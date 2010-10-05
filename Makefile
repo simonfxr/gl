@@ -6,22 +6,22 @@ LIB_DIRS := -L/usr/X11R6/lib -L.
 
 LIBS := -lgltools -lX11 -lglut -lGL -lGLU -lm
 
-CFLAGS  := `pkg-config --cflags glew` $(INC_DIRS) -Wall 
-LDFLAGS := $(LIB_DIRS) $(LIBS) `pkg-config --libs glew`
+CFLAGS  := -I/usr/include/GL `pkg-config --cflags glew` $(INC_DIRS) -Wall 
+LDFLAGS := `pkg-config --libs glew` $(LIB_DIRS) $(LIBS) 
 
 GLTOOLS_SRC := GLBatch.cpp GLShaderManager.cpp GLTools.cpp GLTriangleBatch.cpp math3d.cpp
 
+all: triangle
+
 libgltools.so:
 	cd $(BIBLE)/Src/GLTools/src && \
-          g++ -fPIC -c $(CFLAGS)  $(GLTOOLS_SRC) && \
+          g++ -fPIC -c  $(CFLAGS)  $(GLTOOLS_SRC) && \
           ld -G $(GLTOOLS_SRC:.cpp=.o) -o $(PWD)/$@
 
 triangle: libgltools.so triangle.cpp
 	g++ -o $@ $(CFLAGS) $(LDFLAGS) triangle.cpp -Wl,-rpath,$(PWD)
 
+clean:
+	- rm libgltools.so triangle
 
-
-
-.PHONY: libgltools.so
-
-
+.PHONY: clean
