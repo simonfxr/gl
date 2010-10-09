@@ -4,19 +4,24 @@ BIBLE := $(HOME)/src/oglsuperbible5-read-only
 INC_DIRS := -I$(BIBLE)/Src/GLTools/include -I/usr/include
 LIB_DIRS := -L/usr/X11R6/lib -L.
 
+PACKAGES := glew OpenEXR
+
 LIBS := -lgltools -lX11 -lglut -lGL -lGLU -lm
 
-CFLAGS  := -I/usr/include/GL `pkg-config --cflags glew` $(INC_DIRS) -Wall 
-LDFLAGS := `pkg-config --libs glew` $(LIB_DIRS) $(LIBS) 
+CFLAGS  := -I/usr/include/GL `pkg-config --cflags $(PACKAGES)` $(INC_DIRS) -Wall 
+LDFLAGS := `pkg-config --libs $(PACKAGES)` $(LIB_DIRS) $(LIBS) 
 
-GLTOOLS_SRC := GLBatch.cpp GLShaderManager.cpp GLTools.cpp GLTriangleBatch.cpp math3d.cpp
+GLTOOLS_SRC := GLBatch.cpp GLShaderManager.cpp GLTools.cpp GLTriangleBatch.cpp math3d.cpp 
+
+GLTOOLS_SBM := $(BIBLE)/Src/Models/Ninja/sbm.cpp
 
 all: triangle
 
 libgltools.so:
 	cd $(BIBLE)/Src/GLTools/src && \
-          g++ -fPIC -c  $(CFLAGS)  $(GLTOOLS_SRC) && \
-          ld -G $(GLTOOLS_SRC:.cpp=.o) -o $(PWD)/$@
+          g++ -fPIC -c $(CFLAGS) -o $(shell basename $(GLTOOLS_SBM:.cpp=.o)) $(GLTOOLS_SBM) && \
+          g++ -fPIC -c $(CFLAGS) $(GLTOOLS_SRC) && \
+          ld -G $(GLTOOLS_SRC:.cpp=.o) $(shell basename $(GLTOOLS_SBM:.cpp=.o)) -o $(PWD)/$@
 
 triangle: libgltools.so triangle.cpp
 	g++ -o $@ $(CFLAGS) $(LDFLAGS) triangle.cpp -Wl,-rpath,$(PWD)
