@@ -3,7 +3,7 @@
 
 #include "defs.h"
 
-template <uint32 N, typename T, typename V, typename M>
+template <uint32 N, typename T, typename V>
 struct Vec {
     T data[N];
 
@@ -30,7 +30,7 @@ struct Vec {
     T dot(const V& v) const {
         T p = 0;
         for (uint32 i = 0; i < N; ++i)
-            p += data[i] v.data[i];
+            p += data[i] * v.data[i];
         return p;
     }
 
@@ -50,12 +50,58 @@ struct Vec {
         return scale(rmag());
     }
 
-    T operator()(int i) const {
+    T operator ()(int i) const {
         return data[i];
     }
 
-    T &operator()(int i) const {
+    T &operator ()(int i) const {
         return data[i];
+    }
+
+    V &operator -() const {
+        return neg();
+    }
+
+    V operator +(const V& v) const {
+        return trans(v);
+    }
+
+    V operator -(const V& v) const {
+        return trans(v.neg());
+    }
+
+    V& operator +=(const V& v) const {
+        *this = *this + v;
+        return *this;
+    }
+
+    V& operator -=(const V& v) const {
+        *this = *this - v;
+        return *this;
+    }
+
+    V operator *(T s) const {
+        return scale(s);
+    }
+
+    V operator /(T s) const {
+        return scale(M::recp(s));
+    }
+
+    V& operator *=(T s) {
+        *this = *this * s;
+        return *this;
+    }
+
+    V& operator /=(T s) {
+        *this = *this / s;
+        return *this;
+    }
+
+    V& operator =(const V& v) {
+        for (uint32 i = 0; i < N; ++i)
+            data[i] = v.data[i];
+        return *this;
     }
 
     static V make(T val) {
@@ -65,4 +111,11 @@ struct Vec {
         return r;
     }
 };
+
+namespace {
+    template <uint32 N, typename T, typename V>
+    inline V operator *(T x, const &V A) {
+        return A * x;
+    }
+}
 #endif
