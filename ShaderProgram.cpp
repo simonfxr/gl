@@ -1,5 +1,10 @@
-
 #include <iostream>
+#include <cstdio>
+
+#include <GL/glew.h>
+#include <GL/glut.h>
+
+#include "defs.h"
 #include "ShaderProgram.hpp"
 
 using namespace std;
@@ -16,35 +21,37 @@ ShaderProgram::~ShaderProgram() {
 
 namespace {
 
-    string readContents(const string& path) {
-        ifstream in(path);
-        string contents = "";
-        if (!in.is_open()) {
-            cerr << "couldnt open " << path << endl;
-            return "";
-        } else {
-
-            // noobig ohne ende... zero copy^^
-            
-            while (in.good()) { 
-                string line;
-                in >> line;
-                contents += line;
-            }
+    bool readContents(const string& path, char * &file_contents, int32 &file_size) {
+        FILE *in = fopen(path.c_str(), "rb");
+        if (in == 0)
+            return false;
+        if (fseek(in, 0, SEEK_END) == -1)
+            return false;
+        int64 size = ftell(in);
+        if (size < 0)
+            return false;
+        if (fseek(in, 0, SEEK_SET) == -1)
+            return false;
+        char *contents = new char[size + 1];
+        if (fread(contents, size, 1, in) != 1) {
+            delete[] contents;
+            return false;
         }
+        contents[size] = '\0';
+        file_contents = contents;
+        file_size = size;
+        return true;
     }
 
-    bool createShader(GLenum type, const string& file, const string& source, GLenum *shader) {
+    bool createShader(GLenum type, const string& file, const GLchar *source, int32 source_len, GLenum *shader) {
         *shader = glCreateShader(type);
-        const GLchar *src = source.c_str();
-        const GLint len = source.length();
-        glShaderSource(*shader, 1, &src, &len);
+        glShaderSource(*shader, 1, &source, &source_len);
         glCompileShader(*shader);
 
-        GLint succes;
+        GLint success;
 
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-        if (!success) {
+        glGetShaderiv(*shader, GL_COMPILE_STATUS, &success);
+        if (success == GL_FALSE) {
             cerr << "failed to compile shader: " << file << endl;
 
             GLint log_len;
@@ -71,30 +78,39 @@ namespace {
 bool ShaderProgram::compileVertexShader(const string& source) {
     if (vertex_shader != 0)
         return false;
-
-    return createShader(GL_VERTEX_SHADER, "<unknown>", source, &vertex_shader);
+    return createShader(GL_VERTEX_SHADER, "<unknown>", source.c_str(), source.length(), &vertex_shader);
 }
 
 bool ShaderProgram::compileVertexShaderFromFile(const string& path) {
     if (vertex_shader != 0)
         return false;
 
-    return createShader(GL_VERTEX_SHADER, path, getContents(path), &vertex_shader);
+    char *src;
+    int32 len;
+    if (!readContents(path, src, len))
+        return false;
+    bool ok = createShader(GL_VERTEX_SHADER, path, src, len, &vertex_shader);
+    delete[] src;
+    return ok;
 }
 
 bool ShaderProgram::compileFragmentShader(const string& source) {
     if (fragment_shader != 0)
         return false;
-
-    return createShader(GL_VERTEX_SHADER, "<unknown>", source, &fragment_shader);
-
+    return createShader(GL_FRAGMENT_SHADER, "<unknown>", source.c_str(), source.length(), &fragment_shader);
 }
 
 bool ShaderProgram::compileFragmentShaderFromFile(const string& path) {
     if (fragment_shader != 0)
         return false;
 
-    return createShader(GL_FRAGMENT_SHADER, path, getContents(path), &fragment_shader);
+    char *src;
+    int32 len;
+    if (!readContents(path, src, len))
+        return false;
+    bool ok = createShader(GL_FRAGMENT_SHADER, path, src, len, &fragment_shader);
+    delete[] src;
+    return ok;
 }
 
 bool ShaderProgram::link() {
@@ -108,14 +124,14 @@ bool ShaderProgram::link() {
     
     GLint success;
     glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (!success) {
+    if (success == GL_FALSE) {
         cerr << "failed to link shader program:" << endl;
 
         GLint log_len;
-        glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &log_len);
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_len);
 
         GLchar *log = new GLchar[log_len];
-        glGetShaderInfoLog(*shader, log_len, NULL, log);
+        glGetProgramInfoLog(program, log_len, NULL, log);
 
         cerr << log << endl;
 
@@ -126,4 +142,11 @@ bool ShaderProgram::link() {
     }
 
     return true;
+}
+
+bool ShaderProgram::compileAndLink(const std::string& vertex_shader_file, const std::string& fragment_shader_file) {
+    return
+        compileVertexShaderFromFile(vertex_shader_file) &&
+        compileFragmentShaderFromFile(fragment_shader_file) &&
+        link();
 }

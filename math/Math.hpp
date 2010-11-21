@@ -5,46 +5,61 @@
 #include <cmath>
 #include <xmmintrin.h>
 
+#define Math MathGeneric
+
 namespace {
 
-    class Math {
+    class MathGeneric {
     public:
 
-        static const real32 PI;
+        static const float PI = M_PI;
 
-        static real32 sqrt(real32 x) {
+        static float sqrt(float x) {
             return sqrtf(x);
         }
 
-        static real32 rsqrt(real32 x) {
+        static float rsqrt(float x) {
             return recp(sqrt(x));
         }
 
-        static real32 recp(real32 x) {
-            return unlikely(x == 0.f) ? 0.f : 1 / x;
+        static float recp(float x) {
+            return 1 / x;
         }
 
-        static real32 wrap(real32 x, real32 r) {
+        static float wrap(float x, float r) {
             if (unlikely(x < -r) || unlikely(x > r))
                 return fmodf(x, r);
             else
                 return x;
         }
 
-        static real32 degToRad(real32 x) {
+        static float degToRad(float x) {
             return x * (PI / 180.f);
         }
 
-        static real32 degToRadWrap(real32 x) {
+        static float degToRadWrap(float x) {
             return degToRad(wrap(x, 360.f));
         }
 
-        static real32 radToDeg(real32 x) {
+        static float radToDeg(float x) {
             return x * (180.f / PI);
         }
 
-        static real32 radToDegWrap(real32 x) {
+        static float radToDegWrap(float x) {
             return radToDeg(wrap(x, 2 * PI));
+        }
+
+        static void sincos(float rad, float *sin_x, float *cos_x) {
+            *sin_x = sinf(rad);
+            *cos_x = cosf(rad);
+        }
+
+        static float tan(float rad) {
+            return tanf(rad);
+        }
+
+        static float rtan(float rad) {
+            return Math::recp(tan(rad));
         }
 
     private:
@@ -52,18 +67,18 @@ namespace {
         ~Math();
     };
 
-    class FastMath : public Math {
+    class FastMath : public MathGeneric {
     public:
 
-        static real32 sqrt(real32 x) {
+        static float sqrt(float x) {
             return _mm_cvtss_f32(_mm_sqrt_ss(_mm_set_ss(x)));
         }
         
-        static real32 recp(real32 x) {
+        static float recp(float x) {
             return _mm_cvtss_f32(_mm_rcp_ss(_mm_set_ss(x)));
         }
         
-        static real32 rsqrt(real32 x) {
+        static float rsqrt(float x) {
             return _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(x)));
         }
 
@@ -71,8 +86,5 @@ namespace {
         FastMath();
         ~FastMath();
     };
-
-    const real32 Math::PI = M_PI;
-
 }
 #endif

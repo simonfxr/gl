@@ -3,12 +3,13 @@
 
 #include <GL/gl.h>
 
-#include "Vec3.hpp"
+#include "defs.h"
+#include "math/vec4.hpp"
 
 struct VertexBuffer {
 
-    V3 * restrict vertices;
-    uint16 * restrict elements;
+    vec4 * __restrict__ vertices;
+    uint16 * __restrict__ elements;
 
     uint32 vert_size;
     uint32 vert_filled;
@@ -22,8 +23,10 @@ struct VertexBuffer {
     VertexBuffer(uint32 initial_size = 4);
     ~VertexBuffer();
 
-    void add(const V3& vert);
+    void add(const vec4& v);
     void send(GLenum usage_hint = GL_STATIC_DRAW);
+    void use_as(GLenum attribute_name);
+    void draw();    
 };
 
 #endif
