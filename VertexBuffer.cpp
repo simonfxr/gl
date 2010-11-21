@@ -75,7 +75,6 @@ void VertexBuffer::send(GLenum usage_hint) {
 void VertexBuffer::use_as(GLuint attrib) {
     glBindBuffer(GL_ARRAY_BUFFER, vert_buf_name);
     glVertexAttribPointer(attrib, 4, GL_FLOAT, GL_FALSE, 4 * sizeof (GLfloat), 0);
-    glEnableVertexAttribArray(attrib);
 }
 
 void VertexBuffer::draw() {

@@ -28,9 +28,9 @@ triangle: triangle.cpp libgltools.so
 	g++ -o $@ $(CFLAGS) $(LDFLAGS) $(LD_GLTOOLS) $<
 
 own1: own1.cpp ShaderProgram.cpp VertexBuffer.cpp
-	g++-4.5 -I. -Wall -o $@ $(CFLAGS) $(LDFLAGS) $^
+	g++ -I. -Wall -o $@ $(CFLAGS) $(LDFLAGS) $^
 
 clean:
-	- rm libgltools.so triangle
+	- rm libgltools.so triangle own1
 
 .PHONY: clean

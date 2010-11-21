@@ -111,8 +111,10 @@ namespace {
         glUniform4f(uniform_vec4_color, 1.f, 0.f, 0.f, 1.f);
         glUniformMatrix4fv(uniform_mat4_rotation, 1, GL_FALSE, (float *) &rotation);
 
+        glEnableVertexAttribArray(attribute_vec4_position);
         triangle.use_as(attribute_vec4_position);
-        triangle.draw();        
+        triangle.draw();
+        glDisableVertexAttribArray(attribute_vec4_position);
 
         printGLErrors();
         
