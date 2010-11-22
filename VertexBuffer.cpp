@@ -77,7 +77,7 @@ void VertexBuffer::use_as(GLuint attrib) {
     glVertexAttribPointer(attrib, 4, GL_FLOAT, GL_FALSE, 4 * sizeof (GLfloat), 0);
 }
 
-void VertexBuffer::draw() {
+void VertexBuffer::draw(GLenum mode) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elem_buf_name);
-    glDrawElements(GL_TRIANGLE_STRIP, elem_filled, GL_UNSIGNED_SHORT, 0);
+    glDrawElements(mode, elem_filled, GL_UNSIGNED_SHORT, 0);
 }

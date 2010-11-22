@@ -1,6 +1,8 @@
 #ifndef MAT4_H
 #define MAT4_H
 
+#include <xmmintrin.h>
+
 #include "Math.hpp"
 #include "vec4.hpp"
 
@@ -24,13 +26,10 @@ struct mat4 {
     mat4(const mat4& m)
         : c1(m.c1), c2(m.c2), c3(m.c3), c4(m.c4) {}
 
-private:
-
     static float dot4(const vec4& a, const vec4& b) {
-        return a.x * b.x + a.y * b.y + a.z * a.z + a.w * b.w;
+        vec4 s = vec4(_mm_mul_ps(a.packed, b.packed));
+        return s.x + s.y + s.z + s.w;
     }
-
-public:
 
     static const mat4& identity() {
         return __mat4::identity;

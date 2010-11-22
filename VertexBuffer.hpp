@@ -26,7 +26,7 @@ struct VertexBuffer {
     void add(const vec4& v);
     void send(GLenum usage_hint = GL_STATIC_DRAW);
     void use_as(GLenum attribute_name);
-    void draw();    
+    void draw(GLenum mode);    
 };
 
 #endif

@@ -44,30 +44,38 @@ namespace {
     }
 
     bool createShader(GLenum type, const string& file, const GLchar *source, int32 source_len, GLenum *shader) {
+
+        cerr << "compiling " << file << " ... ";
+        
         *shader = glCreateShader(type);
         glShaderSource(*shader, 1, &source, &source_len);
         glCompileShader(*shader);
 
         GLint success;
-
         glGetShaderiv(*shader, GL_COMPILE_STATUS, &success);
         if (success == GL_FALSE) {
-            cerr << "failed to compile shader: " << file << endl;
-
-            GLint log_len;
-            glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &log_len);
-
-            GLchar *log = new GLchar[log_len];
-            glGetShaderInfoLog(*shader, log_len, NULL, log);
-
-            cerr << log << endl;
-
-            delete[] log;
-
+            cerr << "failed" << endl;
             glDeleteShader(*shader);
             *shader = 0;
-
             return false;
+        } else {
+            cerr << "success" << endl;
+        }
+
+        GLint log_len;
+        glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &log_len);
+        if (log_len > 0) {
+            
+            cerr << file << " compile log:" << endl;
+            
+            GLchar *log = new GLchar[log_len];
+            
+            glGetShaderInfoLog(*shader, log_len, NULL, log);
+        
+            cerr << log << endl;
+            cerr << "end compile log" << endl;
+        
+            delete[] log;
         }
 
         return true;
@@ -117,28 +125,36 @@ bool ShaderProgram::link() {
     if (program != 0 || vertex_shader == 0 || fragment_shader == 0)
         return false;
 
+    cerr << "linking ... ";
+
     program = glCreateProgram();
     glAttachShader(program, vertex_shader);
     glAttachShader(program, fragment_shader);
     glLinkProgram(program);
-    
+
     GLint success;
     glGetProgramiv(program, GL_LINK_STATUS, &success);
     if (success == GL_FALSE) {
-        cerr << "failed to link shader program:" << endl;
-
-        GLint log_len;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_len);
-
-        GLchar *log = new GLchar[log_len];
-        glGetProgramInfoLog(program, log_len, NULL, log);
-
-        cerr << log << endl;
-
-        delete[] log;
+        cerr << "failed" << endl;
 
         glDeleteProgram(program);
         return false;
+    } else {
+        cerr << "success" << endl;
+    }
+
+    GLint log_len;
+    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_len);
+    if (log_len > 0) {
+        
+        cerr << "link log:" << endl;
+        GLchar *log = new GLchar[log_len];
+        glGetProgramInfoLog(program, log_len, NULL, log);
+    
+        cerr << log << endl;
+        cerr << "end link log" << endl;
+    
+        delete[] log;
     }
 
     return true;

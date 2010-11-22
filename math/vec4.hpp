@@ -1,12 +1,19 @@
 #ifndef VEC4_HPP
 #define VEC4_HPP
 
+#include <xmmintrin.h>
+
 #include "Math.hpp"
 #include "vec3.hpp"
 
 struct vec4 {
-    
-    float x, y, z, w;
+
+    union {
+        struct {
+            float x, y, z, w;
+        };
+        __m128 packed;
+    };
 
     vec4() {};
 
@@ -17,10 +24,13 @@ struct vec4 {
         : x(xyz.x), y(xyz.y), z(xyz.z), w(_w) {}
 
     vec4(const vec4& a)
-        : x(a.x), y(a.y), z(a.z), w(a.w) {}
+        : packed(a.packed) {}
+
+    vec4(__m128 p)
+        : packed(p) {}
 
     vec4& operator =(const vec4& a) {
-        x = a.x; y = a.y; z = a.z; w = a.w;
+        packed = a.packed;
         return *this;
     }
 

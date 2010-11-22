@@ -70,9 +70,10 @@ namespace {
         uniform_mat4_rotation = glGetUniformLocation(shader.program, "rotation");
         attribute_vec4_position = glGetAttribLocation(shader.program, "position");
 
-        triangle.add(vec4(-0.5f, -0.5f, 0.f, 1.f));
-        triangle.add(vec4(+0.5f, -0.5f, 0.f, 1.f));
-        triangle.add(vec4( 0.0f, +0.5f, 0.f, 1.f));
+        triangle.add(vec4(-0.5f, -0.5f, 1.f, 1.f));
+        triangle.add(vec4(+0.5f, -0.5f, 2.f, 1.f));
+        triangle.add(vec4( 0.0f, +0.5f, 3.f, 1.f));
+        triangle.add(vec4( 0.0f,  0.0f, 0.5f, 1.f));
 
         triangle.send();
 
@@ -84,6 +85,7 @@ namespace {
     }
 
     void windowSizeChanged(int32 w, int32 h) {
+        cerr << "changed window size: " << w << "x" << h << endl;
         glViewport(0, 0, w, h);
     }
 
@@ -113,7 +115,7 @@ namespace {
 
         glEnableVertexAttribArray(attribute_vec4_position);
         triangle.use_as(attribute_vec4_position);
-        triangle.draw();
+        triangle.draw(GL_POLYGON);
         glDisableVertexAttribArray(attribute_vec4_position);
 
         printGLErrors();
