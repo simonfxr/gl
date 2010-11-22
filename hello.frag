@@ -1,4 +1,4 @@
-#version 110
+#version 330
 
 varying vec4 tone;
 

@@ -28,7 +28,7 @@ triangle: triangle.cpp libgltools.so
 	g++ -o $@ $(CFLAGS) $(LDFLAGS) $(LD_GLTOOLS) $<
 
 own1: own1.cpp ShaderProgram.cpp VertexBuffer.cpp
-	g++ -I. -Wall -o $@ $(CFLAGS) $(LDFLAGS) $^
+	g++ -O3 -march=native -I. -Wall -o $@ $(CFLAGS) $(LDFLAGS) $^
 
 clean:
 	- rm libgltools.so triangle own1

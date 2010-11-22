@@ -2,52 +2,54 @@
 #define MAT4_H
 
 #include <xmmintrin.h>
+#include <smmintrin.h>
 
 #include "Math.hpp"
 #include "vec4.hpp"
 
-struct mat4;
-
-namespace __mat4 {
-    namespace {
-        extern const mat4 identity;
-    }
-}
-
 struct mat4 {
 
-    vec4 c1, c2, c3, c4; // column major, like OpenGL
+    union {
+        struct {
+            __m128 c[4];
+        };
+        struct {
+            __m128 c1, c2, c3, c4;
+        };
+        float a[4][4];
+        float flat[16];
+    };
 
     mat4() {}
 
     mat4(const vec4& _c1, const vec4& _c2, const vec4& _c3, const vec4& _c4)
-        : c1(_c1), c2(_c2), c3(_c3), c4(_c4) {}
+        : c1(_c1.packed), c2(_c2.packed), c3(_c3.packed), c4(_c4.packed) {}
 
     mat4(const mat4& m)
         : c1(m.c1), c2(m.c2), c3(m.c3), c4(m.c4) {}
 
     static float dot4(const vec4& a, const vec4& b) {
-        vec4 s = vec4(_mm_mul_ps(a.packed, b.packed));
-        return s.x + s.y + s.z + s.w;
-    }
-
-    static const mat4& identity() {
-        return __mat4::identity;
+        // return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+        return _mm_cvtss_f32(_mm_dp_ps(a.packed, b.packed, 0xF1));
     }
 
     mat4 transpose() const {
-        return mat4(vec4(c1.x, c2.x, c3.x, c4.x),
-                    vec4(c1.y, c2.y, c3.y, c4.y),
-                    vec4(c1.z, c2.z, c3.z, c4.z),
-                    vec4(c1.w, c2.w, c3.w, c4.w));
+        mat4 r;
+        for (int i = 0; i < 4; ++i)
+            for (int j = 0; j < 4; ++j)
+                r.a[i][j] = a[j][i];
+        return r;
     }
 
     static mat4 mult(const mat4& A, const mat4& B) {
         mat4 BT = B.transpose();
-        return mat4(vec4(dot4(A.c1, BT.c1), dot4(A.c1, BT.c2), dot4(A.c1, BT.c3), dot4(A.c1, BT.c4)),
-                    vec4(dot4(A.c2, BT.c1), dot4(A.c2, BT.c2), dot4(A.c2, BT.c3), dot4(A.c2, BT.c4)),
-                    vec4(dot4(A.c3, BT.c1), dot4(A.c3, BT.c2), dot4(A.c3, BT.c3), dot4(A.c3, BT.c4)),
-                    vec4(dot4(A.c4, BT.c1), dot4(A.c4, BT.c2), dot4(A.c4, BT.c3), dot4(A.c4, BT.c4)));
+        mat4 C;
+
+        for (uint32 i = 0; i < 4; ++i)
+            for (uint32 j = 0; j < 4; ++j)
+                C.a[i][j] = dot4(A.c[i], B.c[j]);
+
+        return C;
     }
 
     mat4 operator *(const mat4& B) const {
@@ -60,15 +62,13 @@ struct mat4 {
     }
 };
 
-namespace __mat4 {
-    namespace {
-        // should be in its own file to prevent copies...        
-        const mat4 identity =
-            mat4(vec4(1.f, 0.f, 0.f, 0.f),
-                 vec4(0.f, 1.f, 0.f, 0.f), 
-                 vec4(0.f, 0.f, 1.f, 0.f),
-                 vec4(0.f, 0.f, 0.f, 1.f));
-        }
+namespace {
+    const mat4 identity(vec4(1.f, 0.f, 0.f, 0.f),
+                        vec4(0.f, 1.f, 0.f, 0.f), 
+                        vec4(0.f, 0.f, 1.f, 0.f),
+                        vec4(0.f, 0.f, 0.f, 1.f));
+
 }
+
 #endif           
                  

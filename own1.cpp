@@ -21,9 +21,14 @@ namespace {
     GLuint uniform_mat4_rotation;
     GLuint attribute_vec4_position;
 
-    mat4 rotation = mat4::identity();
+    mat4 rotation = identity;
     
     VertexBuffer triangle;
+
+    int32 frame_time;
+    int32 measure_begin;
+    int32 frames;
+    
 
     void printGLError(GLenum err) {
         const char *str;
@@ -77,6 +82,9 @@ namespace {
 
         triangle.send();
 
+        measure_begin = glutGet(GLUT_ELAPSED_TIME);
+        frames = 0;
+
         return !printGLErrors();
     }
 
@@ -99,7 +107,9 @@ namespace {
                         vec4(-sin, cos, 0.f, 0.f),
                         vec4(0.f, 0.f, 1.f, 0.f),
                         vec4(0.f, 0.f, 0.f, 1.f));
-        
+
+        frame_time = ms;
+
         glutPostRedisplay();
     }
 
@@ -111,7 +121,7 @@ namespace {
         glUseProgram(shader.program);
 
         glUniform4f(uniform_vec4_color, 1.f, 0.f, 0.f, 1.f);
-        glUniformMatrix4fv(uniform_mat4_rotation, 1, GL_FALSE, (float *) &rotation);
+        glUniformMatrix4fv(uniform_mat4_rotation, 1, GL_FALSE, rotation.flat);
 
         glEnableVertexAttribArray(attribute_vec4_position);
         triangle.use_as(attribute_vec4_position);
@@ -121,6 +131,15 @@ namespace {
         printGLErrors();
         
         glutSwapBuffers();
+
+        ++frames;
+
+        if (frame_time - measure_begin > 5000) {
+            cerr << "fps: " << float(frames) / 5 << endl;
+            frames = 0;
+            measure_begin = frame_time;
+        }
+        
     }
 }
 
