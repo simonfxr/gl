@@ -1,20 +1,18 @@
 #ifndef MAT4_H
 #define MAT4_H
 
-#include <xmmintrin.h>
-#include <smmintrin.h>
-
 #include "Math.hpp"
+#include "v4.hpp"
 #include "vec4.hpp"
 
 struct mat4 {
 
     union {
         struct {
-            __m128 c[4];
+            v4::v4 c[4];
         };
         struct {
-            __m128 c1, c2, c3, c4;
+            v4::v4 c1, c2, c3, c4;
         };
         float a[4][4];
         float flat[16];
@@ -27,11 +25,6 @@ struct mat4 {
 
     mat4(const mat4& m)
         : c1(m.c1), c2(m.c2), c3(m.c3), c4(m.c4) {}
-
-    static float dot4(const vec4& a, const vec4& b) {
-        // return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
-        return _mm_cvtss_f32(_mm_dp_ps(a.packed, b.packed, 0xF1));
-    }
 
     mat4 transpose() const {
         mat4 r;
@@ -47,7 +40,7 @@ struct mat4 {
 
         for (uint32 i = 0; i < 4; ++i)
             for (uint32 j = 0; j < 4; ++j)
-                C.a[i][j] = dot4(A.c[i], B.c[j]);
+                C.a[i][j] = v4::dot(&A.c[i], &B.c[j]);
 
         return C;
     }
@@ -58,7 +51,8 @@ struct mat4 {
 
     vec4 operator *(const vec4& v) const {
         mat4 AT = transpose();
-        return vec4(dot4(v, AT.c1), dot4(v, AT.c2), dot4(v, AT.c3), dot4(v, AT.c4));
+        return vec4(v4::dot(&v.packed, &AT.c1), v4::dot(&v.packed, &AT.c2),
+                    v4::dot(&v.packed, &AT.c3), v4::dot(&v.packed, &AT.c4));
     }
 };
 

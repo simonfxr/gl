@@ -5,6 +5,7 @@
 
 #include "Math.hpp"
 #include "vec3.hpp"
+#include "v4.hpp"
 
 struct vec4 {
 
@@ -12,7 +13,7 @@ struct vec4 {
         struct {
             float x, y, z, w;
         };
-        __m128 packed;
+        v4::v4 packed;
     };
 
     vec4() {};
@@ -26,16 +27,13 @@ struct vec4 {
     vec4(const vec4& a)
         : packed(a.packed) {}
 
-    vec4(__m128 p)
-        : packed(p) {}
-
     vec4& operator =(const vec4& a) {
         packed = a.packed;
         return *this;
     }
 
     static vec3 project3(const vec4& a) {
-        float rw = Math::recp(a.w);
+        float rw = unlikely(a.w == 0) ? 1.f : Math::recp(a.w);
         return vec3(a.x * rw, a.y * rw, a.z * rw);
     }
 
