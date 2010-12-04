@@ -9,12 +9,7 @@
 
 struct vec4 {
 
-    union {
-        struct {
-            float x, y, z, w;
-        };
-        v4::v4 packed;
-    };
+    float x, y, z, w;
 
     vec4() {};
 
@@ -25,10 +20,10 @@ struct vec4 {
         : x(xyz.x), y(xyz.y), z(xyz.z), w(_w) {}
 
     vec4(const vec4& a)
-        : packed(a.packed) {}
+        : x(a.x), y(a.y), z(a.z), w(a.w) {}
 
     vec4& operator =(const vec4& a) {
-        packed = a.packed;
+        x = a.x; y = a.y; z = a.z; w = a.w;
         return *this;
     }
 
@@ -38,8 +33,10 @@ struct vec4 {
     }
 
     static vec4 project4(const vec4& a) {
-        return vec4(project3(a), 1.f);
+        return unlikely(a.w == 0.f) ? a : vec4(project3(a), 1.f);
     }
-};
+        
+} __attribute__((aligned(16)));
+
 #endif
 

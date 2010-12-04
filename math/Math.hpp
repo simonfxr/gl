@@ -12,7 +12,7 @@ namespace {
     class MathGeneric {
     public:
 
-        static const float PI = M_PI;
+        static const float PI;
 
         static float sqrt(float x) {
             return sqrtf(x);
@@ -86,5 +86,7 @@ namespace {
         FastMath();
         ~FastMath();
     };
+
+    const float MathGeneric::PI = M_PI;
 }
 #endif

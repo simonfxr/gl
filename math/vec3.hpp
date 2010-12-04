@@ -2,6 +2,7 @@
 #define VEC3_HPP
 
 #include "Math.hpp"
+#include "v4.hpp"
 
 struct vec3 {
     
@@ -16,21 +17,33 @@ struct vec3 {
         : x(a.x), y(a.y), z(a.z) {}
     
     static vec3 add(const vec3& a, const vec3& b) {
-        return vec3(a.x + b.x, a.y + b.y, a.z + b.z);
+        v4::v4 A = v4::make3(a.x, a.y, a.z);
+        v4::v4 B = v4::make3(b.x, b.y, b.z);
+        v4::v4 R = v4::add3(A, B);
+        return vec3(v4::v4a(R), v4::v4b(R), v4::v4c(R));
     }
 
     static vec3 sub(const vec3& a, const vec3& b) {
-        return add(a, b.neg());
+        v4::v4 A = v4::make3(a.x, a.y, a.z);
+        v4::v4 B = v4::make3(b.x, b.y, b.z);
+        v4::v4 R = v4::sub3(A, B);
+        return vec3(v4::v4a(R), v4::v4b(R), v4::v4c(R));
     }
 
     static float dot(const vec3& a, const vec3& b) {
-        return a.x * b.x + a.y * b.y +  a.z * b.z;
+        v4::v4 A = v4::make3(a.x, a.y, a.z);
+        v4::v4 B = v4::make3(b.x, b.y, b.z);
+        return v4::dot3(A, B);
     }
 
     static vec3 cross(const vec3& a, const vec3& b) {
         return vec3(a.y * b.z - a.z * b.y,
                     a.z * b.x - a.x * b.z,
                     a.x * b.y - a.y * b.x);
+    }
+
+    static vec3 normal(const vec3& a) {
+        return a.normal();
     }
 
     static bool equal(const vec3& a, const vec3& b) {
@@ -90,8 +103,18 @@ struct vec3 {
         return add(*this, a);
     }
 
+    vec3& operator +=(const vec3& a) {
+        *this = *this + a;
+        return *this;
+    }
+
     vec3 operator -(const vec3& a) const {
         return sub(*this, a);
+    }
+
+    vec3& operator -=(const vec3& a) {
+        *this = *this - a;
+        return *this;
     }
 
     vec3 operator -() const {
@@ -100,6 +123,11 @@ struct vec3 {
 
     vec3 operator *(float l) const {
         return scale(l);
+    }
+
+    vec3& operator *=(float l) {
+        *this = *this * l;
+        return *this;
     }
 
     vec3 operator /(float l) const {

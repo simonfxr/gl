@@ -18,4 +18,6 @@ typedef long  int64;
 
 #define ARRAY_LENGTH(x) (sizeof (x) / sizeof *(x))
 
+#define UNUSED(x) ((void) (x))
+
 #endif

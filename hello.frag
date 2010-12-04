@@ -1,7 +1,8 @@
 #version 330
 
-varying vec4 tone;
+in vec4 tone;
+out vec4 color;
 
 void main() {
-     gl_FragColor = tone;
+     color = tone;
 }

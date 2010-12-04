@@ -3,9 +3,9 @@
 uniform vec4 color;
 uniform mat4 rotation;
 
-attribute vec4 position;
+in vec4 position;
 
-varying vec4 tone;
+out vec4 tone;
 
 void main() {
      gl_Position = rotation * vec4(position.xy, 0, 1);
