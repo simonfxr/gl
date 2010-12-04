@@ -42,8 +42,8 @@ struct vec3 {
                     a.x * b.y - a.y * b.x);
     }
 
-    static vec3 normal(const vec3& a) {
-        return a.normal();
+    static vec3 normalize(const vec3& a) {
+        return a.normalize();
     }
 
     static bool equal(const vec3& a, const vec3& b) {
@@ -82,7 +82,7 @@ struct vec3 {
         return Math::rsqrt(magSq());
     }
 
-    vec3 normal() const {
+    vec3 normalize() const {
         return scale(rmag());
     }
 

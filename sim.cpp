@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "math/vec3.hpp"
+#include "math/Math.hpp"
 
 #ifdef __APPLE__
 #include <glut/glut.h>
@@ -63,16 +64,16 @@ void SetupRC()
     	
     floorBatch.Begin(GL_LINES, 324);
     for(GLfloat x = -20.0; x <= 20.0f; x+= 0.5) {
-        floorBatch.Vertex3f(x, -0.55f, 20.0f);
-        floorBatch.Vertex3f(x, -0.55f, -20.0f);
+        floorBatch.Vertex3f(x, 0.f, 20.0f);
+        floorBatch.Vertex3f(x, 0.f, -20.0f);
         
-        floorBatch.Vertex3f(20.0f, -0.55f, x);
-        floorBatch.Vertex3f(-20.0f, -0.55f, x);
+        floorBatch.Vertex3f(20.0f, 0.f, x);
+        floorBatch.Vertex3f(-20.0f, 0.f, x);
     }
     floorBatch.End();
 
     cameraFrame.SetOrigin(-20.f, 10.f, -20.f);
-    vec3 fw = vec3(1.f, 0.f, 1.f).normal();
+    vec3 fw = vec3::normalize(vec3(1.f, 0.f, 1.f));
     cameraFrame.SetForwardVector(fw.x, fw.y, fw.z);
 }
 
@@ -121,16 +122,16 @@ static void animate(float dt, float acc);
 
 static float sphere_speed0 = 3.f;
 
-static float animation_speed = 0.03f;
+static float animation_speed = 0.1f;
 
 static const vec3 g(0.f, -9.81f, 0.f);
 
 static Sphere make_sphere(const vec3& center, const vec3& dir) {
     Sphere s;
     s.center = center;
-    s.vel    = dir.normal() * sphere_speed0;
+    s.vel    = vec3::normalize(dir) * sphere_speed0;
     s.mass   = 1.f;
-    s.r      = 1.f;
+    s.r      = 0.25f;
 
     return s;
 }
@@ -149,6 +150,10 @@ static std::ostream& operator << (std::ostream& out, const vec3& v) {
 
 static const vec3 ground(0.f, -1.f, 0.f);
 
+static vec3 vel_after_coll(float m1, const vec3& v1, float m2, const vec3& v2) {
+    return (m1 * v1 + m2 * (2.f * v2 - v1)) * Math::recp(m1 + m2);
+}
+
 static void resolve_collision(Sphere& x, Sphere& y) {
 
     vec3 xc = x.center + x.vel;
@@ -157,22 +162,38 @@ static void resolve_collision(Sphere& x, Sphere& y) {
     float r = x.r + y.r;
     
     if (vec3::distSq(xc, yc) < r*r) {
-        vec3 n1 = vec3::normal(xc - yc);
+        vec3 n1 = vec3::normalize(yc - xc);
         vec3 n2 = -n1;
         
         vec3 vx_coll = n1 * vec3::dot(x.vel, n1);
         vec3 vx_rest = x.vel - vx_coll;
+
+        vec3 vy_coll = n2 * vec3::dot(y.vel, n2);
+        vec3 vy_rest = y.vel - vy_coll;
+
+        vec3 ux = vel_after_coll(x.mass, vx_coll, y.mass, vy_coll);
+        vec3 uy = vel_after_coll(y.mass, vy_coll, x.mass, vx_coll);
+
+        x.vel = ux + vx_rest;
+        y.vel = uy + vy_rest;
     }
 }
 
 static void __attribute__((noinline)) animate(const float dt, float acc) {
+
+    for (unsigned i = 1; i < spheres.size(); ++i) {
+        for (unsigned j = 0; j < i; ++j) {
+            resolve_collision(spheres[i], spheres[j]);
+        }
+    }
+    
     for (unsigned i = 0; i < spheres.size(); ++i) {
         Sphere &s = spheres[i];
 
         s.vel    += g * (dt * acc);
         s.center += s.vel * acc;
 
-        if (s.center.y - s.r < 0) {
+        if (s.center.y < s.r) {
             const vec3 ground(0.f, -1.f, 0.f);
             vec3 vel_par = ground * vec3::dot(s.vel, ground);
             s.vel = (s.vel - 2 * vel_par) * Math::sqrt(0.2f);
@@ -180,6 +201,11 @@ static void __attribute__((noinline)) animate(const float dt, float acc) {
         }
     }
 }
+
+float draw_fps_at = 0;
+float fps_count = 0;
+
+static const float draw_fps_cycle = 5.f;
         
 // Called to draw scene
 void RenderScene(void)
@@ -191,7 +217,7 @@ void RenderScene(void)
 
     // Time Based animation
     static CStopWatch	rotTimer;
-    float now = rotTimer.GetElapsedSeconds();
+    const float now = rotTimer.GetElapsedSeconds();
 
     anim_tick(now);
 	
@@ -221,7 +247,8 @@ void RenderScene(void)
         modelViewMatrix.PushMatrix();
         const Sphere& s = spheres[i];
         modelViewMatrix.Translate(s.center.x, s.center.y, s.center.z);
-        modelViewMatrix.Scale(s.r, s.r, s.r);
+        float unitRad = 0.1f;
+        modelViewMatrix.Scale(s.r / unitRad, s.r / unitRad, s.r / unitRad);
         shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
                                      transformPipeline.GetModelViewMatrix(), 
                                      transformPipeline.GetProjectionMatrix(),
@@ -272,7 +299,15 @@ void RenderScene(void)
         mouse_callback_set(true);        
         recenter_cursor = false;
     }
-        
+
+    ++fps_count;
+
+    if (draw_fps_at <= now) {
+        std::cerr << "fps: " << float(fps_count) / draw_fps_cycle << std::endl;
+        draw_fps_at = now + draw_fps_cycle;
+        fps_count = 0;
+    }
+    
     // Tell GLUT to do it again
     glutPostRedisplay();
 }
@@ -329,8 +364,7 @@ void MouseEvent(int button, int state, int x, int y) {
         cameraFrame.GetForwardVector(dir);
         Sphere s = make_sphere(toVec3(orig), toVec3(dir));
         spheres.push_back(s);
-        std::cerr << "made sphere: " << s.center.x << ";" << s.center.y << ";" << s.center.z << std::endl;
-        std::cerr << "  speed: " << s.vel.x << ";" << s.vel.y << ";" << s.vel.z << std::endl;
+//        std::cerr << "made sphere at: " << s.center << ", speed: " << s.vel << std::endl;
     }
 }
 

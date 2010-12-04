@@ -1,7 +1,7 @@
 
 BIBLE := $(HOME)/src/oglsuperbible5-read-only
 
-CC := clang
+CC  := clang
 CXX := clang++
 
 INC_DIRS := -I$(BIBLE)/Src/GLTools/include -I/usr/include -I. -Imath
