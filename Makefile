@@ -1,8 +1,8 @@
 
 BIBLE := $(HOME)/src/oglsuperbible5-read-only
 
-CC := icc
-CXX := icpc
+CC := clang
+CXX := clang++
 
 INC_DIRS := -I$(BIBLE)/Src/GLTools/include -I/usr/include -I. -Imath
 LIB_DIRS := -L/usr/X11R6/lib -L.
@@ -16,6 +16,8 @@ OPT_FLAGS := -O3 -march=native $(OPT_FLAGS)
 PKG_CFLAGS := $(shell pkg-config --cflags $(PACKAGES))
 
 CFLAGS  := -I/usr/include/GL $(PKG_CFLAGS) $(INC_DIRS) -Wall -Wextra $(OPT_FLAGS) $(EXTRA_CFLAGS)
+
+ICC_CFLAGS := $(CFLAGS) -xHOST -O3 -ipo -no-prec-div
 
 PKG_LDFLAGS := $(shell pkg-config --libs $(PACKAGES))
 
@@ -41,7 +43,13 @@ own1: own1.cpp ShaderProgram.cpp VertexBuffer.cpp
 	$(CXX) -o $@ -flto $(CFLAGS) $(LDFLAGS) $^
 
 sim: sim.cpp libgltools.so
-	$(CXX) -o $@ $(CFLAGS) $(LDFLAGS) $(LD_GLTOOLS) $<
+	$(CXX)  $< -o $@ $(CFLAGS) $(LDFLAGS) $(LD_GLTOOLS)
+
+sim_icc: sim.cpp libgltools.so
+	icpc $< -o $@ $(ICC_CFLAGS) $(LDFLAGS) $(LD_GLTOOLS)
+
+sim_icc.s: sim.cpp
+	icpc $< -S -o $@ $(ICC_CFLAGS)
 
 clean:
 	- rm libgltools.so triangle own1
