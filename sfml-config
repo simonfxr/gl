@@ -1,0 +1,55 @@
+#!/bin/bash
+
+BASE=/usr/local/stow/sfml2
+KNOWN_PACKAGES="audio graphics network system window"
+
+need_cflags=""
+need_libs=""
+need_all_packages=""
+packages=""
+
+while [[ $# -gt 0 ]]; do
+    opt="$1"; shift
+    case "$opt" in
+        --libs) need_libs="1" ;;
+        --cflags) need_cflags="1" ;;
+        --list-all)
+
+            for pkg in $KNOWN_PACKAGES; do
+                echo $pkg
+            done
+            exit 0
+            ;;
+
+        all) need_all_packages="1" ;;
+
+        *)
+            if echo "$KNOWN_PACKAGES" | grep -w -- "$opt" >/dev/null; then
+                packages="$packages $opt"
+            else
+                echo "unknown sfml-package: $opt" 1>&2
+            fi
+    esac
+done
+
+[[ $need_all_packages ]] && packages="$KNOWN_PACKAGES"
+
+[[ $need_cflags ]] && pkg_opts="--cflags"
+
+[[ $need_libs ]] && pkg_opts="$pkg_opts --libs"
+
+pkg_conf() {
+    local out="`pkg-config $pkg_opts $@`"
+    local ret=$?
+    echo -n "$out" ""
+    return $ret
+}
+
+for pkg in $packages; do
+    [[ $need_libs ]] && echo -n -lsfml-$pkg ""
+    case $pkg in
+        window) pkg_conf xrandr || exit 1 ;;
+    esac
+done
+
+echo ""
