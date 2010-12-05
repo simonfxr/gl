@@ -118,11 +118,11 @@ static const float ANIM_TICK_LEN = 1.0 / ANIM_TICKS_PER_SECOND;
 
 static float next_tick = 0;
 
-static void animate(float dt, float acc);
+static void animate(float dt);
 
-static float sphere_speed0 = 3.f;
+static float sphere_speed0 = 30.f;
 
-static float animation_speed = 0.1f;
+static float animation_speed = 1.f;
 
 static const vec3 g(0.f, -9.81f, 0.f);
 
@@ -140,7 +140,7 @@ static void anim_tick(float now) {
     if (now > next_tick) {
         next_tick = now + ANIM_TICK_LEN;
 
-        animate(ANIM_TICK_LEN, animation_speed);
+        animate(ANIM_TICK_LEN * animation_speed);
     }
 }
 
@@ -151,13 +151,13 @@ static std::ostream& operator << (std::ostream& out, const vec3& v) {
 static const vec3 ground(0.f, -1.f, 0.f);
 
 static vec3 vel_after_coll(float m1, const vec3& v1, float m2, const vec3& v2) {
-    return (m1 * v1 + m2 * (2.f * v2 - v1)) * Math::recp(m1 + m2);
+    return (m1 * v1 + m2 * (2.f * v2 - v1)) / (m1 + m2);
 }
 
-static void resolve_collision(Sphere& x, Sphere& y) {
+static void resolve_collision(Sphere& x, Sphere& y, float dt) {
 
-    vec3 xc = x.center + x.vel;
-    vec3 yc = y.center + y.vel;
+    vec3 xc = x.center + x.vel * dt;
+    vec3 yc = y.center + y.vel * dt;
 
     float r = x.r + y.r;
     
@@ -179,24 +179,24 @@ static void resolve_collision(Sphere& x, Sphere& y) {
     }
 }
 
-static void __attribute__((noinline)) animate(const float dt, float acc) {
+static void __attribute__((noinline)) animate(const float dt) {
 
     for (unsigned i = 1; i < spheres.size(); ++i) {
         for (unsigned j = 0; j < i; ++j) {
-            resolve_collision(spheres[i], spheres[j]);
+            resolve_collision(spheres[i], spheres[j], dt);
         }
     }
     
     for (unsigned i = 0; i < spheres.size(); ++i) {
         Sphere &s = spheres[i];
 
-        s.vel    += g * (dt * acc);
-        s.center += s.vel * acc;
+        s.vel    += g * dt;
+        s.center += s.vel * dt;
 
         if (s.center.y < s.r) {
             const vec3 ground(0.f, -1.f, 0.f);
             vec3 vel_par = ground * vec3::dot(s.vel, ground);
-            s.vel = (s.vel - 2 * vel_par) * Math::sqrt(0.2f);
+            s.vel = (s.vel - 2 * vel_par) * Math::sqrt(0.3f);
             s.center.y = s.r;
         }
     }

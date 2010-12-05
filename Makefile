@@ -42,14 +42,8 @@ triangle: triangle.cpp libgltools.so
 own1: own1.cpp ShaderProgram.cpp VertexBuffer.cpp
 	$(CXX) -o $@ -flto $(CFLAGS) $(LDFLAGS) $^
 
-sim: sim.cpp libgltools.so
-	$(CXX)  $< -o $@ $(CFLAGS) $(LDFLAGS) $(LD_GLTOOLS)
-
-sim_icc: sim.cpp libgltools.so
-	icpc $< -o $@ $(ICC_CFLAGS) $(LDFLAGS) $(LD_GLTOOLS)
-
-sim_icc.s: sim.cpp
-	icpc $< -S -o $@ $(ICC_CFLAGS)
+sim-sfml: sim-sfml.cpp GameLoop.cpp libgltools.so
+	$(CXX) sim-sfml.cpp GameLoop.cpp -o $@  `pkg-config --libs --cflags glew` -I/usr/include/GL $(OPT_FLAGS) -L. $(LD_GLTOOLS) -Wall -Wextra $(INC_DIRS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum
 
 clean:
 	- rm libgltools.so triangle own1

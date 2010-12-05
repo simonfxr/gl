@@ -8,6 +8,8 @@ struct vec3 {
     
     float x, y, z;
 
+    static const vec3 zero;
+
     vec3() {}
 
     vec3(float _x, float _y, float _z)
@@ -139,6 +141,10 @@ namespace {
     inline vec3 operator *(float l, const vec3& a) {
         return a * l;
     }
+
 }
+
+const vec3 vec3::zero = vec3(0.f, 0.f, 0.f);
+
 
 #endif
