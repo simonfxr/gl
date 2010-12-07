@@ -8,11 +8,17 @@ need_libs=""
 need_all_packages=""
 packages=""
 
+print_usage() {
+    echo "usage: sfml-config (--help | [--cflags] [--libs] (all | package...) | --list-all)"
+    echo "packages: $KNOWN_PACKAGES"
+}
+
 while [[ $# -gt 0 ]]; do
     opt="$1"; shift
     case "$opt" in
         --libs) need_libs="1" ;;
         --cflags) need_cflags="1" ;;
+        --help) print_usage ;;
         --list-all)
 
             for pkg in $KNOWN_PACKAGES; do
@@ -22,6 +28,11 @@ while [[ $# -gt 0 ]]; do
             ;;
 
         all) need_all_packages="1" ;;
+
+        -*) 
+            echo "unknown option: $opt" 2>&1
+            exit 1
+            ;;
 
         *)
             if echo "$KNOWN_PACKAGES" | grep -w -- "$opt" >/dev/null; then

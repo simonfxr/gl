@@ -43,7 +43,7 @@ own1: own1.cpp ShaderProgram.cpp VertexBuffer.cpp
 	$(CXX) -o $@ -flto $(CFLAGS) $(LDFLAGS) $^
 
 sim-sfml: sim-sfml.cpp GameLoop.cpp libgltools.so
-	$(CXX) sim-sfml.cpp GameLoop.cpp -o $@  `pkg-config --libs --cflags glew` -I/usr/include/GL $(OPT_FLAGS) -L. $(LD_GLTOOLS) -Wall -Wextra $(INC_DIRS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum
+	$(CXX) sim-sfml.cpp GameLoop.cpp -o $@  `pkg-config --libs --cflags glew` -I/usr/include/GL $(OPT_FLAGS) -L. $(LD_GLTOOLS) -Wall -Wextra $(INC_DIRS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum $(EXTRA_CFLAGS)
 
 clean:
 	- rm libgltools.so triangle own1

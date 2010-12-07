@@ -43,6 +43,46 @@ namespace {
     } __attribute__((aligned(16)));
 }
 
+namespace {
+
+    void printGLError(GLenum err) {
+        const char *str;
+
+        switch (err) {
+            
+#define err_case(e) case e: str = #e; break
+            
+            err_case(GL_NO_ERROR);
+            err_case(GL_INVALID_ENUM);
+            err_case(GL_INVALID_VALUE);
+            err_case(GL_INVALID_OPERATION);
+            err_case(GL_STACK_OVERFLOW);
+            err_case(GL_STACK_UNDERFLOW);
+            err_case(GL_OUT_OF_MEMORY);
+            err_case(GL_TABLE_TOO_LARGE);
+
+#undef err_case
+
+        default:
+            str = 0;
+
+            std::cerr << "unknown OpenGL Error occurred: " << err << std::endl;
+        }
+
+        if (str != 0)
+            std::cerr << "OpenGL Error occurred: " << str << std::endl;
+
+    }
+
+    bool printGLErrors() {
+        bool was_error = false;
+        for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
+            printGLError(err);
+        return was_error;
+    }
+
+}
+
 static const float FPS_DRAW_CYCLE = 1.f;
 
 struct Game : public GameLoop::Game {
@@ -153,6 +193,8 @@ void Game::init() {
     fps_draw_next = fps_draw_last = now();
     
     window_size_changed(window.GetWidth(), window.GetHeight());
+
+    printGLErrors();
 }
 
 float Game::now() {
@@ -242,6 +284,7 @@ void Game::key_pressed(sf::Key::Code key) {
      case U: game_speed += 0.05f; break;
      case Z: game_speed -= 0.05f; break;
      case I: use_interpolation = !use_interpolation; break;
+     case B: loop.pause(!loop.paused()); break;
      }
 
      sphere_mass = std::max(0.1f, sphere_mass);
@@ -310,6 +353,8 @@ static const M3DVector4f vLightPos = { -20.0f, 30.0f, -20.0f, 1.0f };
 
 void Game::draw(float interpolation) {
 
+    return;
+
     if (!use_interpolation && last_frame_drawn == frame_id)
         return;
 
@@ -352,6 +397,8 @@ void Game::draw(float interpolation) {
     draw_hud();
 
     window.Display();
+
+    printGLErrors();
 }
 
 void Game::draw_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyePos) {
@@ -443,7 +490,11 @@ int main(int argc, char *argv[]) {
 
     Game game(clock, window);
     game.init();
-    return game.loop.run(game);
+    int32 exit_code = game.loop.run(game);
+
+    window.Close();
+
+    return exit_code;
 }
 
 void Sphere::move(float dt) {
@@ -459,7 +510,7 @@ void Sphere::move(float dt) {
 }
 
 vec3 Sphere::calc_position(float dt) const {
-    return center + vel * dt + 0.5 * dt * dt * gravity;
+    return center + vel * dt + 0.5f * dt * dt * gravity;
 }
 
 vec3 Sphere::velocity_after_collision(float m1, const vec3& v1, float m2, const vec3& v2) {
