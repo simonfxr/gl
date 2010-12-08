@@ -27,7 +27,7 @@ namespace {
         }
 
         static float wrap(float x, float r) {
-            if (unlikely(x < -r) || unlikely(x > r))
+            if (unlikely(x < -r || x > r))
                 return fmodf(x, r);
             else
                 return x;
@@ -60,6 +60,14 @@ namespace {
 
         static float rtan(float rad) {
             return Math::recp(tan(rad));
+        }
+
+        static float abs(float x) {
+            return fabs(x);
+        }
+
+        static float wrapPi(float x) {
+            return x - floor(x * (1 / (2 * PI))) * (2 * PI);
         }
 
     private:

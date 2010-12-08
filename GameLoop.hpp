@@ -29,7 +29,7 @@ public:
     struct Game {
         virtual ~Game() {};
         virtual void tick() = 0;
-        virtual void draw(float interpolation) = 0;
+        virtual void render(float interpolation) = 0;
         virtual void handle_events() = 0;
         virtual float now() = 0;
     };

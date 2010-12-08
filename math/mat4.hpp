@@ -20,8 +20,12 @@ struct mat4 {
 
     mat4() {}
 
-    mat4(const vec4& _c1, const vec4& _c2, const vec4& _c3, const vec4& _c4)
-        : c1(_c1.packed), c2(_c2.packed), c3(_c3.packed), c4(_c4.packed) {}
+    mat4(const vec4& _c1, const vec4& _c2, const vec4& _c3, const vec4& _c4) :
+        c1(v4::make(_c1.x, _c1.y, _c1.z, _c1.w)),
+        c2(v4::make(_c2.x, _c2.y, _c2.z, _c2.w)),
+        c3(v4::make(_c3.x, _c3.y, _c3.z, _c3.w)),
+        c4(v4::make(_c4.x, _c4.y, _c4.z, _c4.w))
+        {}
 
     mat4(const mat4& m)
         : c1(m.c1), c2(m.c2), c3(m.c3), c4(m.c4) {}
@@ -40,7 +44,7 @@ struct mat4 {
 
         for (uint32 i = 0; i < 4; ++i)
             for (uint32 j = 0; j < 4; ++j)
-                C.a[i][j] = v4::dot(&A.c[i], &B.c[j]);
+                C.a[i][j] = v4::dot(A.c[i], B.c[j]);
 
         return C;
     }
@@ -51,8 +55,9 @@ struct mat4 {
 
     vec4 operator *(const vec4& v) const {
         mat4 AT = transpose();
-        return vec4(v4::dot(&v.packed, &AT.c1), v4::dot(&v.packed, &AT.c2),
-                    v4::dot(&v.packed, &AT.c3), v4::dot(&v.packed, &AT.c4));
+        v4::v4 packed = v4::make(v.x, v.y, v.z, v.w);
+        return vec4(v4::dot(packed, AT.c1), v4::dot(packed, AT.c2),
+                    v4::dot(packed, AT.c3), v4::dot(packed, AT.c4));
     }
 };
 

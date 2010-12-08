@@ -20,14 +20,16 @@
 
 #include "math/vec3.hpp"
 #include "math/Math.hpp"
+#include "math/EulerAngles.hpp"
+#include "math/transform.hpp"
+
 #include "GameLoop.hpp"
 
 static const vec3 gravity(0.f, -9.81f, 0.f);
 
 namespace {
 
-    class Sphere {
-    public:
+    struct Sphere {
         vec3 vel;
         float r;
         vec3 center;
@@ -41,9 +43,25 @@ namespace {
         static vec3 velocity_after_collision(float m1, const vec3& v1, float m2, const vec3& v2);
 
     } __attribute__((aligned(16)));
+
+    struct Camera {
+        vec3 origin;
+        EulerAngles orientation;
+
+        mat4 getModelViewMatrix() const; 
+
+        void move_forward(float step);
+        void move_right(float step);
+        
+    } __attribute__ ((aligned(16)));
 }
 
 namespace {
+
+    void set_matrix(M3DMatrix44f dst, const mat4& src) {
+        for (uint32 i = 0; i < 16; ++i)
+            dst[i] = src.flat[i];
+    }
 
     void printGLError(GLenum err) {
         const char *str;
@@ -83,7 +101,7 @@ namespace {
 
 }
 
-static const float FPS_DRAW_CYCLE = 1.f;
+static const float FPS_RENDER_CYCLE = 1.f;
 
 struct Game : public GameLoop::Game {
 public:
@@ -101,12 +119,13 @@ public:
 
     GLBatch                 floorBatch;
     GLTriangleBatch         sphereBatch;
-    GLFrame                 cameraFrame;
+    
+    Camera                  camera;
 
     uint32 fps_count;
     uint32 current_fps;
-    float  fps_draw_next;
-    float  fps_draw_last;
+    float  fps_render_next;
+    float  fps_render_last;
 
     uint64 frame_id;
 
@@ -120,7 +139,7 @@ public:
     float game_speed;
 
     bool use_interpolation;
-    uint64 last_frame_drawn;
+    uint64 last_frame_rendern;
 
     std::vector<Sphere> spheres;    
 
@@ -129,7 +148,7 @@ public:
     float now();
     void handle_events();
     void tick();
-    void draw(float interpolation);
+    void render(float interpolation);
 
     void init();
     
@@ -142,8 +161,8 @@ private:
     void mouse_pressed(sf::Mouse::Button button);
     void after_mouse_moves(uint32 x, uint32 y);
     void spawn_sphere();
-    void draw_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyePos);
-    void draw_hud();
+    void render_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyePos);
+    void render_hud();
 };
 
 Game::Game(sf::Clock& _clock, sf::RenderWindow& _win)
@@ -153,7 +172,7 @@ Game::Game(sf::Clock& _clock, sf::RenderWindow& _win)
 void Game::init() {
 
     frame_id = 0;
-    last_frame_drawn = 0;
+    last_frame_rendern = 0;
 
     sphere_speed = 10.f;
     sphere_mass = 1.f;
@@ -185,12 +204,14 @@ void Game::init() {
     }
     floorBatch.End();
 
-    cameraFrame.SetOrigin(-20.f, 10.f, -20.f);
-    vec3 fw = vec3::normalize(vec3(1.f, 0.f, 1.f));
-    cameraFrame.SetForwardVector(fw.x, fw.y, fw.z);
+    camera.origin = vec3(-20.f, 10.f, -20.f);
+    camera.orientation = EulerAngles(Math::degToRad(45.f), Math::degToRad(30.f), 0.f);
+    
+    // vec3 fw = vec3::normalize(vec3(1.f, 0.f, 1.f));
+    // cameraFrame.SetForwardVector(fw.x, fw.y, fw.z);
 
     fps_count = 0;
-    fps_draw_next = fps_draw_last = now();
+    fps_render_next = fps_render_last = now();
     
     window_size_changed(window.GetWidth(), window.GetHeight());
 
@@ -271,10 +292,10 @@ void Game::key_pressed(sf::Key::Code key) {
      using namespace sf::Key;
 
      switch (key) {
-     case W: cameraFrame.MoveForward(linear); break;
-     case S: cameraFrame.MoveForward(-linear); break;
-     case A: cameraFrame.MoveRight(linear); break;
-     case D: cameraFrame.MoveRight(-linear); break;
+     case W: camera.move_forward(linear); break;
+     case S: camera.move_forward(-linear); break;
+     case A: camera.move_right(linear); break;
+     case D: camera.move_right(-linear); break;
      case M: sphere_mass += 0.1f; break;
      case N: sphere_mass -= 0.1f; break;
      case R: sphere_rad += 0.1f; break;
@@ -315,10 +336,8 @@ void Game::after_mouse_moves(uint32 x, uint32 y) {
     int32 dx = mx - x;
     int32 dy = y - my;
 
-    GLFrame tmp = cameraFrame;
-
-    cameraFrame.RotateLocalY(dx * 0.001f);
-    cameraFrame.RotateLocalX(dy * 0.001f);
+    // cameraFrame.RotateLocalY(dx * 0.001f);
+    // cameraFrame.RotateLocalX(dy * 0.001f);
 
     window.SetCursorPosition(mx, my);
 }
@@ -333,14 +352,14 @@ static vec3 toVec3(M3DVector3f v3) {
 }
 
 void Game::spawn_sphere() {
-    M3DVector3f orig;
-    cameraFrame.GetOrigin(orig);
-    M3DVector3f dir;
-    cameraFrame.GetForwardVector(dir);
+
+    static const vec4 forward = vec4(0.f, 0.f, -1.f, 0.f);
+
+    vec3 dir = vec4::project3(camera.orientation.getRotationMatrix().transpose() * forward);
 
     Sphere s;
-    s.center = toVec3(orig);
-    s.vel    = vec3::normalize(toVec3(dir)) * sphere_speed;
+    s.center = camera.origin;
+    s.vel    = dir * sphere_speed;
     s.r      = sphere_rad;
     s.mass   = sphere_mass;
 
@@ -351,17 +370,15 @@ static const GLfloat vFloorColor[] = { 0.0f, 1.0f, 0.0f, 1.0f};
 static const GLfloat vSphereColor[] = { 0.0f, 0.0f, 1.0f, 1.0f };
 static const M3DVector4f vLightPos = { -20.0f, 30.0f, -20.0f, 1.0f };
 
-void Game::draw(float interpolation) {
+void Game::render(float interpolation) {
 
-    return;
-
-    if (!use_interpolation && last_frame_drawn == frame_id)
+    if (!use_interpolation && last_frame_rendern == frame_id)
         return;
 
     if (!use_interpolation)
         interpolation = 0.f;
 
-    last_frame_drawn = frame_id;
+    last_frame_rendern = frame_id;
     
     window.SetActive();
 
@@ -370,7 +387,7 @@ void Game::draw(float interpolation) {
     modelViewMatrix.PushMatrix();
     
     M3DMatrix44f mCamera;
-    cameraFrame.GetCameraMatrix(mCamera);
+    set_matrix(mCamera, camera.getModelViewMatrix());
     modelViewMatrix.PushMatrix(mCamera);
 
     // Transform the light position into eye coordinates
@@ -378,7 +395,7 @@ void Game::draw(float interpolation) {
     M3DVector4f vLightEyePos;
     m3dTransformVector4(vLightEyePos, vLightPos, mCamera);
 		
-    // Draw the ground
+    // Render the ground
     shaderManager.UseStockShader(GLT_SHADER_FLAT,
                                  transformPipeline.GetModelViewProjectionMatrix(),
                                  vFloorColor);	
@@ -387,21 +404,21 @@ void Game::draw(float interpolation) {
     float dt = interpolation * game_speed / loop.ticks_per_second;
 
     for (uint32 i = 0; i < spheres.size(); ++i)
-        draw_sphere(spheres[i], dt, vLightEyePos);
+        render_sphere(spheres[i], dt, vLightEyePos);
 
     modelViewMatrix.PopMatrix();
     modelViewMatrix.PopMatrix();    
 
     ++fps_count;
 
-    draw_hud();
+    render_hud();
 
     window.Display();
 
     printGLErrors();
 }
 
-void Game::draw_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyePos) {
+void Game::render_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyePos) {
     modelViewMatrix.PushMatrix();
     vec3 pos = s.calc_position(dt);
     modelViewMatrix.Translate(pos.x, pos.y, pos.z);
@@ -414,14 +431,14 @@ void Game::draw_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyePos
     modelViewMatrix.PopMatrix();
 }
 
-void Game::draw_hud() {
+void Game::render_hud() {
 
     float now = loop.real_time();
-    if (now >= fps_draw_next) {
+    if (now >= fps_render_next) {
 
-        current_fps = fps_count / (now - fps_draw_last);
-        fps_draw_next = now + FPS_DRAW_CYCLE;
-        fps_draw_last = now;
+        current_fps = fps_count / (now - fps_render_last);
+        fps_render_next = now + FPS_RENDER_CYCLE;
+        fps_render_last = now;
         fps_count = 0;
 
         update_fps_text(current_fps);
@@ -541,4 +558,23 @@ void Sphere::collide(Sphere& x, Sphere& y, float dt) {
         y.vel = uy + vy_rest;
 
     }
+}
+
+void Camera::move_forward(float step) {
+    mat4 rot = orientation.getRotationMatrix().transpose();
+    vec4 forward = rot * vec4(0.f, 0.f, -1.f, 0.f);
+    origin += vec4::project3(forward) * step;        
+}
+
+void Camera::move_right(float step) {
+    mat4 rot = orientation.getRotationMatrix().transpose();
+    vec4 forward = rot * vec4(0.f, 0.f, -1.f, 0.f);
+    origin += vec4::project3(forward) * step;    
+}
+
+mat4 Camera::getModelViewMatrix() const {
+    mat4 rotation = orientation.getRotationMatrix();
+    mat4 trans, itrans;
+    Transform::translate(origin, trans, itrans);
+    return trans * rotation * itrans;
 }

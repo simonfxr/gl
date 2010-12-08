@@ -45,9 +45,9 @@ int32 GameLoop::run(GameLoop::Game& logic) {
 
         if (likely(!_paused)) {
             float interpolation = (_now + tick_length - next_game_tick) / tick_length;
-            logic.draw(interpolation);
+            logic.render(interpolation);
         } else {
-            logic.draw(0.f);
+            logic.render(0.f);
         }
 
         next_draw_tick += draw_tick_length;
