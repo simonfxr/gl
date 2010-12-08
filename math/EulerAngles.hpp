@@ -15,6 +15,38 @@ struct EulerAngles {
     EulerAngles(float _heading, float _pitch, float _bank) :
         heading(_heading), pitch(_pitch), bank(_bank) {}
 
+    EulerAngles(mat4 rotation) {
+
+	// Extract sin(pitch) from m23.
+
+	float sp = -rotation.a[2][1];
+
+	// Check for Gimbel lock
+	
+	if (Math::abs(sp) > 9.99999f) {
+
+            // Looking straight up or down
+            
+            pitch = 0.5 * Math::PI * sp;
+
+            // Compute heading, slam bank to zero
+
+            heading = Math::atan2(-rotation.a[0][2], rotation.a[0][0]);
+            bank = 0.0f;
+
+	} else {
+
+            // Compute angles.  We don't have to use the "safe" asin
+            // function because we already checked for range errors when
+            // checking for Gimbel lock
+            
+            heading = Math::atan2(rotation.a[2][0], rotation.a[2][2]);
+            pitch = Math::asin(sp);
+            bank = Math::atan2(rotation.a[0][1], rotation.a[1][1]);
+	}
+
+    }
+
     void canonize() {
 
         pitch = Math::wrapPi(pitch);

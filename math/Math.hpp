@@ -67,7 +67,22 @@ namespace {
         }
 
         static float wrapPi(float x) {
-            return x - floor(x * (1 / (2 * PI))) * (2 * PI);
+            x += PI;
+            x -= floor(x * (1 / (2 * PI))) * (2 * PI);
+            x -= PI;
+            return x;
+        }
+
+        static float asin(float x) {
+            return asinf(x);
+        }
+
+        static float acos(float x) {
+            return acosf(x);
+        }
+
+        static float atan2(float x, float y) {
+            return atan2f(x, y);
         }
 
     private:

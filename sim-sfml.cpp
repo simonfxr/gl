@@ -1,6 +1,3 @@
-
-#include <cmath>
-#include <cstdio>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -45,13 +42,23 @@ namespace {
     } __attribute__((aligned(16)));
 
     struct Camera {
+//        GLFrame frame;
+
         vec3 origin;
         EulerAngles orientation;
+        
 
-        mat4 getModelViewMatrix() const; 
+        void setOrigin(const vec3& origin);
+        void facePoint(const vec3& position);
 
+        vec3 getOrigin();
+        vec3 getForwardVector();
+
+        void move_along_local_axis(const vec3& step);
         void move_forward(float step);
         void move_right(float step);
+
+        mat4 getCameraMatrix();
         
     } __attribute__ ((aligned(16)));
 }
@@ -61,6 +68,21 @@ namespace {
     void set_matrix(M3DMatrix44f dst, const mat4& src) {
         for (uint32 i = 0; i < 16; ++i)
             dst[i] = src.flat[i];
+    }
+
+    std::ostream& operator << (std::ostream& out, const vec3& v) {
+        return out << "(" << v.x << ";" << v.y << ";" << v.z << ")";
+    }
+
+    vec3 toVec3(const M3DVector3f v3) {
+        return vec3(v3[0], v3[1], v3[2]);
+    }
+
+    mat4 toMat4(const M3DMatrix44f m) {
+        mat4 M;
+        for (uint32 i = 0; i < 16; ++i)
+            M.flat[i] = m[i];
+        return M;
     }
 
     void printGLError(GLenum err) {
@@ -139,7 +161,7 @@ public:
     float game_speed;
 
     bool use_interpolation;
-    uint64 last_frame_rendern;
+    uint64 last_frame_rendered;
 
     std::vector<Sphere> spheres;    
 
@@ -172,7 +194,7 @@ Game::Game(sf::Clock& _clock, sf::RenderWindow& _win)
 void Game::init() {
 
     frame_id = 0;
-    last_frame_rendern = 0;
+    last_frame_rendered = 0;
 
     sphere_speed = 10.f;
     sphere_mass = 1.f;
@@ -204,12 +226,13 @@ void Game::init() {
     }
     floorBatch.End();
 
-    camera.origin = vec3(-20.f, 10.f, -20.f);
-    camera.orientation = EulerAngles(Math::degToRad(45.f), Math::degToRad(30.f), 0.f);
-    
-    // vec3 fw = vec3::normalize(vec3(1.f, 0.f, 1.f));
-    // cameraFrame.SetForwardVector(fw.x, fw.y, fw.z);
+    // camera.origin = vec3(-20.f, 10.f, -20.f);
+    // camera.orientation = EulerAngles(0, Math::PI, 0);
+    // camera.orientation.canonize();
 
+    camera.setOrigin(vec3(-20.f, 10.f, -20.f));
+    camera.facePoint(vec3(0.f, 0.f, 0.f));
+    
     fps_count = 0;
     fps_render_next = fps_render_last = now();
     
@@ -336,8 +359,22 @@ void Game::after_mouse_moves(uint32 x, uint32 y) {
     int32 dx = mx - x;
     int32 dy = y - my;
 
-    // cameraFrame.RotateLocalY(dx * 0.001f);
-    // cameraFrame.RotateLocalX(dy * 0.001f);
+    // M3DMatrix44f rot;
+    // camera.frame.GetMatrix(rot, true);
+    // EulerAngles orientation(toMat4(rot));
+
+    camera.orientation.heading -= dx * 0.001f;
+    camera.orientation.pitch -= dy * 0.001f;
+
+    if (camera.orientation.pitch < -0.5f * Math::PI)
+        camera.orientation.pitch = -0.5f * Math::PI;
+    else if (camera.orientation.pitch > 0.5f * Math::PI)
+        camera.orientation.pitch = 0.5f * Math::PI;
+    
+    camera.orientation.canonize();
+
+    // camera.frame.RotateLocalY(dx * 0.001f);
+    // camera.frame.RotateLocalX(dy * 0.001f);
 
     window.SetCursorPosition(mx, my);
 }
@@ -347,19 +384,11 @@ void Game::mouse_pressed(sf::Mouse::Button button) {
         spawn_sphere();
 }
 
-static vec3 toVec3(M3DVector3f v3) {
-    return vec3(v3[0], v3[1], v3[2]);
-}
-
 void Game::spawn_sphere() {
 
-    static const vec4 forward = vec4(0.f, 0.f, -1.f, 0.f);
-
-    vec3 dir = vec4::project3(camera.orientation.getRotationMatrix().transpose() * forward);
-
     Sphere s;
-    s.center = camera.origin;
-    s.vel    = dir * sphere_speed;
+    s.center = camera.getOrigin();
+    s.vel    = camera.getForwardVector() * sphere_speed;
     s.r      = sphere_rad;
     s.mass   = sphere_mass;
 
@@ -372,22 +401,22 @@ static const M3DVector4f vLightPos = { -20.0f, 30.0f, -20.0f, 1.0f };
 
 void Game::render(float interpolation) {
 
-    if (!use_interpolation && last_frame_rendern == frame_id)
+    if (!use_interpolation && last_frame_rendered == frame_id)
         return;
 
     if (!use_interpolation)
         interpolation = 0.f;
 
-    last_frame_rendern = frame_id;
+    last_frame_rendered = frame_id;
     
     window.SetActive();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     modelViewMatrix.PushMatrix();
-    
+
     M3DMatrix44f mCamera;
-    set_matrix(mCamera, camera.getModelViewMatrix());
+    set_matrix(mCamera, camera.getCameraMatrix());
     modelViewMatrix.PushMatrix(mCamera);
 
     // Transform the light position into eye coordinates
@@ -497,7 +526,7 @@ int main(int argc, char *argv[]) {
     
     GLenum err = glewInit();
     if (GLEW_OK != err) {
-        fprintf(stderr, "GLEW Error: %s\n", glewGetErrorString(err));
+        std::cerr << "GLEW Error: " << glewGetErrorString(err) << std::endl;
         return 1;
     }
 
@@ -507,11 +536,7 @@ int main(int argc, char *argv[]) {
 
     Game game(clock, window);
     game.init();
-    int32 exit_code = game.loop.run(game);
-
-    window.Close();
-
-    return exit_code;
+    return game.loop.run(game);
 }
 
 void Sphere::move(float dt) {
@@ -556,25 +581,61 @@ void Sphere::collide(Sphere& x, Sphere& y, float dt) {
 
         x.vel = ux + vx_rest;
         y.vel = uy + vy_rest;
-
     }
 }
 
+void Camera::move_along_local_axis(const vec3& step) {
+//    frame.TranslateLocal(step.x, step.y, step.z);
+    origin += vec4::project3(orientation.getRotationMatrix().transpose() * vec4(step, 0.f));
+}
+
 void Camera::move_forward(float step) {
-    mat4 rot = orientation.getRotationMatrix().transpose();
-    vec4 forward = rot * vec4(0.f, 0.f, -1.f, 0.f);
-    origin += vec4::project3(forward) * step;        
+    move_along_local_axis(vec3(0, 0, 1) * step);
 }
 
 void Camera::move_right(float step) {
-    mat4 rot = orientation.getRotationMatrix().transpose();
-    vec4 forward = rot * vec4(0.f, 0.f, -1.f, 0.f);
-    origin += vec4::project3(forward) * step;    
+    move_along_local_axis(vec3(1, 0, 0) * step);
 }
 
-mat4 Camera::getModelViewMatrix() const {
-    mat4 rotation = orientation.getRotationMatrix();
-    mat4 trans, itrans;
-    Transform::translate(origin, trans, itrans);
-    return trans * rotation * itrans;
+vec3 Camera::getOrigin() {
+    // M3DVector3f orig;
+    // frame.GetOrigin(orig);
+    // return toVec3(orig);
+    return origin;
+}
+
+vec3 Camera::getForwardVector() {
+    // M3DVector3f fw;
+    // frame.GetForwardVector(fw);
+    // return vec3::normalize(toVec3(fw));
+    return vec4::project3(orientation.getRotationMatrix().transpose() * vec4(0.f, 0.f, 1.f, 0.f));
+}
+
+void Camera::setOrigin(const vec3& orig) {
+    origin = orig;
+//    frame.SetOrigin(orig.x, orig.y, orig.z);
+}
+
+void Camera::facePoint(const vec3& pos) {
+    // vec3 fw = vec3::normalize(pos - getOrigin());
+    // frame.SetForwardVector(fw.x, fw.y, fw.z);
+}
+
+mat4 Camera::getCameraMatrix() {
+
+    GLFrame frame;
+
+    frame.SetOrigin(origin.x, origin.y, origin.z);
+    
+    mat4 rot = orientation.getRotationMatrix().transpose();
+    
+    vec3 fw  = vec4::project3(rot * vec4(0.f, 0.f, 1.f, 1.f));
+    vec3 up  = vec4::project3(rot * vec4(0.f, 1.f, 0.f, 1.f));
+    
+    frame.SetForwardVector(fw.x, fw.y, fw.z);
+    frame.SetUpVector(up.x, up.y, up.z);
+
+    M3DMatrix44f trans;
+    frame.GetCameraMatrix(trans);
+    return toMat4(trans);
 }
