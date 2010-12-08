@@ -370,7 +370,7 @@ void Game::after_mouse_moves(uint32 x, uint32 y) {
         camera.orientation.pitch = -0.5f * Math::PI;
     else if (camera.orientation.pitch > 0.5f * Math::PI)
         camera.orientation.pitch = 0.5f * Math::PI;
-    
+
     camera.orientation.canonize();
 
     // camera.frame.RotateLocalY(dx * 0.001f);
