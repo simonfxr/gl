@@ -26,100 +26,110 @@ static const vec3 gravity(0.f, -9.81f, 0.f);
 
 namespace {
 
-    struct Sphere {
-        vec3 vel;
-        float r;
-        vec3 center;
-        float mass;
+struct Sphere;
 
-        void move(float dt);
-        vec3 calc_position(float dt) const;
+struct Cuboid {
+    vec3 corner_min;
+    vec3 corner_max;
+    bool touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision) const;
+};
 
-        static void collide(Sphere& x, Sphere& y, float dt);
+struct Sphere {
+    vec3 vel;
+    float r;
+    vec3 center;
+    float mass;
 
-        static vec3 velocity_after_collision(float m1, const vec3& v1, float m2, const vec3& v2);
+    void move(const Cuboid& room, float dt);
+    vec3 calc_position(float dt) const;
 
-    } __attribute__((aligned(16)));
+    static void collide(Sphere& x, Sphere& y, float dt);
 
-    struct Camera {
-//        GLFrame frame;
+    static vec3 velocity_after_collision(float m1, const vec3& v1, float m2, const vec3& v2);
 
-        vec3 origin;
-        EulerAngles orientation;
+} __attribute__((aligned(16)));
+
+struct Camera {
+    GLFrame frame;
+
+    // vec3 origin;
+    // EulerAngles orientation;
         
 
-        void setOrigin(const vec3& origin);
-        void facePoint(const vec3& position);
+    void setOrigin(const vec3& origin);
+    void facePoint(const vec3& position);
+    void rotate(float rotx, float roty);
 
-        vec3 getOrigin();
-        vec3 getForwardVector();
+    vec3 getOrigin();
+    vec3 getForwardVector();
 
-        void move_along_local_axis(const vec3& step);
-        void move_forward(float step);
-        void move_right(float step);
+    void move_along_local_axis(const vec3& step);
+    void move_forward(float step);
+    void move_right(float step);
 
-        mat4 getCameraMatrix();
+    mat4 getCameraMatrix();
         
-    } __attribute__ ((aligned(16)));
+} __attribute__ ((aligned(16)));
+
 }
 
 namespace {
 
-    void set_matrix(M3DMatrix44f dst, const mat4& src) {
-        for (uint32 i = 0; i < 16; ++i)
-            dst[i] = src.flat[i];
-    }
+void set_matrix(M3DMatrix44f dst, const mat4& src) {
+    for (uint32 i = 0; i < 16; ++i)
+        dst[i] = src.flat[i];
+}
 
-    std::ostream& operator << (std::ostream& out, const vec3& v) {
-        return out << "(" << v.x << ";" << v.y << ";" << v.z << ")";
-    }
+std::ostream& operator << (std::ostream& out, const vec3& v) {
+    return out << "(" << v.x << ";" << v.y << ";" << v.z << ")";
+}
 
-    vec3 toVec3(const M3DVector3f v3) {
-        return vec3(v3[0], v3[1], v3[2]);
-    }
+vec3 toVec3(const M3DVector3f v3) {
+    return vec3(v3[0], v3[1], v3[2]);
+}
 
-    mat4 toMat4(const M3DMatrix44f m) {
-        mat4 M;
-        for (uint32 i = 0; i < 16; ++i)
-            M.flat[i] = m[i];
-        return M;
-    }
+mat4 toMat4(const M3DMatrix44f m) {
+    mat4 M;
+    for (uint32 i = 0; i < 16; ++i)
+        M.flat[i] = m[i];
+    return M;
+}
 
-    void printGLError(GLenum err) {
-        const char *str;
+void printGLError(GLenum err) {
+    const char *str;
 
-        switch (err) {
+    switch (err) {
             
 #define err_case(e) case e: str = #e; break
             
-            err_case(GL_NO_ERROR);
-            err_case(GL_INVALID_ENUM);
-            err_case(GL_INVALID_VALUE);
-            err_case(GL_INVALID_OPERATION);
-            err_case(GL_STACK_OVERFLOW);
-            err_case(GL_STACK_UNDERFLOW);
-            err_case(GL_OUT_OF_MEMORY);
-            err_case(GL_TABLE_TOO_LARGE);
+        err_case(GL_NO_ERROR);
+        err_case(GL_INVALID_ENUM);
+        err_case(GL_INVALID_VALUE);
+        err_case(GL_INVALID_OPERATION);
+        err_case(GL_STACK_OVERFLOW);
+        err_case(GL_STACK_UNDERFLOW);
+        err_case(GL_OUT_OF_MEMORY);
+        err_case(GL_TABLE_TOO_LARGE);
 
 #undef err_case
 
-        default:
-            str = 0;
+    default:
+        str = 0;
 
-            std::cerr << "unknown OpenGL Error occurred: " << err << std::endl;
-        }
-
-        if (str != 0)
-            std::cerr << "OpenGL Error occurred: " << str << std::endl;
-
+        std::cerr << "unknown OpenGL Error occurred: " << err << std::endl;
     }
 
-    bool printGLErrors() {
-        bool was_error = false;
-        for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
-            printGLError(err);
-        return was_error;
-    }
+    if (str != 0)
+        std::cerr << "OpenGL Error occurred: " << str << std::endl;
+
+}
+
+bool printGLErrors() {
+    bool was_error = false;
+    for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
+        printGLError(err);
+    return was_error;
+}
 
 }
 
@@ -139,10 +149,11 @@ public:
     GLFrustum               viewFrustum;                // View Frustum
     GLGeometryTransform     transformPipeline;          // Geometry Transform Pipeline
 
-    GLBatch                 floorBatch;
+    GLBatch                 cubeBatch;
     GLTriangleBatch         sphereBatch;
     
     Camera                  camera;
+    Cuboid                  room;
 
     uint32 fps_count;
     uint32 current_fps;
@@ -151,8 +162,7 @@ public:
 
     uint64 frame_id;
 
-    bool was_mouse_move;
-    uint32 mouse_x, mouse_y;
+    uint32 mouse_dx, mouse_dy;
 
     float sphere_speed;
     float sphere_mass;
@@ -179,9 +189,8 @@ private:
     void update_fps_text(uint32 current_fps);
     void window_size_changed(uint32 width, uint32 height);
     void key_pressed(sf::Key::Code key);
-    void mouse_moved(uint32 x, uint32 y);
+    void mouse_moved(int32 dx, int32 dy);
     void mouse_pressed(sf::Mouse::Button button);
-    void after_mouse_moves(uint32 x, uint32 y);
     void spawn_sphere();
     void render_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyePos);
     void render_hud();
@@ -206,6 +215,9 @@ void Game::init() {
     window.EnableKeyRepeat(true);
     window.ShowMouseCursor(false);
 
+    room.corner_min = vec3(-20.f, 0, -20.f);
+    room.corner_max = vec3(+20.f, 20.f, 20.f);
+
     // Initialze Shader Manager
     shaderManager.InitializeStockShaders();
 	
@@ -215,22 +227,59 @@ void Game::init() {
 
     // This make a sphere
     gltMakeSphere(sphereBatch, 1.f, 26, 13);
+
+    const vec3 lln = room.corner_min;
+    const vec3 dim = room.corner_max - room.corner_min;
+
+    cubeBatch.Begin(GL_QUADS, 24);
+
+    cubeBatch.Vertex3f(0, 0, 0);
+    cubeBatch.Vertex3f(1, 0, 0);
+    cubeBatch.Vertex3f(1, 0, 1);
+    cubeBatch.Vertex3f(0, 0, 1);
+
+    cubeBatch.Vertex3f(0, 1, 0);
+    cubeBatch.Vertex3f(1, 1, 0);
+    cubeBatch.Vertex3f(1, 1, 1);
+    cubeBatch.Vertex3f(0, 1, 1);
+
+    cubeBatch.Vertex3f(0, 0, 0);
+    cubeBatch.Vertex3f(0, 0, 1);
+    cubeBatch.Vertex3f(0, 1, 1);
+    cubeBatch.Vertex3f(0, 1, 0);
+
+    cubeBatch.Vertex3f(1, 0, 0);
+    cubeBatch.Vertex3f(1, 0, 1);
+    cubeBatch.Vertex3f(1, 1, 1);
+    cubeBatch.Vertex3f(1, 1, 0);
+
+    cubeBatch.Vertex3f(0, 0, 0);
+    cubeBatch.Vertex3f(1, 0, 0);
+    cubeBatch.Vertex3f(1, 1, 0);
+    cubeBatch.Vertex3f(0, 1, 0);
+    
+    cubeBatch.Vertex3f(0, 0, 1);
+    cubeBatch.Vertex3f(1, 0, 1);
+    cubeBatch.Vertex3f(1, 1, 1);
+    cubeBatch.Vertex3f(0, 1, 1);
+
+    cubeBatch.End();
     	
-    floorBatch.Begin(GL_LINES, 324);
-    for (GLfloat x = -20.0; x <= 20.0f; x+= 0.5) {
-        floorBatch.Vertex3f(x, 0.f, 20.0f);
-        floorBatch.Vertex3f(x, 0.f, -20.0f);
+    // floorBatch.Begin(GL_LINES, 324);
+    // for (GLfloat x = -20.0; x <= 20.0f; x+= 0.5) {
+    //     floorBatch.Vertex3f(x, 0.f, 20.0f);
+    //     floorBatch.Vertex3f(x, 0.f, -20.0f);
         
-        floorBatch.Vertex3f(20.0f, 0.f, x);
-        floorBatch.Vertex3f(-20.0f, 0.f, x);
-    }
-    floorBatch.End();
+    //     floorBatch.Vertex3f(20.0f, 0.f, x);
+    //     floorBatch.Vertex3f(-20.0f, 0.f, x);
+    // }
+    // floorBatch.End();
 
     // camera.origin = vec3(-20.f, 10.f, -20.f);
     // camera.orientation = EulerAngles(0, Math::PI, 0);
     // camera.orientation.canonize();
 
-    camera.setOrigin(vec3(-20.f, 10.f, -20.f));
+    camera.setOrigin(room.corner_min);
     camera.facePoint(vec3(0.f, 0.f, 0.f));
     
     fps_count = 0;
@@ -246,6 +295,13 @@ float Game::now() {
 }
 
 void Game::handle_events() {
+
+    uint32 win_w = window.GetWidth();
+    uint32 win_h = window.GetHeight();
+
+    uint32 mouse_x = win_w / 2;
+    uint32 mouse_y = win_h / 2;
+    
     sf::Event e;
     while (window.GetEvent(e)) {
         switch (e.Type) {
@@ -256,15 +312,20 @@ void Game::handle_events() {
         case sf::Event::KeyPressed:
             key_pressed(e.Key.Code); break;
         case sf::Event::MouseMoved:
-            mouse_moved(e.MouseMove.X, e.MouseMove.Y); break;
+            mouse_x = e.MouseMove.X;
+            mouse_y = e.MouseMove.Y;
+            break;
         case sf::Event::MouseButtonPressed:
             mouse_pressed(e.MouseButton.Button); break;
         }
     }
 
-    if (was_mouse_move) {
-        was_mouse_move = false;
-        after_mouse_moves(mouse_x, mouse_y);
+    int32 dx = int32(win_w / 2) - mouse_x;
+    int32 dy = mouse_y - int32(win_h / 2);
+
+    if (dx != 0 || dy != 0) {
+        window.SetCursorPosition(win_w / 2, win_h / 2);
+        mouse_moved(dx, dy);
     }
 }
 
@@ -279,7 +340,17 @@ void Game::tick() {
             Sphere::collide(spheres[i], spheres[j], dt);
 
     for (uint32 i = 0; i < spheres.size(); ++i)
-        spheres[i].move(dt);
+        spheres[i].move(room, dt);
+
+    Sphere cam;
+    cam.center = camera.getOrigin();
+    cam.r = 0.01f;
+
+    vec3 norm;
+    vec3 col;
+    if (room.touchesWall(cam, norm, col)) {
+        camera.setOrigin(col);
+    }
 }
 
 template <typename T>
@@ -310,73 +381,53 @@ void Game::window_size_changed(uint32 width, uint32 height) {
 }
 
 void Game::key_pressed(sf::Key::Code key) {
-     float linear = 0.15f;
+    float linear = 0.15f;
 
-     using namespace sf::Key;
+    using namespace sf::Key;
 
-     switch (key) {
-     case W: camera.move_forward(linear); break;
-     case S: camera.move_forward(-linear); break;
-     case A: camera.move_right(linear); break;
-     case D: camera.move_right(-linear); break;
-     case M: sphere_mass += 0.1f; break;
-     case N: sphere_mass -= 0.1f; break;
-     case R: sphere_rad += 0.1f; break;
-     case E: sphere_rad -= 0.1f; break;
-     case P: sphere_speed += 0.5f; break;
-     case O: sphere_speed -= 0.5f; break;
-     case U: game_speed += 0.05f; break;
-     case Z: game_speed -= 0.05f; break;
-     case I: use_interpolation = !use_interpolation; break;
-     case B: loop.pause(!loop.paused()); break;
-     }
+    switch (key) {
+    case W: camera.move_forward(linear); break;
+    case S: camera.move_forward(-linear); break;
+    case A: camera.move_right(linear); break;
+    case D: camera.move_right(-linear); break;
+    case M: sphere_mass += 0.1f; break;
+    case N: sphere_mass -= 0.1f; break;
+    case R: sphere_rad += 0.1f; break;
+    case E: sphere_rad -= 0.1f; break;
+    case P: sphere_speed += 0.5f; break;
+    case O: sphere_speed -= 0.5f; break;
+    case U: game_speed += 0.05f; break;
+    case Z: game_speed -= 0.05f; break;
+    case I: use_interpolation = !use_interpolation; break;
+    case B: loop.pause(!loop.paused()); break;
+    }
 
-     sphere_mass = std::max(0.1f, sphere_mass);
-     sphere_rad = std::max(0.1f, sphere_rad);
-     sphere_speed = std::max(0.5f, sphere_speed);
-     game_speed = std::max(0.f, game_speed);
+    sphere_mass = std::max(0.1f, sphere_mass);
+    sphere_rad = std::max(0.1f, sphere_rad);
+    sphere_speed = std::max(0.5f, sphere_speed);
+    game_speed = std::max(0.f, game_speed);
 }
 
-void Game::mouse_moved(uint32 x, uint32 y) {
-
-    uint32 mx = window.GetWidth() / 2;
-    uint32 my = window.GetHeight() / 2;
-
-    if (mx == x && my == y)
-        return;
-
-    mouse_x = x;
-    mouse_y = y;
-
-    was_mouse_move = true;
-}
-
-void Game::after_mouse_moves(uint32 x, uint32 y) {
-
-    uint32 mx = window.GetWidth() / 2;
-    uint32 my = window.GetHeight() / 2;
-
-    int32 dx = mx - x;
-    int32 dy = y - my;
+void Game::mouse_moved(int32 dx, int32 dy) {
 
     // M3DMatrix44f rot;
     // camera.frame.GetMatrix(rot, true);
     // EulerAngles orientation(toMat4(rot));
 
-    camera.orientation.heading -= dx * 0.001f;
-    camera.orientation.pitch -= dy * 0.001f;
+    // camera.orientation.heading -= dx * 0.001f;
+    // camera.orientation.pitch -= dy * 0.001f;
 
-    if (camera.orientation.pitch < -0.5f * Math::PI)
-        camera.orientation.pitch = -0.5f * Math::PI;
-    else if (camera.orientation.pitch > 0.5f * Math::PI)
-        camera.orientation.pitch = 0.5f * Math::PI;
+    // if (camera.orientation.pitch < -0.5f * Math::PI)
+    //     camera.orientation.pitch = -0.5f * Math::PI;
+    // else if (camera.orientation.pitch > 0.5f * Math::PI)
+    //     camera.orientation.pitch = 0.5f * Math::PI;
 
-    camera.orientation.canonize();
+    // camera.orientation.canonize();
 
     // camera.frame.RotateLocalY(dx * 0.001f);
     // camera.frame.RotateLocalX(dy * 0.001f);
 
-    window.SetCursorPosition(mx, my);
+    camera.rotate(dx * 0.001f, dy * 0.001f);
 }
 
 void Game::mouse_pressed(sf::Mouse::Button button) {
@@ -423,12 +474,16 @@ void Game::render(float interpolation) {
 
     M3DVector4f vLightEyePos;
     m3dTransformVector4(vLightEyePos, vLightPos, mCamera);
+
+    modelViewMatrix.Translate(room.corner_min.x, room.corner_min.y, room.corner_min.z);
+    const vec3 dim = room.corner_max - room.corner_min;
+    modelViewMatrix.Scale(dim.x, dim.y, dim.z);
 		
     // Render the ground
     shaderManager.UseStockShader(GLT_SHADER_FLAT,
                                  transformPipeline.GetModelViewProjectionMatrix(),
                                  vFloorColor);	
-    floorBatch.Draw();
+    cubeBatch.Draw();
 
     float dt = interpolation * game_speed / loop.ticks_per_second;
 
@@ -539,15 +594,17 @@ int main(int argc, char *argv[]) {
     return game.loop.run(game);
 }
 
-void Sphere::move(float dt) {
+void Sphere::move(const Cuboid& room, float dt) {
     center = calc_position(dt);
     vel += gravity * dt;
 
-    if (center.y < r) {
-        const vec3 ground(0.f, -1.f, 0.f);
-        vec3 vel_par = ground * vec3::dot(vel, ground);
+    vec3 wall;
+    vec3 collision;
+    if (room.touchesWall(*this, wall, collision)) {
+//        const vec3 ground(0.f, -1.f, 0.f);
+        vec3 vel_par = wall * vec3::dot(vel, wall);
         vel = (vel - 2 * vel_par) * Math::sqrt(0.3f);
-        center.y = r;
+        center = collision + wall * -r;
     }
 }
 
@@ -585,8 +642,8 @@ void Sphere::collide(Sphere& x, Sphere& y, float dt) {
 }
 
 void Camera::move_along_local_axis(const vec3& step) {
-//    frame.TranslateLocal(step.x, step.y, step.z);
-    origin += vec4::project3(orientation.getRotationMatrix().transpose() * vec4(step, 0.f));
+    frame.TranslateLocal(step.x, step.y, step.z);
+//    origin += vec4::project3(orientation.getRotationMatrix().transpose() * vec4(step, 0.f));
 }
 
 void Camera::move_forward(float step) {
@@ -598,44 +655,96 @@ void Camera::move_right(float step) {
 }
 
 vec3 Camera::getOrigin() {
-    // M3DVector3f orig;
-    // frame.GetOrigin(orig);
-    // return toVec3(orig);
-    return origin;
+    M3DVector3f orig;
+    frame.GetOrigin(orig);
+    return toVec3(orig);
+//    return origin;
 }
 
 vec3 Camera::getForwardVector() {
-    // M3DVector3f fw;
-    // frame.GetForwardVector(fw);
-    // return vec3::normalize(toVec3(fw));
-    return vec4::project3(orientation.getRotationMatrix().transpose() * vec4(0.f, 0.f, 1.f, 0.f));
+    M3DVector3f fw;
+    frame.GetForwardVector(fw);
+    return vec3::normalize(toVec3(fw));
+//    return vec4::project3(orientation.getRotationMatrix().transpose() * vec4(0.f, 0.f, 1.f, 0.f));
 }
 
 void Camera::setOrigin(const vec3& orig) {
-    origin = orig;
-//    frame.SetOrigin(orig.x, orig.y, orig.z);
+//    origin = orig;
+    frame.SetOrigin(orig.x, orig.y, orig.z);
 }
 
 void Camera::facePoint(const vec3& pos) {
-    // vec3 fw = vec3::normalize(pos - getOrigin());
-    // frame.SetForwardVector(fw.x, fw.y, fw.z);
+    vec3 fw = vec3::normalize(pos - getOrigin());
+    frame.SetForwardVector(fw.x, fw.y, fw.z);
 }
 
 mat4 Camera::getCameraMatrix() {
 
-    GLFrame frame;
+    // GLFrame frame;
 
-    frame.SetOrigin(origin.x, origin.y, origin.z);
+    // frame.SetOrigin(origin.x, origin.y, origin.z);
     
-    mat4 rot = orientation.getRotationMatrix().transpose();
+    // mat4 rot = orientation.getRotationMatrix().transpose();
     
-    vec3 fw  = vec4::project3(rot * vec4(0.f, 0.f, 1.f, 1.f));
-    vec3 up  = vec4::project3(rot * vec4(0.f, 1.f, 0.f, 1.f));
+    // vec3 fw  = vec4::project3(rot * vec4(0.f, 0.f, 1.f, 1.f));
+    // vec3 up  = vec4::project3(rot * vec4(0.f, 1.f, 0.f, 1.f));
     
-    frame.SetForwardVector(fw.x, fw.y, fw.z);
-    frame.SetUpVector(up.x, up.y, up.z);
+    // frame.SetForwardVector(fw.x, fw.y, fw.z);
+    // frame.SetUpVector(up.x, up.y, up.z);
+
+    frame.Normalize();
 
     M3DMatrix44f trans;
     frame.GetCameraMatrix(trans);
     return toMat4(trans);
+}
+
+void Camera::rotate(float rotx, float roty) {
+
+    frame.RotateLocal(rotx, 0.f, 1.f, 0.f);
+    frame.RotateLocal(roty, 1.f, 0.f, 0.f);
+    
+}
+
+bool Cuboid::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision) const {
+
+    static const vec3 ground(0, -1.f, 0);
+
+    if (s.center.y - s.r < corner_min.y) {
+        out_normal = vec3(0, -1.f, 0);
+        out_collision = vec3(s.center.x, corner_min.y, s.center.z);
+        return true;
+    }
+
+    if (s.center.y + s.r > corner_max.y) {
+        out_normal = vec3(0, 1.f, 0);
+        out_collision = vec3(s.center.x, corner_max.y, s.center.z);
+        return true;
+    }
+
+    if (s.center.x - s.r < corner_min.x) {
+        out_normal = vec3(-1.0f, 0, 0);
+        out_collision = vec3(corner_min.x, s.center.y, s.center.z);
+        return true;
+    }
+
+    if (s.center.y + s.r > corner_max.x) {
+        out_normal = vec3(1.f, 0.f, 0.f);
+        out_collision = vec3(corner_max.x, s.center.y, s.center.z);
+        return true;
+    }
+
+    if (s.center.z - s.r < corner_min.z) {
+        out_normal = vec3(0.f, 0, -1.0f);
+        out_collision = vec3(s.center.x, s.center.y, corner_min.z);
+        return true;
+    }
+
+    if (s.center.z + s.r > corner_max.z) {
+        out_normal = vec3(0.f, 0.f, 1.f);
+        out_collision = vec3(s.center.x, s.center.y, corner_max.z);
+        return true;
+    }
+
+    return false;
 }
