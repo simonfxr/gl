@@ -21,6 +21,7 @@
 #include "math/transform.hpp"
 
 #include "GameLoop.hpp"
+#include "gltools.hpp"
 
 static const vec3 gravity(0.f, -9.81f, 0.f);
 
@@ -85,41 +86,6 @@ namespace {
         return M;
     }
 
-    void printGLError(GLenum err) {
-        const char *str;
-
-        switch (err) {
-            
-#define err_case(e) case e: str = #e; break
-            
-            err_case(GL_NO_ERROR);
-            err_case(GL_INVALID_ENUM);
-            err_case(GL_INVALID_VALUE);
-            err_case(GL_INVALID_OPERATION);
-            err_case(GL_STACK_OVERFLOW);
-            err_case(GL_STACK_UNDERFLOW);
-            err_case(GL_OUT_OF_MEMORY);
-            err_case(GL_TABLE_TOO_LARGE);
-
-#undef err_case
-
-        default:
-            str = 0;
-
-            std::cerr << "unknown OpenGL Error occurred: " << err << std::endl;
-        }
-
-        if (str != 0)
-            std::cerr << "OpenGL Error occurred: " << str << std::endl;
-
-    }
-
-    bool printGLErrors() {
-        bool was_error = false;
-        for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
-            printGLError(err);
-        return was_error;
-    }
 
 }
 
@@ -168,7 +134,7 @@ public:
     Game(sf::Clock& _clock, sf::RenderWindow& _win);
 
     float now();
-    void handle_events();
+    void handleEvents();
     void tick();
     void render(float interpolation);
 
@@ -234,18 +200,17 @@ void Game::init() {
     camera.facePoint(vec3(0.f, 0.f, 0.f));
     
     fps_count = 0;
-    fps_render_next = fps_render_last = now();
+    fps_render_next = fps_render_last = 0.f;
     
     window_size_changed(window.GetWidth(), window.GetHeight());
 
-    printGLErrors();
 }
 
 float Game::now() {
     return clock.GetElapsedTime();
 }
 
-void Game::handle_events() {
+void Game::handleEvents() {
     sf::Event e;
     while (window.GetEvent(e)) {
         switch (e.Type) {
@@ -444,7 +409,7 @@ void Game::render(float interpolation) {
 
     window.Display();
 
-    printGLErrors();
+    gltools::printErrors(std::cerr);
 }
 
 void Game::render_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyePos) {
@@ -462,7 +427,7 @@ void Game::render_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyeP
 
 void Game::render_hud() {
 
-    float now = loop.real_time();
+    float now = loop.realTime();
     if (now >= fps_render_next) {
 
         current_fps = fps_count / (now - fps_render_last);

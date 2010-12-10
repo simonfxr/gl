@@ -20,4 +20,21 @@ typedef long  int64;
 
 #define UNUSED(x) ((void) (x))
 
+#ifdef DEBUG
+#define ON_DEBUG(x) do { (x); } while (0)
+#else
+#define ON_DEBUG(x) ((void) 0)
+#endif
+
+#ifdef DEBUG
+#define DEBUG_ASSERT(x, err) do { \
+        if (unlikely(!(x)))       \
+            ERROR(err);           \
+    } while (0)
+#else
+#define DEBUG_ASSERT(x, err) ((void) 0)
+#endif
+
+#define ERROR(e) utils::error(e, __FILE__, __LINE__, __func__)
+
 #endif

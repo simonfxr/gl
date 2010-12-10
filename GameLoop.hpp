@@ -21,6 +21,7 @@ private:
     bool _paused; 
     float _now;
     float _skipped_time;
+    float _start_time;
 
     int32 _exit_code;    
 
@@ -30,14 +31,14 @@ public:
         virtual ~Game() {};
         virtual void tick() = 0;
         virtual void render(float interpolation) = 0;
-        virtual void handle_events() = 0;
+        virtual void handleEvents() = 0;
         virtual float now() = 0;
     };
      
     GameLoop(uint32 ticks_per_second, uint32 max_frame_skip, uint32 max_fps = 0);
 
-    float game_time() { return _now - _skipped_time; }
-    float real_time() { return _now; }
+    float gameTime() { return _now - _skipped_time - _start_time; }
+    float realTime() { return _now - _start_time; }
      
     void exit(int32 exit_code = 0);
     void pause(bool pause);
