@@ -5,7 +5,7 @@
 
 namespace gltools {
 
-const std::string& getErrorString(GLenum err) {
+std::string getErrorString(GLenum err) {
 
     switch (err) {
             
@@ -37,6 +37,12 @@ bool printErrors(std::ostream& out) {
         out << "OpenGL error occurred: " << getErrorString(err) << std::endl;
     
     return was_error;
+}
+
+void error(const char *msg, const char *file, int line, const char *func) {
+    std::cerr << "ERROR in " << func << std::endl
+              << " at " << file << ":" << line << std::endl
+              << " message: " << msg << std::endl;
 }
 
 } // namespace gltools

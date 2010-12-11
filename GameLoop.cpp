@@ -19,6 +19,7 @@ int32 GameLoop::run(GameLoop::Game& logic) {
 
     const float tick_length      = 1.f / ticks_per_second;
     const float draw_tick_length = max_fps == 0 ? 0.f : 1.f / 0xFFFFFFFFUL;
+    const uint32 loops_max       = max_frame_skip == 0 ? 0xFFFFFFFFUL : max_frame_skip;
 
     _start_time = logic.now();
     _skipped_time = 0.f;
@@ -30,7 +31,7 @@ int32 GameLoop::run(GameLoop::Game& logic) {
          
         uint32 loops = 0;
         
-        while ((_now = logic.now()) >= next_game_tick && loops < max_frame_skip && _running) {
+        while ((_now = logic.now()) >= next_game_tick && loops < loops_max && _running) {
             logic.handleEvents();
             
             if (likely(!_paused))

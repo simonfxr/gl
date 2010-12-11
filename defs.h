@@ -35,6 +35,19 @@ typedef long  int64;
 #define DEBUG_ASSERT(x, err) ((void) 0)
 #endif
 
-#define ERROR(e) utils::error(e, __FILE__, __LINE__, __func__)
+#define ASSERT DEBUG_ASSERT
+
+#define ERROR(e) gltools::error(e, __FILE__, __LINE__, __func__)
+
+#ifdef DEBUG
+#include <iostream>
+#include "gltools.hpp"
+#define GL_CHECK(op) do {                       \
+        (op);                                   \
+        gltools::printErrors(std::cerr);        \
+    } while (0)
+#else
+#define GL_CHECK(op) op
+#endif
 
 #endif

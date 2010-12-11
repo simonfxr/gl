@@ -7,9 +7,12 @@
 
 namespace gltools {
 
-const std::string& getErrorString(GLenum err);
+std::string getErrorString(GLenum err);
+
 bool printErrors(std::ostream& out);
 
-}
+void error(const char *msg, const char *file, int line, const char *func);
+
+} // namespace gltools
 
 #endif

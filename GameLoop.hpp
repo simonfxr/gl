@@ -35,7 +35,7 @@ public:
         virtual float now() = 0;
     };
      
-    GameLoop(uint32 ticks_per_second, uint32 max_frame_skip, uint32 max_fps = 0);
+    explicit GameLoop(uint32 ticks_per_second, uint32 max_frame_skip = 0, uint32 max_fps = 0);
 
     float gameTime() { return _now - _skipped_time - _start_time; }
     float realTime() { return _now - _start_time; }

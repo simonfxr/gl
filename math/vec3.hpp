@@ -138,13 +138,11 @@ struct vec3 {
 };
 
 namespace {
-    inline vec3 operator *(float l, const vec3& a) {
-        return a * l;
-    }
 
+inline vec3 __attribute__((unused)) operator *(float l, const vec3& a) {
+    return a * l;
 }
 
-const vec3 vec3::zero = vec3(0.f, 0.f, 0.f);
-
+}
 
 #endif

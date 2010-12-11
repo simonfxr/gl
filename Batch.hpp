@@ -4,6 +4,8 @@
 #include <GL/gl.h>
 
 #include "defs.h"
+#include "math/vec3.hpp"
+#include "math/vec4.hpp"
 
 namespace gltools {
 
@@ -15,11 +17,21 @@ struct Batch {
         Color  = 4
     };
 
+    enum AttributePosition {
+        VertexPos = 0,
+        NormalPos = 1,
+        ColorPos  = 2
+    };
+
 private:
 
     const GLenum primType;
 
     bool frozen;
+
+    GLuint vertex_buffer;
+    GLuint normal_buffer;
+    GLuint color_buffer;
 
     struct Data {
         const Attribute attribs;
@@ -39,6 +51,10 @@ private:
         void color(const vec4& c);
 
         void resize(uint32 newsize);
+
+        bool hasAttr(Attribute dest) const {
+            return (attribs & dest) != 0;
+        }
     };
 
     // to let the compiler optimise away accept() calls, we have
@@ -51,23 +67,26 @@ private:
     Batch(const Batch& _);
     Batch& operator =(const Batch& _);
 
-    bool accept(Attribute dest) {
-        return !frozen && (attribs & dest) != 0;
+    bool accept(Attribute dest) const {
+        return !frozen && data.hasAttr(dest);
     }
 
 public:
 
-    explicit Batch(GLenum primType, Attribute attribsToEnable = Attribute::Vertex);
+    explicit Batch(GLenum primType, Attribute attribsToEnable = Vertex);
     ~Batch();
 
     void freeze();
     void draw() const;
 
-    void vertex(const vec3& v) { if (accept(Attribute::Vertex)) data.vertex(n); }
-    void normal(const vec3& n) { if (accept(Attribute::Normal)) data.normal(n); }
-    void color(const vec4& c) { if (accept(Attribute::Color)) data.color(c); }
+    void vertex(const vec3& v) { if (accept(Vertex)) data.vertex(v); }
+    void normal(const vec3& n) { if (accept(Normal)) data.normal(n); }
+    void color(const vec4& c) { if (accept(Color)) data.color(c); }
 };
-
+    
+inline Batch::Attribute operator |(Batch::Attribute a1, Batch::Attribute a2) {
+    return static_cast<Batch::Attribute>(int64(a1) | int64(a2));
+}
 
 } // namespace gltools
 

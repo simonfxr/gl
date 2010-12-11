@@ -41,7 +41,7 @@ mat4 perspective(float angle_of_view, float aspect_ratio, float z_near, float z_
                 vec4(0.f, 0.f, -2.f * z_far * z_near / (z_far - z_near), 0.f));
 }
 
-}
+} // namespace anon
 
-}
+} // namespace Transform
 #endif
