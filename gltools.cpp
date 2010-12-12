@@ -1,10 +1,11 @@
-#include <GL/glew.h>
-#include <GL/glext.h>
-
-#include "gltools.hpp"
-
 #include <iostream>
 #include <sstream>
+
+#include <GL/glew.h>
+#include <GL/glxew.h>
+
+#include "gltools.hpp"
+#include "defs.h"
 
 
 namespace gltools {
@@ -59,6 +60,8 @@ bool checkForGLError(const char *op, const char *file, int line, const char *fun
                   << "  at " << file << ":" << line << std::endl;
     }
 
+
+
 #ifdef GL_ARB_debug_output
 #warning "GL_ARB_debug_output available"
 
@@ -85,8 +88,69 @@ bool checkForGLError(const char *op, const char *file, int line, const char *fun
         delete [] message;
     }
 
+#elif defined(GL_AMD_debug_output)
+#warning "GL_AMD_debug_output available"
+
 #else
-#warning "GL_ARB_debug_output not available"
+
+    typedef GLuint (GLAPIENTRY * glGetDebugMessageLogAMDf_t)(GLuint count,
+                                                             GLsizei bufsize,
+                                                             GLenum* categories,
+                                                             GLuint* severities,
+                                                             GLuint* ids,
+                                                             GLsizei* lengths, 
+                                                             char* message);
+
+    typedef void (GLAPIENTRY *glDebugMessageEnableAMDf_t)(GLenum category,
+                                                          GLenum severity,
+                                                          GLsizei count,
+                                                          const GLuint* ids,
+                                                          GLboolean enabled);
+
+    enum DebugState { Unknown, Available, NotAvailable };
+
+    static DebugState dbgState = Unknown;
+    static glGetDebugMessageLogAMDf_t glGetDebugMessageLogAMD = 0;
+
+    if (dbgState == Unknown) {
+        if (glewIsExtensionSupported("GL_AMD_debug_output")) {
+
+            glGetDebugMessageLogAMD = (glGetDebugMessageLogAMDf_t) glXGetProcAddress((const GLubyte *) "glGetDebugMessageLogAMD");
+
+            glDebugMessageEnableAMDf_t glDebugMessageEnableAMD
+                = (glDebugMessageEnableAMDf_t) glXGetProcAddress((const GLubyte *) "glDebugMessageEnableAMD");
+
+            glDebugMessageEnableAMD(0, 0, 0, NULL, GL_TRUE);
+
+            if (!printErrors(std::cerr)) {
+                std::cerr << "Enabled Debug output" << std::endl;
+                dbgState = Available;
+            } else {
+                dbgState = NotAvailable;
+                std::cerr << "couldnt enable Debug output, no debug context?" << std::endl;
+            }
+
+        } else {
+            dbgState = NotAvailable;
+            std::cerr << "couldnt enable Debug output" << std::endl;
+        }
+    } else if (dbgState == Available) {
+
+        char message_buffer[4096];
+
+        GLenum category;
+        GLuint severity, id;
+        GLsizei length;
+        
+        while (glGetDebugMessageLogAMD(1, ARRAY_LENGTH(message_buffer),
+                                       &category, &severity, &id, &length,
+                                       message_buffer) > 0) {
+
+            std::cerr << "OpenGL Debug Message: " << message_buffer << std::endl;
+        }
+
+    }
+
 #endif
     
     return was_error;

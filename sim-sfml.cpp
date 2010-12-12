@@ -552,12 +552,23 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    sf::ContextSettings glContext(24, 8, 0, 3, 3);
+    sf::ContextSettings glContext;
+    glContext.MajorVersion = 3;
+    glContext.MinorVersion = 3;
+    glContext.DebugContext = true;
     sf::RenderWindow window(sf::VideoMode(800, 600), "sfml-sim", sf::Style::Default, glContext);
+
+    window.SetActive();
+    GL_CHECK((void)0);
+    
     sf::Clock clock;
 
     Game game(clock, window);
+    
     game.init();
+
+    GL_CHECK(glBindVertexArray(11234));
+    
     return game.loop.run(game);
 }
 
