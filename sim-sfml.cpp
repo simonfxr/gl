@@ -567,8 +567,6 @@ int main(int argc, char *argv[]) {
     
     game.init();
 
-    GL_CHECK(glBindVertexArray(11234));
-    
     return game.loop.run(game);
 }
 

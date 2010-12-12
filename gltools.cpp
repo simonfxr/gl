@@ -50,48 +50,27 @@ void error(const char *msg, const char *file, int line, const char *func) {
               << " message: " << msg << std::endl;
 }
 
-bool checkForGLError(const char *op, const char *file, int line, const char *func) {
-    bool was_error = false;
+namespace {
 
-    for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true) {
-        std::cerr << "OpenGL ERROR occurred: " << getErrorString(err) << std::endl
-                  << "  in operation: " << op << std::endl
-                  << "  in function: " << func << std::endl
-                  << "  at " << file << ":" << line << std::endl;
-    }
+struct DebugLocation {
+    const char *op;
+    const char *file;
+    int line;
+    const char *func;
+};
 
+struct GLDebug {
+    virtual ~GLDebug() {}
+    virtual void printDebugMessages(const DebugLocation& loc) = 0;
+};
 
+struct AMDDebug : public GLDebug {
 
-#ifdef GL_ARB_debug_output
-#warning "GL_ARB_debug_output available"
-
-    // PFNGLGETDEBUGMESSAGELOGARBPROC glGetDebugMessageLogARB = glXGetProcAddressARB("glGetDebugMessageLogARB");
-    // if (glGetDebugMessageLogARB == 0) return was_error;
-
-    GLsizei num_messages;
-    glGetIntegerv(GL_DEBUG_LOGGED_MESSAGES_ARB, &num_messages);
-
-    for (GLsizei i = 0; i < num_messages; ++i) {
-        
-        GLsizei length;
-
-        glGetIntegerv(GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH_ARB, &length);
-        char *message = new char[length];
-        GLuint id;
-        GLsizei message_length;
-        GLenum source, type, serverity;
-
-        glGetDebugMessageLogARB(1, length, &source, &type, &id, &serverity, &message_length, message);
-
-        std::cout << "OpenGL Debug Message: " << message << std::endl;
-
-        delete [] message;
-    }
-
-#elif defined(GL_AMD_debug_output)
-#warning "GL_AMD_debug_output available"
-
-#else
+    typedef void (GLAPIENTRY *glDebugMessageEnableAMDf_t)(GLenum category,
+                                                          GLenum severity,
+                                                          GLsizei count,
+                                                          const GLuint* ids,
+                                                          GLboolean enabled);
 
     typedef GLuint (GLAPIENTRY * glGetDebugMessageLogAMDf_t)(GLuint count,
                                                              GLsizei bufsize,
@@ -101,55 +80,151 @@ bool checkForGLError(const char *op, const char *file, int line, const char *fun
                                                              GLsizei* lengths, 
                                                              char* message);
 
-    typedef void (GLAPIENTRY *glDebugMessageEnableAMDf_t)(GLenum category,
-                                                          GLenum severity,
-                                                          GLsizei count,
-                                                          const GLuint* ids,
-                                                          GLboolean enabled);
+    static const GLenum MAX_DEBUG_MESSAGE_LENGTH_AMD          = 0x9143;
 
-    enum DebugState { Unknown, Available, NotAvailable };
+    static const GLenum DEBUG_SEVERITY_HIGH_AMD               = 0x9146;
+    static const GLenum DEBUG_SEVERITY_MEDIUM_AMD             = 0x9147;
+    static const GLenum DEBUG_SEVERITY_LOW_AMD                = 0x9148;
 
-    static DebugState dbgState = Unknown;
-    static glGetDebugMessageLogAMDf_t glGetDebugMessageLogAMD = 0;
+    static const GLenum DEBUG_CATEGORY_API_ERROR_AMD          = 0x9149;
+    static const GLenum DEBUG_CATEGORY_WINDOW_SYSTEM_AMD      = 0x914A;
+    static const GLenum DEBUG_CATEGORY_DEPRECATION_AMD        = 0x914B;
+    static const GLenum DEBUG_CATEGORY_UNDEFINED_BEHAVIOR_AMD = 0x914C;
+    static const GLenum DEBUG_CATEGORY_PERFORMANCE_AMD        = 0x914D;
+    static const GLenum DEBUG_CATEGORY_SHADER_COMPILER_AMD    = 0x914E;
+    static const GLenum DEBUG_CATEGORY_APPLICATION_AMD        = 0x914F;
+    static const GLenum DEBUG_CATEGORY_OTHER_AMD              = 0x9150;
 
-    if (dbgState == Unknown) {
-        if (glewIsExtensionSupported("GL_AMD_debug_output")) {
+    glGetDebugMessageLogAMDf_t glGetDebugMessageLogAMD;
+    GLsizei message_buffer_length;
+    char *message_buffer;
 
-            glGetDebugMessageLogAMD = (glGetDebugMessageLogAMDf_t) glXGetProcAddress((const GLubyte *) "glGetDebugMessageLogAMD");
+    ~AMDDebug();
+    
+    static GLDebug* init();
+    virtual void printDebugMessages(const DebugLocation& loc);
+};
 
-            glDebugMessageEnableAMDf_t glDebugMessageEnableAMD
-                = (glDebugMessageEnableAMDf_t) glXGetProcAddress((const GLubyte *) "glDebugMessageEnableAMD");
+struct ARBDebug : public GLDebug {
+    static GLDebug* init();
+    virtual void printDebugMessages(const DebugLocation& loc);
+};
 
-            glDebugMessageEnableAMD(0, 0, 0, NULL, GL_TRUE);
+struct NODebug : public GLDebug {
+    virtual void printDebugMessages(const DebugLocation& loc) {}
+};
 
-            if (!printErrors(std::cerr)) {
-                std::cerr << "Enabled Debug output" << std::endl;
-                dbgState = Available;
-            } else {
-                dbgState = NotAvailable;
-                std::cerr << "couldnt enable Debug output, no debug context?" << std::endl;
-            }
+GLDebug *AMDDebug::init() {
 
-        } else {
-            dbgState = NotAvailable;
-            std::cerr << "couldnt enable Debug output" << std::endl;
-        }
-    } else if (dbgState == Available) {
+    glDebugMessageEnableAMDf_t glDebugMessageEnableAMD
+        = (glDebugMessageEnableAMDf_t) glXGetProcAddress((const GLubyte *) "glDebugMessageEnableAMD");
 
-        char message_buffer[4096];
+    glDebugMessageEnableAMD(0, 0, 0, NULL, GL_TRUE);
 
-        GLenum category;
-        GLuint severity, id;
-        GLsizei length;
-        
-        while (glGetDebugMessageLogAMD(1, ARRAY_LENGTH(message_buffer),
-                                       &category, &severity, &id, &length,
-                                       message_buffer) > 0) {
-
-            std::cerr << "OpenGL Debug Message: " << message_buffer << std::endl;
-        }
-
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        std::cerr << "OpenGL ERROR occurred: " << getErrorString(err) << std::endl
+                  << "  couldnt initialize debug functionality, maybe we dont have a debug context?" << std::endl;
+            
+        return new NODebug();
     }
+
+    GLsizei max_len;
+    glGetIntegerv(MAX_DEBUG_MESSAGE_LENGTH_AMD, &max_len);
+    
+    AMDDebug *dbg = new AMDDebug();
+    dbg->message_buffer_length = max_len;
+    dbg->message_buffer = new char[max_len];
+    dbg->glGetDebugMessageLogAMD
+        = (glGetDebugMessageLogAMDf_t) glXGetProcAddress((const GLubyte *) "glGetDebugMessageLogAMD");
+        
+    return dbg;
+}
+
+AMDDebug::~AMDDebug() {
+    delete [] message_buffer;
+}
+
+GLDebug *ARBDebug::init() {
+    std::cerr << "Debug information using GL_ARB_debug_output not yet implemented" << std::endl;
+    return new NODebug();
+}
+
+void ARBDebug::printDebugMessages(const DebugLocation& loc) {
+
+}
+
+void AMDDebug::printDebugMessages(const DebugLocation& loc) {
+
+    GLenum category;
+    GLuint severity, id;
+    GLsizei length;
+        
+    while (glGetDebugMessageLogAMD(1, message_buffer_length,
+                                   &category, &severity, &id, &length,
+                                   message_buffer) > 0) {
+
+#define sym_case(v, c) case c: v = #c; break
+        
+        const char *scat = "unknown";
+        switch (category) {
+            sym_case(scat, DEBUG_CATEGORY_API_ERROR_AMD);
+            sym_case(scat, DEBUG_CATEGORY_WINDOW_SYSTEM_AMD);
+            sym_case(scat, DEBUG_CATEGORY_DEPRECATION_AMD);
+            sym_case(scat, DEBUG_CATEGORY_UNDEFINED_BEHAVIOR_AMD);
+            sym_case(scat, DEBUG_CATEGORY_PERFORMANCE_AMD);
+            sym_case(scat, DEBUG_CATEGORY_SHADER_COMPILER_AMD);
+            sym_case(scat, DEBUG_CATEGORY_APPLICATION_AMD);
+            sym_case(scat, DEBUG_CATEGORY_OTHER_AMD);
+        }
+
+        const char *ssev = "unknown";
+        switch (severity) {
+            sym_case(ssev, DEBUG_SEVERITY_HIGH_AMD);
+            sym_case(ssev, DEBUG_SEVERITY_MEDIUM_AMD);
+            sym_case(ssev, DEBUG_SEVERITY_LOW_AMD);
+        }
+
+#undef sym_case
+        
+        std::cerr << "[OpenGL DEBUG] category: " << scat << ", serverity: " << ssev << ", id: " << id << std::endl
+                  << "  in operation: " << loc.op << std::endl
+                  << "  in function: " << loc.func << std::endl
+                  << "  at " << loc.file << ":" << loc.line << std::endl
+                  << "  message: " << message_buffer << std::endl;
+    }
+}
+
+GLDebug *glDebug = 0;
+
+GLDebug* initDebug() {
+    if (glewIsExtensionSupported("GL_AMD_debug_output"))
+        return AMDDebug::init();
+    else if (glewIsExtensionSupported("GL_ARB_debug_output"))
+        return ARBDebug::init();
+    else
+        return new NODebug();
+}
+
+} // namespace anon
+
+bool checkForGLError(const char *op, const char *file, int line, const char *func) {
+    bool was_error = false;
+
+    for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true) {
+        std::cerr << "OpenGL ERROR: " << getErrorString(err) << std::endl
+                  << "  in operation: " << op << std::endl
+                  << "  in function: " << func << std::endl
+                  << "  at " << file << ":" << line << std::endl;
+    }
+
+#ifdef GLDEBUG
+
+    if (glDebug == 0)
+        glDebug = initDebug();
+
+    DebugLocation loc = { .op = op, .file = file, .line = line, .func = func };
+    glDebug->printDebugMessages(loc);
 
 #endif
     
