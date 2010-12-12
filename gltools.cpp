@@ -1,7 +1,11 @@
+#include <GL/glew.h>
+#include <GL/glext.h>
+
 #include "gltools.hpp"
 
 #include <iostream>
 #include <sstream>
+
 
 namespace gltools {
 
@@ -43,6 +47,49 @@ void error(const char *msg, const char *file, int line, const char *func) {
     std::cerr << "ERROR in " << func << std::endl
               << " at " << file << ":" << line << std::endl
               << " message: " << msg << std::endl;
+}
+
+bool checkForGLError(const char *op, const char *file, int line, const char *func) {
+    bool was_error = false;
+
+    for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true) {
+        std::cerr << "OpenGL ERROR occurred: " << getErrorString(err) << std::endl
+                  << "  in operation: " << op << std::endl
+                  << "  in function: " << func << std::endl
+                  << "  at " << file << ":" << line << std::endl;
+    }
+
+#ifdef GL_ARB_debug_output
+#warning "GL_ARB_debug_output available"
+
+    // PFNGLGETDEBUGMESSAGELOGARBPROC glGetDebugMessageLogARB = glXGetProcAddressARB("glGetDebugMessageLogARB");
+    // if (glGetDebugMessageLogARB == 0) return was_error;
+
+    GLsizei num_messages;
+    glGetIntegerv(GL_DEBUG_LOGGED_MESSAGES_ARB, &num_messages);
+
+    for (GLsizei i = 0; i < num_messages; ++i) {
+        
+        GLsizei length;
+
+        glGetIntegerv(GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH_ARB, &length);
+        char *message = new char[length];
+        GLuint id;
+        GLsizei message_length;
+        GLenum source, type, serverity;
+
+        glGetDebugMessageLogARB(1, length, &source, &type, &id, &serverity, &message_length, message);
+
+        std::cout << "OpenGL Debug Message: " << message << std::endl;
+
+        delete [] message;
+    }
+
+#else
+#warning "GL_ARB_debug_output not available"
+#endif
+    
+    return was_error;
 }
 
 } // namespace gltools

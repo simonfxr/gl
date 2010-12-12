@@ -39,15 +39,4 @@ typedef long  int64;
 
 #define ERROR(e) gltools::error(e, __FILE__, __LINE__, __func__)
 
-#ifdef DEBUG
-#include <iostream>
-#include "gltools.hpp"
-#define GL_CHECK(op) do {                       \
-        (op);                                   \
-        gltools::printErrors(std::cerr);        \
-    } while (0)
-#else
-#define GL_CHECK(op) op
-#endif
-
 #endif

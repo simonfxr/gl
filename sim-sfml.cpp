@@ -184,12 +184,14 @@ void Game::init() {
     room.corner_min = vec3(-20.f, 0, -20.f);
     room.corner_max = vec3(+20.f, 20.f, 20.f);
 
+    window.SetActive();
+
     // Initialze Shader Manager
     shaderManager.InitializeStockShaders();
 	
-    glEnable(GL_DEPTH_TEST);
+    GL_CHECK(glEnable(GL_DEPTH_TEST));
     
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
     // This make a sphere
     gltMakeSphere(sphereBatch, 1.f, 26, 13);
@@ -246,14 +248,13 @@ void Game::init() {
     // camera.orientation.canonize();
 
     // camera.setOrigin(room.corner_min);
-    camera.setOrigin(vec3(-20.f, 10.f, -20.f));
+    camera.setOrigin(vec3(-19.f, 10.f, -19.f));
     camera.facePoint(vec3(0.f, 10.f, 0.f));
     
     fps_count = 0;
     fps_render_next = fps_render_last = 0.f;
     
     window_size_changed(window.GetWidth(), window.GetHeight());
-
 }
 
 float Game::now() {
@@ -314,9 +315,9 @@ void Game::tick() {
 
     vec3 norm;
     vec3 col;
-    // if (room.touchesWall(cam, norm, col)) {
-    //     camera.setOrigin(col);
-    // }
+    if (room.touchesWall(cam, norm, col)) {
+        camera.setOrigin(col);
+    }
 }
 
 template <typename T>
@@ -336,7 +337,7 @@ void Game::update_fps_text(uint32 current_fps) {
 void Game::window_size_changed(uint32 width, uint32 height) {
     update_fps_text(current_fps);
 
-    glViewport(0, 0, width, height);
+    GL_CHECK(glViewport(0, 0, width, height));
 
     // Create the projection matrix, and load it on the projection matrix stack
     viewFrustum.SetPerspective(35.0f, float(width) / float(height), 1.0f, 100.0f);
@@ -428,7 +429,7 @@ void Game::render(float interpolation) {
     
     window.SetActive();
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
     modelViewMatrix.PushMatrix();
 
@@ -446,10 +447,10 @@ void Game::render(float interpolation) {
     // modelViewMatrix.Scale(dim.x, dim.y, dim.z);
 		
     // Render the ground
-    shaderManager.UseStockShader(GLT_SHADER_FLAT,
+    GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_FLAT,
                                  transformPipeline.GetModelViewProjectionMatrix(),
-                                 vFloorColor);	
-    floorBatch.Draw();
+                                          vFloorColor));	
+    GL_CHECK(floorBatch.Draw());
 
     float dt = interpolation * game_speed / loop.ticks_per_second;
 
@@ -473,10 +474,10 @@ void Game::render_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyeP
     vec3 pos = s.calc_position(dt);
     modelViewMatrix.Translate(pos.x, pos.y, pos.z);
     modelViewMatrix.Scale(s.r, s.r, s.r);
-    shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
-                                 transformPipeline.GetModelViewMatrix(), 
-                                 transformPipeline.GetProjectionMatrix(),
-                                 vLightEyePos, vSphereColor);
+    GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
+                                          transformPipeline.GetModelViewMatrix(), 
+                                          transformPipeline.GetProjectionMatrix(),
+                                          vLightEyePos, vSphereColor));
     sphereBatch.Draw();
     modelViewMatrix.PopMatrix();
 }
