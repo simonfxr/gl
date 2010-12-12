@@ -114,7 +114,8 @@ public:
     GLFrustum               viewFrustum;                // View Frustum
     GLGeometryTransform     transformPipeline;          // Geometry Transform Pipeline
 
-    GLBatch                 cubeBatch;
+    // GLBatch                 cubeBatch;
+    GLBatch                 floorBatch;
     GLTriangleBatch         sphereBatch;
     
     Camera                  camera;
@@ -196,56 +197,57 @@ void Game::init() {
     const vec3 lln = room.corner_min;
     const vec3 dim = room.corner_max - room.corner_min;
 
-    cubeBatch.Begin(GL_QUADS, 24);
+    // cubeBatch.Begin(GL_QUADS, 24);
 
-    cubeBatch.Vertex3f(0, 0, 0);
-    cubeBatch.Vertex3f(1, 0, 0);
-    cubeBatch.Vertex3f(1, 0, 1);
-    cubeBatch.Vertex3f(0, 0, 1);
+    // cubeBatch.Vertex3f(0, 0, 0);
+    // cubeBatch.Vertex3f(1, 0, 0);
+    // cubeBatch.Vertex3f(1, 0, 1);
+    // cubeBatch.Vertex3f(0, 0, 1);
 
-    cubeBatch.Vertex3f(0, 1, 0);
-    cubeBatch.Vertex3f(1, 1, 0);
-    cubeBatch.Vertex3f(1, 1, 1);
-    cubeBatch.Vertex3f(0, 1, 1);
+    // cubeBatch.Vertex3f(0, 1, 0);
+    // cubeBatch.Vertex3f(1, 1, 0);
+    // cubeBatch.Vertex3f(1, 1, 1);
+    // cubeBatch.Vertex3f(0, 1, 1);
 
-    cubeBatch.Vertex3f(0, 0, 0);
-    cubeBatch.Vertex3f(0, 0, 1);
-    cubeBatch.Vertex3f(0, 1, 1);
-    cubeBatch.Vertex3f(0, 1, 0);
+    // cubeBatch.Vertex3f(0, 0, 0);
+    // cubeBatch.Vertex3f(0, 0, 1);
+    // cubeBatch.Vertex3f(0, 1, 1);
+    // cubeBatch.Vertex3f(0, 1, 0);
 
-    cubeBatch.Vertex3f(1, 0, 0);
-    cubeBatch.Vertex3f(1, 0, 1);
-    cubeBatch.Vertex3f(1, 1, 1);
-    cubeBatch.Vertex3f(1, 1, 0);
+    // cubeBatch.Vertex3f(1, 0, 0);
+    // cubeBatch.Vertex3f(1, 0, 1);
+    // cubeBatch.Vertex3f(1, 1, 1);
+    // cubeBatch.Vertex3f(1, 1, 0);
 
-    cubeBatch.Vertex3f(0, 0, 0);
-    cubeBatch.Vertex3f(1, 0, 0);
-    cubeBatch.Vertex3f(1, 1, 0);
-    cubeBatch.Vertex3f(0, 1, 0);
+    // cubeBatch.Vertex3f(0, 0, 0);
+    // cubeBatch.Vertex3f(1, 0, 0);
+    // cubeBatch.Vertex3f(1, 1, 0);
+    // cubeBatch.Vertex3f(0, 1, 0);
     
-    cubeBatch.Vertex3f(0, 0, 1);
-    cubeBatch.Vertex3f(1, 0, 1);
-    cubeBatch.Vertex3f(1, 1, 1);
-    cubeBatch.Vertex3f(0, 1, 1);
+    // cubeBatch.Vertex3f(0, 0, 1);
+    // cubeBatch.Vertex3f(1, 0, 1);
+    // cubeBatch.Vertex3f(1, 1, 1);
+    // cubeBatch.Vertex3f(0, 1, 1);
 
-    cubeBatch.End();
+    // cubeBatch.End();
     	
-    // floorBatch.Begin(GL_LINES, 324);
-    // for (GLfloat x = -20.0; x <= 20.0f; x+= 0.5) {
-    //     floorBatch.Vertex3f(x, 0.f, 20.0f);
-    //     floorBatch.Vertex3f(x, 0.f, -20.0f);
+    floorBatch.Begin(GL_LINES, 324);
+    for (GLfloat x = -20.0; x <= 20.0f; x+= 0.5) {
+        floorBatch.Vertex3f(x, 0.f, 20.0f);
+        floorBatch.Vertex3f(x, 0.f, -20.0f);
         
-    //     floorBatch.Vertex3f(20.0f, 0.f, x);
-    //     floorBatch.Vertex3f(-20.0f, 0.f, x);
-    // }
-    // floorBatch.End();
+        floorBatch.Vertex3f(20.0f, 0.f, x);
+        floorBatch.Vertex3f(-20.0f, 0.f, x);
+    }
+    floorBatch.End();
 
     // camera.origin = vec3(-20.f, 10.f, -20.f);
     // camera.orientation = EulerAngles(0, Math::PI, 0);
     // camera.orientation.canonize();
 
-    camera.setOrigin(room.corner_min);
-    camera.facePoint(vec3(0.f, 0.f, 0.f));
+    // camera.setOrigin(room.corner_min);
+    camera.setOrigin(vec3(-20.f, 10.f, -20.f));
+    camera.facePoint(vec3(0.f, 10.f, 0.f));
     
     fps_count = 0;
     fps_render_next = fps_render_last = 0.f;
@@ -312,9 +314,9 @@ void Game::tick() {
 
     vec3 norm;
     vec3 col;
-    if (room.touchesWall(cam, norm, col)) {
-        camera.setOrigin(col);
-    }
+    // if (room.touchesWall(cam, norm, col)) {
+    //     camera.setOrigin(col);
+    // }
 }
 
 template <typename T>
@@ -439,15 +441,15 @@ void Game::render(float interpolation) {
     M3DVector4f vLightEyePos;
     m3dTransformVector4(vLightEyePos, vLightPos, mCamera);
 
-    modelViewMatrix.Translate(room.corner_min.x, room.corner_min.y, room.corner_min.z);
-    const vec3 dim = room.corner_max - room.corner_min;
-    modelViewMatrix.Scale(dim.x, dim.y, dim.z);
+    // modelViewMatrix.Translate(room.corner_min.x, room.corner_min.y, room.corner_min.z);
+    // const vec3 dim = room.corner_max - room.corner_min;
+    // modelViewMatrix.Scale(dim.x, dim.y, dim.z);
 		
     // Render the ground
     shaderManager.UseStockShader(GLT_SHADER_FLAT,
                                  transformPipeline.GetModelViewProjectionMatrix(),
                                  vFloorColor);	
-    cubeBatch.Draw();
+    floorBatch.Draw();
 
     float dt = interpolation * game_speed / loop.ticks_per_second;
 
@@ -664,10 +666,8 @@ mat4 Camera::getCameraMatrix() {
 }
 
 void Camera::rotate(float rotx, float roty) {
-
-    frame.RotateLocal(rotx, 0.f, 1.f, 0.f);
     frame.RotateLocal(roty, 1.f, 0.f, 0.f);
-    
+    frame.RotateWorld(rotx, 0.f, 1.f, 0.f);
 }
 
 bool Cuboid::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision) const {
@@ -692,7 +692,7 @@ bool Cuboid::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision)
         return true;
     }
 
-    if (s.center.y + s.r > corner_max.x) {
+    if (s.center.x + s.r > corner_max.x) {
         out_normal = vec3(1.f, 0.f, 0.f);
         out_collision = vec3(corner_max.x, s.center.y, s.center.z);
         return true;
