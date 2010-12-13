@@ -206,8 +206,10 @@ GLDebug* initDebug() {
         return AMDDebug::init();
     else if (glewIsExtensionSupported("GL_ARB_debug_output"))
         return ARBDebug::init();
-    else
+    else {
+        std::cerr << "no debug output available" << std::endl;
         return new NODebug();
+    }
 }
 
 } // namespace anon

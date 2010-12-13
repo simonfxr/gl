@@ -18,6 +18,7 @@
 #include <SFML/OpenGL.hpp>
 
 #include "math/vec3.hpp"
+#include "math/ivec3.hpp"
 #include "math/Math.hpp"
 #include "math/EulerAngles.hpp"
 #include "math/transform.hpp"
@@ -168,6 +169,7 @@ private:
     void render_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyePos);
     void render_hud();
     void render_walls(const M3DVector3f vLightEyePos);
+    void resolve_collisions(float dt);
 };
 
 Game::Game(sf::Clock& _clock, sf::RenderWindow& _win)
@@ -278,9 +280,7 @@ void Game::tick() {
 
     float dt  = game_speed / loop.ticks_per_second;
 
-    for (unsigned i = 1; i < spheres.size(); ++i)
-        for (unsigned j = 0; j < i; ++j)
-            Sphere::collide(spheres[i], spheres[j], dt);
+    resolve_collisions(dt);
 
     for (uint32 i = 0; i < spheres.size(); ++i)
         spheres[i].move(room, dt);
@@ -294,6 +294,100 @@ void Game::tick() {
     if (room.touchesWall(cam, norm, col)) {
         camera.setOrigin(col);
     }
+}
+
+static ivec3 calcTile(const vec3& size, const vec3& p) {
+    const vec3 isize = vec3(Math::recp(size.x), Math::recp(size.y), Math::recp(size.z));
+    return ivec3(vec3::compMult(isize, p)); 
+}
+
+struct Tile {
+    uint32 object; // 1 based
+    Tile *nxt;
+};
+
+static void insertTile(Tile& t, uint32 id, std::vector<Tile *> allocs, Tile *nil) {
+    if (t.object == 0) {
+        t.object = id + 1;
+        t.nxt = nil;
+    } else {
+        Tile *nt = new Tile();
+        allocs.push_back(nt);
+        nt->nxt = t.nxt;
+        nt->object = id + 1;
+        t.nxt = nt;
+    }
+}
+
+static void collTile(std::vector<Sphere> ss, Sphere& s, uint32 i, Tile& t, float dt) {
+    Tile *p = &t;
+
+    while (p != 0 && p->object != 0) {
+        uint32 j = p->object - 1;
+        if (j < i)
+            Sphere::collide(s, ss[j], dt);
+        p = p->nxt;
+    }
+}
+
+void Game::resolve_collisions(float dt) {
+
+    float t0 = now();
+
+    const uint32 dim = 50;
+    const vec3 size = (room.corner_max - room.corner_min) * Math::recp(dim);
+    const vec3 low  = room.corner_min;
+
+    Tile nil_tile = { 0, 0 };
+    Tile tiles[dim][dim][dim];
+    std::vector<Tile *> allocs;
+
+    memset(tiles, 0, dim * dim * dim * sizeof (Tile));
+
+    for (uint32 i = 0; i < spheres.size(); ++i) {
+        Sphere& s = spheres[i];
+        vec3 p = s.center - low;
+        vec3 pl = p - vec3(s.r);
+        vec3 ph = p + vec3(s.r);
+
+        ivec3 tileL = calcTile(size, pl);
+        ivec3 tileH = calcTile(size, ph);
+
+        for (int32 x = tileL.x; x <= tileH.x && x < dim; ++x)
+            for (int32 y = tileH.y; y <= tileH.y && y < dim; ++y)
+                for (int32 z = tileH.z; z <= tileH.z && z < dim; ++z)
+                    insertTile(tiles[x][y][z], i, allocs, &nil_tile);
+    }
+
+    for (uint32 i = 0; i < dim; ++i)
+        for (uint32 j = 0; j < dim; ++j)
+            for (uint32 k = 0; k < dim; ++k)
+                ASSERT(tiles[i][j][k].object <= spheres.size(), "TILES DAMAGED");
+
+    for (unsigned i = 0; i < spheres.size(); ++i) {
+        
+        Sphere& s = spheres[i];
+        vec3 p = s.center - low;
+        vec3 pl = p - vec3(s.r);
+        vec3 ph = p + vec3(s.r);
+
+        ivec3 tileL = calcTile(size, pl);
+        ivec3 tileH = calcTile(size, ph);
+
+        for (int32 x = tileL.x; x <= tileH.x && x < dim; ++x)
+            for (int32 y = tileH.y; y <= tileH.y && y < dim; ++y)
+                for (int32 z = tileH.z; z <= tileH.z && z < dim ; ++z)
+                    collTile(spheres, s, i, tiles[x][y][z], dt);
+    }
+
+    // for (unsigned i = 1; i < spheres.size(); ++i)
+    //     for (unsigned j = 0; j < i; ++j)
+    //         Sphere::collide(spheres[i], spheres[j], dt);
+
+    for (uint32 i = 0; i < allocs.size(); ++i)
+        delete allocs[i];
+
+    std::cerr << "resolve_collisions: " << (now() - t0) << " seconds" << std::endl;
 }
 
 template <typename T>
@@ -620,20 +714,32 @@ void Sphere::collide(Sphere& x, Sphere& y, float dt) {
     float r = x.r + y.r;
     
     if (vec3::distSq(xc, yc) < r*r) {
-        vec3 n1 = vec3::normalize(yc - xc);
-        vec3 n2 = -n1;
+
+        // HACK: if we collided in the last frame and collision wasnt resolved correctly
+        // do it now, with a crude approximation (well no approx. at all...)
+        if (vec3::distSq(x.center, y.center) < r*r) {
+
+            vec3 n1 = vec3::normalize(y.center - x.center);
+
+            x.vel = x.vel.mag() * -n1;
+            y.vel = y.vel.mag() * n1;
+            
+        } else {
+            vec3 n1 = vec3::normalize(yc - xc);
+            vec3 n2 = -n1;
         
-        vec3 vx_coll = n1 * vec3::dot(x.vel, n1);
-        vec3 vx_rest = x.vel - vx_coll;
+            vec3 vx_coll = n1 * vec3::dot(x.vel, n1);
+            vec3 vx_rest = x.vel - vx_coll;
 
-        vec3 vy_coll = n2 * vec3::dot(y.vel, n2);
-        vec3 vy_rest = y.vel - vy_coll;
+            vec3 vy_coll = n2 * vec3::dot(y.vel, n2);
+            vec3 vy_rest = y.vel - vy_coll;
 
-        vec3 ux = (rand1() * 0.1f + 0.9f) * velocity_after_collision(x.mass, vx_coll, y.mass, vy_coll);
-        vec3 uy = (rand1() * 0.1f + 0.9f) * velocity_after_collision(y.mass, vy_coll, x.mass, vx_coll);
+            vec3 ux = (rand1() * 0.1f + 0.9f) * velocity_after_collision(x.mass, vx_coll, y.mass, vy_coll);
+            vec3 uy = (rand1() * 0.1f + 0.9f) * velocity_after_collision(y.mass, vy_coll, x.mass, vx_coll);
 
-        x.vel = ux + vx_rest;
-        y.vel = uy + vy_rest;
+            x.vel = ux + vx_rest;
+            y.vel = uy + vy_rest;
+        }
     }
 }
 

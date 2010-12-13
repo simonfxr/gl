@@ -12,6 +12,9 @@ struct vec3 {
 
     vec3() {}
 
+    explicit vec3(float a)
+        : x(a), y(a), z(a) {}
+
     vec3(float _x, float _y, float _z)
         : x(_x), y(_y), z(_z) {}
 
@@ -62,6 +65,13 @@ struct vec3 {
 
     static float rdist(const vec3& a, const vec3& b) {
         return (a - b).rmag();
+    }
+    
+    static vec3 compMult(const vec3& a, const vec3& b) {
+        v4::v4 av = v4::make3(a.x, a.y, a.z);
+        v4::v4 bv = v4::make3(b.x, b.y, b.z);
+        v4::v4 cv = v4::mul3(av, bv);
+        return vec3(v4::v4a(cv), v4::v4b(cv), v4::v4c(cv));
     }
 
     vec3 scale(float l) const {
