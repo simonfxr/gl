@@ -85,6 +85,10 @@ namespace {
             return atan2f(x, y);
         }
 
+        static float distance(float x, float y) {
+            return abs(x - y);
+        }
+
     private:
         Math();
         ~Math();

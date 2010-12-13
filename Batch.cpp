@@ -4,6 +4,7 @@
 
 #include "defs.h"
 #include "Batch.hpp"
+#include "gltools.hpp"
 
 
 namespace gltools {

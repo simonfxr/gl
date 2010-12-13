@@ -3,6 +3,8 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <ctime>
+#include <limits.h>
 
 #include <GLTools.h>
 #include <GLShaderManager.h>
@@ -25,6 +27,8 @@
 
 static const vec3 gravity(0.f, -9.81f, 0.f);
 
+static void makeUnitCube(GLBatch& cube);
+
 namespace {
 
 struct Sphere;
@@ -40,6 +44,7 @@ struct Sphere {
     float r;
     vec3 center;
     float mass;
+    vec4 color;
 
     void move(const Cuboid& room, float dt);
     vec3 calc_position(float dt) const;
@@ -117,6 +122,8 @@ public:
     // GLBatch                 cubeBatch;
     GLBatch                 floorBatch;
     GLTriangleBatch         sphereBatch;
+
+    GLBatch wallBatch;
     
     Camera                  camera;
     Cuboid                  room;
@@ -160,6 +167,7 @@ private:
     void spawn_sphere();
     void render_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyePos);
     void render_hud();
+    void render_walls(const M3DVector3f vLightEyePos);
 };
 
 Game::Game(sf::Clock& _clock, sf::RenderWindow& _win)
@@ -184,6 +192,8 @@ void Game::init() {
     room.corner_min = vec3(-20.f, 0, -20.f);
     room.corner_max = vec3(+20.f, 20.f, 20.f);
 
+    makeUnitCube(wallBatch);
+
     window.SetActive();
 
     // Initialze Shader Manager
@@ -198,40 +208,6 @@ void Game::init() {
 
     const vec3 lln = room.corner_min;
     const vec3 dim = room.corner_max - room.corner_min;
-
-    // cubeBatch.Begin(GL_QUADS, 24);
-
-    // cubeBatch.Vertex3f(0, 0, 0);
-    // cubeBatch.Vertex3f(1, 0, 0);
-    // cubeBatch.Vertex3f(1, 0, 1);
-    // cubeBatch.Vertex3f(0, 0, 1);
-
-    // cubeBatch.Vertex3f(0, 1, 0);
-    // cubeBatch.Vertex3f(1, 1, 0);
-    // cubeBatch.Vertex3f(1, 1, 1);
-    // cubeBatch.Vertex3f(0, 1, 1);
-
-    // cubeBatch.Vertex3f(0, 0, 0);
-    // cubeBatch.Vertex3f(0, 0, 1);
-    // cubeBatch.Vertex3f(0, 1, 1);
-    // cubeBatch.Vertex3f(0, 1, 0);
-
-    // cubeBatch.Vertex3f(1, 0, 0);
-    // cubeBatch.Vertex3f(1, 0, 1);
-    // cubeBatch.Vertex3f(1, 1, 1);
-    // cubeBatch.Vertex3f(1, 1, 0);
-
-    // cubeBatch.Vertex3f(0, 0, 0);
-    // cubeBatch.Vertex3f(1, 0, 0);
-    // cubeBatch.Vertex3f(1, 1, 0);
-    // cubeBatch.Vertex3f(0, 1, 0);
-    
-    // cubeBatch.Vertex3f(0, 0, 1);
-    // cubeBatch.Vertex3f(1, 0, 1);
-    // cubeBatch.Vertex3f(1, 1, 1);
-    // cubeBatch.Vertex3f(0, 1, 1);
-
-    // cubeBatch.End();
     	
     floorBatch.Begin(GL_LINES, 324);
     for (GLfloat x = -20.0; x <= 20.0f; x+= 0.5) {
@@ -402,6 +378,19 @@ void Game::mouse_pressed(sf::Mouse::Button button) {
         spawn_sphere();
 }
 
+static const GLfloat vFloorColor[] = { 0.0f, 1.0f, 0.0f, 1.0f};
+static const vec4 SPHERE_COLOR = vec4(0.f, 0.f, 1.f, 1.f);
+static const M3DVector4f vLightPos = { -20.0f, 30.0f, -20.0f, 1.0f };
+static const M3DVector4f vWallColor = { 0.6f, 0.6f, 0.6f, 1.f };
+
+static float rand1() {
+    return rand() * (1.f / RAND_MAX);
+}
+
+static vec4 randomColor() {
+    return vec4(rand1(), rand1(), rand1(), 1.f);
+}
+
 void Game::spawn_sphere() {
 
     Sphere s;
@@ -409,13 +398,10 @@ void Game::spawn_sphere() {
     s.vel    = camera.getForwardVector() * sphere_speed;
     s.r      = sphere_rad;
     s.mass   = sphere_mass;
+    s.color  = randomColor();
 
     spheres.push_back(s);
 }
-
-static const GLfloat vFloorColor[] = { 0.0f, 1.0f, 0.0f, 1.0f};
-static const GLfloat vSphereColor[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-static const M3DVector4f vLightPos = { -20.0f, 30.0f, -20.0f, 1.0f };
 
 void Game::render(float interpolation) {
 
@@ -448,9 +434,12 @@ void Game::render(float interpolation) {
 		
     // Render the ground
     GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_FLAT,
-                                 transformPipeline.GetModelViewProjectionMatrix(),
-                                          vFloorColor));	
+                                          transformPipeline.GetModelViewProjectionMatrix(),
+                                          vFloorColor));
+    
     GL_CHECK(floorBatch.Draw());
+
+    render_walls(vLightEyePos);
 
     float dt = interpolation * game_speed / loop.ticks_per_second;
 
@@ -470,6 +459,9 @@ void Game::render(float interpolation) {
 }
 
 void Game::render_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyePos) {
+
+    M3DVector4f color = { s.color.x, s.color.y, s.color.z, s.color.w };
+    
     modelViewMatrix.PushMatrix();
     vec3 pos = s.calc_position(dt);
     modelViewMatrix.Translate(pos.x, pos.y, pos.z);
@@ -477,9 +469,37 @@ void Game::render_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyeP
     GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
                                           transformPipeline.GetModelViewMatrix(), 
                                           transformPipeline.GetProjectionMatrix(),
-                                          vLightEyePos, vSphereColor));
+                                          vLightEyePos, color));
     sphereBatch.Draw();
     modelViewMatrix.PopMatrix();
+}
+
+void Game::render_walls(const M3DVector3f vLightEyePos) {
+
+    modelViewMatrix.PushMatrix();
+
+    vec3 center = room.corner_max;
+    center.y = room.corner_min.y;
+    center = 0.5 * (center + room.corner_min);
+
+    vec3 diff = 0.5 * (room.corner_max - room.corner_min);
+
+    modelViewMatrix.Translate(center.x, center.y, center.z);
+    modelViewMatrix.Scale(diff.x, diff.y * 2 , diff.z);
+    
+    GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_FLAT,
+                                          transformPipeline.GetModelViewProjectionMatrix(),
+                                          vWallColor));	
+
+
+    // GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
+    //                                       transformPipeline.GetModelViewMatrix(), 
+    //                                       transformPipeline.GetProjectionMatrix(),
+    //                                       vLightEyePos, vWallColor));
+
+    wallBatch.Draw();
+
+    modelViewMatrix.PopMatrix();    
 }
 
 void Game::render_hud() {
@@ -578,8 +598,8 @@ void Sphere::move(const Cuboid& room, float dt) {
     vec3 collision;
     if (room.touchesWall(*this, wall, collision)) {
 //        const vec3 ground(0.f, -1.f, 0.f);
-        vec3 vel_par = wall * vec3::dot(vel, wall);
-        vel = (vel - 2 * vel_par) * Math::sqrt(0.3f);
+        vec3 vel_par = (rand1() * 0.1f + 0.9f) * (wall * vec3::dot(vel, wall));
+        vel = (vel - 2 * vel_par) * Math::sqrt(0.6f);
         center = collision + wall * -r;
     }
 }
@@ -609,8 +629,8 @@ void Sphere::collide(Sphere& x, Sphere& y, float dt) {
         vec3 vy_coll = n2 * vec3::dot(y.vel, n2);
         vec3 vy_rest = y.vel - vy_coll;
 
-        vec3 ux = velocity_after_collision(x.mass, vx_coll, y.mass, vy_coll);
-        vec3 uy = velocity_after_collision(y.mass, vy_coll, x.mass, vx_coll);
+        vec3 ux = (rand1() * 0.1f + 0.9f) * velocity_after_collision(x.mass, vx_coll, y.mass, vy_coll);
+        vec3 uy = (rand1() * 0.1f + 0.9f) * velocity_after_collision(y.mass, vy_coll, x.mass, vx_coll);
 
         x.vel = ux + vx_rest;
         y.vel = uy + vy_rest;
@@ -668,8 +688,6 @@ mat4 Camera::getCameraMatrix() {
     // frame.SetForwardVector(fw.x, fw.y, fw.z);
     // frame.SetUpVector(up.x, up.y, up.z);
 
-    frame.Normalize();
-
     M3DMatrix44f trans;
     frame.GetCameraMatrix(trans);
     return toMat4(trans);
@@ -722,3 +740,41 @@ bool Cuboid::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision)
 
     return false;
 }
+
+static void makeUnitCube(GLBatch& cube) {
+
+    cube.Begin(GL_QUADS, 24);
+
+    cube.Vertex3f(-1.0f, -1.0f,  1.0f);
+    cube.Vertex3f( 1.0f, -1.0f,  1.0f);
+    cube.Vertex3f( 1.0f,  1.0f,  1.0f);
+    cube.Vertex3f(-1.0f,  1.0f,  1.0f);
+
+    cube.Vertex3f(-1.0f, -1.0f, -1.0f);
+    cube.Vertex3f(-1.0f,  1.0f, -1.0f);
+    cube.Vertex3f( 1.0f,  1.0f, -1.0f);
+    cube.Vertex3f( 1.0f, -1.0f, -1.0f);
+
+    cube.Vertex3f(-1.0f,  1.0f, -1.0f);
+    cube.Vertex3f(-1.0f,  1.0f,  1.0f);
+    cube.Vertex3f( 1.0f,  1.0f,  1.0f);
+    cube.Vertex3f( 1.0f,  1.0f, -1.0f);
+
+    cube.Vertex3f(-1.0f, -1.0f, -1.0f);
+    cube.Vertex3f( 1.0f, -1.0f, -1.0f);
+    cube.Vertex3f( 1.0f, -1.0f,  1.0f);
+    cube.Vertex3f(-1.0f, -1.0f,  1.0f);
+
+    cube.Vertex3f( 1.0f, -1.0f, -1.0f);
+    cube.Vertex3f( 1.0f,  1.0f, -1.0f);
+    cube.Vertex3f( 1.0f,  1.0f,  1.0f);
+    cube.Vertex3f( 1.0f, -1.0f,  1.0f);
+
+    cube.Vertex3f(-1.0f, -1.0f, -1.0f);
+    cube.Vertex3f(-1.0f, -1.0f,  1.0f);
+    cube.Vertex3f(-1.0f,  1.0f,  1.0f);
+    cube.Vertex3f(-1.0f,  1.0f, -1.0f);
+
+    cube.End();
+}
+

@@ -42,8 +42,8 @@ triangle: triangle.cpp libgltools.so
 own1: own1.cpp ShaderProgram.cpp VertexBuffer.cpp
 	$(CXX) -o $@ $(CFLAGS) $(LDFLAGS) $^
 
-sim-sfml: sim-sfml.cpp GameLoop.cpp gltools.cpp libgltools.so
-	$(CXX) sim-sfml.cpp GameLoop.cpp gltools.cpp -o $@  `pkg-config --libs --cflags glew` -I/usr/include/GL $(OPT_FLAGS) -L. $(LD_GLTOOLS) -Wall -Wextra $(INC_DIRS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum $(EXTRA_CFLAGS)
+sim-sfml: sim-sfml.cpp GameLoop.cpp gltools.cpp Batch.cpp libgltools.so
+	$(CXX) sim-sfml.cpp GameLoop.cpp gltools.cpp Batch.cpp -o $@  `pkg-config --libs --cflags glew` -I/usr/include/GL $(OPT_FLAGS) -L. $(LD_GLTOOLS) -Wall -Wextra $(INC_DIRS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum $(EXTRA_CFLAGS)
 
 cube: cube.cpp GameLoop.cpp gltools.cpp ShaderProgram.cpp Batch.cpp
 	$(CXX) -o $@ $^ $(CFLAGS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum

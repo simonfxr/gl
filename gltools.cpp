@@ -50,6 +50,8 @@ void error(const char *msg, const char *file, int line, const char *func) {
               << " message: " << msg << std::endl;
 }
 
+#ifdef GLDEBUG
+
 namespace {
 
 struct DebugLocation {
@@ -111,7 +113,9 @@ struct ARBDebug : public GLDebug {
 };
 
 struct NODebug : public GLDebug {
-    virtual void printDebugMessages(const DebugLocation& loc) {}
+    virtual void printDebugMessages(const DebugLocation& loc) {
+        UNUSED(loc);
+    }
 };
 
 GLDebug *AMDDebug::init() {
@@ -151,7 +155,7 @@ GLDebug *ARBDebug::init() {
 }
 
 void ARBDebug::printDebugMessages(const DebugLocation& loc) {
-
+    UNUSED(loc);
 }
 
 void AMDDebug::printDebugMessages(const DebugLocation& loc) {
@@ -207,6 +211,8 @@ GLDebug* initDebug() {
 }
 
 } // namespace anon
+
+#endif // GLDEBUG
 
 bool checkForGLError(const char *op, const char *file, int line, const char *func) {
     bool was_error = false;
