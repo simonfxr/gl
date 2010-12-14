@@ -296,37 +296,28 @@ void Game::tick() {
     }
 }
 
-static ivec3 calcTile(const vec3& size, const vec3& p) {
-    const vec3 isize = vec3(Math::recp(size.x), Math::recp(size.y), Math::recp(size.z));
+static ivec3 calcTile(const vec3& isize, const vec3& p) {
     return ivec3(vec3::compMult(isize, p)); 
 }
 
 struct Tile {
-    uint32 object; // 1 based
+    uint32 object;
     Tile *nxt;
 };
 
-static void insertTile(Tile& t, uint32 id, std::vector<Tile *> allocs, Tile *nil) {
-    if (t.object == 0) {
-        t.object = id + 1;
-        t.nxt = nil;
-    } else {
-        Tile *nt = new Tile();
-        allocs.push_back(nt);
-        nt->nxt = t.nxt;
-        nt->object = id + 1;
-        t.nxt = nt;
-    }
+static void insertTile(Tile* &t, uint32 id, std::vector<Tile *> allocs) {
+    Tile *nt = new Tile();
+    allocs.push_back(nt);
+    nt->object = id;
+    nt->nxt = t;
+    t = nt;
 }
 
-static void collTile(std::vector<Sphere> ss, Sphere& s, uint32 i, Tile& t, float dt) {
-    Tile *p = &t;
-
-    while (p != 0 && p->object != 0) {
-        uint32 j = p->object - 1;
-        if (j < i)
-            Sphere::collide(s, ss[j], dt);
-        p = p->nxt;
+static void collTile(std::vector<Sphere> ss, Sphere& s, uint32 i, const Tile *t, float dt) {
+    while (t != 0) {
+        if (t->object < i)
+            Sphere::collide(s, ss[t->object], dt);
+        t = t->nxt;
     }
 }
 
@@ -335,54 +326,45 @@ void Game::resolve_collisions(float dt) {
     float t0 = now();
 
     const uint32 dim = 50;
-    const vec3 size = (room.corner_max - room.corner_min) * Math::recp(dim);
+    const vec3 diff = room.corner_max - room.corner_min;
+    const vec3 isize = vec3(dim / diff.x, dim / diff.y, dim / diff.z);
     const vec3 low  = room.corner_min;
 
-    Tile nil_tile = { 0, 0 };
-    Tile tiles[dim][dim][dim];
+    const ivec3 tmin = ivec3(0);
+    const ivec3 tmax = ivec3(dim - 1);
+
+    Tile *tiles[dim][dim][dim];
     std::vector<Tile *> allocs;
 
-    memset(tiles, 0, dim * dim * dim * sizeof (Tile));
+    memset(tiles, 0, dim * dim * dim * sizeof tiles[0][0][0]);
 
     for (uint32 i = 0; i < spheres.size(); ++i) {
+        
         Sphere& s = spheres[i];
-        vec3 p = s.center - low;
-        vec3 pl = p - vec3(s.r);
-        vec3 ph = p + vec3(s.r);
+        vec3 p = s.calc_position(dt) - low;
 
-        ivec3 tileL = calcTile(size, pl);
-        ivec3 tileH = calcTile(size, ph);
+        ivec3 tileL = ivec3::max(tmin, calcTile(isize, p - vec3(s.r)));
+        ivec3 tileH = ivec3::min(tmax, calcTile(isize, p + vec3(s.r)));
 
-        for (int32 x = tileL.x; x <= tileH.x && x < dim; ++x)
-            for (int32 y = tileH.y; y <= tileH.y && y < dim; ++y)
-                for (int32 z = tileH.z; z <= tileH.z && z < dim; ++z)
-                    insertTile(tiles[x][y][z], i, allocs, &nil_tile);
+        for (int32 x = tileL.x; x <= tileH.x; ++x)
+            for (int32 y = tileL.y; y <= tileH.y; ++y)
+                for (int32 z = tileL.z; z <= tileH.z; ++z)
+                    insertTile(tiles[x][y][z], i, allocs);
     }
-
-    for (uint32 i = 0; i < dim; ++i)
-        for (uint32 j = 0; j < dim; ++j)
-            for (uint32 k = 0; k < dim; ++k)
-                ASSERT(tiles[i][j][k].object <= spheres.size(), "TILES DAMAGED");
 
     for (unsigned i = 0; i < spheres.size(); ++i) {
         
         Sphere& s = spheres[i];
-        vec3 p = s.center - low;
-        vec3 pl = p - vec3(s.r);
-        vec3 ph = p + vec3(s.r);
+        vec3 p = s.calc_position(dt) - low;
 
-        ivec3 tileL = calcTile(size, pl);
-        ivec3 tileH = calcTile(size, ph);
+        ivec3 tileL = ivec3::max(tmin, calcTile(isize, p - vec3(s.r)));
+        ivec3 tileH = ivec3::min(tmax, calcTile(isize, p + vec3(s.r)));
 
-        for (int32 x = tileL.x; x <= tileH.x && x < dim; ++x)
-            for (int32 y = tileH.y; y <= tileH.y && y < dim; ++y)
-                for (int32 z = tileH.z; z <= tileH.z && z < dim ; ++z)
+        for (int32 x = tileL.x; x <= tileH.x; ++x)
+            for (int32 y = tileL.y; y <= tileH.y; ++y)
+                for (int32 z = tileL.z; z <= tileH.z; ++z)
                     collTile(spheres, s, i, tiles[x][y][z], dt);
     }
-
-    // for (unsigned i = 1; i < spheres.size(); ++i)
-    //     for (unsigned j = 0; j < i; ++j)
-    //         Sphere::collide(spheres[i], spheres[j], dt);
 
     for (uint32 i = 0; i < allocs.size(); ++i)
         delete allocs[i];
