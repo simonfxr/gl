@@ -547,7 +547,7 @@ void Game::render(float interpolation) {
     
     GL_CHECK(floorBatch.Draw());
 
-    render_walls(vLightEyePos);
+    // render_walls(vLightEyePos);
 
     float dt = interpolation * game_speed / loop.ticks_per_second;
 
@@ -714,10 +714,9 @@ void Sphere::move(const Cuboid& room, float dt) {
 
     vec3 wall;
     vec3 collision;
+    
     if (room.touchesWall(*this, wall, collision)) {
-//        const vec3 ground(0.f, -1.f, 0.f);
-        vec3 vel_par = (rand1() * 0.1f + 0.9f) * (wall * vec3::dot(vel, wall));
-        vel = (vel - 2 * vel_par) * Math::sqrt(0.6f);
+        vel = vec3::reflect(vel, wall, rand1() * 0.1f + 0.9f) * Math::sqrt(0.6f);
         center = collision + wall * -r;
     }
 }

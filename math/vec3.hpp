@@ -74,6 +74,10 @@ struct vec3 {
         return vec3(v4::v4a(cv), v4::v4b(cv), v4::v4c(cv));
     }
 
+    static vec3 reflect(const vec3& a, const vec3& n, float amp = 1.f) {
+        return a - n * (2.f * amp * dot(n, a));
+    }
+
     vec3 scale(float l) const {
         return vec3(x * l, y * l, z * l);
     }
