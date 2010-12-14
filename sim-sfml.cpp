@@ -25,10 +25,12 @@
 
 #include "GameLoop.hpp"
 #include "gltools.hpp"
+#include "Batch.hpp"
+#include "ShaderProgram.hpp"
 
 static const vec3 gravity(0.f, -9.81f, 0.f);
 
-static void makeUnitCube(GLBatch& cube);
+static void makeUnitCube(gltools::Batch& cube);
 
 namespace {
 
@@ -124,10 +126,16 @@ public:
     GLBatch                 floorBatch;
     GLTriangleBatch         sphereBatch;
 
-    GLBatch wallBatch;
+    gltools::Batch wallBatch;
     
     Camera                  camera;
     Cuboid                  room;
+
+    ShaderProgram wallShader;
+    GLint wall_shader_mvp;
+    GLint wall_shader_mv;
+    GLint wall_shader_nm;
+    GLint wall_shader_light;
 
     uint32 fps_count;
     uint32 current_fps;
@@ -156,7 +164,7 @@ public:
     void tick();
     void render(float interpolation);
 
-    void init();
+    bool init();
     
 private:
 
@@ -172,11 +180,14 @@ private:
     void resolve_collisions(float dt);
 };
 
-Game::Game(sf::Clock& _clock, sf::RenderWindow& _win)
-    : clock(_clock), window(_win), loop(100, 5, 0)
+Game::Game(sf::Clock& _clock, sf::RenderWindow& _win) :
+    clock(_clock),
+    window(_win),
+    loop(100, 5, 0),
+    wallBatch(GL_QUADS, gltools::Batch::Vertex | gltools::Batch::Normal)
 {}
 
-void Game::init() {
+bool Game::init() {
 
     frame_id = 0;
     last_frame_rendered = 0;
@@ -228,11 +239,27 @@ void Game::init() {
     // camera.setOrigin(room.corner_min);
     camera.setOrigin(vec3(-19.f, 10.f, -19.f));
     camera.facePoint(vec3(0.f, 10.f, 0.f));
+
+    wallShader.compileVertexShaderFromFile("brick.vert");
+    wallShader.compileFragmentShaderFromFile("brick.frag");
+    wallShader.bindAttribute("vertex", gltools::Batch::VertexPos);
+    wallShader.bindAttribute("normal", gltools::Batch::NormalPos);
+    if (!wallShader.link()) {
+        std::cerr << "couldnt link wall shader!" << std::endl;
+        return false;
+    }
     
+    wall_shader_mvp = glGetUniformLocation(wallShader.program, "mvpMatrix");
+    wall_shader_mv = glGetUniformLocation(wallShader.program, "mvMatrix");
+    wall_shader_nm = glGetUniformLocation(wallShader.program, "normalMatrix");
+    wall_shader_light = glGetUniformLocation(wallShader.program, "lightPosition");
+
     fps_count = 0;
     fps_render_next = fps_render_last = 0.f;
     
     window_size_changed(window.GetWidth(), window.GetHeight());
+
+    return true;
 }
 
 float Game::now() {
@@ -323,53 +350,58 @@ static void collTile(std::vector<Sphere> ss, Sphere& s, uint32 i, const Tile *t,
 
 void Game::resolve_collisions(float dt) {
 
-    float t0 = now();
+    // float t0 = now();
 
-    const uint32 dim = 50;
-    const vec3 diff = room.corner_max - room.corner_min;
-    const vec3 isize = vec3(dim / diff.x, dim / diff.y, dim / diff.z);
-    const vec3 low  = room.corner_min;
+    // const uint32 dim = 50;
+    // const vec3 diff = room.corner_max - room.corner_min;
+    // const vec3 isize = vec3(dim / diff.x, dim / diff.y, dim / diff.z);
+    // const vec3 low  = room.corner_min;
 
-    const ivec3 tmin = ivec3(0);
-    const ivec3 tmax = ivec3(dim - 1);
+    // const ivec3 tmin = ivec3(0);
+    // const ivec3 tmax = ivec3(dim - 1);
 
-    Tile *tiles[dim][dim][dim];
-    std::vector<Tile *> allocs;
+    // Tile *tiles[dim][dim][dim];
+    // std::vector<Tile *> allocs;
 
-    memset(tiles, 0, dim * dim * dim * sizeof tiles[0][0][0]);
+    // memset(tiles, 0, dim * dim * dim * sizeof tiles[0][0][0]);
 
-    for (uint32 i = 0; i < spheres.size(); ++i) {
+    // for (uint32 i = 0; i < spheres.size(); ++i) {
         
-        Sphere& s = spheres[i];
-        vec3 p = s.calc_position(dt) - low;
+    //     Sphere& s = spheres[i];
+    //     vec3 p = s.calc_position(dt) - low;
 
-        ivec3 tileL = ivec3::max(tmin, calcTile(isize, p - vec3(s.r)));
-        ivec3 tileH = ivec3::min(tmax, calcTile(isize, p + vec3(s.r)));
+    //     ivec3 tileL = ivec3::max(tmin, calcTile(isize, p - vec3(s.r)));
+    //     ivec3 tileH = ivec3::min(tmax, calcTile(isize, p + vec3(s.r)));
 
-        for (int32 x = tileL.x; x <= tileH.x; ++x)
-            for (int32 y = tileL.y; y <= tileH.y; ++y)
-                for (int32 z = tileL.z; z <= tileH.z; ++z)
-                    insertTile(tiles[x][y][z], i, allocs);
-    }
+    //     for (int32 x = tileL.x; x <= tileH.x; ++x)
+    //         for (int32 y = tileL.y; y <= tileH.y; ++y)
+    //             for (int32 z = tileL.z; z <= tileH.z; ++z)
+    //                 insertTile(tiles[x][y][z], i, allocs);
+    // }
 
-    for (unsigned i = 0; i < spheres.size(); ++i) {
+    // for (unsigned i = 0; i < spheres.size(); ++i) {
         
-        Sphere& s = spheres[i];
-        vec3 p = s.calc_position(dt) - low;
+    //     Sphere& s = spheres[i];
+    //     vec3 p = s.calc_position(dt) - low;
 
-        ivec3 tileL = ivec3::max(tmin, calcTile(isize, p - vec3(s.r)));
-        ivec3 tileH = ivec3::min(tmax, calcTile(isize, p + vec3(s.r)));
+    //     ivec3 tileL = ivec3::max(tmin, calcTile(isize, p - vec3(s.r)));
+    //     ivec3 tileH = ivec3::min(tmax, calcTile(isize, p + vec3(s.r)));
 
-        for (int32 x = tileL.x; x <= tileH.x; ++x)
-            for (int32 y = tileL.y; y <= tileH.y; ++y)
-                for (int32 z = tileL.z; z <= tileH.z; ++z)
-                    collTile(spheres, s, i, tiles[x][y][z], dt);
-    }
+    //     for (int32 x = tileL.x; x <= tileH.x; ++x)
+    //         for (int32 y = tileL.y; y <= tileH.y; ++y)
+    //             for (int32 z = tileL.z; z <= tileH.z; ++z)
+    //                 collTile(spheres, s, i, tiles[x][y][z], dt);
+    // }
 
-    for (uint32 i = 0; i < allocs.size(); ++i)
-        delete allocs[i];
+    // for (uint32 i = 0; i < allocs.size(); ++i)
+    //     delete allocs[i];
 
-    std::cerr << "resolve_collisions: " << (now() - t0) << " seconds" << std::endl;
+    // std::cerr << "resolve_collisions: " << (now() - t0) << " seconds" << std::endl;
+
+    for (uint32 i = 0; i < spheres.size(); ++i)
+        for (uint32 j = 0; j < i; ++j)
+            Sphere::collide(spheres[i], spheres[j], dt);
+    
 }
 
 template <typename T>
@@ -563,17 +595,24 @@ void Game::render_walls(const M3DVector3f vLightEyePos) {
     modelViewMatrix.Translate(center.x, center.y, center.z);
     modelViewMatrix.Scale(diff.x, diff.y * 2 , diff.z);
     
-    GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_FLAT,
-                                          transformPipeline.GetModelViewProjectionMatrix(),
-                                          vWallColor));	
+    // GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_FLAT,
+    //                                       transformPipeline.GetModelViewProjectionMatrix(),
+    //                                       vWallColor));
 
+    GL_CHECK(wallShader.use());
+    GL_CHECK(glUniformMatrix4fv(wall_shader_mvp, 1, GL_FALSE, transformPipeline.GetModelViewProjectionMatrix()));
+    GL_CHECK(glUniformMatrix4fv(wall_shader_mv, 1, GL_FALSE, transformPipeline.GetModelViewMatrix()));
+    GL_CHECK(glUniformMatrix3fv(wall_shader_nm, 1, GL_FALSE, transformPipeline.GetNormalMatrix(true)));
+    GL_CHECK(glUniform3fv(wall_shader_light, 1, vLightEyePos));    
+
+    GL_CHECK(wallBatch.draw());
 
     // GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
     //                                       transformPipeline.GetModelViewMatrix(), 
     //                                       transformPipeline.GetProjectionMatrix(),
     //                                       vLightEyePos, vWallColor));
 
-    wallBatch.Draw();
+    // wallBatch.Draw();
 
     modelViewMatrix.PopMatrix();    
 }
@@ -661,7 +700,10 @@ int main(int argc, char *argv[]) {
 
     Game game(clock, window);
     
-    game.init();
+    if (!game.init()) {
+        std::cerr << "initialization failed, exiting..." << std::endl;
+        return 1;
+    }
 
     return game.loop.run(game);
 }
@@ -829,40 +871,45 @@ bool Cuboid::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision)
     return false;
 }
 
-static void makeUnitCube(GLBatch& cube) {
+static void makeUnitCube(gltools::Batch& cube) {
+    // cube.Begin(GL_QUADS, 24);
 
-    cube.Begin(GL_QUADS, 24);
+    vec3 n1 = vec3(0.f, 0.f, -1.f);
+    cube.normal(n1); cube.vertex(vec3(-1.0f, -1.0f,  1.0f));
+    cube.normal(n1); cube.vertex(vec3( 1.0f, -1.0f,  1.0f));
+    cube.normal(n1); cube.vertex(vec3( 1.0f,  1.0f,  1.0f));
+    cube.normal(n1); cube.vertex(vec3(-1.0f,  1.0f,  1.0f));
 
-    cube.Vertex3f(-1.0f, -1.0f,  1.0f);
-    cube.Vertex3f( 1.0f, -1.0f,  1.0f);
-    cube.Vertex3f( 1.0f,  1.0f,  1.0f);
-    cube.Vertex3f(-1.0f,  1.0f,  1.0f);
+    vec3 n2 = vec3(0.f, 0.f, +1.f);
+    cube.normal(n2); cube.vertex(vec3(-1.0f, -1.0f, -1.0f));
+    cube.normal(n2); cube.vertex(vec3(-1.0f,  1.0f, -1.0f));
+    cube.normal(n2); cube.vertex(vec3( 1.0f,  1.0f, -1.0f));
+    cube.normal(n2); cube.vertex(vec3( 1.0f, -1.0f, -1.0f));
 
-    cube.Vertex3f(-1.0f, -1.0f, -1.0f);
-    cube.Vertex3f(-1.0f,  1.0f, -1.0f);
-    cube.Vertex3f( 1.0f,  1.0f, -1.0f);
-    cube.Vertex3f( 1.0f, -1.0f, -1.0f);
+    vec3 n3 = vec3(0.f, -1.f, 0.f);
+    cube.normal(n3); cube.vertex(vec3(-1.0f,  1.0f, -1.0f));
+    cube.normal(n3); cube.vertex(vec3(-1.0f,  1.0f,  1.0f));
+    cube.normal(n3); cube.vertex(vec3( 1.0f,  1.0f,  1.0f));
+    cube.normal(n3); cube.vertex(vec3( 1.0f,  1.0f, -1.0f));
 
-    cube.Vertex3f(-1.0f,  1.0f, -1.0f);
-    cube.Vertex3f(-1.0f,  1.0f,  1.0f);
-    cube.Vertex3f( 1.0f,  1.0f,  1.0f);
-    cube.Vertex3f( 1.0f,  1.0f, -1.0f);
+    vec3 n4 = vec3(0.f, +1.f, 0.f);
+    cube.normal(n4); cube.vertex(vec3(-1.0f, -1.0f, -1.0f));
+    cube.normal(n4); cube.vertex(vec3( 1.0f, -1.0f, -1.0f));
+    cube.normal(n4); cube.vertex(vec3( 1.0f, -1.0f,  1.0f));
+    cube.normal(n4); cube.vertex(vec3(-1.0f, -1.0f,  1.0f));
 
-    cube.Vertex3f(-1.0f, -1.0f, -1.0f);
-    cube.Vertex3f( 1.0f, -1.0f, -1.0f);
-    cube.Vertex3f( 1.0f, -1.0f,  1.0f);
-    cube.Vertex3f(-1.0f, -1.0f,  1.0f);
+    vec3 n5 = vec3(-1.f, 0.f, 0.f);
+    cube.normal(n5); cube.vertex(vec3( 1.0f, -1.0f, -1.0f));
+    cube.normal(n5); cube.vertex(vec3( 1.0f,  1.0f, -1.0f));
+    cube.normal(n5); cube.vertex(vec3( 1.0f,  1.0f,  1.0f));
+    cube.normal(n5); cube.vertex(vec3( 1.0f, -1.0f,  1.0f));
 
-    cube.Vertex3f( 1.0f, -1.0f, -1.0f);
-    cube.Vertex3f( 1.0f,  1.0f, -1.0f);
-    cube.Vertex3f( 1.0f,  1.0f,  1.0f);
-    cube.Vertex3f( 1.0f, -1.0f,  1.0f);
+    vec3 n6 = vec3(+1.f, 0.f, 0.f);
+    cube.normal(n6); cube.vertex(vec3(-1.0f, -1.0f, -1.0f));
+    cube.normal(n6); cube.vertex(vec3(-1.0f, -1.0f,  1.0f));
+    cube.normal(n6); cube.vertex(vec3(-1.0f,  1.0f,  1.0f));
+    cube.normal(n6); cube.vertex(vec3(-1.0f,  1.0f, -1.0f));
 
-    cube.Vertex3f(-1.0f, -1.0f, -1.0f);
-    cube.Vertex3f(-1.0f, -1.0f,  1.0f);
-    cube.Vertex3f(-1.0f,  1.0f,  1.0f);
-    cube.Vertex3f(-1.0f,  1.0f, -1.0f);
-
-    cube.End();
+    cube.freeze();
 }
 

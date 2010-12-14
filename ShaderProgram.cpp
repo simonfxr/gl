@@ -82,8 +82,10 @@ bool ShaderProgram::compileVertexShaderFromFile(const string& path) {
 
     char *src;
     int32 len;
-    if (!readContents(path, src, len))
+    if (!readContents(path, src, len)) {
+        std::cerr << "couldnt read file: " << path << std::endl;
         return false;
+    }
     bool ok = createShader(GL_VERTEX_SHADER, path, src, len, &vertex_shader);
     delete[] src;
     return ok;
@@ -101,8 +103,10 @@ bool ShaderProgram::compileFragmentShaderFromFile(const string& path) {
 
     char *src;
     int32 len;
-    if (!readContents(path, src, len))
+    if (!readContents(path, src, len)) {
+        std::cerr << "couldnt read file: " << path << std::endl;
         return false;
+    }
     bool ok = createShader(GL_FRAGMENT_SHADER, path, src, len, &fragment_shader);
     delete[] src;
     return ok;
@@ -193,4 +197,8 @@ void ShaderProgram::printProgramLog(GLuint program, std::ostream& out) {
     
         delete[] log;
     }
+}
+
+void ShaderProgram::use() {
+    glUseProgram(program);
 }

@@ -25,6 +25,8 @@ struct ShaderProgram {
 
     bool compileAndLink(const std::string& vertex_shader_file, const std::string& fragment_shader_file);
 
+    void use();
+
     static void printShaderLog(GLuint shader, std::ostream& out);
     static void printProgramLog(GLuint program, std::ostream& out);
 };
