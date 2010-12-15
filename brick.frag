@@ -1,32 +1,30 @@
 #version 330
 
-/* uniform vec3 BrickColor, MortarColor; */
-/* uniform vec2 BrickSize; */
-/* uniform vec2 BrickPct; */
-
-const vec3 BrickColor = vec3(1, 0, 0);
+const vec3 BrickColor  = vec3(1, 0, 0);
 const vec3 MortarColor = vec3(0.6);
-const vec2 BrickSize = vec2(1, 1);
-const vec2 BrickPct = vec2(0.9);
+const vec2 BrickSize   = vec2(0.06, 0.03);
+const vec2 BrickPct    = vec2(0.9, 0.85);
 
-in vec2 position;
 in float lightIntensity;
+in vec2  vPosition;
 
-out vec4 FragColor;
+out vec4 fragColor;
 
 void main()
 {
     vec3 color;
-    vec2 p, useBrick;
+    vec2 position, useBrick;
 
-    p = position / BrickSize;
-    if (fract(p.y * 0.5) > 0.5)
-        p.x += 0.5;
-    
-    p = fract(p);
-    useBrick = step(p, BrickPct);
-    
+    position = vPosition / BrickSize;
+
+    if (fract(position.y * 0.5) > 0.5)
+        position.x += 0.5;
+
+    position = fract(position);
+
+    useBrick = step(position, BrickPct);
+
     color = mix(MortarColor, BrickColor, useBrick.x * useBrick.y);
     color *= lightIntensity;
-    FragColor = vec4(color, 1.0);
+    fragColor = vec4(color, 1);
 }

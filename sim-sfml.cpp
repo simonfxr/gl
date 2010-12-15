@@ -9,7 +9,6 @@
 #include <GLTools.h>
 #include <GLShaderManager.h>
 #include <GLFrustum.h>
-#include <GLBatch.h>
 #include <GLFrame.h>
 #include <GLMatrixStack.h>
 #include <GLGeometryTransform.h>
@@ -122,8 +121,6 @@ public:
     GLFrustum               viewFrustum;                // View Frustum
     GLGeometryTransform     transformPipeline;          // Geometry Transform Pipeline
 
-    // GLBatch                 cubeBatch;
-    GLBatch                 floorBatch;
     GLTriangleBatch         sphereBatch;
 
     gltools::Batch wallBatch;
@@ -155,6 +152,8 @@ public:
     bool use_interpolation;
     uint64 last_frame_rendered;
 
+    bool have_focus;
+
     std::vector<Sphere> spheres;    
 
     Game(sf::Clock& _clock, sf::RenderWindow& _win);
@@ -178,6 +177,9 @@ private:
     void render_hud();
     void render_walls(const M3DVector3f vLightEyePos);
     void resolve_collisions(float dt);
+    bool load_shaders();
+    void focus_lost();
+    void focus_gained();
 };
 
 Game::Game(sf::Clock& _clock, sf::RenderWindow& _win) :
@@ -191,6 +193,7 @@ bool Game::init() {
 
     frame_id = 0;
     last_frame_rendered = 0;
+    have_focus = true;
 
     sphere_speed = 10.f;
     sphere_mass = 1.f;
@@ -222,15 +225,15 @@ bool Game::init() {
     const vec3 lln = room.corner_min;
     const vec3 dim = room.corner_max - room.corner_min;
     	
-    floorBatch.Begin(GL_LINES, 324);
-    for (GLfloat x = -20.0; x <= 20.0f; x+= 0.5) {
-        floorBatch.Vertex3f(x, 0.f, 20.0f);
-        floorBatch.Vertex3f(x, 0.f, -20.0f);
+    // floorBatch.Begin(GL_LINES, 324);
+    // for (GLfloat x = -20.0; x <= 20.0f; x+= 0.5) {
+    //     floorBatch.Vertex3f(x, 0.f, 20.0f);
+    //     floorBatch.Vertex3f(x, 0.f, -20.0f);
         
-        floorBatch.Vertex3f(20.0f, 0.f, x);
-        floorBatch.Vertex3f(-20.0f, 0.f, x);
-    }
-    floorBatch.End();
+    //     floorBatch.Vertex3f(20.0f, 0.f, x);
+    //     floorBatch.Vertex3f(-20.0f, 0.f, x);
+    // }
+    // floorBatch.End();
 
     // camera.origin = vec3(-20.f, 10.f, -20.f);
     // camera.orientation = EulerAngles(0, Math::PI, 0);
@@ -240,24 +243,40 @@ bool Game::init() {
     camera.setOrigin(vec3(-19.f, 10.f, -19.f));
     camera.facePoint(vec3(0.f, 10.f, 0.f));
 
-    wallShader.compileVertexShaderFromFile("brick.vert");
-    wallShader.compileFragmentShaderFromFile("brick.frag");
-    wallShader.bindAttribute("vertex", gltools::Batch::VertexPos);
-    wallShader.bindAttribute("normal", gltools::Batch::NormalPos);
-    if (!wallShader.link()) {
-        std::cerr << "couldnt link wall shader!" << std::endl;
+    if (!load_shaders()) {
+        std::cerr << "couldnt load shaders!" << std::endl;
         return false;
     }
-    
-    wall_shader_mvp = glGetUniformLocation(wallShader.program, "mvpMatrix");
-    wall_shader_mv = glGetUniformLocation(wallShader.program, "mvMatrix");
-    wall_shader_nm = glGetUniformLocation(wallShader.program, "normalMatrix");
-    wall_shader_light = glGetUniformLocation(wallShader.program, "lightPosition");
 
     fps_count = 0;
     fps_render_next = fps_render_last = 0.f;
     
     window_size_changed(window.GetWidth(), window.GetHeight());
+
+    return true;
+}
+
+bool Game::load_shaders() {
+
+    ShaderProgram ws;
+    
+    ws.compileVertexShaderFromFile("brick.vert");
+    ws.compileFragmentShaderFromFile("brick.frag");
+    ws.bindAttribute("vertex", gltools::Batch::VertexPos);
+    ws.bindAttribute("normal", gltools::Batch::NormalPos);
+
+    if (!ws.link())
+        return false;
+    
+    std::cerr << "wall shader succesfully loaded and linked" << std::endl;
+
+    wallShader = ws;
+    ws.program = 0;
+        
+    wall_shader_mvp = glGetUniformLocation(wallShader.program, "mvpMatrix");
+    wall_shader_mv = glGetUniformLocation(wallShader.program, "mvMatrix");
+    wall_shader_nm = glGetUniformLocation(wallShader.program, "normalMatrix");
+    wall_shader_light = glGetUniformLocation(wallShader.program, "lightPosition");
 
     return true;
 }
@@ -289,13 +308,17 @@ void Game::handleEvents() {
             break;
         case sf::Event::MouseButtonPressed:
             mouse_pressed(e.MouseButton.Button); break;
+        case sf::Event::LostFocus:
+            focus_lost(); break;       
+        case sf::Event::GainedFocus:
+            focus_gained(); break;
         }
     }
 
     int32 dx = int32(win_w / 2) - mouse_x;
     int32 dy = mouse_y - int32(win_h / 2);
 
-    if (dx != 0 || dy != 0) {
+    if (have_focus && (dx != 0 || dy != 0)) {
         window.SetCursorPosition(win_w / 2, win_h / 2);
         mouse_moved(dx, dy);
     }
@@ -451,6 +474,7 @@ void Game::key_pressed(sf::Key::Code key) {
     case Z: game_speed -= 0.05f; break;
     case I: use_interpolation = !use_interpolation; break;
     case B: loop.pause(!loop.paused()); break;
+    case C: load_shaders(); break;
     }
 
     sphere_mass = std::max(0.1f, sphere_mass);
@@ -486,9 +510,22 @@ void Game::mouse_pressed(sf::Mouse::Button button) {
         spawn_sphere();
 }
 
+void Game::focus_lost() {
+    have_focus = false;
+    std::cerr << "lost focus" << std::endl;
+    window.ShowMouseCursor(true);
+}
+
+void Game::focus_gained() {
+    have_focus = true;
+    window.ShowMouseCursor(false);
+    window.SetCursorPosition(window.GetWidth() / 2, window.GetHeight() / 2);
+    std::cerr << "gained focus" << std::endl;
+}
+
 static const GLfloat vFloorColor[] = { 0.0f, 1.0f, 0.0f, 1.0f};
 static const vec4 SPHERE_COLOR = vec4(0.f, 0.f, 1.f, 1.f);
-static const M3DVector4f vLightPos = { -20.0f, 30.0f, -20.0f, 1.0f };
+static const M3DVector4f vLightPos = { 0.f, 10.f, 0.f };
 static const M3DVector4f vWallColor = { 0.6f, 0.6f, 0.6f, 1.f };
 
 static float rand1() {
@@ -540,14 +577,16 @@ void Game::render(float interpolation) {
     // const vec3 dim = room.corner_max - room.corner_min;
     // modelViewMatrix.Scale(dim.x, dim.y, dim.z);
 		
-    // Render the ground
-    GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_FLAT,
-                                          transformPipeline.GetModelViewProjectionMatrix(),
-                                          vFloorColor));
+    // // Render the ground
+    // GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_FLAT,
+    //                                       transformPipeline.GetModelViewProjectionMatrix(),
+    //                                       vFloorColor));
     
-    GL_CHECK(floorBatch.Draw());
+    // GL_CHECK(floorBatch.Draw());
 
-    // render_walls(vLightEyePos);
+    glDisable(GL_CULL_FACE);
+
+    render_walls(vLightEyePos);
 
     float dt = interpolation * game_speed / loop.ticks_per_second;
 
@@ -586,14 +625,12 @@ void Game::render_walls(const M3DVector3f vLightEyePos) {
 
     modelViewMatrix.PushMatrix();
 
-    vec3 center = room.corner_max;
-    center.y = room.corner_min.y;
-    center = 0.5 * (center + room.corner_min);
-
-    vec3 diff = 0.5 * (room.corner_max - room.corner_min);
+    vec3 center = 0.5f * (room.corner_max + room.corner_min);
+    vec3 diff = 0.5f * (room.corner_max - room.corner_min);
 
     modelViewMatrix.Translate(center.x, center.y, center.z);
-    modelViewMatrix.Scale(diff.x, diff.y * 2 , diff.z);
+    modelViewMatrix.Scale(diff.x, diff.y, diff.z);
+
     
     // GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_FLAT,
     //                                       transformPipeline.GetModelViewProjectionMatrix(),

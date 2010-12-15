@@ -27,6 +27,8 @@ struct ShaderProgram {
 
     void use();
 
+    void reset();
+
     static void printShaderLog(GLuint shader, std::ostream& out);
     static void printProgramLog(GLuint program, std::ostream& out);
 };

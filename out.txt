@@ -1,0 +1,22 @@
+compiling brick.vert ... success
+shader compile log:
+Vertex shader was successfully compiled to run on hardware.
+
+end compile log
+compiling brick.frag ... success
+shader compile log:
+Fragment shader was successfully compiled to run on hardware.
+
+end compile log
+linking ... success
+link log:
+Fragment shader(s) linked, vertex shader(s) linked. 
+
+end link log
+wall shader succesfully loaded and linked
+deleted ShaderProgram
+gained focus
+lost focus
+deleted ShaderProgram
+XIO:  fatal IO error 11 (Resource temporarily unavailable) on X server "pc3"
+      after 187171 requests (187171 known processed) with 0 events remaining.

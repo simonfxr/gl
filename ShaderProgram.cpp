@@ -9,16 +9,24 @@
 
 using namespace std;
 
-ShaderProgram::ShaderProgram() {
-    vertex_shader = 0;
-    fragment_shader = 0;
-    program = 0;
-}
+ShaderProgram::ShaderProgram() :
+    program(0),
+    vertex_shader(0),
+    fragment_shader(0)
+{}
 
 ShaderProgram::~ShaderProgram() {
+    reset();
+    std::cerr << "deleted ShaderProgram" << std::endl;
+}
+
+void ShaderProgram::reset() {
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
     glDeleteProgram(program);
+    vertex_shader = 0;
+    fragment_shader = 0;
+    program = 0;
 }
 
 namespace {
