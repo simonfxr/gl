@@ -41,6 +41,8 @@ struct Cuboid {
     bool touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision) const;
 };
 
+static const float sphere_density = 999;
+
 struct Sphere {
     vec3 vel;
     float r;
@@ -180,6 +182,7 @@ private:
     bool load_shaders();
     void focus_lost();
     void focus_gained();
+    void update_sphere_mass();
 };
 
 Game::Game(sf::Clock& _clock, sf::RenderWindow& _win) :
@@ -250,6 +253,8 @@ bool Game::init() {
 
     fps_count = 0;
     fps_render_next = fps_render_last = 0.f;
+
+    update_sphere_mass();
     
     window_size_changed(window.GetWidth(), window.GetHeight());
 
@@ -270,7 +275,8 @@ bool Game::load_shaders() {
     
     std::cerr << "wall shader succesfully loaded and linked" << std::endl;
 
-    wallShader = ws;
+    wallShader.reset();
+    wallShader.program = ws.program;
     ws.program = 0;
         
     wall_shader_mvp = glGetUniformLocation(wallShader.program, "mvpMatrix");
@@ -464,8 +470,6 @@ void Game::key_pressed(sf::Key::Code key) {
     case S: camera.move_forward(-linear); break;
     case A: camera.move_right(linear); break;
     case D: camera.move_right(-linear); break;
-    case M: sphere_mass += 0.1f; break;
-    case N: sphere_mass -= 0.1f; break;
     case R: sphere_rad += 0.1f; break;
     case E: sphere_rad -= 0.1f; break;
     case P: sphere_speed += 0.5f; break;
@@ -477,10 +481,11 @@ void Game::key_pressed(sf::Key::Code key) {
     case C: load_shaders(); break;
     }
 
-    sphere_mass = std::max(0.1f, sphere_mass);
     sphere_rad = std::max(0.1f, sphere_rad);
     sphere_speed = std::max(0.5f, sphere_speed);
     game_speed = std::max(0.f, game_speed);
+
+    update_sphere_mass();
 }
 
 void Game::mouse_moved(int32 dx, int32 dy) {
@@ -512,7 +517,6 @@ void Game::mouse_pressed(sf::Mouse::Button button) {
 
 void Game::focus_lost() {
     have_focus = false;
-    std::cerr << "lost focus" << std::endl;
     window.ShowMouseCursor(true);
 }
 
@@ -520,12 +524,16 @@ void Game::focus_gained() {
     have_focus = true;
     window.ShowMouseCursor(false);
     window.SetCursorPosition(window.GetWidth() / 2, window.GetHeight() / 2);
-    std::cerr << "gained focus" << std::endl;
+}
+
+void Game::update_sphere_mass() {
+    float V = 4.f / 3.f * Math::PI * sphere_rad * sphere_rad * sphere_rad;
+    sphere_mass = V * sphere_density;
 }
 
 static const GLfloat vFloorColor[] = { 0.0f, 1.0f, 0.0f, 1.0f};
 static const vec4 SPHERE_COLOR = vec4(0.f, 0.f, 1.f, 1.f);
-static const M3DVector4f vLightPos = { 0.f, 10.f, 0.f };
+static const M3DVector4f vLightPos = { 11.f, 7.f, 11.f };
 static const M3DVector4f vWallColor = { 0.6f, 0.6f, 0.6f, 1.f };
 
 static float rand1() {
@@ -755,6 +763,8 @@ void Sphere::move(const Cuboid& room, float dt) {
     if (room.touchesWall(*this, wall, collision)) {
         vel = vec3::reflect(vel, wall, rand1() * 0.1f + 0.9f) * Math::sqrt(0.6f);
         center = collision + wall * -r;
+
+        
     }
 }
 

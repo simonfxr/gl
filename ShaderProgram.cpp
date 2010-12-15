@@ -17,7 +17,6 @@ ShaderProgram::ShaderProgram() :
 
 ShaderProgram::~ShaderProgram() {
     reset();
-    std::cerr << "deleted ShaderProgram" << std::endl;
 }
 
 void ShaderProgram::reset() {
