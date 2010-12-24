@@ -6,6 +6,7 @@
 #include <ctime>
 #include <limits.h>
 
+#define GLEW_STATIC
 #include <GLTools.h>
 #include <GLShaderManager.h>
 #include <GLFrustum.h>
@@ -719,6 +720,14 @@ void Game::render_hud() {
     window.RestoreGLStates();
 }
 
+static void print_context(const sf::ContextSettings& c) {
+    std::cerr << "Version:" << c.MajorVersion << "." << c.MinorVersion << std::endl
+              << "DepthBits: " << c.DepthBits << std::endl
+              << "StencilBits: " << c.StencilBits << std::endl
+              << "Antialiasing: " << c.AntialiasingLevel << std::endl
+              << "DebugContext: " << (c.DebugContext ? "yes" : "no") << std::endl;
+}
+
 int main(int argc, char *argv[]) {
 
     UNUSED(argc);
@@ -732,12 +741,19 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+#ifndef GL_ARB_multisample
+#error "multisampling not supported"
+#endif
+
     sf::ContextSettings glContext;
     glContext.MajorVersion = 3;
     glContext.MinorVersion = 3;
+    glContext.AntialiasingLevel = 4;
+#ifdef GLDEBUG
     glContext.DebugContext = true;
+#endif
     sf::RenderWindow window(sf::VideoMode(800, 600), "sfml-sim", sf::Style::Default, glContext);
-
+    print_context(window.GetSettings());
     window.SetActive();
     GL_CHECK((void)0);
     
