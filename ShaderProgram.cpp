@@ -62,17 +62,17 @@ bool createShader(GLenum type, const string& file, const GLchar *source, int32 s
 
     GLint success;
     glGetShaderiv(*shader, GL_COMPILE_STATUS, &success);
-    if (success == GL_FALSE) {
-        cerr << "failed" << endl;
-        glDeleteShader(*shader);
-        *shader = 0;
-    } else {
-        cerr << "success" << endl;
-    }
+    bool ok = success == GL_TRUE;
+    cerr << (ok ? "success" : "false") << endl;
 
     ShaderProgram::printShaderLog(*shader, cerr);
 
-    return success == GL_TRUE;
+    if (!ok) {
+        glDeleteShader(*shader);
+        *shader = 0;
+    }
+
+    return ok;
 }
 
 } // namespace anon

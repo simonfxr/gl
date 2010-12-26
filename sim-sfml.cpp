@@ -176,9 +176,9 @@ private:
     void mouse_moved(int32 dx, int32 dy);
     void mouse_pressed(sf::Mouse::Button button);
     void spawn_sphere();
-    void render_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyePos);
+    void render_sphere(const Sphere& s, float dt, const vec3& eyeLightPos);
     void render_hud();
-    void render_walls(const M3DVector3f vLightEyePos);
+    void render_walls(const vec3& eyeLightPos);
     void resolve_collisions(float dt);
     bool load_shaders();
     void focus_lost();
@@ -283,7 +283,7 @@ bool Game::load_shaders() {
     wall_shader_mvp = glGetUniformLocation(wallShader.program, "mvpMatrix");
     wall_shader_mv = glGetUniformLocation(wallShader.program, "mvMatrix");
     wall_shader_nm = glGetUniformLocation(wallShader.program, "normalMatrix");
-    wall_shader_light = glGetUniformLocation(wallShader.program, "lightPosition");
+    wall_shader_light = glGetUniformLocation(wallShader.program, "eyeLight");
 
     return true;
 }
@@ -534,7 +534,7 @@ void Game::update_sphere_mass() {
 
 static const GLfloat vFloorColor[] = { 0.0f, 1.0f, 0.0f, 1.0f};
 static const vec4 SPHERE_COLOR = vec4(0.f, 0.f, 1.f, 1.f);
-static const M3DVector4f vLightPos = { 11.f, 7.f, 11.f };
+static const M3DVector4f vLightPos = { 11.f, 18.f, 11.f, 1.f };
 static const M3DVector4f vWallColor = { 0.6f, 0.6f, 0.6f, 1.f };
 
 static float rand1() {
@@ -581,6 +581,7 @@ void Game::render(float interpolation) {
 
     M3DVector4f vLightEyePos;
     m3dTransformVector4(vLightEyePos, vLightPos, mCamera);
+    const vec3 eyeLightPos = vec3(vLightEyePos[0], vLightEyePos[1], vLightEyePos[2]);
 
     // modelViewMatrix.Translate(room.corner_min.x, room.corner_min.y, room.corner_min.z);
     // const vec3 dim = room.corner_max - room.corner_min;
@@ -593,14 +594,12 @@ void Game::render(float interpolation) {
     
     // GL_CHECK(floorBatch.Draw());
 
-    glDisable(GL_CULL_FACE);
-
-    render_walls(vLightEyePos);
+    render_walls(eyeLightPos);
 
     float dt = interpolation * game_speed / loop.ticks_per_second;
 
     for (uint32 i = 0; i < spheres.size(); ++i)
-        render_sphere(spheres[i], dt, vLightEyePos);
+        render_sphere(spheres[i], dt, eyeLightPos);
 
     modelViewMatrix.PopMatrix();
     modelViewMatrix.PopMatrix();    
@@ -614,9 +613,10 @@ void Game::render(float interpolation) {
     gltools::printErrors(std::cerr);
 }
 
-void Game::render_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyePos) {
+void Game::render_sphere(const Sphere& s, float dt, const vec3& light3) {
 
     M3DVector4f color = { s.color.x, s.color.y, s.color.z, s.color.w };
+    M3DVector3f light = { light3.x, light3.y, light3.z };
     
     modelViewMatrix.PushMatrix();
     vec3 pos = s.calc_position(dt);
@@ -625,12 +625,12 @@ void Game::render_sphere(const Sphere& s, float dt, const M3DVector3f vLightEyeP
     GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
                                           transformPipeline.GetModelViewMatrix(), 
                                           transformPipeline.GetProjectionMatrix(),
-                                          vLightEyePos, color));
+                                          light, color));
     sphereBatch.Draw();
     modelViewMatrix.PopMatrix();
 }
 
-void Game::render_walls(const M3DVector3f vLightEyePos) {
+void Game::render_walls(const vec3& eyeLightPos) {
 
     modelViewMatrix.PushMatrix();
 
@@ -649,7 +649,7 @@ void Game::render_walls(const M3DVector3f vLightEyePos) {
     GL_CHECK(glUniformMatrix4fv(wall_shader_mvp, 1, GL_FALSE, transformPipeline.GetModelViewProjectionMatrix()));
     GL_CHECK(glUniformMatrix4fv(wall_shader_mv, 1, GL_FALSE, transformPipeline.GetModelViewMatrix()));
     GL_CHECK(glUniformMatrix3fv(wall_shader_nm, 1, GL_FALSE, transformPipeline.GetNormalMatrix(true)));
-    GL_CHECK(glUniform3fv(wall_shader_light, 1, vLightEyePos));    
+    GL_CHECK(glUniform3fv(wall_shader_light, 1, (const float *) &eyeLightPos));    
 
     GL_CHECK(wallBatch.draw());
 
