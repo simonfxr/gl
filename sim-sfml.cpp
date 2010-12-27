@@ -26,12 +26,11 @@
 #include "GameLoop.hpp"
 #include "gltools.hpp"
 #include "ShaderProgram.hpp"
-
-#include "Batch2.hpp"
+#include "Batch.hpp"
 
 static const vec3 gravity(0.f, -9.81f, 0.f);
 
-static void makeUnitCube(gltools::Batch2& cube);
+static void makeUnitCube(gltools::Batch& cube);
 
 namespace {
 
@@ -127,7 +126,7 @@ public:
 
     GLTriangleBatch         sphereBatch;
 
-    gltools::Batch2 wallBatch;
+    gltools::Batch wallBatch;
     
     Camera                  camera;
     Cuboid                  room;
@@ -191,7 +190,7 @@ Game::Game(sf::Clock& _clock, sf::RenderWindow& _win) :
     clock(_clock),
     window(_win),
     loop(100, 5, 0),
-    wallBatch(GL_QUADS, gltools::Batch2::Vertex | gltools::Batch2::Normal)
+    wallBatch(GL_QUADS, gltools::Batch::Vertex | gltools::Batch::Normal)
 {}
 
 bool Game::init() {
@@ -269,8 +268,8 @@ bool Game::load_shaders() {
     
     ws.compileVertexShaderFromFile("brick.vert");
     ws.compileFragmentShaderFromFile("brick.frag");
-    ws.bindAttribute("vertex", gltools::Batch2::VertexPos);
-    ws.bindAttribute("normal", gltools::Batch2::NormalPos);
+    ws.bindAttribute("vertex", gltools::Batch::VertexPos);
+    ws.bindAttribute("normal", gltools::Batch::NormalPos);
 
     if (!ws.link())
         return false;
@@ -937,7 +936,7 @@ bool Cuboid::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision)
     return false;
 }
 
-static void makeUnitCube(gltools::Batch2& cube) {
+static void makeUnitCube(gltools::Batch& cube) {
     // cube.Begin(GL_QUADS, 24);
 
     vec3 n1 = vec3(0.f, 0.f, -1.f);
