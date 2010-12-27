@@ -9,11 +9,10 @@ const float Ambient = 0.7;
 const float Diffuse = 0.2;
 const float Specular = 0.1;
 
-uniform mat4 mvMatrix;
-uniform vec3 eyeLight;
+uniform vec3 ecLight;
 
-in vec3 mcVertex;
-flat in vec3 eyeNormal;
+in vec3 ecPosition;
+flat in vec3 ecNormal;
 in vec2 texCoord;
 
 out vec4 fragColor;
@@ -31,16 +30,15 @@ vec3 textureSample(vec2 coord) {
     return mix(MortarColor, BrickColor, useBrick.x * useBrick.y);
 }
 
-void main()
-{
+void main() {
+    
     vec3 color = textureSample(texCoord);
-    vec3 ecPosition = vec3(mvMatrix * vec4(mcVertex, 1));
 
-    vec3 light = normalize(eyeLight - ecPosition);
-    float ambientIntensity = max(0, dot(eyeNormal, light));
+    vec3 light = normalize(ecLight - ecPosition);
+    float ambientIntensity = max(0, dot(ecNormal, light));
 
     vec3 spectator = normalize(-ecPosition);
-    vec3 lightReflect = reflect(-light, eyeNormal);
+    vec3 lightReflect = reflect(-light, ecNormal);
     float specularIntensity = pow(max(0, dot(spectator, lightReflect)), 16);
 
     color = color * Diffuse +

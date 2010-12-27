@@ -20,25 +20,28 @@ struct vec3 {
 
     vec3(const vec3& a)
         : x(a.x), y(a.y), z(a.z) {}
+
+private:
+
+    vec3(v4::v4 v)
+        : x(v4::v4a(v)), y(v4::v4b(v)), z(v4::v4c(v)) {}
+
+    static v4::v4 v4(const vec3& v) {
+        return v4::make3(v.x, v.y, v.z);
+    }
+    
+public:
     
     static vec3 add(const vec3& a, const vec3& b) {
-        v4::v4 A = v4::make3(a.x, a.y, a.z);
-        v4::v4 B = v4::make3(b.x, b.y, b.z);
-        v4::v4 R = v4::add3(A, B);
-        return vec3(v4::v4a(R), v4::v4b(R), v4::v4c(R));
+        return v4::add3(v4(a), v4(b));
     }
 
     static vec3 sub(const vec3& a, const vec3& b) {
-        v4::v4 A = v4::make3(a.x, a.y, a.z);
-        v4::v4 B = v4::make3(b.x, b.y, b.z);
-        v4::v4 R = v4::sub3(A, B);
-        return vec3(v4::v4a(R), v4::v4b(R), v4::v4c(R));
+        return v4::sub3(v4(a), v4(b));
     }
 
     static float dot(const vec3& a, const vec3& b) {
-        v4::v4 A = v4::make3(a.x, a.y, a.z);
-        v4::v4 B = v4::make3(b.x, b.y, b.z);
-        return v4::dot3(A, B);
+        return v4::dot3(v4(a), v4(b));
     }
 
     static vec3 cross(const vec3& a, const vec3& b) {
@@ -68,10 +71,7 @@ struct vec3 {
     }
     
     static vec3 compMult(const vec3& a, const vec3& b) {
-        v4::v4 av = v4::make3(a.x, a.y, a.z);
-        v4::v4 bv = v4::make3(b.x, b.y, b.z);
-        v4::v4 cv = v4::mul3(av, bv);
-        return vec3(v4::v4a(cv), v4::v4b(cv), v4::v4c(cv));
+        return v4::mul3(v4(a), v4(b));
     }
 
     static vec3 reflect(const vec3& a, const vec3& n, float amp = 1.f) {
@@ -79,11 +79,11 @@ struct vec3 {
     }
 
     vec3 scale(float l) const {
-        return vec3(x * l, y * l, z * l);
+        return compMult(*this, vec3(l));
     }
 
     vec3 neg() const {
-        return vec3(-x, -y, -z);
+        return v4::neg3(v4(*this));
     }
 
     float magSq() const {

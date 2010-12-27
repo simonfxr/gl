@@ -283,7 +283,7 @@ bool Game::load_shaders() {
     wall_shader_mvp = glGetUniformLocation(wallShader.program, "mvpMatrix");
     wall_shader_mv = glGetUniformLocation(wallShader.program, "mvMatrix");
     wall_shader_nm = glGetUniformLocation(wallShader.program, "normalMatrix");
-    wall_shader_light = glGetUniformLocation(wallShader.program, "eyeLight");
+    wall_shader_light = glGetUniformLocation(wallShader.program, "ecLight");
 
     return true;
 }
