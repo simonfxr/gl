@@ -39,4 +39,8 @@ typedef long  int64;
 
 #define ERROR(e) gltools::error(e, __FILE__, __LINE__, __func__)
 
+#define FATAL_ERROR(e) gltools::fatal_error(e, __FILE__, __LINE__, __func__)
+
+#define LOCAL __attribute__((unused))
+
 #endif

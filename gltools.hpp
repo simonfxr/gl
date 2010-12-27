@@ -22,6 +22,8 @@ bool printErrors(std::ostream& out);
 
 void error(const char *msg, const char *file, int line, const char *func);
 
+void fatal_error(const char *msg, const char *file, int line, const char *func) __attribute__((noreturn));
+
 bool checkForGLError(const char *op, const char *file, int line, const char *func);
 
 } // namespace gltools

@@ -1,12 +1,12 @@
 #include <iostream>
 #include <sstream>
+#include <cstdlib>
 
 #include <GL/glew.h>
 #include <GL/glxew.h>
 
 #include "gltools.hpp"
 #include "defs.h"
-
 
 namespace gltools {
 
@@ -48,6 +48,11 @@ void error(const char *msg, const char *file, int line, const char *func) {
     std::cerr << "ERROR in " << func << std::endl
               << " at " << file << ":" << line << std::endl
               << " message: " << msg << std::endl;
+}
+
+void fatal_error(const char *msg, const char *file, int line, const char *func) {
+    error(msg, file, line, func);
+    exit(2);
 }
 
 #ifdef GLDEBUG
@@ -231,7 +236,8 @@ bool checkForGLError(const char *op, const char *file, int line, const char *fun
     if (glDebug == 0)
         glDebug = initDebug();
 
-    DebugLocation loc = { .op = op, .file = file, .line = line, .func = func };
+    DebugLocation loc;
+    loc.op = op; loc.file = file; loc.line = line; loc.func = func;
     glDebug->printDebugMessages(loc);
 
 #endif

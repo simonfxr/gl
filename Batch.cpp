@@ -125,7 +125,6 @@ void Batch::draw() const {
 
     ASSERT(frozen, "cannot draw batch while building");
 
-    
 //    GL_CHECK(glBindVertexArray(vertex_buffer));
     
     if (data.hasAttr(Vertex)) {

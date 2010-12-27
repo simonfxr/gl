@@ -45,9 +45,16 @@ public:
     }
 
     static vec3 cross(const vec3& a, const vec3& b) {
-        return vec3(a.y * b.z - a.z * b.y,
-                    a.z * b.x - a.x * b.z,
-                    a.x * b.y - a.y * b.x);
+        v4::v4 a1 = v4::make3(a.y, a.z, a.x);
+        v4::v4 b1 = v4::make3(b.z, b.x, b.y);
+        v4::v4 c1 = v4::mul3(a1, b1);
+        v4::v4 a2 = v4::make3(a.z, a.x, a.y);
+        v4::v4 b2 = v4::make3(b.y, b.z, b.x);
+        v4::v4 c2 = v4::mul3(a2, b2);
+        return v4::sub3(c1, c2);
+        // return vec3(a.y * b.z - a.z * b.y,
+        //             a.z * b.x - a.x * b.z,
+        //             a.x * b.y - a.y * b.x);
     }
 
     static vec3 normalize(const vec3& a) {

@@ -15,7 +15,7 @@ OPT_FLAGS := -O3 -march=native $(OPT_FLAGS)
 
 PKG_CFLAGS := $(shell pkg-config --cflags $(PACKAGES))
 
-CFLAGS  := -I/usr/include/GL $(PKG_CFLAGS) $(INC_DIRS) -Wall -Wextra $(OPT_FLAGS) $(EXTRA_CFLAGS)
+CFLAGS  := -I/usr/include/GL $(PKG_CFLAGS) $(INC_DIRS) -Wall -Wextra $(OPT_FLAGS) $(EXTRA_CFLAGS) 
 
 ICC_CFLAGS := $(CFLAGS) -xHOST -O3 -ipo -no-prec-div
 
@@ -42,8 +42,8 @@ triangle: triangle.cpp libgltools.so
 own1: own1.cpp ShaderProgram.cpp VertexBuffer.cpp
 	$(CXX) -o $@ $(CFLAGS) $(LDFLAGS) $^
 
-sim-sfml: sim-sfml.cpp GameLoop.cpp gltools.cpp Batch.cpp ShaderProgram.cpp libgltools.so
-	$(CXX) sim-sfml.cpp GameLoop.cpp gltools.cpp Batch.cpp ShaderProgram.cpp -o $@  `pkg-config --libs --cflags glew` -I/usr/include/GL $(OPT_FLAGS) -L. $(LD_GLTOOLS) -Wall -Wextra $(INC_DIRS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum $(EXTRA_CFLAGS)
+sim-sfml: sim-sfml.cpp GameLoop.cpp gltools.cpp Batch.cpp ShaderProgram.cpp GenBatch.cpp libgltools.so
+	$(CXX) sim-sfml.cpp GameLoop.cpp gltools.cpp Batch.cpp ShaderProgram.cpp GenBatch.cpp -o $@  `pkg-config --libs --cflags glew` -I/usr/include/GL $(OPT_FLAGS) -L. $(LD_GLTOOLS) -Wall -Wextra $(INC_DIRS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum -Wno-invalid-offsetof $(EXTRA_CFLAGS)
 
 cube: cube.cpp GameLoop.cpp gltools.cpp ShaderProgram.cpp Batch.cpp
 	$(CXX) -o $@ $^ $(CFLAGS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum

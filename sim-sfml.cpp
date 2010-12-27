@@ -28,6 +28,8 @@
 #include "Batch.hpp"
 #include "ShaderProgram.hpp"
 
+#include "Batch2.hpp"
+
 static const vec3 gravity(0.f, -9.81f, 0.f);
 
 static void makeUnitCube(gltools::Batch& cube);
@@ -91,7 +93,7 @@ void set_matrix(M3DMatrix44f dst, const mat4& src) {
         dst[i] = src.flat[i];
 }
 
-std::ostream& operator << (std::ostream& out, const vec3& v) {
+std::ostream& LOCAL operator << (std::ostream& out, const vec3& v) {
     return out << "(" << v.x << ";" << v.y << ";" << v.z << ")";
 }
 
@@ -353,30 +355,30 @@ void Game::tick() {
     }
 }
 
-static ivec3 calcTile(const vec3& isize, const vec3& p) {
-    return ivec3(vec3::compMult(isize, p)); 
-}
+// static ivec3 calcTile(const vec3& isize, const vec3& p) {
+//     return ivec3(vec3::compMult(isize, p)); 
+// }
 
-struct Tile {
-    uint32 object;
-    Tile *nxt;
-};
+// struct Tile {
+//     uint32 object;
+//     Tile *nxt;
+// };
 
-static void insertTile(Tile* &t, uint32 id, std::vector<Tile *> allocs) {
-    Tile *nt = new Tile();
-    allocs.push_back(nt);
-    nt->object = id;
-    nt->nxt = t;
-    t = nt;
-}
+// static void insertTile(Tile* &t, uint32 id, std::vector<Tile *> allocs) {
+//     Tile *nt = new Tile();
+//     allocs.push_back(nt);
+//     nt->object = id;
+//     nt->nxt = t;
+//     t = nt;
+// }
 
-static void collTile(std::vector<Sphere> ss, Sphere& s, uint32 i, const Tile *t, float dt) {
-    while (t != 0) {
-        if (t->object < i)
-            Sphere::collide(s, ss[t->object], dt);
-        t = t->nxt;
-    }
-}
+// static void collTile(std::vector<Sphere> ss, Sphere& s, uint32 i, const Tile *t, float dt) {
+//     while (t != 0) {
+//         if (t->object < i)
+//             Sphere::collide(s, ss[t->object], dt);
+//         t = t->nxt;
+//     }
+// }
 
 void Game::resolve_collisions(float dt) {
 
