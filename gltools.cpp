@@ -45,7 +45,7 @@ bool printErrors(std::ostream& out) {
 }
 
 void error(const char *msg, const char *file, int line, const char *func) {
-    std::cerr << "ERROR in " << func << std::endl
+    std::cerr << "ERROR in " << func << "()" << std::endl
               << " at " << file << ":" << line << std::endl
               << " message: " << msg << std::endl;
 }

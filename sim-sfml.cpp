@@ -25,14 +25,13 @@
 
 #include "GameLoop.hpp"
 #include "gltools.hpp"
-#include "Batch.hpp"
 #include "ShaderProgram.hpp"
 
 #include "Batch2.hpp"
 
 static const vec3 gravity(0.f, -9.81f, 0.f);
 
-static void makeUnitCube(gltools::Batch& cube);
+static void makeUnitCube(gltools::Batch2& cube);
 
 namespace {
 
@@ -128,7 +127,7 @@ public:
 
     GLTriangleBatch         sphereBatch;
 
-    gltools::Batch wallBatch;
+    gltools::Batch2 wallBatch;
     
     Camera                  camera;
     Cuboid                  room;
@@ -192,7 +191,7 @@ Game::Game(sf::Clock& _clock, sf::RenderWindow& _win) :
     clock(_clock),
     window(_win),
     loop(100, 5, 0),
-    wallBatch(GL_QUADS, gltools::Batch::Vertex | gltools::Batch::Normal)
+    wallBatch(GL_QUADS, gltools::Batch2::Vertex | gltools::Batch2::Normal)
 {}
 
 bool Game::init() {
@@ -270,8 +269,8 @@ bool Game::load_shaders() {
     
     ws.compileVertexShaderFromFile("brick.vert");
     ws.compileFragmentShaderFromFile("brick.frag");
-    ws.bindAttribute("vertex", gltools::Batch::VertexPos);
-    ws.bindAttribute("normal", gltools::Batch::NormalPos);
+    ws.bindAttribute("vertex", gltools::Batch2::VertexPos);
+    ws.bindAttribute("normal", gltools::Batch2::NormalPos);
 
     if (!ws.link())
         return false;
@@ -723,11 +722,14 @@ void Game::render_hud() {
 }
 
 static void print_context(const sf::ContextSettings& c) {
-    std::cerr << "Version:" << c.MajorVersion << "." << c.MinorVersion << std::endl
-              << "DepthBits: " << c.DepthBits << std::endl
-              << "StencilBits: " << c.StencilBits << std::endl
-              << "Antialiasing: " << c.AntialiasingLevel << std::endl
-              << "DebugContext: " << (c.DebugContext ? "yes" : "no") << std::endl;
+    
+    std::cerr << "Initialized OpenGL Context"<< std::endl
+              << "  Version:\t" << c.MajorVersion << "." << c.MinorVersion << std::endl
+              << "  DepthBits:\t" << c.DepthBits << std::endl
+              << "  StencilBits:\t" << c.StencilBits << std::endl
+              << "  Antialiasing:\t" << c.AntialiasingLevel << std::endl
+              << "  DebugContext:\t" << (c.DebugContext ? "yes" : "no") << std::endl
+              << std::endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -935,7 +937,7 @@ bool Cuboid::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision)
     return false;
 }
 
-static void makeUnitCube(gltools::Batch& cube) {
+static void makeUnitCube(gltools::Batch2& cube) {
     // cube.Begin(GL_QUADS, 24);
 
     vec3 n1 = vec3(0.f, 0.f, -1.f);

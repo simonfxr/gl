@@ -131,7 +131,11 @@ public:
         batch.add(attrs.attrs, static_cast<const void *>(&v));
     }
 
-    void freeze() { frozen = true; }
+    void freeze() {
+        ASSERT(!frozen, "batch already frozen");
+        frozen = true;
+        batch.send(attrs.attrs);
+    }
 
     void draw() {
         ASSERT(frozen, "cannot draw batch while building it");
