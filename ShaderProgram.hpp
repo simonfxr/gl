@@ -56,9 +56,15 @@ public:
         last_error = NoError;
     }
 
+    bool wasError() {
+        return last_error != NoError;
+    }
+
     bool replaceWith(ShaderProgram& new_program);
 
     GLint uniformLocation(const std::string& name);
+
+    void printError(std::ostream& out);
 
     static void printShaderLog(GLuint shader, std::ostream& out);
     static void printProgramLog(GLuint program, std::ostream& out);

@@ -33,6 +33,11 @@ struct color {
         r = c.r; g = c.g; b = c.b; a = c.a;
         return *this;
     }
+
+    explicit vec4() const {
+        static const float Scale = 1.f / 255.f;
+        return vec4(r, g, b, a) * Scale;
+    }
 };
 
 } // gltools

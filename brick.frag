@@ -35,10 +35,11 @@ void main() {
     vec3 color = textureSample(texCoord);
 
     vec3 light = normalize(ecLight - ecPosition);
-    float ambientIntensity = max(0, dot(ecNormal, light));
+    vec3 eyeNormal = normalize(ecNormal);
+    float ambientIntensity = max(0, dot(eyeNormal, light));
 
     vec3 spectator = normalize(-ecPosition);
-    vec3 lightReflect = reflect(-light, ecNormal);
+    vec3 lightReflect = reflect(-light, eyeNormal);
     float specularIntensity = pow(max(0, dot(spectator, lightReflect)), 16);
 
     color = color * Diffuse +

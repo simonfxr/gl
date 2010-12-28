@@ -195,7 +195,7 @@ void ShaderProgram::printProgramLog(GLuint program, std::ostream& out) {
 }
 
 void ShaderProgram::use() {
-    glUseProgram(program);
+    GL_CHECK(glUseProgram(program));
 }
 
 bool ShaderProgram::replaceWith(ShaderProgram& new_prog) {
@@ -211,8 +211,25 @@ bool ShaderProgram::replaceWith(ShaderProgram& new_prog) {
 }
 
 GLint ShaderProgram::uniformLocation(const std::string& name) {
-    GLint loc = glGetUniformLocation(program, name.c_str());
+    GLint loc;
+    GL_CHECK(loc = glGetUniformLocation(program, name.c_str()));
     if (loc == -1)
         push_error(UniformNotKnown);
     return loc;
+}
+
+void ShaderProgram::printError(std::ostream& out) {
+
+    const char *err = 0;
+    switch (last_error) {
+    case NoError: break;
+    case CompilationFailed: err = "compilation failed"; break;
+    case LinkageFailed: err = "linkage failed"; break;
+    case AttributeNotBound: err = "couldnt bind attribute"; break;
+    case UniformNotKnown: err = "uniform not known"; break;
+    default: err = "unknown error"; break;
+    }
+
+    if (err != 0)
+        out << "ShaderProgram error occurred: " << err << std::endl;
 }

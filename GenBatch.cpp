@@ -38,7 +38,7 @@ DynBatch::DynBatch(uint32 _nattrs, const Attr attrs[], uint32 initialSize) :
 }
 
 DynBatch::~DynBatch() {
-    glDeleteBuffers(nattrs, buffer_names);
+    GL_CHECK(glDeleteBuffers(nattrs, buffer_names));
     for (uint32 i = 0; i < nattrs; ++i)
         delete[] data[i];
     delete[] data;
@@ -67,11 +67,11 @@ void DynBatch::add(const Attr attrs[], const void *value) {
 }
 
 void DynBatch::send(const Attr attrs[]) {
-    glGenBuffers(nattrs, buffer_names);
+    GL_CHECK(glGenBuffers(nattrs, buffer_names));
 
     for (uint32 i = 0; i < nattrs; ++i) {
-        glBindBuffer(GL_ARRAY_BUFFER, buffer_names[i]);
-        glBufferData(GL_ARRAY_BUFFER, componentSize(attrs[i].type) * attrs[i].size * filled, data[i], GL_STATIC_DRAW);
+        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, buffer_names[i]));
+        GL_CHECK(glBufferData(GL_ARRAY_BUFFER, componentSize(attrs[i].type) * attrs[i].size * filled, data[i], GL_STATIC_DRAW));
         delete [] data[i];
         data[i] = 0;
     }

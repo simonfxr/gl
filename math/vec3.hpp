@@ -127,8 +127,7 @@ public:
     }
 
     vec3& operator +=(const vec3& a) {
-        *this = *this + a;
-        return *this;
+        return *this = *this + a;
     }
 
     vec3 operator -(const vec3& a) const {
@@ -136,8 +135,7 @@ public:
     }
 
     vec3& operator -=(const vec3& a) {
-        *this = *this - a;
-        return *this;
+        return *this = *this - a;
     }
 
     vec3 operator -() const {
@@ -149,8 +147,7 @@ public:
     }
 
     vec3& operator *=(float l) {
-        *this = *this * l;
-        return *this;
+        return *this = *this * l;
     }
 
     vec3 operator /(float l) const {
@@ -160,10 +157,10 @@ public:
 
 namespace {
 
-inline vec3 __attribute__((unused)) operator *(float l, const vec3& a) {
+inline vec3 LOCAL operator *(float l, const vec3& a) {
     return a * l;
 }
 
-}
+} // namespace anon
 
 #endif

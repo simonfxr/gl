@@ -70,6 +70,20 @@ gltools::Attr cubeVertexAttrArray[] = {
 
 gltools::Attrs<CubeVertex> cubeVertexAttrs(ARRAY_LENGTH(cubeVertexAttrArray), cubeVertexAttrArray);
 
+struct SphereVertex {
+    vec4 position;
+    vec3 normal;
+};
+
+gltools::Attr sphereVertexAttrArray[] = {
+    gltools::attr::vec4(offsetof(SphereVertex, position)),
+    gltools::attr::vec3(offsetof(SphereVertex, normal)),
+};
+
+gltools::Attrs<SphereVertex> sphereVertexAttrs(ARRAY_LENGTH(sphereVertexAttrArray), sphereVertexAttrArray);
+
+void makeSphere(gltools::GenBatch<SphereVertex>& sphere, float rad, int32 stacks, int32 slices);
+
 void makeUnitCube(gltools::GenBatch<CubeVertex>& cube);
 
 struct Camera {
@@ -131,14 +145,14 @@ public:
     GLFrustum               viewFrustum;                // View Frustum
     GLGeometryTransform     transformPipeline;          // Geometry Transform Pipeline
 
-    GLTriangleBatch         sphereBatch;
-
     gltools::GenBatch<CubeVertex> wallBatch;
+    gltools::GenBatch<SphereVertex> sphereBatch;
     
     Camera                  camera;
     Cuboid                  room;
 
     ShaderProgram wallShader;
+    ShaderProgram sphereShader;
 
     struct WallShaderUniforms {
         GLint mvp;
@@ -148,6 +162,17 @@ public:
     };
 
     WallShaderUniforms wall_uniforms;
+
+    struct SphereShaderUniforms {
+        GLint mvp;
+        GLint mv;
+        GLint nm;
+        GLint light;
+        GLint color;
+        GLint shininess;
+    };
+
+    SphereShaderUniforms sphere_uniforms;
     
     uint32 fps_count;
     uint32 current_fps;
@@ -202,7 +227,8 @@ Game::Game(sf::Clock& _clock, sf::RenderWindow& _win) :
     clock(_clock),
     window(_win),
     loop(100, 5, 0),
-    wallBatch(GL_QUADS, cubeVertexAttrs)
+    wallBatch(GL_QUADS, cubeVertexAttrs),
+    sphereBatch(GL_TRIANGLES, sphereVertexAttrs)
 {}
 
 bool Game::init() {
@@ -236,7 +262,7 @@ bool Game::init() {
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
     // This make a sphere
-    gltMakeSphere(sphereBatch, 1.f, 26, 13);
+    makeSphere(sphereBatch, 1.f, 26, 13);
 
     const vec3 lln = room.corner_min;
     const vec3 dim = room.corner_max - room.corner_min;
@@ -276,6 +302,7 @@ bool Game::init() {
 
 bool Game::load_shaders() {
 
+    bool ok = true;
     ShaderProgram ws;
     
     ws.addShaderFile(ShaderProgram::VertexShader, "brick.vert");
@@ -284,26 +311,52 @@ bool Game::load_shaders() {
     ws.bindAttribute("normal", cubeVertexAttrs.index(offsetof(CubeVertex, normal)));
     ws.link();
 
-    if (ws.getError() != ShaderProgram::NoError)
-        return false;
-    
-    WallShaderUniforms us;
+    if (!ws.wasError()) {
+        WallShaderUniforms us;
 
-    us.mvp = ws.uniformLocation("mvpMatrix");
-    us.mv = ws.uniformLocation("mvMatrix");
-    us.nm = ws.uniformLocation("normalMatrix");
-    us.light = ws.uniformLocation("ecLight");
+        us.mvp = ws.uniformLocation("mvpMatrix");
+        us.mv = ws.uniformLocation("mvMatrix");
+        us.nm = ws.uniformLocation("normalMatrix");
+        us.light = ws.uniformLocation("ecLight");
 
-    if (ws.getError() != ShaderProgram::NoError)
-        return false;
+        if (!ws.wasError()) {
+            wall_uniforms = us;
+        
+            wallShader.replaceWith(ws);
+        }
+    }
 
-    wall_uniforms = us;
+    ok = ok && !ws.wasError();
+    ws.printError(std::cerr);
 
-    wallShader.replaceWith(ws);
+    ShaderProgram ss;
 
-    std::cerr << "wall shader succesfully loaded and linked" << std::endl;
+    ss.addShaderFile(ShaderProgram::VertexShader, "sphere.vert");
+    ss.addShaderFile(ShaderProgram::FragmentShader, "sphere.frag");
+    ss.bindAttribute("position", sphereVertexAttrs.index(offsetof(SphereVertex, position)));
+    ss.bindAttribute("normal", sphereVertexAttrs.index(offsetof(SphereVertex, normal)));
+    ss.link();
 
-    return true;
+    if (!ss.wasError()) {
+        SphereShaderUniforms us;
+
+        us.mvp = ss.uniformLocation("mvpMatrix");
+        us.mv = ss.uniformLocation("mvMatrix");
+        us.nm = ss.uniformLocation("normalMatrix");
+        us.light = ss.uniformLocation("ecLight");
+        us.color = ss.uniformLocation("color");
+        us.shininess = ss.uniformLocation("shininess");
+
+        if (!ss.wasError()) {
+            sphere_uniforms = us;
+            sphereShader.replaceWith(ss);
+        }
+    }
+
+    ok = ok && !ss.wasError();
+    ss.printError(std::cerr);
+
+    return ok;
 }
 
 float Game::now() {
@@ -469,6 +522,7 @@ void Game::update_fps_text(uint32 current_fps) {
 void Game::window_size_changed(uint32 width, uint32 height) {
     update_fps_text(current_fps);
 
+    std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
     GL_CHECK(glViewport(0, 0, width, height));
 
     // Create the projection matrix, and load it on the projection matrix stack
@@ -631,20 +685,24 @@ void Game::render(float interpolation) {
     gltools::printErrors(std::cerr);
 }
 
-void Game::render_sphere(const Sphere& s, float dt, const vec3& light3) {
+void Game::render_sphere(const Sphere& s, float dt, const vec3& eyeLightPos) {
 
-    M3DVector4f color = { s.color.x, s.color.y, s.color.z, s.color.w };
-    M3DVector3f light = { light3.x, light3.y, light3.z };
-    
     modelViewMatrix.PushMatrix();
     vec3 pos = s.calc_position(dt);
     modelViewMatrix.Translate(pos.x, pos.y, pos.z);
     modelViewMatrix.Scale(s.r, s.r, s.r);
-    GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
-                                          transformPipeline.GetModelViewMatrix(), 
-                                          transformPipeline.GetProjectionMatrix(),
-                                          light, color));
-    sphereBatch.Draw();
+
+    sphereShader.use();
+    GL_CHECK(glUniformMatrix4fv(sphere_uniforms.mvp, 1, GL_FALSE, transformPipeline.GetModelViewProjectionMatrix()));
+    GL_CHECK(glUniformMatrix4fv(sphere_uniforms.mv, 1, GL_FALSE, transformPipeline.GetModelViewMatrix()));
+    GL_CHECK(glUniformMatrix3fv(sphere_uniforms.nm, 1, GL_FALSE, transformPipeline.GetNormalMatrix(true)));
+    GL_CHECK(glUniform3fv(sphere_uniforms.light, 1, (const float *) &eyeLightPos));
+    vec4 col = s.color;
+    GL_CHECK(glUniform4fv(sphere_uniforms.color, 1, (const float *) &col));
+    float shininess = 60.f;
+    GL_CHECK(glUniform1fv(sphere_uniforms.shininess, 1, &shininess));
+
+    sphereBatch.draw();
     modelViewMatrix.PopMatrix();
 }
 
@@ -663,6 +721,9 @@ void Game::render_walls(const vec3& eyeLightPos) {
     //                                       transformPipeline.GetModelViewProjectionMatrix(),
     //                                       vWallColor));
 
+    GL_CHECK(glCullFace(GL_FRONT));
+    GL_CHECK(glEnable(GL_CULL_FACE));
+
     GL_CHECK(wallShader.use());
     GL_CHECK(glUniformMatrix4fv(wall_uniforms.mvp, 1, GL_FALSE, transformPipeline.GetModelViewProjectionMatrix()));
     GL_CHECK(glUniformMatrix4fv(wall_uniforms.mv, 1, GL_FALSE, transformPipeline.GetModelViewMatrix()));
@@ -670,6 +731,8 @@ void Game::render_walls(const vec3& eyeLightPos) {
     GL_CHECK(glUniform3fv(wall_uniforms.light, 1, (const float *) &eyeLightPos));    
 
     GL_CHECK(wallBatch.draw());
+
+    GL_CHECK(glDisable(GL_CULL_FACE));
 
     // GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
     //                                       transformPipeline.GetModelViewMatrix(), 
@@ -726,6 +789,13 @@ void Game::render_hud() {
     txtInter.SetColor(c);
     txtInter.SetPosition(2, height);
 
+    height += txtInter.GetRect().Height + 2;
+    sf::Text txtNumBalls(std::string("NO Spheres: ") + to_string(spheres.size()));
+    txtNumBalls.SetCharacterSize(16);
+    txtNumBalls.SetColor(c);
+    txtNumBalls.SetPosition(2, height);
+
+
     window.SaveGLStates();
     
     window.Draw(txtFps);
@@ -734,6 +804,7 @@ void Game::render_hud() {
     window.Draw(txtRad);
     window.Draw(txtAnimSpeed);
     window.Draw(txtInter);
+    window.Draw(txtNumBalls);
     
     window.RestoreGLStates();
 }
@@ -999,5 +1070,130 @@ void makeUnitCube(gltools::GenBatch<CubeVertex>& cube) {
 
     cube.freeze();
 }
+
+void addTriangle(gltools::GenBatch<SphereVertex>& s, const M3DVector3f vertices[3], const M3DVector3f normals[3], const M3DVector2f texCoords[3]) {
+
+    for (uint32 i = 0; i < 3; ++i) {
+        SphereVertex v;
+        v.position = vec4(toVec3(vertices[i]), 1.f);
+        v.normal = toVec3(normals[i]);
+        s.add(v);
+    }
+}
+
+// from the GLTools library (OpenGL Superbible)
+void gltMakeSphere(gltools::GenBatch<SphereVertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
+{
+    GLfloat drho = (GLfloat)(3.141592653589) / (GLfloat) iStacks;
+    GLfloat dtheta = 2.0f * (GLfloat)(3.141592653589) / (GLfloat) iSlices;
+    GLfloat ds = 1.0f / (GLfloat) iSlices;
+    GLfloat dt = 1.0f / (GLfloat) iStacks;
+    GLfloat t = 1.0f;	
+    GLfloat s = 0.0f;
+    GLint i, j;     // Looping variables
+    
+    for (i = 0; i < iStacks; i++) 
+    {
+        GLfloat rho = (GLfloat)i * drho;
+        GLfloat srho = (GLfloat)(sin(rho));
+        GLfloat crho = (GLfloat)(cos(rho));
+        GLfloat srhodrho = (GLfloat)(sin(rho + drho));
+        GLfloat crhodrho = (GLfloat)(cos(rho + drho));
+		
+        // Many sources of OpenGL sphere drawing code uses a triangle fan
+        // for the caps of the sphere. This however introduces texturing 
+        // artifacts at the poles on some OpenGL implementations
+        s = 0.0f;
+        M3DVector3f vVertex[4];
+        M3DVector3f vNormal[4];
+        M3DVector2f vTexture[4];
+
+        for ( j = 0; j < iSlices; j++) 
+        {
+            GLfloat theta = (j == iSlices) ? 0.0f : j * dtheta;
+            GLfloat stheta = (GLfloat)(-sin(theta));
+            GLfloat ctheta = (GLfloat)(cos(theta));
+			
+            GLfloat x = stheta * srho;
+            GLfloat y = ctheta * srho;
+            GLfloat z = crho;
+        
+            vTexture[0][0] = s;
+            vTexture[0][1] = t;
+            vNormal[0][0] = x;
+            vNormal[0][1] = y;
+            vNormal[0][2] = z;
+            vVertex[0][0] = x * fRadius;
+            vVertex[0][1] = y * fRadius;
+            vVertex[0][2] = z * fRadius;
+			
+            x = stheta * srhodrho;
+            y = ctheta * srhodrho;
+            z = crhodrho;
+
+            vTexture[1][0] = s;
+            vTexture[1][1] = t - dt;
+            vNormal[1][0] = x;
+            vNormal[1][1] = y;
+            vNormal[1][2] = z;
+            vVertex[1][0] = x * fRadius;
+            vVertex[1][1] = y * fRadius;
+            vVertex[1][2] = z * fRadius;
+			
+
+            theta = ((j+1) == iSlices) ? 0.0f : (j+1) * dtheta;
+            stheta = (GLfloat)(-sin(theta));
+            ctheta = (GLfloat)(cos(theta));
+			
+            x = stheta * srho;
+            y = ctheta * srho;
+            z = crho;
+        
+            s += ds;
+            vTexture[2][0] = s;
+            vTexture[2][1] = t;
+            vNormal[2][0] = x;
+            vNormal[2][1] = y;
+            vNormal[2][2] = z;
+            vVertex[2][0] = x * fRadius;
+            vVertex[2][1] = y * fRadius;
+            vVertex[2][2] = z * fRadius;
+			
+            x = stheta * srhodrho;
+            y = ctheta * srhodrho;
+            z = crhodrho;
+
+            vTexture[3][0] = s;
+            vTexture[3][1] = t - dt;
+            vNormal[3][0] = x;
+            vNormal[3][1] = y;
+            vNormal[3][2] = z;
+            vVertex[3][0] = x * fRadius;
+            vVertex[3][1] = y * fRadius;
+            vVertex[3][2] = z * fRadius;
+
+            addTriangle(sphereBatch, vVertex, vNormal, vTexture);
+			
+            // Rearrange for next triangle
+            memcpy(vVertex[0], vVertex[1], sizeof(M3DVector3f));
+            memcpy(vNormal[0], vNormal[1], sizeof(M3DVector3f));
+            memcpy(vTexture[0], vTexture[1], sizeof(M3DVector2f));
+			
+            memcpy(vVertex[1], vVertex[3], sizeof(M3DVector3f));
+            memcpy(vNormal[1], vNormal[3], sizeof(M3DVector3f));
+            memcpy(vTexture[1], vTexture[3], sizeof(M3DVector2f));
+					
+            addTriangle(sphereBatch, vVertex, vNormal, vTexture);			
+        }
+        t -= dt;
+    }
+    
+    sphereBatch.freeze();
+}
+
+void makeSphere(gltools::GenBatch<SphereVertex>& sphere, float rad, int32 stacks, int32 slices) {
+    gltMakeSphere(sphere, rad, stacks, slices);
+}
+
 
 } // namespace anon

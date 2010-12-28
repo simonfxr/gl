@@ -217,27 +217,32 @@ GLDebug* initDebug() {
     }
 }
 
+
 } // namespace anon
 
 #endif // GLDEBUG
 
+void printGLError(const DebugLocation& loc, GLenum err) {
+    std::cerr << "OpenGL ERROR: " << getErrorString(err) << std::endl
+              << "  in operation: " << loc.op << std::endl
+              << "  in function: " << loc.func << std::endl
+              << "  at " << loc.file << ":" << loc.line << std::endl;
+}
+
 bool checkForGLError(const char *op, const char *file, int line, const char *func) {
     bool was_error = false;
 
-    for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true) {
-        std::cerr << "OpenGL ERROR: " << getErrorString(err) << std::endl
-                  << "  in operation: " << op << std::endl
-                  << "  in function: " << func << std::endl
-                  << "  at " << file << ":" << line << std::endl;
-    }
+    DebugLocation loc;
+    loc.op = op; loc.file = file; loc.line = line; loc.func = func;
+
+    for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
+        printGLError(loc, err);
 
 #ifdef GLDEBUG
 
     if (glDebug == 0)
         glDebug = initDebug();
 
-    DebugLocation loc;
-    loc.op = op; loc.file = file; loc.line = line; loc.func = func;
     glDebug->printDebugMessages(loc);
 
 #endif
