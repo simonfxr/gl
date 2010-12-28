@@ -4,7 +4,7 @@ uniform mat4 mvpMatrix;
 uniform mat4 mvMatrix;
 uniform mat3 normalMatrix;
 
-in vec3 vertex;
+in vec4 vertex;
 in vec3 normal;
 
 out vec3 ecPosition;
@@ -13,7 +13,7 @@ out vec2 texCoord;
 
 void main() {
     
-    ecPosition = vec3(mvMatrix * vec4(vertex, 1));
+    ecPosition = vec3(mvMatrix * vertex);
     ecNormal = normalMatrix * normal;
     
     if (normal.z != 0)
@@ -23,5 +23,5 @@ void main() {
     else
         texCoord = vertex.zy;
 
-    gl_Position = mvpMatrix * vec4(vertex, 1);
+    gl_Position = mvpMatrix * vertex;
 }

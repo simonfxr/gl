@@ -6,13 +6,13 @@
 
 #include "defs.h"
 #include "ShaderProgram.hpp"
+#include "gltools.hpp"
 
 using namespace std;
 
 ShaderProgram::ShaderProgram() :
-    program(0),
-    vertex_shader(0),
-    fragment_shader(0)
+    last_error(NoError),
+    program(0)
 {}
 
 ShaderProgram::~ShaderProgram() {
@@ -20,15 +20,22 @@ ShaderProgram::~ShaderProgram() {
 }
 
 void ShaderProgram::reset() {
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
     glDeleteProgram(program);
-    vertex_shader = 0;
-    fragment_shader = 0;
     program = 0;
+    last_error = NoError;
 }
 
 namespace {
+
+bool translateShaderType(ShaderProgram::ShaderType type, GLenum *gltype) {
+    switch (type) {
+    case ShaderProgram::VertexShader:
+        *gltype = GL_VERTEX_SHADER; return true;
+    case ShaderProgram::FragmentShader:
+        *gltype = GL_FRAGMENT_SHADER; return true;
+    default: return false;
+    }    
+}
 
 bool readContents(const string& path, char * &file_contents, int32 &file_size) {
     FILE *in = fopen(path.c_str(), "rb");
@@ -52,93 +59,86 @@ bool readContents(const string& path, char * &file_contents, int32 &file_size) {
     return true;
 }
 
-bool createShader(GLenum type, const string& file, const GLchar *source, int32 source_len, GLenum *shader) {
+bool addShader(GLuint *program, ShaderProgram::ShaderType type, const string& file, const GLchar *src, int32 src_len) {
+
+    GLenum shader_type;
+    if (!translateShaderType(type, &shader_type)) {
+        ERROR("unknown shader type");
+        return false;
+    }
+
+    if (*program == 0) {
+        *program = glCreateProgram();
+        if (*program == 0) {
+            ERROR("couldnt create program");
+            return false;
+        }
+    }
+
+    GLuint shader = glCreateShader(shader_type);
+    if (shader == 0) {
+        ERROR("couldnt create shader");
+        return false;
+    }
 
     cerr << "compiling " << file << " ... ";
         
-    *shader = glCreateShader(type);
-    glShaderSource(*shader, 1, &source, &source_len);
-    glCompileShader(*shader);
+    glShaderSource(shader, 1, &src, &src_len);
+    glCompileShader(shader);
 
     GLint success;
-    glGetShaderiv(*shader, GL_COMPILE_STATUS, &success);
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
     bool ok = success == GL_TRUE;
-    cerr << (ok ? "success" : "false") << endl;
+    cerr << (ok ? "success" : "failed") << endl;
 
-    ShaderProgram::printShaderLog(*shader, cerr);
+    ShaderProgram::printShaderLog(shader, cerr);
 
-    if (!ok) {
-        glDeleteShader(*shader);
-        *shader = 0;
-    }
+    if (ok)
+        glAttachShader(*program, shader);
+
+    glDeleteShader(shader);
 
     return ok;
 }
 
 } // namespace anon
 
-bool ShaderProgram::compileVertexShader(const string& source) {
-    if (vertex_shader != 0)
-        return false;
-    return createShader(GL_VERTEX_SHADER, "<unknown>", source.c_str(), source.length(), &vertex_shader);
-}
-
-bool ShaderProgram::compileVertexShaderFromFile(const string& path) {
-    if (vertex_shader != 0)
-        return false;
-
-    char *src;
-    int32 len;
-    if (!readContents(path, src, len)) {
-        std::cerr << "couldnt read file: " << path << std::endl;
-        return false;
-    }
-    bool ok = createShader(GL_VERTEX_SHADER, path, src, len, &vertex_shader);
-    delete[] src;
+bool ShaderProgram::addShaderSrc(ShaderType type, const std::string& src) {
+    bool ok = addShader(&program, type, "<unknown>", src.c_str(), src.length());
+    if (!ok)
+        push_error(CompilationFailed);
     return ok;
 }
 
-bool ShaderProgram::compileFragmentShader(const string& source) {
-    if (fragment_shader != 0)
-        return false;
-    return createShader(GL_FRAGMENT_SHADER, "<unknown>", source.c_str(), source.length(), &fragment_shader);
-}
-
-bool ShaderProgram::compileFragmentShaderFromFile(const string& path) {
-    if (fragment_shader != 0)
-        return false;
-
+bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
     char *src;
     int32 len;
-    if (!readContents(path, src, len)) {
-        std::cerr << "couldnt read file: " << path << std::endl;
+    
+    if (!readContents(file, src, len)) {
+        ERROR("couldnt read shader file");
         return false;
     }
-    bool ok = createShader(GL_FRAGMENT_SHADER, path, src, len, &fragment_shader);
+    
+    bool ok = addShader(&program, type, file, src, len);
     delete[] src;
+    if (!ok)
+        push_error(CompilationFailed);
     return ok;
 }
 
 bool ShaderProgram::link() {
 
-    if (program == 0 && (vertex_shader == 0 || fragment_shader == 0))
-        return false;
+    if (program == 0) return false;
 
     cerr << "linking ... ";
 
-    if (program == 0) {
-        program = glCreateProgram();
-        glAttachShader(program, vertex_shader);
-        glAttachShader(program, fragment_shader);
-    }
-    
     glLinkProgram(program);
 
     GLint success;
     glGetProgramiv(program, GL_LINK_STATUS, &success);
     if (success == GL_FALSE) {
         cerr << "failed" << endl;
-        glDeleteProgram(program);
+        push_error(LinkageFailed);
     } else {
         cerr << "success" << endl;
     }
@@ -148,25 +148,13 @@ bool ShaderProgram::link() {
     return success == GL_TRUE;
 }
 
-bool ShaderProgram::compileAndLink(const std::string& vertex_shader_file, const std::string& fragment_shader_file) {
-    return
-        compileVertexShaderFromFile(vertex_shader_file) &&
-        compileFragmentShaderFromFile(fragment_shader_file) &&
-        link();
-}
-
 bool ShaderProgram::bindAttribute(const std::string& s, GLuint position) {
-    
-    if (program == 0 && (vertex_shader == 0 || fragment_shader == 0))
-        return false;
-    
-    if (program == 0) {
+    if (program == 0)
         program = glCreateProgram();
-        glAttachShader(program, vertex_shader);
-        glAttachShader(program, fragment_shader);
-    }
     
     glBindAttribLocation(program, position, s.c_str());
+    // FIXME: check wether attrib was added correctly
+    
     return true;
 }
 
@@ -208,4 +196,23 @@ void ShaderProgram::printProgramLog(GLuint program, std::ostream& out) {
 
 void ShaderProgram::use() {
     glUseProgram(program);
+}
+
+bool ShaderProgram::replaceWith(ShaderProgram& new_prog) {
+    
+    if (new_prog.program != 0 && new_prog.last_error == NoError) {
+        reset();
+        program = new_prog.program;
+        new_prog.program = 0;
+        return true;
+    }
+
+    return false;
+}
+
+GLint ShaderProgram::uniformLocation(const std::string& name) {
+    GLint loc = glGetUniformLocation(program, name.c_str());
+    if (loc == -1)
+        push_error(UniformNotKnown);
+    return loc;
 }

@@ -26,11 +26,9 @@
 #include "GameLoop.hpp"
 #include "gltools.hpp"
 #include "ShaderProgram.hpp"
-#include "Batch.hpp"
+#include "GenBatch.hpp"
 
 static const vec3 gravity(0.f, -9.81f, 0.f);
-
-static void makeUnitCube(gltools::Batch& cube);
 
 namespace {
 
@@ -60,12 +58,25 @@ struct Sphere {
 
 } __attribute__((aligned(16)));
 
+struct CubeVertex {
+    vec4 position;
+    vec3 normal;
+};
+
+gltools::Attr cubeVertexAttrArray[] = {
+    gltools::attr::vec4(offsetof(CubeVertex, position)),
+    gltools::attr::vec3(offsetof(CubeVertex, normal))
+};
+
+gltools::Attrs<CubeVertex> cubeVertexAttrs(ARRAY_LENGTH(cubeVertexAttrArray), cubeVertexAttrArray);
+
+void makeUnitCube(gltools::GenBatch<CubeVertex>& cube);
+
 struct Camera {
     GLFrame frame;
 
     // vec3 origin;
     // EulerAngles orientation;
-        
 
     void setOrigin(const vec3& origin);
     void facePoint(const vec3& position);
@@ -81,10 +92,6 @@ struct Camera {
     mat4 getCameraMatrix();
         
 } __attribute__ ((aligned(16)));
-
-}
-
-namespace {
 
 void set_matrix(M3DMatrix44f dst, const mat4& src) {
     for (uint32 i = 0; i < 16; ++i)
@@ -126,17 +133,22 @@ public:
 
     GLTriangleBatch         sphereBatch;
 
-    gltools::Batch wallBatch;
+    gltools::GenBatch<CubeVertex> wallBatch;
     
     Camera                  camera;
     Cuboid                  room;
 
     ShaderProgram wallShader;
-    GLint wall_shader_mvp;
-    GLint wall_shader_mv;
-    GLint wall_shader_nm;
-    GLint wall_shader_light;
 
+    struct WallShaderUniforms {
+        GLint mvp;
+        GLint mv;
+        GLint nm;
+        GLint light;
+    };
+
+    WallShaderUniforms wall_uniforms;
+    
     uint32 fps_count;
     uint32 current_fps;
     float  fps_render_next;
@@ -157,7 +169,7 @@ public:
 
     bool have_focus;
 
-    std::vector<Sphere> spheres;    
+    std::vector<Sphere> spheres;
 
     Game(sf::Clock& _clock, sf::RenderWindow& _win);
 
@@ -190,7 +202,7 @@ Game::Game(sf::Clock& _clock, sf::RenderWindow& _win) :
     clock(_clock),
     window(_win),
     loop(100, 5, 0),
-    wallBatch(GL_QUADS, gltools::Batch::Vertex | gltools::Batch::Normal)
+    wallBatch(GL_QUADS, cubeVertexAttrs)
 {}
 
 bool Game::init() {
@@ -266,24 +278,30 @@ bool Game::load_shaders() {
 
     ShaderProgram ws;
     
-    ws.compileVertexShaderFromFile("brick.vert");
-    ws.compileFragmentShaderFromFile("brick.frag");
-    ws.bindAttribute("vertex", gltools::Batch::VertexPos);
-    ws.bindAttribute("normal", gltools::Batch::NormalPos);
+    ws.addShaderFile(ShaderProgram::VertexShader, "brick.vert");
+    ws.addShaderFile(ShaderProgram::FragmentShader, "brick.frag");
+    ws.bindAttribute("vertex", cubeVertexAttrs.index(offsetof(CubeVertex, position)));
+    ws.bindAttribute("normal", cubeVertexAttrs.index(offsetof(CubeVertex, normal)));
+    ws.link();
 
-    if (!ws.link())
+    if (ws.getError() != ShaderProgram::NoError)
         return false;
     
-    std::cerr << "wall shader succesfully loaded and linked" << std::endl;
+    WallShaderUniforms us;
 
-    wallShader.reset();
-    wallShader.program = ws.program;
-    ws.program = 0;
-        
-    wall_shader_mvp = glGetUniformLocation(wallShader.program, "mvpMatrix");
-    wall_shader_mv = glGetUniformLocation(wallShader.program, "mvMatrix");
-    wall_shader_nm = glGetUniformLocation(wallShader.program, "normalMatrix");
-    wall_shader_light = glGetUniformLocation(wallShader.program, "ecLight");
+    us.mvp = ws.uniformLocation("mvpMatrix");
+    us.mv = ws.uniformLocation("mvMatrix");
+    us.nm = ws.uniformLocation("normalMatrix");
+    us.light = ws.uniformLocation("ecLight");
+
+    if (ws.getError() != ShaderProgram::NoError)
+        return false;
+
+    wall_uniforms = us;
+
+    wallShader.replaceWith(ws);
+
+    std::cerr << "wall shader succesfully loaded and linked" << std::endl;
 
     return true;
 }
@@ -528,7 +546,7 @@ void Game::focus_gained() {
 }
 
 void Game::update_sphere_mass() {
-    float V = 4.f / 3.f * Math::PI * sphere_rad * sphere_rad * sphere_rad;
+    float V = 4.f / 3.f * Math::PI * Math::cubed(sphere_rad);
     sphere_mass = V * sphere_density;
 }
 
@@ -646,10 +664,10 @@ void Game::render_walls(const vec3& eyeLightPos) {
     //                                       vWallColor));
 
     GL_CHECK(wallShader.use());
-    GL_CHECK(glUniformMatrix4fv(wall_shader_mvp, 1, GL_FALSE, transformPipeline.GetModelViewProjectionMatrix()));
-    GL_CHECK(glUniformMatrix4fv(wall_shader_mv, 1, GL_FALSE, transformPipeline.GetModelViewMatrix()));
-    GL_CHECK(glUniformMatrix3fv(wall_shader_nm, 1, GL_FALSE, transformPipeline.GetNormalMatrix(true)));
-    GL_CHECK(glUniform3fv(wall_shader_light, 1, (const float *) &eyeLightPos));    
+    GL_CHECK(glUniformMatrix4fv(wall_uniforms.mvp, 1, GL_FALSE, transformPipeline.GetModelViewProjectionMatrix()));
+    GL_CHECK(glUniformMatrix4fv(wall_uniforms.mv, 1, GL_FALSE, transformPipeline.GetModelViewMatrix()));
+    GL_CHECK(glUniformMatrix3fv(wall_uniforms.nm, 1, GL_FALSE, transformPipeline.GetNormalMatrix(true)));
+    GL_CHECK(glUniform3fv(wall_uniforms.light, 1, (const float *) &eyeLightPos));    
 
     GL_CHECK(wallBatch.draw());
 
@@ -936,45 +954,50 @@ bool Cuboid::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision)
     return false;
 }
 
-static void makeUnitCube(gltools::Batch& cube) {
+namespace {
+
+void makeUnitCube(gltools::GenBatch<CubeVertex>& cube) {
     // cube.Begin(GL_QUADS, 24);
 
-    vec3 n1 = vec3(0.f, 0.f, -1.f);
-    cube.normal(n1); cube.vertex(vec3(-1.0f, -1.0f,  1.0f));
-    cube.normal(n1); cube.vertex(vec3( 1.0f, -1.0f,  1.0f));
-    cube.normal(n1); cube.vertex(vec3( 1.0f,  1.0f,  1.0f));
-    cube.normal(n1); cube.vertex(vec3(-1.0f,  1.0f,  1.0f));
+    CubeVertex v;
+    
+    v.normal = vec3(0.f, 0.f, -1.f);
+    v.position = vec4(-1.0f, -1.0f,  1.0f, 1.f); cube.add(v);
+    v.position = vec4( 1.0f, -1.0f,  1.0f, 1.f); cube.add(v);
+    v.position = vec4( 1.0f,  1.0f,  1.0f, 1.f); cube.add(v);
+    v.position = vec4(-1.0f,  1.0f,  1.0f, 1.f); cube.add(v);
 
-    vec3 n2 = vec3(0.f, 0.f, +1.f);
-    cube.normal(n2); cube.vertex(vec3(-1.0f, -1.0f, -1.0f));
-    cube.normal(n2); cube.vertex(vec3(-1.0f,  1.0f, -1.0f));
-    cube.normal(n2); cube.vertex(vec3( 1.0f,  1.0f, -1.0f));
-    cube.normal(n2); cube.vertex(vec3( 1.0f, -1.0f, -1.0f));
+    v.normal = vec3(0.f, 0.f, +1.f);
+    v.position = vec4(-1.0f, -1.0f, -1.0f, 1.f); cube.add(v);
+    v.position = vec4(-1.0f,  1.0f, -1.0f, 1.f); cube.add(v);
+    v.position = vec4( 1.0f,  1.0f, -1.0f, 1.f); cube.add(v);
+    v.position = vec4( 1.0f, -1.0f, -1.0f, 1.f); cube.add(v);
 
-    vec3 n3 = vec3(0.f, -1.f, 0.f);
-    cube.normal(n3); cube.vertex(vec3(-1.0f,  1.0f, -1.0f));
-    cube.normal(n3); cube.vertex(vec3(-1.0f,  1.0f,  1.0f));
-    cube.normal(n3); cube.vertex(vec3( 1.0f,  1.0f,  1.0f));
-    cube.normal(n3); cube.vertex(vec3( 1.0f,  1.0f, -1.0f));
+    v.normal = vec3(0.f, -1.f, 0.f);
+    v.position = vec4(-1.0f,  1.0f, -1.0f, 1.f); cube.add(v);
+    v.position = vec4(-1.0f,  1.0f,  1.0f, 1.f); cube.add(v);
+    v.position = vec4( 1.0f,  1.0f,  1.0f, 1.f); cube.add(v);
+    v.position = vec4( 1.0f,  1.0f, -1.0f, 1.f); cube.add(v);
 
-    vec3 n4 = vec3(0.f, +1.f, 0.f);
-    cube.normal(n4); cube.vertex(vec3(-1.0f, -1.0f, -1.0f));
-    cube.normal(n4); cube.vertex(vec3( 1.0f, -1.0f, -1.0f));
-    cube.normal(n4); cube.vertex(vec3( 1.0f, -1.0f,  1.0f));
-    cube.normal(n4); cube.vertex(vec3(-1.0f, -1.0f,  1.0f));
+    v.normal = vec3(0.f, +1.f, 0.f);
+    v.position = vec4(-1.0f, -1.0f, -1.0f, 1.f); cube.add(v);
+    v.position = vec4( 1.0f, -1.0f, -1.0f, 1.f); cube.add(v);
+    v.position = vec4( 1.0f, -1.0f,  1.0f, 1.f); cube.add(v);
+    v.position = vec4(-1.0f, -1.0f,  1.0f, 1.f); cube.add(v);
 
-    vec3 n5 = vec3(-1.f, 0.f, 0.f);
-    cube.normal(n5); cube.vertex(vec3( 1.0f, -1.0f, -1.0f));
-    cube.normal(n5); cube.vertex(vec3( 1.0f,  1.0f, -1.0f));
-    cube.normal(n5); cube.vertex(vec3( 1.0f,  1.0f,  1.0f));
-    cube.normal(n5); cube.vertex(vec3( 1.0f, -1.0f,  1.0f));
+    v.normal = vec3(-1.f, 0.f, 0.f);
+    v.position = vec4( 1.0f, -1.0f, -1.0f, 1.f); cube.add(v);
+    v.position = vec4( 1.0f,  1.0f, -1.0f, 1.f); cube.add(v);
+    v.position = vec4( 1.0f,  1.0f,  1.0f, 1.f); cube.add(v);
+    v.position = vec4( 1.0f, -1.0f,  1.0f, 1.f); cube.add(v);
 
-    vec3 n6 = vec3(+1.f, 0.f, 0.f);
-    cube.normal(n6); cube.vertex(vec3(-1.0f, -1.0f, -1.0f));
-    cube.normal(n6); cube.vertex(vec3(-1.0f, -1.0f,  1.0f));
-    cube.normal(n6); cube.vertex(vec3(-1.0f,  1.0f,  1.0f));
-    cube.normal(n6); cube.vertex(vec3(-1.0f,  1.0f, -1.0f));
+    v.normal = vec3(+1.f, 0.f, 0.f);
+    v.position = vec4(-1.0f, -1.0f, -1.0f, 1.f); cube.add(v);
+    v.position = vec4(-1.0f, -1.0f,  1.0f, 1.f); cube.add(v);
+    v.position = vec4(-1.0f,  1.0f,  1.0f, 1.f); cube.add(v);
+    v.position = vec4(-1.0f,  1.0f, -1.0f, 1.f); cube.add(v);
 
     cube.freeze();
 }
 
+} // namespace anon

@@ -101,6 +101,14 @@ float LOCAL distance(float x, float y) {
     return abs(x - y);
 }
 
+float LOCAL squared(float x) {
+    return x * x;
+}
+
+float LOCAL cubed(float x) {
+    return x * x * x;
+}
+
 } // namespace anon
 
 } // namespace Math
