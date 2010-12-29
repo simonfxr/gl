@@ -33,6 +33,7 @@ public:
         virtual void render(float interpolation) = 0;
         virtual void handleEvents() = 0;
         virtual float now() = 0;
+        virtual void idle(float secs) {}
     };
      
     explicit GameLoop(uint32 ticks_per_second, uint32 max_frame_skip = 0, uint32 max_fps = 0);
@@ -48,4 +49,3 @@ public:
     int32 run(Game& logic);
 };
 #endif
-

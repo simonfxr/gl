@@ -139,7 +139,6 @@ public:
     GameLoop loop;
     sf::Text txtFps;
 
-    GLShaderManager         shaderManager;              // Shader Manager
     GLMatrixStack           modelViewMatrix;            // Modelview Matrix
     GLMatrixStack           projectionMatrix;           // Projection Matrix
     GLFrustum               viewFrustum;                // View Frustum
@@ -208,7 +207,7 @@ public:
 private:
 
     void update_fps_text(uint32 current_fps);
-    void window_size_changed(uint32 width, uint32 height);
+    void window_resized(uint32 width, uint32 height);
     void key_pressed(sf::Key::Code key);
     void mouse_moved(int32 dx, int32 dy);
     void mouse_pressed(sf::Mouse::Button button);
@@ -254,9 +253,6 @@ bool Game::init() {
 
     window.SetActive();
 
-    // Initialze Shader Manager
-    shaderManager.InitializeStockShaders();
-	
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
@@ -295,7 +291,7 @@ bool Game::init() {
 
     update_sphere_mass();
     
-    window_size_changed(window.GetWidth(), window.GetHeight());
+    window_resized(window.GetWidth(), window.GetHeight());
 
     return true;
 }
@@ -347,13 +343,14 @@ bool Game::load_shaders() {
         us.color = ss.uniformLocation("color");
         us.shininess = ss.uniformLocation("shininess");
 
-        if (!ss.wasError()) {
-            sphere_uniforms = us;
-            sphereShader.replaceWith(ss);
-        }
+        sphere_uniforms = us;
+        ss.clearError();
+        sphereShader.replaceWith(ss);
+        ok = ok && !ss.wasError();
     }
 
     ok = ok && !ss.wasError();
+    
     ss.printError(std::cerr);
 
     return ok;
@@ -377,7 +374,7 @@ void Game::handleEvents() {
         case sf::Event::Closed:
             loop.exit(); break;
         case sf::Event::Resized:
-            window_size_changed(e.Size.Width, e.Size.Height); break;
+            window_resized(e.Size.Width, e.Size.Height); break;
         case sf::Event::KeyPressed:
             key_pressed(e.Key.Code); break;
         case sf::Event::MouseMoved:
@@ -519,7 +516,7 @@ void Game::update_fps_text(uint32 current_fps) {
     txtFps.SetColor(sf::Color(255, 255, 0, 180));
 }
 
-void Game::window_size_changed(uint32 width, uint32 height) {
+void Game::window_resized(uint32 width, uint32 height) {
     update_fps_text(current_fps);
 
     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
@@ -527,8 +524,12 @@ void Game::window_size_changed(uint32 width, uint32 height) {
 
     // Create the projection matrix, and load it on the projection matrix stack
     viewFrustum.SetPerspective(35.0f, float(width) / float(height), 1.0f, 100.0f);
-    projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
+    // M3DMatrix44f projMat;
+    // set_matrix(projMat, Transform::perspective(Math::degToRad(35.0f), float(width) / float(height), 1.0f, 100.0f));
     
+    projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
+//    projectionMatrix.LoadMatrix(projMat);
+        
     // Set the transformation pipeline to use the two matrix stacks 
     transformPipeline.SetMatrixStacks(modelViewMatrix, projectionMatrix);
 }
@@ -666,12 +667,19 @@ void Game::render(float interpolation) {
     
     // GL_CHECK(floorBatch.Draw());
 
+    GL_CHECK(glCullFace(GL_FRONT));
+    GL_CHECK(glEnable(GL_CULL_FACE));
+
     render_walls(eyeLightPos);
 
     float dt = interpolation * game_speed / loop.ticks_per_second;
 
+    GL_CHECK(glCullFace(GL_BACK));
+
     for (uint32 i = 0; i < spheres.size(); ++i)
         render_sphere(spheres[i], dt, eyeLightPos);
+
+    GL_CHECK(glDisable(GL_CULL_FACE));
 
     modelViewMatrix.PopMatrix();
     modelViewMatrix.PopMatrix();    
@@ -693,16 +701,28 @@ void Game::render_sphere(const Sphere& s, float dt, const vec3& eyeLightPos) {
     modelViewMatrix.Scale(s.r, s.r, s.r);
 
     sphereShader.use();
-    GL_CHECK(glUniformMatrix4fv(sphere_uniforms.mvp, 1, GL_FALSE, transformPipeline.GetModelViewProjectionMatrix()));
-    GL_CHECK(glUniformMatrix4fv(sphere_uniforms.mv, 1, GL_FALSE, transformPipeline.GetModelViewMatrix()));
-    GL_CHECK(glUniformMatrix3fv(sphere_uniforms.nm, 1, GL_FALSE, transformPipeline.GetNormalMatrix(true)));
-    GL_CHECK(glUniform3fv(sphere_uniforms.light, 1, (const float *) &eyeLightPos));
+    if (sphere_uniforms.mvp != -1)
+        GL_CHECK(glUniformMatrix4fv(sphere_uniforms.mvp, 1, GL_FALSE, transformPipeline.GetModelViewProjectionMatrix()));
+    
+    if (sphere_uniforms.mv != -1)
+        GL_CHECK(glUniformMatrix4fv(sphere_uniforms.mv, 1, GL_FALSE, transformPipeline.GetModelViewMatrix()));
+    
+    if (sphere_uniforms.nm != -1)
+        GL_CHECK(glUniformMatrix3fv(sphere_uniforms.nm, 1, GL_FALSE, transformPipeline.GetNormalMatrix(true)));
+    
+    if (sphere_uniforms.light != -1)
+        GL_CHECK(glUniform3fv(sphere_uniforms.light, 1, (const float *) &eyeLightPos));
+    
     vec4 col = s.color;
-    GL_CHECK(glUniform4fv(sphere_uniforms.color, 1, (const float *) &col));
+    if (sphere_uniforms.color != -1)
+        GL_CHECK(glUniform4fv(sphere_uniforms.color, 1, (const float *) &col));
+    
     float shininess = 60.f;
-    GL_CHECK(glUniform1fv(sphere_uniforms.shininess, 1, &shininess));
+    if (sphere_uniforms.shininess != -1)
+        GL_CHECK(glUniform1fv(sphere_uniforms.shininess, 1, &shininess));
 
     sphereBatch.draw();
+
     modelViewMatrix.PopMatrix();
 }
 
@@ -721,9 +741,6 @@ void Game::render_walls(const vec3& eyeLightPos) {
     //                                       transformPipeline.GetModelViewProjectionMatrix(),
     //                                       vWallColor));
 
-    GL_CHECK(glCullFace(GL_FRONT));
-    GL_CHECK(glEnable(GL_CULL_FACE));
-
     GL_CHECK(wallShader.use());
     GL_CHECK(glUniformMatrix4fv(wall_uniforms.mvp, 1, GL_FALSE, transformPipeline.GetModelViewProjectionMatrix()));
     GL_CHECK(glUniformMatrix4fv(wall_uniforms.mv, 1, GL_FALSE, transformPipeline.GetModelViewMatrix()));
@@ -731,8 +748,6 @@ void Game::render_walls(const vec3& eyeLightPos) {
     GL_CHECK(glUniform3fv(wall_uniforms.light, 1, (const float *) &eyeLightPos));    
 
     GL_CHECK(wallBatch.draw());
-
-    GL_CHECK(glDisable(GL_CULL_FACE));
 
     // GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
     //                                       transformPipeline.GetModelViewMatrix(), 
@@ -823,6 +838,8 @@ static void print_context(const sf::ContextSettings& c) {
 int main(int argc, char *argv[]) {
 
     UNUSED(argc);
+    sf::Clock clock;
+    float startupBegin = clock.GetElapsedTime();
     
     if (argv[0] != 0)
         gltSetWorkingDirectory(argv[0]);
@@ -849,14 +866,15 @@ int main(int argc, char *argv[]) {
     window.SetActive();
     GL_CHECK((void)0);
     
-    sf::Clock clock;
-
     Game game(clock, window);
     
     if (!game.init()) {
         std::cerr << "initialization failed, exiting..." << std::endl;
         return 1;
     }
+
+    float startupTime = clock.GetElapsedTime() - startupBegin;
+    std::cerr << "initialized in " << startupTime * 1000 << " ms." << std::endl;
 
     return game.loop.run(game);
 }

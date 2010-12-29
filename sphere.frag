@@ -4,9 +4,9 @@ uniform vec3 ecLight;
 uniform vec4 color;
 uniform float shininess;
 
-const float Ambient = 0.7;
-const float Diffuse = 0.2;
-const float Specular = 0.1;
+const float Ambient = 0.65; // 0.7;
+const float Diffuse = 0.2; // 0.2;
+const float Specular = 0.15; // 0.1;
 
 in vec3 ecPosition;
 in vec3 ecNormal;

@@ -68,7 +68,7 @@ const mat4 identity(vec4(1.f, 0.f, 0.f, 0.f),
                     vec4(0.f, 0.f, 1.f, 0.f),
                     vec4(0.f, 0.f, 0.f, 1.f));
 
-}
+} // namespace anon
 
 #endif           
                  

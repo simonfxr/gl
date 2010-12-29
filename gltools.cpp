@@ -55,16 +55,16 @@ void fatal_error(const char *msg, const char *file, int line, const char *func) 
     exit(2);
 }
 
-#ifdef GLDEBUG
-
-namespace {
-
 struct DebugLocation {
     const char *op;
     const char *file;
     int line;
     const char *func;
 };
+
+namespace {
+
+#ifdef GLDEBUG
 
 struct GLDebug {
     virtual ~GLDebug() {}
@@ -217,10 +217,9 @@ GLDebug* initDebug() {
     }
 }
 
+#endif // GLDEBUG
 
 } // namespace anon
-
-#endif // GLDEBUG
 
 void printGLError(const DebugLocation& loc, GLenum err) {
     std::cerr << "OpenGL ERROR: " << getErrorString(err) << std::endl
