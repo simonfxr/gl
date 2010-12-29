@@ -1,4 +1,6 @@
 #include <vector>
+// #include <iostream>
+#include <limits>
 
 #include "GameWindow.hpp"
 
@@ -13,7 +15,7 @@ struct GameWindow::Data : public GameLoop::Game {
 
     Data(GameWindow& _self) :
         self(_self),
-        keyStates(sf::Key::Count, 0),
+        keyStates(sf::Key::Count, std::numeric_limits<float>::infinity()),
         mouseStates(sf::Mouse::ButtonCount, false),
         mouse_x(0),
         mouse_y(0)
@@ -37,9 +39,13 @@ void GameWindow::Data::handleEvents() {
     bool was_resize = false;
     uint32 new_w = 0;
     uint32 new_h = 0;
+
+    uint32 loops = 0;
     
     sf::Event e;
     while (self.win->GetEvent(e)) {
+
+        ++loops;
         
         if (self.change_pause_state) {
             self.change_pause_state = false;
@@ -64,7 +70,7 @@ void GameWindow::Data::handleEvents() {
             break;
             
         case sf::Event::KeyReleased:
-            keyStates[int32(e.Key.Code)] = 0.f;
+            keyStates[int32(e.Key.Code)] = std::numeric_limits<float>::infinity();
             self.keyStateChanged(e.Key.Code, false);
             break;
             
@@ -145,6 +151,9 @@ void GameWindow::Data::handleEvents() {
         }
     }
 
+    // if (loops != 0)
+    //     std::cerr << "event loop: processed " << loops << " events" << std::endl;
+
     self.handleInternalEvents();
 }
 
@@ -195,6 +204,7 @@ bool GameWindow::init(const sf::ContextSettings& settings, const std::string& na
     data = new Data(*this);
     win = new sf::RenderWindow(sf::VideoMode(800, 600), name, sf::Style::Default, settings);
     clock = new sf::Clock();
+    win->EnableKeyRepeat(false);
     
     init_successful = onInit();
 
@@ -214,8 +224,8 @@ bool GameWindow::init(const sf::ContextSettings& settings, const std::string& na
 }
 
 bool GameWindow::isKeyDown(sf::Key::Code key) {
-    float keyAge = data->keyStates[int32(key)] - realTime();
-    return keyAge == 0.f || keyAge >= 0.015f;
+    float keyAge = realTime() - data->keyStates[int32(key)];
+    return keyAge == 0.f || keyAge >= 0.035f;
 }
 
 bool GameWindow::isButtonDown(sf::Mouse::Button button) {

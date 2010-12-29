@@ -551,7 +551,7 @@ void Game::move_camera(const vec3& dir) {
     const float STEP = 0.1f;
     vec3 step = dir.normalize() * STEP;
 
-//    std::cerr << "moving camera: " << forward << ";" << right << std::endl;
+//    std::cerr << "moving camera: " << currentFrameID() << ", " << dir << std::endl;
 
     Camera new_cam = camera;
     new_cam.move_along_local_axis(step);
@@ -837,10 +837,8 @@ void Sphere::move(const Cuboid& room, float dt) {
     vec3 collision;
     
     if (room.touchesWall(*this, wall, collision)) {
-        vel = vec3::reflect(vel, wall, rand1() * 0.1f + 0.9f) * Math::sqrt(0.6f);
+        vel = vec3::reflect(vel, wall, rand1() * 0.1f + 0.9f) * 0.8f;
         center = collision + wall * -r;
-
-        
     }
 }
 
