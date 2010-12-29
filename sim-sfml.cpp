@@ -23,7 +23,7 @@
 #include "math/EulerAngles.hpp"
 #include "math/transform.hpp"
 
-#include "GameLoop.hpp"
+#include "GameWindow.hpp"
 #include "gltools.hpp"
 #include "ShaderProgram.hpp"
 #include "GenBatch.hpp"
@@ -131,13 +131,7 @@ mat4 toMat4(const M3DMatrix44f m) {
 
 static const float FPS_RENDER_CYCLE = 1.f;
 
-struct Game : public GameLoop::Game {
-public:
-    
-    sf::Clock &clock;
-    sf::RenderWindow &window;
-    GameLoop loop;
-    sf::Text txtFps;
+struct Game : public GameWindow {
 
     GLMatrixStack           modelViewMatrix;            // Modelview Matrix
     GLMatrixStack           projectionMatrix;           // Projection Matrix
@@ -178,10 +172,6 @@ public:
     float  fps_render_next;
     float  fps_render_last;
 
-    uint64 frame_id;
-
-    uint32 mouse_dx, mouse_dy;
-
     float sphere_speed;
     float sphere_mass;
     float sphere_rad;
@@ -191,50 +181,59 @@ public:
     bool use_interpolation;
     uint64 last_frame_rendered;
 
-    bool have_focus;
-
     std::vector<Sphere> spheres;
 
-    Game(sf::Clock& _clock, sf::RenderWindow& _win);
+    Game();
 
-    float now();
-    void handleEvents();
-    void tick();
-    void render(float interpolation);
-
-    bool init();
-    
 private:
 
-    void update_fps_text(uint32 current_fps);
-    void window_resized(uint32 width, uint32 height);
-    void key_pressed(sf::Key::Code key);
-    void mouse_moved(int32 dx, int32 dy);
-    void mouse_pressed(sf::Mouse::Button button);
+    bool onInit();
+
+    void animate();
+    void renderScene(float interpolation);
+    
+    void keyStateChanged(sf::Key::Code key, bool pressed);
+    void mouseButtonStateChanged(sf::Mouse::Button button, bool pressed);
+    void windowResized(uint32 width, uint32 height);
+    void mouseMoved(int32 dx, int32 dy);
+    void handleInternalEvents();
+
     void spawn_sphere();
+    void move_camera(const vec3& step);
+
     void render_sphere(const Sphere& s, float dt, const vec3& eyeLightPos);
     void render_hud();
     void render_walls(const vec3& eyeLightPos);
+    
     void resolve_collisions(float dt);
     bool load_shaders();
-    void focus_lost();
-    void focus_gained();
     void update_sphere_mass();
 };
 
-Game::Game(sf::Clock& _clock, sf::RenderWindow& _win) :
-    clock(_clock),
-    window(_win),
-    loop(100, 5, 0),
+Game::Game() :
     wallBatch(GL_QUADS, cubeVertexAttrs),
     sphereBatch(GL_TRIANGLES, sphereVertexAttrs)
 {}
 
-bool Game::init() {
+static void print_context(const sf::ContextSettings& c) {
+    
+    std::cerr << "Initialized OpenGL Context"<< std::endl
+              << "  Version:\t" << c.MajorVersion << "." << c.MinorVersion << std::endl
+              << "  DepthBits:\t" << c.DepthBits << std::endl
+              << "  StencilBits:\t" << c.StencilBits << std::endl
+              << "  Antialiasing:\t" << c.AntialiasingLevel << std::endl
+              << "  DebugContext:\t" << (c.DebugContext ? "yes" : "no") << std::endl
+              << std::endl;
+}
 
-    frame_id = 0;
+bool Game::onInit() {
+
+    print_context(window().GetSettings());
+
+    ticksPerSecond(100);
+    grabMouse(true);
+
     last_frame_rendered = 0;
-    have_focus = true;
 
     sphere_speed = 10.f;
     sphere_mass = 1.f;
@@ -243,15 +242,12 @@ bool Game::init() {
     game_speed = 1.f;
     use_interpolation = true;
     
-    window.EnableKeyRepeat(true);
-    window.ShowMouseCursor(false);
-
     room.corner_min = vec3(-20.f, 0, -20.f);
     room.corner_max = vec3(+20.f, 20.f, 20.f);
 
     makeUnitCube(wallBatch);
 
-    window.SetActive();
+    window().SetActive();
 
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     
@@ -278,7 +274,7 @@ bool Game::init() {
     // camera.orientation.canonize();
 
     // camera.setOrigin(room.corner_min);
-    camera.setOrigin(vec3(-19.f, 10.f, -19.f));
+    camera.setOrigin(vec3(-19.f, 10.f, +19.f));
     camera.facePoint(vec3(0.f, 10.f, 0.f));
 
     if (!load_shaders()) {
@@ -291,7 +287,7 @@ bool Game::init() {
 
     update_sphere_mass();
     
-    window_resized(window.GetWidth(), window.GetHeight());
+    windowResized(window().GetWidth(), window().GetHeight());
 
     return true;
 }
@@ -356,69 +352,13 @@ bool Game::load_shaders() {
     return ok;
 }
 
-float Game::now() {
-    return clock.GetElapsedTime();
-}
-
-void Game::handleEvents() {
-
-    uint32 win_w = window.GetWidth();
-    uint32 win_h = window.GetHeight();
-
-    uint32 mouse_x = win_w / 2;
-    uint32 mouse_y = win_h / 2;
-    
-    sf::Event e;
-    while (window.GetEvent(e)) {
-        switch (e.Type) {
-        case sf::Event::Closed:
-            loop.exit(); break;
-        case sf::Event::Resized:
-            window_resized(e.Size.Width, e.Size.Height); break;
-        case sf::Event::KeyPressed:
-            key_pressed(e.Key.Code); break;
-        case sf::Event::MouseMoved:
-            mouse_x = e.MouseMove.X;
-            mouse_y = e.MouseMove.Y;
-            break;
-        case sf::Event::MouseButtonPressed:
-            mouse_pressed(e.MouseButton.Button); break;
-        case sf::Event::LostFocus:
-            focus_lost(); break;       
-        case sf::Event::GainedFocus:
-            focus_gained(); break;
-        }
-    }
-
-    int32 dx = int32(win_w / 2) - mouse_x;
-    int32 dy = mouse_y - int32(win_h / 2);
-
-    if (have_focus && (dx != 0 || dy != 0)) {
-        window.SetCursorPosition(win_w / 2, win_h / 2);
-        mouse_moved(dx, dy);
-    }
-}
-
-void Game::tick() {
-    
-    ++frame_id;
-
-    float dt  = game_speed / loop.ticks_per_second;
+void Game::animate() {
+    float dt  = game_speed * frameDuration();
 
     resolve_collisions(dt);
 
     for (uint32 i = 0; i < spheres.size(); ++i)
         spheres[i].move(room, dt);
-
-    Sphere cam;
-    cam.center = camera.getOrigin();
-    cam.r = 0.01f;
-
-    vec3 norm;
-    vec3 col;
-    if (room.touchesWall(cam, norm, col)) {
-        camera.setOrigin(col);
-    }
 }
 
 // static ivec3 calcTile(const vec3& isize, const vec3& p) {
@@ -509,15 +449,7 @@ static std::string to_string(T x) {
     return out.str();
 }
 
-void Game::update_fps_text(uint32 current_fps) {
-    txtFps = sf::Text(to_string(current_fps));
-    txtFps.SetCharacterSize(16);
-    txtFps.SetPosition(2, 0);
-    txtFps.SetColor(sf::Color(255, 255, 0, 180));
-}
-
-void Game::window_resized(uint32 width, uint32 height) {
-    update_fps_text(current_fps);
+void Game::windowResized(uint32 width, uint32 height) {
 
     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
     GL_CHECK(glViewport(0, 0, width, height));
@@ -534,35 +466,22 @@ void Game::window_resized(uint32 width, uint32 height) {
     transformPipeline.SetMatrixStacks(modelViewMatrix, projectionMatrix);
 }
 
-void Game::key_pressed(sf::Key::Code key) {
-    float linear = 0.15f;
+void Game::keyStateChanged(sf::Key::Code key, bool pressed) {
+
+    if (!pressed) return;
 
     using namespace sf::Key;
 
     switch (key) {
-    case W: camera.move_forward(linear); break;
-    case S: camera.move_forward(-linear); break;
-    case A: camera.move_right(linear); break;
-    case D: camera.move_right(-linear); break;
-    case R: sphere_rad += 0.1f; break;
-    case E: sphere_rad -= 0.1f; break;
-    case P: sphere_speed += 0.5f; break;
-    case O: sphere_speed -= 0.5f; break;
-    case U: game_speed += 0.05f; break;
-    case Z: game_speed -= 0.05f; break;
     case I: use_interpolation = !use_interpolation; break;
-    case B: loop.pause(!loop.paused()); break;
+    case B: pause(!paused()); break;
     case C: load_shaders(); break;
     }
-
-    sphere_rad = std::max(0.1f, sphere_rad);
-    sphere_speed = std::max(0.5f, sphere_speed);
-    game_speed = std::max(0.f, game_speed);
 
     update_sphere_mass();
 }
 
-void Game::mouse_moved(int32 dx, int32 dy) {
+void Game::mouseMoved(int32 dx, int32 dy) {
 
     // M3DMatrix44f rot;
     // camera.frame.GetMatrix(rot, true);
@@ -584,20 +503,67 @@ void Game::mouse_moved(int32 dx, int32 dy) {
     camera.rotate(dx * 0.001f, dy * 0.001f);
 }
 
-void Game::mouse_pressed(sf::Mouse::Button button) {
+void Game::mouseButtonStateChanged(sf::Mouse::Button button, bool pressed) {
+
+    if (!pressed) return;
+    
     if (button == sf::Mouse::Left)
         spawn_sphere();
 }
 
-void Game::focus_lost() {
-    have_focus = false;
-    window.ShowMouseCursor(true);
+void Game::handleInternalEvents() {
+    
+    using namespace sf::Key;
+
+    float z_step = 0.f;
+    if (isKeyDown(W))
+        z_step = +1.f;
+    else if (isKeyDown(S))
+        z_step = -1.f;
+
+    float x_step = 0.f;
+    if (isKeyDown(A))
+        x_step = 1.f;
+    else if (isKeyDown(D))
+        x_step = -1.f;
+
+    if (z_step != 0 || x_step != 0)
+        move_camera(vec3(x_step, 0.f, z_step));
+    
+    if (isKeyDown(R))
+        sphere_rad += 0.05f;
+    else if (isKeyDown(E))
+        sphere_rad = std::max(0.05f, sphere_rad - 0.05f);
+    
+    if (isKeyDown(P))
+        sphere_speed += 0.25f;
+    else if (isKeyDown(O))
+        sphere_speed = std::max(0.25f, sphere_speed - 0.25f);
+
+    if (isKeyDown(U))
+        game_speed += 0.025f;
+    else if (isKeyDown(Z))
+        game_speed = std::max(0.f, game_speed - 0.025f);
 }
 
-void Game::focus_gained() {
-    have_focus = true;
-    window.ShowMouseCursor(false);
-    window.SetCursorPosition(window.GetWidth() / 2, window.GetHeight() / 2);
+void Game::move_camera(const vec3& dir) {
+
+    const float STEP = 0.1f;
+    vec3 step = dir.normalize() * STEP;
+
+//    std::cerr << "moving camera: " << forward << ";" << right << std::endl;
+
+    Camera new_cam = camera;
+    new_cam.move_along_local_axis(step);
+    
+    Sphere cam;
+    cam.center = new_cam.getOrigin();
+    cam.r = 1.f;
+
+    vec3 norm;
+    vec3 col;
+    if (!room.touchesWall(cam, norm, col))
+        camera = new_cam;
 }
 
 void Game::update_sphere_mass() {
@@ -620,9 +586,11 @@ static vec4 randomColor() {
 
 void Game::spawn_sphere() {
 
+    vec3 direction = camera.getForwardVector();
+
     Sphere s;
-    s.center = camera.getOrigin();
-    s.vel    = camera.getForwardVector() * sphere_speed;
+    s.center = camera.getOrigin() + direction * (sphere_rad + 1.1f);
+    s.vel    = direction * sphere_speed;
     s.r      = sphere_rad;
     s.mass   = sphere_mass;
     s.color  = randomColor();
@@ -630,17 +598,17 @@ void Game::spawn_sphere() {
     spheres.push_back(s);
 }
 
-void Game::render(float interpolation) {
+void Game::renderScene(float interpolation) {
 
-    if (!use_interpolation && last_frame_rendered == frame_id)
+    if (!use_interpolation && last_frame_rendered == currentFrameID())
         return;
 
     if (!use_interpolation)
         interpolation = 0.f;
 
-    last_frame_rendered = frame_id;
+    last_frame_rendered = currentFrameID();
     
-    window.SetActive();
+    window().SetActive();
 
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
@@ -672,7 +640,7 @@ void Game::render(float interpolation) {
 
     render_walls(eyeLightPos);
 
-    float dt = interpolation * game_speed / loop.ticks_per_second;
+    float dt = interpolation * game_speed * frameDuration();
 
     GL_CHECK(glCullFace(GL_BACK));
 
@@ -687,8 +655,6 @@ void Game::render(float interpolation) {
     ++fps_count;
 
     render_hud();
-
-    window.Display();
 
     gltools::printErrors(std::cerr);
 }
@@ -761,20 +727,24 @@ void Game::render_walls(const vec3& eyeLightPos) {
 
 void Game::render_hud() {
 
-    float now = loop.realTime();
+    float now = realTime();
     if (now >= fps_render_next) {
 
         current_fps = fps_count / (now - fps_render_last);
         fps_render_next = now + FPS_RENDER_CYCLE;
         fps_render_last = now;
         fps_count = 0;
-
-        update_fps_text(current_fps);
     }
 
     sf::Color c(0, 255, 255, 180);
 
-    uint32 height = txtFps.GetRect().Height + 2;
+    uint32 height = 0;
+    sf::Text txtFps = sf::Text(to_string(current_fps));
+    txtFps.SetCharacterSize(16);
+    txtFps.SetPosition(2, 0);
+    txtFps.SetColor(sf::Color(255, 255, 0, 180));
+
+    height += txtFps.GetRect().Height + 2;
     sf::Text txtSpeed("Sphere speed: " + to_string(sphere_speed) + " m/s");
     txtSpeed.SetCharacterSize(16);
     txtSpeed.SetColor(c);
@@ -810,36 +780,24 @@ void Game::render_hud() {
     txtNumBalls.SetColor(c);
     txtNumBalls.SetPosition(2, height);
 
-
-    window.SaveGLStates();
+    window().SaveGLStates();
     
-    window.Draw(txtFps);
-    window.Draw(txtSpeed);
-    window.Draw(txtMass);
-    window.Draw(txtRad);
-    window.Draw(txtAnimSpeed);
-    window.Draw(txtInter);
-    window.Draw(txtNumBalls);
+    window().Draw(txtFps);
+    window().Draw(txtSpeed);
+    window().Draw(txtMass);
+    window().Draw(txtRad);
+    window().Draw(txtAnimSpeed);
+    window().Draw(txtInter);
+    window().Draw(txtNumBalls);
     
-    window.RestoreGLStates();
-}
-
-static void print_context(const sf::ContextSettings& c) {
-    
-    std::cerr << "Initialized OpenGL Context"<< std::endl
-              << "  Version:\t" << c.MajorVersion << "." << c.MinorVersion << std::endl
-              << "  DepthBits:\t" << c.DepthBits << std::endl
-              << "  StencilBits:\t" << c.StencilBits << std::endl
-              << "  Antialiasing:\t" << c.AntialiasingLevel << std::endl
-              << "  DebugContext:\t" << (c.DebugContext ? "yes" : "no") << std::endl
-              << std::endl;
+    window().RestoreGLStates();
 }
 
 int main(int argc, char *argv[]) {
 
     UNUSED(argc);
-    sf::Clock clock;
-    float startupBegin = clock.GetElapsedTime();
+    sf::Clock startupTimer;
+    float startupBegin = startupTimer.GetElapsedTime();
     
     if (argv[0] != 0)
         gltSetWorkingDirectory(argv[0]);
@@ -850,10 +808,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-#ifndef GL_ARB_multisample
-#error "multisampling not supported"
-#endif
-
     sf::ContextSettings glContext;
     glContext.MajorVersion = 3;
     glContext.MinorVersion = 3;
@@ -861,22 +815,18 @@ int main(int argc, char *argv[]) {
 #ifdef GLDEBUG
     glContext.DebugContext = true;
 #endif
-    sf::RenderWindow window(sf::VideoMode(800, 600), "sfml-sim", sf::Style::Default, glContext);
-    print_context(window.GetSettings());
-    window.SetActive();
-    GL_CHECK((void)0);
-    
-    Game game(clock, window);
-    
-    if (!game.init()) {
+
+    Game game;
+
+    if (!game.init(glContext, "sim-sfml")) {
         std::cerr << "initialization failed, exiting..." << std::endl;
         return 1;
     }
 
-    float startupTime = clock.GetElapsedTime() - startupBegin;
-    std::cerr << "initialized in " << startupTime * 1000 << " ms." << std::endl;
+    float startupTime = startupTimer.GetElapsedTime() - startupBegin;
+    std::cerr << "initialized in " << uint32(startupTime * 1000) << " ms." << std::endl;
 
-    return game.loop.run(game);
+    return game.run();
 }
 
 void Sphere::move(const Cuboid& room, float dt) {

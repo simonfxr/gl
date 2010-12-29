@@ -33,6 +33,9 @@ int32 GameLoop::run(GameLoop::Game& logic) {
         
         while ((_now = logic.now()) >= next_game_tick && loops < loops_max && _running) {
             logic.handleEvents();
+
+            if (unlikely(!_running))
+                break;
             
             if (likely(!_paused))
                 logic.tick();
