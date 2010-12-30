@@ -3,6 +3,8 @@
 uniform vec3 ecLight;
 uniform vec4 color;
 uniform float shininess;
+uniform vec3 ecSpotDirection;
+uniform float spotAngle;
 
 const float Ambient = 0.65; // 0.7;
 const float Diffuse = 0.2; // 0.2;
@@ -23,10 +25,21 @@ void main() {
     vec3 lightReflect = reflect(-light, eyeNormal);
     float specularIntensity = pow(max(0, dot(spectator, lightReflect)), shininess);
 
+    float diff = Diffuse;
+    float ambient = Ambient;
+    float specular = Specular;
+
+    if (max(0, dot(ecSpotDirection, -light)) < spotAngle) {
+//        diff = 0.6;
+        ambient = 0.2;
+        ambientIntensity *= 0.5;
+        specular = 0;
+    }
+
     vec3 baseColor = vec3(color);
-    vec3 tone = baseColor * Diffuse +
-                baseColor * Ambient * ambientIntensity +
-                vec3(0.8) * Specular * specularIntensity;
+    vec3 tone = baseColor * diff +
+                baseColor * ambient * ambientIntensity +
+                vec3(0.8) * specular * specularIntensity;
 
     fragColor = vec4(tone, color.a);
 }

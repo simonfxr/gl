@@ -157,7 +157,18 @@ struct Game : public GameWindow {
     Cuboid                  room;
 
     ShaderProgram wallShader;
+    struct {
+        vec3 ecLightPos;
+        vec3 ecSpotDir;
+        float spotAngle;
+    } wallUniforms;
+    
     ShaderProgram sphereShader;
+    struct {
+        vec3 ecLightPos;
+        vec3 ecSpotDir;
+        float spotAngle;
+    } sphereUniforms;
 
     uint32 fps_count;
     uint32 current_fps;
@@ -193,9 +204,9 @@ private:
     void spawn_sphere();
     void move_camera(const vec3& step);
 
-    void render_sphere(const Sphere& s, float dt, const vec3& eyeLightPos);
+    void render_sphere(const Sphere& s, float dt);
     void render_hud();
-    void render_walls(const vec3& eyeLightPos);
+    void render_walls();
     
     void resolve_collisions(float dt);
     bool load_shaders();
@@ -591,17 +602,32 @@ void Game::renderScene(float interpolation) {
     m3dTransformVector4(vLightEyePos, vLightPos, mCamera);
     const vec3 eyeLightPos = vec3(vLightEyePos[0], vLightEyePos[1], vLightEyePos[2]);
 
+    const vec3& spotDirection = vec3::normalize(vec3(0) - toVec3(vLightPos));
+    const M3DVector4f vSpotDirection = { spotDirection.x, spotDirection.y, spotDirection.z, 0 };
+
+    M3DVector4f vEyeSpotDirection;
+    m3dTransformVector4(vEyeSpotDirection, vSpotDirection, mCamera);
+    const vec3 ecSpotDirection = toVec3(vEyeSpotDirection);
+
+    wallUniforms.ecLightPos = eyeLightPos;
+    wallUniforms.ecSpotDir = ecSpotDirection;
+    wallUniforms.spotAngle = 0.91;
+
+    sphereUniforms.ecLightPos = eyeLightPos;
+    sphereUniforms.ecSpotDir = ecSpotDirection;
+    sphereUniforms.spotAngle = 0.91;
+
     GL_CHECK(glCullFace(GL_FRONT));
     GL_CHECK(glEnable(GL_CULL_FACE));
 
-    render_walls(eyeLightPos);
+    render_walls();
 
     float dt = interpolation * game_speed * frameDuration();
 
     GL_CHECK(glCullFace(GL_BACK));
 
     for (uint32 i = 0; i < spheres.size(); ++i)
-        render_sphere(spheres[i], dt, eyeLightPos);
+        render_sphere(spheres[i], dt);
 
     GL_CHECK(glDisable(GL_CULL_FACE));
 
@@ -615,7 +641,7 @@ void Game::renderScene(float interpolation) {
     gltools::printErrors(std::cerr);
 }
 
-void Game::render_sphere(const Sphere& s, float dt, const vec3& eyeLightPos) {
+void Game::render_sphere(const Sphere& s, float dt) {
 
     modelViewMatrix.PushMatrix();
     vec3 pos = s.calc_position(dt);
@@ -628,7 +654,9 @@ void Game::render_sphere(const Sphere& s, float dt, const vec3& eyeLightPos) {
     us.optional("mvpMatrix", toMat4(transformPipeline.GetModelViewProjectionMatrix()));
     us.optional("mvMatrix", toMat4(transformPipeline.GetModelViewMatrix()));
     us.optional("normalMatrix", toMat3(transformPipeline.GetNormalMatrix(true)));
-    us.optional("ecLight", eyeLightPos);
+    us.optional("ecLight", sphereUniforms.ecLightPos);
+    us.optional("ecSpotDirection", sphereUniforms.ecSpotDir);
+    us.optional("spotAngle", sphereUniforms.spotAngle);
     us.optional("color", s.color);
     us.optional("shininess", s.shininess);
     
@@ -638,7 +666,7 @@ void Game::render_sphere(const Sphere& s, float dt, const vec3& eyeLightPos) {
     modelViewMatrix.PopMatrix();
 }
 
-void Game::render_walls(const vec3& eyeLightPos) {
+void Game::render_walls() {
 
     modelViewMatrix.PushMatrix();
 
@@ -654,7 +682,9 @@ void Game::render_walls(const vec3& eyeLightPos) {
     us.optional("mvpMatrix", toMat4(transformPipeline.GetModelViewProjectionMatrix()));
     us.optional("mvMatrix", toMat4(transformPipeline.GetModelViewMatrix()));
     us.optional("normalMatrix", toMat3(transformPipeline.GetNormalMatrix(true)));
-    us.optional("ecLight", eyeLightPos);
+    us.optional("ecLight", wallUniforms.ecLightPos);
+    us.optional("ecSpotDirection", wallUniforms.ecSpotDir);
+    us.optional("spotAngle", wallUniforms.spotAngle);
 
     wallShader.validate(GLDEBUG_ENABLED);
     wallBatch.draw();

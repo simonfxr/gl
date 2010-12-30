@@ -10,6 +10,8 @@ const float Diffuse = 0.2;
 const float Specular = 0.1;
 
 uniform vec3 ecLight;
+uniform vec3 ecSpotDirection;
+uniform float spotAngle;
 
 in vec3 ecPosition;
 flat in vec3 ecNormal;
@@ -42,9 +44,19 @@ void main() {
     vec3 lightReflect = reflect(-light, eyeNormal);
     float specularIntensity = pow(max(0, dot(spectator, lightReflect)), 16);
 
-    color = color * Diffuse +
-            color * Ambient * ambientIntensity +
-            vec3(0.8) * Specular * specularIntensity;
+    float diff = Diffuse;
+    float ambient = Ambient;
+    float specular = Specular;
+
+    if (max(0, dot(ecSpotDirection, -light)) < spotAngle) {
+        diff = 0.25;
+        ambient = 0.2;
+        specular = 0;
+    }
+
+    color = color * diff +
+            color * ambient * ambientIntensity +
+            vec3(0.8) * specular * specularIntensity;
 
     fragColor = vec4(color, 1);
 }
