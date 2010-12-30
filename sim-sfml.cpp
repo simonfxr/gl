@@ -19,6 +19,8 @@
 
 #include "math/vec3.hpp"
 #include "math/ivec3.hpp"
+#include "math/mat4.hpp"
+#include "math/mat3.hpp"
 #include "math/Math.hpp"
 #include "math/EulerAngles.hpp"
 #include "math/transform.hpp"
@@ -27,6 +29,8 @@
 #include "gltools.hpp"
 #include "ShaderProgram.hpp"
 #include "GenBatch.hpp"
+#include "color.hpp"
+#include "Uniforms.hpp"
 
 static const vec3 gravity(0.f, -9.81f, 0.f);
 
@@ -47,7 +51,8 @@ struct Sphere {
     float r;
     vec3 center;
     float mass;
-    vec4 color;
+    gltools::color color;
+    float shininess;
 
     void move(const Cuboid& room, float dt);
     vec3 calc_position(float dt) const;
@@ -127,6 +132,13 @@ mat4 toMat4(const M3DMatrix44f m) {
     return M;
 }
 
+mat3 toMat3(const M3DMatrix33f m) {
+    mat3 M;
+    for (uint32 i = 0; i < 9; ++i)
+        M.flat[i] = m[i];
+    return M;
+}
+
 } // namespace anon
 
 static const float FPS_RENDER_CYCLE = 1.f;
@@ -147,26 +159,6 @@ struct Game : public GameWindow {
     ShaderProgram wallShader;
     ShaderProgram sphereShader;
 
-    struct WallShaderUniforms {
-        GLint mvp;
-        GLint mv;
-        GLint nm;
-        GLint light;
-    };
-
-    WallShaderUniforms wall_uniforms;
-
-    struct SphereShaderUniforms {
-        GLint mvp;
-        GLint mv;
-        GLint nm;
-        GLint light;
-        GLint color;
-        GLint shininess;
-    };
-
-    SphereShaderUniforms sphere_uniforms;
-    
     uint32 fps_count;
     uint32 current_fps;
     float  fps_render_next;
@@ -303,22 +295,11 @@ bool Game::load_shaders() {
     ws.bindAttribute("normal", cubeVertexAttrs.index(offsetof(CubeVertex, normal)));
     ws.link();
 
-    if (!ws.wasError()) {
-        WallShaderUniforms us;
-
-        us.mvp = ws.uniformLocation("mvpMatrix");
-        us.mv = ws.uniformLocation("mvMatrix");
-        us.nm = ws.uniformLocation("normalMatrix");
-        us.light = ws.uniformLocation("ecLight");
-
-        if (!ws.wasError()) {
-            wall_uniforms = us;
-        
-            wallShader.replaceWith(ws);
-        }
-    }
-
     ok = ok && !ws.wasError();
+    
+    if (!ws.wasError())
+        wallShader.replaceWith(ws);
+
     ws.printError(std::cerr);
 
     ShaderProgram ss;
@@ -329,21 +310,8 @@ bool Game::load_shaders() {
     ss.bindAttribute("normal", sphereVertexAttrs.index(offsetof(SphereVertex, normal)));
     ss.link();
 
-    if (!ss.wasError()) {
-        SphereShaderUniforms us;
-
-        us.mvp = ss.uniformLocation("mvpMatrix");
-        us.mv = ss.uniformLocation("mvMatrix");
-        us.nm = ss.uniformLocation("normalMatrix");
-        us.light = ss.uniformLocation("ecLight");
-        us.color = ss.uniformLocation("color");
-        us.shininess = ss.uniformLocation("shininess");
-
-        sphere_uniforms = us;
-        ss.clearError();
+    if (!ss.wasError())
         sphereShader.replaceWith(ss);
-        ok = ok && !ss.wasError();
-    }
 
     ok = ok && !ss.wasError();
     
@@ -580,8 +548,8 @@ static float rand1() {
     return rand() * (1.f / RAND_MAX);
 }
 
-static vec4 randomColor() {
-    return vec4(rand1(), rand1(), rand1(), 1.f);
+static gltools::color randomColor() {
+    return gltools::color(byte(rand1() * 255), byte(rand1() * 255), byte(rand1() * 255));
 }
 
 void Game::spawn_sphere() {
@@ -590,10 +558,11 @@ void Game::spawn_sphere() {
 
     Sphere s;
     s.center = camera.getOrigin() + direction * (sphere_rad + 1.1f);
-    s.vel    = direction * sphere_speed;
-    s.r      = sphere_rad;
-    s.mass   = sphere_mass;
-    s.color  = randomColor();
+    s.vel = direction * sphere_speed;
+    s.r = sphere_rad;
+    s.mass = sphere_mass;
+    s.color = randomColor();
+    s.shininess = 10.f + rand1() * 60;
 
     spheres.push_back(s);
 }
@@ -618,22 +587,9 @@ void Game::renderScene(float interpolation) {
     set_matrix(mCamera, camera.getCameraMatrix());
     modelViewMatrix.PushMatrix(mCamera);
 
-    // Transform the light position into eye coordinates
-
     M3DVector4f vLightEyePos;
     m3dTransformVector4(vLightEyePos, vLightPos, mCamera);
     const vec3 eyeLightPos = vec3(vLightEyePos[0], vLightEyePos[1], vLightEyePos[2]);
-
-    // modelViewMatrix.Translate(room.corner_min.x, room.corner_min.y, room.corner_min.z);
-    // const vec3 dim = room.corner_max - room.corner_min;
-    // modelViewMatrix.Scale(dim.x, dim.y, dim.z);
-		
-    // // Render the ground
-    // GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_FLAT,
-    //                                       transformPipeline.GetModelViewProjectionMatrix(),
-    //                                       vFloorColor));
-    
-    // GL_CHECK(floorBatch.Draw());
 
     GL_CHECK(glCullFace(GL_FRONT));
     GL_CHECK(glEnable(GL_CULL_FACE));
@@ -667,26 +623,16 @@ void Game::render_sphere(const Sphere& s, float dt, const vec3& eyeLightPos) {
     modelViewMatrix.Scale(s.r, s.r, s.r);
 
     sphereShader.use();
-    if (sphere_uniforms.mvp != -1)
-        GL_CHECK(glUniformMatrix4fv(sphere_uniforms.mvp, 1, GL_FALSE, transformPipeline.GetModelViewProjectionMatrix()));
-    
-    if (sphere_uniforms.mv != -1)
-        GL_CHECK(glUniformMatrix4fv(sphere_uniforms.mv, 1, GL_FALSE, transformPipeline.GetModelViewMatrix()));
-    
-    if (sphere_uniforms.nm != -1)
-        GL_CHECK(glUniformMatrix3fv(sphere_uniforms.nm, 1, GL_FALSE, transformPipeline.GetNormalMatrix(true)));
-    
-    if (sphere_uniforms.light != -1)
-        GL_CHECK(glUniform3fv(sphere_uniforms.light, 1, (const float *) &eyeLightPos));
-    
-    vec4 col = s.color;
-    if (sphere_uniforms.color != -1)
-        GL_CHECK(glUniform4fv(sphere_uniforms.color, 1, (const float *) &col));
-    
-    float shininess = 60.f;
-    if (sphere_uniforms.shininess != -1)
-        GL_CHECK(glUniform1fv(sphere_uniforms.shininess, 1, &shininess));
 
+    gltools::Uniforms us(sphereShader);
+    us.optional("mvpMatrix", toMat4(transformPipeline.GetModelViewProjectionMatrix()));
+    us.optional("mvMatrix", toMat4(transformPipeline.GetModelViewMatrix()));
+    us.optional("normalMatrix", toMat3(transformPipeline.GetNormalMatrix(true)));
+    us.optional("ecLight", eyeLightPos);
+    us.optional("color", s.color);
+    us.optional("shininess", s.shininess);
+    
+    sphereShader.validate(GLDEBUG_ENABLED);
     sphereBatch.draw();
 
     modelViewMatrix.PopMatrix();
@@ -702,25 +648,16 @@ void Game::render_walls(const vec3& eyeLightPos) {
     modelViewMatrix.Translate(center.x, center.y, center.z);
     modelViewMatrix.Scale(diff.x, diff.y, diff.z);
 
+    wallShader.use();
     
-    // GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_FLAT,
-    //                                       transformPipeline.GetModelViewProjectionMatrix(),
-    //                                       vWallColor));
+    gltools::Uniforms us(wallShader);
+    us.optional("mvpMatrix", toMat4(transformPipeline.GetModelViewProjectionMatrix()));
+    us.optional("mvMatrix", toMat4(transformPipeline.GetModelViewMatrix()));
+    us.optional("normalMatrix", toMat3(transformPipeline.GetNormalMatrix(true)));
+    us.optional("ecLight", eyeLightPos);
 
-    GL_CHECK(wallShader.use());
-    GL_CHECK(glUniformMatrix4fv(wall_uniforms.mvp, 1, GL_FALSE, transformPipeline.GetModelViewProjectionMatrix()));
-    GL_CHECK(glUniformMatrix4fv(wall_uniforms.mv, 1, GL_FALSE, transformPipeline.GetModelViewMatrix()));
-    GL_CHECK(glUniformMatrix3fv(wall_uniforms.nm, 1, GL_FALSE, transformPipeline.GetNormalMatrix(true)));
-    GL_CHECK(glUniform3fv(wall_uniforms.light, 1, (const float *) &eyeLightPos));    
-
-    GL_CHECK(wallBatch.draw());
-
-    // GL_CHECK(shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
-    //                                       transformPipeline.GetModelViewMatrix(), 
-    //                                       transformPipeline.GetProjectionMatrix(),
-    //                                       vLightEyePos, vWallColor));
-
-    // wallBatch.Draw();
+    wallShader.validate(GLDEBUG_ENABLED);
+    wallBatch.draw();
 
     modelViewMatrix.PopMatrix();    
 }
@@ -1160,6 +1097,5 @@ void gltMakeSphere(gltools::GenBatch<SphereVertex>& sphereBatch, GLfloat fRadius
 void makeSphere(gltools::GenBatch<SphereVertex>& sphere, float rad, int32 stacks, int32 slices) {
     gltMakeSphere(sphere, rad, stacks, slices);
 }
-
 
 } // namespace anon

@@ -34,7 +34,7 @@ struct color {
         return *this;
     }
 
-    explicit vec4() const {
+    operator vec4() const {
         static const float Scale = 1.f / 255.f;
         return vec4(r, g, b, a) * Scale;
     }

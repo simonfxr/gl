@@ -13,6 +13,18 @@ typedef short int16;
 typedef int   int32;
 typedef long  int64;
 
+#ifdef DEBUG
+#define DEBUG_ENABLED true
+#else
+#define DEBUG_ENABLED false
+#endif
+
+#ifdef GLDEBUG
+#define GLDEBUG_ENABLED true
+#else
+#define GLDEBUG_ENABLED false
+#endif
+
 #define likely(e) __builtin_expect((e) != 0, 1)
 #define unlikely(e) __builtin_expect((e) != 0, 0)
 
@@ -22,14 +34,16 @@ typedef long  int64;
 
 #ifdef DEBUG
 #define ON_DEBUG(x) do { (x); } while (0)
+#define DEBUG_ERROR(msg) ERROR(msg)
 #else
 #define ON_DEBUG(x) ((void) 0)
+#define DEBUG_ERROR(x) ((void) 0)
 #endif
 
 #ifdef DEBUG
 #define DEBUG_ASSERT(x, err) do { \
         if (unlikely(!(x)))       \
-            ERROR(err);           \
+            DEBUG_ERROR(err);           \
     } while (0)
 #else
 #define DEBUG_ASSERT(x, err) ((void) 0)

@@ -15,7 +15,10 @@ struct ShaderProgram {
         CompilationFailed,
         LinkageFailed,
         AttributeNotBound,
-        UniformNotKnown
+        UniformNotKnown,
+        ValidationFailed,
+        APIError,
+        OpenGLError
     };
 
     enum ShaderType {
@@ -24,9 +27,16 @@ struct ShaderProgram {
     };
 
 private:
+
+    struct Impl;
+    friend struct Impl;
     
     Error last_error;
+    
+public:    
     GLuint program;
+
+private:
 
     void push_error(Error err) {
         if (last_error == NoError)
@@ -66,8 +76,11 @@ public:
 
     void printError(std::ostream& out);
 
+    bool validate(bool printLogOnError = false);
+
     static void printShaderLog(GLuint shader, std::ostream& out);
     static void printProgramLog(GLuint program, std::ostream& out);
+    static void printProgramLog(const ShaderProgram& prog, std::ostream& out);
 
 private:
     ShaderProgram(const ShaderProgram& _);

@@ -27,6 +27,6 @@ void main() {
     vec3 tone = baseColor * Diffuse +
                 baseColor * Ambient * ambientIntensity +
                 vec3(0.8) * Specular * specularIntensity;
-    
+
     fragColor = vec4(tone, color.a);
 }
