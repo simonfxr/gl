@@ -57,7 +57,7 @@ struct Sphere {
     void move(const Cuboid& room, float dt);
     vec3 calc_position(float dt) const;
 
-    static void collide(Sphere& x, Sphere& y, float dt);
+    static bool collide(Sphere& x, Sphere& y, float dt);
 
     static vec3 velocity_after_collision(float m1, const vec3& v1, float m2, const vec3& v2);
 
@@ -233,6 +233,26 @@ bool Game::onInit() {
 
     print_context(window().GetSettings());
 
+    window().SetActive();
+
+    GLenum err = glewInit();
+    if (GLEW_OK != err) {
+        std::cerr << "GLEW Error: " << glewGetErrorString(err) << std::endl;
+        return 1;
+    }
+
+    GL_CHECK((void) 0);
+    
+    // GLint nNumExtensions;
+    // glGetIntegerv(GL_NUM_EXTENSIONS, &nNumExtensions);
+
+    // std::cerr << "OpenGL extensions:" << std::endl;
+    // for(GLint i = 0; i < nNumExtensions; i++) {
+    //     const char *extension = (const char *) glGetStringi(GL_EXTENSIONS, i);
+    //     std::cerr << extension << std::endl;
+    // }
+    // std::cerr << std::endl;
+
     ticksPerSecond(100);
     grabMouse(true);
 
@@ -249,8 +269,6 @@ bool Game::onInit() {
     room.corner_max = vec3(+20.f, 20.f, 20.f);
 
     makeUnitCube(wallBatch);
-
-    window().SetActive();
 
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     
@@ -340,78 +358,150 @@ void Game::animate() {
         spheres[i].move(room, dt);
 }
 
-// static ivec3 calcTile(const vec3& isize, const vec3& p) {
-//     return ivec3(vec3::compMult(isize, p)); 
-// }
+// namespace {
 
-// struct Tile {
-//     uint32 object;
-//     Tile *nxt;
+// static const uint32 ALLOC_BLOCK_SIZE = 1024;
+// static const uint32 DIM = 50;
+
+// struct SphereCollisionHandler {
+
+//     struct Tile {
+//         uint32 id;
+//         Tile *nxt;
+//     };
+
+//     struct AllocBlock {
+//         AllocBlock *nxt;
+//         Tile block[ALLOC_BLOCK_SIZE];
+
+//         AllocBlock(AllocBlock *pred = 0) :
+//             nxt(pred)
+//             {}
+//     };
+
+//     Tile *tiles[DIM][DIM][DIM];
+    
+//     std::vector<uint32> last_collisions;
+//     uint32 next_tile;
+//     AllocBlock *blocks;
+
+//     SphereCollisionHandler(uint32 nspheres) :
+//         last_collisions(nspheres, 0),
+//         next_tile(0),
+//         blocks(new AllocBlock)
+//     {
+//         memset(tiles, 0, DIM * DIM * DIM * sizeof tiles[0][0][0]);
+//     }
+
+//     ~SphereCollisionHandler() {
+//         while (blocks != 0) {
+//             AllocBlock *b = blocks;
+//             blocks = blocks->nxt;
+//             delete b;
+//         }            
+//     }
+
+//     void insertTile(uint32 x, uint32 y, uint32 z, uint32 id) {
+        
+//         if (unlikely(next_tile >= ALLOC_BLOCK_SIZE)) {
+//             next_tile = 0;
+//             blocks = new AllocBlock(blocks);
+//         }
+
+//         Tile *t = &blocks->block[next_tile++];
+
+//         t->id = id;
+//         t->nxt = tiles[x][y][z];
+//         tiles[x][y][z] = t;
+//     }
+
+//     void collTile(std::vector<Sphere>& ss, float dt, uint32 x, uint32 y, uint32 z, uint32 id) {
+//         Sphere &s = ss[id];
+//         Tile *t = tiles[x][y][z];
+        
+//         while (t != 0) {
+            
+//             if (t->id < id && last_collisions[id] <= t->id) {
+//                 Sphere::collide(s, ss[t->id], dt);
+//                 last_collisions[id] = t->id + 1;
+//             }
+            
+//             t = t->nxt;
+//         }
+//     }
+    
 // };
 
-// static void insertTile(Tile* &t, uint32 id, std::vector<Tile *> allocs) {
-//     Tile *nt = new Tile();
-//     allocs.push_back(nt);
-//     nt->object = id;
-//     nt->nxt = t;
-//     t = nt;
+// } // namespace anon
+
+// static ivec3 calcTile(const vec3& isize, const vec3& room_min, const vec3& p) {
+//     return ivec3(vec3::compMult(isize, p - room_min)); 
 // }
 
-// static void collTile(std::vector<Sphere> ss, Sphere& s, uint32 i, const Tile *t, float dt) {
-//     while (t != 0) {
-//         if (t->object < i)
-//             Sphere::collide(s, ss[t->object], dt);
-//         t = t->nxt;
-//     }
+// static void calcRange(const Sphere& s, float dt, const vec3& isize, const vec3& room_min, ivec3& tileL, ivec3& tileH) {
+
+//     vec3 pos1 = s.center;
+//     vec3 pos2 = s.calc_position(dt);
+
+//     vec3 cLow  = vec3::min(pos1, pos2) - vec3(s.r * 1.1f);
+//     vec3 cHigh = vec3::max(pos1, pos2) + vec3(s.r * 1.1f);
+
+//     tileL = calcTile(isize, room_min, cLow);
+//     tileH = calcTile(isize, room_min, cHigh);
+    
+// }
+
+// static ivec3 clamp(const ivec3& low, const ivec3& high, const ivec3& v) {
+//     return ivec3::max(low, ivec3::min(high, v));
+// }
+
+// static void clampRange(const ivec3& low, const ivec3& high, ivec3& range_low, ivec3& range_high) {
+//     range_low = clamp(low, high, range_low);
+//     range_high = clamp(low, high, range_high);
 // }
 
 void Game::resolve_collisions(float dt) {
 
     // float t0 = now();
 
-    // const uint32 dim = 50;
-    // const vec3 diff = room.corner_max - room.corner_min;
-    // const vec3 isize = vec3(dim / diff.x, dim / diff.y, dim / diff.z);
-    // const vec3 low  = room.corner_min;
+    // {
+    //     const uint32 dim = 50;
+    //     const vec3 diff = room.corner_max - room.corner_min;
+    //     const vec3 isize = vec3(dim / diff.x, dim / diff.y, dim / diff.z);
+    //     const vec3 low  = room.corner_min;
 
-    // const ivec3 tmin = ivec3(0);
-    // const ivec3 tmax = ivec3(dim - 1);
+    //     const ivec3 tmin = ivec3(0);
+    //     const ivec3 tmax = ivec3(dim - 1);
 
-    // Tile *tiles[dim][dim][dim];
-    // std::vector<Tile *> allocs;
+    //     SphereCollisionHandler coll(spheres.size());
 
-    // memset(tiles, 0, dim * dim * dim * sizeof tiles[0][0][0]);
-
-    // for (uint32 i = 0; i < spheres.size(); ++i) {
+    //     for (uint32 i = 0; i < spheres.size(); ++i) {
         
-    //     Sphere& s = spheres[i];
-    //     vec3 p = s.calc_position(dt) - low;
+    //         Sphere& s = spheres[i];
 
-    //     ivec3 tileL = ivec3::max(tmin, calcTile(isize, p - vec3(s.r)));
-    //     ivec3 tileH = ivec3::min(tmax, calcTile(isize, p + vec3(s.r)));
+    //         ivec3 tileL, tileH;
+    //         calcRange(s, dt, isize, room.corner_min, tileL, tileH);
+    //         clampRange(tmin, tmax, tileL, tileH);
 
-    //     for (int32 x = tileL.x; x <= tileH.x; ++x)
-    //         for (int32 y = tileL.y; y <= tileH.y; ++y)
-    //             for (int32 z = tileL.z; z <= tileH.z; ++z)
-    //                 insertTile(tiles[x][y][z], i, allocs);
-    // }
+    //         for (int32 x = tileL.x; x <= tileH.x; ++x)
+    //             for (int32 y = tileL.y; y <= tileH.y; ++y)
+    //                 for (int32 z = tileL.z; z <= tileH.z; ++z)
+    //                     coll.insertTile(x, y, z, i);
+    //     }
 
-    // for (unsigned i = 0; i < spheres.size(); ++i) {
+    //     for (unsigned i = 0; i < spheres.size(); ++i) {
         
-    //     Sphere& s = spheres[i];
-    //     vec3 p = s.calc_position(dt) - low;
+    //         Sphere& s = spheres[i];
+    //         ivec3 tileL, tileH;
+    //         calcRange(s, dt, isize, room.corner_min, tileL, tileH);
+    //         clampRange(tmin, tmax, tileL, tileH);
 
-    //     ivec3 tileL = ivec3::max(tmin, calcTile(isize, p - vec3(s.r)));
-    //     ivec3 tileH = ivec3::min(tmax, calcTile(isize, p + vec3(s.r)));
-
-    //     for (int32 x = tileL.x; x <= tileH.x; ++x)
-    //         for (int32 y = tileL.y; y <= tileH.y; ++y)
-    //             for (int32 z = tileL.z; z <= tileH.z; ++z)
-    //                 collTile(spheres, s, i, tiles[x][y][z], dt);
+    //         for (int32 x = tileL.x; x <= tileH.x; ++x)
+    //             for (int32 y = tileL.y; y <= tileH.y; ++y)
+    //                 for (int32 z = tileL.z; z <= tileH.z; ++z)
+    //                     coll.collTile(spheres, dt, x, y, z, i);
+    //     }
     // }
-
-    // for (uint32 i = 0; i < allocs.size(); ++i)
-    //     delete allocs[i];
 
     // std::cerr << "resolve_collisions: " << (now() - t0) << " seconds" << std::endl;
 
@@ -769,12 +859,6 @@ int main(int argc, char *argv[]) {
     if (argv[0] != 0)
         gltSetWorkingDirectory(argv[0]);
     
-    GLenum err = glewInit();
-    if (GLEW_OK != err) {
-        std::cerr << "GLEW Error: " << glewGetErrorString(err) << std::endl;
-        return 1;
-    }
-
     sf::ContextSettings glContext;
     glContext.MajorVersion = 3;
     glContext.MinorVersion = 3;
@@ -817,7 +901,7 @@ vec3 Sphere::velocity_after_collision(float m1, const vec3& v1, float m2, const 
     return (m1 * v1 + m2 * (2.f * v2 - v1)) / (m1 + m2);
 }
 
-void Sphere::collide(Sphere& x, Sphere& y, float dt) {
+bool Sphere::collide(Sphere& x, Sphere& y, float dt) {
 
     vec3 xc = x.calc_position(dt);
     vec3 yc = y.calc_position(dt);
@@ -834,7 +918,7 @@ void Sphere::collide(Sphere& x, Sphere& y, float dt) {
 
             x.vel = x.vel.mag() * -n1;
             y.vel = y.vel.mag() * n1;
-            
+
         } else {
             vec3 n1 = vec3::normalize(yc - xc);
             vec3 n2 = -n1;
@@ -851,7 +935,11 @@ void Sphere::collide(Sphere& x, Sphere& y, float dt) {
             x.vel = ux + vx_rest;
             y.vel = uy + vy_rest;
         }
+
+        return true;
     }
+
+    return false;
 }
 
 void Camera::move_along_local_axis(const vec3& step) {

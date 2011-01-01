@@ -52,6 +52,8 @@ private:
 public:
     
     GameWindow();
+
+    float now();
     
     bool init(const sf::ContextSettings& settings, const std::string& name);
     

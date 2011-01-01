@@ -85,6 +85,18 @@ public:
         return a - n * (2.f * amp * dot(n, a));
     }
 
+    static vec3 max(const vec3& a, const vec3& b) {
+        return vec3(b.x > a.x ? b.x : a.x,
+                    b.y > a.y ? b.y : a.y,
+                    b.z > a.z ? b.z : a.z);
+    }
+
+    static vec3 min(const vec3& a, const vec3& b) {
+        return vec3(b.x < a.x ? b.x : a.x,
+                    b.y < a.y ? b.y : a.y,
+                    b.z < a.z ? b.z : a.z);
+    }
+
     vec3 scale(float l) const {
         return compMult(*this, vec3(l));
     }

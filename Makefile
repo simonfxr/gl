@@ -4,7 +4,7 @@ BIBLE := $(HOME)/src/oglsuperbible5-read-only
 CC  := clang
 CXX := clang++
 
-INC_DIRS := -I$(BIBLE)/Src/GLTools/include -I/usr/include -I. -Imath
+INC_DIRS := -I$(BIBLE)/Src/GLTools/include -I/usr/include -I.
 LIB_DIRS := -L/usr/X11R6/lib -L.
 
 PACKAGES := glew OpenEXR
@@ -22,7 +22,7 @@ ICC_CFLAGS := $(CFLAGS) -xHOST -O3 -ipo -no-prec-div
 PKG_LDFLAGS := $(shell pkg-config --libs $(PACKAGES))
 
 LDFLAGS := $(PKG_LDFLAGS) $(LIB_DIRS) $(LIBS) $(LDFLAGS)
-LD_GLTOOLS := -lgltools -Wl,-rpath,$(PWD)
+LD_GLTOOLS := -lgltools -Wl,-rpath,$(PWD) -Wl,-rpath,/usr/local/lib64
 
 GLTOOLS_SRC := GLBatch.cpp GLShaderManager.cpp GLTools.cpp GLTriangleBatch.cpp math3d.cpp
 
@@ -45,7 +45,7 @@ own1: own1.cpp ShaderProgram.cpp VertexBuffer.cpp
 SIM_SFML_SOURCES := sim-sfml.cpp GameLoop.cpp gltools.cpp ShaderProgram.cpp GenBatch.cpp GameWindow.cpp Uniforms.cpp
 
 sim-sfml: $(SIM_SFML_SOURCES) libgltools.so
-	$(CXX) $(SIM_SFML_SOURCES) -o $@  `pkg-config --libs --cflags glew` -I/usr/include/GL $(OPT_FLAGS) -L. $(LD_GLTOOLS) -Wall -Wextra $(INC_DIRS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum -Wno-invalid-offsetof $(EXTRA_CFLAGS)
+	$(CXX) $(SIM_SFML_SOURCES) -o $@  -L/usr/local/lib64 `pkg-config --libs --cflags glew` -I/usr/include/GL $(OPT_FLAGS) -L. $(LD_GLTOOLS) -Wall -Wextra $(INC_DIRS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum -Wno-invalid-offsetof $(EXTRA_CFLAGS)
 
 cube: cube.cpp GameLoop.cpp gltools.cpp ShaderProgram.cpp Batch.cpp
 	$(CXX) -o $@ $^ $(CFLAGS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum

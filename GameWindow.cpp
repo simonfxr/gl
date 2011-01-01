@@ -240,6 +240,10 @@ int32 GameWindow::run() {
     return e;
 }
 
+float GameWindow::now() {
+    return data->now();
+}
+
 void GameWindow::handleEvent(sf::Event& event) {
     UNUSED(event);
 }

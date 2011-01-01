@@ -26,15 +26,25 @@ void main() {
     float specularIntensity = pow(max(0, dot(spectator, lightReflect)), shininess);
 
     float diff = Diffuse;
-    float ambient = Ambient;
-    float specular = Specular;
+    /* float ambient = Ambient; */
+    /* float specular = Specular; */
 
-    if (max(0, dot(ecSpotDirection, -light)) < spotAngle) {
-//        diff = 0.6;
-        ambient = 0.2;
-        ambientIntensity *= 0.5;
-        specular = 0;
-    }
+    float spotEdge = 0.90;
+    float spotFull = 0.91;
+
+    float spotAngle = max(0, dot(ecSpotDirection, -light));
+    float spotIntensity = smoothstep(spotEdge, spotFull, spotAngle);
+
+    
+    float ambient = mix(0.35, Ambient, spotIntensity);
+    float specular = mix(0, Specular, spotIntensity);
+
+/*     if (spotAngle < ) { */
+/* //        diff = 0.6; */
+/*         ambient = 0.4; */
+/*         ambientIntensity *= 0.5; */
+/*         specular = 0; */
+/*     } */
 
     vec3 baseColor = vec3(color);
     vec3 tone = baseColor * diff +

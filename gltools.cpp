@@ -71,6 +71,139 @@ struct GLDebug {
     virtual void printDebugMessages(const DebugLocation& loc) = 0;
 };
 
+struct NODebug : public GLDebug {
+    virtual void printDebugMessages(const DebugLocation& loc) {
+        UNUSED(loc);
+    }
+};
+
+struct ARBDebug : public GLDebug {
+
+    typedef void (GLAPIENTRY *glDebugMessageControlARBf_t)(GLenum source,
+                                                           GLenum type,
+                                                           GLenum severity,
+                                                           GLsizei count,
+                                                           const GLuint* ids,
+                                                           GLboolean enabled);
+
+    typedef GLuint (GLAPIENTRY * glGetDebugMessageLogARBf_t)(GLuint count,
+                                                             GLsizei bufsize,
+                                                             GLenum* sources,
+                                                             GLenum* types,
+                                                             GLuint* ids,
+                                                             GLenum* severities,
+                                                             GLsizei* lengths, 
+                                                             char* message);
+
+    static const GLenum MAX_DEBUG_MESSAGE_LENGTH_ARB          = 0x9143;
+
+    static const GLenum DEBUG_SEVERITY_HIGH_ARB               = 0x9146;
+    static const GLenum DEBUG_SEVERITY_MEDIUM_ARB             = 0x9147;
+    static const GLenum DEBUG_SEVERITY_LOW_ARB                = 0x9148;
+
+    static const GLenum DEBUG_SOURCE_API_ARB                  = 0x8246;
+    static const GLenum DEBUG_SOURCE_WINDOW_SYSTEM_ARB        = 0x8247;
+    static const GLenum DEBUG_SOURCE_SHADER_COMPILER_ARB      = 0x8248;
+    static const GLenum DEBUG_SOURCE_THIRD_PARTY_ARB          = 0x8249;
+    static const GLenum DEBUG_SOURCE_APPLICATION_ARB          = 0x825A;
+    static const GLenum DEBUG_SOURCE_OTHER_ARB                = 0x825B;
+
+    static const GLenum DEBUG_TYPE_ERROR_ARB                  = 0x824C;
+    static const GLenum DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB    = 0x824D;
+    static const GLenum DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB     = 0x824E;
+    static const GLenum DEBUG_TYPE_PORTABILITY_ARB            = 0x824F;
+    static const GLenum DEBUG_TYPE_PERFORMANCE_ARB            = 0x8250;
+    static const GLenum DEBUG_TYPE_OTHER_ARB                  = 0x8251;
+
+    glGetDebugMessageLogARBf_t glGetDebugMessageLogARB;
+    GLsizei message_buffer_length;
+    char *message_buffer;
+
+    ~ARBDebug();
+    
+    static GLDebug* init();
+    virtual void printDebugMessages(const DebugLocation& loc);
+};
+
+ARBDebug::~ARBDebug() {
+    delete[] message_buffer;
+}
+
+GLDebug *ARBDebug::init() {
+
+    glDebugMessageControlARBf_t glDebugMessageEnableAMD
+        = (glDebugMessageControlARBf_t) glXGetProcAddress((const GLubyte *) "glDebugMessageControlARB");
+    
+    glDebugMessageEnableAMD(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+    
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        std::cerr << "OpenGL ERROR occurred: " << getErrorString(err) << std::endl
+                  << "  couldnt initialize debug functionality, maybe we dont have a debug context?" << std::endl;
+            
+        return new NODebug();
+    }
+
+    GLsizei max_len;
+    glGetIntegerv(MAX_DEBUG_MESSAGE_LENGTH_ARB, &max_len);
+    
+    ARBDebug *dbg = new ARBDebug();
+    dbg->message_buffer_length = max_len;
+    dbg->message_buffer = new char[max_len];
+    dbg->glGetDebugMessageLogARB
+        = (glGetDebugMessageLogARBf_t) glXGetProcAddress((const GLubyte *) "glGetDebugMessageLogARB");
+        
+    return dbg;
+}
+
+void ARBDebug::printDebugMessages(const DebugLocation& loc) {
+
+    GLenum source, type, id, serverity;
+    GLsizei length;
+
+    while (glGetDebugMessageLogARB(1, message_buffer_length,
+                                   &source, &type, &id, &serverity,
+                                   &length, message_buffer) > 0) {
+
+#define sym_case(v, c) case c: v = #c; break
+
+        const char *ssrc = "unknown";
+        switch (source) {
+            sym_case(ssrc, DEBUG_SOURCE_API_ARB);
+            sym_case(ssrc, DEBUG_SOURCE_WINDOW_SYSTEM_ARB);
+            sym_case(ssrc, DEBUG_SOURCE_SHADER_COMPILER_ARB);
+            sym_case(ssrc, DEBUG_SOURCE_THIRD_PARTY_ARB);
+            sym_case(ssrc, DEBUG_SOURCE_APPLICATION_ARB);
+            sym_case(ssrc, DEBUG_SOURCE_OTHER_ARB);
+        }
+
+        const char *stype = "unknown";
+        switch (type) {
+            sym_case(stype, DEBUG_TYPE_ERROR_ARB);
+            sym_case(stype, DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB);
+            sym_case(stype, DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB);
+            sym_case(stype, DEBUG_TYPE_PORTABILITY_ARB);
+            sym_case(stype, DEBUG_TYPE_PERFORMANCE_ARB);
+            sym_case(stype, DEBUG_TYPE_OTHER_ARB);
+        }
+
+        const char *ssev = "unknown";
+        switch (serverity) {
+            sym_case(ssev, DEBUG_SEVERITY_HIGH_ARB);
+            sym_case(ssev, DEBUG_SEVERITY_MEDIUM_ARB);
+            sym_case(ssev, DEBUG_SEVERITY_LOW_ARB);
+        }
+        
+#undef sym_case
+
+        std::cerr << "[OpenGL DEBUG] source: " << ssrc << ", severity: " << ssev << ", type: " << stype << ", id: " << id << std::endl
+                  << "  in operation: " << loc.op << std::endl
+                  << "  in function: " << loc.func << std::endl
+                  << "  at " << loc.file << ":" << loc.line << std::endl
+                  << "  message: " << message_buffer << std::endl;
+    }
+}
+
 struct AMDDebug : public GLDebug {
 
     typedef void (GLAPIENTRY *glDebugMessageEnableAMDf_t)(GLenum category,
@@ -112,16 +245,9 @@ struct AMDDebug : public GLDebug {
     virtual void printDebugMessages(const DebugLocation& loc);
 };
 
-struct ARBDebug : public GLDebug {
-    static GLDebug* init();
-    virtual void printDebugMessages(const DebugLocation& loc);
-};
-
-struct NODebug : public GLDebug {
-    virtual void printDebugMessages(const DebugLocation& loc) {
-        UNUSED(loc);
-    }
-};
+AMDDebug::~AMDDebug() {
+    delete[] message_buffer;
+}
 
 GLDebug *AMDDebug::init() {
 
@@ -148,19 +274,6 @@ GLDebug *AMDDebug::init() {
         = (glGetDebugMessageLogAMDf_t) glXGetProcAddress((const GLubyte *) "glGetDebugMessageLogAMD");
         
     return dbg;
-}
-
-AMDDebug::~AMDDebug() {
-    delete [] message_buffer;
-}
-
-GLDebug *ARBDebug::init() {
-    std::cerr << "Debug information using GL_ARB_debug_output not yet implemented" << std::endl;
-    return new NODebug();
-}
-
-void ARBDebug::printDebugMessages(const DebugLocation& loc) {
-    UNUSED(loc);
 }
 
 void AMDDebug::printDebugMessages(const DebugLocation& loc) {
@@ -207,10 +320,10 @@ void AMDDebug::printDebugMessages(const DebugLocation& loc) {
 GLDebug *glDebug = 0;
 
 GLDebug* initDebug() {
-    if (glewIsExtensionSupported("GL_AMD_debug_output"))
-        return AMDDebug::init();
-    else if (glewIsExtensionSupported("GL_ARB_debug_output"))
+    if (glewIsExtensionSupported("GL_ARB_debug_output"))
         return ARBDebug::init();
+    else if (glewIsExtensionSupported("GL_AMD_debug_output"))
+        return AMDDebug::init();
     else {
         std::cerr << "no debug output available" << std::endl;
         return new NODebug();
