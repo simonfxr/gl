@@ -238,7 +238,7 @@ bool Game::onInit() {
     GLenum err = glewInit();
     if (GLEW_OK != err) {
         std::cerr << "GLEW Error: " << glewGetErrorString(err) << std::endl;
-        return 1;
+        return false;
     }
 
     GL_CHECK((void) 0);

@@ -26,6 +26,8 @@ void fatal_error(const char *msg, const char *file, int line, const char *func) 
 
 bool checkForGLError(const char *op, const char *file, int line, const char *func);
 
+bool isExtensionSupported(const char *extension);
+
 } // namespace gltools
 
 #endif

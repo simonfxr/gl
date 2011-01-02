@@ -1,9 +1,10 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <cstring>
 
 #include <GL/glew.h>
-#include <GL/glxew.h>
+#include <GL/glx.h>
 
 #include "gltools.hpp"
 #include "defs.h"
@@ -55,6 +56,17 @@ void fatal_error(const char *msg, const char *file, int line, const char *func) 
     exit(2);
 }
 
+bool isExtensionSupported(const char *extension) {
+    GLint n;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &n);
+    
+    for(GLint i = 0; i < n; i++)
+        if(strcmp(extension, (const char *) glGetStringi(GL_EXTENSIONS, i)) == 0)
+            return true;
+
+    return false;
+}
+
 struct DebugLocation {
     const char *op;
     const char *file;
@@ -64,7 +76,7 @@ struct DebugLocation {
 
 namespace {
 
-#ifdef GLDEBUG
+// #ifdef GLDEBUG
 
 struct GLDebug {
     virtual ~GLDebug() {}
@@ -133,16 +145,15 @@ GLDebug *ARBDebug::init() {
 
     glDebugMessageControlARBf_t glDebugMessageEnableAMD
         = (glDebugMessageControlARBf_t) glXGetProcAddress((const GLubyte *) "glDebugMessageControlARB");
+
+    if (glDebugMessageEnableAMD == 0)
+        return 0;
     
     glDebugMessageEnableAMD(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
     
     GLenum err = glGetError();
-    if (err != GL_NO_ERROR) {
-        std::cerr << "OpenGL ERROR occurred: " << getErrorString(err) << std::endl
-                  << "  couldnt initialize debug functionality, maybe we dont have a debug context?" << std::endl;
-            
-        return new NODebug();
-    }
+    if (err != GL_NO_ERROR)
+        return 0;
 
     GLsizei max_len;
     glGetIntegerv(MAX_DEBUG_MESSAGE_LENGTH_ARB, &max_len);
@@ -152,17 +163,22 @@ GLDebug *ARBDebug::init() {
     dbg->message_buffer = new char[max_len];
     dbg->glGetDebugMessageLogARB
         = (glGetDebugMessageLogARBf_t) glXGetProcAddress((const GLubyte *) "glGetDebugMessageLogARB");
+
+    if (dbg->glGetDebugMessageLogARB == 0) {
+        delete dbg;
+        dbg = 0;
+    }
         
     return dbg;
 }
 
 void ARBDebug::printDebugMessages(const DebugLocation& loc) {
 
-    GLenum source, type, id, serverity;
+    GLenum source, type, id, severity;
     GLsizei length;
 
     while (glGetDebugMessageLogARB(1, message_buffer_length,
-                                   &source, &type, &id, &serverity,
+                                   &source, &type, &id, &severity,
                                    &length, message_buffer) > 0) {
 
 #define sym_case(v, c) case c: v = #c; break
@@ -188,7 +204,7 @@ void ARBDebug::printDebugMessages(const DebugLocation& loc) {
         }
 
         const char *ssev = "unknown";
-        switch (serverity) {
+        switch (severity) {
             sym_case(ssev, DEBUG_SEVERITY_HIGH_ARB);
             sym_case(ssev, DEBUG_SEVERITY_MEDIUM_ARB);
             sym_case(ssev, DEBUG_SEVERITY_LOW_ARB);
@@ -254,15 +270,14 @@ GLDebug *AMDDebug::init() {
     glDebugMessageEnableAMDf_t glDebugMessageEnableAMD
         = (glDebugMessageEnableAMDf_t) glXGetProcAddress((const GLubyte *) "glDebugMessageEnableAMD");
 
+    if (glDebugMessageEnableAMD == 0)
+        return 0;
+
     glDebugMessageEnableAMD(0, 0, 0, NULL, GL_TRUE);
 
     GLenum err = glGetError();
-    if (err != GL_NO_ERROR) {
-        std::cerr << "OpenGL ERROR occurred: " << getErrorString(err) << std::endl
-                  << "  couldnt initialize debug functionality, maybe we dont have a debug context?" << std::endl;
-            
-        return new NODebug();
-    }
+    if (err != GL_NO_ERROR)
+        return 0;
 
     GLsizei max_len;
     glGetIntegerv(MAX_DEBUG_MESSAGE_LENGTH_AMD, &max_len);
@@ -272,6 +287,11 @@ GLDebug *AMDDebug::init() {
     dbg->message_buffer = new char[max_len];
     dbg->glGetDebugMessageLogAMD
         = (glGetDebugMessageLogAMDf_t) glXGetProcAddress((const GLubyte *) "glGetDebugMessageLogAMD");
+
+    if (dbg->glGetDebugMessageLogAMD == 0) {
+        delete dbg;
+        dbg = 0;
+    }
         
     return dbg;
 }
@@ -309,7 +329,7 @@ void AMDDebug::printDebugMessages(const DebugLocation& loc) {
 
 #undef sym_case
         
-        std::cerr << "[OpenGL DEBUG] category: " << scat << ", serverity: " << ssev << ", id: " << id << std::endl
+        std::cerr << "[OpenGL DEBUG] category: " << scat << ", severity: " << ssev << ", id: " << id << std::endl
                   << "  in operation: " << loc.op << std::endl
                   << "  in function: " << loc.func << std::endl
                   << "  at " << loc.file << ":" << loc.line << std::endl
@@ -320,17 +340,31 @@ void AMDDebug::printDebugMessages(const DebugLocation& loc) {
 GLDebug *glDebug = 0;
 
 GLDebug* initDebug() {
-    if (glewIsExtensionSupported("GL_ARB_debug_output"))
-        return ARBDebug::init();
-    else if (glewIsExtensionSupported("GL_AMD_debug_output"))
-        return AMDDebug::init();
-    else {
-        std::cerr << "no debug output available" << std::endl;
-        return new NODebug();
+
+    const char *debug_impl = 0; 
+    GLDebug *dbg = 0;
+
+    if (isExtensionSupported("GL_ARB_debug_output")) {
+        debug_impl = "GL_ARB_debug_output";
+        dbg = ARBDebug::init();
     }
+    
+    if (dbg == 0 && isExtensionSupported("GL_AMD_debug_output")) {
+        debug_impl = "GL_AMD_debug_output";
+        dbg = AMDDebug::init();
+    }
+
+    if (dbg == 0) {
+        std::cerr << "couldnt initialize Debug Output, no debug implementaion available" << std::endl;
+        dbg = new NODebug();
+    } else {
+        std::cerr << "initialized Debug Output using " << debug_impl << std::endl;
+    }
+
+    return dbg;
 }
 
-#endif // GLDEBUG
+// #endif // GLDEBUG
 
 } // namespace anon
 
@@ -350,14 +384,14 @@ bool checkForGLError(const char *op, const char *file, int line, const char *fun
     for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
         printGLError(loc, err);
 
-#ifdef GLDEBUG
+// #ifdef GLDEBUG
 
-    if (glDebug == 0)
+    if (unlikely(glDebug == 0))
         glDebug = initDebug();
 
     glDebug->printDebugMessages(loc);
 
-#endif
+// #endif
     
     return was_error;
 }
