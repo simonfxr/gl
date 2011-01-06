@@ -15,14 +15,14 @@ OPT_FLAGS := -O3 -march=native $(OPT_FLAGS)
 
 PKG_CFLAGS := $(shell pkg-config --cflags $(PACKAGES))
 
-CFLAGS  := -I/usr/include/GL $(PKG_CFLAGS) $(INC_DIRS) -Wall -Wextra $(OPT_FLAGS) $(EXTRA_CFLAGS) 
+CFLAGS  := $(PKG_CFLAGS) $(INC_DIRS) -Wall -Wextra $(OPT_FLAGS) $(EXTRA_CFLAGS) 
 
 ICC_CFLAGS := $(CFLAGS) -xHOST -O3 -ipo -no-prec-div
 
 PKG_LDFLAGS := $(shell pkg-config --libs $(PACKAGES))
 
-LDFLAGS := $(PKG_LDFLAGS) $(LIB_DIRS) $(LIBS) $(LDFLAGS)
-LD_GLTOOLS := -lgltools -Wl,-rpath,$(PWD) -Wl,-rpath,/usr/local/lib64
+LDFLAGS := $(PKG_LDFLAGS) $(LIB_DIRS) $(LDFLAGS)
+LD_GLTOOLS := -lgltools -Wl,-rpath,$(PWD) $(LIBS)
 
 GLTOOLS_SRC := GLBatch.cpp GLShaderManager.cpp GLTools.cpp GLTriangleBatch.cpp math3d.cpp
 
@@ -45,7 +45,7 @@ own1: own1.cpp ShaderProgram.cpp VertexBuffer.cpp
 SIM_SFML_SOURCES := sim-sfml.cpp GameLoop.cpp gltools.cpp ShaderProgram.cpp GenBatch.cpp GameWindow.cpp Uniforms.cpp
 
 sim-sfml: $(SIM_SFML_SOURCES) libgltools.so
-	$(CXX) $(SIM_SFML_SOURCES) -o $@  -L/usr/local/lib64 `pkg-config --libs --cflags glew` -I/usr/include/GL $(OPT_FLAGS) -L. $(LD_GLTOOLS) -Wall -Wextra $(INC_DIRS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum -Wno-invalid-offsetof $(EXTRA_CFLAGS)
+	$(CXX) $(SIM_SFML_SOURCES) -o $@ $(CFLAGS) $(LDFLAGS) $(LD_GLTOOLS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum -Wno-invalid-offsetof
 
 cube: cube.cpp GameLoop.cpp gltools.cpp ShaderProgram.cpp Batch.cpp
 	$(CXX) -o $@ $^ $(CFLAGS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum
