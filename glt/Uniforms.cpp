@@ -9,10 +9,10 @@
 #include "math/mat3.hpp"
 #include "color.hpp"
 
-#include "ShaderProgram.hpp"
-#include "gltools.hpp"
+#include "glt/ShaderProgram.hpp"
+#include "glt/utils.hpp"
 
-namespace gltools {
+namespace glt {
 
 namespace {
 
@@ -25,15 +25,18 @@ void setUniform(bool mandatory, const std::string& name, ShaderProgram& prog, GL
     UNUSED(type);
     
     GLint location;
-    GL_CHECK(location = glGetUniformLocation(prog.program, name.c_str()));
+    GL_CHECK(location = glGetUniformLocation(prog.program(), name.c_str()));
     
-    if (!mandatory && location == -1)
+    if (location == -1) {
+        if (mandatory)
+            ERROR("unknown uniform");
         return;
+    }
 
 #ifdef GLDEBUG
 
     GLenum actual_type;
-    GL_CHECK(glGetActiveUniformsiv(prog.program, 1, (const GLuint *) &location, GL_UNIFORM_TYPE, (GLint *) &actual_type));
+    GL_CHECK(glGetActiveUniformsiv(prog.program(), 1, (const GLuint *) &location, GL_UNIFORM_TYPE, (GLint *) &actual_type));
     if (actual_type != type) {
         ERROR("uniform types dont match");
         return;
@@ -92,7 +95,7 @@ Uniforms& Uniforms::optional(const std::string& name, const mat3& value) {
 }
 
 Uniforms& Uniforms::optional(const std::string& name, color value) {
-    optional(name, static_cast<vec4>(value)); return *this;
+    return optional(name, static_cast<vec4>(value)); 
 }
 
 Uniforms& Uniforms::mandatory(const std::string& name, float value) {
@@ -116,7 +119,7 @@ Uniforms& Uniforms::mandatory(const std::string& name, const mat3& value) {
 }
 
 Uniforms& Uniforms::mandatory(const std::string& name, color value) {
-    mandatory(name, static_cast<vec4>(value)); return *this;
+    return mandatory(name, static_cast<vec4>(value));
 }
 
-} // namespace gltools
+} // namespace glt

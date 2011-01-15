@@ -8,13 +8,13 @@
 #ifdef DEBUG
 #define GL_CHECK(op) do {                                               \
         (op);                                                           \
-        gltools::checkForGLError(#op, __FILE__, __LINE__, __func__);    \
+        glt::checkForGLError(#op, __FILE__, __LINE__, __func__);    \
     } while (0)
 #else
 #define GL_CHECK(op) op
 #endif
 
-namespace gltools {
+namespace glt {
 
 std::string getErrorString(GLenum err);
 
@@ -28,6 +28,8 @@ bool checkForGLError(const char *op, const char *file, int line, const char *fun
 
 bool isExtensionSupported(const char *extension);
 
-} // namespace gltools
+bool initDebug();
+
+} // namespace glt
 
 #endif

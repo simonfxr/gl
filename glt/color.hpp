@@ -4,7 +4,7 @@
 #include "defs.h"
 #include "math/vec4.hpp"
 
-namespace gltools {
+namespace glt {
 
 struct color {
     
@@ -40,6 +40,6 @@ struct color {
     }
 };
 
-} // gltools
+} // glt
 
 #endif

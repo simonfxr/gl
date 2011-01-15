@@ -9,10 +9,10 @@ struct vec3;
 struct vec4;
 struct mat4;
 struct mat3;
+
+namespace glt {
+
 struct ShaderProgram;
-
-namespace gltools {
-
 struct color;
 
 struct Uniforms {
@@ -34,6 +34,6 @@ struct Uniforms {
     Uniforms& mandatory(const std::string& name, color value);
 };
 
-} // namespace gltools
+} // namespace glt
 
 #endif

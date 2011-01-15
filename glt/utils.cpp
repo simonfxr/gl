@@ -6,10 +6,10 @@
 #include <GL/glew.h>
 #include <GL/glx.h>
 
-#include "gltools.hpp"
+#include "glt/utils.hpp"
 #include "defs.h"
 
-namespace gltools {
+namespace glt {
 
 std::string getErrorString(GLenum err) {
 
@@ -75,8 +75,6 @@ struct DebugLocation {
 };
 
 namespace {
-
-// #ifdef GLDEBUG
 
 struct GLDebug {
     virtual ~GLDebug() {}
@@ -337,34 +335,7 @@ void AMDDebug::printDebugMessages(const DebugLocation& loc) {
     }
 }
 
-GLDebug *glDebug = 0;
-
-GLDebug* initDebug() {
-
-    const char *debug_impl = 0; 
-    GLDebug *dbg = 0;
-
-    if (isExtensionSupported("GL_ARB_debug_output")) {
-        debug_impl = "GL_ARB_debug_output";
-        dbg = ARBDebug::init();
-    }
-    
-    if (dbg == 0 && isExtensionSupported("GL_AMD_debug_output")) {
-        debug_impl = "GL_AMD_debug_output";
-        dbg = AMDDebug::init();
-    }
-
-    if (dbg == 0) {
-        std::cerr << "couldnt initialize Debug Output, no debug implementaion available" << std::endl;
-        dbg = new NODebug();
-    } else {
-        std::cerr << "initialized Debug Output using " << debug_impl << std::endl;
-    }
-
-    return dbg;
-}
-
-// #endif // GLDEBUG
+GLDebug *glDebug = new NODebug();
 
 } // namespace anon
 
@@ -384,16 +355,40 @@ bool checkForGLError(const char *op, const char *file, int line, const char *fun
     for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
         printGLError(loc, err);
 
-// #ifdef GLDEBUG
-
-    if (unlikely(glDebug == 0))
-        glDebug = initDebug();
-
     glDebug->printDebugMessages(loc);
-
-// #endif
     
     return was_error;
 }
 
-} // namespace gltools
+bool initDebug() {
+
+    const char *debug_impl = 0; 
+    GLDebug *dbg = 0;
+
+    if (isExtensionSupported("GL_ARB_debug_output")) {
+        debug_impl = "GL_ARB_debug_output";
+        dbg = ARBDebug::init();
+    }
+    
+    if (dbg == 0 && isExtensionSupported("GL_AMD_debug_output")) {
+        debug_impl = "GL_AMD_debug_output";
+        dbg = AMDDebug::init();
+    }
+
+    bool initialized;
+
+    if (dbg == 0) {
+        std::cerr << "couldnt initialize Debug Output, no debug implementaion available" << std::endl;
+        dbg = new NODebug();
+        initialized = false;
+    } else {
+        std::cerr << "initialized Debug Output using " << debug_impl << std::endl;
+        initialized = true;
+    }
+
+    delete glDebug;
+    glDebug = dbg;
+    return initialized;
+}
+
+} // namespace glt

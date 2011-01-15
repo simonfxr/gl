@@ -5,7 +5,7 @@
 #include <GL/gl.h>
 
 #include "defs.h"
-#include "gltools.hpp"
+#include "glt/utils.hpp"
 
 struct vec3;
 struct vec4;

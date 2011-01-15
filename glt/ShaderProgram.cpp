@@ -5,27 +5,61 @@
 #include <GL/glew.h>
 
 #include "defs.h"
-#include "ShaderProgram.hpp"
-#include "gltools.hpp"
+#include "glt/ShaderProgram.hpp"
+#include "glt/utils.hpp"
+#include "glt/ShaderManager.hpp"
 
-ShaderProgram::ShaderProgram() :
-    last_error(NoError),
-    program(0)
-{}
+namespace glt {
+
+namespace {
+
+struct ShaderProgram::Data {
+    Error last_error;
+    GLuint program;
+
+    void push_error(ShaderProgram::Error err) {
+        if (last_error == NoError)
+            last_error = err;
+    }
+
+    bool addShader(ShaderType type, const std::string& file, const GLchar *src, int32 src_len);
+};
+
+} // namespace anon
+
+ShaderProgram::ShaderProgram(ShaderManager& sm) :
+    self(new Data)
+{
+    self->last_error = NoError;
+    self->program = 0;
+}
 
 ShaderProgram::~ShaderProgram() {
     reset();
+    delete self;
 }
 
 void ShaderProgram::reset() {
-    glDeleteProgram(program);
-    program = 0;
-    last_error = NoError;
+    glDeleteProgram(self->program);
+    self->program = 0;
+    self->last_error = NoError;
 }
 
-struct ShaderProgram::Impl {
-    static bool addShader(ShaderProgram& prog, ShaderType type, const std::string& file, const GLchar *src, int32 src_len);
-};
+ShaderProgram::Error ShaderProgram::clearError() {
+    Error err = self->last_error;
+    self->last_error = NoError;
+    return err;
+}
+    
+bool ShaderProgram::wasError() {
+    return self->last_error != NoError;
+}
+
+GLuint ShaderProgram::program() {
+    if (self->program == 0)
+        self->program = glCreateProgram();
+    return self->program;
+}
 
 namespace {
 
@@ -61,119 +95,7 @@ bool readContents(const std::string& path, char * &file_contents, int32 &file_si
     return true;
 }
 
-} // namespace anon
-
-bool ShaderProgram::Impl::addShader(ShaderProgram& prog, ShaderProgram::ShaderType type, const std::string& file, const GLchar *src, int32 src_len) {
-
-    GLenum shader_type;
-    if (!translateShaderType(type, &shader_type)) {
-        DEBUG_ERROR("unknown shader type");
-        prog.push_error(APIError);
-        return false;
-    }
-
-    if (prog.program == 0) {
-        prog.program = glCreateProgram();
-        if (prog.program == 0) {
-            DEBUG_ERROR("couldnt create program");
-            prog.push_error(OpenGLError);
-            return false;
-        }
-    }
-
-    GLuint shader = glCreateShader(shader_type);
-    if (shader == 0) {
-        DEBUG_ERROR("couldnt create shader");
-        prog.push_error(OpenGLError);
-        return false;
-    }
-
-    std::cerr << "compiling " << file << " ... ";
-        
-    glShaderSource(shader, 1, &src, &src_len);
-    glCompileShader(shader);
-
-    GLint success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    bool ok = success == GL_TRUE;
-    std::cerr << (ok ? "success" : "failed") << std::endl;
-
-#ifndef GLDEBUG
-    if (!ok)
-#endif
-    {
-        ShaderProgram::printShaderLog(shader, std::cerr);
-    }
-
-    if (ok)
-        glAttachShader(prog.program, shader);
-    else
-        prog.push_error(CompilationFailed);
-
-    glDeleteShader(shader);
-
-    return ok;
-}
-
-bool ShaderProgram::addShaderSrc(ShaderType type, const std::string& src) {
-    return Impl::addShader(*this, type, "<unknown>", src.c_str(), src.length());
-}
-
-bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
-    char *src;
-    int32 len;
-    
-    if (!readContents(file, src, len)) {
-        ERROR("couldnt read shader file");
-        push_error(CompilationFailed);
-        return false;
-    }
-    
-    bool ok = Impl::addShader(*this, type, file, src, len);
-    delete[] src;
-    return ok;
-}
-
-bool ShaderProgram::link() {
-
-    if (program == 0) {
-        push_error(APIError);
-        return false;
-    }
-
-    std::cerr << "linking ... ";
-
-    glLinkProgram(program);
-
-    GLint success;
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    bool ok = success == GL_TRUE;
-    std::cerr << (ok ? "success" : "failed") << std::endl;
-    
-    if (!ok)
-        push_error(LinkageFailed);
-
-#ifndef GLDEBUG
-    if (!ok)
-#endif
-    {
-        printProgramLog(program, std::cerr);
-    }
-
-    return ok;
-}
-
-bool ShaderProgram::bindAttribute(const std::string& s, GLuint position) {
-    if (program == 0)
-        program = glCreateProgram();
-    
-    glBindAttribLocation(program, position, s.c_str());
-    // FIXME: check wether attrib was added correctly
-    
-    return true;
-}
-
-void ShaderProgram::printShaderLog(GLuint shader, std::ostream& out) {
+void printShaderLog(GLuint shader, std::ostream& out) {
 
     GLint log_len;
     glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len);
@@ -192,11 +114,7 @@ void ShaderProgram::printShaderLog(GLuint shader, std::ostream& out) {
     }
 }
 
-void ShaderProgram::printProgramLog(const ShaderProgram& prog, std::ostream& out) {
-    printProgramLog(prog.program, out);
-}
-
-void ShaderProgram::printProgramLog(GLuint program, std::ostream& out) {
+void printProgramLog(GLuint program, std::ostream& out) {
 
     GLint log_len;
     glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_len);
@@ -213,32 +131,145 @@ void ShaderProgram::printProgramLog(GLuint program, std::ostream& out) {
     }
 }
 
-void ShaderProgram::use() {
+} // namespace anon
+
+bool ShaderProgram::Data::addShader(ShaderProgram::ShaderType type, const std::string& file, const GLchar *src, int32 src_len) {
+
+    GLenum shader_type;
+    if (!translateShaderType(type, &shader_type)) {
+        DEBUG_ERROR("unknown shader type");
+        push_error(APIError);
+        return false;
+    }
 
     if (program == 0) {
-        push_error(APIError);
+        program = glCreateProgram();
+        if (program == 0) {
+            DEBUG_ERROR("couldnt create program");
+            push_error(OpenGLError);
+            return false;
+        }
+    }
+
+    GLuint shader = glCreateShader(shader_type);
+    if (shader == 0) {
+        DEBUG_ERROR("couldnt create shader");
+        push_error(OpenGLError);
+        return false;
+    }
+
+    std::cerr << "compiling " << file << " ... ";
+        
+    glShaderSource(shader, 1, &src, &src_len);
+    glCompileShader(shader);
+
+    GLint success;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    bool ok = success == GL_TRUE;
+    std::cerr << (ok ? "success" : "failed") << std::endl;
+
+#ifndef GLDEBUG
+    if (!ok)
+#endif
+    {
+        printShaderLog(shader, std::cerr);
+    }
+
+    if (ok)
+        glAttachShader(program, shader);
+    else
+        push_error(CompilationFailed);
+
+    glDeleteShader(shader);
+
+    return ok;
+}
+
+bool ShaderProgram::addShaderSrc(ShaderType type, const std::string& src) {
+    return self->addShader(type, "<unknown>", src.c_str(), src.length());
+}
+
+bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
+    char *src;
+    int32 len;
+    
+    if (!readContents(file, src, len)) {
+        ERROR("couldnt read shader file");
+        self->push_error(CompilationFailed);
+        return false;
+    }
+    
+    bool ok = self->addShader(type, file, src, len);
+    delete[] src;
+    return ok;
+}
+
+bool ShaderProgram::link() {
+
+    if (self->program == 0) {
+        self->push_error(APIError);
+        return false;
+    }
+
+    std::cerr << "linking ... ";
+
+    glLinkProgram(self->program);
+
+    GLint success;
+    glGetProgramiv(self->program, GL_LINK_STATUS, &success);
+    bool ok = success == GL_TRUE;
+    std::cerr << (ok ? "success" : "failed") << std::endl;
+    
+    if (!ok)
+        self->push_error(LinkageFailed);
+
+#ifndef GLDEBUG
+    if (!ok)
+#endif
+    {
+        printProgramLog(self->program, std::cerr);
+    }
+
+    return ok;
+}
+
+bool ShaderProgram::bindAttribute(const std::string& s, GLuint position) {
+    if (self->program == 0)
+        self->program = glCreateProgram();
+
+    glBindAttribLocation(self->program, position, s.c_str());
+    // FIXME: check wether attrib was added correctly
+    
+    return true;
+}
+
+void ShaderProgram::use() {
+
+    if (self->program == 0) {
+        self->push_error(APIError);
         return;
     }
 
 #ifdef GLDEBUG
 
     if (wasError()) {
-        Error err = last_error;
+        Error err = self->last_error;
         printError(std::cerr);
-        last_error = err;
+        self->last_error = err;
     }
     
 #endif
     
-    GL_CHECK(glUseProgram(program));
+    GL_CHECK(glUseProgram(self->program));
 }
 
 bool ShaderProgram::replaceWith(ShaderProgram& new_prog) {
     
-    if (new_prog.program != 0 && new_prog.last_error == NoError) {
+    if (new_prog.self->program != 0 && new_prog.self->last_error == NoError) {
         reset();
-        program = new_prog.program;
-        new_prog.program = 0;
+        self->program = new_prog.self->program;
+        self->last_error = NoError;
+        new_prog.self->program = 0;
         return true;
     }
 
@@ -247,16 +278,16 @@ bool ShaderProgram::replaceWith(ShaderProgram& new_prog) {
 
 GLint ShaderProgram::uniformLocation(const std::string& name) {
     GLint loc;
-    GL_CHECK(loc = glGetUniformLocation(program, name.c_str()));
+    GL_CHECK(loc = glGetUniformLocation(self->program, name.c_str()));
     if (loc == -1)
-        push_error(UniformNotKnown);
+        self->push_error(UniformNotKnown);
     return loc;
 }
 
 void ShaderProgram::printError(std::ostream& out) {
 
     const char *err;
-    switch (last_error) {
+    switch (self->last_error) {
     case NoError: err = 0; break;
     case CompilationFailed: err = "compilation failed"; break;
     case LinkageFailed: err = "linkage failed"; break;
@@ -273,21 +304,23 @@ void ShaderProgram::printError(std::ostream& out) {
 
 bool ShaderProgram::validate(bool printLogOnError) {
     
-    if (program == 0) {
-        push_error(APIError);
+    if (self->program == 0) {
+        self->push_error(APIError);
         return false;
     }
 
-    GL_CHECK(glValidateProgram(program));
+    GL_CHECK(glValidateProgram(self->program));
     GLint valid;
-    GL_CHECK(glGetProgramiv(program, GL_VALIDATE_STATUS, &valid));
+    GL_CHECK(glGetProgramiv(self->program, GL_VALIDATE_STATUS, &valid));
     
     if (valid == GL_FALSE) {
-        push_error(ValidationFailed);
+        self->push_error(ValidationFailed);
 
         if (printLogOnError)
-            printProgramLog(*this, std::cerr);
+            printProgramLog(self->program, std::cerr);
     }
 
     return valid == GL_TRUE;
 }
+
+} // namespace glt

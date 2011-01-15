@@ -25,12 +25,15 @@
 #include "math/EulerAngles.hpp"
 #include "math/transform.hpp"
 
+#include "glt/utils.hpp"
+#include "glt/ShaderManager.hpp"
+#include "glt/ShaderProgram.hpp"
+#include "glt/Uniforms.hpp"
+#include "glt/color.hpp"
+
 #include "GameWindow.hpp"
-#include "gltools.hpp"
-#include "ShaderProgram.hpp"
 #include "GenBatch.hpp"
-#include "color.hpp"
-#include "Uniforms.hpp"
+
 
 static const vec3 gravity(0.f, -9.81f, 0.f);
 
@@ -51,7 +54,7 @@ struct Sphere {
     float r;
     vec3 center;
     float mass;
-    gltools::color color;
+    glt::color color;
     float shininess;
 
     void move(const Cuboid& room, float dt);
@@ -156,14 +159,16 @@ struct Game : public GameWindow {
     Camera                  camera;
     Cuboid                  room;
 
-    ShaderProgram wallShader;
+    glt::ShaderManager shaderManager;
+
+    glt::ShaderProgram wallShader;
     struct {
         vec3 ecLightPos;
         vec3 ecSpotDir;
         float spotAngle;
     } wallUniforms;
     
-    ShaderProgram sphereShader;
+    glt::ShaderProgram sphereShader;
     struct {
         vec3 ecLightPos;
         vec3 ecSpotDir;
@@ -215,7 +220,9 @@ private:
 
 Game::Game() :
     wallBatch(GL_QUADS, cubeVertexAttrs),
-    sphereBatch(GL_TRIANGLES, sphereVertexAttrs)
+    sphereBatch(GL_TRIANGLES, sphereVertexAttrs),
+    wallShader(shaderManager),
+    sphereShader(shaderManager)
 {}
 
 static void print_context(const sf::ContextSettings& c) {
@@ -241,18 +248,9 @@ bool Game::onInit() {
         return false;
     }
 
-    GL_CHECK((void) 0);
+    if (window().GetSettings().DebugContext)
+        glt::initDebug();
     
-    // GLint nNumExtensions;
-    // glGetIntegerv(GL_NUM_EXTENSIONS, &nNumExtensions);
-
-    // std::cerr << "OpenGL extensions:" << std::endl;
-    // for(GLint i = 0; i < nNumExtensions; i++) {
-    //     const char *extension = (const char *) glGetStringi(GL_EXTENSIONS, i);
-    //     std::cerr << extension << std::endl;
-    // }
-    // std::cerr << std::endl;
-
     ticksPerSecond(100);
     grabMouse(true);
 
@@ -274,27 +272,11 @@ bool Game::onInit() {
     
     GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
-    // This make a sphere
     makeSphere(sphereBatch, 1.f, 26, 13);
 
     const vec3 lln = room.corner_min;
     const vec3 dim = room.corner_max - room.corner_min;
     	
-    // floorBatch.Begin(GL_LINES, 324);
-    // for (GLfloat x = -20.0; x <= 20.0f; x+= 0.5) {
-    //     floorBatch.Vertex3f(x, 0.f, 20.0f);
-    //     floorBatch.Vertex3f(x, 0.f, -20.0f);
-        
-    //     floorBatch.Vertex3f(20.0f, 0.f, x);
-    //     floorBatch.Vertex3f(-20.0f, 0.f, x);
-    // }
-    // floorBatch.End();
-
-    // camera.origin = vec3(-20.f, 10.f, -20.f);
-    // camera.orientation = EulerAngles(0, Math::PI, 0);
-    // camera.orientation.canonize();
-
-    // camera.setOrigin(room.corner_min);
     camera.setOrigin(vec3(-19.f, 10.f, +19.f));
     camera.facePoint(vec3(0.f, 10.f, 0.f));
 
@@ -316,10 +298,10 @@ bool Game::onInit() {
 bool Game::load_shaders() {
 
     bool ok = true;
-    ShaderProgram ws;
+    glt::ShaderProgram ws(shaderManager);
     
-    ws.addShaderFile(ShaderProgram::VertexShader, "brick.vert");
-    ws.addShaderFile(ShaderProgram::FragmentShader, "brick.frag");
+    ws.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/brick.vert");
+    ws.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/brick.frag");
     ws.bindAttribute("vertex", cubeVertexAttrs.index(offsetof(CubeVertex, position)));
     ws.bindAttribute("normal", cubeVertexAttrs.index(offsetof(CubeVertex, normal)));
     ws.link();
@@ -331,10 +313,10 @@ bool Game::load_shaders() {
 
     ws.printError(std::cerr);
 
-    ShaderProgram ss;
+    glt::ShaderProgram ss(shaderManager);
 
-    ss.addShaderFile(ShaderProgram::VertexShader, "sphere.vert");
-    ss.addShaderFile(ShaderProgram::FragmentShader, "sphere.frag");
+    ss.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/sphere.vert");
+    ss.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/sphere.frag");
     ss.bindAttribute("position", sphereVertexAttrs.index(offsetof(SphereVertex, position)));
     ss.bindAttribute("normal", sphereVertexAttrs.index(offsetof(SphereVertex, normal)));
     ss.link();
@@ -649,8 +631,8 @@ static float rand1() {
     return rand() * (1.f / RAND_MAX);
 }
 
-static gltools::color randomColor() {
-    return gltools::color(byte(rand1() * 255), byte(rand1() * 255), byte(rand1() * 255));
+static glt::color randomColor() {
+    return glt::color(byte(rand1() * 255), byte(rand1() * 255), byte(rand1() * 255));
 }
 
 void Game::spawn_sphere() {
@@ -728,7 +710,7 @@ void Game::renderScene(float interpolation) {
 
     render_hud();
 
-    gltools::printErrors(std::cerr);
+//    gltools::printErrors(std::cerr);
 }
 
 void Game::render_sphere(const Sphere& s, float dt) {
@@ -740,7 +722,7 @@ void Game::render_sphere(const Sphere& s, float dt) {
 
     sphereShader.use();
 
-    gltools::Uniforms us(sphereShader);
+    glt::Uniforms us(sphereShader);
     us.optional("mvpMatrix", toMat4(transformPipeline.GetModelViewProjectionMatrix()));
     us.optional("mvMatrix", toMat4(transformPipeline.GetModelViewMatrix()));
     us.optional("normalMatrix", toMat3(transformPipeline.GetNormalMatrix(true)));
@@ -768,7 +750,7 @@ void Game::render_walls() {
 
     wallShader.use();
     
-    gltools::Uniforms us(wallShader);
+    glt::Uniforms us(wallShader);
     us.optional("mvpMatrix", toMat4(transformPipeline.GetModelViewProjectionMatrix()));
     us.optional("mvMatrix", toMat4(transformPipeline.GetModelViewMatrix()));
     us.optional("normalMatrix", toMat3(transformPipeline.GetNormalMatrix(true)));
