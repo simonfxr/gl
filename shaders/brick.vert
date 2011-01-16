@@ -8,7 +8,7 @@ in vec4 vertex;
 in vec3 normal;
 
 out vec3 ecPosition;
-flat out vec3 ecNormal;
+out vec3 ecNormal;
 out vec2 texCoord;
 
 void main() {

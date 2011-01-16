@@ -250,6 +250,14 @@ bool Game::onInit() {
 
     if (window().GetSettings().DebugContext)
         glt::initDebug();
+
+#ifdef GLDEBUG
+    shaderManager.verbosity(glt::ShaderManager::Info);
+#else
+    shaderManager.verbosity(glt::ShaderManager::Quiet);
+#endif
+
+    shaderManager.addIncludeDir("shaders");
     
     ticksPerSecond(100);
     grabMouse(true);
@@ -301,6 +309,8 @@ bool Game::load_shaders() {
     glt::ShaderProgram ws(shaderManager);
     
     ws.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/brick.vert");
+    ws.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/point_light.frag");
+    ws.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/sim_shading.frag");
     ws.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/brick.frag");
     ws.bindAttribute("vertex", cubeVertexAttrs.index(offsetof(CubeVertex, position)));
     ws.bindAttribute("normal", cubeVertexAttrs.index(offsetof(CubeVertex, normal)));
@@ -310,23 +320,25 @@ bool Game::load_shaders() {
     
     if (!ws.wasError())
         wallShader.replaceWith(ws);
-
-    ws.printError(std::cerr);
+    else
+        ws.printError(std::cerr);
 
     glt::ShaderProgram ss(shaderManager);
 
     ss.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/sphere.vert");
+    ss.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/point_light.frag");
+    ss.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/sim_shading.frag");
     ss.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/sphere.frag");
     ss.bindAttribute("position", sphereVertexAttrs.index(offsetof(SphereVertex, position)));
     ss.bindAttribute("normal", sphereVertexAttrs.index(offsetof(SphereVertex, normal)));
     ss.link();
 
-    if (!ss.wasError())
-        sphereShader.replaceWith(ss);
-
     ok = ok && !ss.wasError();
     
-    ss.printError(std::cerr);
+    if (!ss.wasError())
+        sphereShader.replaceWith(ss);
+    else
+        ss.printError(std::cerr);
 
     return ok;
 }
