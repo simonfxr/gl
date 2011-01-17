@@ -199,6 +199,10 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
     return ok;
 }
 
+bool ShaderProgram::tryLink() {
+    return !wasError() && link();
+}
+
 bool ShaderProgram::link() {
 
     if (self->program == 0) {

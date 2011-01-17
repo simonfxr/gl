@@ -66,33 +66,27 @@ struct Sphere {
 
 } __attribute__((aligned(16)));
 
-struct CubeVertex {
+struct Vertex {
     vec4 position;
     vec3 normal;
 };
 
-gltools::Attr cubeVertexAttrArray[] = {
-    gltools::attr::vec4(offsetof(CubeVertex, position)),
-    gltools::attr::vec3(offsetof(CubeVertex, normal))
+gltools::Attr vertexAttrArray[] = {
+    gltools::attr::vec4(offsetof(Vertex, position)),
+    gltools::attr::vec3(offsetof(Vertex, normal))
 };
 
-gltools::Attrs<CubeVertex> cubeVertexAttrs(ARRAY_LENGTH(cubeVertexAttrArray), cubeVertexAttrArray);
+gltools::Attrs<Vertex> vertexAttrs(ARRAY_LENGTH(vertexAttrArray), vertexAttrArray);
 
-struct SphereVertex {
-    vec4 position;
-    vec3 normal;
+void makeSphere(gltools::GenBatch<Vertex>& sphere, float rad, int32 stacks, int32 slices);
+
+void makeUnitCube(gltools::GenBatch<Vertex>& cube);
+
+struct Mirror {
+    vec3 origin;
+    float width;
+    float height;
 };
-
-gltools::Attr sphereVertexAttrArray[] = {
-    gltools::attr::vec4(offsetof(SphereVertex, position)),
-    gltools::attr::vec3(offsetof(SphereVertex, normal)),
-};
-
-gltools::Attrs<SphereVertex> sphereVertexAttrs(ARRAY_LENGTH(sphereVertexAttrArray), sphereVertexAttrArray);
-
-void makeSphere(gltools::GenBatch<SphereVertex>& sphere, float rad, int32 stacks, int32 slices);
-
-void makeUnitCube(gltools::GenBatch<CubeVertex>& cube);
 
 struct Camera {
     GLFrame frame;
@@ -153,11 +147,13 @@ struct Game : public GameWindow {
     GLFrustum               viewFrustum;                // View Frustum
     GLGeometryTransform     transformPipeline;          // Geometry Transform Pipeline
 
-    gltools::GenBatch<CubeVertex> wallBatch;
-    gltools::GenBatch<SphereVertex> sphereBatch;
+    gltools::GenBatch<Vertex> wallBatch;
+    gltools::GenBatch<Vertex> sphereBatch;
+    gltools::GenBatch<Vertex> mirrorBatch;
     
     Camera                  camera;
     Cuboid                  room;
+    Mirror                  mirror;
 
     glt::ShaderManager shaderManager;
 
@@ -175,6 +171,8 @@ struct Game : public GameWindow {
         float spotAngle;
     } sphereUniforms;
 
+    glt::ShaderProgram mirrorShader;
+
     uint32 fps_count;
     uint32 current_fps;
     float  fps_render_next;
@@ -189,16 +187,20 @@ struct Game : public GameWindow {
     bool use_interpolation;
     uint64 last_frame_rendered;
 
+    bool sort_by_distance;
+
     std::vector<Sphere> spheres;
 
-    Game();
+    Game(sf::RenderWindow& win, sf::Clock& clock);
 
 private:
 
     bool onInit();
+    bool initMirror();
 
     void animate();
     void renderScene(float interpolation);
+    void renderScene(float dt, bool renderWithMirror);
     
     void keyStateChanged(sf::Key::Code key, bool pressed);
     void mouseButtonStateChanged(sf::Mouse::Button button, bool pressed);
@@ -209,7 +211,9 @@ private:
     void spawn_sphere();
     void move_camera(const vec3& step);
 
-    void render_sphere(const Sphere& s, float dt);
+    void renderMirrorTexture(float dt);
+    void renderMirror();
+    void renderSpheres(float dt);
     void render_hud();
     void render_walls();
     
@@ -218,11 +222,14 @@ private:
     void update_sphere_mass();
 };
 
-Game::Game() :
-    wallBatch(GL_QUADS, cubeVertexAttrs),
-    sphereBatch(GL_TRIANGLES, sphereVertexAttrs),
+Game::Game(sf::RenderWindow& win, sf::Clock& clock) :
+    GameWindow(win, clock),
+    wallBatch(GL_QUADS, vertexAttrs),
+    sphereBatch(GL_TRIANGLES, vertexAttrs),
+    mirrorBatch(GL_QUADS, vertexAttrs),
     wallShader(shaderManager),
-    sphereShader(shaderManager)
+    sphereShader(shaderManager),
+    mirrorShader(shaderManager)
 {}
 
 static void print_context(const sf::ContextSettings& c) {
@@ -258,9 +265,14 @@ bool Game::onInit() {
 #endif
 
     shaderManager.addIncludeDir("shaders");
+
+    if (!initMirror())
+        return false;
     
     ticksPerSecond(100);
     grabMouse(true);
+
+    sort_by_distance = true;
 
     last_frame_rendered = 0;
 
@@ -303,6 +315,26 @@ bool Game::onInit() {
     return true;
 }
 
+bool Game::initMirror() {
+
+    gltools::GenBatch<Vertex>& q = mirrorBatch;
+    Vertex v;
+    v.normal = vec3(0.f, 0.f, 1.f);
+    
+    v.position = vec4(0.f, 0.f, 0.f, 1.f); q.add(v);
+    v.position = vec4(1.f, 0.f, 0.f, 1.f); q.add(v);
+    v.position = vec4(1.f, 1.f, 0.f, 1.f); q.add(v);
+    v.position = vec4(0.f, 1.f, 0.f, 1.f); q.add(v);
+
+    q.freeze();
+
+    mirror.origin = vec3(1, 1, 0);
+    mirror.width = 5.f;
+    mirror.height = 5.f;
+
+    return true;
+}
+
 bool Game::load_shaders() {
 
     bool ok = true;
@@ -312,9 +344,9 @@ bool Game::load_shaders() {
     ws.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/point_light.frag");
     ws.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/sim_shading.frag");
     ws.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/brick.frag");
-    ws.bindAttribute("vertex", cubeVertexAttrs.index(offsetof(CubeVertex, position)));
-    ws.bindAttribute("normal", cubeVertexAttrs.index(offsetof(CubeVertex, normal)));
-    ws.link();
+    ws.bindAttribute("vertex", vertexAttrs.index(offsetof(Vertex, position)));
+    ws.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
+    ws.tryLink();
 
     ok = ok && !ws.wasError();
     
@@ -329,9 +361,9 @@ bool Game::load_shaders() {
     ss.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/point_light.frag");
     ss.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/sim_shading.frag");
     ss.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/sphere.frag");
-    ss.bindAttribute("position", sphereVertexAttrs.index(offsetof(SphereVertex, position)));
-    ss.bindAttribute("normal", sphereVertexAttrs.index(offsetof(SphereVertex, normal)));
-    ss.link();
+    ss.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
+    ss.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
+    ss.tryLink();
 
     ok = ok && !ss.wasError();
     
@@ -339,6 +371,20 @@ bool Game::load_shaders() {
         sphereShader.replaceWith(ss);
     else
         ss.printError(std::cerr);
+
+    glt::ShaderProgram ms(shaderManager);
+    ms.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/mirror.vert");
+    ms.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/mirror.frag");
+    ms.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
+    ms.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
+    ms.tryLink();
+
+    ok = ok && !ms.wasError();
+
+    if (!ms.wasError())
+        mirrorShader.replaceWith(ms);
+    else
+        ms.printError(std::cerr);
 
     return ok;
 }
@@ -539,6 +585,10 @@ void Game::keyStateChanged(sf::Key::Code key, bool pressed) {
     case I: use_interpolation = !use_interpolation; break;
     case B: pause(!paused()); break;
     case C: load_shaders(); break;
+    case M:
+        sort_by_distance = !sort_by_distance;
+        std::cerr << "sort_by_distance: " << (sort_by_distance ? "yes" : "no") << std::endl;
+        break;
     }
 
     update_sphere_mass();
@@ -669,10 +719,23 @@ void Game::renderScene(float interpolation) {
 
     if (!use_interpolation)
         interpolation = 0.f;
-
+    
     last_frame_rendered = currentFrameID();
     
     window().SetActive();
+
+    float dt = interpolation * game_speed * frameDuration();
+    renderScene(dt, true);
+
+    ++fps_count;
+    render_hud();
+}
+
+void Game::renderScene(float dt, bool renderWithMirror) {
+
+    if (renderWithMirror) {
+        renderMirrorTexture(dt);
+    }
 
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
@@ -704,50 +767,112 @@ void Game::renderScene(float interpolation) {
     GL_CHECK(glCullFace(GL_FRONT));
     GL_CHECK(glEnable(GL_CULL_FACE));
 
+    if (renderWithMirror)
+        renderMirror();
+
     render_walls();
 
-    float dt = interpolation * game_speed * frameDuration();
-
-    GL_CHECK(glCullFace(GL_BACK));
-
-    for (uint32 i = 0; i < spheres.size(); ++i)
-        render_sphere(spheres[i], dt);
-
-    GL_CHECK(glDisable(GL_CULL_FACE));
+    renderSpheres(dt);
 
     modelViewMatrix.PopMatrix();
     modelViewMatrix.PopMatrix();    
-
-    ++fps_count;
-
-    render_hud();
-
-//    gltools::printErrors(std::cerr);
 }
 
-void Game::render_sphere(const Sphere& s, float dt) {
+void Game::renderMirrorTexture(float dt) {
+
+}
+
+void Game::renderMirror() {
+
+    GL_CHECK(glDisable(GL_CULL_FACE));
 
     modelViewMatrix.PushMatrix();
-    vec3 pos = s.calc_position(dt);
-    modelViewMatrix.Translate(pos.x, pos.y, pos.z);
-    modelViewMatrix.Scale(s.r, s.r, s.r);
+    modelViewMatrix.Translate(mirror.origin.x, mirror.origin.y, mirror.origin. z);
+    modelViewMatrix.Scale(mirror.width, mirror.height, 1.f);
 
-    sphereShader.use();
-
-    glt::Uniforms us(sphereShader);
-    us.optional("mvpMatrix", toMat4(transformPipeline.GetModelViewProjectionMatrix()));
-    us.optional("mvMatrix", toMat4(transformPipeline.GetModelViewMatrix()));
-    us.optional("normalMatrix", toMat3(transformPipeline.GetNormalMatrix(true)));
-    us.optional("ecLight", sphereUniforms.ecLightPos);
-    us.optional("ecSpotDirection", sphereUniforms.ecSpotDir);
-    us.optional("spotAngle", sphereUniforms.spotAngle);
-    us.optional("color", s.color);
-    us.optional("shininess", s.shininess);
+    mirrorShader.use();
     
-    sphereShader.validate(GLDEBUG_ENABLED);
-    sphereBatch.draw();
+    glt::Uniforms us(mirrorShader);
+    
+    us.optional("mvpMatrix", toMat4(transformPipeline.GetModelViewProjectionMatrix()));
+    mirrorBatch.draw();
 
     modelViewMatrix.PopMatrix();
+    
+    GL_CHECK(glEnable(GL_CULL_FACE));
+}
+
+
+
+struct SphereModel {
+    float viewDist;
+    vec3 pos;
+    const Sphere *s;
+
+    static bool compare(SphereModel m1, SphereModel m2) {
+        return m1.viewDist < m2.viewDist;
+    }
+};
+
+void Game::renderSpheres(float dt) {
+
+    GL_CHECK(glCullFace(GL_BACK));
+    sphereShader.use();
+
+    viewFrustum.Transform(camera.frame);
+
+    const vec3 camPos = camera.getOrigin();
+ 
+    std::vector<SphereModel> toRender;
+
+    for (uint32 i = 0; i < spheres.size(); ++i) {
+        const Sphere& s = spheres[i];
+
+        const vec3 pos = s.calc_position(dt);
+
+        if (!viewFrustum.TestSphere(pos.x, pos.y, pos.z, s.r))
+            continue;
+
+        SphereModel m;
+        m.s = &s;
+        m.pos = pos;
+        m.viewDist = std::max(0.f, vec3::dist(pos, camPos) - s.r);
+        toRender.push_back(m);
+    }
+
+    std::sort(toRender.begin(), toRender.end(), SphereModel::compare);
+
+    if (!sort_by_distance)
+        std::reverse(toRender.begin(), toRender.end());
+
+    for (uint32 i = 0; i < toRender.size(); ++i) {
+        const Sphere& s = *toRender[i].s;
+        const vec3& pos = toRender[i].pos;
+        
+        modelViewMatrix.PushMatrix();
+        modelViewMatrix.Translate(pos.x, pos.y, pos.z);
+        modelViewMatrix.Scale(s.r, s.r, s.r);
+
+        glt::Uniforms us(sphereShader);
+        us.optional("mvpMatrix", toMat4(transformPipeline.GetModelViewProjectionMatrix()));
+        us.optional("mvMatrix", toMat4(transformPipeline.GetModelViewMatrix()));
+        us.optional("normalMatrix", toMat3(transformPipeline.GetNormalMatrix(true)));
+        us.optional("ecLight", sphereUniforms.ecLightPos);
+        us.optional("ecSpotDirection", sphereUniforms.ecSpotDir);
+        us.optional("spotAngle", sphereUniforms.spotAngle);
+        us.optional("color", s.color);
+        us.optional("shininess", s.shininess);
+
+#ifdef GLDEBUG
+        sphereShader.validate();
+#endif
+
+        sphereBatch.draw();
+        
+        modelViewMatrix.PopMatrix();
+    }
+    
+    GL_CHECK(glDisable(GL_CULL_FACE));
 }
 
 void Game::render_walls() {
@@ -861,7 +986,9 @@ int main(int argc, char *argv[]) {
     glContext.DebugContext = true;
 #endif
 
-    Game game;
+    sf::RenderWindow win(sf::VideoMode(800, 600), "sim-sfml", sf::Style::Default, glContext);
+
+    Game game(win, startupTimer);
 
     if (!game.init(glContext, "sim-sfml")) {
         std::cerr << "initialization failed, exiting..." << std::endl;
@@ -1042,10 +1169,10 @@ bool Cuboid::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision)
 
 namespace {
 
-void makeUnitCube(gltools::GenBatch<CubeVertex>& cube) {
+void makeUnitCube(gltools::GenBatch<Vertex>& cube) {
     // cube.Begin(GL_QUADS, 24);
 
-    CubeVertex v;
+    Vertex v;
     
     v.normal = vec3(0.f, 0.f, -1.f);
     v.position = vec4(-1.0f, -1.0f,  1.0f, 1.f); cube.add(v);
@@ -1086,10 +1213,10 @@ void makeUnitCube(gltools::GenBatch<CubeVertex>& cube) {
     cube.freeze();
 }
 
-void addTriangle(gltools::GenBatch<SphereVertex>& s, const M3DVector3f vertices[3], const M3DVector3f normals[3], const M3DVector2f texCoords[3]) {
+void addTriangle(gltools::GenBatch<Vertex>& s, const M3DVector3f vertices[3], const M3DVector3f normals[3], const M3DVector2f texCoords[3]) {
 
     for (uint32 i = 0; i < 3; ++i) {
-        SphereVertex v;
+        Vertex v;
         v.position = vec4(toVec3(vertices[i]), 1.f);
         v.normal = toVec3(normals[i]);
         s.add(v);
@@ -1097,7 +1224,7 @@ void addTriangle(gltools::GenBatch<SphereVertex>& s, const M3DVector3f vertices[
 }
 
 // from the GLTools library (OpenGL Superbible)
-void gltMakeSphere(gltools::GenBatch<SphereVertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
+void gltMakeSphere(gltools::GenBatch<Vertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
 {
     GLfloat drho = (GLfloat)(3.141592653589) / (GLfloat) iStacks;
     GLfloat dtheta = 2.0f * (GLfloat)(3.141592653589) / (GLfloat) iSlices;
@@ -1206,7 +1333,7 @@ void gltMakeSphere(gltools::GenBatch<SphereVertex>& sphereBatch, GLfloat fRadius
     sphereBatch.freeze();
 }
 
-void makeSphere(gltools::GenBatch<SphereVertex>& sphere, float rad, int32 stacks, int32 slices) {
+void makeSphere(gltools::GenBatch<Vertex>& sphere, float rad, int32 stacks, int32 slices) {
     gltMakeSphere(sphere, rad, stacks, slices);
 }
 

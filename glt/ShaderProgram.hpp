@@ -37,6 +37,7 @@ struct ShaderProgram {
 
     bool bindAttribute(const std::string& name, GLuint position);
 
+    bool tryLink();
     bool link();
 
     void use();

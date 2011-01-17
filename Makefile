@@ -39,8 +39,8 @@ libgltools.so:
 triangle: triangle.cpp libgltools.so
 	$(CXX) -o $@ $(CFLAGS) $(LDFLAGS) $(LD_GLTOOLS) $<
 
-own1: own1.cpp ShaderProgram.cpp VertexBuffer.cpp
-	$(CXX) -o $@ $(CFLAGS) $(LDFLAGS) $^
+own1: own1.cpp glt/ShaderManager.cpp glt/ShaderProgram.cpp glt/include_proc.cpp glt/utils.cpp VertexBuffer.cpp 
+	$(CXX) -o $@ $(CFLAGS) $(LDFLAGS) $^ -lglut
 
 SIM_SFML_SOURCES := sim-sfml.cpp GameLoop.cpp glt/utils.cpp glt/ShaderManager.cpp glt/ShaderProgram.cpp glt/Uniforms.cpp glt/include_proc.cpp GenBatch.cpp GameWindow.cpp 
 

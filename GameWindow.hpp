@@ -17,7 +17,11 @@ private:
 
     GameLoop loop;
     Data *data;
+    
+    bool owning_win;
     sf::RenderWindow *win;
+    
+    bool owning_clock;
     sf::Clock *clock;
     bool grab_mouse;
     
@@ -51,7 +55,7 @@ private:
 
 public:
     
-    GameWindow();
+    GameWindow(sf::RenderWindow& _win, sf::Clock& _clock);
 
     float now();
     

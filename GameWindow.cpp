@@ -168,11 +168,13 @@ void GameWindow::Data::render(float interpolation) {
     self.win->Display();
 }
 
-GameWindow::GameWindow() :
+GameWindow::GameWindow(sf::RenderWindow& _win, sf::Clock& _clock) : 
     loop(0),
     data(0),
-    win(0),
-    clock(0),
+    owning_win(false),
+    win(&_win),
+    owning_clock(false),
+    clock(&_clock),
     grab_mouse(true),
     game_frame_id(0),
     render_frame_id(0),
@@ -184,8 +186,8 @@ GameWindow::GameWindow() :
 
 GameWindow::~GameWindow() {
     delete data;
-    delete win;
-    delete clock;
+    if (owning_win) delete win;
+    if (owning_clock) delete clock;
 }
 
 bool GameWindow::onInit() {
@@ -202,8 +204,11 @@ bool GameWindow::init(const sf::ContextSettings& settings, const std::string& na
         return true;
 
     data = new Data(*this);
-    win = new sf::RenderWindow(sf::VideoMode(800, 600), name, sf::Style::Default, settings);
-    clock = new sf::Clock();
+
+    if (owning_win)
+        win = new sf::RenderWindow(sf::VideoMode(800, 600), name, sf::Style::Default, settings);
+    if (owning_clock)
+        clock = new sf::Clock();
     win->EnableKeyRepeat(false);
     
     init_successful = onInit();
@@ -211,8 +216,16 @@ bool GameWindow::init(const sf::ContextSettings& settings, const std::string& na
     if (!init_successful) {
         
         delete data; data = 0;
-        delete win; win = 0;
-        delete clock; clock = 0;
+        
+        if (owning_win) {
+            delete win;
+            win = 0;
+        }
+
+        if (owning_clock) {
+            delete clock;
+            clock = 0;
+        }
         
     } else {
 

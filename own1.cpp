@@ -7,15 +7,19 @@
 #include <GL/glut.h>
 
 #include "defs.h"
-#include "ShaderProgram.hpp"
+#include "glt/ShaderProgram.hpp"
+#include "glt/ShaderManager.hpp"
 #include "VertexBuffer.hpp"
 #include "math/mat4.hpp"
 
 using namespace std;
+using glt::ShaderProgram;
+using glt::ShaderManager;
 
 namespace {
 
-ShaderProgram shader;
+ShaderManager shaderManager;
+ShaderProgram shader(shaderManager);
     
 GLuint uniform_vec4_color;
 GLuint uniform_mat4_rotation;
@@ -68,12 +72,18 @@ bool printGLErrors() {
 
 bool init() {
 
-    if (!shader.compileAndLink("hello.vert", "hello.frag"))
-        return false;
+    shader.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/hello.vert");
+    shader.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/hello.frag");
+    shader.tryLink();
 
-    uniform_vec4_color = glGetUniformLocation(shader.program, "color");
-    uniform_mat4_rotation = glGetUniformLocation(shader.program, "rotation");
-    attribute_vec4_position = glGetAttribLocation(shader.program, "position");
+    if (shader.wasError()) {
+        shader.printError(std::cerr);
+        return false;
+    }    
+
+    uniform_vec4_color = glGetUniformLocation(shader.program(), "color");
+    uniform_mat4_rotation = glGetUniformLocation(shader.program(), "rotation");
+    attribute_vec4_position = glGetAttribLocation(shader.program(), "position");
 
     triangle.add(vec4(-0.5f, -0.5f, 1.f, 1.f));
     triangle.add(vec4(+0.5f, -0.5f, 2.f, 1.f));
@@ -118,7 +128,7 @@ void render() {
     glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    glUseProgram(shader.program);
+    glUseProgram(shader.program());
 
     glUniform4f(uniform_vec4_color, 1.f, 0.f, 0.f, 1.f);
     glUniformMatrix4fv(uniform_mat4_rotation, 1, GL_FALSE, rotation.flat);
