@@ -37,6 +37,8 @@
 
 static const vec3 gravity(0.f, -9.81f, 0.f);
 
+struct Game;
+
 namespace {
 
 struct Sphere;
@@ -57,7 +59,7 @@ struct Sphere {
     glt::color color;
     float shininess;
 
-    void move(const Cuboid& room, float dt);
+    void move(const Game& game, float dt);
     vec3 calc_position(float dt) const;
 
     static bool collide(Sphere& x, Sphere& y, float dt);
@@ -86,6 +88,13 @@ struct Mirror {
     vec3 origin;
     float width;
     float height;
+
+    uint32 pix_width;
+    uint32 pix_height;
+    
+    GLuint fbo_name;
+    GLuint depth_buffer_name;
+    GLuint texture;
 };
 
 struct Camera {
@@ -192,6 +201,8 @@ struct Game : public GameWindow {
     std::vector<Sphere> spheres;
 
     Game(sf::RenderWindow& win, sf::Clock& clock);
+
+    bool touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision) const;
 
 private:
 
@@ -332,6 +343,27 @@ bool Game::initMirror() {
     mirror.width = 5.f;
     mirror.height = 5.f;
 
+    mirror.pix_width = 1200;
+    mirror.pix_height = 1200;
+
+    GL_CHECK(glGenFramebuffers(1, &mirror.fbo_name));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mirror.fbo_name));
+
+    GL_CHECK(glGenRenderbuffers(1, &mirror.depth_buffer_name));
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, mirror.depth_buffer_name));
+    GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, mirror.pix_width, mirror.pix_height));
+
+    GL_CHECK(glGenTextures(1, &mirror.texture));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, mirror.texture));
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, mirror.pix_width, mirror.pix_height, 0, GL_RGBA, GL_FLOAT, NULL));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+
+    GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mirror.texture, 0));
+    GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, mirror.depth_buffer_name));
+
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+
     return true;
 }
 
@@ -395,7 +427,7 @@ void Game::animate() {
     resolve_collisions(dt);
 
     for (uint32 i = 0; i < spheres.size(); ++i)
-        spheres[i].move(room, dt);
+        spheres[i].move(*this, dt);
 }
 
 // namespace {
@@ -675,7 +707,7 @@ void Game::move_camera(const vec3& dir) {
 
     vec3 norm;
     vec3 col;
-    if (!room.touchesWall(cam, norm, col))
+    if (!touchesWall(cam, norm, col))
         camera = new_cam;
 }
 
@@ -725,6 +757,7 @@ void Game::renderScene(float interpolation) {
     window().SetActive();
 
     float dt = interpolation * game_speed * frameDuration();
+    
     renderScene(dt, true);
 
     ++fps_count;
@@ -733,13 +766,18 @@ void Game::renderScene(float interpolation) {
 
 void Game::renderScene(float dt, bool renderWithMirror) {
 
+    viewFrustum.Transform(camera.frame);
+
     if (renderWithMirror) {
         renderMirrorTexture(dt);
     }
 
+    viewFrustum.Transform(camera.frame);
+
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
     modelViewMatrix.PushMatrix();
+    modelViewMatrix.Scale(-1.f, 1.f, 1.f);
 
     M3DMatrix44f mCamera;
     set_matrix(mCamera, camera.getCameraMatrix());
@@ -767,12 +805,12 @@ void Game::renderScene(float dt, bool renderWithMirror) {
     GL_CHECK(glCullFace(GL_FRONT));
     GL_CHECK(glEnable(GL_CULL_FACE));
 
-    if (renderWithMirror)
-        renderMirror();
-
     render_walls();
 
     renderSpheres(dt);
+
+    if (renderWithMirror)
+        renderMirror();
 
     modelViewMatrix.PopMatrix();
     modelViewMatrix.PopMatrix();    
@@ -780,29 +818,86 @@ void Game::renderScene(float dt, bool renderWithMirror) {
 
 void Game::renderMirrorTexture(float dt) {
 
+    const vec3 corners[] = {
+        mirror.origin,
+        mirror.origin + vec3(mirror.width, 0.f, 0.f),
+        mirror.origin + vec3(mirror.width, mirror.height, 0.f),
+        mirror.origin + vec3(0.f, mirror.height, 0.f)
+    };
+
+    bool visible = false;
+
+    for (uint32 i = 0; i < 4 && !visible; ++i)
+        visible = viewFrustum.TestSphere(corners[i].x, corners[i].y, corners[i].z, 0.f);
+
+    if (!visible)
+        return;
+
+    Camera old_cam = camera;
+
+    GLFrustum old_frust = viewFrustum;
+    
+    viewFrustum.SetPerspective(35.0f, mirror.width / mirror.height, 1.0f, 100.0f);
+
+
+    static const vec3 mirror_normal = vec3(0.f, 0.f, 1.f);
+
+    const vec3 mirror_center = 0.5f * (corners[0] + corners[2]);
+
+    vec3 fw = camera.getForwardVector();
+    vec3 mirror_view = vec3::reflect(fw, mirror_normal);
+
+    camera.setOrigin(mirror_center);
+    camera.frame.SetForwardVector(mirror_view.x, 0.f, mirror_view.z);
+
+    camera.frame.SetUpVector(0.f, 1.f, 0.f);
+
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mirror.fbo_name));
+
+    static const GLenum fboBuffs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+    
+    GL_CHECK(glDrawBuffers(1, fboBuffs));
+    GL_CHECK(glViewport(0, 0, mirror.pix_width, mirror.pix_height));
+
+    renderScene(dt, false);
+
+    static const GLenum windowBuff[] = { GL_BACK_LEFT };
+
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+    GL_CHECK(glDrawBuffers(1, windowBuff));
+    GL_CHECK(glViewport(0, 0, window().GetWidth(), window().GetHeight()));
+
+    viewFrustum = old_frust;
+    camera = old_cam;
 }
 
 void Game::renderMirror() {
 
-    GL_CHECK(glDisable(GL_CULL_FACE));
+    
 
     modelViewMatrix.PushMatrix();
     modelViewMatrix.Translate(mirror.origin.x, mirror.origin.y, mirror.origin. z);
     modelViewMatrix.Scale(mirror.width, mirror.height, 1.f);
+
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, mirror.texture));
 
     mirrorShader.use();
     
     glt::Uniforms us(mirrorShader);
     
     us.optional("mvpMatrix", toMat4(transformPipeline.GetModelViewProjectionMatrix()));
+
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, mirror.texture));
+
+    GLint texPos;
+    GL_CHECK(texPos = glGetUniformLocation(mirrorShader.program(), "mirrorTexture"));
+    GL_CHECK(glUniform1i(texPos, 0));
+    
     mirrorBatch.draw();
 
     modelViewMatrix.PopMatrix();
     
-    GL_CHECK(glEnable(GL_CULL_FACE));
 }
-
-
 
 struct SphereModel {
     float viewDist;
@@ -818,8 +913,6 @@ void Game::renderSpheres(float dt) {
 
     GL_CHECK(glCullFace(GL_BACK));
     sphereShader.use();
-
-    viewFrustum.Transform(camera.frame);
 
     const vec3 camPos = camera.getOrigin();
  
@@ -1001,14 +1094,14 @@ int main(int argc, char *argv[]) {
     return game.run();
 }
 
-void Sphere::move(const Cuboid& room, float dt) {
+void Sphere::move(const Game& game, float dt) {
     center = calc_position(dt);
     vel += gravity * dt;
 
     vec3 wall;
     vec3 collision;
     
-    if (room.touchesWall(*this, wall, collision)) {
+    if (game.touchesWall(*this, wall, collision)) {        
         vel = vec3::reflect(vel, wall, rand1() * 0.1f + 0.9f) * 0.8f;
         center = collision + wall * -r;
     }
@@ -1126,8 +1219,6 @@ void Camera::rotate(float rotx, float roty) {
 
 bool Cuboid::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision) const {
 
-    static const vec3 ground(0, -1.f, 0);
-
     if (s.center.y - s.r < corner_min.y) {
         out_normal = vec3(0, -1.f, 0);
         out_collision = vec3(s.center.x, corner_min.y, s.center.z);
@@ -1161,6 +1252,26 @@ bool Cuboid::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision)
     if (s.center.z + s.r > corner_max.z) {
         out_normal = vec3(0.f, 0.f, 1.f);
         out_collision = vec3(s.center.x, s.center.y, corner_max.z);
+        return true;
+    }
+
+    return false;
+}
+
+bool Game::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision) const {
+
+    if (room.touchesWall(s, out_normal, out_collision))
+        return true;
+
+    float zdist;
+    if (s.center.x + s.r >= mirror.origin.x &&
+        s.center.x - s.r <= mirror.origin.x + mirror.width &&
+        s.center.y + s.r >= mirror.origin.y &&
+        s.center.y - s.r <= mirror.origin.y + mirror.height &&
+        Math::abs(zdist = (s.center.z - mirror.origin.z)) < s.r) {
+
+        out_normal = vec3(0.f, 0.f, -Math::signum(zdist));
+        out_collision = vec3(s.center.x, s.center.y, mirror.origin.z);
         return true;
     }
 

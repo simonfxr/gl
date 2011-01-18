@@ -66,6 +66,6 @@ void GameLoop::pause(bool _pause) {
     _paused = _pause;
 }
 
-bool GameLoop::paused() {
+bool GameLoop::paused() const {
     return _paused;
 }

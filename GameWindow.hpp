@@ -88,19 +88,19 @@ public:
     
     void maxFPS(uint32 fps) { loop.max_fps = fps; }
 
-    float gameTime() { return loop.gameTime(); }
+    float gameTime() const { return loop.gameTime(); }
     
-    float realTime() { return loop.realTime(); }
+    float realTime() const { return loop.realTime(); }
 
-    uint64 currentFrameID() { return game_frame_id; }
+    uint64 currentFrameID() const { return game_frame_id; }
     
-    uint64 currentRenderFrameID() { return render_frame_id; }
+    uint64 currentRenderFrameID() const { return render_frame_id; }
 
-    bool paused() { return change_pause_state ? new_pause_state : loop.paused(); }
+    bool paused() const { return change_pause_state ? new_pause_state : loop.paused(); }
 
-    bool focused() { return have_focus; }
+    bool focused() const { return have_focus; }
 
-    float frameDuration() { return 1.f / loop.ticks_per_second; }
+    float frameDuration() const { return 1.f / loop.ticks_per_second; }
 };
 
 #endif

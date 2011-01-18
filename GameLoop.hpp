@@ -37,13 +37,13 @@ public:
      
     explicit GameLoop(uint32 ticks_per_second, uint32 max_frame_skip = 0, uint32 max_fps = 0);
 
-    float gameTime() { return _now - _skipped_time - _start_time; }
-    float realTime() { return _now - _start_time; }
+    float gameTime() const { return _now - _skipped_time - _start_time; }
+    float realTime() const { return _now - _start_time; }
      
     void exit(int32 exit_code = 0);
     void pause(bool pause);
 
-    bool paused();
+    bool paused() const;
 
     int32 run(Game& logic);
 };
