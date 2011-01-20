@@ -8,7 +8,7 @@
 #include <xmmintrin.h>
 #endif
 
-namespace Math {
+namespace math {
 
 namespace {
 
@@ -71,7 +71,7 @@ float LOCAL tan(float rad) {
 }
 
 float LOCAL rtan(float rad) {
-    return Math::recp(tan(rad));
+    return recp(tan(rad));
 }
 
 float LOCAL abs(float x) {

@@ -53,12 +53,12 @@ void set(GLint loc, const float& value) {
 }
 
 template <>
-void set(GLint loc, const vec4& value) {
+void set(GLint loc, const vec4_t& value) {
     glUniform4fv(loc, 1, &value.x);
 }
 
 template <>
-void set(GLint loc, const vec3& value) {
+void set(GLint loc, const vec3_t& value) {
     glUniform3fv(loc, 1, &value.x);
 }
 
@@ -78,11 +78,11 @@ Uniforms& Uniforms::optional(const std::string& name, float value) {
     setUniform(false, name, prog, GL_FLOAT, value); return *this;
 }
 
-Uniforms& Uniforms::optional(const std::string& name, const vec4& value) {
+Uniforms& Uniforms::optional(const std::string& name, const vec4_t& value) {
     setUniform(false, name, prog, GL_FLOAT_VEC4, value); return *this;
 }
 
-Uniforms& Uniforms::optional(const std::string& name, const vec3& value) {
+Uniforms& Uniforms::optional(const std::string& name, const vec3_t& value) {
     setUniform(false, name, prog, GL_FLOAT_VEC3, value); return *this;
 }
 
@@ -95,18 +95,18 @@ Uniforms& Uniforms::optional(const std::string& name, const mat3& value) {
 }
 
 Uniforms& Uniforms::optional(const std::string& name, color value) {
-    return optional(name, static_cast<vec4>(value)); 
+    return optional(name, value.vec4()); 
 }
 
 Uniforms& Uniforms::mandatory(const std::string& name, float value) {
     setUniform(true, name, prog, GL_FLOAT, value); return *this;
 }
 
-Uniforms& Uniforms::mandatory(const std::string& name, const vec4& value) {
+Uniforms& Uniforms::mandatory(const std::string& name, const vec4_t& value) {
     setUniform(true, name, prog, GL_FLOAT_VEC4, value); return *this;
 }
 
-Uniforms& Uniforms::mandatory(const std::string& name, const vec3& value) {
+Uniforms& Uniforms::mandatory(const std::string& name, const vec3_t& value) {
     setUniform(true, name, prog, GL_FLOAT_VEC3, value); return *this;
 }
 
@@ -119,7 +119,7 @@ Uniforms& Uniforms::mandatory(const std::string& name, const mat3& value) {
 }
 
 Uniforms& Uniforms::mandatory(const std::string& name, color value) {
-    return mandatory(name, static_cast<vec4>(value));
+    return mandatory(name, value.vec4());
 }
 
 } // namespace glt

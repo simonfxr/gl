@@ -7,9 +7,13 @@
 #include "defs.h"
 #include "glt/utils.hpp"
 
-struct vec3;
+namespace math {
+
+struct vec3_t;
 struct vec4;
 struct color;
+
+}
 
 namespace gltools {
 

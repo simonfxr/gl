@@ -3,6 +3,8 @@
 #include "defs.h"
 #include "math/vec3.hpp"
 
+namespace math {
+
 struct ivec3 {
 
     int32 x, y, z;
@@ -18,7 +20,7 @@ struct ivec3 {
     ivec3(const ivec3& v)
         : x(v.x), y(v.y), z(v.z) {}
 
-    explicit ivec3(const vec3& v)
+    explicit ivec3(const vec3_t& v)
         : x((int32) v.x), y((int32) v.y), z((int32) v.z) {}
 
     static ivec3 max(const ivec3& a, const ivec3& b) {
@@ -34,5 +36,7 @@ struct ivec3 {
     }
 
 };
+
+} // namespace math
 
 #endif

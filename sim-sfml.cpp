@@ -21,7 +21,7 @@
 #include "math/ivec3.hpp"
 #include "math/mat4.hpp"
 #include "math/mat3.hpp"
-#include "math/Math.hpp"
+#include "math/math.hpp"
 #include "math/EulerAngles.hpp"
 #include "math/transform.hpp"
 
@@ -34,8 +34,9 @@
 #include "GameWindow.hpp"
 #include "GenBatch.hpp"
 
+using namespace math;
 
-static const vec3 gravity(0.f, -9.81f, 0.f);
+static const vec3_t gravity = vec3(0.f, -9.81f, 0.f);
 
 struct Game;
 
@@ -44,33 +45,33 @@ namespace {
 struct Sphere;
 
 struct Cuboid {
-    vec3 corner_min;
-    vec3 corner_max;
-    bool touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision) const;
+    vec3_t corner_min;
+    vec3_t corner_max;
+    bool touchesWall(const Sphere& s, vec3_t& out_normal, vec3_t& out_collision) const;
 };
 
 static const float sphere_density = 999;
 
 struct Sphere {
-    vec3 vel;
+    vec3_t vel;
     float r;
-    vec3 center;
+    vec3_t center;
     float mass;
     glt::color color;
     float shininess;
 
     void move(const Game& game, float dt);
-    vec3 calc_position(float dt) const;
+    vec3_t calc_position(float dt) const;
 
     static bool collide(Sphere& x, Sphere& y, float dt);
 
-    static vec3 velocity_after_collision(float m1, const vec3& v1, float m2, const vec3& v2);
+    static vec3_t velocity_after_collision(float m1, const vec3_t& v1, float m2, const vec3_t& v2);
 
 } __attribute__((aligned(16)));
 
 struct Vertex {
-    vec4 position;
-    vec3 normal;
+    vec4_t position;
+    vec3_t normal;
 };
 
 gltools::Attr vertexAttrArray[] = {
@@ -85,7 +86,8 @@ void makeSphere(gltools::GenBatch<Vertex>& sphere, float rad, int32 stacks, int3
 void makeUnitCube(gltools::GenBatch<Vertex>& cube);
 
 struct Mirror {
-    vec3 origin;
+    
+    vec3_t origin;
     float width;
     float height;
 
@@ -95,22 +97,57 @@ struct Mirror {
     GLuint fbo_name;
     GLuint depth_buffer_name;
     GLuint texture;
+
+    bool rendering_recursive;
+
+    gltools::GenBatch<Vertex> batch;
+    glt::ShaderProgram shader;
+
+    Mirror(glt::ShaderManager& sm);
+
+    bool init(Game& game);
+    void resized(Game& game);
+    void createTexture(Game& game, float dt);
+    void render(Game& game);
+};
+
+Mirror::Mirror(glt::ShaderManager& sm) :
+    batch(GL_QUADS, vertexAttrs),
+    shader(sm)
+{}
+
+static const uint32 BLUR_BUFFERS = 6;
+
+struct Blur {
+    GLuint textures[BLUR_BUFFERS];
+    GLuint fbo_name;
+    GLuint depth_buffer_name;
+    
+    uint32 head, size;
+
+    glt::ShaderProgram shader;
+
+    bool init(Game& game);
+    void resized(Game& game);
+    void render(Game& game, float dt);
+
+    Blur(glt::ShaderManager& sm) : shader(sm) {}
 };
 
 struct Camera {
     GLFrame frame;
 
-    // vec3 origin;
+    // vec3_t origin;
     // EulerAngles orientation;
 
-    void setOrigin(const vec3& origin);
-    void facePoint(const vec3& position);
+    void setOrigin(const vec3_t& origin);
+    void facePoint(const vec3_t& position);
     void rotate(float rotx, float roty);
 
-    vec3 getOrigin();
-    vec3 getForwardVector();
+    vec3_t getOrigin();
+    vec3_t getForwardVector();
 
-    void move_along_local_axis(const vec3& step);
+    void move_along_local_axis(const vec3_t& step);
     void move_forward(float step);
     void move_right(float step);
 
@@ -123,11 +160,11 @@ void set_matrix(M3DMatrix44f dst, const mat4& src) {
         dst[i] = src.flat[i];
 }
 
-std::ostream& LOCAL operator << (std::ostream& out, const vec3& v) {
+std::ostream& LOCAL operator << (std::ostream& out, const vec3_t& v) {
     return out << "(" << v.x << ";" << v.y << ";" << v.z << ")";
 }
 
-vec3 toVec3(const M3DVector3f v3) {
+vec3_t toVec3(const M3DVector3f v3) {
     return vec3(v3[0], v3[1], v3[2]);
 }
 
@@ -158,29 +195,30 @@ struct Game : public GameWindow {
 
     gltools::GenBatch<Vertex> wallBatch;
     gltools::GenBatch<Vertex> sphereBatch;
-    gltools::GenBatch<Vertex> mirrorBatch;
     
-    Camera                  camera;
-    Cuboid                  room;
-    Mirror                  mirror;
+    Camera camera;
+    Cuboid room;
+    Mirror mirror;
+    Blur blur;                 
 
     glt::ShaderManager shaderManager;
 
     glt::ShaderProgram wallShader;
     struct {
-        vec3 ecLightPos;
-        vec3 ecSpotDir;
+        vec3_t ecLightPos;
+        vec3_t ecSpotDir;
         float spotAngle;
     } wallUniforms;
     
     glt::ShaderProgram sphereShader;
     struct {
-        vec3 ecLightPos;
-        vec3 ecSpotDir;
+        vec3_t ecLightPos;
+        vec3_t ecSpotDir;
         float spotAngle;
     } sphereUniforms;
 
-    glt::ShaderProgram mirrorShader;
+    GLuint default_framebuffer;
+    GLenum default_drawbuffer;
 
     uint32 fps_count;
     uint32 current_fps;
@@ -202,16 +240,13 @@ struct Game : public GameWindow {
 
     Game(sf::RenderWindow& win, sf::Clock& clock);
 
-    bool touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision) const;
-
-private:
+    bool touchesWall(const Sphere& s, vec3_t& out_normal, vec3_t& out_collision) const;
 
     bool onInit();
-    bool initMirror();
 
     void animate();
     void renderScene(float interpolation);
-    void renderScene(float dt, bool renderWithMirror);
+    void renderWorld(float dt);
     
     void keyStateChanged(sf::Key::Code key, bool pressed);
     void mouseButtonStateChanged(sf::Mouse::Button button, bool pressed);
@@ -220,13 +255,13 @@ private:
     void handleInternalEvents();
 
     void spawn_sphere();
-    void move_camera(const vec3& step);
+    void move_camera(const vec3_t& step);
 
-    void renderMirrorTexture(float dt);
-    void renderMirror();
     void renderSpheres(float dt);
     void render_hud();
     void render_walls();
+
+    void restoreDefaultBuffers();
     
     void resolve_collisions(float dt);
     bool load_shaders();
@@ -237,10 +272,10 @@ Game::Game(sf::RenderWindow& win, sf::Clock& clock) :
     GameWindow(win, clock),
     wallBatch(GL_QUADS, vertexAttrs),
     sphereBatch(GL_TRIANGLES, vertexAttrs),
-    mirrorBatch(GL_QUADS, vertexAttrs),
+    mirror(shaderManager),
+    blur(shaderManager),
     wallShader(shaderManager),
-    sphereShader(shaderManager),
-    mirrorShader(shaderManager)
+    sphereShader(shaderManager)
 {}
 
 static void print_context(const sf::ContextSettings& c) {
@@ -260,6 +295,10 @@ bool Game::onInit() {
 
     window().SetActive();
 
+    default_framebuffer = 0;
+
+    window().UseVerticalSync(false);
+
     GLenum err = glewInit();
     if (GLEW_OK != err) {
         std::cerr << "GLEW Error: " << glewGetErrorString(err) << std::endl;
@@ -277,9 +316,12 @@ bool Game::onInit() {
 
     shaderManager.addIncludeDir("shaders");
 
-    if (!initMirror())
+    if (!mirror.init(*this))
         return false;
-    
+
+    if (!blur.init(*this))
+        return false;
+
     ticksPerSecond(100);
     grabMouse(true);
 
@@ -305,9 +347,6 @@ bool Game::onInit() {
 
     makeSphere(sphereBatch, 1.f, 26, 13);
 
-    const vec3 lln = room.corner_min;
-    const vec3 dim = room.corner_max - room.corner_min;
-    	
     camera.setOrigin(vec3(-19.f, 10.f, +19.f));
     camera.facePoint(vec3(0.f, 10.f, 0.f));
 
@@ -326,9 +365,13 @@ bool Game::onInit() {
     return true;
 }
 
-bool Game::initMirror() {
+bool Mirror::init(Game& game) {
 
-    gltools::GenBatch<Vertex>& q = mirrorBatch;
+    UNUSED(game);
+
+    rendering_recursive = false;
+
+    gltools::GenBatch<Vertex>& q = batch;
     Vertex v;
     v.normal = vec3(0.f, 0.f, 1.f);
     
@@ -339,32 +382,80 @@ bool Game::initMirror() {
 
     q.freeze();
 
-    mirror.origin = vec3(1, 1, 0);
-    mirror.width = 5.f;
-    mirror.height = 5.f;
+    origin = vec3(1, 1, 0);
+    width = 5.f;
+    height = 5.f;
 
-    mirror.pix_width = 1200;
-    mirror.pix_height = 1200;
+    pix_width = 1200;
+    pix_height = 1200;
 
-    GL_CHECK(glGenFramebuffers(1, &mirror.fbo_name));
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mirror.fbo_name));
+    GL_CHECK(glGenFramebuffers(1, &fbo_name));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_name));
 
-    GL_CHECK(glGenRenderbuffers(1, &mirror.depth_buffer_name));
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, mirror.depth_buffer_name));
-    GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, mirror.pix_width, mirror.pix_height));
+    GL_CHECK(glGenRenderbuffers(1, &depth_buffer_name));
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer_name));
+    GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, pix_width, pix_height));
 
-    GL_CHECK(glGenTextures(1, &mirror.texture));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, mirror.texture));
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, mirror.pix_width, mirror.pix_height, 0, GL_RGBA, GL_FLOAT, NULL));
+    GL_CHECK(glGenTextures(1, &texture));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture));
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, pix_width, pix_height, 0, GL_RGBA, GL_FLOAT, NULL));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
-    GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mirror.texture, 0));
-    GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, mirror.depth_buffer_name));
+    GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0));
+    GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer_name));
 
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, game.default_framebuffer));
 
     return true;
+}
+
+bool Blur::init(Game& game) {
+    UNUSED(game);
+
+    // GL_CHECK(glGenFramebuffers(1, &fbo_name));
+    // GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_name));
+
+    // GL_CHECK(glGenRenderbuffers(1, &depth_buffer_name));
+    // GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer_name));
+    // GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, game.window().GetWidth(), game.window().GetHeight()));
+    // GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer_name));
+
+    // memset(textures, 0, sizeof textures);
+
+    // game.default_framebuffer = fbo_name;
+
+    return true;
+}
+
+void Blur::resized(Game& game) {
+
+    UNUSED(game);
+
+    // head = size = 0;
+
+    // GL_CHECK(glDeleteTextures(BLUR_BUFFERS, textures));
+
+    // GL_CHECK(glGenTextures(BLUR_BUFFERS, textures));
+
+    // for (uint32 i = 0; i < BLUR_BUFFERS; ++i) {
+    //     GL_CHECK(glBindTexture(GL_TEXTURE_2D, textures[i]));
+        
+    //     GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, game.window().GetWidth(), game.window().GetHeight(), 0, GL_RGBA, GL_FLOAT, NULL));
+    //     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+    //     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+
+    //     GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, textures[i], 0));
+    // }
+
+    // game.restoreDefaultBuffers();
+}
+
+void Game::restoreDefaultBuffers() {
+    GLenum drawbuf = GL_BACK_LEFT; // GL_COLOR_ATTACHMENT0 + head
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, default_framebuffer));
+    GL_CHECK(glDrawBuffers(1, &drawbuf));
+    GL_CHECK(glViewport(0, 0, window().GetWidth(), window().GetHeight()));    
 }
 
 bool Game::load_shaders() {
@@ -414,9 +505,24 @@ bool Game::load_shaders() {
     ok = ok && !ms.wasError();
 
     if (!ms.wasError())
-        mirrorShader.replaceWith(ms);
+        mirror.shader.replaceWith(ms);
     else
         ms.printError(std::cerr);
+
+    // glt::ShaderProgram bs(shaderManager);
+    
+    // bs.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/blur.vert");
+    // bs.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/blur.frag");
+    // bs.bindAttribute("vertex", vertexAttrs.index(offsetof(Vertex, position)));
+    // bs.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
+    // bs.tryLink();
+
+    // ok = ok && !bs.wasError();
+    
+    // if (!bs.wasError())
+    //     blur.shader.replaceWith(ws);
+    // else
+    //     bs.printError(std::cerr);
 
     return ok;
 }
@@ -506,17 +612,17 @@ void Game::animate() {
 
 // } // namespace anon
 
-// static ivec3 calcTile(const vec3& isize, const vec3& room_min, const vec3& p) {
-//     return ivec3(vec3::compMult(isize, p - room_min)); 
+// static ivec3 calcTile(const vec3_t& isize, const vec3_t& room_min, const vec3_t& p) {
+//     return ivec3(compMult(isize, p - room_min)); 
 // }
 
-// static void calcRange(const Sphere& s, float dt, const vec3& isize, const vec3& room_min, ivec3& tileL, ivec3& tileH) {
+// static void calcRange(const Sphere& s, float dt, const vec3_t& isize, const vec3_t& room_min, ivec3& tileL, ivec3& tileH) {
 
-//     vec3 pos1 = s.center;
-//     vec3 pos2 = s.calc_position(dt);
+//     vec3_t pos1 = s.center;
+//     vec3_t pos2 = s.calc_position(dt);
 
-//     vec3 cLow  = vec3::min(pos1, pos2) - vec3(s.r * 1.1f);
-//     vec3 cHigh = vec3::max(pos1, pos2) + vec3(s.r * 1.1f);
+//     vec3_t cLow  = min(pos1, pos2) - vec3(s.r * 1.1f);
+//     vec3_t cHigh = max(pos1, pos2) + vec3(s.r * 1.1f);
 
 //     tileL = calcTile(isize, room_min, cLow);
 //     tileH = calcTile(isize, room_min, cHigh);
@@ -524,7 +630,7 @@ void Game::animate() {
 // }
 
 // static ivec3 clamp(const ivec3& low, const ivec3& high, const ivec3& v) {
-//     return ivec3::max(low, ivec3::min(high, v));
+//     return imax(low, imin(high, v));
 // }
 
 // static void clampRange(const ivec3& low, const ivec3& high, ivec3& range_low, ivec3& range_high) {
@@ -538,9 +644,9 @@ void Game::resolve_collisions(float dt) {
 
     // {
     //     const uint32 dim = 50;
-    //     const vec3 diff = room.corner_max - room.corner_min;
-    //     const vec3 isize = vec3(dim / diff.x, dim / diff.y, dim / diff.z);
-    //     const vec3 low  = room.corner_min;
+    //     const vec3_t diff = room.corner_max - room.corner_min;
+    //     const vec3_t isize = vec3(dim / diff.x, dim / diff.y, dim / diff.z);
+    //     const vec3_t low  = room.corner_min;
 
     //     const ivec3 tmin = ivec3(0);
     //     const ivec3 tmax = ivec3(dim - 1);
@@ -598,13 +704,17 @@ void Game::windowResized(uint32 width, uint32 height) {
     // Create the projection matrix, and load it on the projection matrix stack
     viewFrustum.SetPerspective(35.0f, float(width) / float(height), 1.0f, 100.0f);
     // M3DMatrix44f projMat;
-    // set_matrix(projMat, Transform::perspective(Math::degToRad(35.0f), float(width) / float(height), 1.0f, 100.0f));
+    // set_matrix(projMat, Transform::perspective(math::degToRad(35.0f), float(width) / float(height), 1.0f, 100.0f));
     
     projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
 //    projectionMatrix.LoadMatrix(projMat);
         
     // Set the transformation pipeline to use the two matrix stacks 
     transformPipeline.SetMatrixStacks(modelViewMatrix, projectionMatrix);
+
+    mirror.resized(*this);
+    
+    blur.resized(*this);
 }
 
 void Game::keyStateChanged(sf::Key::Code key, bool pressed) {
@@ -635,10 +745,10 @@ void Game::mouseMoved(int32 dx, int32 dy) {
     // camera.orientation.heading -= dx * 0.001f;
     // camera.orientation.pitch -= dy * 0.001f;
 
-    // if (camera.orientation.pitch < -0.5f * Math::PI)
-    //     camera.orientation.pitch = -0.5f * Math::PI;
-    // else if (camera.orientation.pitch > 0.5f * Math::PI)
-    //     camera.orientation.pitch = 0.5f * Math::PI;
+    // if (camera.orientation.pitch < -0.5f * math::PI)
+    //     camera.orientation.pitch = -0.5f * math::PI;
+    // else if (camera.orientation.pitch > 0.5f * math::PI)
+    //     camera.orientation.pitch = 0.5f * math::PI;
 
     // camera.orientation.canonize();
 
@@ -691,10 +801,10 @@ void Game::handleInternalEvents() {
         game_speed = std::max(0.f, game_speed - 0.025f);
 }
 
-void Game::move_camera(const vec3& dir) {
+void Game::move_camera(const vec3_t& dir) {
 
     const float STEP = 0.1f;
-    vec3 step = dir.normalize() * STEP;
+    vec3_t step = normalize(dir) * STEP;
 
 //    std::cerr << "moving camera: " << currentFrameID() << ", " << dir << std::endl;
 
@@ -705,19 +815,19 @@ void Game::move_camera(const vec3& dir) {
     cam.center = new_cam.getOrigin();
     cam.r = 1.f;
 
-    vec3 norm;
-    vec3 col;
+    vec3_t norm;
+    vec3_t col;
     if (!touchesWall(cam, norm, col))
         camera = new_cam;
 }
 
 void Game::update_sphere_mass() {
-    float V = 4.f / 3.f * Math::PI * Math::cubed(sphere_rad);
+    float V = 4.f / 3.f * math::PI * math::cubed(sphere_rad);
     sphere_mass = V * sphere_density;
 }
 
 static const GLfloat vFloorColor[] = { 0.0f, 1.0f, 0.0f, 1.0f};
-static const vec4 SPHERE_COLOR = vec4(0.f, 0.f, 1.f, 1.f);
+static const vec4_t SPHERE_COLOR = vec4(0.f, 0.f, 1.f, 1.f);
 static const M3DVector4f vLightPos = { 11.f, 18.f, 11.f, 1.f };
 static const M3DVector4f vWallColor = { 0.6f, 0.6f, 0.6f, 1.f };
 
@@ -731,7 +841,7 @@ static glt::color randomColor() {
 
 void Game::spawn_sphere() {
 
-    vec3 direction = camera.getForwardVector();
+    vec3_t direction = camera.getForwardVector();
 
     Sphere s;
     s.center = camera.getOrigin() + direction * (sphere_rad + 1.1f);
@@ -757,27 +867,28 @@ void Game::renderScene(float interpolation) {
     window().SetActive();
 
     float dt = interpolation * game_speed * frameDuration();
+
+    glEnable(GL_CULL_FACE);
     
-    renderScene(dt, true);
+    renderWorld(dt);
+
+    glDisable(GL_CULL_FACE);
 
     ++fps_count;
     render_hud();
 }
 
-void Game::renderScene(float dt, bool renderWithMirror) {
+void Game::renderWorld(float dt) {
 
     viewFrustum.Transform(camera.frame);
 
-    if (renderWithMirror) {
-        renderMirrorTexture(dt);
-    }
+    mirror.createTexture(*this, dt);
 
     viewFrustum.Transform(camera.frame);
 
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
     modelViewMatrix.PushMatrix();
-    modelViewMatrix.Scale(-1.f, 1.f, 1.f);
 
     M3DMatrix44f mCamera;
     set_matrix(mCamera, camera.getCameraMatrix());
@@ -785,14 +896,14 @@ void Game::renderScene(float dt, bool renderWithMirror) {
 
     M3DVector4f vLightEyePos;
     m3dTransformVector4(vLightEyePos, vLightPos, mCamera);
-    const vec3 eyeLightPos = vec3(vLightEyePos[0], vLightEyePos[1], vLightEyePos[2]);
+    const vec3_t eyeLightPos = vec3(vLightEyePos[0], vLightEyePos[1], vLightEyePos[2]);
 
-    const vec3& spotDirection = vec3::normalize(vec3(0) - toVec3(vLightPos));
+    const vec3_t& spotDirection = normalize(vec3(0.f) - toVec3(vLightPos));
     const M3DVector4f vSpotDirection = { spotDirection.x, spotDirection.y, spotDirection.z, 0 };
 
     M3DVector4f vEyeSpotDirection;
     m3dTransformVector4(vEyeSpotDirection, vSpotDirection, mCamera);
-    const vec3 ecSpotDirection = toVec3(vEyeSpotDirection);
+    const vec3_t ecSpotDirection = toVec3(vEyeSpotDirection);
 
     wallUniforms.ecLightPos = eyeLightPos;
     wallUniforms.ecSpotDir = ecSpotDirection;
@@ -802,106 +913,152 @@ void Game::renderScene(float dt, bool renderWithMirror) {
     sphereUniforms.ecSpotDir = ecSpotDirection;
     sphereUniforms.spotAngle = 0.91;
 
-    GL_CHECK(glCullFace(GL_FRONT));
-    GL_CHECK(glEnable(GL_CULL_FACE));
-
     render_walls();
 
     renderSpheres(dt);
 
-    if (renderWithMirror)
-        renderMirror();
+    mirror.render(*this);
+
+    blur.render(*this, dt);
 
     modelViewMatrix.PopMatrix();
     modelViewMatrix.PopMatrix();    
 }
 
-void Game::renderMirrorTexture(float dt) {
+void Mirror::createTexture(Game& game, float dt) {
 
-    const vec3 corners[] = {
-        mirror.origin,
-        mirror.origin + vec3(mirror.width, 0.f, 0.f),
-        mirror.origin + vec3(mirror.width, mirror.height, 0.f),
-        mirror.origin + vec3(0.f, mirror.height, 0.f)
-    };
+    if (rendering_recursive)
+        return;
+
+    const vec3_t corners[] = { origin,
+                             origin + vec3(width, 0.f, 0.f),
+                             origin + vec3(width, height, 0.f),
+                             origin + vec3(0.f, height, 0.f) };
 
     bool visible = false;
 
     for (uint32 i = 0; i < 4 && !visible; ++i)
-        visible = viewFrustum.TestSphere(corners[i].x, corners[i].y, corners[i].z, 0.f);
+        visible = game.viewFrustum.TestSphere(corners[i].x, corners[i].y, corners[i].z, 0.f);
 
     if (!visible)
         return;
 
-    Camera old_cam = camera;
+    Camera old_cam = game.camera;
 
-    GLFrustum old_frust = viewFrustum;
+    GLFrustum old_frust = game.viewFrustum;
     
-    viewFrustum.SetPerspective(35.0f, mirror.width / mirror.height, 1.0f, 100.0f);
+    game.viewFrustum.SetPerspective(35.0f, width / height, 1.0f, 100.0f);
 
+    static const vec3_t mirror_normal = vec3(0.f, 0.f, 1.f);
 
-    static const vec3 mirror_normal = vec3(0.f, 0.f, 1.f);
+    const vec3_t mirror_center = 0.5f * (corners[0] + corners[2]);
 
-    const vec3 mirror_center = 0.5f * (corners[0] + corners[2]);
+    const vec3_t fw = game.camera.getForwardVector();
 
-    vec3 fw = camera.getForwardVector();
-    vec3 mirror_view = vec3::reflect(fw, mirror_normal);
+    vec3_t mirror_view = normalize(reflect(fw, mirror_normal));
 
-    camera.setOrigin(mirror_center);
-    camera.frame.SetForwardVector(mirror_view.x, 0.f, mirror_view.z);
+    game.camera.setOrigin(mirror_center - 2.f * mirror_view);
+    game.camera.frame.SetForwardVector(mirror_view.x, 0.f, mirror_view.z);
 
-    camera.frame.SetUpVector(0.f, 1.f, 0.f);
+    game.camera.frame.SetUpVector(0.f, 1.f, 0.f);
 
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mirror.fbo_name));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_name));
 
-    static const GLenum fboBuffs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+    static const GLenum fboBuffs[] = { GL_COLOR_ATTACHMENT0 };
     
     GL_CHECK(glDrawBuffers(1, fboBuffs));
-    GL_CHECK(glViewport(0, 0, mirror.pix_width, mirror.pix_height));
+    GL_CHECK(glViewport(0, 0, pix_width, pix_height));
 
-    renderScene(dt, false);
+    game.modelViewMatrix.PushMatrix();
+    game.modelViewMatrix.Scale(-1.f, 1.f, 1.f);
 
-    static const GLenum windowBuff[] = { GL_BACK_LEFT };
+    rendering_recursive = true;
 
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
-    GL_CHECK(glDrawBuffers(1, windowBuff));
-    GL_CHECK(glViewport(0, 0, window().GetWidth(), window().GetHeight()));
+    game.renderWorld(dt);
 
-    viewFrustum = old_frust;
-    camera = old_cam;
+    rendering_recursive = false;
+
+    game.modelViewMatrix.PopMatrix();
+    
+    game.viewFrustum = old_frust;
+    game.camera = old_cam;
+
+    game.restoreDefaultBuffers();
 }
 
-void Game::renderMirror() {
+void Mirror::render(Game& game) {
 
+    if (rendering_recursive)
+        return;
+
+    game.modelViewMatrix.PushMatrix();
+    game.modelViewMatrix.Translate(origin.x, origin.y, origin.z);
+    game.modelViewMatrix.Scale(width, height, 1.f);
+
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture));
+
+    shader.use();
     
-
-    modelViewMatrix.PushMatrix();
-    modelViewMatrix.Translate(mirror.origin.x, mirror.origin.y, mirror.origin. z);
-    modelViewMatrix.Scale(mirror.width, mirror.height, 1.f);
-
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, mirror.texture));
-
-    mirrorShader.use();
+    glt::Uniforms us(shader);
     
-    glt::Uniforms us(mirrorShader);
-    
-    us.optional("mvpMatrix", toMat4(transformPipeline.GetModelViewProjectionMatrix()));
+    us.optional("mvpMatrix", toMat4(game.transformPipeline.GetModelViewProjectionMatrix()));
 
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, mirror.texture));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture));
 
     GLint texPos;
-    GL_CHECK(texPos = glGetUniformLocation(mirrorShader.program(), "mirrorTexture"));
+    GL_CHECK(texPos = glGetUniformLocation(shader.program(), "mirrorTexture"));
     GL_CHECK(glUniform1i(texPos, 0));
     
-    mirrorBatch.draw();
+    batch.draw();
 
-    modelViewMatrix.PopMatrix();
-    
+    game.modelViewMatrix.PopMatrix();
+}
+
+void Mirror::resized(Game& game) {
+    UNUSED(game);
+}
+
+void Blur::render(Game& game, float dt) {
+    UNUSED(dt);
+    UNUSED(game);
+
+    // GLenum drawbuf = GL_BACK_LEFT;
+    // GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+    // GL_CHECK(glDrawBuffers(1, &drawbuf));
+    // GL_CHECK(glViewport(0, 0, game.window().GetWidth(), game.window().GetHeight()));
+    // GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+    // shader.use();
+
+    // for (uint32 i = 0; i < BLUR_BUFFERS; ++i) {
+    //     uint32 k = (head + i) % BLUR_BUFFERS;
+
+    //     GLuint tex;
+    //     if (i < size)
+    //         tex = textures[k];
+    //     else
+    //         tex = textures[head];
+
+    //     GL_CHECK(glBindTexture(GL_TEXTURE_2D, tex));
+    //     GL_CHECK(glActiveTexture(GL_TEXTURE0 + i));
+
+    //     std::string sym = std::string("texture") + to_string(i);
+    //     GLint loc = glGetUniformLocation(shader.program(), sym.c_str());
+    //     if (loc != -1)
+    //         GL_CHECK(glUniform1i(loc, i));
+    // }
+
+    // head = (head + 1) % BLUR_BUFFERS;
+    // size = (size + 1) % BLUR_BUFFERS;
+
+    // game.mirror.batch.draw();
+
+    // game.restoreDefaultBuffers();
 }
 
 struct SphereModel {
     float viewDist;
-    vec3 pos;
+    vec3_t pos;
     const Sphere *s;
 
     static bool compare(SphereModel m1, SphereModel m2) {
@@ -911,17 +1068,16 @@ struct SphereModel {
 
 void Game::renderSpheres(float dt) {
 
-    GL_CHECK(glCullFace(GL_BACK));
     sphereShader.use();
 
-    const vec3 camPos = camera.getOrigin();
+    const vec3_t camPos = camera.getOrigin();
  
     std::vector<SphereModel> toRender;
 
     for (uint32 i = 0; i < spheres.size(); ++i) {
         const Sphere& s = spheres[i];
 
-        const vec3 pos = s.calc_position(dt);
+        const vec3_t pos = s.calc_position(dt);
 
         if (!viewFrustum.TestSphere(pos.x, pos.y, pos.z, s.r))
             continue;
@@ -929,7 +1085,7 @@ void Game::renderSpheres(float dt) {
         SphereModel m;
         m.s = &s;
         m.pos = pos;
-        m.viewDist = std::max(0.f, vec3::dist(pos, camPos) - s.r);
+        m.viewDist = std::max(0.f, distance(pos, camPos) - s.r);
         toRender.push_back(m);
     }
 
@@ -940,7 +1096,7 @@ void Game::renderSpheres(float dt) {
 
     for (uint32 i = 0; i < toRender.size(); ++i) {
         const Sphere& s = *toRender[i].s;
-        const vec3& pos = toRender[i].pos;
+        const vec3_t& pos = toRender[i].pos;
         
         modelViewMatrix.PushMatrix();
         modelViewMatrix.Translate(pos.x, pos.y, pos.z);
@@ -964,16 +1120,16 @@ void Game::renderSpheres(float dt) {
         
         modelViewMatrix.PopMatrix();
     }
-    
-    GL_CHECK(glDisable(GL_CULL_FACE));
 }
 
 void Game::render_walls() {
 
+    GL_CHECK(glCullFace(GL_FRONT));
+
     modelViewMatrix.PushMatrix();
 
-    vec3 center = 0.5f * (room.corner_max + room.corner_min);
-    vec3 diff = 0.5f * (room.corner_max - room.corner_min);
+    vec3_t center = 0.5f * (room.corner_max + room.corner_min);
+    vec3_t diff = 0.5f * (room.corner_max - room.corner_min);
 
     modelViewMatrix.Translate(center.x, center.y, center.z);
     modelViewMatrix.Scale(diff.x, diff.y, diff.z);
@@ -991,7 +1147,9 @@ void Game::render_walls() {
     wallShader.validate(GLDEBUG_ENABLED);
     wallBatch.draw();
 
-    modelViewMatrix.PopMatrix();    
+    modelViewMatrix.PopMatrix();
+    
+    GL_CHECK(glCullFace(GL_BACK));    
 }
 
 void Game::render_hud() {
@@ -1098,53 +1256,53 @@ void Sphere::move(const Game& game, float dt) {
     center = calc_position(dt);
     vel += gravity * dt;
 
-    vec3 wall;
-    vec3 collision;
+    vec3_t wall;
+    vec3_t collision;
     
     if (game.touchesWall(*this, wall, collision)) {        
-        vel = vec3::reflect(vel, wall, rand1() * 0.1f + 0.9f) * 0.8f;
+        vel = reflect(vel, wall, rand1() * 0.1f + 0.9f) * 0.8f;
         center = collision + wall * -r;
     }
 }
 
-vec3 Sphere::calc_position(float dt) const {
+vec3_t Sphere::calc_position(float dt) const {
     return center + vel * dt + 0.5f * dt * dt * gravity;
 }
 
-vec3 Sphere::velocity_after_collision(float m1, const vec3& v1, float m2, const vec3& v2) {
+vec3_t Sphere::velocity_after_collision(float m1, const vec3_t& v1, float m2, const vec3_t& v2) {
     return (m1 * v1 + m2 * (2.f * v2 - v1)) / (m1 + m2);
 }
 
 bool Sphere::collide(Sphere& x, Sphere& y, float dt) {
 
-    vec3 xc = x.calc_position(dt);
-    vec3 yc = y.calc_position(dt);
+    vec3_t xc = x.calc_position(dt);
+    vec3_t yc = y.calc_position(dt);
 
     float r = x.r + y.r;
     
-    if (vec3::distSq(xc, yc) < r*r) {
+    if (distanceSq(xc, yc) < r*r) {
 
         // HACK: if we collided in the last frame and collision wasnt resolved correctly
         // do it now, with a crude approximation (well no approx. at all...)
-        if (vec3::distSq(x.center, y.center) < r*r) {
+        if (distanceSq(x.center, y.center) < r*r) {
 
-            vec3 n1 = vec3::normalize(y.center - x.center);
+            vec3_t n1 = normalize(y.center - x.center);
 
-            x.vel = x.vel.mag() * -n1;
-            y.vel = y.vel.mag() * n1;
+            x.vel = length(x.vel) * -n1;
+            y.vel = length(y.vel) * n1;
 
         } else {
-            vec3 n1 = vec3::normalize(yc - xc);
-            vec3 n2 = -n1;
+            vec3_t n1 = normalize(yc - xc);
+            vec3_t n2 = -n1;
         
-            vec3 vx_coll = n1 * vec3::dot(x.vel, n1);
-            vec3 vx_rest = x.vel - vx_coll;
+            vec3_t vx_coll = n1 * dot(x.vel, n1);
+            vec3_t vx_rest = x.vel - vx_coll;
 
-            vec3 vy_coll = n2 * vec3::dot(y.vel, n2);
-            vec3 vy_rest = y.vel - vy_coll;
+            vec3_t vy_coll = n2 * dot(y.vel, n2);
+            vec3_t vy_rest = y.vel - vy_coll;
 
-            vec3 ux = (rand1() * 0.1f + 0.9f) * velocity_after_collision(x.mass, vx_coll, y.mass, vy_coll);
-            vec3 uy = (rand1() * 0.1f + 0.9f) * velocity_after_collision(y.mass, vy_coll, x.mass, vx_coll);
+            vec3_t ux = (rand1() * 0.1f + 0.9f) * velocity_after_collision(x.mass, vx_coll, y.mass, vy_coll);
+            vec3_t uy = (rand1() * 0.1f + 0.9f) * velocity_after_collision(y.mass, vy_coll, x.mass, vx_coll);
 
             x.vel = ux + vx_rest;
             y.vel = uy + vy_rest;
@@ -1156,7 +1314,7 @@ bool Sphere::collide(Sphere& x, Sphere& y, float dt) {
     return false;
 }
 
-void Camera::move_along_local_axis(const vec3& step) {
+void Camera::move_along_local_axis(const vec3_t& step) {
     frame.TranslateLocal(step.x, step.y, step.z);
 //    origin += vec4::project3(orientation.getRotationMatrix().transpose() * vec4(step, 0.f));
 }
@@ -1169,27 +1327,27 @@ void Camera::move_right(float step) {
     move_along_local_axis(vec3(1, 0, 0) * step);
 }
 
-vec3 Camera::getOrigin() {
+vec3_t Camera::getOrigin() {
     M3DVector3f orig;
     frame.GetOrigin(orig);
     return toVec3(orig);
 //    return origin;
 }
 
-vec3 Camera::getForwardVector() {
+vec3_t Camera::getForwardVector() {
     M3DVector3f fw;
     frame.GetForwardVector(fw);
-    return vec3::normalize(toVec3(fw));
+    return normalize(toVec3(fw));
 //    return vec4::project3(orientation.getRotationMatrix().transpose() * vec4(0.f, 0.f, 1.f, 0.f));
 }
 
-void Camera::setOrigin(const vec3& orig) {
+void Camera::setOrigin(const vec3_t& orig) {
 //    origin = orig;
     frame.SetOrigin(orig.x, orig.y, orig.z);
 }
 
-void Camera::facePoint(const vec3& pos) {
-    vec3 fw = vec3::normalize(pos - getOrigin());
+void Camera::facePoint(const vec3_t& pos) {
+    vec3_t fw = normalize(pos - getOrigin());
     frame.SetForwardVector(fw.x, fw.y, fw.z);
 }
 
@@ -1201,8 +1359,8 @@ mat4 Camera::getCameraMatrix() {
     
     // mat4 rot = orientation.getRotationMatrix().transpose();
     
-    // vec3 fw  = vec4::project3(rot * vec4(0.f, 0.f, 1.f, 1.f));
-    // vec3 up  = vec4::project3(rot * vec4(0.f, 1.f, 0.f, 1.f));
+    // vec3_t fw  = vec4::project3(rot * vec4(0.f, 0.f, 1.f, 1.f));
+    // vec3_t up  = vec4::project3(rot * vec4(0.f, 1.f, 0.f, 1.f));
     
     // frame.SetForwardVector(fw.x, fw.y, fw.z);
     // frame.SetUpVector(up.x, up.y, up.z);
@@ -1217,7 +1375,7 @@ void Camera::rotate(float rotx, float roty) {
     frame.RotateWorld(rotx, 0.f, 1.f, 0.f);
 }
 
-bool Cuboid::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision) const {
+bool Cuboid::touchesWall(const Sphere& s, vec3_t& out_normal, vec3_t& out_collision) const {
 
     if (s.center.y - s.r < corner_min.y) {
         out_normal = vec3(0, -1.f, 0);
@@ -1258,7 +1416,7 @@ bool Cuboid::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision)
     return false;
 }
 
-bool Game::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision) const {
+bool Game::touchesWall(const Sphere& s, vec3_t& out_normal, vec3_t& out_collision) const {
 
     if (room.touchesWall(s, out_normal, out_collision))
         return true;
@@ -1268,9 +1426,9 @@ bool Game::touchesWall(const Sphere& s, vec3& out_normal, vec3& out_collision) c
         s.center.x - s.r <= mirror.origin.x + mirror.width &&
         s.center.y + s.r >= mirror.origin.y &&
         s.center.y - s.r <= mirror.origin.y + mirror.height &&
-        Math::abs(zdist = (s.center.z - mirror.origin.z)) < s.r) {
+        math::abs(zdist = (s.center.z - mirror.origin.z)) < s.r) {
 
-        out_normal = vec3(0.f, 0.f, -Math::signum(zdist));
+        out_normal = vec3(0.f, 0.f, -math::signum(zdist));
         out_collision = vec3(s.center.x, s.center.y, mirror.origin.z);
         return true;
     }
@@ -1326,6 +1484,8 @@ void makeUnitCube(gltools::GenBatch<Vertex>& cube) {
 
 void addTriangle(gltools::GenBatch<Vertex>& s, const M3DVector3f vertices[3], const M3DVector3f normals[3], const M3DVector2f texCoords[3]) {
 
+    UNUSED(texCoords);
+    
     for (uint32 i = 0; i < 3; ++i) {
         Vertex v;
         v.position = vec4(toVec3(vertices[i]), 1.f);

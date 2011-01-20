@@ -1,8 +1,10 @@
 #ifndef EULER_ANGLES_HPP
 #define EULER_ANGLES_HPP
 
-#include "math/Math.hpp"
+#include "math/math.hpp"
 #include "math/mat4.hpp"
+
+namespace math {
 
 struct EulerAngles {
 
@@ -23,15 +25,15 @@ struct EulerAngles {
 
 	// Check for Gimbel lock
 	
-	if (Math::abs(sp) > 9.99999f) {
+	if (abs(sp) > 9.99999f) {
 
             // Looking straight up or down
             
-            pitch = 0.5 * Math::PI * sp;
+            pitch = 0.5 * PI * sp;
 
             // Compute heading, slam bank to zero
 
-            heading = Math::atan2(-rotation.a[0][2], rotation.a[0][0]);
+            heading = atan2(-rotation.a[0][2], rotation.a[0][0]);
             bank = 0.0f;
 
 	} else {
@@ -40,43 +42,43 @@ struct EulerAngles {
             // function because we already checked for range errors when
             // checking for Gimbel lock
             
-            heading = Math::atan2(rotation.a[2][0], rotation.a[2][2]);
-            pitch = Math::asin(sp);
-            bank = Math::atan2(rotation.a[0][1], rotation.a[1][1]);
+            heading = atan2(rotation.a[2][0], rotation.a[2][2]);
+            pitch = asin(sp);
+            bank = atan2(rotation.a[0][1], rotation.a[1][1]);
 	}
 
     }
 
     void canonize() {
 
-        pitch = Math::wrapPi(pitch);
+        pitch = wrapPi(pitch);
 
-        if (pitch < -0.5f * Math::PI) {
-            pitch = -Math::PI - pitch;
-            heading += Math::PI;
-            bank += Math::PI;
-        } else if (pitch > 0.5f * Math::PI) {
-            pitch = Math::PI - pitch;
-            heading += Math::PI;
-            bank += Math::PI;
+        if (pitch < -0.5f * PI) {
+            pitch = -PI - pitch;
+            heading += PI;
+            bank += PI;
+        } else if (pitch > 0.5f * PI) {
+            pitch = PI - pitch;
+            heading += PI;
+            bank += PI;
         }
 
-        if (Math::abs(pitch) > 0.5 * Math::PI - 1e-4) {
+        if (abs(pitch) > 0.5 * PI - 1e-4) {
             heading += bank;
             bank = 0.f;
         } else {
-            bank = Math::wrapPi(bank);
+            bank = wrapPi(bank);
         }
 
-        heading = Math::wrapPi(heading);
+        heading = wrapPi(heading);
     }
 
     mat4 getRotationMatrix() const {
 
         float sh, ch, sp, cp, sb, cb;
-        Math::sincos(heading, &sh, &ch);
-        Math::sincos(pitch, &sp, &cp);
-        Math::sincos(bank, &sb, &cb);
+        sincos(heading, &sh, &ch);
+        sincos(pitch, &sp, &cp);
+        sincos(bank, &sb, &cb);
 
         return mat4(vec4(ch * cb + sh * sp * sb, sb * cp, -sh * cb + ch * sp * sb, 0.f),
                     vec4(-ch * sb + sh * cp * cb, cb * cp, sb * sh + ch * sp * cb, 0.f),
@@ -86,5 +88,5 @@ struct EulerAngles {
     }
 };
 
-
+}
 #endif

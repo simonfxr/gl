@@ -1,18 +1,18 @@
 #ifndef MAT4_H
 #define MAT4_H
 
-#include "Math.hpp"
-#include "v4.hpp"
 #include "vec4.hpp"
+
+namespace math {
 
 struct mat4 {
 
     union {
         struct {
-            v4::v4 c[4];
+            vec4_t c[4];
         };
         struct {
-            v4::v4 c1, c2, c3, c4;
+            vec4_t c1, c2, c3, c4;
         };
         float a[4][4];
         float flat[16];
@@ -20,11 +20,8 @@ struct mat4 {
 
     mat4() {}
 
-    mat4(const vec4& _c1, const vec4& _c2, const vec4& _c3, const vec4& _c4) :
-        c1(v4::make(_c1.x, _c1.y, _c1.z, _c1.w)),
-        c2(v4::make(_c2.x, _c2.y, _c2.z, _c2.w)),
-        c3(v4::make(_c3.x, _c3.y, _c3.z, _c3.w)),
-        c4(v4::make(_c4.x, _c4.y, _c4.z, _c4.w))
+    mat4(const vec4_t& _c1, const vec4_t& _c2, const vec4_t& _c3, const vec4_t& _c4) :
+        c1(_c1), c2(_c2), c3(_c3), c4(_c4)
         {}
 
     mat4(const mat4& m)
@@ -44,7 +41,7 @@ struct mat4 {
 
         for (uint32 i = 0; i < 4; ++i)
             for (uint32 j = 0; j < 4; ++j)
-                C.a[i][j] = v4::dot(A.c[i], B.c[j]);
+                C.a[i][j] = dot(A.c[i], B.c[j]);
 
         return C;
     }
@@ -53,11 +50,10 @@ struct mat4 {
         return mult(*this, B);
     }
 
-    vec4 operator *(const vec4& v) const {
+    vec4_t operator *(const vec4_t& v) const {
         mat4 AT = transpose();
-        v4::v4 packed = v4::make(v.x, v.y, v.z, v.w);
-        return vec4(v4::dot(packed, AT.c1), v4::dot(packed, AT.c2),
-                    v4::dot(packed, AT.c3), v4::dot(packed, AT.c4));
+        return vec4(dot(v, AT.c1), dot(v, AT.c2),
+                    dot(v, AT.c3), dot(v, AT.c4));
     }
 };
 
@@ -69,6 +65,8 @@ const mat4 identity(vec4(1.f, 0.f, 0.f, 0.f),
                     vec4(0.f, 0.f, 0.f, 1.f));
 
 } // namespace anon
+
+} // namespace math
 
 #endif           
                  
