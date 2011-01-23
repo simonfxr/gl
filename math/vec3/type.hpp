@@ -11,24 +11,23 @@ struct vec3_t {
         struct {
             float x, y, z;
         };
+
+        struct {
+            float r, g, b;
+        };
+
+        struct {
+            float s, t, p;
+        };
+        
         float components[3];
     };
 
-#ifndef MATH_INLINE
-    float& MUT_FUNC operator[](unsigned long i);
-    float  PURE_FUNC operator[](unsigned long i) const;
-#else
-    
-    float& MUT_FUNC operator[](unsigned long i) {
-        return components[i];
-    }
-
-    float PURE_FUNC operator[](unsigned long i) const {
-        return components[i];
-    }
-
-#endif
+    float& operator[](unsigned long i) MUT_FUNC;
+    float operator[](unsigned long i) const PURE_FUNC;
 };
+
+typedef vec3_t point3_t;
 
 } // namespace math
 

@@ -63,13 +63,13 @@ void set(GLint loc, const vec3_t& value) {
 }
 
 template <>
-void set(GLint loc, const mat4& value) {
-    glUniformMatrix4fv(loc, 1, GL_FALSE, value.flat);
+void set(GLint loc, const mat4_t& value) {
+    glUniformMatrix4fv(loc, 1, GL_FALSE, value.components);
 }
 
 template <>
-void set(GLint loc, const mat3& value) {
-    glUniformMatrix3fv(loc, 1, GL_FALSE, value.flat);
+void set(GLint loc, const mat3_t& value) {
+    glUniformMatrix3fv(loc, 1, GL_FALSE, value.components);
 }
 
 } // namespace anon
@@ -86,11 +86,11 @@ Uniforms& Uniforms::optional(const std::string& name, const vec3_t& value) {
     setUniform(false, name, prog, GL_FLOAT_VEC3, value); return *this;
 }
 
-Uniforms& Uniforms::optional(const std::string& name, const mat4& value) {
+Uniforms& Uniforms::optional(const std::string& name, const mat4_t& value) {
     setUniform(false, name, prog, GL_FLOAT_MAT4, value); return *this;
 }
 
-Uniforms& Uniforms::optional(const std::string& name, const mat3& value) {
+Uniforms& Uniforms::optional(const std::string& name, const mat3_t& value) {
     setUniform(false, name, prog, GL_FLOAT_MAT3, value); return *this;
 }
 
@@ -110,11 +110,11 @@ Uniforms& Uniforms::mandatory(const std::string& name, const vec3_t& value) {
     setUniform(true, name, prog, GL_FLOAT_VEC3, value); return *this;
 }
 
-Uniforms& Uniforms::mandatory(const std::string& name, const mat4& value) {
+Uniforms& Uniforms::mandatory(const std::string& name, const mat4_t& value) {
     setUniform(true, name, prog, GL_FLOAT_MAT4, value); return *this;
 }
 
-Uniforms& Uniforms::mandatory(const std::string& name, const mat3& value) {
+Uniforms& Uniforms::mandatory(const std::string& name, const mat3_t& value) {
     setUniform(true, name, prog, GL_FLOAT_MAT3, value); return *this;
 }
 

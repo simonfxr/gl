@@ -3,6 +3,7 @@
 
 #include "math/math.hpp"
 #include "math/mat4.hpp"
+#include "math/vec4.hpp"
 
 namespace math {
 
@@ -17,9 +18,16 @@ struct EulerAngles {
     EulerAngles(float _heading, float _pitch, float _bank) :
         heading(_heading), pitch(_pitch), bank(_bank) {}
 
-    EulerAngles(mat4 rotation) {
+    EulerAngles(mat4_t rotation_m) {
 
 	// Extract sin(pitch) from m23.
+
+        union {
+            mat4_t mat;
+            float a[4][4];
+        } rotation;
+
+        rotation.mat = rotation_m;
 
 	float sp = -rotation.a[2][1];
 
@@ -73,12 +81,12 @@ struct EulerAngles {
         heading = wrapPi(heading);
     }
 
-    mat4 getRotationMatrix() const {
+    mat4_t getRotationMatrix() const {
 
         float sh, ch, sp, cp, sb, cb;
-        sincos(heading, &sh, &ch);
-        sincos(pitch, &sp, &cp);
-        sincos(bank, &sb, &cb);
+        sincos(heading, sh, ch);
+        sincos(pitch, sp, cp);
+        sincos(bank, sb, cb);
 
         return mat4(vec4(ch * cb + sh * sp * sb, sb * cp, -sh * cb + ch * sp * sb, 0.f),
                     vec4(-ch * sb + sh * cp * cb, cb * cp, sb * sh + ch * sp * cb, 0.f),

@@ -22,7 +22,6 @@
 #include "math/mat4.hpp"
 #include "math/mat3.hpp"
 #include "math/math.hpp"
-#include "math/EulerAngles.hpp"
 #include "math/transform.hpp"
 
 #include "glt/utils.hpp"
@@ -55,13 +54,13 @@ static const float sphere_density = 999;
 struct Sphere {
     vec3_t vel;
     float r;
-    vec3_t center;
+    point3_t center;
     float mass;
     glt::color color;
     float shininess;
 
     void move(const Game& game, float dt);
-    vec3_t calc_position(float dt) const;
+    point3_t calc_position(float dt) const;
 
     static bool collide(Sphere& x, Sphere& y, float dt);
 
@@ -70,7 +69,7 @@ struct Sphere {
 } __attribute__((aligned(16)));
 
 struct Vertex {
-    vec4_t position;
+    point4_t position;
     vec3_t normal;
 };
 
@@ -87,7 +86,7 @@ void makeUnitCube(gltools::GenBatch<Vertex>& cube);
 
 struct Mirror {
     
-    vec3_t origin;
+    point3_t origin;
     float width;
     float height;
 
@@ -151,35 +150,17 @@ struct Camera {
     void move_forward(float step);
     void move_right(float step);
 
-    mat4 getCameraMatrix();
+    mat4_t getCameraMatrix();
         
 } __attribute__ ((aligned(16)));
 
-void set_matrix(M3DMatrix44f dst, const mat4& src) {
+void set_matrix(M3DMatrix44f dst, const mat4_t& src) {
     for (uint32 i = 0; i < 16; ++i)
-        dst[i] = src.flat[i];
+        dst[i] = src.components[i];
 }
 
 std::ostream& LOCAL operator << (std::ostream& out, const vec3_t& v) {
     return out << "(" << v.x << ";" << v.y << ";" << v.z << ")";
-}
-
-vec3_t toVec3(const M3DVector3f v3) {
-    return vec3(v3[0], v3[1], v3[2]);
-}
-
-mat4 toMat4(const M3DMatrix44f m) {
-    mat4 M;
-    for (uint32 i = 0; i < 16; ++i)
-        M.flat[i] = m[i];
-    return M;
-}
-
-mat3 toMat3(const M3DMatrix33f m) {
-    mat3 M;
-    for (uint32 i = 0; i < 9; ++i)
-        M.flat[i] = m[i];
-    return M;
 }
 
 } // namespace anon
@@ -898,12 +879,12 @@ void Game::renderWorld(float dt) {
     m3dTransformVector4(vLightEyePos, vLightPos, mCamera);
     const vec3_t eyeLightPos = vec3(vLightEyePos[0], vLightEyePos[1], vLightEyePos[2]);
 
-    const vec3_t& spotDirection = normalize(vec3(0.f) - toVec3(vLightPos));
+    const vec3_t& spotDirection = normalize(vec3(0.f) - vec3(vLightPos));
     const M3DVector4f vSpotDirection = { spotDirection.x, spotDirection.y, spotDirection.z, 0 };
 
     M3DVector4f vEyeSpotDirection;
     m3dTransformVector4(vEyeSpotDirection, vSpotDirection, mCamera);
-    const vec3_t ecSpotDirection = toVec3(vEyeSpotDirection);
+    const vec3_t ecSpotDirection = vec3(vEyeSpotDirection);
 
     wallUniforms.ecLightPos = eyeLightPos;
     wallUniforms.ecSpotDir = ecSpotDirection;
@@ -1001,7 +982,7 @@ void Mirror::render(Game& game) {
     
     glt::Uniforms us(shader);
     
-    us.optional("mvpMatrix", toMat4(game.transformPipeline.GetModelViewProjectionMatrix()));
+    us.optional("mvpMatrix", mat4(game.transformPipeline.GetModelViewProjectionMatrix()));
 
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture));
 
@@ -1103,9 +1084,9 @@ void Game::renderSpheres(float dt) {
         modelViewMatrix.Scale(s.r, s.r, s.r);
 
         glt::Uniforms us(sphereShader);
-        us.optional("mvpMatrix", toMat4(transformPipeline.GetModelViewProjectionMatrix()));
-        us.optional("mvMatrix", toMat4(transformPipeline.GetModelViewMatrix()));
-        us.optional("normalMatrix", toMat3(transformPipeline.GetNormalMatrix(true)));
+        us.optional("mvpMatrix", mat4(transformPipeline.GetModelViewProjectionMatrix()));
+        us.optional("mvMatrix", mat4(transformPipeline.GetModelViewMatrix()));
+        us.optional("normalMatrix", mat3(transformPipeline.GetNormalMatrix(true)));
         us.optional("ecLight", sphereUniforms.ecLightPos);
         us.optional("ecSpotDirection", sphereUniforms.ecSpotDir);
         us.optional("spotAngle", sphereUniforms.spotAngle);
@@ -1137,9 +1118,9 @@ void Game::render_walls() {
     wallShader.use();
     
     glt::Uniforms us(wallShader);
-    us.optional("mvpMatrix", toMat4(transformPipeline.GetModelViewProjectionMatrix()));
-    us.optional("mvMatrix", toMat4(transformPipeline.GetModelViewMatrix()));
-    us.optional("normalMatrix", toMat3(transformPipeline.GetNormalMatrix(true)));
+    us.optional("mvpMatrix", mat4(transformPipeline.GetModelViewProjectionMatrix()));
+    us.optional("mvMatrix", mat4(transformPipeline.GetModelViewMatrix()));
+    us.optional("normalMatrix", mat3(transformPipeline.GetNormalMatrix(true)));
     us.optional("ecLight", wallUniforms.ecLightPos);
     us.optional("ecSpotDirection", wallUniforms.ecSpotDir);
     us.optional("spotAngle", wallUniforms.spotAngle);
@@ -1330,14 +1311,14 @@ void Camera::move_right(float step) {
 vec3_t Camera::getOrigin() {
     M3DVector3f orig;
     frame.GetOrigin(orig);
-    return toVec3(orig);
+    return vec3(orig);
 //    return origin;
 }
 
 vec3_t Camera::getForwardVector() {
     M3DVector3f fw;
     frame.GetForwardVector(fw);
-    return normalize(toVec3(fw));
+    return normalize(vec3(fw));
 //    return vec4::project3(orientation.getRotationMatrix().transpose() * vec4(0.f, 0.f, 1.f, 0.f));
 }
 
@@ -1351,7 +1332,7 @@ void Camera::facePoint(const vec3_t& pos) {
     frame.SetForwardVector(fw.x, fw.y, fw.z);
 }
 
-mat4 Camera::getCameraMatrix() {
+mat4_t Camera::getCameraMatrix() {
 
     // GLFrame frame;
 
@@ -1367,7 +1348,7 @@ mat4 Camera::getCameraMatrix() {
 
     M3DMatrix44f trans;
     frame.GetCameraMatrix(trans);
-    return toMat4(trans);
+    return mat4(trans);
 }
 
 void Camera::rotate(float rotx, float roty) {
@@ -1488,8 +1469,8 @@ void addTriangle(gltools::GenBatch<Vertex>& s, const M3DVector3f vertices[3], co
     
     for (uint32 i = 0; i < 3; ++i) {
         Vertex v;
-        v.position = vec4(toVec3(vertices[i]), 1.f);
-        v.normal = toVec3(normals[i]);
+        v.position = vec4(vec3(vertices[i]), 1.f);
+        v.normal = vec3(normals[i]);
         s.add(v);
     }
 }

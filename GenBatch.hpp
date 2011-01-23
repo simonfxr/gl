@@ -10,7 +10,7 @@
 namespace math {
 
 struct vec3_t;
-struct vec4;
+struct vec4_t;
 struct color;
 
 }

@@ -3,6 +3,10 @@
 
 #include "math/defs.hpp"
 
+#if MATH_SSE(2, 0)
+#include <xmmintrin.h>
+#endif
+
 namespace math {
 
 struct vec4_t {
@@ -21,23 +25,15 @@ struct vec4_t {
         };
             
         float components[4];
-        
+
+#if MATH_SSE(2, 0)
+        __m128 packed;
+#endif
+
     } __attribute__((aligned(16)));
 
-#ifndef MATH_INLINE
-    float& MUT_FUNC operator[](unsigned long i);
-    float  PURE_FUNC operator[](unsigned long i) const;
-#else
-    
-    float& MUT_FUNC operator[](unsigned long i) {
-        return components[i];
-    }
-
-    float PURE_FUNC operator[](unsigned long i) const {
-        return components[i];
-    }
-
-#endif
+    float& operator[](unsigned long i) MUT_FUNC;
+    float operator[](unsigned long i) const PURE_FUNC;
 };
 
 typedef vec4_t point4_t;

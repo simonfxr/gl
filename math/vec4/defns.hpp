@@ -7,63 +7,67 @@
 
 MATH_BEGIN_NAMESPACE
 
-vec4_t PURE_FUNC vec4(float x, float y, float z, float w);
+vec4_t vec4(float x, float y, float z, float w) PURE_FUNC;
 
-vec4_t PURE_FUNC vec4(float a);
+vec4_t vec4(float a) PURE_FUNC;
 
-vec4_t PURE_FUNC vec4(const vec3_t& a, float w);
+vec4_t vec4(const vec3_t& a, float w) PURE_FUNC;
 
-vec4_t PURE_FUNC vec4(const float a[4]);
+vec4_t vec4(const float a[4]) PURE_FUNC;
 
-vec4_t PURE_FUNC operator -(const vec4_t& a);
+#if MATH_SSE(2, 0)
+vec4_t vec4(__m128 xmm) PURE_FUNC;
+#endif
 
-vec4_t PURE_FUNC operator +(const vec4_t& a, const vec4_t b);
+vec4_t operator -(const vec4_t& a) PURE_FUNC;
 
-vec4_t PURE_FUNC operator -(const vec4_t& a, const vec4_t b);
+vec4_t operator +(const vec4_t& a, const vec4_t b) PURE_FUNC;
 
-vec4_t PURE_FUNC operator *(const vec4_t& v, float a);
+vec4_t operator -(const vec4_t& a, const vec4_t b) PURE_FUNC;
 
-vec4_t PURE_FUNC operator *(float a, const vec4_t& v);
+vec4_t operator *(const vec4_t& v, float a) PURE_FUNC;
 
-vec4_t PURE_FUNC operator *(const vec4_t& a, const vec4_t& b);
+vec4_t operator *(float a, const vec4_t& v) PURE_FUNC;
 
-vec4_t PURE_FUNC operator /(const vec4_t& v, float a);
+vec4_t operator *(const vec4_t& a, const vec4_t& b) PURE_FUNC;
 
-vec4_t& MUT_FUNC operator +=(vec4_t& v, const vec4_t& a);
+vec4_t operator /(const vec4_t& v, float a) PURE_FUNC;
 
-vec4_t& MUT_FUNC operator -=(vec4_t& v, const vec4_t& a);
+vec4_t& operator +=(vec4_t& v, const vec4_t& a) MUT_FUNC;
 
-vec4_t& MUT_FUNC operator *=(vec4_t& v, float a);
+vec4_t& operator -=(vec4_t& v, const vec4_t& a) MUT_FUNC;
 
-vec4_t& MUT_FUNC operator *=(vec4_t& v, const vec4_t& b);
+vec4_t& operator *=(vec4_t& v, float a) MUT_FUNC;
 
-vec4_t& MUT_FUNC operator /=(vec4_t& v, float a);
+vec4_t& operator *=(vec4_t& v, const vec4_t& b) MUT_FUNC;
 
-bool PURE_FUNC operator ==(vec4_t& a, vec4_t& b);
+vec4_t& operator /=(vec4_t& v, float a) MUT_FUNC;
 
-bool PURE_FUNC operator !=(vec4_t& a, vec4_t& b);
+bool operator ==(vec4_t& a, vec4_t& b) PURE_FUNC;
 
-float PURE_FUNC dot(const vec4_t& a, const vec4_t& b);
+bool operator !=(vec4_t& a, vec4_t& b) PURE_FUNC;
 
-float PURE_FUNC length(const vec4_t& a);
+float dot(const vec4_t& a, const vec4_t& b) PURE_FUNC;
 
-float PURE_FUNC inverseLength(const vec4_t& a);
+float length(const vec4_t& a) PURE_FUNC;
 
-float PURE_FUNC lengthSq(const vec4_t& a);
+float inverseLength(const vec4_t& a) PURE_FUNC;
 
-vec4_t PURE_FUNC normalize(const vec4_t& a);
+float lengthSq(const vec4_t& a) PURE_FUNC;
 
-float PURE_FUNC distance(const vec4_t& a, const vec4_t& b);
+vec4_t normalize(const vec4_t& a) PURE_FUNC;
 
-float PURE_FUNC inverseDistance(const vec4_t& a, const vec4_t& b);
+float distance(const vec4_t& a, const vec4_t& b) PURE_FUNC;
 
-float PURE_FUNC distanceSq(const vec4_t& a, const vec4_t& b);
+float inverseDistance(const vec4_t& a, const vec4_t& b) PURE_FUNC;
 
-vec4_t PURE_FUNC min(const vec4_t& a, const vec4_t& max);
+float distanceSq(const vec4_t& a, const vec4_t& b) PURE_FUNC;
 
-vec4_t PURE_FUNC max(const vec4_t& a, const vec4_t& max);
+vec4_t min(const vec4_t& a, const vec4_t& max) PURE_FUNC;
 
-float PURE_FUNC sum(const vec4_t a);
+vec4_t max(const vec4_t& a, const vec4_t& max) PURE_FUNC;
+
+float sum(const vec4_t& a) PURE_FUNC;
 
 MATH_END_NAMESPACE
 

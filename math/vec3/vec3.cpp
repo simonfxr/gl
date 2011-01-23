@@ -77,18 +77,6 @@ bool operator !=(vec3_t& a, vec3_t& b) {
     return !(a == b);
 }
 
-#ifndef MATH_INLINE
-
-float& vec3_t::operator[](unsigned long i) {
-    return components[i];
-}
-
-float vec3_t::operator[](unsigned long i) const {
-    return components[i];
-}
-
-#endif
-
 float dot(const vec3_t& a, const vec3_t& b) {
     return sum(a * b);
 }
@@ -147,10 +135,26 @@ vec3_t max(const vec3_t& a, const vec3_t& b) {
                 b.z > a.z ? b.z : a.z);
 }
 
-float sum(const vec3_t a) {
+float sum(const vec3_t& a) {
     return a.x + a.y + a.z;
 }
 
+vec3_t linearInterpolate(const vec3_t& a, const vec3_t& b, float t) {
+    return a + t * (b - a);
+}
+
 MATH_END_NAMESPACE
+
+namespace math {
+
+MATH_INLINE_SPEC float& vec3_t::operator[](unsigned long i) {
+    return components[i];
+}
+
+MATH_INLINE_SPEC float vec3_t::operator[](unsigned long i) const {
+    return components[i];
+}
+
+} // namespace math
 
 #endif

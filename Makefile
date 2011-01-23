@@ -42,7 +42,7 @@ triangle: triangle.cpp libgltools.so
 own1: own1.cpp glt/ShaderManager.cpp glt/ShaderProgram.cpp glt/include_proc.cpp glt/utils.cpp VertexBuffer.cpp 
 	$(CXX) -o $@ $(CFLAGS) $(LDFLAGS) $^ -lglut
 
-SIM_SFML_SOURCES := sim-sfml.cpp math/vec3/vec3.cpp math/vec4/vec4.cpp GameLoop.cpp glt/utils.cpp glt/ShaderManager.cpp glt/ShaderProgram.cpp glt/Uniforms.cpp glt/include_proc.cpp GenBatch.cpp GameWindow.cpp 
+SIM_SFML_SOURCES := sim-sfml.cpp math/vec3/vec3.cpp math/vec4/vec4.cpp math/math/impl.cpp math/mat3/impl.cpp math/mat4/impl.cpp GameLoop.cpp glt/utils.cpp glt/ShaderManager.cpp glt/ShaderProgram.cpp glt/Uniforms.cpp glt/include_proc.cpp GenBatch.cpp GameWindow.cpp 
 
 sim-sfml: $(SIM_SFML_SOURCES) libgltools.so
 	$(CXX) $(SIM_SFML_SOURCES) -o $@ $(CFLAGS) $(LDFLAGS) $(LD_GLTOOLS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum -Wno-invalid-offsetof
