@@ -54,6 +54,10 @@ float degToRad(float deg) PURE_FUNC;
 
 float radToDeg(float rad) PURE_FUNC;
 
+float max(float x, float y) PURE_FUNC;
+
+float min(float x, float y) PURE_FUNC;
+
 MATH_END_NAMESPACE
 
 #endif

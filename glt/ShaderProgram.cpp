@@ -186,7 +186,7 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
 
     FileContents contents;
 
-    if (!readAndProcFile(file, self->sm.includeDirs(), contents)) {
+    if (!readAndProcFile(file, self->sm.path(), contents)) {
         LOG_ERROR(self, "couldnt read shader file");
         self->push_error(CompilationFailed);
         return false;

@@ -12,17 +12,14 @@ struct ShaderManager::Data {
     Verbosity verbosity;
     std::ostream *err;
     std::vector<std::string> includeDirs;
-
-    Data(std::ostream& _err) :
-        err(&_err)
-        {}
 };
 
 // } // namespace anon
 
 ShaderManager::ShaderManager() :
-    self(new Data(std::cerr))
+    self(new Data)
 {
+    self->err = &std::cerr;
     self->verbosity = Info;
 }
 
@@ -46,14 +43,20 @@ void ShaderManager::err(std::ostream& err) {
     self->err = &err;
 }
 
-void ShaderManager::addIncludeDir(const std::string& dir) {
+bool ShaderManager::addPath(const std::string& dir, bool verify_existence) {
     for (uint32 i = 0; i < self->includeDirs.size(); ++i)
         if (dir == self->includeDirs[i])
-            return;
+            return true;
+
+    if (verify_existence) {
+        // TODO: check wether dir exists and is a proper directory
+    }
+    
     self->includeDirs.push_back(dir);
+    return true;
 }
 
-const std::vector<std::string>& ShaderManager::includeDirs() {
+const std::vector<std::string>& ShaderManager::path() {
     return self->includeDirs;
 }
 

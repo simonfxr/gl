@@ -93,10 +93,14 @@ float wrapPi(float x) {
 }
 
 float wrap(float x, float period) {
+#ifdef MATH_MATH_INLINE
     if (unlikely(x < -period || x > period))
         return fmodf(x, period);
     else
         return x;
+#else
+    return fmodf(x, period);
+#endif
 }
 
 float degToRad(float deg) {
@@ -105,6 +109,14 @@ float degToRad(float deg) {
 
 float radToDeg(float rad) {
     return rad * (180.f / PI);
+}
+
+float max(float x, float y) {
+    return x < y ? y : x;
+}
+
+float min(float x, float y) {
+    return x > y ? y : x;
 }
 
 MATH_END_NAMESPACE

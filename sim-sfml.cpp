@@ -108,7 +108,11 @@ struct Mirror {
     void resized(Game& game);
     void createTexture(Game& game, float dt);
     void render(Game& game);
+
+    static const bool DISABLE;
 };
+
+const bool Mirror::DISABLE = true;
 
 Mirror::Mirror(glt::ShaderManager& sm) :
     batch(GL_QUADS, vertexAttrs),
@@ -118,11 +122,17 @@ Mirror::Mirror(glt::ShaderManager& sm) :
 static const uint32 BLUR_BUFFERS = 6;
 
 struct Blur {
+
+    static const bool DISABLE;
+    
     GLuint textures[BLUR_BUFFERS];
-    GLuint fbo_name;
-    GLuint depth_buffer_name;
+    GLuint pix_buffer;
     
     uint32 head, size;
+
+    uint32 pix_width, pix_height;
+
+    byte *pixel_data;
 
     glt::ShaderProgram shader;
 
@@ -132,6 +142,8 @@ struct Blur {
 
     Blur(glt::ShaderManager& sm) : shader(sm) {}
 };
+
+const bool Blur::DISABLE = true;
 
 struct Camera {
     GLFrame frame;
@@ -277,6 +289,7 @@ bool Game::onInit() {
     window().SetActive();
 
     default_framebuffer = 0;
+    default_drawbuffer = GL_BACK_LEFT;
 
     window().UseVerticalSync(false);
 
@@ -295,7 +308,7 @@ bool Game::onInit() {
     shaderManager.verbosity(glt::ShaderManager::Quiet);
 #endif
 
-    shaderManager.addIncludeDir("shaders");
+    shaderManager.addPath("shaders");
 
     if (!mirror.init(*this))
         return false;
@@ -347,9 +360,6 @@ bool Game::onInit() {
 }
 
 bool Mirror::init(Game& game) {
-
-    UNUSED(game);
-
     rendering_recursive = false;
 
     gltools::GenBatch<Vertex>& q = batch;
@@ -370,12 +380,15 @@ bool Mirror::init(Game& game) {
     pix_width = 1200;
     pix_height = 1200;
 
+    if (DISABLE) return true;
+
     GL_CHECK(glGenFramebuffers(1, &fbo_name));
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_name));
 
     GL_CHECK(glGenRenderbuffers(1, &depth_buffer_name));
     GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer_name));
     GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, pix_width, pix_height));
+    GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer_name));
 
     GL_CHECK(glGenTextures(1, &texture));
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture));
@@ -384,7 +397,7 @@ bool Mirror::init(Game& game) {
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
     GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0));
-    GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer_name));
+
 
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, game.default_framebuffer));
 
@@ -392,50 +405,64 @@ bool Mirror::init(Game& game) {
 }
 
 bool Blur::init(Game& game) {
-    UNUSED(game);
 
-    // GL_CHECK(glGenFramebuffers(1, &fbo_name));
-    // GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_name));
+    if (DISABLE) return true;
 
-    // GL_CHECK(glGenRenderbuffers(1, &depth_buffer_name));
-    // GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer_name));
-    // GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, game.window().GetWidth(), game.window().GetHeight()));
-    // GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer_name));
+    pix_width = game.window().GetWidth() + 1;
+    pix_height = game.window().GetHeight() + 1;
 
-    // memset(textures, 0, sizeof textures);
+    memset(textures, 0, BLUR_BUFFERS * sizeof textures[0]);
+    pix_buffer = 0;
+    pixel_data = 0;
 
-    // game.default_framebuffer = fbo_name;
+    resized(game);
 
     return true;
 }
 
 void Blur::resized(Game& game) {
 
-    UNUSED(game);
+    if (DISABLE) return;
 
-    // head = size = 0;
+    if (pix_width == game.window().GetWidth() &&
+        pix_height == game.window().GetHeight())
+        return;
+    
+    pix_width = game.window().GetWidth();
+    pix_height = game.window().GetHeight();
+    
+    head = size = 0;
 
-    // GL_CHECK(glDeleteTextures(BLUR_BUFFERS, textures));
+    delete[] pixel_data;
 
-    // GL_CHECK(glGenTextures(BLUR_BUFFERS, textures));
+    GL_CHECK(glDeleteTextures(BLUR_BUFFERS, textures));
+    GL_CHECK(glDeleteBuffers(1, &pix_buffer));
 
-    // for (uint32 i = 0; i < BLUR_BUFFERS; ++i) {
-    //     GL_CHECK(glBindTexture(GL_TEXTURE_2D, textures[i]));
-        
-    //     GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, game.window().GetWidth(), game.window().GetHeight(), 0, GL_RGBA, GL_FLOAT, NULL));
-    //     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-    //     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+    GL_CHECK(glGenTextures(BLUR_BUFFERS, textures));
 
-    //     GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, textures[i], 0));
-    // }
+    uint32 image_size = pix_width * pix_height * 4;
+    pixel_data = new byte[image_size];
+    memset(pixel_data, 0, image_size);
 
-    // game.restoreDefaultBuffers();
+    for (uint32 i = 0; i < BLUR_BUFFERS; ++i) {
+        GL_CHECK(glActiveTexture(GL_TEXTURE0 + i));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, textures[i]));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pix_width, pix_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL));
+    }
+
+    GL_CHECK(glGenBuffers(1, &pix_buffer));
+    GL_CHECK(glBindBuffer(GL_PIXEL_PACK_BUFFER, pix_buffer));
+    GL_CHECK(glBufferData(GL_PIXEL_PACK_BUFFER, image_size, pixel_data, GL_DYNAMIC_COPY));
+    GL_CHECK(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
 }
 
 void Game::restoreDefaultBuffers() {
-    GLenum drawbuf = GL_BACK_LEFT; // GL_COLOR_ATTACHMENT0 + head
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, default_framebuffer));
-    GL_CHECK(glDrawBuffers(1, &drawbuf));
+    GL_CHECK(glDrawBuffers(1, &default_drawbuffer));
     GL_CHECK(glViewport(0, 0, window().GetWidth(), window().GetHeight()));    
 }
 
@@ -490,20 +517,20 @@ bool Game::load_shaders() {
     else
         ms.printError(std::cerr);
 
-    // glt::ShaderProgram bs(shaderManager);
+    glt::ShaderProgram bs(shaderManager);
     
-    // bs.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/blur.vert");
-    // bs.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/blur.frag");
-    // bs.bindAttribute("vertex", vertexAttrs.index(offsetof(Vertex, position)));
-    // bs.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
-    // bs.tryLink();
+    bs.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/blur.vert");
+    bs.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/blur.frag");
+    bs.bindAttribute("vertex", vertexAttrs.index(offsetof(Vertex, position)));
+    bs.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
+    bs.tryLink();
 
-    // ok = ok && !bs.wasError();
+    ok = ok && !bs.wasError();
     
-    // if (!bs.wasError())
-    //     blur.shader.replaceWith(ws);
-    // else
-    //     bs.printError(std::cerr);
+    if (!bs.wasError())
+        blur.shader.replaceWith(bs);
+    else
+        bs.printError(std::cerr);
 
     return ok;
 }
@@ -855,6 +882,8 @@ void Game::renderScene(float interpolation) {
 
     glDisable(GL_CULL_FACE);
 
+    blur.render(*this, dt);
+
     ++fps_count;
     render_hud();
 }
@@ -900,21 +929,21 @@ void Game::renderWorld(float dt) {
 
     mirror.render(*this);
 
-    blur.render(*this, dt);
-
     modelViewMatrix.PopMatrix();
     modelViewMatrix.PopMatrix();    
 }
 
 void Mirror::createTexture(Game& game, float dt) {
 
+    if (DISABLE) return;
+
     if (rendering_recursive)
         return;
 
     const vec3_t corners[] = { origin,
-                             origin + vec3(width, 0.f, 0.f),
-                             origin + vec3(width, height, 0.f),
-                             origin + vec3(0.f, height, 0.f) };
+                               origin + vec3(width, 0.f, 0.f),
+                               origin + vec3(width, height, 0.f),
+                               origin + vec3(0.f, height, 0.f) };
 
     bool visible = false;
 
@@ -969,6 +998,8 @@ void Mirror::createTexture(Game& game, float dt) {
 
 void Mirror::render(Game& game) {
 
+    if (DISABLE) return;
+
     if (rendering_recursive)
         return;
 
@@ -1000,41 +1031,54 @@ void Mirror::resized(Game& game) {
 }
 
 void Blur::render(Game& game, float dt) {
+
+    static float next_update = 0.f;
+
     UNUSED(dt);
-    UNUSED(game);
 
-    // GLenum drawbuf = GL_BACK_LEFT;
-    // GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
-    // GL_CHECK(glDrawBuffers(1, &drawbuf));
-    // GL_CHECK(glViewport(0, 0, game.window().GetWidth(), game.window().GetHeight()));
-    // GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    if (DISABLE) return;
 
-    // shader.use();
+    if (game.realTime() >= next_update) {
+        next_update = game.realTime() + 1;
+        
 
-    // for (uint32 i = 0; i < BLUR_BUFFERS; ++i) {
-    //     uint32 k = (head + i) % BLUR_BUFFERS;
+        GL_CHECK(glBindBuffer(GL_PIXEL_PACK_BUFFER, pix_buffer));
+        GL_CHECK(glReadPixels(0, 0, pix_width, pix_height, GL_RGB, GL_UNSIGNED_BYTE, NULL));
+        GL_CHECK(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        
+        GL_CHECK(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pix_buffer));
+        
+        GL_CHECK(glActiveTexture(GL_TEXTURE0 + head));
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, pix_width, pix_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL));
+        GL_CHECK(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+    }
 
-    //     GLuint tex;
-    //     if (i < size)
-    //         tex = textures[k];
-    //     else
-    //         tex = textures[head];
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+//    GL_CHECK(glDisable(GL_DEPTH_TEST));
 
-    //     GL_CHECK(glBindTexture(GL_TEXTURE_2D, tex));
-    //     GL_CHECK(glActiveTexture(GL_TEXTURE0 + i));
+    shader.use();
 
-    //     std::string sym = std::string("texture") + to_string(i);
-    //     GLint loc = glGetUniformLocation(shader.program(), sym.c_str());
-    //     if (loc != -1)
-    //         GL_CHECK(glUniform1i(loc, i));
-    // }
+    for (uint32 i = 0; i < BLUR_BUFFERS; ++i) {
+        uint32 k = (head + i) % BLUR_BUFFERS;
 
-    // head = (head + 1) % BLUR_BUFFERS;
-    // size = (size + 1) % BLUR_BUFFERS;
+        std::string tex_name = "texture" + to_string(i);
 
-    // game.mirror.batch.draw();
+        GL_CHECK(glActiveTexture(GL_TEXTURE0 + i));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, textures[k]));
+        GLint loc;
+        GL_CHECK(loc = glGetUniformLocation(shader.program(), tex_name.c_str()));
+        if (loc == -1)
+            ERROR("foo");
+        GL_CHECK(glUniform1i(loc, i));
+    }
 
-    // game.restoreDefaultBuffers();
+
+    game.mirror.batch.draw();
+        
+//    GL_CHECK(glEnable(GL_DEPTH_TEST));
+
+    head = (head + 1) % BLUR_BUFFERS;
+    size = min(BLUR_BUFFERS, size + 1);
 }
 
 struct SphereModel {
@@ -1403,7 +1447,8 @@ bool Game::touchesWall(const Sphere& s, vec3_t& out_normal, vec3_t& out_collisio
         return true;
 
     float zdist;
-    if (s.center.x + s.r >= mirror.origin.x &&
+    if (!Mirror::DISABLE &&
+        s.center.x + s.r >= mirror.origin.x &&
         s.center.x - s.r <= mirror.origin.x + mirror.width &&
         s.center.y + s.r >= mirror.origin.y &&
         s.center.y - s.r <= mirror.origin.y + mirror.height &&

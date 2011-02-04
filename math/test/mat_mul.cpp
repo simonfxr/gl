@@ -47,6 +47,15 @@ vec4_t rand_vec(float scale) {
     return vec4(rand1() * scale, rand1() * scale, rand1() * scale, rand1() * scale);
 }
 
+vec4_t vec4_mul1(const mat4_t& A, const vec4_t& v) {
+    return A[0] * v[0] + A[1] * v[1] + A[2] * v[2] + A[3] * v[3];
+}
+
+vec4_t vec4_mul2(const mat4_t& A, const vec4_t& v) {
+    mat4_t AT = transpose(A);
+    return vec4(dot(A[0], v), dot(A[1], v), dot(A[2], v), dot(A[3], v));
+}
+
 int main(void) {
 
     FILE *randdev = fopen("/dev/urandom", "rb");

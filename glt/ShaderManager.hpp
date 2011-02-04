@@ -24,8 +24,8 @@ struct ShaderManager {
     std::ostream& err();
     void err(std::ostream& out);
 
-    void addIncludeDir(const std::string& path);
-    const std::vector<std::string>& includeDirs();
+    bool addPath(const std::string& directory, bool verify_existence = true);
+    const std::vector<std::string>& path();
 
 private:
     
