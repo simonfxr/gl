@@ -47,11 +47,11 @@ mat4_t operator *(const mat4_t& A, const mat4_t& B) {
 }
 
 vec4_t operator *(const mat4_t& A, const vec4_t& v) {
-    // vec4(dot(vec4(v[0]), A[0]), dot(vec4(v[1]), A[1]),
-    //      dot(vec4(v[1]), A[2]), dot(vec4(v[1]), A[3]));
-    mat4_t AT = transpose(A);
-    return vec4(dot(v, AT[0]), dot(v, AT[1]),
-                dot(v, AT[2]), dot(v, AT[3]));
+    return v[0] * A[0] + v[1] * A[1] +
+           v[2] * A[2] + v[3] * A[3];
+    // mat4_t AT = transpose(A);
+    // return vec4(dot(v, AT[0]), dot(v, AT[1]),
+    //             dot(v, AT[2]), dot(v, AT[3]));
 }
 
 mat4_t operator *(const mat4_t& A, float x) {

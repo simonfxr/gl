@@ -57,4 +57,8 @@ typedef long  int64;
 
 #define LOCAL __attribute__((unused))
 
+#define ATTRS(...)
+
+#define ATTR_WARN_UNUSED warn_unused_result
+
 #endif
