@@ -1,5 +1,8 @@
 #include <iostream>
 #include <cstdio>
+#include <cstring>
+#include <cassert>
+#include <map>
 
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -8,7 +11,8 @@
 #include "glt/ShaderProgram.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/utils.hpp"
-#include "glt/include_proc.hpp"
+#include "glt/Preprocessor.hpp"
+#include "glt/GLSLPreprocessor.hpp"
 
 #define LOG_LEVEL(data, lvl) ((data)->sm.verbosity() >= ShaderManager::lvl)
 
@@ -19,12 +23,14 @@
 
 namespace glt {
 
-// namespace {
+typedef std::map<std::string, ShaderProgram::ShaderType> ShaderMap;
+typedef std::pair<std::string, ShaderProgram::ShaderType> ShaderMapping;
 
 struct ShaderProgram::Data {
     Error last_error;
     GLuint program;
     ShaderManager& sm;
+    ShaderMap shaders;
 
     Data(ShaderManager& _sm) :
         sm(_sm)
@@ -35,10 +41,8 @@ struct ShaderProgram::Data {
             last_error = err;
     }
 
-    bool addShader(ShaderType type, const std::string& file, const FileContents& contents);
+    bool addShader(ShaderType type, const std::string& file, uint32 nsegs, const char *segments[], const GLint segLengths[]);
 };
-
-// } // namespace anon
 
 ShaderProgram::ShaderProgram(ShaderManager& sm) :
     self(new Data(sm))
@@ -56,6 +60,7 @@ void ShaderProgram::reset() {
     glDeleteProgram(self->program);
     self->program = 0;
     self->last_error = NoError;
+    self->shaders.clear();
 }
 
 ShaderProgram::Error ShaderProgram::clearError() {
@@ -124,11 +129,11 @@ void printProgramLog(GLuint program, std::ostream& out) {
 
 } // namespace anon
 
-bool ShaderProgram::Data::addShader(ShaderProgram::ShaderType type, const std::string& file, const FileContents& src) {
+bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, uint32 nsegments, const char *segments[], const GLint segLengths[]) {
 
     GLenum shader_type;
     if (!translateShaderType(type, &shader_type)) {
-        LOG_ERROR(this, "unknown shader type");
+        LOG_ERROR(this, "unknown shader type" << std::endl);
         push_error(APIError);
         return false;
     }
@@ -136,7 +141,7 @@ bool ShaderProgram::Data::addShader(ShaderProgram::ShaderType type, const std::s
     if (program == 0) {
         program = glCreateProgram();
         if (program == 0) {
-            LOG_ERROR(this, "couldnt create program");
+            LOG_ERROR(this, "couldnt create program" << std::endl);
             push_error(OpenGLError);
             return false;
         }
@@ -144,14 +149,14 @@ bool ShaderProgram::Data::addShader(ShaderProgram::ShaderType type, const std::s
 
     GLuint shader = glCreateShader(shader_type);
     if (shader == 0) {
-        LOG_ERROR(this, "couldnt create shader");
+        LOG_ERROR(this, "couldnt create shader" << std::endl);
         push_error(OpenGLError);
         return false;
     }
 
     LOG_ERROR(this, "compiling " << file << " ... ");
         
-    glShaderSource(shader, src.nsegments, src.segments, src.lengths);
+    glShaderSource(shader, nsegments, segments, segLengths);
     glCompileShader(shader);
 
     GLint success;
@@ -175,28 +180,88 @@ bool ShaderProgram::Data::addShader(ShaderProgram::ShaderType type, const std::s
 bool ShaderProgram::addShaderSrc(ShaderType type, const std::string& src) {
     const GLchar *str = src.c_str();
     GLsizei length = src.length();
-    FileContents contents;
-    contents.nsegments = 1;
-    contents.segments = &str;
-    contents.lengths = &length;
-    return self->addShader(type, "<unknown>", contents);
+    return self->addShader(type, "<unknown>", 1, &str, &length);
+}
+
+bool ShaderProgram::addShaderFile(const std::string& file) {
+    const char *begin = file.c_str();
+    const char *end = begin + file.length();
+
+    while (end > begin && end[-1] != '.')
+        --end;
+
+    ShaderType type;
+    if (end > begin && strcmp(end, "vert") == 0) {
+        type = VertexShader;
+    } else if (end > begin && strcmp(end, "frag") == 0) {
+        type = FragmentShader;
+    } else {
+        LOG_ERROR(self, "couldnt guess shader type based on file name" << std::endl);
+        self->push_error(CompilationFailed);
+        return false;
+    }
+
+    return addShaderFile(type, file);
 }
 
 bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
 
-    FileContents contents;
+    DependencyHandler depHandler;
+    bool success = false;
+    std::string realname;
 
-    if (!readAndProcFile(file, self->sm.path(), contents)) {
-        LOG_ERROR(self, "couldnt read shader file");
-        self->push_error(CompilationFailed);
-        return false;
+    {
+        Preprocessor proc;
+        IncludeHandler incHandler;
+        ShaderContents shadersrc;
+
+        depHandler.patches = &incHandler.includes;
+    
+        proc.installHandler("include", incHandler);
+        proc.installHandler("need", depHandler);
+        proc.err(self->sm.err());
+
+        realname = self->sm.lookupPath(file);
+
+        if (realname.empty()) {
+            LOG_ERROR(self, "couldnt find file in path: " << file << std::endl);
+            return false;
+        } else if (self->shaders.count(realname) > 0) {
+            return true;
+        }
+
+        self->shaders.insert(ShaderMapping(realname, type));
+
+        if (!preprocess(self->sm, proc, realname, &incHandler.includes, shadersrc)) {
+            LOG_ERROR(self, "couldnt process shader file" << std::endl);
+            self->push_error(CompilationFailed);
+            goto ret;
+        }
+
+        {
+            uint32 nsegments = shadersrc.segments.size();
+            const uint32 *segLengths = &shadersrc.segLengths[0];
+            const char **segments = &shadersrc.segments[0];
+
+            if (!self->addShader(type, realname, nsegments, segments, (GLint *) segLengths)) {
+                goto ret;
+            }
+        }
     }
-    
-    bool ok = self->addShader(type, file, contents);
 
-    deleteFileContents(contents);
-    
-    return ok;
+    for (uint32 i = 0; i < depHandler.deps.size(); ++i)
+        if (!addShaderFile(depHandler.deps[i]))
+            goto ret;
+
+    success = true;
+
+ret:
+
+    if (!success) {
+        self->shaders.erase(realname);
+    }
+
+    return success;
 }
 
 bool ShaderProgram::tryLink() {

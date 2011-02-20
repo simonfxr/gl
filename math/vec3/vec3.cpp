@@ -99,7 +99,7 @@ float lengthSq(const vec3_t& a) {
     return dot(a, a);
 }
 
-vec3_t normalize(const vec3_t& a) {
+direction3_t normalize(const vec3_t& a) {
     return a * inverseLength(a);
 }
 
@@ -115,12 +115,12 @@ float distanceSq(const vec3_t& a, const vec3_t& b) {
     return lengthSq(a - b);
 }
 
-vec3_t reflect(const vec3_t& a, const vec3_t& normal) {
-    return reflect(a, normal, 1.f);
+vec3_t reflect(const vec3_t& a, const normal3_t& n) {
+    return reflect(a, n, 1.f);
 }
 
-vec3_t reflect(const vec3_t& a, const vec3_t& normal, float amp) {
-    return a - normal * (2.f * amp * dot(normal, a));
+vec3_t reflect(const vec3_t& a, const normal3_t& n, float amp) {
+    return a - n * (2.f * amp * dot(n, a));
 }
 
 vec3_t min(const vec3_t& a, const vec3_t& b) {
@@ -141,6 +141,18 @@ float sum(const vec3_t& a) {
 
 vec3_t linearInterpolate(const vec3_t& a, const vec3_t& b, float t) {
     return a + t * (b - a);
+}
+
+direction3_t directionFromTo(const point3_t& a, const point3_t& b) {
+    return normalize(b - a);
+}
+
+float cos(const vec3_t& a, const vec3_t& b) {
+    return dot(a, b) / (length(a) * length(b));
+}
+
+vec3_t projectAlong(const vec3_t& a, const direction3_t& x) {
+    return dot(a, x) * x;
 }
 
 MATH_END_NAMESPACE

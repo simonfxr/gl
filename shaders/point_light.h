@@ -1,4 +1,6 @@
 
+#need "point_light.frag"
+
 void PointLight(vec3 ecLight, vec3 attenuation,
                 vec4 lightAmbient, vec4 lightDiffuse, vec4 lightSpecular,
                 vec3 ecPosition, vec3 ecNormal, float shininess,

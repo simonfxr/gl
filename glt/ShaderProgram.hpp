@@ -34,6 +34,7 @@ struct ShaderProgram {
 
     bool addShaderSrc(ShaderType type, const std::string& src);
     bool addShaderFile(ShaderType type, const std::string& file);
+    bool addShaderFile(const std::string& file);
 
     bool bindAttribute(const std::string& name, GLuint position);
 
@@ -55,10 +56,6 @@ struct ShaderProgram {
     void printError(std::ostream& out);
 
     bool validate(bool printLogOnError = false);
-
-    // static void printShaderLog(GLuint shader, std::ostream& out);
-    // static void printProgramLog(GLuint program, std::ostream& out);
-    // static void printProgramLog(const ShaderProgram& prog, std::ostream& out);
 
 private:
 

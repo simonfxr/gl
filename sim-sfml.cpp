@@ -308,6 +308,7 @@ bool Game::onInit() {
     shaderManager.verbosity(glt::ShaderManager::Quiet);
 #endif
 
+    shaderManager.addPath(".");
     shaderManager.addPath("shaders");
 
     if (!mirror.init(*this))
@@ -472,8 +473,6 @@ bool Game::load_shaders() {
     glt::ShaderProgram ws(shaderManager);
     
     ws.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/brick.vert");
-    ws.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/point_light.frag");
-    ws.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/sim_shading.frag");
     ws.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/brick.frag");
     ws.bindAttribute("vertex", vertexAttrs.index(offsetof(Vertex, position)));
     ws.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
@@ -489,8 +488,6 @@ bool Game::load_shaders() {
     glt::ShaderProgram ss(shaderManager);
 
     ss.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/sphere.vert");
-    ss.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/point_light.frag");
-    ss.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/sim_shading.frag");
     ss.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/sphere.frag");
     ss.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
     ss.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
@@ -503,34 +500,39 @@ bool Game::load_shaders() {
     else
         ss.printError(std::cerr);
 
-    glt::ShaderProgram ms(shaderManager);
-    ms.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/mirror.vert");
-    ms.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/mirror.frag");
-    ms.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
-    ms.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
-    ms.tryLink();
+    if (!Mirror::DISABLE) {
 
-    ok = ok && !ms.wasError();
+        glt::ShaderProgram ms(shaderManager);
+        ms.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/mirror.vert");
+        ms.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/mirror.frag");
+        ms.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
+        ms.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
+        ms.tryLink();
 
-    if (!ms.wasError())
-        mirror.shader.replaceWith(ms);
-    else
-        ms.printError(std::cerr);
+        ok = ok && !ms.wasError();
 
-    glt::ShaderProgram bs(shaderManager);
-    
-    bs.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/blur.vert");
-    bs.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/blur.frag");
-    bs.bindAttribute("vertex", vertexAttrs.index(offsetof(Vertex, position)));
-    bs.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
-    bs.tryLink();
+        if (!ms.wasError())
+            mirror.shader.replaceWith(ms);
+        else
+            ms.printError(std::cerr);
+    }
 
-    ok = ok && !bs.wasError();
-    
-    if (!bs.wasError())
-        blur.shader.replaceWith(bs);
-    else
-        bs.printError(std::cerr);
+    if (!Blur::DISABLE) {
+        glt::ShaderProgram bs(shaderManager);
+        
+        bs.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/blur.vert");
+        bs.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/blur.frag");
+        bs.bindAttribute("vertex", vertexAttrs.index(offsetof(Vertex, position)));
+        bs.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
+        bs.tryLink();
+        
+        ok = ok && !bs.wasError();
+        
+        if (!bs.wasError())
+            blur.shader.replaceWith(bs);
+        else
+            bs.printError(std::cerr);
+    }
 
     return ok;
 }
@@ -1317,20 +1319,21 @@ bool Sphere::collide(Sphere& x, Sphere& y, float dt) {
             y.vel = length(y.vel) * n1;
 
         } else {
-            vec3_t n1 = normalize(yc - xc);
-            vec3_t n2 = -n1;
-        
-            vec3_t vx_coll = n1 * dot(x.vel, n1);
+
+            direction3_t toY = directionFromTo(xc, yc);
+            direction3_t toX = -toY;
+            
+            vec3_t vx_coll = projectAlong(x.vel, toY);
             vec3_t vx_rest = x.vel - vx_coll;
 
-            vec3_t vy_coll = n2 * dot(y.vel, n2);
+            vec3_t vy_coll = projectAlong(y.vel, toX);
             vec3_t vy_rest = y.vel - vy_coll;
 
-            vec3_t ux = (rand1() * 0.1f + 0.9f) * velocity_after_collision(x.mass, vx_coll, y.mass, vy_coll);
-            vec3_t uy = (rand1() * 0.1f + 0.9f) * velocity_after_collision(y.mass, vy_coll, x.mass, vx_coll);
+            vec3_t ux = velocity_after_collision(x.mass, vx_coll, y.mass, vy_coll);
+            vec3_t uy = (x.mass / y.mass) * (vx_coll - ux) + vy_coll;
 
-            x.vel = ux + vx_rest;
-            y.vel = uy + vy_rest;
+            x.vel = (rand1() * 0.1f + 0.9f) * ux + vx_rest;
+            y.vel = (rand1() * 0.1f + 0.9f) * uy + vy_rest;
         }
 
         return true;

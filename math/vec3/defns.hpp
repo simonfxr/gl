@@ -53,7 +53,7 @@ float inverseLength(const vec3_t& a) PURE_FUNC;
 
 float lengthSq(const vec3_t& a) PURE_FUNC;
 
-vec3_t normalize(const vec3_t& a) PURE_FUNC;
+direction3_t normalize(const vec3_t& a) PURE_FUNC;
 
 float distance(const vec3_t& a, const vec3_t& b) PURE_FUNC;
 
@@ -61,9 +61,9 @@ float inverseDistance(const vec3_t& a, const vec3_t& b) PURE_FUNC;
 
 float distanceSq(const vec3_t& a, const vec3_t& b) PURE_FUNC;
 
-vec3_t reflect(const vec3_t& a, const vec3_t& normal) PURE_FUNC;
+vec3_t reflect(const vec3_t& a, const normal3_t& d) PURE_FUNC;
 
-vec3_t reflect(const vec3_t& a, const vec3_t& normal, float amp) PURE_FUNC;
+vec3_t reflect(const vec3_t& a, const normal3_t& d, float amp) PURE_FUNC;
 
 vec3_t min(const vec3_t& a, const vec3_t& max) PURE_FUNC;
 
@@ -72,6 +72,12 @@ vec3_t max(const vec3_t& a, const vec3_t& max) PURE_FUNC;
 float sum(const vec3_t& a) PURE_FUNC;
 
 vec3_t linearInterpolate(const vec3_t& a, const vec3_t& b, float t) PURE_FUNC;
+
+direction3_t directionFromTo(const point3_t& a, const point3_t& b) PURE_FUNC;
+
+float cos(const vec3_t& a, const vec3_t& b) PURE_FUNC;
+
+vec3_t projectAlong(const vec3_t& a, const direction3_t& x) PURE_FUNC;
 
 MATH_END_NAMESPACE
 

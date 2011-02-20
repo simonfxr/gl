@@ -17,6 +17,8 @@ PKG_CFLAGS := $(shell pkg-config --cflags $(PACKAGES))
 
 CFLAGS  := $(PKG_CFLAGS) $(INC_DIRS) -Wall -Wextra $(OPT_FLAGS) $(EXTRA_CFLAGS) 
 
+CXXFLAGS := $(CFLAGS)
+
 ICC_CFLAGS := $(CFLAGS) -xHOST -O3 -ipo -no-prec-div
 
 PKG_LDFLAGS := $(shell pkg-config --libs $(PACKAGES))
@@ -32,23 +34,23 @@ all: triangle
 
 libgltools.so:
 	cd $(BIBLE)/Src/GLTools/src && \
-          $(CXX) -fPIC -c $(CFLAGS) -o $(shell basename $(GLTOOLS_SBM:.cpp=.o)) $(GLTOOLS_SBM) && \
-          $(CXX) -fPIC -c $(CFLAGS) $(GLTOOLS_SRC) && \
+          $(CXX) -fPIC -c $(CXXFLAGS) -o $(shell basename $(GLTOOLS_SBM:.cpp=.o)) $(GLTOOLS_SBM) && \
+          $(CXX) -fPIC -c $(CXXFLAGS) $(GLTOOLS_SRC) && \
           ld -G $(GLTOOLS_SRC:.cpp=.o) $(shell basename $(GLTOOLS_SBM:.cpp=.o)) -o $(PWD)/$@
 
 triangle: triangle.cpp libgltools.so
-	$(CXX) -o $@ $(CFLAGS) $(LDFLAGS) $(LD_GLTOOLS) $<
+	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $(LD_GLTOOLS) $<
 
 own1: own1.cpp glt/ShaderManager.cpp glt/ShaderProgram.cpp glt/include_proc.cpp glt/utils.cpp VertexBuffer.cpp 
-	$(CXX) -o $@ $(CFLAGS) $(LDFLAGS) $^ -lglut
+	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $^ -lglut
 
-SIM_SFML_SOURCES := sim-sfml.cpp math/vec3/vec3.cpp math/vec4/vec4.cpp math/math/impl.cpp math/mat3/impl.cpp math/mat4/impl.cpp GameLoop.cpp glt/utils.cpp glt/ShaderManager.cpp glt/ShaderProgram.cpp glt/Uniforms.cpp glt/include_proc.cpp GenBatch.cpp GameWindow.cpp 
+SIM_SFML_SOURCES := sim-sfml.cpp math/vec3/vec3.cpp math/vec4/vec4.cpp math/math/impl.cpp math/mat3/impl.cpp math/mat4/impl.cpp GameLoop.cpp glt/utils.cpp glt/ShaderManager.cpp glt/ShaderProgram.cpp glt/Uniforms.cpp GenBatch.cpp GameWindow.cpp glt/Preprocessor.cpp glt/GLSLPreprocessor.cpp
 
 sim-sfml: $(SIM_SFML_SOURCES) libgltools.so
-	$(CXX) $(SIM_SFML_SOURCES) -o $@ $(CFLAGS) $(LDFLAGS) $(LD_GLTOOLS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum -Wno-invalid-offsetof
+	$(CXX) $(SIM_SFML_SOURCES) -o $@ $(CXXFLAGS) $(LDFLAGS) $(LD_GLTOOLS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum -Wno-invalid-offsetof
 
 cube: cube.cpp GameLoop.cpp gltools.cpp ShaderProgram.cpp Batch.cpp
-	$(CXX) -o $@ $^ $(CFLAGS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum
+	$(CXX) -o $@ $^ $(CXXFLAGS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum
 
 clean:
 	- rm libgltools.so triangle own1 sim-sfml cube

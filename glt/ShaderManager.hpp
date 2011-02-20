@@ -18,14 +18,18 @@ struct ShaderManager {
     ShaderManager();
     ~ShaderManager();
 
-    Verbosity verbosity();
+    Verbosity verbosity() const;
     void verbosity(Verbosity v);
 
-    std::ostream& err();
+    std::ostream& err() const;
     void err(std::ostream& out);
 
     bool addPath(const std::string& directory, bool verify_existence = true);
-    const std::vector<std::string>& path();
+    const std::vector<std::string>& path() const;
+
+    std::string lookupPath(const std::string& file) const;
+
+    std::string readFileInPath(const std::string& file, char *& contents, uint32& size) const;
 
 private:
     
