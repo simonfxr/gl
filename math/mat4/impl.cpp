@@ -3,7 +3,10 @@
 #include "defs.h"
 #include "math/mat4/defns.hpp"
 #include "math/vec4.hpp"
+#include "math/vec3.hpp"
 #include "math/math.hpp"
+
+#include "glt/utils.hpp"
 
 MATH_BEGIN_NAMESPACE
 
@@ -86,6 +89,18 @@ mat4_t& operator /=(mat4_t& A, float x) {
     return A = A / x;
 }
 
+vec4_t transform(const mat4_t& A, const vec4_t& v) {
+    return A * v;
+}
+
+vec3_t transformPoint(const mat4_t& A, const vec3_t& p) {
+    return vec3(A * vec4(p, 1.f));
+}
+
+vec3_t transformVec(const mat4_t& A, const vec3_t& v) {
+    return vec3(A * vec4(v, 0.f));
+}
+
 mat4_t transpose(const mat4_t& A) {
     mat4_t B;
     for (uint32 i = 0; i < 4; ++i)
@@ -94,7 +109,12 @@ mat4_t transpose(const mat4_t& A) {
     return B;
 }
 
-vec4_t transposedMult(const mat4_t& AT, const vec4_t v) {
+mat4_t inverse(const mat4_t& A) {
+    UNUSED(A);
+    FATAL_ERROR("not yet implemented");
+}
+
+vec4_t transposedMult(const mat4_t& AT, const vec4_t& v) {
     return vec4(dot(v, AT[0]), dot(v, AT[1]),
                 dot(v, AT[2]), dot(v, AT[3]));
 }

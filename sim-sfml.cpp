@@ -1088,7 +1088,7 @@ struct SphereModel {
     vec3_t pos;
     const Sphere *s;
 
-    static bool compare(SphereModel m1, SphereModel m2) {
+    static bool compare(const SphereModel& m1, const SphereModel& m2) {
         return m1.viewDist < m2.viewDist;
     }
 };

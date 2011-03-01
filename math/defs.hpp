@@ -1,11 +1,13 @@
 #ifndef MATH_DEFS_HPP
 #define MATH_DEFS_HPP
 
-#define CONST_ATTR
+#ifndef ATTR_CONST
+#define ATTR_CONST
+#endif
 
 #ifdef MATH_INLINE
 
-#define PURE_FUNC __attribute__((CONST_ATTR always_inline, unused, nothrow))
+#define PURE_FUNC __attribute__((ATTR_CONST always_inline, unused, nothrow))
 #define MUT_FUNC __attribute__((always_inline, unused, nothrow))
 #define MATH_BEGIN_NAMESPACE namespace math { namespace {
 #define MATH_END_NAMESPACE } }
@@ -14,7 +16,7 @@
 
 #else
 
-#define PURE_FUNC __attribute__((CONST_ATTR nothrow))
+#define PURE_FUNC __attribute__((ATTR_CONST nothrow))
 #define MUT_FUNC __attribute__((nothrow))
 #define MATH_BEGIN_NAMESPACE namespace math {
 #define MATH_END_NAMESPACE }
@@ -27,6 +29,8 @@
 #define MATH_SSE_VERS 0
 #endif
 
-#define MATH_SSE(maj, min) (MATH_SSE_VERS >= ((maj) * 10 + min))
+#define MATH_MK_SSE_VERS(maj, min) ((maj) * 100 + (min))
+
+#define MATH_SSE(maj, min) (MATH_SSE_VERS >= MATH_MK_SSE_VERS(maj, min))
 
 #endif

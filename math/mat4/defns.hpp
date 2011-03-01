@@ -5,6 +5,8 @@
 
 MATH_BEGIN_NAMESPACE
 
+struct vec3_t;
+
 mat4_t mat4() PURE_FUNC;
 
 mat4_t mat4(float x) PURE_FUNC;
@@ -37,9 +39,17 @@ mat4_t& operator *=(mat4_t& A, const mat4_t& B) MUT_FUNC;
 
 mat4_t& operator /=(mat4_t& A, float x) MUT_FUNC;
 
+vec4_t transform(const mat4_t& A, const vec4_t& v) PURE_FUNC;
+
+vec3_t transformPoint(const mat4_t& A, const vec3_t& p) PURE_FUNC;
+
+vec3_t transformVec(const mat4_t& A, const vec3_t& v) PURE_FUNC;
+
 mat4_t transpose(const mat4_t& A) PURE_FUNC;
 
-vec4_t transposedMult(const mat4_t& AT, const vec4_t v) PURE_FUNC;
+mat4_t inverse(const mat4_t& A) PURE_FUNC;
+
+vec4_t transposedMult(const mat4_t& AT, const vec4_t& v) PURE_FUNC;
 
 MATH_END_NAMESPACE
 

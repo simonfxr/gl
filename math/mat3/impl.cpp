@@ -5,6 +5,8 @@
 #include "math/vec3.hpp"
 #include "math/math.hpp"
 
+#include "glt/utils.hpp"
+
 MATH_BEGIN_NAMESPACE
 
 mat3_t mat3() {
@@ -46,10 +48,9 @@ mat3_t operator *(const mat3_t& A, const mat3_t& B) {
 }
 
 vec3_t operator *(const mat3_t& A, const vec3_t& v) {
-    // vec3(dot(vec3(v[0]), A[0]), dot(vec3(v[1]), A[1]),
-    //      dot(vec3(v[1]), A[2]), dot(vec3(v[1]), A[3]));
-    mat3_t AT = transpose(A);
-    return vec3(dot(v, AT[0]), dot(v, AT[1]), dot(v, AT[2]));
+    return v[0] * A[0] + v[1] * A[1] + v[2] * A[2];
+    // mat3_t AT = transpose(A);
+    // return vec3(dot(v, AT[0]), dot(v, AT[1]), dot(v, AT[2]));
 }
 
 mat3_t operator *(const mat3_t& A, float x) {
@@ -82,6 +83,15 @@ mat3_t& operator *=(mat3_t& A, const mat3_t& B) {
 
 mat3_t& operator /=(mat3_t& A, float x) {
     return A = A / x;
+}
+
+vec3_t transform(const mat3_t& A, const vec3_t& v) {
+    return A * v;
+}
+
+mat3_t inverse(const mat3_t& A) {
+    UNUSED(A);
+    FATAL_ERROR("not yet implemented");
 }
 
 mat3_t transpose(const mat3_t& A) {

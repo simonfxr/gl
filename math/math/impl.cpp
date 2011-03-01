@@ -14,6 +14,10 @@ float recp(float x) {
     return 1.f / x;
 }
 
+float inverse(float x) {
+    return recp(x);
+}
+
 float rsqrt(float x) {
     return recp(sqrt(x));
 }
