@@ -3,6 +3,8 @@
 
 #include "defs.h"
 
+namespace ge {
+
 class GameLoop {
 public:
 
@@ -27,7 +29,7 @@ public:
         virtual ~Game() {};
         virtual void tick() = 0;
         virtual void render(float interpolation) = 0;
-        virtual void handleEvents() = 0;
+        virtual void handleInputEvents() = 0;
         virtual float now() = 0;
         
         virtual void idle(float seconds) {
@@ -47,4 +49,7 @@ public:
 
     int32 run(Game& logic);
 };
+
+} // namespace ge
+
 #endif

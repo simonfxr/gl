@@ -7,15 +7,7 @@
 #include "defs.h"
 #include "glt/utils.hpp"
 
-namespace math {
-
-struct vec3_t;
-struct vec4_t;
-struct color;
-
-}
-
-namespace gltools {
+namespace glt {
 
 struct Attr {
     GLint size;
@@ -151,5 +143,5 @@ public:
     }
 };
 
-} // namespace gltools
+} // namespace glt
 #endif

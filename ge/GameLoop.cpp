@@ -1,4 +1,6 @@
-#include "GameLoop.hpp"
+#include "ge/GameLoop.hpp"
+
+namespace ge {
 
 GameLoop::GameLoop(uint32 _ticks_per_second, uint32 _max_frame_skip, uint32 _max_fps)
     : ticks_per_second(_ticks_per_second),
@@ -32,7 +34,7 @@ int32 GameLoop::run(GameLoop::Game& logic) {
         uint32 loops = 0;
         
         while ((_now = logic.now()) >= next_game_tick && loops < loops_max && _running) {
-            logic.handleEvents();
+            logic.handleInputEvents();
 
             if (unlikely(!_running))
                 break;
@@ -69,3 +71,5 @@ void GameLoop::pause(bool _pause) {
 bool GameLoop::paused() const {
     return _paused;
 }
+
+} // namespace ge

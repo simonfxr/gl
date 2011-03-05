@@ -43,7 +43,7 @@ vec4_t transform(const mat4_t& A, const vec4_t& v) PURE_FUNC;
 
 vec3_t transformPoint(const mat4_t& A, const vec3_t& p) PURE_FUNC;
 
-vec3_t transformVec(const mat4_t& A, const vec3_t& v) PURE_FUNC;
+vec3_t transformVector(const mat4_t& A, const vec3_t& v) PURE_FUNC;
 
 mat4_t transpose(const mat4_t& A) PURE_FUNC;
 

@@ -4,9 +4,10 @@
 #include <sstream>
 #include <algorithm>
 #include <ctime>
-#include <limits.h>
+#include <climits>
 
 #define GLEW_STATIC
+
 #include <GLTools.h>
 #include <GLShaderManager.h>
 #include <GLFrustum.h>
@@ -29,9 +30,10 @@
 #include "glt/ShaderProgram.hpp"
 #include "glt/Uniforms.hpp"
 #include "glt/color.hpp"
+#include "glt/GenBatch.hpp"
+#include "glt/Frame.hpp"
 
-#include "GameWindow.hpp"
-#include "GenBatch.hpp"
+#include "ge/GameWindow.hpp"
 
 using namespace math;
 
@@ -73,16 +75,16 @@ struct Vertex {
     vec3_t normal;
 };
 
-gltools::Attr vertexAttrArray[] = {
-    gltools::attr::vec4(offsetof(Vertex, position)),
-    gltools::attr::vec3(offsetof(Vertex, normal))
+glt::Attr vertexAttrArray[] = {
+    glt::attr::vec4(offsetof(Vertex, position)),
+    glt::attr::vec3(offsetof(Vertex, normal))
 };
 
-gltools::Attrs<Vertex> vertexAttrs(ARRAY_LENGTH(vertexAttrArray), vertexAttrArray);
+glt::Attrs<Vertex> vertexAttrs(ARRAY_LENGTH(vertexAttrArray), vertexAttrArray);
 
-void makeSphere(gltools::GenBatch<Vertex>& sphere, float rad, int32 stacks, int32 slices);
+void makeSphere(glt::GenBatch<Vertex>& sphere, float rad, int32 stacks, int32 slices);
 
-void makeUnitCube(gltools::GenBatch<Vertex>& cube);
+void makeUnitCube(glt::GenBatch<Vertex>& cube);
 
 struct Mirror {
     
@@ -99,7 +101,7 @@ struct Mirror {
 
     bool rendering_recursive;
 
-    gltools::GenBatch<Vertex> batch;
+    glt::GenBatch<Vertex> batch;
     glt::ShaderProgram shader;
 
     Mirror(glt::ShaderManager& sm);
@@ -146,7 +148,7 @@ struct Blur {
 const bool Blur::DISABLE = true;
 
 struct Camera {
-    GLFrame frame;
+    glt::Frame frame;
 
     // vec3_t origin;
     // EulerAngles orientation;
@@ -179,15 +181,15 @@ std::ostream& LOCAL operator << (std::ostream& out, const vec3_t& v) {
 
 static const float FPS_RENDER_CYCLE = 1.f;
 
-struct Game : public GameWindow {
+struct Game : public ge::GameWindow {
 
     GLMatrixStack           modelViewMatrix;            // Modelview Matrix
     GLMatrixStack           projectionMatrix;           // Projection Matrix
     GLFrustum               viewFrustum;                // View Frustum
     GLGeometryTransform     transformPipeline;          // Geometry Transform Pipeline
 
-    gltools::GenBatch<Vertex> wallBatch;
-    gltools::GenBatch<Vertex> sphereBatch;
+    glt::GenBatch<Vertex> wallBatch;
+    glt::GenBatch<Vertex> sphereBatch;
     
     Camera camera;
     Cuboid room;
@@ -262,7 +264,7 @@ struct Game : public GameWindow {
 };
 
 Game::Game(sf::RenderWindow& win, sf::Clock& clock) :
-    GameWindow(win, clock),
+    ge::GameWindow(win, clock),
     wallBatch(GL_QUADS, vertexAttrs),
     sphereBatch(GL_TRIANGLES, vertexAttrs),
     mirror(shaderManager),
@@ -363,7 +365,7 @@ bool Game::onInit() {
 bool Mirror::init(Game& game) {
     rendering_recursive = false;
 
-    gltools::GenBatch<Vertex>& q = batch;
+    glt::GenBatch<Vertex>& q = batch;
     Vertex v;
     v.normal = vec3(0.f, 0.f, 1.f);
     
@@ -890,13 +892,28 @@ void Game::renderScene(float interpolation) {
     render_hud();
 }
 
+static GLFrame asGLFrame(const glt::Frame& ref) {
+    GLFrame fr;
+
+    point3_t pos = ref.getOrigin();
+    fr.SetOrigin(pos.x, pos.y, pos.z);
+    direction3_t fw = ref.localZ();
+    fr.SetForwardVector(fw.x, fw.y, fw.z);
+    direction3_t up = ref.localY();
+    fr.SetUpVector(up.x, up.y, up.z);
+
+    return fr;
+}
+
 void Game::renderWorld(float dt) {
 
-    viewFrustum.Transform(camera.frame);
+    GLFrame fr = asGLFrame(camera.frame);
+    viewFrustum.Transform(fr);
 
     mirror.createTexture(*this, dt);
 
-    viewFrustum.Transform(camera.frame);
+    fr = asGLFrame(camera.frame);
+    viewFrustum.Transform(fr);
 
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
@@ -969,10 +986,8 @@ void Mirror::createTexture(Game& game, float dt) {
 
     vec3_t mirror_view = normalize(reflect(fw, mirror_normal));
 
-    game.camera.setOrigin(mirror_center - 2.f * mirror_view);
-    game.camera.frame.SetForwardVector(mirror_view.x, 0.f, mirror_view.z);
-
-    game.camera.frame.SetUpVector(0.f, 1.f, 0.f);
+    game.camera.frame.setOrigin(mirror_center - 2.f * mirror_view);
+    game.camera.frame.setYZ(vec3(0.f, 1.f, 0.f), vec3(mirror_view.x, 0.f, mirror_view.z));
 
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_name));
 
@@ -1330,6 +1345,7 @@ bool Sphere::collide(Sphere& x, Sphere& y, float dt) {
             vec3_t vy_rest = y.vel - vy_coll;
 
             vec3_t ux = velocity_after_collision(x.mass, vx_coll, y.mass, vy_coll);
+            // conservation of momentum
             vec3_t uy = (x.mass / y.mass) * (vx_coll - ux) + vy_coll;
 
             x.vel = (rand1() * 0.1f + 0.9f) * ux + vx_rest;
@@ -1343,8 +1359,7 @@ bool Sphere::collide(Sphere& x, Sphere& y, float dt) {
 }
 
 void Camera::move_along_local_axis(const vec3_t& step) {
-    frame.TranslateLocal(step.x, step.y, step.z);
-//    origin += vec4::project3(orientation.getRotationMatrix().transpose() * vec4(step, 0.f));
+    frame.translateLocal(step);
 }
 
 void Camera::move_forward(float step) {
@@ -1356,51 +1371,29 @@ void Camera::move_right(float step) {
 }
 
 vec3_t Camera::getOrigin() {
-    M3DVector3f orig;
-    frame.GetOrigin(orig);
-    return vec3(orig);
-//    return origin;
+    return frame.getOrigin();
 }
 
 vec3_t Camera::getForwardVector() {
-    M3DVector3f fw;
-    frame.GetForwardVector(fw);
-    return normalize(vec3(fw));
-//    return vec4::project3(orientation.getRotationMatrix().transpose() * vec4(0.f, 0.f, 1.f, 0.f));
+    return frame.localZ();
 }
 
 void Camera::setOrigin(const vec3_t& orig) {
-//    origin = orig;
-    frame.SetOrigin(orig.x, orig.y, orig.z);
+    frame.setOrigin(orig);
 }
 
 void Camera::facePoint(const vec3_t& pos) {
-    vec3_t fw = normalize(pos - getOrigin());
-    frame.SetForwardVector(fw.x, fw.y, fw.z);
+    direction3_t z = directionFromTo(getOrigin(), pos);
+    frame.setXZ(normalize(cross(frame.localY(), z)), z);
 }
 
 mat4_t Camera::getCameraMatrix() {
-
-    // GLFrame frame;
-
-    // frame.SetOrigin(origin.x, origin.y, origin.z);
-    
-    // mat4 rot = orientation.getRotationMatrix().transpose();
-    
-    // vec3_t fw  = vec4::project3(rot * vec4(0.f, 0.f, 1.f, 1.f));
-    // vec3_t up  = vec4::project3(rot * vec4(0.f, 1.f, 0.f, 1.f));
-    
-    // frame.SetForwardVector(fw.x, fw.y, fw.z);
-    // frame.SetUpVector(up.x, up.y, up.z);
-
-    M3DMatrix44f trans;
-    frame.GetCameraMatrix(trans);
-    return mat4(trans);
+    return frame.cameraMatrix();
 }
 
 void Camera::rotate(float rotx, float roty) {
-    frame.RotateLocal(roty, 1.f, 0.f, 0.f);
-    frame.RotateWorld(rotx, 0.f, 1.f, 0.f);
+    frame.rotateLocal(roty, vec3(1.f, 0.f, 0.f));
+    frame.rotateWorld(rotx, vec3(0.f, 1.f, 0.f));
 }
 
 bool Cuboid::touchesWall(const Sphere& s, vec3_t& out_normal, vec3_t& out_collision) const {
@@ -1467,7 +1460,7 @@ bool Game::touchesWall(const Sphere& s, vec3_t& out_normal, vec3_t& out_collisio
 
 namespace {
 
-void makeUnitCube(gltools::GenBatch<Vertex>& cube) {
+void makeUnitCube(glt::GenBatch<Vertex>& cube) {
     // cube.Begin(GL_QUADS, 24);
 
     Vertex v;
@@ -1511,7 +1504,7 @@ void makeUnitCube(gltools::GenBatch<Vertex>& cube) {
     cube.freeze();
 }
 
-void addTriangle(gltools::GenBatch<Vertex>& s, const M3DVector3f vertices[3], const M3DVector3f normals[3], const M3DVector2f texCoords[3]) {
+void addTriangle(glt::GenBatch<Vertex>& s, const M3DVector3f vertices[3], const M3DVector3f normals[3], const M3DVector2f texCoords[3]) {
 
     UNUSED(texCoords);
     
@@ -1524,7 +1517,7 @@ void addTriangle(gltools::GenBatch<Vertex>& s, const M3DVector3f vertices[3], co
 }
 
 // from the GLTools library (OpenGL Superbible)
-void gltMakeSphere(gltools::GenBatch<Vertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
+void gltMakeSphere(glt::GenBatch<Vertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
 {
     GLfloat drho = (GLfloat)(3.141592653589) / (GLfloat) iStacks;
     GLfloat dtheta = 2.0f * (GLfloat)(3.141592653589) / (GLfloat) iSlices;
@@ -1633,7 +1626,7 @@ void gltMakeSphere(gltools::GenBatch<Vertex>& sphereBatch, GLfloat fRadius, GLin
     sphereBatch.freeze();
 }
 
-void makeSphere(gltools::GenBatch<Vertex>& sphere, float rad, int32 stacks, int32 slices) {
+void makeSphere(glt::GenBatch<Vertex>& sphere, float rad, int32 stacks, int32 slices) {
     gltMakeSphere(sphere, rad, stacks, slices);
 }
 

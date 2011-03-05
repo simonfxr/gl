@@ -1,8 +1,9 @@
 #include <vector>
-// #include <iostream>
 #include <limits>
 
-#include "GameWindow.hpp"
+#include "ge/GameWindow.hpp"
+
+namespace ge {
 
 struct GameWindow::Data : public GameLoop::Game {
     GameWindow &self;
@@ -22,7 +23,7 @@ struct GameWindow::Data : public GameLoop::Game {
         {}
 
     float now();
-    void handleEvents();
+    void handleInputEvents();
     void tick();
     void render(float interpolation);
 };
@@ -31,7 +32,7 @@ float GameWindow::Data::now() {
     return self.clock->GetElapsedTime();
 }
 
-void GameWindow::Data::handleEvents() {
+void GameWindow::Data::handleInputEvents() {
 
     int32 mouse_current_x = mouse_x;
     int32 mouse_current_y = mouse_y;
@@ -124,7 +125,7 @@ void GameWindow::Data::handleEvents() {
             break;
 
         default:
-            self.handleEvent(e);
+            self.handleInputEvent(e);
             break;
         }
     }
@@ -226,12 +227,13 @@ bool GameWindow::init(const sf::ContextSettings& settings, const std::string& na
             delete clock;
             clock = 0;
         }
-        
-    } else {
 
-        if (grab_mouse)
-            win->ShowMouseCursor(false);
+        return false;
+        
     }
+
+    if (grab_mouse)
+            win->ShowMouseCursor(false);
 
     return init_successful;
 }
@@ -257,7 +259,7 @@ float GameWindow::now() {
     return data->now();
 }
 
-void GameWindow::handleEvent(sf::Event& event) {
+void GameWindow::handleInputEvent(sf::Event& event) {
     UNUSED(event);
 }
 
@@ -288,3 +290,5 @@ void GameWindow::mouseButtonStateChanged(sf::Mouse::Button button, bool pressed)
 void GameWindow::handleInternalEvents() {
 
 }
+
+} // namespace ge

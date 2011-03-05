@@ -18,18 +18,11 @@ struct EulerAngles {
     EulerAngles(float _heading, float _pitch, float _bank) :
         heading(_heading), pitch(_pitch), bank(_bank) {}
 
-    EulerAngles(mat4_t rotation_m) {
+    EulerAngles(const mat4_t& rot) {
 
 	// Extract sin(pitch) from m23.
 
-        union {
-            mat4_t mat;
-            float a[4][4];
-        } rotation;
-
-        rotation.mat = rotation_m;
-
-	float sp = -rotation.a[2][1];
+	float sp = -rot[2][1];
 
 	// Check for Gimbel lock
 	
@@ -41,7 +34,7 @@ struct EulerAngles {
 
             // Compute heading, slam bank to zero
 
-            heading = atan2(-rotation.a[0][2], rotation.a[0][0]);
+            heading = atan2(-rot[0][2], rot[0][0]);
             bank = 0.0f;
 
 	} else {
@@ -50,9 +43,9 @@ struct EulerAngles {
             // function because we already checked for range errors when
             // checking for Gimbel lock
             
-            heading = atan2(rotation.a[2][0], rotation.a[2][2]);
+            heading = atan2(rot[2][0], rot[2][2]);
             pitch = asin(sp);
-            bank = atan2(rotation.a[0][1], rotation.a[1][1]);
+            bank = atan2(rot[0][1], rot[1][1]);
 	}
 
     }

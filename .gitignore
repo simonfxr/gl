@@ -3,3 +3,7 @@
 /own1
 /sim-sfml
 /cube
+/CMakeCache.txt
+/CMakeFiles
+/cmake_install.cmake
+/Makefile

@@ -3,7 +3,6 @@
 #include "math/math/defns.hpp"
 #include <cmath>
 
-
 MATH_BEGIN_NAMESPACE
 
 float sqrt(float x) { 
@@ -85,9 +84,9 @@ int32 signum(float x) {
                       0;
 }
 
-int32 signbit(float x) {
-    return (x < 0.f) ? 1 : 0;
-}
+// bool signbit(float x) {
+//     return x < 0.f;
+// }
 
 float wrapPi(float x) {
     x += PI;

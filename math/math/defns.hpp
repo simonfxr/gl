@@ -6,7 +6,7 @@
 
 MATH_BEGIN_NAMESPACE
 
-static const float MATH_CONSTANT PI = 3.14159265358979323846;
+static const float MATH_CONSTANT PI = 3.1415926;
 
 float sqrt(float x) PURE_FUNC;
 
@@ -46,7 +46,7 @@ float cubed(float x) PURE_FUNC;
 
 int32 signum(float x) PURE_FUNC;
 
-int32 signbit(float x) PURE_FUNC;
+// bool signbit(float x) PURE_FUNC;
 
 float wrapPi(float x) PURE_FUNC;
 

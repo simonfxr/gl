@@ -1,10 +1,8 @@
 #include <cstring>
 
-#include "GenBatch.hpp"
+#include "glt/GenBatch.hpp"
 
-namespace gltools {
-
-namespace priv {
+namespace glt {
 
 namespace {
 
@@ -25,6 +23,8 @@ uint32 componentSize(GLenum type) {
 }
 
 } // namespace anon
+
+namespace priv {
 
 DynBatch::DynBatch(uint32 _nattrs, const Attr attrs[], uint32 initialSize) :
     size(initialSize),
@@ -97,4 +97,4 @@ void DynBatch::draw(const Attr attrs[], GLenum primType, bool enabled[]) {
 
 } // namespace priv
 
-} // namespace gltools
+} // namespace glt

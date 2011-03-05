@@ -6,8 +6,9 @@
 #include <SFML/Graphics.hpp>
 
 #include "defs.h"
-#include "GameLoop.hpp"
+#include "ge/GameLoop.hpp"
 
+namespace ge {
 
 struct GameWindow {
 private:
@@ -44,7 +45,7 @@ private:
     virtual void animate() = 0;
     virtual void renderScene(float interpolation) = 0;
     
-    virtual void handleEvent(sf::Event& event);
+    virtual void handleInputEvent(sf::Event& event);
     virtual void focusChanged(bool haveFocus);
     virtual void pauseStateChanged(bool isNowPaused);
     virtual void windowResized(uint32 width, uint32 height);
@@ -102,5 +103,7 @@ public:
 
     float frameDuration() const { return 1.f / loop.ticks_per_second; }
 };
+
+} // namespace ge
 
 #endif

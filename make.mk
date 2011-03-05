@@ -44,7 +44,13 @@ triangle: triangle.cpp libgltools.so
 own1: own1.cpp glt/ShaderManager.cpp glt/ShaderProgram.cpp glt/include_proc.cpp glt/utils.cpp VertexBuffer.cpp 
 	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $^ -lglut
 
-SIM_SFML_SOURCES := sim-sfml.cpp math/vec3/vec3.cpp math/vec4/vec4.cpp math/math/impl.cpp math/mat3/impl.cpp math/mat4/impl.cpp GameLoop.cpp glt/utils.cpp glt/ShaderManager.cpp glt/ShaderProgram.cpp glt/Uniforms.cpp GenBatch.cpp GameWindow.cpp glt/Preprocessor.cpp glt/GLSLPreprocessor.cpp glt/Frame.cpp
+MATH_LIB_SOURCES := math/vec3/impl.cpp math/vec4/impl.cpp math/math/impl.cpp math/mat3/impl.cpp math/mat4/impl.cpp math/plane.cpp
+
+GE_SOURCES := ge/GameLoop.cpp ge/GameWindow.cpp
+
+GLT_SOURCES := glt/utils.cpp glt/ShaderManager.cpp glt/ShaderProgram.cpp glt/Uniforms.cpp glt/GenBatch.cpp  glt/Preprocessor.cpp glt/GLSLPreprocessor.cpp glt/Frame.cpp
+
+SIM_SFML_SOURCES := sim-sfml.cpp $(MATH_LIB_SOURCES) $(GE_SOURCES) $(GLT_SOURCES)
 
 sim-sfml: $(SIM_SFML_SOURCES) libgltools.so
 	$(CXX) $(SIM_SFML_SOURCES) -o $@ $(CXXFLAGS) $(LDFLAGS) $(LD_GLTOOLS) `sfml-config --libs --cflags window graphics` -Wno-switch-enum -Wno-invalid-offsetof
