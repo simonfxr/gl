@@ -187,6 +187,11 @@ float sum(const vec4_t& a) {
 #endif
 }
 
+bool equal(const vec4_t& a, const vec4_t& b, float epsi) {
+    return distance(a[0], b[0]) < epsi && distance(a[1], b[1]) < epsi &&
+        distance(a[2], b[2]) < epsi && distance(a[3], b[3]) < epsi;
+}
+
 MATH_END_NAMESPACE
 
 namespace math {

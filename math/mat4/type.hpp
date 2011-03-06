@@ -17,6 +17,8 @@ struct mat4_t {
     float& operator()(unsigned long i, unsigned long j) MUT_FUNC;
 };
 
+typedef mat4_t aligned_mat4_t ATTRS(ATTR_ALIGNED(16));
+
 } // namespace math
 
 #endif

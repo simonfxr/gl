@@ -4,9 +4,11 @@ set(CMAKE_C_COMPILER_INIT clang)
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG")
-
 project(sim-sfml)
+
+#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -O3 -march=native")
+
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb")
 
 set(BIBLE $ENV{HOME}/src/oglsuperbible5-read-only)
 
@@ -57,6 +59,8 @@ add_executable(sim-sfml
   glt/GLSLPreprocessor.cpp
   glt/Frame.hpp
   glt/Frame.cpp
+  glt/GeometryTransform.hpp
+  glt/GeometryTransform.cpp
 
   ge/GameLoop.hpp
   ge/GameLoop.cpp

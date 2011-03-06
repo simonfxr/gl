@@ -155,6 +155,11 @@ vec3_t projectAlong(const vec3_t& a, const direction3_t& x) {
     return dot(a, x) * x;
 }
 
+bool equal(const vec3_t& a, const vec3_t& b, float epsi) {
+    return distance(a[0], b[0]) < epsi && distance(a[1], b[1]) < epsi &&
+        distance(a[2], b[2]) < epsi;
+}
+
 MATH_END_NAMESPACE
 
 namespace math {

@@ -28,6 +28,10 @@ mat4_t mat4(const float mat[16]) {
     return A;
 }
 
+mat4_t mat4(const mat3_t& m) {
+    return mat4(vec4(m[0], 0.f), vec4(m[1], 0.f), vec4(m[2], 0.f), vec4(0.f, 0.f, 0.f, 1.f));
+}
+
 mat4_t mat4(const vec4_t& c1, const vec4_t& c2, const vec4_t& c3, const vec4_t& c4) {
     mat4_t A; A[0] = c1; A[1] = c2; A[2] = c3; A[3] = c4; return A;
 }
@@ -97,7 +101,7 @@ vec3_t transformPoint(const mat4_t& A, const vec3_t& p) {
     return vec3(A * vec4(p, 1.f));
 }
 
-vec3_t transformVec(const mat4_t& A, const vec3_t& v) {
+vec3_t transformVector(const mat4_t& A, const vec3_t& v) {
     return vec3(A * vec4(v, 0.f));
 }
 
@@ -133,6 +137,11 @@ MATH_INLINE_SPEC vec4_t& mat4_t::operator[](unsigned long i) {
 
 MATH_INLINE_SPEC float& mat4_t::operator()(unsigned long i, unsigned long j) {
     return components[i * 4 + j];
+}
+
+bool equal(const mat4_t& A, const mat4_t& B, float epsi) {
+    return equal(A[0], B[0], epsi) && equal(A[1], B[1], epsi) &&
+        equal(A[2], B[2], epsi) && equal(A[3], B[3], epsi);
 }
 
 } // namespace math

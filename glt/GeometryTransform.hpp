@@ -3,43 +3,59 @@
 
 #include "defs.h"
 
-namespace math {
+#include "math/vec3/type.hpp"
+#include "math/vec4/type.hpp"
+#include "math/mat3/type.hpp"
+#include "math/mat4/type.hpp"
 
-struct mat4_t;
-struct mat3_t;
-struct vec3_t;
-struct vec4_t;
+#include "glt/utils.hpp"
 
-} // namespace math
+#include <iostream>
 
 namespace glt {
 
+static const uint32 GEOMETRY_TRANSFORM_MAX_DEPTH = 32;
+
 struct SavePoint;
+struct SavePointArgs;
 
 struct GeometryTransform {
 
     GeometryTransform();
     ~GeometryTransform();
 
-    const math::mat4_t& mvpMatrix();
-    const math::mat4_t& mvMatrix();
-    const math::mat3_t& normalMatrix();
+    const math::aligned_mat4_t& mvpMatrix() const;
+    const math::aligned_mat4_t& mvMatrix() const;
+    const math::aligned_mat3_t& normalMatrix() const;
+    const math::aligned_mat4_t& projectionMatrix() const;
+
+    void loadMVMatrix(const math::mat4_t& m);
+
+    void loadProjectionMatrix(const math::mat4_t& m);
 
     void dup();
     
     void pop();
 
-    SavePoint save() ATTRS(ATTR_WARN_UNUSED);
+    SavePointArgs save() ATTRS(ATTR_WARN_UNUSED);
+
+    void restore(SavePoint& sp);
 
     void scale(const math::vec3_t& dim);
 
     void translate(const math::vec3_t& origin);
 
-    vec4_t transform(const math::vec4_t& v);
+    void concat(const math::mat3_t& m);
 
-    vec3_t transformPoint(const math::vec3_t& p);
+    void concat(const math::mat4_t& m);
 
-    vec3_t transformVector(const math::vec3_t& v);
+    math::vec4_t transform(const math::vec4_t& v) const;
+
+    math::vec3_t transformPoint(const math::vec3_t& p) const;
+
+    math::vec3_t transformVector(const math::vec3_t& v) const;
+
+    uint32 depth() const;
 
 private:
 
@@ -50,12 +66,30 @@ private:
     Data * const self;
 };
 
-struct SavePoint {
-    SavePoint(GeometryTransform& _g) : g(_g) {}
-private:
+struct SavePointArgs {    
+protected:
+
     GeometryTransform& g;
-    ~SavePoint() { g.pop(); }
-}
+    const uint64 cookie;
+    const uint32 depth;
+
+public:
+    SavePointArgs(GeometryTransform& _g, uint64 _cookie, uint32 _depth) :
+        g(_g), cookie(_cookie), depth(_depth) {}
+};
+
+struct SavePoint : public SavePointArgs {
+
+    friend struct GeometryTransform;
+
+    SavePoint(const SavePointArgs& args) : SavePointArgs(args) {}
+    
+    ~SavePoint() { g.restore(*this); }
+
+private:
+    SavePoint(const SavePoint& _);
+    SavePoint& operator =(const SavePoint& _);
+};
 
 } // namespace glt
 

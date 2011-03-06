@@ -9,11 +9,8 @@
 #define GLEW_STATIC
 
 #include <GLTools.h>
-#include <GLShaderManager.h>
 #include <GLFrustum.h>
 #include <GLFrame.h>
-#include <GLMatrixStack.h>
-#include <GLGeometryTransform.h>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
@@ -32,6 +29,7 @@
 #include "glt/color.hpp"
 #include "glt/GenBatch.hpp"
 #include "glt/Frame.hpp"
+#include "glt/GeometryTransform.hpp"
 
 #include "ge/GameWindow.hpp"
 
@@ -168,11 +166,6 @@ struct Camera {
         
 } __attribute__ ((aligned(16)));
 
-void set_matrix(M3DMatrix44f dst, const mat4_t& src) {
-    for (uint32 i = 0; i < 16; ++i)
-        dst[i] = src.components[i];
-}
-
 std::ostream& LOCAL operator << (std::ostream& out, const vec3_t& v) {
     return out << "(" << v.x << ";" << v.y << ";" << v.z << ")";
 }
@@ -183,10 +176,9 @@ static const float FPS_RENDER_CYCLE = 1.f;
 
 struct Game : public ge::GameWindow {
 
-    GLMatrixStack           modelViewMatrix;            // Modelview Matrix
-    GLMatrixStack           projectionMatrix;           // Projection Matrix
     GLFrustum               viewFrustum;                // View Frustum
-    GLGeometryTransform     transformPipeline;          // Geometry Transform Pipeline
+
+    glt::GeometryTransform  transformPipeline;
 
     glt::GenBatch<Vertex> wallBatch;
     glt::GenBatch<Vertex> sphereBatch;
@@ -718,11 +710,7 @@ void Game::windowResized(uint32 width, uint32 height) {
     // M3DMatrix44f projMat;
     // set_matrix(projMat, Transform::perspective(math::degToRad(35.0f), float(width) / float(height), 1.0f, 100.0f));
     
-    projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
-//    projectionMatrix.LoadMatrix(projMat);
-        
-    // Set the transformation pipeline to use the two matrix stacks 
-    transformPipeline.SetMatrixStacks(modelViewMatrix, projectionMatrix);
+    transformPipeline.loadProjectionMatrix(mat4(viewFrustum.GetProjectionMatrix()));
 
     mirror.resized(*this);
     
@@ -749,24 +737,6 @@ void Game::keyStateChanged(sf::Key::Code key, bool pressed) {
 }
 
 void Game::mouseMoved(int32 dx, int32 dy) {
-
-    // M3DMatrix44f rot;
-    // camera.frame.GetMatrix(rot, true);
-    // EulerAngles orientation(toMat4(rot));
-
-    // camera.orientation.heading -= dx * 0.001f;
-    // camera.orientation.pitch -= dy * 0.001f;
-
-    // if (camera.orientation.pitch < -0.5f * math::PI)
-    //     camera.orientation.pitch = -0.5f * math::PI;
-    // else if (camera.orientation.pitch > 0.5f * math::PI)
-    //     camera.orientation.pitch = 0.5f * math::PI;
-
-    // camera.orientation.canonize();
-
-    // camera.frame.RotateLocalY(dx * 0.001f);
-    // camera.frame.RotateLocalX(dy * 0.001f);
-
     camera.rotate(dx * 0.001f, dy * 0.001f);
 }
 
@@ -838,10 +808,8 @@ void Game::update_sphere_mass() {
     sphere_mass = V * sphere_density;
 }
 
-static const GLfloat vFloorColor[] = { 0.0f, 1.0f, 0.0f, 1.0f};
 static const vec4_t SPHERE_COLOR = vec4(0.f, 0.f, 1.f, 1.f);
-static const M3DVector4f vLightPos = { 11.f, 18.f, 11.f, 1.f };
-static const M3DVector4f vWallColor = { 0.6f, 0.6f, 0.6f, 1.f };
+static const vec3_t LIGHT_POS = vec3(11.f, 18.f, 11.f);
 
 static float rand1() {
     return rand() * (1.f / RAND_MAX);
@@ -917,23 +885,15 @@ void Game::renderWorld(float dt) {
 
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-    modelViewMatrix.PushMatrix();
-
-    M3DMatrix44f mCamera;
-    set_matrix(mCamera, camera.getCameraMatrix());
-    modelViewMatrix.PushMatrix(mCamera);
-
-    M3DVector4f vLightEyePos;
-    m3dTransformVector4(vLightEyePos, vLightPos, mCamera);
-    const vec3_t eyeLightPos = vec3(vLightEyePos[0], vLightEyePos[1], vLightEyePos[2]);
-
-    const vec3_t& spotDirection = normalize(vec3(0.f) - vec3(vLightPos));
-    const M3DVector4f vSpotDirection = { spotDirection.x, spotDirection.y, spotDirection.z, 0 };
-
-    M3DVector4f vEyeSpotDirection;
-    m3dTransformVector4(vEyeSpotDirection, vSpotDirection, mCamera);
-    const vec3_t ecSpotDirection = vec3(vEyeSpotDirection);
-
+    glt::SavePoint sp(transformPipeline.save());
+    mat4_t camMat = camera.getCameraMatrix();
+    transformPipeline.concat(camMat);
+//        glt::SavePoint sp2(tp.save());
+    
+    const vec3_t eyeLightPos = transformPoint(camMat, LIGHT_POS);
+    const vec3_t spotDirection = normalize(vec3(0.f) - LIGHT_POS);
+    const vec3_t ecSpotDirection = transformVector(camMat, spotDirection);
+        
     wallUniforms.ecLightPos = eyeLightPos;
     wallUniforms.ecSpotDir = ecSpotDirection;
     wallUniforms.spotAngle = 0.91;
@@ -941,15 +901,12 @@ void Game::renderWorld(float dt) {
     sphereUniforms.ecLightPos = eyeLightPos;
     sphereUniforms.ecSpotDir = ecSpotDirection;
     sphereUniforms.spotAngle = 0.91;
-
+        
     render_walls();
-
+        
     renderSpheres(dt);
 
     mirror.render(*this);
-
-    modelViewMatrix.PopMatrix();
-    modelViewMatrix.PopMatrix();    
 }
 
 void Mirror::createTexture(Game& game, float dt) {
@@ -996,17 +953,17 @@ void Mirror::createTexture(Game& game, float dt) {
     GL_CHECK(glDrawBuffers(1, fboBuffs));
     GL_CHECK(glViewport(0, 0, pix_width, pix_height));
 
-    game.modelViewMatrix.PushMatrix();
-    game.modelViewMatrix.Scale(-1.f, 1.f, 1.f);
+    {
+        glt::SavePoint sp(game.transformPipeline.save());
+        game.transformPipeline.scale(vec3(-1.f, 1.f, 1.f));
+        
+        rendering_recursive = true;
 
-    rendering_recursive = true;
+        game.renderWorld(dt);
+        
+        rendering_recursive = false;
+    }
 
-    game.renderWorld(dt);
-
-    rendering_recursive = false;
-
-    game.modelViewMatrix.PopMatrix();
-    
     game.viewFrustum = old_frust;
     game.camera = old_cam;
 
@@ -1020,9 +977,10 @@ void Mirror::render(Game& game) {
     if (rendering_recursive)
         return;
 
-    game.modelViewMatrix.PushMatrix();
-    game.modelViewMatrix.Translate(origin.x, origin.y, origin.z);
-    game.modelViewMatrix.Scale(width, height, 1.f);
+    glt::SavePoint sp(game.transformPipeline.save());
+    
+    game.transformPipeline.translate(vec3(origin.x, origin.y, origin.z));
+    game.transformPipeline.scale(vec3(width, height, 1.f));
 
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture));
 
@@ -1030,7 +988,7 @@ void Mirror::render(Game& game) {
     
     glt::Uniforms us(shader);
     
-    us.optional("mvpMatrix", mat4(game.transformPipeline.GetModelViewProjectionMatrix()));
+    us.optional("mvpMatrix", game.transformPipeline.mvpMatrix());
 
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture));
 
@@ -1039,8 +997,6 @@ void Mirror::render(Game& game) {
     GL_CHECK(glUniform1i(texPos, 0));
     
     batch.draw();
-
-    game.modelViewMatrix.PopMatrix();
 }
 
 void Mirror::resized(Game& game) {
@@ -1139,15 +1095,15 @@ void Game::renderSpheres(float dt) {
     for (uint32 i = 0; i < toRender.size(); ++i) {
         const Sphere& s = *toRender[i].s;
         const vec3_t& pos = toRender[i].pos;
-        
-        modelViewMatrix.PushMatrix();
-        modelViewMatrix.Translate(pos.x, pos.y, pos.z);
-        modelViewMatrix.Scale(s.r, s.r, s.r);
 
+        glt::SavePoint sp(transformPipeline.save());
+        transformPipeline.translate(vec3(pos.x, pos.y, pos.z));
+        transformPipeline.scale(vec3(s.r));
+        
         glt::Uniforms us(sphereShader);
-        us.optional("mvpMatrix", mat4(transformPipeline.GetModelViewProjectionMatrix()));
-        us.optional("mvMatrix", mat4(transformPipeline.GetModelViewMatrix()));
-        us.optional("normalMatrix", mat3(transformPipeline.GetNormalMatrix(true)));
+        us.optional("mvpMatrix", transformPipeline.mvpMatrix());
+        us.optional("mvMatrix", transformPipeline.mvMatrix());
+        us.optional("normalMatrix", transformPipeline.normalMatrix());
         us.optional("ecLight", sphereUniforms.ecLightPos);
         us.optional("ecSpotDirection", sphereUniforms.ecSpotDir);
         us.optional("spotAngle", sphereUniforms.spotAngle);
@@ -1157,10 +1113,7 @@ void Game::renderSpheres(float dt) {
 #ifdef GLDEBUG
         sphereShader.validate();
 #endif
-
         sphereBatch.draw();
-        
-        modelViewMatrix.PopMatrix();
     }
 }
 
@@ -1168,20 +1121,20 @@ void Game::render_walls() {
 
     GL_CHECK(glCullFace(GL_FRONT));
 
-    modelViewMatrix.PushMatrix();
+    glt::SavePoint sp(transformPipeline.save());
 
     vec3_t center = 0.5f * (room.corner_max + room.corner_min);
     vec3_t diff = 0.5f * (room.corner_max - room.corner_min);
 
-    modelViewMatrix.Translate(center.x, center.y, center.z);
-    modelViewMatrix.Scale(diff.x, diff.y, diff.z);
+    transformPipeline.translate(vec3(center.x, center.y, center.z));
+    transformPipeline.scale(vec3(diff.x, diff.y, diff.z));
 
     wallShader.use();
     
     glt::Uniforms us(wallShader);
-    us.optional("mvpMatrix", mat4(transformPipeline.GetModelViewProjectionMatrix()));
-    us.optional("mvMatrix", mat4(transformPipeline.GetModelViewMatrix()));
-    us.optional("normalMatrix", mat3(transformPipeline.GetNormalMatrix(true)));
+    us.optional("mvpMatrix", transformPipeline.mvpMatrix());
+    us.optional("mvMatrix", transformPipeline.mvMatrix());
+    us.optional("normalMatrix", transformPipeline.normalMatrix());
     us.optional("ecLight", wallUniforms.ecLightPos);
     us.optional("ecSpotDirection", wallUniforms.ecSpotDir);
     us.optional("spotAngle", wallUniforms.spotAngle);
@@ -1189,8 +1142,6 @@ void Game::render_walls() {
     wallShader.validate(GLDEBUG_ENABLED);
     wallBatch.draw();
 
-    modelViewMatrix.PopMatrix();
-    
     GL_CHECK(glCullFace(GL_BACK));    
 }
 
@@ -1456,6 +1407,10 @@ bool Game::touchesWall(const Sphere& s, vec3_t& out_normal, vec3_t& out_collisio
     }
 
     return false;
+}
+
+std::ostream& operator <<(std::ostream& out, const vec4_t& a) {
+    return out << "(" << a[0] << ", " << a[1] << ", " << a[2] << ", " << a[3] << ")";
 }
 
 namespace {

@@ -17,6 +17,8 @@ struct mat3_t {
     float& operator()(unsigned long i, unsigned long j) MUT_FUNC;
 };
 
+typedef mat3_t aligned_mat3_t ATTRS(ATTR_ALIGNED(16));
+
 } // namespace math
 
 #endif

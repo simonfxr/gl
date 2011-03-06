@@ -102,6 +102,10 @@ mat3_t transpose(const mat3_t& A) {
     return B;
 }
 
+bool equal(const mat3_t& A, const mat3_t& B, float epsi) {
+    return equal(A[0], B[0], epsi) && equal(A[1], B[1], epsi) && equal(A[2], B[2], epsi);
+}
+
 MATH_END_NAMESPACE
 
 namespace math {

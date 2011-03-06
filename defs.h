@@ -55,10 +55,20 @@ typedef long  int64;
 
 #define FATAL_ERROR(e) glt::fatal_error(e, __FILE__, __LINE__, __func__)
 
-#define LOCAL __attribute__((unused))
-
-#define ATTRS(...)
+#define ATTRS(...) __attribute__((__VA_ARGS__))
 
 #define ATTR_WARN_UNUSED warn_unused_result
+
+#define ATTR_NO_WARN_UNUSED_DEF unused
+
+#define ATTR_ALIGNED(n) aligned(n)
+
+#define LOCAL ATTRS(ATTR_NO_WARN_UNUSED_DEF)
+
+#define CONCAT(a, b) CONCAT_AUX1(a, b)
+#define CONCAT_AUX1(a, b) CONCAT_AUX2(a, b)
+#define CONCAT_AUX2(a, b) a##b
+
+#define CONCAT3(a, b, c) CONCAT(a, CONCAT(b, c))
 
 #endif
