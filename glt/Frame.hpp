@@ -7,8 +7,6 @@
 #include "math/mat3/type.hpp"
 #include "math/mat4/type.hpp"
 
-#include <GLFrame.h>
-
 namespace glt {
 
 /* represents a local right handed coordinate system
@@ -16,8 +14,6 @@ namespace glt {
  */ 
 struct Frame {
 
-    mutable GLFrame frame;
-    
     math::point3_t origin;
     math::direction3_t x_axis;
     math::direction3_t z_axis;
@@ -38,11 +34,9 @@ struct Frame {
 
     void setOrigin(const math::point3_t& p);
 
-    math::mat4_t cameraMatrix() const;
+    void rotateLocal(float angleRad, const math::direction3_t& localAxis);
 
-    void rotateLocal(float angleRad, const math::vec3_t& localAxis);
-
-    void rotateWorld(float angleRad, const math::vec3_t& worldAxis);
+    void rotateWorld(float angleRad, const math::direction3_t& worldAxis);
 
     void translateLocal(const math::vec3_t& v);
 

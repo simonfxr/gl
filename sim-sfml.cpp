@@ -20,7 +20,6 @@
 #include "math/mat4.hpp"
 #include "math/mat3.hpp"
 #include "math/math.hpp"
-#include "math/transform.hpp"
 
 #include "glt/utils.hpp"
 #include "glt/ShaderManager.hpp"
@@ -30,6 +29,7 @@
 #include "glt/GenBatch.hpp"
 #include "glt/Frame.hpp"
 #include "glt/GeometryTransform.hpp"
+#include "glt/Transformations.hpp"
 
 #include "ge/GameWindow.hpp"
 
@@ -285,7 +285,7 @@ bool Game::onInit() {
     default_framebuffer = 0;
     default_drawbuffer = GL_BACK_LEFT;
 
-    window().UseVerticalSync(false);
+    window().EnableVerticalSync(false);
 
     GLenum err = glewInit();
     if (GLEW_OK != err) {
@@ -700,6 +700,10 @@ static std::string to_string(T x) {
     return out.str();
 }
 
+std::ostream& operator <<(std::ostream& out, const vec4_t& a) {
+    return out << "(" << a[0] << ", " << a[1] << ", " << a[2] << ", " << a[3] << ")";
+}
+
 void Game::windowResized(uint32 width, uint32 height) {
 
     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
@@ -709,8 +713,11 @@ void Game::windowResized(uint32 width, uint32 height) {
     viewFrustum.SetPerspective(35.0f, float(width) / float(height), 1.0f, 100.0f);
     // M3DMatrix44f projMat;
     // set_matrix(projMat, Transform::perspective(math::degToRad(35.0f), float(width) / float(height), 1.0f, 100.0f));
+
+    float fov = degToRad(17.5f);
+    float aspect = float(width) / float(height);
     
-    transformPipeline.loadProjectionMatrix(mat4(viewFrustum.GetProjectionMatrix()));
+    transformPipeline.loadProjectionMatrix(glt::perspectiveProjection(fov, aspect, 1.f, 100.f));
 
     mirror.resized(*this);
     
@@ -1339,7 +1346,7 @@ void Camera::facePoint(const vec3_t& pos) {
 }
 
 mat4_t Camera::getCameraMatrix() {
-    return frame.cameraMatrix();
+    return transformationWorldToLocal(frame);
 }
 
 void Camera::rotate(float rotx, float roty) {
@@ -1407,10 +1414,6 @@ bool Game::touchesWall(const Sphere& s, vec3_t& out_normal, vec3_t& out_collisio
     }
 
     return false;
-}
-
-std::ostream& operator <<(std::ostream& out, const vec4_t& a) {
-    return out << "(" << a[0] << ", " << a[1] << ", " << a[2] << ", " << a[3] << ")";
 }
 
 namespace {

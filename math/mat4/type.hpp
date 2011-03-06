@@ -1,6 +1,7 @@
 #ifndef MAT4_TYPE_HPP
 #define MAT4_TYPE_HPP
 
+#include "defs.h"
 #include "math/vec4/type.hpp"
 
 namespace math {

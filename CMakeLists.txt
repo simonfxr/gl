@@ -61,6 +61,8 @@ add_executable(sim-sfml
   glt/Frame.cpp
   glt/GeometryTransform.hpp
   glt/GeometryTransform.cpp
+  glt/Transformations.hpp
+  glt/Transformations.cpp
 
   ge/GameLoop.hpp
   ge/GameLoop.cpp

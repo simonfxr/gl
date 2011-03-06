@@ -166,7 +166,7 @@ GLDebug *ARBDebug::init() {
         delete dbg;
         dbg = 0;
     }
-        
+
     return dbg;
 }
 
