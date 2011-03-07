@@ -34,6 +34,8 @@ struct Frame {
 
     void setOrigin(const math::point3_t& p);
 
+    void lookingAt(const math::point3_t& p);
+
     void rotateLocal(float angleRad, const math::direction3_t& localAxis);
 
     void rotateWorld(float angleRad, const math::direction3_t& worldAxis);

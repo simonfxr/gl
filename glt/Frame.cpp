@@ -12,8 +12,8 @@ using namespace math;
 
 Frame::Frame() :
     origin(vec3(0.f, 0.f, 0.f)),
-    x_axis(vec3(-1.f, 0.f, 0.f)),
-    z_axis(vec3(0.f, 0.f, -1.f))
+    x_axis(vec3(1.f, 0.f, 0.f)),
+    z_axis(vec3(0.f, 0.f, 1.f))
 {}
 
 point3_t Frame::getOrigin() const {
@@ -51,6 +51,11 @@ void Frame::setOrigin(const point3_t& p) {
     origin = p;
 }
 
+void Frame::lookingAt(const point3_t& p) {
+    direction3_t z = directionFromTo(origin, p);
+    setXZ(normalize(cross(localY(), z)), z);
+}
+
 void Frame::rotateLocal(float angleRad, const vec3_t& localAxis) {
     rotateWorld(angleRad, transformVector(*this, localAxis));
 }
@@ -62,11 +67,11 @@ void Frame::rotateWorld(float angleRad, const vec3_t& worldAxis) {
 }
 
 void Frame::translateLocal(const vec3_t& v) {
-    setOrigin(origin + rotationLocalToWorld(*this) * v);
+    origin += rotationLocalToWorld(*this) * v;
 }
 
 void Frame::translateWorld(const vec3_t& v) {
-    setOrigin(origin + v);
+    origin += v;
 }
 
 vec4_t transform(const Frame& fr, const vec4_t& v) {

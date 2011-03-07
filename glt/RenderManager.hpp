@@ -15,6 +15,8 @@ struct RenderManager {
     const ViewFrustum& viewFrustum() const;
     
     const GeometryTransform& geometryTransform() const;
+
+    const math::aligned_mat4_t& cameraMatrix() const;
     
     GeometryTransform& geometryTransform();
 
@@ -35,6 +37,8 @@ private:
     RenderManager(const RenderManager& _);
     RenderManager& operator =(const RenderManager& _);
 };
+
+math::vec4_t transformModelToWorld(const RenderManager& rm, const math::vec4_t& modelCoord);
 
 math::vec4_t project(const RenderManager& rm, const math::point3_t& localCoord);
 

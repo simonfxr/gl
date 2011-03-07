@@ -28,10 +28,9 @@ void SpotLight(vec3 ecLight, vec3 attenuation,
     vec3 halfVector;
 // direction of maximum highlights
 // Compute vector from surface to light position
-    VP = vec3(LightSource[i].position) - ecPosition3;
+    VP = ecLight - ecPosition3;
 // Compute distance between surface and light position
     d = length(VP);
-    9.3 Material Properties and Lighting
 // Normalize the vector from surface to light position
         VP = normalize(VP);
 // Compute attenuation

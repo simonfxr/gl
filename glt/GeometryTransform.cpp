@@ -12,8 +12,7 @@ using namespace math;
 
 struct GeometryTransform::Data {
 
-    aligned_mat4_t projectionMatrix;   // sane projectionMatrix
-    aligned_mat4_t glProjectionMatrix; // same as projectionMatrix but also inverts x and z coordinates
+    aligned_mat4_t projectionMatrix;
 
     aligned_mat4_t mvpMatrix;
     aligned_mat3_t normalMatrix;

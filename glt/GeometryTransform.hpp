@@ -14,7 +14,7 @@
 
 namespace glt {
 
-static const uint32 GEOMETRY_TRANSFORM_MAX_DEPTH = 32;
+static const uint32 GEOMETRY_TRANSFORM_MAX_DEPTH = 24;
 
 struct SavePoint;
 struct SavePointArgs;

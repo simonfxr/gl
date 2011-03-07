@@ -13,16 +13,9 @@ typedef short int16;
 typedef int   int32;
 typedef long  int64;
 
-#ifdef DEBUG
-#define DEBUG_ENABLED true
-#else
-#define DEBUG_ENABLED false
-#endif
-
-#ifdef GLDEBUG
-#define GLDEBUG_ENABLED true
-#else
-#define GLDEBUG_ENABLED false
+#if defined(linux) || defined(__linux)
+#define SYSTEM_LINUX
+#define SYSTEM_UNIX
 #endif
 
 #define likely(e) __builtin_expect((e) != 0, 1)

@@ -66,14 +66,17 @@ void DynBatch::add(const Attr attrs[], const void *value) {
     ++filled;
 }
 
-void DynBatch::send(const Attr attrs[]) {
+void DynBatch::send(const Attr attrs[], bool del) {
     GL_CHECK(glGenBuffers(nattrs, buffer_names));
 
     for (uint32 i = 0; i < nattrs; ++i) {
         GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, buffer_names[i]));
         GL_CHECK(glBufferData(GL_ARRAY_BUFFER, componentSize(attrs[i].type) * attrs[i].size * filled, data[i], GL_STATIC_DRAW));
-        delete [] data[i];
-        data[i] = 0;
+
+        if (del) {
+            delete [] data[i];
+            data[i] = 0;
+        }
     }
 }
 
@@ -92,6 +95,14 @@ void DynBatch::draw(const Attr attrs[], GLenum primType, bool enabled[]) {
     for (uint32 i = 0; i < nattrs; ++i) {
         if (enabled[i])
             GL_CHECK(glDisableVertexAttribArray(i));
+    }
+}
+
+void DynBatch::at(const Attr attrs[], uint32 i, void *buffer) {
+    byte *dest = (byte *) buffer;
+    for (uint32 k = 0; k < nattrs; ++k) {
+        uint32 valSize = componentSize(attrs[k].type) * attrs[k].size;
+        memcpy(&dest[(uint64) attrs[k].offset], data[k] + valSize * i, valSize);
     }
 }
 
