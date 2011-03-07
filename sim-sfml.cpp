@@ -5,15 +5,14 @@
 #include <algorithm>
 #include <ctime>
 #include <climits>
+#include <cstring>
 
-#define GLEW_STATIC
-
-#include <GLTools.h>
-#include <GLFrustum.h>
-#include <GLFrame.h>
+#include <GL/glew.h>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
+
+#include "defs.h"
 
 #include "math/vec3.hpp"
 #include "math/ivec3.hpp"
@@ -32,6 +31,8 @@
 #include "glt/Transformations.hpp"
 
 #include "ge/GameWindow.hpp"
+
+#include <GLTools.h>
 
 using namespace math;
 
@@ -175,8 +176,6 @@ std::ostream& LOCAL operator << (std::ostream& out, const vec3_t& v) {
 static const float FPS_RENDER_CYCLE = 1.f;
 
 struct Game : public ge::GameWindow {
-
-    GLFrustum               viewFrustum;                // View Frustum
 
     glt::GeometryTransform  transformPipeline;
 
@@ -710,7 +709,7 @@ void Game::windowResized(uint32 width, uint32 height) {
     GL_CHECK(glViewport(0, 0, width, height));
 
     // Create the projection matrix, and load it on the projection matrix stack
-    viewFrustum.SetPerspective(35.0f, float(width) / float(height), 1.0f, 100.0f);
+//    viewFrustum.SetPerspective(35.0f, float(width) / float(height), 1.0f, 100.0f);
     // M3DMatrix44f projMat;
     // set_matrix(projMat, Transform::perspective(math::degToRad(35.0f), float(width) / float(height), 1.0f, 100.0f));
 
@@ -867,28 +866,9 @@ void Game::renderScene(float interpolation) {
     render_hud();
 }
 
-static GLFrame asGLFrame(const glt::Frame& ref) {
-    GLFrame fr;
-
-    point3_t pos = ref.getOrigin();
-    fr.SetOrigin(pos.x, pos.y, pos.z);
-    direction3_t fw = ref.localZ();
-    fr.SetForwardVector(fw.x, fw.y, fw.z);
-    direction3_t up = ref.localY();
-    fr.SetUpVector(up.x, up.y, up.z);
-
-    return fr;
-}
-
 void Game::renderWorld(float dt) {
 
-    GLFrame fr = asGLFrame(camera.frame);
-    viewFrustum.Transform(fr);
-
     mirror.createTexture(*this, dt);
-
-    fr = asGLFrame(camera.frame);
-    viewFrustum.Transform(fr);
 
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
@@ -920,61 +900,66 @@ void Mirror::createTexture(Game& game, float dt) {
 
     if (DISABLE) return;
 
-    if (rendering_recursive)
-        return;
+    UNUSED(game);
+    UNUSED(dt);
 
-    const vec3_t corners[] = { origin,
-                               origin + vec3(width, 0.f, 0.f),
-                               origin + vec3(width, height, 0.f),
-                               origin + vec3(0.f, height, 0.f) };
+    FATAL_ERROR("not yet implemented");
 
-    bool visible = false;
+    // if (rendering_recursive)
+    //     return;
 
-    for (uint32 i = 0; i < 4 && !visible; ++i)
-        visible = game.viewFrustum.TestSphere(corners[i].x, corners[i].y, corners[i].z, 0.f);
+    // const vec3_t corners[] = { origin,
+    //                            origin + vec3(width, 0.f, 0.f),
+    //                            origin + vec3(width, height, 0.f),
+    //                            origin + vec3(0.f, height, 0.f) };
 
-    if (!visible)
-        return;
+    // // bool visible = false;
 
-    Camera old_cam = game.camera;
+    // // for (uint32 i = 0; i < 4 && !visible; ++i)
+    // //     visible = game.viewFrustum.TestSphere(corners[i].x, corners[i].y, corners[i].z, 0.f);
 
-    GLFrustum old_frust = game.viewFrustum;
+    // // if (!visible)
+    // //     return;
+
+    // Camera old_cam = game.camera;
+
+    // GLFrustum old_frust = game.viewFrustum;
     
-    game.viewFrustum.SetPerspective(35.0f, width / height, 1.0f, 100.0f);
+    // game.viewFrustum.SetPerspective(35.0f, width / height, 1.0f, 100.0f);
 
-    static const vec3_t mirror_normal = vec3(0.f, 0.f, 1.f);
+    // static const vec3_t mirror_normal = vec3(0.f, 0.f, 1.f);
 
-    const vec3_t mirror_center = 0.5f * (corners[0] + corners[2]);
+    // const vec3_t mirror_center = 0.5f * (corners[0] + corners[2]);
 
-    const vec3_t fw = game.camera.getForwardVector();
+    // const vec3_t fw = game.camera.getForwardVector();
 
-    vec3_t mirror_view = normalize(reflect(fw, mirror_normal));
+    // vec3_t mirror_view = normalize(reflect(fw, mirror_normal));
 
-    game.camera.frame.setOrigin(mirror_center - 2.f * mirror_view);
-    game.camera.frame.setYZ(vec3(0.f, 1.f, 0.f), vec3(mirror_view.x, 0.f, mirror_view.z));
+    // game.camera.frame.setOrigin(mirror_center - 2.f * mirror_view);
+    // game.camera.frame.setYZ(vec3(0.f, 1.f, 0.f), vec3(mirror_view.x, 0.f, mirror_view.z));
 
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_name));
+    // GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_name));
 
-    static const GLenum fboBuffs[] = { GL_COLOR_ATTACHMENT0 };
+    // static const GLenum fboBuffs[] = { GL_COLOR_ATTACHMENT0 };
     
-    GL_CHECK(glDrawBuffers(1, fboBuffs));
-    GL_CHECK(glViewport(0, 0, pix_width, pix_height));
+    // GL_CHECK(glDrawBuffers(1, fboBuffs));
+    // GL_CHECK(glViewport(0, 0, pix_width, pix_height));
 
-    {
-        glt::SavePoint sp(game.transformPipeline.save());
-        game.transformPipeline.scale(vec3(-1.f, 1.f, 1.f));
+    // {
+    //     glt::SavePoint sp(game.transformPipeline.save());
+    //     game.transformPipeline.scale(vec3(-1.f, 1.f, 1.f));
         
-        rendering_recursive = true;
+    //     rendering_recursive = true;
 
-        game.renderWorld(dt);
+    //     game.renderWorld(dt);
         
-        rendering_recursive = false;
-    }
+    //     rendering_recursive = false;
+    // }
 
-    game.viewFrustum = old_frust;
-    game.camera = old_cam;
+    // game.viewFrustum = old_frust;
+    // game.camera = old_cam;
 
-    game.restoreDefaultBuffers();
+    // game.restoreDefaultBuffers();
 }
 
 void Mirror::render(Game& game) {
@@ -1084,8 +1069,8 @@ void Game::renderSpheres(float dt) {
 
         const vec3_t pos = s.calc_position(dt);
 
-        if (!viewFrustum.TestSphere(pos.x, pos.y, pos.z, s.r))
-            continue;
+        // if (!viewFrustum.TestSphere(pos.x, pos.y, pos.z, s.r))
+        //     continue;
 
         SphereModel m;
         m.s = &s;

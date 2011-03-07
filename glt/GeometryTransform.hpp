@@ -39,7 +39,7 @@ struct GeometryTransform {
 
     SavePointArgs save() ATTRS(ATTR_WARN_UNUSED);
 
-    void restore(SavePoint& sp);
+    void restore(const SavePointArgs& sp);
 
     void scale(const math::vec3_t& dim);
 
@@ -73,15 +73,14 @@ protected:
     const uint64 cookie;
     const uint32 depth;
 
+    friend struct GeometryTransform;
+
 public:
     SavePointArgs(GeometryTransform& _g, uint64 _cookie, uint32 _depth) :
         g(_g), cookie(_cookie), depth(_depth) {}
 };
 
 struct SavePoint : public SavePointArgs {
-
-    friend struct GeometryTransform;
-
     SavePoint(const SavePointArgs& args) : SavePointArgs(args) {}
     
     ~SavePoint() { g.restore(*this); }

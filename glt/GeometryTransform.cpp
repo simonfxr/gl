@@ -12,7 +12,8 @@ using namespace math;
 
 struct GeometryTransform::Data {
 
-    aligned_mat4_t projectionMatrix;
+    aligned_mat4_t projectionMatrix;   // sane projectionMatrix
+    aligned_mat4_t glProjectionMatrix; // same as projectionMatrix but also inverts x and z coordinates
 
     aligned_mat4_t mvpMatrix;
     aligned_mat3_t normalMatrix;
@@ -106,7 +107,7 @@ SavePointArgs GeometryTransform::save() {
     return SavePointArgs(*this, cookie, depth);
 }
 
-void GeometryTransform::restore(SavePoint& sp) {
+void GeometryTransform::restore(const SavePointArgs& sp) {
     if (unlikely(self->mods[sp.depth] != sp.cookie || self->depth < sp.depth))
         FATAL_ERROR("cannot restore GeometryTransform: stack modified below safepoint");
     self->dirty = self->mods[sp.depth] != self->mods[self->depth];

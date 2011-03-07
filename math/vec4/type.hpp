@@ -1,6 +1,7 @@
 #ifndef VEC4_TYPE
 #define VEC4_TYPE
 
+#include "defs.h"
 #include "math/defs.hpp"
 
 #if MATH_SSE(2, 0)
@@ -37,6 +38,10 @@ struct vec4_t {
 };
 
 typedef vec4_t point4_t;
+
+typedef vec4_t ATTRS(ATTR_ALIGNED(16)) aligned_vec4_t;
+
+typedef aligned_vec4_t aligned_point4_t;
 
 } // namespace math
 
