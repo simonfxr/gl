@@ -3,6 +3,7 @@
 
 #include "defs.h"
 #include "math/vec3/type.hpp"
+#include "math/mat4/type.hpp"
 #include "math/plane.hpp"
 
 namespace glt {
@@ -39,14 +40,11 @@ const Outcode CLIP_MASK  = (1ul << 6) - 1;
 
 // a four sided pyramid frustum, used to represent a viewing volume
 struct ViewFrustum {
-protected:
     
     // clip planes in world coordinates, normales point in the volume
     math::plane3_t planes[VIEW_FRUSTUM_PLANES];
 
-public:    
-
-    View();
+    ViewFrustum();
 
     void updateView(const math::mat4_t& viewToWorld, const math::mat4_t& projection);
 };

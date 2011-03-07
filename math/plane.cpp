@@ -2,6 +2,10 @@
 
 namespace math {
 
+plane3_t plane() {
+    return plane(vec3(0, 1.f, 0.f), 0.f);
+}
+
 plane3_t plane(const direction3_t& normal, float dist) {
     plane3_t x;
     x.normal = normal;

@@ -68,22 +68,23 @@ private:
 
 struct SavePointArgs {    
 protected:
-
-    GeometryTransform& g;
-    const uint64 cookie;
-    const uint32 depth;
+    GeometryTransform* g;
+    uint64 cookie;
+    uint32 depth;
 
     friend struct GeometryTransform;
+    friend struct SavePoint;
 
 public:
     SavePointArgs(GeometryTransform& _g, uint64 _cookie, uint32 _depth) :
-        g(_g), cookie(_cookie), depth(_depth) {}
+        g(&_g), cookie(_cookie), depth(_depth) {}
 };
 
-struct SavePoint : public SavePointArgs {
-    SavePoint(const SavePointArgs& args) : SavePointArgs(args) {}
+struct SavePoint {
+    const SavePointArgs args;
+    SavePoint(const SavePointArgs& _args) : args(_args)  {}
     
-    ~SavePoint() { g.restore(*this); }
+    ~SavePoint() { args.g->restore(args); }
 
 private:
     SavePoint(const SavePoint& _);

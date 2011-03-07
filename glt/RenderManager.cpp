@@ -1,6 +1,6 @@
 #include "glt/RenderManager.hpp"
 
-#include "glt/Transform.hpp"
+#include "glt/Transformations.hpp"
 
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
@@ -10,7 +10,7 @@ namespace glt {
 
 using namespace math;
 
-struct GeometryTransform::Data {
+struct RenderManager::Data {
     aligned_mat4_t cameraMatrix;
     ViewFrustum frustum;
     GeometryTransform transform;
@@ -19,7 +19,8 @@ struct GeometryTransform::Data {
 
     Data() :
         cameraMatrix(mat4()),
-        inScene(false)
+        inScene(false),
+        transformStateBOS(transform, 0, 0)
         {}
 };
 
@@ -29,6 +30,18 @@ RenderManager::RenderManager() :
 
 RenderManager::~RenderManager() {
     delete self;
+}
+
+const ViewFrustum& RenderManager::viewFrustum() const {
+    return self->frustum;
+}
+
+const GeometryTransform& RenderManager::geometryTransform() const {
+    return self->transform;
+}
+
+GeometryTransform& RenderManager::geometryTransform() {
+    return self->transform;
 }
 
 void RenderManager::setPerspectiveProjection(float theta, float aspectRatio, float z_near, float z_far) {
@@ -45,7 +58,7 @@ void RenderManager::beginScene() {
     ASSERT(!self->inScene, "nested beginScene()!");
     self->inScene = true;
     self->transformStateBOS = self->transform.save();
-    self->transform.concat(self->cameraMatrix());
+    self->transform.concat(self->cameraMatrix);
 }
 
 void RenderManager::endScene() {
@@ -55,7 +68,7 @@ void RenderManager::endScene() {
 }
 
 vec4_t project(const RenderManager& rm, const point3_t& localCoord) {
-    return transform(rm.geomtryTransform().mvpMatrix(), localCoord);
+    return transform(rm.geometryTransform().mvpMatrix(), vec4(localCoord, 1.f));
 }
 
 vec4_t projectView(const RenderManager& rm, const point3_t& eyeCoord) {

@@ -12,9 +12,11 @@ struct RenderManager {
     RenderManager();
     ~RenderManager();
     
-    const ViewFrustum& viewFrustum() { return frustum; }
-    const GeometryTransform& geometryTransform() const { return transform; }
-    GeomtryTransform& geometryTransform() { return transform; }
+    const ViewFrustum& viewFrustum() const;
+    
+    const GeometryTransform& geometryTransform() const;
+    
+    GeometryTransform& geometryTransform();
 
     void setPerspectiveProjection(float theta, float aspectRatio, float z_near, float z_far);
     

@@ -12,6 +12,8 @@ struct plane3_t {
     float dist; // distance to origin
 };
 
+plane3_t plane() PURE_FUNC;
+
 plane3_t plane(const direction3_t& normal, float dist) PURE_FUNC;
 
 // plane through a triangle: if the triangle is viewed such that the points winding goes ccw,

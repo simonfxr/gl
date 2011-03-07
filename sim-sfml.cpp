@@ -29,6 +29,7 @@
 #include "glt/Frame.hpp"
 #include "glt/GeometryTransform.hpp"
 #include "glt/Transformations.hpp"
+#include "glt/RenderManager.hpp"
 
 #include "ge/GameWindow.hpp"
 
