@@ -117,7 +117,7 @@ struct Mirror {
 const bool Mirror::DISABLE = true;
 
 Mirror::Mirror(glt::ShaderManager& sm) :
-    batch(GL_QUADS, vertexAttrs),
+    batch(vertexAttrs),
     shader(sm)
 {}
 
@@ -176,7 +176,7 @@ std::ostream& LOCAL operator << (std::ostream& out, const vec3_t& v) {
 
 static const float FPS_RENDER_CYCLE = 1.f;
 
-struct Game : public ge::GameWindow {
+struct Game EXPLICIT : public ge::GameWindow {
 
     glt::GeometryTransform  transformPipeline;
 
@@ -225,21 +225,21 @@ struct Game : public ge::GameWindow {
 
     std::vector<Sphere> spheres;
 
-    Game(sf::RenderWindow& win, sf::Clock& clock);
+    Game();
 
     bool touchesWall(const Sphere& s, vec3_t& out_normal, vec3_t& out_collision) const;
 
-    bool onInit();
+    bool onInit() OVERRIDE;
 
-    void animate();
-    void renderScene(float interpolation);
+    void animate() OVERRIDE;
+    void renderScene(float interpolation) OVERRIDE;
     void renderWorld(float dt);
     
-    void keyStateChanged(sf::Key::Code key, bool pressed);
-    void mouseButtonStateChanged(sf::Mouse::Button button, bool pressed);
-    void windowResized(uint32 width, uint32 height);
-    void mouseMoved(int32 dx, int32 dy);
-    void handleInternalEvents();
+    void keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) OVERRIDE;
+    void mouseButtonStateChanged(const sf::Event::MouseButtonEvent& button, bool pressed) OVERRIDE;
+    void windowResized(uint32 width, uint32 height) OVERRIDE;
+    void mouseMoved(int32 dx, int32 dy) OVERRIDE;
+    void handleInternalEvents() OVERRIDE;
 
     void spawn_sphere();
     void move_camera(const vec3_t& step);
@@ -255,46 +255,22 @@ struct Game : public ge::GameWindow {
     void update_sphere_mass();
 };
 
-Game::Game(sf::RenderWindow& win, sf::Clock& clock) :
-    ge::GameWindow(win, clock),
-    wallBatch(GL_QUADS, vertexAttrs),
-    sphereBatch(GL_TRIANGLES, vertexAttrs),
+Game::Game() :
+    ge::GameWindow(),
+    wallBatch(vertexAttrs),
+    sphereBatch(vertexAttrs),
     mirror(shaderManager),
     blur(shaderManager),
     wallShader(shaderManager),
     sphereShader(shaderManager)
 {}
 
-static void print_context(const sf::ContextSettings& c) {
-    
-    std::cerr << "Initialized OpenGL Context"<< std::endl
-              << "  Version:\t" << c.MajorVersion << "." << c.MinorVersion << std::endl
-              << "  DepthBits:\t" << c.DepthBits << std::endl
-              << "  StencilBits:\t" << c.StencilBits << std::endl
-              << "  Antialiasing:\t" << c.AntialiasingLevel << std::endl
-              << "  DebugContext:\t" << (c.DebugContext ? "yes" : "no") << std::endl
-              << std::endl;
-}
-
 bool Game::onInit() {
-
-    print_context(window().GetSettings());
-
-    window().SetActive();
-
     default_framebuffer = 0;
     default_drawbuffer = GL_BACK_LEFT;
 
-    window().EnableVerticalSync(false);
-
-    GLenum err = glewInit();
-    if (GLEW_OK != err) {
-        std::cerr << "GLEW Error: " << glewGetErrorString(err) << std::endl;
-        return false;
-    }
-
-    if (window().GetSettings().DebugContext)
-        glt::initDebug();
+    wallBatch.primType(GL_QUADS);
+    sphereBatch.primType(GL_TRIANGLES);
 
 #ifdef GLDEBUG
     shaderManager.verbosity(glt::ShaderManager::Info);
@@ -358,6 +334,8 @@ bool Mirror::init(Game& game) {
     rendering_recursive = false;
 
     glt::GenBatch<Vertex>& q = batch;
+    q.primType(GL_QUADS);
+        
     Vertex v;
     v.normal = vec3(0.f, 0.f, 1.f);
     
@@ -716,21 +694,23 @@ void Game::windowResized(uint32 width, uint32 height) {
 
     float fov = degToRad(17.5f);
     float aspect = float(width) / float(height);
+
+    mat4_t proj = glt::perspectiveProjection(fov, aspect, 1.f, 100.f);
     
-    transformPipeline.loadProjectionMatrix(glt::perspectiveProjection(fov, aspect, 1.f, 100.f));
+    transformPipeline.loadProjectionMatrix(proj);
 
     mirror.resized(*this);
     
     blur.resized(*this);
 }
 
-void Game::keyStateChanged(sf::Key::Code key, bool pressed) {
+void Game::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
 
     if (!pressed) return;
 
     using namespace sf::Key;
 
-    switch (key) {
+    switch (key.Code) {
     case I: use_interpolation = !use_interpolation; break;
     case B: pause(!paused()); break;
     case C: load_shaders(); break;
@@ -747,16 +727,14 @@ void Game::mouseMoved(int32 dx, int32 dy) {
     camera.rotate(dx * 0.001f, dy * 0.001f);
 }
 
-void Game::mouseButtonStateChanged(sf::Mouse::Button button, bool pressed) {
-
+void Game::mouseButtonStateChanged(const sf::Event::MouseButtonEvent& e, bool pressed) {
     if (!pressed) return;
     
-    if (button == sf::Mouse::Left)
+    if (e.Button == sf::Mouse::Left)
         spawn_sphere();
 }
 
 void Game::handleInternalEvents() {
-    
     using namespace sf::Key;
 
     float z_step = 0.f;
@@ -855,11 +833,11 @@ void Game::renderScene(float interpolation) {
 
     float dt = interpolation * game_speed * frameDuration();
 
-    glEnable(GL_CULL_FACE);
+    GL_CHECK(glEnable(GL_CULL_FACE));
     
     renderWorld(dt);
 
-    glDisable(GL_CULL_FACE);
+    GL_CHECK(glDisable(GL_CULL_FACE));
 
     blur.render(*this, dt);
 
@@ -876,7 +854,6 @@ void Game::renderWorld(float dt) {
     glt::SavePoint sp(transformPipeline.save());
     mat4_t camMat = camera.getCameraMatrix();
     transformPipeline.concat(camMat);
-//        glt::SavePoint sp2(tp.save());
     
     const vec3_t eyeLightPos = transformPoint(camMat, LIGHT_POS);
     const vec3_t spotDirection = normalize(vec3(0.f) - LIGHT_POS);
@@ -1132,7 +1109,10 @@ void Game::render_walls() {
     us.optional("ecSpotDirection", wallUniforms.ecSpotDir);
     us.optional("spotAngle", wallUniforms.spotAngle);
 
-    wallShader.validate(GLDEBUG_ENABLED);
+#ifdef GLDEBUG    
+    wallShader.validate(true);
+#endif
+    
     wallBatch.draw();
 
     GL_CHECK(glCullFace(GL_BACK));    
@@ -1207,33 +1187,15 @@ void Game::render_hud() {
 }
 
 int main(int argc, char *argv[]) {
-
     UNUSED(argc);
-    sf::Clock startupTimer;
-    float startupBegin = startupTimer.GetElapsedTime();
-    
+
     if (argv[0] != 0)
         gltSetWorkingDirectory(argv[0]);
-    
-    sf::ContextSettings glContext;
-    glContext.MajorVersion = 3;
-    glContext.MinorVersion = 3;
-    glContext.AntialiasingLevel = 4;
-#ifdef GLDEBUG
-    glContext.DebugContext = true;
-#endif
 
-    sf::RenderWindow win(sf::VideoMode(800, 600), "sim-sfml", sf::Style::Default, glContext);
-
-    Game game(win, startupTimer);
-
-    if (!game.init(glContext, "sim-sfml")) {
-        std::cerr << "initialization failed, exiting..." << std::endl;
+    Game game;
+    if (!game.init("sim-sfml")) {
         return 1;
     }
-
-    float startupTime = startupTimer.GetElapsedTime() - startupBegin;
-    std::cerr << "initialized in " << uint32(startupTime * 1000) << " ms." << std::endl;
 
     return game.run();
 }
@@ -1405,8 +1367,6 @@ bool Game::touchesWall(const Sphere& s, vec3_t& out_normal, vec3_t& out_collisio
 namespace {
 
 void makeUnitCube(glt::GenBatch<Vertex>& cube) {
-    // cube.Begin(GL_QUADS, 24);
-
     Vertex v;
     
     v.normal = vec3(0.f, 0.f, -1.f);

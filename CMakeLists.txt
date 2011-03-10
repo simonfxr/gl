@@ -6,9 +6,9 @@ set(CMAKE_CXX_COMPILER clang++)
 
 project(sim-sfml)
 
-#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -O3 -march=native")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -O3 -march=native")
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb")
+#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb -std=c++0x")
 
 set(BIBLE $ENV{HOME}/src/oglsuperbible5-read-only)
 

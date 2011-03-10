@@ -18,6 +18,18 @@ typedef long  int64;
 #define SYSTEM_UNIX
 #endif
 
+#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#define CXX0X
+#endif
+
+#ifdef CXX0X
+#define EXPLICIT explicit
+#define OVERRIDE override
+#else
+#define EXPLICIT
+#define OVERRIDE
+#endif
+
 #define likely(e) __builtin_expect((e) != 0, 1)
 #define unlikely(e) __builtin_expect((e) != 0, 0)
 
