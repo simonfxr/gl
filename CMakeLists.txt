@@ -6,9 +6,9 @@ set(CMAKE_CXX_COMPILER clang++)
 
 project(sim-sfml)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -O3 -march=native")
+#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -O3 -march=native")
 
-#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb -std=c++0x")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb")
 
 set(BIBLE $ENV{HOME}/src/oglsuperbible5-read-only)
 
@@ -26,9 +26,7 @@ link_libraries(sfml-window sfml-graphics sfml-system)
 link_libraries(gltools)
 link_libraries(-Wl,-rpath,$ENV{PWD})
 
-add_executable(sim-sfml
-  sim-sfml.cpp
-  defs.h
+set(MATH_SRC
 
   math/vec3.hpp
   math/vec3/impl.cpp
@@ -41,7 +39,9 @@ add_executable(sim-sfml
   math/math.hpp
   math/math/impl.cpp
   math/plane.hpp
-  math/plane.cpp
+  math/plane.cpp)
+
+set(GLT_SRC
 
   glt/utils.hpp
   glt/utils.cpp
@@ -66,10 +66,26 @@ add_executable(sim-sfml
   glt/ViewFrustum.hpp
   glt/ViewFrustum.cpp
   glt/RenderManager.hpp
-  glt/RenderManager.cpp
+  glt/RenderManager.cpp)
 
+set(GE_SRC
   ge/GameLoop.hpp
   ge/GameLoop.cpp
   ge/GameWindow.hpp
-  ge/GameWindow.cpp
-)
+  ge/GameWindow.cpp)
+
+add_executable(sim-sfml
+  sim-sfml.cpp
+  defs.h
+  
+  ${MATH_SRC}
+  ${GLT_SRC}
+  ${GE_SRC})
+
+add_executable(voxel-world
+  voxel-world.cpp
+  defs.h
+  
+  ${MATH_SRC}
+  ${GLT_SRC}
+  ${GE_SRC})
