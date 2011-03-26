@@ -40,6 +40,10 @@ struct color {
         static const float Scale = 1.f / 255.f;
         return math::vec4(r, g, b, a) * Scale;
     }
+
+    uint32 rgba() const {
+        return *(uint32 *) &r;
+    }
 };
 
 } // glt

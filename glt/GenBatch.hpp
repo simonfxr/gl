@@ -40,6 +40,13 @@ namespace {
 
 namespace attr {
 
+Attr LOCAL vec2(uint64 offset) {
+    Attr a;
+    a.size = 2; a.type = GL_FLOAT; a.normalized = GL_FALSE;
+    a.offset = (const GLvoid *) offset;
+    return a;
+}
+
 Attr LOCAL vec3(uint64 offset) {
     Attr a;
     a.size = 3; a.type = GL_FLOAT; a.normalized = GL_FALSE;

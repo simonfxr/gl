@@ -21,13 +21,16 @@ pkg_check_modules(LIBGLEW QUIET glew)
 include_directories(${LIBGLEW_INCLUDE_DIRS})
 link_libraries(${LIBGLEW_LIBRARIES})
 
-link_libraries(-L.)
 link_libraries(sfml-window sfml-graphics sfml-system)
+
+link_libraries(-L.)
 link_libraries(gltools)
 link_libraries(-Wl,-rpath,$ENV{PWD})
 
 set(MATH_SRC
 
+  math/vec2.hpp
+  math/vec2/impl.cpp
   math/vec3.hpp
   math/vec3/impl.cpp
   math/vec4.hpp
