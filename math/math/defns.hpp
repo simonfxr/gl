@@ -12,6 +12,8 @@ float sqrt(float x) PURE_FUNC;
 
 float recp(float x) PURE_FUNC;
 
+float recip(float x) PURE_FUNC;
+
 float inverse(float x) PURE_FUNC;
 
 float rsqrt(float x) PURE_FUNC;

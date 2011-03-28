@@ -49,6 +49,10 @@ vec3_t operator /(const vec3_t& v, float a) {
     return v * math::recp(a);
 }
 
+vec3_t operator /(const vec3_t& a, const vec3_t& b) {
+    return a * recip(b);
+}
+
 vec3_t& operator +=(vec3_t& v, const vec3_t& a) {
     return v = v + a;
 }
@@ -67,6 +71,10 @@ vec3_t& operator *=(vec3_t& v, const vec3_t& b) {
 
 vec3_t& operator /=(vec3_t& v, float a) {
     return v = v / a;
+}
+
+vec3_t& operator /=(vec3_t& v, const vec3_t& b) {
+    return v = v / b;
 }
 
 bool operator ==(vec3_t& a, vec3_t& b) {
@@ -137,6 +145,10 @@ vec3_t max(const vec3_t& a, const vec3_t& b) {
 
 float sum(const vec3_t& a) {
     return a.x + a.y + a.z;
+}
+
+vec3_t recip(const vec3_t& a) {
+    return vec3(recip(a.x), recip(a.y), recip(a.z));
 }
 
 vec3_t linearInterpolate(const vec3_t& a, const vec3_t& b, float t) {

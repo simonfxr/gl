@@ -29,6 +29,8 @@ vec3_t operator *(const vec3_t& a, const vec3_t& b) PURE_FUNC;
 
 vec3_t operator /(const vec3_t& v, float a) PURE_FUNC;
 
+vec3_t operator /(const vec3_t& v, const vec3_t& b) PURE_FUNC;
+
 vec3_t& operator +=(vec3_t& v, const vec3_t& a) MUT_FUNC;
 
 vec3_t& operator -=(vec3_t& v, const vec3_t& a) MUT_FUNC;
@@ -38,6 +40,8 @@ vec3_t& operator *=(vec3_t& v, float a) MUT_FUNC;
 vec3_t& operator *=(vec3_t& v, const vec3_t& b) MUT_FUNC;
 
 vec3_t& operator /=(vec3_t& v, float a) MUT_FUNC;
+
+vec3_t& operator /=(vec3_t& v, const vec3_t& b) MUT_FUNC;
 
 bool operator ==(vec3_t& a, vec3_t& b) PURE_FUNC;
 
@@ -70,6 +74,8 @@ vec3_t min(const vec3_t& a, const vec3_t& max) PURE_FUNC;
 vec3_t max(const vec3_t& a, const vec3_t& max) PURE_FUNC;
 
 float sum(const vec3_t& a) PURE_FUNC;
+
+vec3_t recip(const vec3_t& a) PURE_FUNC;
 
 vec3_t linearInterpolate(const vec3_t& a, const vec3_t& b, float t) PURE_FUNC;
 

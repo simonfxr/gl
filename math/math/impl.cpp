@@ -13,6 +13,10 @@ float recp(float x) {
     return 1.f / x;
 }
 
+float recip(float x) {
+    return recp(x);
+}
+
 float inverse(float x) {
     return recp(x);
 }

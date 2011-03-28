@@ -1,6 +1,7 @@
-#include "point_light.h"
+#include "directional-light.h"
+#include "gamma.h"
 
-uniform vec3 ecLight;
+uniform vec3 ecLightDir;
 uniform vec4 materialProperties;
 
 in vec3 ecPosition;
@@ -10,15 +11,12 @@ flat in vec4 vColor;
 out vec4 fragColor;
 
 void main() {
-    vec4 amb, diff, spec;
-    
-    PointLight(ecLight, vec3(0, 0, 1),
-               vec4(materialProperties.x), vec4(materialProperties.y),
-               vec4(materialProperties.z), ecPosition, normalize(ecNormal),
-               materialProperties.w,
-               amb, diff, spec);
-               
-    fragColor = (amb + diff + spec) * vColor;
+    vec4 L = DirectionalLight(ecPosition, normalize(ecNormal), ecLightDir,
+                              vec4(materialProperties.x), vec4(materialProperties.z),
+                              materialProperties.w);
+
+    fragColor = (L + vec4(materialProperties.y)) * vColor;
     fragColor.a = vColor.a;
+    fragColor = gammaCorrect(fragColor);
 }
 

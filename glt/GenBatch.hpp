@@ -94,6 +94,8 @@ struct DynBatch {
     void send(const Attr attrs[], bool del_after_freeze);
     void draw(const Attr attrs[], GLenum primType, bool enabled[]);
     void at(const Attr attrs[], uint32 i, void *buffer);
+    bool read(const char *file, const Attr attrs[]);
+    bool write(const char *file, const Attr attrs[]) const;
 };
 
 } // namespace priv
@@ -174,6 +176,14 @@ public:
         T val;
         batch.at(attrs.attrs, i, static_cast<void *>(&val));
         return val;
+    }
+
+    bool read(const char *filename) {
+        return batch.read(filename, attrs.attrs);
+    }
+
+    bool write(const char *filename) const {
+        return batch.write(filename, attrs.attrs);
     }
 };
 
