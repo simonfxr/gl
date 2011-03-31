@@ -123,6 +123,11 @@ vec4_t transposedMult(const mat4_t& AT, const vec4_t& v) {
                 dot(v, AT[2]), dot(v, AT[3]));
 }
 
+bool equal(const mat4_t& A, const mat4_t& B, float epsi) {
+    return equal(A[0], B[0], epsi) && equal(A[1], B[1], epsi) &&
+        equal(A[2], B[2], epsi) && equal(A[3], B[3], epsi);
+}
+
 MATH_END_NAMESPACE
 
 namespace math {
@@ -137,11 +142,6 @@ MATH_INLINE_SPEC vec4_t& mat4_t::operator[](unsigned long i) {
 
 MATH_INLINE_SPEC float& mat4_t::operator()(unsigned long i, unsigned long j) {
     return components[i * 4 + j];
-}
-
-bool equal(const mat4_t& A, const mat4_t& B, float epsi) {
-    return equal(A[0], B[0], epsi) && equal(A[1], B[1], epsi) &&
-        equal(A[2], B[2], epsi) && equal(A[3], B[3], epsi);
 }
 
 } // namespace math

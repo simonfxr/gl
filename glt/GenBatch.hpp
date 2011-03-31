@@ -93,7 +93,7 @@ struct DynBatch {
     void add(const Attr attrs[], const void *value);
     void send(const Attr attrs[], bool del_after_freeze);
     void draw(const Attr attrs[], GLenum primType, bool enabled[]);
-    void at(const Attr attrs[], uint32 i, void *buffer);
+    void at(const Attr attrs[], uint32 i, void *buffer) const;
     bool read(const char *file, const Attr attrs[]);
     bool write(const char *file, const Attr attrs[]) const;
 };
@@ -135,23 +135,23 @@ public:
     const Attrs<T>& getAttrs() { return attrs; }
 
     void add(const T& v) {
-        ASSERT(!frozen, "cannot add to frozen batch");
+        ASSERT_MSG(!frozen, "cannot add to frozen batch");
         batch.add(attrs.attrs, static_cast<const void *>(&v));
     }
 
     void freeze() {
-        ASSERT(!frozen, "batch already frozen");
+        ASSERT_MSG(!frozen, "batch already frozen");
         frozen = true;
         batch.send(attrs.attrs, del_after_freeze);
     }
 
     void deleteAfterFreeze(bool enable) {
-        ASSERT(!frozen, "already frozen");
+        ASSERT_MSG(!frozen, "already frozen");
         del_after_freeze = enable;
     }
 
     void draw() {
-        ASSERT(frozen, "cannot draw batch while building it");
+        ASSERT_MSG(frozen, "cannot draw batch while building it");
         batch.draw(attrs.attrs, _primType, enabledAttrs);
     }
 
@@ -168,11 +168,11 @@ public:
     }
 
     uint32 size() {
-        return batch.size;
+        return batch.filled;
     }
 
-    T at(uint32 i) {
-        ASSERT(!frozen || !del_after_freeze, "data already deleted");
+    T at(uint32 i) const {
+        ASSERT_MSG(!frozen || !del_after_freeze, "data already deleted");
         T val;
         batch.at(attrs.attrs, i, static_cast<void *>(&val));
         return val;

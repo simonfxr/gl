@@ -112,11 +112,11 @@ vec4_t& operator /=(vec4_t& v, float a) {
     return v = v / a;
 }
 
-bool operator ==(vec4_t& a, vec4_t& b) {
+bool operator ==(const vec4_t& a, const vec4_t& b) {
     return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
 }
 
-bool operator !=(vec4_t& a, vec4_t& b) {
+bool operator !=(const vec4_t& a, const vec4_t& b) {
     return !(a == b);
 }
 

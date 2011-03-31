@@ -37,7 +37,7 @@ static const vec3_t BLOCK_DIM = vec3(0.25f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
 static const int32 N = 128;
-static const int32 SPHERE_POINTS_FACE = 12;
+static const int32 SPHERE_POINTS_FACE = 24;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
 
@@ -54,7 +54,7 @@ struct MaterialProperties {
         shininess(sh) {}
 };
 
-static const MaterialProperties BLOCK_MAT(0.6f, 0.4f, 0.f, 0.f);
+static const MaterialProperties BLOCK_MAT(0, 1.f, 0.f, 0.f);
 
 static float noise3D(const vec3_t& p);
 static float sumNoise3D(const vec3_t& p, uint32 octaves, float fmin, float phi, bool abs = false);
@@ -62,14 +62,14 @@ static void pointsOnSphere(uint32 n, vec3_t *points);
 
 struct Vertex {
     vec3_t position;
-    vec3_t normal;
     uint32 color;
+    vec4_t normal;  // last component is diffuse factor
 };
 
 static const glt::Attr vertexAttrVals[] = {
     glt::attr::vec3(offsetof(Vertex, position)),
-    glt::attr::vec3(offsetof(Vertex, normal)),
-    glt::attr::color(offsetof(Vertex, color))
+    glt::attr::color(offsetof(Vertex, color)),
+    glt::attr::vec4(offsetof(Vertex, normal))
 };
 
 static const glt::Attrs<Vertex> vertexAttrs(
@@ -221,24 +221,68 @@ struct World {
 };
 
 struct Faces {
-    float sum[6];
+    vec3_t f[2]; // front, up, right, bot, down, left
 };
 
-static uint32 NRAYS = 1.42f * N;
+static const uint32 RAY_SAMPLES = 1.9 * (N + 1); // about sqrt(3) * N, maximum ray length
 
 struct Ray {
     Faces lightContrib;
-    ivec3 offset[NRAYS];
+    ivec3_t offset[RAY_SAMPLES];
 };
 
-struct Occ {
+struct Rays {
+    Faces sumcos;
     Ray rays[SPHERE_POINTS];
 };
 
-struct WorldOcc {
-    Ray rays[SPHERE_POINTS];
-    Faces diffContr[N][N][N];
-};
+Faces cosfaces(direction3_t& dir, Faces& sumcos) {
+    direction3_t as = abs(dir);
+    int32 maxi;
+    if (as.x >= as.y && as.x >= as.z)
+        maxi = 0;
+    else if (as.y >= as.x && as.y >= as.z)
+        maxi = 1;
+    else
+        maxi = 2;
+
+    int32 side = dir[maxi] < 0 ? 1 : 0;
+    sumcos.f[side][maxi]++;
+    
+    Faces f = { { vec3(0.f), vec3(0.f) } };
+    f.f[side][maxi] = as[maxi];
+        
+    return f;
+}
+
+void initRay(Ray& r, direction3_t& d, vec3_t step, Faces& sumcos) {
+    vec3_t p = vec3(0.f);
+    ivec3_t lastidx = ivec3(p);
+
+    uint32 i = 0;
+    while (i < RAY_SAMPLES) {
+        ivec3_t idx = ivec3(p);
+        if (idx != lastidx)
+            lastidx = idx, r.offset[i++] = idx;
+        p += step;
+    }
+
+    r.lightContrib = cosfaces(d, sumcos);
+}
+
+void initRays(Rays &rays, const vec3_t dirs[]) {
+    
+    rays.sumcos.f[0] = vec3(0.f);
+    rays.sumcos.f[1] = vec3(0.f);
+    
+    const vec3_t center = vec3(N * 0.5f);
+    for (uint32 i = 0; i < SPHERE_POINTS; ++i) {
+        direction3_t d = normalize(dirs[i]);
+        vec3_t p = N * (d * 0.5f + vec3(0.5f));
+        vec3_t step = (p - center) / (10.f * N);
+        initRay(rays.rays[i], d, step, rays.sumcos);
+    }
+}
 
 void testray(const World& w, World& vis, int32 i, int32 j, int32 k, int32 di, int32 dj, int32 dk) {
     for (;;) {
@@ -307,13 +351,44 @@ World *filterOccluded(const World& w) {
     return ret;                
 }
 
+Faces trace(const World& w, const Rays& rs, const ivec3_t& p0) {
+    Faces diffContr = { { vec3(0.f), vec3(0.f) } };
+    for (uint32 i = 0; i < SPHERE_POINTS; ++i) {
+        const Ray& ray = rs.rays[i];
+        ivec3_t p = p0 + ray.offset[0];
+        uint32 j = 0;
+        bool escaped = true;
+        while (j + 1 < RAY_SAMPLES &&
+               p.x >= 0 && p.x < N &&
+               p.y >= 0 && p.y < N &&
+               p.z >= 0 && p.z < N) {
+
+            if (w.shell[p.x][p.y][p.z]) {
+                escaped = false;
+                break;
+            }
+
+            ++j;
+            p = p0 + ray.offset[j];
+        }
+
+        if (escaped) {
+            diffContr.f[0] += ray.lightContrib.f[0];
+            diffContr.f[1] += ray.lightContrib.f[1];
+        }
+    }
+
+    diffContr.f[0] /= rs.sumcos.f[0];
+    diffContr.f[1] /= rs.sumcos.f[1];
+    return diffContr;
+}
+
 bool visibleFace(const World& w, const World& vis, int32 i, int32 j, int32 k, const vec3_t& normal) {
     i += (int32) normal.x;
     j += (int32) normal.y;
     k += (int32) normal.z;
     return visible(w, vis, i, j, k);
 }
-
 
 bool blockAt(const vec3_t& p) {
     float r = sumNoise3D(p, 4, 1.2, 0.5, true);
@@ -327,30 +402,51 @@ void Anim::initWorld() {
 
     memset(world, 0, sizeof *world);
 
-    // for (uint32 i = 0; i < N; ++i)
-    //     for (uint32 j = 0; j < N; ++j)
-    //         for (uint32 k = 0; k < N; ++k)
-    //             world->shell[i][j][k] = blockAt(vec3(i, j, k) * (1.f / N));
+    for (uint32 i = 0; i < N; ++i)
+        for (uint32 j = 0; j < N; ++j)
+            for (uint32 k = 0; k < N; ++k)
+                world->shell[i][j][k] = blockAt(vec3(i, j, k) * (1.f / N));
 
-    const vec3_t center = vec3(N * 0.5f);
-    for (uint32 k = 0; k < SPHERE_POINTS; ++k) {
-        vec3_t p = N * (normalize(sphere_points[k]) * 0.5f + vec3(0.5f));
-        vec3_t step = (p - center) / (10.f * N);
-        // ivec3 idx = ivec3(p);
-        // world->shell[idx.x][idx.y][idx.z] = true;
-        p = center;
+    // const vec3_t center = vec3(N * 0.5f);
+    // for (uint32 k = 0; k < SPHERE_POINTS; ++k) {
+    //     vec3_t p = N * (normalize(sphere_points[k]) * 0.5f + vec3(0.5f));
+    //     vec3_t step = (p - center) / (10.f * N);
+    //     // ivec3 idx = ivec3(p);
+    //     // world->shell[idx.x][idx.y][idx.z] = true;
+    //     p = center;
         
-        for (;;) {
-            ivec3 idx = ivec3(p);
-            if (idx.x < 0 || idx.x >= N ||
-                idx.y < 0 || idx.y >= N ||
-                idx.z < 0 || idx.z >= N)
-                break;
+    //     for (;;) {
+    //         ivec3_t idx = ivec3(p);
+    //         if (idx.x < 0 || idx.x >= N ||
+    //             idx.y < 0 || idx.y >= N ||
+    //             idx.z < 0 || idx.z >= N)
+    //             break;
 
-            world->shell[idx.x][idx.y][idx.z] = true;
-            p += step;
-        }
-    }
+    //         world->shell[idx.x][idx.y][idx.z] = true;
+    //         p += step;
+    //     }
+    // }
+
+    Rays *rays = new Rays;
+    initRays(*rays, sphere_points);
+    std::cerr << "rays crossing planes: " << rays->sumcos.f[0] << ", " << rays->sumcos.f[1] << std::endl;
+
+    // const ivec3_t center = ivec3(vec3(N) * 0.5f);
+    // for (uint32 i = 0; i < SPHERE_POINTS; ++i) {
+    //     uint32 j = 0;
+    //     ivec3_t p = center;
+    //     while (p.x >= 0 && p.x < N &&
+    //            p.y >= 0 && p.y < N &&
+    //            p.z >= 0 && p.z < N && j < RAY_SAMPLES) {
+    //         ASSERT(j < RAY_SAMPLES);
+    //         // if (p != center)
+    //         // std::cerr << "sphere point at: " << vec3(p)
+    //         //           << "[" << p.x << ", " << p.y << ", " << p.z << "]"
+    //         //           << std::endl;
+    //         world->shell[p.x][p.y][p.z] = true;
+    //         p = center + rays->rays[i].offset[j++];
+    //     }
+    // }
 
     // for (uint32 i = 0; i < N; ++i) {
     //     for (uint32 j = 0; j < N; ++j) {
@@ -363,9 +459,9 @@ void Anim::initWorld() {
     //     }
     // }
 
-//    World *vis = filterOccluded(*world);
-    World *vis = new World;
-    memset(vis, 1, sizeof *vis);
+    World *vis = filterOccluded(*world);
+    // World *vis = new World;
+    // memset(vis, 1, sizeof *vis);
 
     uint32 permut[N];
     for (uint32 i = 0; i < N; ++i)
@@ -383,6 +479,16 @@ void Anim::initWorld() {
     uint32 faces = 0;
     uint32 visFaces = 0;
 
+    // for (uint32 i = 0; i < 32; ++i) {
+    //     for (uint32 j = 0; j < cubeModel.size(); ++j) {
+    //         Vertex v = cubeModel.at(j);
+    //         std::cerr << "position: " << v.position
+    //                   << ", normal: " << v.normal
+    //                   << std::endl;
+    //     }
+    // }
+    // std::cerr << "END DEBUG MODEL" << std::endl;
+
     for (uint32 i = 0; i < N; ++i) {
         for (uint32 j = 0; j < N; ++j) {
             for (uint32 k = 0; k < N; ++k) {
@@ -395,17 +501,30 @@ void Anim::initWorld() {
                 
                 if (vis->shell[ii][jj][kk] && world->shell[ii][jj][kk]) {
                     ++visBlocks;
-                    uint32 col = glt::color(vec4(vec3(0.4f), 1.f)).rgba();
+
+                    Faces diffContr = trace(*world, *rays, ivec3(ii, jj, kk));
+//                    std::cerr << "diffContr: " << diffContr.f[0] << ", " << diffContr.f[1] << std::endl;
+
+                    float height = (float) jj / N;
+                    float hh = height * height * height;
+                        
+                    glt::color col = glt::color(vec4(hh , (float) ii / N, 1 - hh, 1));
 //                    uint32 col = glt::color(randColor()).rgba();
                     vec3_t offset = BLOCK_DIM * vec3(ii, jj, kk);
                     for (uint32 r = 0; r < cubeModel.size(); ++r) {
                         Vertex v = cubeModel.at(r);
                         ++faces;
-                        if (visibleFace(*world, *vis, ii, jj, kk, v.normal)) {
+                        if (visibleFace(*world, *vis, ii, jj, kk, vec3(v.normal))) {
                             ++visFaces;
+                            ivec3_t n = ivec3(vec3(v.normal));
+//                            std::cerr << "n: " << vec3(n) << std::endl;
+                            int32 face = n.x + n.y * 2 + n.z * 3;
+                            int32 side = face < 0 ? 1 : 0;
+                            face = abs(face) - 1;
                             v.position *= BLOCK_DIM;
                             v.position += offset;
-                            v.color = col;
+                            v.normal.w = diffContr.f[side][face];
+                            v.color = col.rgba();
                             worldModel.add(v);
                         }
                     }
@@ -414,6 +533,7 @@ void Anim::initWorld() {
         }
     }
 
+    delete rays;
     delete vis;
     delete world;
 
@@ -476,6 +596,16 @@ void Anim::renderScene(float interpolation) {
 void Anim::renderBlocks() {
     glt::SavePoint sp(rm.geometryTransform().save());
 
+    // float phi = gameTime() * 0.1f;
+
+    // vec3_t center = BLOCK_DIM * N * 0.5f;
+
+    // rm.geometryTransform().translate(center);
+    // rm.geometryTransform().concat(mat3(vec3(cos(phi), sin(phi), 0.f),
+    //                                    vec3(-sin(phi), cos(phi), 0.f),
+    //                                    vec3(0.f, 0.f, 1.f)));
+    // rm.geometryTransform().translate(-center);
+
     voxelShader.use();    
     glt::Uniforms us(voxelShader);
     us.optional("mvpMatrix", rm.geometryTransform().mvpMatrix());
@@ -486,6 +616,7 @@ void Anim::renderBlocks() {
                       BLOCK_MAT.specularContribution, BLOCK_MAT.shininess);
     us.optional("materialProperties", mat);
     us.optional("gammaCorrection", gamma_correction);
+    us.optional("sin_time", sin(gameTime()));
     worldModel.draw();
 }
 
@@ -584,37 +715,37 @@ static void makeUnitCube(glt::GenBatch<Vertex>& cube) {
     Vertex v;
     cube.primType(GL_QUADS);
 
-    v.normal = vec3( 0.0f, 0.0f, 1.0f);					
+    v.normal = vec4(0.0f, 0.0f, 1.0f, 0.f);					
     v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
     v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
     v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
     v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
 
-    v.normal = vec3( 0.0f, 0.0f, -1.f);					
+    v.normal = vec4( 0.0f, 0.0f, -1.f, 0.f);					
     v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
     v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
     v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
     v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
 
-    v.normal = vec3( 0.0f, 1.0f, 0.0f);					
+    v.normal = vec4( 0.0f, 1.0f, 0.0f, 0.f);					
     v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
     v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
     v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
     v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
 
-    v.normal = vec3( 0.0f, -1.f, 0.0f);					
+    v.normal = vec4( 0.0f, -1.f, 0.0f, 0.f);					
     v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
     v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
     v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
     v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
 
-    v.normal = vec3( 1.0f, 0.0f, 0.0f);					
+    v.normal = vec4( 1.0f, 0.0f, 0.0f, 0.f);					
     v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
     v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
     v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
     v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
 
-    v.normal = vec3(-1.f, 0.0f, 0.0f);					
+    v.normal = vec4(-1.f, 0.0f, 0.0f, 0.f);					
     v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
     v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
     v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);

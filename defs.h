@@ -54,7 +54,8 @@ typedef long  int64;
 #define DEBUG_ASSERT(x, err) ((void) 0)
 #endif
 
-#define ASSERT DEBUG_ASSERT
+#define ASSERT_MSG DEBUG_ASSERT
+#define ASSERT(x) ASSERT_MSG(x, "assertion failed: " #x)
 
 #define ERROR(e) glt::error(e, __FILE__, __LINE__, __func__)
 

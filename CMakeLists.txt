@@ -1,14 +1,25 @@
 
-set(CMAKE_C_COMPILER_INIT clang)
 
-set(CMAKE_C_COMPILER clang)
-set(CMAKE_CXX_COMPILER clang++)
+set(ICC "/opt/intel/composerxe-2011.2.137/bin/intel64/icc")
+set(IXX "/opt/intel/composerxe-2011.2.137/bin/intel64/icpc")
+
+set(COMP_C gcc-4.6.0)
+set(COMP_CXX g++-4.6.0)
+
+set(CMAKE_C_COMPILER_INIT ${COMP_C})
+
+set(CMAKE_C_COMPILER ${COMP_C})
+set(CMAKE_CXX_COMPILER ${COMP_CXX})
 
 project(sim-sfml)
 
-#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -O3 -march=native")
+#set(CMAKE_CXX_FLAGS "-xHOST -O3 -ipo -no-prec-div -DMATH_INLINE")
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DMATH_INLINE -O3 -march=native")
+
+set(CMAKE_LDFLAGS "-flto ${CMAKE_CXX_FLAGS}")
+
+#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb")
 
 set(BIBLE $ENV{HOME}/src/oglsuperbible5-read-only)
 
@@ -42,7 +53,9 @@ set(MATH_SRC
   math/math.hpp
   math/math/impl.cpp
   math/plane.hpp
-  math/plane.cpp)
+  math/plane.cpp
+  math/ivec3.hpp
+  math/ivec3/impl.cpp)
 
 set(GLT_SRC
 

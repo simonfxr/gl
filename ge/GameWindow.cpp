@@ -94,7 +94,7 @@ GameWindow::Data::~Data() {
 }
 
 #define SELF ({                                                         \
-    ASSERT(self != 0, "self == NULL (not initialized?)");               \
+    ASSERT_MSG(self != 0, "self == NULL (not initialized?)");               \
     self;                                                               \
         })
 
@@ -261,7 +261,6 @@ bool GameWindow::onInit() {
 }
 
 sf::RenderWindow *GameWindow::createRenderWindow(const std::string& title) {
-
     sf::ContextSettings glContext;
     glContext.MajorVersion = 3;
     glContext.MinorVersion = 3;

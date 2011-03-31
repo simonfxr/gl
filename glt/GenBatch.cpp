@@ -99,7 +99,8 @@ void DynBatch::draw(const Attr attrs[], GLenum primType, bool enabled[]) {
     }
 }
 
-void DynBatch::at(const Attr attrs[], uint32 i, void *buffer) {
+void DynBatch::at(const Attr attrs[], uint32 i, void *buffer) const {
+    ASSERT(i < filled);
     byte *dest = (byte *) buffer;
     for (uint32 k = 0; k < nattrs; ++k) {
         uint32 valSize = componentSize(attrs[k].type) * attrs[k].size;

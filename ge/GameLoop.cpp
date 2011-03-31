@@ -42,7 +42,7 @@ int32 GameLoop::run(GameLoop::Game& logic) {
         const float tick_length      = 1.f / _ticks_per_second;
         const float draw_tick_length = _max_fps == 0 ? 0.f : 1.f / _max_fps;
         const uint32 loops_max       = _max_frame_skip == 0 ? 0xFFFFFFFFUL : _max_frame_skip;
-        uint32 loops;
+        uint32 loops = 0;
 
         _running = true;
         _restart = false;
@@ -115,7 +115,7 @@ int32 GameLoop::run(GameLoop::Game& logic) {
 
     out:;
         
-    } while (!exit && _restart);
+    } while (!_exit && _restart);
 
     return _exit_code;
 }

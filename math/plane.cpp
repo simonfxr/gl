@@ -1,6 +1,8 @@
+#if defined(MATH_PLANE_INLINE) || !defined(MATH_INLINE)
+
 #include "math/plane.hpp"
 
-namespace math {
+MATH_BEGIN_NAMESPACE
 
 plane3_t plane() {
     return plane(vec3(0, 1.f, 0.f), 0.f);
@@ -26,4 +28,6 @@ float distance(const plane3_t& x, const point3_t& p) {
     return dot(x.normal, p) - x.dist;
 }
 
-} // namespace math
+MATH_END_NAMESPACE
+
+#endif

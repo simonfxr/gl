@@ -16,11 +16,13 @@ struct RenderManager::Data {
     ViewFrustum frustum;
     GeometryTransform transform;
     bool inScene;
+    bool camera_set;
     SavePointArgs transformStateBOS; // transform state in begin of scene
 
     Data() :
         cameraMatrix(mat4()),
         inScene(false),
+        camera_set(false),
         transformStateBOS(transform, 0, 0)
         {}
 };
@@ -57,17 +59,20 @@ void RenderManager::setPerspectiveProjection(float theta, float aspectRatio, flo
 
 void RenderManager::setCameraMatrix(const mat4_t& m) {
     self->cameraMatrix = m;
+    self->camera_set = true;
 }
 
 void RenderManager::beginScene() {
-    ASSERT(!self->inScene, "nested beginScene()!");
+    ASSERT_MSG(!self->inScene, "nested beginScene()!");
+    ASSERT(camera_set);
+    self->camera_set = false;
     self->inScene = true;
     self->transformStateBOS = self->transform.save();
     self->transform.concat(self->cameraMatrix);
 }
 
 void RenderManager::endScene() {
-    ASSERT(self->inScene, "cannot endScene() without beginScene()!");
+    ASSERT_MSG(self->inScene, "cannot endScene() without beginScene()!");
     self->inScene = false;
     self->transform.restore(self->transformStateBOS);
 }

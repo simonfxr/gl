@@ -42,9 +42,9 @@ vec2_t& operator *=(vec2_t& v, const vec2_t& b) MUT_FUNC;
 
 vec2_t& operator /=(vec2_t& v, float a) MUT_FUNC;
 
-bool operator ==(vec2_t& a, vec2_t& b) PURE_FUNC;
+bool operator ==(const vec2_t& a, const vec2_t& b) PURE_FUNC;
 
-bool operator !=(vec2_t& a, vec2_t& b) PURE_FUNC;
+bool operator !=(const vec2_t& a, const vec2_t& b) PURE_FUNC;
 
 float dot(const vec2_t& a, const vec2_t& b) PURE_FUNC;
 
@@ -78,7 +78,7 @@ direction2_t directionFromTo(const point2_t& a, const point2_t& b) PURE_FUNC;
 
 float cos(const vec2_t& a, const vec2_t& b) PURE_FUNC;
 
-vec2_t projectAlong(const vec2_t& a, const direction2_t& x) PURE_FUNC;
+vec2_t projectAlong(const vec2_t& a, const vec3_t& x) PURE_FUNC;
 
 bool equal(const vec2_t& a, const vec2_t& b, float epsi = 1e-4) PURE_FUNC;
 

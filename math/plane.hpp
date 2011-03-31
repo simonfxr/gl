@@ -12,6 +12,10 @@ struct plane3_t {
     float dist; // distance to origin
 };
 
+} // namespace math
+
+MATH_BEGIN_NAMESPACE
+
 plane3_t plane() PURE_FUNC;
 
 plane3_t plane(const direction3_t& normal, float dist) PURE_FUNC;
@@ -25,6 +29,11 @@ plane3_t planeParametric(const point3_t& a, const vec3_t& u, const vec3_t& v) PU
 // signed distance, positive on the side where the normal points
 float distance(const plane3_t& x, const point3_t& p) PURE_FUNC;
 
-} // namespace math
+MATH_END_NAMESPACE
+
+#if defined(MATH_INLINE)
+#define MATH_PLANE_INLINE
+#include "math/plane.cpp"
+#endif
 
 #endif

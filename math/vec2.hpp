@@ -6,7 +6,7 @@
 
 #if defined(MATH_INLINE) && !defined(MATH_VEC2_INLINE)
 #define MATH_VEC2_INLINE
-#include "math/vec2/vec2.cpp"
+#include "math/vec2/impl.cpp"
 #endif
 
 #endif

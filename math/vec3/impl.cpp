@@ -13,6 +13,10 @@ vec3_t vec3(float a) {
     return vec3(a, a, a);
 }
 
+vec3_t vec3(const ivec3_t& a) {
+    return vec3(a.x, a.y, a.z);
+}
+
 vec3_t vec3(const vec4_t& a) {
     return vec3(a.x, a.y, a.z);
 }
@@ -77,11 +81,11 @@ vec3_t& operator /=(vec3_t& v, const vec3_t& b) {
     return v = v / b;
 }
 
-bool operator ==(vec3_t& a, vec3_t& b) {
+bool operator ==(const vec3_t& a, const vec3_t& b) {
     return a.x == b.x && a.y == b.y && a.z == b.z;
 }
 
-bool operator !=(vec3_t& a, vec3_t& b) {
+bool operator !=(const vec3_t& a, const vec3_t& b) {
     return !(a == b);
 }
 
@@ -151,6 +155,10 @@ vec3_t recip(const vec3_t& a) {
     return vec3(recip(a.x), recip(a.y), recip(a.z));
 }
 
+vec3_t abs(const vec3_t& a) {
+    return vec3(abs(a.x), abs(a.y), abs(a.z));
+}
+
 vec3_t linearInterpolate(const vec3_t& a, const vec3_t& b, float t) {
     return a + t * (b - a);
 }
@@ -163,13 +171,14 @@ float cos(const vec3_t& a, const vec3_t& b) {
     return dot(a, b) / (length(a) * length(b));
 }
 
-vec3_t projectAlong(const vec3_t& a, const direction3_t& x) {
-    return dot(a, x) * x;
+vec3_t projectAlong(const vec3_t& a, const vec3_t& x) {
+    return (dot(a, x) / lengthSq(x)) * x;
 }
 
 bool equal(const vec3_t& a, const vec3_t& b, float epsi) {
-    return distance(a[0], b[0]) < epsi && distance(a[1], b[1]) < epsi &&
-        distance(a[2], b[2]) < epsi;
+    return distance(a[0], b[0]) < epsi &&
+           distance(a[1], b[1]) < epsi &&
+           distance(a[2], b[2]) < epsi;
 }
 
 MATH_END_NAMESPACE

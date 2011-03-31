@@ -43,9 +43,9 @@ vec4_t& operator *=(vec4_t& v, const vec4_t& b) MUT_FUNC;
 
 vec4_t& operator /=(vec4_t& v, float a) MUT_FUNC;
 
-bool operator ==(vec4_t& a, vec4_t& b) PURE_FUNC;
+bool operator ==(const vec4_t& a, const vec4_t& b) PURE_FUNC;
 
-bool operator !=(vec4_t& a, vec4_t& b) PURE_FUNC;
+bool operator !=(const vec4_t& a, const vec4_t& b) PURE_FUNC;
 
 float dot(const vec4_t& a, const vec4_t& b) PURE_FUNC;
 
