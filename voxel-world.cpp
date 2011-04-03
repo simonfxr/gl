@@ -37,10 +37,16 @@ static const vec3_t BLOCK_DIM = vec3(0.25f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
 static const int32 N = 128;
-static const int32 SPHERE_POINTS_FACE = 24;
+static const int32 SPHERE_POINTS_FACE = 128;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
 
+#define time(op) do {                                                   \
+        float T0 = now();                                               \
+        (op);                                                           \
+        float diff = now() - T0;                                        \
+        std::cerr << #op << " took " << diff << " seconds." << std::endl; \
+    } while (0)
 
 struct MaterialProperties {
     float ambientContribution;
@@ -168,7 +174,7 @@ bool Anim::onInit() {
 
     ticksPerSecond(100);
     maxDrawFramesSkipped(1);
-    maxFPS(0);
+    maxFPS(100);
 
     gamma_correction = 1.8f;
     
@@ -236,6 +242,10 @@ struct Rays {
     Ray rays[SPHERE_POINTS];
 };
 
+struct GlobalOcc {
+    Faces lambertFactor[N][N][N];
+};
+
 Faces cosfaces(direction3_t& dir, Faces& sumcos) {
     direction3_t as = abs(dir);
     int32 maxi;
@@ -272,16 +282,32 @@ void initRay(Ray& r, direction3_t& d, vec3_t step, Faces& sumcos) {
 
 void initRays(Rays &rays, const vec3_t dirs[]) {
     
-    rays.sumcos.f[0] = vec3(0.f);
-    rays.sumcos.f[1] = vec3(0.f);
-    
     const vec3_t center = vec3(N * 0.5f);
+
+    float cos0 = 0.f, cos1 = 0.f, cos2 = 0.f;
+    float cos3 = 0.f, cos4 = 0.f, cos5 = 0.f;
+
+#pragma omp parallel for reduction(+:cos0, cos1, cos2, cos3, cos4, cos5)
     for (uint32 i = 0; i < SPHERE_POINTS; ++i) {
         direction3_t d = normalize(dirs[i]);
         vec3_t p = N * (d * 0.5f + vec3(0.5f));
         vec3_t step = (p - center) / (10.f * N);
-        initRay(rays.rays[i], d, step, rays.sumcos);
+        Faces sum1 = { { vec3(0.f), vec3(0.f) } };
+        initRay(rays.rays[i], d, step, sum1);
+        cos0 += sum1.f[0][0];
+        cos1 += sum1.f[0][1];
+        cos2 += sum1.f[0][2];
+        cos3 += sum1.f[1][0];
+        cos4 += sum1.f[1][1];
+        cos5 += sum1.f[1][2];
     }
+
+    rays.sumcos.f[0][0] = cos0;
+    rays.sumcos.f[0][1] = cos1;
+    rays.sumcos.f[0][2] = cos2;
+    rays.sumcos.f[1][0] = cos3;
+    rays.sumcos.f[1][1] = cos4;
+    rays.sumcos.f[1][2] = cos5;
 }
 
 void testray(const World& w, World& vis, int32 i, int32 j, int32 k, int32 di, int32 dj, int32 dk) {
@@ -327,6 +353,7 @@ World *filterOccluded(const World& w) {
     bool fixpoint = false;
     while (!fixpoint) {
         fixpoint = true;
+#pragma omp parallel for
         for (uint32 i = 0; i < N; ++i) {
             for (uint32 j = 0; j < N; ++j) {
                 for (uint32 k = 0; k < N; ++k) {
@@ -396,72 +423,37 @@ bool blockAt(const vec3_t& p) {
     return (2 * p.y * p.y + 0.3) * (1 - distC) * r > 0.2f;
 }
 
+void createGeometry(World *world) {
+#pragma omp parallel for
+    for (uint32 i = 0; i < N; ++i)
+        for (uint32 j = 0; j < N; ++j)
+            for (uint32 k = 0; k < N; ++k)
+                world->shell[i][j][k] = blockAt(vec3(i, j, k) * (1.f / N));
+}
+
+void createOcclusionMap(GlobalOcc& occ, const World& world, const World& vis, const Rays& rays) {
+#pragma omp parallel for
+    for (uint32 i = 0; i < N; ++i)
+        for (uint32 j = 0; j < N; ++j)
+            for (uint32 k = 0; k < N; ++k)
+                if (vis.shell[i][j][k] && world.shell[i][j][k])
+                    occ.lambertFactor[i][j][k] = trace(world, rays, ivec3(i, j, k));
+}
+
 void Anim::initWorld() {
 
     World *world = new World;
 
     memset(world, 0, sizeof *world);
 
-    for (uint32 i = 0; i < N; ++i)
-        for (uint32 j = 0; j < N; ++j)
-            for (uint32 k = 0; k < N; ++k)
-                world->shell[i][j][k] = blockAt(vec3(i, j, k) * (1.f / N));
-
-    // const vec3_t center = vec3(N * 0.5f);
-    // for (uint32 k = 0; k < SPHERE_POINTS; ++k) {
-    //     vec3_t p = N * (normalize(sphere_points[k]) * 0.5f + vec3(0.5f));
-    //     vec3_t step = (p - center) / (10.f * N);
-    //     // ivec3 idx = ivec3(p);
-    //     // world->shell[idx.x][idx.y][idx.z] = true;
-    //     p = center;
-        
-    //     for (;;) {
-    //         ivec3_t idx = ivec3(p);
-    //         if (idx.x < 0 || idx.x >= N ||
-    //             idx.y < 0 || idx.y >= N ||
-    //             idx.z < 0 || idx.z >= N)
-    //             break;
-
-    //         world->shell[idx.x][idx.y][idx.z] = true;
-    //         p += step;
-    //     }
-    // }
-
+    time(createGeometry(world));
+    
     Rays *rays = new Rays;
-    initRays(*rays, sphere_points);
+    time(initRays(*rays, sphere_points));
     std::cerr << "rays crossing planes: " << rays->sumcos.f[0] << ", " << rays->sumcos.f[1] << std::endl;
 
-    // const ivec3_t center = ivec3(vec3(N) * 0.5f);
-    // for (uint32 i = 0; i < SPHERE_POINTS; ++i) {
-    //     uint32 j = 0;
-    //     ivec3_t p = center;
-    //     while (p.x >= 0 && p.x < N &&
-    //            p.y >= 0 && p.y < N &&
-    //            p.z >= 0 && p.z < N && j < RAY_SAMPLES) {
-    //         ASSERT(j < RAY_SAMPLES);
-    //         // if (p != center)
-    //         // std::cerr << "sphere point at: " << vec3(p)
-    //         //           << "[" << p.x << ", " << p.y << ", " << p.z << "]"
-    //         //           << std::endl;
-    //         world->shell[p.x][p.y][p.z] = true;
-    //         p = center + rays->rays[i].offset[j++];
-    //     }
-    // }
-
-    // for (uint32 i = 0; i < N; ++i) {
-    //     for (uint32 j = 0; j < N; ++j) {
-    //         world->shell[i][j][0] = true;
-    //         world->shell[i][j][N - 1] = true;
-    //         world->shell[i][0][j] = true;
-    //         world->shell[i][N-1][j] = true;
-    //         world->shell[0][i][j] = true;
-    //         world->shell[N-1][i][j] = true;
-    //     }
-    // }
-
-    World *vis = filterOccluded(*world);
-    // World *vis = new World;
-    // memset(vis, 1, sizeof *vis);
+    World *vis;
+    time(vis = filterOccluded(*world));
 
     uint32 permut[N];
     for (uint32 i = 0; i < N; ++i)
@@ -479,15 +471,9 @@ void Anim::initWorld() {
     uint32 faces = 0;
     uint32 visFaces = 0;
 
-    // for (uint32 i = 0; i < 32; ++i) {
-    //     for (uint32 j = 0; j < cubeModel.size(); ++j) {
-    //         Vertex v = cubeModel.at(j);
-    //         std::cerr << "position: " << v.position
-    //                   << ", normal: " << v.normal
-    //                   << std::endl;
-    //     }
-    // }
-    // std::cerr << "END DEBUG MODEL" << std::endl;
+    GlobalOcc *occmap = new GlobalOcc;
+    time(createOcclusionMap(*occmap, *world, *vis, *rays));
+
 
     for (uint32 i = 0; i < N; ++i) {
         for (uint32 j = 0; j < N; ++j) {
@@ -502,8 +488,7 @@ void Anim::initWorld() {
                 if (vis->shell[ii][jj][kk] && world->shell[ii][jj][kk]) {
                     ++visBlocks;
 
-                    Faces diffContr = trace(*world, *rays, ivec3(ii, jj, kk));
-//                    std::cerr << "diffContr: " << diffContr.f[0] << ", " << diffContr.f[1] << std::endl;
+                    const Faces& diffContr = occmap->lambertFactor[ii][jj][kk];
 
                     float height = (float) jj / N;
                     float hh = height * height * height;
@@ -536,6 +521,7 @@ void Anim::initWorld() {
     delete rays;
     delete vis;
     delete world;
+    delete occmap;
 
     std::cerr << "blocks: " << blocks << ", visible blocks: " << visBlocks << std::endl;
     std::cerr << "faces: " << faces << ", visible faces: " << visFaces << std::endl;

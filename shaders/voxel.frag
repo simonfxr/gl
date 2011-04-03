@@ -1,3 +1,5 @@
+#version 330
+
 #include "directional-light.h"
 #include "gamma.h"
 
@@ -16,16 +18,15 @@ void main() {
     /*                           vec4(materialProperties.x), vec4(materialProperties.z), */
     /*                           materialProperties.w); */
 
-    /* const vec4 lightColor = vec4(1); */
-
-    /* float phi = asin(sin_time); */
-    /* vec3 filter = abs(vec3(sin(0.3 * (phi + 3)), sin(0.6 * phi), sin(0.3 * phi))); */
-    
-    /* fragColor = (L + vec4(materialProperties.y)) * vec4(filter, 1) * lightColor * vColor; */
-    /* fragColor *= diffFactor; */
+    /* fragColor = (L + vec4(materialProperties.y)) * vColor; */
+    /* fragColor *= diff; */
     /* fragColor.a = 1; */
 
-    fragColor = vec4(diffFactor, 0, 0, 1);
+    float diff = min(diffFactor + 0.3, 1.0);
+
+    fragColor = vColor;
+    fragColor *= diff;
+    fragColor.a = 1.0;
     fragColor = gammaCorrect(fragColor);
 }
 
