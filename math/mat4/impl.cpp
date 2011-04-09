@@ -70,7 +70,7 @@ mat4_t operator *(float x, const mat4_t& A) {
 }
 
 mat4_t operator /(const mat4_t& A, float x) {
-    return A * math::recp(x);
+    return A * math::recip(x);
 }
 
 mat4_t& operator +=(mat4_t& A, const mat4_t& B) {

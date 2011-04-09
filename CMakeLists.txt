@@ -3,8 +3,8 @@
 set(ICC "/opt/intel/composerxe-2011.2.137/bin/intel64/icc")
 set(IXX "/opt/intel/composerxe-2011.2.137/bin/intel64/icpc")
 
-set(COMP_C gcc)
-set(COMP_CXX g++)
+set(COMP_C clang)
+set(COMP_CXX clang++)
 
 set(CMAKE_C_COMPILER_INIT ${COMP_C})
 
@@ -15,7 +15,9 @@ project(sim-sfml)
 
 #set(CMAKE_CXX_FLAGS "-xHOST -O3 -ipo -no-prec-div -DMATH_INLINE")
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -O3 -march=native -fopenmp -fno-exceptions -DMATH_INLINE -flto")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -O3 -DMATH_INLINE -DDEBUG -DGLDEBUG -march=native -fno-exceptions")
+
+#set(CMAKE_CXX_FLAGS "-fopenmp" ${CMAKE_CXX_FLAGS})
 
 set(CMAKE_LDFLAGS "-flto ${CMAKE_CXX_FLAGS}")
 
@@ -93,6 +95,8 @@ set(GE_SRC
 add_executable(sim-sfml
   sim-sfml.cpp
   defs.h
+  sim.hpp
+  sim.cpp
   
   ${MATH_SRC}
   ${GLT_SRC}

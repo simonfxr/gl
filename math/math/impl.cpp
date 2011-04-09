@@ -9,20 +9,16 @@ float sqrt(float x) {
     return sqrtf(x);
 }
 
-float recp(float x) {
+float recip(float x) {
     return 1.f / x;
 }
 
-float recip(float x) {
-    return recp(x);
-}
-
 float inverse(float x) {
-    return recp(x);
+    return recip(x);
 }
 
 float rsqrt(float x) {
-    return recp(sqrt(x));
+    return recip(sqrt(x));
 }
 
 float sin(float rad) {
@@ -59,7 +55,7 @@ void sincos(float rad, float& out_sin, float& out_cos) {
 }
 
 float rtan(float rad) {
-    return recp(tan(rad));
+    return recip(tan(rad));
 }
 
 float abs(float x) {
@@ -81,6 +77,29 @@ float squared(float x) {
 float cubed(float x) {
     return x * x * x;
 }
+
+float pow(float x, int32 n) {
+    if (n == 0) return 1.f;
+    
+    uint32 k = n < 0 ? -n : n;
+    float a = 1.f;
+    float p = x;
+
+    while (k > 1) {
+        if (k % 2 == 1)
+            a *= x;
+        k /= 2;
+        p *= p;
+    }
+
+    float r = a * p;
+    return n < 0 ? recip(r) : r;
+}
+
+float pow(float x, float y) {
+    return powf(x, y);
+}
+
 
 int32 signum(float x) {
     return x < 0.f ? -1 :

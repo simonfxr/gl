@@ -37,7 +37,7 @@ static const vec3_t BLOCK_DIM = vec3(0.25f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
 static const int32 N = 128;
-static const int32 SPHERE_POINTS_FACE = 128;
+static const int32 SPHERE_POINTS_FACE = 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
 
@@ -288,7 +288,7 @@ void initRays(Rays &rays, const vec3_t dirs[]) {
     float cos3 = 0.f, cos4 = 0.f, cos5 = 0.f;
 
 #pragma omp parallel for reduction(+:cos0, cos1, cos2, cos3, cos4, cos5)
-    for (uint32 i = 0; i < SPHERE_POINTS; ++i) {
+    for (int32 i = 0; i < SPHERE_POINTS; ++i) {
         direction3_t d = normalize(dirs[i]);
         vec3_t p = N * (d * 0.5f + vec3(0.5f));
         vec3_t step = (p - center) / (10.f * N);
@@ -354,9 +354,9 @@ World *filterOccluded(const World& w) {
     while (!fixpoint) {
         fixpoint = true;
 #pragma omp parallel for
-        for (uint32 i = 0; i < N; ++i) {
-            for (uint32 j = 0; j < N; ++j) {
-                for (uint32 k = 0; k < N; ++k) {
+        for (int32 i = 0; i < N; ++i) {
+            for (int32 j = 0; j < N; ++j) {
+                for (int32 k = 0; k < N; ++k) {
                     if (!vis.shell[i][j][k] &&
                         (visible(w, vis, i + 1, j, k) ||
                          visible(w, vis, i - 1, j, k) ||
@@ -380,7 +380,7 @@ World *filterOccluded(const World& w) {
 
 Faces trace(const World& w, const Rays& rs, const ivec3_t& p0) {
     Faces diffContr = { { vec3(0.f), vec3(0.f) } };
-    for (uint32 i = 0; i < SPHERE_POINTS; ++i) {
+    for (int32 i = 0; i < SPHERE_POINTS; ++i) {
         const Ray& ray = rs.rays[i];
         ivec3_t p = p0 + ray.offset[0];
         uint32 j = 0;
@@ -425,17 +425,17 @@ bool blockAt(const vec3_t& p) {
 
 void createGeometry(World *world) {
 #pragma omp parallel for
-    for (uint32 i = 0; i < N; ++i)
-        for (uint32 j = 0; j < N; ++j)
-            for (uint32 k = 0; k < N; ++k)
+    for (int32 i = 0; i < N; ++i)
+        for (int32 j = 0; j < N; ++j)
+            for (int32 k = 0; k < N; ++k)
                 world->shell[i][j][k] = blockAt(vec3(i, j, k) * (1.f / N));
 }
 
 void createOcclusionMap(GlobalOcc& occ, const World& world, const World& vis, const Rays& rays) {
 #pragma omp parallel for
-    for (uint32 i = 0; i < N; ++i)
-        for (uint32 j = 0; j < N; ++j)
-            for (uint32 k = 0; k < N; ++k)
+    for (int32 i = 0; i < N; ++i)
+        for (int32 j = 0; j < N; ++j)
+            for (int32 k = 0; k < N; ++k)
                 if (vis.shell[i][j][k] && world.shell[i][j][k])
                     occ.lambertFactor[i][j][k] = trace(world, rays, ivec3(i, j, k));
 }
@@ -456,10 +456,10 @@ void Anim::initWorld() {
     time(vis = filterOccluded(*world));
 
     uint32 permut[N];
-    for (uint32 i = 0; i < N; ++i)
+    for (int32 i = 0; i < N; ++i)
         permut[i] = i;
 
-    for (uint32 i = 0; i < N - 1; ++i) {
+    for (int32 i = 0; i < N - 1; ++i) {
         uint32 j = rand() % (N - i);
         uint32 t = permut[i];
         permut[i] = permut[i + j];
@@ -475,9 +475,9 @@ void Anim::initWorld() {
     time(createOcclusionMap(*occmap, *world, *vis, *rays));
 
 
-    for (uint32 i = 0; i < N; ++i) {
-        for (uint32 j = 0; j < N; ++j) {
-            for (uint32 k = 0; k < N; ++k) {
+    for (int32 i = 0; i < N; ++i) {
+        for (int32 j = 0; j < N; ++j) {
+            for (int32 k = 0; k < N; ++k) {
                 uint32 ii = permut[i];
                 uint32 jj = permut[permut[j]];
                 uint32 kk = permut[permut[permut[k]]];
@@ -509,7 +509,7 @@ void Anim::initWorld() {
                             v.position *= BLOCK_DIM;
                             v.position += offset;
                             v.normal.w = diffContr.f[side][face];
-                            v.color = col.rgba();
+                            v.color = col.rgba;
                             worldModel.add(v);
                         }
                     }

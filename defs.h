@@ -69,6 +69,8 @@ typedef long  int64;
 
 #define ATTR_ALIGNED(n) aligned(n)
 
+#define ATTR_NOINLINE noinline
+
 #define RESTRICT __restrict__
 
 #define LOCAL ATTRS(ATTR_NO_WARN_UNUSED_DEF)

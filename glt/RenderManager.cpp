@@ -64,7 +64,7 @@ void RenderManager::setCameraMatrix(const mat4_t& m) {
 
 void RenderManager::beginScene() {
     ASSERT_MSG(!self->inScene, "nested beginScene()!");
-    ASSERT(camera_set);
+    ASSERT(self->camera_set);
     self->camera_set = false;
     self->inScene = true;
     self->transformStateBOS = self->transform.save();

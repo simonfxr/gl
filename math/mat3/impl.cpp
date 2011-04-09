@@ -62,7 +62,7 @@ mat3_t operator *(float x, const mat3_t& A) {
 }
 
 mat3_t operator /(const mat3_t& A, float x) {
-    return A * math::recp(x);
+    return A * math::recip(x);
 }
 
 mat3_t& operator +=(mat3_t& A, const mat3_t& B) {
@@ -87,6 +87,14 @@ mat3_t& operator /=(mat3_t& A, float x) {
 
 vec3_t transform(const mat3_t& A, const vec3_t& v) {
     return A * v;
+}
+
+point3_t transformPoint(const mat3_t& A, const point3_t& v) {
+    return transform(A, v);
+}
+
+vec3_t transformVector(const mat3_t& A, const vec3_t& v) {
+    return transform(A, v);
 }
 
 mat3_t inverse(const mat3_t& A) {

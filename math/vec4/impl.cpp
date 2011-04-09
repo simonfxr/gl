@@ -89,7 +89,7 @@ vec4_t operator *(const vec4_t& a, const vec4_t& b) {
 }
 
 vec4_t operator /(const vec4_t& v, float a) {
-    return v * math::recp(a);
+    return v * math::recip(a);
 }
 
 vec4_t& operator +=(vec4_t& v, const vec4_t& a) {

@@ -43,7 +43,7 @@ mat4_t& operator /=(mat4_t& A, float x) MUT_FUNC;
 
 vec4_t transform(const mat4_t& A, const vec4_t& v) PURE_FUNC;
 
-vec3_t transformPoint(const mat4_t& A, const vec3_t& p) PURE_FUNC;
+vec3_t transformPoint(const mat4_t& A, const point3_t& p) PURE_FUNC;
 
 vec3_t transformVector(const mat4_t& A, const vec3_t& v) PURE_FUNC;
 

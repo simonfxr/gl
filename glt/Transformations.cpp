@@ -12,7 +12,7 @@ using namespace math;
 
 mat4_t perspectiveProjection(float radViewAngle, float aspectRatio, float z_near, float z_far) {
     float recp_tan_fov = rtan(radViewAngle);
-    float recp_aspect = recp(aspectRatio);
+    float recp_aspect = recip(aspectRatio);
 
     return mat4(vec4(-recp_aspect * recp_tan_fov, 0.f, 0.f, 0.f),
                 vec4(0.f, recp_tan_fov, 0.f, 0.f),

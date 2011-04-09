@@ -9,8 +9,15 @@
 namespace glt {
 
 struct color {
-    
-    byte r, g, b, a;
+
+    union {
+        
+        struct {
+            byte r, g, b, a;
+        };
+
+        uint32 rgba;
+    };
     
     color() {}
 
@@ -37,12 +44,9 @@ struct color {
     }
 
     math::vec4_t vec4() const {
+        using namespace math;
         static const float Scale = 1.f / 255.f;
         return math::vec4(r, g, b, a) * Scale;
-    }
-
-    uint32 rgba() const {
-        return *(uint32 *) &r;
     }
 };
 

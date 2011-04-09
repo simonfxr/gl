@@ -8,9 +8,11 @@ MATH_BEGIN_NAMESPACE
 
 static const float MATH_CONSTANT PI = 3.1415926;
 
-float sqrt(float x) PURE_FUNC;
+static const float MATH_CONSTANT POS_INF = 1.f / 0.f;
 
-float recp(float x) PURE_FUNC;
+static const float MATH_CONSTANT NEG_INF = -1.f / 0.f;
+
+float sqrt(float x) PURE_FUNC;
 
 float recip(float x) PURE_FUNC;
 
@@ -45,6 +47,10 @@ float distance(float x, float y) PURE_FUNC;
 float squared(float x) PURE_FUNC;
 
 float cubed(float x) PURE_FUNC;
+
+float pow(float x, int32 n) PURE_FUNC;
+
+float pow(float x, float y) PURE_FUNC;
 
 int32 signum(float x) PURE_FUNC;
 

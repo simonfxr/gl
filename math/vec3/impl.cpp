@@ -50,7 +50,7 @@ vec3_t operator *(const vec3_t& a, const vec3_t& b) {
 }
 
 vec3_t operator /(const vec3_t& v, float a) {
-    return v * math::recp(a);
+    return v * math::recip(a);
 }
 
 vec3_t operator /(const vec3_t& a, const vec3_t& b) {

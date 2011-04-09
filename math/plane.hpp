@@ -2,7 +2,9 @@
 #define PLANE_HPP
 
 #include "math/defs.hpp"
-#include "math/vec3.hpp"
+#include "math/vec3/type.hpp"
+#include "math/mat3/type.hpp"
+#include "math/mat4/type.hpp"
 
 namespace math {
 
@@ -27,7 +29,13 @@ plane3_t plane(const point3_t& a, const point3_t& b, const point3_t& c) PURE_FUN
 plane3_t planeParametric(const point3_t& a, const vec3_t& u, const vec3_t& v) PURE_FUNC;
 
 // signed distance, positive on the side where the normal points
-float distance(const plane3_t& x, const point3_t& p) PURE_FUNC;
+float distance(const plane3_t& P, const point3_t& a) PURE_FUNC;
+
+point3_t projectOnto(const plane3_t& P, const point3_t& a) PURE_FUNC;
+
+plane3_t transform(const mat3_t& A, const plane3_t& P) PURE_FUNC;
+
+plane3_t transform(const mat4_t& A, const plane3_t& P) PURE_FUNC;
 
 MATH_END_NAMESPACE
 

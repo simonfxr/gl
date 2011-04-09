@@ -49,7 +49,7 @@ vec2_t operator *(const vec2_t& a, const vec2_t& b) {
 }
 
 vec2_t operator /(const vec2_t& v, float a) {
-    return v * math::recp(a);
+    return v * math::recip(a);
 }
 
 vec2_t& operator +=(vec2_t& v, const vec2_t& a) {
