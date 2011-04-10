@@ -167,7 +167,8 @@ bool Game::onInit() {
     shaderManager.addPath("shaders");
 
     ticksPerSecond(100);
-    maxFPS(125);
+    maxFPS(0);
+    use_interpolation = true;
     grabMouse(true);
 
     if (!world.init())
@@ -183,7 +184,6 @@ bool Game::onInit() {
     sphere_proto.r = 0.3f;
 
     game_speed = 1.f;
-    use_interpolation = true;
     
     makeUnitCube(wallBatch);
 
@@ -530,7 +530,9 @@ void Game::render_con(const point3_t& a, const point3_t& b) {
     glt::SavePoint sp(transformPipeline.save());
 
     transformPipeline.translate(a);
-    mat3_t trans = mat3(b - a, vec3(0.f), vec3(0.f));
+    mat3_t trans = mat3(b - a,
+                        vec3(0.f, 1.f, 0.f),
+                        vec3(0.f, 0.f, 1.f));
     transformPipeline.concat(trans);
 
     identityShader.use();

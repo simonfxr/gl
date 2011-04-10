@@ -5,9 +5,8 @@
 #include <GL/glew.h>
 
 #include "defs.h"
-
+#include "math/math.hpp"
 #include "glt/utils.hpp"
-
 #include "ge/GameWindow.hpp"
 
 #ifdef SYSTEM_UNIX
@@ -20,7 +19,7 @@ namespace ge {
 struct KeyState {
     float keyAge;
 
-    KeyState() : keyAge(1.f / 0.f) {}
+    KeyState() : keyAge(math::POS_INF) {}
     
     KeyState(float age) : keyAge(age) {}
 
@@ -83,29 +82,24 @@ struct GameWindow::Data : public GameLoop::Game {
 
 GameWindow::Data::~Data() {
     if (owning_win) {
-        delete win;
-        win = 0;
+        delete win; win = 0;
     }
 
     if (owning_clock) {
-        delete clock;
-        clock = 0;
+        delete clock; clock = 0;
     }
 }
 
 #define SELF ({                                                         \
-    ASSERT_MSG(self != 0, "self == NULL (not initialized?)");               \
-    self;                                                               \
+            ASSERT_MSG(self != 0, "self == NULL (not initialized?)");   \
+            self;                                                       \
         })
 
 GameWindow::GameWindow() :
     self(0) {}
     
 GameWindow::~GameWindow() {
-    if (self != 0) {
-        delete self;
-        self = 0;
-    }
+    delete self; self = 0;
 }
 
 float GameWindow::Data::now() {
@@ -286,10 +280,8 @@ bool GameWindow::init(const std::string& windowTitle, sf::RenderWindow *win, sf:
 
     self = new Data(*this);
 
-    if (clock == 0) {
-        self->owning_clock = true;
-        self->clock = new sf::Clock;
-    }
+    self->owning_clock = clock == 0;
+    self->clock = clock == 0 ? new sf::Clock : clock;
 
     float startupT0 = self->clock->GetElapsedTime();
 
@@ -312,13 +304,8 @@ bool GameWindow::init(const std::string& windowTitle, sf::RenderWindow *win, sf:
 
     self->frame_duration = 0.f;
 
-    if (win == 0) {
-        self->owning_win = true;
-        self->win = createRenderWindow(windowTitle);
-    } else {
-        self->owning_win = false;
-        self->win = win;
-    }
+    self->owning_win = win == 0;
+    self->win = win == 0 ? createRenderWindow(windowTitle) : win;
     
     if (self->win != 0) {
         self->win->SetActive();

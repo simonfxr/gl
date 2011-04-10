@@ -133,6 +133,7 @@ void GeometryTransform::concat(const mat4_t& m) {
     self->dirty = true;
     ++self->mods[self->depth];
     self->mvMats[self->depth] *= m;
+    self->update();
 }
 
 vec4_t GeometryTransform::transform(const vec4_t& v) const {

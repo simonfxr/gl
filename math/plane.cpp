@@ -32,7 +32,10 @@ float distance(const plane3_t& P, const point3_t& a) {
 }
 
 point3_t projectOnto(const plane3_t& P, const point3_t& a) {
-    return a + (-dot(P.normal, a) + P.dist) * P.normal;
+//    return a + (-dot(P.normal, a) + P.dist) * P.normal;
+    point3_t b = P.normal * P.dist;
+    point3_t a_par = dot(P.normal, a) * P.normal;
+    return b + a - a_par;
 }
 
 plane3_t transform(const mat3_t& A, const plane3_t& P) {

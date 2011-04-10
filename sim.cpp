@@ -13,20 +13,51 @@
 
 using namespace math;
 
-struct Spring {
-    float D;
-    float l0;
+struct Particle {
+    point3_t pos;
+    vec3_t   vel;
+    float    invMass;
 };
 
-struct Connection {
-    uint32 id;
-    point3_t anchor;
-    Spring spring;
+struct ParticleRef {
+    uint16 index;
+    ParticleRef() {}
+    ParticleRef(uint16 i) : index(i) {}
 };
+
+struct SphereRef {
+    uint16 index;
+    SphereRef() {}
+    SphereRef(uint16 i) : index(i) {}
+};
+
+struct SphereData {
+    ParticleRef particle;
+    float r;
+};
+
+struct Contact {
+    direction3_t normal;
+    float distance;
+    float restitution;
+    ParticleRef x, y;
+};
+
+// struct Spring {
+//     float D;
+//     float l0;
+// };
+
+// struct Connection {
+//     SphereRef x;
+//     point3_t anchor;
+//     Spring spring;
+// };
+
 
 static const vec3_t GRAVITY = vec3(0.f, -9.81f, 0.f);
 
-static const float DAMPENING = 0.99f;
+static const float DAMPING = 0.97f;
 
 static const vec3_t ROOM_DIMENSIONS = vec3(40.f, 30.f, 40.f);
 
@@ -34,28 +65,26 @@ static float rand1() {
     return rand() * (1.f / RAND_MAX);
 }
 
-const plane3_t WALLS[6] = {
-    plane(vec3(+1.f, 0.f, 0.f), ROOM_DIMENSIONS.x * -0.5f), // left 
-    plane(vec3(-1.f, 0.f, 0.f), ROOM_DIMENSIONS.x * -0.5f), // right
-    plane(vec3(0.f, +1.f, 0.f), ROOM_DIMENSIONS.y * -0.5f), // bot  
-    plane(vec3(0.f, -1.f, 0.f), ROOM_DIMENSIONS.y * -0.5f), // top  
-    plane(vec3(0.f, 0.f, +1.f), ROOM_DIMENSIONS.z * -0.5f), // far      
-    plane(vec3(0.f, 0.f, -1.f), ROOM_DIMENSIONS.z * -0.5f), // near 
-};
-
 struct World::Data {
-    std::vector<Sphere> spheres;
+    std::vector<Particle> particles;
+    std::vector<SphereData> spheres;
     std::vector<SphereModel> sphereModels;
-    std::vector<Connection> connected;
     
     glt::Frame _camera;
     glt::AABB room;
 
-    bool collidesWall(const point3_t& center, float r, direction3_t& out_norma, point3_t& out_collision) ATTRS(ATTR_NOINLINE);
+    plane3_t walls[6];
+    ParticleRef world; // stationary particle with infinite mass
 
-    point3_t spherePosition(const Sphere& s, float dt) const;
-    bool collideSpheres(Sphere& x, Sphere& y, float dt);
-    void moveSphere(Sphere& s, float dt, float damp);
+    Particle& deref(ParticleRef ref);
+    SphereData& deref(SphereRef ref);
+    Sphere makeSphere(SphereRef ref);
+    
+    int32 collidesWall(const point3_t& center, float r, point3_t& out_collision);
+
+    void generateContacts(std::vector<Contact>& contacts, float dt);
+    void solveContacts(std::vector<Contact>& contacts, float dt);
+    void integrate(float dt);
 };
 
 World::World()
@@ -68,6 +97,21 @@ World::~World() {
 
 bool World::init() {
     const vec3_t dim = ROOM_DIMENSIONS * 0.5f;
+
+    self->walls[0] = plane(vec3(+1.f, 0.f, 0.f), ROOM_DIMENSIONS.x * -0.5f); // left 
+    self->walls[1] = plane(vec3(-1.f, 0.f, 0.f), ROOM_DIMENSIONS.x * -0.5f); // right
+    self->walls[2] = plane(vec3(0.f, +1.f, 0.f), ROOM_DIMENSIONS.y * -0.5f); // bot  
+    self->walls[3] = plane(vec3(0.f, -1.f, 0.f), ROOM_DIMENSIONS.y * -0.5f); // top  
+    self->walls[4] = plane(vec3(0.f, 0.f, +1.f), ROOM_DIMENSIONS.z * -0.5f); // far      
+    self->walls[5] = plane(vec3(0.f, 0.f, -1.f), ROOM_DIMENSIONS.z * -0.5f); // near
+
+    Particle world;
+    world.invMass = 0.f;
+    world.pos = vec3(0.f);
+    world.vel = vec3(0.f);
+
+    self->particles.push_back(world);
+    self->world.index = 0;
 
     self->room.corner_min = -dim;
     self->room.corner_max = dim;
@@ -93,10 +137,10 @@ void World::moveCamera(const vec3_t& step, float r) {
     glt::Frame new_cam = self->_camera;
     new_cam.translateLocal(step);
 
-    direction3_t coll_norm;
     point3_t coll_center;
-    if (self->collidesWall(new_cam.origin, r, coll_norm, coll_center))
-        new_cam.origin = coll_norm * r + coll_center;
+    int32 hit = self->collidesWall(new_cam.origin, r, coll_center);
+    if (hit >= 0)
+        new_cam.origin = self->walls[hit].normal * r + coll_center;
 
     self->_camera.origin = new_cam.origin;
 }
@@ -107,62 +151,58 @@ void World::rotateCamera(float rotx, float roty) {
 }
 
 void World::simulate(float dt) {
-    const uint32 n = self->spheres.size();
-    
-    for (uint32 i = 0; i < n; ++i)
-        for (uint32 j = 0; j < i; ++j)
-            self->collideSpheres(self->spheres[i], self->spheres[j], dt);
-
-    float damp = pow(DAMPENING, dt);
-
-    for (uint32 i = 0; i < n; ++i)
-        self->moveSphere(self->spheres[i], dt, damp);
-
-    for (uint32 i = 0; i < self->connected.size(); ++i) {
-        Connection& con = self->connected[i];
-        
-        Sphere& x = self->spheres[con.id];
-        point3_t anchor = con.anchor;
-
-        // F = -D (l - l0) (negative for the pull)
-        // p = F dt
-        // v = v0 + p / m
-        float l = distance(x.center, con.anchor);
-        float F = - con.spring.D * (l - con.spring.l0);
-        direction3_t r0 = (x.center - con.anchor) / l;
-        x.v += (F * dt / x.m) * r0;
+    {
+        std::vector<Contact> contacts;
+        self->generateContacts(contacts, dt);
+        self->solveContacts(contacts, dt);
     }
+    
+    self->integrate(dt);
 }
 
 void World::spawnSphere(const Sphere& s, const SphereModel& m) {
 
-    Spring spring;
-    spring.D = 100.f;
-    spring.l0 = 1.f;
+    // Spring spring;
+    // spring.D = 100.f;
+    // spring.l0 = 1.f;
 
-    self->spheres.push_back(s);
+    Particle p;
+    p.invMass = recip(s.m);
+    p.vel = s.v;
+    p.pos = s.center;
+    
+    SphereData sd;
+    sd.particle.index = self->particles.size();
+    sd.r = s.r;
+
+    self->particles.push_back(p);
+    self->spheres.push_back(sd);
     self->sphereModels.push_back(m);
 
-    uint16 n = self->spheres.size();
+    // uint16 n = self->spheres.size();
 
-    if (rand1() >= 0.5f) {
-        Connection con;
-        con.id = n - 1;
-        con.spring = spring;
-        con.anchor = ROOM_DIMENSIONS * (vec3(rand1(), 1.f, rand1()) - vec3(0.5f));
-        self->connected.push_back(con);
-    }
+    // if (rand1() >= 0.5f) {
+    //     Connection con;
+    //     con.x = n - 1;
+    //     con.spring = spring;
+    //     vec3_t sel = vec3(rand1(), 1.f, rand1()) - vec3(0.5f);
+    //     sel *= sel;
+    //     sel *= sel;
+    //     sel.y = 0.5f;
+    //     con.anchor = ROOM_DIMENSIONS * sel;
+    //     self->connected.push_back(con);
+    // }
 }
 
 struct SphereDistance {
-    uint32 id;
+    SphereRef sphere;
     float viewDist;
-    point3_t renderPos;
 
     static bool lessThan(const SphereDistance& d1, const SphereDistance& d2) {
         return d1.viewDist < d2.viewDist;
     }
-};
+    
+} ATTRS(ATTR_ALIGNED(8));
 
 void World::render(Renderer& renderer, float dt) {
     const uint32 n = self->spheres.size();
@@ -172,11 +212,13 @@ void World::render(Renderer& renderer, float dt) {
         std::vector<SphereDistance> spheres_ordered(n);
 
         for (uint32 i = 0; i < n; ++i) {
-            Sphere& s = self->spheres[i];
+            const SphereData& s = self->spheres[i];
+            const Particle& p = self->deref(s.particle);
+            const point3_t pos = p.pos + p.vel * dt;
+            
             SphereDistance d;
-            d.id = i;
-            d.renderPos = self->spherePosition(s, dt);
-            d.viewDist = max(0.f, distanceSq(d.renderPos, cam) - s.r * s.r);
+            d.sphere = SphereRef(i);
+            d.viewDist = max(0.f, distanceSq(pos, cam) - s.r * s.r);
             spheres_ordered[i] = d;
         }
 
@@ -184,276 +226,132 @@ void World::render(Renderer& renderer, float dt) {
 
         for (uint32 i = 0; i < n; ++i) {
             const SphereDistance& d = spheres_ordered[i];
-            Sphere& s = self->spheres[d.id];
-            point3_t old_center = s.center;
-            s.center = d.renderPos;
-            renderer.renderSphere(s, self->sphereModels[d.id]);
-            s.center = old_center;
+            Sphere s = self->makeSphere(d.sphere);
+            s.center += s.v * dt;
+            renderer.renderSphere(s, self->sphereModels[d.sphere.index]);
         }
 
     } else {
-        for (uint32 i = 0; i < n; ++i)
-            renderer.renderSphere(self->spheres[i], self->sphereModels[i]);
+        for (uint32 i = 0; i < n; ++i) {
+            Sphere s = self->makeSphere(SphereRef(i));
+            s.center += s.v * dt;
+            renderer.renderSphere(s, self->sphereModels[i]);
+        }
     }
 
-    uint32 ncon = self->connected.size();
-    for (uint32 i = 0; i < ncon; ++i) {
-        Connection& c = self->connected[i];
-        Sphere& x = self->spheres[c.id];
-        direction3_t r = directionFromTo(x.center, c.anchor);
-        renderer.renderConnection(x.center + x.r * r, c.anchor);
-    }
+    // uint32 ncon = self->connected.size();
+    // for (uint32 i = 0; i < ncon; ++i) {
+    //     Connection& c = self->connected[i];
+    //     Sphere& x = self->spheres[c.x];
+    //     direction3_t r = directionFromTo(x.center, c.anchor);
+    //     renderer.renderConnection(x.center + x.r * r, c.anchor);
+    // }
 
     renderer.renderBox(self->room);
 }
 
-bool World::Data::collidesWall(const point3_t& center, float r, direction3_t& out_normal, point3_t& out_collision) {
+int32 World::Data::collidesWall(const point3_t& center, float r, point3_t& out_collision) {
     float dist_min = r + 1;
+    int32 hit = -1;
 
     for (uint32 i = 0; i < 6; ++i) {
-        float dist = distance(WALLS[i], center);
+        float dist = distance(walls[i], center);
         if (dist < r && dist < dist_min) {
             dist_min = dist;
-            out_normal = WALLS[i].normal;
-            out_collision = projectOnto(WALLS[i], center);
+            hit = i;
+            out_collision = projectOnto(walls[i], center);
         }
     }
 
-    return dist_min < r;
+    return hit;
 }
 
-void World::Data::moveSphere(Sphere& s, float dt, float damp) {
-    s.center = spherePosition(s, dt);
+Particle& World::Data::deref(ParticleRef ref) {
+    return particles[ref.index];
+}
 
-    vec3_t a_friction = vec3(0.f);
-    // if (s.state == Rolling) {
-    //     // Fr = mu FN
-    //     // FN = -Fg
-    //     // Fg = m g
-    //     // Fr = - mu m g
-    //     // a  = Fr / m
-    //     // a  = - mu m g / m
-    //     //    = - mu g
-        
-    //     float mu = 0.01;
-    //     vec3_t a_friction = - length(GRAVITY) * mu * normalize(s.v);
-    // }
-    
-    s.v += (GRAVITY + a_friction) * dt;
-    s.v *= damp;
-    
-    direction3_t coll_norm;
-    point3_t coll_pos;
+SphereData& World::Data::deref(SphereRef ref) {
+    return spheres[ref.index];
+}
 
-    if (collidesWall(s.center, s.r, coll_norm, coll_pos)) {
-        s.v = reflect(s.v, coll_norm, rand1() * 0.1f + 0.9f) * 0.8f;
-        s.center = coll_pos + coll_norm * s.r;
+void World::Data::generateContacts(std::vector<Contact>& contacts, float dt) {
+    uint32 n = spheres.size();
+    for (uint32 i = 0; i < n; ++i) {
+        const SphereData& s1 = spheres[i];
+        const Particle& p1 = deref(s1.particle);
+        const point3_t pos1 = p1.pos;
 
-        if (equal(coll_norm, vec3(0.f, 1.f, 0.f)) && dot(s.v, coll_norm) < 0.2f) {
-            s.state = Rolling;
-            s.v -= dot(s.v, coll_norm) * coll_norm;
+        point3_t coll_pos;
+        int32 hit = collidesWall(pos1, s1.r, coll_pos);
+        if (hit >= 0) {
+            Contact con;
+            con.x = s1.particle;
+            con.y = world;
+            con.normal = walls[hit].normal;
+            point3_t nearest = projectOnto(walls[hit], p1.pos);
+            float dist = distance(p1.pos, nearest);
+            con.distance = dist - s1.r;
+            contacts.push_back(con);
+        }
+
+        for (uint32 j = 0; j < i; ++j) {
+            const SphereData s2 = spheres[j];
+            const Particle& p2 = deref(s2.particle);
+            const point3_t pos2 = p2.pos;
+
+            float dist2 = distanceSq(pos1, pos2);
+            if (dist2 < squared(s1.r + s2.r)) {
+                Contact con;
+                con.x = s1.particle;
+                con.y = s2.particle;
+                con.normal = directionFromTo(pos2, pos1);
+                con.distance = sqrt(dist2) - s1.r - s2.r;
+                contacts.push_back(con);
+            }
         }
     }
 }
 
-point3_t World::Data::spherePosition(const Sphere& s, float dt) const {
-    // s = s0 + v0 * dt + 1/2 * a * dt^2
-    // (dt^2 is really small so we can ignore the quadratic term)
-    return s.center + s.v * dt;
-}
+void World::Data::solveContacts(std::vector<Contact>& contacts, float dt) {
+    uint32 n = contacts.size();
+    for (uint32 i = 0; i < n; ++i) {
+        const Contact& con = contacts[i];
+        Particle& p1 = deref(con.x);
+        Particle& p2 = deref(con.y);
 
-bool World::Data::collideSpheres(Sphere& x, Sphere& y, float dt) {
-    point3_t xc = spherePosition(x, dt);
-    point3_t yc = spherePosition(y, dt);
+        const direction3_t n = con.normal;
 
-    float r = x.r + y.r;
-    
-    if (distanceSq(xc, yc) < r*r) {
+        float relNv = dot(p2.vel - p1.vel, n);
+        float remove = relNv - con.distance / dt;
 
-        // HACK: if we collided in the last frame and collision wasnt resolved correctly
-        // do it now, with a crude approximation (well no approx. at all...)
-        if (distanceSq(x.center, y.center) < r*r) {
-
-            vec3_t n1 = normalize(y.center - x.center);
-
-            x.v = length(x.v) * -n1;
-            y.v = length(y.v) * n1;
-
-        } else {
-
-            direction3_t toY = directionFromTo(xc, yc);
-            direction3_t toX = -toY;
-            
-            vec3_t vx_coll = projectAlong(x.v, toY);
-            vec3_t vx_rest = x.v - vx_coll;
-
-            vec3_t vy_coll = projectAlong(y.v, toX);
-            vec3_t vy_rest = y.v - vy_coll;
-
-            vec3_t ux = (x.m * vx_coll + y.m * (2.f * vy_coll - vx_coll)) / (x.m + y.m);
-            
-            // conservation of momentum
-            vec3_t uy = (x.m / y.m) * (vx_coll - ux) + vy_coll;
-
-            x.v = (rand1() * 0.1f + 0.9f) * ux + vx_rest;
-            y.v = (rand1() * 0.1f + 0.9f) * uy + vy_rest;
+        if (remove > 0) {
+            float p = remove / (p1.invMass + p2.invMass);
+            p1.vel += p * p1.invMass * n;
+            p2.vel -= p * p2.invMass * n;
         }
-
-        return true;
     }
-
-    return false;
 }
 
-// namespace {
-
-// static const uint32 ALLOC_BLOCK_SIZE = 1024;
-// static const uint32 DIM = 50;
-
-// struct SphereCollisionHandler {
-
-//     struct Tile {
-//         uint32 id;
-//         Tile *nxt;
-//     };
-
-//     struct AllocBlock {
-//         AllocBlock *nxt;
-//         Tile block[ALLOC_BLOCK_SIZE];
-
-//         AllocBlock(AllocBlock *pred = 0) :
-//             nxt(pred)
-//             {}
-//     };
-
-//     Tile *tiles[DIM][DIM][DIM];
+void World::Data::integrate(float dt) {
+    const vec3_t v_grav = GRAVITY * dt;
     
-//     std::vector<uint32> last_collisions;
-//     uint32 next_tile;
-//     AllocBlock *blocks;
+    uint32 n = particles.size();
+    for (uint32 i = 0; i < n; ++i) {
+        Particle& p = particles[i];
+        p.pos += p.vel * dt;
+        if (p.invMass != 0.f)
+            p.vel += v_grav;
+    }
+}
 
-//     SphereCollisionHandler(uint32 nspheres) :
-//         last_collisions(nspheres, 0),
-//         next_tile(0),
-//         blocks(new AllocBlock)
-//     {
-//         memset(tiles, 0, DIM * DIM * DIM * sizeof tiles[0][0][0]);
-//     }
-
-//     ~SphereCollisionHandler() {
-//         while (blocks != 0) {
-//             AllocBlock *b = blocks;
-//             blocks = blocks->nxt;
-//             delete b;
-//         }            
-//     }
-
-//     void insertTile(uint32 x, uint32 y, uint32 z, uint32 id) {
-        
-//         if (unlikely(next_tile >= ALLOC_BLOCK_SIZE)) {
-//             next_tile = 0;
-//             blocks = new AllocBlock(blocks);
-//         }
-
-//         Tile *t = &blocks->block[next_tile++];
-
-//         t->id = id;
-//         t->nxt = tiles[x][y][z];
-//         tiles[x][y][z] = t;
-//     }
-
-//     void collTile(std::vector<Sphere>& ss, float dt, uint32 x, uint32 y, uint32 z, uint32 id) {
-//         Sphere &s = ss[id];
-//         Tile *t = tiles[x][y][z];
-        
-//         while (t != 0) {
-            
-//             if (t->id < id && last_collisions[id] <= t->id) {
-//                 Sphere::collide(s, ss[t->id], dt);
-//                 last_collisions[id] = t->id + 1;
-//             }
-            
-//             t = t->nxt;
-//         }
-//     }
-    
-// };
-
-// } // namespace anon
-
-// static ivec3 calcTile(const vec3_t& isize, const vec3_t& room_min, const vec3_t& p) {
-//     return ivec3(compMult(isize, p - room_min)); 
-// }
-
-// static void calcRange(const Sphere& s, float dt, const vec3_t& isize, const vec3_t& room_min, ivec3& tileL, ivec3& tileH) {
-
-//     vec3_t pos1 = s.center;
-//     vec3_t pos2 = s.calc_position(dt);
-
-//     vec3_t cLow  = min(pos1, pos2) - vec3(s.r * 1.1f);
-//     vec3_t cHigh = max(pos1, pos2) + vec3(s.r * 1.1f);
-
-//     tileL = calcTile(isize, room_min, cLow);
-//     tileH = calcTile(isize, room_min, cHigh);
-    
-// }
-
-// static ivec3 clamp(const ivec3& low, const ivec3& high, const ivec3& v) {
-//     return imax(low, imin(high, v));
-// }
-
-// static void clampRange(const ivec3& low, const ivec3& high, ivec3& range_low, ivec3& range_high) {
-//     range_low = clamp(low, high, range_low);
-//     range_high = clamp(low, high, range_high);
-// }
-
-// void Game::resolve_collisions(float dt) {
-
-//     // float t0 = now();
-
-//     // {
-//     //     const uint32 dim = 50;
-//     //     const vec3_t diff = room.corner_max - room.corner_min;
-//     //     const vec3_t isize = vec3(dim / diff.x, dim / diff.y, dim / diff.z);
-//     //     const vec3_t low  = room.corner_min;
-
-//     //     const ivec3 tmin = ivec3(0);
-//     //     const ivec3 tmax = ivec3(dim - 1);
-
-//     //     SphereCollisionHandler coll(spheres.size());
-
-//     //     for (uint32 i = 0; i < spheres.size(); ++i) {
-        
-//     //         Sphere& s = spheres[i];
-
-//     //         ivec3 tileL, tileH;
-//     //         calcRange(s, dt, isize, room.corner_min, tileL, tileH);
-//     //         clampRange(tmin, tmax, tileL, tileH);
-
-//     //         for (int32 x = tileL.x; x <= tileH.x; ++x)
-//     //             for (int32 y = tileL.y; y <= tileH.y; ++y)
-//     //                 for (int32 z = tileL.z; z <= tileH.z; ++z)
-//     //                     coll.insertTile(x, y, z, i);
-//     //     }
-
-//     //     for (unsigned i = 0; i < spheres.size(); ++i) {
-        
-//     //         Sphere& s = spheres[i];
-//     //         ivec3 tileL, tileH;
-//     //         calcRange(s, dt, isize, room.corner_min, tileL, tileH);
-//     //         clampRange(tmin, tmax, tileL, tileH);
-
-//     //         for (int32 x = tileL.x; x <= tileH.x; ++x)
-//     //             for (int32 y = tileL.y; y <= tileH.y; ++y)
-//     //                 for (int32 z = tileL.z; z <= tileH.z; ++z)
-//     //                     coll.collTile(spheres, dt, x, y, z, i);
-//     //     }
-//     // }
-
-//     // std::cerr << "resolve_collisions: " << (now() - t0) << " seconds" << std::endl;
-
-//     for (uint32 i = 0; i < spheres.size(); ++i)
-//         for (uint32 j = 0; j < i; ++j)
-//             Sphere::collide(spheres[i], spheres[j], dt);
-    
-// }
+Sphere World::Data::makeSphere(SphereRef ref) {
+    SphereData s = deref(ref);
+    Particle p = deref(s.particle);
+    Sphere sp;
+    sp.center = p.pos;
+    sp.v = p.vel;
+    sp.m = recip(p.invMass);
+    sp.r = s.r;
+    sp.state = Bouncing;
+    return sp;
+}
