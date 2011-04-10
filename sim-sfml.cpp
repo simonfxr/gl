@@ -14,7 +14,9 @@
 
 #include "defs.h"
 
+#include "math/vec2.hpp"
 #include "math/vec3.hpp"
+#include "math/vec4.hpp"
 #include "math/ivec3.hpp"
 #include "math/mat4.hpp"
 #include "math/mat3.hpp"
@@ -34,8 +36,6 @@
 #include "ge/GameWindow.hpp"
 
 #include "sim.hpp"
-
-#include <GLTools.h>
 
 using namespace math;
 
@@ -620,7 +620,7 @@ int main(int argc, char *argv[]) {
     UNUSED(argc);
 
     if (argv[0] != 0)
-        gltSetWorkingDirectory(argv[0]);
+        glt::setWorkingDirectory(argv[0]);
 
     Game game;
     if (!game.init("sim-sfml")) {
@@ -675,14 +675,14 @@ void makeUnitCube(glt::GenBatch<Vertex>& cube) {
     cube.freeze();
 }
 
-void addTriangle(glt::GenBatch<Vertex>& s, const M3DVector3f vertices[3], const M3DVector3f normals[3], const M3DVector2f texCoords[3]) {
+void addTriangle(glt::GenBatch<Vertex>& s, const vec3_t vertices[3], const vec3_t normals[3], const vec2_t texCoords[3]) {
 
     UNUSED(texCoords);
     
     for (uint32 i = 0; i < 3; ++i) {
         Vertex v;
-        v.position = vec4(vec3(vertices[i]), 1.f);
-        v.normal = vec3(normals[i]);
+        v.position = vec4(vertices[i], 1.f);
+        v.normal = normals[i];
         s.add(v);
     }
 }
@@ -710,9 +710,9 @@ void gltMakeSphere(glt::GenBatch<Vertex>& sphereBatch, GLfloat fRadius, GLint iS
         // for the caps of the sphere. This however introduces texturing 
         // artifacts at the poles on some OpenGL implementations
         s = 0.0f;
-        M3DVector3f vVertex[4];
-        M3DVector3f vNormal[4];
-        M3DVector2f vTexture[4];
+        vec3_t vVertex[4];
+        vec3_t vNormal[4];
+        vec2_t vTexture[4];
 
         for ( j = 0; j < iSlices; j++) 
         {
@@ -781,13 +781,13 @@ void gltMakeSphere(glt::GenBatch<Vertex>& sphereBatch, GLfloat fRadius, GLint iS
             addTriangle(sphereBatch, vVertex, vNormal, vTexture);
 			
             // Rearrange for next triangle
-            memcpy(vVertex[0], vVertex[1], sizeof(M3DVector3f));
-            memcpy(vNormal[0], vNormal[1], sizeof(M3DVector3f));
-            memcpy(vTexture[0], vTexture[1], sizeof(M3DVector2f));
+            vVertex[0] = vVertex[1];
+            vNormal[0] = vNormal[1];
+            vTexture[0] = vTexture[1];
 			
-            memcpy(vVertex[1], vVertex[3], sizeof(M3DVector3f));
-            memcpy(vNormal[1], vNormal[3], sizeof(M3DVector3f));
-            memcpy(vTexture[1], vTexture[3], sizeof(M3DVector2f));
+            vVertex[1] = vVertex[3];
+            vNormal[1] = vNormal[3];
+            vTexture[1] = vTexture[3];
 					
             addTriangle(sphereBatch, vVertex, vNormal, vTexture);			
         }

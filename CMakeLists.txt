@@ -38,10 +38,6 @@ link_libraries(${LIBGLEW_LIBRARIES})
 
 link_libraries(sfml-window sfml-graphics sfml-system)
 
-link_libraries(-L.)
-link_libraries(gltools)
-link_libraries(-Wl,-rpath,$ENV{PWD})
-
 set(MATH_SRC
 
   math/vec2.hpp
