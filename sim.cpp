@@ -10,6 +10,26 @@
 #include <algorithm>
 
 #include <cstdlib>
+#include <ctime>
+
+#include <SFML/System/Clock.hpp>
+
+#if 0
+
+#define time_msg(msg, op) do {                                          \
+        sf::Clock c;                                                    \
+        float __t0 = c.GetElapsedTime();                                \
+        { op }                                                          \
+        float __delta = c.GetElapsedTime() - __t0;                      \
+        __delta *= 1000.f;                                              \
+        std::cout << msg << " took " << __delta << " ms" << std::endl; \
+    } while (0)
+
+#else
+
+#define time_msg(msg, op) do { op } while (0)
+
+#endif
 
 using namespace math;
 
@@ -21,15 +41,23 @@ struct Particle {
 
 struct ParticleRef {
     uint16 index;
-    ParticleRef() {}
-    ParticleRef(uint16 i) : index(i) {}
 };
 
 struct SphereRef {
     uint16 index;
-    SphereRef() {}
-    SphereRef(uint16 i) : index(i) {}
 };
+
+namespace {
+
+ParticleRef particleRef(uint16 index) {
+    ParticleRef r; r.index = index; return r;
+}
+
+SphereRef sphereRef(uint16 index) {
+    SphereRef r; r.index = index; return r;
+}
+
+}
 
 struct SphereData {
     ParticleRef particle;
@@ -54,7 +82,6 @@ struct Contact {
 //     Spring spring;
 // };
 
-
 static const vec3_t GRAVITY = vec3(0.f, -9.81f, 0.f);
 
 static const float DAMPING = 0.97f;
@@ -64,6 +91,10 @@ static const vec3_t ROOM_DIMENSIONS = vec3(40.f, 30.f, 40.f);
 static float rand1() {
     return rand() * (1.f / RAND_MAX);
 }
+
+struct BSP;
+struct Box;
+struct Node;
 
 struct World::Data {
     std::vector<Particle> particles;
@@ -85,6 +116,9 @@ struct World::Data {
     void generateContacts(std::vector<Contact>& contacts, float dt);
     void solveContacts(std::vector<Contact>& contacts, float dt);
     void integrate(float dt);
+
+    void insertBSP(BSP *&p, int ni, Box volume, uint32 d, Node *node, const point3_t& center, float r);
+    void findCollisions(std::vector<Contact>& contacts, const BSP *t, int ni, std::vector<bool>& collided, SphereRef s, const point3_t& center, float r);
 };
 
 World::World()
@@ -111,7 +145,7 @@ bool World::init() {
     world.vel = vec3(0.f);
 
     self->particles.push_back(world);
-    self->world.index = 0;
+    self->world = particleRef(0);
 
     self->room.corner_min = -dim;
     self->room.corner_max = dim;
@@ -153,8 +187,8 @@ void World::rotateCamera(float rotx, float roty) {
 void World::simulate(float dt) {
     {
         std::vector<Contact> contacts;
-        self->generateContacts(contacts, dt);
-        self->solveContacts(contacts, dt);
+        time_msg("generating contacts", self->generateContacts(contacts, dt););
+        time_msg("solving contacts", self->solveContacts(contacts, dt););
     }
     
     self->integrate(dt);
@@ -215,16 +249,19 @@ void World::render(Renderer& renderer, float dt) {
             const SphereData& s = self->spheres[i];
             const Particle& p = self->deref(s.particle);
             const point3_t pos = p.pos + p.vel * dt;
+            if (glt::clipped(testSphere(renderer.frustum(), p.pos, s.r)))
+                continue;
             
             SphereDistance d;
-            d.sphere = SphereRef(i);
+            d.sphere = sphereRef(i);
             d.viewDist = max(0.f, distanceSq(pos, cam) - s.r * s.r);
-            spheres_ordered[i] = d;
+            //   spheres_ordered[i] = d;
+            spheres_ordered.push_back(d);
         }
 
         std::sort(spheres_ordered.begin(), spheres_ordered.end(), SphereDistance::lessThan);
 
-        for (uint32 i = 0; i < n; ++i) {
+        for (uint32 i = 0; i < spheres_ordered.size(); ++i) {
             const SphereDistance& d = spheres_ordered[i];
             Sphere s = self->makeSphere(d.sphere);
             s.center += s.v * dt;
@@ -233,7 +270,7 @@ void World::render(Renderer& renderer, float dt) {
 
     } else {
         for (uint32 i = 0; i < n; ++i) {
-            Sphere s = self->makeSphere(SphereRef(i));
+            Sphere s = self->makeSphere(sphereRef(i));
             s.center += s.v * dt;
             renderer.renderSphere(s, self->sphereModels[i]);
         }
@@ -274,7 +311,183 @@ SphereData& World::Data::deref(SphereRef ref) {
     return spheres[ref.index];
 }
 
+struct Box {
+    point3_t center;
+    vec3_t halfWidth;
+};
+
+struct BSP;
+
+bool isLeaf(const BSP* bsp);
+
+struct Node {
+    SphereRef sphere;
+    Node *nxt;
+};
+
+struct BSP {
+    plane3_t plane;
+
+    union Child {
+        BSP *tree;
+        Node *list;
+    };
+
+    Child down[2]; // front, back
+
+    ~BSP() {
+        if (!isLeaf(this)) {
+            delete down[0].tree;
+            delete down[1].tree;
+        } else {
+            Node *node = down[1].list;
+            while (node != 0) {
+                Node *prev = node;
+                node = node->nxt;
+                prev->nxt = 0;
+                delete prev;
+            }
+        }
+    }
+};
+
+static const BSP marker_leaf = { plane(), { { 0 }, { 0 } } };
+static BSP * const leaf_marker = (BSP *) &marker_leaf;
+
+
+bool isLeaf(const BSP* t) {
+    return t->down[0].tree == leaf_marker;
+}
+
+direction3_t NORMALS[3] = {
+    vec3(1.f, 0.f, 0.f),
+    vec3(0.f, 1.f, 0.f),
+    vec3(0.f, 0.f, 1.f)
+};
+
+plane3_t makePlane(int ni, const Box& vol) {
+    const vec3_t& n = NORMALS[ni];
+    return plane(n, sum(vol.center * n));
+}
+
+Box split(const Box& enclosing, int ni, float sign) {
+    Box b;
+    b.halfWidth = enclosing.halfWidth * (vec3(1.f) - vec3(0.5f) * NORMALS[ni]);
+    b.center = enclosing.center + sign * (enclosing.halfWidth - b.halfWidth);
+    return b;
+}
+
+static const uint32 MAX_DEPTH = 10;
+
+static uint32 num_tree;
+static uint32 num_nodes;
+
+void World::Data::insertBSP(BSP *&p, int ni, Box volume, uint32 depth, Node *node, const point3_t& center, float r) {
+    
+    if (p == 0) {
+        p = new BSP;
+        ++num_tree;
+//        ASSERT(node->nxt == 0);
+        p->plane = makePlane(ni, volume);
+        p->down[0].tree = leaf_marker;
+        p->down[1].list = node;
+        return;
+    }
+
+    if (isLeaf(p)) {
+        if (depth >= MAX_DEPTH) {
+            node->nxt = p->down[1].list;
+            p->down[1].list = node;
+        } else {
+            Node *other = p->down[1].list;
+            // must have exactly one Node
+//            ASSERT(other->nxt == 0);
+            SphereRef s2 = other->sphere;
+            const SphereData& s2d = deref(s2);
+            const Particle& p2 = deref(s2d.particle);
+            p->down[0].tree = p->down[1].tree = 0;
+            insertBSP(p, ni, volume, depth, other, p2.pos, s2d.r);
+            insertBSP(p, ni, volume, depth, node, center, r);
+        }
+        return;
+    }
+
+    float d = distance(p->plane, center);
+    float d0 = abs(d);
+    float sign = signum(d);
+    uint32 ni2 = (ni + 1) % 3;
+    if (sign == 0.f) sign = 1.f;
+    uint32 face = sign > 0 ? 0 : 1;
+    
+    ++depth;
+
+    if (d0 > r) {
+        insertBSP(p->down[face].tree, ni2, split(volume, ni2, sign), depth, node, center, r);
+        return;
+    }
+
+    insertBSP(p->down[face].tree, ni2, split(volume, ni2, sign), depth, node, center, r);
+    Node *copy = new Node;
+    ++num_nodes;
+    copy->nxt = 0;
+    copy->sphere = node->sphere;
+    insertBSP(p->down[!face].tree, ni2, split(volume, ni2, -sign), depth, copy, center, r);
+}
+
+void World::Data::findCollisions(std::vector<Contact>& contacts, const BSP *t, int ni, std::vector<bool>& collided,SphereRef s, const point3_t& center, float r) {
+    
+    if (t == 0) return;
+    
+    if (isLeaf(t)) {
+
+        Node *list = t->down[1].list;
+        while (list != 0) {
+
+            if (s.index >= list->sphere.index) {
+                const SphereData& s2 = deref(list->sphere);
+                const Particle& p2 = deref(s2.particle);
+
+                if (!collided[s2.particle.index]) {
+                    float dist2 = distanceSq(center, p2.pos);
+                    if (dist2 < squared(r + s2.r)) {
+                        collided[s2.particle.index] = true;
+                        Contact con;
+                        const SphereData& s1 = deref(s);
+                        con.x = s1.particle;
+                        con.y = s2.particle;
+                        con.normal = directionFromTo(p2.pos, center);
+                        con.distance = sqrt(dist2) - r - s2.r;
+                        contacts.push_back(con);
+                    }
+                }
+            }
+            
+            list = list->nxt;
+        }
+        
+        return;
+    }
+
+    float d = distance(t->plane, center);
+    float d0 = abs(d);
+    float sign = signum(d);
+    uint32 ni2 = (ni + 1) % 3;
+    if (sign == 0.f) sign = 1.f;
+    uint32 face = sign > 0 ? 0 : 1;
+
+    if (d0 > r) {
+        findCollisions(contacts, t->down[face].tree, ni2, collided, s, center, r);
+        return;
+    }
+
+    findCollisions(contacts, t->down[face].tree, ni2, collided, s, center, r);
+    findCollisions(contacts, t->down[!face].tree, ni2, collided, s, center, r);
+}
+
 void World::Data::generateContacts(std::vector<Contact>& contacts, float dt) {
+
+    UNUSED(dt);
+    
     uint32 n = spheres.size();
     for (uint32 i = 0; i < n; ++i) {
         const SphereData& s1 = spheres[i];
@@ -294,22 +507,59 @@ void World::Data::generateContacts(std::vector<Contact>& contacts, float dt) {
             contacts.push_back(con);
         }
 
-        for (uint32 j = 0; j < i; ++j) {
-            const SphereData s2 = spheres[j];
-            const Particle& p2 = deref(s2.particle);
-            const point3_t pos2 = p2.pos;
+        // for (uint32 j = 0; j < i; ++j) {
+        //     const SphereData s2 = spheres[j];
+        //     const Particle& p2 = deref(s2.particle);
+        //     const point3_t pos2 = p2.pos;
 
-            float dist2 = distanceSq(pos1, pos2);
-            if (dist2 < squared(s1.r + s2.r)) {
-                Contact con;
-                con.x = s1.particle;
-                con.y = s2.particle;
-                con.normal = directionFromTo(pos2, pos1);
-                con.distance = sqrt(dist2) - s1.r - s2.r;
-                contacts.push_back(con);
-            }
-        }
+        //     float dist2 = distanceSq(pos1, pos2);
+        //     if (dist2 < squared(s1.r + s2.r)) {
+        //         Contact con;
+        //         con.x = s1.particle;
+        //         con.y = s2.particle;
+        //         con.normal = directionFromTo(pos2, pos1);
+        //         con.distance = sqrt(dist2) - s1.r - s2.r;
+        //         contacts.push_back(con);
+        //     }
+        // }
     }
+
+    BSP *root = 0;
+    Box volume;
+    volume.center = room.center();
+    volume.halfWidth = 0.5f * (room.corner_max - room.corner_min);
+
+    num_tree = 0;
+    num_nodes = 0;
+
+    time_msg("tree building", 
+    for (uint32 i = 0; i < n; ++i) {
+        const SphereData& s1 = spheres[i];
+        const Particle& p1 = deref(s1.particle);
+        Node *node = new Node;
+        ++num_nodes;
+        node->nxt = 0;
+        node->sphere = sphereRef(i);
+        insertBSP(root, 0, volume, 0, node, p1.pos, s1.r);
+    });
+
+    time_msg("testing collisions",
+    std::vector<bool> collided(particles.size(), false);
+
+    for (uint32 i = 0; i < n; ++i) {
+        const SphereData& s1 = spheres[i];
+        const Particle& p1 = deref(s1.particle);
+        uint32 num_coll = contacts.size();
+        findCollisions(contacts, root, 0, collided, sphereRef(i), p1.pos, s1.r);
+        uint32 k = contacts.size();
+        for (uint32 j = num_coll; j < k; ++j) {
+            collided[contacts[j].y.index] = false;
+        }
+    });
+
+//    std::cerr << "number of tree nodes: " << num_tree << ", number of list nodes: " << num_nodes << std::endl;
+
+    delete root;            
 }
 
 void World::Data::solveContacts(std::vector<Contact>& contacts, float dt) {

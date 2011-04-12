@@ -17,11 +17,11 @@ project(sim-sfml)
 
 #set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -O3 -DMATH_INLINE -DDEBUG -DGLDEBUG -march=native -fno-exceptions")
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -DMATH_INLINE -DDEBUG -DGLDEBUG -fno-exceptions -O3 -march=native")
+set(GRAPHITE_OPTS "-floop-strip-mine -floop-block -floop-interchange")
 
-#set(CMAKE_CXX_FLAGS "-fopenmp" ${CMAKE_CXX_FLAGS})
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -DMATH_INLINE -DDEBUG -DGLDEBUG -fno-exceptions -O0 -ggdb -march=native")
 
-set(CMAKE_LDFLAGS "-flto ${CMAKE_CXX_FLAGS}")
+#set(CMAKE_LDFLAGS "${CMAKE_CXX_FLAGS}")
 
 #set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb")
 

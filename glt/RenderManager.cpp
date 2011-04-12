@@ -69,6 +69,7 @@ void RenderManager::beginScene() {
     self->inScene = true;
     self->transformStateBOS = self->transform.save();
     self->transform.concat(self->cameraMatrix);
+//    self->frustum.updateView
 }
 
 void RenderManager::endScene() {

@@ -56,6 +56,12 @@ void error(const char *msg, const char *file, int line, const char *func) {
               << " message: " << msg << std::endl;
 }
 
+void error_once(const char *msg, const char *file, int line, const char *func) {
+    std::cerr << "ERROR (only reported once) in "<< func << "()" << std::endl
+              << " at " << file << ":" << line << std::endl
+              << " message: " << msg << std::endl;
+}
+
 void fatal_error(const char *msg, const char *file, int line, const char *func) {
     error(msg, file, line, func);
     exit(2);
@@ -409,15 +415,15 @@ void setWorkingDirectory(const char *filename) {
         char *copy = new char[len + 1];
         memcpy(copy, filename, len + 1);
         uint32 i = len;
-        while (len > 0) {
-            --len;
-            if (copy[len] == '/') {
-                copy[len] = '\0';
+        while (i > 0) {
+            --i;
+            if (copy[i] == '/') {
+                copy[i] = '\0';
                 break;
             }
         }
 
-        if (len == 0) {
+        if (i == 0) {
             ERROR("not a directory"); return;
         }
 

@@ -5,6 +5,7 @@
 #include "glt/color.hpp"
 #include "glt/Frame.hpp"
 #include "glt/AABB.hpp"
+#include "glt/ViewFrustum.hpp"
 
 enum SphereState { Bouncing, Rolling };
 
@@ -27,6 +28,9 @@ struct Game;
 struct Renderer {
     Renderer(Game& _g) : game(_g) {}
     Game& game;
+
+    const glt::ViewFrustum& frustum();
+
     void renderSphere(const Sphere& sphere, const SphereModel& model);
     void renderBox(const glt::AABB& box);
     void renderConnection(const math::point3_t& a, const math::point3_t& b);

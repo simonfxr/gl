@@ -20,7 +20,9 @@ Outcode testSphere(const ViewFrustum& frust, const vec3_t& center, float rad) {
     UNUSED(frust); UNUSED(center); UNUSED(rad);
 
     // FIXME: implement!
-    FATAL_ERROR("not yet implemented");
+    ERROR_ONCE("not yet implemented");
+
+    return 0;
     
     // Outcode code = 0;
 

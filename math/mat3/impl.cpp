@@ -85,6 +85,54 @@ mat3_t& operator /=(mat3_t& A, float x) {
     return A = A / x;
 }
 
+float determinant(const mat3_t& A) {
+    const mat3_t AT = transpose(A);
+    struct { const float *data; } m = { AT.components };
+
+    float t4 = m.data[0]*m.data[4];
+    float t6 = m.data[0]*m.data[5];
+    float t8 = m.data[1]*m.data[3];
+    float t10 = m.data[2]*m.data[3];
+    float t12 = m.data[1]*m.data[6];
+    float t14 = m.data[2]*m.data[6];
+    // Calculate the determinant.
+    float t16 = (t4*m.data[8] - t6*m.data[7] - t8*m.data[8] +
+                 t10*m.data[7] + t12*m.data[5] - t14*m.data[4]);
+    return t16;
+}
+
+mat3_t inverse(const mat3_t& A) {
+    const mat3_t AT = transpose(A);
+    mat3_t B;
+    struct { const float *data; } m = { AT.components };
+    float *data = B.components;
+
+    float t4 = m.data[0]*m.data[4];
+    float t6 = m.data[0]*m.data[5];
+    float t8 = m.data[1]*m.data[3];
+    float t10 = m.data[2]*m.data[3];
+    float t12 = m.data[1]*m.data[6];
+    float t14 = m.data[2]*m.data[6];
+    // Calculate the determinant.
+    float t16 = (t4*m.data[8] - t6*m.data[7] - t8*m.data[8] +
+                 t10*m.data[7] + t12*m.data[5] - t14*m.data[4]);
+    
+    // Make sure the determinant is non-zero.
+    if (t16 == 0.0f) return mat3(0.f);
+    float t17 = 1/t16;
+    data[0] = (m.data[4]*m.data[8]-m.data[5]*m.data[7])*t17; 
+    data[1] = -(m.data[1]*m.data[8]-m.data[2]*m.data[7])*t17;
+    data[2] = (m.data[1]*m.data[5]-m.data[2]*m.data[4])*t17; 
+    data[3] = -(m.data[3]*m.data[8]-m.data[5]*m.data[6])*t17;
+    data[4] = (m.data[0]*m.data[8]-t14)*t17;                 
+    data[5] = -(t6-t10)*t17;                                 
+    data[6] = (m.data[3]*m.data[7]-m.data[4]*m.data[6])*t17; 
+    data[7] = -(m.data[0]*m.data[7]-t12)*t17;                
+    data[8] = (t4-t8)*t17;
+
+    return transpose(B);
+}
+
 vec3_t transform(const mat3_t& A, const vec3_t& v) {
     return A * v;
 }
@@ -95,11 +143,6 @@ point3_t transformPoint(const mat3_t& A, const point3_t& v) {
 
 vec3_t transformVector(const mat3_t& A, const vec3_t& v) {
     return transform(A, v);
-}
-
-mat3_t inverse(const mat3_t& A) {
-    UNUSED(A);
-    FATAL_ERROR("not yet implemented");
 }
 
 mat3_t transpose(const mat3_t& A) {

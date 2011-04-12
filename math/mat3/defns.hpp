@@ -37,13 +37,15 @@ mat3_t& operator *=(mat3_t& A, const mat3_t& B) MUT_FUNC;
 
 mat3_t& operator /=(mat3_t& A, float x) MUT_FUNC;
 
+float determinant(const mat3_t& A) PURE_FUNC;
+
+mat3_t inverse(const mat3_t& A) PURE_FUNC;
+
 vec3_t transform(const mat3_t& A, const vec3_t& v) PURE_FUNC;
 
 point3_t transformPoint(const mat3_t& A, const point3_t& v) PURE_FUNC;
 
 vec3_t transformVector(const mat3_t& A, const vec3_t& v) PURE_FUNC;
-
-mat3_t inverse(const mat3_t& A) PURE_FUNC;
 
 mat3_t transpose(const mat3_t& A) PURE_FUNC;
 

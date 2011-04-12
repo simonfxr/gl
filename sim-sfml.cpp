@@ -79,8 +79,6 @@ std::ostream& LOCAL operator << (std::ostream& out, const vec3_t& v) {
 
 struct Game EXPLICIT : public ge::GameWindow {
 
-    glt::GeometryTransform  transformPipeline;
-
     glt::GenBatch<Vertex> wallBatch;
     glt::GenBatch<Vertex> sphereBatch;
     glt::GenBatch<Vertex> lineBatch;
@@ -91,6 +89,8 @@ struct Game EXPLICIT : public ge::GameWindow {
     Renderer renderer;
     
     glt::ShaderManager shaderManager;
+    glt::RenderManager renderManager;
+    glt::GeometryTransform& transformPipeline;
 
     glt::ShaderProgram wallShader;
     struct {
@@ -112,6 +112,11 @@ struct Game EXPLICIT : public ge::GameWindow {
     uint32 current_fps;
     float  fps_render_next;
     float  fps_render_last;
+
+    float  current_avg_draw_time;
+    uint32 num_draws;
+    float  draw_time_accum;
+    float  draw_time_render_next;
 
     float game_speed;
 
@@ -148,6 +153,7 @@ Game::Game() :
     sphereBatch(vertexAttrs),
     lineBatch(vertexAttrs),
     renderer(*this),
+    transformPipeline(renderManager.geometryTransform()),
     wallShader(shaderManager),
     sphereShader(shaderManager),
     identityShader(shaderManager)
@@ -177,6 +183,9 @@ bool Game::onInit() {
     world.render_by_distance = true;
 
     last_frame_rendered = 0;
+
+    num_draws = 0;
+    draw_time_accum = 0.f;
 
     sphere_speed = 10.f;
     sphere_proto.state = Bouncing;
@@ -299,9 +308,10 @@ void Game::windowResized(uint32 width, uint32 height) {
     float fov = degToRad(17.5f);
     float aspect = float(width) / float(height);
 
-    mat4_t proj = glt::perspectiveProjection(fov, aspect, 1.f, 100.f);
+//    mat4_t proj = glt::perspectiveProjection(fov, aspect, 1.f, 100.f);
     
-    transformPipeline.loadProjectionMatrix(proj);
+//    transformPipeline.loadProjectionMatrix(proj);
+    renderManager.setPerspectiveProjection(fov, aspect, 1.f, 100.f);
 }
 
 void Game::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
@@ -401,6 +411,11 @@ void Game::renderScene(float interpolation) {
 
     if (!use_interpolation)
         interpolation = 0.f;
+
+    renderManager.setCameraMatrix(transformationWorldToLocal(world.camera()));
+    renderManager.beginScene();
+
+    float t0 = now();
     
     last_frame_rendered = currentFrameID();
     
@@ -416,18 +431,19 @@ void Game::renderScene(float interpolation) {
 
     ++fps_count;
     render_hud();
+
+    ++num_draws;
+    draw_time_accum += now() - t0;
+
+    renderManager.endScene();    
 }
 
 void Game::renderWorld(float dt) {
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-    glt::SavePoint sp(transformPipeline.save());
-    mat4_t camMat = transformationWorldToLocal(world.camera());
-    transformPipeline.concat(camMat);
-    
-    const vec3_t eyeLightPos = transformPoint(camMat, LIGHT_POS);
+    const vec3_t eyeLightPos = transformPipeline.transformPoint(LIGHT_POS);
     const vec3_t spotDirection = normalize(vec3(0.f) - LIGHT_POS);
-    const vec3_t ecSpotDirection = transformVector(camMat, spotDirection);
+    const vec3_t ecSpotDirection = transformPipeline.transformVector(spotDirection);
         
     wallUniforms.ecLightPos = eyeLightPos;
     wallUniforms.ecSpotDir = ecSpotDirection;
@@ -438,6 +454,10 @@ void Game::renderWorld(float dt) {
     sphereUniforms.spotAngle = 0.91;
         
     world.render(renderer, dt);
+}
+
+const glt::ViewFrustum& Renderer::frustum() {
+    return game.renderManager.viewFrustum();
 }
 
 void Renderer::renderSphere(const Sphere& s, const SphereModel& m) {
@@ -559,6 +579,13 @@ void Game::render_hud() {
         fps_count = 0;
     }
 
+    if (now >= draw_time_render_next) {
+        current_avg_draw_time = draw_time_accum / num_draws;
+        num_draws = 0;
+        draw_time_accum = 0.f;
+        draw_time_render_next = now + FPS_RENDER_CYCLE;
+    }
+
     sf::Color c(0, 255, 255, 180);
 
     uint32 height = 0;
@@ -603,6 +630,12 @@ void Game::render_hud() {
     txtNumBalls.SetColor(c);
     txtNumBalls.SetPosition(2, height);
 
+    height += txtNumBalls.GetRect().Height + 2;
+    sf::Text txtRenderTime(std::string("Render Time: ") + to_string(current_avg_draw_time * 1000) + " ms");
+    txtRenderTime.SetCharacterSize(16);
+    txtRenderTime.SetColor(c);
+    txtRenderTime.SetPosition(2, height);
+
     window().SaveGLStates();
     
     window().Draw(txtFps);
@@ -612,6 +645,7 @@ void Game::render_hud() {
     window().Draw(txtAnimSpeed);
     window().Draw(txtInter);
     window().Draw(txtNumBalls);
+    window().Draw(txtRenderTime);
     
     window().RestoreGLStates();
 }

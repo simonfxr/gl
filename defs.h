@@ -59,6 +59,14 @@ typedef long  int64;
 
 #define ERROR(e) glt::error(e, __FILE__, __LINE__, __func__)
 
+#define ERROR_ONCE(e) do {                                              \
+        static bool __reported = false;                                 \
+        if (unlikely(!__reported)) {                                    \
+            __reported = true;                                          \
+            glt::error_once(e, __FILE__, __LINE__, __func__);           \
+        }                                                               \
+    } while (0)
+
 #define FATAL_ERROR(e) glt::fatal_error(e, __FILE__, __LINE__, __func__)
 
 #define ATTRS(...) __attribute__((__VA_ARGS__))
