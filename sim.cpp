@@ -68,6 +68,7 @@ struct Contact {
     direction3_t normal;
     float distance;
     float restitution;
+    float impulse;
     ParticleRef x, y;
 };
 
@@ -104,6 +105,8 @@ struct World::Data {
     glt::Frame _camera;
     glt::AABB room;
 
+    uint32 solve_iterations;
+
     plane3_t walls[6];
     ParticleRef world; // stationary particle with infinite mass
 
@@ -121,8 +124,10 @@ struct World::Data {
     void findCollisions(std::vector<Contact>& contacts, const BSP *t, int ni, std::vector<bool>& collided, SphereRef s, const point3_t& center, float r);
 };
 
-World::World()
-    : self(new Data)
+World::World() :
+    solve_iterations(1),
+
+    self(new Data)
 {}
 
 World::~World() {
@@ -186,6 +191,7 @@ void World::rotateCamera(float rotx, float roty) {
 
 void World::simulate(float dt) {
     {
+        self->solve_iterations = solve_iterations;
         std::vector<Contact> contacts;
         time_msg("generating contacts", self->generateContacts(contacts, dt););
         time_msg("solving contacts", self->solveContacts(contacts, dt););
@@ -243,14 +249,16 @@ void World::render(Renderer& renderer, float dt) {
 
     if (render_by_distance) {
         const point3_t& cam = self->_camera.origin;
-        std::vector<SphereDistance> spheres_ordered(n);
+        std::vector<SphereDistance> spheres_ordered;
 
         for (uint32 i = 0; i < n; ++i) {
             const SphereData& s = self->spheres[i];
             const Particle& p = self->deref(s.particle);
             const point3_t pos = p.pos + p.vel * dt;
-            if (glt::clipped(testSphere(renderer.frustum(), p.pos, s.r)))
+
+            if (glt::clipped(testSphere(renderer.frustum(), pos, s.r))) {
                 continue;
+            }
             
             SphereDistance d;
             d.sphere = sphereRef(i);
@@ -258,8 +266,6 @@ void World::render(Renderer& renderer, float dt) {
             //   spheres_ordered[i] = d;
             spheres_ordered.push_back(d);
         }
-
-        std::sort(spheres_ordered.begin(), spheres_ordered.end(), SphereDistance::lessThan);
 
         for (uint32 i = 0; i < spheres_ordered.size(); ++i) {
             const SphereDistance& d = spheres_ordered[i];
@@ -443,7 +449,7 @@ void World::Data::findCollisions(std::vector<Contact>& contacts, const BSP *t, i
         Node *list = t->down[1].list;
         while (list != 0) {
 
-            if (s.index >= list->sphere.index) {
+            if (s.index > list->sphere.index) {
                 const SphereData& s2 = deref(list->sphere);
                 const Particle& p2 = deref(s2.particle);
 
@@ -501,6 +507,7 @@ void World::Data::generateContacts(std::vector<Contact>& contacts, float dt) {
             con.x = s1.particle;
             con.y = world;
             con.normal = walls[hit].normal;
+            con.impulse = 0.f;
             point3_t nearest = projectOnto(walls[hit], p1.pos);
             float dist = distance(p1.pos, nearest);
             con.distance = dist - s1.r;
@@ -563,21 +570,54 @@ void World::Data::generateContacts(std::vector<Contact>& contacts, float dt) {
 }
 
 void World::Data::solveContacts(std::vector<Contact>& contacts, float dt) {
-    uint32 n = contacts.size();
-    for (uint32 i = 0; i < n; ++i) {
-        const Contact& con = contacts[i];
-        Particle& p1 = deref(con.x);
-        Particle& p2 = deref(con.y);
+    const uint32 n = contacts.size();
 
-        const direction3_t n = con.normal;
+    for (uint32 k = 0; k < solve_iterations; ++k) {
+        
+        for (uint32 i = 0; i < n; ++i) {
+            // const Contact& con = contacts[i];
+            // Particle& p1 = deref(con.x);
+            // Particle& p2 = deref(con.y);
 
-        float relNv = dot(p2.vel - p1.vel, n);
-        float remove = relNv - con.distance / dt;
+            // const direction3_t n = con.normal;
 
-        if (remove > 0) {
-            float p = remove / (p1.invMass + p2.invMass);
-            p1.vel += p * p1.invMass * n;
-            p2.vel -= p * p2.invMass * n;
+            // float relNv = dot(p2.vel - p1.vel, n);
+            // float remove = relNv - con.distance / dt;
+
+            // if (remove > 0) {
+            //     float p = remove / (p1.invMass + p2.invMass);
+            //     p1.vel += p * p1.invMass * n;
+            //     p2.vel -= p * p2.invMass * n;
+            // }
+
+            Contact& con = contacts[i];
+
+            const vec3_t& n = con.normal;
+
+            Particle& p1 = deref(con.x);
+            Particle& p2 = deref(con.y);
+
+// get all of relative normal velocity
+            float relNv = dot(p2.vel - p1.vel, n);
+ 
+// we want to remove only the amount which leaves them touching next frame
+            float remove = relNv - con.distance / dt;
+ 
+// compute impulse
+            float imp = remove / (p1.invMass + p2.invMass);
+ 
+// accumulate
+            float newImpulse = max(imp + con.impulse, 0.f);
+ 
+// compute change
+            float change = newImpulse - con.impulse;
+ 
+// store accumulated impulse
+            con.impulse = newImpulse;
+ 
+// apply impulse
+            p1.vel += change * n * p1.invMass;
+            p2.vel -= change * n * p2.invMass;
         }
     }
 }

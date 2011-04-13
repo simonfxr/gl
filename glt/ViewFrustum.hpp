@@ -46,7 +46,7 @@ struct ViewFrustum {
 
     ViewFrustum();
 
-    void updateView(const math::mat4_t& viewToWorld, const math::mat4_t& projection);
+    void update(const math::mat4_t& mvpMatrix);
 };
 
 Outcode testSphere(const ViewFrustum& frust, const math::point3_t& center, float rad);

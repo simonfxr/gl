@@ -324,12 +324,18 @@ void Game::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
     case I: use_interpolation = !use_interpolation; break;
     case B: pause(!paused()); break;
     case C: load_shaders(); break;
+    case G: if (world.solve_iterations > 0) --world.solve_iterations; goto print_iter;
+    case H: ++world.solve_iterations; goto print_iter;
     case M:
         world.render_by_distance = !world.render_by_distance;
         std::cerr << "render_by_distance: " << (world.render_by_distance ? "yes" : "no") << std::endl;
         break;
     }
 
+    return;
+
+print_iter:
+    std::cerr << "number of contact-solver iterations: " << world.solve_iterations << std::endl;    
 }
 
 void Game::mouseMoved(int32 dx, int32 dy) {
@@ -406,13 +412,14 @@ void Game::spawn_sphere() {
 
 void Game::renderScene(float interpolation) {
 
-    if (!use_interpolation && last_frame_rendered == currentFrameID())
-        return;
+    // if (!use_interpolation && last_frame_rendered == currentFrameID())
+    //     return;
 
     if (!use_interpolation)
         interpolation = 0.f;
 
-    renderManager.setCameraMatrix(transformationWorldToLocal(world.camera()));
+    const mat4_t camMat = transformationWorldToLocal(world.camera());
+    renderManager.setCameraMatrix(camMat);
     renderManager.beginScene();
 
     float t0 = now();

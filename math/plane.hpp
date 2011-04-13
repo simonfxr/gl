@@ -3,6 +3,7 @@
 
 #include "math/defs.hpp"
 #include "math/vec3/type.hpp"
+#include "math/vec4/type.hpp"
 #include "math/mat3/type.hpp"
 #include "math/mat4/type.hpp"
 
@@ -10,8 +11,15 @@ namespace math {
 
 // every point x on the plane solves dot(normal, x - dist * normal) = 0
 struct plane3_t {
-    direction3_t normal;
-    float dist; // distance to origin
+
+    union {
+        struct {
+            direction3_t normal;
+            float dist; // distance to origin
+        };
+
+        vec4_t coeff;
+    };
 };
 
 } // namespace math
@@ -20,6 +28,8 @@ MATH_BEGIN_NAMESPACE
 
 plane3_t plane() PURE_FUNC;
 
+plane3_t plane(const vec4_t& coeff) PURE_FUNC;
+
 plane3_t plane(const direction3_t& normal, float dist) PURE_FUNC;
 
 // plane through a triangle: if the triangle is viewed such that the points winding goes ccw,
@@ -27,6 +37,8 @@ plane3_t plane(const direction3_t& normal, float dist) PURE_FUNC;
 plane3_t plane(const point3_t& a, const point3_t& b, const point3_t& c) PURE_FUNC;
 
 plane3_t planeParametric(const point3_t& a, const vec3_t& u, const vec3_t& v) PURE_FUNC;
+
+plane3_t normalize(const plane3_t& P) PURE_FUNC;
 
 // signed distance, positive on the side where the normal points
 float distance(const plane3_t& P, const point3_t& a) PURE_FUNC;

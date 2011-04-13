@@ -54,7 +54,6 @@ const aligned_mat4_t& RenderManager::cameraMatrix() const {
 void RenderManager::setPerspectiveProjection(float theta, float aspectRatio, float z_near, float z_far) {
     aligned_mat4_t m = perspectiveProjection(theta, aspectRatio, z_near, z_far);
     self->transform.loadProjectionMatrix(m);
-    self->frustum.updateView(self->cameraMatrix, m);
 }
 
 void RenderManager::setCameraMatrix(const mat4_t& m) {
@@ -69,7 +68,7 @@ void RenderManager::beginScene() {
     self->inScene = true;
     self->transformStateBOS = self->transform.save();
     self->transform.concat(self->cameraMatrix);
-//    self->frustum.updateView
+    self->frustum.update(self->transform.mvpMatrix());
 }
 
 void RenderManager::endScene() {

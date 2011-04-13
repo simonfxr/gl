@@ -10,27 +10,31 @@ ViewFrustum::ViewFrustum() {
         planes[i] = plane();
 }
 
-void ViewFrustum::updateView(const mat4_t& viewToWorld, const mat4_t& projection) {
-    UNUSED(viewToWorld); UNUSED(projection);
-    // FIXME: implement!
+void ViewFrustum::update(const mat4_t& mvp) {
+    aligned_mat4_t A = transpose(mvp);
+
+    planes[PLANE_LEFT]   = normalize(plane(A[3] + A[0]));
+    planes[PLANE_RIGHT]  = normalize(plane(A[3] - A[0]));
+    planes[PLANE_TOP]    = normalize(plane(A[3] - A[1]));
+    planes[PLANE_BOTTOM] = normalize(plane(A[3] + A[1]));
+    planes[PLANE_NEAR]   = normalize(plane(A[3] + A[2]));
+    planes[PLANE_FAR]    = normalize(plane(A[3] - A[2]));
+
+    for (uint32 i = 0; i < VIEW_FRUSTUM_PLANES; ++i)
+        planes[i].dist *= -1.f;
 }
 
 Outcode testSphere(const ViewFrustum& frust, const vec3_t& center, float rad) {
 
-    UNUSED(frust); UNUSED(center); UNUSED(rad);
+    Outcode code = 0;
 
-    // FIXME: implement!
-    ERROR_ONCE("not yet implemented");
+    for (uint32 i = 0; i < 1; ++i)
+        if (distance(frust.planes[i], center) + rad < 0)
+            code |= 1ul << i;
+
+    return code;
 
     return 0;
-    
-    // Outcode code = 0;
-
-    // for (uint32 i = 0; i < VIEW_FRUSTUM_PLANES; ++i)
-    //     if (distance(frust.planes[i], center) + rad < 0)
-    //         code |= 1ul << i;
-
-    // return code;    
 }
 
 Outcode testPoint(const ViewFrustum& frust, const point3_t& p) {

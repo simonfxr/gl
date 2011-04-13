@@ -44,6 +44,7 @@ struct World {
     bool init();
 
     bool render_by_distance; // try to render near object first
+    uint32 solve_iterations;
 
     void moveCamera(const math::vec3_t& step, float r);
     void rotateCamera(float rotx, float roty);

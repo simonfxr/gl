@@ -30,6 +30,15 @@ mat3_t mat3(const vec3_t& c1, const vec3_t& c2, const vec3_t& c3) {
     mat3_t A; A[0] = c1; A[1] = c2; A[2] = c3; return A;
 }
 
+mat3_t mat3(const quat_t& q) {
+    float w = q.a, x = q.b, y = q.c, z = q.d;
+    float xx = x * x, yy = y * y, zz = z * z;
+    
+    return mat3(vec3(1 - 2 * yy - 2 * zz, 2 * x * y - 2 * w * z, 2 * x * z + 2 * w * y),
+                vec3(2 * x * y + 2 * w * z, 1 - 2 * xx - 2 * zz, 2 * y * z - 2 * w * x),
+                vec3(2 * x * z - 2 * w * y, 2 * y * z + 2 * w * x, 1 - 2 * xx - 2 * yy));
+}
+
 mat3_t operator +(const mat3_t& A, const mat3_t& B) {
     return mat3(A[0] + B[0], A[1] + B[1], A[2] + B[2]);
 }
@@ -130,7 +139,11 @@ mat3_t inverse(const mat3_t& A) {
     data[7] = -(m.data[0]*m.data[7]-t12)*t17;                
     data[8] = (t4-t8)*t17;
 
-    return transpose(B);
+    mat3_t Ainv = transpose(B);
+
+    ASSERT(equal(A * Ainv, mat3()));
+
+    return Ainv;
 }
 
 vec3_t transform(const mat3_t& A, const vec3_t& v) {

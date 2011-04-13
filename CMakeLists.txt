@@ -19,7 +19,7 @@ project(sim-sfml)
 
 set(GRAPHITE_OPTS "-floop-strip-mine -floop-block -floop-interchange")
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -DMATH_INLINE -DDEBUG -DGLDEBUG -fno-exceptions -O0 -ggdb -march=native")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -DMATH_INLINE -DDEBUG -DGLDEBUG -fno-exceptions -fno-rtti -O3 -ggdb -march=native")
 
 #set(CMAKE_LDFLAGS "${CMAKE_CXX_FLAGS}")
 
@@ -55,7 +55,9 @@ set(MATH_SRC
   math/plane.hpp
   math/plane.cpp
   math/ivec3.hpp
-  math/ivec3/impl.cpp)
+  math/ivec3/impl.cpp
+  math/quat.hpp
+  math/quat/impl.cpp)
 
 set(GLT_SRC
 
