@@ -14,7 +14,7 @@ ivec3_t ivec3(int32 a) {
 }
 
 ivec3_t ivec3(const vec3_t& a) {
-    return ivec3((int32) a.x, (int32) a.y, (int32) a.z);
+    return ivec3(int32(a.x), int32(a.y), int32(a.z));
 }
 
 ivec3_t ivec3(const int32 a[3]) {

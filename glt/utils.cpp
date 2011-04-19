@@ -35,7 +35,7 @@ std::string getErrorString(GLenum err) {
 
     default:
 
-        std::stringstream rep;
+        std::ostringstream rep;
         rep << "Unknown OpenGL error [code = " << err << "]";
         return rep.str();
     }
@@ -72,7 +72,7 @@ bool isExtensionSupported(const char *extension) {
     glGetIntegerv(GL_NUM_EXTENSIONS, &n);
     
     for(GLint i = 0; i < n; i++)
-        if(strcmp(extension, (const char *) glGetStringi(GL_EXTENSIONS, i)) == 0)
+        if(strcmp(extension, gl_unstr(glGetStringi(GL_EXTENSIONS, i))) == 0)
             return true;
 
     return false;
@@ -107,14 +107,14 @@ struct ARBDebug : public GLDebug {
                                                            const GLuint* ids,
                                                            GLboolean enabled);
 
-    typedef GLuint (GLAPIENTRY * glGetDebugMessageLogARBf_t)(GLuint count,
-                                                             GLsizei bufsize,
-                                                             GLenum* sources,
-                                                             GLenum* types,
-                                                             GLuint* ids,
-                                                             GLenum* severities,
-                                                             GLsizei* lengths, 
-                                                             char* message);
+    typedef GLuint (GLAPIENTRY *glGetDebugMessageLogARBf_t)(GLuint count,
+                                                            GLsizei bufsize,
+                                                            GLenum* sources,
+                                                            GLenum* types,
+                                                            GLuint* ids,
+                                                            GLenum* severities,
+                                                            GLsizei* lengths, 
+                                                            char* message);
 
     static const GLenum MAX_DEBUG_MESSAGE_LENGTH_ARB          = 0x9143;
 
@@ -153,7 +153,7 @@ ARBDebug::~ARBDebug() {
 GLDebug *ARBDebug::init() {
 
     glDebugMessageControlARBf_t glDebugMessageEnableAMD
-        = (glDebugMessageControlARBf_t) glXGetProcAddress((const GLubyte *) "glDebugMessageControlARB");
+        = reinterpret_cast<glDebugMessageControlARBf_t>(glXGetProcAddress(gl_str("glDebugMessageControlARB")));
 
     if (glDebugMessageEnableAMD == 0)
         return 0;
@@ -171,7 +171,7 @@ GLDebug *ARBDebug::init() {
     dbg->message_buffer_length = max_len;
     dbg->message_buffer = new char[max_len];
     dbg->glGetDebugMessageLogARB
-        = (glGetDebugMessageLogARBf_t) glXGetProcAddress((const GLubyte *) "glGetDebugMessageLogARB");
+        = reinterpret_cast<glGetDebugMessageLogARBf_t>(glXGetProcAddress(gl_str("glGetDebugMessageLogARB")));
 
     if (dbg->glGetDebugMessageLogARB == 0) {
         delete dbg;
@@ -277,7 +277,7 @@ AMDDebug::~AMDDebug() {
 GLDebug *AMDDebug::init() {
 
     glDebugMessageEnableAMDf_t glDebugMessageEnableAMD
-        = (glDebugMessageEnableAMDf_t) glXGetProcAddress((const GLubyte *) "glDebugMessageEnableAMD");
+        = reinterpret_cast<glDebugMessageEnableAMDf_t>(glXGetProcAddress(gl_str("glDebugMessageEnableAMD")));
 
     if (glDebugMessageEnableAMD == 0)
         return 0;
@@ -295,7 +295,7 @@ GLDebug *AMDDebug::init() {
     dbg->message_buffer_length = max_len;
     dbg->message_buffer = new char[max_len];
     dbg->glGetDebugMessageLogAMD
-        = (glGetDebugMessageLogAMDf_t) glXGetProcAddress((const GLubyte *) "glGetDebugMessageLogAMD");
+        = reinterpret_cast<glGetDebugMessageLogAMDf_t>(glXGetProcAddress(gl_str("glGetDebugMessageLogAMD")));
 
     if (dbg->glGetDebugMessageLogAMD == 0) {
         delete dbg;

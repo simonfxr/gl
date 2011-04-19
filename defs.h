@@ -1,17 +1,7 @@
 #ifndef _DEFS_H
 #define _DEFS_H
 
-typedef unsigned char  uint8;
-typedef unsigned short uint16;
-typedef unsigned int   uint32;
-typedef unsigned long  uint64;
-
-typedef uint8 byte;
-
-typedef char  int8;
-typedef short int16;
-typedef int   int32;
-typedef long  int64;
+#include <stdint.h>
 
 #if defined(linux) || defined(__linux)
 #define SYSTEM_LINUX
@@ -88,5 +78,24 @@ typedef long  int64;
 #define CONCAT_AUX2(a, b) a##b
 
 #define CONCAT3(a, b, c) CONCAT(a, CONCAT(b, c))
+
+#define IALIAS(t) typedef CONCAT(t, _t) t;
+
+IALIAS(uint8);
+IALIAS(uint16);
+IALIAS(uint32);
+IALIAS(uint64);
+
+IALIAS(int8);
+IALIAS(int16);
+IALIAS(int32);
+IALIAS(int64);
+
+#undef IALIAS
+
+typedef uintptr_t uptr;
+typedef intptr_t iptr;
+
+typedef uint8 byte;
 
 #endif

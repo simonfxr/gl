@@ -61,7 +61,7 @@ void DynBatch::add(const Attr attrs[], const void *value) {
 
     for (uint32 i = 0; i < nattrs; ++i) {
         uint32 valSize = componentSize(attrs[i].type) * attrs[i].size;
-        memcpy(data[i] + valSize * filled, &bytes[(uint64) attrs[i].offset], valSize);
+        memcpy(data[i] + valSize * filled, &bytes[reinterpret_cast<uptr>(attrs[i].offset)], valSize);
     }
 
     ++filled;
@@ -104,7 +104,7 @@ void DynBatch::at(const Attr attrs[], uint32 i, void *buffer) const {
     byte *dest = (byte *) buffer;
     for (uint32 k = 0; k < nattrs; ++k) {
         uint32 valSize = componentSize(attrs[k].type) * attrs[k].size;
-        memcpy(&dest[(uint64) attrs[k].offset], data[k] + valSize * i, valSize);
+        memcpy(&dest[reinterpret_cast<uptr>(attrs[k].offset)], data[k] + valSize * i, valSize);
     }
 }
 
