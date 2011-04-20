@@ -3,8 +3,8 @@
 set(ICC "/opt/intel/composerxe-2011.2.137/bin/intel64/icc")
 set(IXX "/opt/intel/composerxe-2011.2.137/bin/intel64/icpc")
 
-set(COMP_C gcc)
-set(COMP_CXX g++)
+set(COMP_C clang)
+set(COMP_CXX clang++)
 
 set(CMAKE_C_COMPILER_INIT ${COMP_C})
 

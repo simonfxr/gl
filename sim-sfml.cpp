@@ -81,6 +81,7 @@ struct Game EXPLICIT : public ge::GameWindow {
     glt::GenBatch<Vertex> wallBatch;
     glt::GenBatch<Vertex> sphereBatch;
     glt::GenBatch<Vertex> lineBatch;
+    glt::GenBatch<Vertex> rectBatch;
 
     World world;
     float sphere_speed;
@@ -104,6 +105,8 @@ struct Game EXPLICIT : public ge::GameWindow {
         vec3_t ecSpotDir;
         float spotAngle;
     } sphereUniforms;
+
+    glt::ShaderProgram postprocShader;
 
     glt::ShaderProgram identityShader;
     glt::WindowRenderTarget *windowRenderTarget;
@@ -153,19 +156,22 @@ Game::Game() :
     wallBatch(vertexAttrs),
     sphereBatch(vertexAttrs),
     lineBatch(vertexAttrs),
+    rectBatch(vertexAttrs),
     renderer(*this),
     transformPipeline(renderManager.geometryTransform()),
     wallShader(shaderManager),
     sphereShader(shaderManager),
+    postprocShader(shaderManager),
     identityShader(shaderManager)
 {}
 
 bool Game::onInit() {
 
     windowRenderTarget = new glt::WindowRenderTarget(*this);
-    renderManager.setRenderTarget(*windowRenderTarget);
 
-    textureRenderTarget = new glt::TextureRenderTarget(window().GetWidth(), window().GetHeight(), glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);    
+    textureRenderTarget = new glt::TextureRenderTarget(window().GetWidth(), window().GetHeight(), glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);
+
+    renderManager.setRenderTarget(*textureRenderTarget);
     
     wallBatch.primType(GL_QUADS);
     sphereBatch.primType(GL_TRIANGLES);
@@ -175,6 +181,20 @@ bool Game::onInit() {
 #else
     shaderManager.verbosity(glt::ShaderManager::Quiet);
 #endif
+
+    {
+        rectBatch.primType(GL_QUADS);
+
+        Vertex v;
+        v.normal = vec3(0.f, 0.f, 1.f);
+        v.position = vec4(0.f, 0.f, 0.f, 1.f); rectBatch.add(v);
+        v.position = vec4(1.f, 0.f, 0.f, 1.f); rectBatch.add(v);
+        v.position = vec4(1.f, 1.f, 0.f, 1.f); rectBatch.add(v);
+        v.position = vec4(0.f, 1.f, 0.f, 1.f); rectBatch.add(v);
+        
+        rectBatch.freeze();
+    }
+    
 
     shaderManager.addPath(".");
     shaderManager.addPath("shaders");
@@ -283,6 +303,21 @@ bool Game::load_shaders() {
     else
         is.printError(std::cerr);
 
+    glt::ShaderProgram ps(shaderManager);
+
+    ps.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/postproc.vert");
+    ps.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/postproc.frag");
+    ps.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
+    ps.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
+    ps.tryLink();
+
+    ok = ok && !ps.wasError();
+    
+    if (!ps.wasError())
+        postprocShader.replaceWith(ps);
+    else
+        ps.printError(std::cerr);
+
     return ok;
 }
 
@@ -304,7 +339,7 @@ std::ostream& operator <<(std::ostream& out, const vec4_t& a) {
 
 void Game::windowResized(uint32 width, uint32 height) {
     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
-    renderManager.renderTarget().viewport(glt::Viewport(width, height));
+    windowRenderTarget->viewport(glt::Viewport(width, height));
     textureRenderTarget->resize(width, height);
     textureRenderTarget->viewport(glt::Viewport(width, height));
     
@@ -441,7 +476,19 @@ void Game::renderScene(float interpolation) {
     ++num_draws;
     draw_time_accum += now() - t0;
 
-    renderManager.endScene();    
+    renderManager.endScene();
+
+    windowRenderTarget->activate();
+    postprocShader.use();
+
+    GL_CHECK(glActiveTexture(GL_TEXTURE0));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, textureRenderTarget->textureHandle().texture));
+    GL_CHECK(glUniform1i(glGetUniformLocation(postprocShader.program(), "texture0"), 0));
+
+    rectBatch.draw();
+    
+    windowRenderTarget->draw();
+//    windowRenderTarget->deactivate();
 }
 
 void Game::renderWorld(float dt) {

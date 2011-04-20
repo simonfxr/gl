@@ -20,6 +20,10 @@ TextureRenderTarget::~TextureRenderTarget() {
         GL_CHECK(glDeleteRenderbuffers(1, &depth_buffer));
 }
 
+const TextureHandle& TextureRenderTarget::textureHandle() {
+    return texture;
+}
+
 void TextureRenderTarget::resize(uint32 w, uint32 h) {
 
     if (width() == w && height() == h)
