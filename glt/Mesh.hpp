@@ -1,10 +1,8 @@
 #ifndef GLT_MESH_HPP
 #define GLT_MESH_HPP
 
-#include <GL/gl.h>
-
 #include "defs.h"
-
+#include "opengl."
 
 namespace glt {
 

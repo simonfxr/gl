@@ -1,10 +1,8 @@
 #ifndef GENBATCH_HPP
 #define GENBATCH_HPP
 
-#include <GL/glew.h>
-#include <GL/gl.h>
-
 #include "defs.h"
+#include "opengl.h"
 #include "glt/utils.hpp"
 
 namespace glt {

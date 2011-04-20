@@ -4,8 +4,6 @@
 #include <cstdlib>
 #include <limits.h>
 
-#include <GL/glew.h>
-
 #include <SFML/Graphics/Image.hpp>
 
 #include "defs.h"

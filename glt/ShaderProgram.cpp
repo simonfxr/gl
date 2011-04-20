@@ -4,9 +4,8 @@
 #include <cassert>
 #include <map>
 
-#include <GL/glew.h>
-
 #include "defs.h"
+#include "opengl.h"
 #include "glt/ShaderProgram.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/utils.hpp"

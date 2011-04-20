@@ -25,15 +25,12 @@ private:
 public:
 
     struct Game {
-        
         virtual ~Game() {};
         virtual void tick() = 0;
         virtual void render(float interpolation) = 0;
         virtual void handleInputEvents() = 0;
         virtual float now() = 0;
-        virtual void sleep(float seconds) = 0;
-        
-        virtual void idle(float seconds) {
+        virtual void sleep(float seconds) {
             UNUSED(seconds);
         }
     };

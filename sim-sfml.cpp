@@ -7,10 +7,7 @@
 #include <climits>
 #include <cstring>
 
-#include <GL/glew.h>
-
 #include <SFML/Graphics.hpp>
-#include <SFML/OpenGL.hpp>
 
 #include "defs.h"
 
@@ -32,6 +29,8 @@
 #include "glt/GeometryTransform.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/RenderManager.hpp"
+#include "glt/WindowRenderTarget.hpp"
+#include "glt/TextureRenderTarget.hpp"
 
 #include "ge/GameWindow.hpp"
 
@@ -107,6 +106,8 @@ struct Game EXPLICIT : public ge::GameWindow {
     } sphereUniforms;
 
     glt::ShaderProgram identityShader;
+    glt::WindowRenderTarget *windowRenderTarget;
+    glt::TextureRenderTarget *textureRenderTarget;
 
     uint32 fps_count;
     uint32 current_fps;
@@ -160,6 +161,12 @@ Game::Game() :
 {}
 
 bool Game::onInit() {
+
+    windowRenderTarget = new glt::WindowRenderTarget(*this);
+    renderManager.setRenderTarget(*windowRenderTarget);
+
+    textureRenderTarget = new glt::TextureRenderTarget(window().GetWidth(), window().GetHeight(), glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);    
+    
     wallBatch.primType(GL_QUADS);
     sphereBatch.primType(GL_TRIANGLES);
 
@@ -296,21 +303,11 @@ std::ostream& operator <<(std::ostream& out, const vec4_t& a) {
 }
 
 void Game::windowResized(uint32 width, uint32 height) {
-
     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
-    GL_CHECK(glViewport(0, 0, width, height));
-
-    // Create the projection matrix, and load it on the projection matrix stack
-//    viewFrustum.SetPerspective(35.0f, float(width) / float(height), 1.0f, 100.0f);
-    // M3DMatrix44f projMat;
-    // set_matrix(projMat, Transform::perspective(math::degToRad(35.0f), float(width) / float(height), 1.0f, 100.0f));
-
+    renderManager.renderTarget().viewport(glt::Viewport(width, height));
+    
     float fov = degToRad(17.5f);
     float aspect = float(width) / float(height);
-
-//    mat4_t proj = glt::perspectiveProjection(fov, aspect, 1.f, 100.f);
-    
-//    transformPipeline.loadProjectionMatrix(proj);
     renderManager.setPerspectiveProjection(fov, aspect, 1.f, 100.f);
 }
 
@@ -551,9 +548,6 @@ void Game::render_con(const point3_t& a, const point3_t& b) {
     GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
     GL_CHECK(glLineWidth(10.f));
 
-    point3_t va = transformPipeline.transformPoint(a);
-    point3_t vb = transformPipeline.transformPoint(b);
-    
     glt::SavePoint sp(transformPipeline.save());
 
     transformPipeline.translate(a);

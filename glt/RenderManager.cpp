@@ -19,11 +19,16 @@ struct RenderManager::Data {
     bool camera_set;
     SavePointArgs transformStateBOS; // transform state in begin of scene
 
+    bool owning_render_target;
+    RenderTarget *render_target;
+
     Data() :
         cameraMatrix(mat4()),
         inScene(false),
         camera_set(false),
-        transformStateBOS(transform, 0, 0)
+        transformStateBOS(transform, 0, 0),
+        owning_render_target(false),
+        render_target(0)        
         {}
 };
 
@@ -61,32 +66,55 @@ void RenderManager::setCameraMatrix(const mat4_t& m) {
     self->camera_set = true;
 }
 
+void RenderManager::setRenderTarget(RenderTarget& rt, bool delete_after) {
+
+    if (&rt != self->render_target) {
+        if (self->render_target != 0)
+            self->render_target->deactivate();
+        
+        if (self->owning_render_target && self->render_target != 0) {
+            delete self->render_target;
+        }
+    }
+    
+    self->owning_render_target = delete_after;
+    self->render_target = &rt;
+
+    if (self->inScene)
+        self->render_target->activate();
+}
+
+RenderTarget& RenderManager::renderTarget()  {
+    ASSERT_MSG(self->render_target != 0, "no RenderTarget specified");
+    if (self->render_target == 0)
+        return *reinterpret_cast<RenderTarget *>(0);
+    else
+        return *self->render_target;
+}
+
 void RenderManager::beginScene() {
-    ASSERT_MSG(!self->inScene, "nested beginScene()!");
+    ASSERT_MSG(!self->inScene, "nested beginScene()");
     ASSERT(self->camera_set);
+    ASSERT_MSG(self->render_target != 0, "no RenderTarget specified");
     self->camera_set = false;
     self->inScene = true;
     self->transformStateBOS = self->transform.save();
     self->transform.concat(self->cameraMatrix);
     self->frustum.update(self->transform.mvpMatrix());
+    self->render_target->activate();
 }
 
 void RenderManager::endScene() {
-    ASSERT_MSG(self->inScene, "cannot endScene() without beginScene()!");
+    ASSERT_MSG(self->inScene, "cannot endScene() without beginScene()");
     self->inScene = false;
     self->transform.restore(self->transformStateBOS);
+    self->render_target->draw();
 }
 
 vec4_t transformModelToWorld(const RenderManager& rm, const vec4_t& modelCoord) {
-    vec4_t view = transform(rm.geometryTransform().mvMatrix(), modelCoord);
-    mat4_t m = rm.cameraMatrix();
-    vec3_t trans = vec3(m[3]);
-    mat3_t irot = transpose(mat3(vec3(m[0]),
-                                 vec3(m[1]),
-                                 vec3(m[2])));
-    m = mat4(irot);
-    m[3] = m * vec4(-trans, 1.f);
-    return m * view;
+    vec4_t viewCoord = transform(rm.geometryTransform().mvMatrix(), modelCoord);
+    mat4_t viewWorld = inverse(rm.cameraMatrix());
+    return viewWorld * viewCoord;
 }
 
 vec4_t project(const RenderManager& rm, const point3_t& localCoord) {

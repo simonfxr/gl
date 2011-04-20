@@ -1,7 +1,8 @@
 #ifndef GL_UTILS
 #define GL_UTILS
 
-#include <GL/gl.h>
+#include "opengl.h"
+
 #include <string>
 #include <ostream>
 

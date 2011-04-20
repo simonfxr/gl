@@ -2,9 +2,8 @@
 #include <limits>
 #include <iostream>
 
-#include <GL/glew.h>
-
 #include "defs.h"
+#include "opengl.h"
 #include "math/math.hpp"
 #include "glt/utils.hpp"
 #include "ge/GameWindow.hpp"
@@ -118,7 +117,7 @@ void GameWindow::Data::handleInputEvents() {
     uint32 new_h = 0;
 
     sf::Event e;
-    while (win->GetEvent(e)) {
+    while (win->PollEvent(e)) {
 
         if (change_pause_state) {
             change_pause_state = false;
@@ -239,7 +238,6 @@ void GameWindow::Data::tick() {
 void GameWindow::Data::render(float interpolation) {
     self.renderScene(interpolation);
     ++render_frame_id;
-    win->Display();
 }
 
 void GameWindow::Data::sleep(float time) {

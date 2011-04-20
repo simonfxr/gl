@@ -3,6 +3,7 @@
 
 #include "glt/ViewFrustum.hpp"
 #include "glt/GeometryTransform.hpp"
+#include "glt/RenderTarget.hpp"
 
 #include "math/mat4/type.hpp"
 
@@ -17,12 +18,16 @@ struct RenderManager {
     const GeometryTransform& geometryTransform() const;
 
     const math::aligned_mat4_t& cameraMatrix() const;
-    
+
     GeometryTransform& geometryTransform();
 
     void setPerspectiveProjection(float theta, float aspectRatio, float z_near, float z_far);
     
     void setCameraMatrix(const math::mat4_t& m);
+
+    void setRenderTarget(RenderTarget& rt, bool delete_after = false);
+
+    RenderTarget& renderTarget();
 
     void beginScene();
 

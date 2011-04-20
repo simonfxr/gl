@@ -1,7 +1,6 @@
-#include <GL/glew.h>
-
 #include "Uniforms.hpp"
 
+#include "opengl.h"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "math/mat4.hpp"

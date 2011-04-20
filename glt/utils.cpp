@@ -4,13 +4,16 @@
 #include <cstring>
 #include <errno.h>
 
-#include <GL/glew.h>
+#include "opengl.h"
+
+#ifdef SYSTEM_LINUX
 #include <GL/glx.h>
+#endif
 
 #include "glt/utils.hpp"
 #include "defs.h"
 
-#ifdef SYSTEM_UNIX
+#ifdef SYSTEM_LINUX
 #include "unistd.h"
 #endif
 
@@ -87,6 +90,21 @@ struct DebugLocation {
 
 namespace {
 
+typedef void (*function_t)(void);
+
+function_t glGetProcAddress(const GLubyte *sym);
+
+#ifdef SYSTEM_LINUX
+
+function_t glGetProcAddress(const GLubyte *sym) {
+    return reinterpret_cast<function_t>(glXGetProcAddress(sym));
+}
+
+#else
+#error "cannot define glGetProcAddress"
+#endif
+
+
 struct GLDebug {
     virtual ~GLDebug() {}
     virtual void printDebugMessages(const DebugLocation& loc) = 0;
@@ -153,7 +171,7 @@ ARBDebug::~ARBDebug() {
 GLDebug *ARBDebug::init() {
 
     glDebugMessageControlARBf_t glDebugMessageEnableAMD
-        = reinterpret_cast<glDebugMessageControlARBf_t>(glXGetProcAddress(gl_str("glDebugMessageControlARB")));
+        = reinterpret_cast<glDebugMessageControlARBf_t>(glGetProcAddress(gl_str("glDebugMessageControlARB")));
 
     if (glDebugMessageEnableAMD == 0)
         return 0;
@@ -171,7 +189,7 @@ GLDebug *ARBDebug::init() {
     dbg->message_buffer_length = max_len;
     dbg->message_buffer = new char[max_len];
     dbg->glGetDebugMessageLogARB
-        = reinterpret_cast<glGetDebugMessageLogARBf_t>(glXGetProcAddress(gl_str("glGetDebugMessageLogARB")));
+        = reinterpret_cast<glGetDebugMessageLogARBf_t>(glGetProcAddress(gl_str("glGetDebugMessageLogARB")));
 
     if (dbg->glGetDebugMessageLogARB == 0) {
         delete dbg;
@@ -277,7 +295,7 @@ AMDDebug::~AMDDebug() {
 GLDebug *AMDDebug::init() {
 
     glDebugMessageEnableAMDf_t glDebugMessageEnableAMD
-        = reinterpret_cast<glDebugMessageEnableAMDf_t>(glXGetProcAddress(gl_str("glDebugMessageEnableAMD")));
+        = reinterpret_cast<glDebugMessageEnableAMDf_t>(glGetProcAddress(gl_str("glDebugMessageEnableAMD")));
 
     if (glDebugMessageEnableAMD == 0)
         return 0;
@@ -295,7 +313,7 @@ GLDebug *AMDDebug::init() {
     dbg->message_buffer_length = max_len;
     dbg->message_buffer = new char[max_len];
     dbg->glGetDebugMessageLogAMD
-        = reinterpret_cast<glGetDebugMessageLogAMDf_t>(glXGetProcAddress(gl_str("glGetDebugMessageLogAMD")));
+        = reinterpret_cast<glGetDebugMessageLogAMDf_t>(glGetProcAddress(gl_str("glGetDebugMessageLogAMD")));
 
     if (dbg->glGetDebugMessageLogAMD == 0) {
         delete dbg;

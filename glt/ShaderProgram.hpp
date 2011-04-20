@@ -3,7 +3,8 @@
 
 #include <string>
 #include <ostream>
-#include <GL/gl.h>
+
+#include "opengl.h"
 
 namespace glt {
 

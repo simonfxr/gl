@@ -19,7 +19,7 @@ project(sim-sfml)
 
 set(GRAPHITE_OPTS "-floop-strip-mine -floop-block -floop-interchange")
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -DMATH_INLINE -DDEBUG -DGLDEBUG -fno-exceptions -fno-rtti -O3 -ggdb -march=native")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -DSYSTEM_LINUX -DMATH_INLINE -DDEBUG -DGLDEBUG -DGNU_EXTENSIONS -fno-exceptions -fno-rtti -O0 -ggdb -march=native")
 
 #set(CMAKE_LDFLAGS "${CMAKE_CXX_FLAGS}")
 
@@ -84,7 +84,15 @@ set(GLT_SRC
   glt/ViewFrustum.hpp
   glt/ViewFrustum.cpp
   glt/RenderManager.hpp
-  glt/RenderManager.cpp)
+  glt/RenderManager.cpp
+  glt/RenderTarget.hpp
+  glt/RenderTarget.cpp
+  glt/WindowRenderTarget.hpp
+  glt/WindowRenderTarget.cpp
+  glt/TextureHandle.hpp
+  glt/TextureHandle.cpp
+  glt/TextureRenderTarget.hpp
+  glt/TextureRenderTarget.cpp)
 
 set(GE_SRC
   ge/GameLoop.hpp

@@ -3,15 +3,6 @@
 
 #include <stdint.h>
 
-#if defined(linux) || defined(__linux)
-#define SYSTEM_LINUX
-#define SYSTEM_UNIX
-#endif
-
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
-#define CXX0X
-#endif
-
 #ifdef CXX0X
 #define EXPLICIT explicit
 #define OVERRIDE override
@@ -20,8 +11,13 @@
 #define OVERRIDE
 #endif
 
+#ifdef GNU_EXTENSIONS
 #define likely(e) __builtin_expect((e) != 0, 1)
 #define unlikely(e) __builtin_expect((e) != 0, 0)
+#else
+#define likely(e) (e)
+#define unlikely(e) (e)
+#endif
 
 #define ARRAY_LENGTH(x) (sizeof (x) / sizeof *(x))
 
@@ -59,7 +55,11 @@
 
 #define FATAL_ERROR(e) glt::fatal_error(e, __FILE__, __LINE__, __func__)
 
+#ifdef GNU_EXTENSIONS
 #define ATTRS(...) __attribute__((__VA_ARGS__))
+#else
+#define ATTRS(...) UNUSED(0)
+#endif
 
 #define ATTR_WARN_UNUSED warn_unused_result
 
