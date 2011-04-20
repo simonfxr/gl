@@ -169,7 +169,7 @@ bool Game::onInit() {
 
     windowRenderTarget = new glt::WindowRenderTarget(*this);
 
-    textureRenderTarget = new glt::TextureRenderTarget(window().GetWidth(), window().GetHeight(), glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);
+    textureRenderTarget = new glt::TextureRenderTarget(window().GetWidth(), window().GetHeight(), glt::RT_COLOR_BUFFER);
 
     renderManager.setRenderTarget(*textureRenderTarget);
     
@@ -187,10 +187,10 @@ bool Game::onInit() {
 
         Vertex v;
         v.normal = vec3(0.f, 0.f, 1.f);
-        v.position = vec4(0.f, 0.f, 0.f, 1.f); rectBatch.add(v);
-        v.position = vec4(1.f, 0.f, 0.f, 1.f); rectBatch.add(v);
-        v.position = vec4(1.f, 1.f, 0.f, 1.f); rectBatch.add(v);
-        v.position = vec4(0.f, 1.f, 0.f, 1.f); rectBatch.add(v);
+        v.position = vec4(-1.f, -1.f, 0.f, 1.f); rectBatch.add(v);
+        v.position = vec4( 1.f, -1.f, 0.f, 1.f); rectBatch.add(v);
+        v.position = vec4( 1.f,  1.f, 0.f, 1.f); rectBatch.add(v);
+        v.position = vec4(-1.f,  1.f, 0.f, 1.f); rectBatch.add(v);
         
         rectBatch.freeze();
     }
@@ -455,6 +455,7 @@ void Game::renderScene(float interpolation) {
     const mat4_t camMat = transformationWorldToLocal(world.camera());
     renderManager.setCameraMatrix(camMat);
     renderManager.beginScene();
+    renderManager.renderTarget().clear(glt::RT_DEPTH_BUFFER);
 
     float t0 = now();
     
@@ -477,8 +478,10 @@ void Game::renderScene(float interpolation) {
     draw_time_accum += now() - t0;
 
     renderManager.endScene();
+    renderManager.renderTarget().deactivate();
 
     windowRenderTarget->activate();
+    windowRenderTarget->clear(glt::RT_DEPTH_BUFFER);
     postprocShader.use();
 
     GL_CHECK(glActiveTexture(GL_TEXTURE0));
@@ -488,7 +491,7 @@ void Game::renderScene(float interpolation) {
     rectBatch.draw();
     
     windowRenderTarget->draw();
-//    windowRenderTarget->deactivate();
+    windowRenderTarget->deactivate();
 }
 
 void Game::renderWorld(float dt) {
