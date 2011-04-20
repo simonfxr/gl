@@ -55,7 +55,7 @@ ShaderProgram::~ShaderProgram() {
 }
 
 void ShaderProgram::reset() {
-    glDeleteProgram(self->program);
+    GL_CHECK(glDeleteProgram(self->program));
     self->program = 0;
     self->last_error = NoError;
     self->shaders.clear();
@@ -73,7 +73,7 @@ bool ShaderProgram::wasError() {
 
 GLuint ShaderProgram::program() {
     if (self->program == 0)
-        self->program = glCreateProgram();
+        GL_CHECK(self->program = glCreateProgram());
     return self->program;
 }
 
@@ -92,14 +92,14 @@ bool translateShaderType(ShaderProgram::ShaderType type, GLenum *gltype) {
 void printShaderLog(GLuint shader, std::ostream& out) {
 
     GLint log_len;
-    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len);
+    GL_CHECK(glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len));
     if (log_len > 0) {
             
         out << "shader compile log:" << std::endl;
             
         GLchar *log = new GLchar[log_len];
             
-        glGetShaderInfoLog(shader, log_len, NULL, log);
+        GL_CHECK(glGetShaderInfoLog(shader, log_len, NULL, log));
         
         out << log << std::endl
             << "end compile log" << std::endl;
@@ -111,12 +111,12 @@ void printShaderLog(GLuint shader, std::ostream& out) {
 void printProgramLog(GLuint program, std::ostream& out) {
 
     GLint log_len;
-    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_len);
+    GL_CHECK(glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_len));
     if (log_len > 0) {
         
         out << "link log:" << std::endl;
         GLchar *log = new GLchar[log_len];
-        glGetProgramInfoLog(program, log_len, NULL, log);
+        GL_CHECK(glGetProgramInfoLog(program, log_len, NULL, log));
     
         out << log << std::endl
             << "end link log" << std::endl;
@@ -137,7 +137,7 @@ bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, ui
     }
 
     if (program == 0) {
-        program = glCreateProgram();
+        GL_CHECK(program = glCreateProgram());
         if (program == 0) {
             LOG_ERROR(this, "couldnt create program" << std::endl);
             push_error(OpenGLError);
@@ -145,7 +145,8 @@ bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, ui
         }
     }
 
-    GLuint shader = glCreateShader(shader_type);
+    GLuint shader;
+    GL_CHECK(shader = glCreateShader(shader_type));
     if (shader == 0) {
         LOG_ERROR(this, "couldnt create shader" << std::endl);
         push_error(OpenGLError);
@@ -154,11 +155,11 @@ bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, ui
 
     LOG_ERROR(this, "compiling " << file << " ... ");
         
-    glShaderSource(shader, nsegments, segments, segLengths);
-    glCompileShader(shader);
+    GL_CHECK(glShaderSource(shader, nsegments, segments, segLengths));
+    GL_CHECK(glCompileShader(shader));
 
     GLint success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    GL_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
     bool ok = success == GL_TRUE;
     LOG_ERROR(this, (ok ? "success" : "failed") << std::endl);
 
@@ -166,11 +167,11 @@ bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, ui
         printShaderLog(shader, sm.err());
 
     if (ok)
-        glAttachShader(program, shader);
+        GL_CHECK(glAttachShader(program, shader));
     else
         push_error(CompilationFailed);
 
-    glDeleteShader(shader);
+    GL_CHECK(glDeleteShader(shader));
 
     return ok;
 }
@@ -275,10 +276,10 @@ bool ShaderProgram::link() {
 
     LOG_ERROR(self, "linking ... ");
 
-    glLinkProgram(self->program);
+    GL_CHECK(glLinkProgram(self->program));
 
     GLint success;
-    glGetProgramiv(self->program, GL_LINK_STATUS, &success);
+    GL_CHECK(glGetProgramiv(self->program, GL_LINK_STATUS, &success));
     bool ok = success == GL_TRUE;
     LOG_ERROR(self, (ok ? "success" : "failed") << std::endl);
 
@@ -294,9 +295,9 @@ bool ShaderProgram::link() {
 
 bool ShaderProgram::bindAttribute(const std::string& s, GLuint position) {
     if (self->program == 0)
-        self->program = glCreateProgram();
+        GL_CHECK(self->program = glCreateProgram());
 
-    glBindAttribLocation(self->program, position, s.c_str());
+    GL_CHECK(glBindAttribLocation(self->program, position, s.c_str()));
     // FIXME: check wether attrib was added correctly
     
     return true;

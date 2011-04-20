@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#ifdef SYSTEM_LINUX
+#define SYSTEM_UNIX
+#endif
+
 #ifdef CXX0X
 #define EXPLICIT explicit
 #define OVERRIDE override

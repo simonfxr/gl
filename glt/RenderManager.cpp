@@ -109,6 +109,7 @@ void RenderManager::endScene() {
     self->inScene = false;
     self->transform.restore(self->transformStateBOS);
     self->render_target->draw();
+    self->render_target->deactivate();
 }
 
 vec4_t transformModelToWorld(const RenderManager& rm, const vec4_t& modelCoord) {

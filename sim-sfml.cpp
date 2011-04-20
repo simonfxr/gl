@@ -305,6 +305,8 @@ std::ostream& operator <<(std::ostream& out, const vec4_t& a) {
 void Game::windowResized(uint32 width, uint32 height) {
     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
     renderManager.renderTarget().viewport(glt::Viewport(width, height));
+    textureRenderTarget->resize(width, height);
+    textureRenderTarget->viewport(glt::Viewport(width, height));
     
     float fov = degToRad(17.5f);
     float aspect = float(width) / float(height);

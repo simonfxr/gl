@@ -13,7 +13,11 @@ TextureRenderTarget::TextureRenderTarget(uint32 w, uint32 h, uint32 bs) :
 }
 
 TextureRenderTarget::~TextureRenderTarget() {
-    
+    if (frame_buffer != 0)
+        GL_CHECK(glDeleteFramebuffers(1, &frame_buffer));
+
+    if (depth_buffer != 0)
+        GL_CHECK(glDeleteRenderbuffers(1, &depth_buffer));
 }
 
 void TextureRenderTarget::resize(uint32 w, uint32 h) {
@@ -23,13 +27,15 @@ void TextureRenderTarget::resize(uint32 w, uint32 h) {
 
     updateSize(w, h);
 
-    if (depth_buffer != 0)
-        GL_CHECK(glDeleteRenderbuffers(1, &depth_buffer));
+    GL_CHECK(glDeleteFramebuffers(1, &frame_buffer));
+    GL_CHECK(glDeleteRenderbuffers(1, &depth_buffer));
+    GL_CHECK(glDeleteTextures(1, &texture.texture));
 
-    if (frame_buffer != 0)
-        GL_CHECK(glDeleteFramebuffers(1, &frame_buffer));
+    texture.texture = 0;
+    frame_buffer = 0;
+    depth_buffer = 0;
     
-    GLuint tex;
+    GLuint tex = 0;
     GL_CHECK(glGenTextures(1, &tex));
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, tex));
 
@@ -38,13 +44,7 @@ void TextureRenderTarget::resize(uint32 w, uint32 h) {
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
 
-//    byte *texels = new byte[w * h * 4];
-    byte *texels = 0;
-
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, texels));    
-
-    // delete[] texels;
-    // texels = 0;
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0));
 
     texture.texture = tex;
 
@@ -62,17 +62,18 @@ void TextureRenderTarget::resize(uint32 w, uint32 h) {
     GL_CHECK(status = glCheckFramebufferStatus(GL_FRAMEBUFFER));
 
     const char *str_status = "unknown";
-#define CASE(s) case s: str_status = #s
+#define CASE(s) case s: str_status = #s; break
     switch (status) {
         CASE(GL_FRAMEBUFFER_COMPLETE);
-//        CASE(GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
+        CASE(GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
 //        CASE(GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS);
         CASE(GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
         CASE(GL_FRAMEBUFFER_UNSUPPORTED);
     }
 #undef CASE
 
-    ERROR(str_status);
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+        ERROR(str_status);
 }
 
 void TextureRenderTarget::doActivate() {
@@ -80,11 +81,11 @@ void TextureRenderTarget::doActivate() {
 }
 
 void TextureRenderTarget::doDeactivate() {
-    
+    // noop
 }
 
 void TextureRenderTarget::doDraw() {
-    
+    // noop
 }
 
 } // namespace glt

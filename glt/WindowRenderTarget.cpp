@@ -30,7 +30,7 @@ void WindowRenderTarget::doActivate() {
 }
 
 void WindowRenderTarget::doDeactivate() {
-    window.window().SetActive(false);
+    // noop
 }
 
 void WindowRenderTarget::doDraw() {
