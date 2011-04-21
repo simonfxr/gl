@@ -411,6 +411,7 @@ print_iter:
 }
 
 void Game::mouseMoved(int32 dx, int32 dy) {
+    std::cerr << "mouse moved: " << dx << ", " << dy << std::endl;
     world.rotateCamera(dx * 0.001f, dy * 0.001f);
 }
 
@@ -516,8 +517,6 @@ void Game::renderScene(float interpolation) {
     render_hud();
 
     ++num_draws;
-    draw_time_accum += now() - t0;
-
     renderManager.endScene();
     renderManager.renderTarget().deactivate();
 
@@ -557,6 +556,8 @@ void Game::renderScene(float interpolation) {
 
     if (inc)
         ++nactive_texs;
+
+    draw_time_accum += now() - t0;
 }
 
 void Game::renderWorld(float dt) {
@@ -620,6 +621,7 @@ void Game::end_render_spheres() {
 
         glt::Uniforms(sphereInstancedShader)
             .optional("normalMatrix", transformPipeline.normalMatrix())
+            .optional("vMatrix", transformPipeline.mvMatrix())
             .optional("pMatrix", transformPipeline.projectionMatrix());
 
         sphereBatch.drawInstanced(num);
@@ -632,8 +634,7 @@ void Game::render_sphere(const Sphere& s, const SphereModel& m) {
 
     if (render_spheres_instanced) {
 
-        point3_t viewCoord = s.center - world.camera().origin;;
-        SphereInstance inst = vec4(viewCoord, s.r);
+        SphereInstance inst = vec4(s.center, s.r);
         sphere_instances.push_back(inst);
         
     } else {

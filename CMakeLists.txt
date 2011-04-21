@@ -25,9 +25,6 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -DSYSTEM_LINUX -DMATH_INLINE -DDE
 
 #set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb")
 
-set(BIBLE $ENV{HOME}/src/oglsuperbible5-read-only)
-
-include_directories(${BIBLE}/Src/GLTools/include)
 include_directories(.)
 
 find_package(PkgConfig)
