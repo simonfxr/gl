@@ -67,8 +67,12 @@ struct GameWindow::Data : public GameLoop::Game {
 
     float frame_duration;
 
+    WindowRenderTarget *renderTarget;
+
     Data(GameWindow& _self) :
-        self(_self), loop(30) {}
+        self(_self),
+        loop(30)
+        {}
     
     ~Data();
 
@@ -87,6 +91,8 @@ GameWindow::Data::~Data() {
     if (owning_clock) {
         delete clock; clock = 0;
     }
+
+    delete renderTarget; renderTarget = 0;
 }
 
 #define SELF ({                                                         \
@@ -304,6 +310,7 @@ bool GameWindow::init(const std::string& windowTitle, sf::RenderWindow *win, sf:
 
     self->owning_win = win == 0;
     self->win = win == 0 ? createRenderWindow(windowTitle) : win;
+    self->renderTarget = new WindowRenderTarget(*this);
     
     if (self->win != 0) {
         self->win->SetActive();
@@ -474,6 +481,10 @@ bool GameWindow::focused() const {
 
 float GameWindow::frameDuration() const {
     return SELF->frame_duration;
+}
+
+WindowRenderTarget& GameWindow::renderTarget() {
+    return *SELF->renderTarget;
 }
 
 } // namespace ge

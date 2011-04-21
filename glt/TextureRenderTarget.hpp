@@ -8,12 +8,13 @@
 namespace glt {
 
 struct TextureRenderTarget EXPLICIT : public RenderTarget {
-    const TextureHandle& textureHandle();
+    TextureHandle& textureHandle();
 
     TextureRenderTarget(uint32 w, uint32 h, uint32 buffers);
     ~TextureRenderTarget();
 
     void resize(uint32 width, uint32 height);
+    void recreateTexture();
 
 protected:
     void doActivate() OVERRIDE;

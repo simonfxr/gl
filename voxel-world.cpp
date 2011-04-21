@@ -167,6 +167,8 @@ bool Anim::onInit() {
         GL_CHECK(glEnable(GL_MULTISAMPLE_ARB));
     }
 
+    rm.setRenderTarget(this->renderTarget());
+
     sm.addPath(".");
     sm.addPath("shaders");
 

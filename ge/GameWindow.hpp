@@ -7,6 +7,7 @@
 
 #include "defs.h"
 #include "ge/GameLoop.hpp"
+#include "ge/WindowRenderTarget.hpp"
 
 namespace ge {
 
@@ -52,6 +53,8 @@ struct GameWindow {
     bool focused() const;
 
     float frameDuration() const;
+
+    WindowRenderTarget& renderTarget();
 
 private:
     

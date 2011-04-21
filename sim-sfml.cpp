@@ -29,7 +29,6 @@
 #include "glt/GeometryTransform.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/RenderManager.hpp"
-#include "glt/WindowRenderTarget.hpp"
 #include "glt/TextureRenderTarget.hpp"
 
 #include "ge/GameWindow.hpp"
@@ -49,6 +48,10 @@ static const float FPS_RENDER_CYCLE = 1.f;
 static const float CAMERA_STEP = 0.1f;
 
 static const float CAMERA_SPHERE_RAD = 1.f;
+
+static const uint32 NUM_BLUR_TEXTURES = 10;
+
+static const float BLUR_TEXTURES_UPDATE_CYCLE = 0.03f / NUM_BLUR_TEXTURES;
 
 static const glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
 
@@ -109,8 +112,12 @@ struct Game EXPLICIT : public ge::GameWindow {
     glt::ShaderProgram postprocShader;
 
     glt::ShaderProgram identityShader;
-    glt::WindowRenderTarget *windowRenderTarget;
     glt::TextureRenderTarget *textureRenderTarget;
+    
+    GLuint texture3D;
+    uint32 nactive_texs;
+    uint32 active_tex_idx;
+    float next_tex_snapshot;
 
     uint32 fps_count;
     uint32 current_fps;
@@ -167,9 +174,7 @@ Game::Game() :
 
 bool Game::onInit() {
 
-    windowRenderTarget = new glt::WindowRenderTarget(*this);
-
-    textureRenderTarget = new glt::TextureRenderTarget(window().GetWidth(), window().GetHeight(), glt::RT_COLOR_BUFFER);
+    textureRenderTarget = new glt::TextureRenderTarget(window().GetWidth(), window().GetHeight(), glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);
 
     renderManager.setRenderTarget(*textureRenderTarget);
     
@@ -194,7 +199,10 @@ bool Game::onInit() {
         
         rectBatch.freeze();
     }
-    
+
+    nactive_texs = 0;
+    active_tex_idx = 0;
+    texture3D = 0;
 
     shaderManager.addPath(".");
     shaderManager.addPath("shaders");
@@ -225,8 +233,6 @@ bool Game::onInit() {
 
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     
-    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-
     makeSphere(sphereBatch, 1.f, 26, 13);
 
     world.camera().setOrigin(vec3(-19.f, 10.f, +19.f));
@@ -338,14 +344,32 @@ std::ostream& operator <<(std::ostream& out, const vec4_t& a) {
 }
 
 void Game::windowResized(uint32 width, uint32 height) {
+
+    nactive_texs = 0;
+    GL_CHECK(glDeleteTextures(1, &texture3D));
+    texture3D = 0;
+    
     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
-    windowRenderTarget->viewport(glt::Viewport(width, height));
+    this->renderTarget().viewport(glt::Viewport(width, height));
     textureRenderTarget->resize(width, height);
     textureRenderTarget->viewport(glt::Viewport(width, height));
     
     float fov = degToRad(17.5f);
     float aspect = float(width) / float(height);
     renderManager.setPerspectiveProjection(fov, aspect, 1.f, 100.f);
+
+    GL_CHECK(glGenTextures(1, &texture3D));
+    GL_CHECK(glBindTexture(GL_TEXTURE_3D, texture3D));
+    GL_CHECK(glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB8, width, height, NUM_BLUR_TEXTURES, 0, GL_RGB, GL_UNSIGNED_BYTE, 0));
+
+    GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+
+    next_tex_snapshot = realTime();
+    active_tex_idx = 0;
 }
 
 void Game::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
@@ -478,20 +502,41 @@ void Game::renderScene(float interpolation) {
     draw_time_accum += now() - t0;
 
     renderManager.endScene();
+
+    GL_CHECK(glBindTexture(GL_TEXTURE_3D, texture3D));
+    GL_CHECK(glCopyTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, active_tex_idx, 0, 0, textureRenderTarget->width(), textureRenderTarget->height()));
+
     renderManager.renderTarget().deactivate();
 
-    windowRenderTarget->activate();
-    windowRenderTarget->clear(glt::RT_DEPTH_BUFFER);
+    bool inc = false;
+
+    if (realTime() >= next_tex_snapshot) {
+        
+        if (nactive_texs < NUM_BLUR_TEXTURES)
+            inc = true;
+        
+        active_tex_idx = (active_tex_idx + 1) % NUM_BLUR_TEXTURES;
+        next_tex_snapshot = realTime() + BLUR_TEXTURES_UPDATE_CYCLE;
+    }
+                                 
+    GL_CHECK(glDisable(GL_DEPTH_TEST));
+
+    this->renderTarget().activate();
     postprocShader.use();
 
     GL_CHECK(glActiveTexture(GL_TEXTURE0));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, textureRenderTarget->textureHandle().texture));
-    GL_CHECK(glUniform1i(glGetUniformLocation(postprocShader.program(), "texture0"), 0));
+    GL_CHECK(glUniform1i(glGetUniformLocation(postprocShader.program(), "textures"), 0));
+    glt::Uniforms(postprocShader).optional("depth", float(nactive_texs + 1));
 
     rectBatch.draw();
     
-    windowRenderTarget->draw();
-    windowRenderTarget->deactivate();
+    this->renderTarget().draw();
+    this->renderTarget().deactivate();
+
+    GL_CHECK(glEnable(GL_DEPTH_TEST));
+
+    if (inc)
+        ++nactive_texs;
 }
 
 void Game::renderWorld(float dt) {

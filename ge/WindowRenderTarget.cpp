@@ -1,24 +1,25 @@
-#include "glt/WindowRenderTarget.hpp"
+#include "ge/WindowRenderTarget.hpp"
+#include "ge/GameWindow.hpp"
 #include "glt/utils.hpp"
 #include "math/vec4.hpp"
 
-namespace glt {
+namespace ge {
 
 namespace {
 
-uint32 buffersOf(ge::GameWindow& win) {
+uint32 buffersOf(GameWindow& win) {
     const sf::ContextSettings& cs = win.window().GetSettings();
-    uint32 bs = RT_COLOR_BUFFER;
+    uint32 bs = glt::RT_COLOR_BUFFER;
     if (cs.DepthBits > 0)
-        bs |= RT_DEPTH_BUFFER;
+        bs |= glt::RT_DEPTH_BUFFER;
     if (cs.StencilBits > 0)
-        bs |= RT_STENCIL_BUFFER;
+        bs |= glt::RT_STENCIL_BUFFER;
     return bs;
 }
 
 } // namespace anon
 
-WindowRenderTarget::WindowRenderTarget(ge::GameWindow& w) :
+WindowRenderTarget::WindowRenderTarget(GameWindow& w) :
     RenderTarget(w.window().GetWidth(), w.window().GetHeight(),
                  buffersOf(w)),
     window(w)
@@ -37,10 +38,10 @@ void WindowRenderTarget::doDraw() {
     window.window().Display();
 }
 
-void WindowRenderTarget::doViewport(const Viewport& vp) {
+void WindowRenderTarget::doViewport(const glt::Viewport& vp) {
     updateSize(window.window().GetWidth(), window.window().GetHeight());
     RenderTarget::doViewport(vp);
 }
 
-} // namespace glt
+} // namespace ge
 

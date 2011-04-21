@@ -3,26 +3,27 @@
 
 #include "defs.h"
 #include "glt/RenderTarget.hpp"
-#include "ge/GameWindow.hpp"
 
-namespace glt {
+namespace ge {
 
-struct WindowRenderTarget EXPLICIT : public RenderTarget {
+struct GameWindow;
+
+struct WindowRenderTarget EXPLICIT : public glt::RenderTarget {
 private:
 
-    ge::GameWindow& window;
+    GameWindow& window;
 
 public:
 
-    WindowRenderTarget(ge::GameWindow& win);
+    WindowRenderTarget(GameWindow& win);
     
 protected:
     void doActivate() OVERRIDE;
     void doDeactivate() OVERRIDE;
     void doDraw() OVERRIDE;
-    void doViewport(const Viewport& vp) OVERRIDE;
+    void doViewport(const glt::Viewport& vp) OVERRIDE;
 };
 
-} // namespace glt
+} // namespace ge
 
 #endif
