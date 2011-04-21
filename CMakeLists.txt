@@ -90,7 +90,9 @@ set(GLT_SRC
   glt/TextureHandle.hpp
   glt/TextureHandle.cpp
   glt/TextureRenderTarget.hpp
-  glt/TextureRenderTarget.cpp)
+  glt/TextureRenderTarget.cpp
+  glt/TextureRenderTarget3D.hpp
+  glt/TextureRenderTarget3D.cpp)
 
 set(GE_SRC
   ge/GameLoop.hpp

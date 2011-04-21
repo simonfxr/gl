@@ -6,6 +6,7 @@ namespace glt {
 
 TextureRenderTarget::TextureRenderTarget(uint32 w, uint32 h, uint32 bs) :
     RenderTarget(0, 0, bs),
+    texture(Texture2D),
     frame_buffer(0),
     depth_buffer(0)
 {
@@ -40,7 +41,7 @@ void TextureRenderTarget::resize(uint32 w, uint32 h) {
     GL_CHECK(glGenFramebuffers(1, &frame_buffer));
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));
 
-    recreateTexture();
+    createTexture();
 
     if (buffers() & RT_DEPTH_BUFFER) {
         GL_CHECK(glGenRenderbuffers(1, &depth_buffer));
@@ -66,14 +67,14 @@ void TextureRenderTarget::resize(uint32 w, uint32 h) {
     }
 }
 
-void TextureRenderTarget::recreateTexture() {
-    GL_CHECK(glDeleteTextures(1, &texture.texture));
-    texture.texture = 0;
-    
-    GLuint tex = 0;
-    GL_CHECK(glGenTextures(1, &tex));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, tex));
+void TextureRenderTarget::createTexture(bool delete_old) {
 
+    if (delete_old)
+        texture.free();
+
+    texture.type(Texture2D);
+    texture.bind();
+    
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
@@ -81,22 +82,12 @@ void TextureRenderTarget::recreateTexture() {
 
     GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width(), height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, 0));
 
-    texture.texture = tex;
-
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));    
-    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0));
+    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.handle(), 0));
 }
 
 void TextureRenderTarget::doActivate() {
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));
-}
-
-void TextureRenderTarget::doDeactivate() {
-    // noop
-}
-
-void TextureRenderTarget::doDraw() {
-    // noop
 }
 
 } // namespace glt

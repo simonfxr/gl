@@ -29,7 +29,7 @@
 #include "glt/GeometryTransform.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/RenderManager.hpp"
-#include "glt/TextureRenderTarget.hpp"
+#include "glt/TextureRenderTarget3D.hpp"
 
 #include "ge/GameWindow.hpp"
 
@@ -49,9 +49,9 @@ static const float CAMERA_STEP = 0.1f;
 
 static const float CAMERA_SPHERE_RAD = 1.f;
 
-static const uint32 NUM_BLUR_TEXTURES = 10;
+static const uint32 NUM_BLUR_TEXTURES = 5;
 
-static const float BLUR_TEXTURES_UPDATE_CYCLE = 0.03f / NUM_BLUR_TEXTURES;
+static const float BLUR_TEXTURES_UPDATE_CYCLE = 0.04f / NUM_BLUR_TEXTURES;
 
 static const glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
 
@@ -112,9 +112,8 @@ struct Game EXPLICIT : public ge::GameWindow {
     glt::ShaderProgram postprocShader;
 
     glt::ShaderProgram identityShader;
-    glt::TextureRenderTarget *textureRenderTarget;
+    glt::TextureRenderTarget3D *textureRenderTarget;
     
-    GLuint texture3D;
     uint32 nactive_texs;
     uint32 active_tex_idx;
     float next_tex_snapshot;
@@ -174,7 +173,8 @@ Game::Game() :
 
 bool Game::onInit() {
 
-    textureRenderTarget = new glt::TextureRenderTarget(window().GetWidth(), window().GetHeight(), glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);
+    textureRenderTarget = new glt::TextureRenderTarget3D(window().GetWidth(), window().GetHeight(), NUM_BLUR_TEXTURES,
+                                                         glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);
 
     renderManager.setRenderTarget(*textureRenderTarget);
     
@@ -202,7 +202,6 @@ bool Game::onInit() {
 
     nactive_texs = 0;
     active_tex_idx = 0;
-    texture3D = 0;
 
     shaderManager.addPath(".");
     shaderManager.addPath("shaders");
@@ -346,30 +345,18 @@ std::ostream& operator <<(std::ostream& out, const vec4_t& a) {
 void Game::windowResized(uint32 width, uint32 height) {
 
     nactive_texs = 0;
-    GL_CHECK(glDeleteTextures(1, &texture3D));
-    texture3D = 0;
     
     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
     this->renderTarget().viewport(glt::Viewport(width, height));
-    textureRenderTarget->resize(width, height);
+    textureRenderTarget->resize(width, height, NUM_BLUR_TEXTURES);
     textureRenderTarget->viewport(glt::Viewport(width, height));
     
     float fov = degToRad(17.5f);
     float aspect = float(width) / float(height);
     renderManager.setPerspectiveProjection(fov, aspect, 1.f, 100.f);
 
-    GL_CHECK(glGenTextures(1, &texture3D));
-    GL_CHECK(glBindTexture(GL_TEXTURE_3D, texture3D));
-    GL_CHECK(glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB8, width, height, NUM_BLUR_TEXTURES, 0, GL_RGB, GL_UNSIGNED_BYTE, 0));
-
-    GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-
     next_tex_snapshot = realTime();
-    active_tex_idx = 0;
+    textureRenderTarget->targetDepth(0);
 }
 
 void Game::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
@@ -478,6 +465,9 @@ void Game::renderScene(float interpolation) {
 
     const mat4_t camMat = transformationWorldToLocal(world.camera());
     renderManager.setCameraMatrix(camMat);
+
+    
+    
     renderManager.beginScene();
     renderManager.renderTarget().clear(glt::RT_DEPTH_BUFFER);
 
@@ -502,10 +492,6 @@ void Game::renderScene(float interpolation) {
     draw_time_accum += now() - t0;
 
     renderManager.endScene();
-
-    GL_CHECK(glBindTexture(GL_TEXTURE_3D, texture3D));
-    GL_CHECK(glCopyTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, active_tex_idx, 0, 0, textureRenderTarget->width(), textureRenderTarget->height()));
-
     renderManager.renderTarget().deactivate();
 
     bool inc = false;
@@ -514,8 +500,8 @@ void Game::renderScene(float interpolation) {
         
         if (nactive_texs < NUM_BLUR_TEXTURES)
             inc = true;
-        
-        active_tex_idx = (active_tex_idx + 1) % NUM_BLUR_TEXTURES;
+
+        textureRenderTarget->targetDepth((textureRenderTarget->targetDepth() + 1) % NUM_BLUR_TEXTURES);
         next_tex_snapshot = realTime() + BLUR_TEXTURES_UPDATE_CYCLE;
     }
                                  
@@ -524,9 +510,13 @@ void Game::renderScene(float interpolation) {
     this->renderTarget().activate();
     postprocShader.use();
 
+    textureRenderTarget->textureHandle().bind();
     GL_CHECK(glActiveTexture(GL_TEXTURE0));
     GL_CHECK(glUniform1i(glGetUniformLocation(postprocShader.program(), "textures"), 0));
-    glt::Uniforms(postprocShader).optional("depth", float(nactive_texs + 1));
+    glt::Uniforms(postprocShader)
+        .optional("depth", float(nactive_texs + 1))
+        .optional("offset", nactive_texs == 0 ? 2 : 1 / float(nactive_texs))
+        .optional("gammaCorrection", 2.2);
 
     rectBatch.draw();
     

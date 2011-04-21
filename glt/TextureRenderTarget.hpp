@@ -14,14 +14,12 @@ struct TextureRenderTarget EXPLICIT : public RenderTarget {
     ~TextureRenderTarget();
 
     void resize(uint32 width, uint32 height);
-    void recreateTexture();
+    
+    virtual void createTexture(bool delete_old = true);
 
 protected:
-    void doActivate() OVERRIDE;
-    void doDeactivate() OVERRIDE;
-    void doDraw() OVERRIDE;
+    virtual void doActivate() OVERRIDE;
 
-private:
     TextureHandle texture;
     GLuint frame_buffer;
     GLuint depth_buffer;
