@@ -90,7 +90,7 @@ struct DynBatch {
     
     void add(const Attr attrs[], const void *value);
     void send(const Attr attrs[], bool del_after_freeze);
-    void draw(const Attr attrs[], GLenum primType, bool enabled[]);
+    void draw(const Attr attrs[], GLenum primType, bool enabled[], uint32 num_instances);
     void at(const Attr attrs[], uint32 i, void *buffer) const;
     bool read(const char *file, const Attr attrs[]);
     bool write(const char *file, const Attr attrs[]) const;
@@ -150,7 +150,12 @@ public:
 
     void draw() {
         ASSERT_MSG(frozen, "cannot draw batch while building it");
-        batch.draw(attrs.attrs, _primType, enabledAttrs);
+        batch.draw(attrs.attrs, _primType, enabledAttrs, 1);
+    }
+
+    void drawInstanced(uint32 n) {
+        ASSERT_MSG(frozen, "cannot draw batch while building it");
+        batch.draw(attrs.attrs, _primType, enabledAttrs, n);
     }
 
     void enableAttrib(GLuint position, bool enable = true) {

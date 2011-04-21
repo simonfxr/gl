@@ -32,6 +32,7 @@ struct Renderer {
     const glt::ViewFrustum& frustum();
 
     void renderSphere(const Sphere& sphere, const SphereModel& model);
+    void endRenderSpheres();
     void renderBox(const glt::AABB& box);
     void renderConnection(const math::point3_t& a, const math::point3_t& b);
 };

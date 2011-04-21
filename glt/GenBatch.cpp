@@ -81,8 +81,10 @@ void DynBatch::send(const Attr attrs[], bool del) {
     }
 }
 
-void DynBatch::draw(const Attr attrs[], GLenum primType, bool enabled[]) {
+void DynBatch::draw(const Attr attrs[], GLenum primType, bool enabled[], uint32 num_instances) {
 
+    ASSERT(num_instances > 0);
+    
     for (uint32 i = 0; i < nattrs; ++i) {
         if (!enabled[i]) continue;
 
@@ -91,7 +93,10 @@ void DynBatch::draw(const Attr attrs[], GLenum primType, bool enabled[]) {
         GL_CHECK(glVertexAttribPointer(i, attrs[i].size, attrs[i].type, attrs[i].normalized, 0, 0));
     }
 
-    GL_CHECK(glDrawArrays(primType, 0, filled));
+    if (num_instances == 1)
+        GL_CHECK(glDrawArrays(primType, 0, filled));
+    else
+        GL_CHECK(glDrawArraysInstanced(primType, 0, filled, num_instances));
 
     for (uint32 i = 0; i < nattrs; ++i) {
         if (enabled[i])

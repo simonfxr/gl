@@ -280,7 +280,10 @@ void World::render(Renderer& renderer, float dt) {
             s.center += s.v * dt;
             renderer.renderSphere(s, self->sphereModels[i]);
         }
+        
     }
+    
+    renderer.endRenderSpheres();
 
     // uint32 ncon = self->connected.size();
     // for (uint32 i = 0; i < ncon; ++i) {

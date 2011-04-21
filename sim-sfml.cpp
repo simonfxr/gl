@@ -49,13 +49,15 @@ static const float CAMERA_STEP = 0.1f;
 
 static const float CAMERA_SPHERE_RAD = 1.f;
 
-static const uint32 NUM_BLUR_TEXTURES = 5;
+static const uint32 NUM_BLUR_TEXTURES = 1;
 
 static const float BLUR_TEXTURES_UPDATE_CYCLE = 0.04f / NUM_BLUR_TEXTURES;
 
 static const glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
 
 namespace {
+
+typedef vec4_t SphereInstance; // pos.xyz; radius
 
 struct Vertex {
     point4_t position;
@@ -110,8 +112,11 @@ struct Game EXPLICIT : public ge::GameWindow {
     } sphereUniforms;
 
     glt::ShaderProgram postprocShader;
+    
+    glt::ShaderProgram sphereInstancedShader;
 
     glt::ShaderProgram identityShader;
+
     glt::TextureRenderTarget3D *textureRenderTarget;
     
     uint32 nactive_texs;
@@ -133,6 +138,10 @@ struct Game EXPLICIT : public ge::GameWindow {
     bool use_interpolation;
     uint64 last_frame_rendered;
 
+    bool render_spheres_instanced;
+
+    std::vector<SphereInstance> sphere_instances;
+
     Game();
 
     bool onInit() OVERRIDE;
@@ -149,6 +158,7 @@ struct Game EXPLICIT : public ge::GameWindow {
     void spawn_sphere();
 
     void render_sphere(const Sphere& s, const SphereModel& m);
+    void end_render_spheres();
     void render_box(const glt::AABB& box);
     void render_con(const point3_t& a, const point3_t& b);
     void render_hud();
@@ -158,7 +168,6 @@ struct Game EXPLICIT : public ge::GameWindow {
 };
 
 Game::Game() :
-    ge::GameWindow(),
     wallBatch(vertexAttrs),
     sphereBatch(vertexAttrs),
     lineBatch(vertexAttrs),
@@ -168,6 +177,7 @@ Game::Game() :
     wallShader(shaderManager),
     sphereShader(shaderManager),
     postprocShader(shaderManager),
+    sphereInstancedShader(shaderManager),
     identityShader(shaderManager)
 {}
 
@@ -177,6 +187,8 @@ bool Game::onInit() {
                                                          glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);
 
     renderManager.setRenderTarget(*textureRenderTarget);
+
+    render_spheres_instanced = true;
     
     wallBatch.primType(GL_QUADS);
     sphereBatch.primType(GL_TRIANGLES);
@@ -322,6 +334,21 @@ bool Game::load_shaders() {
         postprocShader.replaceWith(ps);
     else
         ps.printError(std::cerr);
+
+    glt::ShaderProgram sis(shaderManager);
+
+    sis.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/sphere_instanced.vert");
+    sis.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/sphere_instanced.frag");
+    sis.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
+    sis.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
+    sis.tryLink();
+
+    ok = ok && !sis.wasError();
+    
+    if (!sis.wasError())
+        sphereInstancedShader.replaceWith(sis);
+    else
+        sis.printError(std::cerr);
 
     return ok;
 }
@@ -498,7 +525,7 @@ void Game::renderScene(float interpolation) {
 
     if (realTime() >= next_tex_snapshot) {
         
-        if (nactive_texs < NUM_BLUR_TEXTURES)
+        if (nactive_texs + 1 < NUM_BLUR_TEXTURES)
             inc = true;
 
         textureRenderTarget->targetDepth((textureRenderTarget->targetDepth() + 1) % NUM_BLUR_TEXTURES);
@@ -512,7 +539,10 @@ void Game::renderScene(float interpolation) {
 
     textureRenderTarget->textureHandle().bind();
     GL_CHECK(glActiveTexture(GL_TEXTURE0));
-    GL_CHECK(glUniform1i(glGetUniformLocation(postprocShader.program(), "textures"), 0));
+    GLint loc;
+    GL_CHECK(loc = glGetUniformLocation(postprocShader.program(), "textures"));
+    ASSERT(loc != -1);
+    GL_CHECK(glUniform1i(loc, 0));
     glt::Uniforms(postprocShader)
         .optional("depth", float(nactive_texs + 1))
         .optional("offset", nactive_texs == 0 ? 2 : 1 / float(nactive_texs))
@@ -552,36 +582,83 @@ const glt::ViewFrustum& Renderer::frustum() {
 }
 
 void Renderer::renderSphere(const Sphere& s, const SphereModel& m) {
-    SphereModel rm = m;
-    if (s.state == Rolling) {
-        vec4_t col = m.color.vec4() * 0.6f;
-        rm.color = glt::color(col);
+    game.render_sphere(s, m);
+}
+
+void Renderer::endRenderSpheres() {
+    game.end_render_spheres();
+}
+
+void Game::end_render_spheres() {
+    if (render_spheres_instanced) {
+
+        uint32 num = sphere_instances.size();
+
+        if (num == 0)
+            return;
+
+        glt::TextureHandle sphereMap(glt::Texture1D);
+        sphereMap.bind();
+
+        GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+        
+        GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, num, 0, GL_RGBA, GL_FLOAT, &sphere_instances[0]));
+
+        sphere_instances.clear();
+
+        sphereInstancedShader.use();
+        
+        GL_CHECK(glActiveTexture(GL_TEXTURE0));
+        sphereMap.bind();
+        
+        GLint loc;
+        GL_CHECK(loc = glGetUniformLocation(sphereInstancedShader.program(), "instancesMap"));
+        ASSERT(loc != -1);
+        GL_CHECK(glUniform1i(loc, 0));
+
+        glt::Uniforms(sphereInstancedShader)
+            .optional("normalMatrix", transformPipeline.normalMatrix())
+            .optional("pMatrix", transformPipeline.projectionMatrix());
+
+        sphereBatch.drawInstanced(num);
+
+        sphereMap.free();        
     }
-    game.render_sphere(s, rm);
 }
 
 void Game::render_sphere(const Sphere& s, const SphereModel& m) {
-    const vec3_t& pos = s.center;
-    glt::SavePoint sp(transformPipeline.save());
-    transformPipeline.translate(vec3(pos.x, pos.y, pos.z));
-    transformPipeline.scale(vec3(s.r));
 
-    sphereShader.use();
+    if (render_spheres_instanced) {
+
+        point3_t viewCoord = s.center - world.camera().origin;;
+        SphereInstance inst = vec4(viewCoord, s.r);
+        sphere_instances.push_back(inst);
+        
+    } else {
+        const vec3_t& pos = s.center;
+        glt::SavePoint sp(transformPipeline.save());
+        transformPipeline.translate(vec3(pos.x, pos.y, pos.z));
+        transformPipeline.scale(vec3(s.r));
+        
+        sphereShader.use();
     
-    glt::Uniforms us(sphereShader);
-    us.optional("mvpMatrix", transformPipeline.mvpMatrix());
-    us.optional("mvMatrix", transformPipeline.mvMatrix());
-    us.optional("normalMatrix", transformPipeline.normalMatrix());
-    us.optional("ecLight", sphereUniforms.ecLightPos);
-    us.optional("ecSpotDirection", sphereUniforms.ecSpotDir);
-    us.optional("spotAngle", sphereUniforms.spotAngle);
-    us.optional("color", m.color);
-    us.optional("shininess", m.shininess);
-
+        glt::Uniforms us(sphereShader);
+        us.optional("mvpMatrix", transformPipeline.mvpMatrix());
+        us.optional("mvMatrix", transformPipeline.mvMatrix());
+        us.optional("normalMatrix", transformPipeline.normalMatrix());
+        us.optional("ecLight", sphereUniforms.ecLightPos);
+        us.optional("ecSpotDirection", sphereUniforms.ecSpotDir);
+        us.optional("spotAngle", sphereUniforms.spotAngle);
+        us.optional("color", m.color);
+        us.optional("shininess", m.shininess);
+        
 #ifdef GLDEBUG
-    sphereShader.validate();
+        sphereShader.validate();
 #endif
-    sphereBatch.draw();
+        sphereBatch.draw();
+    }
 }
 
 void Renderer::renderBox(const glt::AABB& box) {
