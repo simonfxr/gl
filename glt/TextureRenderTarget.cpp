@@ -63,7 +63,7 @@ void TextureRenderTarget::resize(uint32 w, uint32 h) {
         }
 #undef CASE
         
-        ERROR(str_status);
+        ERR(str_status);
     }
 }
 

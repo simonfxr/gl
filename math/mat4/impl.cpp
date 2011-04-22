@@ -115,7 +115,7 @@ mat4_t transpose(const mat4_t& A) {
 
 float determinant(const mat4_t& A) {
     UNUSED(A);
-    FATAL_ERROR("not yet implemented");
+    FATAL_ERR("not yet implemented");
 }
 
 mat4_t inverse(const mat4_t& A) {

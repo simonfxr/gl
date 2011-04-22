@@ -27,7 +27,7 @@ void setUniform(bool mandatory, const std::string& name, ShaderProgram& prog, GL
     
     if (location == -1) {
         if (mandatory)
-            ERROR("unknown uniform");
+            ERR("unknown uniform");
         return;
     }
 
@@ -36,7 +36,7 @@ void setUniform(bool mandatory, const std::string& name, ShaderProgram& prog, GL
     GLenum actual_type;
     GL_CHECK(glGetActiveUniformsiv(prog.program(), 1, (const GLuint *) &location, GL_UNIFORM_TYPE, (GLint *) &actual_type));
     if (actual_type != type) {
-        ERROR("uniform types dont match");
+        ERR("uniform types dont match");
         return;
     }
 

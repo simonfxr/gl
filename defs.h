@@ -29,16 +29,16 @@
 
 #ifdef DEBUG
 #define ON_DEBUG(x) do { (x); } while (0)
-#define DEBUG_ERROR(msg) ERROR(msg)
+#define DEBUG_ERR(msg) ERR(msg)
 #else
 #define ON_DEBUG(x) ((void) 0)
-#define DEBUG_ERROR(x) ((void) 0)
+#define DEBUG_ERR(x) ((void) 0)
 #endif
 
 #ifdef DEBUG
 #define DEBUG_ASSERT(x, err) do { \
         if (unlikely(!(x)))       \
-            DEBUG_ERROR(err);           \
+            DEBUG_ERR(err);           \
     } while (0)
 #else
 #define DEBUG_ASSERT(x, err) ((void) 0)
@@ -47,7 +47,7 @@
 #define ASSERT_MSG DEBUG_ASSERT
 #define ASSERT(x) ASSERT_MSG(x, "assertion failed: " #x)
 
-#define ERROR(e) glt::error(e, __FILE__, __LINE__, __func__)
+#define ERR(e) glt::error(e, __FILE__, __LINE__, __func__)
 
 #define ERROR_ONCE(e) do {                                              \
         static bool __reported = false;                                 \
@@ -57,7 +57,7 @@
         }                                                               \
     } while (0)
 
-#define FATAL_ERROR(e) glt::fatal_error(e, __FILE__, __LINE__, __func__)
+#define FATAL_ERR(e) glt::fatal_error(e, __FILE__, __LINE__, __func__)
 
 #ifdef GNU_EXTENSIONS
 #define ATTRS(...) __attribute__((__VA_ARGS__))

@@ -17,7 +17,7 @@
 #define LOG(data, lvl, msg) do { if (LOG_LEVEL(data, lvl)) { (data)->sm.err() << msg; } } while (0)
 
 #define LOG_INFO(data, msg) LOG(data, Info, msg)
-#define LOG_ERROR(data, msg) LOG(data, OnlyErrors, msg)
+#define LOG_ERR(data, msg) LOG(data, OnlyErrors, msg)
 
 namespace glt {
 
@@ -131,7 +131,7 @@ bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, ui
 
     GLenum shader_type;
     if (!translateShaderType(type, &shader_type)) {
-        LOG_ERROR(this, "unknown shader type" << std::endl);
+        LOG_ERR(this, "unknown shader type" << std::endl);
         push_error(APIError);
         return false;
     }
@@ -139,7 +139,7 @@ bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, ui
     if (program == 0) {
         GL_CHECK(program = glCreateProgram());
         if (program == 0) {
-            LOG_ERROR(this, "couldnt create program" << std::endl);
+            LOG_ERR(this, "couldnt create program" << std::endl);
             push_error(OpenGLError);
             return false;
         }
@@ -148,12 +148,12 @@ bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, ui
     GLuint shader;
     GL_CHECK(shader = glCreateShader(shader_type));
     if (shader == 0) {
-        LOG_ERROR(this, "couldnt create shader" << std::endl);
+        LOG_ERR(this, "couldnt create shader" << std::endl);
         push_error(OpenGLError);
         return false;
     }
 
-    LOG_ERROR(this, "compiling " << file << " ... ");
+    LOG_ERR(this, "compiling " << file << " ... ");
         
     GL_CHECK(glShaderSource(shader, nsegments, segments, segLengths));
     GL_CHECK(glCompileShader(shader));
@@ -161,7 +161,7 @@ bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, ui
     GLint success;
     GL_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
     bool ok = success == GL_TRUE;
-    LOG_ERROR(this, (ok ? "success" : "failed") << std::endl);
+    LOG_ERR(this, (ok ? "success" : "failed") << std::endl);
 
     if ((!ok && LOG_LEVEL(this, OnlyErrors)) || LOG_LEVEL(this, Info))
         printShaderLog(shader, sm.err());
@@ -195,7 +195,7 @@ bool ShaderProgram::addShaderFile(const std::string& file) {
     } else if (end > begin && strcmp(end, "frag") == 0) {
         type = FragmentShader;
     } else {
-        LOG_ERROR(self, "couldnt guess shader type based on file name" << std::endl);
+        LOG_ERR(self, "couldnt guess shader type based on file name" << std::endl);
         self->push_error(CompilationFailed);
         return false;
     }
@@ -223,7 +223,7 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
         realname = self->sm.lookupPath(file);
 
         if (realname.empty()) {
-            LOG_ERROR(self, "couldnt find file in path: " << file << std::endl);
+            LOG_ERR(self, "couldnt find file in path: " << file << std::endl);
             return false;
         } else if (self->shaders.count(realname) > 0) {
             return true;
@@ -232,7 +232,7 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
         self->shaders.insert(ShaderMapping(realname, type));
 
         if (!preprocess(self->sm, proc, realname, &incHandler.includes, shadersrc)) {
-            LOG_ERROR(self, "couldnt process shader file" << std::endl);
+            LOG_ERR(self, "couldnt process shader file" << std::endl);
             self->push_error(CompilationFailed);
             goto ret;
         }
@@ -274,14 +274,14 @@ bool ShaderProgram::link() {
         return false;
     }
 
-    LOG_ERROR(self, "linking ... ");
+    LOG_ERR(self, "linking ... ");
 
     GL_CHECK(glLinkProgram(self->program));
 
     GLint success;
     GL_CHECK(glGetProgramiv(self->program, GL_LINK_STATUS, &success));
     bool ok = success == GL_TRUE;
-    LOG_ERROR(self, (ok ? "success" : "failed") << std::endl);
+    LOG_ERR(self, (ok ? "success" : "failed") << std::endl);
 
     if (!ok)
         self->push_error(LinkageFailed);

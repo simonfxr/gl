@@ -195,7 +195,7 @@ bool Game::onInit() {
 
     renderManager.setRenderTarget(*textureRenderTarget);
 
-    render_spheres_instanced = true;
+    render_spheres_instanced = false;
     
     wallBatch.primType(GL_QUADS);
     sphereBatch.primType(GL_TRIANGLES);

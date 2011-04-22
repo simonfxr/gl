@@ -18,7 +18,7 @@ void *alloc_aligned(uint64 size, uint32 alignment) {
 #else
     mem = malloc(size);
     if (static_cast<uint64>(mem) & (alignment - 1)) != 0) {
-        ERROR("cannot alloc align memory");
+        ERR("cannot alloc align memory");
         free(mem);
         mem = 0;
     }
@@ -40,7 +40,7 @@ void validatePrimType(GLenum primType) {
     case GL_POLYGON:
         break;
     default:
-        ERROR("invalid OpenGL primitive type");
+        ERR("invalid OpenGL primitive type");
     }
 }
 
@@ -57,7 +57,7 @@ void validateUsageHint(GLenum usageHint) {
     case GL_DYNAMIC_COPY:
         break;
     default:
-        ERROR("invalid BufferData usage hint");
+        ERR("invalid BufferData usage hint");
     }
 }
 
@@ -78,7 +78,7 @@ VertexDesc *allocVertexDesc(uint32 sizeof_vertex, uint32 nattrs, const Attr *att
     if (alignment == ALIGNMENT_DEFAULT)
         alignment = required_alignment;
     else if (required_alignment > alignment)
-        ERROR("request alignment below required alignment!");
+        ERR("request alignment below required alignment!");
 
     desc->alignment = alignment;
     desc->sizeof_vertex = sizeof_vertex;
@@ -234,7 +234,7 @@ GLuint Mesh::attributePosition(uint32 offset) {
             return i;
     }
 
-    FATAL_ERROR("invalid attribute offset");
+    FATAL_ERR("invalid attribute offset");
 }
 
 } // namespace glt

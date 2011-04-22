@@ -424,7 +424,7 @@ void setWorkingDirectory(const char *filename) {
     uint32 len = strlen(filename);
     
     if (len == 0) {
-        ERROR("empty filename"); return;
+        ERR("empty filename"); return;
     }
 
     const char *dirname = filename;
@@ -442,7 +442,7 @@ void setWorkingDirectory(const char *filename) {
         }
 
         if (i == 0) {
-            ERROR("not a directory"); return;
+            ERR("not a directory"); return;
         }
 
         dirname = copy;
@@ -450,10 +450,10 @@ void setWorkingDirectory(const char *filename) {
 
 #ifdef SYSTEM_UNIX
     if (chdir(dirname) < 0) {
-        ERROR(strerror(errno));
+        ERR(strerror(errno));
     }
 #else
-    ERROR("couldnt change directory: not implemented");
+    ERR("couldnt change directory: not implemented");
 #endif
 
     if (dirname != filename)

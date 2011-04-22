@@ -31,7 +31,7 @@ GLuint Attrs<T>::index(uint64 offset) const {
     for (uint32 i = 0; i < length; ++i)
         if ((const GLvoid *) off == attrs[i].offset)
             return i;
-    FATAL_ERROR("unknown offset in attribute list");
+    FATAL_ERR("unknown offset in attribute list");
 }
 
 namespace {

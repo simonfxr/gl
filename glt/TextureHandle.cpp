@@ -12,7 +12,7 @@ GLenum glType(TextureType ty) {
     case Texture2D: return GL_TEXTURE_2D;
     case Texture3D: return GL_TEXTURE_3D;
     default:
-        ERROR("invalid TextureType");
+        ERR("invalid TextureType");
         return GL_FALSE;
     }
 }

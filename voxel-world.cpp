@@ -197,7 +197,7 @@ bool Anim::onInit() {
 
     if (read_model) {
         if (!readModel(WORLD_MODEL_FILE, worldModel)) {
-            ERROR("couldnt read model file!");
+            ERR("couldnt read model file!");
             return false;
         }
     } else {
@@ -206,7 +206,7 @@ bool Anim::onInit() {
 
     if (write_model) {
         if (!writeModel(WORLD_MODEL_FILE, worldModel))
-            ERROR("couldnt write model file");
+            ERR("couldnt write model file");
     }
 
     worldModel.freeze();

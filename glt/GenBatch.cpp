@@ -20,7 +20,7 @@ uint32 componentSize(GLenum type) {
     case GL_UNSIGNED_BYTE: return sizeof (GLubyte);
     }
 
-    FATAL_ERROR("unknown OpenGL component type");
+    FATAL_ERR("unknown OpenGL component type");
 }
 
 } // namespace anon
@@ -134,7 +134,7 @@ bool DynBatch::read(const char *file, const Attr attrs[]) {
     line[sizeof line - 1] = 0;
 
     if (strcmp(HEADER, line) != 0) {
-        ERROR("not a model file!");
+        ERR("not a model file!");
         goto ret;
     }
 
@@ -144,7 +144,7 @@ bool DynBatch::read(const char *file, const Attr attrs[]) {
         goto ret;
 
     if (vers_maj != VERS_MAJ || vers_min != VERS_MIN) {
-        ERROR("versions dont match!");
+        ERR("versions dont match!");
         goto ret;
     }
 
@@ -160,7 +160,7 @@ bool DynBatch::read(const char *file, const Attr attrs[]) {
         if (fread(&a, sizeof a, 1, fd) != 1)
             goto ret;
         if (memcmp(&a, &attrs[i], sizeof a) != 0) {
-            ERROR("attributes dont match!");
+            ERR("attributes dont match!");
             goto ret;
         }
     }

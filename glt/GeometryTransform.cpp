@@ -86,7 +86,7 @@ void GeometryTransform::loadProjectionMatrix(const mat4_t& m) {
 
 void GeometryTransform::dup() {
     if (unlikely(self->depth + 1 >= GEOMETRY_TRANSFORM_MAX_DEPTH))
-        FATAL_ERROR("GeometryTransform: stack overflow");
+        FATAL_ERR("GeometryTransform: stack overflow");
     self->mvMats[self->depth + 1] = self->mvMats[self->depth];
     self->mods[self->depth + 1] = self->mods[self->depth];
     ++self->depth;
@@ -94,7 +94,7 @@ void GeometryTransform::dup() {
     
 void GeometryTransform::pop() {
     if (unlikely(self->depth == 0))
-        FATAL_ERROR("GeometryTransform: stack underflow");
+        FATAL_ERR("GeometryTransform: stack underflow");
     --self->depth;
     self->dirty = self->mods[self->depth] != self->mods[self->depth + 1];
 }
@@ -108,7 +108,7 @@ SavePointArgs GeometryTransform::save() {
 
 void GeometryTransform::restore(const SavePointArgs& sp) {
     if (unlikely(self->mods[sp.depth] != sp.cookie || self->depth < sp.depth))
-        FATAL_ERROR("cannot restore GeometryTransform: stack modified below safepoint");
+        FATAL_ERR("cannot restore GeometryTransform: stack modified below safepoint");
     self->dirty = self->mods[sp.depth] != self->mods[self->depth];
     self->depth = sp.depth;
 }

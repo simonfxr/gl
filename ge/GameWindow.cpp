@@ -278,7 +278,7 @@ void GameWindow::onExit(int32 exit_code) {
 bool GameWindow::init(const std::string& windowTitle, sf::RenderWindow *win, sf::Clock *clock) {
 
     if (self != 0) {
-        ERROR("GameWindow already initialized");
+        ERR("GameWindow already initialized");
         return false;
     }
 
@@ -349,7 +349,7 @@ post_init:;
         delete self;
         self = 0;
 
-        ERROR("initialization failed");
+        ERR("initialization failed");
         return false;
     }
 
@@ -377,7 +377,7 @@ bool GameWindow::isButtonDown(sf::Mouse::Button button) {
 int32 GameWindow::run() {
     
     if (self == 0 || !self->initialized) {
-        ERROR("GameWindow not initialized");
+        ERR("GameWindow not initialized");
         return -1;
     }
     
