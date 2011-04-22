@@ -1,6 +1,7 @@
 #ifndef GL_UTILS
 #define GL_UTILS
 
+#include "defs.h"
 #include "opengl.h"
 
 #include <string>
@@ -25,7 +26,7 @@ void error(const char *msg, const char *file, int line, const char *func);
 
 void error_once(const char *msg, const char *file, int line, const char *func);
 
-void fatal_error(const char *msg, const char *file, int line, const char *func) __attribute__((noreturn));
+void fatal_error(const char *msg, const char *file, int line, const char *func) ATTRS(ATTR_NORETURN);
 
 bool checkForGLError(const char *op, const char *file, int line, const char *func);
 

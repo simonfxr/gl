@@ -1,15 +1,11 @@
 
+#set(COMP_C clang)
+#set(COMP_CXX clang++)
 
-set(ICC "/opt/intel/composerxe-2011.2.137/bin/intel64/icc")
-set(IXX "/opt/intel/composerxe-2011.2.137/bin/intel64/icpc")
+#set(CMAKE_C_COMPILER_INIT ${COMP_C})
 
-set(COMP_C clang)
-set(COMP_CXX clang++)
-
-set(CMAKE_C_COMPILER_INIT ${COMP_C})
-
-set(CMAKE_C_COMPILER ${COMP_C})
-set(CMAKE_CXX_COMPILER ${COMP_CXX})
+#set(CMAKE_C_COMPILER ${COMP_C})
+#set(CMAKE_CXX_COMPILER ${COMP_CXX})
 
 project(sim-sfml)
 
@@ -17,23 +13,38 @@ project(sim-sfml)
 
 #set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -O3 -DMATH_INLINE -DDEBUG -DGLDEBUG -march=native -fno-exceptions")
 
-set(GRAPHITE_OPTS "-floop-strip-mine -floop-block -floop-interchange")
+#set(GRAPHITE_OPTS "-floop-strip-mine -floop-block -floop-interchange")
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -DSYSTEM_LINUX -DMATH_INLINE -DDEBUG -DGLDEBUG -DGNU_EXTENSIONS -fno-exceptions -fno-rtti -O3 -ggdb -march=native")
+#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -DSYSTEM_LINUX -DMATH_INLINE -DDEBUG -DGLDEBUG -DGNU_EXTENSIONS -fno-exceptions -fno-rtti -O3 -ggdb -march=native")
 
 #set(CMAKE_LDFLAGS "${CMAKE_CXX_FLAGS}")
 
 #set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb")
 
-include_directories(.)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
-find_package(PkgConfig)
+#string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
 
-pkg_check_modules(LIBGLEW QUIET glew)
-include_directories(${LIBGLEW_INCLUDE_DIRS})
-link_libraries(${LIBGLEW_LIBRARIES})
+find_package(SFML REQUIRED)
+include_directories(${SFML_INCLUDE_DIR})
+link_libraries(${SFML_LIBRARIES})
 
 link_libraries(sfml-window sfml-graphics sfml-system)
+
+# foreach(lib ${SFML_LIBS})
+#   link_libraries(${SFML_${lib}_LIBRARY_RELEASE})
+# endforeach()
+
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+
+include_directories(${GLEW_INCLUDE_PATH})
+
+add_definitions("-DGLEW_STATIC")
+
+link_libraries(${GLEW_LIBRARY} ${OPENGL_gl_LIBRARY})
+
+include_directories(.)
 
 set(MATH_SRC
 

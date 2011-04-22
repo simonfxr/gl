@@ -1,6 +1,9 @@
 #include "glt/ViewFrustum.hpp"
 #include "glt/utils.hpp"
 
+#include "math/vec4.hpp"
+#include "math/mat4.hpp"
+
 namespace glt {
 
 using namespace math;

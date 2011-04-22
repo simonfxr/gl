@@ -61,7 +61,7 @@ quat_t& operator *=(quat_t& p, const quat_t& q) {
 }
 
 // 3D Math Primer for Graphics and Game Development (3dmp) (great book btw.)
-quat_t1 pow(const quat1_t& q, float exp) {
+quat1_t pow(const quat1_t& q, float exp) {
 
     if (abs(q.a) < 0.9999f) {
 
@@ -71,7 +71,7 @@ quat_t1 pow(const quat1_t& q, float exp) {
         float s, c;
         sincos(newAlpha, s, c);
         
-        quat r;
+        quat_t r;
         r.a = 0.f;
 
         float mult = s / sin(alpha);
@@ -85,7 +85,7 @@ quat_t1 pow(const quat1_t& q, float exp) {
 }
 
 // also 3dmp
-quat_t1 slerp(const quat1_t& p, const quat1_t& q) {
+quat1_t slerp(const quat1_t& p, const quat1_t& q, float t) {
 
     float w0 = p.a, x0 = p.b, y0 = p.c, z0 = p.d;
     float w1 = q.a, x1 = q.b, y1 = q.c, z1 = q.d;

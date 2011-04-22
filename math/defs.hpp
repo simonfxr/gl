@@ -1,23 +1,21 @@
 #ifndef MATH_DEFS_HPP
 #define MATH_DEFS_HPP
 
-#ifndef ATTR_CONST
-#define ATTR_CONST
-#endif
+#include "defs.h"
 
 #ifdef MATH_INLINE
 
-#define PURE_FUNC __attribute__((ATTR_CONST always_inline, unused, nothrow))
-#define MUT_FUNC __attribute__((always_inline, unused, nothrow))
+#define PURE_FUNC ATTRS(ATTR_FORCE_INLINE, ATTR_NO_WARN_UNUSED_DEF, ATTR_NOTHROW)
+#define MUT_FUNC ATTRS(ATTR_FORCE_INLINE, ATTR_NO_WARN_UNUSED_DEF, ATTR_NOTHROW)
 #define MATH_BEGIN_NAMESPACE namespace math { namespace {
 #define MATH_END_NAMESPACE } }
 #define MATH_INLINE_SPEC inline
-#define MATH_CONSTANT __attribute__((unused))
+#define MATH_CONSTANT ATTRS(ATTR_NO_WARN_UNUSED_DEF)
 
 #else
 
-#define PURE_FUNC __attribute__((ATTR_CONST nothrow))
-#define MUT_FUNC __attribute__((nothrow))
+#define PURE_FUNC ATTRS(ATTR_NOTHROW)
+#define MUT_FUNC ATTRS(ATTR_NOTHROW)
 #define MATH_BEGIN_NAMESPACE namespace math {
 #define MATH_END_NAMESPACE }
 #define MATH_INLINE_SPEC

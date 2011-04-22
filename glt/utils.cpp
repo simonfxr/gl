@@ -95,15 +95,13 @@ typedef void (*function_t)(void);
 function_t glGetProcAddress(const GLubyte *sym);
 
 #ifdef SYSTEM_LINUX
+#define HAVE_GL_GET_PROC_ADDRESS
 
 function_t glGetProcAddress(const GLubyte *sym) {
     return reinterpret_cast<function_t>(glXGetProcAddress(sym));
 }
 
-#else
-#error "cannot define glGetProcAddress"
 #endif
-
 
 struct GLDebug {
     virtual ~GLDebug() {}
@@ -115,6 +113,10 @@ struct NODebug : public GLDebug {
         UNUSED(loc);
     }
 };
+
+#ifndef HAVE_GL_GET_PROC_ADDRESS
+#warning "glGetProcAddress not defined, OpenGL debug output not available"
+#else
 
 struct ARBDebug : public GLDebug {
 
@@ -364,6 +366,8 @@ void AMDDebug::printDebugMessages(const DebugLocation& loc) {
     }
 }
 
+#endif
+
 GLDebug *glDebug = new NODebug();
 
 } // namespace anon
@@ -391,8 +395,10 @@ bool checkForGLError(const char *op, const char *file, int line, const char *fun
 
 bool initDebug() {
 
-    const char *debug_impl = 0; 
     GLDebug *dbg = 0;
+    const char *debug_impl = 0; 
+
+    #ifdef HAVE_GL_GET_PROC_ADDRESS
 
     if (isExtensionSupported("GL_ARB_debug_output")) {
         debug_impl = "GL_ARB_debug_output";
@@ -403,6 +409,8 @@ bool initDebug() {
         debug_impl = "GL_AMD_debug_output";
         dbg = AMDDebug::init();
     }
+
+    #endif
 
     bool initialized;
 

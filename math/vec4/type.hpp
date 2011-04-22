@@ -31,7 +31,7 @@ struct vec4_t {
         __m128 packed;
 #endif
 
-    } __attribute__((aligned(16)));
+    } ATTRS(ATTR_ALIGNED(16));
 
     float& operator[](unsigned long i) MUT_FUNC;
     float operator[](unsigned long i) const PURE_FUNC;
