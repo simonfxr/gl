@@ -57,7 +57,14 @@ static const glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
 
 namespace {
 
-typedef vec4_t SphereInstance; // pos.xyz; radius
+struct SphereInstance {
+    point3_t pos;
+    float rad;
+    vec3_t col_rgb;
+    float shininess;
+};
+
+// typedef vec4_t SphereInstance; // pos.xyz; radius
 
 struct Vertex {
     point4_t position;
@@ -402,6 +409,8 @@ void Game::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
         world.render_by_distance = !world.render_by_distance;
         std::cerr << "render_by_distance: " << (world.render_by_distance ? "yes" : "no") << std::endl;
         break;
+    case N:
+        render_spheres_instanced = !render_spheres_instanced; break;
     }
 
     return;
@@ -411,7 +420,7 @@ print_iter:
 }
 
 void Game::mouseMoved(int32 dx, int32 dy) {
-    std::cerr << "mouse moved: " << dx << ", " << dy << std::endl;
+//    std::cerr << "mouse moved: " << dx << ", " << dy << std::endl;
     world.rotateCamera(dx * 0.001f, dy * 0.001f);
 }
 
@@ -605,7 +614,7 @@ void Game::end_render_spheres() {
         GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
         GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
         
-        GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, num, 0, GL_RGBA, GL_FLOAT, &sphere_instances[0]));
+        GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, num * 2, 0, GL_RGBA, GL_FLOAT, &sphere_instances[0]));
 
         sphere_instances.clear();
 
@@ -615,14 +624,15 @@ void Game::end_render_spheres() {
         sphereMap.bind();
         
         GLint loc;
-        GL_CHECK(loc = glGetUniformLocation(sphereInstancedShader.program(), "instancesMap"));
+        GL_CHECK(loc = glGetUniformLocation(sphereInstancedShader.program(), "instanceData"));
         ASSERT(loc != -1);
         GL_CHECK(glUniform1i(loc, 0));
 
         glt::Uniforms(sphereInstancedShader)
             .optional("normalMatrix", transformPipeline.normalMatrix())
             .optional("vMatrix", transformPipeline.mvMatrix())
-            .optional("pMatrix", transformPipeline.projectionMatrix());
+            .optional("pMatrix", transformPipeline.projectionMatrix())
+            .optional("ecLight", sphereUniforms.ecLightPos);
 
         sphereBatch.drawInstanced(num);
 
@@ -634,7 +644,12 @@ void Game::render_sphere(const Sphere& s, const SphereModel& m) {
 
     if (render_spheres_instanced) {
 
-        SphereInstance inst = vec4(s.center, s.r);
+        SphereInstance inst;
+        inst.pos = s.center;
+        inst.rad = s.r;
+        inst.col_rgb = vec3(m.color.vec4());
+        inst.shininess = m.shininess;
+        
         sphere_instances.push_back(inst);
         
     } else {
