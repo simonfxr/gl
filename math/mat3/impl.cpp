@@ -1,6 +1,7 @@
+#include "math/defs.hpp"
+
 #if defined(MATH_MAT3_INLINE) || !defined(MATH_INLINE)
 
-#include "defs.h"
 #include "math/mat3/defns.hpp"
 #include "math/vec3.hpp"
 #include "math/math.hpp"

@@ -4,6 +4,7 @@
 #include <cstring>
 #include <errno.h>
 
+#include "defs.h"
 #include "opengl.h"
 
 #ifdef SYSTEM_LINUX

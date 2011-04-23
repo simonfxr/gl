@@ -1,3 +1,5 @@
+#include "math/defs.hpp"
+
 #if defined(MATH_IVEC3_INLINE) || !defined(MATH_INLINE)
 
 #include "math/math.hpp"

@@ -1,7 +1,6 @@
 #ifndef VEC4_TYPE
 #define VEC4_TYPE
 
-#include "defs.h"
 #include "math/defs.hpp"
 
 #if MATH_SSE(2, 0)

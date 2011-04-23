@@ -1,3 +1,5 @@
+#include "math/defs.hpp"
+
 #if defined(MATH_PLANE_INLINE) || !defined(MATH_INLINE)
 
 #include "math/plane.hpp"

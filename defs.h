@@ -1,6 +1,7 @@
 #ifndef _DEFS_H
 #define _DEFS_H
 
+#include "config.h"
 #include <stdint.h>
 
 #ifdef SYSTEM_LINUX

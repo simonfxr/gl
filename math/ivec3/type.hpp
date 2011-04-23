@@ -1,7 +1,6 @@
 #ifndef MATH_IVEC3_TYPE
 #define MATH_IVEC3_TYPE
 
-#include "defs.h"
 #include "math/defs.hpp"
 
 namespace math {

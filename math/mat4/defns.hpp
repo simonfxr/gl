@@ -1,3 +1,5 @@
+#include "math/mat4.hpp"
+
 #ifndef MAT4_DEFNS_HPP
 #define MAT4_DEFNS_HPP
 

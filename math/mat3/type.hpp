@@ -1,7 +1,7 @@
 #ifndef MAT3_TYPE_HPP
 #define MAT3_TYPE_HPP
 
-#include "defs.h"
+#include "math/defs.hpp"
 #include "math/vec3/type.hpp"
 
 namespace math {
