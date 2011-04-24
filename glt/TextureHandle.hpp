@@ -13,24 +13,27 @@ enum TextureType {
 
 struct TextureHandle {
 private:
-    
+
+    uint32 _samples;
     GLuint _handle;
     TextureType _type;
     
 public:
 
     TextureHandle();
-    TextureHandle(TextureType type);
+    TextureHandle(TextureType type, uint32 samples = 1);
     
     ~TextureHandle();
 
     void free();
     void bind();
     
-    GLuint handle() const { return _handle; } 
+    GLuint handle() const { return _handle; }
+    uint32 samples() const { return _samples; }
     TextureType type() const { return _type; }
+    GLenum glType() const;
     
-    void type(TextureType new_type);
+    void type(TextureType new_type, uint32 new_samples = 1);
     
 private:
     TextureHandle(const TextureHandle& _);

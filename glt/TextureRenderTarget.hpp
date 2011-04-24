@@ -10,7 +10,7 @@ namespace glt {
 struct TextureRenderTarget EXPLICIT : public RenderTarget {
     TextureHandle& textureHandle();
 
-    TextureRenderTarget(uint32 w, uint32 h, uint32 buffers);
+    TextureRenderTarget(uint32 w, uint32 h, uint32 buffers, uint32 samples = 1);
     ~TextureRenderTarget();
 
     void resize(uint32 width, uint32 height);
@@ -23,6 +23,7 @@ protected:
     TextureHandle texture;
     GLuint frame_buffer;
     GLuint depth_buffer;
+    uint32 samples;
 };
 
 } // namespace glt

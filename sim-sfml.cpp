@@ -29,7 +29,7 @@
 #include "glt/GeometryTransform.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/RenderManager.hpp"
-#include "glt/TextureRenderTarget3D.hpp"
+#include "glt/TextureRenderTarget.hpp"
 
 #include "ge/GameWindow.hpp"
 
@@ -124,7 +124,7 @@ struct Game EXPLICIT : public ge::GameWindow {
 
     glt::ShaderProgram identityShader;
 
-    glt::TextureRenderTarget3D *textureRenderTarget;
+    glt::TextureRenderTarget *textureRenderTarget;
     
     uint32 nactive_texs;
     uint32 active_tex_idx;
@@ -190,8 +190,7 @@ Game::Game() :
 
 bool Game::onInit() {
 
-    textureRenderTarget = new glt::TextureRenderTarget3D(window().GetWidth(), window().GetHeight(), NUM_BLUR_TEXTURES,
-                                                         glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);
+    textureRenderTarget = new glt::TextureRenderTarget(window().GetWidth(), window().GetHeight(), glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);
 
     renderManager.setRenderTarget(*textureRenderTarget);
 
@@ -382,7 +381,7 @@ void Game::windowResized(uint32 width, uint32 height) {
     
     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
     this->renderTarget().viewport(glt::Viewport(width, height));
-    textureRenderTarget->resize(width, height, NUM_BLUR_TEXTURES);
+    textureRenderTarget->resize(width, height);
     textureRenderTarget->viewport(glt::Viewport(width, height));
     
     float fov = degToRad(17.5f);
@@ -390,7 +389,7 @@ void Game::windowResized(uint32 width, uint32 height) {
     renderManager.setPerspectiveProjection(fov, aspect, 1.f, 100.f);
 
     next_tex_snapshot = realTime();
-    textureRenderTarget->targetDepth(0);
+//    textureRenderTarget->targetDepth(0);
 }
 
 void Game::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
@@ -503,8 +502,6 @@ void Game::renderScene(float interpolation) {
     const mat4_t camMat = transformationWorldToLocal(world.camera());
     renderManager.setCameraMatrix(camMat);
 
-    
-    
     renderManager.beginScene();
     renderManager.renderTarget().clear(glt::RT_DEPTH_BUFFER);
 
@@ -516,6 +513,7 @@ void Game::renderScene(float interpolation) {
 
     float dt = interpolation * game_speed * frameDuration();
 
+    GL_CHECK(glEnable(GL_MULTISAMPLE));
     GL_CHECK(glEnable(GL_CULL_FACE));
     
     renderWorld(dt);
@@ -529,16 +527,16 @@ void Game::renderScene(float interpolation) {
     renderManager.endScene();
     renderManager.renderTarget().deactivate();
 
-    bool inc = false;
+    // bool inc = false;
 
-    if (realTime() >= next_tex_snapshot) {
+    // if (realTime() >= next_tex_snapshot) {
         
-        if (nactive_texs + 1 < NUM_BLUR_TEXTURES)
-            inc = true;
+    //     if (nactive_texs + 1 < NUM_BLUR_TEXTURES)
+    //         inc = true;
 
-        textureRenderTarget->targetDepth((textureRenderTarget->targetDepth() + 1) % NUM_BLUR_TEXTURES);
-        next_tex_snapshot = realTime() + BLUR_TEXTURES_UPDATE_CYCLE;
-    }
+    //     textureRenderTarget->targetDepth((textureRenderTarget->targetDepth() + 1) % NUM_BLUR_TEXTURES);
+    //     next_tex_snapshot = realTime() + BLUR_TEXTURES_UPDATE_CYCLE;
+    // }
                                  
     GL_CHECK(glDisable(GL_DEPTH_TEST));
 
@@ -563,8 +561,8 @@ void Game::renderScene(float interpolation) {
 
     GL_CHECK(glEnable(GL_DEPTH_TEST));
 
-    if (inc)
-        ++nactive_texs;
+    // if (inc)
+    //     ++nactive_texs;
 
     draw_time_accum += now() - t0;
 }

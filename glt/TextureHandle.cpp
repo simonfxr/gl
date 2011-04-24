@@ -6,10 +6,17 @@ namespace glt {
 
 namespace {
 
-GLenum glType(TextureType ty) {
+GLenum getGLType(TextureType ty, uint32 ss) {
+
     switch (ty) {
     case Texture1D: return GL_TEXTURE_1D;
-    case Texture2D: return GL_TEXTURE_2D;
+    case Texture2D:
+        
+        if (ss == 1)
+            return GL_TEXTURE_2D;
+        else
+            return GL_TEXTURE_2D_MULTISAMPLE;
+        
     case Texture3D: return GL_TEXTURE_3D;
     default:
         ERR("invalid TextureType");
@@ -19,9 +26,10 @@ GLenum glType(TextureType ty) {
 
 } // namespace anon
 
-TextureHandle::TextureHandle(TextureType ty) :
+TextureHandle::TextureHandle(TextureType ty, uint32 samples) :
     _handle(0),
-    _type(ty)
+    _type(ty),
+    _samples(samples)
 {}
 
 TextureHandle::~TextureHandle() {
@@ -36,12 +44,17 @@ void TextureHandle::free() {
 void TextureHandle::bind() {
     if (_handle == 0)
         GL_CHECK(glGenTextures(1, &_handle));
-    GL_CHECK(glBindTexture(glType(_type), _handle));
+    GL_CHECK(glBindTexture(getGLType(_type, _samples), _handle));
 }
 
-void TextureHandle::type(TextureType ty) {
-    ASSERT_MSG(ty == _type || _handle == 0, "cannot change type, texture already created");
+GLenum TextureHandle::glType() const {
+    return getGLType(_type, _samples);
+}
+
+void TextureHandle::type(TextureType ty, uint32 ss) {
+    ASSERT_MSG((ty == _type && ss == _samples)  || _handle == 0, "cannot change type, texture already created");
     _type = ty;
+    _samples = ss;
 }
 
 bool operator ==(const TextureHandle& t1, const TextureHandle& t2) {
