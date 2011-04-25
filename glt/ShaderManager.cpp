@@ -1,7 +1,7 @@
 #include "defs.h"
 #include "glt/ShaderManager.hpp"
-
 #include <iostream>
+
 #include <map>
 #include <cstdio>
 
@@ -121,29 +121,25 @@ std::string ShaderManager::lookupPath(const std::string& file) const {
     return name;
 }
 
-std::string ShaderManager::readFileInPath(const std::string& file, char *& contents, uint32& size) const {
+std::string ShaderManager::readFile(const std::string& file, char *& contents, uint32& size) const {
 
     contents = 0;
     size = 0;
     
-    FILE *in;
-    std::string name = lookupInPath(path(), file, in);
-    
+    FILE *in = fopen(file.c_str(), "r");
     if (in == 0) {
-        if (verbosity() >= ShaderManager::OnlyErrors)
-            err() << "couldnt find file in path: " << file << std::endl;
-
+        err() << "couldnt open " << file << std::endl;
         return "";
     }
-
+    
     if (!readWholeFile(in, contents, size)) {
         if (verbosity() >= ShaderManager::OnlyErrors)
-            err() << "couldnt read file: " << name << std::endl;
+            err() << "couldnt read file: " << file << std::endl;
 
         return "";
     }
 
-    return name;
+    return file;
 }
 
 Ref<ShaderManager::CachedShaderObject> ShaderManager::lookupShaderObject(const std::string& file) const {

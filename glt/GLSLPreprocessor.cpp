@@ -105,7 +105,7 @@ bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& 
 
     char *contents;
     uint32 size;
-    std::string name = sm.readFileInPath(file, contents, size);
+    std::string name = sm.readFile(file, contents, size);
     if (contents == 0)
         return false;
 
@@ -134,9 +134,12 @@ bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& 
         }
         
         pos = contents + inc.offset + inc.directiveLineLength;
-
-        if (!inc.fileToInclude.empty() && !preprocess(sm, proc, inc.fileToInclude, includeBuffer, shadersrc))
-            return false;
+        
+        if (!inc.fileToInclude.empty()) {
+            std::string realname = sm.lookupPath(inc.fileToInclude);
+            if (realname.empty() || !preprocess(sm, proc, realname, includeBuffer, shadersrc))
+                return false;
+        }
     }
 
     if (pos < contents + size) {

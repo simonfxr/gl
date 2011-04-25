@@ -231,11 +231,11 @@ bool Game::onInit() {
     nactive_texs = 0;
     active_tex_idx = 0;
 
-    shaderManager.addPath(".");
     shaderManager.addPath("shaders");
 
     ticksPerSecond(100);
-    maxFPS(0);
+    synchronizeDrawing(true);
+    
     use_interpolation = true;
     grabMouse(true);
 

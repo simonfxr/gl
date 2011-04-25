@@ -15,7 +15,9 @@ private:
     bool _running;
     bool _exit;
     bool _restart;
-    bool _paused; 
+    bool _paused;
+    bool _sync;
+    
     float _now;
     float _skipped_time;
     float _start_time;
@@ -30,9 +32,7 @@ public:
         virtual void render(float interpolation) = 0;
         virtual void handleInputEvents() = 0;
         virtual float now() = 0;
-        virtual void sleep(float seconds) {
-            UNUSED(seconds);
-        }
+        virtual void sleep(float seconds) { UNUSED(seconds); }
     };
      
     explicit GameLoop(uint32 ticks_per_second, uint32 max_frame_skip = 10, uint32 max_fps = 0);
@@ -59,6 +59,13 @@ public:
         _restart = true;
         _running = false;
         _max_fps = max_fps;
+    }
+
+    // synchronize drawing with simulation (draw every simulation frame exactly once)
+    void sync(bool yesno) {
+        _restart = true;
+        _running = false;
+        _sync = yesno;
     }
 
     void exit(int32 exit_code = 0);

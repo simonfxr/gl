@@ -15,7 +15,7 @@ project(sim-sfml)
 
 #set(GRAPHITE_OPTS "-floop-strip-mine -floop-block -floop-interchange")
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -fno-exceptions -fno-rtti -O0 -march=native -fopenmp -ggdb")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-switch -fno-exceptions -fno-rtti -fopenmp")
 
 set(CMAKE_LDFLAGS "${CMAKE_CXX_FLAGS}")
 

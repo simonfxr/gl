@@ -44,6 +44,8 @@ struct GameWindow {
     
     void maxFPS(uint32 fps);
 
+    void synchronizeDrawing(bool sync);
+
     uint64 currentFrameID() const;
     
     uint64 currentRenderFrameID() const;

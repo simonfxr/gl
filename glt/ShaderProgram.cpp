@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <set>
 #include <stack>
 
 #include "defs.h"
@@ -43,9 +44,7 @@ struct ShaderProgram::Data {
 
     bool addShader(ShaderType type, const std::string& file, uint32 nsegs, const char *segments[], const GLint segLengths[], GLuint *handle = 0);
     bool createProgram();
-    bool attachShaderObjects(const Ref<CachedShaderObject>& cached);
-    // remove ignores multiple deps on the same shaderobject
-    void removeShaderObjects(const Ref<CachedShaderObject>& cached);
+    bool attachShaderObjects(std::set<const Ref<CachedShaderObject> *>& added, const Ref<CachedShaderObject>& cached);
 };
 
 ShaderProgram::ShaderProgram(ShaderManager& sm) :
@@ -161,24 +160,19 @@ bool ShaderProgram::Data::createProgram() {
     return true;
 }
 
-bool ShaderProgram::Data::attachShaderObjects(const Ref<CachedShaderObject>& cached) {
+bool ShaderProgram::Data::attachShaderObjects(std::set<const Ref<CachedShaderObject> *>& added, const Ref<CachedShaderObject>& cached) {
     DEBUG_ASSERT(cached.ptr() != 0);
-    for (uint32 i = 0; i < cached->deps.size(); ++i) {
-        if (!attachShaderObjects(cached->deps[i])) {
-            for (uint32 k = 0; k < i; ++k)
-                removeShaderObjects(cached->deps[k]);
-            return false;
-        }
-    }
-    ASSERT(cached->so.handle != 0);
-    GL_CHECK(glAttachShader(program, cached->so.handle));
+    if (added.count(&cached) == 0) {
+        added.insert(&cached);
+        
+        for (uint32 i = 0; i < cached->deps.size(); ++i)
+            if (!attachShaderObjects(added, cached->deps[i]))
+                return false;
+        
+        ASSERT(cached->so.handle != 0);
+        GL_CHECK(glAttachShader(program, cached->so.handle));
+    }        
     return true;
-}
-
-void ShaderProgram::Data::removeShaderObjects(const Ref<CachedShaderObject>& cached) {
-    for (uint32 i = 0; i < cached->deps.size(); ++i)
-        removeShaderObjects(cached->deps[i]);
-    shaders.erase(cached->key);
 }
 
 bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, uint32 nsegments, const char *segments[], const GLint segLengths[], GLuint *handle) {
@@ -364,8 +358,9 @@ bool ShaderProgram::link() {
     if (!self->createProgram())
         return false;
 
+    std::set<const Ref<CachedShaderObject> *> added;
     for (ShaderMap::const_iterator it = self->shaders.begin(); it != self->shaders.end(); ++it)
-        if (!self->attachShaderObjects(it->second))
+        if (!self->attachShaderObjects(added, it->second))
             return false;
 
     LOG_ERR(self, "linking ... ");

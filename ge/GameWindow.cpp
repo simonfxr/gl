@@ -463,6 +463,10 @@ void GameWindow::maxFPS(uint32 fps) {
     SELF->loop.updateMaxFPS(fps);
 }
 
+void GameWindow::synchronizeDrawing(bool sync) {
+    SELF->loop.sync(sync);
+}
+
 uint64 GameWindow::currentFrameID() const {
     return SELF->game_frame_id;
 }

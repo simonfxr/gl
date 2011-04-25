@@ -10,6 +10,7 @@ GameLoop::GameLoop(uint32 ticks_per_second, uint32 max_frame_skip, uint32 max_fp
       _exit(false),
       _restart(false),
       _paused(false),
+      _sync(false),
       _now(0.f),
       _exit_code(0)
 {}
@@ -40,8 +41,10 @@ int32 GameLoop::run(GameLoop::Game& logic) {
     do {
         
         const float tick_length      = 1.f / _ticks_per_second;
-        const float draw_tick_length = _max_fps == 0 ? 0.f : 1.f / _max_fps;
-        const uint32 loops_max       = _max_frame_skip == 0 ? 0xFFFFFFFFUL : _max_frame_skip;
+        const float draw_tick_length = _sync || _max_fps == 0 ? 0.f : 1.f / _max_fps;
+        const uint32 loops_max       = _sync ? 1 : _max_frame_skip == 0 ? 0xFFFFFFFFUL : _max_frame_skip;
+        const bool syncDraw = _sync;
+        
         uint32 loops = 0;
 
         _running = true;
@@ -83,12 +86,12 @@ int32 GameLoop::run(GameLoop::Game& logic) {
 
         render:
 
-            if (unlikely(_now < next_draw_tick)) {
+            if (unlikely(_now < next_draw_tick || (syncDraw && loops == 0))) {
                 
                 bool skip_rendering;
                 float diff;
                 
-                if (next_draw_tick < next_game_tick) {
+                if (!syncDraw && next_draw_tick < next_game_tick) {
                     skip_rendering = false;
                     diff = next_draw_tick - _now;
                 } else {
@@ -96,14 +99,14 @@ int32 GameLoop::run(GameLoop::Game& logic) {
                     diff = next_game_tick - _now;
                 }
 
-                if (diff > 0.001f)
-                    logic.sleep(diff - 0.001f);
+                if (diff > 0.f)
+                    logic.sleep(diff);
 
                 if (skip_rendering)
                     continue;
             }
             
-            if (likely(!_paused)) {
+            if (likely(!_paused && !syncDraw)) {
                 float interpolation = (_now + tick_length - next_game_tick) / tick_length;
                 logic.render(interpolation);
             } else {
