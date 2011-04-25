@@ -1,4 +1,4 @@
-#include "GLSLPreprocessor.hpp"
+#include "glt/GLSLPreprocessor.hpp"
 
 #include <cstdio>
 #include <cstring>
@@ -7,6 +7,49 @@
 namespace glt {
 
 namespace {
+
+bool readFile(std::ostream& err, const std::string& fn, char *& file_contents, uint32& file_size) {
+
+    FILE *in = fopen(fn.c_str(), "r");
+    if (in == 0)
+        goto fail;
+    
+    file_contents = 0;
+    file_size = 0;
+    
+    if (fseek(in, 0, SEEK_END) == -1)
+        goto fail;
+
+    {
+        int64 size = ftell(in);
+        if (size < 0)
+            goto fail;
+        if (fseek(in, 0, SEEK_SET) == -1)
+            goto fail;
+
+        {
+            char *contents = new char[size + 1];
+            if (fread(contents, size, 1, in) != 1) {
+                delete[] contents;
+                goto fail;
+            }
+        
+            contents[size] = '\0';
+            file_contents = contents;
+            file_size = static_cast<uint32>(size);
+            fclose(in);
+        }
+    }
+    
+    return true;
+
+fail:
+    
+    err << "unable to read file: " << fn << std::endl;
+    return false;
+}
+
+} // namespace anon
 
 bool parseFileArg(const Preprocessor::DirectiveContext& ctx, const char *& arg, uint32& len) {
 
@@ -40,8 +83,6 @@ bool parseFileArg(const Preprocessor::DirectiveContext& ctx, const char *& arg, 
         return false;
     }
 }
-
-} // namespace anon
 
 ShaderContents::~ShaderContents() {
     for (uint32 i = 0; i < contents.size(); ++i) {
@@ -105,8 +146,8 @@ bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& 
 
     char *contents;
     uint32 size;
-    std::string name = sm.readFile(file, contents, size);
-    if (contents == 0)
+    
+    if (!readFile(sm.err(), file, contents, size))
         return false;
 
     {

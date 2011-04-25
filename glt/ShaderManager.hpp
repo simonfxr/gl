@@ -45,8 +45,6 @@ struct ShaderManager {
 
     std::string lookupPath(const std::string& basename) const;
 
-    std::string readFile(const std::string& basename, char *& contents, uint32& size) const;
-
     Ref<CachedShaderObject> lookupShaderObject(const std::string& file) const;
     
     void cacheShaderObject(const Ref<CachedShaderObject>& s);

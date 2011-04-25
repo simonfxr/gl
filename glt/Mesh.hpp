@@ -2,7 +2,7 @@
 #define GLT_MESH_HPP
 
 #include "defs.h"
-#include "opengl."
+#include "opengl.h"
 
 namespace glt {
 

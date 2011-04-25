@@ -1,5 +1,5 @@
-#ifndef GLSLDIRECTIVEHANDLER_HPP
-#define GLSLDIRECTIVEHANDLER_HPP
+#ifndef GLT_GLSLPREPROCESSOR_HPP
+#define GLT_GLSLPREPROCESSOR_HPP
 
 #include <vector>
 #include <string>
@@ -50,6 +50,7 @@ struct DependencyHandler : public Preprocessor::DirectiveHandler {
 };
 
 bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& file, std::vector<Include> *includeBuffer, ShaderContents& shadersrc);
+
 } // namespace glt
 
 #endif

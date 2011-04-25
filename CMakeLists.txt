@@ -44,7 +44,7 @@ add_definitions("-DGLEW_STATIC")
 
 link_libraries(${GLEW_LIBRARY} ${OPENGL_gl_LIBRARY})
 
-include_directories(.)
+include_directories(${CMAKE_SOURCE_DIR})
 
 set(MATH_SRC
 

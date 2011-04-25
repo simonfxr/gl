@@ -1,11 +1,11 @@
-#include "Uniforms.hpp"
+#include "glt/Uniforms.hpp"
 
 #include "opengl.h"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "math/mat4.hpp"
 #include "math/mat3.hpp"
-#include "color.hpp"
+#include "glt/color.hpp"
 
 #include "glt/ShaderProgram.hpp"
 #include "glt/utils.hpp"

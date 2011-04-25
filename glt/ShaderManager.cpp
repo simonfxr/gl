@@ -23,35 +23,6 @@ std::string lookupInPath(const std::vector<std::string>& paths, const std::strin
     return "";
 }
 
-bool readWholeFile(FILE *in, char *& file_contents, uint32& file_size) {
-    
-    file_contents = 0;
-    file_size = 0;
-    
-    if (in == 0)
-        return false;
-    if (fseek(in, 0, SEEK_END) == -1)
-        return false;
-    int64 size = ftell(in);
-    if (size < 0)
-        return false;
-    if (fseek(in, 0, SEEK_SET) == -1)
-        return false;
-    
-    char *contents = new char[size + 1];
-    if (fread(contents, size, 1, in) != 1) {
-        delete[] contents;
-        return false;
-    }
-    
-    contents[size] = '\0';
-    file_contents = contents;
-    file_size = (uint32) size;
-    fclose(in);
-    
-    return true;
-}
-
 } // namespace anon
 
 const Ref<ShaderManager::CachedShaderObject> ShaderManager::EMPTY_CACHE_ENTRY(0);
@@ -119,27 +90,6 @@ std::string ShaderManager::lookupPath(const std::string& file) const {
     if (fh != 0)
         fclose(fh);
     return name;
-}
-
-std::string ShaderManager::readFile(const std::string& file, char *& contents, uint32& size) const {
-
-    contents = 0;
-    size = 0;
-    
-    FILE *in = fopen(file.c_str(), "r");
-    if (in == 0) {
-        err() << "couldnt open " << file << std::endl;
-        return "";
-    }
-    
-    if (!readWholeFile(in, contents, size)) {
-        if (verbosity() >= ShaderManager::OnlyErrors)
-            err() << "couldnt read file: " << file << std::endl;
-
-        return "";
-    }
-
-    return file;
 }
 
 Ref<ShaderManager::CachedShaderObject> ShaderManager::lookupShaderObject(const std::string& file) const {

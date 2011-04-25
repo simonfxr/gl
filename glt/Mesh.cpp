@@ -1,4 +1,4 @@
-#include "Mesh.hpp"
+#include "glt/Mesh.hpp"
 
 #ifdef SYSTEM_UNIX
 #include <stdlib.h>
