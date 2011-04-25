@@ -85,9 +85,10 @@ struct DynBatch {
 
     uint32 nattrs;
     
-    DynBatch(uint32 nattrs, const Attr attrs[], uint32 initialSize);
+    DynBatch();
     ~DynBatch();
-    
+
+    void init(uint32 nattrs, const Attr attrs[], uint32 initialSize);
     void add(const Attr attrs[], const void *value);
     void send(const Attr attrs[], bool del_after_freeze);
     void draw(const Attr attrs[], GLenum primType, bool enabled[], uint32 num_instances);
@@ -103,7 +104,7 @@ struct GenBatch {
 private:
 
     GLenum _primType;
-    const Attrs<T>& attrs;
+    const Attrs<T>* attrs;
     bool frozen;
     bool del_after_freeze;
     priv::DynBatch batch;
@@ -116,15 +117,34 @@ public:
 
     GenBatch(const Attrs<T>& _attrs) :
         _primType(GL_TRIANGLES),
-        attrs(_attrs),
+        attrs(&_attrs),
         frozen(false),
         del_after_freeze(true),
-        batch(_attrs.length, _attrs.attrs, 4),
         enabledAttrs(new bool[_attrs.length])
     {
-        for (uint32 i = 0; i < attrs.length; ++i)
+        batch.init(_attrs.length, _attrs.attrs, 4);
+        for (uint32 i = 0; i < attrs->length; ++i)
             enabledAttrs[i] = true;
     }
+
+    GenBatch() :
+        _primType(GL_TRIANGLES),
+        attrs(0),
+        frozen(false),
+        del_after_freeze(true),
+        enabledAttrs(0)
+    {}
+
+    void init(const Attrs<T>& _attrs) {
+        ASSERT_MSG(attrs == 0, "already initialized!");
+        attrs = &_attrs;
+        enabledAttrs = new bool[_attrs.length];
+        for (uint32 i = 0; i < attrs->length; ++i)
+            enabledAttrs[i] = true;
+
+        batch.init(_attrs.length, _attrs.attrs, 4);
+    }
+
 
     ~GenBatch() {
         delete [] enabledAttrs;
@@ -134,13 +154,13 @@ public:
 
     void add(const T& v) {
         ASSERT_MSG(!frozen, "cannot add to frozen batch");
-        batch.add(attrs.attrs, static_cast<const void *>(&v));
+        batch.add(attrs->attrs, static_cast<const void *>(&v));
     }
 
     void freeze() {
         ASSERT_MSG(!frozen, "batch already frozen");
         frozen = true;
-        batch.send(attrs.attrs, del_after_freeze);
+        batch.send(attrs->attrs, del_after_freeze);
     }
 
     void deleteAfterFreeze(bool enable) {
@@ -150,12 +170,12 @@ public:
 
     void draw() {
         ASSERT_MSG(frozen, "cannot draw batch while building it");
-        batch.draw(attrs.attrs, _primType, enabledAttrs, 1);
+        batch.draw(attrs->attrs, _primType, enabledAttrs, 1);
     }
 
     void drawInstanced(uint32 n) {
         ASSERT_MSG(frozen, "cannot draw batch while building it");
-        batch.draw(attrs.attrs, _primType, enabledAttrs, n);
+        batch.draw(attrs->attrs, _primType, enabledAttrs, n);
     }
 
     void enableAttrib(GLuint position, bool enable = true) {
@@ -177,16 +197,16 @@ public:
     T at(uint32 i) const {
         ASSERT_MSG(!frozen || !del_after_freeze, "data already deleted");
         T val;
-        batch.at(attrs.attrs, i, static_cast<void *>(&val));
+        batch.at(attrs->attrs, i, static_cast<void *>(&val));
         return val;
     }
 
     bool read(const char *filename) {
-        return batch.read(filename, attrs.attrs);
+        return batch.read(filename, attrs->attrs);
     }
 
     bool write(const char *filename) const {
-        return batch.write(filename, attrs.attrs);
+        return batch.write(filename, attrs->attrs);
     }
 };
 

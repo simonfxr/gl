@@ -20,11 +20,11 @@ struct vec4_t {
             float r, g, b, a;
         };
 
-        struct {
-            float s, t, p, q;
-        };
+        // struct {
+        //     float s, t, p, q;
+        // };
             
-        float components[4];
+        // float components[4];
 
 #if MATH_SSE(2, 0)
         __m128 packed;

@@ -5,6 +5,9 @@
 #include <string>
 #include <vector>
 
+#include "glt/Ref.hpp"
+#include "glt/ShaderObject.hpp"
+
 namespace glt {
 
 struct ShaderManager {
@@ -14,7 +17,20 @@ struct ShaderManager {
         OnlyErrors,
         Info
     };
-    
+
+    struct CachedShaderObject {
+    private:
+        ShaderManager& sm;
+    public:
+        std::string key;
+        ShaderObject so;
+        std::vector<Ref<CachedShaderObject> > deps;
+        CachedShaderObject(ShaderManager& _sm, const std::string& k) : sm(_sm), key(k) {}
+        ~CachedShaderObject();
+    };
+
+    static const Ref<CachedShaderObject> EMPTY_CACHE_ENTRY;
+
     ShaderManager();
     ~ShaderManager();
 
@@ -27,14 +43,19 @@ struct ShaderManager {
     bool addPath(const std::string& directory, bool verify_existence = true);
     const std::vector<std::string>& path() const;
 
-    std::string lookupPath(const std::string& file) const;
+    std::string lookupPath(const std::string& basename) const;
 
-    std::string readFileInPath(const std::string& file, char *& contents, uint32& size) const;
+    std::string readFileInPath(const std::string& basename, char *& contents, uint32& size) const;
 
+    Ref<CachedShaderObject> lookupShaderObject(const std::string& file) const;
+    
+    void cacheShaderObject(const Ref<CachedShaderObject>& s);
+    
 private:
     
     struct Data;
     friend struct Data;
+    friend struct CachedShaderObject;
     Data * const self;
 
     ShaderManager(const ShaderManager& _);

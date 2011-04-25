@@ -21,6 +21,9 @@ struct GeometryTransform::Data {
 
     bool dirty;
 
+    bool inv_proj_dirty;
+    aligned_mat4_t inverseProjectionMatrix;
+
     aligned_mat4_t mvMats[GEOMETRY_TRANSFORM_MAX_DEPTH];
     uint64 mods[GEOMETRY_TRANSFORM_MAX_DEPTH];
 
@@ -29,7 +32,9 @@ struct GeometryTransform::Data {
         mvpMatrix(mat4()),
         normalMatrix(mat3()),
         depth(0),
-        dirty(false)
+        dirty(false),
+        inv_proj_dirty(false),
+        inverseProjectionMatrix(mat4())
     {
         mvMats[0] = mat4();
         mods[0] = 0;
@@ -72,6 +77,14 @@ const aligned_mat4_t& GeometryTransform::projectionMatrix() const {
     return self->projectionMatrix;
 }
 
+const aligned_mat4_t& GeometryTransform::inverseProjectionMatrix() const {
+    if (unlikely(self->inv_proj_dirty)) {
+        self->inv_proj_dirty = false;
+        self->inverseProjectionMatrix = inverse(self->projectionMatrix);
+    }
+    return self->inverseProjectionMatrix;
+}
+
 void GeometryTransform::loadMVMatrix(const mat4_t& m) {
     ++self->mods[self->depth];
     self->dirty = true;
@@ -81,6 +94,7 @@ void GeometryTransform::loadMVMatrix(const mat4_t& m) {
 void GeometryTransform::loadProjectionMatrix(const mat4_t& m) {
     ++self->mods[self->depth];
     self->dirty = true;
+    self->inv_proj_dirty = true;
     self->projectionMatrix = m;
 }
 

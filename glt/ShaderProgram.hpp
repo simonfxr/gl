@@ -2,7 +2,7 @@
 #define _SHADER_PROGRAM_H
 
 #include <string>
-#include <ostream>
+#include <iostream>
 
 #include "opengl.h"
 
@@ -25,7 +25,8 @@ struct ShaderProgram {
 
     enum ShaderType {
         VertexShader,
-        FragmentShader
+        FragmentShader,
+        GeometryShader
     };
 
     ShaderProgram(ShaderManager& sm);
@@ -36,6 +37,8 @@ struct ShaderProgram {
     bool addShaderSrc(ShaderType type, const std::string& src);
     bool addShaderFile(ShaderType type, const std::string& file);
     bool addShaderFile(const std::string& file);
+    bool addShaderFilePair(const std::string& vert_file, const std::string& frag_file);
+    bool addShaderFilePair(const std::string& basename);
 
     bool bindAttribute(const std::string& name, GLuint position);
 
@@ -54,7 +57,7 @@ struct ShaderProgram {
 
     GLint uniformLocation(const std::string& name);
 
-    void printError(std::ostream& out);
+    void printError(std::ostream& out = std::cerr);
 
     bool validate(bool printLogOnError = false);
 

@@ -14,7 +14,7 @@
 
 namespace glt {
 
-static const uint32 GEOMETRY_TRANSFORM_MAX_DEPTH = 24;
+static const uint32 GEOMETRY_TRANSFORM_MAX_DEPTH = 16;
 
 struct SavePoint;
 struct SavePointArgs;
@@ -28,6 +28,7 @@ struct GeometryTransform {
     const math::aligned_mat4_t& mvMatrix() const;
     const math::aligned_mat3_t& normalMatrix() const;
     const math::aligned_mat4_t& projectionMatrix() const;
+    const math::aligned_mat4_t& inverseProjectionMatrix() const;
 
     void loadMVMatrix(const math::mat4_t& m);
 

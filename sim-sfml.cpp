@@ -53,10 +53,21 @@ static const uint32 NUM_BLUR_TEXTURES = 1;
 
 static const float BLUR_TEXTURES_UPDATE_CYCLE = 0.04f / NUM_BLUR_TEXTURES;
 
+static const float PROJ_Z_MIN = 1.f;
+static const float PROJ_Z_MAX = 100.f;
+
 static const glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
+
+static const uint32 SPHERE_LOD_MAX = 6;
+
+struct SphereLOD {
+    uint32 level;
+};
 
 namespace {
 
+
+// dont change layout (directly mapped to texture)
 struct SphereInstance {
     point3_t pos;
     float rad;
@@ -91,7 +102,7 @@ std::ostream& LOCAL operator << (std::ostream& out, const vec3_t& v) {
 struct Game EXPLICIT : public ge::GameWindow {
 
     glt::GenBatch<Vertex> wallBatch;
-    glt::GenBatch<Vertex> sphereBatch;
+    glt::GenBatch<Vertex> sphereBatches[SPHERE_LOD_MAX];
     glt::GenBatch<Vertex> lineBatch;
     glt::GenBatch<Vertex> rectBatch;
 
@@ -147,7 +158,7 @@ struct Game EXPLICIT : public ge::GameWindow {
 
     bool render_spheres_instanced;
 
-    std::vector<SphereInstance> sphere_instances;
+    std::vector<SphereInstance> sphere_instances[SPHERE_LOD_MAX];
 
     Game();
 
@@ -164,6 +175,7 @@ struct Game EXPLICIT : public ge::GameWindow {
     void handleInternalEvents() OVERRIDE;
     void spawn_sphere();
 
+    SphereLOD calc_sphere_lod(const Sphere& s);
     void render_sphere(const Sphere& s, const SphereModel& m);
     void end_render_spheres();
     void render_box(const glt::AABB& box);
@@ -176,7 +188,6 @@ struct Game EXPLICIT : public ge::GameWindow {
 
 Game::Game() :
     wallBatch(vertexAttrs),
-    sphereBatch(vertexAttrs),
     lineBatch(vertexAttrs),
     rectBatch(vertexAttrs),
     renderer(*this),
@@ -197,7 +208,6 @@ bool Game::onInit() {
     render_spheres_instanced = false;
     
     wallBatch.primType(GL_QUADS);
-    sphereBatch.primType(GL_TRIANGLES);
 
 #ifdef GLDEBUG
     shaderManager.verbosity(glt::ShaderManager::Info);
@@ -249,8 +259,20 @@ bool Game::onInit() {
     makeUnitCube(wallBatch);
 
     GL_CHECK(glEnable(GL_DEPTH_TEST));
-    
-    makeSphere(sphereBatch, 1.f, 26, 13);
+
+    struct {
+        int32 a, b;
+    } sphere_params[SPHERE_LOD_MAX] = {
+        { 12, 6 }, { 16, 8 },
+        { 20, 10 }, { 24, 12 },
+        { 26, 13 }, { 36, 18 }
+    };
+
+    for (uint32 i = 0; i < SPHERE_LOD_MAX; ++i) {
+        sphereBatches[i].init(vertexAttrs);
+        makeSphere(sphereBatches[i], 1.f, sphere_params[i].a, sphere_params[i].b);
+    }
+
 
     world.camera().setOrigin(vec3(-19.f, 10.f, +19.f));
     world.camera().lookingAt(vec3(0.f, 10.f, 0.f));
@@ -280,87 +302,32 @@ bool Game::onInit() {
 
 bool Game::load_shaders() {
 
+    const struct {
+        std::string basename;
+        glt::ShaderProgram& prog;
+    } vertexProgs[] = {
+        { "brick", wallShader },
+        { "sphere", sphereShader },
+        { "identity", identityShader },
+        { "postproc", postprocShader },
+        { "sphere_instanced", sphereInstancedShader }
+    };
+
     bool ok = true;
-    glt::ShaderProgram ws(shaderManager);
-    
-    ws.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/brick.vert");
-    ws.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/brick.frag");
-    ws.bindAttribute("vertex", vertexAttrs.index(offsetof(Vertex, position)));
-    ws.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
-    ws.tryLink();
-
-    ok = ok && !ws.wasError();
-    
-    if (!ws.wasError())
-        wallShader.replaceWith(ws);
-    else
-        ws.printError(std::cerr);
-
-    glt::ShaderProgram ss(shaderManager);
-
-    ss.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/sphere.vert");
-    ss.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/sphere.frag");
-    ss.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
-    ss.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
-    ss.tryLink();
-
-    ok = ok && !ss.wasError();
-    
-    if (!ss.wasError())
-        sphereShader.replaceWith(ss);
-    else
-        ss.printError(std::cerr);
-
-    glt::ShaderProgram is(shaderManager);
-
-    is.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/identity.vert");
-    is.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/identity.frag");
-    is.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
-    is.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
-    is.tryLink();
-
-    ok = ok && !is.wasError();
-    
-    if (!is.wasError())
-        identityShader.replaceWith(is);
-    else
-        is.printError(std::cerr);
-
-    glt::ShaderProgram ps(shaderManager);
-
-    ps.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/postproc.vert");
-    ps.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/postproc.frag");
-    ps.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
-    ps.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
-    ps.tryLink();
-
-    ok = ok && !ps.wasError();
-    
-    if (!ps.wasError())
-        postprocShader.replaceWith(ps);
-    else
-        ps.printError(std::cerr);
-
-    glt::ShaderProgram sis(shaderManager);
-
-    sis.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/sphere_instanced.vert");
-    sis.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/sphere_instanced.frag");
-    sis.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
-    sis.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
-    sis.tryLink();
-
-    ok = ok && !sis.wasError();
-    
-    if (!sis.wasError())
-        sphereInstancedShader.replaceWith(sis);
-    else
-        sis.printError(std::cerr);
+    for (uint32 i = 0; i < ARRAY_LENGTH(vertexProgs); ++i) {
+        glt::ShaderProgram prog(shaderManager);
+        prog.addShaderFilePair(vertexProgs[i].basename);
+        prog.bindAttribute("vertex", vertexAttrs.index(offsetof(Vertex, position)));
+        prog.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
+        prog.tryLink();
+        ok = ok && vertexProgs[i].prog.replaceWith(prog);
+    }
 
     return ok;
 }
 
 void Game::animate() {
-    float dt  = game_speed * frameDuration();
+    float dt = game_speed * frameDuration();
     world.simulate(dt);
 }
 
@@ -386,7 +353,7 @@ void Game::windowResized(uint32 width, uint32 height) {
     
     float fov = degToRad(17.5f);
     float aspect = float(width) / float(height);
-    renderManager.setPerspectiveProjection(fov, aspect, 1.f, 100.f);
+    renderManager.setPerspectiveProjection(fov, aspect, PROJ_Z_MIN, PROJ_Z_MAX);
 
     next_tex_snapshot = realTime();
 //    textureRenderTarget->targetDepth(0);
@@ -543,16 +510,12 @@ void Game::renderScene(float interpolation) {
     this->renderTarget().activate();
     postprocShader.use();
 
-    textureRenderTarget->textureHandle().bind();
-    GL_CHECK(glActiveTexture(GL_TEXTURE0));
-    GLint loc;
-    GL_CHECK(loc = glGetUniformLocation(postprocShader.program(), "textures"));
-    ASSERT(loc != -1);
-    GL_CHECK(glUniform1i(loc, 0));
+    textureRenderTarget->textureHandle().bind(0);
     glt::Uniforms(postprocShader)
         .optional("depth", float(nactive_texs + 1))
         .optional("offset", nactive_texs == 0 ? 2 : 1 / float(nactive_texs))
-        .optional("gammaCorrection", 2.2);
+        .optional("gammaCorrection", 2.2)
+        .mandatory("textures", textureRenderTarget->textureHandle(), 0);
 
     rectBatch.draw();
     
@@ -600,45 +563,67 @@ void Renderer::endRenderSpheres() {
 void Game::end_render_spheres() {
     if (render_spheres_instanced) {
 
-        uint32 num = sphere_instances.size();
+        for (uint32 lod = 0; lod < SPHERE_LOD_MAX; ++lod) {
+            uint32 num = sphere_instances[lod].size();
 
-        if (num == 0)
-            return;
+            if (num == 0)
+                continue;
 
-        glt::TextureHandle sphereMap(glt::Texture1D);
-        sphereMap.bind();
+            glt::TextureHandle sphereMap(glt::Texture1D);
+            sphereMap.bind();
 
-        GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-        
-        GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, num * 2, 0, GL_RGBA, GL_FLOAT, &sphere_instances[0]));
+            GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+            GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+            GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+            GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, num * 2, 0, GL_RGBA, GL_FLOAT, &sphere_instances[lod][0]));
 
-        sphere_instances.clear();
+            sphere_instances[lod].clear();
 
-        sphereInstancedShader.use();
-        
-        GL_CHECK(glActiveTexture(GL_TEXTURE0));
-        sphereMap.bind();
-        
-        GLint loc;
-        GL_CHECK(loc = glGetUniformLocation(sphereInstancedShader.program(), "instanceData"));
-        ASSERT(loc != -1);
-        GL_CHECK(glUniform1i(loc, 0));
+            sphereInstancedShader.use();
 
-        glt::Uniforms(sphereInstancedShader)
-            .optional("normalMatrix", transformPipeline.normalMatrix())
-            .optional("vMatrix", transformPipeline.mvMatrix())
-            .optional("pMatrix", transformPipeline.projectionMatrix())
-            .optional("ecLight", sphereUniforms.ecLightPos);
+            sphereMap.bind(0);
 
-        sphereBatch.drawInstanced(num);
+            glt::Uniforms(sphereInstancedShader)
+                .optional("normalMatrix", transformPipeline.normalMatrix())
+                .optional("vMatrix", transformPipeline.mvMatrix())
+                .optional("pMatrix", transformPipeline.projectionMatrix())
+                .optional("ecLight", sphereUniforms.ecLightPos)
+                .mandatory("instanceData", sphereMap, 0);
 
-        sphereMap.free();        
+            sphereBatches[lod].drawInstanced(num);
+
+            sphereMap.free();
+        }
     }
 }
 
+SphereLOD Game::calc_sphere_lod(const Sphere& s) {
+    vec3_t ecCoord = transformPipeline.transformPoint(s.center);
+
+    // near upper right corner of frustm (view coord)
+    vec4_t nur_corner = transformPipeline.inverseProjectionMatrix() * vec4(-1.f, -1.f, -1.f, 1.f);
+    float x_max = abs(nur_corner.x);
+    float y_max = abs(nur_corner.y);
+    float z_min = abs(nur_corner.z);
+    
+    float size = min(x_max, y_max);
+        
+    // calculate lod, use projected radius on screen
+    float r_proj = s.r / ecCoord.z * z_min;
+    float screen_rad = r_proj / size;
+
+    screen_rad *= 2;
+
+    SphereLOD lod;
+    lod.level = uint32(screen_rad * SPHERE_LOD_MAX);
+    if (lod.level >= SPHERE_LOD_MAX)
+        lod.level = SPHERE_LOD_MAX - 1;
+    return lod;
+}
+
 void Game::render_sphere(const Sphere& s, const SphereModel& m) {
+
+    SphereLOD lod = calc_sphere_lod(s);
 
     if (render_spheres_instanced) {
 
@@ -648,16 +633,20 @@ void Game::render_sphere(const Sphere& s, const SphereModel& m) {
         inst.col_rgb = vec3(m.color.vec4());
         inst.shininess = m.shininess;
         
-        sphere_instances.push_back(inst);
+        sphere_instances[lod.level].push_back(inst);
         
     } else {
         const vec3_t& pos = s.center;
         glt::SavePoint sp(transformPipeline.save());
         transformPipeline.translate(vec3(pos.x, pos.y, pos.z));
         transformPipeline.scale(vec3(s.r));
-        
+
         sphereShader.use();
-    
+
+        vec3_t col3 = vec3(1.f);
+        col3 /= lod.level + 1;
+        glt::color col = glt::color(col3);
+        
         glt::Uniforms us(sphereShader);
         us.optional("mvpMatrix", transformPipeline.mvpMatrix());
         us.optional("mvMatrix", transformPipeline.mvMatrix());
@@ -665,13 +654,13 @@ void Game::render_sphere(const Sphere& s, const SphereModel& m) {
         us.optional("ecLight", sphereUniforms.ecLightPos);
         us.optional("ecSpotDirection", sphereUniforms.ecSpotDir);
         us.optional("spotAngle", sphereUniforms.spotAngle);
-        us.optional("color", m.color);
+        us.optional("color", col);
         us.optional("shininess", m.shininess);
         
 #ifdef GLDEBUG
         sphereShader.validate();
 #endif
-        sphereBatch.draw();
+        sphereBatches[lod.level].draw();
     }
 }
 

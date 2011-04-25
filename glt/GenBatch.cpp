@@ -27,16 +27,25 @@ uint32 componentSize(GLenum type) {
 
 namespace priv {
 
-DynBatch::DynBatch(uint32 _nattrs, const Attr attrs[], uint32 initialSize) :
-    size(initialSize),
-    filled(0),
-    buffer_names(new GLuint[_nattrs]),
-    data(new byte *[_nattrs]),
-    nattrs(_nattrs)
-{
+void DynBatch::init(uint32 _nattrs, const Attr attrs[], uint32 initialSize) {
+
+    size = initialSize;
+    filled = 0;
+    buffer_names = new GLuint[_nattrs];
+    data = new byte *[_nattrs];
+    nattrs = _nattrs;
+    
     for (uint32 i = 0; i < nattrs; ++i)
         data[i] = new byte[componentSize(attrs[i].type) * attrs[i].size * initialSize];
 }
+
+DynBatch::DynBatch() :
+    size(0),
+    filled(0),
+    buffer_names(0),
+    data(0),
+    nattrs(0)
+{}
 
 DynBatch::~DynBatch() {
     GL_CHECK(glDeleteBuffers(nattrs, buffer_names));

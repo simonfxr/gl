@@ -26,7 +26,9 @@ public:
     ~TextureHandle();
 
     void free();
+    
     void bind();
+    void bind(uint32 active_index);
     
     GLuint handle() const { return _handle; }
     uint32 samples() const { return _samples; }

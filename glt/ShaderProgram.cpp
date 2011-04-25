@@ -1,8 +1,8 @@
 #include <iostream>
 #include <cstdio>
 #include <cstring>
-#include <cassert>
 #include <map>
+#include <stack>
 
 #include "defs.h"
 #include "opengl.h"
@@ -21,14 +21,16 @@
 
 namespace glt {
 
-typedef std::map<std::string, ShaderProgram::ShaderType> ShaderMap;
-typedef std::pair<std::string, ShaderProgram::ShaderType> ShaderMapping;
+typedef ShaderManager::CachedShaderObject CachedShaderObject;
+
+typedef std::map<std::string, Ref<CachedShaderObject> > ShaderMap;
 
 struct ShaderProgram::Data {
     Error last_error;
     GLuint program;
     ShaderManager& sm;
-    ShaderMap shaders;
+    ShaderMap shaders; // contains only root shader files and during compilation markers to prevent endless recursive compiles
+    std::stack<Ref<CachedShaderObject> > compileStk;
 
     Data(ShaderManager& _sm) :
         sm(_sm)
@@ -39,7 +41,11 @@ struct ShaderProgram::Data {
             last_error = err;
     }
 
-    bool addShader(ShaderType type, const std::string& file, uint32 nsegs, const char *segments[], const GLint segLengths[]);
+    bool addShader(ShaderType type, const std::string& file, uint32 nsegs, const char *segments[], const GLint segLengths[], GLuint *handle = 0);
+    bool createProgram();
+    bool attachShaderObjects(const Ref<CachedShaderObject>& cached);
+    // remove ignores multiple deps on the same shaderobject
+    void removeShaderObjects(const Ref<CachedShaderObject>& cached);
 };
 
 ShaderProgram::ShaderProgram(ShaderManager& sm) :
@@ -72,8 +78,7 @@ bool ShaderProgram::wasError() {
 }
 
 GLuint ShaderProgram::program() {
-    if (self->program == 0)
-        GL_CHECK(self->program = glCreateProgram());
+    ASSERT(self->createProgram());
     return self->program;
 }
 
@@ -93,16 +98,24 @@ void printShaderLog(GLuint shader, std::ostream& out) {
 
     GLint log_len;
     GL_CHECK(glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len));
+
     if (log_len > 0) {
             
-        out << "shader compile log:" << std::endl;
-            
         GLchar *log = new GLchar[log_len];
+
+        GLchar *logBegin = log;
+        while (logBegin < log + log_len - 1 && isspace(*logBegin))
+            ++logBegin;
+
+        if (logBegin == log + log_len - 1)  {
+            out << "shader compile log empty" << std::endl;
+        } else {
+            out << "shader compile log: " << std::endl;
+            GL_CHECK(glGetShaderInfoLog(shader, log_len, NULL, log));
             
-        GL_CHECK(glGetShaderInfoLog(shader, log_len, NULL, log));
-        
-        out << log << std::endl
-            << "end compile log" << std::endl;
+            out << log << std::endl
+                << "end compile log" << std::endl;
+        }
         
         delete[] log;
     }
@@ -114,28 +127,29 @@ void printProgramLog(GLuint program, std::ostream& out) {
     GL_CHECK(glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_len));
     if (log_len > 0) {
         
-        out << "link log:" << std::endl;
         GLchar *log = new GLchar[log_len];
-        GL_CHECK(glGetProgramInfoLog(program, log_len, NULL, log));
+        GLchar *logBegin = log;
+
+        while (logBegin < log + log_len - 1 && isspace(*logBegin))
+            ++logBegin;
+
+        if (logBegin == log + log_len - 1) {
+            out << "link log empty" << std::endl;
+        } else {
+            out << "link log: " << std::endl;
+            GL_CHECK(glGetProgramInfoLog(program, log_len, NULL, log));
     
-        out << log << std::endl
-            << "end link log" << std::endl;
-    
+            out << log << std::endl
+                << "end link log" << std::endl;
+        }
+            
         delete[] log;
     }
 }
 
 } // namespace anon
 
-bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, uint32 nsegments, const char *segments[], const GLint segLengths[]) {
-
-    GLenum shader_type;
-    if (!translateShaderType(type, &shader_type)) {
-        LOG_ERR(this, "unknown shader type" << std::endl);
-        push_error(APIError);
-        return false;
-    }
-
+bool ShaderProgram::Data::createProgram() {
     if (program == 0) {
         GL_CHECK(program = glCreateProgram());
         if (program == 0) {
@@ -144,6 +158,40 @@ bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, ui
             return false;
         }
     }
+    return true;
+}
+
+bool ShaderProgram::Data::attachShaderObjects(const Ref<CachedShaderObject>& cached) {
+    DEBUG_ASSERT(cached.ptr() != 0);
+    for (uint32 i = 0; i < cached->deps.size(); ++i) {
+        if (!attachShaderObjects(cached->deps[i])) {
+            for (uint32 k = 0; k < i; ++k)
+                removeShaderObjects(cached->deps[k]);
+            return false;
+        }
+    }
+    ASSERT(cached->so.handle != 0);
+    GL_CHECK(glAttachShader(program, cached->so.handle));
+    return true;
+}
+
+void ShaderProgram::Data::removeShaderObjects(const Ref<CachedShaderObject>& cached) {
+    for (uint32 i = 0; i < cached->deps.size(); ++i)
+        removeShaderObjects(cached->deps[i]);
+    shaders.erase(cached->key);
+}
+
+bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, uint32 nsegments, const char *segments[], const GLint segLengths[], GLuint *handle) {
+
+    GLenum shader_type;
+    if (!translateShaderType(type, &shader_type)) {
+        LOG_ERR(this, "unknown shader type" << std::endl);
+        push_error(APIError);
+        return false;
+    }
+
+    if (!createProgram())
+        return false;
 
     GLuint shader;
     GL_CHECK(shader = glCreateShader(shader_type));
@@ -161,17 +209,26 @@ bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, ui
     GLint success;
     GL_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
     bool ok = success == GL_TRUE;
-    LOG_ERR(this, (ok ? "success" : "failed") << std::endl);
+    LOG_ERR(this, (ok ? "success" : "failed"));
 
-    if ((!ok && LOG_LEVEL(this, OnlyErrors)) || LOG_LEVEL(this, Info))
+    if ((!ok && LOG_LEVEL(this, OnlyErrors)) || LOG_LEVEL(this, Info)) {
+        sm.err() << ", ";
         printShaderLog(shader, sm.err());
+    } else {
+        sm.err() << std::endl;
+    }
 
-    if (ok)
-        GL_CHECK(glAttachShader(program, shader));
-    else
+    if (!ok)
         push_error(CompilationFailed);
 
-    GL_CHECK(glDeleteShader(shader));
+    if (ok && handle == 0)
+        GL_CHECK(glAttachShader(program, shader));
+
+    if (!ok || handle == 0)
+        GL_CHECK(glDeleteShader(shader));
+
+    if (handle != 0)
+        *handle = ok ? shader : 0;
 
     return ok;
 }
@@ -208,6 +265,7 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
     DependencyHandler depHandler;
     bool success = false;
     std::string realname;
+    Ref<CachedShaderObject> cacheEntry;
 
     {
         Preprocessor proc;
@@ -229,7 +287,17 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
             return true;
         }
 
-        self->shaders.insert(ShaderMapping(realname, type));
+        {
+            cacheEntry = self->sm.lookupShaderObject(realname);
+            if (cacheEntry.ptr() != 0) {
+                DEBUG_ASSERT(cacheEntry->key == realname);
+                success = true;
+                goto ret_add;
+            }
+        }
+
+        self->shaders[realname] = ShaderManager::EMPTY_CACHE_ENTRY; // mark as added (prevent recursive adds)
+        cacheEntry = new CachedShaderObject(self->sm, realname);
 
         if (!preprocess(self->sm, proc, realname, &incHandler.includes, shadersrc)) {
             LOG_ERR(self, "couldnt process shader file" << std::endl);
@@ -241,26 +309,50 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
             uint32 nsegments = shadersrc.segments.size();
             const uint32 *segLengths = &shadersrc.segLengths[0];
             const char **segments = &shadersrc.segments[0];
-
-            if (!self->addShader(type, realname, nsegments, segments, (GLint *) segLengths)) {
+            GLuint handle = 0;
+            if (!self->addShader(type, realname, nsegments, segments, (GLint *) segLengths, &handle))
                 goto ret;
-            }
+
+            cacheEntry->so.handle = handle;
+            self->sm.cacheShaderObject(cacheEntry);
         }
+
+        self->compileStk.push(cacheEntry);
     }
 
     for (uint32 i = 0; i < depHandler.deps.size(); ++i)
         if (!addShaderFile(depHandler.deps[i]))
-            goto ret;
+            goto ret_pop;
 
     success = true;
 
+ret_pop:
+    self->compileStk.pop();
+
+ret_add:
+
+    if (self->compileStk.empty()) { // root dependency
+        DEBUG_ASSERT(cacheEntry.ptr() != 0);
+        self->shaders[cacheEntry->key] = cacheEntry;
+    } else {
+        self->compileStk.top()->deps.push_back(cacheEntry);
+    }
+    
 ret:
 
-    if (!success) {
+    if (!self->compileStk.empty())
         self->shaders.erase(realname);
-    }
 
     return success;
+}
+
+bool ShaderProgram::addShaderFilePair(const std::string& vert_file, const std::string& frag_file) {
+    return addShaderFile(VertexShader, vert_file) &&
+        addShaderFile(FragmentShader, frag_file);   
+}
+
+bool ShaderProgram::addShaderFilePair(const std::string& basename) {
+    return addShaderFilePair(basename + ".vert", basename + ".frag");
 }
 
 bool ShaderProgram::tryLink() {
@@ -269,10 +361,12 @@ bool ShaderProgram::tryLink() {
 
 bool ShaderProgram::link() {
 
-    if (self->program == 0) {
-        self->push_error(APIError);
+    if (!self->createProgram())
         return false;
-    }
+
+    for (ShaderMap::const_iterator it = self->shaders.begin(); it != self->shaders.end(); ++it)
+        if (!self->attachShaderObjects(it->second))
+            return false;
 
     LOG_ERR(self, "linking ... ");
 
@@ -281,22 +375,25 @@ bool ShaderProgram::link() {
     GLint success;
     GL_CHECK(glGetProgramiv(self->program, GL_LINK_STATUS, &success));
     bool ok = success == GL_TRUE;
-    LOG_ERR(self, (ok ? "success" : "failed") << std::endl);
+    LOG_ERR(self, (ok ? "success" : "failed"));
 
     if (!ok)
         self->push_error(LinkageFailed);
 
-    
-    if ((!ok && LOG_LEVEL(self, OnlyErrors)) || LOG_LEVEL(self, Info))
+    if ((!ok && LOG_LEVEL(self, OnlyErrors)) || LOG_LEVEL(self, Info)) {
+        self->sm.err() << ", ";
         printProgramLog(self->program, self->sm.err());
+    } else {
+        self->sm.err() << std::endl;
+    }
 
     return ok;
 }
 
 bool ShaderProgram::bindAttribute(const std::string& s, GLuint position) {
-    if (self->program == 0)
-        GL_CHECK(self->program = glCreateProgram());
-
+    if (!self->createProgram())
+        return false;
+    
     GL_CHECK(glBindAttribLocation(self->program, position, s.c_str()));
     // FIXME: check wether attrib was added correctly
     
@@ -320,16 +417,25 @@ void ShaderProgram::use() {
 }
 
 bool ShaderProgram::replaceWith(ShaderProgram& new_prog) {
-    
-    if (new_prog.self->program != 0 && new_prog.self->last_error == NoError) {
-        reset();
-        self->program = new_prog.self->program;
-        self->last_error = NoError;
-        new_prog.self->program = 0;
+
+    if (&new_prog != this) {
+        ASSERT(&new_prog.self->sm == &self->sm);
+
+        if (new_prog.self->program != 0 && new_prog.self->last_error == NoError) {
+            reset();
+            self->program = new_prog.self->program;
+            self->last_error = NoError;
+            self->shaders = new_prog.self->shaders;
+            new_prog.self->program = 0;
+            new_prog.reset();
+            return true;
+        } else {
+            new_prog.printError(self->sm.err());
+            return false;
+        }
+    } else {
         return true;
     }
-
-    return false;
 }
 
 GLint ShaderProgram::uniformLocation(const std::string& name) {

@@ -199,11 +199,13 @@ MATH_END_NAMESPACE
 namespace math {
 
 MATH_INLINE_SPEC float& vec4_t::operator[](unsigned long i) {
-    return components[i];
+    return (&x)[i];
+//    return components[i];
 }
 
 MATH_INLINE_SPEC float vec4_t::operator[](unsigned long i) const {
-    return components[i];
+    return (&x)[i];
+//    return components[i];
 }
 
 } // namespace math

@@ -37,16 +37,18 @@
 #endif
 
 #ifdef DEBUG
-#define DEBUG_ASSERT(x, err) do { \
-        if (unlikely(!(x)))       \
+#define DEBUG_ASSERT_MSG(x, err) do { \
+        if (unlikely(!(x)))           \
             DEBUG_ERR(err);           \
     } while (0)
+#define DEBUG_ASSERT(x) DEBUG_ASSERT_MSG(x, "assertion failed: " #x)
 #else
-#define DEBUG_ASSERT(x, err) ((void) 0)
+#define DEBUG_ASSERT_MSG(x, err) UNUSED(0)
+#define DEBUG_ASSERT(x) UNUSED(0)
 #endif
 
-#define ASSERT_MSG DEBUG_ASSERT
-#define ASSERT(x) ASSERT_MSG(x, "assertion failed: " #x)
+#define ASSERT_MSG DEBUG_ASSERT_MSG
+#define ASSERT(x) DEBUG_ASSERT(x)
 
 #define ERR(e) glt::error(e, __FILE__, __LINE__, __func__)
 

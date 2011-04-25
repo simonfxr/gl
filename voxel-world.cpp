@@ -531,20 +531,13 @@ bool Anim::loadShaders() {
     bool ok = true;
 
     glt::ShaderProgram vs(sm);
-    
-    vs.addShaderFile(glt::ShaderProgram::VertexShader, "shaders/voxel.vert");
-    vs.addShaderFile(glt::ShaderProgram::FragmentShader, "shaders/voxel.frag");
+
+    vs.addShaderFilePair("voxel");
     vs.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
     vs.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
     vs.bindAttribute("color", vertexAttrs.index(offsetof(Vertex, color)));
     vs.tryLink();
-
-    ok = ok && !vs.wasError();
-
-    if (!vs.wasError())
-        voxelShader.replaceWith(vs);
-    else
-        vs.printError(std::cerr);
+    ok = ok && voxelShader.replaceWith(vs);
 
     return ok;
 }

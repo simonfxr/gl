@@ -27,9 +27,9 @@ GLenum getGLType(TextureType ty, uint32 ss) {
 } // namespace anon
 
 TextureHandle::TextureHandle(TextureType ty, uint32 samples) :
+    _samples(samples),
     _handle(0),
-    _type(ty),
-    _samples(samples)
+    _type(ty)
 {}
 
 TextureHandle::~TextureHandle() {
@@ -45,6 +45,11 @@ void TextureHandle::bind() {
     if (_handle == 0)
         GL_CHECK(glGenTextures(1, &_handle));
     GL_CHECK(glBindTexture(getGLType(_type, _samples), _handle));
+}
+
+void TextureHandle::bind(uint32 active_index) {
+    GL_CHECK(glActiveTexture(GL_TEXTURE0 + active_index));
+    bind();
 }
 
 GLenum TextureHandle::glType() const {

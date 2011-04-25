@@ -2,6 +2,7 @@
 #include "glt/ShaderManager.hpp"
 
 #include <iostream>
+#include <map>
 #include <cstdio>
 
 namespace glt {
@@ -53,11 +54,20 @@ bool readWholeFile(FILE *in, char *& file_contents, uint32& file_size) {
 
 } // namespace anon
 
+const Ref<ShaderManager::CachedShaderObject> ShaderManager::EMPTY_CACHE_ENTRY(0);
+
+typedef std::map<std::string, WeakRef<ShaderManager::CachedShaderObject> > ShaderCache;
+
 struct ShaderManager::Data {
     Verbosity verbosity;
     std::ostream *err;
     std::vector<std::string> paths;
+    ShaderCache cache;
 };
+
+ShaderManager::CachedShaderObject::~CachedShaderObject() {
+    sm.self->cache.erase(key);
+}
 
 ShaderManager::ShaderManager() :
     self(new Data)
@@ -134,6 +144,16 @@ std::string ShaderManager::readFileInPath(const std::string& file, char *& conte
     }
 
     return name;
+}
+
+Ref<ShaderManager::CachedShaderObject> ShaderManager::lookupShaderObject(const std::string& file) const {
+    ShaderCache::const_iterator it = self->cache.find(file);
+    return it == self->cache.end() ? EMPTY_CACHE_ENTRY : it->second.unweak();
+}
+
+void ShaderManager::cacheShaderObject(const Ref<ShaderManager::CachedShaderObject>& entry) {
+    DEBUG_ASSERT(entry.ptr() != 0);
+    self->cache[entry->key] = entry.weak();
 }
 
 } // namespace glt

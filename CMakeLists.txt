@@ -1,11 +1,11 @@
 
-#set(COMP_C clang)
-#set(COMP_CXX clang++)
+# set(COMP_C clang)
+# set(COMP_CXX clang++)
 
-#set(CMAKE_C_COMPILER_INIT ${COMP_C})
+# set(CMAKE_C_COMPILER_INIT ${COMP_C})
 
-#set(CMAKE_C_COMPILER ${COMP_C})
-#set(CMAKE_CXX_COMPILER ${COMP_CXX})
+# set(CMAKE_C_COMPILER ${COMP_C})
+# set(CMAKE_CXX_COMPILER ${COMP_CXX})
 
 project(sim-sfml)
 
@@ -15,9 +15,9 @@ project(sim-sfml)
 
 #set(GRAPHITE_OPTS "-floop-strip-mine -floop-block -floop-interchange")
 
-#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -DSYSTEM_LINUX -DMATH_INLINE -DDEBUG -DGLDEBUG -DGNU_EXTENSIONS -fno-exceptions -fno-rtti -O3 -ggdb -march=native")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -fno-exceptions -fno-rtti -O0 -march=native -fopenmp -ggdb")
 
-#set(CMAKE_LDFLAGS "${CMAKE_CXX_FLAGS}")
+set(CMAKE_LDFLAGS "${CMAKE_CXX_FLAGS}")
 
 #set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb")
 
@@ -100,7 +100,10 @@ set(GLT_SRC
   glt/TextureRenderTarget.hpp
   glt/TextureRenderTarget.cpp
   glt/TextureRenderTarget3D.hpp
-  glt/TextureRenderTarget3D.cpp)
+  glt/TextureRenderTarget3D.cpp
+  glt/ShaderObject.hpp
+  glt/ShaderObject.cpp
+  glt/Ref.hpp)
 
 set(GE_SRC
   ge/GameLoop.hpp
