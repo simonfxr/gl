@@ -3,7 +3,6 @@
 #include <cstring>
 #include <map>
 #include <set>
-#include <stack>
 
 #include "defs.h"
 #include "opengl.h"
@@ -31,7 +30,7 @@ struct ShaderProgram::Data {
     GLuint program;
     ShaderManager& sm;
     ShaderMap shaders; // contains only root shader files and during compilation markers to prevent endless recursive compiles
-    std::stack<Ref<CachedShaderObject> > compileStk;
+    CachedShaderObject *parentSO;
 
     Data(ShaderManager& _sm) :
         sm(_sm)
@@ -52,6 +51,7 @@ ShaderProgram::ShaderProgram(ShaderManager& sm) :
 {
     self->last_error = NoError;
     self->program = 0;
+    self->parentSO = 0;
 }
 
 ShaderProgram::~ShaderProgram() {
@@ -259,6 +259,7 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
     DependencyHandler depHandler;
     bool success = false;
     std::string realname;
+    CachedShaderObject *myParentSO = self->parentSO;
     Ref<CachedShaderObject> cacheEntry;
 
     {
@@ -311,7 +312,7 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
             self->sm.cacheShaderObject(cacheEntry);
         }
 
-        self->compileStk.push(cacheEntry);
+        self->parentSO = cacheEntry.ptr();
     }
 
     for (uint32 i = 0; i < depHandler.deps.size(); ++i)
@@ -321,20 +322,20 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
     success = true;
 
 ret_pop:
-    self->compileStk.pop();
+    self->parentSO = myParentSO;
 
 ret_add:
 
-    if (self->compileStk.empty()) { // root dependency
+    if (myParentSO == 0) { // root dependency
         DEBUG_ASSERT(cacheEntry.ptr() != 0);
         self->shaders[cacheEntry->key] = cacheEntry;
     } else {
-        self->compileStk.top()->deps.push_back(cacheEntry);
+        myParentSO->deps.push_back(cacheEntry);
     }
     
 ret:
 
-    if (!self->compileStk.empty())
+    if (myParentSO != 0)
         self->shaders.erase(realname);
 
     return success;

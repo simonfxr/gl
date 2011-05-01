@@ -66,7 +66,6 @@ struct SphereLOD {
 
 namespace {
 
-
 // dont change layout (directly mapped to texture)
 struct SphereInstance {
     point3_t pos;
@@ -74,8 +73,6 @@ struct SphereInstance {
     vec3_t col_rgb;
     float shininess;
 };
-
-// typedef vec4_t SphereInstance; // pos.xyz; radius
 
 struct Vertex {
     point4_t position;
@@ -799,7 +796,7 @@ void Game::render_hud() {
     txtNumBalls.SetPosition(2, height);
 
     height += txtNumBalls.GetRect().Height + 2;
-    sf::Text txtRenderTime(std::string("Render Time: ") + to_string(current_avg_draw_time * 1000) + " ms");
+    sf::Text txtRenderTime(std::string("Render Time: ") + to_string(current_avg_draw_time * 1000) + " ms (" + to_string(recip(current_avg_draw_time)) + " fps)");
     txtRenderTime.SetCharacterSize(16);
     txtRenderTime.SetColor(c);
     txtRenderTime.SetPosition(2, height);
