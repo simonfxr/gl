@@ -71,6 +71,8 @@ add_executable(teapot
   ../glt/RenderTarget.cpp
   ../glt/ShaderObject.hpp
   ../glt/ShaderObject.cpp
+  ../glt/TextureRenderTarget.hpp
+  ../glt/TextureRenderTarget.cpp
 
   ../ge/GameLoop.hpp
   ../ge/GameLoop.cpp

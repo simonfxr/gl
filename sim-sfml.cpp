@@ -238,8 +238,6 @@ bool Game::onInit() {
     
     makeUnitCube(wallBatch);
 
-    GL_CHECK(glEnable(GL_DEPTH_TEST));
-
     struct {
         int32 a, b;
     } sphere_params[SPHERE_LOD_MAX] = {
@@ -469,8 +467,6 @@ void Game::renderScene(float interpolation) {
 }
 
 void Game::renderWorld(float dt) {
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-
     const vec3_t eyeLightPos = transformPipeline.transformPoint(LIGHT_POS);
     const vec3_t spotDirection = normalize(vec3(0.f) - LIGHT_POS);
     const vec3_t ecSpotDirection = transformPipeline.transformVector(spotDirection);

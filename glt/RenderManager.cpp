@@ -95,16 +95,10 @@ RenderManager::RenderManager() :
 RenderManager::~RenderManager() {
     if (self->current_rt != 0)
         self->current_rt->deactivate();
-    
-    if (self->owning_def_rt && self->def_rt != 0) {
-        if (self->def_rt == self->current_rt) {
-            self->current_rt->deactivate();
-            self->current_rt = 0;
-        }
 
+    if (self->owning_def_rt)
         delete self->def_rt;
-        self->def_rt = 0;
-    }
+    
     delete self;
 }
 

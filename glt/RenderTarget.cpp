@@ -15,7 +15,9 @@ struct RenderTarget::Data {
     Data(uint32 w, uint32 h, uint32 bs, const Viewport& vp) :
         width(w), height(h), buffers(bs),
         viewport(vp)
-        {}
+        {
+            ON_DEBUG(active = false);
+        }
 
     Viewport effectiveViewport() const {
         return viewport == Viewport() ? Viewport(width, height) : viewport;
