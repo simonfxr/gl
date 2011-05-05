@@ -216,8 +216,10 @@ void GameWindow::Data::handleInputEvents() {
             mouse_current_y = mouse_y = new_h / 2;
             win->SetCursorPosition(mouse_x, mouse_y);
         }
-        
+
+        renderTarget->resized();
         self.windowResized(new_w, new_h);
+        
     } else {
 
         int32 dx = mouse_current_x - mouse_x;

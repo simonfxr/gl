@@ -30,9 +30,11 @@
 
 #ifdef DEBUG
 #define ON_DEBUG(x) do { (x); } while (0)
+#define DEBUG_DECL(x) x
 #define DEBUG_ERR(msg) ERR(msg)
 #else
 #define ON_DEBUG(x) ((void) 0)
+#define DEBUG_DECL(x)
 #define DEBUG_ERR(x) ((void) 0)
 #endif
 
@@ -51,6 +53,7 @@
 #define ASSERT(x) DEBUG_ASSERT(x)
 
 #define ERR(e) glt::error(e, __FILE__, __LINE__, __func__)
+#define WARN(msg) ERR(msg)
 
 #define ERROR_ONCE(e) do {                                              \
         static bool __reported = false;                                 \

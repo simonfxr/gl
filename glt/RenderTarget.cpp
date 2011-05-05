@@ -1,7 +1,6 @@
 #include "glt/RenderTarget.hpp"
 #include "glt/utils.hpp"
-
-#include <SFML/OpenGL.hpp>
+#include "opengl.h"
 
 namespace glt {
 
@@ -11,14 +10,16 @@ struct RenderTarget::Data {
     uint32 buffers;
     Viewport viewport;
 
-    bool active;
-    bool viewport_changed;
+    DEBUG_DECL(bool active;)
 
     Data(uint32 w, uint32 h, uint32 bs, const Viewport& vp) :
         width(w), height(h), buffers(bs),
-        viewport(vp == Viewport() ? Viewport(w, h) : vp),
-        active(false),
-        viewport_changed(false) {}
+        viewport(vp)
+        {}
+
+    Viewport effectiveViewport() const {
+        return viewport == Viewport() ? Viewport(width, height) : viewport;
+    }
 };
 
 RenderTarget::RenderTarget(uint32 w, uint32 h, uint32 bs, const Viewport& vp) :
@@ -26,6 +27,7 @@ RenderTarget::RenderTarget(uint32 w, uint32 h, uint32 bs, const Viewport& vp) :
 {}
 
 RenderTarget::~RenderTarget() {
+    DEBUG_ASSERT(!self->active);
     delete self;
 }
 
@@ -46,22 +48,16 @@ const Viewport& RenderTarget::viewport() const {
 }
 
 void RenderTarget::activate() {
-    if (!self->active) {
-        self->active = true;
-        doActivate();
-
-        if (self->viewport_changed) {
-            self->viewport_changed = false;
-            doViewport(self->viewport);
-        }
-    }
+    DEBUG_ASSERT(!self->active);
+    ON_DEBUG(self->active = true);
+    doActivate();
+    doViewport(self->effectiveViewport());
 }
 
 void RenderTarget::deactivate() {
-    if (self->active) {
-        self->active = false;
-        doDeactivate();
-    }
+    DEBUG_ASSERT(self->active);
+    ON_DEBUG(self->active = false);
+    doDeactivate();
 }
 
 void RenderTarget::clear(uint32 buffers, glt::color clear_color) {
@@ -79,9 +75,9 @@ void RenderTarget::viewport(const Viewport& vp) {
     if (vp != self->viewport) {
         self->viewport = vp;
 
-        if (self->active)
-            doViewport(vp);
-        self->viewport_changed = !self->active;
+        if (self->active) {
+            doViewport(self->effectiveViewport());
+        }
     }
 }
 

@@ -58,6 +58,8 @@ static const float PROJ_Z_MAX = 100.f;
 
 static const glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
 
+static const uint32 AA_SAMPLES = 4;
+
 static const uint32 SPHERE_LOD_MAX = 6;
 
 struct SphereLOD {
@@ -133,25 +135,10 @@ struct Game EXPLICIT : public ge::GameWindow {
     glt::ShaderProgram identityShader;
 
     glt::TextureRenderTarget *textureRenderTarget;
-    
-    uint32 nactive_texs;
-    uint32 active_tex_idx;
-    float next_tex_snapshot;
-
-    uint32 fps_count;
-    uint32 current_fps;
-    float  fps_render_next;
-    float  fps_render_last;
-
-    float  current_avg_draw_time;
-    uint32 num_draws;
-    float  draw_time_accum;
-    float  draw_time_render_next;
 
     float game_speed;
 
     bool use_interpolation;
-    uint64 last_frame_rendered;
 
     bool render_spheres_instanced;
 
@@ -198,9 +185,13 @@ Game::Game() :
 
 bool Game::onInit() {
 
+    std::cerr << "GLEW_AMD_debug_output:" << (GLEW_AMD_debug_output ? "yes" : "no") << std::endl;
+    std::cerr << "GLEW_ARB_debug_output:" << (GLEW_ARB_debug_output ? "yes" : "no") << std::endl;
+
+    
     textureRenderTarget = new glt::TextureRenderTarget(window().GetWidth(), window().GetHeight(), glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);
 
-    renderManager.setRenderTarget(*textureRenderTarget);
+    renderManager.setDefaultRenderTarget(textureRenderTarget, true);
 
     render_spheres_instanced = false;
     
@@ -225,9 +216,6 @@ bool Game::onInit() {
         rectBatch.freeze();
     }
 
-    nactive_texs = 0;
-    active_tex_idx = 0;
-
     shaderManager.addPath("shaders");
 
     ticksPerSecond(100);
@@ -240,11 +228,6 @@ bool Game::onInit() {
         return false;
 
     world.render_by_distance = true;
-
-    last_frame_rendered = 0;
-
-    num_draws = 0;
-    draw_time_accum = 0.f;
 
     sphere_speed = 10.f;
     sphere_proto.state = Bouncing;
@@ -278,9 +261,6 @@ bool Game::onInit() {
         std::cerr << "couldnt load shaders!" << std::endl;
         return false;
     }
-
-    fps_count = 0;
-    fps_render_next = fps_render_last = 0.f;
 
     update_sphere_mass();
     
@@ -340,20 +320,17 @@ std::ostream& operator <<(std::ostream& out, const vec4_t& a) {
 }
 
 void Game::windowResized(uint32 width, uint32 height) {
-
-    nactive_texs = 0;
-    
     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
-    this->renderTarget().viewport(glt::Viewport(width, height));
-    textureRenderTarget->resize(width, height);
-    textureRenderTarget->viewport(glt::Viewport(width, height));
+
+    uint32 stride = 1;
+    while (stride * stride < AA_SAMPLES)
+        ++stride;
+    
+    textureRenderTarget->resize(width * stride, height * stride);
     
     float fov = degToRad(17.5f);
     float aspect = float(width) / float(height);
     renderManager.setPerspectiveProjection(fov, aspect, PROJ_Z_MIN, PROJ_Z_MAX);
-
-    next_tex_snapshot = realTime();
-//    textureRenderTarget->targetDepth(0);
 }
 
 void Game::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
@@ -457,9 +434,6 @@ void Game::spawn_sphere() {
 
 void Game::renderScene(float interpolation) {
 
-    // if (!use_interpolation && last_frame_rendered == currentFrameID())
-    //     return;
-
     if (!use_interpolation)
         interpolation = 0.f;
 
@@ -467,64 +441,31 @@ void Game::renderScene(float interpolation) {
     renderManager.setCameraMatrix(camMat);
 
     renderManager.beginScene();
-    renderManager.renderTarget().clear(glt::RT_DEPTH_BUFFER);
+    renderManager.activeRenderTarget()->clear(glt::RT_DEPTH_BUFFER);
+    GL_CHECK(glEnable(GL_DEPTH_TEST));
 
-    float t0 = now();
-    
-    last_frame_rendered = currentFrameID();
-    
     window().SetActive();
 
     float dt = interpolation * game_speed * frameDuration();
 
-    GL_CHECK(glEnable(GL_MULTISAMPLE));
-    GL_CHECK(glEnable(GL_CULL_FACE));
-    
     renderWorld(dt);
-
-    GL_CHECK(glDisable(GL_CULL_FACE));
-
-    ++fps_count;
-    render_hud();
-
-    ++num_draws;
-    renderManager.endScene();
-    renderManager.renderTarget().deactivate();
-
-    // bool inc = false;
-
-    // if (realTime() >= next_tex_snapshot) {
-        
-    //     if (nactive_texs + 1 < NUM_BLUR_TEXTURES)
-    //         inc = true;
-
-    //     textureRenderTarget->targetDepth((textureRenderTarget->targetDepth() + 1) % NUM_BLUR_TEXTURES);
-    //     next_tex_snapshot = realTime() + BLUR_TEXTURES_UPDATE_CYCLE;
-    // }
                                  
     GL_CHECK(glDisable(GL_DEPTH_TEST));
 
-    this->renderTarget().activate();
+    renderManager.setActiveRenderTarget(&this->renderTarget());
     postprocShader.use();
 
     textureRenderTarget->textureHandle().bind(0);
     glt::Uniforms(postprocShader)
-        .optional("depth", float(nactive_texs + 1))
-        .optional("offset", nactive_texs == 0 ? 2 : 1 / float(nactive_texs))
         .optional("gammaCorrection", 2.2)
         .mandatory("textures", textureRenderTarget->textureHandle(), 0);
 
     rectBatch.draw();
-    
-    this->renderTarget().draw();
-    this->renderTarget().deactivate();
 
-    GL_CHECK(glEnable(GL_DEPTH_TEST));
+    render_hud();
 
-    // if (inc)
-    //     ++nactive_texs;
-
-    draw_time_accum += now() - t0;
+    renderManager.endScene();
+    renderManager.setActiveRenderTarget(0);
 }
 
 void Game::renderWorld(float dt) {
@@ -736,68 +677,58 @@ void Game::render_con(const point3_t& a, const point3_t& b) {
 }
 
 void Game::render_hud() {
-    float now = realTime();
-    if (now >= fps_render_next) {
-        current_fps = fps_count / (now - fps_render_last);
-        fps_render_next = now + FPS_RENDER_CYCLE;
-        fps_render_last = now;
-        fps_count = 0;
-    }
 
-    if (now >= draw_time_render_next) {
-        current_avg_draw_time = draw_time_accum / num_draws;
-        num_draws = 0;
-        draw_time_accum = 0.f;
-        draw_time_render_next = now + FPS_RENDER_CYCLE;
-    }
-
-    sf::Color c(0, 255, 255, 180);
+    const glt::FrameStatistics& fs = renderManager.frameStatistics();
+    
+    sf::Color c(0, 255, 255, 200);
 
     uint32 height = 0;
-    sf::Text txtFps = sf::Text(to_string(current_fps));
-    txtFps.SetCharacterSize(16);
+    sf::Text txtFps = sf::Text(to_string(fs.avg_fps));
+    txtFps.SetCharacterSize(12);
     txtFps.SetPosition(2, 0);
     txtFps.SetColor(sf::Color(255, 255, 0, 180));
 
     height += txtFps.GetRect().Height + 2;
     sf::Text txtSpeed("Sphere speed: " + to_string(sphere_speed) + " m/s");
-    txtSpeed.SetCharacterSize(16);
+    txtSpeed.SetCharacterSize(12);
     txtSpeed.SetColor(c);
     txtSpeed.SetPosition(2, height);
 
     height += txtSpeed.GetRect().Height + 2;    
     sf::Text txtMass("Sphere mass: " + to_string(sphere_proto.m) + " kg");
-    txtMass.SetCharacterSize(16);
+    txtMass.SetCharacterSize(12);
     txtMass.SetColor(c);
     txtMass.SetPosition(2, height);
 
     height += txtMass.GetRect().Height + 2;
     sf::Text txtRad("Sphere radius: " + to_string(sphere_proto.r) + " m");
-    txtRad.SetCharacterSize(16);
+    txtRad.SetCharacterSize(12);
     txtRad.SetColor(c);
     txtRad.SetPosition(2, height);
 
     height += txtRad.GetRect().Height + 2;
     sf::Text txtAnimSpeed("Animation Speed: " + to_string(game_speed));
-    txtAnimSpeed.SetCharacterSize(16);
+    txtAnimSpeed.SetCharacterSize(12);
     txtAnimSpeed.SetColor(c);
     txtAnimSpeed.SetPosition(2, height);
 
     height += txtAnimSpeed.GetRect().Height + 2;
     sf::Text txtInter(std::string("Interpolation: ") + (use_interpolation ? "on" : "off"));
-    txtInter.SetCharacterSize(16);
+    txtInter.SetCharacterSize(12);
     txtInter.SetColor(c);
     txtInter.SetPosition(2, height);
 
     height += txtInter.GetRect().Height + 2;
     sf::Text txtNumBalls(std::string("NO Spheres: ") + to_string(world.numSpheres()));
-    txtNumBalls.SetCharacterSize(16);
+    txtNumBalls.SetCharacterSize(12);
     txtNumBalls.SetColor(c);
     txtNumBalls.SetPosition(2, height);
 
     height += txtNumBalls.GetRect().Height + 2;
-    sf::Text txtRenderTime(std::string("Render Time: ") + to_string(current_avg_draw_time * 1000) + " ms (" + to_string(recip(current_avg_draw_time)) + " fps)");
-    txtRenderTime.SetCharacterSize(16);
+    std::string render_stat = "FPS(Rendering): " + to_string(fs.rt_avg) + " " +
+        to_string(fs.rt_current) + " " + to_string(fs.rt_min) + " " + to_string(fs.rt_max);
+    sf::Text txtRenderTime(render_stat);
+    txtRenderTime.SetCharacterSize(12);
     txtRenderTime.SetColor(c);
     txtRenderTime.SetPosition(2, height);
 

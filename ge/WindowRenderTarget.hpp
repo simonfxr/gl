@@ -10,18 +10,15 @@ struct GameWindow;
 
 struct WindowRenderTarget EXPLICIT : public glt::RenderTarget {
 private:
-
     GameWindow& window;
 
 public:
-
     WindowRenderTarget(GameWindow& win);
+    void resized();
     
 protected:
     void doActivate() OVERRIDE;
-    void doDeactivate() OVERRIDE;
     void doDraw() OVERRIDE;
-    void doViewport(const glt::Viewport& vp) OVERRIDE;
 };
 
 } // namespace ge

@@ -129,7 +129,6 @@ struct Anim EXPLICIT : public ge::GameWindow {
     vec3_t ecLightDir;
     
     Timer fpsTimer;
-    uint64 fpsFirstFrame;
 
     bool write_model;
     bool read_model;
@@ -170,7 +169,7 @@ bool Anim::onInit() {
         GL_CHECK(glEnable(GL_MULTISAMPLE_ARB));
     }
 
-    rm.setRenderTarget(this->renderTarget());
+    rm.setDefaultRenderTarget(&this->renderTarget());
 
     sm.addPath("shaders");
 
@@ -182,7 +181,6 @@ bool Anim::onInit() {
     
     grabMouse(true);
 
-    fpsFirstFrame = 0;
     fpsTimer.start(*this, FPS_UPDATE_INTERVAL, true);
 
     cubeModel.primType(GL_QUADS);
@@ -789,11 +787,8 @@ void Anim::renderScene(float interpolation) {
     rm.endScene();
 
     if (fpsTimer.fire()) {
-        uint64 id = currentRenderFrameID();
-        uint64 frames = id - fpsFirstFrame;
-        fpsFirstFrame = id;
-
-        std::cerr << "fps: " << (frames / FPS_UPDATE_INTERVAL) << std::endl;
+        glt::FrameStatistics fs = rm.frameStatistics();
+        std::cerr << "Timings (FPS/Render Avg/Render Min/Render Max): " << fs.avg_fps << "; " << fs.rt_avg << "; " << fs.rt_min << "; " << fs.rt_max << std::endl;
     }
 }
 

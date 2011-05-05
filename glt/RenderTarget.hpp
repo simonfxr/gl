@@ -34,7 +34,7 @@ static const uint32 RT_ALL_BUFFERS = RT_COLOR_BUFFER | RT_DEPTH_BUFFER | RT_STEN
 
 struct RenderTarget {
 
-    RenderTarget(uint32 width, uint32 height, uint32 buffers = RT_COLOR_BUFFER, const Viewport& vp = Viewport(0, 0));
+    RenderTarget(uint32 width, uint32 height, uint32 buffers = RT_COLOR_BUFFER, const Viewport& vp = Viewport());
     virtual ~RenderTarget();
 
     uint32 width() const;

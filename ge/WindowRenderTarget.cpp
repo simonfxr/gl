@@ -25,22 +25,17 @@ WindowRenderTarget::WindowRenderTarget(GameWindow& w) :
     window(w)
 {}
 
+void WindowRenderTarget::resized() {
+    updateSize(window.window().GetWidth(), window.window().GetHeight());
+}
+
 void WindowRenderTarget::doActivate() {
     window.window().SetActive();
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }
 
-void WindowRenderTarget::doDeactivate() {
-    // noop
-}
-
 void WindowRenderTarget::doDraw() {
     window.window().Display();
-}
-
-void WindowRenderTarget::doViewport(const glt::Viewport& vp) {
-    updateSize(window.window().GetWidth(), window.window().GetHeight());
-    RenderTarget::doViewport(vp);
 }
 
 } // namespace ge

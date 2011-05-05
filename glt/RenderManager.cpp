@@ -7,9 +7,15 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 
+#include <algorithm>
+#include <SFML/System/Clock.hpp>
+
 namespace glt {
 
 using namespace math;
+
+static const float FS_UPDATE_INTERVAL = 1.f;
+static const float FS_UPDATE_INTERVAL_FAST = 0.1f;
 
 struct RenderManager::Data {
     aligned_mat4_t cameraMatrix;
@@ -19,17 +25,67 @@ struct RenderManager::Data {
     bool camera_set;
     SavePointArgs transformStateBOS; // transform state in begin of scene
 
-    bool owning_render_target;
-    RenderTarget *render_target;
+    bool owning_def_rt;
+    RenderTarget *def_rt;
+
+    // always active
+    RenderTarget *current_rt;
+
+    sf::Clock clk;
+    float stat_snapshot;
+    float stat_fast_snapshot;
+    float framet0;
+    float renderAcc;
+    float renderAccFast;
+    uint32 num_frames_fast;
+    uint32 num_frames;
+    
+    FrameStatistics stats;
 
     Data() :
         cameraMatrix(mat4()),
         inScene(false),
         camera_set(false),
         transformStateBOS(transform, 0, 0),
-        owning_render_target(false),
-        render_target(0)        
+        owning_def_rt(false),
+        def_rt(0),
+        current_rt(0),
+        stat_snapshot(0.f),
+        stat_fast_snapshot(0.f)
         {}
+
+    void statBegin() {
+        framet0 = clk.GetElapsedTime();
+        float diff = framet0 - stat_snapshot;
+        if (diff >= FS_UPDATE_INTERVAL) {
+            stats.avg_fps = uint32(math::recip(diff / num_frames));
+            stats.rt_avg = uint32(math::recip(renderAcc / num_frames));
+            renderAcc = 0.f;
+            num_frames = 0;
+            stat_snapshot = framet0;
+            stats.rt_min = 0xFFFFFFFF;
+            stats.rt_max = 0;
+        }
+
+        float diff2 = framet0 - stat_fast_snapshot;
+        if (diff2 >= FS_UPDATE_INTERVAL_FAST) {
+            stats.rt_current = uint32(math::recip(renderAccFast / num_frames_fast));
+            renderAccFast = 0.f;
+            num_frames_fast = 0;
+            stat_fast_snapshot = framet0;
+        }
+    }
+
+    void statEnd() {
+        float frameDur = clk.GetElapsedTime() - framet0;
+        renderAcc += frameDur;
+        renderAccFast += frameDur;
+        uint32 fps = uint32(math::recip(frameDur));
+        stats.rt_max = std::max(stats.rt_max, fps);
+        stats.rt_min = std::min(stats.rt_min, fps);
+        ++num_frames;
+        ++num_frames_fast;
+    }
 };
 
 RenderManager::RenderManager() :
@@ -37,6 +93,18 @@ RenderManager::RenderManager() :
 {}
 
 RenderManager::~RenderManager() {
+    if (self->current_rt != 0)
+        self->current_rt->deactivate();
+    
+    if (self->owning_def_rt && self->def_rt != 0) {
+        if (self->def_rt == self->current_rt) {
+            self->current_rt->deactivate();
+            self->current_rt = 0;
+        }
+
+        delete self->def_rt;
+        self->def_rt = 0;
+    }
     delete self;
 }
 
@@ -66,50 +134,74 @@ void RenderManager::setCameraMatrix(const mat4_t& m) {
     self->camera_set = true;
 }
 
-void RenderManager::setRenderTarget(RenderTarget& rt, bool delete_after) {
+void RenderManager::setDefaultRenderTarget(RenderTarget *rt, bool delete_after) {
 
-    if (&rt != self->render_target) {
-        if (self->render_target != 0)
-            self->render_target->deactivate();
-        
-        if (self->owning_render_target && self->render_target != 0) {
-            delete self->render_target;
+    if (rt != self->def_rt) {
+
+        if (self->owning_def_rt && self->def_rt != 0) {
+
+            if (self->current_rt == self->def_rt) {
+                WARN("destroying active render target");
+                self->current_rt->deactivate();
+                self->current_rt = 0;
+            }
+            
+            delete self->def_rt;
         }
-    }
-    
-    self->owning_render_target = delete_after;
-    self->render_target = &rt;
 
-    if (self->inScene)
-        self->render_target->activate();
+        self->def_rt = rt;
+    }
+
+    self->owning_def_rt = delete_after;
 }
 
-RenderTarget& RenderManager::renderTarget()  {
-    ASSERT_MSG(self->render_target != 0, "no RenderTarget specified");
-    if (self->render_target == 0)
-        return *reinterpret_cast<RenderTarget *>(0);
-    else
-        return *self->render_target;
+RenderTarget *RenderManager::defaultRenderTarget() const {
+    return self->def_rt;
+}
+
+void RenderManager::setActiveRenderTarget(RenderTarget* rt) {
+    if (rt != self->current_rt) {
+        
+        if (self->current_rt != 0)
+            self->current_rt->deactivate();
+
+        self->current_rt = rt;
+        if (self->current_rt != 0)
+            self->current_rt->activate();
+    }
+}
+
+RenderTarget *RenderManager::activeRenderTarget() const {
+    return self->current_rt;
 }
 
 void RenderManager::beginScene() {
     ASSERT_MSG(!self->inScene, "nested beginScene()");
-    ASSERT(self->camera_set);
-    ASSERT_MSG(self->render_target != 0, "no RenderTarget specified");
+    ASSERT_MSG(self->camera_set, "camera matrix not set");
+    ASSERT_MSG(self->current_rt != 0 || self->def_rt != 0, "no RenderTarget specified");
+
+    self->statBegin();
+    
     self->camera_set = false;
     self->inScene = true;
+
+    setActiveRenderTarget(self->def_rt);
+
     self->transformStateBOS = self->transform.save();
     self->transform.concat(self->cameraMatrix);
     self->frustum.update(self->transform.mvpMatrix());
-    self->render_target->activate();
 }
 
 void RenderManager::endScene() {
     ASSERT_MSG(self->inScene, "cannot endScene() without beginScene()");
     self->inScene = false;
     self->transform.restore(self->transformStateBOS);
-    self->render_target->draw();
-    self->render_target->deactivate();
+    self->current_rt->draw();
+    self->statEnd();
+}
+
+FrameStatistics RenderManager::frameStatistics() {
+    return self->stats;
 }
 
 vec4_t transformModelToWorld(const RenderManager& rm, const vec4_t& modelCoord) {

@@ -9,6 +9,14 @@
 
 namespace glt {
 
+struct FrameStatistics {
+    uint32 avg_fps;
+    uint32 rt_avg;
+    uint32 rt_current;
+    uint32 rt_max;
+    uint32 rt_min;
+};
+
 struct RenderManager {
     RenderManager();
     ~RenderManager();
@@ -25,14 +33,20 @@ struct RenderManager {
     
     void setCameraMatrix(const math::mat4_t& m);
 
-    void setRenderTarget(RenderTarget& rt, bool delete_after = false);
+    void setDefaultRenderTarget(RenderTarget* rt, bool delete_after = false);
+    
+    RenderTarget* defaultRenderTarget() const;
 
-    RenderTarget& renderTarget();
+    void setActiveRenderTarget(RenderTarget *rt);
+
+    RenderTarget *activeRenderTarget() const;
 
     void beginScene();
 
     void endScene();
 
+    FrameStatistics frameStatistics();
+    
 private:
 
     struct Data;
