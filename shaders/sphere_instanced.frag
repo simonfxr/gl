@@ -1,4 +1,4 @@
-#version 330
+
 
 #include "point_light2.h"
 #include "gamma.h"

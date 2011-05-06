@@ -5,6 +5,7 @@
 #endif
 
 #include <cstring>
+#include <iostream>
 
 namespace glt {
 
@@ -26,6 +27,13 @@ void *alloc_aligned(uint64 size, uint32 alignment) {
     return mem;
 }
 
+byte *reallocVerts(const VertexDescBase& desc, byte *vertex_data, uint32 old_size, uint32 new_capa) {
+    byte *verts = static_cast<byte *>(alloc_aligned(desc.sizeof_vertex * new_capa, desc.alignment));
+    memcpy(verts, vertex_data, desc.sizeof_vertex * old_size);
+    free(vertex_data);
+    return verts;
+}
+
 void validatePrimType(GLenum primType) {
     switch (primType) {
     case GL_POINTS:
@@ -35,8 +43,8 @@ void validatePrimType(GLenum primType) {
     case GL_TRIANGLE_STRIP:
     case GL_TRIANGLE_FAN:
     case GL_TRIANGLES:
-    case GL_QUAD_STRIP:
-    case GL_QUADS:
+    case GL_QUAD_STRIP: // deprecated in core 3.0
+    case GL_QUADS:      // deprecated in core 3.0  
     case GL_POLYGON:
         break;
     default:
@@ -63,49 +71,48 @@ void validateUsageHint(GLenum usageHint) {
 
 }
 
-VertexDesc *allocVertexDesc(uint32 sizeof_vertex, uint32 nattrs, const Attr *attrs, uint32 alignment) {
-    VertexDesc *desc = malloc(sizeof *desc + sizeof attrs[0] * nattrs);
-    desc->sizeof_vertex = sizeof_vertex;
+// VertexDesc *allocVertexDesc(uint32 sizeof_vertex, uint32 nattrs, const Attr *attrs, uint32 alignment) {
+//     VertexDesc *desc = malloc(sizeof *desc + sizeof attrs[0] * nattrs);
+//     desc->sizeof_vertex = sizeof_vertex;
 
-    uint32 required_alignement = 0;
+//     uint32 required_alignement = 0;
 
-    for (uint32 i = 0; i < nattrs; ++i) {
-        desc->attrs[i] = attrs[i];
-        if (attrs[i].alignment > required_alignment) // FIXME: not really correct
-            required_alignment = attrs[i].alignment;
-    }
+//     for (uint32 i = 0; i < nattrs; ++i) {
+//         desc->attrs[i] = attrs[i];
+//         if (attrs[i].alignment > required_alignment) // FIXME: not really correct
+//             required_alignment = attrs[i].alignment;
+//     }
 
-    if (alignment == ALIGNMENT_DEFAULT)
-        alignment = required_alignment;
-    else if (required_alignment > alignment)
-        ERR("request alignment below required alignment!");
+//     if (alignment == ALIGNMENT_DEFAULT)
+//         alignment = required_alignment;
+//     else if (required_alignment > alignment)
+//         ERR("request alignment below required alignment!");
 
-    desc->alignment = alignment;
-    desc->sizeof_vertex = sizeof_vertex;
-    desc->nattrs = nattrs;
-}
+//     desc->alignment = alignment;
+//     desc->sizeof_vertex = sizeof_vertex;
+//     desc->nattrs = nattrs;
+// }
 
-Mesh::Mesh(const VertexDesc& layout, uint32 initial_nverts, uint32 initial_nelems) :
+MeshBase::MeshBase(const VertexDescBase& layout, uint32 initial_nverts, uint32 initial_nelems) :
     element_buffer_name(0),
     vertex_buffer_name(0),
     usage_hint(GL_STATIC_DRAW),
     prim_type(GL_TRIANGLES),
     owning_vertices(true),
     vertices_capacity(initial_nverts < MIN_NUM_VERTICES ? MIN_NUM_VERTICES : initial_nverts),
-    vertex_data(0)
     vertices_size(0),
+    vertex_data(0),
     owning_elements(true),
     elements_capacity(initial_nelems < MIN_NUM_ELEMENTS ? MIN_NUM_ELEMENTS : initial_nelems),
     elements_size(0),
     element_data(0),
-    desc(layout),
-    consistent(true);
+    desc(layout)
 {
-    vertex_data = alloc_aligned(vertices_capacity * desc.sizeof_vertex, desc.alignment);
+    vertex_data = static_cast<byte *>(alloc_aligned(vertices_capacity * desc.sizeof_vertex, desc.alignment));
     element_data = new uint32[elements_capacity];
 }
 
-Mesh::~Mesh() {
+MeshBase::~MeshBase() {
     GLuint names[] = { element_buffer_name, vertex_buffer_name };
     GL_CHECK(glDeleteBuffers(ARRAY_LENGTH(names), names));
 
@@ -120,31 +127,22 @@ Mesh::~Mesh() {
     }
 }
 
-GLenum Mesh::primType() const {
-    return prim_type;
-}
-
-void Mesh::primType(GLenum primType) {
+void MeshBase::primType(GLenum primType) {
     validatePrimType(primType);
     prim_type = primType;
 }
 
-GLenum Mesh::usageHint() const {
-    return usage_hint;
-}
-
-void Mesh::usageHint(GLenum usageHint) {
+void MeshBase::usageHint(GLenum usageHint) {
     validateUsageHint(usageHint);
     usage_hint = usageHint;
 }
     
-void Mesh::send() {
+void MeshBase::send() {
     send(usage_hint);
 }
 
-void Mesh::send(GLenum usageHint) {
+void MeshBase::send(GLenum usageHint) {
     validateUsageHint(usageHint);
-    consistent = true;
 
     if (vertex_buffer_name == 0)
         GL_CHECK(glGenBuffers(1, &vertex_buffer_name));
@@ -157,84 +155,99 @@ void Mesh::send(GLenum usageHint) {
         GL_CHECK(glGenBuffers(1, &element_buffer_name));
 
     GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_name));
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,
+    GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                           elements_size * sizeof (GLuint),
-                          elements_data, usageHint));
+                          element_data, usageHint));
 }
     
-void Mesh::draw() {
-    draw(prim_type);
-}
-
-void Mesh::draw(GLenum primType) {
+void MeshBase::draw(GLenum primType) {
     validatePrimType(primType);
-    
-    if (!consistent)
-        send();
 
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
 
-    for (uint32 i = 0; i < desc.nattrs; ++i) {
-        Attr& a = desc.attrs[i];
+    for (uint32 i = 0; i < desc.nattributes; ++i) {
+        const Attr<Any>& a = desc.attributes[i];
+        GL_CHECK(glEnableVertexAttribArray(i));
         GL_CHECK(glVertexAttribPointer(i, a.ncomponents, a.component_type,
                                        a.normalized ? GL_TRUE : GL_FALSE,
                                        desc.sizeof_vertex,
-                                       (void *) a.offset));
-                                       
+                                       (void *) (size_t) a.offset));
+        
     }
 
     GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_name));
-    GL_CHECK(glDrawElements(primType, elements_size, GL_UNSIGNED_INT, (void *) 0));
+    GL_CHECK(glDrawElements(primType, elements_size, GL_UNSIGNED_INT, 0));
+
+    for (uint32 i = 0; i < desc.nattributes; ++i) {
+        GL_CHECK(glDisableVertexAttribArray(i));
+    }
 }
     
-const byte *Mesh::vertexRef(uint32 i) const {
+const byte *MeshBase::vertexRef(uint32 i) const {
     return vertex_data + desc.sizeof_vertex * i;
 }
 
-byte *Mesh::vertexRef(uint32 i) {
+byte *MeshBase::vertexRef(uint32 i) {
     return vertex_data + desc.sizeof_vertex * i;
 }
 
-void Mesh::addVertex(const byte *vertex, bool insert_elem) {
-    consistent = false;
-
+void MeshBase::appendVertex(const byte *vertex) {
     if (unlikely(vertices_size == vertices_capacity)) {
-        byte *verts = alloc_aligned(desc.sizeof_vertex * vertices_capacity * 2, desc.alignment);
-        memcpy(verts, vertex_data, desc.sizeof_vertex * vertices_capacity);
-        free(vertex_data);
+        vertex_data = reallocVerts(desc, vertex_data, vertices_size, vertices_size * 2);
         vertices_capacity *= 2;
-        vertex_data = verts;
     }
 
-    memcpy(vertexRef(vertices_size), desc.sizeof_vertex);
-
-    if (insert_elem)
-        addElement(vertices_size);
-
+    memcpy(vertexRef(vertices_size), vertex, desc.sizeof_vertex);
     ++vertices_size;
 }
 
-void Mesh::addElement(uint32 index) {
-    consistent = false;
+void MeshBase::appendVertexElem(const byte *vertex) {
+    appendVertex(vertex);
+    addElement(vertices_size);
+}
+
+void MeshBase::addElement(uint32 index) {
     
     if (unlikely(elements_size == elements_capacity)) {
         uint32 *elems = new uint32[elements_capacity * 2];
-        memcpy(elems, element_data, sizeof elems[0] * element_capacity);
+        memcpy(elems, element_data, sizeof elems[0] * elements_capacity);
         delete[] element_data;
-        element_capacity *= 2;
+        elements_capacity *= 2;
         element_data = elems;
     }
 
     element_data[elements_size++] = index;
 }
 
-GLuint Mesh::attributePosition(uint32 offset) {
-    for (uint32 i = 0; i < desc.nattrs; ++i) {
-        if (offset == desc.attrs[i].offset)
-            return i;
-    }
+GLuint MeshBase::attributePosition(size_t offset) const {
+    return static_cast<GLuint>(desc.index(offset));
+}
 
-    FATAL_ERR("invalid attribute offset");
+void MeshBase::setSize(uint32 size) {
+    uint32 capa = MIN_NUM_VERTICES;
+    while (capa < size)
+        capa *= 2;
+
+    if (capa != vertices_capacity) {
+        vertex_data = reallocVerts(desc, vertex_data, size, capa);
+        vertices_size = size;
+        vertices_capacity = capa;
+    }
+}
+
+void MeshBase::setElementsSize(uint32 size) {
+    uint32 capa = MIN_NUM_ELEMENTS;
+    while (capa < size)
+        capa *= 2;
+
+    if (capa != elements_capacity) {
+        uint32 *elems = new uint32[capa];
+        memcpy(elems, element_data, sizeof elems[0] * size);
+        delete[] element_data;
+        element_data = elems;
+        elements_capacity = capa;
+        elements_size = size;
+    }
 }
 
 } // namespace glt

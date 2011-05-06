@@ -1,4 +1,4 @@
-#version 330
+
 
 #include "directional-light.h"
 #include "gamma.h"

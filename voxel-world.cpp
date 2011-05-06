@@ -27,7 +27,8 @@
 #include "glt/ShaderProgram.hpp"
 #include "glt/Uniforms.hpp"
 #include "glt/Frame.hpp"
-#include "glt/GenBatch.hpp"
+#include "glt/CubeMesh.hpp"
+// #include "glt/GenBatch.hpp"
 #include "glt/color.hpp"
 #include "glt/Transformations.hpp"
 
@@ -73,15 +74,25 @@ struct Vertex {
     vec4_t normal;  // last component is diffuse factor
 };
 
-static const glt::Attr vertexAttrVals[] = {
-    glt::attr::vec3(offsetof(Vertex, position)),
-    glt::attr::color(offsetof(Vertex, color)),
-    glt::attr::vec4(offsetof(Vertex, normal))
-};
+// static const glt::Attr vertexAttrVals[] = {
+//     glt::attr::vec3(offsetof(Vertex, position)),
+//     glt::attr::color(offsetof(Vertex, color)),
+//     glt::attr::vec4(offsetof(Vertex, normal))
+// };
 
-static const glt::Attrs<Vertex> vertexAttrs(
-    ARRAY_LENGTH(vertexAttrVals), vertexAttrVals
+// static const glt::Attrs<Vertex> vertexAttrs(
+//     ARRAY_LENGTH(vertexAttrVals), vertexAttrVals
+// );
+
+// typedef glt::GenBatch<Vertex> CubeMesh;
+
+DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
+    VERTEX_ATTR(Vertex, position),
+    VERTEX_ATTR_AS(Vertex, color, glt::color),
+    VERTEX_ATTR(Vertex, normal)
 );
+
+typedef glt::CubeMesh<Vertex> CubeMesh;
 
 struct Timer {
 private:
@@ -119,9 +130,9 @@ struct Anim EXPLICIT : public ge::GameWindow {
     glt::RenderManager rm;
     glt::ShaderManager sm;
     glt::Frame         camera;
-    glt::GenBatch<Vertex> cubeModel;
+    CubeMesh cubeModel;
     glt::ShaderProgram voxelShader;
-    glt::GenBatch<Vertex> worldModel;
+    CubeMesh worldModel;
     vec3_t sphere_points[SPHERE_POINTS];
 
     float gamma_correction;
@@ -150,11 +161,11 @@ struct Anim EXPLICIT : public ge::GameWindow {
     void keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) OVERRIDE;
     void handleInternalEvents() OVERRIDE;
 
-    bool readModel(const std::string& file, glt::GenBatch<Vertex>& model);
-    bool writeModel(const std::string& file, const glt::GenBatch<Vertex>& model);
+    bool readModel(const std::string& file, CubeMesh& model);
+    bool writeModel(const std::string& file, const CubeMesh& model);
 };
 
-static void makeUnitCube(glt::GenBatch<Vertex>& cube);
+static void makeUnitCube(CubeMesh& cube);
 
 std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
     return out << "(" << v.x << ", " << v.y << ", " << v.z << ")";
@@ -162,6 +173,12 @@ std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
 
 bool Anim::onInit() {
     sm.verbosity(glt::ShaderManager::Info);
+    sm.setShaderVersion(410);
+
+    GLuint vao;
+    GL_CHECK(glGenVertexArrays(1, &vao));
+    GL_CHECK(glBindVertexArray(vao));
+
 
     if (GLEW_ARB_multisample) {
         std::cerr << "multisampling support available" << std::endl;
@@ -873,12 +890,14 @@ void Anim::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
         std::cerr << "gamma_correction: " << gamma_correction << std::endl;
 }
 
-bool Anim::readModel(const std::string& file, glt::GenBatch<Vertex>& mdl) {
-    return mdl.read(file.c_str());
+bool Anim::readModel(const std::string& file, CubeMesh& mdl) {
+//    return mdl.read(file.c_str());
+    return false;
 }
 
-bool Anim::writeModel(const std::string& file, const glt::GenBatch<Vertex>& mdl) {
-    return mdl.write(file.c_str());
+bool Anim::writeModel(const std::string& file, const CubeMesh& mdl) {
+//    return mdl.write(file.c_str());
+    return false;
 }
 
 int main(int argc, char *argv[]) {
@@ -902,6 +921,7 @@ int main(int argc, char *argv[]) {
     glContext.MinorVersion = 1;
     glContext.StencilBits = 0;
     glContext.AntialiasingLevel = 0;
+    glContext.CoreProfile = true;
 #ifdef GLDEBUG
     glContext.DebugContext = true;
 #endif
@@ -919,7 +939,7 @@ int main(int argc, char *argv[]) {
     return ret;
 }
 
-static void makeUnitCube(glt::GenBatch<Vertex>& cube) {
+static void makeUnitCube(CubeMesh& cube) {
     Vertex v;
     cube.primType(GL_QUADS);
 

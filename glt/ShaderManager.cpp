@@ -34,6 +34,7 @@ struct ShaderManager::Data {
     std::ostream *err;
     std::vector<std::string> paths;
     ShaderCache cache;
+    uint32 shader_version;
 };
 
 ShaderManager::CachedShaderObject::~CachedShaderObject() {
@@ -45,10 +46,19 @@ ShaderManager::ShaderManager() :
 {
     self->err = &std::cerr;
     self->verbosity = Info;
+    self->shader_version = 0;
 }
 
 ShaderManager::~ShaderManager() {
     delete self;
+}
+
+void ShaderManager::setShaderVersion(uint32 vers) {
+    self->shader_version = vers;
+}
+
+uint32 ShaderManager::shaderVersion() {
+    return self->shader_version;
 }
 
 ShaderManager::Verbosity ShaderManager::verbosity() const {

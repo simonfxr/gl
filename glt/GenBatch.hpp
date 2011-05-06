@@ -79,7 +79,7 @@ namespace priv {
 struct DynBatch {
     uint32 size;
     uint32 filled;
-    
+
     GLuint *buffer_names;
     byte **data;
 

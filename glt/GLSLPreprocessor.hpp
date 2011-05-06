@@ -49,7 +49,7 @@ struct DependencyHandler : public Preprocessor::DirectiveHandler {
     void directiveEncountered(const Preprocessor::DirectiveContext& ctx);
 };
 
-bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& file, std::vector<Include> *includeBuffer, ShaderContents& shadersrc);
+bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& file, std::vector<Include> *includeBuffer, const std::string& prefixSrc, ShaderContents& shadersrc);
 
 } // namespace glt
 

@@ -24,6 +24,12 @@
 #define unlikely(e) (e)
 #endif
 
+#ifdef GNU_EXTENSIONS
+#define ALIGNOF(e) __alignof__(e)
+#else
+#define ALIGNOF(e) alignof_not_defined
+#endif
+
 #define ARRAY_LENGTH(x) (sizeof (x) / sizeof *(x))
 
 #define UNUSED(x) ((void) (x))
@@ -95,7 +101,7 @@
 
 #define CONCAT3(a, b, c) CONCAT(a, CONCAT(b, c))
 
-#define IALIAS(t) typedef CONCAT(t, _t) t;
+#define IALIAS(t) typedef t##_t t;
 
 IALIAS(uint8);
 IALIAS(uint16);

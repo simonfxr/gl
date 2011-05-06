@@ -1,4 +1,4 @@
-#version 330
+
 
 #include "gamma.h"
 

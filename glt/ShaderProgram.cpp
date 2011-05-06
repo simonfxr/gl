@@ -3,6 +3,7 @@
 #include <cstring>
 #include <map>
 #include <set>
+#include <sstream>
 
 #include "defs.h"
 #include "opengl.h"
@@ -294,7 +295,16 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
         self->shaders[realname] = ShaderManager::EMPTY_CACHE_ENTRY; // mark as added (prevent recursive adds)
         cacheEntry = new CachedShaderObject(self->sm, realname);
 
-        if (!preprocess(self->sm, proc, realname, &incHandler.includes, shadersrc)) {
+        uint32 shader_vers = self->sm.shaderVersion();
+        std::string versionStr = "";
+
+        if (shader_vers != 0) {
+            std::ostringstream svers;
+            svers << "#version " << shader_vers;
+            versionStr = svers.str();
+        }
+
+        if (!preprocess(self->sm, proc, realname, &incHandler.includes, versionStr, shadersrc)) {
             LOG_ERR(self, "couldnt process shader file" << std::endl);
             self->push_error(CompilationFailed);
             goto ret;

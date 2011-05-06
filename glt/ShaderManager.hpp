@@ -48,6 +48,9 @@ struct ShaderManager {
     Ref<CachedShaderObject> lookupShaderObject(const std::string& file) const;
     
     void cacheShaderObject(const Ref<CachedShaderObject>& s);
+
+    void setShaderVersion(uint32 vers); // e.g. 330
+    uint32 shaderVersion();
     
 private:
     

@@ -35,8 +35,10 @@ void DynBatch::init(uint32 _nattrs, const Attr attrs[], uint32 initialSize) {
     data = new byte *[_nattrs];
     nattrs = _nattrs;
     
-    for (uint32 i = 0; i < nattrs; ++i)
+    for (uint32 i = 0; i < nattrs; ++i) {
+        buffer_names[i] = 0;
         data[i] = new byte[componentSize(attrs[i].type) * attrs[i].size * initialSize];
+    }
 }
 
 DynBatch::DynBatch() :
@@ -77,9 +79,13 @@ void DynBatch::add(const Attr attrs[], const void *value) {
 }
 
 void DynBatch::send(const Attr attrs[], bool del) {
-    GL_CHECK(glGenBuffers(nattrs, buffer_names));
+
+    if (nattrs > 0 && buffer_names[0] == 0) {
+        GL_CHECK(glGenBuffers(nattrs, buffer_names));
+    }
 
     for (uint32 i = 0; i < nattrs; ++i) {
+        
         GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, buffer_names[i]));
         GL_CHECK(glBufferData(GL_ARRAY_BUFFER, componentSize(attrs[i].type) * attrs[i].size * filled, data[i], GL_STATIC_DRAW));
 
@@ -91,9 +97,7 @@ void DynBatch::send(const Attr attrs[], bool del) {
 }
 
 void DynBatch::draw(const Attr attrs[], GLenum primType, bool enabled[], uint32 num_instances) {
-
     ASSERT(num_instances > 0);
-    
     for (uint32 i = 0; i < nattrs; ++i) {
         if (!enabled[i]) continue;
 

@@ -135,7 +135,7 @@ void IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext& 
     includes.push_back(inc);
 }
 
-bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& file, std::vector<Include> *includeBuffer, ShaderContents& shadersrc) {
+bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& file, std::vector<Include> *includeBuffer, const std::string& prefixSrc, ShaderContents& shadersrc) {
 
     std::auto_ptr<std::vector<Include> > localIncBuf(0);
 
@@ -149,6 +149,17 @@ bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& 
     
     if (!readFile(sm.err(), file, contents, size))
         return false;
+
+    if (!prefixSrc.empty()) {
+        FileContents fc;
+        fc.contents = strdup(prefixSrc.c_str());
+        fc.size = prefixSrc.length();
+        shadersrc.segments.push_back(fc.contents);
+        shadersrc.segLengths.push_back(prefixSrc.length());
+        shadersrc.contents.push_back(fc);
+        fc.contents = 0;
+        fc.size = 0;
+    }
 
     {
         FileContents fc; fc.contents = contents; fc.size = size;
@@ -184,7 +195,7 @@ bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& 
                 return false;
             }
             
-            if (!preprocess(sm, proc, realname, includeBuffer, shadersrc))
+            if (!preprocess(sm, proc, realname, includeBuffer, "", shadersrc))
                 return false;
         }
     }

@@ -1,4 +1,4 @@
-#version 330
+
 
 uniform sampler1D instanceData;
 uniform mat3 normalMatrix;

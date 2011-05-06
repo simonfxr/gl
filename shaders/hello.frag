@@ -1,4 +1,4 @@
-#version 330
+
 
 in vec4 tone;
 out vec4 color;

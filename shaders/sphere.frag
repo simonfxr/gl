@@ -1,4 +1,4 @@
-#version 330
+
 
 #include "sim_shading.h"
 #include "gamma.h"

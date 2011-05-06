@@ -103,7 +103,9 @@ set(GLT_SRC
   glt/TextureRenderTarget3D.cpp
   glt/ShaderObject.hpp
   glt/ShaderObject.cpp
-  glt/Ref.hpp)
+  glt/Ref.hpp
+  glt/Mesh.hpp
+  glt/Mesh.cpp)
 
 set(GE_SRC
   ge/GameLoop.hpp
