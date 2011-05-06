@@ -174,8 +174,7 @@ bool Anim::onInit() {
     sm.addPath("shaders");
 
     ticksPerSecond(100);
-    maxDrawFramesSkipped(1);
-    maxFPS(100);
+    synchronizeDrawing(true);
 
     gamma_correction = 1.8f;
     
@@ -898,12 +897,22 @@ int main(int argc, char *argv[]) {
             write_mdl = false;
     }
 
+    sf::ContextSettings glContext;
+    glContext.MajorVersion = 4;
+    glContext.MinorVersion = 1;
+    glContext.StencilBits = 0;
+    glContext.AntialiasingLevel = 0;
+#ifdef GLDEBUG
+    glContext.DebugContext = true;
+#endif
+
+    sf::RenderWindow win(sf::VideoMode(800, 600), "", sf::Style::Default, glContext);
     Anim *anim = new Anim;
     
     anim->read_model = read_mdl;
     anim->write_model = write_mdl;
     
-    if (!anim->init("voxel-world"))
+    if (!anim->init("voxel-world", &win))
         return 1;
     int ret = anim->run();
     delete anim;

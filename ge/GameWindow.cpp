@@ -313,6 +313,8 @@ bool GameWindow::init(const std::string& windowTitle, sf::RenderWindow *win, sf:
     self->owning_win = win == 0;
     self->win = win == 0 ? createRenderWindow(windowTitle) : win;
     self->renderTarget = new WindowRenderTarget(*this);
+
+    self->win->SetTitle(windowTitle);
     
     if (self->win != 0) {
         self->win->SetActive();

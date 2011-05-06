@@ -1,6 +1,7 @@
 #version 330
 
 #include "point_light2.h"
+#include "gamma.h"
 
 const float AmbContr = 0.2;
 const float DiffContr = 0.6;
@@ -24,4 +25,5 @@ void main() {
                         vec4(DiffContr), vec4(SpecContr), shininess);
 
     fragColor = vec4((vec3(L) + vec3(AmbContr)) * color, 1.);
+    fragColor = gammaCorrect(fragColor);
 }

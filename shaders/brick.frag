@@ -1,6 +1,7 @@
 #version 330
 
 #include "sim_shading.h"
+#include "gamma.h"
 
 const vec3 BrickColor  = vec3(0.8, 0, 0);
 const vec3 MortarColor = vec3(0.6);
@@ -37,4 +38,5 @@ void main() {
     vec3 color = textureSample(texCoord);
     
     fragColor = shade(ecLight, ecPosition, normalize(ecNormal), Shininess, vec4(color, 1));
+    fragColor = gammaCorrect(fragColor);
 }

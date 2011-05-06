@@ -1,6 +1,7 @@
 #version 330
 
 #include "sim_shading.h"
+#include "gamma.h"
 
 uniform vec3 ecLight;
 uniform vec4 color;
@@ -18,5 +19,6 @@ out vec4 fragColor;
 void main() {
 
     fragColor = shade(ecLight, ecPosition, normalize(ecNormal), shininess, color);
+    fragColor = gammaCorrect(fragColor);
 
 }

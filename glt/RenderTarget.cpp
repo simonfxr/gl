@@ -67,8 +67,10 @@ void RenderTarget::deactivate() {
 }
 
 void RenderTarget::beginScene() {
+    DEBUG_ASSERT(self->active);
     if (self->viewport_changed) {
-
+        self->viewport_changed = false;
+        doViewport(self->effectiveViewport());
     }
 }
 
@@ -79,6 +81,7 @@ void RenderTarget::clear(uint32 buffers, glt::color clear_color) {
 }
 
 void RenderTarget::draw() {
+    DEBUG_ASSERT(self->active);
     ASSERT_MSG(self->active, "RenderTarget not active");
     doDraw();
 }
@@ -91,6 +94,7 @@ void RenderTarget::viewport(const Viewport& vp) {
 void RenderTarget::updateSize(uint32 w, uint32 h) {
     self->width = w;
     self->height = h;
+    self->viewport_changed = self->viewport == Viewport();
 }
 
 void RenderTarget::doDeactivate() {

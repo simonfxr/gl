@@ -20,6 +20,7 @@ TextureRenderTarget::~TextureRenderTarget() {
 }
 
 TextureHandle& TextureRenderTarget::textureHandle() {
+    DEBUG_ASSERT(this != 0);
     return texture;
 }
 

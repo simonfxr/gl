@@ -178,7 +178,13 @@ bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& 
         
         if (!inc.fileToInclude.empty()) {
             std::string realname = sm.lookupPath(inc.fileToInclude);
-            if (realname.empty() || !preprocess(sm, proc, realname, includeBuffer, shadersrc))
+            
+            if (realname.empty()) {
+                ERR(("couldnt include file: not found: " + inc.fileToInclude).c_str());
+                return false;
+            }
+            
+            if (!preprocess(sm, proc, realname, includeBuffer, shadersrc))
                 return false;
         }
     }

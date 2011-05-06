@@ -1,5 +1,7 @@
+// -*- mode: glsl -*-
 
 #need "gamma.frag"
 
-vec4 gammaCorrect(vec4 color);
+uniform float gammaCorrection;
 
+vec4 gammaCorrect(vec4 color);

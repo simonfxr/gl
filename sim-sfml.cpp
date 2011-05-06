@@ -56,9 +56,11 @@ static const float BLUR_TEXTURES_UPDATE_CYCLE = 0.04f / NUM_BLUR_TEXTURES;
 static const float PROJ_Z_MIN = 1.f;
 static const float PROJ_Z_MAX = 100.f;
 
+static const float GAMMA = 1.8f;
+
 static const glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
 
-static const uint32 AA_SAMPLES = 1;
+static const uint32 AA_SAMPLES = 4;
 
 static const uint32 SPHERE_LOD_MAX = 6;
 
@@ -146,7 +148,7 @@ struct Game EXPLICIT : public ge::GameWindow {
 
     Game();
 
-    void updateRenderTarget(bool indirect);
+    void updateIndirectRendering(bool indirect);
     void resizeRenderTargets();
 
     bool onInit() OVERRIDE;
@@ -190,9 +192,9 @@ Game::Game() :
 bool Game::onInit() {
     textureRenderTarget = 0;
     indirect_rendering = false;
-    updateRenderTarget(indirect_rendering);
+    updateIndirectRendering(indirect_rendering);
 
-    render_spheres_instanced = false;
+    render_spheres_instanced = true;
     
     wallBatch.primType(GL_QUADS);
 
@@ -249,7 +251,6 @@ bool Game::onInit() {
         sphereBatches[i].init(vertexAttrs);
         makeSphere(sphereBatches[i], 1.f, sphere_params[i].a, sphere_params[i].b);
     }
-
 
     world.camera().setOrigin(vec3(-19.f, 10.f, +19.f));
     world.camera().lookingAt(vec3(0.f, 10.f, 0.f));
@@ -348,7 +349,13 @@ void Game::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
         std::cerr << "render_by_distance: " << (world.render_by_distance ? "yes" : "no") << std::endl;
         break;
     case N:
-        render_spheres_instanced = !render_spheres_instanced; break;
+        render_spheres_instanced = !render_spheres_instanced;
+        std::cerr << "Instanced Rendering: " << (render_spheres_instanced ? "yes" : "no") << std::endl;
+        break;
+    case V:
+        updateIndirectRendering(!indirect_rendering);
+        std::cerr << "Indirect Rendering: " << (indirect_rendering ? "yes" : "no") << std::endl;
+        break;
     }
 
     return;
@@ -456,7 +463,7 @@ void Game::renderScene(float interpolation) {
         
         textureRenderTarget->textureHandle().bind(0);
         glt::Uniforms(postprocShader)
-            .optional("gammaCorrection", 2.2)
+            .optional("gammaCorrection", GAMMA)
             .mandatory("textures", textureRenderTarget->textureHandle(), 0);
         
         rectBatch.draw();
@@ -491,7 +498,7 @@ const glt::ViewFrustum& Renderer::frustum() {
     return game.renderManager.viewFrustum();
 }
 
-void Game::updateRenderTarget(bool indirect) {
+void Game::updateIndirectRendering(bool indirect) {
     glt::RenderTarget *rt;
 
     if (indirect) {
@@ -559,6 +566,7 @@ void Game::end_render_spheres() {
                 .optional("vMatrix", transformPipeline.mvMatrix())
                 .optional("pMatrix", transformPipeline.projectionMatrix())
                 .optional("ecLight", sphereUniforms.ecLightPos)
+                .optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA)
                 .mandatory("instanceData", sphereMap, 0);
 
             sphereBatches[lod].drawInstanced(num);
@@ -627,6 +635,7 @@ void Game::render_sphere(const Sphere& s, const SphereModel& m) {
         us.optional("spotAngle", sphereUniforms.spotAngle);
         us.optional("color", col);
         us.optional("shininess", m.shininess);
+        us.optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
         
 #ifdef GLDEBUG
         sphereShader.validate();
@@ -660,6 +669,7 @@ void Game::render_box(const glt::AABB& box) {
     us.optional("ecLight", wallUniforms.ecLightPos);
     us.optional("ecSpotDirection", wallUniforms.ecSpotDir);
     us.optional("spotAngle", wallUniforms.spotAngle);
+    us.optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
 
 #ifdef GLDEBUG    
     wallShader.validate(true);
@@ -698,6 +708,7 @@ void Game::render_con(const point3_t& a, const point3_t& b) {
     glt::Uniforms us(identityShader);
     us.optional("mvpMatrix", transformPipeline.mvpMatrix());
     us.optional("color", CONNECTION_COLOR);
+    us.optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
 
     // std::cerr << "con: a = " << va << ", b = " << vb << std::endl
     //           << "  a' = " << transformPipeline.transformPoint(vec3(0.f))
