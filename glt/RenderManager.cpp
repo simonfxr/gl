@@ -58,8 +58,8 @@ struct RenderManager::Data {
         framet0 = clk.GetElapsedTime();
         float diff = framet0 - stat_snapshot;
         if (diff >= FS_UPDATE_INTERVAL) {
-            stats.avg_fps = uint32(math::recip(diff / num_frames));
-            stats.rt_avg = uint32(math::recip(renderAcc / num_frames));
+            stats.avg_fps = uint32(num_frames / diff);
+            stats.rt_avg = uint32(num_frames / renderAcc);
             renderAcc = 0.f;
             num_frames = 0;
             stat_snapshot = framet0;
@@ -69,7 +69,7 @@ struct RenderManager::Data {
 
         float diff2 = framet0 - stat_fast_snapshot;
         if (diff2 >= FS_UPDATE_INTERVAL_FAST) {
-            stats.rt_current = uint32(math::recip(renderAccFast / num_frames_fast));
+            stats.rt_current = uint32(num_frames_fast / renderAccFast);
             renderAccFast = 0.f;
             num_frames_fast = 0;
             stat_fast_snapshot = framet0;
@@ -180,6 +180,7 @@ void RenderManager::beginScene() {
     self->inScene = true;
 
     setActiveRenderTarget(self->def_rt);
+    self->current_rt->beginScene();
 
     self->transformStateBOS = self->transform.save();
     self->transform.concat(self->cameraMatrix);

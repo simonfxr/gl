@@ -120,44 +120,6 @@ struct NODebug : public GLDebug {
 #else
 
 struct ARBDebug : public GLDebug {
-
-    typedef void (GLAPIENTRY *glDebugMessageControlARBf_t)(GLenum source,
-                                                           GLenum type,
-                                                           GLenum severity,
-                                                           GLsizei count,
-                                                           const GLuint* ids,
-                                                           GLboolean enabled);
-
-    typedef GLuint (GLAPIENTRY *glGetDebugMessageLogARBf_t)(GLuint count,
-                                                            GLsizei bufsize,
-                                                            GLenum* sources,
-                                                            GLenum* types,
-                                                            GLuint* ids,
-                                                            GLenum* severities,
-                                                            GLsizei* lengths, 
-                                                            char* message);
-
-    static const GLenum MAX_DEBUG_MESSAGE_LENGTH_ARB          = 0x9143;
-
-    static const GLenum DEBUG_SEVERITY_HIGH_ARB               = 0x9146;
-    static const GLenum DEBUG_SEVERITY_MEDIUM_ARB             = 0x9147;
-    static const GLenum DEBUG_SEVERITY_LOW_ARB                = 0x9148;
-
-    static const GLenum DEBUG_SOURCE_API_ARB                  = 0x8246;
-    static const GLenum DEBUG_SOURCE_WINDOW_SYSTEM_ARB        = 0x8247;
-    static const GLenum DEBUG_SOURCE_SHADER_COMPILER_ARB      = 0x8248;
-    static const GLenum DEBUG_SOURCE_THIRD_PARTY_ARB          = 0x8249;
-    static const GLenum DEBUG_SOURCE_APPLICATION_ARB          = 0x825A;
-    static const GLenum DEBUG_SOURCE_OTHER_ARB                = 0x825B;
-
-    static const GLenum DEBUG_TYPE_ERROR_ARB                  = 0x824C;
-    static const GLenum DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB    = 0x824D;
-    static const GLenum DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB     = 0x824E;
-    static const GLenum DEBUG_TYPE_PORTABILITY_ARB            = 0x824F;
-    static const GLenum DEBUG_TYPE_PERFORMANCE_ARB            = 0x8250;
-    static const GLenum DEBUG_TYPE_OTHER_ARB                  = 0x8251;
-
-    glGetDebugMessageLogARBf_t glGetDebugMessageLogARB;
     GLsizei message_buffer_length;
     char *message_buffer;
 
@@ -172,33 +134,18 @@ ARBDebug::~ARBDebug() {
 }
 
 GLDebug *ARBDebug::init() {
-
-    glDebugMessageControlARBf_t glDebugMessageEnableAMD
-        = reinterpret_cast<glDebugMessageControlARBf_t>(glGetProcAddress(gl_str("glDebugMessageControlARB")));
-
-    if (glDebugMessageEnableAMD == 0)
-        return 0;
-    
-    glDebugMessageEnableAMD(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
     
     GLenum err = glGetError();
     if (err != GL_NO_ERROR)
         return 0;
 
     GLsizei max_len;
-    glGetIntegerv(MAX_DEBUG_MESSAGE_LENGTH_ARB, &max_len);
+    glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH_ARB, &max_len);
     
     ARBDebug *dbg = new ARBDebug();
     dbg->message_buffer_length = max_len;
     dbg->message_buffer = new char[max_len];
-    dbg->glGetDebugMessageLogARB
-        = reinterpret_cast<glGetDebugMessageLogARBf_t>(glGetProcAddress(gl_str("glGetDebugMessageLogARB")));
-
-    if (dbg->glGetDebugMessageLogARB == 0) {
-        delete dbg;
-        dbg = 0;
-    }
-
     return dbg;
 }
 
@@ -215,29 +162,29 @@ void ARBDebug::printDebugMessages(const DebugLocation& loc) {
 
         const char *ssrc = "unknown";
         switch (source) {
-            sym_case(ssrc, DEBUG_SOURCE_API_ARB);
-            sym_case(ssrc, DEBUG_SOURCE_WINDOW_SYSTEM_ARB);
-            sym_case(ssrc, DEBUG_SOURCE_SHADER_COMPILER_ARB);
-            sym_case(ssrc, DEBUG_SOURCE_THIRD_PARTY_ARB);
-            sym_case(ssrc, DEBUG_SOURCE_APPLICATION_ARB);
-            sym_case(ssrc, DEBUG_SOURCE_OTHER_ARB);
+            sym_case(ssrc, GL_DEBUG_SOURCE_API_ARB);
+            sym_case(ssrc, GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB);
+            sym_case(ssrc, GL_DEBUG_SOURCE_SHADER_COMPILER_ARB);
+            sym_case(ssrc, GL_DEBUG_SOURCE_THIRD_PARTY_ARB);
+            sym_case(ssrc, GL_DEBUG_SOURCE_APPLICATION_ARB);
+            sym_case(ssrc, GL_DEBUG_SOURCE_OTHER_ARB);
         }
 
         const char *stype = "unknown";
         switch (type) {
-            sym_case(stype, DEBUG_TYPE_ERROR_ARB);
-            sym_case(stype, DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB);
-            sym_case(stype, DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB);
-            sym_case(stype, DEBUG_TYPE_PORTABILITY_ARB);
-            sym_case(stype, DEBUG_TYPE_PERFORMANCE_ARB);
-            sym_case(stype, DEBUG_TYPE_OTHER_ARB);
+            sym_case(stype, GL_DEBUG_TYPE_ERROR_ARB);
+            sym_case(stype, GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB);
+            sym_case(stype, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB);
+            sym_case(stype, GL_DEBUG_TYPE_PORTABILITY_ARB);
+            sym_case(stype, GL_DEBUG_TYPE_PERFORMANCE_ARB);
+            sym_case(stype, GL_DEBUG_TYPE_OTHER_ARB);
         }
 
         const char *ssev = "unknown";
         switch (severity) {
-            sym_case(ssev, DEBUG_SEVERITY_HIGH_ARB);
-            sym_case(ssev, DEBUG_SEVERITY_MEDIUM_ARB);
-            sym_case(ssev, DEBUG_SEVERITY_LOW_ARB);
+            sym_case(ssev, GL_DEBUG_SEVERITY_HIGH_ARB);
+            sym_case(ssev, GL_DEBUG_SEVERITY_MEDIUM_ARB);
+            sym_case(ssev, GL_DEBUG_SEVERITY_LOW_ARB);
         }
         
 #undef sym_case

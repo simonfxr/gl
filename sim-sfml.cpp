@@ -58,7 +58,7 @@ static const float PROJ_Z_MAX = 100.f;
 
 static const glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
 
-static const uint32 AA_SAMPLES = 4;
+static const uint32 AA_SAMPLES = 1;
 
 static const uint32 SPHERE_LOD_MAX = 6;
 
@@ -139,18 +139,22 @@ struct Game EXPLICIT : public ge::GameWindow {
     float game_speed;
 
     bool use_interpolation;
-
     bool render_spheres_instanced;
+    bool indirect_rendering;
 
     std::vector<SphereInstance> sphere_instances[SPHERE_LOD_MAX];
 
     Game();
+
+    void updateRenderTarget(bool indirect);
+    void resizeRenderTargets();
 
     bool onInit() OVERRIDE;
 
     void animate() OVERRIDE;
     void renderScene(float interpolation) OVERRIDE;
     void renderWorld(float dt);
+    
     
     void keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) OVERRIDE;
     void mouseButtonStateChanged(const sf::Event::MouseButtonEvent& button, bool pressed) OVERRIDE;
@@ -184,14 +188,9 @@ Game::Game() :
 {}
 
 bool Game::onInit() {
-
-    std::cerr << "GLEW_AMD_debug_output:" << (GLEW_AMD_debug_output ? "yes" : "no") << std::endl;
-    std::cerr << "GLEW_ARB_debug_output:" << (GLEW_ARB_debug_output ? "yes" : "no") << std::endl;
-
-    
-    textureRenderTarget = new glt::TextureRenderTarget(window().GetWidth(), window().GetHeight(), glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);
-
-    renderManager.setDefaultRenderTarget(textureRenderTarget, true);
+    textureRenderTarget = 0;
+    indirect_rendering = false;
+    updateRenderTarget(indirect_rendering);
 
     render_spheres_instanced = false;
     
@@ -261,7 +260,7 @@ bool Game::onInit() {
     }
 
     update_sphere_mass();
-    
+
     windowResized(window().GetWidth(), window().GetHeight());
 
     Vertex vert;
@@ -318,13 +317,14 @@ std::ostream& operator <<(std::ostream& out, const vec4_t& a) {
 }
 
 void Game::windowResized(uint32 width, uint32 height) {
+
+    ASSERT(renderTarget().viewport() == glt::Viewport());
+    ASSERT(renderTarget().width() == width);
+    ASSERT(renderTarget().height() == height);
+    
     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
 
-    uint32 stride = 1;
-    while (stride * stride < AA_SAMPLES)
-        ++stride;
-    
-    textureRenderTarget->resize(width * stride, height * stride);
+    resizeRenderTargets();
     
     float fov = degToRad(17.5f);
     float aspect = float(width) / float(height);
@@ -447,23 +447,28 @@ void Game::renderScene(float interpolation) {
     float dt = interpolation * game_speed * frameDuration();
 
     renderWorld(dt);
-                                 
-    GL_CHECK(glDisable(GL_DEPTH_TEST));
 
-    renderManager.setActiveRenderTarget(&this->renderTarget());
-    postprocShader.use();
-
-    textureRenderTarget->textureHandle().bind(0);
-    glt::Uniforms(postprocShader)
-        .optional("gammaCorrection", 2.2)
-        .mandatory("textures", textureRenderTarget->textureHandle(), 0);
-
-    rectBatch.draw();
+    if (indirect_rendering) {
+        GL_CHECK(glDisable(GL_DEPTH_TEST));
+        
+        renderManager.setActiveRenderTarget(&this->renderTarget());
+        postprocShader.use();
+        
+        textureRenderTarget->textureHandle().bind(0);
+        glt::Uniforms(postprocShader)
+            .optional("gammaCorrection", 2.2)
+            .mandatory("textures", textureRenderTarget->textureHandle(), 0);
+        
+        rectBatch.draw();
+        
+    }
 
     render_hud();
-
+        
     renderManager.endScene();
-    renderManager.setActiveRenderTarget(0);
+
+    if (indirect_rendering) 
+        renderManager.setActiveRenderTarget(0);
 }
 
 void Game::renderWorld(float dt) {
@@ -484,6 +489,38 @@ void Game::renderWorld(float dt) {
 
 const glt::ViewFrustum& Renderer::frustum() {
     return game.renderManager.viewFrustum();
+}
+
+void Game::updateRenderTarget(bool indirect) {
+    glt::RenderTarget *rt;
+
+    if (indirect) {
+
+        if (textureRenderTarget == 0)
+            textureRenderTarget = new glt::TextureRenderTarget(window().GetWidth(), window().GetHeight(), glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);
+        
+        rt = textureRenderTarget;
+    } else {
+        rt = &this->renderTarget();
+    }
+
+    indirect_rendering = indirect;
+    
+    renderManager.setActiveRenderTarget(0);
+    resizeRenderTargets();
+    renderManager.setDefaultRenderTarget(rt);
+}
+
+void Game::resizeRenderTargets() {
+    uint32 width = window().GetWidth();
+    uint32 height = window().GetHeight();
+    
+    uint32 stride = 1;
+    while (stride * stride < AA_SAMPLES)
+        ++stride;
+
+    if (indirect_rendering)
+        textureRenderTarget->resize(width * stride, height * stride);
 }
 
 void Renderer::renderSphere(const Sphere& s, const SphereModel& m) {

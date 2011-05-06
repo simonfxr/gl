@@ -12,9 +12,12 @@ struct RenderTarget::Data {
 
     DEBUG_DECL(bool active;)
 
+    bool viewport_changed;
+
     Data(uint32 w, uint32 h, uint32 bs, const Viewport& vp) :
         width(w), height(h), buffers(bs),
-        viewport(vp)
+        viewport(vp),
+        viewport_changed(false)
         {
             ON_DEBUG(active = false);
         }
@@ -52,6 +55,7 @@ const Viewport& RenderTarget::viewport() const {
 void RenderTarget::activate() {
     DEBUG_ASSERT(!self->active);
     ON_DEBUG(self->active = true);
+    self->viewport_changed = false;
     doActivate();
     doViewport(self->effectiveViewport());
 }
@@ -60,6 +64,12 @@ void RenderTarget::deactivate() {
     DEBUG_ASSERT(self->active);
     ON_DEBUG(self->active = false);
     doDeactivate();
+}
+
+void RenderTarget::beginScene() {
+    if (self->viewport_changed) {
+
+    }
 }
 
 void RenderTarget::clear(uint32 buffers, glt::color clear_color) {
@@ -74,13 +84,8 @@ void RenderTarget::draw() {
 }
 
 void RenderTarget::viewport(const Viewport& vp) {
-    if (vp != self->viewport) {
-        self->viewport = vp;
-
-        if (self->active) {
-            doViewport(self->effectiveViewport());
-        }
-    }
+    self->viewport_changed = vp != self->viewport;
+    self->viewport = vp;
 }
 
 void RenderTarget::updateSize(uint32 w, uint32 h) {

@@ -44,6 +44,7 @@ struct RenderTarget {
 
     void activate();
     void deactivate();
+    void beginScene();
     void clear(uint32 buffers = RT_ALL_BUFFERS, glt::color clear_color = glt::color(0, 0, 0));
     void draw();
     void viewport(const Viewport& vp);
