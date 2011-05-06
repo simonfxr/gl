@@ -90,7 +90,7 @@ private:
     uint32 elements_size;
     uint32 * RESTRICT element_data;
 
-    const VertexDescBase& desc;
+    const VertexDescBase* desc;
     
 protected:
     byte * vertexRef(uint32 i);
@@ -101,8 +101,10 @@ protected:
     
 public:
 
-    MeshBase(const VertexDescBase& layout, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS);
+    MeshBase();
     ~MeshBase();
+
+    void initBase(const VertexDescBase *layout, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS);
 
     GLenum primType() const { return prim_type; }
     void primType(GLenum primType);
@@ -138,11 +140,17 @@ private:
 template <typename T>
 struct Mesh : public MeshBase {
 
-    Mesh(const VertexDesc<T>& layout, GLenum primTy = GL_TRIANGLES, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS) :
-        MeshBase(*reinterpret_cast<const VertexDescBase *>(&layout), initial_nverts, initial_nelems)
-        {
-            primType(primTy);
-        }
+    Mesh() {}
+    
+    Mesh(const VertexDesc<T>& layout, GLenum primTy = GL_TRIANGLES, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS) {
+        initBase(reinterpret_cast<const VertexDescBase *>(&layout) , initial_nverts, initial_nelems);
+        primType(primTy);
+    }
+    
+    void init(const VertexDesc<T>& layout, GLenum primTy = GL_TRIANGLES, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS) {
+        initBase(reinterpret_cast<const VertexDescBase *>(&layout) , initial_nverts, initial_nelems);
+        primType(primTy);
+    }
     
     void addVertex(const T& vert) {
         appendVertex(reinterpret_cast<const byte *>(&vert));

@@ -25,6 +25,8 @@
 #include "glt/Uniforms.hpp"
 #include "glt/color.hpp"
 #include "glt/GenBatch.hpp"
+// #include "glt/Mesh.hpp"
+// #include "glt/CubeMesh.hpp"
 #include "glt/Frame.hpp"
 #include "glt/GeometryTransform.hpp"
 #include "glt/Transformations.hpp"
@@ -90,9 +92,26 @@ glt::Attr vertexAttrArray[] = {
 
 glt::Attrs<Vertex> vertexAttrs(ARRAY_LENGTH(vertexAttrArray), vertexAttrArray);
 
-void makeSphere(glt::GenBatch<Vertex>& sphere, float rad, int32 stacks, int32 slices);
+typedef glt::GenBatch<Vertex> Mesh;
+typedef glt::GenBatch<Vertex> CubeMesh;
 
-void makeUnitCube(glt::GenBatch<Vertex>& cube);
+#define ADD_VERT(e, v) e.add(v)
+#define FREEZE_MESH(e) e.freeze()
+
+// DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
+//     VERTEX_ATTR(Vertex, position),
+//     VERTEX_ATTR(Vertex, normal)
+// );
+
+// typedef glt::Mesh<Vertex> Mesh;
+// typedef glt::CubeMesh<Vertex> CubeMesh;
+
+// #define FREEZE_MESH(e) e.send()
+// #define ADD_VERT(e, v) e.addVerteElem(v)
+
+void makeSphere(Mesh& sphere, float rad, int32 stacks, int32 slices);
+
+void makeUnitCube(CubeMesh& cube);
 
 std::ostream& LOCAL operator << (std::ostream& out, const vec3_t& v) {
     return out << "(" << v.x << ";" << v.y << ";" << v.z << ")";
@@ -102,10 +121,10 @@ std::ostream& LOCAL operator << (std::ostream& out, const vec3_t& v) {
 
 struct Game EXPLICIT : public ge::GameWindow {
 
-    glt::GenBatch<Vertex> wallBatch;
-    glt::GenBatch<Vertex> sphereBatches[SPHERE_LOD_MAX];
-    glt::GenBatch<Vertex> lineBatch;
-    glt::GenBatch<Vertex> rectBatch;
+    CubeMesh wallBatch;
+    Mesh sphereBatches[SPHERE_LOD_MAX];
+    Mesh lineBatch;
+    CubeMesh rectBatch;
 
     World world;
     float sphere_speed;
@@ -267,10 +286,10 @@ bool Game::onInit() {
     Vertex vert;
     vert.normal = vec3(1.f, 0.f, 0.f);
     vert.position = vec4(vec3(0.f), 1.f);
-    lineBatch.add(vert);
+    ADD_VERT(lineBatch, vert);
     vert.position = vec4(1.f, 0.f, 0.f, 1.f);
-    lineBatch.add(vert);
-    lineBatch.freeze();
+    ADD_VERT(lineBatch, vert);
+    FREEZE_MESH(lineBatch);
 
     return true;
 }
@@ -807,7 +826,7 @@ int main(int argc, char *argv[]) {
 
 namespace {
 
-void makeUnitCube(glt::GenBatch<Vertex>& cube) {
+void makeUnitCube(CubeMesh& cube) {
     Vertex v;
     
     v.normal = vec3(0.f, 0.f, -1.f);
@@ -849,7 +868,7 @@ void makeUnitCube(glt::GenBatch<Vertex>& cube) {
     cube.freeze();
 }
 
-void addTriangle(glt::GenBatch<Vertex>& s, const vec3_t vertices[3], const vec3_t normals[3], const vec2_t texCoords[3]) {
+void addTriangle(Mesh& s, const vec3_t vertices[3], const vec3_t normals[3], const vec2_t texCoords[3]) {
 
     UNUSED(texCoords);
     
@@ -857,12 +876,12 @@ void addTriangle(glt::GenBatch<Vertex>& s, const vec3_t vertices[3], const vec3_
         Vertex v;
         v.position = vec4(vertices[i], 1.f);
         v.normal = normals[i];
-        s.add(v);
+        ADD_VERT(s, v);
     }
 }
 
 // from the GLTools library (OpenGL Superbible)
-void gltMakeSphere(glt::GenBatch<Vertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
+void gltMakeSphere(Mesh& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
 {
     GLfloat drho = (GLfloat)(3.141592653589) / (GLfloat) iStacks;
     GLfloat dtheta = 2.0f * (GLfloat)(3.141592653589) / (GLfloat) iSlices;
@@ -968,10 +987,10 @@ void gltMakeSphere(glt::GenBatch<Vertex>& sphereBatch, GLfloat fRadius, GLint iS
         t -= dt;
     }
     
-    sphereBatch.freeze();
+    FREEZE_MESH(sphereBatch);
 }
 
-void makeSphere(glt::GenBatch<Vertex>& sphere, float rad, int32 stacks, int32 slices) {
+void makeSphere(Mesh& sphere, float rad, int32 stacks, int32 slices) {
     gltMakeSphere(sphere, rad, stacks, slices);
 }
 
