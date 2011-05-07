@@ -260,7 +260,7 @@ bool GameWindow::onInit() {
     return true;
 }
 
-sf::RenderWindow *GameWindow::createRenderWindow(const std::string& title) {
+sf::ContextSettings GameWindow::createContextSettings() {
     sf::ContextSettings glContext;
     glContext.MajorVersion = 3;
     glContext.MinorVersion = 3;
@@ -268,14 +268,16 @@ sf::RenderWindow *GameWindow::createRenderWindow(const std::string& title) {
 #ifdef GLDEBUG
     glContext.DebugContext = true;
 #endif
+    return glContext;
+}
 
-    return new sf::RenderWindow(sf::VideoMode(800, 600), title, sf::Style::Default, glContext);
+sf::RenderWindow *GameWindow::createRenderWindow(const std::string& title, const sf::ContextSettings& cs) {
+    return new sf::RenderWindow(sf::VideoMode(800, 600), title, sf::Style::Default, cs);
 }
 
 void GameWindow::onExit(int32 exit_code) {
     UNUSED(exit_code);
 }
-
 
 bool GameWindow::init(const std::string& windowTitle, sf::RenderWindow *win, sf::Clock *clock) {
 
@@ -311,12 +313,11 @@ bool GameWindow::init(const std::string& windowTitle, sf::RenderWindow *win, sf:
     self->frame_duration = 0.f;
 
     self->owning_win = win == 0;
-    self->win = win == 0 ? createRenderWindow(windowTitle) : win;
+    self->win = win == 0 ? createRenderWindow(windowTitle, createContextSettings()) : win;
     self->renderTarget = new WindowRenderTarget(*this);
-
-    self->win->SetTitle(windowTitle);
     
     if (self->win != 0) {
+        self->win->SetTitle(windowTitle);
         self->win->SetActive();
 
         const sf::ContextSettings& c = self->win->GetSettings();
@@ -327,6 +328,7 @@ bool GameWindow::init(const std::string& windowTitle, sf::RenderWindow *win, sf:
                   << "  StencilBits:\t" << c.StencilBits << std::endl
                   << "  Antialiasing:\t" << c.AntialiasingLevel << std::endl
 #ifdef GLDEBUG
+                  << "  CoreProfile:\t" << (c.CoreProfile ? "yes" : "no") << std::endl
                   << "  DebugContext:\t" << (c.DebugContext ? "yes" : "no") << std::endl
 #endif
                   << std::endl;

@@ -94,6 +94,8 @@ DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
 
 typedef glt::CubeMesh<Vertex> CubeMesh;
 
+#define FREEZE_MESH(m) m.send()
+
 struct Timer {
 private:
     const ge::GameWindow* win;
@@ -225,7 +227,7 @@ bool Anim::onInit() {
             ERR("couldnt write model file");
     }
 
-    worldModel.freeze();
+    FREEZE_MESH(worldModel);
 
     return true;
 }
@@ -979,7 +981,7 @@ static void makeUnitCube(CubeMesh& cube) {
     v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
     v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
 
-    cube.freeze();
+    FREEZE_MESH(cube);
 }
 
 namespace {

@@ -2,7 +2,6 @@
 #define GLT_RENDER_TARGET_HPP
 
 #include "defs.h"
-#include "glt/color.hpp"
 
 namespace glt {
 
@@ -45,7 +44,7 @@ struct RenderTarget {
     void activate();
     void deactivate();
     void beginScene();
-    void clear(uint32 buffers = RT_ALL_BUFFERS, glt::color clear_color = glt::color(0, 0, 0));
+    void clear(uint32 buffers = RT_ALL_BUFFERS);
     void draw();
     void viewport(const Viewport& vp);
 
@@ -55,7 +54,7 @@ protected:
 
     virtual void doActivate() = 0;
     virtual void doDeactivate();
-    virtual void doClear(uint32 buffers, glt::color clear_color);
+    virtual void doClear(uint32 buffers);
     virtual void doDraw();
     virtual void doViewport(const Viewport& vp);
 

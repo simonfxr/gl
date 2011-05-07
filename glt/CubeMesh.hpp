@@ -25,13 +25,13 @@ struct CubeMesh : public Mesh<T> {
         }
     }
 
-    void freeze() { this->send(); }
+//    void freeze() { this->send(); }
 
     uint32 size() { return this->verticesSize(); }
 
     void deleteAfterFreeze(bool) {}
 
-    void primType(GLenum) {}
+    void primType(GLenum) { ERR("primType not available"); }
 };
 
 } // namespace glt

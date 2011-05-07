@@ -74,10 +74,10 @@ void RenderTarget::beginScene() {
     }
 }
 
-void RenderTarget::clear(uint32 buffers, glt::color clear_color) {
+void RenderTarget::clear(uint32 buffers) {
     ASSERT_MSG(self->active, "RenderTarget not active");
     buffers &= self->buffers;
-    doClear(buffers, clear_color);
+    doClear(buffers);
 }
 
 void RenderTarget::draw() {
@@ -101,14 +101,11 @@ void RenderTarget::doDeactivate() {
     // noop
 }
 
-void RenderTarget::doClear(uint32 buffers, glt::color clear_color) {
+void RenderTarget::doClear(uint32 buffers) {
     GLbitfield bits = 0;
 
-    if (buffers & RT_COLOR_BUFFER) {
+    if (buffers & RT_COLOR_BUFFER)
         bits |= GL_COLOR_BUFFER_BIT;
-        const math::vec4_t c = clear_color.vec4();
-        GL_CHECK(glClearColor(c.r, c.g, c.b, c.a));
-    }
 
     if (buffers & RT_DEPTH_BUFFER)
         bits |= GL_DEPTH_BUFFER_BIT;
@@ -117,7 +114,7 @@ void RenderTarget::doClear(uint32 buffers, glt::color clear_color) {
         bits |= GL_STENCIL_BUFFER_BIT;
 
     if (bits != 0)
-        GL_CHECK(glClear(bits));    
+        GL_CHECK(glClear(bits));
 }
 
 void RenderTarget::doDraw() {

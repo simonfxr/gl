@@ -4,12 +4,11 @@
 #include <vector>
 
 #include "parse_sply.hpp"
-
 #include "math/vec3.hpp"
 
 using namespace math;
 
-int32 parse_sply(const char *filename, glt::GenBatch<Vertex>& model) {
+int32 parse_sply(const char *filename, CubeMesh& model) {
     FILE *data = fopen(filename, "rb");
     if (!data)
         return -1;
@@ -44,6 +43,13 @@ int32 parse_sply(const char *filename, glt::GenBatch<Vertex>& model) {
 
     uint32 faces = 0;
 
+#ifdef MESH_MESH
+
+    for (uint32 i = 0; i < verts.size(); ++i)
+        model.addVertex(verts[i]);
+
+#endif
+
     while (fgets(line, sizeof line, data) != 0 && faces < nfaces) {
         uint32 n, i, j, k, l;
         int nparsed = sscanf(line, "%u %u %u %u %u", &n, &i, &j, &k, &l);
@@ -53,10 +59,23 @@ int32 parse_sply(const char *filename, glt::GenBatch<Vertex>& model) {
             return -1;
         }
 
-        model.add(verts.at(i));
-        model.add(verts.at(j));
-        model.add(verts.at(k));
-        model.add(verts.at(l));
+#ifdef MESH_MESH
+        
+        model.addElement(i);
+        model.addElement(j);
+        model.addElement(k);
+        model.addElement(k);
+        model.addElement(l);
+        model.addElement(i);
+        
+#else
+        
+        ADD_VERTEX(model, verts.at(i));
+        ADD_VERTEX(model, verts.at(j));
+        ADD_VERTEX(model, verts.at(k));
+        ADD_VERTEX(model, verts.at(l));
+
+#endif
 
         ++faces;
     }

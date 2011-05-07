@@ -14,6 +14,8 @@ namespace {
 void *alloc_aligned(uint64 size, uint32 alignment) {
     void *mem;
 #ifdef SYSTEM_UNIX
+    if (alignment < sizeof (void *))
+        alignment = sizeof (void *);
     if (posix_memalign(&mem, alignment, size) != 0)
         mem = 0;
 #else
@@ -110,6 +112,9 @@ MeshBase::MeshBase() :
 {}
 
 void MeshBase::initBase(const VertexDescBase *layout, uint32 initial_nverts, uint32 initial_nelems) {
+
+    std::cerr << this << ".initBase()" << std::endl;
+    
     this->~MeshBase();
 
     vertices_capacity = MIN_NUM_VERTICES;
@@ -127,6 +132,7 @@ void MeshBase::initBase(const VertexDescBase *layout, uint32 initial_nverts, uin
     owning_vertices = true;
     vertices_size = 0;
     vertex_data = static_cast<byte *>(alloc_aligned(layout->sizeof_vertex * vertices_capacity, layout->alignment));
+    ASSERT(vertex_data != 0);
     owning_elements = true;
     elements_size = 0;
     element_data = new uint32[elements_capacity];
@@ -233,8 +239,8 @@ byte *MeshBase::vertexRef(uint32 i) {
 }
 
 void MeshBase::appendVertex(const byte *vertex) {
-    if (unlikely(vertices_size == vertices_capacity)) {
-        vertex_data = reallocVerts(desc, vertex_data, vertices_size, vertices_size * 2);
+    if (unlikely(vertices_size >= vertices_capacity)) {
+        vertex_data = reallocVerts(desc, vertex_data, vertices_capacity, vertices_capacity * 2);
         vertices_capacity *= 2;
     }
 
@@ -244,12 +250,12 @@ void MeshBase::appendVertex(const byte *vertex) {
 
 void MeshBase::appendVertexElem(const byte *vertex) {
     appendVertex(vertex);
-    addElement(vertices_size);
+    addElement(vertices_size - 1);
 }
 
 void MeshBase::addElement(uint32 index) {
     
-    if (unlikely(elements_size == elements_capacity)) {
+    if (unlikely(elements_size >= elements_capacity)) {
         uint32 *elems = new uint32[elements_capacity * 2];
         memcpy(elems, element_data, sizeof elems[0] * elements_capacity);
         delete[] element_data;

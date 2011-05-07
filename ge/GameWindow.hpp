@@ -21,7 +21,7 @@ struct GameWindow {
     float gameTime() const;
     
     float realTime() const;
-    
+
     bool init(const std::string& windowTitle, sf::RenderWindow *win = 0, sf::Clock *clock = 0);
 
     bool isKeyDown(sf::Key::Code key);
@@ -65,7 +65,9 @@ private:
 
     virtual bool onInit();
 
-    virtual sf::RenderWindow *createRenderWindow(const std::string& windowTitle);
+    virtual sf::ContextSettings createContextSettings();
+
+    virtual sf::RenderWindow *createRenderWindow(const std::string& windowTitle, const sf::ContextSettings& ctxconf);
     
     virtual void onExit(int32 exit_code);
 

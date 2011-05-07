@@ -24,9 +24,9 @@
 #include "glt/ShaderProgram.hpp"
 #include "glt/Uniforms.hpp"
 #include "glt/color.hpp"
-#include "glt/GenBatch.hpp"
-// #include "glt/Mesh.hpp"
-// #include "glt/CubeMesh.hpp"
+// #include "glt/GenBatch.hpp"
+#include "glt/Mesh.hpp"
+#include "glt/CubeMesh.hpp"
 #include "glt/Frame.hpp"
 #include "glt/GeometryTransform.hpp"
 #include "glt/Transformations.hpp"
@@ -85,29 +85,29 @@ struct Vertex {
     vec3_t normal;
 };
 
-glt::Attr vertexAttrArray[] = {
-    glt::attr::vec4(offsetof(Vertex, position)),
-    glt::attr::vec3(offsetof(Vertex, normal))
-};
+// glt::Attr vertexAttrArray[] = {
+//     glt::attr::vec4(offsetof(Vertex, position)),
+//     glt::attr::vec3(offsetof(Vertex, normal))
+// };
 
-glt::Attrs<Vertex> vertexAttrs(ARRAY_LENGTH(vertexAttrArray), vertexAttrArray);
+// glt::Attrs<Vertex> vertexAttrs(ARRAY_LENGTH(vertexAttrArray), vertexAttrArray);
 
-typedef glt::GenBatch<Vertex> Mesh;
-typedef glt::GenBatch<Vertex> CubeMesh;
+// typedef glt::GenBatch<Vertex> Mesh;
+// typedef glt::GenBatch<Vertex> CubeMesh;
 
-#define ADD_VERT(e, v) e.add(v)
-#define FREEZE_MESH(e) e.freeze()
+// #define ADD_VERT(e, v) e.add(v)
+// #define FREEZE_MESH(e) e.freeze()
 
-// DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
-//     VERTEX_ATTR(Vertex, position),
-//     VERTEX_ATTR(Vertex, normal)
-// );
+DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
+    VERTEX_ATTR(Vertex, position),
+    VERTEX_ATTR(Vertex, normal)
+);
 
-// typedef glt::Mesh<Vertex> Mesh;
-// typedef glt::CubeMesh<Vertex> CubeMesh;
+typedef glt::Mesh<Vertex> Mesh;
+typedef glt::CubeMesh<Vertex> CubeMesh;
 
-// #define FREEZE_MESH(e) e.send()
-// #define ADD_VERT(e, v) e.addVerteElem(v)
+#define FREEZE_MESH(e) e.send()
+#define ADD_VERT(e, v) e.addVertexElem(v)
 
 void makeSphere(Mesh& sphere, float rad, int32 stacks, int32 slices);
 
@@ -170,6 +170,7 @@ struct Game EXPLICIT : public ge::GameWindow {
     void updateIndirectRendering(bool indirect);
     void resizeRenderTargets();
 
+    sf::ContextSettings createContextSettings() OVERRIDE;
     bool onInit() OVERRIDE;
 
     void animate() OVERRIDE;
@@ -208,7 +209,27 @@ Game::Game() :
     identityShader(shaderManager)
 {}
 
+sf::ContextSettings Game::createContextSettings() {
+    sf::ContextSettings cs;
+    cs.MajorVersion = 3;
+    cs.MinorVersion = 3;
+    cs.DepthBits = 24;
+    cs.StencilBits = 0;
+    cs.CoreProfile = false;
+#ifdef GLDEBUG
+    cs.DebugContext = true;
+#endif
+    return cs;
+}
+
 bool Game::onInit() {
+
+    shaderManager.setShaderVersion(330);
+
+    GLuint vao;
+    GL_CHECK(glGenVertexArrays(1, &vao));
+    GL_CHECK(glBindVertexArray(vao));
+    
     textureRenderTarget = 0;
     indirect_rendering = false;
     updateIndirectRendering(indirect_rendering);
@@ -232,8 +253,8 @@ bool Game::onInit() {
         v.position = vec4( 1.f, -1.f, 0.f, 1.f); rectBatch.add(v);
         v.position = vec4( 1.f,  1.f, 0.f, 1.f); rectBatch.add(v);
         v.position = vec4(-1.f,  1.f, 0.f, 1.f); rectBatch.add(v);
-        
-        rectBatch.freeze();
+
+        FREEZE_MESH(rectBatch);
     }
 
     shaderManager.addPath("shaders");
@@ -865,7 +886,7 @@ void makeUnitCube(CubeMesh& cube) {
     v.position = vec4(-1.0f,  1.0f,  1.0f, 1.f); cube.add(v);
     v.position = vec4(-1.0f,  1.0f, -1.0f, 1.f); cube.add(v);
 
-    cube.freeze();
+    FREEZE_MESH(cube);
 }
 
 void addTriangle(Mesh& s, const vec3_t vertices[3], const vec3_t normals[3], const vec2_t texCoords[3]) {

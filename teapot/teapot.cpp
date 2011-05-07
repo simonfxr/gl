@@ -7,6 +7,7 @@
 #include <SFML/Graphics/Image.hpp>
 
 #include "defs.h"
+#include "mesh.h"
 
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
@@ -23,7 +24,6 @@
 #include "glt/ShaderProgram.hpp"
 #include "glt/Uniforms.hpp"
 #include "glt/Frame.hpp"
-#include "glt/GenBatch.hpp"
 #include "glt/color.hpp"
 #include "glt/Transformations.hpp"
 
@@ -34,6 +34,15 @@ using namespace math;
 static const point3_t LIGHT_CENTER_OF_ROTATION = vec3(0.f, 15.f, 0.f);
 static const float  LIGHT_ROTATION_RAD = 15.f;
 
+struct Vertex2 {
+    vec3_t position;
+    vec3_t normal;
+    vec2_t texCoord;
+};
+
+
+#ifdef MESH_GENBATCH
+
 static const glt::Attr vertexAttrVals[] = {
     glt::attr::vec3(offsetof(Vertex, position)),
     glt::attr::vec3(offsetof(Vertex, normal))
@@ -42,12 +51,6 @@ static const glt::Attr vertexAttrVals[] = {
 static const glt::Attrs<Vertex> vertexAttrs(
     ARRAY_LENGTH(vertexAttrVals), vertexAttrVals
 );
-
-struct Vertex2 {
-    vec3_t position;
-    vec3_t normal;
-    vec2_t texCoord;
-};
 
 static const glt::Attr vertex2AttrVals[] = {
     glt::attr::vec3(offsetof(Vertex2, position)),
@@ -58,6 +61,22 @@ static const glt::Attr vertex2AttrVals[] = {
 static const glt::Attrs<Vertex2> vertex2Attrs(
     ARRAY_LENGTH(vertex2AttrVals), vertex2AttrVals
 );
+
+#elif defined(MESH_MESH)
+
+DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
+                    VERTEX_ATTR(Vertex, position),
+                    VERTEX_ATTR(Vertex, normal));
+
+DEFINE_VERTEX_ATTRS(vertex2Attrs, Vertex2,
+                    VERTEX_ATTR(Vertex2, position),
+                    VERTEX_ATTR(Vertex2, normal),
+                    VERTEX_ATTR(Vertex2, texCoord));
+
+#else
+#error "no meshtype defined"
+#endif
+
 
 struct Timer {
 private:
@@ -116,10 +135,10 @@ struct Anim EXPLICIT : public ge::GameWindow {
     glt::RenderManager rm;
     glt::ShaderManager sm;
     glt::Frame         camera;
-    glt::GenBatch<Vertex> groundModel;
-    glt::GenBatch<Vertex> teapotModel;
-    glt::GenBatch<Vertex> sphereModel;
-    glt::GenBatch<Vertex2> cubeModel;
+    CubeMesh groundModel;
+    CubeMesh teapotModel;
+    Mesh sphereModel;
+    CubeMesh2 cubeModel;
     glt::ShaderProgram teapotShader;
     glt::ShaderProgram teapotTexturedShader;
     sf::Image woodTexture;
@@ -150,7 +169,8 @@ struct Anim EXPLICIT : public ge::GameWindow {
         teapotShader(sm),
         teapotTexturedShader(sm)
         {}
-    
+
+    sf::ContextSettings createContextSettings() OVERRIDE;
     bool onInit() OVERRIDE;
     bool loadShaders();
     void animate() OVERRIDE;
@@ -167,25 +187,32 @@ struct Anim EXPLICIT : public ge::GameWindow {
     void handleInternalEvents() OVERRIDE;
 };
 
-static void makeUnitCube(glt::GenBatch<Vertex2>& cube);
-static void makeSphere(glt::GenBatch<Vertex>& sphere, float rad, int32 stacks, int32 slices);
+static void makeUnitCube(CubeMesh2& cube);
+static void makeSphere(Mesh& sphere, float rad, int32 stacks, int32 slices);
 
 std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
     return out << "(" << v.x << ", " << v.y << ", " << v.z << ")";
 }
 
+sf::ContextSettings Anim::createContextSettings() {
+    sf::ContextSettings cs;
+    cs.MajorVersion = 3;
+    cs.MinorVersion = 3;
+    cs.DepthBits = 24;
+    cs.StencilBits = 0;
+    cs.CoreProfile = false;
+#ifdef GLDEBUG
+    cs.DebugContext = true;
+#endif
+    return cs;
+}
+
 bool Anim::onInit() {
     sm.verbosity(glt::ShaderManager::Info);
-
-    if (GLEW_ARB_multisample) {
-        std::cerr << "multisampling support available" << std::endl;
-
-        GL_CHECK(glEnable(GL_MULTISAMPLE_ARB));
-    }
+    sm.setShaderVersion(330);
 
     rm.setDefaultRenderTarget(&this->renderTarget());
 
-    sm.addPath(".");
     sm.addPath("shaders");
     sm.addPath("../shaders");
 
@@ -224,22 +251,24 @@ bool Anim::onInit() {
         std::cerr << "parsed teapot model: " << nfaces << " vertices" << std::endl;
     }
 
-    teapotModel.primType(GL_QUADS);
-    teapotModel.freeze();
+    QUAD_MESH(teapotModel);
+    FREEZE_MESH(teapotModel);
 
-    groundModel.primType(GL_QUADS);
-
+    QUAD_MESH(groundModel);
     makeUnitCube(cubeModel);
 
     makeSphere(sphereModel, 1.f, 26, 13);
 
-    Vertex v;
-    v.normal = vec3(0.f, 1.f, 0.f);
-    v.position = vec3(0.f, 0.f, 0.f); groundModel.add(v);
-    v.position = vec3(1.f, 0.f, 0.f); groundModel.add(v);
-    v.position = vec3(1.f, 0.f, 1.f); groundModel.add(v);
-    v.position = vec3(0.f, 0.f, 1.f); groundModel.add(v);
-    groundModel.freeze();
+    {
+        Vertex v;
+        v.normal = vec3(0.f, 1.f, 0.f);
+        v.position = vec3(0.f, 0.f, 0.f); ADD_VERTEX(groundModel, v);
+        v.position = vec3(1.f, 0.f, 0.f); ADD_VERTEX(groundModel, v);
+        v.position = vec3(1.f, 0.f, 1.f); ADD_VERTEX(groundModel, v);
+        v.position = vec3(0.f, 0.f, 1.f); ADD_VERTEX(groundModel, v);
+
+        FREEZE_MESH(groundModel);
+    }
 
     if (!loadShaders())
         return false;
@@ -456,7 +485,7 @@ void Anim::windowResized(uint32 width, uint32 height) {
     float fov = degToRad(17.5f);
     float aspect = float(width) / float(height);
 
-    rm.setPerspectiveProjection(fov, aspect, 0.25f, 100.f);
+    rm.setPerspectiveProjection(fov, aspect, 0.1f, 100.f);
 }
 
 void Anim::mouseMoved(int32 dx, int32 dy) {
@@ -531,63 +560,63 @@ int main(void) {
     return anim.run();
 }
 
-static void makeUnitCube(glt::GenBatch<Vertex2>& cube) {
+static void makeUnitCube(CubeMesh2& cube) {
     Vertex2 v;
-    cube.primType(GL_QUADS);
+    QUAD_MESH(cube);
 
     v.normal = vec3( 0.0f, 0.0f, 1.0f);					
-    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
-    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
-    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
-    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
+    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3(0.f, 0.f,  1.0f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3( 1.0f, 0.f,  1.0f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3( 1.0f,  1.0f,  1.0f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3(0.f,  1.0f,  1.0f); ADD_VERTEX(cube, v);
 
     v.normal = vec3( 0.0f, 0.0f,0.f);					
-    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
-    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
-    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
-    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
+    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3(0.f, 0.f, 0.f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3(0.f,  1.0f, 0.f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3( 1.0f,  1.0f, 0.f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3( 1.0f, 0.f, 0.f); ADD_VERTEX(cube, v);
 
     v.normal = vec3( 0.0f, 1.0f, 0.0f);					
-    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
-    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
-    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
-    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
+    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3(0.f,  1.0f, 0.f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3(0.f,  1.0f,  1.0f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3( 1.0f,  1.0f,  1.0f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3( 1.0f,  1.0f, 0.f); ADD_VERTEX(cube, v);
 
     v.normal = vec3( 0.0f,0.f, 0.0f);					
-    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
-    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
-    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
-    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
+    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3(0.f, 0.f, 0.f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3( 1.0f, 0.f, 0.f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3( 1.0f, 0.f,  1.0f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3(0.f, 0.f,  1.0f); ADD_VERTEX(cube, v);
 
     v.normal = vec3( 1.0f, 0.0f, 0.0f);					
-    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
-    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
-    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
-    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
+    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3( 1.0f, 0.f, 0.f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3( 1.0f,  1.0f, 0.f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3( 1.0f,  1.0f,  1.0f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3( 1.0f, 0.f,  1.0f); ADD_VERTEX(cube, v);
 
     v.normal = vec3(0.f, 0.0f, 0.0f);					
-    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
-    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
-    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
-    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
+    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3(0.f, 0.f, 0.f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3(0.f, 0.f,  1.0f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3(0.f,  1.0f,  1.0f); ADD_VERTEX(cube, v);
+    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3(0.f,  1.0f, 0.f); ADD_VERTEX(cube, v);
 
-    cube.freeze();
+    FREEZE_MESH(cube);
 }
 
 
-static void addTriangle(glt::GenBatch<Vertex>& s, const vec3_t vertices[3], const vec3_t normals[3], const vec2_t texCoords[3]) {
+static void addTriangle(Mesh& s, const vec3_t vertices[3], const vec3_t normals[3], const vec2_t texCoords[3]) {
     UNUSED(texCoords);
     
     for (uint32 i = 0; i < 3; ++i) {
         Vertex v;
         v.position = vertices[i];
         v.normal = normals[i];
-        s.add(v);
+        ADD_VERTEX(s, v);
     }
 }
 
 // from the GLTools library (OpenGL Superbible)
-static void gltMakeSphere(glt::GenBatch<Vertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
+static void gltMakeSphere(Mesh& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
 {
     GLfloat drho = (GLfloat)(3.141592653589) / (GLfloat) iStacks;
     GLfloat dtheta = 2.0f * (GLfloat)(3.141592653589) / (GLfloat) iSlices;
@@ -692,11 +721,11 @@ static void gltMakeSphere(glt::GenBatch<Vertex>& sphereBatch, GLfloat fRadius, G
         }
         t -= dt;
     }
-    
-    sphereBatch.freeze();
+
+    FREEZE_MESH(sphereBatch);
 }
 
-static void makeSphere(glt::GenBatch<Vertex>& sphere, float rad, int32 stacks, int32 slices) {
+static void makeSphere(Mesh& sphere, float rad, int32 stacks, int32 slices) {
     sphere.primType(GL_TRIANGLES);
     gltMakeSphere(sphere, rad, stacks, slices);
 }
