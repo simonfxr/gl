@@ -161,6 +161,10 @@ struct Anim EXPLICIT : public ge::GameWindow {
 
     uint32 shade_mode;
 
+    bool use_spotlight;
+    bool spotlight_smooth;
+    direction3_t ec_spotlight_dir;
+
     Anim() :
         groundModel(vertexAttrs),
         teapotModel(vertexAttrs),
@@ -221,6 +225,9 @@ bool Anim::onInit() {
     synchronizeDrawing(true);
     // maxDrawFramesSkipped(1);
     // maxFPS(120);
+
+    use_spotlight = false;
+    spotlight_smooth = false;
 
     wireframe_mode = true;
     GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
@@ -342,7 +349,15 @@ void Anim::renderScene(float interpolation) {
     
     rm.beginScene();
 
-    ecLight = rm.geometryTransform().transformPoint(light);        
+    ecLight = rm.geometryTransform().transformPoint(light);
+
+    {
+        vec3_t spot_center = vec3(5.f, 2.f, 8.f);
+        vec3_t spotdir = spot_center - light;
+        spotdir = normalize(spotdir);
+        ec_spotlight_dir = rm.geometryTransform().normalMatrix() * spotdir;
+        ec_spotlight_dir = normalize(ec_spotlight_dir);
+    }
 
     renderLight();
 
@@ -400,6 +415,9 @@ void Anim::setupTeapotShader(glt::ShaderProgram& prog, const vec4_t& surfaceColo
     us.optional("materialProperties", vm * materialSelector);
     us.optional("ecLight", ecLight);
     us.optional("gammaCorrection", gamma_correction);
+    us.optional("spotDirection", ec_spotlight_dir);
+    us.optional("useSpot", use_spotlight);
+    us.optional("spotSmooth", spotlight_smooth);
 }
 
 void Anim::renderLight() {
@@ -551,6 +569,16 @@ void Anim::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
     case L: shade_mode ^= SHADE_MODE_SPECULAR; break;
     case O: gamma_correction += 0.05f; break;
     case P: gamma_correction -= 0.05f; break;
+    case G:
+        if (use_spotlight && spotlight_smooth) {
+            use_spotlight = false;
+            spotlight_smooth = false;
+        } else if (use_spotlight) {
+            spotlight_smooth = true;
+        } else {
+            use_spotlight = true;
+        }
+        break;
     }
 }
 
