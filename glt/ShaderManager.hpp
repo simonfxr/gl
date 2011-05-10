@@ -51,6 +51,9 @@ struct ShaderManager {
 
     void setShaderVersion(uint32 vers); // e.g. 330
     uint32 shaderVersion();
+
+    bool cacheShaderObjects() const;
+    void cacheShaderObjects(bool docache);
     
 private:
     

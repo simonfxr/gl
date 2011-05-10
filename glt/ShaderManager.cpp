@@ -35,6 +35,7 @@ struct ShaderManager::Data {
     std::vector<std::string> paths;
     ShaderCache cache;
     uint32 shader_version;
+    bool cache_so;
 };
 
 ShaderManager::CachedShaderObject::~CachedShaderObject() {
@@ -47,6 +48,7 @@ ShaderManager::ShaderManager() :
     self->err = &std::cerr;
     self->verbosity = Info;
     self->shader_version = 0;
+    self->cache_so = true;
 }
 
 ShaderManager::~ShaderManager() {
@@ -109,7 +111,20 @@ Ref<ShaderManager::CachedShaderObject> ShaderManager::lookupShaderObject(const s
 
 void ShaderManager::cacheShaderObject(const Ref<ShaderManager::CachedShaderObject>& entry) {
     DEBUG_ASSERT(entry.ptr() != 0);
-    self->cache[entry->key] = entry.weak();
+    if (self->cache_so)
+        self->cache[entry->key] = entry.weak();
+}
+
+bool ShaderManager::cacheShaderObjects() const {
+    return self->cache_so;
+}
+
+void ShaderManager::cacheShaderObjects(bool docache) {
+    if (docache != self->cache_so) {
+        self->cache_so = docache;
+        if (!docache)
+            self->cache.clear();
+    }
 }
 
 } // namespace glt
