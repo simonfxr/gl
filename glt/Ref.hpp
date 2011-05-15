@@ -2,7 +2,7 @@
 #define GLT_REF_HPP
 
 #include "defs.h"
-#include "glt/utils.hpp"
+#include "glt/error.hpp"
 #include <iostream>
 
 namespace glt {

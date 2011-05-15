@@ -2,6 +2,8 @@
 #include <cstdio>
 
 #include "glt/GenBatch.hpp"
+#include "glt/utils.hpp"
+
 
 namespace glt {
 

@@ -7,7 +7,7 @@
 #include "math/vec3.hpp"
 #include "math/math.hpp"
 
-#include "glt/utils.hpp"
+#include "glt/error.hpp"
 
 MATH_BEGIN_NAMESPACE
 
@@ -208,7 +208,7 @@ mat4_t inverse(const mat4_t& A) {
 
     float det = m[0]*inv[0] + m[1]*inv[4] + m[2]*inv[8] + m[3]*inv[12];
     if (det == 0.f) {
-        ERROR_ONCE("matrix has no inverse");
+        ERR_ONCE("matrix has no inverse");
         return mat4(0.f);
     }
 

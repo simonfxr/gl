@@ -7,12 +7,8 @@
 #include "defs.h"
 #include "opengl.h"
 
-#ifdef SYSTEM_LINUX
-#include <GL/glx.h>
-#endif
-
 #include "glt/utils.hpp"
-#include "defs.h"
+#include "glt/error.hpp"
 
 #ifdef SYSTEM_LINUX
 #include <unistd.h>
@@ -20,7 +16,7 @@
 
 namespace glt {
 
-std::string getErrorString(GLenum err) {
+std::string getGLErrorString(GLenum err) {
 
     switch (err) {
             
@@ -45,30 +41,13 @@ std::string getErrorString(GLenum err) {
     }
 }
 
-bool printErrors(std::ostream& out) {
+bool printGLErrors(std::ostream& out) {
     bool was_error = false;
     
     for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
-        out << "OpenGL error occurred: " << getErrorString(err) << std::endl;
+        out << "OpenGL error occurred: " << getGLErrorString(err) << std::endl;
     
     return was_error;
-}
-
-void error(const char *msg, const char *file, int line, const char *func) {
-    std::cerr << "ERROR in " << func << "()" << std::endl
-              << " at " << file << ":" << line << std::endl
-              << " message: " << msg << std::endl;
-}
-
-void error_once(const char *msg, const char *file, int line, const char *func) {
-    std::cerr << "ERROR (only reported once) in "<< func << "()" << std::endl
-              << " at " << file << ":" << line << std::endl
-              << " message: " << msg << std::endl;
-}
-
-void fatal_error(const char *msg, const char *file, int line, const char *func) {
-    error(msg, file, line, func);
-    exit(2);
 }
 
 bool isExtensionSupported(const char *extension) {
@@ -262,7 +241,7 @@ GLDebug *glDebug = new NODebug();
 } // namespace anon
 
 void printGLError(const DebugLocation& loc, GLenum err) {
-    std::cerr << "OpenGL ERROR: " << getErrorString(err) << std::endl
+    std::cerr << "OpenGL ERROR: " << getGLErrorString(err) << std::endl
               << "  in operation: " << loc.op << std::endl
               << "  in function: " << loc.func << std::endl
               << "  at " << loc.file << ":" << loc.line << std::endl;
@@ -287,8 +266,6 @@ bool initDebug() {
     GLDebug *dbg = 0;
     const char *debug_impl = 0; 
 
-    #ifdef HAVE_GL_GET_PROC_ADDRESS
-
     if (isExtensionSupported("GL_ARB_debug_output")) {
         debug_impl = "GL_ARB_debug_output";
         dbg = ARBDebug::init();
@@ -298,8 +275,6 @@ bool initDebug() {
         debug_impl = "GL_AMD_debug_output";
         dbg = AMDDebug::init();
     }
-
-    #endif
 
     bool initialized;
 

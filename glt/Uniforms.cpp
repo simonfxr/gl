@@ -8,6 +8,7 @@
 #include "glt/color.hpp"
 
 #include "glt/ShaderProgram.hpp"
+#include "glt/error.hpp"
 #include "glt/utils.hpp"
 
 namespace glt {

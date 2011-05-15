@@ -7,7 +7,7 @@
 #include <string>
 #include <ostream>
 
-#ifdef DEBUG
+#ifdef GLDEBUG
 #define GL_CHECK(op) do {                                               \
         (op);                                                           \
         glt::checkForGLError(#op, __FILE__, __LINE__, __func__);    \
@@ -18,15 +18,9 @@
 
 namespace glt {
 
-std::string getErrorString(GLenum err);
+std::string getGLErrorString(GLenum err);
 
-bool printErrors(std::ostream& out);
-
-void error(const char *msg, const char *file, int line, const char *func);
-
-void error_once(const char *msg, const char *file, int line, const char *func);
-
-void fatal_error(const char *msg, const char *file, int line, const char *func) ATTRS(ATTR_NORETURN);
+bool printGLErrors(std::ostream& out);
 
 bool checkForGLError(const char *op, const char *file, int line, const char *func);
 

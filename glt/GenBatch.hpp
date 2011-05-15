@@ -3,7 +3,7 @@
 
 #include "defs.h"
 #include "opengl.h"
-#include "glt/utils.hpp"
+#include "glt/error.hpp"
 
 namespace glt {
 

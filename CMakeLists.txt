@@ -11,9 +11,12 @@ project(sim-sfml)
 
 #set(GRAPHITE_OPTS "-floop-strip-mine -floop-block -floop-interchange")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-switch -fno-exceptions -fno-rtti -O3 -march=native -fopenmp")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-switch -fno-exceptions -fno-rtti -O3 -march=native -fopenmp")
 
-set(CMAKE_LDFLAGS "${CMAKE_CXX_FLAGS}")
+#set(CMAKE_LDFLAGS "${CMAKE_CXX_FLAGS}")
+
+add_definitions("-Wall -Wextra -Wno-switch -fno-exceptions -fno-rtti")
+add_definitions("-march=native -O3")
 
 #set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb")
 
@@ -66,6 +69,8 @@ set(MATH_SRC
 
 set(GLT_SRC
 
+  glt/error.hpp
+  glt/error.cpp
   glt/utils.hpp
   glt/utils.cpp
   glt/ShaderManager.hpp

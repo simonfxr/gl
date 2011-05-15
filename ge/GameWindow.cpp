@@ -5,6 +5,7 @@
 #include "defs.h"
 #include "opengl.h"
 #include "math/math.hpp"
+#include "glt/error.hpp"
 #include "glt/utils.hpp"
 #include "ge/GameWindow.hpp"
 

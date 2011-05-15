@@ -1,4 +1,5 @@
 #include "glt/Mesh.hpp"
+#include "glt/utils.hpp"
 
 #ifdef SYSTEM_UNIX
 #include <stdlib.h>
@@ -112,9 +113,6 @@ MeshBase::MeshBase() :
 {}
 
 void MeshBase::initBase(const VertexDescBase *layout, uint32 initial_nverts, uint32 initial_nelems) {
-
-    std::cerr << this << ".initBase()" << std::endl;
-    
     this->~MeshBase();
 
     vertices_capacity = MIN_NUM_VERTICES;

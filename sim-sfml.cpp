@@ -24,9 +24,6 @@
 #include "glt/ShaderProgram.hpp"
 #include "glt/Uniforms.hpp"
 #include "glt/color.hpp"
-// #include "glt/GenBatch.hpp"
-#include "glt/Mesh.hpp"
-#include "glt/CubeMesh.hpp"
 #include "glt/Frame.hpp"
 #include "glt/GeometryTransform.hpp"
 #include "glt/Transformations.hpp"
@@ -36,6 +33,13 @@
 #include "ge/GameWindow.hpp"
 
 #include "sim.hpp"
+
+#ifdef MESH_GENBATCH
+#include "glt/GenBatch.hpp"
+#else
+#include "glt/Mesh.hpp"
+#include "glt/CubeMesh.hpp"
+#endif
 
 using namespace math;
 
@@ -85,18 +89,23 @@ struct Vertex {
     vec3_t normal;
 };
 
-// glt::Attr vertexAttrArray[] = {
-//     glt::attr::vec4(offsetof(Vertex, position)),
-//     glt::attr::vec3(offsetof(Vertex, normal))
-// };
+#ifdef MESH_GENBATCH
 
-// glt::Attrs<Vertex> vertexAttrs(ARRAY_LENGTH(vertexAttrArray), vertexAttrArray);
+glt::Attr vertexAttrArray[] = {
+    glt::attr::vec4(offsetof(Vertex, position)),
+    glt::attr::vec3(offsetof(Vertex, normal))
+};
 
-// typedef glt::GenBatch<Vertex> Mesh;
-// typedef glt::GenBatch<Vertex> CubeMesh;
+glt::Attrs<Vertex> vertexAttrs(ARRAY_LENGTH(vertexAttrArray), vertexAttrArray);
 
-// #define ADD_VERT(e, v) e.add(v)
-// #define FREEZE_MESH(e) e.freeze()
+typedef glt::GenBatch<Vertex> Mesh;
+typedef glt::GenBatch<Vertex> CubeMesh;
+
+#define FREEZE_MESH(m) m.send()
+#define CUBE_MESH(m) UNUSED(m)
+#define ADD_VERT(e, v) e.add(v)
+
+#else
 
 DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
     VERTEX_ATTR(Vertex, position),
@@ -107,7 +116,10 @@ typedef glt::Mesh<Vertex> Mesh;
 typedef glt::CubeMesh<Vertex> CubeMesh;
 
 #define FREEZE_MESH(e) e.send()
+#define CUBE_MESH(e) UNUSED(e)
 #define ADD_VERT(e, v) e.addVertexElem(v)
+
+#endif
 
 void makeSphere(Mesh& sphere, float rad, int32 stacks, int32 slices);
 
@@ -235,8 +247,8 @@ bool Game::onInit() {
     updateIndirectRendering(indirect_rendering);
 
     render_spheres_instanced = true;
-    
-    wallBatch.primType(GL_QUADS);
+
+    CUBE_MESH(wallBatch);
 
 #ifdef GLDEBUG
     shaderManager.verbosity(glt::ShaderManager::Info);
@@ -245,7 +257,7 @@ bool Game::onInit() {
 #endif
 
     {
-        rectBatch.primType(GL_QUADS);
+        CUBE_MESH(rectBatch);
 
         Vertex v;
         v.normal = vec3(0.f, 0.f, 1.f);

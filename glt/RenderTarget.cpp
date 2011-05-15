@@ -1,4 +1,5 @@
 #include "glt/RenderTarget.hpp"
+#include "glt/error.hpp"
 #include "glt/utils.hpp"
 #include "opengl.h"
 

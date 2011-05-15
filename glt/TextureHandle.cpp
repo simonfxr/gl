@@ -1,6 +1,8 @@
 #include "defs.h"
 #include "glt/TextureHandle.hpp"
+#include "glt/error.hpp"
 #include "glt/utils.hpp"
+
 
 namespace glt {
 

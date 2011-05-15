@@ -9,6 +9,7 @@
 #include "opengl.h"
 #include "glt/ShaderProgram.hpp"
 #include "glt/ShaderManager.hpp"
+#include "glt/error.hpp"
 #include "glt/utils.hpp"
 #include "glt/Preprocessor.hpp"
 #include "glt/GLSLPreprocessor.hpp"
