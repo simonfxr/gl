@@ -44,9 +44,7 @@ struct GeometryTransform::Data {
         if (unlikely(dirty)) {
             dirty = false;
             mvpMatrix = projectionMatrix * mvMats[depth];
-            normalMatrix = mat3(normalize(vec3(mvMats[depth][0])),
-                                normalize(vec3(mvMats[depth][1])),
-                                normalize(vec3(mvMats[depth][2])));
+            normalMatrix = orthonormalBasis(mat3(mvMats[depth]));
         }
     }
 };
@@ -105,7 +103,7 @@ void GeometryTransform::dup() {
     self->mods[self->depth + 1] = self->mods[self->depth];
     ++self->depth;
 }
-    
+
 void GeometryTransform::pop() {
     if (unlikely(self->depth == 0))
         FATAL_ERR("GeometryTransform: stack underflow");
@@ -147,7 +145,6 @@ void GeometryTransform::concat(const mat4_t& m) {
     self->dirty = true;
     ++self->mods[self->depth];
     self->mvMats[self->depth] *= m;
-    self->update();
 }
 
 vec4_t GeometryTransform::transform(const vec4_t& v) const {
@@ -165,5 +162,5 @@ vec3_t GeometryTransform::transformVector(const vec3_t& v) const {
 uint32 GeometryTransform::depth() const {
     return self->depth + 1;
 }
-   
+
 } // namespace glt

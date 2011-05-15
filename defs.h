@@ -69,8 +69,6 @@
         }                                                               \
     } while (0)
 
-
-
 #define FATAL_ERR(e) glt::fatal_error(e, __FILE__, __LINE__, __func__)
 
 #ifdef GNU_EXTENSIONS
@@ -94,6 +92,7 @@
 #define RESTRICT __restrict__
 
 #define LOCAL ATTRS(ATTR_NO_WARN_UNUSED_DEF)
+#define LOCAL_CONSTANT ATTRS(ATTR_NO_WARN_UNUSED_DEF)
 
 #define CONCAT(a, b) CONCAT_AUX1(a, b)
 #define CONCAT_AUX1(a, b) CONCAT_AUX2(a, b)

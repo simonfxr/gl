@@ -27,10 +27,15 @@
 #include "glt/ShaderProgram.hpp"
 #include "glt/Uniforms.hpp"
 #include "glt/Frame.hpp"
-#include "glt/CubeMesh.hpp"
-// #include "glt/GenBatch.hpp"
 #include "glt/color.hpp"
 #include "glt/Transformations.hpp"
+
+#ifdef MESH_GENBATCH
+#include "glt/GenBatch.hpp"
+#else
+#include "glt/Mesh.hpp"
+#include "glt/CubeMesh.hpp"
+#endif
 
 using namespace math;
 
@@ -74,17 +79,24 @@ struct Vertex {
     vec4_t normal;  // last component is diffuse factor
 };
 
-// static const glt::Attr vertexAttrVals[] = {
-//     glt::attr::vec3(offsetof(Vertex, position)),
-//     glt::attr::color(offsetof(Vertex, color)),
-//     glt::attr::vec4(offsetof(Vertex, normal))
-// };
+#ifdef MESH_GENBATCH
 
-// static const glt::Attrs<Vertex> vertexAttrs(
-//     ARRAY_LENGTH(vertexAttrVals), vertexAttrVals
-// );
+static const glt::Attr vertexAttrVals[] = {
+    glt::attr::vec3(offsetof(Vertex, position)),
+    glt::attr::color(offsetof(Vertex, color)),
+    glt::attr::vec4(offsetof(Vertex, normal))
+};
 
-// typedef glt::GenBatch<Vertex> CubeMesh;
+static const glt::Attrs<Vertex> vertexAttrs(
+    ARRAY_LENGTH(vertexAttrVals), vertexAttrVals
+);
+
+typedef glt::GenBatch<Vertex> CubeMesh;
+#define FREEZE_MESH(m) m.freeze()
+#define CUBE_MESH(m) m.primType(GL_QUADS)
+#define KEEP_MESH_DATA(m) m.deleteAfterFreeze(false)
+
+#else
 
 DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
     VERTEX_ATTR(Vertex, position),
@@ -95,6 +107,10 @@ DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
 typedef glt::CubeMesh<Vertex> CubeMesh;
 
 #define FREEZE_MESH(m) m.send()
+#define CUBE_MESH(m) UNUSED(m)
+#define KEEP_MESH_DATA(m) UNUSED(m)
+
+#endif
 
 struct Timer {
 private:
@@ -175,7 +191,7 @@ std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
 
 bool Anim::onInit() {
     sm.verbosity(glt::ShaderManager::Info);
-    sm.setShaderVersion(410);
+    sm.setShaderVersion(330, glt::ShaderManager::CompatibilityProfile);
 
     GLuint vao;
     GL_CHECK(glGenVertexArrays(1, &vao));
@@ -201,8 +217,7 @@ bool Anim::onInit() {
 
     fpsTimer.start(*this, FPS_UPDATE_INTERVAL, true);
 
-    cubeModel.primType(GL_QUADS);
-    cubeModel.deleteAfterFreeze(false);
+    KEEP_MESH_DATA(cubeModel);
     makeUnitCube(cubeModel);
 
     if (!loadShaders())
@@ -210,7 +225,7 @@ bool Anim::onInit() {
 
     srand(0xDEADBEEF);
 
-    worldModel.primType(GL_QUADS);
+    CUBE_MESH(worldModel);
     pointsOnSphere(SPHERE_POINTS, sphere_points);
 
     if (read_model) {
@@ -918,23 +933,12 @@ int main(int argc, char *argv[]) {
             write_mdl = false;
     }
 
-    sf::ContextSettings glContext;
-    glContext.MajorVersion = 4;
-    glContext.MinorVersion = 1;
-    glContext.StencilBits = 0;
-    glContext.AntialiasingLevel = 0;
-    glContext.CoreProfile = true;
-#ifdef GLDEBUG
-    glContext.DebugContext = true;
-#endif
-
-    sf::RenderWindow win(sf::VideoMode(800, 600), "", sf::Style::Default, glContext);
     Anim *anim = new Anim;
     
     anim->read_model = read_mdl;
     anim->write_model = write_mdl;
     
-    if (!anim->init("voxel-world", &win))
+    if (!anim->init("voxel-world"))
         return 1;
     int ret = anim->run();
     delete anim;
@@ -943,7 +947,7 @@ int main(int argc, char *argv[]) {
 
 static void makeUnitCube(CubeMesh& cube) {
     Vertex v;
-    cube.primType(GL_QUADS);
+    CUBE_MESH(cube);
 
     v.normal = vec4(0.0f, 0.0f, 1.0f, 0.f);					
     v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);

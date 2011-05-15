@@ -301,6 +301,9 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
         if (shader_vers != 0) {
             std::ostringstream svers;
             svers << "#version " << shader_vers;
+            if (self->sm.shaderProfile() == ShaderManager::CompatibilityProfile) {
+                svers << " compatibility";
+            }
             versionStr = svers.str();
         }
 

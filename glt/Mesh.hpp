@@ -15,9 +15,9 @@ namespace glt {
 
 namespace {
 
-uint32 ALIGNMENT_DEFAULT = 0;
-uint32 MIN_NUM_VERTICES = 8;
-uint32 MIN_NUM_ELEMENTS = 8;
+uint32 LOCAL_CONSTANT ALIGNMENT_DEFAULT = 0;
+uint32 LOCAL_CONSTANT MIN_NUM_VERTICES = 8;
+uint32 LOCAL_CONSTANT MIN_NUM_ELEMENTS = 8;
 
 } // namespace anon
 

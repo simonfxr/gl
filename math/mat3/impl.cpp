@@ -31,6 +31,10 @@ mat3_t mat3(const vec3_t& c1, const vec3_t& c2, const vec3_t& c3) {
     mat3_t A; A[0] = c1; A[1] = c2; A[2] = c3; return A;
 }
 
+mat3_t mat3(const mat4_t& A) {
+    return mat3(vec3(A[0]), vec3(A[1]), vec3(A[2]));
+}
+
 mat3_t mat3(const quat_t& q) {
     float w = q.a, x = q.b, y = q.c, z = q.d;
     float xx = x * x, yy = y * y, zz = z * z;
@@ -147,6 +151,12 @@ mat3_t inverse(const mat3_t& A) {
     return Ainv;
 }
 
+mat3_t orthonormalBasis(const mat3_t& A) {
+    direction3_t u = normalize(A[0]);
+    direction3_t v = normalize(A[1] - projectAlong(A[1], u));
+    return mat3(u, v, cross(u, v));
+}
+
 vec3_t transform(const mat3_t& A, const vec3_t& v) {
     return A * v;
 }
@@ -190,3 +200,4 @@ MATH_INLINE_SPEC float& mat3_t::operator()(unsigned long i, unsigned long j) {
 } // namespace math
 
 #endif
+

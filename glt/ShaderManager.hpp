@@ -18,6 +18,11 @@ struct ShaderManager {
         Info
     };
 
+    enum ShaderProfile {
+        CoreProfile,
+        CompatibilityProfile
+    };
+
     struct CachedShaderObject {
     private:
         ShaderManager& sm;
@@ -49,8 +54,9 @@ struct ShaderManager {
     
     void cacheShaderObject(const Ref<CachedShaderObject>& s);
 
-    void setShaderVersion(uint32 vers); // e.g. 330
-    uint32 shaderVersion();
+    void setShaderVersion(uint32 vers, ShaderProfile profile = CoreProfile); // e.g. 330
+    uint32 shaderVersion() const;
+    ShaderProfile shaderProfile() const;
 
     bool cacheShaderObjects() const;
     void cacheShaderObjects(bool docache);

@@ -91,19 +91,6 @@ struct DebugLocation {
 
 namespace {
 
-typedef void (*function_t)(void);
-
-function_t glGetProcAddress(const GLubyte *sym);
-
-#ifdef SYSTEM_LINUX
-#define HAVE_GL_GET_PROC_ADDRESS
-
-function_t glGetProcAddress(const GLubyte *sym) {
-    return reinterpret_cast<function_t>(glXGetProcAddress(sym));
-}
-
-#endif
-
 struct GLDebug {
     virtual ~GLDebug() {}
     virtual void printDebugMessages(const DebugLocation& loc) = 0;
@@ -114,10 +101,6 @@ struct NODebug : public GLDebug {
         UNUSED(loc);
     }
 };
-
-#ifndef HAVE_GL_GET_PROC_ADDRESS
-#warning "glGetProcAddress not defined, OpenGL debug output not available"
-#else
 
 struct ARBDebug : public GLDebug {
     GLsizei message_buffer_length;
@@ -273,8 +256,6 @@ void AMDDebug::printDebugMessages(const DebugLocation& loc) {
                   << "  message: " << message_buffer << std::endl;
     }
 }
-
-#endif
 
 GLDebug *glDebug = new NODebug();
 

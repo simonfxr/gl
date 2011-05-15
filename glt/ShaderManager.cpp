@@ -35,6 +35,7 @@ struct ShaderManager::Data {
     std::vector<std::string> paths;
     ShaderCache cache;
     uint32 shader_version;
+    ShaderProfile shader_profile;
     bool cache_so;
 };
 
@@ -48,6 +49,7 @@ ShaderManager::ShaderManager() :
     self->err = &std::cerr;
     self->verbosity = Info;
     self->shader_version = 0;
+    self->shader_profile = CoreProfile;
     self->cache_so = true;
 }
 
@@ -55,12 +57,20 @@ ShaderManager::~ShaderManager() {
     delete self;
 }
 
-void ShaderManager::setShaderVersion(uint32 vers) {
+void ShaderManager::setShaderVersion(uint32 vers, ShaderProfile prof) {
+    ShaderProfile newprof = CoreProfile;
+    if (prof == CompatibilityProfile)
+        newprof = CompatibilityProfile;
     self->shader_version = vers;
+    self->shader_profile = newprof;
 }
 
-uint32 ShaderManager::shaderVersion() {
+uint32 ShaderManager::shaderVersion() const {
     return self->shader_version;
+}
+
+ShaderManager::ShaderProfile ShaderManager::shaderProfile() const {
+    return self->shader_profile;
 }
 
 ShaderManager::Verbosity ShaderManager::verbosity() const {

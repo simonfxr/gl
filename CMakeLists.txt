@@ -1,6 +1,6 @@
 
-# set(COMP_C clang)
-# set(COMP_CXX clang++)
+# set(COMP_C ${ANA_C})
+# set(COMP_CXX ${ANA_CXX})
 
 # set(CMAKE_C_COMPILER_INIT ${COMP_C})
 
@@ -8,10 +8,6 @@
 # set(CMAKE_CXX_COMPILER ${COMP_CXX})
 
 project(sim-sfml)
-
-#set(CMAKE_CXX_FLAGS "-xHOST -O3 -ipo -no-prec-div -DMATH_INLINE")
-
-#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -O3 -DMATH_INLINE -DDEBUG -DGLDEBUG -march=native -fno-exceptions")
 
 #set(GRAPHITE_OPTS "-floop-strip-mine -floop-block -floop-interchange")
 
@@ -28,6 +24,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 find_package(SFML REQUIRED)
 include_directories(${SFML_INCLUDE_DIR})
 link_libraries(${SFML_LIBRARIES})
+link_directories("/usr/local/lib")
 
 link_libraries(sfml-window sfml-graphics sfml-system)
 

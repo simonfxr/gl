@@ -2,6 +2,7 @@
 #define MAT3_DEFNS_HPP
 
 #include "math/mat3/type.hpp"
+#include "math/mat4/type.hpp"
 #include "math/quat/type.hpp"
 
 MATH_BEGIN_NAMESPACE
@@ -13,6 +14,8 @@ mat3_t mat3(float x) PURE_FUNC;
 mat3_t mat3(const float mat[9]) PURE_FUNC;
 
 mat3_t mat3(const vec3_t& c1, const vec3_t& c2, const vec3_t& c3) PURE_FUNC;
+
+mat3_t mat3(const mat4_t& A) PURE_FUNC;
 
 mat3_t mat3(const quat_t& q) PURE_FUNC;
 
@@ -43,6 +46,8 @@ mat3_t& operator /=(mat3_t& A, float x) MUT_FUNC;
 float determinant(const mat3_t& A) PURE_FUNC;
 
 mat3_t inverse(const mat3_t& A) PURE_FUNC;
+
+mat3_t orthonormalBasis(const mat3_t& A) PURE_FUNC;
 
 vec3_t transform(const mat3_t& A, const vec3_t& v) PURE_FUNC;
 
