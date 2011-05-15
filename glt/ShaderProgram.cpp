@@ -214,10 +214,11 @@ bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, ui
     if ((!ok && LOG_LEVEL(this, OnlyErrors)) || LOG_LEVEL(this, Info)) {
         sm.err() << ", ";
         printShaderLog(shader, sm.err());
-    } else {
+        sm.err() << std::endl;
+    } else if (LOG_LEVEL(this, OnlyErrors)) {
         sm.err() << std::endl;
     }
-
+    
     if (!ok)
         push_error(CompilationFailed);
 
@@ -239,7 +240,7 @@ bool ShaderProgram::addShaderSrc(ShaderType type, const std::string& src) {
     return self->addShader(type, "<unknown>", 1, &str, &length);
 }
 
-bool ShaderProgram::addShaderFile(const std::string& file) {
+bool ShaderProgram::addShaderFile(const std::string& file, bool absolute) {
     const char *begin = file.c_str();
     const char *end = begin + file.length();
 
@@ -257,10 +258,10 @@ bool ShaderProgram::addShaderFile(const std::string& file) {
         return false;
     }
 
-    return addShaderFile(type, file);
+    return addShaderFile(type, file, absolute);
 }
 
-bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
+bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file, bool absolute) {
 
     DependencyHandler depHandler;
     bool success = false;
@@ -279,7 +280,7 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
         proc.installHandler("need", depHandler);
         proc.err(self->sm.err());
 
-        realname = self->sm.lookupPath(file);
+        realname = absolute ? file : self->sm.lookupPath(file);
 
         if (realname.empty()) {
             LOG_ERR(self, "couldnt find file in path: " << file << std::endl);
@@ -299,8 +300,7 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
         }
 
         self->shaders[realname] = ShaderManager::EMPTY_CACHE_ENTRY; // mark as added (prevent recursive adds)
-        cacheEntry = new CachedShaderObject(self->sm, realname);
-        cacheEntry->mtime = mtime;
+        cacheEntry = new CachedShaderObject(self->sm, realname, mtime);
 
         uint32 shader_vers = self->sm.shaderVersion();
         std::string versionStr = "";
@@ -361,13 +361,13 @@ ret:
     return success;
 }
 
-bool ShaderProgram::addShaderFilePair(const std::string& vert_file, const std::string& frag_file) {
-    return addShaderFile(VertexShader, vert_file) &&
-        addShaderFile(FragmentShader, frag_file);   
+bool ShaderProgram::addShaderFilePair(const std::string& vert_file, const std::string& frag_file, bool absolute) {
+    return addShaderFile(VertexShader, vert_file, absolute) &&
+        addShaderFile(FragmentShader, frag_file, absolute);   
 }
 
-bool ShaderProgram::addShaderFilePair(const std::string& basename) {
-    return addShaderFilePair(basename + ".vert", basename + ".frag");
+bool ShaderProgram::addShaderFilePair(const std::string& basename, bool absolute) {
+    return addShaderFilePair(basename + ".vert", basename + ".frag", absolute);
 }
 
 bool ShaderProgram::tryLink() {
@@ -402,7 +402,7 @@ bool ShaderProgram::link() {
     if ((!ok && LOG_LEVEL(self, OnlyErrors)) || LOG_LEVEL(self, Info)) {
         self->sm.err() << ", ";
         printProgramLog(self->program, self->sm.err());
-    } else {
+    } else if (LOG_LEVEL(self, OnlyErrors)) {
         self->sm.err() << std::endl;
     }
 
@@ -506,5 +506,26 @@ bool ShaderProgram::validate(bool printLogOnError) {
 
     return valid == GL_TRUE;
 }
+
+Ref<CachedShaderObject> ShaderProgram::rebuildShaderObject(ShaderManager& sm, Ref<CachedShaderObject>& so) {
+
+    ASSERT(so.ptr() != 0);
+
+    sm.removeFromCache(*so);
+    
+    ShaderProgram prog(sm);
+    if (!prog.addShaderFile(so->key, true)) {
+        return ShaderManager::EMPTY_CACHE_ENTRY;
+    }
+
+    Ref<CachedShaderObject> new_so = prog.self->shaders[so->key];
+    prog.self->shaders.clear();
+    return new_so;
+}
+
+Ref<ShaderManager::CachedShaderObject> rebuildShaderObject(ShaderManager& self, Ref<ShaderManager::CachedShaderObject>& so) {
+    return ShaderProgram::rebuildShaderObject(self, so);
+}
+
 
 } // namespace glt

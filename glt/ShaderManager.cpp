@@ -8,6 +8,8 @@
 
 namespace glt {
 
+extern Ref<ShaderManager::CachedShaderObject> rebuildShaderObject(ShaderManager& self, Ref<ShaderManager::CachedShaderObject>& so);
+
 namespace {
 
 std::string lookupInPath(const std::vector<std::string>& paths, const std::string& file, FILE *& fh) {
@@ -38,6 +40,8 @@ struct ShaderManager::Data {
     uint32 shader_version;
     ShaderProfile shader_profile;
     bool cache_so;
+
+    Ref<CachedShaderObject> rebuildSO(ShaderManager& self, Ref<CachedShaderObject>& so, const fs::MTime& mtime);
 };
 
 ShaderManager::CachedShaderObject::~CachedShaderObject() {
@@ -117,49 +121,54 @@ std::string ShaderManager::lookupPath(const std::string& file) const {
     return name;
 }
 
-Ref<ShaderManager::CachedShaderObject> ShaderManager::lookupShaderObject(const std::string& file, const fs::MTime& mtimeRoot) const {
+Ref<ShaderManager::CachedShaderObject> ShaderManager::Data::rebuildSO(ShaderManager& self, Ref<ShaderManager::CachedShaderObject>& so, const fs::MTime& mtime) {
+    
+    if (mtime != so->mtime)
+        return rebuildShaderObject(self, so);
+
+    Ref<CachedShaderObject> new_so;
+    for (uint32 i = 0; i < so->deps.size(); ++i) {
+        Ref<CachedShaderObject>& child = so->deps[i];
+        Ref<CachedShaderObject> new_child = rebuildSO(self, child, fs::getMTime(child->key));
+        if (new_child.ptr() != child.ptr()) {
+            if (new_child.ptr() == 0)
+                return EMPTY_CACHE_ENTRY;
+            
+            if (new_so.ptr() == 0) {
+                new_so = new CachedShaderObject(self, so->key, mtime);
+                new_so->so = so->so;
+                so->so.handle = 0;
+            }
+            
+            
+            for (uint32 j = new_so->deps.size(); j < i; ++j)
+                new_so->deps.push_back(so->deps[j]);
+            
+            new_so->deps.push_back(new_child);
+        }
+    }
+
+    return new_so.ptr() == 0 ? so : new_so;
+}
+
+Ref<ShaderManager::CachedShaderObject> ShaderManager::lookupShaderObject(const std::string& file, const fs::MTime& mtime) {
     ShaderCache::iterator it = self->cache.find(file);
 
     if (it != self->cache.end()) {
         Ref<CachedShaderObject> ref = it->second.unweak();
-        std::stack<CachedShaderObject *> down;
-        down.push(ref.ptr());
-
-        CachedShaderObject *parent = 0;        
-        while (!down.empty()) {
-            CachedShaderObject *so = down.top();
-            down.pop();
-            
-            fs::MTime mtime;
-            if (parent == 0) {
-                mtime = mtimeRoot;
-            } else {
-                mtime = fs::getMTime(so->key);
-            }
-
-            if (mtime != so->mtime) {
-                std::cerr << so->key << " modified" << std::endl;
-                if (parent == 0) {
-                    self->cache.erase(it);
-                    return EMPTY_CACHE_ENTRY;
-                } else {
-                    ShaderCache::iterator it = self->cache.find(so->key);
-                    if (it != self->cache.end() && it->second.ptr() == so)
-                        self->cache.erase(it);
-                    return EMPTY_CACHE_ENTRY;
-                }
-            }    
-
-            for (uint32 i = 0; i < so->deps.size(); ++i)
-                down.push(so->deps[i].ptr());
-            
-            parent = so;
-        }
-
-        return ref;
+        return self->rebuildSO(*this, ref, mtime);
     }
 
     return EMPTY_CACHE_ENTRY;
+}
+
+bool ShaderManager::removeFromCache(ShaderManager::CachedShaderObject& so) {
+    ShaderCache::iterator it = self->cache.find(so.key);
+    if (it != self->cache.end() && it->second.ptr() == &so) {
+        self->cache.erase(it);
+        return true;
+    }
+    return false;
 }
 
 void ShaderManager::cacheShaderObject(const Ref<ShaderManager::CachedShaderObject>& entry) {

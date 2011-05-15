@@ -29,7 +29,7 @@ void error(const Location& loc, LogLevel lvl, const char *mesg) {
     else
         std::cerr << " message: " << mesg << std::endl;
 
-    if (lvl == FatalError)
+    if (lvl == FatalError || lvl == Assertion || lvl == DebugAssertion)
         abort();
 }
 

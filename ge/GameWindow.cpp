@@ -328,8 +328,8 @@ bool GameWindow::init(const std::string& windowTitle, sf::RenderWindow *win, sf:
                   << "  DepthBits:\t" << c.DepthBits << std::endl
                   << "  StencilBits:\t" << c.StencilBits << std::endl
                   << "  Antialiasing:\t" << c.AntialiasingLevel << std::endl
-#ifdef GLDEBUG
                   << "  CoreProfile:\t" << (c.CoreProfile ? "yes" : "no") << std::endl
+#ifdef GLDEBUG
                   << "  DebugContext:\t" << (c.DebugContext ? "yes" : "no") << std::endl
 #endif
                   << std::endl;

@@ -33,7 +33,7 @@ struct ShaderManager {
         ShaderObject so;
         fs::MTime mtime;
         std::vector<Ref<CachedShaderObject> > deps;
-        CachedShaderObject(ShaderManager& _sm, const std::string& k) : sm(_sm), key(k) {}
+        CachedShaderObject(ShaderManager& _sm, const std::string& k, const fs::MTime& mt) : sm(_sm), key(k), mtime(mt) {}
         ~CachedShaderObject();
     };
 
@@ -53,7 +53,8 @@ struct ShaderManager {
 
     std::string lookupPath(const std::string& basename) const;
 
-    Ref<CachedShaderObject> lookupShaderObject(const std::string& file, const fs::MTime& mtime) const;
+    Ref<CachedShaderObject> lookupShaderObject(const std::string& file, const fs::MTime& mtime);
+    bool removeFromCache(CachedShaderObject& so);
     
     void cacheShaderObject(const Ref<CachedShaderObject>& s);
 
