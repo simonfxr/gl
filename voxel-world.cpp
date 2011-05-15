@@ -191,7 +191,7 @@ std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
 
 bool Anim::onInit() {
     sm.verbosity(glt::ShaderManager::Info);
-    sm.setShaderVersion(330, glt::ShaderManager::CompatibilityProfile);
+    configureShaderVersion(sm);
 
     GLuint vao;
     GL_CHECK(glGenVertexArrays(1, &vao));

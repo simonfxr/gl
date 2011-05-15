@@ -8,6 +8,8 @@
 #include "glt/Ref.hpp"
 #include "glt/ShaderObject.hpp"
 
+#include "fs/fs.hpp"
+
 namespace glt {
 
 struct ShaderManager {
@@ -29,6 +31,7 @@ struct ShaderManager {
     public:
         std::string key;
         ShaderObject so;
+        fs::MTime mtime;
         std::vector<Ref<CachedShaderObject> > deps;
         CachedShaderObject(ShaderManager& _sm, const std::string& k) : sm(_sm), key(k) {}
         ~CachedShaderObject();
@@ -50,7 +53,7 @@ struct ShaderManager {
 
     std::string lookupPath(const std::string& basename) const;
 
-    Ref<CachedShaderObject> lookupShaderObject(const std::string& file) const;
+    Ref<CachedShaderObject> lookupShaderObject(const std::string& file, const fs::MTime& mtime) const;
     
     void cacheShaderObject(const Ref<CachedShaderObject>& s);
 

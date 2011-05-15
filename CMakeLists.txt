@@ -69,8 +69,9 @@ set(MATH_SRC
 
 set(GLT_SRC
 
-  glt/error.hpp
-  glt/error.cpp
+  error/error.hpp
+  error/error.cpp
+
   glt/utils.hpp
   glt/utils.cpp
   glt/ShaderManager.hpp
@@ -107,7 +108,11 @@ set(GLT_SRC
   glt/ShaderObject.cpp
   glt/Ref.hpp
   glt/Mesh.hpp
-  glt/Mesh.cpp)
+  glt/Mesh.cpp
+  
+  fs/fs.hpp
+  fs/fs_unix.hpp
+  fs/fs_unix.cpp)
 
 set(GE_SRC
   ge/GameLoop.hpp

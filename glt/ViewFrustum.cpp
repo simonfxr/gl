@@ -1,5 +1,5 @@
 #include "glt/ViewFrustum.hpp"
-#include "glt/error.hpp"
+#include "error/error.hpp"
 
 #include "math/vec4.hpp"
 #include "math/mat4.hpp"

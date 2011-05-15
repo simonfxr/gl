@@ -1,5 +1,5 @@
 #include "glt/TextureRenderTarget3D.hpp"
-#include "glt/error.hpp"
+#include "error/error.hpp"
 #include "glt/utils.hpp"
 
 namespace glt {

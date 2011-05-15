@@ -43,6 +43,8 @@ add_executable(teapot
 
   ../glt/utils.hpp
   ../glt/utils.cpp
+  ../glt/error.hpp
+  ../glt/error.cpp
   ../glt/ShaderManager.hpp
   ../glt/ShaderManager.cpp
   ../glt/ShaderProgram.hpp

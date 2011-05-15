@@ -1,8 +1,8 @@
-#include "glt/error.hpp"
+#include "error/error.hpp"
 #include <iostream>
 #include <stdlib.h>
 
-namespace glt {
+namespace err {
 
 void error(const Location& loc, LogLevel lvl, const char *mesg) {
     const char *prefix = 0;
@@ -56,4 +56,4 @@ void fatal_error(const char *msg, const char *file, int line, const char *func) 
 }
 
 
-} // namespace glt
+} // namespace err

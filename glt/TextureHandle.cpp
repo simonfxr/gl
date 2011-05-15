@@ -1,6 +1,6 @@
 #include "defs.h"
 #include "glt/TextureHandle.hpp"
-#include "glt/error.hpp"
+#include "error/error.hpp"
 #include "glt/utils.hpp"
 
 

@@ -8,7 +8,7 @@
 #include "math/mat3/type.hpp"
 #include "math/mat4/type.hpp"
 
-#include "glt/error.hpp"
+#include "error/error.hpp"
 
 #include <iostream>
 

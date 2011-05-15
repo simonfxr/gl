@@ -1,18 +1,12 @@
 #include <iostream>
 #include <sstream>
-#include <cstdlib>
 #include <cstring>
-#include <errno.h>
 
 #include "defs.h"
 #include "opengl.h"
 
 #include "glt/utils.hpp"
-#include "glt/error.hpp"
-
-#ifdef SYSTEM_LINUX
-#include <unistd.h>
-#endif
+#include "error/error.hpp"
 
 namespace glt {
 
@@ -290,46 +284,6 @@ bool initDebug() {
     delete glDebug;
     glDebug = dbg;
     return initialized;
-}
-
-void setWorkingDirectory(const char *filename) {
-    uint32 len = strlen(filename);
-    
-    if (len == 0) {
-        ERR("empty filename"); return;
-    }
-
-    const char *dirname = filename;
-
-    if (filename[len - 1] != '/') {
-        char *copy = new char[len + 1];
-        memcpy(copy, filename, len + 1);
-        uint32 i = len;
-        while (i > 0) {
-            --i;
-            if (copy[i] == '/') {
-                copy[i] = '\0';
-                break;
-            }
-        }
-
-        if (i == 0) {
-            ERR("not a directory"); return;
-        }
-
-        dirname = copy;
-    }
-
-#ifdef SYSTEM_UNIX
-    if (chdir(dirname) < 0) {
-        ERR(strerror(errno));
-    }
-#else
-    ERR("couldnt change directory: not implemented");
-#endif
-
-    if (dirname != filename)
-        delete[] dirname;
 }
 
 } // namespace glt

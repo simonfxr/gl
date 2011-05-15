@@ -8,6 +8,7 @@
 #include "defs.h"
 #include "ge/GameLoop.hpp"
 #include "ge/WindowRenderTarget.hpp"
+#include "glt/ShaderManager.hpp"
 
 namespace ge {
 
@@ -55,6 +56,8 @@ struct GameWindow {
     bool focused() const;
 
     float frameDuration() const;
+
+    void configureShaderVersion(glt::ShaderManager& mng) const;
 
     WindowRenderTarget& renderTarget();
 

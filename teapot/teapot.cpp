@@ -213,7 +213,7 @@ sf::ContextSettings Anim::createContextSettings() {
 
 bool Anim::onInit() {
     sm.verbosity(glt::ShaderManager::Info);
-    sm.setShaderVersion(330);
+    configureShaderVersion(sm);
     sm.cacheShaderObjects(false);
 
     rm.setDefaultRenderTarget(&this->renderTarget());

@@ -28,9 +28,6 @@ bool isExtensionSupported(const char *extension);
 
 bool initDebug();
 
-// if filename doesnt have a trailing / then use dirname of filename
-void setWorkingDirectory(const char *filename);
-
 inline const GLubyte *gl_str(const char *str) {
     return reinterpret_cast<const GLubyte *>(str);
 }

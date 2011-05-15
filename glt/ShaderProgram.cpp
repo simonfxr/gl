@@ -9,7 +9,7 @@
 #include "opengl.h"
 #include "glt/ShaderProgram.hpp"
 #include "glt/ShaderManager.hpp"
-#include "glt/error.hpp"
+#include "error/error.hpp"
 #include "glt/utils.hpp"
 #include "glt/Preprocessor.hpp"
 #include "glt/GLSLPreprocessor.hpp"
@@ -33,6 +33,7 @@ struct ShaderProgram::Data {
     ShaderManager& sm;
     ShaderMap shaders; // contains only root shader files and during compilation markers to prevent endless recursive compiles
     CachedShaderObject *parentSO;
+    bool linked;
 
     Data(ShaderManager& _sm) :
         sm(_sm)
@@ -54,6 +55,7 @@ ShaderProgram::ShaderProgram(ShaderManager& sm) :
     self->last_error = NoError;
     self->program = 0;
     self->parentSO = 0;
+    self->linked = false;
 }
 
 ShaderProgram::~ShaderProgram() {
@@ -189,6 +191,8 @@ bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, ui
     if (!createProgram())
         return false;
 
+    linked = false;
+
     GLuint shader;
     GL_CHECK(shader = glCreateShader(shader_type));
     if (shader == 0) {
@@ -284,8 +288,9 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
             return true;
         }
 
+        fs::MTime mtime = fs::getMTime(realname);
         {
-            cacheEntry = self->sm.lookupShaderObject(realname);
+            cacheEntry = self->sm.lookupShaderObject(realname, mtime);
             if (cacheEntry.ptr() != 0) {
                 DEBUG_ASSERT(cacheEntry->key == realname);
                 success = true;
@@ -295,6 +300,7 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file) {
 
         self->shaders[realname] = ShaderManager::EMPTY_CACHE_ENTRY; // mark as added (prevent recursive adds)
         cacheEntry = new CachedShaderObject(self->sm, realname);
+        cacheEntry->mtime = mtime;
 
         uint32 shader_vers = self->sm.shaderVersion();
         std::string versionStr = "";
@@ -373,6 +379,9 @@ bool ShaderProgram::link() {
     if (!self->createProgram())
         return false;
 
+    if (self->linked)
+        return true;
+
     std::set<const Ref<CachedShaderObject> *> added;
     for (ShaderMap::const_iterator it = self->shaders.begin(); it != self->shaders.end(); ++it)
         if (!self->attachShaderObjects(added, it->second))
@@ -396,6 +405,9 @@ bool ShaderProgram::link() {
     } else {
         self->sm.err() << std::endl;
     }
+
+    if (ok)
+        self->linked = true;
 
     return ok;
 }

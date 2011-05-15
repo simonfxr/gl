@@ -5,7 +5,7 @@
 #include "defs.h"
 #include "opengl.h"
 #include "math/math.hpp"
-#include "glt/error.hpp"
+#include "error/error.hpp"
 #include "glt/utils.hpp"
 #include "ge/GameWindow.hpp"
 
@@ -492,6 +492,16 @@ bool GameWindow::focused() const {
 
 float GameWindow::frameDuration() const {
     return SELF->frame_duration;
+}
+
+void GameWindow::configureShaderVersion(glt::ShaderManager& mng) const {
+    const sf::ContextSettings& c = SELF->win->GetSettings();
+    glt::ShaderManager::ShaderProfile prof = c.CoreProfile ?
+        glt::ShaderManager::CoreProfile :
+        glt::ShaderManager::CompatibilityProfile;
+
+    int vers = c.MajorVersion * 100 + c.MinorVersion * 10;
+    mng.setShaderVersion(vers, prof);
 }
 
 WindowRenderTarget& GameWindow::renderTarget() {

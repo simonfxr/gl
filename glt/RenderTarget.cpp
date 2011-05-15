@@ -1,5 +1,5 @@
 #include "glt/RenderTarget.hpp"
-#include "glt/error.hpp"
+#include "error/error.hpp"
 #include "glt/utils.hpp"
 #include "opengl.h"
 
@@ -76,14 +76,13 @@ void RenderTarget::beginScene() {
 }
 
 void RenderTarget::clear(uint32 buffers) {
-    ASSERT_MSG(self->active, "RenderTarget not active");
+    DEBUG_ASSERT_MSG(self->active, "RenderTarget not active");
     buffers &= self->buffers;
     doClear(buffers);
 }
 
 void RenderTarget::draw() {
     DEBUG_ASSERT(self->active);
-    ASSERT_MSG(self->active, "RenderTarget not active");
     doDraw();
 }
 

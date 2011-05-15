@@ -6,7 +6,7 @@
 #include "math/vec3.hpp"
 #include "math/math.hpp"
 
-#include "glt/error.hpp"
+#include "error/error.hpp"
 
 MATH_BEGIN_NAMESPACE
 

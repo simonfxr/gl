@@ -11,6 +11,8 @@
 
 #include "defs.h"
 
+#include "fs/fs.hpp"
+
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
@@ -236,7 +238,7 @@ sf::ContextSettings Game::createContextSettings() {
 
 bool Game::onInit() {
 
-    shaderManager.setShaderVersion(330);
+    configureShaderVersion(shaderManager);
 
     GLuint vao;
     GL_CHECK(glGenVertexArrays(1, &vao));
@@ -846,7 +848,7 @@ int main(int argc, char *argv[]) {
     UNUSED(argc);
 
     if (argv[0] != 0)
-        glt::setWorkingDirectory(argv[0]);
+        fs::cwdBasenameOf(argv[0]);
 
     Game game;
     if (!game.init("sim-sfml")) {

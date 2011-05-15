@@ -9,7 +9,7 @@
 #include "math/vec4/type.hpp"
 #include "glt/color.hpp"
 
-#include "glt/error.hpp"
+#include "error/error.hpp"
 
 namespace glt {
 
