@@ -33,6 +33,7 @@ struct ShaderManager {
         ShaderObject so;
         fs::MTime mtime;
         std::vector<Ref<CachedShaderObject> > deps;
+        std::vector<std::pair<std::string, fs::MTime> > incs;
         CachedShaderObject(ShaderManager& _sm, const std::string& k, const fs::MTime& mt) : sm(_sm), key(k), mtime(mt) {}
         ~CachedShaderObject();
     };

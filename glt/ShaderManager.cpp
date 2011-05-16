@@ -122,8 +122,22 @@ std::string ShaderManager::lookupPath(const std::string& file) const {
 }
 
 Ref<ShaderManager::CachedShaderObject> ShaderManager::Data::rebuildSO(ShaderManager& self, Ref<ShaderManager::CachedShaderObject>& so, const fs::MTime& mtime) {
-    
-    if (mtime != so->mtime)
+
+    bool outdated = false;
+
+    if (mtime != so->mtime) {
+        outdated = true;
+    } else {
+        for (uint32 i = 0; i < so->incs.size(); ++i) {
+            fs::MTime mtime = fs::getMTime(so->incs[i].first);
+            if (mtime != so->incs[i].second) {
+                outdated = true;
+                break;
+            }
+        }
+    }
+
+    if (outdated)
         return rebuildShaderObject(self, so);
 
     Ref<CachedShaderObject> new_so;

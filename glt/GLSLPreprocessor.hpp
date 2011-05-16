@@ -8,6 +8,7 @@
 
 #include "glt/Preprocessor.hpp"
 #include "glt/ShaderManager.hpp"
+#include "fs/fs.hpp"
 
 namespace glt {
 
@@ -49,7 +50,7 @@ struct DependencyHandler : public Preprocessor::DirectiveHandler {
     void directiveEncountered(const Preprocessor::DirectiveContext& ctx);
 };
 
-bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& file, std::vector<Include> *includeBuffer, const std::string& prefixSrc, ShaderContents& shadersrc);
+bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& file, std::vector<Include> *includeBuffer, std::vector<std::pair<std::string, fs::MTime> >& allIncs, const std::string& prefixSrc, ShaderContents& shadersrc);
 
 } // namespace glt
 

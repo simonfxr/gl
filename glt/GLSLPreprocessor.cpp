@@ -135,7 +135,7 @@ void IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext& 
     includes.push_back(inc);
 }
 
-bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& file, std::vector<Include> *includeBuffer, const std::string& prefixSrc, ShaderContents& shadersrc) {
+bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& file, std::vector<Include> *includeBuffer, std::vector<std::pair<std::string, fs::MTime> >& allIncs, const std::string& prefixSrc, ShaderContents& shadersrc) {
 
     std::auto_ptr<std::vector<Include> > localIncBuf(0);
 
@@ -194,9 +194,11 @@ bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& 
                 ERR(("couldnt include file: not found: " + inc.fileToInclude).c_str());
                 return false;
             }
-            
-            if (!preprocess(sm, proc, realname, includeBuffer, "", shadersrc))
+
+            if (!preprocess(sm, proc, realname, includeBuffer, allIncs, "", shadersrc))
                 return false;
+
+            allIncs.push_back(std::make_pair(realname, fs::getMTime(realname)));
         }
     }
 

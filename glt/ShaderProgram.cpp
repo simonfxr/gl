@@ -314,7 +314,7 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file, bool
             versionStr = svers.str();
         }
 
-        if (!preprocess(self->sm, proc, realname, &incHandler.includes, versionStr, shadersrc)) {
+        if (!preprocess(self->sm, proc, realname, &incHandler.includes, cacheEntry->incs, versionStr, shadersrc)) {
             LOG_ERR(self, "couldnt process shader file" << std::endl);
             self->push_error(CompilationFailed);
             goto ret;
