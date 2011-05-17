@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "defs.h"
-#include "opengl.h"
 #include "math/math.hpp"
 #include "error/error.hpp"
 #include "glt/utils.hpp"
@@ -38,83 +37,99 @@ const KeyState KEY_STATE_UP;
 
 } // namespace anon
 
-struct GameWindow::Data : public GameLoop::Game {
+struct GameWindow::Data {
     GameWindow &self;
 
-    bool initialized;
-    
-    GameLoop loop;
-    
-    bool owning_win;
+    const bool owning_win;
     sf::RenderWindow *win;
     
-    bool owning_clock;
-    sf::Clock *clock;
-    
     bool grab_mouse;
-    uint64 game_frame_id;
-    uint64 render_frame_id;
-
-    bool change_pause_state;
-    bool new_pause_state;
-    
     bool have_focus;
     
     KeyState keyStates[sf::Key::Count];
     bool mouseStates[sf::Mouse::ButtonCount];
+    sf::Clock clock;
     
     int32 mouse_x;
     int32 mouse_y;
 
-    float frame_duration;
+    bool show_mouse_cursor;
+    bool accum_mouse_moves;
 
     WindowRenderTarget *renderTarget;
 
-    Data(GameWindow& _self) :
-        self(_self),
-        loop(30)
-        {}
+    WindowEvents events;
+
+    Data(GameWindow& _self, const WindowOpts& opts) :
+        self(_self), owning_win(true),
+        win(new sf::RenderWindow(sf::VideoMode(opts.width, opts.height),
+                                 opts.title,
+                                 sf::Style::Default,
+                                 opts.settings)) {}
     
+    Data(GameWindow& _self, sf::RenderWindow& w) : 
+        self(_self), owning_win(false),  win(&w) {}
+
+        
     ~Data();
 
-    float now();
+    void init();
     void handleInputEvents();
-    void tick();
-    void render(float interpolation);
-    void sleep(float time);
+    float now();
+
+    struct HandleInput;
 };
 
-GameWindow::Data::~Data() {
-    if (owning_win) {
-        delete win; win = 0;
-    }
-
-    if (owning_clock) {
-        delete clock; clock = 0;
-    }
-
-    delete renderTarget; renderTarget = 0;
-}
-
-#define SELF ({                                                         \
-            ASSERT_MSG(self != 0, "self == NULL (not initialized?)");   \
-            self;                                                       \
-        })
-
-GameWindow::GameWindow() :
-    self(0) {}
-    
-GameWindow::~GameWindow() {
-    delete self; self = 0;
-}
-
 float GameWindow::Data::now() {
-    return clock->GetElapsedTime();
+    return clock.GetElapsedTime();
+}
+
+void GameWindow::Data::init() {
+    grab_mouse = false;
+    have_focus = true;
+    show_mouse_cursor = true;
+
+    for (uint32 i = 0; i < ARRAY_LENGTH(keyStates); ++i)
+        keyStates[i] = KEY_STATE_UP;
+
+    for (uint32 i = 0; i < ARRAY_LENGTH(mouseStates); ++i)
+        mouseStates[i] = false;
+
+    mouse_x = 0;
+    mouse_y = 0;
+
+    renderTarget = new WindowRenderTarget(self);
+    win->SetActive();
+
+    if (grab_mouse)
+
+    win->EnableKeyRepeat(false);
+    win->EnableVerticalSync(false);
+
+    // TODO: register handler
+//    renderTarget->resized();
+}
+
+GameWindow::Data::~Data() {
+    if (owning_win) delete win;
+    delete renderTarget;
+}
+
+GameWindow::GameWindow(const WindowOpts& opts) :
+    self(new Data(*this, opts)) { self->init(); }
+
+GameWindow::GameWindow(sf::RenderWindow& win) :
+    self(new Data(*this, win)) { self->init(); }
+
+GameWindow::~GameWindow() {
+    delete self;
+}
+
+bool GameWindow::init() {
+    return true;
 }
 
 void GameWindow::Data::handleInputEvents() {
-
-    frame_duration = 1.f / loop.ticksPerSecond();
 
     int32 mouse_current_x = mouse_x;
     int32 mouse_current_y = mouse_y;
@@ -125,16 +140,10 @@ void GameWindow::Data::handleInputEvents() {
 
     sf::Event e;
     while (win->PollEvent(e)) {
-
-        if (change_pause_state) {
-            change_pause_state = false;
-            loop.pause(new_pause_state);
-            self.pauseStateChanged(new_pause_state);
-        }
         
         switch (e.Type) {
         case sf::Event::Closed:
-            self.requestExit();
+            events.windowClosed.raise(makeEvent(WindowEvent(self)));
             break;
             
         case sf::Event::Resized:
@@ -144,32 +153,43 @@ void GameWindow::Data::handleInputEvents() {
             break;
             
         case sf::Event::KeyPressed:
-            keyStates[int32(e.Key.Code)] = KeyState(self.realTime());
-            self.keyStateChanged(e.Key, true);
+            keyStates[int32(e.Key.Code)] = KeyState(now());
+            events.keyChanged.raise(makeEvent(KeyChanged(self, true, e.Key)));
             break;
             
         case sf::Event::KeyReleased:
             keyStates[int32(e.Key.Code)] = KEY_STATE_UP;
-            self.keyStateChanged(e.Key, false);
+            events.keyChanged.raise(makeEvent(KeyChanged(self, false, e.Key)));
             break;
             
         case sf::Event::MouseMoved:
             mouse_x = e.MouseMove.X;
             mouse_y = e.MouseMove.Y;
+            
+            if (!accum_mouse_moves) {
+                MouseMoved ev(self);
+                ev.x = mouse_current_x = mouse_x;
+                ev.y = mouse_current_y = mouse_y;
+                ev.dx = mouse_current_x - mouse_x;
+                ev.dy = mouse_y - mouse_current_y;
+                if (have_focus && (ev.dx != 0 || ev.dy != 0))
+                    events.mouseMoved.raise(makeEvent(ev));
+            }
+            
             break;
             
         case sf::Event::MouseButtonPressed:
             mouse_x = e.MouseButton.X;
             mouse_y = e.MouseButton.Y;
             mouseStates[int32(e.MouseButton.Button)] = true;
-            self.mouseButtonStateChanged(e.MouseButton, true);
+            events.mouseButton.raise(makeEvent(MouseButton(self, true, e.MouseButton)));
             break;
 
         case sf::Event::MouseButtonReleased:
             mouse_x = e.MouseButton.X;
             mouse_y = e.MouseButton.Y;
             mouseStates[int32(e.MouseButton.Button)] = false;
-            self.mouseButtonStateChanged(e.MouseButton, false);
+            events.mouseButton.raise(makeEvent(MouseButton(self, false, e.MouseButton)));
             break;
             
         case sf::Event::LostFocus:
@@ -177,7 +197,7 @@ void GameWindow::Data::handleInputEvents() {
             if (have_focus) {
                 have_focus = false;
                 win->ShowMouseCursor(true);
-                self.focusChanged(false);
+                events.focusChanged.raise(makeEvent(FocusChanged(self, false)));
             }
             
             break;
@@ -198,14 +218,10 @@ void GameWindow::Data::handleInputEvents() {
 
                     win->SetCursorPosition(mouse_x, mouse_y);
                 }
-            
-                self.focusChanged(true);
+
+                events.focusChanged.raise(makeEvent(FocusChanged(self, true)));
             }
             
-            break;
-
-        default:
-            self.handleInputEvent(e);
             break;
         }
     }
@@ -218,9 +234,7 @@ void GameWindow::Data::handleInputEvents() {
             win->SetCursorPosition(mouse_x, mouse_y);
         }
 
-        renderTarget->resized();
-        self.windowResized(new_w, new_h);
-        
+        events.windowResized.raise(makeEvent(WindowResized(self, new_w, new_h)));
     } else {
 
         int32 dx = mouse_current_x - mouse_x;
@@ -232,148 +246,88 @@ void GameWindow::Data::handleInputEvents() {
                 mouse_y = win->GetHeight() / 2;
                 win->SetCursorPosition(mouse_x, mouse_y);
             }
-            self.mouseMoved(dx, dy);
+
+            MouseMoved ev(self);
+            ev.dx = dx; ev.dy = dy;
+            ev.x = mouse_x; ev.y = mouse_y;
+            events.mouseMoved.raise(makeEvent(ev));
         }
     }
-
-    self.handleInternalEvents();
 }
 
-void GameWindow::Data::tick() {
-    self.animate();
-    ++game_frame_id;
-}
+// bool GameWindow::init(const std::string& windowTitle, sf::RenderWindow *win, sf::Clock *clock) {
 
-void GameWindow::Data::render(float interpolation) {
-    self.renderScene(interpolation);
-    ++render_frame_id;
-}
+//     if (self != 0) {
+//         ERR("GameWindow already initialized");
+//         return false;
+//     }
 
-void GameWindow::Data::sleep(float time) {
-#ifdef HAVE_UNISTD
-    usleep(uint32(time * 1000000));
-#else
-    UNUSED(time);
-#endif
-}
+//     self = new Data(*this);
 
-bool GameWindow::onInit() {
-    return true;
-}
+//     self->owning_clock = clock == 0;
+//     self->clock = clock == 0 ? new sf::Clock : clock;
 
-sf::ContextSettings GameWindow::createContextSettings() {
-    sf::ContextSettings glContext;
-    glContext.MajorVersion = 3;
-    glContext.MinorVersion = 3;
-    glContext.AntialiasingLevel = 0;
-#ifdef GLDEBUG
-    glContext.DebugContext = true;
-#endif
-    return glContext;
-}
+//     float startupT0 = self->clock->GetElapsedTime();
 
-sf::RenderWindow *GameWindow::createRenderWindow(const std::string& title, const sf::ContextSettings& cs) {
-    return new sf::RenderWindow(sf::VideoMode(800, 600), title, sf::Style::Default, cs);
-}
+//     self->initialized = false;
+//     self->grab_mouse = false;
+//     self->game_frame_id = 0;
+//     self->render_frame_id = 0;
+//     self->change_pause_state = false;
+//     self->new_pause_state = false;
+//     self->have_focus = true;
 
-void GameWindow::onExit(int32 exit_code) {
-    UNUSED(exit_code);
-}
+//     for (uint32 i = 0; i < ARRAY_LENGTH(self->keyStates); ++i)
+//         self->keyStates[i] = KEY_STATE_UP;
 
-bool GameWindow::init(const std::string& windowTitle, sf::RenderWindow *win, sf::Clock *clock) {
+//     for (uint32 i = 0; i < ARRAY_LENGTH(self->mouseStates); ++i)
+//         self->mouseStates[i] = false;
 
-    if (self != 0) {
-        ERR("GameWindow already initialized");
-        return false;
-    }
+//     self->mouse_x = 0;
+//     self->mouse_y = 0;
 
-    self = new Data(*this);
+//     self->frame_duration = 0.f;
 
-    self->owning_clock = clock == 0;
-    self->clock = clock == 0 ? new sf::Clock : clock;
-
-    float startupT0 = self->clock->GetElapsedTime();
-
-    self->initialized = false;
-    self->grab_mouse = false;
-    self->game_frame_id = 0;
-    self->render_frame_id = 0;
-    self->change_pause_state = false;
-    self->new_pause_state = false;
-    self->have_focus = true;
-
-    for (uint32 i = 0; i < ARRAY_LENGTH(self->keyStates); ++i)
-        self->keyStates[i] = KEY_STATE_UP;
-
-    for (uint32 i = 0; i < ARRAY_LENGTH(self->mouseStates); ++i)
-        self->mouseStates[i] = false;
-
-    self->mouse_x = 0;
-    self->mouse_y = 0;
-
-    self->frame_duration = 0.f;
-
-    self->owning_win = win == 0;
-    self->win = win == 0 ? createRenderWindow(windowTitle, createContextSettings()) : win;
-    self->renderTarget = new WindowRenderTarget(*this);
+//     self->owning_win = win == 0;
+//     self->win = win == 0 ? createRenderWindow(windowTitle, createContextSettings()) : win;
+//     self->renderTarget = new WindowRenderTarget(*this);
     
-    if (self->win != 0) {
-        self->win->SetTitle(windowTitle);
-        self->win->SetActive();
+//     if (self->win != 0) {
+//         self->win->SetTitle(windowTitle);
+//         self->win->SetActive();
 
-        const sf::ContextSettings& c = self->win->GetSettings();
 
-        std::cerr << "Initialized OpenGL Context"<< std::endl
-                  << "  Version:\t" << c.MajorVersion << "." << c.MinorVersion << std::endl
-                  << "  DepthBits:\t" << c.DepthBits << std::endl
-                  << "  StencilBits:\t" << c.StencilBits << std::endl
-                  << "  Antialiasing:\t" << c.AntialiasingLevel << std::endl
-                  << "  CoreProfile:\t" << (c.CoreProfile ? "yes" : "no") << std::endl
-#ifdef GLDEBUG
-                  << "  DebugContext:\t" << (c.DebugContext ? "yes" : "no") << std::endl
-#endif
-                  << std::endl;
 
-        GLenum err = glewInit();
-        if (GLEW_OK != err) {
-            std::cerr << "GLEW Error: " << glewGetErrorString(err) << std::endl;
-            goto post_init;
-        }
+// #ifdef GLDEBUG
+//         if (window().GetSettings().DebugContext)
+//             glt::initDebug();
+// #endif
 
-#ifdef GLDEBUG
-        if (window().GetSettings().DebugContext)
-            glt::initDebug();
-#endif
-
-        window().EnableVerticalSync(false);
+//         window().EnableVerticalSync(false);
         
-        self->initialized = onInit();
-    }
+//         self->initialized = onInit();
+//     }
 
-post_init:;
+// post_init:;
 
-    if (!self->initialized) {
-        delete self;
-        self = 0;
+//     if (!self->initialized) {
+//         delete self;
+//         self = 0;
 
-        ERR("initialization failed");
-        return false;
-    }
+//         ERR("initialization failed");
+//         return false;
+//     }
 
-    if (self->grab_mouse)
-        self->win->ShowMouseCursor(false);
-    
-    self->win->EnableKeyRepeat(false);
 
-    float startupTime = self->clock->GetElapsedTime() - startupT0;
+//     float startupTime = self->clock->GetElapsedTime() - startupT0;
 
-    std::cerr << "successfully initialized in " << uint32(startupTime * 1000) << " ms" << std::endl;
+//     std::cerr << "successfully initialized in " << uint32(startupTime * 1000) << " ms" << std::endl;
 
-    return true;
-}
+//     return true;
+// }
 
 bool GameWindow::isKeyDown(sf::Key::Code key) {
-    KeyState s = SELF->keyStates[int32(key)];
+    KeyState s = self->keyStates[int32(key)];
     return s != KEY_STATE_UP;
 }
 
@@ -381,131 +335,69 @@ bool GameWindow::isButtonDown(sf::Mouse::Button button) {
     return self->mouseStates[int32(button)];
 }
 
-int32 GameWindow::run() {
-    
-    if (self == 0 || !self->initialized) {
-        ERR("GameWindow not initialized");
-        return -1;
-    }
-    
-    int32 e = self->loop.run(*self);
-    onExit(e);
-    
-    return e;
-}
-
-float GameWindow::now() const {
-    return SELF->now();
-}
-
-void GameWindow::handleInputEvent(sf::Event& event) {
-    UNUSED(event);
-}
-
-void GameWindow::focusChanged(bool haveFocus) {
-    UNUSED(haveFocus);
-}
-
-void GameWindow::pauseStateChanged(bool isNowPaused) {
-    UNUSED(isNowPaused);
-}
-
-void GameWindow::windowResized(uint32 width, uint32 height) {
-    UNUSED(width); UNUSED(height);
-}
-
-void GameWindow::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
-    UNUSED(key); UNUSED(pressed);
-}
-
-void GameWindow::mouseMoved(int32 dx, int32 dy) {
-    UNUSED(dx); UNUSED(dy);
-}
-
-void GameWindow::mouseButtonStateChanged(const sf::Event::MouseButtonEvent& button, bool pressed) {
-    UNUSED(button); UNUSED(pressed);
-}
-
-void GameWindow::handleInternalEvents() {
-
-}
-
-float GameWindow::gameTime() const {
-    return SELF->loop.gameTime();
-}
-    
-float GameWindow::realTime() const {
-    return SELF->loop.realTime();
-}
-    
-void GameWindow::requestExit(int32 exit_code) {
-    SELF->loop.exit(exit_code);
-}
-
 void GameWindow::grabMouse(bool grab) {
-    SELF->grab_mouse = grab;
+    self->grab_mouse = grab;
 }
-    
-void GameWindow::pause(bool pauseGame)  {
-    UNUSED(SELF);
-    if (pauseGame != paused()) {
-        SELF->change_pause_state = true;
-        SELF->new_pause_state = pauseGame;
+
+bool GameWindow::grabMouse() const {
+    return self->grab_mouse;
+}
+
+void GameWindow::showMouseCursor(bool show) {
+    if (show != self->show_mouse_cursor) {
+        self->show_mouse_cursor = show;
+        self->win->ShowMouseCursor(show);
     }
 }
 
-sf::RenderWindow& GameWindow::window() {
-    return *SELF->win;
+bool GameWindow::showMouseCursor() const {
+    return self->show_mouse_cursor;
 }
 
-void GameWindow::ticksPerSecond(uint32 ticks) { 
-    SELF->loop.updateTicksPerSecond(ticks);
+void GameWindow::accumulateMouseMoves(bool accum) {
+    self->accum_mouse_moves = accum;
 }
 
-void GameWindow::maxDrawFramesSkipped(uint32 ticks) {
-    SELF->loop.updateMaxDrawFramesSkipped(ticks);
+bool GameWindow::accumulateMouseMoves() {
+    return self->accum_mouse_moves;
 }
     
-void GameWindow::maxFPS(uint32 fps) {
-    SELF->loop.updateMaxFPS(fps);
-}
-
-void GameWindow::synchronizeDrawing(bool sync) {
-    SELF->loop.sync(sync);
-}
-
-uint64 GameWindow::currentFrameID() const {
-    return SELF->game_frame_id;
-}
-
-uint64 GameWindow::currentRenderFrameID() const {
-    return SELF->render_frame_id;
-}
-
-bool GameWindow::paused() const {
-    return SELF->change_pause_state ? SELF->new_pause_state : SELF->loop.paused();
+sf::RenderWindow& GameWindow::window() {
+    return *self->win;
 }
 
 bool GameWindow::focused() const {
-    return SELF->have_focus;
+    return self->have_focus;
 }
 
-float GameWindow::frameDuration() const {
-    return SELF->frame_duration;
+// void GameWindow::configureShaderVersion(glt::ShaderManager& mng) const {
+//     const sf::ContextSettings& c = self->win->GetSettings();
+//     glt::ShaderManager::ShaderProfile prof = c.CoreProfile ?
+//         glt::ShaderManager::CoreProfile :
+//         glt::ShaderManager::CompatibilityProfile;
+
+//     int vers = c.MajorVersion * 100 + c.MinorVersion * 10;
+//     mng.setShaderVersion(vers, prof);
+// }
+
+WindowRenderTarget& GameWindow::renderTarget(){
+    return *self->renderTarget;
 }
 
-void GameWindow::configureShaderVersion(glt::ShaderManager& mng) const {
-    const sf::ContextSettings& c = SELF->win->GetSettings();
-    glt::ShaderManager::ShaderProfile prof = c.CoreProfile ?
-        glt::ShaderManager::CoreProfile :
-        glt::ShaderManager::CompatibilityProfile;
-
-    int vers = c.MajorVersion * 100 + c.MinorVersion * 10;
-    mng.setShaderVersion(vers, prof);
+WindowEvents& GameWindow::events() {
+    return self->events;
 }
 
-WindowRenderTarget& GameWindow::renderTarget() {
-    return *SELF->renderTarget;
+struct GameWindow::Data::HandleInput : public EventHandler<EngineEvent> {
+    Data& win;
+    HandleInput(Data& w) : win(w) {}    
+    void handle(const Event<EngineEvent>&) {
+        win.handleInputEvents();
+    }
+};
+
+void GameWindow::registerHandlers(EngineEvents& evnts) {
+    evnts.handleInput.registerHandler(glt::Ref<EventHandler<EngineEvent> >(new Data::HandleInput(*self)));
 }
 
 } // namespace ge

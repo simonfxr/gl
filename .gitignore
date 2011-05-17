@@ -1,6 +1,7 @@
 /libgltools.so
 /sim-sfml
 /voxel-world
+/engine-test
 /CMakeCache.txt
 /CMakeFiles
 /cmake_install.cmake

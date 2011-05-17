@@ -82,8 +82,10 @@ public:
     const T *ptr() const { return _ptr; }
     T *ptr() { return _ptr; }
 
-    bool operator ==(const R& ref) const { return _cnt == ref._cnt; }
-    bool operator !=(const R& ref) const { return !(*this == ref); }
+    bool equals(const R& ref) const { return _cnt == ref._cnt; }
+
+    bool operator ==(const T *p) const { return _ptr == p; }
+    bool operator !=(const T *p) const { return _ptr != p; }
 };
 
 struct RefCnt {
@@ -109,6 +111,7 @@ struct Ref : public priv::RefBase<T, priv::RefCnt, Ref<T> > {
     Ref(const Ref<T>& ref) : priv::RefBase<T, priv::RefCnt, Ref<T> >(ref) {}
     Ref<T>& operator =(T *p) { this->set(p); return *this; }
     WeakRef<T> weak() const;
+    operator bool() const { return this->_ptr != 0; }
 private:
     Ref(T *p, atomic::Counter *cnt) : priv::RefBase<T, priv::RefCnt, Ref<T> >(p, cnt) {}
     friend struct WeakRef<T>;
@@ -133,6 +136,9 @@ Ref<T> WeakRef<T>::unweak() const {
     ASSERT(this->valid());
     return Ref<T>(this->_ptr, this->_cnt);
 }
+
+template <typename T>
+Ref<T> makeRef(T *p) { return Ref<T>(p); }
 
 } // namespace glt
 

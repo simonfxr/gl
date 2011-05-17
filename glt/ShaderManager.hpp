@@ -12,6 +12,8 @@
 
 namespace glt {
 
+struct ShaderProgram;
+
 struct ShaderManager {
 
     enum Verbosity {
@@ -43,6 +45,9 @@ struct ShaderManager {
     ShaderManager();
     ~ShaderManager();
 
+    Ref<ShaderProgram> program(const std::string& name) const;
+    void addProgram(const std::string& name, Ref<ShaderProgram>& program);
+
     Verbosity verbosity() const;
     void verbosity(Verbosity v);
 
@@ -59,7 +64,7 @@ struct ShaderManager {
     
     void cacheShaderObject(const Ref<CachedShaderObject>& s);
 
-    void setShaderVersion(uint32 vers, ShaderProfile profile = CoreProfile); // e.g. 330
+    void setShaderVersion(uint32 vers /* e.g. 330 */, ShaderProfile profile = CoreProfile);
     uint32 shaderVersion() const;
     ShaderProfile shaderProfile() const;
 

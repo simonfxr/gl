@@ -12,7 +12,9 @@ GameLoop::GameLoop(uint32 ticks_per_second, uint32 max_frame_skip, uint32 max_fp
       _paused(false),
       _sync(false),
       _now(0.f),
-      _exit_code(0)
+      _exit_code(0),
+      _animation_frame_id(0),
+      _render_frame_id(0)      
 {}
 
 void GameLoop::exit(int32 exit_code) {
@@ -44,6 +46,8 @@ int32 GameLoop::run(GameLoop::Game& logic) {
         const float draw_tick_length = _sync || _max_fps == 0 ? 0.f : 1.f / _max_fps;
         const uint32 loops_max       = _sync ? 1 : _max_frame_skip == 0 ? 0xFFFFFFFFUL : _max_frame_skip;
         const bool syncDraw = _sync;
+
+        _frame_duration = tick_length;
         
         uint32 loops = 0;
 
@@ -70,10 +74,12 @@ int32 GameLoop::run(GameLoop::Game& logic) {
 
             tick:
 
-                if (likely(!_paused))
+                if (likely(!_paused)) {
                     logic.tick();
-                else
+                    ++_animation_frame_id;
+                } else {
                     _skipped_time += tick_length;
+                }
                 
                 next_game_tick += tick_length;
                 ++loops;
@@ -112,7 +118,8 @@ int32 GameLoop::run(GameLoop::Game& logic) {
             } else {
                 logic.render(0.f);
             }
-            
+
+            ++_render_frame_id;            
             next_draw_tick += draw_tick_length;
         }
 

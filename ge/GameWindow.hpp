@@ -1,101 +1,114 @@
-#ifndef GAMEWINDOW_HPP
-#define GAMEWINDOW_HPP
+#ifndef GE_GAMEWINDOW_HPP
+#define GE_GAMEWINDOW_HPP
 
 #include <string>
 
 #include <SFML/Graphics.hpp>
 
 #include "defs.h"
-#include "ge/GameLoop.hpp"
 #include "ge/WindowRenderTarget.hpp"
-#include "glt/ShaderManager.hpp"
+#include "ge/Event.hpp"
+#include "ge/EngineEvents.hpp"
 
 namespace ge {
 
+struct WindowEvent {
+    GameWindow& window;
+    WindowEvent(GameWindow& win) : window(win) {}
+};
+
+struct WindowResized : public WindowEvent {
+    uint32 width, height;
+    WindowResized(GameWindow& win, uint32 w, uint32 h) :
+        WindowEvent(win), width(w), height(h) {}
+};
+
+struct KeyChanged : public WindowEvent {
+    sf::Event::KeyEvent key;
+    bool pressed;
+    KeyChanged(GameWindow& win, bool press, const sf::Event::KeyEvent& e) :
+        WindowEvent(win), key(e), pressed(press) {}
+};
+
+struct MouseMoved : public WindowEvent {
+    int32 dx, dy;
+    uint32 x, y;
+    MouseMoved(GameWindow& win) : WindowEvent(win) {}
+};
+
+struct MouseButton : public WindowEvent {
+    uint32 x, y;
+    bool pressed;
+    sf::Event::MouseButtonEvent button;
+    MouseButton(GameWindow& win, bool press, const sf::Event::MouseButtonEvent& butn) :
+        WindowEvent(win), pressed(press), button(butn) {}
+};
+
+struct FocusChanged : public WindowEvent {
+    bool focused;
+    FocusChanged(GameWindow& win, bool focus) : WindowEvent(win), focused(focus) {}
+};
+
+struct WindowEvents {
+    EventSource<WindowEvent> windowClosed;
+    EventSource<FocusChanged> focusChanged;
+    EventSource<WindowResized> windowResized;
+    EventSource<KeyChanged> keyChanged;
+    EventSource<MouseMoved> mouseMoved;
+    EventSource<MouseButton> mouseButton;
+};
+
+struct WindowOpts {
+    uint32 width;
+    uint32 height;
+    std::string title;
+    sf::ContextSettings settings;
+    
+    WindowOpts() :
+        width(640),
+        height(480),
+        title(""),
+        settings(24, 0, 0, 3, 3)
+        {}
+};
+
 struct GameWindow {
-    GameWindow();
-    
-    virtual ~GameWindow();
-
-    float now() const;
-
-    float gameTime() const;
-    
-    float realTime() const;
-
-    bool init(const std::string& windowTitle, sf::RenderWindow *win = 0, sf::Clock *clock = 0);
+    GameWindow(sf::RenderWindow& win);
+    GameWindow(const WindowOpts& opts = WindowOpts());
+    ~GameWindow();
 
     bool isKeyDown(sf::Key::Code key);
     
     bool isButtonDown(sf::Mouse::Button button);
 
-    void requestExit(int32 exit_code = 0);
-
     void grabMouse(bool grab = true);
-    
-    void pause(bool pauseGame = true);
+    bool grabMouse() const;
+
+    void showMouseCursor(bool show = true);
+    bool showMouseCursor() const;
+
+    void accumulateMouseMoves(bool accum = true);
+    bool accumulateMouseMoves();
     
     sf::RenderWindow& window();
 
-    int32 run();
-
-    void ticksPerSecond(uint32 ticks);
-    
-    void maxDrawFramesSkipped(uint32 ticks);
-    
-    void maxFPS(uint32 fps);
-
-    void synchronizeDrawing(bool sync);
-
-    uint64 currentFrameID() const;
-    
-    uint64 currentRenderFrameID() const;
-
-    bool paused() const;
-
     bool focused() const;
 
-    float frameDuration() const;
-
-    void configureShaderVersion(glt::ShaderManager& mng) const;
+    bool init();
 
     WindowRenderTarget& renderTarget();
+
+    WindowEvents& events();
+
+    void registerHandlers(EngineEvents& evnts);
 
 private:
     
     GameWindow(const GameWindow& _);
     GameWindow& operator =(const GameWindow& _);
 
-    virtual bool onInit();
-
-    virtual sf::ContextSettings createContextSettings();
-
-    virtual sf::RenderWindow *createRenderWindow(const std::string& windowTitle, const sf::ContextSettings& ctxconf);
-    
-    virtual void onExit(int32 exit_code);
-
-    virtual void animate() = 0;
-    
-    virtual void renderScene(float interpolation) = 0;
-    
-    virtual void handleInputEvent(sf::Event& event);
-    
-    virtual void focusChanged(bool haveFocus);
-    
-    virtual void pauseStateChanged(bool isNowPaused);
-    
-    virtual void windowResized(uint32 width, uint32 height);
-    
-    virtual void keyStateChanged(const sf::Event::KeyEvent& key, bool pressed);
-    
-    virtual void mouseMoved(int32 dx, int32 dy);
-    
-    virtual void mouseButtonStateChanged(const sf::Event::MouseButtonEvent& button, bool pressed);
-    
-    virtual void handleInternalEvents();
-
     struct Data;
-    Data *self;
+    Data * const self;
 };
 
 } // namespace ge

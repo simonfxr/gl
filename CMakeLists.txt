@@ -16,7 +16,7 @@ project(sim-sfml)
 #set(CMAKE_LDFLAGS "${CMAKE_CXX_FLAGS}")
 
 add_definitions("-Wall -Wextra -Wno-switch -fno-exceptions -fno-rtti")
-add_definitions("-march=native -O3")
+#add_definitions("-march=native -O3")
 
 #set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb")
 
@@ -120,7 +120,15 @@ set(GE_SRC
   ge/GameWindow.hpp
   ge/GameWindow.cpp
   ge/WindowRenderTarget.hpp
-  ge/WindowRenderTarget.cpp)
+  ge/WindowRenderTarget.cpp
+  ge/Event.hpp
+  ge/EngineEvents.hpp
+  ge/Engine.hpp
+  ge/Engine.cpp
+  ge/CommandProcessor.hpp
+  ge/CommandProcessor.cpp
+  ge/Init.hpp
+  ge/Init.cpp)
 
 add_executable(sim-sfml
   sim-sfml.cpp
@@ -134,6 +142,14 @@ add_executable(sim-sfml
 
 add_executable(voxel-world
   voxel-world.cpp
+  defs.h
+  
+  ${MATH_SRC}
+  ${GLT_SRC}
+  ${GE_SRC})
+
+add_executable(engine-test
+  engine-test.cpp
   defs.h
   
   ${MATH_SRC}

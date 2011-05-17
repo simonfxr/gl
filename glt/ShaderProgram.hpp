@@ -1,5 +1,5 @@
-#ifndef _SHADER_PROGRAM_H
-#define _SHADER_PROGRAM_H
+#ifndef GLT_SHADER_PROGRAM_HPP
+#define GLT_SHADER_PROGRAM_HPP
 
 #include <string>
 #include <iostream>
