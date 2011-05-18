@@ -1,10 +1,10 @@
 #include "defs.h"
 #include "glt/ShaderManager.hpp"
+#include "glt/ShaderProgram.hpp"
 #include <iostream>
 
 #include <map>
 #include <cstdio>
-#include <stack>
 
 namespace glt {
 
@@ -30,13 +30,18 @@ std::string lookupInPath(const std::vector<std::string>& paths, const std::strin
 
 const Ref<ShaderManager::CachedShaderObject> ShaderManager::EMPTY_CACHE_ENTRY(0);
 
+const Ref<ShaderProgram> NULL_PROGRAM_REF(0);
+
 typedef std::map<std::string, WeakRef<ShaderManager::CachedShaderObject> > ShaderCache;
+
+typedef std::map<std::string, Ref<ShaderProgram> > ProgramMap;
 
 struct ShaderManager::Data {
     Verbosity verbosity;
     std::ostream *err;
     std::vector<std::string> paths;
     ShaderCache cache;
+    ProgramMap programs;
     uint32 shader_version;
     ShaderProfile shader_profile;
     bool cache_so;
@@ -86,6 +91,24 @@ ShaderManager::Verbosity ShaderManager::verbosity() const {
 
 void ShaderManager::verbosity(ShaderManager::Verbosity v) {
     self->verbosity = v;
+}
+
+Ref<ShaderProgram> ShaderManager::program(const std::string& name) const {
+    ProgramMap::const_iterator it = self->programs.find(name);
+    if (it != self->programs.end())
+        return it->second;
+    return NULL_PROGRAM_REF;
+}
+
+void ShaderManager::addProgram(const std::string& name, Ref<ShaderProgram>& program) {
+    ASSERT(program);
+    self->programs[name] = program;
+}
+
+void ShaderManager::reloadShaders() {
+    ProgramMap::iterator it = self->programs.begin();
+    for (; it != self->programs.end(); ++it)
+        it->second->reload();
 }
 
 std::ostream& ShaderManager::err() const {

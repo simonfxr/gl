@@ -67,6 +67,10 @@ set(MATH_SRC
   math/quat.hpp
   math/quat/impl.cpp)
 
+set(DATA_SRC
+  data/Ref.hpp
+  data/Array.hpp)
+
 set(GLT_SRC
 
   error/error.hpp
@@ -106,7 +110,6 @@ set(GLT_SRC
   glt/TextureRenderTarget3D.cpp
   glt/ShaderObject.hpp
   glt/ShaderObject.cpp
-  glt/Ref.hpp
   glt/Mesh.hpp
   glt/Mesh.cpp
   
@@ -125,10 +128,18 @@ set(GE_SRC
   ge/EngineEvents.hpp
   ge/Engine.hpp
   ge/Engine.cpp
-  ge/CommandProcessor.hpp
-  ge/CommandProcessor.cpp
   ge/Init.hpp
-  ge/Init.cpp)
+  ge/Init.cpp
+  ge/Command.hpp
+  ge/Command.cpp
+  ge/Commands.hpp
+  ge/Commands.cpp
+  ge/CommandArgs.hpp
+  ge/CommandArgs.cpp
+  ge/CommandRegistry.hpp
+  ge/CommandRegistry.cpp
+  ge/Tokenizer.hpp
+  ge/Tokenizer.cpp)
 
 add_executable(sim-sfml
   sim-sfml.cpp
@@ -137,6 +148,7 @@ add_executable(sim-sfml
   sim.cpp
   
   ${MATH_SRC}
+  ${DATA_SRC}
   ${GLT_SRC}
   ${GE_SRC})
 
@@ -145,6 +157,7 @@ add_executable(voxel-world
   defs.h
   
   ${MATH_SRC}
+  ${DATA_SRC}
   ${GLT_SRC}
   ${GE_SRC})
 
@@ -153,5 +166,6 @@ add_executable(engine-test
   defs.h
   
   ${MATH_SRC}
+  ${DATA_SRC}
   ${GLT_SRC}
   ${GE_SRC})

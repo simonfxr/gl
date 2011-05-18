@@ -7,6 +7,7 @@
 #include "error/error.hpp"
 #include "glt/utils.hpp"
 #include "ge/GameWindow.hpp"
+#include "ge/Event.hpp"
 
 #ifdef SYSTEM_UNIX
 #define HAVE_UNISTD
@@ -15,25 +16,37 @@
 
 namespace ge {
 
-struct KeyState {
+struct KeyAge {
+    bool down;
     float keyAge;
 
-    KeyState() : keyAge(math::POS_INF) {}
+    KeyAge() : down(false), keyAge(math::POS_INF) {}
     
-    KeyState(float age) : keyAge(age) {}
+    KeyAge(bool dn, float age) : down(dn), keyAge(age) {}
 
-    bool operator ==(const KeyState& ks) const {
+    bool operator ==(const KeyAge& ks) const {
         return keyAge == ks.keyAge;
     }
 
-    bool operator !=(const KeyState& ks) const {
+    bool operator !=(const KeyAge& ks) const {
         return !(*this == ks);
+    }
+
+    KeyState keyState(float frame_time) const {
+        if (keyAge == frame_time)
+            return down ? Pressed : Released;
+        else
+            return down ? Down : Up;
     }
 };
 
 namespace {
 
-const KeyState KEY_STATE_UP;
+const KeyAge KEY_AGE_UP;
+
+static void resizeRenderTarget(const Event<WindowResized>& e) {
+    e.info.window.renderTarget().resized();
+}
 
 } // namespace anon
 
@@ -45,9 +58,11 @@ struct GameWindow::Data {
     
     bool grab_mouse;
     bool have_focus;
+
+    float frame_time;
     
-    KeyState keyStates[sf::Key::Count];
-    bool mouseStates[sf::Mouse::ButtonCount];
+    KeyAge keyStates[sf::Key::Count];
+    KeyAge mouseStates[sf::Mouse::ButtonCount];
     sf::Clock clock;
     
     int32 mouse_x;
@@ -69,7 +84,6 @@ struct GameWindow::Data {
     
     Data(GameWindow& _self, sf::RenderWindow& w) : 
         self(_self), owning_win(false),  win(&w) {}
-
         
     ~Data();
 
@@ -77,7 +91,7 @@ struct GameWindow::Data {
     void handleInputEvents();
     float now();
 
-    struct HandleInput;
+    static void runHandleInputEvents(Data *, const Event<EngineEvent>&);
 };
 
 float GameWindow::Data::now() {
@@ -88,12 +102,13 @@ void GameWindow::Data::init() {
     grab_mouse = false;
     have_focus = true;
     show_mouse_cursor = true;
+    frame_time = -1.f;
 
     for (uint32 i = 0; i < ARRAY_LENGTH(keyStates); ++i)
-        keyStates[i] = KEY_STATE_UP;
+        keyStates[i] = KEY_AGE_UP;
 
     for (uint32 i = 0; i < ARRAY_LENGTH(mouseStates); ++i)
-        mouseStates[i] = false;
+        mouseStates[i] = KEY_AGE_UP;
 
     mouse_x = 0;
     mouse_y = 0;
@@ -106,8 +121,7 @@ void GameWindow::Data::init() {
     win->EnableKeyRepeat(false);
     win->EnableVerticalSync(false);
 
-    // TODO: register handler
-//    renderTarget->resized();
+    events.windowResized.registerHandler(makeEventHandler(resizeRenderTarget));
 }
 
 GameWindow::Data::~Data() {
@@ -134,6 +148,8 @@ void GameWindow::Data::handleInputEvents() {
     int32 mouse_current_x = mouse_x;
     int32 mouse_current_y = mouse_y;
 
+    frame_time = now();
+
     bool was_resize = false;
     uint32 new_w = 0;
     uint32 new_h = 0;
@@ -153,12 +169,12 @@ void GameWindow::Data::handleInputEvents() {
             break;
             
         case sf::Event::KeyPressed:
-            keyStates[int32(e.Key.Code)] = KeyState(now());
+            keyStates[int32(e.Key.Code)] = KeyAge(true, frame_time);
             events.keyChanged.raise(makeEvent(KeyChanged(self, true, e.Key)));
             break;
             
         case sf::Event::KeyReleased:
-            keyStates[int32(e.Key.Code)] = KEY_STATE_UP;
+            keyStates[int32(e.Key.Code)] = KeyAge(false, frame_time);
             events.keyChanged.raise(makeEvent(KeyChanged(self, false, e.Key)));
             break;
             
@@ -181,14 +197,14 @@ void GameWindow::Data::handleInputEvents() {
         case sf::Event::MouseButtonPressed:
             mouse_x = e.MouseButton.X;
             mouse_y = e.MouseButton.Y;
-            mouseStates[int32(e.MouseButton.Button)] = true;
+            mouseStates[int32(e.MouseButton.Button)] = KeyAge(true, frame_time);
             events.mouseButton.raise(makeEvent(MouseButton(self, true, e.MouseButton)));
             break;
 
         case sf::Event::MouseButtonReleased:
             mouse_x = e.MouseButton.X;
             mouse_y = e.MouseButton.Y;
-            mouseStates[int32(e.MouseButton.Button)] = false;
+            mouseStates[int32(e.MouseButton.Button)] = KeyAge(false, frame_time);
             events.mouseButton.raise(makeEvent(MouseButton(self, false, e.MouseButton)));
             break;
             
@@ -326,13 +342,14 @@ void GameWindow::Data::handleInputEvents() {
 //     return true;
 // }
 
-bool GameWindow::isKeyDown(sf::Key::Code key) {
-    KeyState s = self->keyStates[int32(key)];
-    return s != KEY_STATE_UP;
+KeyState GameWindow::keyState(sf::Key::Code key) const {
+    if (int32(key) >= int32(sf::Key::Count)) return Up;
+    return self->keyStates[int32(key)].keyState(self->frame_time);
 }
 
-bool GameWindow::isButtonDown(sf::Mouse::Button button) {
-    return self->mouseStates[int32(button)];
+KeyState GameWindow::mouseButtonState(sf::Mouse::Button button) const {
+    if (int32(button) >= int32(sf::Mouse::ButtonCount)) return Up;
+    return self->mouseStates[int32(button)].keyState(self->frame_time);
 }
 
 void GameWindow::grabMouse(bool grab) {
@@ -370,16 +387,6 @@ bool GameWindow::focused() const {
     return self->have_focus;
 }
 
-// void GameWindow::configureShaderVersion(glt::ShaderManager& mng) const {
-//     const sf::ContextSettings& c = self->win->GetSettings();
-//     glt::ShaderManager::ShaderProfile prof = c.CoreProfile ?
-//         glt::ShaderManager::CoreProfile :
-//         glt::ShaderManager::CompatibilityProfile;
-
-//     int vers = c.MajorVersion * 100 + c.MinorVersion * 10;
-//     mng.setShaderVersion(vers, prof);
-// }
-
 WindowRenderTarget& GameWindow::renderTarget(){
     return *self->renderTarget;
 }
@@ -388,16 +395,12 @@ WindowEvents& GameWindow::events() {
     return self->events;
 }
 
-struct GameWindow::Data::HandleInput : public EventHandler<EngineEvent> {
-    Data& win;
-    HandleInput(Data& w) : win(w) {}    
-    void handle(const Event<EngineEvent>&) {
-        win.handleInputEvents();
-    }
-};
+void GameWindow::Data::runHandleInputEvents(Data *win, const Event<EngineEvent>&) {
+    win->handleInputEvents();
+}
 
 void GameWindow::registerHandlers(EngineEvents& evnts) {
-    evnts.handleInput.registerHandler(glt::Ref<EventHandler<EngineEvent> >(new Data::HandleInput(*self)));
+    evnts.handleInput.registerHandler(makeEventHandler(Data::runHandleInputEvents, self));
 }
 
 } // namespace ge

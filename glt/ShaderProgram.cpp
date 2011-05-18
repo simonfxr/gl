@@ -27,11 +27,14 @@ typedef ShaderManager::CachedShaderObject CachedShaderObject;
 
 typedef std::map<std::string, Ref<CachedShaderObject> > ShaderMap;
 
+typedef std::map<std::string, GLuint> Attributes;
+
 struct ShaderProgram::Data {
     Error last_error;
     GLuint program;
     ShaderManager& sm;
     ShaderMap shaders; // contains only root shader files and during compilation markers to prevent endless recursive compiles
+    Attributes attrs;
     CachedShaderObject *parentSO;
     bool linked;
 
@@ -68,6 +71,31 @@ void ShaderProgram::reset() {
     self->program = 0;
     self->last_error = NoError;
     self->shaders.clear();
+}
+
+bool ShaderProgram::reload() {
+    ShaderProgram new_prog(self->sm);
+
+    bool outdated = false;
+    {
+        ShaderMap::const_iterator it = self->shaders.begin();
+        for (; it != self->shaders.end(); ++it) {
+            if (!new_prog.addShaderFile(it->first, true))
+                return false;
+            outdated = it->second != new_prog.self->shaders[it->first];
+        }
+    }
+
+    Attributes::const_iterator it = self->attrs.begin();
+    for (; it != self->attrs.end(); ++it)
+        if (!bindAttribute(it->first, it->second))
+            return false;
+
+    if (outdated && new_prog.tryLink()) {
+       return replaceWith(new_prog);
+    } else {
+        return false;
+    }
 }
 
 ShaderProgram::Error ShaderProgram::clearError() {
@@ -417,6 +445,9 @@ bool ShaderProgram::bindAttribute(const std::string& s, GLuint position) {
         return false;
     
     GL_CHECK(glBindAttribLocation(self->program, position, s.c_str()));
+
+    self->attrs[s] = position;
+    
     // FIXME: check wether attrib was added correctly
     
     return true;

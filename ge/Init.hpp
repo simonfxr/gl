@@ -2,7 +2,7 @@
 #define GE_INIT_HPP
 
 #include "ge/EngineEvents.hpp"
-#include "glt/Ref.hpp"
+#include "data/Ref.hpp"
 
 namespace ge {
 
@@ -17,6 +17,10 @@ struct EngineInitializers {
 void initGLEW(EngineInitializers&);
 
 void initInitStats(EngineInitializers&);
+
+void initShaderVersion(EngineInitializers&);
+
+void initCommands(EngineInitializers&);
 
 } // namespace ge
 

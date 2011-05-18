@@ -72,14 +72,21 @@ struct WindowOpts {
         {}
 };
 
+enum KeyState {
+    Up,
+    Pressed,
+    Down,
+    Released,
+};
+
 struct GameWindow {
     GameWindow(sf::RenderWindow& win);
     GameWindow(const WindowOpts& opts = WindowOpts());
     ~GameWindow();
 
-    bool isKeyDown(sf::Key::Code key);
+    KeyState keyState(sf::Key::Code key) const;
     
-    bool isButtonDown(sf::Mouse::Button button);
+    KeyState mouseButtonState(sf::Mouse::Button button) const;
 
     void grabMouse(bool grab = true);
     bool grabMouse() const;

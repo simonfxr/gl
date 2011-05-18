@@ -5,8 +5,6 @@
 #include "error/error.hpp"
 #include <iostream>
 
-namespace glt {
-
 namespace atomic {
 
 struct Counter {
@@ -139,7 +137,5 @@ Ref<T> WeakRef<T>::unweak() const {
 
 template <typename T>
 Ref<T> makeRef(T *p) { return Ref<T>(p); }
-
-} // namespace glt
 
 #endif

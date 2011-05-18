@@ -2,7 +2,7 @@
 #define GE_EVENT_HPP
 
 #include "defs.h"
-#include <glt/Ref.hpp>
+#include "data/Ref.hpp"
 
 #include <vector>
 
@@ -38,13 +38,13 @@ public:
 };
 
 template <typename F, typename E>
-glt::Ref<EventHandler<E> > makeEventHandler(F f) {
-    return glt::makeRef(new FunctorHandler<F, E>(f));
+Ref<EventHandler<E> > makeEventHandler(F f) {
+    return makeRef(new FunctorHandler<F, E>(f));
 }
 
 template <typename E>
-glt::Ref<EventHandler<E> > makeEventHandler(void (*fun)(const Event<E>&)) {
-    return glt::Ref<EventHandler<E> >(new FunctorHandler<void (*)(const Event<E>&), E>(fun));
+Ref<EventHandler<E> > makeEventHandler(void (*fun)(const Event<E>&)) {
+    return Ref<EventHandler<E> >(new FunctorHandler<void (*)(const Event<E>&), E>(fun));
 }
 
 template <typename S, typename F, typename E>
@@ -58,8 +58,8 @@ public:
 };
 
 template <typename S, typename E>
-glt::Ref<EventHandler<E> > makeEventHandler(void (*fun)(S s, const Event<E>&), S s) {
-    return glt::Ref<EventHandler<E> >(new FunctorStateHandler<S, void (*)(S s, const Event<E>&), E>(s, fun));
+Ref<EventHandler<E> > makeEventHandler(void (*fun)(S s, const Event<E>&), S s) {
+    return Ref<EventHandler<E> >(new FunctorStateHandler<S, void (*)(S s, const Event<E>&), E>(s, fun));
 }
 
 
@@ -73,19 +73,19 @@ public:
 };
 
 template <typename F, typename E>
-glt::Ref<EventHandler<E> > makeVoidEventHandler(F f) {
-    return glt::makeRef(new VoidFunctorHandler<F, E>(f));
+Ref<EventHandler<E> > makeVoidEventHandler(F f) {
+    return makeRef(new VoidFunctorHandler<F, E>(f));
 }
 
 
 template <typename T>
 struct EventSource {
     void raise(const Event<T>& evnt);
-    bool registerHandler(const glt::Ref<EventHandler<T> >& handler);
-    bool unregisterHandler(const glt::Ref<EventHandler<T> >& handler);
+    bool registerHandler(const Ref<EventHandler<T> >& handler);
+    bool unregisterHandler(const Ref<EventHandler<T> >& handler);
     void clearHandlers();
     
-    std::vector<glt::Ref<EventHandler<T> > > handlers;
+    std::vector<Ref<EventHandler<T> > > handlers;
     EventSource() {}
 private:
     EventSource(const EventSource<T>&);
@@ -99,7 +99,7 @@ void EventSource<T>::raise(const Event<T>& e) {
 }
 
 template <typename T>
-bool EventSource<T>::registerHandler(const glt::Ref<EventHandler<T> >& handler) {
+bool EventSource<T>::registerHandler(const Ref<EventHandler<T> >& handler) {
     if (handler.ptr() == 0)
         return true;
     for (uint32 i = 0; i < handlers.size(); ++i)
@@ -110,7 +110,7 @@ bool EventSource<T>::registerHandler(const glt::Ref<EventHandler<T> >& handler) 
 }
 
 template <typename T>
-bool EventSource<T>::unregisterHandler(const glt::Ref<EventHandler<T> >& handler) {
+bool EventSource<T>::unregisterHandler(const Ref<EventHandler<T> >& handler) {
     if (handler.ptr() == 0)
         return true;
     for (uint32 i = 0; i < handlers.size(); ++i)

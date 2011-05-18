@@ -5,12 +5,10 @@
 #include <iostream>
 
 #include "opengl.h"
-#include "glt/Ref.hpp"
+#include "data/Ref.hpp"
 #include "glt/ShaderManager.hpp"
 
 namespace glt {
-
-struct ShaderManager;
 
 struct ShaderProgram {
 
@@ -45,11 +43,14 @@ struct ShaderProgram {
     bool bindAttribute(const std::string& name, GLuint position);
 
     bool tryLink();
+    
     bool link();
 
     void use();
 
     void reset();
+
+    bool reload();
 
     Error clearError();
 

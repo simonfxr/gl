@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "glt/Ref.hpp"
+#include "data/Ref.hpp"
 #include "glt/ShaderObject.hpp"
 
 #include "fs/fs.hpp"
@@ -47,6 +47,8 @@ struct ShaderManager {
 
     Ref<ShaderProgram> program(const std::string& name) const;
     void addProgram(const std::string& name, Ref<ShaderProgram>& program);
+
+    void reloadShaders();
 
     Verbosity verbosity() const;
     void verbosity(Verbosity v);

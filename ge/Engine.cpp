@@ -18,7 +18,7 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
     Engine& theEngine; // owning engine
     GameWindow window;
     GameLoop gameLoop;
-    CommandProcessor commandProcessor;
+    CommandRegistry commandRegistry;
     
     glt::ShaderManager shaderManager;
     glt::RenderManager renderManager;
@@ -29,7 +29,8 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
     Data(Engine& engine, const EngineOpts& opts) :
         theEngine(engine),
         window(opts.window),
-        gameLoop(30)
+        gameLoop(30),
+        commandRegistry(engine)
     {}
                              
     void tick() OVERRIDE;
@@ -58,7 +59,7 @@ GameWindow& Engine::window() { return SELF->window; }
 
 GameLoop& Engine::gameLoop() { return SELF->gameLoop; }
 
-CommandProcessor& Engine::commandProcessor() { return SELF->commandProcessor; }
+CommandRegistry& Engine::commandRegistry() { return SELF->commandRegistry; }
 
 glt::ShaderManager& Engine::shaderManager() { return SELF->shaderManager; }
 
@@ -168,7 +169,7 @@ bool runInit(EventSource<InitEvent>& source, const Event<InitEvent>& e) {
 
 namespace handlers {
 
-void sigExit(Engine *engine, const Event<WindowEvent>& e) {
+void sigExit(Engine *engine, const Event<WindowEvent>&) {
     engine->gameLoop().exit(0);
 }
 

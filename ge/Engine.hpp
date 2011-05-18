@@ -9,8 +9,8 @@
 #include "ge/GameLoop.hpp"
 #include "ge/Event.hpp"
 #include "ge/EngineEvents.hpp"
-#include "ge/CommandProcessor.hpp"
 #include "ge/Init.hpp"
+#include "ge/CommandRegistry.hpp"
 
 #include "glt/ShaderManager.hpp"
 #include "glt/RenderManager.hpp"
@@ -48,7 +48,7 @@ struct Engine {
 
     GameWindow& window();
     GameLoop& gameLoop();
-    CommandProcessor& commandProcessor();
+    CommandRegistry& commandRegistry();
     
     glt::ShaderManager& shaderManager();
     glt::RenderManager& renderManager();
