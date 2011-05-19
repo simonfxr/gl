@@ -19,6 +19,8 @@ extern const Ref<Command> help;
 
 extern const Ref<Command> bindShader;
 
+extern const Ref<Command> loadScript;
+
 } // namespace commands
 
 } // namespace ge

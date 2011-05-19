@@ -1,4 +1,4 @@
-#include "ge/CommandRegistry.hpp"
+#include "ge/CommandProcessor.hpp"
 #include "ge/Event.hpp"
 
 #include "error/error.hpp"
@@ -12,21 +12,20 @@ const Ref<Command> NULL_COMMAND_REF;
 
 typedef std::map<std::string, Ref<Command> > CommandMap;
     
-uint32 CommandRegistry::size() const {
+uint32 CommandProcessor::size() const {
     return commands.size();
 }
     
-Ref<Command> CommandRegistry::command(const std::string comname) {
+Ref<Command> CommandProcessor::command(const std::string comname) {
     CommandMap::iterator it = commands.find(comname);
     if (it != commands.end())
         return it->second;
     return NULL_COMMAND_REF;
 }
     
-bool CommandRegistry::define(const std::string comname, const Ref<Command>& comm, bool unique) {
-    
+bool CommandProcessor::define(const std::string comname, const Ref<Command>& comm, bool unique) {
     if (!comm) {
-        ERR("null command");
+        ERR((comname + ": null command").c_str());
         return false;
     }
     
@@ -40,7 +39,7 @@ bool CommandRegistry::define(const std::string comname, const Ref<Command>& comm
     return dup;
 }
 
-bool CommandRegistry::exec(const std::string& comname, Array<CommandArg>& args) {
+bool CommandProcessor::exec(const std::string& comname, Array<CommandArg>& args) {
     Ref<Command> com = command(comname);
     if (!com) {
         ERR(("command not found: " + comname).c_str());
@@ -50,7 +49,7 @@ bool CommandRegistry::exec(const std::string& comname, Array<CommandArg>& args) 
 }
 
 
-bool CommandRegistry::exec(Ref<Command>& com, Array<CommandArg>& args, const std::string& comname) {
+bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const std::string& comname) {
 
     if (!com) {
         ERR("Command == 0");

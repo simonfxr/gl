@@ -343,12 +343,12 @@ void GameWindow::Data::handleInputEvents() {
 // }
 
 KeyState GameWindow::keyState(sf::Key::Code key) const {
-    if (int32(key) >= int32(sf::Key::Count)) return Up;
+    if (key >= sf::Key::Count) return Up;
     return self->keyStates[int32(key)].keyState(self->frame_time);
 }
 
 KeyState GameWindow::mouseButtonState(sf::Mouse::Button button) const {
-    if (int32(button) >= int32(sf::Mouse::ButtonCount)) return Up;
+    if (button >= sf::Mouse::ButtonCount) return Up;
     return self->mouseStates[int32(button)].keyState(self->frame_time);
 }
 

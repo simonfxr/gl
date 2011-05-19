@@ -127,7 +127,7 @@ bool tokenize(std::istream& in, std::vector<CommandArg>& args) {
     State s;
     std::string tok;
     do {
-        args.resize(args.size() + 1);
+        args.push_back(CommandArg());
         s = readToken(in, &args[args.size() - 1]);
     } while (s == EndToken && in.good());
     args.pop_back();

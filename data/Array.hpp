@@ -20,4 +20,13 @@ public:
     const T& operator[](uint32 i) const { return _elems[i]; }
 };
 
+
+#define DEFINE_ARRAY(name, type, ...)                                   \
+    type CONCAT(_array_data_, name)[] = { __VA_ARGS__ };                \
+    Array<type> name(CONCAT(_array_data_, name), ARRAY_LENGTH(CONCAT(_array_data_, name)))
+
+#define DEFINE_CONST_ARRAY(name, type, ...)                             \
+    type CONCAT(_array_data_, name)[] = { __VA_ARGS__ };                \
+    const Array<type> name(CONCAT(_array_data_, name), ARRAY_LENGTH(CONCAT(_array_data_, name)))
+
 #endif

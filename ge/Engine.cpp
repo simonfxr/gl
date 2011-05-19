@@ -1,10 +1,15 @@
 #include "ge/Engine.hpp"
+#include "ge/Tokenizer.hpp"
 
 #include "error/error.hpp"
 
 #include "fs/fs.hpp"
 
 #include <SFML/System/Clock.hpp>
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 
 #ifdef SYSTEM_UNIX
@@ -18,7 +23,7 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
     Engine& theEngine; // owning engine
     GameWindow window;
     GameLoop gameLoop;
-    CommandRegistry commandRegistry;
+    CommandProcessor commandProcessor;
     
     glt::ShaderManager shaderManager;
     glt::RenderManager renderManager;
@@ -30,7 +35,7 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
         theEngine(engine),
         window(opts.window),
         gameLoop(30),
-        commandRegistry(engine)
+        commandProcessor(engine)
     {}
                              
     void tick() OVERRIDE;
@@ -41,6 +46,7 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
     void exit(int32 exit_code) OVERRIDE;
 
     void registerHandlers();
+    bool execCommand(std::vector<CommandArg>& args);
 };
 
 namespace {
@@ -59,7 +65,7 @@ GameWindow& Engine::window() { return SELF->window; }
 
 GameLoop& Engine::gameLoop() { return SELF->gameLoop; }
 
-CommandRegistry& Engine::commandRegistry() { return SELF->commandRegistry; }
+CommandProcessor& Engine::commandProcessor() { return SELF->commandProcessor; }
 
 glt::ShaderManager& Engine::shaderManager() { return SELF->shaderManager; }
 
@@ -70,13 +76,30 @@ EngineEvents& Engine::events() { return SELF->events; }
 float Engine::now() { return SELF->now(); }
 
 bool Engine::loadScript(const std::string& file) {
-    ERR_ONCE("not yet implemented");
+    std::ifstream inp(file.c_str());
+    if (!inp.is_open()) {
+        ERR(("opening file: " + file).c_str());
+        return false;
+    }
+
+    std::vector<CommandArg> args;
+    while (tokenize(inp, args)) {
+        if (!self->execCommand(args))
+            return false;
+        for (uint32 i = 0; i < args.size(); ++i)
+            args[i].free();
+        args.clear();
+    }
+    
     return true;
 }
 
 bool Engine::evalCommand(const std::string& cmd) {
-    ERR_ONCE("not yet implemented");
-    return true;
+    std::vector<CommandArg> args;
+    std::istringstream inp(cmd);
+    if (!tokenize(inp, args))
+        return false;
+    return self->execCommand(args);
 }
 
 int32 Engine::run(const EngineOpts& opts) {
@@ -153,6 +176,17 @@ void Engine::Data::exit(int32 exit_code) {
     events.exit.raise(ExitEvent(theEngine, exit_code));
 }
 
+bool Engine::Data::execCommand(std::vector<CommandArg>& args) {
+    if (args.size() == 0)
+        return true;
+    if (!args[0].type == String) {
+        ERR("expected a command name");
+        return false;
+    }
+    Array<CommandArg> argsArr(&args[1], args.size() - 1);
+    return commandProcessor.exec(*args[0].string, argsArr);
+}
+
 namespace {
 
 bool runInit(EventSource<InitEvent>& source, const Event<InitEvent>& e) {
@@ -197,4 +231,3 @@ EngineOpts& EngineOpts::parseOpts(int *argcp, char ***argvp) {
 }
 
 } // namespace ge
-

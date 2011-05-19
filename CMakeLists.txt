@@ -136,8 +136,8 @@ set(GE_SRC
   ge/Commands.cpp
   ge/CommandArgs.hpp
   ge/CommandArgs.cpp
-  ge/CommandRegistry.hpp
-  ge/CommandRegistry.cpp
+  ge/CommandProcessor.hpp
+  ge/CommandProcessor.cpp
   ge/Tokenizer.hpp
   ge/Tokenizer.cpp)
 

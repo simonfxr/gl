@@ -9,6 +9,8 @@
 #include "ge/WindowRenderTarget.hpp"
 #include "ge/Event.hpp"
 #include "ge/EngineEvents.hpp"
+#include "ge/Command.hpp"
+#include "ge/KeyBinding.hpp"
 
 namespace ge {
 
@@ -72,13 +74,6 @@ struct WindowOpts {
         {}
 };
 
-enum KeyState {
-    Up,
-    Pressed,
-    Down,
-    Released,
-};
-
 struct GameWindow {
     GameWindow(sf::RenderWindow& win);
     GameWindow(const WindowOpts& opts = WindowOpts());
@@ -106,6 +101,8 @@ struct GameWindow {
     WindowRenderTarget& renderTarget();
 
     WindowEvents& events();
+
+    void registerBinding(const KeyBinding& bind, Ref<Command>& com);
 
     void registerHandlers(EngineEvents& evnts);
 

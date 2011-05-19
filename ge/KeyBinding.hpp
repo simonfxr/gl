@@ -7,8 +7,9 @@ namespace ge {
 
 enum KeyState {
     Pressed,
-    Released,
-    Down
+    Down,
+    Up,
+    Released
 };
 
 struct Key {
@@ -17,7 +18,9 @@ struct Key {
 };
 
 struct KeyBinding {
-
+    Array<Key> keys;
+    bool fired;
+    bool mayFire;
 };
 
 } // namespace ge

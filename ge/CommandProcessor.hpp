@@ -1,5 +1,5 @@
-#ifndef GE_COMMAND_REGISTRY_HPP
-#define GE_COMMAND_REGISTRY_HPP
+#ifndef GE_COMMAND_PROCESSOR_HPP
+#define GE_COMMAND_PROCESSOR_HPP
 
 #include "ge/Command.hpp"
 #include "ge/CommandArgs.hpp"
@@ -12,14 +12,14 @@ namespace ge {
 
 struct Engine;
 
-struct CommandRegistry {
+struct CommandProcessor {
 private:
     Engine& _engine;
     std::map<std::string, Ref<Command> > commands;
     
 public:
     
-    CommandRegistry(Engine& e) : _engine(e) {}
+    CommandProcessor(Engine& e) : _engine(e) {}
     uint32 size() const;
 
     Engine& engine() { return _engine; }
@@ -33,8 +33,8 @@ public:
     bool exec(Ref<Command>& com, Array<CommandArg>& args, const std::string &com_name = "");
 
 private:
-    CommandRegistry(const CommandRegistry&);
-    CommandRegistry& operator =(const CommandRegistry&);
+    CommandProcessor(const CommandProcessor&);
+    CommandProcessor& operator =(const CommandProcessor&);
 };
 
 const char *prettyCommandType(CommandType type);

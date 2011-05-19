@@ -28,8 +28,7 @@ Ref<Command> makeCommand(CommandHandler handler, const std::string& desc = "") {
 
 typedef void (*ListCommandHandler)(const Event<CommandEvent>&, const Array<CommandArg>&);
 
-CommandParamType manyParamsArr[] = { ListParam };
-const Array<CommandParamType> MANY_PARAMS(manyParamsArr, ARRAY_LENGTH(manyParamsArr));
+DEFINE_CONST_ARRAY(MANY_PARAMS, CommandParamType, ListParam);
 
 struct StringListCommand : public Command {
 private:
@@ -144,6 +143,25 @@ static void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>&
 
 const Ref<Command> bindShader = makeStringListCommand(runBindShader,
                                                       "compile and linke a ShaderProgram and give it a name");
+
+struct InteractiveCommand : public Command {
+    void handle(const Event<CommandEvent>&) { ERR("cannot execute Command non interactively"); }
+    InteractiveCommand(const Array<CommandParamType>& ts, const std::string& desc = "") :
+        Command(ts, desc) {}
+};
+
+
+DEFINE_CONST_ARRAY(scriptParams, CommandParamType, StringParam);
+
+struct ScriptCommand : public InteractiveCommand {
+    ScriptCommand() :
+        InteractiveCommand(scriptParams, "load and execute a script file") {}
+    void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+        e.info.engine.loadScript(*args[0].string);
+    }
+};
+
+const Ref<Command> loadScript = Ref<Command>(new ScriptCommand);
 
 } // namespace commands
 

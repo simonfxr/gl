@@ -65,7 +65,7 @@ void initShaderVersion(EngineInitializers& inits) {
 static void runInitCommands(const Event<InitEvent>& e) {
     e.info.success = true;
     using namespace ::ge::commands;
-    CommandRegistry& r = e.info.engine.commandRegistry();
+    CommandProcessor& r = e.info.engine.commandProcessor();
     
     r.define("printContextInfo", printContextInfo);
     r.define("reloadShaders", reloadShaders);
@@ -73,6 +73,7 @@ static void runInitCommands(const Event<InitEvent>& e) {
     r.define("bindKey", bindKey);
     r.define("help", help);
     r.define("bindShader", bindShader);
+    r.define("load", loadScript);
 }
 
 void initCommands(EngineInitializers& inits) {
