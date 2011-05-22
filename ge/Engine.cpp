@@ -87,7 +87,8 @@ bool Engine::loadScript(const std::string& file) {
     }
 
     std::vector<CommandArg> args;
-    while (tokenize(inp, args)) {
+    ParseState state(inp, commandProcessor(), file);
+    while (inp.good() && tokenize(state, args)) {
         if (!self->execCommand(args))
             return false;
         for (uint32 i = 0; i < args.size(); ++i)
@@ -101,7 +102,8 @@ bool Engine::loadScript(const std::string& file) {
 bool Engine::evalCommand(const std::string& cmd) {
     std::vector<CommandArg> args;
     std::istringstream inp(cmd);
-    if (!tokenize(inp, args))
+    ParseState state(inp, commandProcessor(), "<unknown>");
+    if (!tokenize(state, args))
         return false;
     return self->execCommand(args);
 }

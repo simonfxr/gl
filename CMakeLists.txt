@@ -29,6 +29,9 @@ add_definitions("-Wall -fno-exceptions -fno-rtti")
 
 if(COMP_GCC OR COMP_CLANG)
   add_definitions("-Wextra -Wno-switch")
+  if(BUILD_DEBUG)
+    add_definitions("-ggdb")
+  endif()
 endif()
 
 if(BUILD_DEBUG AND COMP_CLANG)
@@ -188,6 +191,15 @@ add_executable(engine-test
   engine-test.cpp
   defs.h
   
+  ${MATH_SRC}
+  ${DATA_SRC}
+  ${GLT_SRC}
+  ${GE_SRC})
+
+add_executable(tokenizer
+  tokenizer.cpp
+  defs.h
+
   ${MATH_SRC}
   ${DATA_SRC}
   ${GLT_SRC}

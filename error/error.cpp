@@ -4,6 +4,10 @@
 
 namespace err {
 
+void error(const Location& loc, LogLevel lvl, const std::string& mesg) {
+    error(loc, lvl, mesg.c_str());
+}
+
 void error(const Location& loc, LogLevel lvl, const char *mesg) {
     const char *prefix = 0;
     
@@ -33,27 +37,14 @@ void error(const Location& loc, LogLevel lvl, const char *mesg) {
         abort();
 }
 
+void fatalError(const Location& loc, const std::string& mesg) {
+    fatalError(loc, mesg.c_str());
+    abort(); // keep the control flow analyser happy
+}
+
 void fatalError(const Location& loc, const char *mesg) {
     error(loc, FatalError, mesg);
-    abort();
+    abort(); // keep the control flow analyser happy
 }
-
-void error(const char *msg, const char *file, int line, const char *func) {
-    std::cerr << "ERROR in " << func << "()" << std::endl
-              << " at " << file << ":" << line << std::endl
-              << " message: " << msg << std::endl;
-}
-
-void error_once(const char *msg, const char *file, int line, const char *func) {
-    std::cerr << "ERROR (only reported once) in "<< func << "()" << std::endl
-              << " at " << file << ":" << line << std::endl
-              << " message: " << msg << std::endl;
-}
-
-void fatal_error(const char *msg, const char *file, int line, const char *func) {
-    error(msg, file, line, func);
-    exit(2);
-}
-
 
 } // namespace err

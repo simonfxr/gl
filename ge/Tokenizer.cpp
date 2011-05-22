@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <ctype.h>
+#include <cmath>
 
 namespace ge {
 
@@ -11,155 +12,436 @@ enum State {
     Fail
 };
 
-bool seperator(char c) {
+#define PARSE_ERROR(s, mesg) parse_err((s), _CURRENT_LOCATION, (mesg))
+
+static void parse_err(const ParseState& s, const err::Location& loc, const std::string& mesg) {
+    std::ostringstream buf;
+    buf << "parsing " << s.filename << "@" << s.line << ":" << s.col;
+    buf << " parse-error: " << mesg;
+    err::error(loc, err::Error, buf.str());
+}
+
+bool getchAny(ParseState& s) {
+    char lastC = s.rawC;
+    
+    if (!s.in.good()) {
+        s.c = 0;
+        return false;
+    }
+
+    s.in.get(s.c);
+    s.rawC = s.c;
+    
+    if (s.c == '\n' || s.c == '\r') {
+        if (lastC == '\r' && s.c == '\n') {
+            return getchAny(s);
+        } else {
+            ++s.line;
+            s.col = 0;
+            s.c = s.rawC = '\n';
+        }
+    }
+
+    ++s.col;
+    return true;
+}
+
+void skipLine(ParseState& s) {
+    while (getchAny(s) && s.c != '\n')
+        ;
+}
+
+bool getch(ParseState& s) {
+    getchAny(s);
+    bool ok = true;
+    if (s.c == '#') {
+        while (getchAny(s) && s.c != '\n')
+            ;
+        ok = s.c == '\n';
+    }
+    
+    if (s.c == '\n')
+        s.c = ';';
+    
+    return ok;
+}
+
+void skipSpace(ParseState& s) {
+    while (isspace(s.c))
+        getch(s);
+}
+
+bool symFirst(char c) {
+    if (isalpha(c))
+        return true;
     switch (c) {
-    case '\n':
-    case '\r':
-    case ';':
-    case '(':
-    case ')':
-    case '{':
-    case '}':
-    case '[':
-    case ']':
-    case '#':
+    case '_':
+    case '?':
+    case '*':
+    case '%':
+    case '$':
         return true;
     default:
         return false;
-    };
-}
-
-char skipSpace(std::istream& in, State *state, bool first = false) {
-    bool firstIter = true;
-    char c;
-    for (;;) {
-        in >> c;
-        if (!in.good()) {
-            if (first && firstIter)
-                *state = EndStatement;
-            else
-                *state = Fail;
-            return 0;
-        }
-
-        firstIter = false;
-        
-        if (c == '\n' || c == '\r') {
-            do {
-                in >> c;
-                if (!in.good()) break;
-            } while (c == '\n' || c == '\r');
-            *state = EndStatement;
-            return 0;
-        }
-
-        if (c == '#') {
-            *state = EndStatement;
-            do {
-                in >> c;
-                if (!in.good()) break;
-            } while (c != '\n' && c != '\r');
-            return 0;
-        }
-
-        if (c == ';') {
-            *state = EndStatement;
-            return 0;
-        }
-
-        if (!isspace(c))
-            return c;
     }
 }
 
-namespace {
-State readToken(std::istream& in, CommandArg *arg) {
-    arg->type = Integer;
-    arg->integer = 0;
-
-    State s = EndToken;
-
-    bool num = false;
-    bool neg = false;
-
-    char c = skipSpace(in, &s, true);
-    if (!c) goto ret;
-
-    while (c == '+' || c == '-') {
-        c = skipSpace(in, &s);
-        if (!c) {
-            s = Fail;
-            goto ret;
-        }
-        if (c == '-') neg = !neg;
-        num = true;
-    }
-
-    if (num || (c >= '0' && c <= '9') || c == '.') {
-        double num;
-        in >> num;
-        if (!in.good()) {
-            s = Fail;
-            goto ret;
-        }
-
-        arg->type = Number;
-        arg->number = neg ? - num : num;
-        goto ret;
-    }
-
-    {
-        char delim = 0;
-        if (c == '"') delim = '"';
-        else if (c == '\'') delim = '\'';
-        
-        std::ostringstream buf;
-    
-        for (;;) {
-            in >> c;
-            if (!in.good()) goto unmatched;
-            if (c == delim || (delim == 0 && seperator(c)))
-                break;
-            buf << c;
-        }
-
-        arg->type = String;
-        arg->string = new std::string(buf.str());
-    }
-    goto ret;
-
-unmatched:
-    s = Fail;
-ret:
-    return s;
+bool symChar(char c) {
+    return symFirst(c) || (c >= '0' && c <= '9');
 }
 
-} // namespace anon
+std::string parseSym(ParseState& s) {
+    std::ostringstream buf;
 
-bool tokenize(std::istream& in, std::vector<CommandArg>& args) {
+    if (!symFirst(s.c))
+        return "";
 
-    State s;
-    std::string tok;
     do {
-        args.push_back(CommandArg());
-        s = readToken(in, &args[args.size() - 1]);
-    } while (s == EndToken && in.good());
-    args.pop_back();
-    return s != Fail;
+        buf << s.c;
+        getch(s);
+    } while (symChar(s.c));
+
+    return buf.str();
 }
 
-struct ParseState {
-    char c;
-    std::ifstream& in;
-    int line;
-    int col;
-};
+State parseKeycombo(ParseState& s, CommandArg& tok) {
+    std::vector<Key> keys;
+
+    bool needOne = true;
+
+    getch(s);
+    while (s.c != 0 && s.c != ']') {
+        skipSpace(s);
+        Key k;
+        if (s.c == '!')
+            k.state = Up;
+        else if (s.c == '+')
+            k.state = Pressed;
+        else if (s.c == '-')
+            k.state = Released;
+        else
+            k.state = Down;
+
+        if (k.state != Down) {
+            getch(s); skipSpace(s);
+        }
+
+        std::string sym = parseSym(s);
+        
+        if (sym.empty()) {
+            PARSE_ERROR(s, "expected a key symbol");
+            return Fail;
+        }
+        
+        if (!parseKeyCode(sym, &k.code)) {
+            PARSE_ERROR(s, "invalid key-symbol: " + sym);
+            return Fail;
+        }
+
+        skipSpace(s);
+        if (s.c == ',') {
+            getch(s);
+            needOne = true;
+        } else {
+            needOne = false;
+        }
+        keys.push_back(k);
+    }
+
+    if (s.c == 0) {
+        if (needOne)
+            PARSE_ERROR(s, "expected a key symbol");
+        else
+            PARSE_ERROR(s, "exptected ]");
+        return Fail;
+    }
+
+    KeyBinding *bind = new KeyBinding(new Key[keys.size()], keys.size(), true);
+    tok.keyBinding = bind;
+    tok.type = KeyCombo;
+
+    for (uint32 i = 0; i < keys.size(); ++i)
+        (*bind)[i] = keys[i];
+
+    return EndToken;
+}
+
+State parseString(ParseState& s, CommandArg& tok) {
+    char delim = s.c == '"' ? '"' : '\'';
+    getch(s);
+    std::ostringstream buf;
+    while (s.c != 0 && s.c != delim) {
+        char suf;
+        if (s.c == '\\') {
+            getch(s);
+            if (s.c == 0)
+                return Fail;
+            char esc;
+            switch (s.c) {
+            case 'n': esc = '\n'; break;
+            case 't': esc = '\t'; break;
+            case 'r': esc = '\r'; break;
+            case 'v': esc = '\v'; break;
+            case '\\':
+            case '"':
+            case '\'': esc = s.c; break;
+            default:
+                PARSE_ERROR(s, "invalid escape sequence in string literal");
+                return Fail;
+            }
+
+            suf = esc;
+        } else {
+            suf = s.c;
+        }
+
+        buf << suf;
+        getch(s);
+    }
+
+    if (s.c == 0)
+        return Fail;
+
+    tok.type = String;
+    tok.string = new std::string(buf.str());
+
+    return EndToken;
+}
+
+State parseCommandRef(ParseState& s, CommandArg& arg) {
+    if (s.c == 0)
+        goto fail;
+    { 
+        std::string sym = parseSym(s);
+        if (s.c == 0 || sym.empty())
+            goto fail;
+        Ref<Command> comref = s.proc.command(sym);
+        if (!comref) {
+            WARN(("unknown command name: " + sym));
+            // TODO: fix
+            // PARSE_ERROR(s, ("unknown command name: " + sym));
+//            return Fail;
+        }
+
+        arg.type = CommandRef;
+        arg.command.ref = new Ref<Command>(comref);
+        arg.command.name = new std::string(sym);
+        arg.command.quotation = 0;
+
+        return EndToken;
+    }
+
+fail:
+    PARSE_ERROR(s, "expected a command name");
+    return Fail;
+}
+
+State parseVarRef(ParseState& s, CommandArg& arg) {
+    if (s.c == 0)
+        goto fail;
+    { 
+        std::string sym = parseSym(s);
+        if (s.c == 0 || sym.empty())
+            goto fail;
+
+        arg.type = VarRef;
+        arg.var = new std::string(sym);
+        return EndToken;
+    }
+
+fail:
+    PARSE_ERROR(s, "expected a variable name");
+    return Fail;
+}
+
+State statement(ParseState& s, std::vector<CommandArg>& toks, bool quot);
+
+State parseQuot(ParseState& s, CommandArg& arg) {
+    Quotation *q = new Quotation;
+
+    int line = s.line;
+    int col = s.col;
+    
+    for (;;) {
+        getch(s);
+        q->push_back(std::vector<CommandArg>());
+        std::vector<CommandArg>& toks = (*q)[q->size() - 1];
+        State st = statement(s, toks, true);
+
+        if (st == Fail || toks.size() == 0)
+            q->pop_back();
+
+        if (st == Fail)
+            return st;
+
+        if (st != EndStatement)
+            break;
+
+        if (s.c == 0)
+            break;
+    }
+
+    if (s.c != '}') {
+        PARSE_ERROR(s, "expected }");
+        return Fail;
+    }
+
+    arg.type = CommandRef;
+    std::ostringstream buf;
+    buf << "<quotation: " << s.filename << "@" << line << ":" << col << ">";
+    arg.command.name = new std::string(buf.str());
+    arg.command.ref = 0;
+    arg.command.quotation = q;
+
+    return EndToken;
+}
+
+int parsePow(ParseState& s) {
+    int pow = 1;
+    int sig = 1;
+
+    if (s.c == 'E' || s.c == 'e') {
+        getch(s);
+
+        if (s.c == '-') {
+            sig = -1;
+            getch(s);
+        } else if (s.c == '+') {
+            getch(s);
+        }
+
+        pow = 0;
+        while (s.c >= '0' && s.c <= '9') {
+            pow = pow * 10 + s.c - '0';
+            getch(s);
+        }
+        
+        std::cerr << "parsed power: " << (pow * sig) << std::endl;
+    }
 
 
 
-// bool tokenize(std::istream& in, std::vector<CommandArg>& args) {
+    return pow * sig;
+}
 
-// }
+State parseNum(ParseState& s, CommandArg& tok) {
+    bool neg = false;
+    while (s.c == '+' || s.c == '-') {
+        if (s.c == '-')
+            neg = !neg;
+        getch(s); skipSpace(s);
+    }
+
+    bool oneDigit = false;
+    int64 k = 0;
+    while (s.c >= '0' && s.c <= '9') {
+        k = (k * 10) + s.c - '0';
+        getch(s);
+        oneDigit = true;
+    }
+
+    double num = 0;
+    bool isNum = false;
+
+    if (oneDigit && (s.c == 'e' || s.c == 'E')) {
+        int p = parsePow(s);
+        num = pow(k, p);
+        isNum = true;
+    } else if (s.c == '.') {
+        getch(s);
+        int64 fract = 0;
+        double div = 1;
+        while (s.c >= '0' && s.c <= '9') {
+            fract = fract * 10 + s.c - '0';
+            div *= 10;
+            oneDigit = true;
+            getch(s);
+        }
+
+        int p = 1;
+        if (s.c == 'e' || s.c == 'E')
+            p = parsePow(s);
+
+        std::cerr << "num: " << (k + fract / div) << std::endl;
+
+        num = (k + fract / div) * pow(10, p);
+        isNum = true;
+    }
+
+    if (!oneDigit) {
+        PARSE_ERROR(s, "expected a number");
+        return Fail;
+    }
+
+    if (isNum) {
+        tok.type = Number;
+        tok.number = neg ? -num : num;
+    } else {
+        tok.type = Integer;
+        tok.integer = neg ? -k : k;
+    }
+
+    return EndToken;
+}
+
+State token(ParseState& s, CommandArg& tok, bool first) {
+    skipSpace(s);
+
+    if (first) {
+        switch (s.c) {
+        case '{': return parseQuot(s, tok);
+        default:
+            return parseCommandRef(s, tok);
+        }
+    }
+    
+    switch (s.c) {
+    case '[': return parseKeycombo(s, tok);
+    case '\'':
+    case '"': return parseString(s, tok);
+    case '&': getch(s); return parseCommandRef(s, tok);
+    case '$': getch(s); return parseVarRef(s, tok);
+    case '{': return parseQuot(s, tok);
+    default:
+        if ((s.c >= '0' && s.c <= '9') || s.c == '+' || s.c == '-' || s.c == '.')
+            return parseNum(s, tok);
+        return Fail;
+    }
+}
+
+State statement(ParseState& s, std::vector<CommandArg>& toks, bool quot) {
+    State st;
+    bool first = true;
+    for (;;) {
+        if (!first) getch(s);
+        if (quot) {
+            skipSpace(s);
+            if (s.c == '}')
+                return EndToken;
+        }
+        
+        if (s.c == ';' || s.c == 0)
+            break;
+        CommandArg tok;
+        st = token(s, tok, first);
+        if (st != Fail)
+            toks.push_back(tok);
+        else
+            return Fail;
+        first = false;
+        if (s.c == ';' || s.c == 0)
+            break;
+    }
+    
+    return EndStatement;
+}
+
+bool tokenize(ParseState& s, std::vector<CommandArg>& args) {
+    getch(s);
+    if (!s.in.good())
+        return false;
+    return statement(s, args, false) != Fail;
+}
 
 } // namespace ge
 

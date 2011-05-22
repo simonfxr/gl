@@ -3,6 +3,8 @@
 
 #include "defs.h"
 
+#include <string>
+
 namespace err {
 
 struct Location {
@@ -24,7 +26,12 @@ enum LogLevel {
     FatalError
 };
 
+void error(const Location& loc, LogLevel lvl, const std::string& mesg);
+
 void error(const Location& loc, LogLevel lvl, const char *mesg);
+
+void fatalError(const Location& loc, const std::string& mesg) ATTRS(ATTR_NORETURN);
+
 void fatalError(const Location& loc, const char *mesg) ATTRS(ATTR_NORETURN);
 
 #ifdef GNU_EXTENSIONS

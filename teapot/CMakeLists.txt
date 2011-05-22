@@ -33,6 +33,9 @@ endif()
 
 if(BUILD_DEBUG AND COMP_CLANG)
   add_definitions("-ftrapv -fcatch-undefined-behavior")
+  if(BUILD_DEBUG)
+    add_definitions("-ggdb")
+  endif()
 endif()
 
 if(BUILD_OPT)

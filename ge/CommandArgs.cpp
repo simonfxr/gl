@@ -10,7 +10,7 @@ CommandArg::CommandArg() { memset(this, 0, sizeof *this); }
 void CommandArg::free() {
     switch (type) {
     case String: delete string; break;
-    case KeyCombo: // TODO: implement delete
+    case KeyCombo: delete keyBinding; break;
     case CommandRef:
         delete command.name;
         delete command.ref;

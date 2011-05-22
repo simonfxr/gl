@@ -50,8 +50,10 @@ struct RenderManager::Data {
         owning_def_rt(false),
         def_rt(0),
         current_rt(0),
-        stat_snapshot(0.f),
-        stat_fast_snapshot(0.f)
+        stat_snapshot(NEG_INF),
+        stat_fast_snapshot(NEG_INF),
+        renderAcc(1.f),
+        renderAccFast(1.f)
         {}
 
     void statBegin() {

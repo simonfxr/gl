@@ -5,12 +5,12 @@
 namespace ge {
 
 struct StaticInit {
+    const char *table[keycode::Count];
+    std::map<std::string, KeyCode> revtable;
     StaticInit();
 };
 
-static const char *table[keycode::Count];
-
-static std::map<std::string, KeyCode> revtable;
+static const StaticInit global;
 
 KeyCode fromSFML(sf::Key::Code key) {
     return static_cast<KeyCode>(key);
@@ -148,12 +148,19 @@ StaticInit::StaticInit() {
 }
 
 bool parseKeyCode(const std::string& str, KeyCode *code) {
-    std::map<std::string, KeyCode>::const_iterator it = revtable.find(str);
-    if (it != revtable.end()) {
+    std::map<std::string, KeyCode>::const_iterator it = global.revtable.find(str);
+    if (it != global.revtable.end()) {
         *code = it->second;
         return true;
     }
     return false;
+}
+
+const char *prettyKeyCode(KeyCode code) {
+    if (code >= 0 && code <= keycode::Count)
+        return global.table[code];
+    else
+        return 0;
 }
 
 } // namespace ge
