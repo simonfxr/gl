@@ -11,7 +11,7 @@ namespace glt {
 
 /* represents a local right handed coordinate system
  * x_axis is perpendicular to z_axis
- */ 
+ */
 struct Frame {
 
     math::point3_t origin;

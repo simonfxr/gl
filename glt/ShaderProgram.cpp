@@ -242,7 +242,6 @@ bool ShaderProgram::Data::addShader(ShaderType type, const std::string& file, ui
     if ((!ok && LOG_LEVEL(this, OnlyErrors)) || LOG_LEVEL(this, Info)) {
         sm.err() << ", ";
         printShaderLog(shader, sm.err());
-        sm.err() << std::endl;
     } else if (LOG_LEVEL(this, OnlyErrors)) {
         sm.err() << std::endl;
     }
@@ -518,24 +517,28 @@ void ShaderProgram::printError(std::ostream& out) {
 }
 
 bool ShaderProgram::validate(bool printLogOnError) {
+    bool ok = false;
     
     if (self->program == 0) {
         self->push_error(APIError);
-        return false;
+        goto ret;
     }
 
     GL_CHECK(glValidateProgram(self->program));
     GLint valid;
     GL_CHECK(glGetProgramiv(self->program, GL_VALIDATE_STATUS, &valid));
     
-    if (valid == GL_FALSE) {
+    if (valid == GL_FALSE)
         self->push_error(ValidationFailed);
+    else
+        ok = true;
 
-        if (printLogOnError)
-            printProgramLog(self->program, self->sm.err());
-    }
+ret:
 
-    return valid == GL_TRUE;
+    if (!ok && printLogOnError)
+        printProgramLog(self->program, self->sm.err());
+
+    return ok;
 }
 
 Ref<CachedShaderObject> ShaderProgram::rebuildShaderObject(ShaderManager& sm, Ref<CachedShaderObject>& so) {

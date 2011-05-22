@@ -2,6 +2,7 @@
 #define DATA_ARRAY_HPP
 
 #include "defs.h"
+#include "error/error.hpp"
 
 template <typename T>
 struct Array {
@@ -16,6 +17,7 @@ public:
     }
     ~Array() { if (del_elems) delete[] _elems; }
     uint32 size() const { return _size; }
+    void setDelete(bool del = true) { del_elems = del; }
     T& operator[](uint32 i) { return _elems[i]; }
     const T& operator[](uint32 i) const { return _elems[i]; }
 };

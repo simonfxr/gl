@@ -97,12 +97,19 @@ Ref<ShaderProgram> ShaderManager::program(const std::string& name) const {
     ProgramMap::const_iterator it = self->programs.find(name);
     if (it != self->programs.end())
         return it->second;
+    ERR(("program not found: " + name).c_str());
     return NULL_PROGRAM_REF;
 }
 
 void ShaderManager::addProgram(const std::string& name, Ref<ShaderProgram>& program) {
     ASSERT(program);
     self->programs[name] = program;
+}
+
+Ref<ShaderProgram> ShaderManager::defineProgram(const std::string& name) {
+    Ref<ShaderProgram> prog(new ShaderProgram(*this));
+    self->programs[name] = prog;
+    return prog;
 }
 
 void ShaderManager::reloadShaders() {

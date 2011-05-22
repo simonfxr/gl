@@ -1,5 +1,7 @@
 #include "opengl.h"
 
+#include "glt/utils.hpp"
+
 #include "ge/Init.hpp"
 #include "ge/Event.hpp"
 #include "ge/Engine.hpp"
@@ -14,6 +16,8 @@ namespace ge {
 EngineInitializers::EngineInitializers() {
     initGLEW(*this);
     initInitStats(*this);
+    initShaderVersion(*this);
+    initDebug(*this);
     initCommands(*this);
 }
 
@@ -27,7 +31,7 @@ static void runInitGLEW(const Event<InitEvent>& e) {
 }
 
 void initGLEW(EngineInitializers& inits) {
-    inits.init.registerHandler(makeEventHandler(runInitGLEW));
+    inits.init.reg(makeEventHandler(runInitGLEW));
 }
 
 static void runPreInitStats(Ref<float> t0, const Event<InitEvent>& e) {
@@ -43,8 +47,8 @@ static void runPostInitStats(Ref<float> t0, const Event<InitEvent>& e) {
 
 void initInitStats(EngineInitializers& inits) {
     Ref<float> initT0(new float);
-    inits.preInit.registerHandler(makeEventHandler(runPreInitStats, initT0));
-    inits.postInit.registerHandler(makeEventHandler(runPostInitStats, initT0));
+    inits.preInit.reg(makeEventHandler(runPreInitStats, initT0));
+    inits.postInit.reg(makeEventHandler(runPostInitStats, initT0));
 }
 
 static void runInitShaderVersion(const Event<InitEvent>& e) {
@@ -59,7 +63,7 @@ static void runInitShaderVersion(const Event<InitEvent>& e) {
 }
 
 void initShaderVersion(EngineInitializers& inits) {
-    inits.init.registerHandler(makeEventHandler(runInitShaderVersion));
+    inits.init.reg(makeEventHandler(runInitShaderVersion));
 }
 
 static void runInitCommands(const Event<InitEvent>& e) {
@@ -77,7 +81,21 @@ static void runInitCommands(const Event<InitEvent>& e) {
 }
 
 void initCommands(EngineInitializers& inits) {
-    inits.init.registerHandler(makeEventHandler(runInitCommands));
+    inits.init.reg(makeEventHandler(runInitCommands));
+}
+
+static void runInitDebug(const Event<InitEvent>& e) {
+    e.info.success = true;
+    if (e.info.engine.window().window().GetSettings().DebugContext) {
+        std::cerr << "initalizing OpenGL debug output" << std::endl;
+        glt::initDebug();
+    } else {
+        std::cerr << "cannot initialize OpenGL debug output: no debug context" << std::endl;
+    }
+}
+
+void initDebug(EngineInitializers& inits) {
+    inits.init.reg(makeEventHandler(runInitDebug));
 }
 
 } // namespace ge

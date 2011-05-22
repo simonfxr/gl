@@ -21,6 +21,8 @@ extern const Ref<Command> bindShader;
 
 extern const Ref<Command> loadScript;
 
+extern const Ref<Command> initDebug;
+
 } // namespace commands
 
 } // namespace ge

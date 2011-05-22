@@ -1,28 +1,49 @@
 
-# set(COMP_C ${ANA_C})
-# set(COMP_CXX ${ANA_CXX})
+string(REGEX REPLACE "[^/]*/" "" CXX_COMP ${CMAKE_CXX_COMPILER})
 
-# set(CMAKE_C_COMPILER_INIT ${COMP_C})
+if(CXX_COMP STREQUAL "clang++")
+  set(COMP_CLANG "yes")
+elseif(CXX_COMP STREQUAL "g++")
+  set(COMP_GCC "yes")
+elseif(CXX_COMP STREQUAL "icpc")
+  set(COMP_ICC "yes")
+endif()
 
-# set(CMAKE_C_COMPILER ${COMP_C})
-# set(CMAKE_CXX_COMPILER ${COMP_CXX})
+string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
+
+if(BUILD_TYPE STREQUAL "DEBUG")
+  set(BUILD_DEBUG "yes")
+elseif(BUILD_TYPE STREQUAL "RELEASE")
+  set(BUILD_RELEASE "yes")
+  set(BUILD_OPT "yes")
+else()
+  message(WARNING "unknown build type: \"${CMAKE_BUILD_TYPE}\", using Release")
+  set(CMAKE_BUILD_TYPE "Release")
+  set(BUILD_RELEASE "yes")
+  set(BUILD_OPT "yes")
+endif()
 
 project(sim-sfml)
 
-#set(GRAPHITE_OPTS "-floop-strip-mine -floop-block -floop-interchange")
+add_definitions("-Wall -fno-exceptions -fno-rtti")
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-switch -fno-exceptions -fno-rtti -O3 -march=native -fopenmp")
+if(COMP_GCC OR COMP_CLANG)
+  add_definitions("-Wextra -Wno-switch")
+endif()
 
-#set(CMAKE_LDFLAGS "${CMAKE_CXX_FLAGS}")
+if(BUILD_DEBUG AND COMP_CLANG)
+  add_definitions("-ftrapv -fcatch-undefined-behavior")
+endif()
 
-add_definitions("-Wall -Wextra -Wno-switch -fno-exceptions -fno-rtti")
-#add_definitions("-march=native -O3")
-
-#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -ggdb")
+if(BUILD_OPT)
+  if(COMP_GCC OR COMP_CLANG)
+    add_definitions("-O3 -march=native -ffast-math")
+  elseif(COMP_ICC)
+    add_definitions("-xHOST -O3 -ipo -no-prec-div")
+  endif()
+endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-
-#string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
 
 find_package(SFML REQUIRED)
 include_directories(${SFML_INCLUDE_DIR})
@@ -40,7 +61,7 @@ find_package(GLEW REQUIRED)
 
 include_directories(${GLEW_INCLUDE_PATH})
 
-add_definitions("-DGLEW_STATIC")
+#add_definitions("-DGLEW_STATIC")
 
 link_libraries(${GLEW_LIBRARY} ${OPENGL_gl_LIBRARY})
 
@@ -136,6 +157,8 @@ set(GE_SRC
   ge/Commands.cpp
   ge/CommandArgs.hpp
   ge/CommandArgs.cpp
+  ge/KeyBinding.hpp
+  ge/KeyBinding.cpp
   ge/CommandProcessor.hpp
   ge/CommandProcessor.cpp
   ge/Tokenizer.hpp

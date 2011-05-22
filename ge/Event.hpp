@@ -48,7 +48,7 @@ Ref<EventHandler<E> > makeEventHandler(void (*fun)(const Event<E>&)) {
 }
 
 template <typename S, typename F, typename E>
-struct FunctorStateHandler : public EventHandler<E> {
+struct FunctorStateHandler EXPLICIT : public EventHandler<E> {
 private:
     S s;
     F f;    
@@ -62,6 +62,20 @@ Ref<EventHandler<E> > makeEventHandler(void (*fun)(S s, const Event<E>&), S s) {
     return Ref<EventHandler<E> >(new FunctorStateHandler<S, void (*)(S s, const Event<E>&), E>(s, fun));
 }
 
+template <typename T, typename M, typename E>
+struct MemberFunHandler EXPLICIT : public EventHandler<E> {
+private:
+    T *o;
+    M m;
+public:
+    MemberFunHandler(T *_o, M _m) : o(_o), m(_m) {}
+    void handle(const Event<E>& ev) OVERRIDE { (o->*m)(ev); }
+};
+
+template <typename T, typename E>
+Ref<EventHandler<E> > makeEventHandler(T *o, void (T::*m)(const Event<E>&)) {
+    return Ref<EventHandler<E> >(new MemberFunHandler<T, void (T::*)(const Event<E>&), E>(o, m));
+}
 
 template <typename F, typename E>
 struct VoidFunctorHandler EXPLICIT : public EventHandler<E> {
@@ -81,9 +95,9 @@ Ref<EventHandler<E> > makeVoidEventHandler(F f) {
 template <typename T>
 struct EventSource {
     void raise(const Event<T>& evnt);
-    bool registerHandler(const Ref<EventHandler<T> >& handler);
-    bool unregisterHandler(const Ref<EventHandler<T> >& handler);
-    void clearHandlers();
+    bool reg(const Ref<EventHandler<T> >& handler);
+    bool unreg(const Ref<EventHandler<T> >& handler);
+    void clear();
     
     std::vector<Ref<EventHandler<T> > > handlers;
     EventSource() {}
@@ -99,7 +113,7 @@ void EventSource<T>::raise(const Event<T>& e) {
 }
 
 template <typename T>
-bool EventSource<T>::registerHandler(const Ref<EventHandler<T> >& handler) {
+bool EventSource<T>::reg(const Ref<EventHandler<T> >& handler) {
     if (handler.ptr() == 0)
         return true;
     for (uint32 i = 0; i < handlers.size(); ++i)
@@ -110,7 +124,7 @@ bool EventSource<T>::registerHandler(const Ref<EventHandler<T> >& handler) {
 }
 
 template <typename T>
-bool EventSource<T>::unregisterHandler(const Ref<EventHandler<T> >& handler) {
+bool EventSource<T>::unreg(const Ref<EventHandler<T> >& handler) {
     if (handler.ptr() == 0)
         return true;
     for (uint32 i = 0; i < handlers.size(); ++i)
@@ -122,7 +136,7 @@ bool EventSource<T>::unregisterHandler(const Ref<EventHandler<T> >& handler) {
 }
 
 template <typename T>
-void EventSource<T>::clearHandlers() {
+void EventSource<T>::clear() {
     handlers.clear();
 }
 

@@ -48,6 +48,12 @@ bool CommandProcessor::exec(const std::string& comname, Array<CommandArg>& args)
     return exec(com, args, comname);
 }
 
+bool coerceKeyCombo(CommandArg& arg) {
+    UNUSED(arg);
+    ERR_ONCE("not yet implemented");
+    // TODO: implement
+    return false;
+}
 
 bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const std::string& comname) {
 
@@ -106,7 +112,18 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
                     keepAlive.push_back(comArg);
                     args[i].type = CommandRef;
                     args[i].command.name = args[i].string;
-                    args[i].command.ref = comArg.ptr();
+                    args[i].command.ref = new Ref<Command>(comArg);
+                } else if (val_type == KeyCombo && args[i].type == String) {
+                    if (!coerceKeyCombo(args[i])) {
+                        std::ostringstream err;
+                        if (!comname.empty())
+                            err << "executing Command " << comname << ": ";
+                        else
+                            err << "executing unknown Command: ";
+                        err << " invalid KeyCombo, position: " << (i + 1);
+                        ERR(err.str().c_str());
+                        return false;
+                    }
                 } else {
                     std::ostringstream err;
                     if (!comname.empty())
@@ -128,10 +145,12 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
 }
 
 const char *prettyCommandType(CommandType type) {
+    UNUSED(type);
     return "<type: not yet implemented>";
 }
 
 const char *prettyCommandParamType(CommandParamType type) {
+    UNUSED(type);
     return "<type: not yet implemented>";
 }
 

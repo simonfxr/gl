@@ -21,9 +21,11 @@ namespace ge {
 
 struct Engine::Data EXPLICIT : public GameLoop::Game {
     Engine& theEngine; // owning engine
-    GameWindow window;
+    GameWindow *window;
     GameLoop gameLoop;
     CommandProcessor commandProcessor;
+
+    const WindowOpts *winOpts; // only during init
     
     glt::ShaderManager shaderManager;
     glt::RenderManager renderManager;
@@ -31,12 +33,14 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
     EngineEvents events;
     sf::Clock clock;
 
-    Data(Engine& engine, const EngineOpts& opts) :
+    Data(Engine& engine) :
         theEngine(engine),
-        window(opts.window),
         gameLoop(30),
-        commandProcessor(engine)
+        commandProcessor(engine),
+        winOpts(0)
     {}
+
+    void init(const Event<InitEvent>&);
                              
     void tick() OVERRIDE;
     void render(float interpolation) OVERRIDE;
@@ -61,7 +65,7 @@ Engine::Engine() : self(0) {}
 
 Engine::~Engine() { delete self; }
 
-GameWindow& Engine::window() { return SELF->window; }
+GameWindow& Engine::window() { return *SELF->window; }
 
 GameLoop& Engine::gameLoop() { return SELF->gameLoop; }
 
@@ -111,10 +115,11 @@ int32 Engine::run(const EngineOpts& opts) {
 
     if (!opts.workingDirectory.empty())
         fs::cwd(opts.workingDirectory);
-    
-    self = new Data(*this, opts);
 
-    self->registerHandlers();
+    self = new Data(*this);
+
+    self->winOpts = &opts.window;
+    opts.inits.preInit.reg(makeEventHandler(self, &Data::init));
 
     Event<InitEvent> initEv = makeEvent(InitEvent(*this));
     if (!runInit(opts.inits.preInit, initEv))
@@ -139,9 +144,11 @@ int32 Engine::run(const EngineOpts& opts) {
     if (!runInit(opts.inits.postInit, initEv))
         return 1;
 
-    opts.inits.preInit.clearHandlers();
-    opts.inits.init.clearHandlers();
-    opts.inits.postInit.clearHandlers();
+    opts.inits.preInit.clear();
+    opts.inits.init.clear();
+    opts.inits.postInit.clear();
+
+    self->winOpts = 0;
 
     return self->gameLoop.run(*self);
 }
@@ -187,6 +194,12 @@ bool Engine::Data::execCommand(std::vector<CommandArg>& args) {
     return commandProcessor.exec(*args[0].string, argsArr);
 }
 
+void Engine::Data::init(const Event<InitEvent>& e) {
+    window = new GameWindow(*winOpts);
+    registerHandlers();
+    e.info.success = true;
+}
+
 namespace {
 
 bool runInit(EventSource<InitEvent>& source, const Event<InitEvent>& e) {
@@ -212,8 +225,8 @@ void sigExit(Engine *engine, const Event<WindowEvent>&) {
 } // namespace anon
 
 void Engine::Data::registerHandlers() {
-    window.registerHandlers(events);
-    window.events().windowClosed.registerHandler(makeEventHandler(handlers::sigExit, &theEngine));
+    window->registerHandlers(events);
+    window->events().windowClosed.reg(makeEventHandler(handlers::sigExit, &theEngine));
 }
 
 EngineOpts& EngineOpts::parseOpts(int *argcp, char ***argvp) {

@@ -16,8 +16,6 @@
 #include "math/mat4.hpp"
 #include "math/math.hpp"
 
-#include "ge/GameWindow.hpp"
-
 #include "glt/utils.hpp"
 #include "glt/RenderManager.hpp"
 #include "glt/ShaderManager.hpp"
@@ -27,9 +25,13 @@
 #include "glt/color.hpp"
 #include "glt/Transformations.hpp"
 
+#include "ge/Engine.hpp"
+#include "ge/Camera.hpp"
+
 #include "parse_sply.hpp"
 
 using namespace math;
+using namespace ge;
 
 static const point3_t LIGHT_CENTER_OF_ROTATION = vec3(0.f, 15.f, 0.f);
 static const float  LIGHT_ROTATION_RAD = 15.f;
@@ -39,7 +41,6 @@ struct Vertex2 {
     vec3_t normal;
     vec2_t texCoord;
 };
-
 
 #ifdef MESH_GENBATCH
 
@@ -77,40 +78,6 @@ DEFINE_VERTEX_ATTRS(vertex2Attrs, Vertex2,
 #error "no meshtype defined"
 #endif
 
-
-struct Timer {
-private:
-    const ge::GameWindow* win;
-    bool repeat;
-    float countdown;
-    float timestamp;
-
-public:
-    Timer() : win(0), repeat(false), countdown(0.f), timestamp(0.f) {}
-
-    void start(const ge::GameWindow& _win, float _countdown, bool _repeat = false);
-        
-    bool fire();
-};
-
-void Timer::start(const ge::GameWindow& _win, float _countdown, bool _repeat) {
-    win = &_win;
-    repeat = _repeat;
-    countdown = _countdown;
-    timestamp = win->realTime();
-}
-
-bool Timer::fire() {
-    float now = win->realTime();
-    if (now < timestamp + countdown)
-        return false;
-    if (repeat)
-        timestamp = now;
-    return true;
-}
-
-static const float FPS_UPDATE_INTERVAL = 3.f;
-
 static const uint32 SHADE_MODE_AMBIENT = 1;
 static const uint32 SHADE_MODE_DIFFUSE = 2;
 static const uint32 SHADE_MODE_SPECULAR = 4;
@@ -130,17 +97,14 @@ struct Teapot {
     glt::color color;
 };
 
-struct Anim EXPLICIT : public ge::GameWindow {
-
-    glt::RenderManager rm;
-    glt::ShaderManager sm;
-    glt::Frame         camera;
+struct Anim {
+    ge::Engine& engine;
+    ge::Camera camera;
     CubeMesh groundModel;
     CubeMesh teapotModel;
     Mesh sphereModel;
     CubeMesh2 cubeModel;
-    glt::ShaderProgram teapotShader;
-    glt::ShaderProgram teapotTexturedShader;
+
     sf::Image woodTexture;
 
     Teapot teapot1;
@@ -156,40 +120,36 @@ struct Anim EXPLICIT : public ge::GameWindow {
     vec3_t light;
     vec3_t ecLight;
     
-    Timer fpsTimer;
-    uint64 fpsFirstFrame;
-
     uint32 shade_mode;
 
     bool use_spotlight;
     bool spotlight_smooth;
     direction3_t ec_spotlight_dir;
 
-    Anim() :
+    Anim(ge::Engine& e) :
+        engine(e),
         groundModel(vertexAttrs),
         teapotModel(vertexAttrs),
         sphereModel(vertexAttrs),
-        cubeModel(vertex2Attrs),
-        teapotShader(sm),
-        teapotTexturedShader(sm)
+        cubeModel(vertex2Attrs)
         {}
 
-    sf::ContextSettings createContextSettings() OVERRIDE;
-    bool onInit() OVERRIDE;
-    bool loadShaders();
-    void animate() OVERRIDE;
-    void renderScene(float interpolation) OVERRIDE;
+    void linkEvents(const Event<InitEvent>& e);
+    void init(const Event<InitEvent>&);
+    void animate(const Event<EngineEvent>&);
+    void renderScene(const Event<RenderEvent>&);
     vec3_t lightPosition(float interpolation);
-    void setupTeapotShader(glt::ShaderProgram& prog, const vec4_t& surfaceColor, const MaterialProperties& mat);
+    void setupTeapotShader(const std::string& prog, const vec4_t& surfaceColor, const MaterialProperties& mat);
     void renderTeapot(const Teapot& teapot);
     void renderGround();
     void renderLight();
-    void renderTable(glt::ShaderProgram& shader);
-    void windowResized(uint32 width, uint32 height) OVERRIDE;
-    void mouseMoved(int32 dx, int32 dy) OVERRIDE;
-    void keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) OVERRIDE;
-    void handleInternalEvents() OVERRIDE;
+    void renderTable(const std::string& shader);
+    void windowResized(const Event<WindowResized>&);
+    void mouseMoved(const Event<MouseMoved>&);
+    void keyStateChanged(const Event<KeyChanged>&);
+    void handleInput(const Event<EngineEvent>&);
 };
+
 
 static void makeUnitCube(CubeMesh2& cube);
 static void makeSphere(Mesh& sphere, float rad, int32 stacks, int32 slices);
@@ -198,33 +158,29 @@ std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
     return out << "(" << v.x << ", " << v.y << ", " << v.z << ")";
 }
 
-sf::ContextSettings Anim::createContextSettings() {
-    sf::ContextSettings cs;
-    cs.MajorVersion = 3;
-    cs.MinorVersion = 3;
-    cs.DepthBits = 24;
-    cs.StencilBits = 0;
-    cs.CoreProfile = false;
-#ifdef GLDEBUG
-    cs.DebugContext = true;
-#endif
-    return cs;
+void Anim::linkEvents(const Event<InitEvent>& e) {
+    engine.events().handleInput.reg(makeEventHandler(this, &Anim::handleInput));
+    engine.events().animate.reg(makeEventHandler(this, &Anim::animate));
+    engine.events().render.reg(makeEventHandler(this, &Anim::renderScene));
+    GameWindow& win = engine.window();
+    win.events().windowResized.reg(makeEventHandler(this, &Anim::windowResized));
+    win.events().mouseMoved.reg(makeEventHandler(this, &Anim::mouseMoved));
+    win.events().keyChanged.reg(makeEventHandler(this, &Anim::keyStateChanged));
+    e.info.success = true;
 }
 
-bool Anim::onInit() {
-    sm.verbosity(glt::ShaderManager::Info);
-    configureShaderVersion(sm);
-    sm.cacheShaderObjects(false);
 
-    rm.setDefaultRenderTarget(&this->renderTarget());
+void Anim::init(const Event<InitEvent>& e) {
+    engine.renderManager().setDefaultRenderTarget(&engine.window().renderTarget());
 
-    sm.addPath("shaders");
-    sm.addPath("../shaders");
+    engine.window().showMouseCursor(false);
+    engine.window().grabMouse(true);
+    
+    engine.shaderManager().addPath("shaders");
+    engine.shaderManager().addPath("../shaders");
 
-    ticksPerSecond(100);
-    synchronizeDrawing(true);
-    // maxDrawFramesSkipped(1);
-    // maxFPS(120);
+    engine.gameLoop().ticksPerSecond(100);
+    engine.gameLoop().sync(true);
 
     use_spotlight = false;
     spotlight_smooth = false;
@@ -239,22 +195,17 @@ bool Anim::onInit() {
 
     gamma_correction = 1.35f;
     
-    grabMouse(true);
-
     if (!woodTexture.LoadFromFile("data/wood.jpg")) {
         std::cerr << "couldnt load data/wood.jpg" << std::endl;
-        return false;
+        return;
     }
-
-    fpsFirstFrame = 0;
-    fpsTimer.start(*this, FPS_UPDATE_INTERVAL, true);
 
     woodTexture.SetSmooth(true);
 
     int32 nfaces = parse_sply("data/teapot.sply", teapotModel);
     if (nfaces < 0) {
         std::cerr << "couldnt parse teapot model" << std::endl;
-        return false;
+        return;
     } else {
         std::cerr << "parsed teapot model: " << nfaces << " vertices" << std::endl;
     }
@@ -277,9 +228,6 @@ bool Anim::onInit() {
 
         FREEZE_MESH(groundModel);
     }
-
-    if (!loadShaders())
-        return false;
 
     camera.setOrigin(vec3(6.36, 5.87, 1.97));
     camera.setXZ(normalize(vec3(-0.29, 0.f, 0.95f)),
@@ -304,31 +252,25 @@ bool Anim::onInit() {
     teapot2.material.shininess = 35;
     teapot2.color = glt::color(0xFF, 0x8C, 0x00);
 
-    return true;
+    Ref<glt::ShaderProgram> teapot = engine.shaderManager().defineProgram("teapot");
+    teapot->addShaderFilePair("teapot");
+    teapot->bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
+    teapot->bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
+    if (!teapot->tryLink())
+        return;
+
+    Ref<glt::ShaderProgram> teapotTex = engine.shaderManager().defineProgram("teapotTextured");
+    teapotTex->addShaderFilePair("teapot_textured");
+    teapotTex->bindAttribute("position", vertex2Attrs.index(offsetof(Vertex2, position)));
+    teapotTex->bindAttribute("normal", vertex2Attrs.index(offsetof(Vertex2, normal)));
+    teapotTex->bindAttribute("texCoord", vertex2Attrs.index(offsetof(Vertex2, texCoord)));
+    if (!teapotTex->tryLink())
+        return;
+
+    e.info.success = true;
 }
 
-bool Anim::loadShaders() {
-    bool ok = true;
-
-    glt::ShaderProgram ts(sm);
-    ts.addShaderFilePair("teapot");
-    ts.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
-    ts.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
-    ts.tryLink();
-    ok = ok && teapotShader.replaceWith(ts);
-
-    glt::ShaderProgram tt(sm);
-    tt.addShaderFilePair("teapot_textured");
-    tt.bindAttribute("position", vertex2Attrs.index(offsetof(Vertex2, position)));
-    tt.bindAttribute("normal", vertex2Attrs.index(offsetof(Vertex2, normal)));
-    tt.bindAttribute("texCoord", vertex2Attrs.index(offsetof(Vertex2, texCoord)));
-    tt.tryLink();
-    ok = ok && teapotTexturedShader.replaceWith(tt);
-
-    return ok;
-}
-
-void Anim::animate() {
+void Anim::animate(const Event<EngineEvent>&) {
     light_angular_position = wrapPi(light_angular_position + light_rotation_speed);
 }
 
@@ -338,10 +280,14 @@ vec3_t Anim::lightPosition(float interpolation) {
     return d * LIGHT_ROTATION_RAD + LIGHT_CENTER_OF_ROTATION;
 }
 
-void Anim::renderScene(float interpolation) {
+void Anim::renderScene(const Event<RenderEvent>& e) {
+    float interpolation = e.info.interpolation;
+    
     GL_CHECK(glClearColor(1.f, 1.f, 1.f, 1.f));
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+    glt::RenderManager& rm = engine.renderManager();
 
     rm.setCameraMatrix(glt::transformationWorldToLocal(camera));
 
@@ -361,7 +307,7 @@ void Anim::renderScene(float interpolation) {
 
     renderLight();
 
-    renderTable(teapotTexturedShader);
+    renderTable("teapotTextured");
     
     // { // render a shadow of the table
     //     glt::GeometryTransform& gt = rm.geometryTransform();
@@ -384,17 +330,21 @@ void Anim::renderScene(float interpolation) {
     renderTeapot(teapot2);
     
     rm.endScene();
-
-    if (fpsTimer.fire()) {
-        uint64 id = currentRenderFrameID();
-        uint64 frames = id - fpsFirstFrame;
-        fpsFirstFrame = id;
-
-        std::cerr << "fps: " << (frames / FPS_UPDATE_INTERVAL) << std::endl;
-    }
 }
 
-void Anim::setupTeapotShader(glt::ShaderProgram& prog, const vec4_t& surfaceColor, const MaterialProperties& mat) {
+void Anim::setupTeapotShader(const std::string& progname, const vec4_t& surfaceColor, const MaterialProperties& mat) {
+    glt::RenderManager& rm = engine.renderManager();
+    Ref<glt::ShaderProgram> progRef = engine.shaderManager().program(progname);
+    if (!progRef) {
+        ERR(("undefined program: "  + progname).c_str());
+        return;
+    }
+
+    glt::ShaderProgram& prog = *progRef;
+
+    ASSERT(!prog.wasError());
+    ASSERT(prog.validate());
+
     prog.use();
 
     vec4_t materialSelector = vec4((shade_mode & SHADE_MODE_AMBIENT) != 0,
@@ -421,6 +371,7 @@ void Anim::setupTeapotShader(glt::ShaderProgram& prog, const vec4_t& surfaceColo
 }
 
 void Anim::renderLight() {
+    glt::RenderManager& rm = engine.renderManager();
     glt::SavePoint sp(rm.geometryTransform().save());
 
     rm.geometryTransform().translate(light);
@@ -428,21 +379,23 @@ void Anim::renderLight() {
 
     MaterialProperties mat = { 0.8f, 0.2f, 1.f, 120.f };
 
-    setupTeapotShader(teapotShader, vec4(1.f, 1.f, 0.f, 1.f), mat);
+    setupTeapotShader("teapot", vec4(1.f, 1.f, 0.f, 1.f), mat);
     sphereModel.draw();
 }
 
 void Anim::renderTeapot(const Teapot& teapot) {
+    glt::RenderManager& rm = engine.renderManager();
     glt::SavePoint sp(rm.geometryTransform().save());
 
     rm.geometryTransform().concat(transformationLocalToWorld(teapot.frame));
     rm.geometryTransform().scale(vec3(13.f));
 
-    setupTeapotShader(teapotShader, teapot.color.vec4(), teapot.material);
+    setupTeapotShader("teapot", teapot.color.vec4(), teapot.material);
     teapotModel.draw();
 }
 
 void Anim::renderGround() {
+    glt::RenderManager& rm = engine.renderManager();
     glt::SavePoint sp(rm.geometryTransform().save());
 
     rm.geometryTransform().scale(vec3(50.f));
@@ -450,11 +403,12 @@ void Anim::renderGround() {
 
     MaterialProperties mat = { 0.f, 1.f, 0.f, 30.f };
     vec4_t color = glt::color(0xcd, 0xc9, 0xc9).vec4();
-    setupTeapotShader(teapotShader, color, mat);
+    setupTeapotShader("teapot", color, mat);
     groundModel.draw();
 }
 
-void Anim::renderTable(glt::ShaderProgram& shader) {
+void Anim::renderTable(const std::string& shader) {
+    glt::RenderManager& rm = engine.renderManager();
     glt::GeometryTransform& gt = rm.geometryTransform();
     glt::SavePoint sp(gt.save());
 
@@ -497,21 +451,25 @@ void Anim::renderTable(glt::ShaderProgram& shader) {
     }
 }
 
-void Anim::windowResized(uint32 width, uint32 height) {
+void Anim::windowResized(const Event<WindowResized>& e) {
+    uint32 width = e.info.width;
+    uint32 height = e.info.height;
     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
     GL_CHECK(glViewport(0, 0, width, height));
 
     float fov = degToRad(17.5f);
     float aspect = float(width) / float(height);
 
-    rm.setPerspectiveProjection(fov, aspect, 0.1f, 100.f);
+    engine.renderManager().setPerspectiveProjection(fov, aspect, 0.1f, 100.f);
 }
 
-void Anim::mouseMoved(int32 dx, int32 dy) {
+void Anim::mouseMoved(const Event<MouseMoved>& e) {
+    int32 dx = e.info.dx;
+    int32 dy = e.info.dy;
 
     dx = - dx;
 
-    if (isKeyDown(sf::Key::M)) {
+    if (engine.window().keyState(sf::Key::M) <= Down) {
 
         teapot1.frame.rotateWorld(-dx * 0.001f, camera.localY());
         teapot1.frame.rotateWorld(dy * 0.001f, camera.localX());
@@ -525,18 +483,20 @@ void Anim::mouseMoved(int32 dx, int32 dy) {
     }
 }
 
-void Anim::handleInternalEvents() {
+void Anim::handleInput(const Event<EngineEvent>&) {
     vec3_t step = vec3(0.f);
 
-    using namespace sf::Key;
+    GameWindow& w = engine.window();
 
-    if (isKeyDown(W))
+    namespace K = sf::Key;
+
+    if (w.keyState(K::W) <= Down)
         step += vec3(0.f, 0.f, 1.f);
-    if (isKeyDown(S))
+    if (w.keyState(K::S) <= Down)
         step += vec3(0.f, 0.f, -1.f);
-    if (isKeyDown(A))
+    if (w.keyState(K::A) <= Down)
         step += vec3(1.f, 0.f, 0.f);
-    if (isKeyDown(D))
+    if (w.keyState(K::D) <= Down)
         step += vec3(-1.f, 0.f, 0.f);
 
     static const float STEP = 0.1f;
@@ -545,14 +505,16 @@ void Anim::handleInternalEvents() {
         camera.translateLocal(STEP * normalize(step));
 }
 
-void Anim::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
-    if (!pressed) return;
+void Anim::keyStateChanged(const Event<KeyChanged>& e) {
+    if (!e.info.pressed) return;
+
+    const sf::Event::KeyEvent& key = e.info.key;
 
     using namespace sf::Key;
 
     switch (key.Code) {
-    case C: loadShaders(); break;
-    case B: pause(!paused()); break;
+    case C: engine.shaderManager().reloadShaders(); break;
+    case B: engine.gameLoop().pause(!engine.gameLoop().paused()); break;
     case F:
         wireframe_mode = !wireframe_mode;
         GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, wireframe_mode ? GL_LINE : GL_FILL));
@@ -582,11 +544,14 @@ void Anim::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
     }
 }
 
-int main(void) {
-    Anim anim;
-    if (!anim.init("teapot"))
-        return 1;
-    return anim.run();
+int main(int argc, char *argv[]) {
+    EngineOpts opts;
+    opts.parseOpts(&argc, &argv);
+    Engine engine;
+    Anim anim(engine);
+    opts.inits.init.reg(makeEventHandler(&anim, &Anim::linkEvents));
+    opts.inits.init.reg(makeEventHandler(&anim, &Anim::init));
+    return engine.run(opts);
 }
 
 static void makeUnitCube(CubeMesh2& cube) {
@@ -631,7 +596,6 @@ static void makeUnitCube(CubeMesh2& cube) {
 
     FREEZE_MESH(cube);
 }
-
 
 static void addTriangle(Mesh& s, const vec3_t vertices[3], const vec3_t normals[3], const vec2_t texCoords[3]) {
     UNUSED(texCoords);

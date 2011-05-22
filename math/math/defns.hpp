@@ -4,13 +4,15 @@
 #include "defs.h"
 #include "math/defs.hpp"
 
+#include <limits>
+
 MATH_BEGIN_NAMESPACE
 
 static const float MATH_CONSTANT PI = 3.1415926;
 
-static const float MATH_CONSTANT POS_INF = 1.f / 0.f;
+static const float MATH_CONSTANT POS_INF = std::numeric_limits<float>::infinity();
 
-static const float MATH_CONSTANT NEG_INF = -1.f / 0.f;
+static const float MATH_CONSTANT NEG_INF = - POS_INF;
 
 float sqrt(float x) PURE_FUNC;
 

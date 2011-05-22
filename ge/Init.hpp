@@ -22,6 +22,8 @@ void initShaderVersion(EngineInitializers&);
 
 void initCommands(EngineInitializers&);
 
+void initDebug(EngineInitializers&);
+
 } // namespace ge
 
 #endif

@@ -62,7 +62,7 @@ struct ShaderProgram {
 
     void printError(std::ostream& out = std::cerr);
 
-    bool validate(bool printLogOnError = false);
+    bool validate(bool printLogOnError = true);
 
     static Ref<ShaderManager::CachedShaderObject> rebuildShaderObject(ShaderManager& sm, Ref<ShaderManager::CachedShaderObject>& so);
 

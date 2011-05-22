@@ -1,20 +1,27 @@
 #ifndef GE_COMMAND_ARGS_HPP
 #define GE_COMMAND_ARGS_HPP
 
+#include "ge/KeyBinding.hpp"
+
 #include "data/Array.hpp"
 
 #include <string>
+#include <vector>
+
+template <typename T>
+struct Ref;
 
 namespace ge {
 
 struct Command;
 
 enum CommandParamType {
-    StringParam,
-    IntegerParam,
-    NumberParam,
-    CommandParam,
-    KeyComboParam,
+    StringParam, // "abcd", 'foo'
+    IntegerParam, // 42, 12334, ...
+    NumberParam, // 3.14159
+    VarRefParam, // $var
+    CommandParam, // commandref: &comname or quotation: { com1 arg1 arg2 ; com2 arg3 ... }
+    KeyComboParam, // keycombo: [LShift;+Up;-A], [!Mouse1] ...
     AnyParam, // one parameter of any type
     ListParam, // all remaining params, can only appear as the last parameter
 };
@@ -24,8 +31,13 @@ enum CommandType {
     Integer,
     Number,
     KeyCombo,
-    CommandRef
+    CommandRef,
+    VarRef
 };
+
+struct CommandArg;
+
+typedef std::vector<std::vector<CommandArg> > Quotation;
 
 struct CommandArg {
     CommandArg();
@@ -38,14 +50,15 @@ struct CommandArg {
         double number;
         struct {
             const std::string *name;
-            Command *ref;
+            Ref<Command> *ref;
+            Quotation *quotation;
         } command;
-        void *keyCombo;
+        const std::string *var;
+        const KeyBinding *keyBinding;
     };
 
     void free();
 };
-
 
 } // namepspace ge
 

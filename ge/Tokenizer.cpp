@@ -12,7 +12,21 @@ enum State {
 };
 
 bool seperator(char c) {
-    return c == '\n' || c == '\r' || c == ';';
+    switch (c) {
+    case '\n':
+    case '\r':
+    case ';':
+    case '(':
+    case ')':
+    case '{':
+    case '}':
+    case '[':
+    case ']':
+    case '#':
+        return true;
+    default:
+        return false;
+    };
 }
 
 char skipSpace(std::istream& in, State *state, bool first = false) {
@@ -39,17 +53,17 @@ char skipSpace(std::istream& in, State *state, bool first = false) {
             return 0;
         }
 
-        if (c == ';') {
-            *state = EndStatement;
-            return 0;
-        }
-
         if (c == '#') {
             *state = EndStatement;
             do {
                 in >> c;
                 if (!in.good()) break;
             } while (c != '\n' && c != '\r');
+            return 0;
+        }
+
+        if (c == ';') {
+            *state = EndStatement;
             return 0;
         }
 
@@ -133,6 +147,19 @@ bool tokenize(std::istream& in, std::vector<CommandArg>& args) {
     args.pop_back();
     return s != Fail;
 }
+
+struct ParseState {
+    char c;
+    std::ifstream& in;
+    int line;
+    int col;
+};
+
+
+
+// bool tokenize(std::istream& in, std::vector<CommandArg>& args) {
+
+// }
 
 } // namespace ge
 

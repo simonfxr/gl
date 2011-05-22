@@ -71,7 +71,11 @@ struct WindowOpts {
         height(480),
         title(""),
         settings(24, 0, 0, 3, 3)
-        {}
+        {
+#ifdef GLDEBUG
+            settings.DebugContext = true;
+#endif
+        }
 };
 
 struct GameWindow {
@@ -103,6 +107,8 @@ struct GameWindow {
     WindowEvents& events();
 
     void registerBinding(const KeyBinding& bind, Ref<Command>& com);
+
+    bool unregisterBinding(const KeyBinding& bind);
 
     void registerHandlers(EngineEvents& evnts);
 

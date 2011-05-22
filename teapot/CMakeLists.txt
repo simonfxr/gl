@@ -1,24 +1,73 @@
 
-# set(CMAKE_C_COMPILER_INIT clang)
+string(REGEX REPLACE "[^/]*/" "" CXX_COMP ${CMAKE_CXX_COMPILER})
 
-# set(CMAKE_C_COMPILER clang)
-# set(CMAKE_CXX_COMPILER clang++)
+if(CXX_COMP STREQUAL "clang++")
+  set(COMP_CLANG "yes")
+elseif(CXX_COMP STREQUAL "g++")
+  set(COMP_GCC "yes")
+elseif(CXX_COMP STREQUAL "icpc")
+  set(COMP_ICC "yes")
+endif()
+
+string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
+
+if(BUILD_TYPE STREQUAL "DEBUG")
+  set(BUILD_DEBUG "yes")
+elseif(BUILD_TYPE STREQUAL "RELEASE")
+  set(BUILD_RELEASE "yes")
+  set(BUILD_OPT "yes")
+else()
+  message(WARNING "unknown build type: \"${CMAKE_BUILD_TYPE}\", using Release")
+  set(CMAKE_BUILD_TYPE "Release")
+  set(BUILD_RELEASE "yes")
+  set(BUILD_OPT "yes")
+endif()
 
 project(teapot)
 
-#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch-enum -DGLDEBUG -DDEBUG -O3 -march=native")
+add_definitions("-Wall -fno-exceptions -fno-rtti")
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-switch -O3")
+if(COMP_GCC OR COMP_CLANG)
+  add_definitions("-Wextra -Wno-switch")
+endif()
 
-include_directories(..)
+if(BUILD_DEBUG AND COMP_CLANG)
+  add_definitions("-ftrapv -fcatch-undefined-behavior")
+endif()
 
-find_package(PkgConfig)
+if(BUILD_OPT)
+  if(COMP_GCC OR COMP_CLANG)
+    add_definitions("-O3 -march=native -ffast-math")
+  elseif(COMP_ICC)
+    add_definitions("-xHOST -O3 -ipo -no-prec-div")
+  endif()
+endif()
 
-pkg_check_modules(LIBGLEW QUIET glew)
-include_directories(${LIBGLEW_INCLUDE_DIRS})
-link_libraries(${LIBGLEW_LIBRARIES})
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../cmake/Modules/")
+
+find_package(SFML REQUIRED)
+include_directories(${SFML_INCLUDE_DIR})
+link_libraries(${SFML_LIBRARIES})
+link_directories("/usr/local/lib")
 
 link_libraries(sfml-window sfml-graphics sfml-system)
+
+# foreach(lib ${SFML_LIBS})
+#   link_libraries(${SFML_${lib}_LIBRARY_RELEASE})
+# endforeach()
+
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+
+include_directories(${GLEW_INCLUDE_PATH})
+
+#add_definitions("-DGLEW_STATIC")
+
+link_libraries(${GLEW_LIBRARY} ${OPENGL_gl_LIBRARY})
+
+include_directories(${CMAKE_SOURCE_DIR})
+
+include_directories(..)
 
 add_executable(teapot
   teapot.cpp
@@ -41,10 +90,18 @@ add_executable(teapot
   ../math/plane.hpp
   ../math/plane.cpp
 
+  ../error/error.hpp
+  ../error/error.cpp
+
+  ../data/Array.hpp
+  ../data/Ref.hpp
+
+  ../fs/fs.hpp
+  ../fs/fs_unix.hpp
+  ../fs/fs_unix.cpp
+
   ../glt/utils.hpp
   ../glt/utils.cpp
-  ../glt/error.hpp
-  ../glt/error.cpp
   ../glt/ShaderManager.hpp
   ../glt/ShaderManager.cpp
   ../glt/ShaderProgram.hpp
@@ -84,4 +141,22 @@ add_executable(teapot
   ../ge/GameWindow.hpp
   ../ge/GameWindow.cpp
   ../ge/WindowRenderTarget.hpp
-  ../ge/WindowRenderTarget.cpp)
+  ../ge/WindowRenderTarget.cpp
+  ../ge/Event.hpp
+  ../ge/EngineEvents.hpp
+  ../ge/Engine.hpp
+  ../ge/Engine.cpp
+  ../ge/Init.hpp
+  ../ge/Init.cpp
+  ../ge/Command.hpp
+  ../ge/Command.cpp
+  ../ge/Commands.hpp
+  ../ge/Commands.cpp
+  ../ge/CommandArgs.hpp
+  ../ge/CommandArgs.cpp
+  ../ge/KeyBinding.hpp
+  ../ge/KeyBinding.cpp
+  ../ge/CommandProcessor.hpp
+  ../ge/CommandProcessor.cpp
+  ../ge/Tokenizer.hpp
+  ../ge/Tokenizer.cpp)
