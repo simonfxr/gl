@@ -55,6 +55,35 @@ bool coerceKeyCombo(CommandArg& arg) {
     return false;
 }
 
+bool CommandProcessor::exec(Array<CommandArg>& args) {
+    if (args.size() == 0)
+        return true;
+    const std::string *com_name = 0;
+    Ref<Command> comm;
+    if (args[0].type == String) {
+        com_name = args[0].string;
+    } else if (args[0].type == CommandRef) {
+        if (!*args[0].command.ref)
+            com_name = args[0].command.name;
+        else
+            comm = *args[0].command.ref;
+    } else {
+        ERR("cannot execute command: invalid type");
+        return false;
+    }
+
+    if (com_name != 0) {
+        comm = command(*com_name);
+        if (!comm) {
+            ERR("unknown command: " + *com_name);
+            return false;
+        }
+    }
+
+    Array<CommandArg> argsArr(&args[1], args.size() - 1);
+    return exec(comm, argsArr);
+}
+
 bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const std::string& comname) {
 
     if (!com) {

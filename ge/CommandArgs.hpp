@@ -43,7 +43,6 @@ struct CommandArg {
     CommandArg();
 
     CommandType type;
-
     union {
         const std::string *string;
         int64 integer;

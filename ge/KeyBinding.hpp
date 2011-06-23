@@ -18,7 +18,6 @@ enum KeyState {
     Released
 };
 
-
 namespace keycode {
 
 // stolen from SFML
@@ -139,6 +138,13 @@ enum KeyCode {
 
 typedef keycode::KeyCode KeyCode;
 
+struct Key {
+    KeyState state;
+    KeyCode code;
+};
+
+typedef Array<Key> KeyBinding;
+
 KeyCode fromSFML(sf::Key::Code key);
 
 KeyCode fromSFML(sf::Mouse::Button button);
@@ -147,12 +153,7 @@ const char *prettyKeyCode(KeyCode code);
 
 bool parseKeyCode(const std::string& str, KeyCode *code);
 
-struct Key {
-    KeyState state;
-    KeyCode code;
-};
-
-typedef Array<Key> KeyBinding;
+int compareKeyBinding(const KeyBinding& x, const KeyBinding& y);
 
 } // namespace ge
 

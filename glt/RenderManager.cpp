@@ -56,8 +56,12 @@ struct RenderManager::Data {
         renderAccFast(1.f)
         {}
 
+    float now() {
+        return float(clk.GetElapsedTime()) / 1000.f;
+    }
+
     void statBegin() {
-        framet0 = clk.GetElapsedTime();
+        framet0 = now();
         float diff = framet0 - stat_snapshot;
         if (diff >= FS_UPDATE_INTERVAL) {
             stats.avg_fps = uint32(num_frames / diff);
@@ -79,7 +83,7 @@ struct RenderManager::Data {
     }
 
     void statEnd() {
-        float frameDur = clk.GetElapsedTime() - framet0;
+        float frameDur = now() - framet0;
         renderAcc += frameDur;
         renderAccFast += frameDur;
         uint32 fps = uint32(math::recip(frameDur));

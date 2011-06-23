@@ -21,7 +21,9 @@ extern const Ref<Command> bindShader;
 
 extern const Ref<Command> loadScript;
 
-extern const Ref<Command> initDebug;
+extern const Ref<Command> initGLDebug;
+
+extern const Ref<Command> describe;
 
 } // namespace commands
 

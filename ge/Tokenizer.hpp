@@ -17,9 +17,10 @@ struct ParseState {
     CommandProcessor& proc;
     int line;
     int col;
+    bool eof;
 
     ParseState(std::istream& inp, CommandProcessor& p, const std::string& fn) :
-        c('\n'), filename(fn), in(inp), proc(p), line(1), col(0) {}
+        c('\n'), filename(fn), in(inp), proc(p), line(1), col(0), eof(false) {}
 };
 
 void skipLine(ParseState& state);

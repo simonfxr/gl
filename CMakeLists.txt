@@ -165,7 +165,9 @@ set(GE_SRC
   ge/CommandProcessor.hpp
   ge/CommandProcessor.cpp
   ge/Tokenizer.hpp
-  ge/Tokenizer.cpp)
+  ge/Tokenizer.cpp
+  ge/KeyHandler.hpp
+  ge/KeyHandler.cpp)
 
 add_executable(sim-sfml
   sim-sfml.cpp

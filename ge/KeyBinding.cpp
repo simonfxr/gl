@@ -163,5 +163,15 @@ const char *prettyKeyCode(KeyCode code) {
         return 0;
 }
 
+int compareKeyBinding(const KeyBinding& x, const KeyBinding& y) {
+    for (uint32 i = 0; i < x.size() && y.size(); ++i) {
+        int32 diff = int32(y[i].code) - int32(x[i].code);
+        if (diff != 0)
+            return diff;
+    }
+
+    return y.size() - x.size();
+}
+
 } // namespace ge
 

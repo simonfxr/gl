@@ -32,6 +32,16 @@ extern const Array<CommandParamType> NULL_PARAMS;
 
 extern const Array<CommandArg> NULL_ARGS;
 
+struct QuotationCommand EXPLICIT : public Command {
+    Quotation * const quotation;
+    
+    QuotationCommand(const std::string& source, int line, int column, const std::string& desc, Quotation *quot);
+    ~QuotationCommand();
+    
+    void interactive(const Event<CommandEvent>& ev, const Array<CommandArg>&) OVERRIDE;
+    void handle(const Event<CommandEvent>& ev) OVERRIDE;
+};
+
 } // namespace ge
 
 #endif

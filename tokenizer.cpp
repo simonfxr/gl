@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <vector>
+#include <sstream>
 
 using namespace ge;
 
@@ -81,12 +82,26 @@ static void printArgs(const std::vector<CommandArg>& args) {
     std::cout << std::endl;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     ge::Engine eng;
     ge::CommandProcessor proc(eng);
-    ge::ParseState state(std::cin, proc, "<interactive>");
+    std::stringstream input;
+    ge::ParseState state(input, proc, "<interactive>");
+
+    for (int i = 1; i < argc; ++i) {
+        input << argv[i];
+        if (i + 1 < argc )
+            input << ' ';
+    }
 
     while (std::cin.good()) {
+        if (input.eof()) {
+            std::string line;
+            std::cin >> line;
+            if (std::cin.good())
+                input << line;
+            
+        }
         std::vector<ge::CommandArg> args;
         if (!ge::tokenize(state, args)) {
             ERR("tokenize failed");

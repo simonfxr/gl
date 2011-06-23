@@ -13,25 +13,39 @@
 
 namespace ge {
 
-EngineInitializers::EngineInitializers() {
-    initGLEW(*this);
-    initInitStats(*this);
-    initShaderVersion(*this);
-    initDebug(*this);
-    initCommands(*this);
+EngineInitializers::EngineInitializers(bool default_init) {
+    if (default_init) {
+        initInitStats(*this);
+        initCommands(PreInit0, *this);
+        initGLEW(PreInit1, *this);
+        initShaderVersion(Init, *this);
+    }
+}
+
+void EngineInitializers::reg(RunLevel lvl, const Ref<EventHandler<InitEvent> >& handler) {
+    switch (lvl) {
+    case PreInit0: preInit0.reg(handler); break;
+    case PreInit1: preInit1.reg(handler); break;
+    case Init: init.reg(handler); break;
+    case PostInit: postInit.reg(handler); break;
+    default:
+        ERR("invalid runlevel");
+    }
 }
 
 static void runInitGLEW(const Event<InitEvent>& e) {
     GLenum err = glewInit();
+
     if (GLEW_OK != err) {
-        std::cerr << "GLEW Error: " << glewGetErrorString(err) << std::endl;
+        ERR(std::string("GLEW Error: ") + (const char *) glewGetErrorString(err));
         e.info.success = false;
     }
+    
     e.info.success = true;
 }
 
-void initGLEW(EngineInitializers& inits) {
-    inits.init.reg(makeEventHandler(runInitGLEW));
+void initGLEW(RunLevel lvl, EngineInitializers& inits) {
+    inits.reg(lvl, makeEventHandler(runInitGLEW));
 }
 
 static void runPreInitStats(Ref<float> t0, const Event<InitEvent>& e) {
@@ -47,8 +61,8 @@ static void runPostInitStats(Ref<float> t0, const Event<InitEvent>& e) {
 
 void initInitStats(EngineInitializers& inits) {
     Ref<float> initT0(new float);
-    inits.preInit.reg(makeEventHandler(runPreInitStats, initT0));
-    inits.postInit.reg(makeEventHandler(runPostInitStats, initT0));
+    inits.reg(PreInit0, makeEventHandler(runPreInitStats, initT0));
+    inits.reg(PostInit, makeEventHandler(runPostInitStats, initT0));
 }
 
 static void runInitShaderVersion(const Event<InitEvent>& e) {
@@ -62,15 +76,15 @@ static void runInitShaderVersion(const Event<InitEvent>& e) {
     e.info.engine.shaderManager().setShaderVersion(vers, prof);
 }
 
-void initShaderVersion(EngineInitializers& inits) {
-    inits.init.reg(makeEventHandler(runInitShaderVersion));
+void initShaderVersion(RunLevel lvl, EngineInitializers& inits) {
+    inits.reg(lvl, makeEventHandler(runInitShaderVersion));
 }
 
 static void runInitCommands(const Event<InitEvent>& e) {
     e.info.success = true;
     using namespace ::ge::commands;
     CommandProcessor& r = e.info.engine.commandProcessor();
-    
+
     r.define("printContextInfo", printContextInfo);
     r.define("reloadShaders", reloadShaders);
     r.define("listBindings", listBindings);
@@ -78,24 +92,12 @@ static void runInitCommands(const Event<InitEvent>& e) {
     r.define("help", help);
     r.define("bindShader", bindShader);
     r.define("load", loadScript);
+    r.define("initOpenGLDebug", initGLDebug);
+    r.define("describe", describe);
 }
 
-void initCommands(EngineInitializers& inits) {
-    inits.init.reg(makeEventHandler(runInitCommands));
-}
-
-static void runInitDebug(const Event<InitEvent>& e) {
-    e.info.success = true;
-    if (e.info.engine.window().window().GetSettings().DebugContext) {
-        std::cerr << "initalizing OpenGL debug output" << std::endl;
-        glt::initDebug();
-    } else {
-        std::cerr << "cannot initialize OpenGL debug output: no debug context" << std::endl;
-    }
-}
-
-void initDebug(EngineInitializers& inits) {
-    inits.init.reg(makeEventHandler(runInitDebug));
+void initCommands(RunLevel lvl, EngineInitializers& inits) {
+    inits.reg(lvl, makeEventHandler(runInitCommands));
 }
 
 } // namespace ge

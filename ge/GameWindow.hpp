@@ -83,10 +83,6 @@ struct GameWindow {
     GameWindow(const WindowOpts& opts = WindowOpts());
     ~GameWindow();
 
-    KeyState keyState(sf::Key::Code key) const;
-    
-    KeyState mouseButtonState(sf::Mouse::Button button) const;
-
     void grabMouse(bool grab = true);
     bool grabMouse() const;
 

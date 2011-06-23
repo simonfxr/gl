@@ -32,6 +32,8 @@ public:
     
     bool exec(Ref<Command>& com, Array<CommandArg>& args, const std::string &com_name = "");
 
+    bool exec(Array<CommandArg>& args);
+
 private:
     CommandProcessor(const CommandProcessor&);
     CommandProcessor& operator =(const CommandProcessor&);

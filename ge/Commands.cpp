@@ -1,6 +1,7 @@
 #include "ge/Commands.hpp"
 #include "ge/Engine.hpp"
 
+#include "glt/utils.hpp"
 #include "glt/ShaderProgram.hpp"
 
 namespace ge {
@@ -94,11 +95,35 @@ static void runReloadShaders(const Event<CommandEvent>& e, const Array<CommandAr
 
 const Ref<Command> reloadShaders = makeStringListCommand(runReloadShaders, "reload ShaderPrograms");
 
-const Ref<Command> listBindings;
+static void runListBindings(const Event<CommandEvent>&) {
+    ERR("list bindings not yet implemented");
+}
 
-const Ref<Command> bindKey;
+const Ref<Command> listBindings = makeCommand(runListBindings, "");
 
-const Ref<Command> help;
+DEFINE_CONST_ARRAY(BIND_KEY_PARAMS, CommandParamType, KeyComboParam, CommandParam);
+
+struct BindKey : public Command {
+    BindKey() :
+        Command(BIND_KEY_PARAMS, "bind a command to a key combination") {}
+
+    void handle(const Event<CommandEvent>&) { ERR("cannot execute without arguments"); }
+    
+    void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+        KeyBinding bind = args[0].keyBinding->clone();
+        bind.setDelete(false);
+        Ref<KeyBinding> binding(new KeyBinding(&bind[0], bind.size(), true));
+        e.info.engine.keyHandler().registerBinding(binding, *args[1].command.ref);
+    }
+};
+
+const Ref<Command> bindKey = Ref<Command>(new BindKey);
+
+static void runHelp(const Event<CommandEvent>&) {
+    ERR("help not yet implemented");
+}
+
+const Ref<Command> help = makeCommand(runHelp, "help and command overview");
 
 static void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     if (args.size() == 0) {
@@ -161,7 +186,23 @@ struct ScriptCommand : public InteractiveCommand {
     }
 };
 
-const Ref<Command> loadScript = Ref<Command>(new ScriptCommand);
+const Ref<Command> loadScript(new ScriptCommand);
+
+void runInitGLDebug(const Event<CommandEvent>& e) {
+    if (e.info.engine.window().window().GetSettings().DebugContext) {
+        glt::initDebug();
+    } else {
+        std::cerr << "cannot initialize OpenGL debug output: no debug context" << std::endl;
+    }
+}
+
+const Ref<Command> initGLDebug = makeCommand(runInitGLDebug, "initialize OpenGL debug output");
+
+void runDescribe(const Event<CommandEvent>&, const Array<CommandArg>&) {
+    ERR("not yet implemented");
+}
+
+const Ref<Command> describe = makeListCommand(runDescribe, "print a description of its parameters");
 
 } // namespace commands
 

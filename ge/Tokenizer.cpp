@@ -24,14 +24,14 @@ static void parse_err(const ParseState& s, const err::Location& loc, const std::
 bool getchAny(ParseState& s) {
     char lastC = s.rawC;
     
-    if (!s.in.good()) {
-        s.c = 0;
-        return false;
-    }
-
     s.in.get(s.c);
     s.rawC = s.c;
-    
+    if (!s.in.good()) {
+        s.c = s.rawC = 0;
+        s.eof = true;
+        return false;        
+    }
+
     if (s.c == '\n' || s.c == '\r') {
         if (lastC == '\r' && s.c == '\n') {
             return getchAny(s);
@@ -62,7 +62,7 @@ bool getch(ParseState& s) {
     
     if (s.c == '\n')
         s.c = ';';
-    
+
     return ok;
 }
 
@@ -79,7 +79,6 @@ bool symFirst(char c) {
     case '?':
     case '*':
     case '%':
-    case '$':
         return true;
     default:
         return false;
@@ -213,14 +212,11 @@ State parseCommandRef(ParseState& s, CommandArg& arg) {
         goto fail;
     { 
         std::string sym = parseSym(s);
-        if (s.c == 0 || sym.empty())
+        if (sym.empty())
             goto fail;
         Ref<Command> comref = s.proc.command(sym);
         if (!comref) {
             WARN(("unknown command name: " + sym));
-            // TODO: fix
-            // PARSE_ERROR(s, ("unknown command name: " + sym));
-//            return Fail;
         }
 
         arg.type = CommandRef;
@@ -241,7 +237,7 @@ State parseVarRef(ParseState& s, CommandArg& arg) {
         goto fail;
     { 
         std::string sym = parseSym(s);
-        if (s.c == 0 || sym.empty())
+        if (sym.empty())
             goto fail;
 
         arg.type = VarRef;
@@ -290,7 +286,7 @@ State parseQuot(ParseState& s, CommandArg& arg) {
     std::ostringstream buf;
     buf << "<quotation: " << s.filename << "@" << line << ":" << col << ">";
     arg.command.name = new std::string(buf.str());
-    arg.command.ref = 0;
+    arg.command.ref = new Ref<Command>(new QuotationCommand(s.filename, line, col, "", q));
     arg.command.quotation = q;
 
     return EndToken;

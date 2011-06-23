@@ -11,6 +11,7 @@
 #include "ge/EngineEvents.hpp"
 #include "ge/Init.hpp"
 #include "ge/CommandProcessor.hpp"
+#include "ge/KeyHandler.hpp"
 
 #include "glt/ShaderManager.hpp"
 #include "glt/RenderManager.hpp"
@@ -49,6 +50,7 @@ struct Engine {
     GameWindow& window();
     GameLoop& gameLoop();
     CommandProcessor& commandProcessor();
+    KeyHandler& keyHandler();
     
     glt::ShaderManager& shaderManager();
     glt::RenderManager& renderManager();
