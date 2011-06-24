@@ -3,73 +3,12 @@
 
 #include "glt/utils.hpp"
 #include "glt/ShaderProgram.hpp"
+
 #include <iostream>
 
 namespace ge {
 
 namespace commands {
-
-typedef void (*CommandHandler)(const Event<CommandEvent>&);
-
-struct SimpleCommand : public Command {
-private:
-    CommandHandler handler;
-public:
-    SimpleCommand(CommandHandler hndlr, const std::string& desc = "") :
-        Command(NULL_PARAMS, desc), handler(hndlr) {}
-    void handle(const Event<CommandEvent>& e) { handler(e); }
-    void interactive(const Event<CommandEvent>& e, const Array<CommandArg>&) {
-        handler(e);
-    }
-};
-
-
-Ref<Command> makeCommand(CommandHandler handler, const std::string& desc = "") {
-    return Ref<Command>(new SimpleCommand(handler, desc));
-}
-
-typedef void (*ListCommandHandler)(const Event<CommandEvent>&, const Array<CommandArg>&);
-
-DEFINE_CONST_ARRAY(MANY_PARAMS, CommandParamType, ListParam);
-
-struct StringListCommand : public Command {
-private:
-    ListCommandHandler handler;
-public:
-    StringListCommand(ListCommandHandler hndlr, const std::string& desc = "") :
-        Command(MANY_PARAMS, desc), handler(hndlr) {}
-    void handle(const Event<CommandEvent>& e) { handler(e, NULL_ARGS); }
-    void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
-        for (uint32 i = 0; i < args.size(); ++i) {
-            if (args[i].type != String) {
-                ERR("expected String argument");
-                return;
-            }
-        }
-        
-        handler(e, args);
-    }
-};
-
-Ref<Command> makeStringListCommand(ListCommandHandler handler, const std::string& desc = "") {
-    return Ref<Command>(new StringListCommand(handler, desc));
-}
-
-struct ListCommand : public Command {
-private:
-    ListCommandHandler handler;
-public:
-    ListCommand(ListCommandHandler hndlr, const std::string& desc = "") :
-        Command(MANY_PARAMS, desc), handler(hndlr) {}
-    void handle(const Event<CommandEvent>& e) { handler(e, NULL_ARGS); }
-    void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
-        handler(e, args);
-    }
-};
-
-Ref<Command> makeListCommand(ListCommandHandler handler, const std::string& desc = "") {
-    return Ref<Command>(new ListCommand(handler, desc));
-}
 
 static void runPrintContextInfo(const Event<CommandEvent>& e) {
     const sf::ContextSettings& c = e.info.engine.window().window().GetSettings();
@@ -84,37 +23,42 @@ static void runPrintContextInfo(const Event<CommandEvent>& e) {
 }
 
 const Ref<Command> printContextInfo = makeCommand(runPrintContextInfo,
+                                                  "printContextInfo",
                                                   "prints information about the current OpenGL context");
 
 static void runReloadShaders(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     if (args.size() == 0) {
+        std::cerr << "reloading shaders" << std::endl;
         e.info.engine.shaderManager().reloadShaders();
+        std::cerr << "all shaders reloaded" << std::endl;
     } else {
         ERR("reloadShaders: selectively shader reloading not yet implemented");
     }
 }
 
-const Ref<Command> reloadShaders = makeStringListCommand(runReloadShaders, "reload ShaderPrograms");
+const Ref<Command> reloadShaders = makeStringListCommand(runReloadShaders,
+                                                         "reloadShaders", "reload ShaderPrograms");
 
 static void runListBindings(const Event<CommandEvent>&) {
     ERR("list bindings not yet implemented");
 }
 
-const Ref<Command> listBindings = makeCommand(runListBindings, "");
+const Ref<Command> listBindings = makeCommand(runListBindings, "listBindings", "list all key bindings");
 
 DEFINE_CONST_ARRAY(BIND_KEY_PARAMS, CommandParamType, KeyComboParam, CommandParam);
 
 struct BindKey : public Command {
     BindKey() :
-        Command(BIND_KEY_PARAMS, "bind a command to a key combination") {}
-
-    void handle(const Event<CommandEvent>&) { ERR("cannot execute without arguments"); }
-    
+        Command(BIND_KEY_PARAMS, "bindKey", "bind a command to a key combination") {}
     void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
         Ref<Command>& comm = *args[1].command.ref;
+        if (!comm) {
+            ERR("cannot bind key: null command");
+            return;
+        }
         KeyBinding bind = args[0].keyBinding->clone();
         bind.setDelete(false);
-        Ref<KeyBinding> binding(new KeyBinding(&bind[0], bind.size(), true));
+        Ref<KeyBinding> binding(new KeyBinding(&bind[0], bind.size(), KeyBinding::Owned));
         e.info.engine.keyHandler().registerBinding(binding, comm);
     }
 };
@@ -125,7 +69,7 @@ static void runHelp(const Event<CommandEvent>&) {
     ERR("help not yet implemented");
 }
 
-const Ref<Command> help = makeCommand(runHelp, "help and command overview");
+const Ref<Command> help = makeCommand(runHelp, "help", "help and command overview");
 
 static void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     if (args.size() == 0) {
@@ -133,7 +77,7 @@ static void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>&
         return;
     }
 
-    if (!args[1].type == String) {
+    if (!args[0].type == String) {
         ERR("bindShader: first argument not a string");
         return;
     }
@@ -141,7 +85,7 @@ static void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>&
     Ref<glt::ShaderProgram> prog(new glt::ShaderProgram(e.info.engine.shaderManager()));
 
     uint32 i;
-    for (i = 0; i < args.size() && args[i].type == String; ++i) {
+    for (i = 1; i < args.size() && args[i].type == String; ++i) {
         if (!prog->addShaderFile(*args[i].string)) {
             ERR("bindShader: compilation failed");
             return;
@@ -149,7 +93,7 @@ static void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>&
     }
 
     for (; i + 1 < args.size() && args[i].type == Integer && args[i + 1].type == String; i += 2) {
-        if (!prog->bindAttribute(*args[i].string, args[i].integer)) {
+        if (!prog->bindAttribute(*args[i + 1].string, args[i].integer)) {
             ERR("bindShader: couldnt bind attribute");
             return;
         }
@@ -160,35 +104,19 @@ static void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>&
         return;
     }
 
-    if (!prog->tryLink()) {
+    if (prog->wasError() || !prog->tryLink()) {
         ERR("bindShader: linking failed");
         return;
     }
 
+    std::cerr << "bound program: " << *args[0].string << std::endl;
+
     e.info.engine.shaderManager().addProgram(*args[0].string, prog);
 }
 
-const Ref<Command> bindShader = makeStringListCommand(runBindShader,
-                                                      "compile and linke a ShaderProgram and give it a name");
-
-struct InteractiveCommand : public Command {
-    void handle(const Event<CommandEvent>&) { ERR("cannot execute Command non interactively"); }
-    InteractiveCommand(const Array<CommandParamType>& ts, const std::string& desc = "") :
-        Command(ts, desc) {}
-};
-
-
-DEFINE_CONST_ARRAY(scriptParams, CommandParamType, StringParam);
-
-struct ScriptCommand : public InteractiveCommand {
-    ScriptCommand() :
-        InteractiveCommand(scriptParams, "load and execute a script file") {}
-    void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
-        e.info.engine.loadScript(*args[0].string);
-    }
-};
-
-const Ref<Command> loadScript(new ScriptCommand);
+const Ref<Command> bindShader = makeListCommand(runBindShader,
+                                                "bindShader",
+                                                "compile and linke a ShaderProgram and give it a name");
 
 void runInitGLDebug(const Event<CommandEvent>& e) {
     if (e.info.engine.window().window().GetSettings().DebugContext) {
@@ -198,26 +126,64 @@ void runInitGLDebug(const Event<CommandEvent>& e) {
     }
 }
 
-const Ref<Command> initGLDebug = makeCommand(runInitGLDebug, "initialize OpenGL debug output");
+const Ref<Command> initGLDebug = makeCommand(runInitGLDebug, "initGLDebug", "initialize OpenGL debug output");
 
 void runDescribe(const Event<CommandEvent>&, const Array<CommandArg>&) {
     ERR("not yet implemented");
 }
 
-const Ref<Command> describe = makeListCommand(runDescribe, "print a description of its parameters");
+const Ref<Command> describe = makeListCommand(runDescribe, "describe", "print a description of its parameters");
 
 static void runEval(const Event<CommandEvent>&, const Array<CommandArg>&) {
     ERR("not yet implemented");
 }
 
-const Ref<Command> eval = makeStringListCommand(runEval, "parse a string and execute it");
+const Ref<Command> eval = makeStringListCommand(runEval, "eval", "parse a string and execute it");
 
-static void runLoad(const Event<CommandEvent>&, const Array<CommandArg>&) {
-    ERR("not yet implemented");
+static void runLoad(const Event<CommandEvent>& ev, const Array<CommandArg>& args) {
+    for (uint32 i = 0; i < args.size(); ++i) {
+        ev.info.engine.loadScript(*args[i].string);
+    }
 }
 
-const Ref<Command> load = makeStringListCommand(runLoad, "execute a script file");
+const Ref<Command> load = makeStringListCommand(runLoad, "load", "execute a script file");
 
+static void runAddShaderPath(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+    for (uint32 i = 0; i < args.size(); ++i) {
+        e.info.engine.shaderManager().addPath(*args[i].string);
+    }
+}
+
+const Ref<Command> addShaderPath = makeStringListCommand(runAddShaderPath, "addShaderPath", "add directories to the shader path");
+
+static void runTogglePause(const Event<CommandEvent>& e) {
+    Engine& eng = e.info.engine;
+    eng.gameLoop().pause(!eng.gameLoop().paused());
+}
+
+extern const Ref<Command> togglePause = makeCommand(runTogglePause, "togglePause", "toggle the pause state");
+
+DEFINE_CONST_ARRAY(PERSPECTIVE_PROJECTION_PARAMS, CommandParamType, NumberParam, NumberParam, NumberParam);
+
+struct PerspectiveProjection : public Command {
+    PerspectiveProjection() :
+        Command(PERSPECTIVE_PROJECTION_PARAMS, "perspectiveProjection", "set parameters for perspective projection") {}
+
+    void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+        double fovDeg = args[0].number;
+        double zn = args[1].number;
+        double zf = args[2].number;
+
+        glt::RenderManager& rm = e.info.engine.renderManager();
+
+        rm.setDefaultProjection(glt::Projection::mkPerspective(math::degToRad(fovDeg), zn, zf));
+        glt::RenderTarget *tgt = rm.activeRenderTarget();
+        if (tgt != 0)
+            rm.updateProjection(float(tgt->width()) / float(tgt->height()));
+    }
+};
+
+extern const Ref<Command> perspectiveProjection(new PerspectiveProjection);
 
 } // namespace commands
 

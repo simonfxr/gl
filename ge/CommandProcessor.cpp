@@ -22,10 +22,19 @@ Ref<Command> CommandProcessor::command(const std::string comname) {
         return it->second;
     return NULL_COMMAND_REF;
 }
+
+bool CommandProcessor::define(const Ref<Command>& comm, bool unique) {
+    return define(comm->name(), comm, unique);
+}
     
 bool CommandProcessor::define(const std::string comname, const Ref<Command>& comm, bool unique) {
     if (!comm) {
         ERR((comname + ": null command").c_str());
+        return false;
+    }
+
+    if (comname.empty()) {
+        ERR("cannot define command without name");
         return false;
     }
     
@@ -94,17 +103,17 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
     bool rest_args = params.size() > 0 && params[params.size() - 1] == ListParam;
     uint32 nparams = rest_args ? params.size() - 1 : params.size();
 
-    if (params.size() != args.size() || (rest_args && args.size() < nparams)) {
+    if (nparams != args.size() && !(rest_args && args.size() > nparams)) {
         std::ostringstream err;
         if (!comname.empty())
             err << "executing Command " << comname << ": ";
         else
             err << "executing unknown Command: ";
-        err << "expected " + nparams;
+        err << "expected " << nparams;
         if (rest_args)
            err << " or more";
-        err << "got " << args.size();
-        ERR(err.str().c_str());
+        err << " got " << args.size();
+        ERR(err.str());
     }
 
     std::vector<Ref<Command> > keepAlive;

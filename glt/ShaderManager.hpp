@@ -47,7 +47,7 @@ struct ShaderManager {
 
     Ref<ShaderProgram> program(const std::string& name) const;
     void addProgram(const std::string& name, Ref<ShaderProgram>& program);
-    Ref<ShaderProgram> defineProgram(const std::string& name);
+    Ref<ShaderProgram> declareProgram(const std::string& name);
 
     void reloadShaders();
 

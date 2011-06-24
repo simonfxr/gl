@@ -1,0 +1,13 @@
+load "scripts/default.script"
+
+bindShader "voxel" "voxel.vert" "voxel.frag" 0 "position" 1 "normal" 2 "color"
+
+bindKey [+O] &incGamma
+bindKey [+P] &decGamma
+
+bindKey [W] { move 12 }
+bindKey [D] { move 3 }
+bindKey [S] { move 6 }
+bindKey [A] { move 9 }
+
+perspectiveProjection 16.5 0.25 200.0

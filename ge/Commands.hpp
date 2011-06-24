@@ -19,8 +19,6 @@ extern const Ref<Command> help;
 
 extern const Ref<Command> bindShader;
 
-extern const Ref<Command> loadScript;
-
 extern const Ref<Command> initGLDebug;
 
 extern const Ref<Command> describe;
@@ -28,6 +26,12 @@ extern const Ref<Command> describe;
 extern const Ref<Command> eval;
 
 extern const Ref<Command> load;
+
+extern const Ref<Command> addShaderPath;
+
+extern const Ref<Command> togglePause;
+
+extern const Ref<Command> perspectiveProjection;
 
 } // namespace commands
 

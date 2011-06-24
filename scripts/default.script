@@ -1,2 +1,8 @@
 printContextInfo
-initOpenGLDebug
+
+initGLDebug
+
+addShaderPath "shaders"
+
+bindKey [+C] &reloadShaders
+bindKey [+B] &togglePause

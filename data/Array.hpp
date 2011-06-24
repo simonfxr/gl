@@ -10,10 +10,19 @@ private:
     const uint32 _size;
     T * const _elems;
     bool owning_elems;
-    
+
 public:
-    Array(T *els, uint32 s, bool owns = false) :
-        _size(s), _elems(els), owning_elems(owns) {}
+    // disambiguate constructor
+    enum Ownership {
+        Shared,
+        Owned
+    };
+    
+    Array(uint32 s, Ownership own = Shared) :
+        _size(s), _elems(new T[s]), owning_elems(own == Owned) {}
+    
+    Array(T *els, uint32 s, Ownership own = Shared) :
+        _size(s), _elems(els), owning_elems(own == Owned) {}
     
     Array(const Array<T>& a) :
         _size(a._size), _elems(a._elems), owning_elems(false) {
@@ -40,17 +49,25 @@ public:
         T *elems = new T[_size];
         for (uint32 i = 0; i < _size; ++i)
             elems[i] = _elems[i];
-        return Array<T>(elems, _size, true);
+        return Array<T>(elems, _size, Owned);
     }
 };
 
 
 #define DEFINE_ARRAY(name, type, ...)                                   \
-    type CONCAT(_array_data_, name)[] = { __VA_ARGS__ };                \
+    static type CONCAT(_array_data_, name)[] = { __VA_ARGS__ };                \
     Array<type> name(CONCAT(_array_data_, name), ARRAY_LENGTH(CONCAT(_array_data_, name)))
 
 #define DEFINE_CONST_ARRAY(name, type, ...)                             \
-    type CONCAT(_array_data_, name)[] = { __VA_ARGS__ };                \
+    static type CONCAT(_array_data_, name)[] = { __VA_ARGS__ };         \
     const Array<type> name(CONCAT(_array_data_, name), ARRAY_LENGTH(CONCAT(_array_data_, name)))
+
+#ifdef GNU_EXTENSIONS
+#define CONST_ARRAY(type, ...) ({                                       \
+            static type CONCAT(_array_data_, _anon_arr)[] = { __VA_ARGS__ }; \
+            static const Array<type> _anon_arr(CONCAT(_array_data_, _anon_arr), ARRAY_LENGTH(CONCAT(_array_data_, _anon_arr))); \
+            _anon_arr;                                                  \
+        })
+#endif
 
 #endif

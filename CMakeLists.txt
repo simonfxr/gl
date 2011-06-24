@@ -16,6 +16,10 @@ if(BUILD_TYPE STREQUAL "DEBUG")
 elseif(BUILD_TYPE STREQUAL "RELEASE")
   set(BUILD_RELEASE "yes")
   set(BUILD_OPT "yes")
+elseif(BUILD_TYPE STREQUAL "DEBUGOPT")
+  set(CMAKE_BUILD_TYPE "Debug")
+  set(BUILD_OPT "yes")
+  set(BUILD_DEBUG "yes")
 else()
   message(WARNING "unknown build type: \"${CMAKE_BUILD_TYPE}\", using Release")
   set(CMAKE_BUILD_TYPE "Release")
@@ -26,6 +30,11 @@ endif()
 project(sim-sfml)
 
 add_definitions("-Wall -fno-exceptions -fno-rtti")
+
+if(COMP_GCC)
+  add_definitions("-fopenmp")
+  link_libraries("-fopenmp")
+endif()
 
 if(COMP_GCC OR COMP_CLANG)
   add_definitions("-Wextra -Wno-switch")
@@ -167,7 +176,10 @@ set(GE_SRC
   ge/Tokenizer.hpp
   ge/Tokenizer.cpp
   ge/KeyHandler.hpp
-  ge/KeyHandler.cpp)
+  ge/KeyHandler.cpp
+  ge/Camera.hpp
+  ge/Camera.cpp
+  ge/Timer.hpp)
 
 add_executable(sim-sfml
   sim-sfml.cpp

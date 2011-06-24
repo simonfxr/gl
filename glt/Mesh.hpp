@@ -118,6 +118,10 @@ public:
     void setSize(uint32 size);
     void setElementsSize(uint32 size);
     
+    void freeHost();
+    
+    void freeGPU();
+    
     void send();
     void send(GLenum usageHint);
     

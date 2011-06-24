@@ -25,11 +25,7 @@ struct CubeMesh : public Mesh<T> {
         }
     }
 
-//    void freeze() { this->send(); }
-
     uint32 size() { return this->verticesSize(); }
-
-    void deleteAfterFreeze(bool) {}
 
     void primType(GLenum) { ERR("primType not available"); }
 };

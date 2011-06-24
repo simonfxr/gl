@@ -85,17 +85,19 @@ static void runInitCommands(const Event<InitEvent>& e) {
     using namespace ::ge::commands;
     CommandProcessor& r = e.info.engine.commandProcessor();
 
-    r.define("printContextInfo", printContextInfo);
-    r.define("reloadShaders", reloadShaders);
-    r.define("listBindings", listBindings);
-    r.define("bindKey", bindKey);
-    r.define("help", help);
-    r.define("bindShader", bindShader);
-    r.define("load", loadScript);
-    r.define("initOpenGLDebug", initGLDebug);
-    r.define("describe", describe);
-    r.define("eval", eval);
-    r.define("load", load);
+    r.define(printContextInfo);
+    r.define(reloadShaders);
+    r.define(listBindings);
+    r.define(bindKey);
+    r.define(help);
+    r.define(bindShader);
+    r.define(initGLDebug);
+    r.define(describe);
+    r.define(eval);
+    r.define(load);
+    r.define(addShaderPath);
+    r.define(togglePause);
+    r.define(perspectiveProjection);
 }
 
 void initCommands(RunLevel lvl, EngineInitializers& inits) {

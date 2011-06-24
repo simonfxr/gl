@@ -106,7 +106,7 @@ void ShaderManager::addProgram(const std::string& name, Ref<ShaderProgram>& prog
     self->programs[name] = program;
 }
 
-Ref<ShaderProgram> ShaderManager::defineProgram(const std::string& name) {
+Ref<ShaderProgram> ShaderManager::declareProgram(const std::string& name) {
     Ref<ShaderProgram> prog(new ShaderProgram(*this));
     self->programs[name] = prog;
     return prog;

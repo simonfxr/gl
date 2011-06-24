@@ -31,6 +31,8 @@ struct RenderManager::Data {
     // always active
     RenderTarget *current_rt;
 
+    Projection projection;
+
     sf::Clock clk;
     float stat_snapshot;
     float stat_fast_snapshot;
@@ -65,7 +67,8 @@ struct RenderManager::Data {
         float diff = framet0 - stat_snapshot;
         if (diff >= FS_UPDATE_INTERVAL) {
             stats.avg_fps = uint32(num_frames / diff);
-            stats.rt_avg = uint32(num_frames / renderAcc);
+            if (renderAcc != 0)
+                stats.rt_avg = uint32(num_frames / renderAcc);
             renderAcc = 0.f;
             num_frames = 0;
             stat_snapshot = framet0;
@@ -75,7 +78,8 @@ struct RenderManager::Data {
 
         float diff2 = framet0 - stat_fast_snapshot;
         if (diff2 >= FS_UPDATE_INTERVAL_FAST) {
-            stats.rt_current = uint32(num_frames_fast / renderAccFast);
+            if (renderAccFast != 0)
+                stats.rt_current = uint32(num_frames_fast / renderAccFast);
             renderAccFast = 0.f;
             num_frames_fast = 0;
             stat_fast_snapshot = framet0;
@@ -86,7 +90,7 @@ struct RenderManager::Data {
         float frameDur = now() - framet0;
         renderAcc += frameDur;
         renderAccFast += frameDur;
-        uint32 fps = uint32(math::recip(frameDur));
+        uint32 fps = uint32(frameDur != 0 ? math::recip(frameDur) : 0);
         stats.rt_max = std::max(stats.rt_max, fps);
         stats.rt_min = std::min(stats.rt_min, fps);
         ++num_frames;
@@ -122,6 +126,23 @@ GeometryTransform& RenderManager::geometryTransform() {
 
 const aligned_mat4_t& RenderManager::cameraMatrix() const {
     return self->cameraMatrix;
+}
+
+void RenderManager::setDefaultProjection(const Projection& proj) {
+    self->projection = proj;
+}
+
+void RenderManager::updateProjection(float aspectRatio) {
+    switch (self->projection.type) {
+    case Projection::Perspective:
+        setPerspectiveProjection(self->projection.perspective.fieldOfViewRad,
+                                 aspectRatio,
+                                 self->projection.perspective.z_near,
+                                 self->projection.perspective.z_far);
+        break;
+    default:
+        ERR("invalid projection type");
+    }
 }
 
 void RenderManager::setPerspectiveProjection(float theta, float aspectRatio, float z_near, float z_far) {

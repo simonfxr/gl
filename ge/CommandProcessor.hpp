@@ -25,6 +25,8 @@ public:
     Engine& engine() { return _engine; }
     
     Ref<Command> command(const std::string comname);
+
+    bool define(const Ref<Command>& comm, bool unique = false);
     
     bool define(const std::string comname, const Ref<Command>& comm, bool unique = false);
     

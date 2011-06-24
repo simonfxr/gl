@@ -63,6 +63,8 @@ bool getch(ParseState& s) {
     if (s.c == '\n')
         s.c = ';';
 
+//    std::cerr << "getch: state = " << ok << ", eof = " << s.eof << ", c = " << s.c << std::endl;
+
     return ok;
 }
 
@@ -155,7 +157,7 @@ State parseKeycombo(ParseState& s, CommandArg& tok) {
         return Fail;
     }
 
-    KeyBinding *bind = new KeyBinding(new Key[keys.size()], keys.size(), true);
+    KeyBinding *bind = new KeyBinding(new Key[keys.size()], keys.size(), KeyBinding::Owned);
     tok.keyBinding = bind;
     tok.type = KeyCombo;
 
@@ -166,36 +168,44 @@ State parseKeycombo(ParseState& s, CommandArg& tok) {
 }
 
 State parseString(ParseState& s, CommandArg& tok) {
-    char delim = s.c == '"' ? '"' : '\'';
+    char delim = s.c == '"'  ? '"' :
+                 s.c == '\'' ? '\'' : ' ';
     getch(s);
     std::ostringstream buf;
-    while (s.c != 0 && s.c != delim) {
-        char suf;
-        if (s.c == '\\') {
-            getch(s);
-            if (s.c == 0)
-                return Fail;
-            char esc;
-            switch (s.c) {
-            case 'n': esc = '\n'; break;
-            case 't': esc = '\t'; break;
-            case 'r': esc = '\r'; break;
-            case 'v': esc = '\v'; break;
-            case '\\':
-            case '"':
-            case '\'': esc = s.c; break;
-            default:
-                PARSE_ERROR(s, "invalid escape sequence in string literal");
-                return Fail;
+    if (delim != ' ') {
+        while (s.c != 0 && s.c != delim) {
+            char suf;
+            if (s.c == '\\') {
+                getch(s);
+                if (s.c == 0)
+                    return Fail;
+                char esc;
+                switch (s.c) {
+                case 'n': esc = '\n'; break;
+                case 't': esc = '\t'; break;
+                case 'r': esc = '\r'; break;
+                case 'v': esc = '\v'; break;
+                case '\\':
+                case '"':
+                case '\'': esc = s.c; break;
+                default:
+                    PARSE_ERROR(s, "invalid escape sequence in string literal");
+                    return Fail;
+                }
+
+                suf = esc;
+            } else {
+                suf = s.c;
             }
 
-            suf = esc;
-        } else {
-            suf = s.c;
+            buf << suf;
+            getch(s);
         }
-
-        buf << suf;
-        getch(s);
+    } else {
+        while (s.c != 0 && s.c != ';' && !isspace(s.c)) {
+            buf << s.c;
+            getch(s);
+        }
     }
 
     if (s.c == 0)
@@ -311,8 +321,6 @@ int parsePow(ParseState& s) {
             pow = pow * 10 + s.c - '0';
             getch(s);
         }
-        
-        std::cerr << "parsed power: " << (pow * sig) << std::endl;
     }
 
 
@@ -358,7 +366,7 @@ State parseNum(ParseState& s, CommandArg& tok) {
         if (s.c == 'e' || s.c == 'E')
             p = parsePow(s);
 
-        std::cerr << "num: " << (k + fract / div) << std::endl;
+//        std::cerr << "num: " << (k + fract / div) << std::endl;
 
         num = (k + fract / div) * pow(10, p);
         isNum = true;
@@ -401,6 +409,8 @@ State token(ParseState& s, CommandArg& tok, bool first) {
     default:
         if ((s.c >= '0' && s.c <= '9') || s.c == '+' || s.c == '-' || s.c == '.')
             return parseNum(s, tok);
+        else if (symFirst(s.c))
+            return parseString(s, tok);
         return Fail;
     }
 }

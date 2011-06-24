@@ -69,12 +69,14 @@ KeyHandler::KeyHandler(CommandProcessor& proc) :
 KeyHandler::~KeyHandler() { delete self; }
 
 void KeyHandler::keyPressed(KeyCode code) {
+//    std::cerr << "key pressed: " << self->frame_id << " " << prettyKeyCode(code) << std::endl;
     int32 idx = int32(code);
     CHECK_KEYCODE(idx);
     self->states[idx] = State(true, self->frame_id);
 }
     
 void KeyHandler::keyReleased(KeyCode code) {
+//    std::cerr << "key released: " << self->frame_id << " " << prettyKeyCode(code) << std::endl;
     int32 idx = int32(code);
     CHECK_KEYCODE(idx);
     self->states[idx] = State(false, self->frame_id);
@@ -109,10 +111,13 @@ void KeyHandler::handleCommands() {
     for (; it != self->bindings.end(); ++it) {
         const Ref<KeyBinding>& bind = it->first.binding;
         
-        for (uint32 i = 0; i < bind->size(); ++i)
-            if (bind->get(i).state != keyState(bind->get(i).code))
+        for (uint32 i = 0; i < bind->size(); ++i) {
+            KeyState state = keyState(bind->get(i).code);
+            if ((bind->get(i).state & state) == 0)
                 goto next;
+        }
 
+//        std::cerr << "executing command: " << self->frame_id << " " << it->second->name() << std::endl;
         self->processor.exec(it->second, const_cast<Array<CommandArg>& >(NULL_ARGS));
 
     next:;

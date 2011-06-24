@@ -81,15 +81,21 @@ float Engine::now() { return SELF->now(); }
 bool Engine::loadScript(const std::string& file, bool quiet) {
     std::ifstream inp(file.c_str());
     if (!inp.is_open() || !inp.good()) {
+        std::cerr << "loading script: " << file << " -> not found" << std::endl;
+
         if (!quiet)
             ERR(("opening file: " + file).c_str());
         return false;
     }
 
-    bool ok = true;
+    std::cerr << "loading script: " << file << std::endl;
+    return loadStream(inp, file);
+}
 
+bool Engine::loadStream(std::istream& inp, const std::string& inp_name) {
+    bool ok = true;
     std::vector<CommandArg> args;
-    ParseState state(inp, commandProcessor(), file);
+    ParseState state(inp, commandProcessor(), inp_name);
     bool done = false;
     while (!done) {
         
@@ -120,13 +126,8 @@ bool Engine::loadScript(const std::string& file, bool quiet) {
 }
 
 bool Engine::evalCommand(const std::string& cmd) {
-    std::vector<CommandArg> args;
     std::istringstream inp(cmd);
-    ParseState state(inp, commandProcessor(), "<unknown>");
-    bool ok = tokenize(state, args) && self->execCommand(args);
-    for (uint32 i = 0; i < args.size(); ++i)
-        args[i].free();
-    return ok;
+    return loadStream(inp, "<unknown>");
 }
 
 int32 Engine::run(const EngineOpts& opts) {
@@ -153,7 +154,7 @@ int32 Engine::run(const EngineOpts& opts) {
         return 1;
 
     if (!opts.initScript.empty()) {
-        loadScript(opts.initScript);
+        loadScript(opts.initScript, true);
     }
 
     for (uint32 i = 0; i < opts.commands.size(); ++i) {
@@ -219,7 +220,13 @@ void Engine::Data::exit(int32 exit_code) {
 }
 
 bool Engine::Data::execCommand(std::vector<CommandArg>& args) {
+    if (args.size() == 0)
+        return true;
+    
     Array<CommandArg> com_args(&args[0], args.size());
+
+    ON_DEBUG(std::cerr << "executing command: ");
+    ON_DEBUG(prettyCommandArgs(std::cerr, com_args));
     
     bool ok = commandProcessor.exec(com_args);
 
@@ -235,6 +242,7 @@ bool Engine::Data::execCommand(std::vector<CommandArg>& args) {
 
 void Engine::Data::init(const Event<InitEvent>& e) {
     window = new GameWindow(*winOpts);
+    renderManager.setDefaultRenderTarget(&window->renderTarget());
     registerHandlers();
     e.info.success = true;
 }
@@ -279,6 +287,10 @@ void handleKeyBindings(KeyHandler *handler, const Event<EngineEvent>&) {
     handler->handleCommands();
 }
 
+void updateProjectionMatrix(Engine *eng, const Event<WindowResized>& e) {
+    eng->renderManager().updateProjection(float(e.info.width) / float(e.info.height));
+}
+
 } // namespace handlers
 
 } // namespace anon
@@ -288,6 +300,7 @@ void Engine::Data::registerHandlers() {
     window->events().windowClosed.reg(makeEventHandler(handlers::sigExit, &theEngine));
     window->events().keyChanged.reg(makeEventHandler(handlers::keyChanged, &keyHandler));
     window->events().mouseButton.reg(makeEventHandler(handlers::mouseButtonChanged, &keyHandler));
+    window->events().windowResized.reg(makeEventHandler(handlers::updateProjectionMatrix, &theEngine));
     theEngine.events().handleInput.reg(makeEventHandler(handlers::handleKeyBindings, &keyHandler));
 }
 

@@ -17,6 +17,36 @@ struct FrameStatistics {
     uint32 rt_min;
 };
 
+struct Projection {
+    enum Type {
+        Perspective
+    } type;
+
+    union {
+        struct {
+            float fieldOfViewRad;
+            float z_near;
+            float z_far;
+        } perspective;
+    };
+
+    Projection() {
+        type = Perspective;
+        perspective.fieldOfViewRad = math::PI / 10.f;
+        perspective.z_near = 0.5f;
+        perspective.z_far = 100.f;
+    }
+    
+    static Projection mkPerspective(float fov, float zn, float zf) {
+        Projection proj;
+        proj.type = Perspective;
+        proj.perspective.fieldOfViewRad = fov;
+        proj.perspective.z_near = zn;
+        proj.perspective.z_far = zf;
+        return proj;
+    }
+};
+
 struct RenderManager {
     RenderManager();
     ~RenderManager();
@@ -29,6 +59,10 @@ struct RenderManager {
 
     GeometryTransform& geometryTransform();
 
+    void setDefaultProjection(const Projection& proj);
+
+    void updateProjection(float aspectRatio);
+    
     void setPerspectiveProjection(float theta, float aspectRatio, float z_near, float z_far);
     
     void setCameraMatrix(const math::mat4_t& m);

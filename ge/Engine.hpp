@@ -4,6 +4,7 @@
 #include "defs.h"
 
 #include <string>
+#include <istream>
 
 #include "ge/GameWindow.hpp"
 #include "ge/GameLoop.hpp"
@@ -15,6 +16,9 @@
 
 #include "glt/ShaderManager.hpp"
 #include "glt/RenderManager.hpp"
+
+#include "glt/ShaderProgram.hpp"
+#include "glt/Uniforms.hpp"
 
 namespace ge {
 
@@ -60,6 +64,7 @@ struct Engine {
 
     float now();
 
+    bool loadStream(std::istream& inp, const std::string& input_name);
     bool loadScript(const std::string& file, bool quiet = false);
     bool evalCommand(const std::string& cmd);
 

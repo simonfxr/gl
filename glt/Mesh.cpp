@@ -275,9 +275,10 @@ void MeshBase::setSize(uint32 size) {
 
     if (capa != vertices_capacity) {
         vertex_data = reallocVerts(desc, vertex_data, size, capa);
-        vertices_size = size;
         vertices_capacity = capa;
     }
+
+    vertices_size = size;
 }
 
 void MeshBase::setElementsSize(uint32 size) {
@@ -291,8 +292,18 @@ void MeshBase::setElementsSize(uint32 size) {
         delete[] element_data;
         element_data = elems;
         elements_capacity = capa;
-        elements_size = size;
     }
+
+    elements_size = size;
+}
+
+void MeshBase::freeHost() {
+    setSize(0);
+    setElementsSize(0);
+}
+
+void MeshBase::freeGPU() {
+    WARN("not yet implemented");
 }
 
 } // namespace glt

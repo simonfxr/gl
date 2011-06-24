@@ -19,23 +19,18 @@
 #include "math/math.hpp"
 #include "math/ivec3.hpp"
 
-#include "ge/GameWindow.hpp"
+#include "ge/Engine.hpp"
+#include "ge/Camera.hpp"
+#include "ge/Timer.hpp"
+
+#include "glt/primitives.hpp"
 
 #include "glt/utils.hpp"
-#include "glt/RenderManager.hpp"
-#include "glt/ShaderManager.hpp"
-#include "glt/ShaderProgram.hpp"
-#include "glt/Uniforms.hpp"
 #include "glt/Frame.hpp"
 #include "glt/color.hpp"
-#include "glt/Transformations.hpp"
 
-#ifdef MESH_GENBATCH
-#include "glt/GenBatch.hpp"
-#else
 #include "glt/Mesh.hpp"
 #include "glt/CubeMesh.hpp"
-#endif
 
 using namespace math;
 
@@ -43,17 +38,24 @@ static const float FPS_UPDATE_INTERVAL = 3.f;
 static const vec3_t BLOCK_DIM = vec3(0.25f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
-static const int32 N = 196;
-static const int32 SPHERE_POINTS_FACE = 32;
+static const int32 N = 196; // 196;
+static const int32 SPHERE_POINTS_FACE = 24; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
 
+#if 0
 #define time(op) do {                                                   \
-        float T0 = now();                                               \
+        float T0 = now();                                             \
         (op);                                                           \
-        float diff = now() - T0;                                        \
+        float diff = now() - T0;                                      \
         std::cerr << #op << " took " << diff << " seconds." << std::endl; \
     } while (0)
+#else
+#define time(op) do {                                   \
+        (op);                                           \
+        std::cerr << #op << " executed" << std::endl;   \
+    } while (0)
+#endif
 
 struct MaterialProperties {
     float ambientContribution;
@@ -79,25 +81,6 @@ struct Vertex {
     vec4_t normal;  // last component is diffuse factor
 };
 
-#ifdef MESH_GENBATCH
-
-static const glt::Attr vertexAttrVals[] = {
-    glt::attr::vec3(offsetof(Vertex, position)),
-    glt::attr::color(offsetof(Vertex, color)),
-    glt::attr::vec4(offsetof(Vertex, normal))
-};
-
-static const glt::Attrs<Vertex> vertexAttrs(
-    ARRAY_LENGTH(vertexAttrVals), vertexAttrVals
-);
-
-typedef glt::GenBatch<Vertex> CubeMesh;
-#define FREEZE_MESH(m) m.freeze()
-#define CUBE_MESH(m) m.primType(GL_QUADS)
-#define KEEP_MESH_DATA(m) m.deleteAfterFreeze(false)
-
-#else
-
 DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
     VERTEX_ATTR(Vertex, position),
     VERTEX_ATTR_AS(Vertex, color, glt::color),
@@ -106,145 +89,106 @@ DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
 
 typedef glt::CubeMesh<Vertex> CubeMesh;
 
-#define FREEZE_MESH(m) m.send()
-#define CUBE_MESH(m) UNUSED(m)
-#define KEEP_MESH_DATA(m) UNUSED(m)
+typedef ge::Event<ge::InitEvent> InitEv;
 
-#endif
-
-struct Timer {
-private:
-    const ge::GameWindow* win;
-    bool repeat;
-    float countdown;
-    float timestamp;
-
-public:
-    Timer() : win(0), repeat(false), countdown(0.f), timestamp(0.f) {}
-
-    void start(const ge::GameWindow& _win, float _countdown, bool _repeat = false);
-        
-    bool fire();
-};
-
-void Timer::start(const ge::GameWindow& _win, float _countdown, bool _repeat) {
-    win = &_win;
-    repeat = _repeat;
-    countdown = _countdown;
-    timestamp = win->realTime();
-}
-
-bool Timer::fire() {
-    float now = win->realTime();
-    if (now < timestamp + countdown)
-        return false;
-    if (repeat)
-        timestamp = now;
-    return true;
-}
-
-struct Anim EXPLICIT : public ge::GameWindow {
-
-    glt::RenderManager rm;
-    glt::ShaderManager sm;
-    glt::Frame         camera;
-    CubeMesh cubeModel;
-    glt::ShaderProgram voxelShader;
+struct State {
+    ge::Camera camera;
     CubeMesh worldModel;
-    vec3_t sphere_points[SPHERE_POINTS];
 
+    vec3_t sphere_points[SPHERE_POINTS];
+    
     float gamma_correction;
 
     vec3_t ecLightDir;
     
-    Timer fpsTimer;
+    ge::Timer *fpsTimer;
 
     bool write_model;
     bool read_model;
 
-    Anim() :
-        cubeModel(vertexAttrs),
-        voxelShader(sm),
+    State() :
         worldModel(vertexAttrs)
         {}
-    
-    bool onInit() OVERRIDE;
-    void initWorld();
-    bool loadShaders();
-    void animate() OVERRIDE;
-    void renderScene(float interpolation) OVERRIDE;
-    void renderBlocks();
-    void windowResized(uint32 width, uint32 height) OVERRIDE;
-    void mouseMoved(int32 dx, int32 dy) OVERRIDE;
-    void keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) OVERRIDE;
-    void handleInternalEvents() OVERRIDE;
-
-    bool readModel(const std::string& file, CubeMesh& model);
-    bool writeModel(const std::string& file, const CubeMesh& model);
 };
 
-static void makeUnitCube(CubeMesh& cube);
+typedef ge::Event<ge::RenderEvent> RenderEv;
 
-std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
-    return out << "(" << v.x << ", " << v.y << ", " << v.z << ")";
-}
+void renderScene(State *state, const RenderEv& ev);
 
-bool Anim::onInit() {
-    sm.verbosity(glt::ShaderManager::Info);
-    configureShaderVersion(sm);
+bool readModel(const std::string& file, CubeMesh& mdl);
+bool writeModel(const std::string& file, const CubeMesh& mdl);
+
+void initWorld(CubeMesh& worldModel, vec3_t *sphere_points);
+
+void initState(State *state, const InitEv& ev) {
+
+    ge::Engine& e = ev.info.engine;
+
+    e.window().showMouseCursor(false);
+
+    e.shaderManager().verbosity(glt::ShaderManager::Info);
+
+    state->camera.registerWith(e, "move");
+    e.events().render.reg(makeEventHandler(renderScene, state));
 
     GLuint vao;
     GL_CHECK(glGenVertexArrays(1, &vao));
     GL_CHECK(glBindVertexArray(vao));
 
+    e.gameLoop().ticksPerSecond(100);
+    e.gameLoop().sync(true);
 
-    if (GLEW_ARB_multisample) {
-        std::cerr << "multisampling support available" << std::endl;
-
-        GL_CHECK(glEnable(GL_MULTISAMPLE_ARB));
-    }
-
-    rm.setDefaultRenderTarget(&this->renderTarget());
-
-    sm.addPath("shaders");
-
-    ticksPerSecond(100);
-    synchronizeDrawing(true);
-
-    gamma_correction = 1.8f;
+    state->gamma_correction = 1.8f;
     
-    grabMouse(true);
+    e.window().grabMouse(true);
 
-    fpsTimer.start(*this, FPS_UPDATE_INTERVAL, true);
-
-    KEEP_MESH_DATA(cubeModel);
-    makeUnitCube(cubeModel);
-
-    if (!loadShaders())
-        return false;
+    state->fpsTimer = new ge::Timer(e);
+    state->fpsTimer->start(FPS_UPDATE_INTERVAL, true);
 
     srand(0xDEADBEEF);
 
-    CUBE_MESH(worldModel);
-    pointsOnSphere(SPHERE_POINTS, sphere_points);
+    pointsOnSphere(SPHERE_POINTS, state->sphere_points);
 
-    if (read_model) {
-        if (!readModel(WORLD_MODEL_FILE, worldModel)) {
+    if (state->read_model) {
+        if (!readModel(WORLD_MODEL_FILE, state->worldModel)) {
             ERR("couldnt read model file!");
-            return false;
+            return;
         }
     } else {
-        initWorld();
+        initWorld(state->worldModel, state->sphere_points);
     }
 
-    if (write_model) {
-        if (!writeModel(WORLD_MODEL_FILE, worldModel))
+    if (state->write_model) {
+        if (!writeModel(WORLD_MODEL_FILE, state->worldModel))
             ERR("couldnt write model file");
     }
 
-    FREEZE_MESH(worldModel);
+    state->worldModel.send();
+//    state->worldModel.freeHost();
 
-    return true;
+    // Ref<glt::ShaderProgram> voxel = e.shaderManager().declareProgram("voxel");
+    // glt::ShaderProgram& vs = *voxel;
+
+    // vs.addShaderFilePair("voxel");
+    // vs.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
+    // vs.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
+    // vs.bindAttribute("color", vertexAttrs.index(offsetof(Vertex, color)));
+    // ASSERT(vs.tryLink());
+
+    ev.info.success = true;
+}
+
+
+std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
+    return out << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+}
+
+std::ostream& operator <<(std::ostream& out, const vec4_t& v) {
+    return out << "(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
+}
+
+std::ostream& operator <<(std::ostream& out, const mat4_t& m) {
+    return out << m[0] << m[1] << m[2] << m[3];
 }
 
 static float rand1() {
@@ -322,14 +266,6 @@ struct World {
                     r(i, j, k) = a(i, j, k) && b(i, j, k);
     }
 };
-
-bool foo_get(World& w, uint32 i, uint32 j, uint32 k) {
-    return w(i, j, k);
-}
-
-void foo_set(World& w, uint32 i, uint32 j, uint32 k, bool val) {
-    w(i, j, k) = val;
-}
 
 struct Faces {
     vec3_t f[2]; // front, up, right, bot, down, left
@@ -669,7 +605,10 @@ bool hasNeighbours(const World& w, const World& vis, const ivec3_t& p) {
     return false;
 }
 
-void Anim::initWorld() {
+void initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
+
+    CubeMesh cubeModel(vertexAttrs);
+    glt::primitives::unitCube(cubeModel);
 
     std::auto_ptr<World> worldp(new World);
     World& world = *worldp;
@@ -783,49 +722,33 @@ void Anim::initWorld() {
     std::cerr << "faces: " << faces << ", visible faces: " << visFaces << std::endl;
 }
 
-bool Anim::loadShaders() {
-    bool ok = true;
+void renderBlocks(State *state, ge::Engine& e);
 
-    glt::ShaderProgram vs(sm);
+void renderScene(State *state, const RenderEv& ev) {
+    ge::Engine& e = ev.info.engine;
 
-    vs.addShaderFilePair("voxel");
-    vs.bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
-    vs.bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
-    vs.bindAttribute("color", vertexAttrs.index(offsetof(Vertex, color)));
-    vs.tryLink();
-    ok = ok && voxelShader.replaceWith(vs);
-
-    return ok;
-}
-
-void Anim::animate() {
-    
-}
-
-void Anim::renderScene(float interpolation) {
-    UNUSED(interpolation);
-    
     GL_CHECK(glClearColor(1.f, 1.f, 1.f, 1.f));
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-    rm.setCameraMatrix(glt::transformationWorldToLocal(camera));
+    e.renderManager().setCameraMatrix(glt::transformationWorldToLocal(state->camera.frame));
 
-    rm.beginScene();
+    e.renderManager().beginScene();
 
-    ecLightDir = rm.geometryTransform().transformVector(LIGHT_DIR);
+    state->ecLightDir = e.renderManager().geometryTransform().transformVector(LIGHT_DIR);
 
-    renderBlocks();
+    renderBlocks(state, e);
 
-    rm.endScene();
+    e.renderManager().endScene();
 
-    if (fpsTimer.fire()) {
-        glt::FrameStatistics fs = rm.frameStatistics();
+    if (state->fpsTimer->fire()) {
+        glt::FrameStatistics fs = e.renderManager().frameStatistics();
         std::cerr << "Timings (FPS/Render Avg/Render Min/Render Max): " << fs.avg_fps << "; " << fs.rt_avg << "; " << fs.rt_min << "; " << fs.rt_max << std::endl;
     }
 }
 
-void Anim::renderBlocks() {
+void renderBlocks(State *state, ge::Engine& e) {
+    glt::RenderManager& rm = e.renderManager();
     glt::SavePoint sp(rm.geometryTransform().save());
 
     // float phi = gameTime() * 0.1f;
@@ -838,86 +761,48 @@ void Anim::renderBlocks() {
     //                                    vec3(0.f, 0.f, 1.f)));
     // rm.geometryTransform().translate(-center);
 
-    voxelShader.use();    
-    glt::Uniforms us(voxelShader);
+    Ref<glt::ShaderProgram> voxelShader = e.shaderManager().program("voxel");
+    ASSERT(!!voxelShader);
+
+    voxelShader->use();
+
+    glt::Uniforms us(*voxelShader);
     us.optional("mvpMatrix", rm.geometryTransform().mvpMatrix());
     us.optional("mvMatrix", rm.geometryTransform().mvMatrix());
     us.optional("normalMatrix", rm.geometryTransform().normalMatrix());
-    us.optional("ecLightDir", ecLightDir);
+    us.optional("ecLightDir", state->ecLightDir);
     vec4_t mat = vec4(BLOCK_MAT.ambientContribution, BLOCK_MAT.diffuseContribution,
                       BLOCK_MAT.specularContribution, BLOCK_MAT.shininess);
     us.optional("materialProperties", mat);
-    us.optional("gammaCorrection", gamma_correction);
-    us.optional("sin_time", sin(gameTime()));
-    worldModel.draw();
+    us.optional("gammaCorrection", state->gamma_correction);
+    us.optional("sin_time", sin(e.gameLoop().gameTime()));
+    state->worldModel.draw();
 }
 
-void Anim::windowResized(uint32 width, uint32 height) {
-    std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
-    GL_CHECK(glViewport(0, 0, width, height));
-
-    float fov = degToRad(17.5f);
-    float aspect = float(width) / float(height);
-
-    rm.setPerspectiveProjection(fov, aspect, 0.25f, 200.f);
-}
-
-void Anim::mouseMoved(int32 dx, int32 dy) {
-    float rotX = dx * 0.001f;
-    float rotY = dy * 0.001f;
+// void mouseMoved(int32 dx, int32 dy) {
+//     float rotX = dx * 0.001f;
+//     float rotY = dy * 0.001f;
     
-    camera.rotateLocal(rotY, vec3(1.f, 0.f, 0.f));
-    camera.rotateWorld(rotX, vec3(0.f, 1.f, 0.f));
-}
+//     camera.rotateLocal(rotY, vec3(1.f, 0.f, 0.f));
+//     camera.rotateWorld(rotX, vec3(0.f, 1.f, 0.f));
+// }
 
-void Anim::handleInternalEvents() {
-    vec3_t step = vec3(0.f);
-
-    using namespace sf::Key;
-
-    if (isKeyDown(W))
-        step += vec3(0.f, 0.f, 1.f);
-    if (isKeyDown(S))
-        step += vec3(0.f, 0.f, -1.f);
-    if (isKeyDown(D))
-        step -= vec3(1.f, 0.f, 0.f);
-    if (isKeyDown(A))
-        step -= vec3(-1.f, 0.f, 0.f);
-
-    static const float STEP = 0.1f;
-
-    if (lengthSq(step) != 0.f)
-        camera.translateLocal(STEP * normalize(step));
-}
-
-void Anim::keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) {
-    if (!pressed) return;
-
-    using namespace sf::Key;
-    bool gamma_changed = false;
-
-    switch (key.Code) {
-    case C: loadShaders(); break;
-    case B: pause(!paused()); break;
-    case O: gamma_correction -= 0.05f; gamma_changed = true; break;
-    case P: gamma_correction += 0.05f; gamma_changed = true; break;
-    }
-
-    if (gamma_changed)
-        std::cerr << "gamma_correction: " << gamma_correction << std::endl;
-}
-
-bool Anim::readModel(const std::string& file, CubeMesh& mdl) {
+bool readModel(const std::string& file, CubeMesh& mdl) {
+    UNUSED(file); UNUSED(mdl);
 //    return mdl.read(file.c_str());
     return false;
 }
 
-bool Anim::writeModel(const std::string& file, const CubeMesh& mdl) {
+bool writeModel(const std::string& file, const CubeMesh& mdl) {
+    UNUSED(file); UNUSED(mdl);
 //    return mdl.write(file.c_str());
     return false;
 }
 
 int main(int argc, char *argv[]) {
+
+    ge::EngineOpts opts;
+    opts.parseOpts(&argc, &argv);
 
     bool read_mdl = true;
     bool write_mdl = false;
@@ -933,59 +818,16 @@ int main(int argc, char *argv[]) {
             write_mdl = false;
     }
 
-    Anim *anim = new Anim;
+    State state;
     
-    anim->read_model = read_mdl;
-    anim->write_model = write_mdl;
-    
-    if (!anim->init("voxel-world"))
-        return 1;
-    int ret = anim->run();
-    delete anim;
-    return ret;
-}
+    state.read_model = read_mdl;
+    state.write_model = write_mdl;
 
-static void makeUnitCube(CubeMesh& cube) {
-    Vertex v;
-    CUBE_MESH(cube);
+    ge::Engine engine;
 
-    v.normal = vec4(0.0f, 0.0f, 1.0f, 0.f);					
-    v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
-    v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
-    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
-    v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
+    opts.inits.reg(ge::Init, makeEventHandler(initState, &state));
 
-    v.normal = vec4( 0.0f, 0.0f, -1.f, 0.f);					
-    v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
-    v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
-    v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
-    v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
-
-    v.normal = vec4( 0.0f, 1.0f, 0.0f, 0.f);					
-    v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
-    v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
-    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
-    v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
-
-    v.normal = vec4( 0.0f, -1.f, 0.0f, 0.f);					
-    v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
-    v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
-    v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
-    v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
-
-    v.normal = vec4( 1.0f, 0.0f, 0.0f, 0.f);					
-    v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
-    v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
-    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
-    v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
-
-    v.normal = vec4(-1.f, 0.0f, 0.0f, 0.f);					
-    v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
-    v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
-    v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
-    v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
-
-    FREEZE_MESH(cube);
+    return engine.run(opts);
 }
 
 namespace {
