@@ -4,22 +4,36 @@
 #include "defs.h"
 #include "error/error.hpp"
 
+#include <iostream>
+
+#define VAL ((void *) 0xDEADBEEFDEADBEEFul)
+
 template <typename T>
 struct Array {
 private:
+    void * magic1;
     const uint32 _size;
     T * const _elems;
     bool owning_elems;
+    void * magic2;
     
 public:
     Array(T *els, uint32 s, bool owns = false) :
-        _size(s), _elems(els), owning_elems(owns) {}
+        magic1(VAL),
+        _size(s), _elems(els), owning_elems(owns)
+        , magic2(VAL) {
+        std::cerr << "constructing array: " << this << " elems: " << _elems << ", length: " << _size << ", owning: " << owning_elems << "magic1: " << magic1 << ", magic2: " << magic2 << std::endl;
+    }
     
     Array(const Array<T>& a) : _size(a._size), _elems(a._elems) {
         ASSERT_MSG(!a.owning_elems, "cannot copy array with ownership");
     }
     
-    ~Array() { if (owning_elems) delete[] _elems; }
+    ~Array() {
+        std::cerr << "destroying array: " << this << " elems: " << _elems << ", length: " << _size << ", owning: " << owning_elems << "magic1: " << magic1 << ", magic2: " << magic2 << std::endl;
+        ASSERT(magic1 == VAL && magic2 == VAL);
+        if (owning_elems) delete[] _elems;
+    }
     
     uint32 size() const { return _size; }
     

@@ -4,6 +4,8 @@
 #include "glt/utils.hpp"
 #include "glt/ShaderProgram.hpp"
 
+#include <iostream>
+
 namespace ge {
 
 namespace commands {
@@ -105,7 +107,9 @@ DEFINE_CONST_ARRAY(BIND_KEY_PARAMS, CommandParamType, KeyComboParam, CommandPara
 
 struct BindKey : public Command {
     BindKey() :
-        Command(BIND_KEY_PARAMS, "bind a command to a key combination") {}
+        Command(BIND_KEY_PARAMS, "bind a command to a key combination") {
+        std::cerr << "BIND_KEY_PARAMS: " << &BIND_KEY_PARAMS << std::endl;
+    }
 
     void handle(const Event<CommandEvent>&) { ERR("cannot execute without arguments"); }
     

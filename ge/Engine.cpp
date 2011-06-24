@@ -89,16 +89,29 @@ bool Engine::loadScript(const std::string& file) {
 
     std::vector<CommandArg> args;
     ParseState state(inp, commandProcessor(), file);
-    while (inp.good() && tokenize(state, args)) {
+    bool done = false;
+    while (inp.good() && !done) {
+        
+        ok = tokenize(state, args);
+        if (!ok) {
+            ERR("parsing failed: " + state.filename);
+            done = true;
+            goto next;
+        }
+        
         ok = !self->execCommand(args);
-        if (!ok) break;
+        if (!ok) {
+//            ERR("executing command");
+            done = true;
+            goto next;
+        }
+        
+    next:;
         for (uint32 i = 0; i < args.size(); ++i)
             args[i].free();
         args.clear();
     }
 
-    for (uint32 i = 0; i < args.size(); ++i)
-        args[i].free();
     return ok;
 }
 
@@ -137,13 +150,19 @@ int32 Engine::run(const EngineOpts& opts) {
 
     for (uint32 i = 0; i < opts.commands.size(); ++i) {
         bool ok;
-        if (opts.commands[i].first == EngineOpts::Script)
+        std::string command;
+        if (opts.commands[i].first == EngineOpts::Script) {
             ok = loadScript(opts.commands[i].second);
-        else
+            if (!ok)
+                command = "script";
+        } else {
             ok = evalCommand(opts.commands[i].second);
-        
+            if (!ok)
+                command = "command";
+        }
+
         if (!ok) {
-            ERR("initialization failed: script returned an error");
+//            ERR(command + " failed: " + opts.commands[i].second);
             return 1;
         }
     }

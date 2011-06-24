@@ -30,7 +30,7 @@ add_definitions("-Wall -fno-exceptions -fno-rtti")
 if(COMP_GCC OR COMP_CLANG)
   add_definitions("-Wextra -Wno-switch")
   if(BUILD_DEBUG)
-    add_definitions("-ggdb")
+    add_definitions("-ggdb -fstack-protector")
   endif()
 endif()
 

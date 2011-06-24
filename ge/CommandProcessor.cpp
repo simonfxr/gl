@@ -63,16 +63,14 @@ bool CommandProcessor::exec(Array<CommandArg>& args) {
     if (args[0].type == String) {
         com_name = args[0].string;
     } else if (args[0].type == CommandRef) {
-        if (!*args[0].command.ref)
-            com_name = args[0].command.name;
-        else
-            comm = *args[0].command.ref;
+        com_name = args[0].command.name;
+        comm = *args[0].command.ref;
     } else {
         ERR("cannot execute command: invalid type");
         return false;
     }
 
-    if (com_name != 0) {
+    if (!comm) {
         comm = command(*com_name);
         if (!comm) {
             ERR("unknown command: " + *com_name);
@@ -81,7 +79,7 @@ bool CommandProcessor::exec(Array<CommandArg>& args) {
     }
 
     Array<CommandArg> argsArr(&args[1], args.size() - 1);
-    return exec(comm, argsArr);
+    return exec(comm, argsArr, *com_name);
 }
 
 bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const std::string& comname) {
@@ -91,7 +89,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
         return false;
     }
 
-    const Array<CommandParamType> params = com->parameters();
+    const Array<CommandParamType>& params = com->parameters();
     bool rest_args = params.size() > 0 && params[params.size() - 1] == ListParam;
     uint32 nparams = rest_args ? params.size() - 1 : params.size();
 
