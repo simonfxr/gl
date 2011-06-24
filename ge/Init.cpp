@@ -94,6 +94,8 @@ static void runInitCommands(const Event<InitEvent>& e) {
     r.define("load", loadScript);
     r.define("initOpenGLDebug", initGLDebug);
     r.define("describe", describe);
+    r.define("eval", eval);
+    r.define("load", load);
 }
 
 void initCommands(RunLevel lvl, EngineInitializers& inits) {

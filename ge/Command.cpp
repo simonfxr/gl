@@ -3,7 +3,6 @@
 
 #include <sstream>
 #include <vector>
-#include <iostream>
 
 namespace ge {
 
@@ -47,39 +46,3 @@ void QuotationCommand::handle(const Event<CommandEvent>&) {
 }
 
 } // namespace ge
-
-static std::vector<const Array<int> *> *arrays = 0;
-
-static void init() {
-    if (arrays == 0) {
-        std::cerr << "constructing arrays" << std::endl;
-        arrays = new std::vector<const Array<int> *>;
-    }
-}
-
-extern void register_arr(const Array<int> *arr) {
-    init();
-    arrays->push_back(arr);
-    check_arrs();
-}
-
-extern void unregister_arr(const Array<int> *arr) {
-    init();
-    check_arrs();
-    for (uint32 i = 0; i < arrays->size(); ++i) {
-        if ((*arrays)[i] == arr) {
-            arrays->erase(arrays->begin() + i);
-            return;
-        }
-    }
-
-    ERR("array not found!");
-}
-
-extern void check_arrs() {
-    init();
-    for (uint32 i = 0; i < arrays->size(); ++i) {
-        ASSERT((*arrays)[i]->magic1 == VAL);
-        ASSERT((*arrays)[i]->magic2 == VAL);
-    }
-}

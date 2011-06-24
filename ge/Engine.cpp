@@ -78,10 +78,11 @@ EngineEvents& Engine::events() { return SELF->events; }
 
 float Engine::now() { return SELF->now(); }
 
-bool Engine::loadScript(const std::string& file) {
+bool Engine::loadScript(const std::string& file, bool quiet) {
     std::ifstream inp(file.c_str());
-    if (!inp.is_open()) {
-        ERR(("opening file: " + file).c_str());
+    if (!inp.is_open() || !inp.good()) {
+        if (!quiet)
+            ERR(("opening file: " + file).c_str());
         return false;
     }
 
@@ -90,18 +91,21 @@ bool Engine::loadScript(const std::string& file) {
     std::vector<CommandArg> args;
     ParseState state(inp, commandProcessor(), file);
     bool done = false;
-    while (inp.good() && !done) {
+    while (!done) {
         
         ok = tokenize(state, args);
         if (!ok) {
-            ERR("parsing failed: " + state.filename);
+            if (!state.eof)
+                ERR("parsing failed: " + state.filename);
+            else
+                ok = true;
             done = true;
             goto next;
         }
         
-        ok = !self->execCommand(args);
+        ok = self->execCommand(args);
         if (!ok) {
-//            ERR("executing command");
+            ERR("executing command");
             done = true;
             goto next;
         }
@@ -148,6 +152,10 @@ int32 Engine::run(const EngineOpts& opts) {
     if (!runInit(opts.inits.preInit1, initEv))
         return 1;
 
+    if (!opts.initScript.empty()) {
+        loadScript(opts.initScript);
+    }
+
     for (uint32 i = 0; i < opts.commands.size(); ++i) {
         bool ok;
         std::string command;
@@ -162,7 +170,7 @@ int32 Engine::run(const EngineOpts& opts) {
         }
 
         if (!ok) {
-//            ERR(command + " failed: " + opts.commands[i].second);
+            ERR(command + " failed: " + opts.commands[i].second);
             return 1;
         }
     }
@@ -212,7 +220,17 @@ void Engine::Data::exit(int32 exit_code) {
 
 bool Engine::Data::execCommand(std::vector<CommandArg>& args) {
     Array<CommandArg> com_args(&args[0], args.size());
-    return commandProcessor.exec(com_args);
+    
+    bool ok = commandProcessor.exec(com_args);
+
+    if (!ok) {
+        std::ostringstream err;
+        err << "executing command failed: ";
+        prettyCommandArgs(err, com_args);
+        ERR(err.str());
+    }
+    
+    return ok;
 }
 
 void Engine::Data::init(const Event<InitEvent>& e) {
@@ -286,8 +304,10 @@ EngineOpts& EngineOpts::parseOpts(int *argcp, char ***argvp) {
     if (workingDirectory.empty() && argc > 0) {
         std::string binary(argv[0]);
         size_t pos = binary.rfind('/');
-        if (pos != std::string::npos)
+        if (pos != std::string::npos) {
             workingDirectory = binary.substr(0, pos);
+            initScript = binary.substr(pos + 1) + ".script";
+        }
     }
 
     int nargs = argc;
@@ -302,6 +322,8 @@ EngineOpts& EngineOpts::parseOpts(int *argcp, char ***argvp) {
             done = true;
         } else if (str_eq(arg1, "--help")) {
             mode = Help;
+        } else if (str_eq(arg1, "--no-init-script")) {
+            initScript = "";
         } else {
             if (++i >= nargs || str_eq(argv[i], "--")) {
                 if (i < nargs)

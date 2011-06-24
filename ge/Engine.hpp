@@ -32,6 +32,7 @@ struct EngineOpts {
     
     std::vector<std::pair<CommandType, std::string> > commands;
     std::string workingDirectory;
+    std::string initScript;
     WindowOpts window;
     Mode mode;
 
@@ -59,7 +60,7 @@ struct Engine {
 
     float now();
 
-    bool loadScript(const std::string& file);
+    bool loadScript(const std::string& file, bool quiet = false);
     bool evalCommand(const std::string& cmd);
 
     int32 run(const EngineOpts& opts = EngineOpts());

@@ -79,7 +79,8 @@ bool CommandProcessor::exec(Array<CommandArg>& args) {
     }
 
     Array<CommandArg> argsArr(&args[1], args.size() - 1);
-    return exec(comm, argsArr, *com_name);
+    bool ok = exec(comm, argsArr, *com_name);
+    return ok;
 }
 
 bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const std::string& comname) {

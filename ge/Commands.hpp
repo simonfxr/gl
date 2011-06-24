@@ -25,6 +25,10 @@ extern const Ref<Command> initGLDebug;
 
 extern const Ref<Command> describe;
 
+extern const Ref<Command> eval;
+
+extern const Ref<Command> load;
+
 } // namespace commands
 
 } // namespace ge

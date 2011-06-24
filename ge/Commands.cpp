@@ -3,7 +3,6 @@
 
 #include "glt/utils.hpp"
 #include "glt/ShaderProgram.hpp"
-
 #include <iostream>
 
 namespace ge {
@@ -107,15 +106,12 @@ DEFINE_CONST_ARRAY(BIND_KEY_PARAMS, CommandParamType, KeyComboParam, CommandPara
 
 struct BindKey : public Command {
     BindKey() :
-        Command(BIND_KEY_PARAMS, "bind a command to a key combination") {
-        std::cerr << "BIND_KEY_PARAMS: " << &BIND_KEY_PARAMS << std::endl;
-    }
+        Command(BIND_KEY_PARAMS, "bind a command to a key combination") {}
 
     void handle(const Event<CommandEvent>&) { ERR("cannot execute without arguments"); }
     
     void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
         Ref<Command>& comm = *args[1].command.ref;
-        std::cerr << "bindKey: " << comm->description() << std::endl;
         KeyBinding bind = args[0].keyBinding->clone();
         bind.setDelete(false);
         Ref<KeyBinding> binding(new KeyBinding(&bind[0], bind.size(), true));
@@ -209,6 +205,19 @@ void runDescribe(const Event<CommandEvent>&, const Array<CommandArg>&) {
 }
 
 const Ref<Command> describe = makeListCommand(runDescribe, "print a description of its parameters");
+
+static void runEval(const Event<CommandEvent>&, const Array<CommandArg>&) {
+    ERR("not yet implemented");
+}
+
+const Ref<Command> eval = makeStringListCommand(runEval, "parse a string and execute it");
+
+static void runLoad(const Event<CommandEvent>&, const Array<CommandArg>&) {
+    ERR("not yet implemented");
+}
+
+const Ref<Command> load = makeStringListCommand(runLoad, "execute a script file");
+
 
 } // namespace commands
 

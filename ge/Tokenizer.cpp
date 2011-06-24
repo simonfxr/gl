@@ -434,7 +434,7 @@ State statement(ParseState& s, std::vector<CommandArg>& toks, bool quot) {
 
 bool tokenize(ParseState& s, std::vector<CommandArg>& args) {
     getch(s);
-    if (!s.in.good())
+    if (s.eof)
         return false;
     return statement(s, args, false) != Fail;
 }

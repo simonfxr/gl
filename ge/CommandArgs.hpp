@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <ostream>
 
 template <typename T>
 struct Ref;
@@ -58,6 +59,12 @@ struct CommandArg {
 
     void free();
 };
+
+void prettyKeyCombo(std::ostream& out, const KeyBinding& binding);
+
+void prettyCommandArg(std::ostream& out, const CommandArg& arg);
+
+void prettyCommandArgs(std::ostream& out, const Array<CommandArg>& args);
 
 } // namepspace ge
 
