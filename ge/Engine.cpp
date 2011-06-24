@@ -257,6 +257,10 @@ void mouseButtonChanged(KeyHandler *handler, const Event<MouseButton>& ev) {
         handler->keyReleased(code);
 }
 
+void handleKeyBindings(KeyHandler *handler, const Event<EngineEvent>&) {
+    handler->handleCommands();
+}
+
 } // namespace handlers
 
 } // namespace anon
@@ -266,6 +270,7 @@ void Engine::Data::registerHandlers() {
     window->events().windowClosed.reg(makeEventHandler(handlers::sigExit, &theEngine));
     window->events().keyChanged.reg(makeEventHandler(handlers::keyChanged, &keyHandler));
     window->events().mouseButton.reg(makeEventHandler(handlers::mouseButtonChanged, &keyHandler));
+    theEngine.events().handleInput.reg(makeEventHandler(handlers::handleKeyBindings, &keyHandler));
 }
 
 static bool str_eq(const char *a, const char *b) {

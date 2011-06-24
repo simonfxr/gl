@@ -114,10 +114,12 @@ struct BindKey : public Command {
     void handle(const Event<CommandEvent>&) { ERR("cannot execute without arguments"); }
     
     void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+        Ref<Command>& comm = *args[1].command.ref;
+        std::cerr << "bindKey: " << comm->description() << std::endl;
         KeyBinding bind = args[0].keyBinding->clone();
         bind.setDelete(false);
         Ref<KeyBinding> binding(new KeyBinding(&bind[0], bind.size(), true));
-        e.info.engine.keyHandler().registerBinding(binding, *args[1].command.ref);
+        e.info.engine.keyHandler().registerBinding(binding, comm);
     }
 };
 

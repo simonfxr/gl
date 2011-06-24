@@ -9,4 +9,3 @@ int main(int argc, char *argv[]) {
     opts.parseOpts(&argc, &argv);
     return Engine().run(opts);
 }
-
