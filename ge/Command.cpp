@@ -20,6 +20,10 @@ std::string Command::name() const {
     return id.str();
 }
 
+void Command::name(const std::string& new_name) {
+    namestr = new_name;
+}
+
 Command::Command(const Array<CommandParamType>& ps, const std::string name, const std::string& desc) :
     params(ps), namestr(name), descr(desc)
 {
@@ -84,13 +88,27 @@ Ref<Command> makeCommand(CommandHandler handler, const std::string& name, const 
     return Ref<Command>(new SimpleCommand(handler, name, desc));
 }
 
+struct TypedCommand : public Command {
+    ListCommandHandler handler;
+    TypedCommand(ListCommandHandler hndlr, const Array<CommandParamType>& params, const std::string& name, const std::string& desc) :
+        Command(params, name, desc),
+        handler(hndlr) {}
+    void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+        handler(e, args);
+    }
+};
+
+Ref<Command> makeCommand(ListCommandHandler handler, const Array<CommandParamType>& params, const std::string& name, const std::string& desc) {
+    return Ref<Command>(new TypedCommand(handler, params, name, desc));
+}
+
 struct StringListCommand : public Command {
 private:
     ListCommandHandler handler;
 
 public:
     StringListCommand(ListCommandHandler hndlr, const std::string& name, const std::string& desc) :
-        Command(CONST_ARRAY(CommandParamType, ListParam), name, desc),
+        Command(PARAM_ARRAY(ListParam), name, desc),
         handler(hndlr) {
 //        std::cerr << "list command: " << parameters().size() << std::endl;
 
@@ -116,17 +134,14 @@ private:
     ListCommandHandler handler;
 public:
     ListCommand(ListCommandHandler hndlr, const std::string& name, const std::string& desc) :
-        Command(CONST_ARRAY(CommandParamType, ListParam), name, desc), handler(hndlr) {}
+        Command(PARAM_ARRAY(ListParam), name, desc), handler(hndlr) {}
     void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
         handler(e, args);
     }
 };
 
-
 Ref<Command> makeListCommand(ListCommandHandler handler, const std::string& name, const std::string& desc) {
     return Ref<Command>(new ListCommand(handler, name, desc));
 }
-
-
 
 } // namespace ge

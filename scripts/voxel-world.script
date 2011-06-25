@@ -2,12 +2,22 @@ load "scripts/default.script"
 
 bindShader "voxel" "voxel.vert" "voxel.frag" 0 "position" 1 "color" 2 "normal"
 
+perspectiveProjection 17.5 0.25 200.0
+
 bindKey [+O] &incGamma
 bindKey [+P] &decGamma
 
-bindKey [W] { move 12 }
-bindKey [D] { move 3 }
-bindKey [S] { move 6 }
-bindKey [A] { move 9 }
+bindKey [W] { moveCamera 12 }
+bindKey [D] { moveCamera 3 }
+bindKey [S] { moveCamera 6 }
+bindKey [A] { moveCamera 9 }
 
-perspectiveProjection 16.5 0.25 200.0
+bindKey [+U] { saveCameraFrame "voxel.cam" }
+bindKey [+I] { loadCameraFrame "voxel.cam" }
+
+postInit { 
+    setCameraStepLength 0.1
+    setCameraMouseSensitivity 0.0005 
+    loadCameraFrame "voxel.cam"
+}
+

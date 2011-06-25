@@ -68,6 +68,8 @@ struct Engine {
     bool loadScript(const std::string& file, bool quiet = false);
     bool evalCommand(const std::string& cmd);
 
+    void addInit(RunLevel lvl, const Ref<EventHandler<InitEvent> >& comm);
+
     int32 run(const EngineOpts& opts = EngineOpts());
 
 private:

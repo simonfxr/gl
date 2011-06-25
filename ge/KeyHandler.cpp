@@ -105,15 +105,34 @@ Ref<Command> KeyHandler::unregisterBinding(const Ref<KeyBinding>& binding) {
         return it->second;
 }
 
+static const char *prettyKeyState(KeyState state) {
+    switch (state) {
+    case Up: return "Up";
+    case Down: return "Down"; 
+    case Pressed: return "Pressed";
+    case Released: return "Released";
+    default: return "<unknown>";
+    }
+}
+
 void KeyHandler::handleCommands() {
 
     CommandBindings::iterator it = self->bindings.begin();
     for (; it != self->bindings.end(); ++it) {
         const Ref<KeyBinding>& bind = it->first.binding;
-        
+
         for (uint32 i = 0; i < bind->size(); ++i) {
-            KeyState state = keyState(bind->get(i).code);
-            if ((bind->get(i).state & state) == 0)
+
+            KeyCode code = bind->get(i).code;
+            KeyState reqState = bind->get(i).state;
+            KeyState curState = keyState(code);
+
+            bool match = (reqState & curState) == reqState;
+
+            // if (curState != Up)
+            //     std::cerr << "checking key: " << prettyKeyCode(code) <<  " req: " << prettyKeyState(reqState) << " cur: " << prettyKeyState(curState) << " -> " << match << std::endl;
+
+            if (!match)
                 goto next;
         }
 

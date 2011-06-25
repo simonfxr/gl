@@ -15,10 +15,21 @@ struct Camera {
     float step_length;
     math::vec2_t mouse_sensitivity;
     glt::Frame frame;
-    Ref<Command> moveCommand;
 
+    struct Commands {
+        Ref<Command> move;
+        Ref<Command> saveFrame;
+        Ref<Command> loadFrame;
+        Ref<Command> setStepLength;
+        Ref<Command> setSensitivity;
+    };
+
+    Commands commands;
+    
     Camera(float step_len = 0.1f, vec2_t mouse_sens = vec2(0.0005f, 0.0005f));
-    void registerWith(Engine& e, const std::string& move_cmd = "");
+    
+    void registerWith(Engine& e);
+    void registerCommands(CommandProcessor& proc);
 };
 
 } // namespace ge

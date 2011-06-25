@@ -226,7 +226,7 @@ State parseCommandRef(ParseState& s, CommandArg& arg) {
             goto fail;
         Ref<Command> comref = s.proc.command(sym);
         if (!comref) {
-            WARN(("unknown command name: " + sym));
+//            WARN(("unknown command name: " + sym));
         }
 
         arg.type = CommandRef;
@@ -323,8 +323,6 @@ int parsePow(ParseState& s) {
         }
     }
 
-
-
     return pow * sig;
 }
 
@@ -344,6 +342,8 @@ State parseNum(ParseState& s, CommandArg& tok) {
         oneDigit = true;
     }
 
+    if (neg) k = -k;
+
     double num = 0;
     bool isNum = false;
 
@@ -362,11 +362,9 @@ State parseNum(ParseState& s, CommandArg& tok) {
             getch(s);
         }
 
-        int p = 1;
+        int p = 0;
         if (s.c == 'e' || s.c == 'E')
             p = parsePow(s);
-
-//        std::cerr << "num: " << (k + fract / div) << std::endl;
 
         num = (k + fract / div) * pow(10, p);
         isNum = true;
@@ -379,10 +377,10 @@ State parseNum(ParseState& s, CommandArg& tok) {
 
     if (isNum) {
         tok.type = Number;
-        tok.number = neg ? -num : num;
+        tok.number = num;
     } else {
         tok.type = Integer;
-        tok.integer = neg ? -k : k;
+        tok.integer = k;
     }
 
     return EndToken;

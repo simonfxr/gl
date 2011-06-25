@@ -5,6 +5,8 @@
 
 namespace ge {
 
+void prettyCommandArg(std::ostream& out, const ge::CommandArg& arg, bool first);
+
 CommandArg::CommandArg() { memset(this, 0, sizeof *this); }
 
 void CommandArg::free() {
@@ -54,13 +56,21 @@ void prettyQuot(std::ostream& out, const Quotation& q) {
         return;
     }
 
-    out << "{ " << std::endl;
-    for (uint32 i = 0; i < q.size(); ++i)
+    out << "{";
+    for (uint32 i = 0; i < q.size(); ++i) {
+        out << ' ';
+        if (i > 0)
+            out << ';';
         prettyCommandArgs(out, Array<CommandArg>(const_cast<CommandArg *>(&q[i][0]), q[i].size()));
-    out << "}" << std::endl;
+    }
+    out << " }";
 }
 
 void prettyCommandArg(std::ostream& out, const ge::CommandArg& arg) {
+    prettyCommandArg(out, arg, false);
+}
+
+void prettyCommandArg(std::ostream& out, const ge::CommandArg& arg, bool first) {
     switch (arg.type) {
     case String:
         out << '"' << *arg.string << '"'; break;
@@ -70,7 +80,9 @@ void prettyCommandArg(std::ostream& out, const ge::CommandArg& arg) {
         out << arg.number; break;
     case KeyCombo: prettyKeyCombo(out, *arg.keyBinding); break;
     case CommandRef:
-        out << '&' << *arg.command.name;
+        if (!first)
+            out << '&';
+        out << *arg.command.name;
         if (arg.command.quotation != 0)
             prettyQuot(out, *arg.command.quotation);
         break;
@@ -85,10 +97,9 @@ void prettyCommandArgs(std::ostream& out, const Array<CommandArg>& args) {
     const char *sep = "";
     for (uint32 i = 0; i < args.size(); ++i) {
         out << sep;
-        prettyCommandArg(out, args[i]);
+        prettyCommandArg(out, args[i], i == 0);
         sep = " ";
     }
-    out << std::endl;
 }
 
 } // namespace ge

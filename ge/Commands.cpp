@@ -185,6 +185,24 @@ struct PerspectiveProjection : public Command {
 
 extern const Ref<Command> perspectiveProjection(new PerspectiveProjection);
 
+struct InitCommandHandler : public EventHandler<InitEvent> {
+    Ref<Command> handler;
+    InitCommandHandler(const Ref<Command>& hndlr) :
+        handler(hndlr) {}
+    void handle(const Event<InitEvent>& e) {
+        e.info.success = true;
+        handler->handle(makeEvent(CommandEvent(e.info.engine)));
+    }
+};
+
+static void runPostInit(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+    e.info.engine.addInit(PostInit, Ref<EventHandler<InitEvent> >(new InitCommandHandler(*args[0].command.ref)));
+}
+
+DEFINE_PARAM_ARRAY(POST_INIT_PARAMS, CommandParam);
+
+const Ref<Command> postInit = makeCommand(runPostInit, POST_INIT_PARAMS, "postInit", "execute its argument command in the postInit hook");
+
 } // namespace commands
 
 } // namespace ge

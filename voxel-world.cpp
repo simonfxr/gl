@@ -128,7 +128,9 @@ void initState(State *state, const InitEv& ev) {
 
     e.shaderManager().verbosity(glt::ShaderManager::Info);
 
-    state->camera.registerWith(e, "move");
+    state->camera.registerWith(e);
+    state->camera.registerCommands(e.commandProcessor());
+    
     e.events().render.reg(makeEventHandler(renderScene, state));
 
     GLuint vao;

@@ -21,7 +21,7 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
     CommandProcessor commandProcessor;
     KeyHandler keyHandler;
 
-    const WindowOpts *winOpts; // only during init
+    const EngineOpts *opts; // only during init
     
     glt::ShaderManager shaderManager;
     glt::RenderManager renderManager;
@@ -34,7 +34,7 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
         gameLoop(30),
         commandProcessor(engine),
         keyHandler(commandProcessor),
-        winOpts(0)
+        opts(0)
     {}
 
     void init(const Event<InitEvent>&);
@@ -143,7 +143,7 @@ int32 Engine::run(const EngineOpts& opts) {
 
     self = new Data(*this);
 
-    self->winOpts = &opts.window;
+    self->opts = &opts;
     opts.inits.reg(PreInit0, makeEventHandler(self, &Data::init));
 
     Event<InitEvent> initEv = makeEvent(InitEvent(*this));
@@ -188,7 +188,7 @@ int32 Engine::run(const EngineOpts& opts) {
     opts.inits.init.clear();
     opts.inits.postInit.clear();
 
-    self->winOpts = 0;
+    self->opts = 0;
 
     return self->gameLoop.run(*self);
 }
@@ -227,6 +227,7 @@ bool Engine::Data::execCommand(std::vector<CommandArg>& args) {
 
     ON_DEBUG(std::cerr << "executing command: ");
     ON_DEBUG(prettyCommandArgs(std::cerr, com_args));
+    ON_DEBUG(std::cerr << std::endl);
     
     bool ok = commandProcessor.exec(com_args);
 
@@ -234,6 +235,7 @@ bool Engine::Data::execCommand(std::vector<CommandArg>& args) {
         std::ostringstream err;
         err << "executing command failed: ";
         prettyCommandArgs(err, com_args);
+        err << std::endl;
         ERR(err.str());
     }
     
@@ -241,11 +243,22 @@ bool Engine::Data::execCommand(std::vector<CommandArg>& args) {
 }
 
 void Engine::Data::init(const Event<InitEvent>& e) {
-    window = new GameWindow(*winOpts);
+    window = new GameWindow(opts->window);
     renderManager.setDefaultRenderTarget(&window->renderTarget());
     registerHandlers();
     e.info.success = true;
 }
+
+void Engine::addInit(RunLevel lvl, const Ref<EventHandler<InitEvent> >& comm) {
+    
+    if (SELF->opts == 0) {
+        ERR("cannot register init handler, already initialized");
+        return;
+    }
+
+    SELF->opts->inits.reg(lvl, comm);
+}
+
 
 namespace {
 

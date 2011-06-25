@@ -85,23 +85,9 @@ static void printArgs(const std::vector<CommandArg>& args) {
 int main(int argc, char *argv[]) {
     ge::Engine eng;
     ge::CommandProcessor proc(eng);
-    std::stringstream input;
-    ge::ParseState state(input, proc, "<interactive>");
-
-    for (int i = 1; i < argc; ++i) {
-        input << argv[i];
-        if (i + 1 < argc )
-            input << ' ';
-    }
+    ge::ParseState state(std::cin, proc, "<interactive>");
 
     while (std::cin.good()) {
-        if (input.eof()) {
-            std::string line;
-            std::cin >> line;
-            if (std::cin.good())
-                input << line;
-            
-        }
         std::vector<ge::CommandArg> args;
         if (!ge::tokenize(state, args)) {
             ERR("tokenize failed");

@@ -98,6 +98,7 @@ static void runInitCommands(const Event<InitEvent>& e) {
     r.define(addShaderPath);
     r.define(togglePause);
     r.define(perspectiveProjection);
+    r.define(postInit);
 }
 
 void initCommands(RunLevel lvl, EngineInitializers& inits) {

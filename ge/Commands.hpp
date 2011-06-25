@@ -33,6 +33,8 @@ extern const Ref<Command> togglePause;
 
 extern const Ref<Command> perspectiveProjection;
 
+extern const Ref<Command> postInit;
+
 } // namespace commands
 
 } // namespace ge
