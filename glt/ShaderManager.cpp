@@ -199,8 +199,9 @@ Ref<ShaderManager::CachedShaderObject> ShaderManager::lookupShaderObject(const s
     ShaderCache::iterator it = self->cache.find(file);
 
     if (it != self->cache.end()) {
-        Ref<CachedShaderObject> ref = it->second.unweak();
-        return self->rebuildSO(*this, ref, mtime);
+        Ref<CachedShaderObject> ref;
+        if (it->second.unweak(&ref))
+            return self->rebuildSO(*this, ref, mtime);
     }
 
     return EMPTY_CACHE_ENTRY;
@@ -215,8 +216,8 @@ bool ShaderManager::removeFromCache(ShaderManager::CachedShaderObject& so) {
     return false;
 }
 
-void ShaderManager::cacheShaderObject(const Ref<ShaderManager::CachedShaderObject>& entry) {
-    DEBUG_ASSERT(entry.ptr() != 0);
+void ShaderManager::cacheShaderObject(Ref<ShaderManager::CachedShaderObject>& entry) {
+    DEBUG_ASSERT(entry);
     if (self->cache_so)
         self->cache[entry->key] = entry.weak();
 }

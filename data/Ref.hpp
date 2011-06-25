@@ -7,14 +7,32 @@
 
 namespace atomic {
 
-struct Counter {
-    uint32 x; // not thread safe
-    Counter(uint32 initial) : x(initial) {}
-    ~Counter() { ON_DEBUG(x = 0xDEADBEEF); }
-    void inc() { DEBUG_ASSERT(x != 0xDEADBEEF); ++x; }
-    uint32 decAndGet() { DEBUG_ASSERT(x != 0xDEADBEEF && x > 0); return --x; }
-    uint32 get() { DEBUG_ASSERT(x != 0xDEADBEEF); return x; }
-    bool alive() { bool ret = true; ON_DEBUG(ret = x != 0xDEADBEEF); ret = ret && x > 0; return ret; }
+static const uint32 MARK = -0xAFAFAFAF;
+
+struct Counter { // not thread safe
+    int32 count; 
+    Counter(int32 initial) : count(initial) {}
+    ~Counter() { ON_DEBUG(count = MARK); }
+    
+    int32 getAndInc() { DEBUG_ASSERT(count != MARK); return count++; }
+    int32 decAndGet() { DEBUG_ASSERT(count != MARK && count > 0); return --count; }
+    void inc() { getAndInc(); }
+    void dec() { decAndGet(); }
+    int32 get() const { DEBUG_ASSERT(count != MARK); return count; }
+    bool xchg(int32 expected, int32 *val) {
+        if (count == expected) {
+            count = *val;
+            return true;
+        } else {
+            *val = count;
+            return false;
+        }
+    }
+};
+
+struct RefCount {
+    Counter strong, weak;
+    RefCount(int32 s, int32 w) : strong(s), weak(w) {}
 };
 
 } // namespace atomic
@@ -25,31 +43,25 @@ template <typename T, typename C, typename R>
 struct RefBase {
 protected:
     T *_ptr; // fat pointer, saves one indirection for pointer uses, but wastes space
-    atomic::Counter *_cnt;
+    atomic::RefCount *_cnt;
 
-private:
+protected:
+    void retain() { C::retain(_cnt); }
+    void release() { if (C::release(_cnt)) delete _ptr; }
 
-    void retain() {
-        ASSERT(C::get(_cnt) != 0);
-        C::inc(_cnt);
-    }
+    RefBase(T *p, atomic::RefCount *cnt) : _ptr(p), _cnt(cnt) { }
     
-    void release() {
-        if (C::decAndGet(_cnt) == 0) {
-            delete _ptr;
-            delete _cnt;
+    void set(T *p) {
+        if (likely(p != _ptr)) {
+            release(); // could reuse old counter, but makes debugging harder
+            _ptr = p;
+            _cnt = new atomic::RefCount(1, 0);
         }
     }
 
-protected:
-
-    RefBase(T *p, atomic::Counter *cnt) : _ptr(p), _cnt(cnt) { retain(); }
-
 public:
-
-    explicit RefBase(T *p = 0) : _ptr(p), _cnt(new atomic::Counter(1)) {}
+    explicit RefBase(T *p = 0) : _ptr(p), _cnt(new atomic::RefCount(1, 0)) {}
     RefBase(const RefBase<T, C, R>& ref) : _ptr(ref._ptr), _cnt(ref._cnt)  { retain(); }
-
     ~RefBase() { release(); }
 
     RefBase<T, C, R>& operator =(const RefBase<T, C, R>& ref) {
@@ -61,41 +73,54 @@ public:
         return *this;
     }
 
-    void set(T *p) {
-        if (likely(p != _ptr)) {
-            release(); // could reuse old counter, but makes debugging harder
-            _ptr = p; _cnt = new atomic::Counter(1);
-        }
-    }
-
-    uint32 refCount() const { return C::get(_cnt); }
-    bool valid() const { return C::alive(_cnt); }
+    uint32 refCount() const { return _cnt->strong.get(); }
+    uint32 weakCount() const { return _cnt->weak.get(); }
+    bool valid() const { return _cnt->strong.get() > 0; }
     
-    const T& operator *() const { DEBUG_ASSERT(_ptr != 0); return *_ptr; }
-    T& operator *() { DEBUG_ASSERT(_ptr != 0); return *_ptr; }
+    const T *ptr() const { ON_DEBUG(_cnt->strong.get()); return _ptr; }
+    T *ptr() { ON_DEBUG(_cnt->strong.get()); return _ptr; }
 
-    const T *operator ->() const { DEBUG_ASSERT(_ptr != 0); return _ptr; }
-    T *operator ->() { DEBUG_ASSERT(_ptr != 0); return _ptr; }
-
-    const T *ptr() const { return _ptr; }
-    T *ptr() { return _ptr; }
-
-    bool equals(const R& ref) const { return _cnt == ref._cnt; }
+    bool same(const R& ref) const { return _cnt == ref._cnt; }
 
     bool operator ==(const T *p) const { return _ptr == p; }
     bool operator !=(const T *p) const { return _ptr != p; }
 };
 
 struct RefCnt {
-    static void inc(atomic::Counter *cnt) { cnt->inc(); }
-    static uint32 decAndGet(atomic::Counter *cnt) { return cnt->decAndGet(); }
-    static uint32 get(atomic::Counter *cnt) { return cnt->get(); }
-    static bool alive(atomic::Counter *cnt) { return cnt->alive(); }
+    static void retain(atomic::RefCount *cnt) {
+        DEBUG_ASSERT(cnt->strong.get() > 0);
+        cnt->strong.inc();
+    }
+    
+    static bool release(atomic::RefCount *cnt) {
+        DEBUG_ASSERT(cnt->strong.get() > 0);
+        if (cnt->strong.decAndGet() == 0) {
+            int32 val = -1;
+            if (cnt->weak.xchg(0, &val))
+                delete cnt;
+            return true;
+        }
+        return false;
+    }
 };
 
-struct WeakRefCnt : public RefCnt {
-    static void inc(atomic::Counter *cnt) { UNUSED(cnt); }
-    static uint32 decAndGet(atomic::Counter *cnt) { UNUSED(cnt); return 1; }
+struct WeakRefCnt {
+    static void retain(atomic::RefCount *cnt) {
+        DEBUG_ASSERT(cnt->weak.get() > 0 || cnt->strong.get() > 0);
+        cnt->weak.inc();
+    }
+    
+    static bool release(atomic::RefCount *cnt) {
+        DEBUG_ASSERT(cnt->weak.get() > 0);
+        if (cnt->weak.decAndGet() == 0) {
+            if (cnt->strong.get() == 0) {
+                int32 val = -1;
+                if (cnt->weak.xchg(0, &val))
+                    delete cnt;
+            }
+        }
+        return false;
+    }
 };
 
 } // namespace priv
@@ -108,31 +133,42 @@ struct Ref : public priv::RefBase<T, priv::RefCnt, Ref<T> > {
     explicit Ref(T *p = 0) : priv::RefBase<T, priv::RefCnt, Ref<T> >(p) {}
     Ref(const Ref<T>& ref) : priv::RefBase<T, priv::RefCnt, Ref<T> >(ref) {}
     Ref<T>& operator =(T *p) { this->set(p); return *this; }
-    WeakRef<T> weak() const;
+    WeakRef<T> weak();
     operator bool() const { return this->_ptr != 0; }
+    const T& operator *() const { DEBUG_ASSERT(this->valid() && this->_ptr != 0); return *this->_ptr; }
+    T& operator *() { DEBUG_ASSERT(this->valid() && this->_ptr != 0); return *this->_ptr; }
+
+    const T *operator ->() const { DEBUG_ASSERT(this->valid() && this->_ptr != 0); return this->_ptr; }
+    T *operator ->() { DEBUG_ASSERT(this->valid() && this->_ptr != 0); return this->_ptr; }
 private:
-    Ref(T *p, atomic::Counter *cnt) : priv::RefBase<T, priv::RefCnt, Ref<T> >(p, cnt) {}
+    Ref(T *p, atomic::Counter *cnt) : priv::RefBase<T, priv::RefCnt, Ref<T> >(p, cnt) { this->retain(); }
     friend struct WeakRef<T>;
 };
 
 template <typename T>
 struct WeakRef : public priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> > {
-    explicit WeakRef(T *p = 0) : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(p) {}
+    WeakRef() : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(0, new atomic::RefCount(0, 1)) {}
     WeakRef(const WeakRef<T>& ref) : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(ref) {}
-    WeakRef<T>& operator =(T *p) { this->set(p); return *this; }
-    Ref<T> unweak() const;
+    bool unweak(Ref<T> *dest);
 private:
-    WeakRef(T *p, atomic::Counter *cnt) : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(p, cnt) {}
+    WeakRef(T *p, atomic::RefCount *cnt) : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(p, cnt) { this->retain(); }
     friend struct Ref<T>;
 };
 
 template <typename T>
-WeakRef<T> Ref<T>::weak() const { return WeakRef<T>(this->_ptr, this->_cnt); }
+WeakRef<T> Ref<T>::weak() { return WeakRef<T>(this->_ptr, this->_cnt); }
 
 template <typename T>
-Ref<T> WeakRef<T>::unweak() const {
-    ASSERT(this->valid());
-    return Ref<T>(this->_ptr, this->_cnt);
+bool WeakRef<T>::unweak(Ref<T> *dest) {
+    if (this->_cnt->strong.getAndInc() > 0) {
+        dest->release();
+        dest->_ptr = this->_ptr;
+        dest->_cnt = this->_cnt;
+        return true;
+    } else {
+        this->_cnt->strong.dec();
+        return false;
+    }
 }
 
 template <typename T>

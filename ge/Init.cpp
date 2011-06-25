@@ -18,7 +18,7 @@ EngineInitializers::EngineInitializers(bool default_init) {
         initInitStats(*this);
         initCommands(PreInit0, *this);
         initGLEW(PreInit1, *this);
-        initShaderVersion(Init, *this);
+        initShaderVersion(PreInit1, *this);
     }
 }
 

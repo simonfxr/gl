@@ -38,8 +38,8 @@ static const float FPS_UPDATE_INTERVAL = 3.f;
 static const vec3_t BLOCK_DIM = vec3(0.25f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
-static const int32 N = 196; // 196;
-static const int32 SPHERE_POINTS_FACE = 24; // 32;
+static const int32 N = 64; // 196;
+static const int32 SPHERE_POINTS_FACE = 16; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
 
@@ -762,7 +762,7 @@ void renderBlocks(State *state, ge::Engine& e) {
     // rm.geometryTransform().translate(-center);
 
     Ref<glt::ShaderProgram> voxelShader = e.shaderManager().program("voxel");
-    ASSERT(!!voxelShader);
+    ASSERT(voxelShader);
 
     voxelShader->use();
 

@@ -65,7 +65,7 @@ struct ShaderManager {
     Ref<CachedShaderObject> lookupShaderObject(const std::string& file, const fs::MTime& mtime);
     bool removeFromCache(CachedShaderObject& so);
     
-    void cacheShaderObject(const Ref<CachedShaderObject>& s);
+    void cacheShaderObject(Ref<CachedShaderObject>& s);
 
     void setShaderVersion(uint32 vers /* e.g. 330 */, ShaderProfile profile = CoreProfile);
     uint32 shaderVersion() const;

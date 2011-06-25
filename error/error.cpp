@@ -23,15 +23,15 @@ void error(const Location& loc, LogLevel lvl, const char *mesg) {
     }
 
     std::cerr << prefix << " in " << loc.function << std::endl
-              << " at " << loc.file << ":" << loc.line << std::endl;
+              << "  at " << loc.file << ":" << loc.line << std::endl;
 
     if (loc.operation != 0)
-        std::cerr << " operation: " << loc.operation << std::endl;
+        std::cerr << "  operation: " << loc.operation << std::endl;
 
     if (lvl == DebugAssertion || lvl == Assertion)
-        std::cerr << " assertion: " << mesg << std::endl;
+        std::cerr << "  assertion: " << mesg << std::endl;
     else
-        std::cerr << " message: " << mesg << std::endl;
+        std::cerr << "  message: " << mesg << std::endl;
 
     if (lvl == FatalError || lvl == Assertion || lvl == DebugAssertion)
         abort();
