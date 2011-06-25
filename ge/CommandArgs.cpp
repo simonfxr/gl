@@ -58,9 +58,9 @@ void prettyQuot(std::ostream& out, const Quotation& q) {
 
     out << "{";
     for (uint32 i = 0; i < q.size(); ++i) {
-        out << ' ';
         if (i > 0)
             out << ';';
+        out << ' ';
         prettyCommandArgs(out, Array<CommandArg>(const_cast<CommandArg *>(&q[i][0]), q[i].size()));
     }
     out << " }";

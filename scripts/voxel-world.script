@@ -17,7 +17,7 @@ bindKey [+I] { loadCameraFrame "voxel.cam" }
 
 postInit { 
     setCameraStepLength 0.1
-    setCameraMouseSensitivity 0.0005 
+    setCameraMouseSensitivity 0.00075
     loadCameraFrame "voxel.cam"
 }
 
