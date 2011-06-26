@@ -7,7 +7,7 @@
 
 namespace atomic {
 
-static const uint32 MARK = -0xAFAFAFAF;
+static const int32 MARK = -0xAFAFAFAF;
 
 struct Counter { // not thread safe
     int32 count; 

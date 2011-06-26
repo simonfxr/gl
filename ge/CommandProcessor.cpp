@@ -74,6 +74,9 @@ bool CommandProcessor::exec(Array<CommandArg>& args) {
     } else if (args[0].type == CommandRef) {
         com_name = args[0].command.name;
         comm = *args[0].command.ref;
+        if (!comm && com_name->empty()) {
+            comm = command(*com_name);
+        }
     } else {
         ERR("cannot execute command: invalid type");
         return false;
@@ -172,6 +175,10 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
                     err << ", got: " << prettyCommandType(args[i].type);
                     ERR(err.str().c_str());
                     return false;
+                }
+            } else if (val_type == CommandRef) {
+                if (!*args[i].command.ref && !args[i].command.name->empty()) {
+                    *args[i].command.ref = command(*args[i].command.name);
                 }
             }
         }

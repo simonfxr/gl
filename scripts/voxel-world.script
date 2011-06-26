@@ -4,9 +4,6 @@ bindShader "voxel" "voxel.vert" "voxel.frag" 0 "position" 1 "color" 2 "normal"
 
 perspectiveProjection 17.5 0.25 200.0
 
-bindKey [+O] &incGamma
-bindKey [+P] &decGamma
-
 bindKey [W] { moveCamera 12 }
 bindKey [D] { moveCamera 3 }
 bindKey [S] { moveCamera 6 }
@@ -16,8 +13,11 @@ bindKey [+U] { saveCameraFrame "voxel.cam" }
 bindKey [+I] { loadCameraFrame "voxel.cam" }
 
 postInit { 
+
+    bindKey [+O] &decGamma
+    bindKey [+P] &incGamma
+
     setCameraStepLength 0.1
     setCameraMouseSensitivity 0.00075
     loadCameraFrame "voxel.cam"
 }
-

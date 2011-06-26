@@ -38,7 +38,7 @@ static const float FPS_UPDATE_INTERVAL = 3.f;
 static const vec3_t BLOCK_DIM = vec3(0.25f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
-static const int32 N = 64; // 196;
+static const int32 N = 128; // 196;
 static const int32 SPHERE_POINTS_FACE = 16; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
@@ -120,6 +120,15 @@ bool writeModel(const std::string& file, const CubeMesh& mdl);
 
 void initWorld(CubeMesh& worldModel, vec3_t *sphere_points);
 
+static void incGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
+    *gamma += 0.1f;
+}
+
+static void decGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
+    *gamma += -0.1f;
+    if (*gamma < 0.f) *gamma = 0.f;
+}
+
 void initState(State *state, const InitEv& ev) {
 
     ge::Engine& e = ev.info.engine;
@@ -127,6 +136,9 @@ void initState(State *state, const InitEv& ev) {
     e.window().showMouseCursor(false);
 
     e.shaderManager().verbosity(glt::ShaderManager::Info);
+
+    e.commandProcessor().define(makeCommand(incGamma, &state->gamma_correction, ge::NULL_PARAMS, "incGamma", "increase the value of gamma correction"));
+    e.commandProcessor().define(makeCommand(decGamma, &state->gamma_correction, ge::NULL_PARAMS, "decGamma", "decrease the value of gamma correction"));
 
     state->camera.registerWith(e);
     state->camera.registerCommands(e.commandProcessor());
@@ -166,8 +178,8 @@ void initState(State *state, const InitEv& ev) {
     }
 
     state->worldModel.send();
-//    state->worldModel.freeHost();
 
+    
     // Ref<glt::ShaderProgram> voxel = e.shaderManager().declareProgram("voxel");
     // glt::ShaderProgram& vs = *voxel;
 
@@ -742,6 +754,9 @@ void renderScene(State *state, const RenderEv& ev) {
     renderBlocks(state, e);
 
     e.renderManager().endScene();
+
+    
+//    state->worldModel.freeHost();
 
     if (state->fpsTimer->fire()) {
         glt::FrameStatistics fs = e.renderManager().frameStatistics();
