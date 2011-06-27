@@ -4,6 +4,8 @@
 #include "defs.h"
 #include <ctime>
 
+namespace sys {
+
 namespace fs {
 
 struct MTime {
@@ -11,5 +13,8 @@ struct MTime {
 };
 
 } // namespace fs
+
+} // namespace sys
+
 
 #endif

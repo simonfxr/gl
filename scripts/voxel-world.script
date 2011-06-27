@@ -12,11 +12,10 @@ bindKey [A] { moveCamera 9 }
 bindKey [+U] { saveCameraFrame "voxel.cam" }
 bindKey [+I] { loadCameraFrame "voxel.cam" }
 
+bindKey [+O] { decGamma 0.01 }
+bindKey [+P] { incGamma 0.01 }
+
 postInit { 
-
-    bindKey [+O] &decGamma
-    bindKey [+P] &incGamma
-
     setCameraStepLength 0.1
     setCameraMouseSensitivity 0.00075
     loadCameraFrame "voxel.cam"

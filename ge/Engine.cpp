@@ -3,7 +3,7 @@
 
 #include "error/error.hpp"
 
-#include "fs/fs.hpp"
+#include "sys/fs/fs.hpp"
 
 #include <SFML/System.hpp>
 
@@ -139,7 +139,7 @@ int32 Engine::run(const EngineOpts& opts) {
     }
 
     if (!opts.workingDirectory.empty())
-        fs::cwd(opts.workingDirectory);
+        sys::fs::cwd(opts.workingDirectory);
 
     self = new Data(*this);
 
@@ -326,15 +326,8 @@ static bool str_eq(const char *a, const char *b) {
 EngineOpts& EngineOpts::parseOpts(int *argcp, char ***argvp) {
     int& argc = *argcp;
     char **argv = *argvp;
-    
-    if (workingDirectory.empty() && argc > 0) {
-        std::string binary(argv[0]);
-        size_t pos = binary.rfind('/');
-        if (pos != std::string::npos) {
-            workingDirectory = binary.substr(0, pos);
-            initScript = binary.substr(pos + 1) + ".script";
-        }
-    }
+
+    bool no_cd = false;
 
     int nargs = argc;
     int dest = 1;
@@ -350,6 +343,8 @@ EngineOpts& EngineOpts::parseOpts(int *argcp, char ***argvp) {
             mode = Help;
         } else if (str_eq(arg1, "--no-init-script")) {
             initScript = "";
+        } else if (str_eq(arg1, "--no-cd")) {
+            no_cd = true;        
         } else {
             if (++i >= nargs || str_eq(argv[i], "--")) {
                 if (i < nargs)
@@ -365,6 +360,32 @@ EngineOpts& EngineOpts::parseOpts(int *argcp, char ***argvp) {
                 commands.push_back(std::make_pair(Command, std::string(arg2)));
             } else if (str_eq(arg1, "--script")) {
                 commands.push_back(std::make_pair(Script, std::string(arg2)));
+            } else if (str_eq(arg1, "--gl-version")) {
+                int maj, min;
+                if (sscanf(arg2, "%d.%d", &maj, &min) != 2 || maj < 0 || min < 0 || maj > 9 || min > 9) {
+                    CMDWARN("invalid OpenGL Version: " + std::string(arg2));
+                } else {
+                    window.settings.MajorVersion = maj;
+                    window.settings.MinorVersion = min;
+                }
+            } else if (str_eq(arg1, "--gl-profile")) {
+                if (str_eq(arg2, "core")) {
+                    window.settings.CoreProfile = true;
+                } else if (str_eq(arg2, "compat") || str_eq(arg2, "compatibility")) {
+                    window.settings.CoreProfile = false;
+                } else {
+                    CMDWARN("invalid OpenGL Profile type: " + std::string(arg2));
+                }
+            } else if (str_eq(arg1, "--gl-debug")) {
+                if (str_eq(arg2, "yes")) {
+                    window.settings.DebugContext = true;
+                } else if (str_eq(arg2, "no")) {
+                    window.settings.DebugContext = false;
+                } else {
+                    CMDWARN("--gl-debug: not a boolean option");
+                }
+            } else if (str_eq(arg1, "--cwd")) {
+                workingDirectory = arg2;
             } else {
                 --arg_end;
             }
@@ -374,6 +395,14 @@ EngineOpts& EngineOpts::parseOpts(int *argcp, char ***argvp) {
 
         for (int j = arg_begin; j < arg_end; ++j)
             argv[dest++] = argv[j];
+    }
+
+    if (!no_cd && workingDirectory.empty() && argc > 0) {
+        std::string bin(argv[0]);
+        workingDirectory = sys::fs::dirname(bin);
+        std::string exec = sys::fs::basename(bin);
+        if (!exec.empty())
+            initScript = exec + ".script";
     }
 
     argc = dest;

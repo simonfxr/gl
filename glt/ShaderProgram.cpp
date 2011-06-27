@@ -316,7 +316,7 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file, bool
             return true;
         }
 
-        fs::MTime mtime = fs::getMTime(realname);
+        sys::fs::MTime mtime = sys::fs::getMTime(realname);
         {
             cacheEntry = self->sm.lookupShaderObject(realname, mtime);
             if (cacheEntry.ptr() != 0) {

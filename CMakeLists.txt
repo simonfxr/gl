@@ -144,11 +144,12 @@ set(GLT_SRC
   glt/ShaderObject.hpp
   glt/ShaderObject.cpp
   glt/Mesh.hpp
-  glt/Mesh.cpp
-  
-  fs/fs.hpp
-  fs/fs_unix.hpp
-  fs/fs_unix.cpp)
+  glt/Mesh.cpp)
+
+set(SYS_SRC
+  sys/fs/fs.hpp
+  sys/fs/fs_unix.hpp
+  sys/fs/fs_unix.cpp)
 
 set(GE_SRC
   ge/GameLoop.hpp
@@ -190,7 +191,8 @@ add_executable(sim-sfml
   ${MATH_SRC}
   ${DATA_SRC}
   ${GLT_SRC}
-  ${GE_SRC})
+  ${GE_SRC}
+  ${SYS_SRC})
 
 add_executable(voxel-world
   voxel-world.cpp
@@ -199,7 +201,8 @@ add_executable(voxel-world
   ${MATH_SRC}
   ${DATA_SRC}
   ${GLT_SRC}
-  ${GE_SRC})
+  ${GE_SRC}
+  ${SYS_SRC})
 
 add_executable(engine-test
   engine-test.cpp
@@ -208,7 +211,8 @@ add_executable(engine-test
   ${MATH_SRC}
   ${DATA_SRC}
   ${GLT_SRC}
-  ${GE_SRC})
+  ${GE_SRC}
+  ${SYS_SRC})
 
 add_executable(tokenizer
   tokenizer.cpp
@@ -217,4 +221,5 @@ add_executable(tokenizer
   ${MATH_SRC}
   ${DATA_SRC}
   ${GLT_SRC}
-  ${GE_SRC})
+  ${GE_SRC}
+  ${SYS_SRC})

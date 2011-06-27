@@ -273,12 +273,13 @@ void MeshBase::setSize(uint32 size) {
     while (capa < size)
         capa *= 2;
 
+    if (size < vertices_size)
+        vertices_size = size;
+    
     if (capa != vertices_capacity) {
-        vertex_data = reallocVerts(desc, vertex_data, size, capa);
+        vertex_data = reallocVerts(desc, vertex_data, vertices_size, capa);
         vertices_capacity = capa;
     }
-
-    vertices_size = size;
 }
 
 void MeshBase::setElementsSize(uint32 size) {
@@ -286,15 +287,16 @@ void MeshBase::setElementsSize(uint32 size) {
     while (capa < size)
         capa *= 2;
 
+    if (size < elements_size)
+        elements_size = size;
+
     if (capa != elements_capacity) {
         uint32 *elems = new uint32[capa];
-        memcpy(elems, element_data, sizeof elems[0] * size);
+        memcpy(elems, element_data, sizeof elems[0] * elements_size);
         delete[] element_data;
         element_data = elems;
         elements_capacity = capa;
     }
-
-    elements_size = size;
 }
 
 void MeshBase::freeHost() {

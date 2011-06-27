@@ -11,6 +11,7 @@
 #include "ge/Event.hpp"
 #include "ge/EngineEvents.hpp"
 #include "ge/Init.hpp"
+#include "ge/Command.hpp"
 #include "ge/CommandProcessor.hpp"
 #include "ge/KeyHandler.hpp"
 

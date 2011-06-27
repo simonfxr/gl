@@ -7,8 +7,6 @@
 #include <bitset>
 #include <algorithm>
 
-#include <SFML/Graphics/Image.hpp>
-
 #include "defs.h"
 
 #include "math/vec2.hpp"
@@ -29,7 +27,6 @@
 #include "glt/Frame.hpp"
 #include "glt/color.hpp"
 
-#include "glt/Mesh.hpp"
 #include "glt/CubeMesh.hpp"
 
 using namespace math;
@@ -120,16 +117,18 @@ bool writeModel(const std::string& file, const CubeMesh& mdl);
 
 void initWorld(CubeMesh& worldModel, vec3_t *sphere_points);
 
-static void incGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
-    *gamma += 0.1f;
+static void incGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
+    *gamma += args[0].number;
 }
 
-static void decGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
-    *gamma += -0.1f;
+static void decGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
+    *gamma -= args[0].number;
     if (*gamma < 0.f) *gamma = 0.f;
 }
 
 void initState(State *state, const InitEv& ev) {
+
+    glt::initDebug();
 
     ge::Engine& e = ev.info.engine;
 
@@ -137,8 +136,13 @@ void initState(State *state, const InitEv& ev) {
 
     e.shaderManager().verbosity(glt::ShaderManager::Info);
 
-    e.commandProcessor().define(makeCommand(incGamma, &state->gamma_correction, ge::NULL_PARAMS, "incGamma", "increase the value of gamma correction"));
-    e.commandProcessor().define(makeCommand(decGamma, &state->gamma_correction, ge::NULL_PARAMS, "decGamma", "decrease the value of gamma correction"));
+    e.commandProcessor().define(makeCommand(incGamma, &state->gamma_correction,
+                                            PARAM_ARRAY(ge::NumberParam),
+                                            "incGamma", "increase the value of gamma correction"));
+    
+    e.commandProcessor().define(makeCommand(decGamma, &state->gamma_correction,
+                                            PARAM_ARRAY(ge::NumberParam),
+                                            "decGamma", "decrease the value of gamma correction"));
 
     state->camera.registerWith(e);
     state->camera.registerCommands(e.commandProcessor());

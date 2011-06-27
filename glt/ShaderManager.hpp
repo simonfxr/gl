@@ -8,7 +8,7 @@
 #include "data/Ref.hpp"
 #include "glt/ShaderObject.hpp"
 
-#include "fs/fs.hpp"
+#include "sys/fs/fs.hpp"
 
 namespace glt {
 
@@ -33,10 +33,10 @@ struct ShaderManager {
     public:
         std::string key;
         ShaderObject so;
-        fs::MTime mtime;
+        sys::fs::MTime mtime;
         std::vector<Ref<CachedShaderObject> > deps;
-        std::vector<std::pair<std::string, fs::MTime> > incs;
-        CachedShaderObject(ShaderManager& _sm, const std::string& k, const fs::MTime& mt) : sm(_sm), key(k), mtime(mt) {}
+        std::vector<std::pair<std::string, sys::fs::MTime> > incs;
+        CachedShaderObject(ShaderManager& _sm, const std::string& k, const sys::fs::MTime& mt) : sm(_sm), key(k), mtime(mt) {}
         ~CachedShaderObject();
     };
 
@@ -62,7 +62,7 @@ struct ShaderManager {
 
     std::string lookupPath(const std::string& basename) const;
 
-    Ref<CachedShaderObject> lookupShaderObject(const std::string& file, const fs::MTime& mtime);
+    Ref<CachedShaderObject> lookupShaderObject(const std::string& file, const sys::fs::MTime& mtime);
     bool removeFromCache(CachedShaderObject& so);
     
     void cacheShaderObject(Ref<CachedShaderObject>& s);

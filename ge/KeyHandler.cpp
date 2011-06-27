@@ -105,15 +105,15 @@ Ref<Command> KeyHandler::unregisterBinding(const Ref<KeyBinding>& binding) {
         return it->second;
 }
 
-static const char *prettyKeyState(KeyState state) {
-    switch (state) {
-    case Up: return "Up";
-    case Down: return "Down"; 
-    case Pressed: return "Pressed";
-    case Released: return "Released";
-    default: return "<unknown>";
-    }
-}
+// static const char *prettyKeyState(KeyState state) {
+//     switch (state) {
+//     case Up: return "Up";
+//     case Down: return "Down"; 
+//     case Pressed: return "Pressed";
+//     case Released: return "Released";
+//     default: return "<unknown>";
+//     }
+// }
 
 void KeyHandler::handleCommands() {
 

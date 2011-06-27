@@ -4,17 +4,17 @@
 #include "defs.h"
 #include <string>
 
-#ifdef SYSTEM_UNIX
-#include "fs/fs_unix.hpp"
-#else
-#error "no Filesystem implementation available"
-#endif
+namespace sys {
 
 namespace fs {
 
+struct MTime;
+
 bool cwd(const std::string& dir);
 
-bool cwdBasenameOf(const std::string& file);
+std::string dirname(const std::string& path);
+
+std::string basename(const std::string& path);
 
 MTime getMTime(const std::string& file);
 
@@ -30,5 +30,13 @@ inline bool operator >=(const MTime& a, const MTime& b) { return !(a < b); }
 inline bool operator >(const MTime& a, const MTime& b) { return !(a <= b); }
 
 } // namespace fs
+
+} // namespace sys
+
+#ifdef SYSTEM_UNIX
+#include "sys/fs/fs_unix.hpp"
+#else
+#error "no Filesystem implementation available"
+#endif
 
 #endif

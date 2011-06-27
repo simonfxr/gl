@@ -46,7 +46,7 @@ struct ShaderManager::Data {
     ShaderProfile shader_profile;
     bool cache_so;
 
-    Ref<CachedShaderObject> rebuildSO(ShaderManager& self, Ref<CachedShaderObject>& so, const fs::MTime& mtime);
+    Ref<CachedShaderObject> rebuildSO(ShaderManager& self, Ref<CachedShaderObject>& so, const sys::fs::MTime& mtime);
 };
 
 ShaderManager::CachedShaderObject::~CachedShaderObject() {
@@ -151,7 +151,7 @@ std::string ShaderManager::lookupPath(const std::string& file) const {
     return name;
 }
 
-Ref<ShaderManager::CachedShaderObject> ShaderManager::Data::rebuildSO(ShaderManager& self, Ref<ShaderManager::CachedShaderObject>& so, const fs::MTime& mtime) {
+Ref<ShaderManager::CachedShaderObject> ShaderManager::Data::rebuildSO(ShaderManager& self, Ref<ShaderManager::CachedShaderObject>& so, const sys::fs::MTime& mtime) {
 
     bool outdated = false;
 
@@ -159,7 +159,7 @@ Ref<ShaderManager::CachedShaderObject> ShaderManager::Data::rebuildSO(ShaderMana
         outdated = true;
     } else {
         for (uint32 i = 0; i < so->incs.size(); ++i) {
-            fs::MTime mtime = fs::getMTime(so->incs[i].first);
+            sys::fs::MTime mtime = sys::fs::getMTime(so->incs[i].first);
             if (mtime != so->incs[i].second) {
                 outdated = true;
                 break;
@@ -173,7 +173,7 @@ Ref<ShaderManager::CachedShaderObject> ShaderManager::Data::rebuildSO(ShaderMana
     Ref<CachedShaderObject> new_so;
     for (uint32 i = 0; i < so->deps.size(); ++i) {
         Ref<CachedShaderObject>& child = so->deps[i];
-        Ref<CachedShaderObject> new_child = rebuildSO(self, child, fs::getMTime(child->key));
+        Ref<CachedShaderObject> new_child = rebuildSO(self, child, sys::fs::getMTime(child->key));
         if (new_child.ptr() != child.ptr()) {
             if (new_child.ptr() == 0)
                 return EMPTY_CACHE_ENTRY;
@@ -195,7 +195,7 @@ Ref<ShaderManager::CachedShaderObject> ShaderManager::Data::rebuildSO(ShaderMana
     return new_so.ptr() == 0 ? so : new_so;
 }
 
-Ref<ShaderManager::CachedShaderObject> ShaderManager::lookupShaderObject(const std::string& file, const fs::MTime& mtime) {
+Ref<ShaderManager::CachedShaderObject> ShaderManager::lookupShaderObject(const std::string& file, const sys::fs::MTime& mtime) {
     ShaderCache::iterator it = self->cache.find(file);
 
     if (it != self->cache.end()) {

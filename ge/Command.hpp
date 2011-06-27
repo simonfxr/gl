@@ -84,10 +84,10 @@ Ref<Command> makeCommand(typename StateCommandHandler<S>::type handler, S state,
 }
 
 #ifdef CONST_ARRAY
-#define PARAM_ARRAY(...) CONST_ARRAY(CommandParamType, __VA_ARGS__)
+#define PARAM_ARRAY(...) CONST_ARRAY(ge::CommandParamType, __VA_ARGS__)
 #endif
 
-#define DEFINE_PARAM_ARRAY(name, ...) DEFINE_CONST_ARRAY(name, CommandParamType, __VA_ARGS__)
+#define DEFINE_PARAM_ARRAY(name, ...) DEFINE_CONST_ARRAY(name, ge::CommandParamType, __VA_ARGS__)
 
 } // namespace ge
 

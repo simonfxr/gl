@@ -20,7 +20,7 @@ private:
     
 public:
 
-    TextureHandle();
+    TextureHandle() : _samples(1), _handle(0), _type(Texture2D)  {}
     TextureHandle(TextureType type, uint32 samples = 1);
     
     ~TextureHandle();
