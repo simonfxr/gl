@@ -342,8 +342,6 @@ State parseNum(ParseState& s, CommandArg& tok) {
         oneDigit = true;
     }
 
-    if (neg) k = -k;
-
     double num = 0;
     bool isNum = false;
 
@@ -377,10 +375,12 @@ State parseNum(ParseState& s, CommandArg& tok) {
 
     if (isNum) {
         tok.type = Number;
-        tok.number = num;
+        tok.number = neg ? -num : num;
+        std::cerr << "parsed number: " << num << std::endl;
     } else {
         tok.type = Integer;
-        tok.integer = k;
+        tok.integer = neg ? -k : k;
+        std::cerr << "parsed int: " << k << std::endl;
     }
 
     return EndToken;

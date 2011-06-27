@@ -8,6 +8,7 @@
 /Makefile
 /*.mdl
 /*.cam
+/lib*.a
 /config.h
 /log.txt
 

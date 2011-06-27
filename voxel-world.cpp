@@ -29,6 +29,8 @@
 
 #include "glt/CubeMesh.hpp"
 
+#include "sys/clock.hpp"
+
 using namespace math;
 
 static const float FPS_UPDATE_INTERVAL = 3.f;
@@ -40,19 +42,18 @@ static const int32 SPHERE_POINTS_FACE = 16; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
 
-#if 0
 #define time(op) do {                                                   \
-        float T0 = now();                                             \
+        float T0 = sys::queryTimer();                                   \
         (op);                                                           \
-        float diff = now() - T0;                                      \
-        std::cerr << #op << " took " << diff << " seconds." << std::endl; \
+        float diff = sys::queryTimer() - T0;                            \
+        std::cerr << #op << " took " << (diff * 1000) << " ms." << std::endl; \
     } while (0)
-#else
-#define time(op) do {                                   \
-        (op);                                           \
-        std::cerr << #op << " executed" << std::endl;   \
-    } while (0)
-#endif
+// #else
+// #define time(op) do {                                   \
+//         (op);                                           \
+//         std::cerr << #op << " executed" << std::endl;   \
+//     } while (0)
+// #endif
 
 struct MaterialProperties {
     float ambientContribution;
@@ -119,11 +120,7 @@ void initWorld(CubeMesh& worldModel, vec3_t *sphere_points);
 
 static void incGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
     *gamma += args[0].number;
-}
-
-static void decGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
-    *gamma -= args[0].number;
-    if (*gamma < 0.f) *gamma = 0.f;
+    if (*gamma < 0) *gamma = 0.f;
 }
 
 void initState(State *state, const InitEv& ev) {
@@ -140,10 +137,6 @@ void initState(State *state, const InitEv& ev) {
                                             PARAM_ARRAY(ge::NumberParam),
                                             "incGamma", "increase the value of gamma correction"));
     
-    e.commandProcessor().define(makeCommand(decGamma, &state->gamma_correction,
-                                            PARAM_ARRAY(ge::NumberParam),
-                                            "decGamma", "decrease the value of gamma correction"));
-
     state->camera.registerWith(e);
     state->camera.registerCommands(e.commandProcessor());
     

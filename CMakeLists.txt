@@ -1,12 +1,21 @@
 
-string(REGEX REPLACE "[^/]*/" "" CXX_COMP ${CMAKE_CXX_COMPILER})
+set(MATH_INLINE TRUE CACHE BOOL "TRUE to inline all math functions")
+
+if (CMAKE_CXX_COMPILER)
+  string(REGEX REPLACE "[^/]*/" "" CXX_COMP ${CMAKE_CXX_COMPILER})
+else()
+  set(CXX_COMP "")
+endif()
 
 if(CXX_COMP STREQUAL "clang++")
   set(COMP_CLANG "yes")
+  add_definitions("-DGNU_EXTENSIONS")
 elseif(CXX_COMP STREQUAL "g++")
   set(COMP_GCC "yes")
+  add_definitions("-DGNU_EXTENSIONS")
 elseif(CXX_COMP STREQUAL "icpc")
   set(COMP_ICC "yes")
+  add_definitions("-DGNU_EXTENSIONS")
 endif()
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
@@ -28,6 +37,13 @@ else()
 endif()
 
 project(sim-sfml)
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  set(SYS_UNIX "yes")
+  add_definitions("-DSYSTEM_LINUX")
+else()
+    message(WARNING "Unsupported operating system")
+endif()
 
 add_definitions("-Wall -fno-exceptions -fno-rtti")
 
@@ -57,48 +73,49 @@ endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
-find_package(SFML REQUIRED)
+#link_directories("/usr/local/lib")
+find_package(SFML 2 COMPONENTS system window graphics REQUIRED)
 include_directories(${SFML_INCLUDE_DIR})
 link_libraries(${SFML_LIBRARIES})
-link_directories("/usr/local/lib")
-
-link_libraries(sfml-window sfml-graphics sfml-system)
-
-# foreach(lib ${SFML_LIBS})
-#   link_libraries(${SFML_${lib}_LIBRARY_RELEASE})
-# endforeach()
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
 include_directories(${GLEW_INCLUDE_PATH})
 
-#add_definitions("-DGLEW_STATIC")
+add_definitions("-DGLEW_STATIC")
 
 link_libraries(${GLEW_LIBRARY} ${OPENGL_gl_LIBRARY})
 
 include_directories(${CMAKE_SOURCE_DIR})
 
-set(MATH_SRC
 
+set(MATH_SRC
   math/vec2.hpp
-  math/vec2/impl.cpp
   math/vec3.hpp
-  math/vec3/impl.cpp
   math/vec4.hpp
-  math/vec4/impl.cpp
   math/mat3.hpp
-  math/mat3/impl.cpp
   math/mat4.hpp
-  math/mat4/impl.cpp
   math/math.hpp
-  math/math/impl.cpp
   math/plane.hpp
   math/plane.cpp
   math/ivec3.hpp
-  math/ivec3/impl.cpp
-  math/quat.hpp
-  math/quat/impl.cpp)
+  math/quat.hpp)
+
+if(NOT MATH_INLINE)
+  set(MATH_SRC
+    ${MATH_SRC}
+    math/vec2/impl.cpp
+    math/vec3/impl.cpp
+    math/vec4/impl.cpp
+    math/mat3/impl.cpp
+    math/mat4/impl.cpp
+    math/math/impl.cpp
+    math/ivec3/impl.cpp
+    math/quat/impl.cpp)
+else()
+  add_definitions("-DMATH_INLINE")
+endif()
 
 set(DATA_SRC
   data/Ref.hpp
@@ -146,10 +163,25 @@ set(GLT_SRC
   glt/Mesh.hpp
   glt/Mesh.cpp)
 
+add_library(glt ${GLT_SRC})
+link_directories(${GLT_BINARY_DIR})
+link_libraries(glt)
+
 set(SYS_SRC
   sys/fs/fs.hpp
-  sys/fs/fs_unix.hpp
-  sys/fs/fs_unix.cpp)
+  sys/clock.hpp)
+
+if(SYS_UNIX)
+  set(SYS_SRC
+    ${SYS_SRC}
+    sys/fs/fs_unix.hpp
+    sys/fs/fs_unix.cpp
+    sys/clock_unix.cpp)
+endif()
+
+add_library(sys ${SYS_SRC})
+link_directories(${SYS_BINARY_DIR})
+link_libraries(sys)
 
 set(GE_SRC
   ge/GameLoop.hpp
@@ -182,6 +214,10 @@ set(GE_SRC
   ge/Camera.cpp
   ge/Timer.hpp)
 
+add_library(ge ${GE_SRC})
+link_directories(${GE_BINARY_DIR})
+link_libraries(ge)
+
 add_executable(sim-sfml
   sim-sfml.cpp
   defs.h
@@ -189,37 +225,25 @@ add_executable(sim-sfml
   sim.cpp
   
   ${MATH_SRC}
-  ${DATA_SRC}
-  ${GLT_SRC}
-  ${GE_SRC}
-  ${SYS_SRC})
+  ${DATA_SRC})
 
 add_executable(voxel-world
   voxel-world.cpp
   defs.h
   
   ${MATH_SRC}
-  ${DATA_SRC}
-  ${GLT_SRC}
-  ${GE_SRC}
-  ${SYS_SRC})
+  ${DATA_SRC})
 
 add_executable(engine-test
   engine-test.cpp
   defs.h
   
   ${MATH_SRC}
-  ${DATA_SRC}
-  ${GLT_SRC}
-  ${GE_SRC}
-  ${SYS_SRC})
+  ${DATA_SRC})
 
 add_executable(tokenizer
   tokenizer.cpp
   defs.h
 
   ${MATH_SRC}
-  ${DATA_SRC}
-  ${GLT_SRC}
-  ${GE_SRC}
-  ${SYS_SRC})
+  ${DATA_SRC})

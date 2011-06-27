@@ -7,8 +7,9 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 
+#include "sys/clock.hpp"
+
 #include <algorithm>
-#include <SFML/System/Clock.hpp>
 
 namespace glt {
 
@@ -33,7 +34,6 @@ struct RenderManager::Data {
 
     Projection projection;
 
-    sf::Clock clk;
     float stat_snapshot;
     float stat_fast_snapshot;
     float framet0;
@@ -59,7 +59,7 @@ struct RenderManager::Data {
         {}
 
     float now() {
-        return float(clk.GetElapsedTime()) / 1000.f;
+        return float(sys::queryTimer());
     }
 
     void statBegin() {

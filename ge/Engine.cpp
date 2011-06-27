@@ -4,8 +4,7 @@
 #include "error/error.hpp"
 
 #include "sys/fs/fs.hpp"
-
-#include <SFML/System.hpp>
+#include "sys/clock.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -27,7 +26,6 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
     glt::RenderManager renderManager;
     
     EngineEvents events;
-    sf::Clock clock;
 
     Data(Engine& engine) :
         theEngine(engine),
@@ -208,11 +206,11 @@ void Engine::Data::handleInputEvents() {
 }
 
 float Engine::Data::now() {
-    return float(clock.GetElapsedTime()) / 1000.f;
+    return float(sys::queryTimer());
 }
 
 void Engine::Data::sleep(float secs) {
-    sf::Sleep(uint32(secs * 1000.f));
+    sys::sleep(secs);
 }
 
 void Engine::Data::exit(int32 exit_code) {
