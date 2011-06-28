@@ -125,7 +125,7 @@ static void incGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Arr
 
 void initState(State *state, const InitEv& ev) {
 
-    glt::initDebug();
+//    glt::initDebug();
 
     ge::Engine& e = ev.info.engine;
 

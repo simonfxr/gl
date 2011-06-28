@@ -4,16 +4,18 @@
 #include "defs.h"
 #include "opengl.h"
 
+#include "error/error.hpp"
+
 #include <string>
 #include <ostream>
 
 #ifdef GLDEBUG
-#define GL_CHECK(op) do {                                               \
-        (op);                                                           \
-        glt::checkForGLError(#op, __FILE__, __LINE__, __func__);    \
+#define GL_CHECK(op) do {                                \
+        (op);                                            \
+        glt::checkForGLError(_CURRENT_LOCATION_OP(#op)); \
     } while (0)
 #else
-#define GL_CHECK(op) op
+#define GL_CHECK(op) UNUSED(op)
 #endif
 
 namespace glt {
@@ -22,7 +24,7 @@ std::string getGLErrorString(GLenum err);
 
 bool printGLErrors(std::ostream& out);
 
-bool checkForGLError(const char *op, const char *file, int line, const char *func);
+bool checkForGLError(const err::Location& loc);
 
 bool isExtensionSupported(const char *extension);
 

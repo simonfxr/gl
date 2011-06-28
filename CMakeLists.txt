@@ -73,6 +73,10 @@ endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
+if(SYS_UNIX)
+  link_libraries(rt)
+endif()
+
 #link_directories("/usr/local/lib")
 find_package(SFML 2 COMPONENTS system window graphics REQUIRED)
 include_directories(${SFML_INCLUDE_DIR})
@@ -163,7 +167,7 @@ set(GLT_SRC
   glt/Mesh.hpp
   glt/Mesh.cpp)
 
-add_library(glt ${GLT_SRC})
+add_library(glt SHARED ${GLT_SRC})
 link_directories(${GLT_BINARY_DIR})
 link_libraries(glt)
 
@@ -179,7 +183,7 @@ if(SYS_UNIX)
     sys/clock_unix.cpp)
 endif()
 
-add_library(sys ${SYS_SRC})
+add_library(sys SHARED ${SYS_SRC})
 link_directories(${SYS_BINARY_DIR})
 link_libraries(sys)
 
@@ -214,7 +218,7 @@ set(GE_SRC
   ge/Camera.cpp
   ge/Timer.hpp)
 
-add_library(ge ${GE_SRC})
+add_library(ge SHARED ${GE_SRC})
 link_directories(${GE_BINARY_DIR})
 link_libraries(ge)
 

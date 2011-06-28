@@ -55,22 +55,15 @@ bool isExtensionSupported(const char *extension) {
     return false;
 }
 
-struct DebugLocation {
-    const char *op;
-    const char *file;
-    int line;
-    const char *func;
-};
-
 namespace {
 
 struct GLDebug {
     virtual ~GLDebug() {}
-    virtual void printDebugMessages(const DebugLocation& loc) = 0;
+    virtual void printDebugMessages(const err::Location& loc) = 0;
 };
 
 struct NODebug : public GLDebug {
-    virtual void printDebugMessages(const DebugLocation& loc) {
+    virtual void printDebugMessages(const err::Location& loc) {
         UNUSED(loc);
     }
 };
@@ -82,7 +75,7 @@ struct ARBDebug : public GLDebug {
     ~ARBDebug();
     
     static GLDebug* init();
-    virtual void printDebugMessages(const DebugLocation& loc);
+    virtual void printDebugMessages(const err::Location& loc);
 };
 
 ARBDebug::~ARBDebug() {
@@ -105,7 +98,7 @@ GLDebug *ARBDebug::init() {
     return dbg;
 }
 
-void ARBDebug::printDebugMessages(const DebugLocation& loc) {
+void ARBDebug::printDebugMessages(const err::Location& loc) {
 
     GLenum source, type, id, severity;
     GLsizei length;
@@ -145,12 +138,12 @@ void ARBDebug::printDebugMessages(const DebugLocation& loc) {
         
 #undef sym_case
 
-        std::cerr << "[OpenGL DEBUG] source: " << ssrc << ", severity: " << ssev << ", type: " << stype << ", id: " << id << std::endl
-                  << "  in operation: " << loc.op << std::endl
-                  << "  in function: " << loc.func << std::endl
-                  << "  at " << loc.file << ":" << loc.line << std::endl
-                  << "  message: " << message_buffer << std::endl;
-    }
+        std::stringstream mesg;
+        mesg << "source: " << ssrc << ", severity: " << ssev
+             << ", type: " << stype << ", id: " << id
+             << "  message: " << message_buffer;
+
+        err::printError(std::cerr, "OpenGL DEBUG", loc, err::Error, mesg.str());               }
 }
 
 struct AMDDebug : public GLDebug {
@@ -161,7 +154,7 @@ struct AMDDebug : public GLDebug {
     ~AMDDebug();
     
     static GLDebug* init();
-    virtual void printDebugMessages(const DebugLocation& loc);
+    virtual void printDebugMessages(const err::Location& loc);
 };
 
 AMDDebug::~AMDDebug() {
@@ -189,7 +182,7 @@ GLDebug *AMDDebug::init() {
     return dbg;
 }
 
-void AMDDebug::printDebugMessages(const DebugLocation& loc) {
+void AMDDebug::printDebugMessages(const err::Location& loc) {
 
     GLenum category;
     GLuint severity, id;
@@ -221,12 +214,12 @@ void AMDDebug::printDebugMessages(const DebugLocation& loc) {
         }
 
 #undef sym_case
-        
-        std::cerr << "[OpenGL DEBUG] category: " << scat << ", severity: " << ssev << ", id: " << id << std::endl
-                  << "  in operation: " << loc.op << std::endl
-                  << "  in function: " << loc.func << std::endl
-                  << "  at " << loc.file << ":" << loc.line << std::endl
-                  << "  message: " << message_buffer << std::endl;
+
+        std::stringstream mesg;
+        mesg << "category: " << scat << ", severity: " << ssev
+             << ", id: " << id << "  message: " << message_buffer;
+
+        err::printError(std::cerr, "OpenGL DEBUG", loc, err::Error, mesg.str());
     }
 }
 
@@ -234,18 +227,12 @@ GLDebug *glDebug = new NODebug();
 
 } // namespace anon
 
-void printGLError(const DebugLocation& loc, GLenum err) {
-    std::cerr << "OpenGL ERROR: " << getGLErrorString(err) << std::endl
-              << "  in operation: " << loc.op << std::endl
-              << "  in function: " << loc.func << std::endl
-              << "  at " << loc.file << ":" << loc.line << std::endl;
+void printGLError(const err::Location& loc, GLenum err) {
+    err::printError(std::cerr, "OpenGL Error", loc, err::Error, getGLErrorString(err));
 }
 
-bool checkForGLError(const char *op, const char *file, int line, const char *func) {
+bool checkForGLError(const err::Location& loc) {
     bool was_error = false;
-
-    DebugLocation loc;
-    loc.op = op; loc.file = file; loc.line = line; loc.func = func;
 
     for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
         printGLError(loc, err);

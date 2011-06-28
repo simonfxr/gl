@@ -69,14 +69,14 @@ KeyHandler::KeyHandler(CommandProcessor& proc) :
 KeyHandler::~KeyHandler() { delete self; }
 
 void KeyHandler::keyPressed(KeyCode code) {
-//    std::cerr << "key pressed: " << self->frame_id << " " << prettyKeyCode(code) << std::endl;
+    // std::cerr << "key pressed: " << self->frame_id << " " << prettyKeyCode(code) << std::endl;
     int32 idx = int32(code);
     CHECK_KEYCODE(idx);
     self->states[idx] = State(true, self->frame_id);
 }
     
 void KeyHandler::keyReleased(KeyCode code) {
-//    std::cerr << "key released: " << self->frame_id << " " << prettyKeyCode(code) << std::endl;
+    // std::cerr << "key released: " << self->frame_id << " " << prettyKeyCode(code) << std::endl;
     int32 idx = int32(code);
     CHECK_KEYCODE(idx);
     self->states[idx] = State(false, self->frame_id);
@@ -129,8 +129,8 @@ void KeyHandler::handleCommands() {
 
             bool match = (reqState & curState) == reqState;
 
-            // if (curState != Up)
-            //     std::cerr << "checking key: " << prettyKeyCode(code) <<  " req: " << prettyKeyState(reqState) << " cur: " << prettyKeyState(curState) << " -> " << match << std::endl;
+             // if (curState != Up)
+             //     std::cerr << "checking key: " << prettyKeyCode(code) <<  " req: " << prettyKeyState(reqState) << " cur: " << prettyKeyState(curState) << " -> " << match << std::endl;
 
             if (!match)
                 goto next;

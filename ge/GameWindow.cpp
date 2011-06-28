@@ -69,11 +69,9 @@ void GameWindow::Data::init() {
     renderTarget = new WindowRenderTarget(self);
     win->SetActive();
 
-    if (grab_mouse)
-
     win->EnableKeyRepeat(false);
     win->EnableVerticalSync(false);
-
+    
     events.windowResized.reg(makeEventHandler(resizeRenderTarget));
 }
 

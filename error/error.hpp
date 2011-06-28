@@ -34,10 +34,14 @@ void fatalError(const Location& loc, const std::string& mesg) ATTRS(ATTR_NORETUR
 
 void fatalError(const Location& loc, const char *mesg) ATTRS(ATTR_NORETURN);
 
+void printError(std::ostream& out, const char *type, const Location& loc, LogLevel lvl, const std::string& mesg);
+
+void printError(std::ostream& out, const char *type, const Location& loc, LogLevel lvl, const char *mesg);
+
 #ifdef GNU_EXTENSIONS
 #define _CURRENT_LOCATION_OP(op) err::Location(__FILE__, __LINE__, __PRETTY_FUNCTION__, op)
 #else
-#define _CURRENT_LOCATION_OP(op) err::Location(__FILE__, __LINE__, __FUNCTION__ "()", op)
+#define _CURRENT_LOCATION_OP(op) err::Location(__FILE__, __LINE__, __FUNCTION__, op)
 #endif
 
 #define _CURRENT_LOCATION _CURRENT_LOCATION_OP(0)

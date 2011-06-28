@@ -2,7 +2,7 @@ load "scripts/default.script"
 
 bindShader "voxel" "voxel.vert" "voxel.frag" 0 "position" 1 "color" 2 "normal"
 
-perspectiveProjection 17.5 0.25 200.0
+perspectiveProjection 17.5 0.25 200.03
 
 bindKey [W] { moveCamera 12 }
 bindKey [D] { moveCamera 3 }

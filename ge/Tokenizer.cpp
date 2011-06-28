@@ -376,11 +376,11 @@ State parseNum(ParseState& s, CommandArg& tok) {
     if (isNum) {
         tok.type = Number;
         tok.number = neg ? -num : num;
-        std::cerr << "parsed number: " << num << std::endl;
+        // std::cerr << "parsed number: " << num << std::endl;
     } else {
         tok.type = Integer;
         tok.integer = neg ? -k : k;
-        std::cerr << "parsed int: " << k << std::endl;
+        // std::cerr << "parsed int: " << k << std::endl;
     }
 
     return EndToken;
