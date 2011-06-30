@@ -70,6 +70,14 @@ float max(float x, float y) PURE_FUNC;
 
 float min(float x, float y) PURE_FUNC;
 
+float saturate(float x) PURE_FUNC;
+
+float clamp(float lo, float hi, float x) PURE_FUNC;
+
+float smoothstep(float lo_edge, float hi_edge, float x) PURE_FUNC;
+
+float lerp(float a, float b, float t) PURE_FUNC;
+
 MATH_END_NAMESPACE
 
 #endif

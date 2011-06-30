@@ -145,6 +145,23 @@ float min(float x, float y) {
     return x > y ? y : x;
 }
 
+float saturate(float x) {
+    return clamp(0.f, 1.f, x);
+}
+
+float clamp(float lo, float hi, float x) {
+    return x < lo ? lo : (x > hi ? hi : x);
+}
+
+float smoothstep(float lo_edge, float hi_edge, float x) {
+    x = saturate((x - lo_edge)/(hi_edge - lo_edge)); 
+    return x*x*(3 - 2*x);
+}
+
+float lerp(float a, float b, float t) {
+    return a + t * (b - a);
+}
+
 MATH_END_NAMESPACE
 
 #endif

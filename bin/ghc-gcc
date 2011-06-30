@@ -1,0 +1,18 @@
+#!/bin/bash
+
+args=( )
+
+for arg; do
+    case "$arg" in
+        -D*|-Wl*)
+            args=( "${args[@]}" -optc "$arg" ) ;;
+        *)
+            args=( "${args[@]}" "$arg" ) ;;
+    esac
+done
+
+# echo "executing GHC: ${args[@]}"
+# echo "****"
+
+exec ghc "${args[@]}"
+

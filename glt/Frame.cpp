@@ -52,7 +52,7 @@ void Frame::setOrigin(const point3_t& p) {
 }
 
 void Frame::lookingAt(const point3_t& p) {
-    direction3_t z = directionFromTo(origin, p);
+    direction3_t z = -directionFromTo(origin, p);
     setXZ(normalize(cross(localY(), z)), z);
 }
 

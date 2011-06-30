@@ -12,6 +12,7 @@
 /lib*.a
 /config.h
 /log.txt
+/ext/
 
 create_x11_window.cpp
 multisample

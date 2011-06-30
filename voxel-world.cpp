@@ -31,15 +31,18 @@
 
 #include "sys/clock.hpp"
 
+#include <voxel_hs.h>
+
 using namespace math;
 
 static const float FPS_UPDATE_INTERVAL = 3.f;
 static const vec3_t BLOCK_DIM = vec3(0.25f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
-static const int32 N = 128; // 196;
-static const int32 SPHERE_POINTS_FACE = 16; // 32;
+static const int32 N = 32; // 196;
+static const int32 SPHERE_POINTS_FACE = 8; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
+static const bool OCCLUSION = true;
 static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
 
 #define time(op) do {                                                   \
@@ -48,12 +51,6 @@ static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
         float diff = sys::queryTimer() - T0;                            \
         std::cerr << #op << " took " << (diff * 1000) << " ms." << std::endl; \
     } while (0)
-// #else
-// #define time(op) do {                                   \
-//         (op);                                           \
-//         std::cerr << #op << " executed" << std::endl;   \
-//     } while (0)
-// #endif
 
 struct MaterialProperties {
     float ambientContribution;
@@ -111,19 +108,19 @@ struct State {
 
 typedef ge::Event<ge::RenderEvent> RenderEv;
 
-void renderScene(State *state, const RenderEv& ev);
+static void renderScene(State *state, const RenderEv& ev);
 
-bool readModel(const std::string& file, CubeMesh& mdl);
-bool writeModel(const std::string& file, const CubeMesh& mdl);
+static bool readModel(const std::string& file, CubeMesh& mdl);
+static bool writeModel(const std::string& file, const CubeMesh& mdl);
 
-void initWorld(CubeMesh& worldModel, vec3_t *sphere_points);
+static void initWorld(CubeMesh& worldModel, vec3_t *sphere_points);
 
 static void incGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
     *gamma += args[0].number;
     if (*gamma < 0) *gamma = 0.f;
 }
 
-void initState(State *state, const InitEv& ev) {
+static void initState(State *state, const InitEv& ev) {
 
 //    glt::initDebug();
 
@@ -166,6 +163,16 @@ void initState(State *state, const InitEv& ev) {
             return;
         }
     } else {
+
+        hs_begin();
+
+        int ret;
+        time(ret = hs_voxel_create_world((Bitmap *) &state->worldModel, N));
+        if (ret == -1) {
+            ERR("hs_voxel_create_world failed");
+            return;
+        }
+        
         initWorld(state->worldModel, state->sphere_points);
     }
 
@@ -187,18 +194,19 @@ void initState(State *state, const InitEv& ev) {
     // ASSERT(vs.tryLink());
 
     ev.info.success = true;
+
 }
 
 
-std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
+static std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
     return out << "(" << v.x << ", " << v.y << ", " << v.z << ")";
 }
 
-std::ostream& operator <<(std::ostream& out, const vec4_t& v) {
+static std::ostream& operator <<(std::ostream& out, const vec4_t& v) {
     return out << "(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
 }
 
-std::ostream& operator <<(std::ostream& out, const mat4_t& m) {
+static std::ostream& operator <<(std::ostream& out, const mat4_t& m) {
     return out << m[0] << m[1] << m[2] << m[3];
 }
 
@@ -225,6 +233,10 @@ static vec4_t randColor() {
 
 //     void zero() { bits.reset(); }
 // };
+
+struct Densities {
+    float ds[N][N][N];
+};
 
 struct World {
     typedef unsigned long Word;
@@ -301,7 +313,7 @@ struct GlobalOcc {
     Faces lambertFactor[N][N][N];
 };
 
-int32 faceIdx(const vec3_t& dir) {
+static int32 faceIdx(const vec3_t& dir) {
     direction3_t as = abs(dir);
     int32 maxi;
     if (as.x >= as.y && as.x >= as.z)
@@ -315,7 +327,7 @@ int32 faceIdx(const vec3_t& dir) {
     return side * 3 + maxi;
 }
 
-Faces cosfaces(const direction3_t& dir, Faces& sumcos) {
+static Faces cosfaces(const direction3_t& dir, Faces& sumcos) {
     direction3_t as = abs(dir);
     int32 i = faceIdx(dir);
     int32 comp = i % 3;
@@ -327,7 +339,7 @@ Faces cosfaces(const direction3_t& dir, Faces& sumcos) {
     return f;
 }
 
-void initRay(Ray& r, const direction3_t& d, const vec3_t& step, Faces& sumcos) {
+static void initRay(Ray& r, const direction3_t& d, const vec3_t& step, Faces& sumcos) {
     vec3_t p = vec3(0.f);
     ivec3_t lastidx = ivec3(p);
 
@@ -343,11 +355,11 @@ void initRay(Ray& r, const direction3_t& d, const vec3_t& step, Faces& sumcos) {
 }
 
 
-bool faceIdxLessThan(const vec3_t& a, const vec3_t& b) {
+static bool faceIdxLessThan(const vec3_t& a, const vec3_t& b) {
     return faceIdx(a) < faceIdx(b);
 }
 
-void initRays(Rays &rays, vec3_t dirs[]) {
+static void initRays(Rays &rays, vec3_t dirs[]) {
 
     for (int32 i = 0; i < SPHERE_POINTS; ++i)
         dirs[i] = normalize(dirs[i]);
@@ -418,7 +430,7 @@ void initRays(Rays &rays, vec3_t dirs[]) {
     }
 }
 
-void testray(const World& w, World& vis, int32 i, int32 j, int32 k, int32 di, int32 dj, int32 dk) {
+static void testray(const World& w, World& vis, int32 i, int32 j, int32 k, int32 di, int32 dj, int32 dk) {
     for (;;) {
         
         if (i < 0 || i >= N) break;
@@ -435,7 +447,7 @@ void testray(const World& w, World& vis, int32 i, int32 j, int32 k, int32 di, in
     }
 }
 
-void sendRays(const World& w, World& vis, int32 i, int32 j, int32 k) {
+static void sendRays(const World& w, World& vis, int32 i, int32 j, int32 k) {
     testray(w, vis, i, j, k, +1, 0, 0);    
     testray(w, vis, i, j, k, -1, 0, 0);
     testray(w, vis, i, j, k, 0, +1, 0);     
@@ -444,14 +456,14 @@ void sendRays(const World& w, World& vis, int32 i, int32 j, int32 k) {
     testray(w, vis, i, j, k, 0, 0, -1);
 }
 
-bool visible(const World& w, const World& vis, int32 i, int32 j, int32 k) {
+static bool visible(const World& w, const World& vis, int32 i, int32 j, int32 k) {
     return i < 0 || i >= N ||
            j < 0 || j >= N ||
            k < 0 || k >= N ||
         (!w(i, j, k) && vis(i, j, k));
 }
 
-World *filterOccluded(const World& w) {
+static World *filterOccluded(const World& w) {
 
     World *ret = new World;
     World& vis = *ret;
@@ -486,7 +498,7 @@ World *filterOccluded(const World& w) {
     return ret;                
 }
 
-Faces trace(const World& w, const Rays& rs, const ivec3_t& p0) {
+static Faces trace(const World& w, const Rays& rs, const ivec3_t& p0) {
     Faces diffContr = { { vec3(0.f), vec3(0.f) } };
 
     // // front, up, right, bot, down, left
@@ -549,28 +561,114 @@ Faces trace(const World& w, const Rays& rs, const ivec3_t& p0) {
     return diffContr;
 }
 
-bool visibleFace(const World& w, const World& vis, int32 i, int32 j, int32 k, const vec3_t& normal) {
+static float VIRTUAL_DIM = 100.f;
+
+static bool visibleFace(const World& w, const World& vis, int32 i, int32 j, int32 k, const vec3_t& normal) {
     i += (int32) normal.x;
     j += (int32) normal.y;
     k += (int32) normal.z;
     return visible(w, vis, i, j, k);
 }
 
-bool blockAt(const vec3_t& p) {
-    float r = sumNoise3D(p, 4, 1.2, 0.5, true);
-    float distC = length(p - vec3(0.5f)) / length(vec3(0.5f));
-    return (2 * p.y * p.y + 0.3) * (1 - distC) * r > 0.2f;
+static float noise3D1(const vec3_t& p) {
+    return saturate((noise3D(p) + 1.f) * 0.5f / 0.7f);
 }
 
-void createGeometry(World& world) {
+static float heightAt(const vec3_t& p, const vec3_t& warp, float freq) {
+    float y0 = p.y / VIRTUAL_DIM;
+    float w = 1 - y0;
+    float noise = noise3D(((vec3(p.x, p.z, 0.f) + warp) * freq));
+    return 1.f + noise;
+}
+
+static vec3_t noise3D3(const vec3_t& p) {
+    return vec3(noise3D(p + vec3(89.f, -193.f, 521.f)),
+                noise3D(p + vec3(-239.f, -181.f, 619.f)),
+                noise3D(p + vec3(-107.f, 157.f, 487.f)));
+}
+
+float density(const vec3_t& p) {
+    // float r = sumNoise3D(p, 4, 1.2, 0.5, true);
+    // float distC = length(p - vec3(0.5f)) / length(vec3(0.5f));
+    // return (2 * p.y * p.y + 0.3) * (1 - distC) * r > 0.2f;
+
+    // float height = p.y / DIM;
+
+    // float heightF = 2 * height * height + 0.3;
+
+    // float distC = 1 - distance(vec2(p.x, p.z), CENTER) / CENTER.x;
+
+    // float detail = 0.3f * fabs(noise3D((p + vec3(0.2, 0.5, -0.3f)) * 11.f));
+
+    // float cave = fabs(noise3D(2.f * (p + vec3(-19.f, 23.f, +11.f))));
+    // if (cave > 0.5f)
+    //     cave = 1.f;
+    // else
+    //     cave = 0.5f;
+
+    // float world = noise3D(2.3f * p);
+    // return heightF * distC * cave * (fabs(world) - detail) > 0.13f;
+
+    vec3_t ws_orig = p;
+    vec3_t ws = p;
+    float density = 0.f;
+
+    float prewarp_stride = 25.f;
+    float prewarp_freq = 0.0221f;
+    vec3_t warp = noise3D3(ws * prewarp_freq) * 0.64f + noise3D3(ws * prewarp_freq * 0.5f) * 0.32f;
+    ws += warp * prewarp_stride;
+
+    density += -ws.y;
+    // density += saturate((-4.f * ws_orig.y * 0.3) * 3.0) * 40 * noise3D1(ws_orig * 0.00071f);
+
+    density += sumNoise3D(ws, 4, 0.0125f, 0.5f, false) * 20.f;
+
+    return density;    
+}
+
+static int32 signAt(const Densities& ds, const ivec3_t& i) {
+    return ds.ds[i.x][i.y][i.z] >= 0 ? +1 : -1;
+}
+
+static bool blockAt(const Densities& ds, const ivec3_t& idx) {
+    int s = signAt(ds, idx);
+    for (int i = -1; i < 2; i += 2) {
+        for (int j = -1; j < 2; j += 2) {
+            for (int k = -1; k < 2; k += 2) {
+                ivec3_t jdx = idx + ivec3(i, j, k);
+                if (jdx.x >= 0 && jdx.x < N &&
+                    jdx.y >= 0 && jdx.y < N &&
+                    jdx.z >= 0 && jdx.z < N &&
+                    s != signAt(ds, jdx))
+                    return true;                    
+            }
+        }
+    }
+
+    return false;
+}
+
+static void createGeometry(World& world, Densities& ds) {
+
 #pragma omp parallel for
     for (int32 i = 0; i < N; ++i)
         for (int32 j = 0; j < N; ++j)
-            for (int32 k = 0; k < N; ++k)
-                world(i, j, k) = blockAt(vec3(i, j, k) * (1.f / N));
+            for (int32 k = 0; k < N; ++k) {
+                vec3_t wc = (vec3(i, j, k) * (1.f / N) - vec3(0.5f)) * VIRTUAL_DIM;
+                ds.ds[i][j][k] = density(wc);
+//                std::cerr << i << " " << j << " " << k << " -> wc:" << wc << " density: " << ds.ds[i][j][k] << " sign " << signAt(ds, ivec3(i, j, k)) << std::endl;
+            }
+
+#pragma omp parallel for
+    for (int32 i = 0; i < N; ++i)
+        for (int32 j = 0; j < N; ++j)
+            for (int32 k = 0; k < N; ++k) {
+                world(i, j, k) = blockAt(ds, ivec3(i, j, k));
+//                std::cerr << "block At " << i << " " << j << " " << k << " -> " << world(i,j,k) << std::endl;
+            }
 }
 
-void createOcclusionMap(GlobalOcc& occ, const World& hull, const World& world, const Rays& rays) {
+static void createOcclusionMap(GlobalOcc& occ, const World& hull, const World& world, const Rays& rays) {
 #pragma omp parallel for
     for (int32 i = 0; i < N; ++i)
         for (int32 j = 0; j < N; ++j)
@@ -579,11 +677,11 @@ void createOcclusionMap(GlobalOcc& occ, const World& hull, const World& world, c
                     occ.lambertFactor[i][j][k] = trace(world, rays, ivec3(i, j, k));
 }
 
-void andWorld(World& r, const World& a, const World& b) {
+static void andWorld(World& r, const World& a, const World& b) {
     World::bitwiseAnd(r, a, b);
 }
 
-void orWorldNot(World& r, const World& a, const World& b) {
+static void orWorldNot(World& r, const World& a, const World& b) {
     for (int32 i = 0; i < N; ++i)
         for (int32 j = 0; j < N; ++j)
             for (int32 k = 0; k < N; ++k)
@@ -602,7 +700,7 @@ const ivec3_t neighOffs[6] = {
     ivec3(0, 0, -1), ivec3(0, -1, 0), ivec3(-1, 0, 0)
 };
 
-bool hasNeighbours(const World& w, const World& vis, const ivec3_t& p) {
+static bool hasNeighbours(const World& w, const World& vis, const ivec3_t& p) {
     if (!w(p.x, p.y, p.z))
         return false;
     for (uint32 i = 0; i < 6; ++i) {
@@ -616,7 +714,77 @@ bool hasNeighbours(const World& w, const World& vis, const ivec3_t& p) {
     return false;
 }
 
-void initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
+struct Stats {
+    uint32 faces;
+    uint32 visFaces;
+    uint32 blocks;
+    uint32 visBlocks;
+};
+
+static void createModel(CubeMesh& worldModel, const World& world, const World& vis, const GlobalOcc& occmap, const Vertices& verts, const uint32 *permut, Stats& stats, const Densities& ds) {
+
+    stats.blocks = 0;
+    stats.visBlocks = 0;
+    stats.faces = 0;
+    stats.visFaces = 0;
+    
+    for (int32 i = 0; i < N; ++i) {
+        for (int32 j = 0; j < N; ++j) {
+            for (int32 k = 0; k < N; ++k) {
+                uint32 ii = permut[i];
+                uint32 jj = permut[permut[j]];
+                uint32 kk = permut[permut[permut[k]]];
+
+                if (world(ii, jj, kk))
+                    ++stats.blocks;
+
+                if (vis(ii, jj, kk) && world(ii, jj, kk)) {
+                    ++stats.visBlocks;
+
+                    const Faces& diffContr = occmap.lambertFactor[ii][jj][kk];
+
+                    float dens = ds.ds[ii][jj][kk];
+
+                    vec3_t blue = vec3(0.f, 0.f, 1.f);
+                    vec3_t yellow = vec3(0.f, 1.f, 1.f);
+                    vec3_t red = vec3(1.f, 0.f, 0.f);
+
+                    vec3_t col3;
+                    if (dens <= 0.5) {
+                        float w = dens * 2;
+                        col3 = (1 - w) * blue + w * yellow;
+                    } else {
+                        float w = (dens - 0.5) * 2;
+                        col3 = (1 - w) * yellow + w * red;
+                    }
+                    
+                    glt::color col = glt::color(col3);
+//                    uint32 col = glt::color(randColor()).rgba();
+                    vec3_t offset = BLOCK_DIM * vec3(ii, jj, kk);
+                    for (uint32 r = 0; r < verts.size; ++r) {
+                        Vertex v = verts.verts[r];
+                        ++stats.faces;
+                        if (visibleFace(world, vis, ii, jj, kk, vec3(v.normal))) {
+                            ++stats.visFaces;
+                            ivec3_t n = ivec3(vec3(v.normal));
+//                            std::cerr << "n: " << vec3(n) << std::endl;
+                            int32 face = n.x + n.y * 2 + n.z * 3;
+                            int32 side = face < 0 ? 1 : 0;
+                            face = abs(face) - 1;
+                            v.position *= BLOCK_DIM;
+                            v.position += offset;
+                            v.normal.w = OCCLUSION ? diffContr.f[side][face] : 1.f;
+                            v.color = col.rgba;
+                            worldModel.add(v);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+static void initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
 
     CubeMesh cubeModel(vertexAttrs);
     glt::primitives::unitCube(cubeModel);
@@ -624,8 +792,10 @@ void initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
     std::auto_ptr<World> worldp(new World);
     World& world = *worldp;
 
+    std::auto_ptr<Densities> densitiesp(new Densities);
+
     world.zero();
-    time(createGeometry(world));
+    time(createGeometry(world, *densitiesp));
     
     std::auto_ptr<Rays> raysp(new Rays);
     Rays& rays = *raysp;
@@ -674,11 +844,7 @@ void initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
     //             andWorld(worldAndVis, world, vis);
     //         });
 
-    uint32 blocks = 0;
-    uint32 visBlocks = 0;
-    uint32 faces = 0;
-    uint32 visFaces = 0;
-
+    Stats stats;
 
     std::auto_ptr<Vertices> vertsp(new Vertices(cubeModel.size()));
     Vertices& verts = *vertsp;
@@ -686,56 +852,15 @@ void initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
     for (uint32 i = 0; i < verts.size; ++i)
         verts.verts[i] = cubeModel.at(i);
 
-    for (int32 i = 0; i < N; ++i) {
-        for (int32 j = 0; j < N; ++j) {
-            for (int32 k = 0; k < N; ++k) {
-                uint32 ii = permut[i];
-                uint32 jj = permut[permut[j]];
-                uint32 kk = permut[permut[permut[k]]];
+    time(createModel(worldModel, world, vis, occmap, verts, permut, stats, *densitiesp));
 
-                if (world(ii, jj, kk))
-                    ++blocks;
-
-                if (vis(ii, jj, kk) && world(ii, jj, kk)) {
-                    ++visBlocks;
-
-                    const Faces& diffContr = occmap.lambertFactor[ii][jj][kk];
-
-                    float height = (float) jj / N;
-                    float hh = height * height * height;
-                        
-                    glt::color col = glt::color(vec4(hh , (float) ii / N, 1 - hh, 1));
-//                    uint32 col = glt::color(randColor()).rgba();
-                    vec3_t offset = BLOCK_DIM * vec3(ii, jj, kk);
-                    for (uint32 r = 0; r < verts.size; ++r) {
-                        Vertex v = verts.verts[r];
-                        ++faces;
-                        if (visibleFace(world, vis, ii, jj, kk, vec3(v.normal))) {
-                            ++visFaces;
-                            ivec3_t n = ivec3(vec3(v.normal));
-//                            std::cerr << "n: " << vec3(n) << std::endl;
-                            int32 face = n.x + n.y * 2 + n.z * 3;
-                            int32 side = face < 0 ? 1 : 0;
-                            face = abs(face) - 1;
-                            v.position *= BLOCK_DIM;
-                            v.position += offset;
-                            v.normal.w = diffContr.f[side][face];
-                            v.color = col.rgba;
-                            worldModel.add(v);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    std::cerr << "blocks: " << blocks << ", visible blocks: " << visBlocks << std::endl;
-    std::cerr << "faces: " << faces << ", visible faces: " << visFaces << std::endl;
+    std::cerr << "blocks: " << stats.blocks << ", visible blocks: " << stats.visBlocks << std::endl;
+    std::cerr << "faces: " << stats.faces << ", visible faces: " << stats.visFaces << std::endl;
 }
 
-void renderBlocks(State *state, ge::Engine& e);
+static void renderBlocks(State *state, ge::Engine& e);
 
-void renderScene(State *state, const RenderEv& ev) {
+static void renderScene(State *state, const RenderEv& ev) {
     ge::Engine& e = ev.info.engine;
 
     GL_CHECK(glClearColor(1.f, 1.f, 1.f, 1.f));
@@ -761,7 +886,7 @@ void renderScene(State *state, const RenderEv& ev) {
     }
 }
 
-void renderBlocks(State *state, ge::Engine& e) {
+static void renderBlocks(State *state, ge::Engine& e) {
     glt::RenderManager& rm = e.renderManager();
     glt::SavePoint sp(rm.geometryTransform().save());
 
@@ -801,13 +926,13 @@ void renderBlocks(State *state, ge::Engine& e) {
 //     camera.rotateWorld(rotX, vec3(0.f, 1.f, 0.f));
 // }
 
-bool readModel(const std::string& file, CubeMesh& mdl) {
+static bool readModel(const std::string& file, CubeMesh& mdl) {
     UNUSED(file); UNUSED(mdl);
 //    return mdl.read(file.c_str());
     return false;
 }
 
-bool writeModel(const std::string& file, const CubeMesh& mdl) {
+static bool writeModel(const std::string& file, const CubeMesh& mdl) {
     UNUSED(file); UNUSED(mdl);
 //    return mdl.write(file.c_str());
     return false;
@@ -889,8 +1014,6 @@ const uint16 permutation[512] = {
 
 static float fade(float t) { return t * t * t * (t * (t * 6 - 15) + 10); }
 
-static float lerp(float t, float a, float b) { return a + t * (b - a); }
-
 static float grad(int hash, float x, float y, float z) {
     int h = hash & 15;                      
     float u = h<8 ? x : y;                 
@@ -912,6 +1035,10 @@ static float sumNoise3D(const vec3_t& p, uint32 octaves, float fmin, float phi, 
     }
 
     return r;
+}
+
+static float lerp2(float t, float a, float b) {
+    return lerp(a, b, t);
 }
 
 static float noise3D(const vec3_t& pnt) {
@@ -937,13 +1064,13 @@ static float noise3D(const vec3_t& pnt) {
     int A = p[X  ]+Y, AA = p[A]+Z, AB = p[A+1]+Z,      
         B = p[X+1]+Y, BA = p[B]+Z, BB = p[B+1]+Z;      
 
-    return lerp(w, lerp(v, lerp(u, grad(p[AA  ], x  , y  , z  ),  
+    return lerp2(w, lerp2(v, lerp2(u, grad(p[AA  ], x  , y  , z  ),  
                                    grad(p[BA  ], x-1, y  , z  )), 
-                           lerp(u, grad(p[AB  ], x  , y-1, z  ),  
+                           lerp2(u, grad(p[AB  ], x  , y-1, z  ),  
                                    grad(p[BB  ], x-1, y-1, z  ))),
-                   lerp(v, lerp(u, grad(p[AA+1], x  , y  , z-1),  
+                   lerp2(v, lerp2(u, grad(p[AA+1], x  , y  , z-1),  
                                    grad(p[BA+1], x-1, y  , z-1)), 
-                           lerp(u, grad(p[AB+1], x  , y-1, z-1),
+                           lerp2(u, grad(p[AB+1], x  , y-1, z-1),
                                    grad(p[BB+1], x-1, y-1, z-1))));
 }
 

@@ -38,6 +38,8 @@ endif()
 
 project(sim-sfml)
 
+include_directories("${CMAKE_SOURCE_DIR}/ext/include")
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   set(SYS_UNIX "yes")
   add_definitions("-DSYSTEM_LINUX")
@@ -45,7 +47,7 @@ else()
     message(WARNING "Unsupported operating system")
 endif()
 
-add_definitions("-Wall -fno-exceptions -fno-rtti")
+#add_definitions("-Wall -fno-exceptions -fno-rtti")
 
 if(COMP_GCC)
   add_definitions("-fopenmp")
@@ -169,7 +171,6 @@ set(GLT_SRC
 
 add_library(glt SHARED ${GLT_SRC})
 link_directories(${GLT_BINARY_DIR})
-link_libraries(glt)
 
 set(SYS_SRC
   sys/fs/fs.hpp
@@ -185,7 +186,6 @@ endif()
 
 add_library(sys SHARED ${SYS_SRC})
 link_directories(${SYS_BINARY_DIR})
-link_libraries(sys)
 
 set(GE_SRC
   ge/GameLoop.hpp
@@ -220,7 +220,6 @@ set(GE_SRC
 
 add_library(ge SHARED ${GE_SRC})
 link_directories(${GE_BINARY_DIR})
-link_libraries(ge)
 
 add_executable(sim-sfml
   sim-sfml.cpp
@@ -231,12 +230,25 @@ add_executable(sim-sfml
   ${MATH_SRC}
   ${DATA_SRC})
 
+find_library(VOXEL_LIB voxel PATHS "${CMAKE_SOURCE_DIR}/ext/lib")
+find_library(VOXEL_HS_LIB voxel-hs PATHS "${CMAKE_SOURCE_DIR}/ext/lib")
+
+# find_library(HS_GMP HSinteger-gmp-0.2.0.3-ghc7.0.3 PATHS /usr/lib/ghc-7.0.3/integer-gmp-0.2.0.3)
+# find_library(HS_PRIM HSghc-prim-0.2.0.0-ghc7.0.3 PATHS /usr/lib/ghc-7.0.3/ghc-prim-0.2.0.0)
+# find_library(HS_FFI HSffi-ghc7.0.3 PATHS /usr/lib/ghc-7.0.3)
+# find_library(HS_BASE HSbase-4.3.1.0-ghc7.0.3 PATHS /usr/lib/ghc-7.0.3/base-4.3.1.0)
+
+link_libraries(${VOXEL_LIB} ${VOXEL_HS_LIB})
+#link_libraries(${HS_GMP} ${HS_PRIM} ${HS_FFI} ${HS_BASE})
+
 add_executable(voxel-world
   voxel-world.cpp
   defs.h
   
   ${MATH_SRC}
   ${DATA_SRC})
+
+target_link_libraries(voxel-world sys glt ge)
 
 add_executable(engine-test
   engine-test.cpp
