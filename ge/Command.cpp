@@ -10,7 +10,7 @@ namespace ge {
 
 const Array<CommandParamType> NULL_PARAMS(0, 0);
 
-const Array<CommandArg> NULL_ARGS(0, 0);
+Array<CommandArg> NULL_ARGS(0, 0);
 
 std::string Command::name() const {
     if (!namestr.empty())

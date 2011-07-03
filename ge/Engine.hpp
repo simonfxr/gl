@@ -6,6 +6,7 @@
 #include <string>
 #include <istream>
 
+#include "ge/EngineOptions.hpp"
 #include "ge/GameWindow.hpp"
 #include "ge/GameLoop.hpp"
 #include "ge/Event.hpp"
@@ -22,31 +23,6 @@
 #include "glt/Uniforms.hpp"
 
 namespace ge {
-
-struct EngineOpts {
-
-    enum CommandType {
-        Script,
-        Command
-    };
-
-    enum Mode {
-        Help,
-        Animate
-    };
-    
-    std::vector<std::pair<CommandType, std::string> > commands;
-    std::string workingDirectory;
-    std::string initScript;
-    WindowOpts window;
-    Mode mode;
-
-    mutable EngineInitializers inits;
-
-    EngineOpts() : mode(Animate) {}
-
-    EngineOpts& parseOpts(int *argc, char ***argv);
-};
 
 struct Engine {
 
@@ -71,14 +47,14 @@ struct Engine {
 
     void addInit(RunLevel lvl, const Ref<EventHandler<InitEvent> >& comm);
 
-    int32 run(const EngineOpts& opts = EngineOpts());
+    int32 run(const EngineOptions& opts = EngineOptions());
 
 private:
     Engine(const Engine&);
     Engine& operator =(const Engine&);
 
     struct Data;
-    Data * self;
+    Data * const self;
 };
 
 } // namespace ge

@@ -48,6 +48,7 @@ void printError(std::ostream& out, const char *type, const Location& loc, LogLev
 
 #define _ERROR(lvl, msg) err::error(_CURRENT_LOCATION, lvl, (msg))
 #define _ASSERT(x, lvl, msg)  do { if (unlikely(!(x))) _ERROR(lvl, msg); } while (0)
+#define _ASSERT_EXPR(x, lvl, msg, expr) ((unlikely(!(x)) ? (_ERROR(lvl, msg), 0) : 0), (expr))
 
 #ifdef DEBUG
 #define DEBUG_ASSERT_MSG(x, msg) _ASSERT(x, err::DebugAssertion, msg)
@@ -61,6 +62,8 @@ void printError(std::ostream& out, const char *type, const Location& loc, LogLev
 
 #define ASSERT_MSG(x, msg) _ASSERT(x, err::Assertion, msg)
 #define ASSERT(x) ASSERT_MSG(x, #x)
+#define ASSERT_MSG_EXPR(x, msg, expr) _ASSERT_EXPR(x, err::Assertion, msg, expr)
+#define ASSERT_EXPR(x, expr) ASSERT_MSG_EXPR(x, #x, expr)
 
 #define ERR(msg) _ERROR(err::Error, msg)
 #define WARN(msg) _ERROR(err::Warn, msg)

@@ -104,16 +104,18 @@ MeshBase::MeshBase() :
     owning_vertices(true),
     vertices_capacity(0),
     vertices_size(0),
+    gpu_vertices_size(0),
     vertex_data(0),
     owning_elements(true),
     elements_capacity(0),
     elements_size(0),
+    gpu_elements_size(0),
     element_data(0),
     desc(0)
 {}
 
 void MeshBase::initBase(const VertexDescBase *layout, uint32 initial_nverts, uint32 initial_nelems) {
-    this->~MeshBase();
+    free();
 
     vertices_capacity = MIN_NUM_VERTICES;
     while (vertices_capacity < initial_nverts)
@@ -135,20 +137,25 @@ void MeshBase::initBase(const VertexDescBase *layout, uint32 initial_nverts, uin
     elements_size = 0;
     element_data = new uint32[elements_capacity];
     desc = layout;
+    enabled_attributes = BitSet(layout->nattributes, true);
 }
 
-
-MeshBase::~MeshBase() {
+void MeshBase::free() {
     if (element_buffer_name != 0 || vertex_buffer_name != 0) {
         GLuint names[] = { element_buffer_name, vertex_buffer_name };
         GL_CHECK(glDeleteBuffers(ARRAY_LENGTH(names), names));
     }
 
     if (owning_vertices)
-        free(vertex_data);
+        ::free(vertex_data);
 
     if (owning_elements)
         delete[] element_data;
+}
+
+
+MeshBase::~MeshBase() {
+    free();
 }
 
 void MeshBase::primType(GLenum primType) {
@@ -175,6 +182,8 @@ void MeshBase::send(GLenum usageHint) {
     GL_CHECK(glBufferData(GL_ARRAY_BUFFER, vertices_size * desc->sizeof_vertex,
                           vertex_data, usageHint));
 
+    gpu_vertices_size = vertices_size;
+
     if (element_buffer_name == 0)
         GL_CHECK(glGenBuffers(1, &element_buffer_name));
 
@@ -182,6 +191,8 @@ void MeshBase::send(GLenum usageHint) {
     GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                           elements_size * sizeof (GLuint),
                           element_data, usageHint));
+
+    gpu_elements_size = elements_size;
 }
 
 void MeshBase::drawInstanced(uint32 num, GLenum primType) {
@@ -190,6 +201,8 @@ void MeshBase::drawInstanced(uint32 num, GLenum primType) {
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
 
     for (uint32 i = 0; i < desc->nattributes; ++i) {
+        if (!enabled_attributes[i])
+            continue;
         const Attr<Any>& a = desc->attributes[i];
         GL_CHECK(glEnableVertexAttribArray(i));
         GL_CHECK(glVertexAttribPointer(i, a.ncomponents, a.component_type,
@@ -203,7 +216,8 @@ void MeshBase::drawInstanced(uint32 num, GLenum primType) {
     GL_CHECK(glDrawElementsInstanced(primType, elements_size, GL_UNSIGNED_INT, 0, num));
 
     for (uint32 i = 0; i < desc->nattributes; ++i)
-        GL_CHECK(glDisableVertexAttribArray(i));
+        if (enabled_attributes[i])
+            GL_CHECK(glDisableVertexAttribArray(i));
 }
     
 void MeshBase::draw(GLenum primType) {
@@ -212,20 +226,22 @@ void MeshBase::draw(GLenum primType) {
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
 
     for (uint32 i = 0; i < desc->nattributes; ++i) {
-        const Attr<Any>& a = desc->attributes[i];
-        GL_CHECK(glEnableVertexAttribArray(i));
-        GL_CHECK(glVertexAttribPointer(i, a.ncomponents, a.component_type,
-                                       a.normalized ? GL_TRUE : GL_FALSE,
-                                       desc->sizeof_vertex,
-                                       (void *) (size_t) a.offset));
-        
+        if (enabled_attributes[i]) {
+            const Attr<Any>& a = desc->attributes[i];
+            GL_CHECK(glEnableVertexAttribArray(i));
+            GL_CHECK(glVertexAttribPointer(i, a.ncomponents, a.component_type,
+                                           a.normalized ? GL_TRUE : GL_FALSE,
+                                           desc->sizeof_vertex,
+                                           (void *) (size_t) a.offset));
+        }
     }
 
     GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_name));
-    GL_CHECK(glDrawElements(primType, elements_size, GL_UNSIGNED_INT, 0));
+    GL_CHECK(glDrawElements(primType, gpu_elements_size, GL_UNSIGNED_INT, 0));
 
     for (uint32 i = 0; i < desc->nattributes; ++i)
-        GL_CHECK(glDisableVertexAttribArray(i));
+        if (enabled_attributes[i])
+            GL_CHECK(glDisableVertexAttribArray(i));
 }
     
 const byte *MeshBase::vertexRef(uint32 i) const {
@@ -266,6 +282,14 @@ void MeshBase::addElement(uint32 index) {
 
 GLuint MeshBase::attributePosition(size_t offset) const {
     return static_cast<GLuint>(desc->index(offset));
+}
+
+void MeshBase::enableAttribute(uint32 i, bool enabled) {
+    if (i >= desc->nattributes) {
+        ERR("index out of range");
+        return;
+    }
+    enabled_attributes[i] = enabled;
 }
 
 void MeshBase::setSize(uint32 size) {

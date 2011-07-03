@@ -1,6 +1,7 @@
 #include "ge/KeyHandler.hpp"
 
 #include <map>
+#include <cstring>
 
 namespace ge {
 
@@ -54,7 +55,7 @@ struct KeyHandler::Data {
 static Ref<Command> NULL_COMMAND(0);
 
 KeyHandler::Data::Data(CommandProcessor& proc) :
-    processor(proc), frame_id(0)
+    processor(proc), frame_id(1)
 {
     for (uint32 i = 0; i < ARRAY_LENGTH(states); ++i)
         states[i] = State();
@@ -79,7 +80,13 @@ void KeyHandler::keyReleased(KeyCode code) {
     // std::cerr << "key released: " << self->frame_id << " " << prettyKeyCode(code) << std::endl;
     int32 idx = int32(code);
     CHECK_KEYCODE(idx);
-    self->states[idx] = State(false, self->frame_id);
+    if (self->states[idx].down)
+        self->states[idx] = State(false, self->frame_id);
+}
+
+void KeyHandler::clearStates() {
+    memset(self->states, 0, sizeof self->states);
+    self->frame_id = 1;
 }
 
 KeyState KeyHandler::keyState(KeyCode code) {

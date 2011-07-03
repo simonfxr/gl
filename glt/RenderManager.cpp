@@ -198,7 +198,7 @@ RenderTarget *RenderManager::activeRenderTarget() const {
 
 void RenderManager::beginScene() {
     ASSERT_MSG(!self->inScene, "nested beginScene()");
-    ASSERT_MSG(self->camera_set, "camera matrix not set");
+//    ASSERT_MSG(self->camera_set, "camera matrix not set");
     ASSERT_MSG(self->current_rt != 0 || self->def_rt != 0, "no RenderTarget specified");
 
     self->statBegin();

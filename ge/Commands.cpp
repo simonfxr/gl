@@ -191,7 +191,7 @@ struct InitCommandHandler : public EventHandler<InitEvent> {
         handler(hndlr) {}
     void handle(const Event<InitEvent>& e) {
         e.info.success = true;
-        handler->handle(makeEvent(CommandEvent(e.info.engine)));
+        handler->handle(makeEvent(CommandEvent(e.info.engine, e.info.engine.commandProcessor())));
     }
 };
 

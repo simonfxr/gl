@@ -4,8 +4,15 @@ args=( )
 
 for arg; do
     case "$arg" in
-        -D*|-Wl*)
-            args=( "${args[@]}" -optc "$arg" ) ;;
+        -D*|-Wl*|-fno-exceptions|-fno-rtti|-fopenmp|-fstack-protector|-ffast-math|-Wextra|-Wno-switch|-g*|-march=*)
+            args=( "${args[@]}" -optc "$arg" )
+        
+            if [[ $arg = '-fopenmp' ]]; then
+                args=( "${args[@]}" -lgomp )
+            fi
+
+            ;;
+
         *)
             args=( "${args[@]}" "$arg" ) ;;
     esac

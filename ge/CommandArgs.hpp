@@ -20,9 +20,9 @@ enum CommandParamType {
     StringParam, // "abcd", 'foo'
     IntegerParam, // 42, 12334, ...
     NumberParam, // 3.14159
-    VarRefParam, // $var
-    CommandParam, // commandref: &comname or quotation: { com1 arg1 arg2 ; com2 arg3 ... }
     KeyComboParam, // keycombo: [LShift;+Up;-A], [!Mouse1] ...
+    CommandParam, // commandref: &comname or quotation: { com1 arg1 arg2 ; com2 arg3 ... }
+    VarRefParam, // $var
     AnyParam, // one parameter of any type
     ListParam, // all remaining params, can only appear as the last parameter
 };
@@ -33,7 +33,8 @@ enum CommandType {
     Number,
     KeyCombo,
     CommandRef,
-    VarRef
+    VarRef,
+    Nil
 };
 
 struct CommandArg;

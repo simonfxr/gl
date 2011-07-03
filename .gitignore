@@ -14,7 +14,12 @@
 /log.txt
 /ext/
 
+voxel_create_world.cl
+
 create_x11_window.cpp
 multisample
 multisample.cpp
 tokenizer
+simple.cpp
+simple
+

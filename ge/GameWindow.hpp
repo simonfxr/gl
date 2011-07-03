@@ -14,6 +14,77 @@
 
 namespace ge {
 
+struct WindowEvents;
+
+struct WindowOptions {
+    uint32 width;
+    uint32 height;
+    std::string title;
+    sf::ContextSettings settings;
+    
+    WindowOptions() :
+        width(640),
+        height(480),
+        title(""),
+        settings(24, 0, 0, 3, 3)
+        {}
+};
+
+struct GameWindow {
+    GameWindow(sf::RenderWindow& win);
+    GameWindow(const WindowOptions& opts = WindowOptions());
+    ~GameWindow();
+
+    void grabMouse(bool grab = true);
+    bool grabMouse() const;
+
+    void showMouseCursor(bool show = true);
+    bool showMouseCursor() const;
+
+    void accumulateMouseMoves(bool accum = true);
+    bool accumulateMouseMoves();
+    
+    sf::RenderWindow& window();
+
+    bool focused() const;
+
+    bool init();
+
+    WindowRenderTarget& renderTarget();
+
+    WindowEvents& events();
+
+    void registerBinding(const KeyBinding& bind, Ref<Command>& com);
+
+    bool unregisterBinding(const KeyBinding& bind);
+
+    void registerHandlers(EngineEvents& evnts);
+
+private:
+    
+    GameWindow(const GameWindow& _);
+    GameWindow& operator =(const GameWindow& _);
+
+    struct Data;
+    Data * const self;
+};
+
+struct WindowEvent;
+struct WindowResized;
+struct KeyChanged;
+struct MouseMoved;
+struct MouseButton;
+struct FocusChanged;
+
+struct WindowEvents {
+    EventSource<WindowEvent> windowClosed;
+    EventSource<FocusChanged> focusChanged;
+    EventSource<WindowResized> windowResized;
+    EventSource<KeyChanged> keyChanged;
+    EventSource<MouseMoved> mouseMoved;
+    EventSource<MouseButton> mouseButton;
+};
+
 struct WindowEvent {
     GameWindow& window;
     WindowEvent(GameWindow& win) : window(win) {}
@@ -49,72 +120,6 @@ struct MouseButton : public WindowEvent {
 struct FocusChanged : public WindowEvent {
     bool focused;
     FocusChanged(GameWindow& win, bool focus) : WindowEvent(win), focused(focus) {}
-};
-
-struct WindowEvents {
-    EventSource<WindowEvent> windowClosed;
-    EventSource<FocusChanged> focusChanged;
-    EventSource<WindowResized> windowResized;
-    EventSource<KeyChanged> keyChanged;
-    EventSource<MouseMoved> mouseMoved;
-    EventSource<MouseButton> mouseButton;
-};
-
-struct WindowOpts {
-    uint32 width;
-    uint32 height;
-    std::string title;
-    sf::ContextSettings settings;
-    
-    WindowOpts() :
-        width(640),
-        height(480),
-        title(""),
-        settings(24, 0, 0, 3, 3)
-        {
-#ifdef GLDEBUG
-            settings.DebugContext = true;
-#endif
-        }
-};
-
-struct GameWindow {
-    GameWindow(sf::RenderWindow& win);
-    GameWindow(const WindowOpts& opts = WindowOpts());
-    ~GameWindow();
-
-    void grabMouse(bool grab = true);
-    bool grabMouse() const;
-
-    void showMouseCursor(bool show = true);
-    bool showMouseCursor() const;
-
-    void accumulateMouseMoves(bool accum = true);
-    bool accumulateMouseMoves();
-    
-    sf::RenderWindow& window();
-
-    bool focused() const;
-
-    bool init();
-
-    WindowRenderTarget& renderTarget();
-
-    WindowEvents& events();
-
-    void registerBinding(const KeyBinding& bind, Ref<Command>& com);
-
-    bool unregisterBinding(const KeyBinding& bind);
-
-    void registerHandlers(EngineEvents& evnts);
-
-private:
-    
-    GameWindow(const GameWindow& _);
-    GameWindow& operator =(const GameWindow& _);
-
-    struct Data;
-    Data * const self;
 };
 
 } // namespace ge

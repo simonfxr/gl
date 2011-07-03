@@ -54,7 +54,7 @@ void sincos(float rad, float& out_sin, float& out_cos) {
     out_cos = cos(rad);
 }
 
-float rtan(float rad) {
+float cotan(float rad) {
     return recip(tan(rad));
 }
 
@@ -146,10 +146,10 @@ float min(float x, float y) {
 }
 
 float saturate(float x) {
-    return clamp(0.f, 1.f, x);
+    return clamp(x, 0.f, 1.f);
 }
 
-float clamp(float lo, float hi, float x) {
+float clamp(float x, float lo, float hi) {
     return x < lo ? lo : (x > hi ? hi : x);
 }
 

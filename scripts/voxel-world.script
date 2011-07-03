@@ -2,7 +2,7 @@ load "scripts/default.script"
 
 bindShader "voxel" "voxel.vert" "voxel.frag" 0 "position" 1 "color" 2 "normal"
 
-perspectiveProjection 17.5 1.0 1000.0
+perspectiveProjection 35 1 600.0
 
 bindKey [W] { moveCamera 12 }
 bindKey [D] { moveCamera 3 }
@@ -14,6 +14,8 @@ bindKey [+I] { loadCameraFrame "voxel.cam" }
 
 bindKey [+O] { incGamma -0.1 }
 bindKey [+P] { incGamma +0.1 }
+
+bindKey [+R] { recreateWorld }
 
 postInit { 
     setCameraStepLength 1

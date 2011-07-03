@@ -36,6 +36,12 @@ public:
 
     bool exec(Array<CommandArg>& args);
 
+    CommandArg cast(const CommandArg& val, CommandType type);
+
+    static bool isAssignable(CommandParamType lval, CommandType rval);
+
+    static CommandParamType commandParamType(CommandType type);
+
 private:
     CommandProcessor(const CommandProcessor&);
     CommandProcessor& operator =(const CommandProcessor&);

@@ -38,7 +38,7 @@ float atan2(float x, float y) PURE_FUNC;
 
 void sincos(float rad, float& out_sin, float& out_cos) PURE_FUNC;
 
-float rtan(float rad) PURE_FUNC;
+float cotan(float rad) PURE_FUNC; // 1/tan
 
 float abs(float x) PURE_FUNC;
 
@@ -72,7 +72,7 @@ float min(float x, float y) PURE_FUNC;
 
 float saturate(float x) PURE_FUNC;
 
-float clamp(float lo, float hi, float x) PURE_FUNC;
+float clamp(float x, float lo, float hi) PURE_FUNC;
 
 float smoothstep(float lo_edge, float hi_edge, float x) PURE_FUNC;
 

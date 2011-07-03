@@ -184,9 +184,32 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
         }
     }
 
-    com->interactive(makeEvent(CommandEvent(engine())), args);
+    com->interactive(makeEvent(CommandEvent(engine(), *this)), args);
     return true;
 }
+
+CommandParamType CommandProcessor::commandParamType(CommandType type) {
+    switch (type) {
+    case String: return StringParam;
+    case Integer: return IntegerParam;
+    case Number: return NumberParam;
+    case KeyCombo: return KeyComboParam;
+    case CommandRef: return CommandParam;
+    case VarRef: return VarRefParam;
+    case Nil: ERR("Nil has no declarable type");
+    default:
+        ERR("invalid type: returning IntegerParam");
+        return IntegerParam;
+    }
+}
+
+CommandArg CommandProcessor::cast(const CommandArg& val, CommandType type) {
+    FATAL_ERR("not yet implemented");
+}
+
+bool CommandProcessor::isAssignable(CommandParamType lval, CommandType rval) {
+    FATAL_ERR("not yet implemented");
+}       
 
 const char *prettyCommandType(CommandType type) {
     UNUSED(type);

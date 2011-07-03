@@ -16,6 +16,9 @@ elseif(CXX_COMP STREQUAL "g++")
 elseif(CXX_COMP STREQUAL "icpc")
   set(COMP_ICC "yes")
   add_definitions("-DGNU_EXTENSIONS")
+elseif(CXX_COMP STREQUAL "ghc-gcc")
+  set(COMP_GCC "yes")
+  add_definitions("-DGNU_EXTENSIONS")
 endif()
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
@@ -47,7 +50,7 @@ else()
     message(WARNING "Unsupported operating system")
 endif()
 
-#add_definitions("-Wall -fno-exceptions -fno-rtti")
+add_definitions("-Wall -fno-exceptions -fno-rtti")
 
 if(COMP_GCC)
   add_definitions("-fopenmp")
@@ -198,6 +201,8 @@ set(GE_SRC
   ge/EngineEvents.hpp
   ge/Engine.hpp
   ge/Engine.cpp
+  ge/EngineOptions.hpp
+  ge/EngineOptions.cpp
   ge/Init.hpp
   ge/Init.cpp
   ge/Command.hpp
@@ -238,7 +243,7 @@ find_library(VOXEL_HS_LIB voxel-hs PATHS "${CMAKE_SOURCE_DIR}/ext/lib")
 # find_library(HS_FFI HSffi-ghc7.0.3 PATHS /usr/lib/ghc-7.0.3)
 # find_library(HS_BASE HSbase-4.3.1.0-ghc7.0.3 PATHS /usr/lib/ghc-7.0.3/base-4.3.1.0)
 
-link_libraries(${VOXEL_LIB} ${VOXEL_HS_LIB})
+
 #link_libraries(${HS_GMP} ${HS_PRIM} ${HS_FFI} ${HS_BASE})
 
 add_executable(voxel-world
@@ -249,6 +254,7 @@ add_executable(voxel-world
   ${DATA_SRC})
 
 target_link_libraries(voxel-world sys glt ge)
+target_link_libraries(voxel-world ${VOXEL_LIB} ${VOXEL_HS_LIB})
 
 add_executable(engine-test
   engine-test.cpp
@@ -263,3 +269,18 @@ add_executable(tokenizer
 
   ${MATH_SRC}
   ${DATA_SRC})
+
+add_executable(simple
+  simple.cpp
+  defs.h
+
+  ${MATH_SRC}
+  ${DATA_SRC})
+
+target_link_libraries(simple sys glt ge)
+
+add_executable(queryExtension
+  queryExtension.cpp
+  defs.h)
+
+target_link_libraries(queryExtension sys glt ge)

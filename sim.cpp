@@ -5,6 +5,8 @@
 #include "math/vec3.hpp"
 #include "math/plane.hpp"
 
+#include "sys/clock.hpp"
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -12,15 +14,12 @@
 #include <cstdlib>
 #include <ctime>
 
-#include <SFML/System/Clock.hpp>
-
 #if 0
 
 #define time_msg(msg, op) do {                                          \
-        sf::Clock c;                                                    \
-        float __t0 = c.GetElapsedTime();                                \
+        float __t0 = ::sys::queryTimer();                          \
         { op }                                                          \
-        float __delta = c.GetElapsedTime() - __t0;                      \
+        float __delta = ::sys::queryTimer() - __t0;                               \
         __delta *= 1000.f;                                              \
         std::cout << msg << " took " << __delta << " ms" << std::endl; \
     } while (0)

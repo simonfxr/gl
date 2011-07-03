@@ -31,25 +31,29 @@
 
 #include "sys/clock.hpp"
 
+#define HS_WORLD_GEN
+
+#ifdef HS_WORLD_GEN
 #include <voxel_hs.h>
+#endif
 
 using namespace math;
 
 static const float FPS_UPDATE_INTERVAL = 3.f;
-static const vec3_t BLOCK_DIM = vec3(0.25f);
+static const vec3_t BLOCK_DIM = vec3(1.f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
-static const int32 N = 32; // 196;
+static const int32 N = 128; // 196;
 static const int32 SPHERE_POINTS_FACE = 8; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const bool OCCLUSION = true;
 static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
 
 #define time(op) do {                                                   \
-        float T0 = sys::queryTimer();                                   \
+        float _T0_ = ::sys::queryTimer();                               \
         (op);                                                           \
-        float diff = sys::queryTimer() - T0;                            \
-        std::cerr << #op << " took " << (diff * 1000) << " ms." << std::endl; \
+        float _diff_ = ::sys::queryTimer() - _T0_;                      \
+        ::std::cerr << #op << " took " << (_diff_ * 1000) << " ms." << ::std::endl; \
     } while (0)
 
 struct MaterialProperties {
@@ -113,11 +117,15 @@ static void renderScene(State *state, const RenderEv& ev);
 static bool readModel(const std::string& file, CubeMesh& mdl);
 static bool writeModel(const std::string& file, const CubeMesh& mdl);
 
-static void initWorld(CubeMesh& worldModel, vec3_t *sphere_points);
+static bool initWorld(CubeMesh& worldModel, vec3_t *sphere_points);
 
 static void incGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
     *gamma += args[0].number;
     if (*gamma < 0) *gamma = 0.f;
+}
+
+static void runRecreateWorld(State *state, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
+    time(initWorld(state->worldModel, state->sphere_points));
 }
 
 static void initState(State *state, const InitEv& ev) {
@@ -133,6 +141,10 @@ static void initState(State *state, const InitEv& ev) {
     e.commandProcessor().define(makeCommand(incGamma, &state->gamma_correction,
                                             PARAM_ARRAY(ge::NumberParam),
                                             "incGamma", "increase the value of gamma correction"));
+
+    e.commandProcessor().define(makeCommand(runRecreateWorld, state,
+                                            ge::NULL_PARAMS,
+                                            "recreateWorld", "recreate the entire world"));
     
     state->camera.registerWith(e);
     state->camera.registerCommands(e.commandProcessor());
@@ -157,6 +169,10 @@ static void initState(State *state, const InitEv& ev) {
 
     pointsOnSphere(SPHERE_POINTS, state->sphere_points);
 
+#ifdef HS_WORLD_GEN
+    hs_begin();
+#endif
+
     if (state->read_model) {
         if (!readModel(WORLD_MODEL_FILE, state->worldModel)) {
             ERR("couldnt read model file!");
@@ -164,16 +180,8 @@ static void initState(State *state, const InitEv& ev) {
         }
     } else {
 
-        hs_begin();
-
-        int ret;
-        time(ret = hs_voxel_create_world((Bitmap *) &state->worldModel, N));
-        if (ret == -1) {
-            ERR("hs_voxel_create_world failed");
+        if (!initWorld(state->worldModel, state->sphere_points))
             return;
-        }
-        
-        initWorld(state->worldModel, state->sphere_points);
     }
 
     if (state->write_model) {
@@ -181,9 +189,6 @@ static void initState(State *state, const InitEv& ev) {
             ERR("couldnt write model file");
     }
 
-    state->worldModel.send();
-
-    
     // Ref<glt::ShaderProgram> voxel = e.shaderManager().declareProgram("voxel");
     // glt::ShaderProgram& vs = *voxel;
 
@@ -621,7 +626,7 @@ float density(const vec3_t& p) {
     density += -ws.y;
     // density += saturate((-4.f * ws_orig.y * 0.3) * 3.0) * 40 * noise3D1(ws_orig * 0.00071f);
 
-    density += sumNoise3D(ws, 4, 0.0125f, 0.5f, false) * 20.f;
+    density += sumNoise3D(ws, 9, 0.0125f, 0.5f, false) * 20.f;
 
     return density;    
 }
@@ -648,8 +653,7 @@ static bool blockAt(const Densities& ds, const ivec3_t& idx) {
     return false;
 }
 
-static void createGeometry(World& world, Densities& ds) {
-
+static void createWorld(Densities& ds) {
 #pragma omp parallel for
     for (int32 i = 0; i < N; ++i)
         for (int32 j = 0; j < N; ++j)
@@ -658,6 +662,9 @@ static void createGeometry(World& world, Densities& ds) {
                 ds.ds[i][j][k] = density(wc);
 //                std::cerr << i << " " << j << " " << k << " -> wc:" << wc << " density: " << ds.ds[i][j][k] << " sign " << signAt(ds, ivec3(i, j, k)) << std::endl;
             }
+}
+
+static void createGeometry(World& world, const Densities& ds) {
 
 #pragma omp parallel for
     for (int32 i = 0; i < N; ++i)
@@ -784,7 +791,10 @@ static void createModel(CubeMesh& worldModel, const World& world, const World& v
     }
 }
 
-static void initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
+static bool initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
+
+    worldModel.setSize(0);
+    worldModel.setElementsSize(0);
 
     CubeMesh cubeModel(vertexAttrs);
     glt::primitives::unitCube(cubeModel);
@@ -795,6 +805,27 @@ static void initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
     std::auto_ptr<Densities> densitiesp(new Densities);
 
     world.zero();
+
+#ifdef HS_WORLD_GEN
+
+    int ret;
+    time(ret = hs_voxel_create_world(&densitiesp->ds[0][0][0], N));
+    if (ret == -1) {
+        ERR("hs_voxel_create_world failed");
+        return false;
+    }
+
+    // ERR("not yet implemented");
+    // return false;
+
+#else
+
+    time(createWorld(*densitiesp));
+
+#endif
+
+
+    
     time(createGeometry(world, *densitiesp));
     
     std::auto_ptr<Rays> raysp(new Rays);
@@ -856,6 +887,10 @@ static void initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
 
     std::cerr << "blocks: " << stats.blocks << ", visible blocks: " << stats.visBlocks << std::endl;
     std::cerr << "faces: " << stats.faces << ", visible faces: " << stats.visFaces << std::endl;
+    
+    worldModel.send();
+
+    return true;
 }
 
 static void renderBlocks(State *state, ge::Engine& e);
@@ -867,17 +902,10 @@ static void renderScene(State *state, const RenderEv& ev) {
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-    e.renderManager().setCameraMatrix(glt::transformationWorldToLocal(state->camera.frame));
-
-    e.renderManager().beginScene();
-
     state->ecLightDir = e.renderManager().geometryTransform().transformVector(LIGHT_DIR);
 
     renderBlocks(state, e);
 
-    e.renderManager().endScene();
-
-    
 //    state->worldModel.freeHost();
 
     if (state->fpsTimer->fire()) {
@@ -915,6 +943,7 @@ static void renderBlocks(State *state, ge::Engine& e) {
     us.optional("materialProperties", mat);
     us.optional("gammaCorrection", state->gamma_correction);
     us.optional("sin_time", sin(e.gameLoop().gameTime()));
+
     state->worldModel.draw();
 }
 
@@ -940,8 +969,8 @@ static bool writeModel(const std::string& file, const CubeMesh& mdl) {
 
 int main(int argc, char *argv[]) {
 
-    ge::EngineOpts opts;
-    opts.parseOpts(&argc, &argv);
+    ge::EngineOptions opts;
+    opts.parse(&argc, &argv);
 
     bool read_mdl = true;
     bool write_mdl = false;
@@ -966,7 +995,13 @@ int main(int argc, char *argv[]) {
 
     opts.inits.reg(ge::Init, makeEventHandler(initState, &state));
 
-    return engine.run(opts);
+    int32 ret = engine.run(opts);
+
+#ifdef HS_WORLD_GEN
+    hs_end();
+#endif
+
+    return ret;
 }
 
 namespace {

@@ -20,6 +20,8 @@ struct KeyHandler {
     
     void keyReleased(KeyCode code);
 
+    void clearStates();
+
     KeyState keyState(KeyCode code);
 
     void registerBinding(const Ref<KeyBinding>& binding, const Ref<Command>& comm);

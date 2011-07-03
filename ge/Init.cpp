@@ -34,13 +34,14 @@ void EngineInitializers::reg(RunLevel lvl, const Ref<EventHandler<InitEvent> >& 
 }
 
 static void runInitGLEW(const Event<InitEvent>& e) {
+    std::cerr << "initializing GLEW - experimental option: " << (glewExperimental == GL_TRUE ? "yes" : "no") << std::endl;
     GLenum err = glewInit();
 
     if (GLEW_OK != err) {
         ERR(std::string("GLEW Error: ") + (const char *) glewGetErrorString(err));
-        e.info.success = false;
+        return;
     }
-    
+
     e.info.success = true;
 }
 

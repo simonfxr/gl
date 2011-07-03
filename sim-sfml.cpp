@@ -32,16 +32,15 @@
 #include "glt/RenderManager.hpp"
 #include "glt/TextureRenderTarget.hpp"
 
+#include "glt/primitives.hpp"
+
 #include "ge/GameWindow.hpp"
+#include "ge/Engine.hpp"
 
 #include "sim.hpp"
 
-#ifdef MESH_GENBATCH
-#include "glt/GenBatch.hpp"
-#else
 #include "glt/Mesh.hpp"
 #include "glt/CubeMesh.hpp"
-#endif
 
 using namespace math;
 
@@ -91,24 +90,6 @@ struct Vertex {
     vec3_t normal;
 };
 
-#ifdef MESH_GENBATCH
-
-glt::Attr vertexAttrArray[] = {
-    glt::attr::vec4(offsetof(Vertex, position)),
-    glt::attr::vec3(offsetof(Vertex, normal))
-};
-
-glt::Attrs<Vertex> vertexAttrs(ARRAY_LENGTH(vertexAttrArray), vertexAttrArray);
-
-typedef glt::GenBatch<Vertex> Mesh;
-typedef glt::GenBatch<Vertex> CubeMesh;
-
-#define FREEZE_MESH(m) m.send()
-#define CUBE_MESH(m) UNUSED(m)
-#define ADD_VERT(e, v) e.add(v)
-
-#else
-
 DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
     VERTEX_ATTR(Vertex, position),
     VERTEX_ATTR(Vertex, normal)
@@ -117,23 +98,13 @@ DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
 typedef glt::Mesh<Vertex> Mesh;
 typedef glt::CubeMesh<Vertex> CubeMesh;
 
-#define FREEZE_MESH(e) e.send()
-#define CUBE_MESH(e) UNUSED(e)
-#define ADD_VERT(e, v) e.addVertexElem(v)
-
-#endif
-
-void makeSphere(Mesh& sphere, float rad, int32 stacks, int32 slices);
-
-void makeUnitCube(CubeMesh& cube);
-
 std::ostream& LOCAL operator << (std::ostream& out, const vec3_t& v) {
     return out << "(" << v.x << ";" << v.y << ";" << v.z << ")";
 }
 
 } // namespace anon
 
-struct Game EXPLICIT : public ge::GameWindow {
+struct Game {
 
     CubeMesh wallBatch;
     Mesh sphereBatches[SPHERE_LOD_MAX];
@@ -145,29 +116,17 @@ struct Game EXPLICIT : public ge::GameWindow {
     Sphere sphere_proto;
     Renderer renderer;
     
-    glt::ShaderManager shaderManager;
-    glt::RenderManager renderManager;
-    glt::GeometryTransform& transformPipeline;
-
-    glt::ShaderProgram wallShader;
     struct {
         vec3_t ecLightPos;
         vec3_t ecSpotDir;
         float spotAngle;
     } wallUniforms;
     
-    glt::ShaderProgram sphereShader;
     struct {
         vec3_t ecLightPos;
         vec3_t ecSpotDir;
         float spotAngle;
     } sphereUniforms;
-
-    glt::ShaderProgram postprocShader;
-    
-    glt::ShaderProgram sphereInstancedShader;
-
-    glt::ShaderProgram identityShader;
 
     glt::TextureRenderTarget *textureRenderTarget;
 
@@ -184,19 +143,17 @@ struct Game EXPLICIT : public ge::GameWindow {
     void updateIndirectRendering(bool indirect);
     void resizeRenderTargets();
 
-    sf::ContextSettings createContextSettings() OVERRIDE;
-    bool onInit() OVERRIDE;
+    bool init();
 
-    void animate() OVERRIDE;
-    void renderScene(float interpolation) OVERRIDE;
+    void animate();
+    void renderScene(float interpolation);
     void renderWorld(float dt);
     
-    
-    void keyStateChanged(const sf::Event::KeyEvent& key, bool pressed) OVERRIDE;
-    void mouseButtonStateChanged(const sf::Event::MouseButtonEvent& button, bool pressed) OVERRIDE;
-    void windowResized(uint32 width, uint32 height) OVERRIDE;
-    void mouseMoved(int32 dx, int32 dy) OVERRIDE;
-    void handleInternalEvents() OVERRIDE;
+    void keyStateChanged(const sf::Event::KeyEvent& key, bool pressed);
+    void mouseButtonStateChanged(const sf::Event::MouseButtonEvent& button, bool pressed);
+    void windowResized(uint32 width, uint32 height);
+    void mouseMoved(int32 dx, int32 dy);
+    void handleInternalEvents();
     void spawn_sphere();
 
     SphereLOD calc_sphere_lod(const Sphere& s);
@@ -206,7 +163,6 @@ struct Game EXPLICIT : public ge::GameWindow {
     void render_con(const point3_t& a, const point3_t& b);
     void render_hud();
     
-    bool load_shaders();
     void update_sphere_mass();
 };
 
@@ -214,27 +170,8 @@ Game::Game() :
     wallBatch(vertexAttrs),
     lineBatch(vertexAttrs),
     rectBatch(vertexAttrs),
-    renderer(*this),
-    transformPipeline(renderManager.geometryTransform()),
-    wallShader(shaderManager),
-    sphereShader(shaderManager),
-    postprocShader(shaderManager),
-    sphereInstancedShader(shaderManager),
-    identityShader(shaderManager)
+    renderer(*this)
 {}
-
-sf::ContextSettings Game::createContextSettings() {
-    sf::ContextSettings cs;
-    cs.MajorVersion = 3;
-    cs.MinorVersion = 3;
-    cs.DepthBits = 24;
-    cs.StencilBits = 0;
-    cs.CoreProfile = false;
-#ifdef GLDEBUG
-    cs.DebugContext = true;
-#endif
-    return cs;
-}
 
 bool Game::onInit() {
 
@@ -857,176 +794,3 @@ int main(int argc, char *argv[]) {
 
     return game.run();
 }
-
-
-namespace {
-
-void makeUnitCube(CubeMesh& cube) {
-    Vertex v;
-    
-    v.normal = vec3(0.f, 0.f, -1.f);
-    v.position = vec4(-1.0f, -1.0f,  1.0f, 1.f); cube.add(v);
-    v.position = vec4( 1.0f, -1.0f,  1.0f, 1.f); cube.add(v);
-    v.position = vec4( 1.0f,  1.0f,  1.0f, 1.f); cube.add(v);
-    v.position = vec4(-1.0f,  1.0f,  1.0f, 1.f); cube.add(v);
-
-    v.normal = vec3(0.f, 0.f, +1.f);
-    v.position = vec4(-1.0f, -1.0f, -1.0f, 1.f); cube.add(v);
-    v.position = vec4(-1.0f,  1.0f, -1.0f, 1.f); cube.add(v);
-    v.position = vec4( 1.0f,  1.0f, -1.0f, 1.f); cube.add(v);
-    v.position = vec4( 1.0f, -1.0f, -1.0f, 1.f); cube.add(v);
-
-    v.normal = vec3(0.f, -1.f, 0.f);
-    v.position = vec4(-1.0f,  1.0f, -1.0f, 1.f); cube.add(v);
-    v.position = vec4(-1.0f,  1.0f,  1.0f, 1.f); cube.add(v);
-    v.position = vec4( 1.0f,  1.0f,  1.0f, 1.f); cube.add(v);
-    v.position = vec4( 1.0f,  1.0f, -1.0f, 1.f); cube.add(v);
-
-    v.normal = vec3(0.f, +1.f, 0.f);
-    v.position = vec4(-1.0f, -1.0f, -1.0f, 1.f); cube.add(v);
-    v.position = vec4( 1.0f, -1.0f, -1.0f, 1.f); cube.add(v);
-    v.position = vec4( 1.0f, -1.0f,  1.0f, 1.f); cube.add(v);
-    v.position = vec4(-1.0f, -1.0f,  1.0f, 1.f); cube.add(v);
-
-    v.normal = vec3(-1.f, 0.f, 0.f);
-    v.position = vec4( 1.0f, -1.0f, -1.0f, 1.f); cube.add(v);
-    v.position = vec4( 1.0f,  1.0f, -1.0f, 1.f); cube.add(v);
-    v.position = vec4( 1.0f,  1.0f,  1.0f, 1.f); cube.add(v);
-    v.position = vec4( 1.0f, -1.0f,  1.0f, 1.f); cube.add(v);
-
-    v.normal = vec3(+1.f, 0.f, 0.f);
-    v.position = vec4(-1.0f, -1.0f, -1.0f, 1.f); cube.add(v);
-    v.position = vec4(-1.0f, -1.0f,  1.0f, 1.f); cube.add(v);
-    v.position = vec4(-1.0f,  1.0f,  1.0f, 1.f); cube.add(v);
-    v.position = vec4(-1.0f,  1.0f, -1.0f, 1.f); cube.add(v);
-
-    FREEZE_MESH(cube);
-}
-
-void addTriangle(Mesh& s, const vec3_t vertices[3], const vec3_t normals[3], const vec2_t texCoords[3]) {
-
-    UNUSED(texCoords);
-    
-    for (uint32 i = 0; i < 3; ++i) {
-        Vertex v;
-        v.position = vec4(vertices[i], 1.f);
-        v.normal = normals[i];
-        ADD_VERT(s, v);
-    }
-}
-
-// from the GLTools library (OpenGL Superbible)
-void gltMakeSphere(Mesh& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
-{
-    GLfloat drho = (GLfloat)(3.141592653589) / (GLfloat) iStacks;
-    GLfloat dtheta = 2.0f * (GLfloat)(3.141592653589) / (GLfloat) iSlices;
-    GLfloat ds = 1.0f / (GLfloat) iSlices;
-    GLfloat dt = 1.0f / (GLfloat) iStacks;
-    GLfloat t = 1.0f;	
-    GLfloat s = 0.0f;
-    GLint i, j;     // Looping variables
-    
-    for (i = 0; i < iStacks; i++) 
-    {
-        GLfloat rho = (GLfloat)i * drho;
-        GLfloat srho = (GLfloat)(sin(rho));
-        GLfloat crho = (GLfloat)(cos(rho));
-        GLfloat srhodrho = (GLfloat)(sin(rho + drho));
-        GLfloat crhodrho = (GLfloat)(cos(rho + drho));
-		
-        // Many sources of OpenGL sphere drawing code uses a triangle fan
-        // for the caps of the sphere. This however introduces texturing 
-        // artifacts at the poles on some OpenGL implementations
-        s = 0.0f;
-        vec3_t vVertex[4];
-        vec3_t vNormal[4];
-        vec2_t vTexture[4];
-
-        for ( j = 0; j < iSlices; j++) 
-        {
-            GLfloat theta = (j == iSlices) ? 0.0f : j * dtheta;
-            GLfloat stheta = (GLfloat)(-sin(theta));
-            GLfloat ctheta = (GLfloat)(cos(theta));
-			
-            GLfloat x = stheta * srho;
-            GLfloat y = ctheta * srho;
-            GLfloat z = crho;
-        
-            vTexture[0][0] = s;
-            vTexture[0][1] = t;
-            vNormal[0][0] = x;
-            vNormal[0][1] = y;
-            vNormal[0][2] = z;
-            vVertex[0][0] = x * fRadius;
-            vVertex[0][1] = y * fRadius;
-            vVertex[0][2] = z * fRadius;
-			
-            x = stheta * srhodrho;
-            y = ctheta * srhodrho;
-            z = crhodrho;
-
-            vTexture[1][0] = s;
-            vTexture[1][1] = t - dt;
-            vNormal[1][0] = x;
-            vNormal[1][1] = y;
-            vNormal[1][2] = z;
-            vVertex[1][0] = x * fRadius;
-            vVertex[1][1] = y * fRadius;
-            vVertex[1][2] = z * fRadius;
-			
-
-            theta = ((j+1) == iSlices) ? 0.0f : (j+1) * dtheta;
-            stheta = (GLfloat)(-sin(theta));
-            ctheta = (GLfloat)(cos(theta));
-			
-            x = stheta * srho;
-            y = ctheta * srho;
-            z = crho;
-        
-            s += ds;
-            vTexture[2][0] = s;
-            vTexture[2][1] = t;
-            vNormal[2][0] = x;
-            vNormal[2][1] = y;
-            vNormal[2][2] = z;
-            vVertex[2][0] = x * fRadius;
-            vVertex[2][1] = y * fRadius;
-            vVertex[2][2] = z * fRadius;
-			
-            x = stheta * srhodrho;
-            y = ctheta * srhodrho;
-            z = crhodrho;
-
-            vTexture[3][0] = s;
-            vTexture[3][1] = t - dt;
-            vNormal[3][0] = x;
-            vNormal[3][1] = y;
-            vNormal[3][2] = z;
-            vVertex[3][0] = x * fRadius;
-            vVertex[3][1] = y * fRadius;
-            vVertex[3][2] = z * fRadius;
-
-            addTriangle(sphereBatch, vVertex, vNormal, vTexture);
-			
-            // Rearrange for next triangle
-            vVertex[0] = vVertex[1];
-            vNormal[0] = vNormal[1];
-            vTexture[0] = vTexture[1];
-			
-            vVertex[1] = vVertex[3];
-            vNormal[1] = vNormal[3];
-            vTexture[1] = vTexture[3];
-					
-            addTriangle(sphereBatch, vVertex, vNormal, vTexture);			
-        }
-        t -= dt;
-    }
-    
-    FREEZE_MESH(sphereBatch);
-}
-
-void makeSphere(Mesh& sphere, float rad, int32 stacks, int32 slices) {
-    gltMakeSphere(sphere, rad, stacks, slices);
-}
-
-} // namespace anon

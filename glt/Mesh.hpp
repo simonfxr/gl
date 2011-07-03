@@ -11,6 +11,8 @@
 
 #include "error/error.hpp"
 
+#include "data/BitSet.hpp"
+
 namespace glt {
 
 namespace {
@@ -83,12 +85,16 @@ private:
     bool owning_vertices;
     uint32 vertices_capacity;
     uint32 vertices_size;
+    uint32 gpu_vertices_size;
     byte * RESTRICT vertex_data;
 
     bool owning_elements;
     uint32 elements_capacity;
     uint32 elements_size;
+    uint32 gpu_elements_size;
     uint32 * RESTRICT element_data;
+
+    BitSet enabled_attributes;
 
     const VertexDescBase* desc;
     
@@ -115,9 +121,15 @@ public:
     uint32 verticesSize() const { return vertices_size; }
     uint32 elementsSize() const { return elements_size; }
 
+    uint32 gpuVerticesSize() const { return gpu_vertices_size; }
+    uint32 gpuElementsSize() const { return gpu_elements_size; }
+
+    void enableAttribute(uint32 i, bool enabled = true);
+
     void setSize(uint32 size);
-    void setElementsSize(uint32 size);
     
+    void setElementsSize(uint32 size);
+
     void freeHost();
     
     void freeGPU();
@@ -139,6 +151,7 @@ public:
 private:
     MeshBase(const MeshBase& _);
     MeshBase& operator =(const MeshBase& _);
+    void free();
 };
 
 template <typename T>

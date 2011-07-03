@@ -10,8 +10,12 @@
 
 namespace ge {
 
+struct CommandProcessor;
+
 struct CommandEvent : public EngineEvent {
-    CommandEvent(Engine& e) : EngineEvent(e) {}
+    CommandEvent(Engine& e, CommandProcessor& proc) :
+        EngineEvent(e), processor(proc) {}
+    CommandProcessor& processor;
 };
 
 struct Command : public EventHandler<CommandEvent> {
@@ -32,7 +36,7 @@ public:
 
 extern const Array<CommandParamType> NULL_PARAMS;
 
-extern const Array<CommandArg> NULL_ARGS;
+extern Array<CommandArg> NULL_ARGS;
 
 struct QuotationCommand EXPLICIT : public Command {
     Quotation * const quotation;

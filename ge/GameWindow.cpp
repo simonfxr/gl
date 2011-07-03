@@ -39,7 +39,7 @@ struct GameWindow::Data {
 
     WindowEvents events;
 
-    Data(GameWindow& _self, const WindowOpts& opts) :
+    Data(GameWindow& _self, const WindowOptions& opts) :
         self(_self), owning_win(true),
         win(new sf::RenderWindow(sf::VideoMode(opts.width, opts.height),
                                  opts.title,
@@ -80,7 +80,7 @@ GameWindow::Data::~Data() {
     delete renderTarget;
 }
 
-GameWindow::GameWindow(const WindowOpts& opts) :
+GameWindow::GameWindow(const WindowOptions& opts) :
     self(new Data(*this, opts)) { self->init(); }
 
 GameWindow::GameWindow(sf::RenderWindow& win) :

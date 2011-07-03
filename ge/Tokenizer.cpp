@@ -1,4 +1,5 @@
 #include "ge/Tokenizer.hpp"
+#include "ge/Command.hpp"
 
 #include <sstream>
 #include <ctype.h>
@@ -224,13 +225,13 @@ State parseCommandRef(ParseState& s, CommandArg& arg) {
         std::string sym = parseSym(s);
         if (sym.empty())
             goto fail;
-        Ref<Command> comref = s.proc.command(sym);
-        if (!comref) {
-//            WARN(("unknown command name: " + sym));
-        }
+//         Ref<Command> comref = s.proc.command(sym);
+//         if (!comref) {
+// //            WARN(("unknown command name: " + sym));
+//         }
 
         arg.type = CommandRef;
-        arg.command.ref = new Ref<Command>(comref);
+        arg.command.ref = new Ref<Command>(0);
         arg.command.name = new std::string(sym);
         arg.command.quotation = 0;
 

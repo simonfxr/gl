@@ -111,9 +111,14 @@ static void execStep(Camera *cam, const Event<EngineEvent>&) {
     cam->step_accum = vec3(0.f);
 }
 
+static void setCamMat(glt::Frame *frame, const Event<RenderEvent>& e) {
+    e.info.engine.renderManager().setCameraMatrix(transformationWorldToLocal(*frame));
+}
+
 void Camera::registerWith(Engine& e) {
     e.window().events().mouseMoved.reg(makeEventHandler(mouseLook, this));
     e.events().animate.reg(makeEventHandler(execStep, this));
+    e.events().beforeRender.reg(makeEventHandler(setCamMat, &frame));
 }
 
 void Camera::registerCommands(CommandProcessor& proc) {
