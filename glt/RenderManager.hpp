@@ -19,6 +19,7 @@ struct FrameStatistics {
 
 struct Projection {
     enum Type {
+        Identity,
         Perspective
     } type;
 
@@ -30,13 +31,21 @@ struct Projection {
         } perspective;
     };
 
-    Projection() {
-        type = Perspective;
-        perspective.fieldOfViewRad = math::PI / 10.f;
-        perspective.z_near = 0.5f;
-        perspective.z_far = 100.f;
+    Projection(Type ty = Identity) :
+        type(ty)
+    {
+        switch (type) {
+        case Identity: break;
+        case Perspective:
+            perspective.fieldOfViewRad = math::PI / 10.f;
+            perspective.z_near = 0.5f;
+            perspective.z_far = 100.f;
+            break;
+        default:
+            FATAL_ERR("invalid Projection::Type enum");
+        }
     }
-    
+
     static Projection mkPerspective(float fov, float zn, float zf) {
         Projection proj;
         proj.type = Perspective;
@@ -45,6 +54,8 @@ struct Projection {
         proj.perspective.z_far = zf;
         return proj;
     }
+
+    static Projection identity() { return Projection(Identity); }
 };
 
 struct RenderManager {

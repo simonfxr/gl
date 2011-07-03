@@ -25,15 +25,19 @@ uint32 LOCAL_CONSTANT MIN_NUM_ELEMENTS = 8;
 
 struct Any;
 
-#define TYPE_WITNESS(t) static_cast<t *>(0)
+#define _TYPE_WITNESS(t) static_cast<t *>(0)
 
-#define VERTEX_ATTR(type, field) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), TYPE_WITNESS(type)->field))
+#define VERTEX_ATTR(type, field) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), _TYPE_WITNESS(type)->field), #field)
 
-#define VERTEX_ATTR_AS(type, field, fieldtype) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), *TYPE_WITNESS(fieldtype)))
+#define VERTEX_ATTR_AS(type, field, fieldtype) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), *_TYPE_WITNESS(fieldtype)), #field)
+
+#define VERTEX_ATTRS(type, ...)                                         \
+    ({ static const glt::Attr<type> _vertex_attrs[] = { __VA_ARGS__ };  \
+        glt::meshAttrs(_vertex_attrs, ARRAY_LENGTH(_vertex_attrs)); })
 
 #define DEFINE_VERTEX_ATTRS(name, type, ...)                            \
-    static const glt::Attr<type> _vertex_attrs_##name[] = { __VA_ARGS__ }; \
-    static const glt::VertexDesc<type> name = glt::meshAttrs(_vertex_attrs_##name, ARRAY_LENGTH(_vertex_attrs_##name))
+    static const glt::Attr<type> _vertex_attrs_##__LINE__[] = { __VA_ARGS__ }; \
+    const glt::VertexDesc<type> name = glt::meshAttrs(_vertex_attrs_##__LINE__, ARRAY_LENGTH(_vertex_attrs_##__LINE__))
 
 template <typename T>
 struct Attr {
@@ -42,6 +46,7 @@ struct Attr {
     GLenum component_type;
     uint32 ncomponents;
     bool normalized;
+    const char * name;
 
     Attr();
     Attr(size_t off, uint32 align, GLenum ty, uint32 ncomp, bool norm = false) :
@@ -49,7 +54,8 @@ struct Attr {
         alignment(align),
         component_type(ty),
         ncomponents(ncomp),
-        normalized(norm)
+        normalized(norm),
+        name(0)
         {}        
 };
 
@@ -157,9 +163,7 @@ private:
 template <typename T>
 struct Mesh : public MeshBase {
 
-    Mesh() {}
-    
-    Mesh(const VertexDesc<T>& layout, GLenum primTy = GL_TRIANGLES, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS) {
+    Mesh(const VertexDesc<T>& layout = T::ATTRIBUTES, GLenum primTy = GL_TRIANGLES, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS) {
         initBase(reinterpret_cast<const VertexDescBase *>(&layout) , initial_nverts, initial_nelems);
         primType(primTy);
     }
@@ -225,7 +229,8 @@ inline AttrBase meshAttr(size_t offset, const glt::color&) {
 }
 
 template <typename T>
-Attr<T> meshTaggedAttr(const AttrBase& a) {
+Attr<T> meshTaggedAttr(AttrBase a, const char *name) {
+    a.name = name;
     return reinterpret_cast<const Attr<T>&>(a);
 }
 

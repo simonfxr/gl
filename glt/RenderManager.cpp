@@ -134,6 +134,13 @@ void RenderManager::setDefaultProjection(const Projection& proj) {
 
 void RenderManager::updateProjection(float aspectRatio) {
     switch (self->projection.type) {
+    case Projection::Identity:
+        geometryTransform().loadProjectionMatrix(
+            mat4(vec4(1.f, 0.f, 0.f, 0.f),
+                 vec4(0.f, 1.f, 0.f, 0.f),
+                 vec4(0.f, 0.f, 1.f, 0.f),
+                 vec4(0.f, 0.f, 0.f, 1.f)));
+        break;
     case Projection::Perspective:
         setPerspectiveProjection(self->projection.perspective.fieldOfViewRad,
                                  aspectRatio,
