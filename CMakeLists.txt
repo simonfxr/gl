@@ -235,8 +235,8 @@ add_executable(sim-sfml
   ${MATH_SRC}
   ${DATA_SRC})
 
-find_library(VOXEL_LIB voxel PATHS "${CMAKE_SOURCE_DIR}/ext/lib")
-find_library(VOXEL_HS_LIB voxel-hs PATHS "${CMAKE_SOURCE_DIR}/ext/lib")
+# find_library(VOXEL_LIB voxel PATHS "${CMAKE_SOURCE_DIR}/ext/lib")
+# find_library(VOXEL_HS_LIB voxel-hs PATHS "${CMAKE_SOURCE_DIR}/ext/lib")
 
 # find_library(HS_GMP HSinteger-gmp-0.2.0.3-ghc7.0.3 PATHS /usr/lib/ghc-7.0.3/integer-gmp-0.2.0.3)
 # find_library(HS_PRIM HSghc-prim-0.2.0.0-ghc7.0.3 PATHS /usr/lib/ghc-7.0.3/ghc-prim-0.2.0.0)
@@ -254,7 +254,7 @@ add_executable(voxel-world
   ${DATA_SRC})
 
 target_link_libraries(voxel-world sys glt ge)
-target_link_libraries(voxel-world ${VOXEL_LIB} ${VOXEL_HS_LIB})
+# target_link_libraries(voxel-world ${VOXEL_LIB} ${VOXEL_HS_LIB})
 
 add_executable(engine-test
   engine-test.cpp
@@ -270,14 +270,14 @@ add_executable(tokenizer
   ${MATH_SRC}
   ${DATA_SRC})
 
-add_executable(simple
-  simple.cpp
-  defs.h
+# add_executable(simple
+#   simple.cpp
+#   defs.h
 
-  ${MATH_SRC}
-  ${DATA_SRC})
+#   ${MATH_SRC}
+#   ${DATA_SRC})
 
-target_link_libraries(simple sys glt ge)
+# target_link_libraries(simple sys glt ge)
 
 add_executable(queryExtension
   queryExtension.cpp

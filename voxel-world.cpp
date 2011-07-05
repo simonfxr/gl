@@ -31,7 +31,7 @@
 
 #include "sys/clock.hpp"
 
-#define HS_WORLD_GEN
+// #define HS_WORLD_GEN
 
 #ifdef HS_WORLD_GEN
 #include <voxel_hs.h>
@@ -1121,4 +1121,3 @@ void pointsOnSphere(uint32 n, vec3_t *ps) {
         ps[k] = vec3(c * r, y, s * r);
     }
 }
-
