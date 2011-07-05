@@ -21,7 +21,9 @@ private:
     float _now;
     float _skipped_time;
     float _start_time;
-    
+
+    float _keepup_threshold;
+
     float _frame_duration;
 
     int32 _exit_code;
@@ -67,6 +69,10 @@ public:
         _restart = true;
         _running = false;
         _max_fps = max_fps;
+    }
+
+    void updateKeepupThreshold(float secs) {
+        _keepup_threshold = secs;
     }
 
     // synchronize drawing with simulation (draw every simulation frame exactly once)

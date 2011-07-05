@@ -212,8 +212,12 @@ void MeshBase::drawInstanced(uint32 num, GLenum primType) {
         
     }
 
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_name));
-    GL_CHECK(glDrawElementsInstanced(primType, elements_size, GL_UNSIGNED_INT, 0, num));
+    if (elements_size > 0) {
+        GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_name));
+        GL_CHECK(glDrawElementsInstanced(primType, elements_size, GL_UNSIGNED_INT, 0, num));
+    } else {
+        GL_CHECK(glDrawArraysInstanced(primType, 0, vertices_size, num));
+    }
 
     for (uint32 i = 0; i < desc->nattributes; ++i)
         if (enabled_attributes[i])

@@ -189,6 +189,8 @@ bool Game::onInit() {
 
     CUBE_MESH(wallBatch);
 
+    CUBE_MESH(wallBatch);
+    
 #ifdef GLDEBUG
     shaderManager.verbosity(glt::ShaderManager::Info);
 #else
@@ -212,6 +214,8 @@ bool Game::onInit() {
 
     ticksPerSecond(100);
     synchronizeDrawing(true);
+    // maxDrawFramesSkipped(1);
+    // maxFPS(0);
     
     use_interpolation = true;
     grabMouse(true);

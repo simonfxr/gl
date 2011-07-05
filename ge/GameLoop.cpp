@@ -12,6 +12,7 @@ GameLoop::GameLoop(uint32 ticks_per_second, uint32 max_frame_skip, uint32 max_fp
       _paused(false),
       _sync(false),
       _now(0.f),
+      _keepup_threshold(0.5f),
       _exit_code(0),
       _animation_frame_id(0),
       _render_frame_id(0)      
@@ -19,6 +20,7 @@ GameLoop::GameLoop(uint32 ticks_per_second, uint32 max_frame_skip, uint32 max_fp
 
 void GameLoop::exit(int32 exit_code) {
     _running = false;
+    _restart = false;
     _exit = true;
     _exit_code = exit_code;
 }
@@ -49,12 +51,19 @@ int32 GameLoop::run(GameLoop::Game& logic) {
 
         _frame_duration = tick_length;
         
+        int running_behind = 0;
+
+        bool reset_time = false;
+
         uint32 loops = 0;
 
         _running = true;
         _restart = false;
 
-        switch (state) {
+        LoopState s1 = state;
+        state = LoopBegin;
+
+        switch (s1) {
         case LoopBegin: break;
         case LoopTick: goto tick;
         case LoopRender: goto render;
@@ -64,7 +73,16 @@ int32 GameLoop::run(GameLoop::Game& logic) {
             
             loops = 0;
             
-            while ((_now = logic.now()) >= next_game_tick && loops < loops_max && _running) {
+            while ((_now = logic.now()) >= next_game_tick && _running) {
+
+                if (loops >= loops_max) {
+                    ++running_behind;
+                    if (running_behind * tick_length < _keepup_threshold)
+                        goto behind;
+                    reset_time = true;
+                    break;
+                }
+                
                 logic.handleInputEvents();
                     
                 if (unlikely(!_running)) {
@@ -84,6 +102,10 @@ int32 GameLoop::run(GameLoop::Game& logic) {
                 next_game_tick += tick_length;
                 ++loops;
             }
+
+            running_behind = 0;
+
+        behind:;
 
             if (unlikely(!_running)) {
                 state = LoopRender;
@@ -109,7 +131,7 @@ int32 GameLoop::run(GameLoop::Game& logic) {
                     logic.sleep(diff);
 
                 if (skip_rendering)
-                    continue;
+                    goto draw_skipped;
             }
             
             if (likely(!_paused && !syncDraw)) {
@@ -121,6 +143,19 @@ int32 GameLoop::run(GameLoop::Game& logic) {
 
             ++_render_frame_id;            
             next_draw_tick += draw_tick_length;
+
+        draw_skipped:
+
+            if (reset_time) {
+                reset_time = false;
+                float now = logic.now();
+                float behind = now - next_game_tick;
+                if (behind > 0.f) {
+                    _skipped_time += behind;
+                    next_game_tick = now;
+                    next_draw_tick = now;
+                }
+            }
         }
 
     out:;

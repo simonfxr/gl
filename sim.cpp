@@ -390,10 +390,18 @@ static const uint32 MAX_DEPTH = 10;
 static uint32 num_tree;
 static uint32 num_nodes;
 
+static BSP *allocBSP() {
+    return new BSP;
+}
+
+static Node *allocNode() {
+    return new Node();
+}
+
 void World::Data::insertBSP(BSP *&p, int ni, Box volume, uint32 depth, Node *node, const point3_t& center, float r) {
     
     if (p == 0) {
-        p = new BSP;
+        p = allocBSP();
         ++num_tree;
 //        ASSERT(node->nxt == 0);
         p->plane = makePlane(ni, volume);
@@ -435,7 +443,7 @@ void World::Data::insertBSP(BSP *&p, int ni, Box volume, uint32 depth, Node *nod
     }
 
     insertBSP(p->down[face].tree, ni2, split(volume, ni2, sign), depth, node, center, r);
-    Node *copy = new Node;
+    Node *copy = allocNode();
     ++num_nodes;
     copy->nxt = 0;
     copy->sphere = node->sphere;
@@ -545,7 +553,7 @@ void World::Data::generateContacts(std::vector<Contact>& contacts, float dt) {
     for (uint32 i = 0; i < n; ++i) {
         const SphereData& s1 = spheres[i];
         const Particle& p1 = deref(s1.particle);
-        Node *node = new Node;
+        Node *node = allocNode();
         ++num_nodes;
         node->nxt = 0;
         node->sphere = sphereRef(i);
