@@ -39,7 +39,8 @@ TextureHandle::~TextureHandle() {
 }
 
 void TextureHandle::free() {
-    GL_CHECK(glDeleteTextures(1, &_handle));
+    if (_handle != 0)
+        GL_CHECK(glDeleteTextures(1, &_handle));
     _handle = 0;
 }
 

@@ -13,7 +13,7 @@ struct mat4_t {
         float components[16];
     };
 
-    vec4_t operator[](unsigned long i) const PURE_FUNC;
+    const vec4_t& operator[](unsigned long i) const PURE_FUNC;
     vec4_t& operator[](unsigned long i) MUT_FUNC;
     float operator()(unsigned long i, unsigned long j) const PURE_FUNC;
     float& operator()(unsigned long i, unsigned long j) MUT_FUNC;

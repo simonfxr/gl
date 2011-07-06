@@ -41,6 +41,9 @@ int main(int argc, char *argv[]) {
     ge::Engine engine;
     
     opts.parse(&argc, &argv);
+    for (int i = 1; i < argc; ++i)
+        if (argv[i] != 0 && argv[i][0] == '-')
+            std::cerr << "unknown option: " << argv[i] << std::endl;
 
     State state;
     state.argc = argc;

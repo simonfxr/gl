@@ -46,11 +46,21 @@ mat4_t operator -(const mat4_t& A, const mat4_t& B) {
 }
 
 mat4_t operator *(const mat4_t& A, const mat4_t& B) {
-    mat4_t AT = transpose(A);
     mat4_t C;
-    for (uint32 i = 0; i < 4; ++i)
-        for (uint32 j = 0; j < 4; ++j)
-            C(i, j) = dot(AT[j], B[i]);
+    // mat4_t AT = transpose(A);
+    // for (uint32 i = 0; i < 4; ++i)
+    //     for (uint32 j = 0; j < 4; ++j)
+    //         C(i, j) = dot(AT[j], B[i]);
+    
+    for (uint32 j = 0; j < 4; ++j) {
+        for (uint32 i = 0; i < 4; ++i) {
+            float c_i_j = 0.f;
+            for (uint32 k = 0; k < 4; ++k)
+                c_i_j += A(k, i) * B(j, k);
+            C(j, i) = c_i_j;
+        }
+    }
+
     return C;
 }
 
@@ -110,7 +120,7 @@ mat4_t transpose(const mat4_t& A) {
     mat4_t B;
     for (uint32 i = 0; i < 4; ++i)
         for (uint32 j = 0; j < 4; ++j)
-            B(i, j) = A[j][i];
+            B(i, j) = A(j, i);
     return B;
 }
 
@@ -120,55 +130,6 @@ float determinant(const mat4_t& A) {
 }
 
 mat4_t inverse(const mat4_t& A) {
-    // float SubFactor00 = A[2][2] * A[3][3] - A[3][2] * A[2][3];
-    // float SubFactor01 = A[2][1] * A[3][3] - A[3][1] * A[2][3];
-    // float SubFactor02 = A[2][1] * A[3][2] - A[3][1] * A[2][2];
-    // float SubFactor03 = A[2][0] * A[3][3] - A[3][0] * A[2][3];
-    // float SubFactor04 = A[2][0] * A[3][2] - A[3][0] * A[2][2];
-    // float SubFactor05 = A[2][0] * A[3][1] - A[3][0] * A[2][1];
-    // float SubFactor06 = A[1][2] * A[3][3] - A[3][2] * A[1][3];
-    // float SubFactor07 = A[1][1] * A[3][3] - A[3][1] * A[1][3];
-    // float SubFactor08 = A[1][1] * A[3][2] - A[3][1] * A[1][2];
-    // float SubFactor09 = A[1][0] * A[3][3] - A[3][0] * A[1][3];
-    // float SubFactor10 = A[1][0] * A[3][2] - A[3][0] * A[1][2];
-    // float SubFactor11 = A[1][1] * A[3][3] - A[3][1] * A[1][3];
-    // float SubFactor12 = A[1][0] * A[3][1] - A[3][0] * A[1][1];
-    // float SubFactor13 = A[1][2] * A[2][3] - A[2][2] * A[1][3];
-    // float SubFactor14 = A[1][1] * A[2][3] - A[2][1] * A[1][3];
-    // float SubFactor15 = A[1][1] * A[2][2] - A[2][1] * A[1][2];
-    // float SubFactor16 = A[1][0] * A[2][3] - A[2][0] * A[1][3];
-    // float SubFactor17 = A[1][0] * A[2][2] - A[2][0] * A[1][2];
-    // float SubFactor18 = A[1][0] * A[2][1] - A[2][0] * A[1][1];
-
-    // mat4_t inv = mat4(vec4(
-    //     + A[1][1] * SubFactor00 - A[1][2] * SubFactor01 + A[1][3] * SubFactor02,
-    //     - A[1][0] * SubFactor00 + A[1][2] * SubFactor03 - A[1][3] * SubFactor04,
-    //     + A[1][0] * SubFactor01 - A[1][1] * SubFactor03 + A[1][3] * SubFactor05,
-    //     - A[1][0] * SubFactor02 + A[1][1] * SubFactor04 - A[1][2] * SubFactor05), vec4(
-
-    //     - A[0][1] * SubFactor00 + A[0][2] * SubFactor01 - A[0][3] * SubFactor02,
-    //     + A[0][0] * SubFactor00 - A[0][2] * SubFactor03 + A[0][3] * SubFactor04,
-    //     - A[0][0] * SubFactor01 + A[0][1] * SubFactor03 - A[0][3] * SubFactor05,
-    //     + A[0][0] * SubFactor02 - A[0][1] * SubFactor04 + A[0][2] * SubFactor05), vec4(
-
-    //     + A[0][1] * SubFactor06 - A[0][2] * SubFactor07 + A[0][3] * SubFactor08,
-    //     - A[0][0] * SubFactor06 + A[0][2] * SubFactor09 - A[0][3] * SubFactor10,
-    //     + A[0][0] * SubFactor11 - A[0][1] * SubFactor09 + A[0][3] * SubFactor12,
-    //     - A[0][0] * SubFactor08 + A[0][1] * SubFactor10 - A[0][2] * SubFactor12), vec4(
-
-    //     - A[0][1] * SubFactor13 + A[0][2] * SubFactor14 - A[0][3] * SubFactor15,
-    //     + A[0][0] * SubFactor13 - A[0][2] * SubFactor16 + A[0][3] * SubFactor17,
-    //     - A[0][0] * SubFactor14 + A[0][1] * SubFactor16 - A[0][3] * SubFactor18,
-    //     + A[0][0] * SubFactor15 - A[0][1] * SubFactor17 + A[0][2] * SubFactor18));
-
-    // float det = 
-    //     + A[0][0] * inv[0][0] 
-    //     + A[0][1] * inv[1][0] 
-    //     + A[0][2] * inv[2][0] 
-    //     + A[0][3] * inv[3][0];
-
-    // inv /= det;
-
     const float *m = A.components;
     mat4_t Ainv;
     float *inv = Ainv.components;
@@ -208,7 +169,7 @@ mat4_t inverse(const mat4_t& A) {
 
     float det = m[0]*inv[0] + m[1]*inv[4] + m[2]*inv[8] + m[3]*inv[12];
     if (det == 0.f) {
-        ERR_ONCE("matrix has no inverse");
+        ERR("matrix has no inverse");
         return mat4(0.f);
     }
 
@@ -234,7 +195,7 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC vec4_t mat4_t::operator[](unsigned long i) const {
+MATH_INLINE_SPEC const vec4_t& mat4_t::operator[](unsigned long i) const {
     return columns[i];
 }
 

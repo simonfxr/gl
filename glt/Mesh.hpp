@@ -39,8 +39,7 @@ struct Any;
     static const glt::Attr<type> _vertex_attrs_##__LINE__[] = { __VA_ARGS__ }; \
     const glt::VertexDesc<type> name = glt::meshAttrs(_vertex_attrs_##__LINE__, ARRAY_LENGTH(_vertex_attrs_##__LINE__))
 
-template <typename T>
-struct Attr {
+struct AttrBase {
     uint32 offset;
     uint32 alignment;
     GLenum component_type;
@@ -48,8 +47,8 @@ struct Attr {
     bool normalized;
     const char * name;
 
-    Attr();
-    Attr(size_t off, uint32 align, GLenum ty, uint32 ncomp, bool norm = false) :
+    AttrBase();
+    AttrBase(size_t off, uint32 align, GLenum ty, uint32 ncomp, bool norm = false) :
         offset(uint32(off)),
         alignment(align),
         component_type(ty),
@@ -59,7 +58,15 @@ struct Attr {
         {}        
 };
 
-typedef Attr<Any> AttrBase;
+template <typename T>
+struct Attr : public AttrBase {
+    Attr(size_t off, uint32 align, GLenum ty, uint32 ncomp, bool norm = false) :
+        AttrBase(off, align, ty, ncomp, norm) {}
+    Attr(const AttrBase& base) :
+        AttrBase(base) {}
+};
+
+struct AttrBase;
 
 template <typename T>
 struct VertexDesc {
@@ -230,8 +237,9 @@ inline AttrBase meshAttr(size_t offset, const glt::color&) {
 
 template <typename T>
 Attr<T> meshTaggedAttr(AttrBase a, const char *name) {
-    a.name = name;
-    return reinterpret_cast<const Attr<T>&>(a);
+    Attr<T> typed(a);
+    typed.name = name;
+    return typed;
 }
 
 } // namespace glt

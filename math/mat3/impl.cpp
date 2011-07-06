@@ -185,7 +185,7 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC vec3_t mat3_t::operator[](unsigned long i) const {
+MATH_INLINE_SPEC const vec3_t& mat3_t::operator[](unsigned long i) const {
     return columns[i];
 }
 

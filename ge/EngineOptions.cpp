@@ -218,7 +218,8 @@ EngineOptions& EngineOptions::parse(int *argcp, char ***argvp) {
         argv[dest++] = argv[i++];
 
     argv[dest] = 0;
-    *argcp = dest;    
+    *argcp = dest;
+    return *this;
 }
 
 void EngineOptions::printHelp() {

@@ -130,11 +130,14 @@ set(DATA_SRC
   data/Ref.hpp
   data/Array.hpp)
 
-set(GLT_SRC
-
+set(ERROR_SRC
   error/error.hpp
-  error/error.cpp
+  error/error.cpp)
 
+add_library(err SHARED ${ERROR_SRC})
+link_directories(${GLT_BINARY_DIR})
+
+set(GLT_SRC
   glt/utils.hpp
   glt/utils.cpp
   glt/ShaderManager.hpp
@@ -253,7 +256,7 @@ add_executable(voxel-world
   ${MATH_SRC}
   ${DATA_SRC})
 
-target_link_libraries(voxel-world sys glt ge)
+target_link_libraries(voxel-world sys err glt ge)
 # target_link_libraries(voxel-world ${VOXEL_LIB} ${VOXEL_HS_LIB})
 
 add_executable(engine-test
@@ -284,3 +287,9 @@ add_executable(queryExtension
   defs.h)
 
 target_link_libraries(queryExtension sys glt ge)
+
+add_executable(math_test
+  math_test.cpp)
+
+target_link_libraries(math_test sys err)
+#target_link_libraries(math_test glt)

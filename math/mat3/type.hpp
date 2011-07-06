@@ -13,7 +13,7 @@ struct mat3_t {
         float components[9];
     };
 
-    vec3_t operator[](unsigned long i) const PURE_FUNC;
+    const vec3_t& operator[](unsigned long i) const PURE_FUNC;
     vec3_t& operator[](unsigned long i) MUT_FUNC;
     float& operator()(unsigned long i, unsigned long j) MUT_FUNC;
 };

@@ -13,7 +13,7 @@
 #include <pmmintrin.h>
 #endif
 
-#if MATH_SSE(4, 1)
+#if MATH_SSE(4, 0)
 #include <smmintrin.h>
 #endif
 
