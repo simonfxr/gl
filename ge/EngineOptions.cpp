@@ -21,6 +21,7 @@ enum OptionCase {
     GLVersion,
     GLProfile,
     GLDebug,
+    AASamples,
     GlewExp
 };
 
@@ -41,6 +42,7 @@ const Option OPTIONS[] = {
     { "--gl-version", "VERSION", GLVersion, "set the OpenGL context version: MAJOR.MINOR" },
     { "--gl-profile", "TYPE", GLProfile, "set the OpenGL profile type: core|compatibility" },
     { "--gl-debug", "BOOL", GLDebug, "create a OpenGL debug context: yes|no" },
+    { "--aa-samples", "NUM", AASamples, "set the number of FSAA Samples" },
     { "--glew-experimental", "BOOL", GlewExp, "set the glewExperimental flag: yes|no" }
 };
 
@@ -117,6 +119,15 @@ bool State::option(OptionCase opt, const char *arg) {
             return false;
         }
         return true;
+    case AASamples:
+        unsigned samples;
+        if (sscanf(arg, "%u", &samples) != 1) {
+            CMDWARN("--aa-samples: not an integer");
+            return false;
+        }
+        
+        options.window.settings.AntialiasingLevel = samples;
+        return true;
     case GlewExp:
         if (str_eq(arg, "yes")) {
             glewExperimental = GL_TRUE;
@@ -129,6 +140,7 @@ bool State::option(OptionCase opt, const char *arg) {
         return true;
     default:
         FATAL_ERR("unhandled option_case");
+        return false;
     }
 }
 
