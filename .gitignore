@@ -20,6 +20,6 @@ create_x11_window.cpp
 multisample
 multisample.cpp
 tokenizer
-simple.cpp
 simple
 
+math_test
