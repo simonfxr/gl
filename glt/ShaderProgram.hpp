@@ -7,8 +7,12 @@
 #include "opengl.h"
 #include "data/Ref.hpp"
 #include "glt/ShaderManager.hpp"
+#include "glt/VertexDescription.hpp"
 
 namespace glt {
+
+template <typename T> struct VertexDesc;
+
 
 struct ShaderProgram {
 
@@ -41,6 +45,11 @@ struct ShaderProgram {
     bool addShaderFilePair(const std::string& basename, bool absolute = false);
 
     bool bindAttribute(const std::string& name, GLuint position);
+    
+    template <typename T>
+    bool bindAttributes(const VertexDesc<T>& desc = VertexTraits<T>::description());
+    
+    bool bindAttributesGeneric(const VertexDescBase& desc);
 
     bool tryLink();
     
@@ -79,6 +88,10 @@ private:
 
 Ref<ShaderManager::CachedShaderObject> rebuildShaderObject(ShaderManager& self, Ref<ShaderManager::CachedShaderObject>& so);
 
+template <typename T>
+bool ShaderProgram::bindAttributes(const VertexDesc<T>& desc) {
+    return bindAttributesGeneric(desc.generic());
+}
 
 } // namespace glt
 

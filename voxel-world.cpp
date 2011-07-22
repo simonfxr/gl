@@ -80,7 +80,7 @@ struct Vertex {
     vec4_t normal;  // last component is diffuse factor
 };
 
-DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
+DEFINE_VERTEX_DESC(Vertex,
     VERTEX_ATTR(Vertex, position),
     VERTEX_ATTR_AS(Vertex, color, glt::color),
     VERTEX_ATTR(Vertex, normal)
@@ -104,10 +104,6 @@ struct State {
 
     bool write_model;
     bool read_model;
-
-    State() :
-        worldModel(vertexAttrs)
-        {}
 };
 
 typedef ge::Event<ge::RenderEvent> RenderEv;
@@ -796,7 +792,7 @@ static bool initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
     worldModel.setSize(0);
     worldModel.setElementsSize(0);
 
-    CubeMesh cubeModel(vertexAttrs);
+    CubeMesh cubeModel;
     glt::primitives::unitCube(cubeModel);
 
     std::auto_ptr<World> worldp(new World);
@@ -906,8 +902,6 @@ static void renderScene(State *state, const RenderEv& ev) {
 
     renderBlocks(state, e);
 
-//    state->worldModel.freeHost();
-
     if (state->fpsTimer->fire()) {
         glt::FrameStatistics fs = e.renderManager().frameStatistics();
         std::cerr << "Timings (FPS/Render Avg/Render Min/Render Max): " << fs.avg_fps << "; " << fs.rt_avg << "; " << fs.rt_min << "; " << fs.rt_max << std::endl;
@@ -944,7 +938,7 @@ static void renderBlocks(State *state, ge::Engine& e) {
     us.optional("gammaCorrection", state->gamma_correction);
     us.optional("sin_time", sin(e.gameLoop().gameTime()));
 
-    state->worldModel.draw();
+    state->worldModel.drawElements();
 }
 
 // void mouseMoved(int32 dx, int32 dy) {

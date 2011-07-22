@@ -7,7 +7,9 @@
 #include "math/vec2/type.hpp"
 #include "math/vec3/type.hpp"
 #include "math/vec4/type.hpp"
+
 #include "glt/color.hpp"
+#include "glt/VertexDescription.hpp"
 
 #include "error/error.hpp"
 
@@ -23,69 +25,31 @@ uint32 LOCAL_CONSTANT MIN_NUM_ELEMENTS = 8;
 
 } // namespace anon
 
-struct Any;
-
 #define _TYPE_WITNESS(t) static_cast<t *>(0)
 
-#define VERTEX_ATTR(type, field) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), _TYPE_WITNESS(type)->field), #field)
+#define VERTEX_ATTR(type, field) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), _TYPE_WITNESS(type)->field), AS_STRING(field))
 
-#define VERTEX_ATTR_AS(type, field, fieldtype) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), *_TYPE_WITNESS(fieldtype)), #field)
+#define VERTEX_ATTR_AS(type, field, fieldtype) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), *_TYPE_WITNESS(fieldtype)), AS_STRING(field))
 
 #define VERTEX_ATTRS(type, ...)                                         \
     ({ static const glt::Attr<type> _vertex_attrs[] = { __VA_ARGS__ };  \
         glt::meshAttrs(_vertex_attrs, ARRAY_LENGTH(_vertex_attrs)); })
 
-#define DEFINE_VERTEX_ATTRS(name, type, ...)                            \
-    static const glt::Attr<type> _vertex_attrs_##__LINE__[] = { __VA_ARGS__ }; \
-    const glt::VertexDesc<type> name = glt::meshAttrs(_vertex_attrs_##__LINE__, ARRAY_LENGTH(_vertex_attrs_##__LINE__))
-
-struct AttrBase {
-    uint32 offset;
-    uint32 alignment;
-    GLenum component_type;
-    uint32 ncomponents;
-    bool normalized;
-    const char * name;
-
-    AttrBase();
-    AttrBase(size_t off, uint32 align, GLenum ty, uint32 ncomp, bool norm = false) :
-        offset(uint32(off)),
-        alignment(align),
-        component_type(ty),
-        ncomponents(ncomp),
-        normalized(norm),
-        name(0)
-        {}        
-};
-
-template <typename T>
-struct Attr : public AttrBase {
-    Attr(size_t off, uint32 align, GLenum ty, uint32 ncomp, bool norm = false) :
-        AttrBase(off, align, ty, ncomp, norm) {}
-    Attr(const AttrBase& base) :
-        AttrBase(base) {}
-};
-
-struct AttrBase;
-
-template <typename T>
-struct VertexDesc {
-    uint32 sizeof_vertex;
-    uint32 alignment;
-    uint32 nattributes;
-    const Attr<T> *attributes;
-
-    uint32 index(size_t off) const {
-        for (uint32 i = 0; i < nattributes; ++i) {
-            if (off == attributes[i].offset)
-                return i;
-        }
+#define DEFINE_VERTEX_TRAITS(type, desc)                        \
+    template <>                                                 \
+    struct VertexTraits<type> {                                 \
+        static const glt::VertexDesc<type>& description() {     \
+            return desc;                                        \
+        }                                                       \
+    }                                                           \
         
-        FATAL_ERR("invalid attribute offset");
-    }
-};
+#define DEFINE_VERTEX_ATTRS(name, type, ...)                            \
+    static const glt::Attr<type> CONCAT(_vertex_attrs_, __LINE__) [] = { __VA_ARGS__ }; \
+    const glt::VertexDesc<type> name = glt::meshAttrs(CONCAT(_vertex_attrs_, __LINE__), ARRAY_LENGTH(CONCAT(_vertex_attrs_, __LINE__)))
 
-typedef VertexDesc<Any> VertexDescBase;
+#define DEFINE_VERTEX_DESC(type, ...) \
+    DEFINE_VERTEX_ATTRS(CONCAT3(type, _DESC_, __LINE__), type, __VA_ARGS__);  \
+    DEFINE_VERTEX_TRAITS(type, CONCAT3(type, _DESC_, __LINE__))
 
 struct MeshBase {
 private:
@@ -109,7 +73,7 @@ private:
 
     BitSet enabled_attributes;
 
-    const VertexDescBase* desc;
+    VertexDescBase desc;
     
 protected:
     byte * vertexRef(uint32 i);
@@ -123,7 +87,7 @@ public:
     MeshBase();
     ~MeshBase();
 
-    void initBase(const VertexDescBase *layout, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS);
+    void initBase(const VertexDescBase& layout, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS);
 
     GLenum primType() const { return prim_type; }
     void primType(GLenum primType);
@@ -150,10 +114,14 @@ public:
     void send();
     void send(GLenum usageHint);
     
-    void draw() { draw(prim_type); }
-    void drawInstanced(uint32 instances) { drawInstanced(instances, prim_type); }
-    void drawInstanced(uint32 instances, GLenum type);
-    void draw(GLenum primType);
+    void drawElements() { drawElements(prim_type); }
+    void drawElements(GLenum primType);
+    
+    void drawElementsInstanced(uint32 instances) { drawElementsInstanced(instances, prim_type); }
+    void drawElementsInstanced(uint32 instances, GLenum type);
+
+    void drawArrays() { drawArrays(prim_type); }
+    void drawArrays(GLenum primType);
     
     void addElement(uint32 index);
     uint32 element(uint32 index) const { return element_data[index]; }
@@ -162,6 +130,10 @@ public:
     GLuint attributePosition(size_t offset) const;
 
 private:
+
+    void enableAttributes();
+    void disableAttributes();
+    
     MeshBase(const MeshBase& _);
     MeshBase& operator =(const MeshBase& _);
     void free();
@@ -170,13 +142,13 @@ private:
 template <typename T>
 struct Mesh : public MeshBase {
 
-    Mesh(const VertexDesc<T>& layout = T::ATTRIBUTES, GLenum primTy = GL_TRIANGLES, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS) {
-        initBase(reinterpret_cast<const VertexDescBase *>(&layout) , initial_nverts, initial_nelems);
+    Mesh(const VertexDesc<T>& layout = VertexTraits<T>::description(), GLenum primTy = GL_TRIANGLES, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS) {
+        initBase(layout.generic(), initial_nverts, initial_nelems);
         primType(primTy);
     }
     
     void init(const VertexDesc<T>& layout, GLenum primTy = GL_TRIANGLES, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS) {
-        initBase(reinterpret_cast<const VertexDescBase *>(&layout) , initial_nverts, initial_nelems);
+        initBase(layout.generic(), initial_nverts, initial_nelems);
         primType(primTy);
     }
     

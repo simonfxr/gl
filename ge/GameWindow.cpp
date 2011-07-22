@@ -53,6 +53,7 @@ struct GameWindow::Data {
 
     void init();
     void handleInputEvents();
+    void setMouse(int x, int y);
 
     static void runHandleInputEvents(Data *, const Event<EngineEvent>&);
 };
@@ -73,6 +74,10 @@ void GameWindow::Data::init() {
     win->EnableVerticalSync(false);
     
     events.windowResized.reg(makeEventHandler(resizeRenderTarget));
+}
+
+void GameWindow::Data::setMouse(int x, int y) {
+    sf::Mouse::SetPosition(sf::Vector2i(x, y), *win);
 }
 
 GameWindow::Data::~Data() {
@@ -179,7 +184,7 @@ void GameWindow::Data::handleInputEvents() {
                     mouse_current_x = mouse_x = win_w / 2;
                     mouse_current_y = mouse_y = win_h / 2;
 
-                    win->SetCursorPosition(mouse_x, mouse_y);
+                    setMouse(mouse_x, mouse_y);
                 }
 
                 events.focusChanged.raise(makeEvent(FocusChanged(self, true)));
@@ -194,7 +199,7 @@ void GameWindow::Data::handleInputEvents() {
         if (grab_mouse) {
             mouse_current_x = mouse_x = new_w / 2;
             mouse_current_y = mouse_y = new_h / 2;
-            win->SetCursorPosition(mouse_x, mouse_y);
+            setMouse(mouse_x, mouse_y);
         }
 
         events.windowResized.raise(makeEvent(WindowResized(self, new_w, new_h)));
@@ -212,7 +217,8 @@ void GameWindow::Data::handleInputEvents() {
             if (grab_mouse) {
                 mouse_x = win->GetWidth() / 2;
                 mouse_y = win->GetHeight() / 2;
-                win->SetCursorPosition(mouse_x, mouse_y);
+
+                setMouse(mouse_x, mouse_y);
             }
 
             events.mouseMoved.raise(makeEvent(ev));

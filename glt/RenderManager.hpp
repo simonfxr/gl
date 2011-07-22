@@ -66,18 +66,12 @@ struct RenderManager {
     
     const GeometryTransform& geometryTransform() const;
 
-    const math::aligned_mat4_t& cameraMatrix() const;
-
     GeometryTransform& geometryTransform();
 
     void setDefaultProjection(const Projection& proj);
 
     void updateProjection(float aspectRatio);
     
-    void setPerspectiveProjection(float theta, float aspectRatio, float z_near, float z_far);
-    
-    void setCameraMatrix(const math::mat4_t& m);
-
     void setDefaultRenderTarget(RenderTarget* rt, bool delete_after = false);
     
     RenderTarget* defaultRenderTarget() const;
@@ -102,9 +96,9 @@ private:
     RenderManager& operator =(const RenderManager& _);
 };
 
-math::vec4_t transformModelToWorld(const RenderManager& rm, const math::vec4_t& modelCoord);
-
 math::vec4_t project(const RenderManager& rm, const math::point3_t& localCoord);
+
+math::vec4_t projectWorld(const RenderManager& rm, const math::point3_t& worldCoord);
 
 math::vec4_t projectView(const RenderManager& rm, const math::point3_t& eyeCoord);
 

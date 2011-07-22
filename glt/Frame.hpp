@@ -20,8 +20,6 @@ struct Frame {
 
     Frame();
 
-    math::point3_t getOrigin() const;
-
     math::direction3_t localX() const;
     math::direction3_t localY() const;
     math::direction3_t localZ() const;
@@ -32,8 +30,6 @@ struct Frame {
 
     void setXZ(const math::direction3_t& x, const math::direction3_t& z);
 
-    void setOrigin(const math::point3_t& p);
-
     void lookingAt(const math::point3_t& p);
 
     void rotateLocal(float angleRad, const math::direction3_t& localAxis);
@@ -43,6 +39,8 @@ struct Frame {
     void translateLocal(const math::vec3_t& v);
 
     void translateWorld(const math::vec3_t& v);
+
+    void normalize();
 };
 
 math::vec4_t transform(const Frame& fr, const math::vec4_t& v);

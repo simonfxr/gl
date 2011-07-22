@@ -32,4 +32,3 @@ struct BitSet {
 };
 
 #endif
-

@@ -286,10 +286,11 @@ add_executable(queryExtension
   queryExtension.cpp
   defs.h)
 
-target_link_libraries(queryExtension sys glt ge)
+target_link_libraries(queryExtension sys glt err ge)
 
 add_executable(math_test
   math_test.cpp)
 
 target_link_libraries(math_test sys err)
 #target_link_libraries(math_test glt)
+

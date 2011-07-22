@@ -245,7 +245,9 @@ bool checkForGLError(const err::Location& loc) {
 bool initDebug() {
 
     GLDebug *dbg = 0;
-    const char *debug_impl = 0; 
+    const char *debug_impl = 0;
+
+    glewInit();
 
     if (isExtensionSupported("GL_ARB_debug_output")) {
         debug_impl = "GL_ARB_debug_output";

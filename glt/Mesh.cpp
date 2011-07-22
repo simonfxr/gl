@@ -30,9 +30,9 @@ void *alloc_aligned(uint64 size, uint32 alignment) {
     return mem;
 }
 
-byte *reallocVerts(const VertexDescBase* desc, byte *vertex_data, uint32 old_size, uint32 new_capa) {
-    byte *verts = static_cast<byte *>(alloc_aligned(desc->sizeof_vertex * new_capa, desc->alignment));
-    memcpy(verts, vertex_data, desc->sizeof_vertex * old_size);
+byte *reallocVerts(const VertexDescBase& desc, byte *vertex_data, uint32 old_size, uint32 new_capa) {
+    byte *verts = static_cast<byte *>(alloc_aligned(desc.sizeof_vertex * new_capa, desc.alignment));
+    memcpy(verts, vertex_data, desc.sizeof_vertex * old_size);
     free(vertex_data);
     return verts;
 }
@@ -110,11 +110,10 @@ MeshBase::MeshBase() :
     elements_capacity(0),
     elements_size(0),
     gpu_elements_size(0),
-    element_data(0),
-    desc(0)
+    element_data(0)
 {}
 
-void MeshBase::initBase(const VertexDescBase *layout, uint32 initial_nverts, uint32 initial_nelems) {
+void MeshBase::initBase(const VertexDescBase& layout, uint32 initial_nverts, uint32 initial_nelems) {
     free();
 
     vertices_capacity = MIN_NUM_VERTICES;
@@ -131,28 +130,36 @@ void MeshBase::initBase(const VertexDescBase *layout, uint32 initial_nverts, uin
     prim_type = GL_TRIANGLES;
     owning_vertices = true;
     vertices_size = 0;
-    vertex_data = static_cast<byte *>(alloc_aligned(layout->sizeof_vertex * vertices_capacity, layout->alignment));
+    vertex_data = static_cast<byte *>(alloc_aligned(layout.sizeof_vertex * vertices_capacity, layout.alignment));
     ASSERT(vertex_data != 0);
     owning_elements = true;
     elements_size = 0;
     element_data = new uint32[elements_capacity];
     desc = layout;
-    enabled_attributes = BitSet(layout->nattributes, true);
+    enabled_attributes = BitSet(layout.nattributes, true);
 }
 
 void MeshBase::free() {
-    if (element_buffer_name != 0 || vertex_buffer_name != 0) {
-        GLuint names[] = { element_buffer_name, vertex_buffer_name };
-        GL_CHECK(glDeleteBuffers(ARRAY_LENGTH(names), names));
-    }
-
+    GLuint names[2] = {0, 0};
+    int len = 0;
+    if (element_buffer_name != 0)
+        names[len++] = element_buffer_name;
+    if (vertex_buffer_name != 0)
+        names[len++] = vertex_buffer_name;
+    if (len > 0)
+        GL_CHECK(glDeleteBuffers(len, names));
+    
     if (owning_vertices)
         ::free(vertex_data);
 
     if (owning_elements)
         delete[] element_data;
-}
 
+    element_buffer_name = 0;
+    vertex_buffer_name = 0;
+    vertex_data = 0;
+    element_data = 0;
+}
 
 MeshBase::~MeshBase() {
     free();
@@ -179,7 +186,7 @@ void MeshBase::send(GLenum usageHint) {
         GL_CHECK(glGenBuffers(1, &vertex_buffer_name));
 
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
-    GL_CHECK(glBufferData(GL_ARRAY_BUFFER, vertices_size * desc->sizeof_vertex,
+    GL_CHECK(glBufferData(GL_ARRAY_BUFFER, vertices_size * desc.sizeof_vertex,
                           vertex_data, usageHint));
 
     gpu_vertices_size = vertices_size;
@@ -195,65 +202,62 @@ void MeshBase::send(GLenum usageHint) {
     gpu_elements_size = elements_size;
 }
 
-void MeshBase::drawInstanced(uint32 num, GLenum primType) {
-    validatePrimType(primType);
-
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
-
-    for (uint32 i = 0; i < desc->nattributes; ++i) {
+void MeshBase::enableAttributes() {
+    for (uint32 i = 0; i < desc.nattributes; ++i) {
         if (!enabled_attributes[i])
             continue;
-        const Attr<Any>& a = desc->attributes[i];
+        const Attr<Any>& a = desc.attributes[i];
         GL_CHECK(glEnableVertexAttribArray(i));
         GL_CHECK(glVertexAttribPointer(i, a.ncomponents, a.component_type,
                                        a.normalized ? GL_TRUE : GL_FALSE,
-                                       desc->sizeof_vertex,
+                                       desc.sizeof_vertex,
                                        (void *) (size_t) a.offset));
-        
     }
+}
 
-    if (elements_size > 0) {
-        GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_name));
-        GL_CHECK(glDrawElementsInstanced(primType, elements_size, GL_UNSIGNED_INT, 0, num));
-    } else {
-        GL_CHECK(glDrawArraysInstanced(primType, 0, vertices_size, num));
-    }
-
-    for (uint32 i = 0; i < desc->nattributes; ++i)
+void MeshBase::disableAttributes() {
+    for (uint32 i = 0; i < desc.nattributes; ++i)
         if (enabled_attributes[i])
             GL_CHECK(glDisableVertexAttribArray(i));
 }
-    
-void MeshBase::draw(GLenum primType) {
+
+void MeshBase::drawElementsInstanced(uint32 num, GLenum primType) {
     validatePrimType(primType);
 
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
-
-    for (uint32 i = 0; i < desc->nattributes; ++i) {
-        if (enabled_attributes[i]) {
-            const Attr<Any>& a = desc->attributes[i];
-            GL_CHECK(glEnableVertexAttribArray(i));
-            GL_CHECK(glVertexAttribPointer(i, a.ncomponents, a.component_type,
-                                           a.normalized ? GL_TRUE : GL_FALSE,
-                                           desc->sizeof_vertex,
-                                           (void *) (size_t) a.offset));
-        }
-    }
+    enableAttributes();
 
     GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_name));
-    GL_CHECK(glDrawElements(primType, gpu_elements_size, GL_UNSIGNED_INT, 0));
+    GL_CHECK(glDrawElementsInstanced(primType, gpu_elements_size, GL_UNSIGNED_INT, 0, num));
+    disableAttributes();
+}
 
-    for (uint32 i = 0; i < desc->nattributes; ++i)
-        if (enabled_attributes[i])
-            GL_CHECK(glDisableVertexAttribArray(i));
+void MeshBase::drawElements(GLenum primType) {
+    validatePrimType(primType);
+
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
+    enableAttributes();
+    
+    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_name));
+    GL_CHECK(glDrawElements(primType, gpu_elements_size, GL_UNSIGNED_INT, 0));
+    disableAttributes();
+}
+
+void MeshBase::drawArrays(GLenum primType) {
+    validatePrimType(primType);
+
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
+    enableAttributes();
+    GL_CHECK(glDrawArrays(primType, 0, gpu_vertices_size));
+    disableAttributes();
 }
     
 const byte *MeshBase::vertexRef(uint32 i) const {
-    return vertex_data + desc->sizeof_vertex * i;
+    return vertex_data + desc.sizeof_vertex * i;
 }
 
 byte *MeshBase::vertexRef(uint32 i) {
-    return vertex_data + desc->sizeof_vertex * i;
+    return vertex_data + desc.sizeof_vertex * i;
 }
 
 void MeshBase::appendVertex(const byte *vertex) {
@@ -262,7 +266,7 @@ void MeshBase::appendVertex(const byte *vertex) {
         vertices_capacity *= 2;
     }
 
-    memcpy(vertexRef(vertices_size), vertex, desc->sizeof_vertex);
+    memcpy(vertexRef(vertices_size), vertex, desc.sizeof_vertex);
     ++vertices_size;
 }
 
@@ -285,11 +289,11 @@ void MeshBase::addElement(uint32 index) {
 }
 
 GLuint MeshBase::attributePosition(size_t offset) const {
-    return static_cast<GLuint>(desc->index(offset));
+    return static_cast<GLuint>(desc.index(offset));
 }
 
 void MeshBase::enableAttribute(uint32 i, bool enabled) {
-    if (i >= desc->nattributes) {
+    if (i >= desc.nattributes) {
         ERR("index out of range");
         return;
     }

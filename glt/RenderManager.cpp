@@ -19,11 +19,9 @@ static const float FS_UPDATE_INTERVAL = 1.f;
 static const float FS_UPDATE_INTERVAL_FAST = 0.1f;
 
 struct RenderManager::Data {
-    aligned_mat4_t cameraMatrix;
     ViewFrustum frustum;
     GeometryTransform transform;
     bool inScene;
-    bool camera_set;
     SavePointArgs transformStateBOS; // transform state in begin of scene
 
     bool owning_def_rt;
@@ -45,9 +43,7 @@ struct RenderManager::Data {
     FrameStatistics stats;
 
     Data() :
-        cameraMatrix(mat4()),
         inScene(false),
-        camera_set(false),
         transformStateBOS(transform, 0, 0),
         owning_def_rt(false),
         def_rt(0),
@@ -124,10 +120,6 @@ GeometryTransform& RenderManager::geometryTransform() {
     return self->transform;
 }
 
-const aligned_mat4_t& RenderManager::cameraMatrix() const {
-    return self->cameraMatrix;
-}
-
 void RenderManager::setDefaultProjection(const Projection& proj) {
     self->projection = proj;
 }
@@ -142,24 +134,15 @@ void RenderManager::updateProjection(float aspectRatio) {
                  vec4(0.f, 0.f, 0.f, 1.f)));
         break;
     case Projection::Perspective:
-        setPerspectiveProjection(self->projection.perspective.fieldOfViewRad,
-                                 aspectRatio,
-                                 self->projection.perspective.z_near,
-                                 self->projection.perspective.z_far);
+        geometryTransform().loadProjectionMatrix(
+            perspectiveProjection(self->projection.perspective.fieldOfViewRad,
+                                  aspectRatio,
+                                  self->projection.perspective.z_near,
+                                  self->projection.perspective.z_far));
         break;
     default:
         ERR("invalid projection type");
     }
-}
-
-void RenderManager::setPerspectiveProjection(float theta, float aspectRatio, float z_near, float z_far) {
-    aligned_mat4_t m = perspectiveProjection(theta, aspectRatio, z_near, z_far);
-    self->transform.loadProjectionMatrix(m);
-}
-
-void RenderManager::setCameraMatrix(const mat4_t& m) {
-    self->cameraMatrix = m;
-    self->camera_set = true;
 }
 
 void RenderManager::setDefaultRenderTarget(RenderTarget *rt, bool delete_after) {
@@ -205,20 +188,17 @@ RenderTarget *RenderManager::activeRenderTarget() const {
 
 void RenderManager::beginScene() {
     ASSERT_MSG(!self->inScene, "nested beginScene()");
-//    ASSERT_MSG(self->camera_set, "camera matrix not set");
     ASSERT_MSG(self->current_rt != 0 || self->def_rt != 0, "no RenderTarget specified");
 
     self->statBegin();
     
-    self->camera_set = false;
     self->inScene = true;
 
     setActiveRenderTarget(self->def_rt);
     self->current_rt->beginScene();
 
     self->transformStateBOS = self->transform.save();
-    self->transform.concat(self->cameraMatrix);
-    self->frustum.update(self->transform.mvpMatrix());
+    self->frustum.update(self->transform.vpMatrix());
 }
 
 void RenderManager::endScene() {
@@ -233,14 +213,12 @@ FrameStatistics RenderManager::frameStatistics() {
     return self->stats;
 }
 
-vec4_t transformModelToWorld(const RenderManager& rm, const vec4_t& modelCoord) {
-    vec4_t viewCoord = transform(rm.geometryTransform().mvMatrix(), modelCoord);
-    mat4_t viewWorld = inverse(rm.cameraMatrix());
-    return viewWorld * viewCoord;
-}
-
 vec4_t project(const RenderManager& rm, const point3_t& localCoord) {
     return transform(rm.geometryTransform().mvpMatrix(), vec4(localCoord, 1.f));
+}
+
+vec4_t projectWorld(const RenderManager& rm, const point3_t& worldCoord) {
+    return transform(rm.geometryTransform().vpMatrix(), vec4(worldCoord, 1.f));
 }
 
 vec4_t projectView(const RenderManager& rm, const point3_t& eyeCoord) {

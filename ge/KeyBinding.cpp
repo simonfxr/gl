@@ -12,7 +12,7 @@ struct StaticInit {
 
 static const StaticInit global;
 
-KeyCode fromSFML(sf::Key::Code key) {
+KeyCode fromSFML(sf::Keyboard::Key key) {
     return static_cast<KeyCode>(key);
 }
 

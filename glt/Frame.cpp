@@ -16,10 +16,6 @@ Frame::Frame() :
     z_axis(vec3(0.f, 0.f, 1.f))
 {}
 
-point3_t Frame::getOrigin() const {
-    return origin;
-}
-
 direction3_t Frame::localX() const {
     return x_axis;
 }
@@ -47,13 +43,9 @@ void Frame::setXZ(const direction3_t& x, const direction3_t& z) {
     z_axis = z;
 }
 
-void Frame::setOrigin(const point3_t& p) {
-    origin = p;
-}
-
 void Frame::lookingAt(const point3_t& p) {
-    direction3_t z = -directionFromTo(origin, p);
-    setXZ(normalize(cross(localY(), z)), z);
+    direction3_t z = - directionFromTo(origin, p);
+    setXZ(math::normalize(cross(localY(), z)), z);
 }
 
 void Frame::rotateLocal(float angleRad, const vec3_t& localAxis) {
@@ -72,6 +64,14 @@ void Frame::translateLocal(const vec3_t& v) {
 
 void Frame::translateWorld(const vec3_t& v) {
     origin += v;
+}
+
+void Frame::normalize() {
+    vec3_t y = localY();
+    vec3_t x = x_axis - projectAlong(x_axis, y);
+    vec3_t z = z_axis - projectAlong(z_axis, y) - projectAlong(z_axis, x);
+    x_axis = math::normalize(x);
+    z_axis = math::normalize(z);
 }
 
 vec4_t transform(const Frame& fr, const vec4_t& v) {

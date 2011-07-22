@@ -22,51 +22,51 @@ namespace keycode {
 
 // stolen from SFML
 enum KeyCode {
-    A = 'a',      ///< The A key
-    B = 'b',      ///< The B key
-    C = 'c',      ///< The C key
-    D = 'd',      ///< The D key
-    E = 'e',      ///< The E key
-    F = 'f',      ///< The F key
-    G = 'g',      ///< The G key
-    H = 'h',      ///< The H key
-    I = 'i',      ///< The I key
-    J = 'j',      ///< The J key
-    K = 'k',      ///< The K key
-    L = 'l',      ///< The L key
-    M = 'm',      ///< The M key
-    N = 'n',      ///< The N key
-    O = 'o',      ///< The O key
-    P = 'p',      ///< The P key
-    Q = 'q',      ///< The Q key
-    R = 'r',      ///< The R key
-    S = 's',      ///< The S key
-    T = 't',      ///< The T key
-    U = 'u',      ///< The U key
-    V = 'v',      ///< The V key
-    W = 'w',      ///< The W key
-    X = 'x',      ///< The X key
-    Y = 'y',      ///< The Y key
-    Z = 'z',      ///< The Z key
-    Num0 = '0',   ///< The 0 key
-    Num1 = '1',   ///< The 1 key
-    Num2 = '2',   ///< The 2 key
-    Num3 = '3',   ///< The 3 key
-    Num4 = '4',   ///< The 4 key
-    Num5 = '5',   ///< The 5 key
-    Num6 = '6',   ///< The 6 key
-    Num7 = '7',   ///< The 7 key
-    Num8 = '8',   ///< The 8 key
-    Num9 = '9',   ///< The 9 key
-    Escape = 256, ///< The Escape key
+    A,            ///< The A key
+    B,            ///< The B key
+    C,            ///< The C key
+    D,            ///< The D key
+    E,            ///< The E key
+    F,            ///< The F key
+    G,            ///< The G key
+    H,            ///< The H key
+    I,            ///< The I key
+    J,            ///< The J key
+    K,            ///< The K key
+    L,            ///< The L key
+    M,            ///< The M key
+    N,            ///< The N key
+    O,            ///< The O key
+    P,            ///< The P key
+    Q,            ///< The Q key
+    R,            ///< The R key
+    S,            ///< The S key
+    T,            ///< The T key
+    U,            ///< The U key
+    V,            ///< The V key
+    W,            ///< The W key
+    X,            ///< The X key
+    Y,            ///< The Y key
+    Z,            ///< The Z key
+    Num0,         ///< The 0 key
+    Num1,         ///< The 1 key
+    Num2,         ///< The 2 key
+    Num3,         ///< The 3 key
+    Num4,         ///< The 4 key
+    Num5,         ///< The 5 key
+    Num6,         ///< The 6 key
+    Num7,         ///< The 7 key
+    Num8,         ///< The 8 key
+    Num9,         ///< The 9 key
+    Escape,       ///< The Escape key
     LControl,     ///< The left Control key
     LShift,       ///< The left Shift key
     LAlt,         ///< The left Alt key
-    LSystem,      ///< The left OS specific key : windows (Windows and Linux), apple (MacOS X), ...
+    LSystem,      ///< The left OS specific key: window (Windows and Linux), apple (MacOS X), ...
     RControl,     ///< The right Control key
     RShift,       ///< The right Shift key
     RAlt,         ///< The right Alt key
-    RSystem,      ///< The right OS specific key : windows (Windows and Linux), apple (MacOS X), ...
+    RSystem,      ///< The right OS specific key: window (Windows and Linux), apple (MacOS X), ...
     Menu,         ///< The Menu key
     LBracket,     ///< The [ key
     RBracket,     ///< The ] key
@@ -123,7 +123,8 @@ enum KeyCode {
     F14,          ///< The F14 key
     F15,          ///< The F15 key
     Pause,        ///< The Pause key
-    KeyCount,
+
+    KeyCount,     ///< Keep last -- the total number of keyboard keys
 
     MLeft,        ///< The left mouse button
     MRight,       ///< The right mouse button
@@ -131,7 +132,7 @@ enum KeyCode {
     MXButton1,    ///< The first extra mouse button
     MXButton2,    ///< The second extra mouse button
     
-    Count         ///< Keep last -- the total number of keyboard keys
+    Count         ///< Keep last -- the total number of keyboard keys + mouse keys
 };
 
 } // namespace keycode
@@ -145,7 +146,7 @@ struct Key {
 
 typedef Array<Key> KeyBinding;
 
-KeyCode fromSFML(sf::Key::Code key);
+KeyCode fromSFML(sf::Keyboard::Key key);
 
 KeyCode fromSFML(sf::Mouse::Button button);
 

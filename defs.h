@@ -67,9 +67,21 @@
 
 #define CONCAT(a, b) CONCAT_AUX1(a, b)
 #define CONCAT_AUX1(a, b) CONCAT_AUX2(a, b)
-#define CONCAT_AUX2(a, b) a##b
+#define CONCAT_AUX2(a, b) CONCAT_AUX3(a, b)
+#define CONCAT_AUX3(a, b) CONCAT_AUX4(a, b)
+#define CONCAT_AUX4(a, b) CONCAT_AUX5(a, b)
+#define CONCAT_AUX5(a, b) a##b
 
 #define CONCAT3(a, b, c) CONCAT(a, CONCAT(b, c))
+
+#define AS_STRING(a) AS_STRING_AUX1(a)
+#define AS_STRING_AUX1(a) AS_STRING_AUX2(a)
+#define AS_STRING_AUX2(a) AS_STRING_AUX3(a)
+#define AS_STRING_AUX3(a) AS_STRING_AUX4(a)
+#define AS_STRING_AUX4(a) AS_STRING_AUX5(a)
+#define AS_STRING_AUX5(a) AS_STRING_AUX6(a)
+#define AS_STRING_AUX6(a) AS_STRING_AUX7(a)
+#define AS_STRING_AUX7(a) #a
 
 #define IALIAS(t) typedef t##_t t;
 

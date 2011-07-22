@@ -98,7 +98,7 @@ static void mouseLook(Camera *cam, const Event<MouseMoved>& ev) {
 //    std::cerr << "mouse look" << std::endl;
     vec2_t rot = vec2(ev.info.dx, ev.info.dy) * cam->mouse_sensitivity;
 //    std::cerr << "dx: " << ev.info.dx << " dy: " << ev.info.dy << " rotY: " << rot.y << " rotX: " << rot.x << std::endl;
-    cam->frame.rotateLocal(rot.y, vec3(1.f, 0.f, 0.f));
+    cam->frame.rotateLocal(- rot.y, vec3(1.f, 0.f, 0.f));
     cam->frame.rotateWorld(rot.x, vec3(0.f, 1.f, 0.f));
 }
 
@@ -112,7 +112,8 @@ static void execStep(Camera *cam, const Event<EngineEvent>&) {
 }
 
 static void setCamMat(glt::Frame *frame, const Event<RenderEvent>& e) {
-    e.info.engine.renderManager().setCameraMatrix(transformationWorldToLocal(*frame));
+    frame->normalize();
+    e.info.engine.renderManager().geometryTransform().loadViewMatrix(transformationWorldToLocal(*frame));
 }
 
 void Camera::registerWith(Engine& e) {
@@ -135,10 +136,10 @@ static Array<vec3_t> mkDirTable() {
     for (uint32 i = 0; i < 12; ++i)
         dirs[i] = vec3(0.f);
 
-    dirs[11] = vec3(0.f, 0.f, +1.f);
-    dirs[5]  = vec3(0.f, 0.f, -1.f);
-    dirs[2]  = vec3(-1.f, 0.f, 0.f);
-    dirs[8]  = vec3(+1.f, 0.f, 0.f);
+    dirs[11] = vec3(0.f, 0.f, -1.f);
+    dirs[5]  = vec3(0.f, 0.f, +1.f);
+    dirs[2]  = vec3(+1.f, 0.f, 0.f);
+    dirs[8]  = vec3(-1.f, 0.f, 0.f);
 
     // TODO: add all the clock directions
 

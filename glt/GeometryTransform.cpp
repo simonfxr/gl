@@ -1,4 +1,5 @@
 #include "glt/GeometryTransform.hpp"
+#include "glt/Transformations.hpp"
 #include "error/error.hpp"
 
 #include "math/vec3.hpp"
@@ -10,42 +11,53 @@ namespace glt {
 
 using namespace math;
 
+static const uint16 FLAG_MV      = 1;
+static const uint16 FLAG_MVP     = 2;
+static const uint16 FLAG_VP      = 4;
+static const uint16 FLAG_NORMAL  = 8;
+static const uint16 FLAG_INVPROJ = 16;
+static const uint16 FLAG_ALL     = 0x1F;
+
 struct GeometryTransform::Data {
 
+    aligned_mat4_t viewMatrix;
     aligned_mat4_t projectionMatrix;
 
+    aligned_mat4_t mvMatrix;
     aligned_mat4_t mvpMatrix;
+    aligned_mat4_t vpMatrix;
     aligned_mat3_t normalMatrix;
 
-    uint64 depth;
-
-    bool dirty;
-
-    bool inv_proj_dirty;
+    uint16 depth;
+    uint16 dirty_flags;
+    
     aligned_mat4_t inverseProjectionMatrix;
 
-    aligned_mat4_t mvMats[GEOMETRY_TRANSFORM_MAX_DEPTH];
+    aligned_mat4_t modelMatrices[GEOMETRY_TRANSFORM_MAX_DEPTH];
     uint64 mods[GEOMETRY_TRANSFORM_MAX_DEPTH];
 
     Data() :
+        viewMatrix(mat4()),
         projectionMatrix(mat4()),
-        mvpMatrix(mat4()),
-        normalMatrix(mat3()),
         depth(0),
-        dirty(false),
-        inv_proj_dirty(false),
+        dirty_flags(FLAG_ALL),
         inverseProjectionMatrix(mat4())
     {
-        mvMats[0] = mat4();
+        modelMatrices[0] = mat4();
         mods[0] = 0;
     }
 
-    void update() {
-        if (unlikely(dirty)) {
-            dirty = false;
-            mvpMatrix = projectionMatrix * mvMats[depth];
-            normalMatrix = orthonormalBasis(mat3(mvMats[depth]));
+    bool flag(uint16 flg) {
+        if (unlikely((dirty_flags & flg) != 0)) {
+            dirty_flags &= ~ flg;
+            return true;
         }
+        return false;
+    }
+
+    void modelUpdated() {
+        dirty_flags = FLAG_MV | FLAG_MVP | FLAG_NORMAL;
+        ++mods[depth];
     }
 };
 
@@ -57,49 +69,72 @@ GeometryTransform::~GeometryTransform() {
     delete self;
 }
 
-const aligned_mat4_t& GeometryTransform::mvpMatrix() const {
-    self->update();
-    return self->mvpMatrix;
+const aligned_mat4_t& GeometryTransform::modelMatrix() const {
+    return self->modelMatrices[self->depth];
 }
 
-const aligned_mat4_t& GeometryTransform::mvMatrix() const {
-    return self->mvMats[self->depth];
-}
-
-const aligned_mat3_t& GeometryTransform::normalMatrix() const {
-    self->update();
-    return self->normalMatrix;
+const aligned_mat4_t& GeometryTransform::viewMatrix() const {
+    return self->viewMatrix;
 }
 
 const aligned_mat4_t& GeometryTransform::projectionMatrix() const {
     return self->projectionMatrix;
 }
 
-const aligned_mat4_t& GeometryTransform::inverseProjectionMatrix() const {
-    if (unlikely(self->inv_proj_dirty)) {
-        self->inv_proj_dirty = false;
-        self->inverseProjectionMatrix = inverse(self->projectionMatrix);
+
+const aligned_mat4_t& GeometryTransform::mvpMatrix() const {
+    if (self->flag(FLAG_MVP))
+        self->mvpMatrix = vpMatrix() * modelMatrix();
+    return self->mvpMatrix;
+}
+
+const aligned_mat4_t& GeometryTransform::mvMatrix() const {
+    if (self->flag(FLAG_MV))
+        self->mvMatrix = viewMatrix() * modelMatrix();
+    return self->mvMatrix;
+}
+
+const aligned_mat4_t& GeometryTransform::vpMatrix() const {
+    if (self->flag(FLAG_VP))
+        self->vpMatrix = projectionMatrix() * viewMatrix();
+    return self->vpMatrix;
+}
+
+const aligned_mat3_t& GeometryTransform::normalMatrix() const {
+    if (self->flag(FLAG_NORMAL)) {
+        // transposed of inverse modelView
+        self->normalMatrix = transpose(inverse(mat3(mvMatrix())));
     }
+    return self->normalMatrix;
+}
+
+const aligned_mat4_t& GeometryTransform::inverseProjectionMatrix() const {
+    if (self->flag(FLAG_INVPROJ))
+        self->inverseProjectionMatrix = inverse(self->projectionMatrix);
     return self->inverseProjectionMatrix;
 }
 
-void GeometryTransform::loadMVMatrix(const mat4_t& m) {
+void GeometryTransform::loadModelMatrix(const mat4_t& m) {
+    self->modelMatrices[self->depth] = m;
+    self->modelUpdated();
+}
+
+void GeometryTransform::loadViewMatrix(const mat4_t& m) {
+    self->dirty_flags = FLAG_MVP | FLAG_VP | FLAG_MV | FLAG_NORMAL;
+    self->viewMatrix = m;
     ++self->mods[self->depth];
-    self->dirty = true;
-    self->mvMats[self->depth] = m;
 }
 
 void GeometryTransform::loadProjectionMatrix(const mat4_t& m) {
-    ++self->mods[self->depth];
-    self->dirty = true;
-    self->inv_proj_dirty = true;
+    self->dirty_flags = FLAG_MVP | FLAG_VP | FLAG_INVPROJ;
     self->projectionMatrix = m;
+    ++self->mods[self->depth];
 }
 
 void GeometryTransform::dup() {
-    if (unlikely(self->depth + 1 >= GEOMETRY_TRANSFORM_MAX_DEPTH))
+    if (unlikely(self->depth >= GEOMETRY_TRANSFORM_MAX_DEPTH - 1))
         FATAL_ERR("GeometryTransform: stack overflow");
-    self->mvMats[self->depth + 1] = self->mvMats[self->depth];
+    self->modelMatrices[self->depth + 1] = self->modelMatrices[self->depth];
     self->mods[self->depth + 1] = self->mods[self->depth];
     ++self->depth;
 }
@@ -108,7 +143,8 @@ void GeometryTransform::pop() {
     if (unlikely(self->depth == 0))
         FATAL_ERR("GeometryTransform: stack underflow");
     --self->depth;
-    self->dirty = self->mods[self->depth] != self->mods[self->depth + 1];
+    if (self->mods[self->depth] != self->mods[self->depth + 1])
+        self->dirty_flags |= FLAG_MV | FLAG_MVP | FLAG_NORMAL;
 }
 
 SavePointArgs GeometryTransform::save() {
@@ -121,20 +157,25 @@ SavePointArgs GeometryTransform::save() {
 void GeometryTransform::restore(const SavePointArgs& sp) {
     if (unlikely(self->mods[sp.depth] != sp.cookie || self->depth < sp.depth))
         FATAL_ERR("cannot restore GeometryTransform: stack modified below safepoint");
-    self->dirty = self->mods[sp.depth] != self->mods[self->depth];
     self->depth = sp.depth;
+    if (self->mods[sp.depth] != self->mods[self->depth])
+        self->dirty_flags |= FLAG_MV | FLAG_MVP | FLAG_NORMAL;
 }
 
 void GeometryTransform::scale(const vec3_t& dim) {
-    concat(mat3(vec3(dim.x, 0.f, 0.f),
-                vec3(0.f, dim.y, 0.f),
-                vec3(0.f, 0.f, dim.z)));
+    self->modelMatrices[self->depth][0] *= dim.x;
+    self->modelMatrices[self->depth][1] *= dim.y;
+    self->modelMatrices[self->depth][2] *= dim.z;
+    self->modelUpdated();
 }
 
 void GeometryTransform::translate(const vec3_t& origin) {
-    mat4_t trans = mat4();
-    trans[3] = vec4(origin, 1.f);
-    concat(trans);
+    self->modelMatrices[self->depth][3] += transform(vec4(origin, 1.f));
+    self->modelUpdated();
+}
+
+void GeometryTransform::rotate(float phi, const direction3_t& axis) {
+    concat(rotationMatrix(phi, axis));
 }
 
 void GeometryTransform::concat(const mat3_t& m) {
@@ -142,13 +183,12 @@ void GeometryTransform::concat(const mat3_t& m) {
 }
 
 void GeometryTransform::concat(const mat4_t& m) {
-    self->dirty = true;
-    ++self->mods[self->depth];
-    self->mvMats[self->depth] *= m;
+    self->modelMatrices[self->depth] *= m;
+    self->modelUpdated();
 }
 
 vec4_t GeometryTransform::transform(const vec4_t& v) const {
-    return self->mvMats[self->depth] * v;
+    return self->modelMatrices[self->depth] * v;
 }
 
 vec3_t GeometryTransform::transformPoint(const vec3_t& p) const {

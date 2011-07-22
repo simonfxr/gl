@@ -24,13 +24,19 @@ struct GeometryTransform {
     GeometryTransform();
     ~GeometryTransform();
 
-    const math::aligned_mat4_t& mvpMatrix() const;
-    const math::aligned_mat4_t& mvMatrix() const;
-    const math::aligned_mat3_t& normalMatrix() const;
+    const math::aligned_mat4_t& modelMatrix() const;
+    const math::aligned_mat4_t& viewMatrix() const;
     const math::aligned_mat4_t& projectionMatrix() const;
     const math::aligned_mat4_t& inverseProjectionMatrix() const;
+    
+    const math::aligned_mat4_t& mvpMatrix() const;
+    const math::aligned_mat4_t& mvMatrix() const;
+    const math::aligned_mat4_t& vpMatrix() const;
+    const math::aligned_mat3_t& normalMatrix() const;
 
-    void loadMVMatrix(const math::mat4_t& m);
+    void loadModelMatrix(const math::mat4_t& m);
+
+    void loadViewMatrix(const math::mat4_t& m);
 
     void loadProjectionMatrix(const math::mat4_t& m);
 
@@ -45,6 +51,8 @@ struct GeometryTransform {
     void scale(const math::vec3_t& dim);
 
     void translate(const math::vec3_t& origin);
+
+    void rotate(float phi, const math::direction3_t& axis);
 
     void concat(const math::mat3_t& m);
 

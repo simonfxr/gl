@@ -561,5 +561,11 @@ Ref<ShaderManager::CachedShaderObject> rebuildShaderObject(ShaderManager& self, 
     return ShaderProgram::rebuildShaderObject(self, so);
 }
 
+bool ShaderProgram::bindAttributesGeneric(const VertexDescBase& desc) {
+    for (uptr i = 0; i < desc.nattributes; ++i)
+        if (!bindAttribute(desc.attributes[i].name, i))
+            return false;
+    return true;
+}
 
 } // namespace glt
