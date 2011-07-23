@@ -110,7 +110,8 @@ MeshBase::MeshBase() :
     elements_capacity(0),
     elements_size(0),
     gpu_elements_size(0),
-    element_data(0)
+    element_data(0),
+    draw_type(DrawArrays)
 {}
 
 void MeshBase::initBase(const VertexDescBase& layout, uint32 initial_nverts, uint32 initial_nelems) {
@@ -202,6 +203,19 @@ void MeshBase::send(GLenum usageHint) {
     gpu_elements_size = elements_size;
 }
 
+void MeshBase::drawType(DrawType type) {
+    switch (type) {
+    case DrawArrays:
+    case DrawElements:
+        break;
+    default:
+        ERR("invalid draw type");
+        return;
+    }
+
+    draw_type = type;
+}
+
 void MeshBase::enableAttributes() {
     for (uint32 i = 0; i < desc.nattributes; ++i) {
         if (!enabled_attributes[i])
@@ -250,6 +264,37 @@ void MeshBase::drawArrays(GLenum primType) {
     enableAttributes();
     GL_CHECK(glDrawArrays(primType, 0, gpu_vertices_size));
     disableAttributes();
+}
+
+void MeshBase::drawArraysInstanced(uint32 num, GLenum primType) {
+    validatePrimType(primType);
+
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
+    enableAttributes();
+    GL_CHECK(glDrawArraysInstanced(primType, 0, gpu_vertices_size, num));
+    disableAttributes();
+}
+
+void MeshBase::draw(GLenum primType) {
+    switch (draw_type) {
+    case DrawArrays:
+        drawArrays(primType);
+        break;
+    case DrawElements:
+        drawElements(primType);
+        break;
+    }
+}
+
+void MeshBase::drawInstanced(uint32 num, GLenum primType) {
+    switch (draw_type) {
+    case DrawArrays:
+        drawArraysInstanced(num, primType);
+        break;
+    case DrawElements:
+        drawElementsInstanced(num, primType);
+        break;
+    }
 }
     
 const byte *MeshBase::vertexRef(uint32 i) const {

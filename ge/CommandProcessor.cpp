@@ -204,10 +204,14 @@ CommandParamType CommandProcessor::commandParamType(CommandType type) {
 }
 
 CommandArg CommandProcessor::cast(const CommandArg& val, CommandType type) {
+    UNUSED(val);
+    UNUSED(type);
     FATAL_ERR("not yet implemented");
 }
 
 bool CommandProcessor::isAssignable(CommandParamType lval, CommandType rval) {
+    UNUSED(lval);
+    UNUSED(rval);
     FATAL_ERR("not yet implemented");
 }       
 

@@ -10,7 +10,9 @@ struct CubeMesh : public Mesh<T> {
 
     CubeMesh(const VertexDesc<T>& layout = VertexTraits<T>::description(), uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS) :
         Mesh<T>(layout, GL_TRIANGLES, initial_nverts, initial_nelems)
-        {}
+        {
+            this->drawType(DrawElements);
+        }
 
     void add(const T& vert) {
         this->addVertex(vert);

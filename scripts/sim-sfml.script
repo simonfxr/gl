@@ -1,10 +1,10 @@
 load "scripts/default.script"
 
-bindShader "brick" "brick.vert" "brick.frag" 0 "vertex" 1 "normal"
+bindShader "wall" "brick.vert" "brick.frag" 0 "vertex" 1 "normal"
 bindShader "sphere" "sphere.vert" "sphere.frag" 0 "vertex" 1 "normal"
 bindShader "identity" "identity.vert" "identity.frag" 0 "vertex" 1 "normal"
 bindShader "postproc" "postproc.vert" "postproc.frag" 0 "vertex" 1 "normal"
-bindShader "sphere_instanced" "sphere_instanced.vert" "sphere_instanced.frag" 0 "vertex" 1 "normal"
+bindShader "sphereInstanced" "sphere_instanced.vert" "sphere_instanced.frag" 0 "vertex" 1 "normal"
 
 perspectiveProjection 35 0.25 200.0
 
@@ -18,6 +18,8 @@ bindKey [+I] { loadCameraFrame "sim-sfml.cam" }
 
 bindKey [+O] { incGamma -0.1 }
 bindKey [+P] { incGamma +0.1 }
+
+bindKey [+MLeft] { spawnSphere }
 
 postInit { 
     setCameraStepLength 0.1

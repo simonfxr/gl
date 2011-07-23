@@ -30,16 +30,16 @@ struct Renderer {
     Game& game;
 
     const glt::ViewFrustum& frustum();
+    const glt::Frame& camera();
 
     void renderSphere(const Sphere& sphere, const SphereModel& model);
     void endRenderSpheres();
     void renderBox(const glt::AABB& box);
     void renderConnection(const math::point3_t& a, const math::point3_t& b);
+
 };
 
 struct World {
-    glt::Frame& camera();
-
     uint32 numSpheres();
 
     bool init();
@@ -47,8 +47,6 @@ struct World {
     bool render_by_distance; // try to render near object first
     uint32 solve_iterations;
 
-    void moveCamera(const math::vec3_t& step, float r);
-    void rotateCamera(float rotx, float roty);
     void spawnSphere(const Sphere& sphere, const SphereModel& model);
     void simulate(float dt);
     

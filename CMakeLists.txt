@@ -238,6 +238,8 @@ add_executable(sim-sfml
   ${MATH_SRC}
   ${DATA_SRC})
 
+target_link_libraries(sim-sfml sys err glt ge)
+
 # find_library(VOXEL_LIB voxel PATHS "${CMAKE_SOURCE_DIR}/ext/lib")
 # find_library(VOXEL_HS_LIB voxel-hs PATHS "${CMAKE_SOURCE_DIR}/ext/lib")
 

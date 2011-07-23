@@ -13,6 +13,8 @@ namespace glt {
 
 namespace primitives {
 
+using namespace math;
+
 template <typename V>
 void cubeoid(CubeMesh<V>& model, const math::point3_t& origin, const math::vec3_t dim, bool evert = false) {
 
