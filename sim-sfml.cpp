@@ -176,10 +176,10 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
     GL_CHECK(glBindVertexArray(vao));
     
     textureRenderTarget = 0;
-    indirect_rendering = false;
+    indirect_rendering = true;
     updateIndirectRendering(indirect_rendering);
 
-    render_spheres_instanced = false;
+    render_spheres_instanced = true;
 
     {
         Vertex v;
@@ -193,7 +193,7 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
     }
 
     e.gameLoop().ticksPerSecond(100);
-    e.gameLoop().sync(true);
+    e.gameLoop().sync(false);
     
     use_interpolation = true;
     e.window().grabMouse(true);
@@ -309,7 +309,7 @@ void Game::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     if (!use_interpolation)
         interpolation = 0.f;
 
-    renderManager.activeRenderTarget()->clear(glt::RT_DEPTH_BUFFER | glt::RT_COLOR_BUFFER);
+    renderManager.activeRenderTarget()->clear(glt::RT_DEPTH_BUFFER);
     GL_CHECK(glEnable(GL_DEPTH_TEST));
 
     e.window().window().SetActive();

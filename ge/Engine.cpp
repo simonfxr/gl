@@ -255,9 +255,9 @@ bool Engine::Data::execCommand(std::vector<CommandArg>& args) {
     
     Array<CommandArg> com_args(&args[0], args.size());
 
-    ON_DEBUG(std::cerr << "executing command: ");
-    ON_DEBUG(prettyCommandArgs(std::cerr, com_args));
-    ON_DEBUG(std::cerr << std::endl);
+    // ON_DEBUG(std::cerr << "executing command: ");
+    // ON_DEBUG(prettyCommandArgs(std::cerr, com_args));
+    // ON_DEBUG(std::cerr << std::endl);
     
     bool ok = commandProcessor.exec(com_args);
 

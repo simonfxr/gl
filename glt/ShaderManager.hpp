@@ -65,7 +65,7 @@ struct ShaderManager {
     
     void cacheShaderObject(Ref<CachedShaderObject>& s);
 
-    void setShaderVersion(uint32 vers /* e.g. 330 */, ShaderProfile profile = CoreProfile);
+    void setShaderVersion(uint32 vers /* e.g. 330 */, ShaderProfile profile = CompatibilityProfile);
     uint32 shaderVersion() const;
     ShaderProfile shaderProfile() const;
 
