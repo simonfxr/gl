@@ -150,7 +150,7 @@ const Ref<Command> load = makeStringListCommand(runLoad, "load", "execute a scri
 
 static void runAddShaderPath(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     for (uint32 i = 0; i < args.size(); ++i) {
-        e.info.engine.shaderManager().addPath(*args[i].string);
+        e.info.engine.shaderManager().addShaderDirectory(*args[i].string);
     }
 }
 

@@ -112,7 +112,7 @@ static void execStep(Camera *cam, const Event<EngineEvent>&) {
 }
 
 static void setCamMat(glt::Frame *frame, const Event<RenderEvent>& e) {
-    frame->normalize();
+//    frame->normalize();
     e.info.engine.renderManager().geometryTransform().loadViewMatrix(transformationWorldToLocal(*frame));
 }
 

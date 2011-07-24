@@ -180,6 +180,7 @@ link_directories(${GLT_BINARY_DIR})
 
 set(SYS_SRC
   sys/fs/fs.hpp
+  sys/fs/fs_default.cpp
   sys/clock.hpp)
 
 if(SYS_UNIX)

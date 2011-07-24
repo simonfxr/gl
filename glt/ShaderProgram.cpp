@@ -7,12 +7,17 @@
 
 #include "defs.h"
 #include "opengl.h"
+
 #include "glt/ShaderProgram.hpp"
 #include "glt/ShaderManager.hpp"
-#include "error/error.hpp"
 #include "glt/utils.hpp"
 #include "glt/Preprocessor.hpp"
 #include "glt/GLSLPreprocessor.hpp"
+
+#include "error/error.hpp"
+
+#include "sys/fs/fs.hpp"
+
 
 #define LOG_LEVEL(data, lvl) ((data)->sm.verbosity() >= ShaderManager::lvl)
 
@@ -307,7 +312,7 @@ bool ShaderProgram::addShaderFile(ShaderType type, const std::string& file, bool
         proc.installHandler("need", depHandler);
         proc.err(self->sm.err());
 
-        realname = absolute ? file : self->sm.lookupPath(file);
+        realname = absolute ? file : sys::fs::lookup(self->sm.shaderDirectories(), file);
 
         if (realname.empty()) {
             LOG_ERR(self, "couldnt find file in path: " << file << std::endl);

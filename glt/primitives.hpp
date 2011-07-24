@@ -62,7 +62,7 @@ template <typename Vertex>
 void unitCube(CubeMesh<Vertex>& cube) {
 
     using namespace math;
-    
+
     Vertex v;
 
     v.normal = vec4(0.0f, 0.0f, 1.0f, 0.f);					
@@ -238,7 +238,7 @@ void sphere(Mesh<Vertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iSt
                 Vertex v;
                 v.position = vec4(vVertex[i], 1.f);
                 v.normal = vNormal[i];
-                sphereBatch.addVertexElem(v);
+                sphereBatch.addVertex(v);
             }
 			
             // Rearrange for next triangle
@@ -254,11 +254,14 @@ void sphere(Mesh<Vertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iSt
                 Vertex v;
                 v.position = vec4(vVertex[i], 1.f);
                 v.normal = vNormal[i];
-                sphereBatch.addVertexElem(v);
+                sphereBatch.addVertex(v);
             }
         }
         t -= dt;
     }
+
+    sphereBatch.drawType(DrawArrays);
+    sphereBatch.primType(GL_TRIANGLES);
 }
 
 } // namespace primitives

@@ -7,6 +7,7 @@
 #include "data/Ref.hpp"
 
 #include <map>
+#include <vector>
 
 namespace ge {
 
@@ -16,11 +17,15 @@ struct CommandProcessor {
 private:
     Engine& _engine;
     std::map<std::string, Ref<Command> > commands;
+    std::vector<std::string> scriptDirs;
     
 public:
     
     CommandProcessor(Engine& e) : _engine(e) {}
     uint32 size() const;
+
+    bool addScriptDirectory(const std::string& dir, bool check_exists = true);
+    const std::vector<std::string>& scriptDirectories();
 
     Engine& engine() { return _engine; }
     

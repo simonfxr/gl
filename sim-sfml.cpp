@@ -179,7 +179,7 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
     indirect_rendering = false;
     updateIndirectRendering(indirect_rendering);
 
-    render_spheres_instanced = true;
+    render_spheres_instanced = false;
 
     {
         Vertex v;
@@ -202,7 +202,7 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
     if (!world.init())
         return;
 
-    world.render_by_distance = true;
+    world.render_by_distance = false;
 
     sphere_speed = 10.f;
     sphere_proto.state = Bouncing;
@@ -227,8 +227,7 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
         sphereBatches[i].send();
     }
 
-    camera.frame.origin = vec3(-19.f, 10.f, +19.f);
-    camera.frame.lookingAt(vec3(0.f, 10.f, 0.f));
+    camera.frame.origin = vec3(0.f, 0.f, 0.f);
 
     update_sphere_mass();
 
@@ -288,7 +287,7 @@ static glt::color randomColor() {
 }
 
 void Game::spawn_sphere() {
-    vec3_t direction = camera.frame.localZ();
+    vec3_t direction = - camera.frame.localZ();
     sphere_proto.center = camera.frame.origin + direction * (sphere_proto.r + 1.1f);
     sphere_proto.v = direction * sphere_speed;
 
@@ -310,7 +309,7 @@ void Game::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     if (!use_interpolation)
         interpolation = 0.f;
 
-    renderManager.activeRenderTarget()->clear(glt::RT_DEPTH_BUFFER);
+    renderManager.activeRenderTarget()->clear(glt::RT_DEPTH_BUFFER | glt::RT_COLOR_BUFFER);
     GL_CHECK(glEnable(GL_DEPTH_TEST));
 
     e.window().window().SetActive();
@@ -332,7 +331,7 @@ void Game::renderScene(const ge::Event<ge::RenderEvent>& ev) {
             .optional("gammaCorrection", GAMMA)
             .mandatory("textures", textureRenderTarget->textureHandle(), 0);
         
-        rectBatch.drawArrays();        
+        rectBatch.draw();        
     }
 
     render_hud();
@@ -444,7 +443,7 @@ void Game::end_render_spheres() {
                 .optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA)
                 .mandatory("instanceData", sphereMap, 0);
 
-            sphereBatches[lod].drawArraysInstanced(num);
+            sphereBatches[lod].drawInstanced(num);
 
             sphereMap.free();
         }
@@ -536,10 +535,12 @@ void Game::render_box(const glt::AABB& box) {
     glt::SavePoint sp(gt.save());
 
     point3_t center = box.center();
-    vec3_t diff = 0.5f * box.dimensions();
+    vec3_t dim = 0.5f * box.dimensions();
 
-    gt.translate(vec3(center.x, center.y, center.z));
-    gt.scale(vec3(diff.x, diff.y, diff.z));
+//    std::cerr << "render box: " << center << "dim: " << dim << std::endl;
+
+    gt.translate(center);
+    gt.scale(dim);
 
     Ref<glt::ShaderProgram> wallShader = engine->shaderManager().program("wall");
     ASSERT(wallShader);
