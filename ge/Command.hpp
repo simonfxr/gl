@@ -25,6 +25,7 @@ private:
     std::string descr;
 public:
     Command(const Array<CommandParamType>& ps, const std::string name, const std::string& desc);
+    virtual ~Command() {}
     const Array<CommandParamType>& parameters() const { return params; }
     std::string name() const;
     void name(const std::string& new_name);
@@ -85,6 +86,26 @@ struct StateHandler : public Command {
 template <typename S>
 Ref<Command> makeCommand(typename StateCommandHandler<S>::type handler, S state, const Array<CommandParamType>& params, const std::string& name, const std::string& desc) {
     return Ref<Command>(new StateHandler<S>(handler, state, params, name, desc));
+}
+
+template <typename T, typename M>
+struct MemberFunCommand EXPLICIT : public Command {
+private:
+    T *o;
+    M m;
+public:
+    MemberFunCommand(T *_o, M _m, const Array<CommandParamType>& params,
+                     const std::string& name, const std::string& desc) :
+        Command(params, name, desc),
+        o(_o), m(_m) {}
+    void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+        (o->*m)(e, args);
+    }
+};
+
+template <typename T>
+Ref<Command> makeCommand(T *o, void (T::*m)(const Event<CommandEvent>&, const Array<CommandArg>&), const Array<CommandParamType>& params, const std::string& name, const std::string& desc = "") {
+    return Ref<Command>(new MemberFunCommand<T, void (T::*)(const Event<CommandEvent>&, const Array<CommandArg>&)>(o, m, params, name, desc));
 }
 
 #ifdef CONST_ARRAY

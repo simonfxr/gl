@@ -5,8 +5,9 @@
 #include <string>
 #include <cstring>
 #include <errno.h>
-#include <unistd.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 namespace sys {
 
@@ -81,6 +82,23 @@ MTime getMTime(const std::string& file) {
         mt.timestamp = st.st_mtime;
     }
     return mt;
+}
+
+std::string lookup(const std::vector<std::string>& dirs, const std::string& name) {
+    return def::lookup(dirs, name);
+}
+
+bool exists(const std::string& path, ObjectType type) {
+    struct stat info;
+    if (stat(path.c_str(), &info) == -1)
+        return false;
+    int objtype = info.st_mode & S_IFMT;
+    switch (type) {
+    case Any: return true;
+    case File: return objtype == S_IFREG;
+    case Directory: return objtype == S_IFDIR;
+    default: return false;
+    }
 }
 
 bool operator ==(const MTime& a, const MTime& b) {

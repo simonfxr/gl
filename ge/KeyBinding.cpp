@@ -17,7 +17,7 @@ KeyCode fromSFML(sf::Keyboard::Key key) {
 }
 
 KeyCode fromSFML(sf::Mouse::Button button) {
-    return KeyCode(int32(button) + int32(keycode::KeyCount));
+    return KeyCode(int32(button) + int32(keycode::KeyCount) + 1);
 }
 
 const char *keycodeStrings(KeyCode code) {

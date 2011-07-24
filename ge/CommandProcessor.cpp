@@ -3,6 +3,8 @@
 
 #include "error/error.hpp"
 
+#include "sys/fs/fs.hpp"
+
 #include <vector>
 #include <sstream>
 
@@ -14,6 +16,22 @@ typedef std::map<std::string, Ref<Command> > CommandMap;
     
 uint32 CommandProcessor::size() const {
     return commands.size();
+}
+
+bool CommandProcessor::addScriptDirectory(const std::string& dir, bool check_exists) {
+    for (int i = 0; i < scriptDirs.size(); ++i)
+        if (dir == scriptDirs[i])
+            return true;
+
+    if (check_exists && !sys::fs::exists(dir, sys::fs::Directory))
+        return false;
+
+    scriptDirs.push_back(dir);
+    return true;
+}
+
+const std::vector<std::string>& CommandProcessor::scriptDirectories() {
+    return scriptDirs;
 }
     
 Ref<Command> CommandProcessor::command(const std::string comname) {
@@ -204,10 +222,14 @@ CommandParamType CommandProcessor::commandParamType(CommandType type) {
 }
 
 CommandArg CommandProcessor::cast(const CommandArg& val, CommandType type) {
+    UNUSED(val);
+    UNUSED(type);
     FATAL_ERR("not yet implemented");
 }
 
 bool CommandProcessor::isAssignable(CommandParamType lval, CommandType rval) {
+    UNUSED(lval);
+    UNUSED(rval);
     FATAL_ERR("not yet implemented");
 }       
 

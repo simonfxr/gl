@@ -57,6 +57,7 @@
 #define ATTR_NOTHROW nothrow
 #define ATTR_FORCE_INLINE always_inline
 #define ATTR_NORETURN noreturn
+#define ATTR_PACKED packed
 
 #endif
 

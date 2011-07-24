@@ -10,24 +10,6 @@ namespace glt {
 
 extern Ref<ShaderManager::CachedShaderObject> rebuildShaderObject(ShaderManager& self, Ref<ShaderManager::CachedShaderObject>& so);
 
-namespace {
-
-std::string lookupInPath(const std::vector<std::string>& paths, const std::string& file, FILE *& fh) {
-    std::string suffix = "/" + file;
-    fh = 0;
-
-    for (uint32 i = 0; i < paths.size(); ++i) {
-        std::string filename = paths[i] + suffix;
-        fh = fopen(filename.c_str(), "r");
-        if (fh != 0)
-            return filename;
-    }
-
-    return "";
-}
-
-} // namespace anon
-
 const Ref<ShaderManager::CachedShaderObject> ShaderManager::EMPTY_CACHE_ENTRY(0);
 
 const Ref<ShaderProgram> NULL_PROGRAM_REF(0);
@@ -39,7 +21,7 @@ typedef std::map<std::string, Ref<ShaderProgram> > ProgramMap;
 struct ShaderManager::Data {
     Verbosity verbosity;
     std::ostream *err;
-    std::vector<std::string> paths;
+    std::vector<std::string> shaderDirs;
     ShaderCache cache;
     ProgramMap programs;
     uint32 shader_version;
@@ -59,7 +41,7 @@ ShaderManager::ShaderManager() :
     self(new Data)
 {
     self->err = &std::cerr;
-    self->verbosity = Info;
+    self->verbosity = OnlyErrors;
     self->shader_version = 0;
     self->shader_profile = CoreProfile;
     self->cache_so = true;
@@ -126,29 +108,20 @@ void ShaderManager::err(std::ostream& err) {
     self->err = &err;
 }
 
-bool ShaderManager::addPath(const std::string& dir, bool verify_existence) {
-    for (uint32 i = 0; i < self->paths.size(); ++i)
-        if (dir == self->paths[i])
+bool ShaderManager::addShaderDirectory(const std::string& dir, bool check_exists) {
+    for (uint32 i = 0; i < self->shaderDirs.size(); ++i)
+        if (dir == self->shaderDirs[i])
             return true;
 
-    if (verify_existence) {
-        // TODO: check wether dir exists and is a proper directory
-    }
+    if (check_exists && !sys::fs::exists(dir, sys::fs::Directory))
+        return false;
     
-    self->paths.push_back(dir);
+    self->shaderDirs.push_back(dir);
     return true;
 }
 
-const std::vector<std::string>& ShaderManager::path() const {
-    return self->paths;
-}
-
-std::string ShaderManager::lookupPath(const std::string& file) const {
-    FILE *fh;
-    std::string name = lookupInPath(path(), file, fh);
-    if (fh != 0)
-        fclose(fh);
-    return name;
+const std::vector<std::string>& ShaderManager::shaderDirectories() const {
+    return self->shaderDirs;
 }
 
 Ref<ShaderManager::CachedShaderObject> ShaderManager::Data::rebuildSO(ShaderManager& self, Ref<ShaderManager::CachedShaderObject>& so, const sys::fs::MTime& mtime) {

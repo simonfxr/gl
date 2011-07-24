@@ -4,6 +4,7 @@
 #include "error/error.hpp"
 
 #include "sys/clock.hpp"
+#include "sys/fs/fs.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -79,18 +80,29 @@ EngineEvents& Engine::events() { return SELF->events; }
 
 float Engine::now() { return SELF->now(); }
 
-bool Engine::loadScript(const std::string& file, bool quiet) {
-    std::ifstream inp(file.c_str());
-    if (!inp.is_open() || !inp.good()) {
-        std::cerr << "loading script: " << file << " -> not found" << std::endl;
+bool Engine::loadScript(const std::string& name, bool quiet) {
 
-        if (!quiet)
-            ERR(("opening file: " + file).c_str());
-        return false;
+    std::string file = sys::fs::lookup(commandProcessor().scriptDirectories(), name);
+    if (file.empty())
+        goto not_found;
+
+    {
+        std::ifstream inp(file.c_str());
+        if (!inp.is_open() || !inp.good())
+            goto not_found;
+        
+        std::cerr << "loading script: " << file << std::endl;
+        return loadStream(inp, file);
     }
 
-    std::cerr << "loading script: " << file << std::endl;
-    return loadStream(inp, file);
+not_found:
+    
+    std::cerr << "loading script: " << name << " -> not found" << std::endl;
+    
+    if (!quiet)
+        ERR(("opening script: " + name).c_str());
+
+    return false;
 }
 
 bool Engine::loadStream(std::istream& inp, const std::string& inp_name) {
@@ -145,6 +157,20 @@ int32 Engine::run(const EngineOptions& opts) {
     if (!opts.workingDirectory.empty())
         sys::fs::cwd(opts.workingDirectory);
 
+    for (uint32 i = 0; i < opts.scriptDirs.size(); ++i) {
+        if (!commandProcessor().addScriptDirectory(opts.scriptDirs[i])) {
+            ERR("script directory not found: " + opts.scriptDirs[i]);
+            return 1;
+        }
+    }
+
+    for (uint32 i = 0; i < opts.shaderDirs.size(); ++i) {
+        if (!shaderManager().addShaderDirectory(opts.shaderDirs[i])) {
+            ERR("shader directory not found: " + opts.shaderDirs[i]);
+            return 1;
+        }
+    }
+
     Event<InitEvent> initEv = makeEvent(InitEvent(*this));
     if (!runInit(opts.inits.preInit0, initEv))
         return 1;
@@ -156,7 +182,7 @@ int32 Engine::run(const EngineOptions& opts) {
         return 1;
 
     if (!opts.initScript.empty()) {
-        loadScript(opts.initScript, true);
+        loadScript(opts.initScript);
     }
 
     for (uint32 i = 0; i < opts.commands.size(); ++i) {
@@ -229,9 +255,9 @@ bool Engine::Data::execCommand(std::vector<CommandArg>& args) {
     
     Array<CommandArg> com_args(&args[0], args.size());
 
-    ON_DEBUG(std::cerr << "executing command: ");
-    ON_DEBUG(prettyCommandArgs(std::cerr, com_args));
-    ON_DEBUG(std::cerr << std::endl);
+    // ON_DEBUG(std::cerr << "executing command: ");
+    // ON_DEBUG(prettyCommandArgs(std::cerr, com_args));
+    // ON_DEBUG(std::cerr << std::endl);
     
     bool ok = commandProcessor.exec(com_args);
 

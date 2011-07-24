@@ -1,5 +1,7 @@
 #include "glt/GLSLPreprocessor.hpp"
 
+#include "sys/fs/fs.hpp"
+
 #include <cstdio>
 #include <cstring>
 #include <iostream>
@@ -188,10 +190,10 @@ bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& 
         pos = contents + inc.offset + inc.directiveLineLength;
         
         if (!inc.fileToInclude.empty()) {
-            std::string realname = sm.lookupPath(inc.fileToInclude);
+            std::string realname = sys::fs::lookup(sm.shaderDirectories(), inc.fileToInclude);
             
             if (realname.empty()) {
-                ERR(("couldnt include file: not found: " + inc.fileToInclude).c_str());
+                ERR("couldnt include file: not found: " + inc.fileToInclude);
                 return false;
             }
 

@@ -14,6 +14,8 @@ namespace {
 enum OptionCase {
     Help,
     NoInitScript,
+    ScriptDir,
+    ShaderDir,
     NoCD,
     Eval,
     Script,
@@ -35,6 +37,8 @@ struct Option {
 const Option OPTIONS[] = {
     { "--help", NULL, Help, "print a description of all options and exit" },
     { "--no-init-script", NULL, NoInitScript, "inhibit loading of default script file (<program-name>.script)" },
+    { "--script-dir", "DIR", ScriptDir, "add DIR to the list of searched script directories" },
+    { "--shader-dir", "DIR", ShaderDir, "add DIR to the list of searched shader directories" },
     { "--no-cd", NULL, NoCD, "dont change into the base directory of the program binary" },
     { "--eval", "COMMAND", Eval, "execute COMMAND as a script command" },
     { "--script", "FILE", Script, "load FILE and execute it as a script" },
@@ -76,7 +80,13 @@ bool State::option(OptionCase opt, const char *arg) {
         return true;
     case NoInitScript:
         no_init = true;
-        return true;    
+        return true;
+    case ScriptDir:
+        options.scriptDirs.push_back(arg);
+        return true;
+    case ShaderDir:
+        options.shaderDirs.push_back(arg);
+        return true;
     case NoCD:
         no_cd = true;
         return true;

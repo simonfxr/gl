@@ -51,6 +51,12 @@ uint32 LOCAL_CONSTANT MIN_NUM_ELEMENTS = 8;
     DEFINE_VERTEX_ATTRS(CONCAT3(type, _DESC_, __LINE__), type, __VA_ARGS__);  \
     DEFINE_VERTEX_TRAITS(type, CONCAT3(type, _DESC_, __LINE__))
 
+
+enum DrawType {
+    DrawArrays,
+    DrawElements        
+};
+
 struct MeshBase {
 private:
     GLuint element_buffer_name;
@@ -70,6 +76,8 @@ private:
     uint32 elements_size;
     uint32 gpu_elements_size;
     uint32 * RESTRICT element_data;
+    
+    DrawType draw_type;
 
     BitSet enabled_attributes;
 
@@ -101,6 +109,9 @@ public:
     uint32 gpuVerticesSize() const { return gpu_vertices_size; }
     uint32 gpuElementsSize() const { return gpu_elements_size; }
 
+    DrawType drawType() const { return draw_type; }
+    void drawType(DrawType type);
+
     void enableAttribute(uint32 i, bool enabled = true);
 
     void setSize(uint32 size);
@@ -122,6 +133,15 @@ public:
 
     void drawArrays() { drawArrays(prim_type); }
     void drawArrays(GLenum primType);
+
+    void drawArraysInstanced(uint32 num) { drawArraysInstanced(num, prim_type); }
+    void drawArraysInstanced(uint32 num, GLenum primType);
+
+    void draw() { draw(prim_type); }
+    void draw(GLenum primType);
+
+    void drawInstanced(uint32 num) { drawInstanced(num, prim_type); }
+    void drawInstanced(uint32 num, GLenum prim_type);    
     
     void addElement(uint32 index);
     uint32 element(uint32 index) const { return element_data[index]; }

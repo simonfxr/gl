@@ -1,12 +1,12 @@
-load "scripts/default.script"
+load "default.script"
 
-bindShader "brick" "brick.vert" "brick.frag" 0 "vertex" 1 "normal"
+bindShader "wall" "brick.vert" "brick.frag" 0 "vertex" 1 "normal"
 bindShader "sphere" "sphere.vert" "sphere.frag" 0 "vertex" 1 "normal"
 bindShader "identity" "identity.vert" "identity.frag" 0 "vertex" 1 "normal"
 bindShader "postproc" "postproc.vert" "postproc.frag" 0 "vertex" 1 "normal"
-bindShader "sphere_instanced" "sphere_instanced.vert" "sphere_instanced.frag" 0 "vertex" 1 "normal"
+bindShader "sphereInstanced" "sphere_instanced.vert" "sphere_instanced.frag" 0 "vertex" 1 "normal"
 
-perspectiveProjection 35 0.25 200.0
+perspectiveProjection 35 0.5 100
 
 bindKey [W] { moveCamera 12 }
 bindKey [D] { moveCamera 3 }
@@ -16,11 +16,22 @@ bindKey [A] { moveCamera 9 }
 bindKey [+U] { saveCameraFrame "sim-sfml.cam" }
 bindKey [+I] { loadCameraFrame "sim-sfml.cam" }
 
-bindKey [+O] { incGamma -0.1 }
-bindKey [+P] { incGamma +0.1 }
-
 postInit { 
     setCameraStepLength 0.1
     setCameraMouseSensitivity 0.00075
-    loadCameraFrame "sim-sfml.cam"
+#    loadCameraFrame "sim-sfml.cam"
+
+    bindKey [+MLeft] &spawnSphere
+
+    bindKey [+I] &toggleUseInterpolation
+
+    bindKey [O] { incGameSpeed -0.01 }
+    bindKey [P] { incGameSpeed +0.01 }
+
+    bindKey [+K] { incWorldSolveIterations +1 }
+    bindKey [+L] { incWorldSolveIterations -1 }
+
+    bindKey [+U] &toggleRenderByDistance
+    bindKey [+Z] &toggleRenderSpheresInstanced
+    bindKey [+T] &toggleIndirectRendering
 }

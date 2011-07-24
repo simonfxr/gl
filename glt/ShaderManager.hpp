@@ -57,17 +57,15 @@ struct ShaderManager {
     std::ostream& err() const;
     void err(std::ostream& out);
 
-    bool addPath(const std::string& directory, bool verify_existence = true);
-    const std::vector<std::string>& path() const;
-
-    std::string lookupPath(const std::string& basename) const;
+    bool addShaderDirectory(const std::string& directory, bool check_exists = true);
+    const std::vector<std::string>& shaderDirectories() const;
 
     Ref<CachedShaderObject> lookupShaderObject(const std::string& file, const sys::fs::MTime& mtime);
     bool removeFromCache(CachedShaderObject& so);
     
     void cacheShaderObject(Ref<CachedShaderObject>& s);
 
-    void setShaderVersion(uint32 vers /* e.g. 330 */, ShaderProfile profile = CoreProfile);
+    void setShaderVersion(uint32 vers /* e.g. 330 */, ShaderProfile profile = CompatibilityProfile);
     uint32 shaderVersion() const;
     ShaderProfile shaderProfile() const;
 

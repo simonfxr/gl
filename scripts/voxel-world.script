@@ -1,4 +1,4 @@
-load "scripts/default.script"
+load "default.script"
 
 bindShader "voxel" "voxel.vert" "voxel.frag" 0 "position" 1 "color" 2 "normal"
 

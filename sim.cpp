@@ -101,7 +101,6 @@ struct World::Data {
     std::vector<SphereData> spheres;
     std::vector<SphereModel> sphereModels;
     
-    glt::Frame _camera;
     glt::AABB room;
 
     uint32 solve_iterations;
@@ -157,10 +156,6 @@ bool World::init() {
     return true;
 }
 
-glt::Frame& World::camera() {
-    return self->_camera;
-}
-
 uint32 World::numSpheres() {
     return self->spheres.size();
 }
@@ -169,23 +164,6 @@ namespace {
 std::ostream& operator <<(std::ostream& out, const vec4_t& a) {
     return out << "(" << a[0] << ", " << a[1] << ", " << a[2] << ", " << a[3] << ")";
 }
-}
-
-void World::moveCamera(const vec3_t& step, float r) {
-    glt::Frame new_cam = self->_camera;
-    new_cam.translateLocal(step);
-
-    point3_t coll_center;
-    int32 hit = self->collidesWall(new_cam.origin, r, coll_center);
-    if (hit >= 0)
-        new_cam.origin = self->walls[hit].normal * r + coll_center;
-
-    self->_camera.origin = new_cam.origin;
-}
-
-void World::rotateCamera(float rotx, float roty) {
-    self->_camera.rotateLocal(roty, vec3(1.f, 0.f, 0.f));
-    self->_camera.rotateWorld(rotx, vec3(0.f, 1.f, 0.f));
 }
 
 void World::simulate(float dt) {
@@ -247,7 +225,7 @@ void World::render(Renderer& renderer, float dt) {
     const uint32 n = self->spheres.size();
 
     if (render_by_distance) {
-        const point3_t& cam = self->_camera.origin;
+        const point3_t& cam = renderer.camera().origin;
         std::vector<SphereDistance> spheres_ordered;
 
         for (uint32 i = 0; i < n; ++i) {

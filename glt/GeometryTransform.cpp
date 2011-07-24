@@ -170,7 +170,7 @@ void GeometryTransform::scale(const vec3_t& dim) {
 }
 
 void GeometryTransform::translate(const vec3_t& origin) {
-    self->modelMatrices[self->depth][3] += transform(vec4(origin, 1.f));
+    self->modelMatrices[self->depth][3] += vec4(transformPoint(origin), 0.f);
     self->modelUpdated();
 }
 
