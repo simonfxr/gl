@@ -157,8 +157,10 @@ private:
 
     void enableAttributes();
     void disableAttributes();
+    void initState();
     void initVertexBuffer();
     void initVertexArray();
+    void initVertexAttribs();
     
     MeshBase(const MeshBase& _);
     MeshBase& operator =(const MeshBase& _);
@@ -169,11 +171,6 @@ template <typename T>
 struct Mesh : public MeshBase {
 
     Mesh(const VertexDesc<T>& layout = VertexTraits<T>::description(), GLenum primTy = GL_TRIANGLES, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS) {
-        initBase(layout.generic(), initial_nverts, initial_nelems);
-        primType(primTy);
-    }
-    
-    void init(const VertexDesc<T>& layout, GLenum primTy = GL_TRIANGLES, uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS) {
         initBase(layout.generic(), initial_nverts, initial_nelems);
         primType(primTy);
     }

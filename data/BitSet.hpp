@@ -37,6 +37,16 @@ struct BitSet {
     reference operator[](uint32 i) {
         return reference(*this, i);
     }
+
+    void set(bool val) {
+        uint32 s = bits.size();
+        for (uint32 i = 0; i < s; ++i)
+            bits[i] = val;
+    }
+
+    void resize(uint32 s) {
+        bits.resize(s);
+    }
 };
 
 #endif

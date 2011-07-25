@@ -29,7 +29,6 @@
 
 #include "sim.hpp"
 
-
 using namespace math;
 
 static const float SPHERE_DENSITY = 999.f;
@@ -173,7 +172,6 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
     textureRenderTarget = 0;
     indirect_rendering = true;
     updateIndirectRendering(indirect_rendering);
-
     render_spheres_instanced = true;
 
     {
@@ -197,7 +195,7 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
     if (!world.init())
         return;
 
-    world.render_by_distance = false;
+    world.render_by_distance = true;;
 
     sphere_speed = 10.f;
     sphere_proto.state = Bouncing;
