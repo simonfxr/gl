@@ -6,7 +6,7 @@ bindShader "identity" "identity.vert" "identity.frag" 0 "vertex" 1 "normal"
 bindShader "postproc" "postproc.vert" "postproc.frag" 0 "vertex" 1 "normal"
 bindShader "sphereInstanced" "sphere_instanced.vert" "sphere_instanced.frag" 0 "vertex" 1 "normal"
 
-perspectiveProjection 35 0.5 100
+perspectiveProjection 35 0.5 200
 
 bindKey [W] { moveCamera 12 }
 bindKey [D] { moveCamera 3 }
