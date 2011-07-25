@@ -1,5 +1,4 @@
 
-
 #include "gamma.h"
 
 uniform sampler2D textures;

@@ -222,19 +222,19 @@ int32 Engine::run(const EngineOptions& opts) {
 }
 
 void Engine::Data::tick() {
-    events.animate.raise(EngineEvent(theEngine));
+    events.animate.raise(makeEvent(EngineEvent(theEngine)));
 }
 
 void Engine::Data::render(float interpolation) {
-    events.beforeRender.raise(RenderEvent(theEngine, interpolation));
+    events.beforeRender.raise(makeEvent(RenderEvent(theEngine, interpolation)));
     renderManager.beginScene();
-    events.render.raise(RenderEvent(theEngine, interpolation));
+    events.render.raise(makeEvent(RenderEvent(theEngine, interpolation)));
     renderManager.endScene();
-    events.afterRender.raise(RenderEvent(theEngine, interpolation));
+    events.afterRender.raise(makeEvent(RenderEvent(theEngine, interpolation)));
 }
 
 void Engine::Data::handleInputEvents() {
-    events.handleInput.raise(EngineEvent(theEngine));
+    events.handleInput.raise(makeEvent(EngineEvent(theEngine)));
 }
 
 float Engine::Data::now() {
@@ -246,7 +246,7 @@ void Engine::Data::sleep(float secs) {
 }
 
 void Engine::Data::exit(int32 exit_code) {
-    events.exit.raise(ExitEvent(theEngine, exit_code));
+    events.exit.raise(makeEvent(ExitEvent(theEngine, exit_code)));
 }
 
 bool Engine::Data::execCommand(std::vector<CommandArg>& args) {

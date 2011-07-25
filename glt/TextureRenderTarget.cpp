@@ -25,7 +25,6 @@ TextureRenderTarget::~TextureRenderTarget() {
 
     GL_CHECK(glDeleteFramebuffers(1, &frame_buffer));
     GL_CHECK(glDeleteRenderbuffers(1, &depth_buffer));
-    printState();
 }
 
 TextureHandle& TextureRenderTarget::textureHandle() {
@@ -47,8 +46,6 @@ void TextureRenderTarget::resize(uint32 w, uint32 h) {
         --glstate.num_framebuffers;
     if (depth_buffer != 0)
         --glstate.num_renderbuffers;
-
-    printState();
 
     GL_CHECK(glDeleteFramebuffers(1, &frame_buffer));
     GL_CHECK(glDeleteRenderbuffers(1, &depth_buffer));
@@ -75,8 +72,6 @@ void TextureRenderTarget::resize(uint32 w, uint32 h) {
                 
         GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer));
     }
-
-    printState();
 
     GLenum status;
     GL_CHECK(status = glCheckFramebufferStatus(GL_FRAMEBUFFER));

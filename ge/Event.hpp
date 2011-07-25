@@ -14,7 +14,7 @@ template <typename T>
 struct Event {
     T info;
     Event() {}
-    Event(const T& _info) : info(_info) {}
+    explicit Event(const T& _info) : info(_info) {}
 };
 
 template <typename T>
@@ -33,7 +33,7 @@ struct FunctorHandler EXPLICIT : public EventHandler<E> {
 private:
     F f;
 public:
-    FunctorHandler(const F& _f) : f(_f) {}
+    explicit FunctorHandler(const F& _f) : f(_f) {}
     void handle(const Event<E>& ev) OVERRIDE { f(ev); }
 };
 
@@ -82,7 +82,7 @@ struct VoidFunctorHandler EXPLICIT : public EventHandler<E> {
 private:
     F f;
 public:
-    VoidFunctorHandler(const F& _f) : f(_f) {}
+    explicit VoidFunctorHandler(const F& _f) : f(_f) {}
     void handle(const Event<E>& ev) OVERRIDE { UNUSED(ev); f(); }
 };
 
@@ -90,7 +90,6 @@ template <typename F, typename E>
 Ref<EventHandler<E> > makeVoidEventHandler(F f) {
     return makeRef(new VoidFunctorHandler<F, E>(f));
 }
-
 
 template <typename T>
 struct EventSource {

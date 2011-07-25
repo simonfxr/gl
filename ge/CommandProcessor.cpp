@@ -19,7 +19,7 @@ uint32 CommandProcessor::size() const {
 }
 
 bool CommandProcessor::addScriptDirectory(const std::string& dir, bool check_exists) {
-    for (int i = 0; i < scriptDirs.size(); ++i)
+    for (uint32 i = 0; i < scriptDirs.size(); ++i)
         if (dir == scriptDirs[i])
             return true;
 

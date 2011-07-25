@@ -7,6 +7,8 @@
 #include "glt/AABB.hpp"
 #include "glt/ViewFrustum.hpp"
 
+static const float CAMERA_SPHERE_RAD = 1.f;
+
 enum SphereState { Bouncing, Rolling };
 
 struct SphereModel {
@@ -46,6 +48,8 @@ struct World {
 
     bool render_by_distance; // try to render near object first
     uint32 solve_iterations;
+
+    bool canMoveCamera(const math::vec3_t& position, math::vec3_t& step);
 
     void spawnSphere(const Sphere& sphere, const SphereModel& model);
     void simulate(float dt);

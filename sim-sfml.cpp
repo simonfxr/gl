@@ -40,8 +40,6 @@ static const vec3_t LIGHT_POS = vec3(11.f, 18.f, 11.f);
 
 static const float FPS_RENDER_CYCLE = 1.f;
 
-static const float CAMERA_SPHERE_RAD = 1.f;
-
 static const uint32 NUM_BLUR_TEXTURES = 1;
 
 static const float BLUR_TEXTURES_UPDATE_CYCLE = 0.04f / NUM_BLUR_TEXTURES;
@@ -132,6 +130,7 @@ struct Game {
     void init(const ge::Event<ge::InitEvent>&);
     void link(ge::Engine& e);
 
+    void constrainCameraMovement(const ge::Event<ge::CameraMoved>&);
     void animate(const ge::Event<ge::EngineEvent>&);
     void renderScene(const ge::Event<ge::RenderEvent>&);
     void renderWorld(float dt);
@@ -236,6 +235,12 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
     lineBatch.send();
     
     ev.info.success = true;
+}
+
+void Game::constrainCameraMovement(const ge::Event<ge::CameraMoved>& ev) {
+    ev.info.allowed_step = ev.info.step;
+    if (!world.canMoveCamera(camera.frame.origin, ev.info.allowed_step))
+        ev.info.allowed_step = vec3(0.f);
 }
 
 void Game::animate(const ge::Event<ge::EngineEvent>& ev) {
@@ -385,13 +390,15 @@ void Game::updateIndirectRendering(bool indirect) {
 void Game::resizeRenderTargets() {
     uint32 width = engine->window().window().GetWidth();
     uint32 height = engine->window().window().GetHeight();
-    
-    uint32 stride = 1;
-    while (stride * stride < AA_SAMPLES)
-        ++stride;
 
-    if (indirect_rendering)
+    if (indirect_rendering) {
+
+        uint32 stride = 1;
+        while (stride * stride < AA_SAMPLES)
+            ++stride;
+        
         textureRenderTarget->resize(width * stride, height * stride);
+    }
 }
 
 void Renderer::renderSphere(const Sphere& s, const SphereModel& m) {
@@ -710,6 +717,7 @@ void Game::link(ge::Engine& e) {
 
     camera.registerWith(e);
     camera.registerCommands(e.commandProcessor());
+    camera.moved.reg(ge::makeEventHandler(this, &Game::constrainCameraMovement));
 }
 
 void Game::cmdToggleUseInterpolation(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
@@ -746,6 +754,7 @@ void Game::cmdSpawnSphere(const ge::Event<ge::CommandEvent>&, const Array<ge::Co
 
 void Game::cmdIncSphereRadius(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
     sphere_proto.r = std::max(0.05f, sphere_proto.r + (float) args[0].number);
+    update_sphere_mass();
 }
 
 void Game::cmdIncSphereSpeed(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {

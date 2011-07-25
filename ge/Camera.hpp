@@ -5,16 +5,26 @@
 
 #include "ge/Engine.hpp"
 #include "ge/Command.hpp"
+#include "ge/Event.hpp"
 
 #include "math/vec2.hpp"
 
 namespace ge {
+
+struct CameraMoved {
+    math::vec3_t step;
+    mutable math::vec3_t allowed_step;
+
+    CameraMoved(const math::vec3_t& s) :
+        step(s), allowed_step(s) {}
+};
 
 struct Camera {
     math::vec3_t step_accum;
     float step_length;
     math::vec2_t mouse_sensitivity;
     glt::Frame frame;
+    EventSource<CameraMoved> moved;
 
     struct Commands {
         Ref<Command> move;

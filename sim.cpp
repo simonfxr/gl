@@ -177,6 +177,19 @@ void World::simulate(float dt) {
     self->integrate(dt);
 }
 
+bool World::canMoveCamera(const math::vec3_t& position, math::vec3_t& step) {
+    vec3_t out_coll;
+    vec3_t new_pos = position + step;
+    int32 hit = self->collidesWall(new_pos, CAMERA_SPHERE_RAD, out_coll);
+
+    if (hit >= 0) {
+        vec3_t valid_pos = out_coll + self->walls[hit].normal * CAMERA_SPHERE_RAD;
+        step = valid_pos - position;
+    }
+
+    return true;
+}
+
 void World::spawnSphere(const Sphere& s, const SphereModel& m) {
 
     // Spring spring;
@@ -274,7 +287,7 @@ void World::render(Renderer& renderer, float dt) {
 }
 
 int32 World::Data::collidesWall(const point3_t& center, float r, point3_t& out_collision) {
-    float dist_min = r + 1;
+    float dist_min = r;
     int32 hit = -1;
 
     for (uint32 i = 0; i < 6; ++i) {

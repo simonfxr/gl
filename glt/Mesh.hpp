@@ -151,10 +151,14 @@ public:
 
     GLuint attributePosition(size_t offset) const;
 
+    void bind();
+
 private:
 
     void enableAttributes();
     void disableAttributes();
+    void initVertexBuffer();
+    void initVertexArray();
     
     MeshBase(const MeshBase& _);
     MeshBase& operator =(const MeshBase& _);

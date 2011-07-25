@@ -104,10 +104,15 @@ static void mouseLook(Camera *cam, const Event<MouseMoved>& ev) {
 
 static void execStep(Camera *cam, const Event<EngineEvent>&) {
     float lenSq = lengthSq(cam->step_accum);
-    if (!lenSq < 1e-4f) {
+    
+    if (lenSq >= 1e-4f) {
 //        std::cerr << "camera step" << std::endl;
-        cam->frame.translateLocal(cam->step_length * normalize(cam->step_accum));
+        vec3_t local_step = cam->step_length * normalize(cam->step_accum);
+        Event<CameraMoved> ev = makeEvent(CameraMoved(transformVector(cam->frame, local_step)));
+        cam->moved.raise(ev);
+        cam->frame.translateWorld(ev.info.allowed_step);
     }
+    
     cam->step_accum = vec3(0.f);
 }
 
