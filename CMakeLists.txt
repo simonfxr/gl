@@ -146,8 +146,6 @@ set(GLT_SRC
   glt/ShaderProgram.cpp
   glt/Uniforms.hpp
   glt/Uniforms.cpp
-  glt/GenBatch.hpp
-  glt/GenBatch.cpp
   glt/Preprocessor.hpp
   glt/Preprocessor.cpp
   glt/GLSLPreprocessor.hpp
@@ -173,7 +171,9 @@ set(GLT_SRC
   glt/ShaderObject.hpp
   glt/ShaderObject.cpp
   glt/Mesh.hpp
-  glt/Mesh.cpp)
+  glt/Mesh.cpp
+  glt/glstate.hpp
+  glt/glstate.cpp)
 
 add_library(glt SHARED ${GLT_SRC})
 link_directories(${GLT_BINARY_DIR})

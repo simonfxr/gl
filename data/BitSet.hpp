@@ -17,12 +17,20 @@ struct BitSet {
     struct reference {
         BitSet& set;
         int i;
+        
         reference(BitSet& s, uint32 idx) :
             set(s), i(idx) {}
+        
         reference& operator =(bool val) {
             set.bits[i] = val;
             return *this;
         }
+
+        reference& operator =(const reference& ref) {
+            set.bits[i] = ref.set.bits[ref.i];
+            return *this;
+        }
+        
         operator bool() { return set.bits[i]; }
     };
 

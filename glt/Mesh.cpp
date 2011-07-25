@@ -1,5 +1,6 @@
 #include "glt/Mesh.hpp"
 #include "glt/utils.hpp"
+#include "glt/glstate.hpp"
 
 #ifdef SYSTEM_UNIX
 #include <stdlib.h>
@@ -97,6 +98,7 @@ void validateUsageHint(GLenum usageHint) {
 // }
 
 MeshBase::MeshBase() :
+    vertex_array_name(0),
     element_buffer_name(0),
     vertex_buffer_name(0),
     usage_hint(GL_STATIC_DRAW),
@@ -125,6 +127,7 @@ void MeshBase::initBase(const VertexDescBase& layout, uint32 initial_nverts, uin
     while (elements_capacity < initial_nelems)
         elements_capacity *= 2;
 
+    vertex_array_name = 0;
     element_buffer_name = 0;
     vertex_buffer_name = 0;
     usage_hint = GL_STATIC_DRAW;
@@ -137,18 +140,31 @@ void MeshBase::initBase(const VertexDescBase& layout, uint32 initial_nverts, uin
     elements_size = 0;
     element_data = new uint32[elements_capacity];
     desc = layout;
-    enabled_attributes = BitSet(layout.nattributes, true);
+
+    // enable all attributes
+    enabled_attributes = BitSet(layout.nattributes * 2, true);
+
+    // state not updated
+    for (uint32 i = 0; i < layout.nattributes; ++i)
+        enabled_attributes[i * 2 + 1] = false;
 }
 
 void MeshBase::free() {
-    GLuint names[2] = {0, 0};
-    int len = 0;
-    if (element_buffer_name != 0)
-        names[len++] = element_buffer_name;
-    if (vertex_buffer_name != 0)
-        names[len++] = vertex_buffer_name;
-    if (len > 0)
+    if (vertex_array_name != 0) {
+        GLuint names[2] = {vertex_buffer_name, 0};
+        int len = 1;
+
+        GL_CHECK(glDeleteVertexArrays(1, &vertex_array_name));
+        --glstate.num_vertex_arrays;
+        --glstate.num_buffers;
+
+        if (element_buffer_name != 0) {
+            names[len++] = element_buffer_name;
+            --glstate.num_buffers;
+        }
+        
         GL_CHECK(glDeleteBuffers(len, names));
+    }
     
     if (owning_vertices)
         ::free(vertex_data);
@@ -156,6 +172,7 @@ void MeshBase::free() {
     if (owning_elements)
         delete[] element_data;
 
+    vertex_array_name = 0;
     element_buffer_name = 0;
     vertex_buffer_name = 0;
     vertex_data = 0;
@@ -183,24 +200,38 @@ void MeshBase::send() {
 void MeshBase::send(GLenum usageHint) {
     validateUsageHint(usageHint);
 
-    if (vertex_buffer_name == 0)
-        GL_CHECK(glGenBuffers(1, &vertex_buffer_name));
+    if (vertex_array_name == 0) {
+        ++glstate.num_vertex_arrays;
+        GL_CHECK(glGenVertexArrays(1, &vertex_array_name));
 
+        ++glstate.num_buffers;
+        GL_CHECK(glGenBuffers(1, &vertex_buffer_name));
+        printState();
+    }
+
+    GL_CHECK(glBindVertexArray(vertex_array_name));
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
+
     GL_CHECK(glBufferData(GL_ARRAY_BUFFER, vertices_size * desc.sizeof_vertex,
                           vertex_data, usageHint));
 
     gpu_vertices_size = vertices_size;
 
-    if (element_buffer_name == 0)
+    if (element_buffer_name == 0 && elements_size > 0) {
         GL_CHECK(glGenBuffers(1, &element_buffer_name));
+        GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_name));
+        ++glstate.num_buffers;
+        printState();
+    }
 
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_name));
-    GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                          elements_size * sizeof (GLuint),
-                          element_data, usageHint));
-
+    if (element_buffer_name != 0)
+        GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                              elements_size * sizeof (GLuint),
+                              element_data, usageHint));
+    
     gpu_elements_size = elements_size;
+
+    GL_CHECK(glBindVertexArray(0));
 }
 
 void MeshBase::drawType(DrawType type) {
@@ -217,50 +248,55 @@ void MeshBase::drawType(DrawType type) {
 }
 
 void MeshBase::enableAttributes() {
+    
+    if (vertex_array_name == 0) {
+        ERR("not data on gpu");
+        return;
+    }
+    
+    GL_CHECK(glBindVertexArray(vertex_array_name));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
+    
     for (uint32 i = 0; i < desc.nattributes; ++i) {
-        if (!enabled_attributes[i])
+        if (enabled_attributes[2 * i] == enabled_attributes[2 * i + 1])
             continue;
-        const Attr<Any>& a = desc.attributes[i];
-        GL_CHECK(glEnableVertexAttribArray(i));
-        GL_CHECK(glVertexAttribPointer(i, a.ncomponents, a.component_type,
-                                       a.normalized ? GL_TRUE : GL_FALSE,
-                                       desc.sizeof_vertex,
-                                       (void *) (size_t) a.offset));
+        
+        if (enabled_attributes[2 * i]) {
+            GL_CHECK(glEnableVertexAttribArray(i));
+            const Attr<Any>& a = desc.attributes[i];
+            GL_CHECK(glVertexAttribPointer(i, a.ncomponents, a.component_type,
+                                           a.normalized ? GL_TRUE : GL_FALSE,
+                                           desc.sizeof_vertex,
+                                           (void *) (size_t) a.offset));
+        } else {
+            GL_CHECK(glDisableVertexAttribArray(i));
+        }
+
+        enabled_attributes[2 * i + 1] = enabled_attributes[2 * i];
     }
 }
 
 void MeshBase::disableAttributes() {
-    for (uint32 i = 0; i < desc.nattributes; ++i)
-        if (enabled_attributes[i])
-            GL_CHECK(glDisableVertexAttribArray(i));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GL_CHECK(glBindVertexArray(0));
 }
 
 void MeshBase::drawElementsInstanced(uint32 num, GLenum primType) {
     validatePrimType(primType);
-
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
     enableAttributes();
-
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_name));
     GL_CHECK(glDrawElementsInstanced(primType, gpu_elements_size, GL_UNSIGNED_INT, 0, num));
     disableAttributes();
 }
 
 void MeshBase::drawElements(GLenum primType) {
     validatePrimType(primType);
-
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
     enableAttributes();
-    
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_name));
     GL_CHECK(glDrawElements(primType, gpu_elements_size, GL_UNSIGNED_INT, 0));
     disableAttributes();
 }
 
 void MeshBase::drawArrays(GLenum primType) {
     validatePrimType(primType);
-
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
     enableAttributes();
     GL_CHECK(glDrawArrays(primType, 0, gpu_vertices_size));
     disableAttributes();
@@ -268,8 +304,6 @@ void MeshBase::drawArrays(GLenum primType) {
 
 void MeshBase::drawArraysInstanced(uint32 num, GLenum primType) {
     validatePrimType(primType);
-
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_name));
     enableAttributes();
     GL_CHECK(glDrawArraysInstanced(primType, 0, gpu_vertices_size, num));
     disableAttributes();
@@ -342,7 +376,15 @@ void MeshBase::enableAttribute(uint32 i, bool enabled) {
         ERR("index out of range");
         return;
     }
-    enabled_attributes[i] = enabled;
+    enabled_attributes[i * 2] = enabled;
+}
+
+bool MeshBase::attributeEnabled(uint32 i) {
+    if (i >= desc.nattributes) {
+        ERR("index out of range");
+        return false;
+    }
+    return enabled_attributes[i * 2];
 }
 
 void MeshBase::setSize(uint32 size) {

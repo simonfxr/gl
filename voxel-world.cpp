@@ -147,10 +147,6 @@ static void initState(State *state, const InitEv& ev) {
     
     e.events().render.reg(makeEventHandler(renderScene, state));
 
-    GLuint vao;
-    GL_CHECK(glGenVertexArrays(1, &vao));
-    GL_CHECK(glBindVertexArray(vao));
-
     e.gameLoop().ticksPerSecond(100);
     e.gameLoop().sync(true);
 

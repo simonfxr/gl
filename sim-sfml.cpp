@@ -171,10 +171,6 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
 
     link(e);
     
-    GLuint vao;
-    GL_CHECK(glGenVertexArrays(1, &vao));
-    GL_CHECK(glBindVertexArray(vao));
-    
     textureRenderTarget = 0;
     indirect_rendering = true;
     updateIndirectRendering(indirect_rendering);

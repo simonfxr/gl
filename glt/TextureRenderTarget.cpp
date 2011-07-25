@@ -2,6 +2,7 @@
 #include "opengl.h"
 #include "error/error.hpp"
 #include "glt/utils.hpp"
+#include "glt/glstate.hpp"
 
 
 namespace glt {
@@ -17,8 +18,14 @@ TextureRenderTarget::TextureRenderTarget(uint32 w, uint32 h, uint32 bs, uint32 s
 }
 
 TextureRenderTarget::~TextureRenderTarget() {
+    if (frame_buffer != 0)
+        --glstate.num_framebuffers;
+    if (depth_buffer != 0)
+        --glstate.num_renderbuffers;
+
     GL_CHECK(glDeleteFramebuffers(1, &frame_buffer));
     GL_CHECK(glDeleteRenderbuffers(1, &depth_buffer));
+    printState();
 }
 
 TextureHandle& TextureRenderTarget::textureHandle() {
@@ -36,11 +43,20 @@ void TextureRenderTarget::resize(uint32 w, uint32 h) {
 
     updateSize(w, h);
 
+    if (frame_buffer != 0)
+        --glstate.num_framebuffers;
+    if (depth_buffer != 0)
+        --glstate.num_renderbuffers;
+
+    printState();
+
     GL_CHECK(glDeleteFramebuffers(1, &frame_buffer));
     GL_CHECK(glDeleteRenderbuffers(1, &depth_buffer));
 
     frame_buffer = 0;
     depth_buffer = 0;
+    
+    ++glstate.num_framebuffers;
 
     GL_CHECK(glGenFramebuffers(1, &frame_buffer));
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));
@@ -48,6 +64,7 @@ void TextureRenderTarget::resize(uint32 w, uint32 h) {
     createTexture();
 
     if (buffers() & RT_DEPTH_BUFFER) {
+        ++glstate.num_renderbuffers;
         GL_CHECK(glGenRenderbuffers(1, &depth_buffer));
         GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer));
 
@@ -58,6 +75,8 @@ void TextureRenderTarget::resize(uint32 w, uint32 h) {
                 
         GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer));
     }
+
+    printState();
 
     GLenum status;
     GL_CHECK(status = glCheckFramebufferStatus(GL_FRAMEBUFFER));

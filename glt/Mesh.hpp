@@ -59,6 +59,7 @@ enum DrawType {
 
 struct MeshBase {
 private:
+    GLuint vertex_array_name;
     GLuint element_buffer_name;
     GLuint vertex_buffer_name;
 
@@ -113,6 +114,7 @@ public:
     void drawType(DrawType type);
 
     void enableAttribute(uint32 i, bool enabled = true);
+    bool attributeEnabled(uint32 i);
 
     void setSize(uint32 size);
     

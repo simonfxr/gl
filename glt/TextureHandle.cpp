@@ -2,7 +2,7 @@
 #include "glt/TextureHandle.hpp"
 #include "error/error.hpp"
 #include "glt/utils.hpp"
-
+#include "glt/glstate.hpp"
 
 namespace glt {
 
@@ -39,14 +39,20 @@ TextureHandle::~TextureHandle() {
 }
 
 void TextureHandle::free() {
-    if (_handle != 0)
+    if (_handle != 0) {
+        --glstate.num_textures;
         GL_CHECK(glDeleteTextures(1, &_handle));
+        printState();
+    }
     _handle = 0;
 }
 
 void TextureHandle::bind() {
-    if (_handle == 0)
+    if (_handle == 0) {
         GL_CHECK(glGenTextures(1, &_handle));
+        ++glstate.num_textures;
+        printState();
+    }
     GL_CHECK(glBindTexture(getGLType(_type, _samples), _handle));
 }
 
