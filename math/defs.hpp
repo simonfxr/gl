@@ -1,8 +1,6 @@
 #ifndef MATH_DEFS_HPP
 #define MATH_DEFS_HPP
 
-#define MATH_SSE_VERS 401
-
 #include "defs.h"
 
 #ifdef MATH_INLINE
