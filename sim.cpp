@@ -184,7 +184,7 @@ bool World::canMoveCamera(const math::vec3_t& position, math::vec3_t& step) {
 
     if (hit >= 0) {
         vec3_t valid_pos = out_coll + self->walls[hit].normal * CAMERA_SPHERE_RAD;
-        step = valid_pos - position;
+        step = projectAlong(valid_pos - position, step);
     }
 
     return true;

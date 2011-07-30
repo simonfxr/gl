@@ -55,6 +55,12 @@ struct SphereLOD {
     uint32 level;
 };
 
+#define SPHERE_INSTANCED_TEXTURED
+// (doesnt work atm)
+// #define SPHERE_INSTANCED_ARRAY
+
+#ifdef SPHERE_INSTANCED_TEXTURED
+
 // dont change layout (directly mapped to texture)
 struct SphereInstance {
     point3_t pos;
@@ -62,6 +68,17 @@ struct SphereInstance {
     vec3_t col_rgb;
     float shininess;
 } ATTRS(ATTR_PACKED);
+
+#elif defined(SPHERE_INSTANCED_ARRAY)
+
+struct SphereInstance {
+    mat4_t mvMatrix;
+    vec4_t colorShininess;
+} ATTRS(ATTR_PACKED);
+
+#else
+#error "no SPHERE_INSTANCED_* specified"
+#endif
 
 struct Vertex {
     point4_t position;
@@ -416,6 +433,7 @@ void Game::end_render_spheres() {
             if (num == 0)
                 continue;
 
+#ifdef SPHERE_INSTANCED_TEXTURED
             glt::TextureHandle sphereMap(glt::Texture1D);
             sphereMap.bind();
 
@@ -427,9 +445,7 @@ void Game::end_render_spheres() {
             sphere_instances[lod].clear();
 
             Ref<glt::ShaderProgram> sphereInstancedShader = engine->shaderManager().program("sphereInstanced");
-
             ASSERT(sphereInstancedShader);
-
             sphereInstancedShader->use();
 
             sphereMap.bind(0);
@@ -447,6 +463,60 @@ void Game::end_render_spheres() {
             sphereBatches[lod].drawInstanced(num);
 
             sphereMap.free();
+
+#elif defined(SPHERE_INSTANCED_ARRAY)
+
+            Ref<glt::ShaderProgram> sphereInstanced2Shader = engine->shaderManager().program("sphereInstanced2");
+            ASSERT(sphereInstanced2Shader);
+            sphereInstanced2Shader->use();
+
+            GLuint per_instance_vbo;
+            GL_CHECK(glGenBuffers(1, &per_instance_vbo));
+            GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, per_instance_vbo));
+            GL_CHECK(glBufferData(GL_ARRAY_BUFFER, sizeof (SphereInstance) * num, &sphere_instances[lod][0], GL_STREAM_DRAW));
+
+            sphereBatches[lod].bind();
+            GLint attr_mvMatrix;
+            GL_CHECK(attr_mvMatrix = glGetAttribLocation(sphereInstanced2Shader->program(), "mvMatrix"));
+            ASSERT(attr_mvMatrix >= 0);
+            GLint attr_colorShininess;
+            GL_CHECK(attr_colorShininess = glGetAttribLocation(sphereInstanced2Shader->program(), "colorShininess"));
+            ASSERT(attr_colorShininess >= 0);
+
+            for (uint32 col = 0; col < 4; ++col) {
+                GL_CHECK(glVertexAttribPointer(attr_mvMatrix + col, 4, GL_FLOAT, GL_FALSE,
+                                               sizeof (vec4_t),
+                                               (void *) (offsetof(SphereInstance, mvMatrix) + col * sizeof (vec4_t))));
+                GL_CHECK(glVertexAttribDivisor(attr_mvMatrix + col, 1));
+                GL_CHECK(glEnableVertexAttribArray(attr_mvMatrix + col));
+            }
+
+            GL_CHECK(glVertexAttribPointer(attr_colorShininess, 4, GL_FLOAT, GL_FALSE,
+                                           sizeof (SphereInstance),
+                                           (void *) offsetof(SphereInstance, colorShininess)));
+            GL_CHECK(glVertexAttribDivisor(attr_colorShininess, 1));
+            GL_CHECK(glEnableVertexAttribArray(attr_colorShininess));
+
+            GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+
+            glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
+            glt::Uniforms(*sphereInstanced2Shader)
+                .optional("pMatrix", gt.projectionMatrix())
+                .optional("ecLight", sphereUniforms.ecLightPos)
+                .optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
+
+            sphereBatches[lod].drawInstanced(num);
+            sphereBatches[lod].bind();
+
+            for (uint32 col = 0; col < 4; ++col) {
+                GL_CHECK(glDisableVertexAttribArray(attr_mvMatrix + col));
+            }
+
+
+            GL_CHECK(glDisableVertexAttribArray(attr_colorShininess));
+            GL_CHECK(glBindVertexArray(0));
+            GL_CHECK(glDeleteBuffers(1, &per_instance_vbo));
+#endif 
         }
     }
 }
@@ -482,11 +552,21 @@ void Game::render_sphere(const Sphere& s, const SphereModel& m) {
 
     if (render_spheres_instanced) {
 
+#ifdef SPHERE_INSTANCED_TEXTURED
+
         SphereInstance inst;
         inst.pos = s.center;
         inst.rad = s.r;
         inst.col_rgb = vec3(m.color.vec4());
         inst.shininess = m.shininess;
+
+#elif defined(SPHERE_INSTANCED_ARRAY)
+
+        SphereInstance inst;
+        inst.mvMatrix = engine->renderManager().geometryTransform().mvMatrix();
+        inst.colorShininess = vec4(vec3(m.color.vec4()), m.shininess);
+        
+#endif
         
         sphere_instances[lod.level].push_back(inst);
         

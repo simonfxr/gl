@@ -17,13 +17,9 @@
 #include "math/math.hpp"
 
 #include "glt/utils.hpp"
-#include "glt/RenderManager.hpp"
-#include "glt/ShaderManager.hpp"
-#include "glt/ShaderProgram.hpp"
 #include "glt/Uniforms.hpp"
 #include "glt/Frame.hpp"
 #include "glt/color.hpp"
-#include "glt/Transformations.hpp"
 
 #include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
@@ -65,11 +61,11 @@ static const glt::Attrs<Vertex2> vertex2Attrs(
 
 #elif defined(MESH_MESH)
 
-DEFINE_VERTEX_ATTRS(vertexAttrs, Vertex,
+DEFINE_VERTEX_DESC(Vertex,
                     VERTEX_ATTR(Vertex, position),
                     VERTEX_ATTR(Vertex, normal));
 
-DEFINE_VERTEX_ATTRS(vertex2Attrs, Vertex2,
+DEFINE_VERTEX_DESC(Vertex2,
                     VERTEX_ATTR(Vertex2, position),
                     VERTEX_ATTR(Vertex2, normal),
                     VERTEX_ATTR(Vertex2, texCoord));
@@ -128,10 +124,6 @@ struct Anim {
 
     Anim(ge::Engine& e) :
         engine(e),
-        groundModel(vertexAttrs),
-        teapotModel(vertexAttrs),
-        sphereModel(vertexAttrs),
-        cubeModel(vertex2Attrs)
         {}
 
     void linkEvents(const Event<InitEvent>& e);
@@ -158,7 +150,7 @@ std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
     return out << "(" << v.x << ", " << v.y << ", " << v.z << ")";
 }
 
-void Anim::linkEvents(const Event<InitEvent>& e) {
+void Anim::link() {
     engine.events().handleInput.reg(makeEventHandler(this, &Anim::handleInput));
     engine.events().animate.reg(makeEventHandler(this, &Anim::animate));
     engine.events().render.reg(makeEventHandler(this, &Anim::renderScene));
@@ -169,10 +161,7 @@ void Anim::linkEvents(const Event<InitEvent>& e) {
     e.info.success = true;
 }
 
-
 void Anim::init(const Event<InitEvent>& e) {
-    engine.renderManager().setDefaultRenderTarget(&engine.window().renderTarget());
-
     engine.window().showMouseCursor(false);
     engine.window().grabMouse(true);
     
@@ -252,21 +241,6 @@ void Anim::init(const Event<InitEvent>& e) {
     teapot2.material.shininess = 35;
     teapot2.color = glt::color(0xFF, 0x8C, 0x00);
 
-    Ref<glt::ShaderProgram> teapot = engine.shaderManager().defineProgram("teapot");
-    teapot->addShaderFilePair("teapot");
-    teapot->bindAttribute("position", vertexAttrs.index(offsetof(Vertex, position)));
-    teapot->bindAttribute("normal", vertexAttrs.index(offsetof(Vertex, normal)));
-    if (!teapot->tryLink())
-        return;
-
-    Ref<glt::ShaderProgram> teapotTex = engine.shaderManager().defineProgram("teapotTextured");
-    teapotTex->addShaderFilePair("teapot_textured");
-    teapotTex->bindAttribute("position", vertex2Attrs.index(offsetof(Vertex2, position)));
-    teapotTex->bindAttribute("normal", vertex2Attrs.index(offsetof(Vertex2, normal)));
-    teapotTex->bindAttribute("texCoord", vertex2Attrs.index(offsetof(Vertex2, texCoord)));
-    if (!teapotTex->tryLink())
-        return;
-
     e.info.success = true;
 }
 
@@ -289,12 +263,8 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
 
     glt::RenderManager& rm = engine.renderManager();
 
-    rm.setCameraMatrix(glt::transformationWorldToLocal(camera));
-
     light = lightPosition(interpolation);
     
-    rm.beginScene();
-
     ecLight = rm.geometryTransform().transformPoint(light);
 
     {
@@ -328,24 +298,20 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
 //    renderGround();
     renderTeapot(teapot1);
     renderTeapot(teapot2);
-    
-    rm.endScene();
 }
 
 void Anim::setupTeapotShader(const std::string& progname, const vec4_t& surfaceColor, const MaterialProperties& mat) {
     glt::RenderManager& rm = engine.renderManager();
-    Ref<glt::ShaderProgram> progRef = engine.shaderManager().program(progname);
-    if (!progRef) {
-        ERR(("undefined program: "  + progname).c_str());
+    Ref<glt::ShaderProgram> prog = engine.shaderManager().program(progname);
+    if (!prog) {
+        ASSERT_MSG(!prog, "undefined program: "  + progname);
         return;
     }
 
-    glt::ShaderProgram& prog = *progRef;
+    ASSERT(!prog->wasError());
+    ASSERT(prog->validate());
 
-    ASSERT(!prog.wasError());
-    ASSERT(prog.validate());
-
-    prog.use();
+    prog->use();
 
     vec4_t materialSelector = vec4((shade_mode & SHADE_MODE_AMBIENT) != 0,
                                    (shade_mode & SHADE_MODE_DIFFUSE) != 0,
@@ -357,7 +323,7 @@ void Anim::setupTeapotShader(const std::string& progname, const vec4_t& surfaceC
     vec4_t vm = vec4(mat.ambientContribution, mat.diffuseContribution,
                      specular_factor, mat.shininess);
     
-    glt::Uniforms us(prog);
+    glt::Uniforms us(*prog);
     us.optional("projectionMatrix", rm.geometryTransform().projectionMatrix());
     us.optional("mvMatrix", rm.geometryTransform().mvMatrix());
     us.optional("normalMatrix", rm.geometryTransform().normalMatrix());
@@ -546,179 +512,12 @@ void Anim::keyStateChanged(const Event<KeyChanged>& e) {
 
 int main(int argc, char *argv[]) {
     EngineOpts opts;
-    opts.parseOpts(&argc, &argv);
     Engine engine;
     Anim anim(engine);
-    opts.inits.init.reg(makeEventHandler(&anim, &Anim::linkEvents));
+
+    opts.parseOpts(&argc, &argv);
+    anim.link();
     opts.inits.init.reg(makeEventHandler(&anim, &Anim::init));
+    
     return engine.run(opts);
-}
-
-static void makeUnitCube(CubeMesh2& cube) {
-    Vertex2 v;
-    QUAD_MESH(cube);
-
-    v.normal = vec3( 0.0f, 0.0f, 1.0f);					
-    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3(0.f, 0.f,  1.0f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3( 1.0f, 0.f,  1.0f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3( 1.0f,  1.0f,  1.0f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3(0.f,  1.0f,  1.0f); ADD_VERTEX(cube, v);
-
-    v.normal = vec3( 0.0f, 0.0f,0.f);					
-    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3(0.f, 0.f, 0.f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3(0.f,  1.0f, 0.f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3( 1.0f,  1.0f, 0.f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3( 1.0f, 0.f, 0.f); ADD_VERTEX(cube, v);
-
-    v.normal = vec3( 0.0f, 1.0f, 0.0f);					
-    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3(0.f,  1.0f, 0.f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3(0.f,  1.0f,  1.0f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3( 1.0f,  1.0f,  1.0f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3( 1.0f,  1.0f, 0.f); ADD_VERTEX(cube, v);
-
-    v.normal = vec3( 0.0f,0.f, 0.0f);					
-    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3(0.f, 0.f, 0.f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3( 1.0f, 0.f, 0.f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3( 1.0f, 0.f,  1.0f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3(0.f, 0.f,  1.0f); ADD_VERTEX(cube, v);
-
-    v.normal = vec3( 1.0f, 0.0f, 0.0f);					
-    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3( 1.0f, 0.f, 0.f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3( 1.0f,  1.0f, 0.f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3( 1.0f,  1.0f,  1.0f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3( 1.0f, 0.f,  1.0f); ADD_VERTEX(cube, v);
-
-    v.normal = vec3(0.f, 0.0f, 0.0f);					
-    v.texCoord = vec2(0.0f, 0.0f); v.position = vec3(0.f, 0.f, 0.f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(1.0f, 0.0f); v.position = vec3(0.f, 0.f,  1.0f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(1.0f, 1.0f); v.position = vec3(0.f,  1.0f,  1.0f); ADD_VERTEX(cube, v);
-    v.texCoord = vec2(0.0f, 1.0f); v.position = vec3(0.f,  1.0f, 0.f); ADD_VERTEX(cube, v);
-
-    FREEZE_MESH(cube);
-}
-
-static void addTriangle(Mesh& s, const vec3_t vertices[3], const vec3_t normals[3], const vec2_t texCoords[3]) {
-    UNUSED(texCoords);
-    
-    for (uint32 i = 0; i < 3; ++i) {
-        Vertex v;
-        v.position = vertices[i];
-        v.normal = normals[i];
-        ADD_VERTEX(s, v);
-    }
-}
-
-// from the GLTools library (OpenGL Superbible)
-static void gltMakeSphere(Mesh& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
-{
-    GLfloat drho = (GLfloat)(3.141592653589) / (GLfloat) iStacks;
-    GLfloat dtheta = 2.0f * (GLfloat)(3.141592653589) / (GLfloat) iSlices;
-    GLfloat ds = 1.0f / (GLfloat) iSlices;
-    GLfloat dt = 1.0f / (GLfloat) iStacks;
-    GLfloat t = 1.0f;	
-    GLfloat s = 0.0f;
-    GLint i, j;     // Looping variables
-    
-    for (i = 0; i < iStacks; i++) 
-    {
-        GLfloat rho = (GLfloat)i * drho;
-        GLfloat srho = (GLfloat)(sin(rho));
-        GLfloat crho = (GLfloat)(cos(rho));
-        GLfloat srhodrho = (GLfloat)(sin(rho + drho));
-        GLfloat crhodrho = (GLfloat)(cos(rho + drho));
-		
-        // Many sources of OpenGL sphere drawing code uses a triangle fan
-        // for the caps of the sphere. This however introduces texturing 
-        // artifacts at the poles on some OpenGL implementations
-        s = 0.0f;
-        vec3_t vVertex[4];
-        vec3_t vNormal[4];
-        vec2_t vTexture[4];
-
-        for ( j = 0; j < iSlices; j++) 
-        {
-            GLfloat theta = (j == iSlices) ? 0.0f : j * dtheta;
-            GLfloat stheta = (GLfloat)(-sin(theta));
-            GLfloat ctheta = (GLfloat)(cos(theta));
-			
-            GLfloat x = stheta * srho;
-            GLfloat y = ctheta * srho;
-            GLfloat z = crho;
-        
-            vTexture[0][0] = s;
-            vTexture[0][1] = t;
-            vNormal[0][0] = x;
-            vNormal[0][1] = y;
-            vNormal[0][2] = z;
-            vVertex[0][0] = x * fRadius;
-            vVertex[0][1] = y * fRadius;
-            vVertex[0][2] = z * fRadius;
-			
-            x = stheta * srhodrho;
-            y = ctheta * srhodrho;
-            z = crhodrho;
-
-            vTexture[1][0] = s;
-            vTexture[1][1] = t - dt;
-            vNormal[1][0] = x;
-            vNormal[1][1] = y;
-            vNormal[1][2] = z;
-            vVertex[1][0] = x * fRadius;
-            vVertex[1][1] = y * fRadius;
-            vVertex[1][2] = z * fRadius;
-			
-
-            theta = ((j+1) == iSlices) ? 0.0f : (j+1) * dtheta;
-            stheta = (GLfloat)(-sin(theta));
-            ctheta = (GLfloat)(cos(theta));
-			
-            x = stheta * srho;
-            y = ctheta * srho;
-            z = crho;
-        
-            s += ds;
-            vTexture[2][0] = s;
-            vTexture[2][1] = t;
-            vNormal[2][0] = x;
-            vNormal[2][1] = y;
-            vNormal[2][2] = z;
-            vVertex[2][0] = x * fRadius;
-            vVertex[2][1] = y * fRadius;
-            vVertex[2][2] = z * fRadius;
-			
-            x = stheta * srhodrho;
-            y = ctheta * srhodrho;
-            z = crhodrho;
-
-            vTexture[3][0] = s;
-            vTexture[3][1] = t - dt;
-            vNormal[3][0] = x;
-            vNormal[3][1] = y;
-            vNormal[3][2] = z;
-            vVertex[3][0] = x * fRadius;
-            vVertex[3][1] = y * fRadius;
-            vVertex[3][2] = z * fRadius;
-
-            addTriangle(sphereBatch, vVertex, vNormal, vTexture);
-			
-            // Rearrange for next triangle
-            memcpy(&vVertex[0], &vVertex[1], sizeof(vec3_t));
-            memcpy(&vNormal[0], &vNormal[1], sizeof(vec3_t));
-            memcpy(&vTexture[0], &vTexture[1], sizeof(vec2_t));
-			
-            memcpy(&vVertex[1], &vVertex[3], sizeof(vec3_t));
-            memcpy(&vNormal[1], &vNormal[3], sizeof(vec3_t));
-            memcpy(&vTexture[1], &vTexture[3], sizeof(vec2_t));
-					
-            addTriangle(sphereBatch, vVertex, vNormal, vTexture);		       
-        }
-        t -= dt;
-    }
-
-    FREEZE_MESH(sphereBatch);
-}
-
-static void makeSphere(Mesh& sphere, float rad, int32 stacks, int32 slices) {
-    sphere.primType(GL_TRIANGLES);
-    gltMakeSphere(sphere, rad, stacks, slices);
 }

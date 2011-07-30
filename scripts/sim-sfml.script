@@ -5,6 +5,7 @@ bindShader "sphere" "sphere.vert" "sphere.frag" 0 "vertex" 1 "normal"
 bindShader "identity" "identity.vert" "identity.frag" 0 "vertex" 1 "normal"
 bindShader "postproc" "postproc.vert" "postproc.frag" 0 "vertex" 1 "normal"
 bindShader "sphereInstanced" "sphere_instanced.vert" "sphere_instanced.frag" 0 "vertex" 1 "normal"
+bindShader "sphereInstanced2" "sphere_instanced2.vert" "sphere_instanced.frag" 0 "vertex" 1 "normal" 2 "colorShininess" 3 "mvMatrix"
 
 perspectiveProjection 35 0.5 200
 

@@ -241,17 +241,6 @@ add_executable(sim-sfml
 
 target_link_libraries(sim-sfml sys err glt ge)
 
-# find_library(VOXEL_LIB voxel PATHS "${CMAKE_SOURCE_DIR}/ext/lib")
-# find_library(VOXEL_HS_LIB voxel-hs PATHS "${CMAKE_SOURCE_DIR}/ext/lib")
-
-# find_library(HS_GMP HSinteger-gmp-0.2.0.3-ghc7.0.3 PATHS /usr/lib/ghc-7.0.3/integer-gmp-0.2.0.3)
-# find_library(HS_PRIM HSghc-prim-0.2.0.0-ghc7.0.3 PATHS /usr/lib/ghc-7.0.3/ghc-prim-0.2.0.0)
-# find_library(HS_FFI HSffi-ghc7.0.3 PATHS /usr/lib/ghc-7.0.3)
-# find_library(HS_BASE HSbase-4.3.1.0-ghc7.0.3 PATHS /usr/lib/ghc-7.0.3/base-4.3.1.0)
-
-
-#link_libraries(${HS_GMP} ${HS_PRIM} ${HS_FFI} ${HS_BASE})
-
 add_executable(voxel-world
   voxel-world.cpp
   defs.h
@@ -260,30 +249,6 @@ add_executable(voxel-world
   ${DATA_SRC})
 
 target_link_libraries(voxel-world sys err glt ge)
-# target_link_libraries(voxel-world ${VOXEL_LIB} ${VOXEL_HS_LIB})
-
-add_executable(engine-test
-  engine-test.cpp
-  defs.h
-  
-  ${MATH_SRC}
-  ${DATA_SRC})
-
-add_executable(tokenizer
-  tokenizer.cpp
-  defs.h
-
-  ${MATH_SRC}
-  ${DATA_SRC})
-
-# add_executable(simple
-#   simple.cpp
-#   defs.h
-
-#   ${MATH_SRC}
-#   ${DATA_SRC})
-
-# target_link_libraries(simple sys glt ge)
 
 add_executable(queryExtension
   queryExtension.cpp
@@ -295,5 +260,14 @@ add_executable(math_test
   math_test.cpp)
 
 target_link_libraries(math_test sys err)
-#target_link_libraries(math_test glt)
 
+add_executable(teapot
+  teapot.cpp
+  defs.h
+  
+  teapot/mesh.h
+  teapot/parse_sply.hpp
+  teapot/parse_sply.cpp)
+
+target_link_libraries(teapot sys glt err ge)
+  

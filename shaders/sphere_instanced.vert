@@ -10,21 +10,25 @@ in vec3 normal;
 
 out vec3 ecPosition;
 out vec3 ecNormal;
-flat out int instanceID;
-/* flat out vec3 color; */
-/* flat out float shininess; */
+out vec3 color;
+out float shininess;
+
+vec3 colorGradient(vec3 color, vec3 pos) {
+    return color * vec3(pos.x * 0.5 + 0.5, pos.y * 0.5 + 0.5, pos.z * 0.5 + 0.5);
+}
 
 void main() {
     vec4 data1 = texelFetch(instanceData, gl_InstanceID * 2, 0);
+    vec4 data2 = texelFetch(instanceData, gl_InstanceID * 2 + 1, 0);
+    
     vec3 offset = data1.xyz;
     float rad = data1.w;
-    /* vec4 data2 = texelFetch(instanceData, gl_InstanceID * 2 + 1, 0); */
-    /* color = data2.rgb; */
-    /* shininess = data2.a; */
+
+    color = colorGradient(data2.rgb, position.xyz);
+    shininess = data2.a;
 
     vec4 ecPos4 = vMatrix * vec4(vec3(position) * rad + offset, 1.0);
     ecPosition = vec3(ecPos4);
     ecNormal = normalMatrix * normal;
     gl_Position = pMatrix * ecPos4;
-    instanceID = gl_InstanceID;
 }

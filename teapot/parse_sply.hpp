@@ -2,7 +2,7 @@
 #define PARSE_SPLY_HPP
 
 #include "defs.h"
-#include "mesh.h"
+#include "teapot/mesh.h"
 #include "math/vec3/type.hpp"
 
 struct Vertex {

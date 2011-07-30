@@ -41,7 +41,7 @@ ShaderManager::ShaderManager() :
     self(new Data)
 {
     self->err = &std::cerr;
-    self->verbosity = OnlyErrors;
+    self->verbosity = Info;
     self->shader_version = 0;
     self->shader_profile = CoreProfile;
     self->cache_so = true;

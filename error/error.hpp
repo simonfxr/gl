@@ -58,12 +58,12 @@ void printError(std::ostream& out, const char *type, const Location& loc, LogLev
 #define DEBUG_ERR(msg) UNUSED(0)
 #endif
 
-#define DEBUG_ASSERT(x) DEBUG_ASSERT_MSG(x, #x)
+#define DEBUG_ASSERT(x) DEBUG_ASSERT_MSG(x, AS_STR(x))
 
 #define ASSERT_MSG(x, msg) _ASSERT(x, err::Assertion, msg)
-#define ASSERT(x) ASSERT_MSG(x, #x)
+#define ASSERT(x) ASSERT_MSG(x, AS_STR(x))
 #define ASSERT_MSG_EXPR(x, msg, expr) _ASSERT_EXPR(x, err::Assertion, msg, expr)
-#define ASSERT_EXPR(x, expr) ASSERT_MSG_EXPR(x, #x, expr)
+#define ASSERT_EXPR(x, expr) ASSERT_MSG_EXPR(x, AS_STR(x), expr)
 
 #define ERR(msg) _ERROR(err::Error, msg)
 #define WARN(msg) _ERROR(err::Warn, msg)

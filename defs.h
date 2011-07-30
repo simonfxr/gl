@@ -75,6 +75,7 @@
 
 #define CONCAT3(a, b, c) CONCAT(a, CONCAT(b, c))
 
+#define AS_STR(a) AS_STRING(a)
 #define AS_STRING(a) AS_STRING_AUX1(a)
 #define AS_STRING_AUX1(a) AS_STRING_AUX2(a)
 #define AS_STRING_AUX2(a) AS_STRING_AUX3(a)

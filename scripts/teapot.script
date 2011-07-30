@@ -1,0 +1,23 @@
+load "default.script"
+
+bindShader "teapot" "teapot.vert" "teapot.frag" 0 "position" 1 "normal"
+bindShader "teapotTextured" "teapot_textured.vert" "teapot_textured.frag" 0 "position" 1 "normal" 2 "texCoord"
+
+perspectiveProjection 35 1 800.0
+
+bindKey [W] { moveCamera 12 }
+bindKey [D] { moveCamera 3 }
+bindKey [S] { moveCamera 6 }
+bindKey [A] { moveCamera 9 }
+
+bindKey [+U] { saveCameraFrame "teapot.cam" }
+bindKey [+I] { loadCameraFrame "teapot.cam" }
+
+bindKey [+O] { incGamma -0.1 }
+bindKey [+P] { incGamma +0.1 }
+
+postInit { 
+    setCameraStepLength 1
+    setCameraMouseSensitivity 0.00075
+    loadCameraFrame "teapot.cam"
+}
