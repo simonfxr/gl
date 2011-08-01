@@ -5,7 +5,7 @@
 #include "math/mat4/defns.hpp"
 #include "math/vec4.hpp"
 #include "math/vec3.hpp"
-#include "math/math.hpp"
+#include "math/real.hpp"
 
 #include "error/error.hpp"
 

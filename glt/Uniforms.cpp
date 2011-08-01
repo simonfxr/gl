@@ -110,12 +110,12 @@ void set(GLint loc, const float& value) {
 
 template <>
 void set(GLint loc, const vec4_t& value) {
-    glUniform4fv(loc, 1, &value.x);
+    glUniform4fv(loc, 1, value.components);
 }
 
 template <>
 void set(GLint loc, const vec3_t& value) {
-    glUniform3fv(loc, 1, &value.x);
+    glUniform3fv(loc, 1, value.components);
 }
 
 template <>

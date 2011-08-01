@@ -31,12 +31,12 @@ struct color {
         : r(c.r), g(c.g), b(c.b), a(c.a) {}
 
     explicit color(const math::vec4_t& v)
-        : r(byte(255 * v.x)), g(byte(255 * v.y)),
-          b(byte(255 * v.z)), a(byte(255 * v.w)) {}
+        : r(byte(255 * v[0])), g(byte(255 * v[1])),
+          b(byte(255 * v[2])), a(byte(255 * v[3])) {}
     
     explicit color(const math::vec3_t& v)
-        : r(byte(255 * v.x)), g(byte(255 * v.y)),
-          b(byte(255 * v.z)), a(255) {}
+        : r(byte(255 * v[0])), g(byte(255 * v[1])),
+          b(byte(255 * v[2])), a(255) {}
 
     color& operator =(const color& c) {
         r = c.r; g = c.g; b = c.b; a = c.a;

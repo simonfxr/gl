@@ -148,21 +148,7 @@ void MeshBase::free() {
         --glstate.num_vertex_arrays;
     }
 
-    GLuint names[2] = {vertex_buffer_name, 0};
-    int len = 0;
-
-    if (vertex_buffer_name != 0) {
-        names[len++] = vertex_buffer_name;
-        --glstate.num_buffers;
-    }
-    
-    if (element_buffer_name != 0) {
-        names[len++] = element_buffer_name;
-        --glstate.num_buffers;
-    }
-
-    if (len > 0)
-        GL_CHECK(glDeleteBuffers(len, names));
+    freeGPU();
     
     if (owning_vertices)
         ::free(vertex_data);
@@ -460,7 +446,21 @@ void MeshBase::freeHost() {
 }
 
 void MeshBase::freeGPU() {
-    WARN("not yet implemented");
+    GLuint names[2] = {vertex_buffer_name, 0};
+    int len = 0;
+
+    if (vertex_buffer_name != 0) {
+        names[len++] = vertex_buffer_name;
+        --glstate.num_buffers;
+    }
+    
+    if (element_buffer_name != 0) {
+        names[len++] = element_buffer_name;
+        --glstate.num_buffers;
+    }
+
+    if (len > 0)
+        GL_CHECK(glDeleteBuffers(len, names));
 }
 
 } // namespace glt

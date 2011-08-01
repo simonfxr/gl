@@ -135,12 +135,12 @@ World::~World() {
 bool World::init() {
     const vec3_t dim = ROOM_DIMENSIONS * 0.5f;
 
-    self->walls[0] = plane(vec3(+1.f, 0.f, 0.f), ROOM_DIMENSIONS.x * -0.5f); // left 
-    self->walls[1] = plane(vec3(-1.f, 0.f, 0.f), ROOM_DIMENSIONS.x * -0.5f); // right
-    self->walls[2] = plane(vec3(0.f, +1.f, 0.f), ROOM_DIMENSIONS.y * -0.5f); // bot  
-    self->walls[3] = plane(vec3(0.f, -1.f, 0.f), ROOM_DIMENSIONS.y * -0.5f); // top  
-    self->walls[4] = plane(vec3(0.f, 0.f, +1.f), ROOM_DIMENSIONS.z * -0.5f); // far      
-    self->walls[5] = plane(vec3(0.f, 0.f, -1.f), ROOM_DIMENSIONS.z * -0.5f); // near
+    self->walls[0] = plane(vec3(+1.f, 0.f, 0.f), ROOM_DIMENSIONS[0] * -0.5f); // left 
+    self->walls[1] = plane(vec3(-1.f, 0.f, 0.f), ROOM_DIMENSIONS[0] * -0.5f); // right
+    self->walls[2] = plane(vec3(0.f, +1.f, 0.f), ROOM_DIMENSIONS[1] * -0.5f); // bot  
+    self->walls[3] = plane(vec3(0.f, -1.f, 0.f), ROOM_DIMENSIONS[1] * -0.5f); // top  
+    self->walls[4] = plane(vec3(0.f, 0.f, +1.f), ROOM_DIMENSIONS[2] * -0.5f); // far      
+    self->walls[5] = plane(vec3(0.f, 0.f, -1.f), ROOM_DIMENSIONS[2] * -0.5f); // near
 
     Particle world;
     world.invMass = 0.f;
@@ -158,12 +158,6 @@ bool World::init() {
 
 uint32 World::numSpheres() {
     return self->spheres.size();
-}
-
-namespace {
-std::ostream& operator <<(std::ostream& out, const vec4_t& a) {
-    return out << "(" << a[0] << ", " << a[1] << ", " << a[2] << ", " << a[3] << ")";
-}
 }
 
 void World::simulate(float dt) {

@@ -1,89 +1,89 @@
-#if defined(MATH_MATH_INLINE) || !defined(MATH_INLINE)
+#if defined(MATH_REAL_INLINE) || !defined(MATH_INLINE)
 
-#include "math/math/defns.hpp"
+#include "math/real/defns.hpp"
 #include <cmath>
 
 MATH_BEGIN_NAMESPACE
 
-float sqrt(float x) { 
+real sqrt(real x) { 
     return sqrtf(x);
 }
 
-float recip(float x) {
+real recip(real x) {
     return 1.f / x;
 }
 
-float inverse(float x) {
+real inverse(real x) {
     return recip(x);
 }
 
-float rsqrt(float x) {
+real rsqrt(real x) {
     return recip(sqrt(x));
 }
 
-float sin(float rad) {
+real sin(real rad) {
     return sinf(rad);
 }
 
-float cos(float rad) {
+real cos(real rad) {
     return cosf(rad);
 }
 
-float tan(float rad) {
+real tan(real rad) {
     return tanf(rad);
 }
 
-float asin(float x) {
+real asin(real x) {
     return asinf(x);
 }
 
-float acos(float x) {
+real acos(real x) {
     return acosf(x);
 }
 
-float atan(float x) {
+real atan(real x) {
     return atanf(x);
 }
 
-float atan2(float x, float y) {
+real atan2(real x, real y) {
     return atan2f(x, y);
 }
 
-void sincos(float rad, float& out_sin, float& out_cos) {
+void sincos(real rad, real& out_sin, real& out_cos) {
     out_sin = sin(rad);
     out_cos = cos(rad);
 }
 
-float cotan(float rad) {
+real cotan(real rad) {
     return recip(tan(rad));
 }
 
-float abs(float x) {
+real abs(real x) {
     return fabsf(x);
 }
 
-float length(float x) {
+real length(real x) {
     return abs(x);
 }
 
-float distance(float x, float y) {
+real distance(real x, real y) {
     return length(x - y);
 }
 
-float squared(float x) {
+real squared(real x) {
     return x * x;
 }
 
-float cubed(float x) {
+real cubed(real x) {
     return x * x * x;
 }
 
-float pow(float x, int32 n) {
+real pow(real x, int32 n) {
     if (n == 0) return 1.f;
     
     uint32 k = n < 0 ? -n : n;
-    float a = 1.f;
-    float p = x;
+    real a = 1.f;
+    real p = x;
 
     while (k > 1) {
         if (k % 2 == 1)
@@ -92,33 +92,33 @@ float pow(float x, int32 n) {
         p *= p;
     }
 
-    float r = a * p;
+    real r = a * p;
     return n < 0 ? recip(r) : r;
 }
 
-float pow(float x, float y) {
+real pow(real x, real y) {
     return powf(x, y);
 }
 
 
-int32 signum(float x) {
+int32 signum(real x) {
     return x < 0.f ? -1 :
            x > 0.f ? +1 :
                       0;
 }
 
-// bool signbit(float x) {
+// bool signbit(real x) {
 //     return x < 0.f;
 // }
 
-float wrapPi(float x) {
+real wrapPi(real x) {
     x += PI;
     x -= floor(x * (1 / (2 * PI))) * (2 * PI);
     x -= PI;
     return x;
 }
 
-float wrap(float x, float period) {
+real wrap(real x, real period) {
 #ifdef MATH_MATH_INLINE
     if (unlikely(x < -period || x > period))
         return fmodf(x, period);
@@ -129,36 +129,36 @@ float wrap(float x, float period) {
 #endif
 }
 
-float degToRad(float deg) {
+real degToRad(real deg) {
     return deg * (PI / 180.f);
 }
 
-float radToDeg(float rad) {
+real radToDeg(real rad) {
     return rad * (180.f / PI);
 }
 
-float max(float x, float y) {
+real max(real x, real y) {
     return x < y ? y : x;
 }
 
-float min(float x, float y) {
+real min(real x, real y) {
     return x > y ? y : x;
 }
 
-float saturate(float x) {
+real saturate(real x) {
     return clamp(x, 0.f, 1.f);
 }
 
-float clamp(float x, float lo, float hi) {
+real clamp(real x, real lo, real hi) {
     return x < lo ? lo : (x > hi ? hi : x);
 }
 
-float smoothstep(float lo_edge, float hi_edge, float x) {
+real smoothstep(real lo_edge, real hi_edge, real x) {
     x = saturate((x - lo_edge)/(hi_edge - lo_edge)); 
     return x*x*(3 - 2*x);
 }
 
-float lerp(float a, float b, float t) {
+real lerp(real a, real b, real t) {
     return a + t * (b - a);
 }
 

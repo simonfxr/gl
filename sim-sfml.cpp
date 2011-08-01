@@ -15,7 +15,8 @@
 #include "math/ivec3.hpp"
 #include "math/mat4.hpp"
 #include "math/mat3.hpp"
-#include "math/math.hpp"
+#include "math/real.hpp"
+#include "math/io.hpp"
 
 #include "glt/utils.hpp"
 #include "glt/primitives.hpp"
@@ -94,10 +95,6 @@ namespace {
 
 typedef glt::Mesh<Vertex> Mesh;
 typedef glt::CubeMesh<Vertex> CubeMesh;
-
-std::ostream& LOCAL operator << (std::ostream& out, const vec3_t& v) {
-    return out << "(" << v.x << ";" << v.y << ";" << v.z << ")";
-}
 
 } // namespace anon
 
@@ -268,10 +265,6 @@ static std::string to_string(T x) {
     std::stringstream out;
     out << x;
     return out.str();
-}
-
-std::ostream& operator <<(std::ostream& out, const vec4_t& a) {
-    return out << "(" << a[0] << ", " << a[1] << ", " << a[2] << ", " << a[3] << ")";
 }
 
 void Game::windowResized(const ge::Event<ge::WindowResized>& ev) {
@@ -527,14 +520,15 @@ SphereLOD Game::calc_sphere_lod(const Sphere& s) {
 
     // near upper right corner of frustm (view coord)
     vec4_t nur_corner = gt.inverseProjectionMatrix() * vec4(-1.f, -1.f, -1.f, 1.f);
-    float x_max = abs(nur_corner.x);
-    float y_max = abs(nur_corner.y);
-    float z_min = abs(nur_corner.z);
+    vec3_t max = abs(vec3(nur_corner));
+    float x_max = abs(nur_corner[0]);
+    float y_max = abs(nur_corner[1]);
+    float z_min = abs(nur_corner[2]);
     
     float size = min(x_max, y_max);
         
     // calculate lod, use projected radius on screen
-    float r_proj = s.r / ecCoord.z * z_min;
+    float r_proj = s.r / ecCoord[2] * z_min;
     float screen_rad = r_proj / size;
 
     screen_rad *= 2;
@@ -574,7 +568,7 @@ void Game::render_sphere(const Sphere& s, const SphereModel& m) {
         glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
         const vec3_t& pos = s.center;
         glt::SavePoint sp(gt.save());
-        gt.translate(vec3(pos.x, pos.y, pos.z));
+        gt.translate(pos);
         gt.scale(vec3(s.r));
 
         Ref<glt::ShaderProgram> sphereShader = engine->shaderManager().program("sphere");

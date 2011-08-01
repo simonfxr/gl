@@ -82,7 +82,6 @@ if(SYS_UNIX)
   link_libraries(rt)
 endif()
 
-#link_directories("/usr/local/lib")
 find_package(SFML 2 COMPONENTS system window graphics REQUIRED)
 include_directories(${SFML_INCLUDE_DIR})
 link_libraries(${SFML_LIBRARIES})
@@ -105,7 +104,7 @@ set(MATH_SRC
   math/vec4.hpp
   math/mat3.hpp
   math/mat4.hpp
-  math/math.hpp
+  math/real.hpp
   math/plane.hpp
   math/plane.cpp
   math/ivec3.hpp
@@ -241,6 +240,8 @@ add_executable(sim-sfml
 
 target_link_libraries(sim-sfml sys err glt ge)
 
+link_directories("${CMAKE_SOURCE_DIR}/ext/lib")
+
 add_executable(voxel-world
   voxel-world.cpp
   defs.h
@@ -248,7 +249,7 @@ add_executable(voxel-world
   ${MATH_SRC}
   ${DATA_SRC})
 
-target_link_libraries(voxel-world sys err glt ge)
+target_link_libraries(voxel-world sys err glt ge voxel voxel-hs)
 
 add_executable(queryExtension
   queryExtension.cpp
@@ -261,13 +262,13 @@ add_executable(math_test
 
 target_link_libraries(math_test sys err)
 
-add_executable(teapot
-  teapot.cpp
-  defs.h
+# add_executable(teapot
+#   teapot.cpp
+#   defs.h
   
-  teapot/mesh.h
-  teapot/parse_sply.hpp
-  teapot/parse_sply.cpp)
+#   teapot/mesh.h
+#   teapot/parse_sply.hpp
+#   teapot/parse_sply.cpp)
 
-target_link_libraries(teapot sys glt err ge)
+# target_link_libraries(teapot sys glt err ge)
   

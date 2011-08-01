@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "defs.h"
-#include "math/math.hpp"
+#include "math/real.hpp"
 #include "error/error.hpp"
 #include "glt/utils.hpp"
 #include "ge/GameWindow.hpp"

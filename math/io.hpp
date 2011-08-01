@@ -9,11 +9,13 @@
 #include <ostream>
 
 std::ostream& operator <<(std::ostream& out, const math::vec3_t& v) {
-    return out << "[" << v.x << " " << v.y << " " << v.z << "]";
+    return out << "[" << v[0] << " " << v[1] << " " << v[2] << "]";
+    return out << "[" << v[0] << " " << v[1] << " " << v[2] << "]";
 }
 
 std::ostream& operator <<(std::ostream& out, const math::vec4_t& v) {
-    return out << "[" << v.x << " " << v.y << " " << v.z << " " << v.w << "]";
+    return out << "[" << v[0] << " " << v[1] << " " << v[2] << " " << v[3] << "]";
+    return out << "[" << v[0] << " " << v[1] << " " << v[2] << " " << v[3] << "]";
 }
 
 std::ostream& operator <<(std::ostream& out, const math::mat3_t& m) {

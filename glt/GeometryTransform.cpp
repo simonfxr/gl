@@ -163,9 +163,9 @@ void GeometryTransform::restore(const SavePointArgs& sp) {
 }
 
 void GeometryTransform::scale(const vec3_t& dim) {
-    self->modelMatrices[self->depth][0] *= dim.x;
-    self->modelMatrices[self->depth][1] *= dim.y;
-    self->modelMatrices[self->depth][2] *= dim.z;
+    self->modelMatrices[self->depth][0] *= dim[0];
+    self->modelMatrices[self->depth][1] *= dim[1];
+    self->modelMatrices[self->depth][2] *= dim[2];
     self->modelUpdated();
 }
 

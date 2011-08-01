@@ -2,7 +2,7 @@
 
 #include "math/quat/defns.hpp"
 #include "math/vec4.hpp"
-#include "math/math.hpp"
+#include "math/real.hpp"
 
 MATH_BEGIN_NAMESPACE
 

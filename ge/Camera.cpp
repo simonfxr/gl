@@ -1,6 +1,6 @@
 #include "ge/Camera.hpp"
 
-#include "math/math.hpp"
+#include "math/real.hpp"
 #include "math/vec3.hpp"
 
 #include <fstream>
@@ -98,8 +98,8 @@ static void mouseLook(Camera *cam, const Event<MouseMoved>& ev) {
 //    std::cerr << "mouse look" << std::endl;
     vec2_t rot = vec2(ev.info.dx, ev.info.dy) * cam->mouse_sensitivity;
 //    std::cerr << "dx: " << ev.info.dx << " dy: " << ev.info.dy << " rotY: " << rot.y << " rotX: " << rot.x << std::endl;
-    cam->frame.rotateLocal(- rot.y, vec3(1.f, 0.f, 0.f));
-    cam->frame.rotateWorld(rot.x, vec3(0.f, 1.f, 0.f));
+    cam->frame.rotateLocal(- rot[1], vec3(1.f, 0.f, 0.f));
+    cam->frame.rotateWorld(rot[0], vec3(0.f, 1.f, 0.f));
 }
 
 static void execStep(Camera *cam, const Event<EngineEvent>&) {

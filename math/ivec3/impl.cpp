@@ -2,13 +2,13 @@
 
 #if defined(MATH_IVEC3_INLINE) || !defined(MATH_INLINE)
 
-#include "math/math.hpp"
+#include "math/real.hpp"
 #include "math/ivec3.hpp"
 
 MATH_BEGIN_NAMESPACE
 
 ivec3_t ivec3(int32 x, int32 y, int32 z) {
-    ivec3_t v; v.x = x; v.y = y; v.z = z; return v;
+    ivec3_t v; v[0] = x; v[1] = y; v[2] = z; return v;
 }
 
 ivec3_t ivec3(int32 a) {
@@ -16,7 +16,7 @@ ivec3_t ivec3(int32 a) {
 }
 
 ivec3_t ivec3(const vec3_t& a) {
-    return ivec3(int32(a.x), int32(a.y), int32(a.z));
+    return ivec3(int32(a[0]), int32(a[1]), int32(a[2]));
 }
 
 ivec3_t ivec3(const int32 a[3]) {
@@ -28,11 +28,11 @@ ivec3_t operator -(const ivec3_t& a) {
 }
 
 ivec3_t operator +(const ivec3_t& a, const ivec3_t b) {
-    return ivec3(a.x + b.x, a.y + b.y, a.z + b.z);
+    return ivec3(a[0] + b[0], a[1] + b[1], a[2] + b[2]);
 }
 
 ivec3_t operator -(const ivec3_t& a, const ivec3_t b) {
-    return ivec3(a.x - b.x, a.y - b.y, a.z - b.z);
+    return ivec3(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 }
 
 ivec3_t operator *(const ivec3_t& v, int32 a) {
@@ -44,7 +44,7 @@ ivec3_t operator *(int32 a, const ivec3_t& v) {
 }
 
 ivec3_t operator *(const ivec3_t& a, const ivec3_t& b) {
-    return ivec3(a.x * b.x, a.y * b.y, a.z * b.z);
+    return ivec3(a[0] * b[0], a[1] * b[1], a[2] * b[2]);
 }
 
 ivec3_t operator /(const ivec3_t& v, int32 a) {
@@ -52,7 +52,7 @@ ivec3_t operator /(const ivec3_t& v, int32 a) {
 }
 
 ivec3_t operator /(const ivec3_t& a, const ivec3_t& b) {
-    return ivec3(a.x / b.x, a.y / b.y, a.z / b.z);
+    return ivec3(a[0] / b[0], a[1] / b[1], a[2] / b[2]);
 }
 
 ivec3_t& operator +=(ivec3_t& v, const ivec3_t& a) {
@@ -80,7 +80,7 @@ ivec3_t& operator /=(ivec3_t& v, const ivec3_t& b) {
 }
 
 bool operator ==(const ivec3_t& a, const ivec3_t& b) {
-    return a.x == b.x && a.y == b.y && a.z == b.z;
+    return a[0] == b[0] && a[1] == b[1] && a[2] == b[2];
 }
 
 bool operator !=(const ivec3_t& a, const ivec3_t& b) {
@@ -92,9 +92,9 @@ int32 dot(const ivec3_t& a, const ivec3_t& b) {
 }
 
 ivec3_t cross(const ivec3_t& a, const ivec3_t& b) {
-    return ivec3(a.y * b.z - a.z * b.y,
-                a.z * b.x - a.x * b.z,
-                a.x * b.y - a.y * b.x);
+    return ivec3(a[1] * b[2] - a[2] * b[1],
+                a[2] * b[0] - a[0] * b[2],
+                a[0] * b[1] - a[1] * b[0]);
 }
 
 float length(const ivec3_t& a) {
@@ -122,19 +122,19 @@ int32 distanceSq(const ivec3_t& a, const ivec3_t& b) {
 }
 
 ivec3_t min(const ivec3_t& a, const ivec3_t& b) {
-    return ivec3(b.x < a.x ? b.x : a.x,
-                b.y < a.y ? b.y : a.y,
-                b.z < a.z ? b.z : a.z);
+    return ivec3(b[0] < a[0] ? b[0] : a[0],
+                b[1] < a[1] ? b[1] : a[1],
+                b[2] < a[2] ? b[2] : a[2]);
 }
 
 ivec3_t max(const ivec3_t& a, const ivec3_t& b) {
-    return ivec3(b.x > a.x ? b.x : a.x,
-                b.y > a.y ? b.y : a.y,
-                b.z > a.z ? b.z : a.z);
+    return ivec3(b[0] > a[0] ? b[0] : a[0],
+                b[1] > a[1] ? b[1] : a[1],
+                b[2] > a[2] ? b[2] : a[2]);
 }
 
 int32 sum(const ivec3_t& a) {
-    return a.x + a.y + a.z;
+    return a[0] + a[1] + a[2];
 }
 
 bool equal(const ivec3_t& a, const ivec3_t& b) {

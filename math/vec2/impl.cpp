@@ -2,13 +2,13 @@
 
 #if defined(MATH_VEC2_INLINE) || !defined(MATH_INLINE)
 
-#include "math/math.hpp"
+#include "math/real.hpp"
 #include "math/vec2.hpp"
 
 MATH_BEGIN_NAMESPACE
 
 vec2_t vec2(float x, float y) {
-    vec2_t v; v.x = x; v.y = y; return v;
+    vec2_t v; v[0] = x; v[1] = y; return v;
 }
 
 vec2_t vec2(float a) {
@@ -16,10 +16,10 @@ vec2_t vec2(float a) {
 }
 
 vec2_t vec2(const vec3_t& a) {
-    return vec2(a.x, a.y);
+    return vec2(a[0], a[1]);
 }
 vec2_t vec2(const vec4_t& a) {
-    return vec2(a.x, a.y);
+    return vec2(a[0], a[1]);
 }
 
 vec2_t vec2(const float a[2]) {
@@ -31,11 +31,11 @@ vec2_t operator -(const vec2_t& a) {
 }
 
 vec2_t operator +(const vec2_t& a, const vec2_t b) {
-    return vec2(a.x + b.x, a.y + b.y);
+    return vec2(a[0] + b[0], a[1] + b[1]);
 }
 
 vec2_t operator -(const vec2_t& a, const vec2_t b) {
-    return vec2(a.x - b.x, a.y - b.y);
+    return vec2(a[0] - b[0], a[1] - b[1]);
 }
 
 vec2_t operator *(const vec2_t& v, float a) {
@@ -47,7 +47,7 @@ vec2_t operator *(float a, const vec2_t& v) {
 }
 
 vec2_t operator *(const vec2_t& a, const vec2_t& b) {
-    return vec2(a.x * b.x, a.y * b.y);
+    return vec2(a[0] * b[0], a[1] * b[1]);
 }
 
 vec2_t operator /(const vec2_t& v, float a) {
@@ -75,7 +75,7 @@ vec2_t& operator /=(vec2_t& v, float a) {
 }
 
 bool operator ==(const vec2_t& a, const vec2_t& b) {
-    return a.x == b.x && a.y == b.y;
+    return a[0] == b[0] && a[1] == b[1];
 }
 
 bool operator !=(const vec2_t& a, const vec2_t& b) {
@@ -123,17 +123,17 @@ vec2_t reflect(const vec2_t& a, const normal2_t& n, float amp) {
 }
 
 vec2_t min(const vec2_t& a, const vec2_t& b) {
-    return vec2(b.x < a.x ? b.x : a.x,
-                b.y < a.y ? b.y : a.y);
+    return vec2(b[0] < a[0] ? b[0] : a[0],
+                b[1] < a[1] ? b[1] : a[1]);
 }
 
 vec2_t max(const vec2_t& a, const vec2_t& b) {
-    return vec2(b.x > a.x ? b.x : a.x,
-                b.y > a.y ? b.y : a.y);
+    return vec2(b[0] > a[0] ? b[0] : a[0],
+                b[1] > a[1] ? b[1] : a[1]);
 }
 
 float sum(const vec2_t& a) {
-    return a.x + a.y;
+    return a[0] + a[1];
 }
 
 vec2_t linearInterpolate(const vec2_t& a, const vec2_t& b, float t) {

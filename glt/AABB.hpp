@@ -1,7 +1,7 @@
 #ifndef GLT_AABB_HPP
 #define GLT_AABB_HPP
 
-#include "math/math.hpp"
+#include "math/real.hpp"
 #include "math/vec3.hpp"
 
 namespace glt {

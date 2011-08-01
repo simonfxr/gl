@@ -31,4 +31,10 @@
 
 #define MATH_SSE(maj, min) (MATH_SSE_VERS >= MATH_MK_SSE_VERS(maj, min))
 
+#if defined(MATH_REAL_FLOAT) && defined(MATH_REAL_DOUBLE)
+#error "MATH_REAL_FLOAT and MATH_REAL_DOUBLE both defined"
+#elif !defined(MATH_REAL_FLOAT) && !defined(MATH_REAL_DOUBLE)
+#define MATH_REAL_FLOAT
+#endif
+
 #endif

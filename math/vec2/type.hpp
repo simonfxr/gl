@@ -1,30 +1,15 @@
 #ifndef MATH_VEC2_TYPE
 #define MATH_VEC2_TYPE
 
-#include "math/defs.hpp"
+#include "math/real/type.hpp"
 
 namespace math {
 
 struct vec2_t {
-    
-    union {
-        struct {
-            float x, y;
-        };
+    real components[2];
 
-        struct {
-            float r, g;
-        };
-
-        struct {
-            float s, t;
-        };
-        
-        float components[2];
-    };
-
-    float& operator[](unsigned long i) MUT_FUNC;
-    float operator[](unsigned long i) const PURE_FUNC;
+    real& operator[](unsigned long i) MUT_FUNC;
+    real operator[](unsigned long i) const PURE_FUNC;
 };
 
 typedef vec2_t point2_t;

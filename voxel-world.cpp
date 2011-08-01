@@ -14,7 +14,7 @@
 #include "math/vec4.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-#include "math/math.hpp"
+#include "math/real.hpp"
 #include "math/ivec3.hpp"
 
 #include "ge/Engine.hpp"
@@ -31,7 +31,7 @@
 
 #include "sys/clock.hpp"
 
-// #define HS_WORLD_GEN
+#define HS_WORLD_GEN
 
 #ifdef HS_WORLD_GEN
 #include <voxel_hs.h>
@@ -43,7 +43,7 @@ static const float FPS_UPDATE_INTERVAL = 3.f;
 static const vec3_t BLOCK_DIM = vec3(1.f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
-static const int32 N = 128; // 196;
+static const int32 N = 300; // 196;
 static const int32 SPHERE_POINTS_FACE = 8; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const bool OCCLUSION = true;
@@ -82,7 +82,7 @@ struct Vertex {
 
 DEFINE_VERTEX_DESC(Vertex,
     VERTEX_ATTR(Vertex, position),
-    VERTEX_ATTR_AS(Vertex, color, glt::color),
+                   VERTEX_ATTR_AS(Vertex, color, glt::color),
     VERTEX_ATTR(Vertex, normal)
 );
 
@@ -104,6 +104,14 @@ struct State {
 
     bool write_model;
     bool read_model;
+
+#ifdef HS_WORLD_GEN
+    VoxelState *voxel_state;
+#endif
+
+    State() :
+        voxel_state(0)
+        {}
 };
 
 typedef ge::Event<ge::RenderEvent> RenderEv;
@@ -113,7 +121,7 @@ static void renderScene(State *state, const RenderEv& ev);
 static bool readModel(const std::string& file, CubeMesh& mdl);
 static bool writeModel(const std::string& file, const CubeMesh& mdl);
 
-static bool initWorld(CubeMesh& worldModel, vec3_t *sphere_points);
+static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points);
 
 static void incGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
     *gamma += args[0].number;
@@ -121,7 +129,8 @@ static void incGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Arr
 }
 
 static void runRecreateWorld(State *state, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
-    time(initWorld(state->worldModel, state->sphere_points));
+    state->worldModel.freeGPU();
+    time(initWorld(state, state->worldModel, state->sphere_points));
 }
 
 static void initState(State *state, const InitEv& ev) {
@@ -162,17 +171,22 @@ static void initState(State *state, const InitEv& ev) {
     pointsOnSphere(SPHERE_POINTS, state->sphere_points);
 
 #ifdef HS_WORLD_GEN
-    hs_begin();
+    int ret;
+    time(ret = hs_voxel_init(&state->voxel_state));
+    if (ret != 0) {
+        ERR("hs_voxel_begin() failed");
+        return;
+    }
 #endif
 
     if (state->read_model) {
         if (!readModel(WORLD_MODEL_FILE, state->worldModel)) {
-            ERR("couldnt read model file!");
+            ERR("couldnt read model file");
             return;
         }
     } else {
 
-        if (!initWorld(state->worldModel, state->sphere_points))
+        if (!initWorld(state, state->worldModel, state->sphere_points))
             return;
     }
 
@@ -191,16 +205,15 @@ static void initState(State *state, const InitEv& ev) {
     // ASSERT(vs.tryLink());
 
     ev.info.success = true;
-
 }
 
 
 static std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
-    return out << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+    return out << "(" << v[0] << ", " << v[1] << ", " << v[2] << ")";
 }
 
 static std::ostream& operator <<(std::ostream& out, const vec4_t& v) {
-    return out << "(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
+    return out << "(" << v[0] << ", " << v[1] << ", " << v[2] << ", " << v[3] << ")";
 }
 
 static std::ostream& operator <<(std::ostream& out, const mat4_t& m) {
@@ -313,9 +326,9 @@ struct GlobalOcc {
 static int32 faceIdx(const vec3_t& dir) {
     direction3_t as = abs(dir);
     int32 maxi;
-    if (as.x >= as.y && as.x >= as.z)
+    if (as[0] >= as[1] && as[0] >= as[2])
         maxi = 0;
-    else if (as.y >= as.x && as.y >= as.z)
+    else if (as[1] >= as[0] && as[1] >= as[2])
         maxi = 1;
     else
         maxi = 2;
@@ -512,9 +525,9 @@ static Faces trace(const World& w, const Rays& rs, const ivec3_t& p0) {
         // const ivec3_t& norm = faceNorms[side];
         // const ivec3_t p1 = p0 + norm;
 
-        // bool onCubeSurface =  p1.x < 0 || p1.x >= N ||
-        //     0 > p1.y || p1.y >= N ||
-        //     0 > p1.z || p1.z >= N;
+        // bool onCubeSurface =  p1[0] < 0 || p1[0] >= N ||
+        //     0 > p1[1] || p1[1] >= N ||
+        //     0 > p1[2] || p1[2] >= N;
         
         // if (onCubeSurface) { // all rays pass
         //     diffContr.f[0] += rs.lightContribFace[side].f[0];
@@ -522,7 +535,7 @@ static Faces trace(const World& w, const Rays& rs, const ivec3_t& p0) {
         //     continue;
         // }
 
-        // if (w(p1.x, p1.y, p1.z)) { // all fail
+        // if (w(p1[0], p1[1], p1[2])) { // all fail
         //     continue;
         // }
 
@@ -532,11 +545,11 @@ static Faces trace(const World& w, const Rays& rs, const ivec3_t& p0) {
             uint32 j = 0;
             bool escaped = true;
             while (j + 1 < RAY_SAMPLES &&
-                   p.x >= 0 && p.x < N &&
-                   p.y >= 0 && p.y < N &&
-                   p.z >= 0 && p.z < N) {
+                   p[0] >= 0 && p[0] < N &&
+                   p[1] >= 0 && p[1] < N &&
+                   p[2] >= 0 && p[2] < N) {
                 
-                if (w(p.x, p.y, p.z)) {
+                if (w(p[0], p[1], p[2])) {
                     escaped = false;
                     break;
                 }
@@ -561,9 +574,9 @@ static Faces trace(const World& w, const Rays& rs, const ivec3_t& p0) {
 static float VIRTUAL_DIM = 100.f;
 
 static bool visibleFace(const World& w, const World& vis, int32 i, int32 j, int32 k, const vec3_t& normal) {
-    i += (int32) normal.x;
-    j += (int32) normal.y;
-    k += (int32) normal.z;
+    i += (int32) normal[0];
+    j += (int32) normal[1];
+    k += (int32) normal[2];
     return visible(w, vis, i, j, k);
 }
 
@@ -572,9 +585,9 @@ static float noise3D1(const vec3_t& p) {
 }
 
 static float heightAt(const vec3_t& p, const vec3_t& warp, float freq) {
-    float y0 = p.y / VIRTUAL_DIM;
+    float y0 = p[1] / VIRTUAL_DIM;
     float w = 1 - y0;
-    float noise = noise3D(((vec3(p.x, p.z, 0.f) + warp) * freq));
+    float noise = noise3D(((vec3(p[0], p[2], 0.f) + warp) * freq));
     return 1.f + noise;
 }
 
@@ -587,13 +600,13 @@ static vec3_t noise3D3(const vec3_t& p) {
 float density(const vec3_t& p) {
     // float r = sumNoise3D(p, 4, 1.2, 0.5, true);
     // float distC = length(p - vec3(0.5f)) / length(vec3(0.5f));
-    // return (2 * p.y * p.y + 0.3) * (1 - distC) * r > 0.2f;
+    // return (2 * p[1] * p[1] + 0.3) * (1 - distC) * r > 0.2f;
 
-    // float height = p.y / DIM;
+    // float height = p[1] / DIM;
 
     // float heightF = 2 * height * height + 0.3;
 
-    // float distC = 1 - distance(vec2(p.x, p.z), CENTER) / CENTER.x;
+    // float distC = 1 - distance(vec2(p[0], p[2]), CENTER) / CENTER[0];
 
     // float detail = 0.3f * fabs(noise3D((p + vec3(0.2, 0.5, -0.3f)) * 11.f));
 
@@ -615,8 +628,8 @@ float density(const vec3_t& p) {
     vec3_t warp = noise3D3(ws * prewarp_freq) * 0.64f + noise3D3(ws * prewarp_freq * 0.5f) * 0.32f;
     ws += warp * prewarp_stride;
 
-    density += -ws.y;
-    // density += saturate((-4.f * ws_orig.y * 0.3) * 3.0) * 40 * noise3D1(ws_orig * 0.00071f);
+    density += -ws[1];
+    // density += saturate((-4.f * ws_orig[1] * 0.3) * 3.0) * 40 * noise3D1(ws_orig * 0.00071f);
 
     density += sumNoise3D(ws, 9, 0.0125f, 0.5f, false) * 20.f;
 
@@ -624,7 +637,7 @@ float density(const vec3_t& p) {
 }
 
 static int32 signAt(const Densities& ds, const ivec3_t& i) {
-    return ds.ds[i.x][i.y][i.z] >= 0 ? +1 : -1;
+    return ds.ds[i[0]][i[1]][i[2]] >= 0 ? +1 : -1;
 }
 
 static bool blockAt(const Densities& ds, const ivec3_t& idx) {
@@ -633,9 +646,9 @@ static bool blockAt(const Densities& ds, const ivec3_t& idx) {
         for (int j = -1; j < 2; j += 2) {
             for (int k = -1; k < 2; k += 2) {
                 ivec3_t jdx = idx + ivec3(i, j, k);
-                if (jdx.x >= 0 && jdx.x < N &&
-                    jdx.y >= 0 && jdx.y < N &&
-                    jdx.z >= 0 && jdx.z < N &&
+                if (jdx[0] >= 0 && jdx[0] < N &&
+                    jdx[1] >= 0 && jdx[1] < N &&
+                    jdx[2] >= 0 && jdx[2] < N &&
                     s != signAt(ds, jdx))
                     return true;                    
             }
@@ -700,15 +713,15 @@ const ivec3_t neighOffs[6] = {
 };
 
 static bool hasNeighbours(const World& w, const World& vis, const ivec3_t& p) {
-    if (!w(p.x, p.y, p.z))
+    if (!w(p[0], p[1], p[2]))
         return false;
     for (uint32 i = 0; i < 6; ++i) {
         const ivec3_t p1 = p + neighOffs[i];
-        bool onCubeSurf = 0 > p1.x || p1.x >= N ||
-            0 > p1.y || p1.y >= N ||
-            0 > p1.z || p1.z >= N;
+        bool onCubeSurf = 0 > p1[0] || p1[0] >= N ||
+            0 > p1[1] || p1[1] >= N ||
+            0 > p1[2] || p1[2] >= N;
         if (onCubeSurf) return true;
-        if (!w(p1.x, p1.y, p1.z) && vis(p1.x, p1.y, p1.z)) return true;
+        if (!w(p1[0], p1[1], p1[2]) && vis(p1[0], p1[1], p1[2])) return true;
     }
     return false;
 }
@@ -767,12 +780,12 @@ static void createModel(CubeMesh& worldModel, const World& world, const World& v
                             ++stats.visFaces;
                             ivec3_t n = ivec3(vec3(v.normal));
 //                            std::cerr << "n: " << vec3(n) << std::endl;
-                            int32 face = n.x + n.y * 2 + n.z * 3;
+                            int32 face = n[0] + n[1] * 2 + n[2] * 3;
                             int32 side = face < 0 ? 1 : 0;
                             face = abs(face) - 1;
                             v.position *= BLOCK_DIM;
                             v.position += offset;
-                            v.normal.w = OCCLUSION ? diffContr.f[side][face] : 1.f;
+                            v.normal[3] = OCCLUSION ? diffContr.f[side][face] : 1.f;
                             v.color = col.rgba;
                             worldModel.add(v);
                         }
@@ -783,7 +796,7 @@ static void createModel(CubeMesh& worldModel, const World& world, const World& v
     }
 }
 
-static bool initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
+static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points) {
 
     worldModel.setSize(0);
     worldModel.setElementsSize(0);
@@ -801,9 +814,9 @@ static bool initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
 #ifdef HS_WORLD_GEN
 
     int ret;
-    time(ret = hs_voxel_create_world(&densitiesp->ds[0][0][0], N));
+    time(ret = hs_voxel_create_world(state->voxel_state, &densitiesp->ds[0][0][0], N));
     if (ret == -1) {
-        ERR("hs_voxel_create_world failed");
+        ERR("hs_voxel_create_world() failed");
         return false;
     }
 
@@ -881,6 +894,7 @@ static bool initWorld(CubeMesh& worldModel, vec3_t *sphere_points) {
     std::cerr << "faces: " << stats.faces << ", visible faces: " << stats.visFaces << std::endl;
     
     worldModel.send();
+    worldModel.freeHost();
 
     return true;
 }
@@ -953,7 +967,7 @@ static bool readModel(const std::string& file, CubeMesh& mdl) {
 
 static bool writeModel(const std::string& file, const CubeMesh& mdl) {
     UNUSED(file); UNUSED(mdl);
-//    return mdl.write(file.c_str());
+//    return mdl[3]rite(file.c_str());
     return false;
 }
 
@@ -988,7 +1002,7 @@ int main(int argc, char *argv[]) {
     int32 ret = engine.run(opts);
 
 #ifdef HS_WORLD_GEN
-    hs_end();
+    hs_voxel_destroy(state.voxel_state);
 #endif
 
     return ret;
@@ -1070,9 +1084,9 @@ static float noise3D(const vec3_t& pnt) {
 
     const uint16 *p = permutation;
 
-    float x = pnt.x;
-    float y = pnt.y;
-    float z = pnt.z;
+    float x = pnt[0];
+    float y = pnt[1];
+    float z = pnt[2];
     
     int X = (int) floor(x) & 255,                  
         Y = (int) floor(y) & 255,                  

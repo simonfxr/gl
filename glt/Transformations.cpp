@@ -1,6 +1,6 @@
 #include "glt/Transformations.hpp"
 
-#include "math/math.hpp"
+#include "math/real.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "math/mat3.hpp"
@@ -38,15 +38,15 @@ mat3_t rotationMatrix(float theta, const direction3_t& n) {
     float s, c;
     sincos(-theta, s, c);
 
-    return mat3(vec3(n.x * n.x * (1 - c) + c,
-                     n.x * n.y * (1 - c) - n.z * s,
-                     n.x * n.z * (1 - c) + n.y * s),
-                vec3(n.y * n.x * (1 - c) + n.z * s,
-                     n.y * n.y * (1 - c) + c,
-                     n.y * n.z * (1 - c) - n.x * s),
-                vec3(n.z * n.x * (1 - c) - n.y * s,
-                     n.z * n.y * (1 - c) + n.x * s,
-                     n.z * n.z * (1 - c) + c));
+    return mat3(vec3(n[0] * n[0] * (1 - c) + c,
+                     n[0] * n[1] * (1 - c) - n[2] * s,
+                     n[0] * n[2] * (1 - c) + n[1] * s),
+                vec3(n[1] * n[0] * (1 - c) + n[2] * s,
+                     n[1] * n[1] * (1 - c) + c,
+                     n[1] * n[2] * (1 - c) - n[0] * s),
+                vec3(n[2] * n[0] * (1 - c) - n[1] * s,
+                     n[2] * n[1] * (1 - c) + n[0] * s,
+                     n[2] * n[2] * (1 - c) + c));
 }
 
 } // namespace glt
