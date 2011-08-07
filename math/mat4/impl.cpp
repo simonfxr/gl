@@ -1,7 +1,3 @@
-#include "math/defs.hpp"
-
-#if defined(MATH_MAT4_INLINE) || !defined(MATH_INLINE)
-
 #include "math/mat4/defns.hpp"
 #include "math/vec4.hpp"
 #include "math/vec3.hpp"
@@ -18,11 +14,11 @@ mat4_t mat4() {
                 vec4(0.f, 0.f, 0.f, 1.f));
 }
 
-mat4_t mat4(float x) {
+mat4_t mat4(real x) {
     return mat4(vec4(x), vec4(x), vec4(x), vec4(x));
 }
 
-mat4_t mat4(const float mat[16]) {
+mat4_t mat4(const real mat[16]) {
     mat4_t A;
     for (uint32 i = 0; i < 16; ++i)
         A.components[i] = mat[i];
@@ -54,7 +50,7 @@ mat4_t operator *(const mat4_t& A, const mat4_t& B) {
     
     for (uint32 j = 0; j < 4; ++j) {
         for (uint32 i = 0; i < 4; ++i) {
-            float c_i_j = 0.f;
+            real c_i_j = 0.f;
             for (uint32 k = 0; k < 4; ++k)
                 c_i_j += A(k, i) * B(j, k);
             C(j, i) = c_i_j;
@@ -72,15 +68,15 @@ vec4_t operator *(const mat4_t& A, const vec4_t& v) {
     //             dot(v, AT[2]), dot(v, AT[3]));
 }
 
-mat4_t operator *(const mat4_t& A, float x) {
+mat4_t operator *(const mat4_t& A, real x) {
     return mat4(A[0] * x, A[1] * x, A[2] * x, A[3] * x);
 }
 
-mat4_t operator *(float x, const mat4_t& A) {
+mat4_t operator *(real x, const mat4_t& A) {
     return A * x;
 }
 
-mat4_t operator /(const mat4_t& A, float x) {
+mat4_t operator /(const mat4_t& A, real x) {
     return A * math::recip(x);
 }
 
@@ -92,7 +88,7 @@ mat4_t& operator -=(mat4_t& A, const mat4_t& B) {
     return A = A - B;
 }
 
-mat4_t& operator *=(mat4_t& A, float x) {
+mat4_t& operator *=(mat4_t& A, real x) {
     return A = A * x;
 }
 
@@ -100,7 +96,7 @@ mat4_t& operator *=(mat4_t& A, const mat4_t& B) {
     return A = A * B;
 }
 
-mat4_t& operator /=(mat4_t& A, float x) {
+mat4_t& operator /=(mat4_t& A, real x) {
     return A = A / x;
 }
 
@@ -124,15 +120,15 @@ mat4_t transpose(const mat4_t& A) {
     return B;
 }
 
-float determinant(const mat4_t& A) {
+real determinant(const mat4_t& A) {
     UNUSED(A);
     FATAL_ERR("not yet implemented");
 }
 
 mat4_t inverse(const mat4_t& A) {
-    const float *m = A.components;
+    const real *m = A.components;
     mat4_t Ainv;
-    float *inv = Ainv.components;
+    real *inv = Ainv.components;
 
     inv[0] =   m[5]*m[10]*m[15] - m[5]*m[11]*m[14] - m[9]*m[6]*m[15]
         + m[9]*m[7]*m[14] + m[13]*m[6]*m[11] - m[13]*m[7]*m[10];
@@ -167,7 +163,7 @@ mat4_t inverse(const mat4_t& A) {
     inv[15] =  m[0]*m[5]*m[10] - m[0]*m[6]*m[9] - m[4]*m[1]*m[10]
         + m[4]*m[2]*m[9] + m[8]*m[1]*m[6] - m[8]*m[2]*m[5];
 
-    float det = m[0]*inv[0] + m[1]*inv[4] + m[2]*inv[8] + m[3]*inv[12];
+    real det = m[0]*inv[0] + m[1]*inv[4] + m[2]*inv[8] + m[3]*inv[12];
     if (det == 0.f) {
         ERR("matrix has no inverse");
         return mat4(0.f);
@@ -186,7 +182,7 @@ vec4_t transposedMult(const mat4_t& AT, const vec4_t& v) {
                 dot(v, AT[2]), dot(v, AT[3]));
 }
 
-bool equal(const mat4_t& A, const mat4_t& B, float epsi) {
+bool equal(const mat4_t& A, const mat4_t& B, real epsi) {
     return equal(A[0], B[0], epsi) && equal(A[1], B[1], epsi) &&
         equal(A[2], B[2], epsi) && equal(A[3], B[3], epsi);
 }
@@ -195,23 +191,21 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC const vec4_t& mat4_t::operator[](unsigned long i) const {
+MATH_INLINE_SPEC const vec4_t& mat4_t::operator[](index_t i) const {
     return columns[i];
 }
 
-MATH_INLINE_SPEC vec4_t& mat4_t::operator[](unsigned long i) {
+MATH_INLINE_SPEC vec4_t& mat4_t::operator[](index_t i) {
     return columns[i];
 }
 
-MATH_INLINE_SPEC float mat4_t::operator()(unsigned long i, unsigned long j) const {
+MATH_INLINE_SPEC real mat4_t::operator()(index_t i, index_t j) const {
     return components[i * 4 + j];
 }
 
 
-MATH_INLINE_SPEC float& mat4_t::operator()(unsigned long i, unsigned long j) {
+MATH_INLINE_SPEC real& mat4_t::operator()(index_t i, index_t j) {
     return components[i * 4 + j];
 }
 
 } // namespace math
-
-#endif

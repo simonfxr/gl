@@ -100,6 +100,7 @@ include_directories(${CMAKE_SOURCE_DIR})
 
 set(MATH_SRC
   math/vec2.hpp
+  math/vec2/type.hpp
   math/vec3.hpp
   math/vec4.hpp
   math/mat3.hpp
@@ -118,7 +119,7 @@ if(NOT MATH_INLINE)
     math/vec4/impl.cpp
     math/mat3/impl.cpp
     math/mat4/impl.cpp
-    math/math/impl.cpp
+    math/real/impl.cpp
     math/ivec3/impl.cpp
     math/quat/impl.cpp)
 else()
@@ -134,7 +135,7 @@ set(ERROR_SRC
   error/error.cpp)
 
 add_library(err SHARED ${ERROR_SRC})
-link_directories(${GLT_BINARY_DIR})
+link_directories(${ERR_BINARY_DIR})
 
 set(GLT_SRC
   glt/utils.hpp
@@ -249,16 +250,18 @@ add_executable(voxel-world
   ${MATH_SRC}
   ${DATA_SRC})
 
-target_link_libraries(voxel-world sys err glt ge voxel voxel-hs)
+target_link_libraries(voxel-world sys err glt ge)
 
 add_executable(queryExtension
   queryExtension.cpp
-  defs.h)
+  defs.h
+  ${MATH_SRC})
 
 target_link_libraries(queryExtension sys glt err ge)
 
 add_executable(math_test
-  math_test.cpp)
+  math_test.cpp
+  ${MATH_SRC})
 
 target_link_libraries(math_test sys err)
 

@@ -16,6 +16,7 @@
 #include "math/mat4.hpp"
 #include "math/real.hpp"
 #include "math/ivec3.hpp"
+#include "math/io.hpp"
 
 #include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
@@ -31,7 +32,7 @@
 
 #include "sys/clock.hpp"
 
-#define HS_WORLD_GEN
+// #define HS_WORLD_GEN
 
 #ifdef HS_WORLD_GEN
 #include <voxel_hs.h>
@@ -43,7 +44,7 @@ static const float FPS_UPDATE_INTERVAL = 3.f;
 static const vec3_t BLOCK_DIM = vec3(1.f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
-static const int32 N = 300; // 196;
+static const int32 N = 64; // 196;
 static const int32 SPHERE_POINTS_FACE = 8; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const bool OCCLUSION = true;
@@ -110,7 +111,10 @@ struct State {
 #endif
 
     State() :
-        voxel_state(0)
+#ifdef HS_WORLD_GEN
+        voxel_state(0),
+#endif
+        fpsTimer(0)
         {}
 };
 
@@ -133,10 +137,21 @@ static void runRecreateWorld(State *state, const ge::Event<ge::CommandEvent>&, c
     time(initWorld(state, state->worldModel, state->sphere_points));
 }
 
+int blah(void *foo) {
+
+    int *baz = 0;
+    int val = 3;
+
+    if (foo != 0)
+        baz = &val;
+
+    return *baz;    
+}
+
 static void initState(State *state, const InitEv& ev) {
 
 //    glt::initDebug();
-
+    
     ge::Engine& e = ev.info.engine;
 
     e.window().showMouseCursor(false);
@@ -207,26 +222,13 @@ static void initState(State *state, const InitEv& ev) {
     ev.info.success = true;
 }
 
+// static float rand1() {
+//     return rand() * (1.f / RAND_MAX);
+// }
 
-static std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
-    return out << "(" << v[0] << ", " << v[1] << ", " << v[2] << ")";
-}
-
-static std::ostream& operator <<(std::ostream& out, const vec4_t& v) {
-    return out << "(" << v[0] << ", " << v[1] << ", " << v[2] << ", " << v[3] << ")";
-}
-
-static std::ostream& operator <<(std::ostream& out, const mat4_t& m) {
-    return out << m[0] << m[1] << m[2] << m[3];
-}
-
-static float rand1() {
-    return rand() * (1.f / RAND_MAX);
-}
-
-static vec4_t randColor() {
-    return vec4(vec3(rand1(), rand1(), rand1()), 1.f);
-}
+// static vec4_t randColor() {
+//     return vec4(vec3(rand1(), rand1(), rand1()), 1.f);
+// }
 
 // struct World {
 
@@ -580,16 +582,16 @@ static bool visibleFace(const World& w, const World& vis, int32 i, int32 j, int3
     return visible(w, vis, i, j, k);
 }
 
-static float noise3D1(const vec3_t& p) {
-    return saturate((noise3D(p) + 1.f) * 0.5f / 0.7f);
-}
+// static float noise3D1(const vec3_t& p) {
+//     return saturate((noise3D(p) + 1.f) * 0.5f / 0.7f);
+// }
 
-static float heightAt(const vec3_t& p, const vec3_t& warp, float freq) {
-    float y0 = p[1] / VIRTUAL_DIM;
-    float w = 1 - y0;
-    float noise = noise3D(((vec3(p[0], p[2], 0.f) + warp) * freq));
-    return 1.f + noise;
-}
+// static float heightAt(const vec3_t& p, const vec3_t& warp, float freq) {
+//     // float y0 = p[1] / VIRTUAL_DIM;
+// //    float w = 1 - y0;
+//     float noise = noise3D(((vec3(p[0], p[2], 0.f) + warp) * freq));
+//     return 1.f + noise;
+// }
 
 static vec3_t noise3D3(const vec3_t& p) {
     return vec3(noise3D(p + vec3(89.f, -193.f, 521.f)),
@@ -619,7 +621,7 @@ float density(const vec3_t& p) {
     // float world = noise3D(2.3f * p);
     // return heightF * distC * cave * (fabs(world) - detail) > 0.13f;
 
-    vec3_t ws_orig = p;
+//    vec3_t ws_orig = p;
     vec3_t ws = p;
     float density = 0.f;
 
@@ -976,7 +978,7 @@ int main(int argc, char *argv[]) {
     ge::EngineOptions opts;
     opts.parse(&argc, &argv);
 
-    bool read_mdl = true;
+    bool read_mdl = false;
     bool write_mdl = false;
 
     for (int32 i = 1; i < argc; ++i) {

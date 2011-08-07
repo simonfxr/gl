@@ -62,12 +62,13 @@ public:
     static type CONCAT(_array_data_, name)[] = { __VA_ARGS__ };         \
     const Array<type> name(CONCAT(_array_data_, name), ARRAY_LENGTH(CONCAT(_array_data_, name)))
 
-#ifdef GNU_EXTENSIONS
+// FIXME: can this be made portable (maybe lambda's) ?
+// #ifdef GNU_EXTENSIONS 
 #define CONST_ARRAY(type, ...) ({                                       \
             static type CONCAT(_array_data_, _anon_arr)[] = { __VA_ARGS__ }; \
             static const Array<type> _anon_arr(CONCAT(_array_data_, _anon_arr), ARRAY_LENGTH(CONCAT(_array_data_, _anon_arr))); \
             _anon_arr;                                                  \
         })
-#endif
+// #endif
 
 #endif

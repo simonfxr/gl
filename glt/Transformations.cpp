@@ -11,22 +11,7 @@ namespace glt {
 using namespace math;
 
 mat4_t perspectiveProjection(float radViewAngle, float aspectRatio, float z_near, float z_far) {
-
-    // float f = math::cotan(radViewAngle);
-
-    // float q = math::recip(z_near - z_far);
-
-    // return transpose(mat4(vec4(f / aspectRatio, 0.f, 0.f, 0.f),
-    //             vec4(0.f, f, 0.f, 0.f),
-    //             vec4(0.f, 0.f, (z_near + z_far) * q, -1.f),
-    //                       vec4(0.f, 0.f, 2 * z_near * z_far * q, 0.f)));
-    
     float f = cotan(radViewAngle * 0.5f);
-
-    // return mat4(vec4(- f / aspectRatio, 0.f, 0.f, 0.f),
-    //             vec4(0.f, f, 0.f, 0.f),
-    //             vec4(0.f, 0.f, (z_far + z_near) / (z_far - z_near), 1.f),
-    //             vec4(0.f, 0.f, -2.f * z_far * z_near / (z_far - z_near), 0.f));
 
     return mat4(vec4(f / aspectRatio, 0.f, 0.f, 0.f),
                 vec4(0.f, f, 0.f, 0.f),

@@ -1,9 +1,5 @@
-#include "math/defs.hpp"
-
-#if defined(MATH_VEC3_INLINE) || !defined(MATH_INLINE)
-
+#include "math/vec3/defns.hpp"
 #include "math/real.hpp"
-#include "math/vec3.hpp"
 
 MATH_BEGIN_NAMESPACE
 
@@ -187,14 +183,12 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC real& vec3_t::operator[](unsigned long i) {
+MATH_INLINE_SPEC real& vec3_t::operator[](index_t i) {
     return components[i];
 }
 
-MATH_INLINE_SPEC real vec3_t::operator[](unsigned long i) const {
+MATH_INLINE_SPEC real vec3_t::operator[](index_t i) const {
     return components[i];
 }
 
 } // namespace math
-
-#endif

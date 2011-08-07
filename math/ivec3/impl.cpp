@@ -1,7 +1,3 @@
-#include "math/defs.hpp"
-
-#if defined(MATH_IVEC3_INLINE) || !defined(MATH_INLINE)
-
 #include "math/real.hpp"
 #include "math/ivec3.hpp"
 
@@ -97,11 +93,11 @@ ivec3_t cross(const ivec3_t& a, const ivec3_t& b) {
                 a[0] * b[1] - a[1] * b[0]);
 }
 
-float length(const ivec3_t& a) {
+real length(const ivec3_t& a) {
     return math::sqrt(lengthSq(a));
 }
 
-float inverseLength(const ivec3_t& a) {
+real inverseLength(const ivec3_t& a) {
     return math::rsqrt(lengthSq(a));
 }
 
@@ -109,11 +105,11 @@ int32 lengthSq(const ivec3_t& a) {
     return dot(a, a);
 }
 
-float distance(const ivec3_t& a, const ivec3_t& b) {
+real distance(const ivec3_t& a, const ivec3_t& b) {
     return length(a - b);
 }
 
-float inverseDistance(const ivec3_t& a, const ivec3_t& b) {
+real inverseDistance(const ivec3_t& a, const ivec3_t& b) {
     return inverseLength(a - b);
 }
 
@@ -145,14 +141,12 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC int32& ivec3_t::operator[](unsigned long i) {
+MATH_INLINE_SPEC int32& ivec3_t::operator[](index_t i) {
     return components[i];
 }
 
-MATH_INLINE_SPEC int32 ivec3_t::operator[](unsigned long i) const {
+MATH_INLINE_SPEC int32 ivec3_t::operator[](index_t i) const {
     return components[i];
 }
 
 } // namespace math
-
-#endif

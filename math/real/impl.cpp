@@ -1,5 +1,3 @@
-#if defined(MATH_REAL_INLINE) || !defined(MATH_INLINE)
-
 #include "math/real/defns.hpp"
 #include <cmath>
 
@@ -163,5 +161,3 @@ real lerp(real a, real b, real t) {
 }
 
 MATH_END_NAMESPACE
-
-#endif

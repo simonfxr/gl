@@ -22,4 +22,3 @@ done
 # echo "****"
 
 exec ghc "${args[@]}"
-

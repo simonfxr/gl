@@ -5,6 +5,10 @@
 
 #include <string>
 
+#ifndef ATTR_NORETURN
+#include <cstdlib>
+#endif
+
 namespace err {
 
 struct Location {
@@ -67,7 +71,12 @@ void printError(std::ostream& out, const char *type, const Location& loc, LogLev
 
 #define ERR(msg) _ERROR(err::Error, msg)
 #define WARN(msg) _ERROR(err::Warn, msg)
+
+#ifdef ATTR_NORETURN
 #define FATAL_ERR(msg) err::fatalError(_CURRENT_LOCATION, msg)
+#else
+#define FATAL_ERR(msg) (err::fatalError(_CURRENT_LOCATION, msg), ::exit(1))
+#endif
 
 #define ERR_ONCE(msg) do {                                      \
         static bool _reported = false;                          \

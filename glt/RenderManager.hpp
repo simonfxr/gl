@@ -6,6 +6,7 @@
 #include "glt/RenderTarget.hpp"
 
 #include "math/mat4/type.hpp"
+#include "math/real.hpp"
 
 namespace glt {
 

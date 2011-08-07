@@ -1,7 +1,6 @@
 #ifndef MATH_IVEC3_DEFNS_HPP
 #define MATH_IVEC3_DEFNS_HPP
 
-#include "math/defs.hpp"
 #include "math/ivec3/type.hpp"
 #include "math/vec3/type.hpp"
 
@@ -51,15 +50,15 @@ int32 dot(const ivec3_t& a, const ivec3_t& b) PURE_FUNC;
 
 ivec3_t cross(const ivec3_t& a, const ivec3_t& b) PURE_FUNC;
 
-float length(const ivec3_t& a) PURE_FUNC;
+real length(const ivec3_t& a) PURE_FUNC;
 
-float inverseLength(const ivec3_t& a) PURE_FUNC;
+real inverseLength(const ivec3_t& a) PURE_FUNC;
 
 int32 lengthSq(const ivec3_t& a) PURE_FUNC;
 
-float distance(const ivec3_t& a, const ivec3_t& b) PURE_FUNC;
+real distance(const ivec3_t& a, const ivec3_t& b) PURE_FUNC;
 
-float inverseDistance(const ivec3_t& a, const ivec3_t& b) PURE_FUNC;
+real inverseDistance(const ivec3_t& a, const ivec3_t& b) PURE_FUNC;
 
 int32 distanceSq(const ivec3_t& a, const ivec3_t& b) PURE_FUNC;
 

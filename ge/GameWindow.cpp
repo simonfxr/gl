@@ -191,6 +191,20 @@ void GameWindow::Data::handleInputEvents() {
             }
             
             break;
+
+        case sf::Event::TextEntered: break;
+        case sf::Event::MouseWheelMoved: break;
+        case sf::Event::MouseEntered: break;
+        case sf::Event::MouseLeft: break;
+        case sf::Event::JoystickButtonPressed: break;
+        case sf::Event::JoystickButtonReleased: break;
+        case sf::Event::JoystickMoved: break;
+        case sf::Event::JoystickConnected: break;
+        case sf::Event::JoystickDisconnected: break;
+        case sf::Event::Count: FATAL_ERR("not possible?"); break;
+        default:
+            ERR("unknown SFML-Eventtype");
+            break;
         }
     }
 

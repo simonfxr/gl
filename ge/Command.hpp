@@ -110,6 +110,8 @@ Ref<Command> makeCommand(T *o, void (T::*m)(const Event<CommandEvent>&, const Ar
 
 #ifdef CONST_ARRAY
 #define PARAM_ARRAY(...) CONST_ARRAY(ge::CommandParamType, __VA_ARGS__)
+#else
+#error "CONST_ARRAY not defined"
 #endif
 
 #define DEFINE_PARAM_ARRAY(name, ...) DEFINE_CONST_ARRAY(name, ge::CommandParamType, __VA_ARGS__)

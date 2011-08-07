@@ -3,8 +3,7 @@
 
 #include "math/mat3/defns.hpp"
 
-#if defined(MATH_INLINE) && !defined(MATH_MAT3_INLINE)
-#define MATH_MAT3_INLINE
+#if defined(MATH_INLINE)
 #include "math/mat3/impl.cpp"
 #endif
 

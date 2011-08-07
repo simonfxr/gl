@@ -204,30 +204,30 @@ template <typename T>
 VertexDesc<T> meshAttrs(const Attr<T> attrs[], uint32 len) {
     VertexDesc<T> desc;
     desc.sizeof_vertex = sizeof(T);
-    desc.alignment = ALIGNOF(T);
+    desc.alignment = ALIGNOF_TYPE(T);
     desc.nattributes = len;
     desc.attributes = attrs;
     return desc;
 }
 
 inline AttrBase meshAttr(size_t offset, const float&) {
-    return AttrBase(offset, ALIGNOF(float), GL_FLOAT, 1);
+    return AttrBase(offset, ALIGNOF_TYPE(float), GL_FLOAT, 1);
 }
 
 inline AttrBase meshAttr(size_t offset, const math::vec2_t&) {
-    return AttrBase(offset, ALIGNOF(math::vec2_t), GL_FLOAT, 2);
+    return AttrBase(offset, ALIGNOF_TYPE(math::vec2_t), GL_FLOAT, 2);
 }
 
 inline AttrBase meshAttr(size_t offset, const math::vec3_t&) {
-    return AttrBase(offset, ALIGNOF(math::vec3_t), GL_FLOAT, 3);
+    return AttrBase(offset, ALIGNOF_TYPE(math::vec3_t), GL_FLOAT, 3);
 }
 
 inline AttrBase meshAttr(size_t offset, const math::vec4_t&) {
-    return AttrBase(offset, ALIGNOF(math::vec4_t), GL_FLOAT, 4);
+    return AttrBase(offset, ALIGNOF_TYPE(math::vec4_t), GL_FLOAT, 4);
 }
 
 inline AttrBase meshAttr(size_t offset, const glt::color&) {
-    return AttrBase(offset, ALIGNOF(glt::color), GL_UNSIGNED_BYTE, 4, true);
+    return AttrBase(offset, ALIGNOF_TYPE(glt::color), GL_UNSIGNED_BYTE, 4, true);
 }
 
 template <typename T>

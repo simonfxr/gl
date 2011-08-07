@@ -25,9 +25,16 @@
 #endif
 
 #ifdef GNU_EXTENSIONS
-#define ALIGNOF(e) __alignof__(e)
+#define HAVE_ALIGNOF_EXPR
+#define HAVE_ALIGNOF_TYPE
+#define ALIGNOF_EXPR(e) __alignof__(e)
+#define ALIGNOF_TYPE(t) __alignof__(t)
 #else
-#define ALIGNOF(e) alignof_not_defined
+
+#define HAVE_ALIGNOF_TYPE
+#define ALIGNOF_TYPE(t) offsetof(struct { char ___c; t ___x; }, ___x)
+#define ALIGNOF_EXPR(e) alignof_not_defined
+
 #endif
 
 #define ARRAY_LENGTH(x) (sizeof (x) / sizeof *(x))
@@ -103,5 +110,8 @@ typedef uintptr_t uptr;
 typedef intptr_t iptr;
 
 typedef uint8 byte;
+
+typedef uptr index_t;
+typedef iptr sindex_t;
 
 #endif

@@ -1,9 +1,5 @@
-#include "math/defs.hpp"
-
-#if defined(MATH_VEC4_INLINE) || !defined(MATH_INLINE)
-
+#include "math/vec4/defns.hpp"
 #include "math/real.hpp"
-#include "math/vec4.hpp"
 
 MATH_BEGIN_NAMESPACE
 
@@ -138,14 +134,12 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC float& vec4_t::operator[](unsigned long i) {
+MATH_INLINE_SPEC float& vec4_t::operator[](index_t i) {
     return components[i];
 }
 
-MATH_INLINE_SPEC float vec4_t::operator[](unsigned long i) const {
+MATH_INLINE_SPEC float vec4_t::operator[](index_t i) const {
     return components[i];
 }
 
 } // namespace math
-
-#endif

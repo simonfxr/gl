@@ -1,7 +1,3 @@
-#include "math/defs.hpp"
-
-#if defined(MATH_MAT3_INLINE) || !defined(MATH_INLINE)
-
 #include "math/mat3/defns.hpp"
 #include "math/vec3.hpp"
 #include "math/real.hpp"
@@ -16,11 +12,11 @@ mat3_t mat3() {
                 vec3(0.f, 0.f, 1.f));
 }
 
-mat3_t mat3(float x) {
+mat3_t mat3(real x) {
     return mat3(vec3(x), vec3(x), vec3(x));
 }
 
-mat3_t mat3(const float mat[9]) {
+mat3_t mat3(const real mat[9]) {
     mat3_t A;
     for (uint32 i = 0; i < 9; ++i)
         A.components[i] = mat[i];
@@ -36,8 +32,8 @@ mat3_t mat3(const mat4_t& A) {
 }
 
 mat3_t mat3(const quat_t& q) {
-    float w = q.a, x = q.b, y = q.c, z = q.d;
-    float xx = x * x, yy = y * y, zz = z * z;
+    real w = q.a, x = q.b, y = q.c, z = q.d;
+    real xx = x * x, yy = y * y, zz = z * z;
     
     return mat3(vec3(1 - 2 * yy - 2 * zz, 2 * x * y - 2 * w * z, 2 * x * z + 2 * w * y),
                 vec3(2 * x * y + 2 * w * z, 1 - 2 * xx - 2 * zz, 2 * y * z - 2 * w * x),
@@ -67,15 +63,15 @@ vec3_t operator *(const mat3_t& A, const vec3_t& v) {
     // return vec3(dot(v, AT[0]), dot(v, AT[1]), dot(v, AT[2]));
 }
 
-mat3_t operator *(const mat3_t& A, float x) {
+mat3_t operator *(const mat3_t& A, real x) {
     return mat3(A[0] * x, A[1] * x, A[2] * x);
 }
 
-mat3_t operator *(float x, const mat3_t& A) {
+mat3_t operator *(real x, const mat3_t& A) {
     return A * x;
 }
 
-mat3_t operator /(const mat3_t& A, float x) {
+mat3_t operator /(const mat3_t& A, real x) {
     return A * math::recip(x);
 }
 
@@ -87,7 +83,7 @@ mat3_t& operator -=(mat3_t& A, const mat3_t& B) {
     return A = A - B;
 }
 
-mat3_t& operator *=(mat3_t& A, float x) {
+mat3_t& operator *=(mat3_t& A, real x) {
     return A = A * x;
 }
 
@@ -95,22 +91,22 @@ mat3_t& operator *=(mat3_t& A, const mat3_t& B) {
     return A = A * B;
 }
 
-mat3_t& operator /=(mat3_t& A, float x) {
+mat3_t& operator /=(mat3_t& A, real x) {
     return A = A / x;
 }
 
-float determinant(const mat3_t& A) {
+real determinant(const mat3_t& A) {
     const mat3_t AT = transpose(A);
-    struct { const float *data; } m = { AT.components };
+    struct { const real *data; } m = { AT.components };
 
-    float t4 = m.data[0]*m.data[4];
-    float t6 = m.data[0]*m.data[5];
-    float t8 = m.data[1]*m.data[3];
-    float t10 = m.data[2]*m.data[3];
-    float t12 = m.data[1]*m.data[6];
-    float t14 = m.data[2]*m.data[6];
+    real t4 = m.data[0]*m.data[4];
+    real t6 = m.data[0]*m.data[5];
+    real t8 = m.data[1]*m.data[3];
+    real t10 = m.data[2]*m.data[3];
+    real t12 = m.data[1]*m.data[6];
+    real t14 = m.data[2]*m.data[6];
     // Calculate the determinant.
-    float t16 = (t4*m.data[8] - t6*m.data[7] - t8*m.data[8] +
+    real t16 = (t4*m.data[8] - t6*m.data[7] - t8*m.data[8] +
                  t10*m.data[7] + t12*m.data[5] - t14*m.data[4]);
     return t16;
 }
@@ -118,22 +114,22 @@ float determinant(const mat3_t& A) {
 mat3_t inverse(const mat3_t& A) {
     const mat3_t AT = transpose(A);
     mat3_t B;
-    struct { const float *data; } m = { AT.components };
-    float *data = B.components;
+    struct { const real *data; } m = { AT.components };
+    real *data = B.components;
 
-    float t4 = m.data[0]*m.data[4];
-    float t6 = m.data[0]*m.data[5];
-    float t8 = m.data[1]*m.data[3];
-    float t10 = m.data[2]*m.data[3];
-    float t12 = m.data[1]*m.data[6];
-    float t14 = m.data[2]*m.data[6];
+    real t4 = m.data[0]*m.data[4];
+    real t6 = m.data[0]*m.data[5];
+    real t8 = m.data[1]*m.data[3];
+    real t10 = m.data[2]*m.data[3];
+    real t12 = m.data[1]*m.data[6];
+    real t14 = m.data[2]*m.data[6];
     // Calculate the determinant.
-    float t16 = (t4*m.data[8] - t6*m.data[7] - t8*m.data[8] +
+    real t16 = (t4*m.data[8] - t6*m.data[7] - t8*m.data[8] +
                  t10*m.data[7] + t12*m.data[5] - t14*m.data[4]);
     
     // Make sure the determinant is non-zero.
     if (t16 == 0.0f) return mat3(0.f);
-    float t17 = 1/t16;
+    real t17 = 1/t16;
     data[0] = (m.data[4]*m.data[8]-m.data[5]*m.data[7])*t17; 
     data[1] = -(m.data[1]*m.data[8]-m.data[2]*m.data[7])*t17;
     data[2] = (m.data[1]*m.data[5]-m.data[2]*m.data[4])*t17; 
@@ -177,7 +173,7 @@ mat3_t transpose(const mat3_t& A) {
     return B;
 }
 
-bool equal(const mat3_t& A, const mat3_t& B, float epsi) {
+bool equal(const mat3_t& A, const mat3_t& B, real epsi) {
     return equal(A[0], B[0], epsi) && equal(A[1], B[1], epsi) && equal(A[2], B[2], epsi);
 }
 
@@ -185,19 +181,17 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC const vec3_t& mat3_t::operator[](unsigned long i) const {
+MATH_INLINE_SPEC const vec3_t& mat3_t::operator[](index_t i) const {
     return columns[i];
 }
 
-MATH_INLINE_SPEC vec3_t& mat3_t::operator[](unsigned long i) {
+MATH_INLINE_SPEC vec3_t& mat3_t::operator[](index_t i) {
     return columns[i];
 }
 
-MATH_INLINE_SPEC float& mat3_t::operator()(unsigned long i, unsigned long j) {
+MATH_INLINE_SPEC real& mat3_t::operator()(index_t i, index_t j) {
     return components[i * 3 + j];
 }
 
 } // namespace math
-
-#endif
 
