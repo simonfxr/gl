@@ -27,21 +27,21 @@ struct ShaderProgram {
         OpenGLError
     };
 
-    enum ShaderType {
-        VertexShader,
-        FragmentShader,
-        GeometryShader
-    };
-
     ShaderProgram(ShaderManager& sm);
+    ShaderProgram(const ShaderProgram&);
+    
     ~ShaderProgram();
+
+    ShaderProgram& operator =(const ShaderProgram&);
 
     GLuint program();
 
     bool addShaderSrc(ShaderType type, const std::string& src);
+    
     bool addShaderFile(ShaderType type, const std::string& file, bool absolute = false);
-    bool addShaderFile(const std::string& file, bool absolute = false);
+    
     bool addShaderFilePair(const std::string& vert_file, const std::string& frag_file, bool absolute = false);
+    
     bool addShaderFilePair(const std::string& basename, bool absolute = false);
 
     bool bindAttribute(const std::string& name, GLuint position);
@@ -69,11 +69,9 @@ struct ShaderProgram {
 
     GLint uniformLocation(const std::string& name);
 
-    void printError(std::ostream& out = std::cerr);
+    void printError();
 
     bool validate(bool printLogOnError = true);
-
-    static Ref<ShaderManager::CachedShaderObject> rebuildShaderObject(ShaderManager& sm, Ref<ShaderManager::CachedShaderObject>& so);
 
 private:
 
@@ -81,9 +79,6 @@ private:
     friend struct Data;
     
     Data * const self;
-    
-    ShaderProgram(const ShaderProgram& _);
-    ShaderProgram& operator =(const ShaderProgram& _);
 };
 
 Ref<ShaderManager::CachedShaderObject> rebuildShaderObject(ShaderManager& self, Ref<ShaderManager::CachedShaderObject>& so);

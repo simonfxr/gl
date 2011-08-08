@@ -44,8 +44,13 @@ struct QuotationCommand EXPLICIT : public Command {
     
     QuotationCommand(const std::string& source, int line, int column, const std::string& desc, Quotation *quot);
     ~QuotationCommand();
-    
+
     void interactive(const Event<CommandEvent>& ev, const Array<CommandArg>&) OVERRIDE;
+
+private:
+
+    QuotationCommand& operator =(const QuotationCommand&);
+    QuotationCommand(const QuotationCommand&);
 };
 
 typedef void (*CommandHandler)(const Event<CommandEvent>&);

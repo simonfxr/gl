@@ -48,12 +48,10 @@ Preprocessor::~Preprocessor() {
 }
 
 void Preprocessor::process(const char *begin, uint32 size) {
-    DirectiveContext ctx(*this);
-    const std::string name = self->sourceName;
+    DirectiveContext ctx(*this, self->sourceName);
     
     ctx.content.data = begin;
     ctx.content.size = size;
-    ctx.content.name = name.c_str();
 
     clearError();
 

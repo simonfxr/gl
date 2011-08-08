@@ -8,6 +8,7 @@ namespace ge {
 struct Engine;
 
 struct EngineEvent {
+    virtual ~EngineEvent() {} // currently not used
     Engine& engine;
     EngineEvent(Engine& _engine) : engine(_engine) {}
 };

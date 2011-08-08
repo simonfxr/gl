@@ -11,8 +11,11 @@ GameLoop::GameLoop(uint32 ticks_per_second, uint32 max_frame_skip, uint32 max_fp
       _restart(false),
       _paused(false),
       _sync(false),
-      _now(0.f),
+      _now(0),
+      _skipped_time(0),
+      _start_time(0),
       _keepup_threshold(0.5f),
+      _frame_duration(0),
       _exit_code(0),
       _animation_frame_id(0),
       _render_frame_id(0)      

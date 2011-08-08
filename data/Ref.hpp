@@ -1,13 +1,39 @@
-#ifndef GLT_REF_HPP
-#define GLT_REF_HPP
+#ifndef DATA_REF_HPP
+#define DATA_REF_HPP
 
 #include "defs.h"
 #include "error/error.hpp"
 #include <iostream>
 
+#ifdef REF_CONCURRENT
+#include "data/Atomic.hpp"
+#endif
+
 namespace atomic {
 
 static const int32 MARK = -0xAFAFAFAF;
+
+#ifdef REF_CONCURRENT
+
+struct Counter {
+    Atomic<int32> count;
+
+    Counter(int32 initial) :
+        count(initial) {}
+
+    ~Counter() { ON_DEBUG(count.set(MARK)); }
+
+    int32 getAndInc() { DEBUG_ASSERT(count.get() != MARK); return count.getAndInc(); }
+    int32 decAndGet() { DEBUG_ASSERT(count.get() != MARK); return count.decAndGet(); }
+    void inc() { getAndInc(); }
+    void dec() { decAndGet(); }
+    int32 get() const { int32 val = count.get(); DEBUG_ASSERT(val != MARK); return val; }
+    bool xchg(int32 expected, int32 *val) {
+        return count.xchg(expected, val);
+    }    
+};
+
+#else
 
 struct Counter { // not thread safe
     int32 count; 
@@ -30,6 +56,8 @@ struct Counter { // not thread safe
     }
 };
 
+#endif
+
 struct RefCount {
     Counter strong, weak;
     RefCount(int32 s, int32 w) : strong(s), weak(w) {}
@@ -43,11 +71,11 @@ template <typename T, typename C, typename R>
 struct RefBase {
 protected:
     T *_ptr; // fat pointer, saves one indirection for pointer uses, but wastes space
-    atomic::RefCount *_cnt;
+    mutable atomic::RefCount *_cnt;
 
 protected:
-    void retain() { C::retain(_cnt); }
-    void release() { if (C::release(_cnt)) delete _ptr; }
+    void retain() const { C::retain(_cnt); }
+    void release() const { if (C::release(_cnt)) delete _ptr; }
 
     RefBase(T *p, atomic::RefCount *cnt) : _ptr(p), _cnt(cnt) { }
     
@@ -65,11 +93,9 @@ public:
     ~RefBase() { release(); }
 
     RefBase<T, C, R>& operator =(const RefBase<T, C, R>& ref) {
-        if (likely(_cnt != ref._cnt)) {
-            release();
-            _ptr = ref._ptr; _cnt = ref._cnt;
-            retain();
-        }
+        ref.retain();
+        release();
+        _ptr = ref._ptr; _cnt = ref._cnt;
         return *this;
     }
 
@@ -95,11 +121,24 @@ struct RefCnt {
     static bool release(atomic::RefCount *cnt) {
         DEBUG_ASSERT(cnt->strong.get() > 0);
         if (cnt->strong.decAndGet() == 0) {
+            // we are the last strong, only weak are remaining
+            
             int32 val = -1;
-            if (cnt->weak.xchg(0, &val))
+            if (cnt->weak.xchg(0, &val)) {
+                // last one, delete counter
                 delete cnt;
-            return true;
+                return true;
+            }
+
+            int32 dead_val = -0x0FFFFFFF; // highly negative value,
+                                        // makes conversion from weak to strong easier
+
+            if (cnt->strong.xchg(0, &dead_val)) {
+                // no weak tried to convert
+                return true;
+            }
         }
+
         return false;
     }
 };
@@ -113,7 +152,7 @@ struct WeakRefCnt {
     static bool release(atomic::RefCount *cnt) {
         DEBUG_ASSERT(cnt->weak.get() > 0);
         if (cnt->weak.decAndGet() == 0) {
-            if (cnt->strong.get() == 0) {
+            if (cnt->strong.get() < 0) {
                 int32 val = -1;
                 if (cnt->weak.xchg(0, &val))
                     delete cnt;
@@ -127,10 +166,12 @@ struct WeakRefCnt {
 
 template <typename T> struct Ref;
 template <typename T> struct WeakRef;
+template <typename T> struct RefValue;
 
 template <typename T>
 struct Ref : public priv::RefBase<T, priv::RefCnt, Ref<T> > {
     explicit Ref(T *p = 0) : priv::RefBase<T, priv::RefCnt, Ref<T> >(p) {}
+    explicit Ref(RefValue<T>&);
     Ref(const Ref<T>& ref) : priv::RefBase<T, priv::RefCnt, Ref<T> >(ref) {}
     Ref<T>& operator =(T *p) { this->set(p); return *this; }
     WeakRef<T> weak();
@@ -149,6 +190,7 @@ template <typename T>
 struct WeakRef : public priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> > {
     WeakRef() : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(0, new atomic::RefCount(0, 1)) {}
     WeakRef(const WeakRef<T>& ref) : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(ref) {}
+    bool unweak(RefValue<T> *dest);
     bool unweak(Ref<T> *dest);
 private:
     WeakRef(T *p, atomic::RefCount *cnt) : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(p, cnt) { this->retain(); }
@@ -159,9 +201,53 @@ template <typename T>
 WeakRef<T> Ref<T>::weak() { return WeakRef<T>(this->_ptr, this->_cnt); }
 
 template <typename T>
-bool WeakRef<T>::unweak(Ref<T> *dest) {
+struct RefValue {
+private:
+    T *_ptr;
+    atomic::Counter *_cnt;
+
+    void unset() { _ptr = 0, _cnt = 0; }
+    
+public:
+    RefValue(T *ptr, atomic::Counter *cnt) :
+        _ptr(ptr), _cnt(cnt) {}
+
+    ~RefValue() {
+        if (_cnt != 0) {
+            Ref<T> ref(*this); // force release
+        }
+    }
+
+    friend struct Ref<T>;
+};
+
+template <typename T>
+Ref<T>::Ref(RefValue<T>& rv) :
+    priv::RefBase<T, priv::RefCnt, Ref<T> >(rv._ptr, rv._cnt)
+{
+    ASSERT(rv._cnt != 0);
+    rv.unset();
+}
+
+template <typename T>
+bool WeakRef<T>::unweak(RefValue<T> *dest) {
     if (this->_cnt->strong.getAndInc() > 0) {
-        dest->release();
+        dest->_ptr = this->_ptr;
+        dest->_cnt = this->_cnt;
+        return true;
+    } else {
+        this->_cnt->strong.dec();
+        return false;
+    }
+}
+
+template <typename T>
+bool WeakRef<T>::unweak(Ref<T> *dest) {
+    if (dest->_cnt == this->_cnt)
+        return true;
+    
+    if (this->_cnt->strong.getAndInc() > 0) {
+        (*dest)->release();
         dest->_ptr = this->_ptr;
         dest->_cnt = this->_cnt;
         return true;

@@ -59,23 +59,39 @@ namespace {
 
 struct GLDebug {
     virtual ~GLDebug() {}
-    virtual void printDebugMessages(const err::Location& loc) = 0;
+    virtual void printDebugMessages(const err::Location&) = 0;
+    GLDebug() {}
+
+private:
+    GLDebug(const GLDebug&);
+    GLDebug& operator =(const GLDebug &);
 };
 
-struct NODebug : public GLDebug {
-    virtual void printDebugMessages(const err::Location& loc) {
-        UNUSED(loc);
-    }
+struct NoDebug : public GLDebug {
+    NoDebug() {}
+    virtual void printDebugMessages(const err::Location&) {}
+
+private:
+    NoDebug(const NoDebug&);
+    NoDebug& operator =(const NoDebug&);
 };
 
 struct ARBDebug : public GLDebug {
     GLsizei message_buffer_length;
     char *message_buffer;
 
+    explicit ARBDebug(GLsizei buf_len) :
+        message_buffer_length(buf_len),
+        message_buffer(new char[buf_len]) {}
+    
     ~ARBDebug();
     
     static GLDebug* init();
     virtual void printDebugMessages(const err::Location& loc);
+    
+private:
+    ARBDebug(const ARBDebug&);
+    ARBDebug& operator =(const ARBDebug&);
 };
 
 ARBDebug::~ARBDebug() {
@@ -92,10 +108,7 @@ GLDebug *ARBDebug::init() {
     GLsizei max_len;
     glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH_ARB, &max_len);
     
-    ARBDebug *dbg = new ARBDebug();
-    dbg->message_buffer_length = max_len;
-    dbg->message_buffer = new char[max_len];
-    return dbg;
+    return new ARBDebug(max_len);
 }
 
 void ARBDebug::printDebugMessages(const err::Location& loc) {
@@ -151,10 +164,18 @@ struct AMDDebug : public GLDebug {
     GLsizei message_buffer_length;
     char *message_buffer;
 
+    explicit AMDDebug(GLsizei buf_len) :
+        message_buffer_length(buf_len),
+        message_buffer(new char[buf_len]) {}
+    
     ~AMDDebug();
     
     static GLDebug* init();
     virtual void printDebugMessages(const err::Location& loc);
+
+private:
+    AMDDebug(const AMDDebug&);
+    AMDDebug& operator =(const AMDDebug&);
 };
 
 AMDDebug::~AMDDebug() {
@@ -175,11 +196,7 @@ GLDebug *AMDDebug::init() {
     GLsizei max_len;
     glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH_AMD, &max_len);
     
-    AMDDebug *dbg = new AMDDebug();
-    dbg->message_buffer_length = max_len;
-    dbg->message_buffer = new char[max_len];
-        
-    return dbg;
+    return new AMDDebug(max_len);
 }
 
 void AMDDebug::printDebugMessages(const err::Location& loc) {
@@ -223,7 +240,7 @@ void AMDDebug::printDebugMessages(const err::Location& loc) {
     }
 }
 
-GLDebug *glDebug = new NODebug();
+GLDebug *glDebug = new NoDebug();
 
 } // namespace anon
 
@@ -263,7 +280,7 @@ bool initDebug() {
 
     if (dbg == 0) {
         std::cerr << "couldnt initialize Debug Output, no debug implementaion available" << std::endl;
-        dbg = new NODebug();
+        dbg = new NoDebug();
         initialized = false;
     } else {
         std::cerr << "initialized Debug Output using " << debug_impl << std::endl;

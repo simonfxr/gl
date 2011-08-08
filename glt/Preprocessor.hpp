@@ -12,11 +12,12 @@ struct Preprocessor {
 
     struct ContentContext {
         Preprocessor& processor;
-        const char *name;
+        const std::string name;
         const char *data;
         uint32 size;
 
-        ContentContext(Preprocessor& proc) : processor(proc) {}
+        ContentContext(Preprocessor& proc, const std::string& nam) :
+            processor(proc), name(nam) {}
     };
 
     struct DirectiveContext {

@@ -520,7 +520,7 @@ SphereLOD Game::calc_sphere_lod(const Sphere& s) {
 
     // near upper right corner of frustm (view coord)
     vec4_t nur_corner = gt.inverseProjectionMatrix() * vec4(-1.f, -1.f, -1.f, 1.f);
-    vec3_t max = abs(vec3(nur_corner));
+
     float x_max = abs(nur_corner[0]);
     float y_max = abs(nur_corner[1]);
     float z_min = abs(nur_corner[2]);

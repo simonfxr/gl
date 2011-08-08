@@ -12,6 +12,11 @@ namespace fs {
 
 struct MTime;
 
+struct Stat {
+    std::string absolute;
+    MTime mtime;
+};
+
 enum ObjectType {
     Any,
     File,
@@ -24,7 +29,11 @@ std::string dirname(const std::string& path);
 
 std::string basename(const std::string& path);
 
-MTime getMTime(const std::string& file);
+bool getMTime(const std::string& path, sys::fs::MTime *mtime);
+
+bool state(const std::string& path, sys::fs::State *state);
+
+std::string absolutePath(const std::string& path);
 
 std::string lookup(const std::vector<std::string>& dirs, const std::string& name);
 

@@ -3,54 +3,63 @@
 
 #include <vector>
 #include <string>
-#include <ostream>
-#include <memory>
+#include <map>
 
 #include "glt/Preprocessor.hpp"
-#include "glt/ShaderManager.hpp"
+#include "glt/ShaderCompiler.hpp"
 #include "sys/fs/fs.hpp"
 
 namespace glt {
 
+struct ProcessingState;
+
 struct FileContents {
     const char *contents;
     uint32 size;
-};
 
-struct ShaderContents {
-    std::vector<uint32> segLengths;
-    std::vector<const char *> segments;
-
-    std::vector<FileContents> contents;
-
-    ~ShaderContents();
-};
-
-struct Include {
-    uint32 offset;
-    uint32 directiveLineLength;
-
-    // if the string is empty no file gets included,
-    // as a side effect the range [offset;offset+directiveLineLength)
-    // will not be included in the resulting ShaderContents
-    std::string fileToInclude;    
+    FileContents(const char *_contents, uint32 _size) :
+        contents(_contents), size(_size) {}
 };
 
 struct IncludeHandler : public Preprocessor::DirectiveHandler {
-    std::vector<Include> includes;
-    
-    void beginProcessing(const Preprocessor::ContentContext& proc);
-    void directiveEncountered(const Preprocessor::DirectiveContext& ctx);
+    void beginProcessing(const ContentContext&);
+    void directiveEncountered(const Preprocessor::DirectiveContext&);
+    void endProcessing(const ContentContext&);
 };
 
 struct DependencyHandler : public Preprocessor::DirectiveHandler {
-    std::vector<std::string> deps;
-    std::vector<Include> *patches; // used to delete lines containing directives
-    
-    void directiveEncountered(const Preprocessor::DirectiveContext& ctx);
+    void directiveEncountered(const Preprocessor::DirectiveContext&);
 };
 
-bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& file, std::vector<Include> *includeBuffer, std::vector<std::pair<std::string, sys::fs::MTime> >& allIncs, const std::string& prefixSrc, ShaderContents& shadersrc);
+struct GLSLPreprocessor : public Preprocessor {
+
+    const IncludePath& includePath;
+    ShaderIncludes& includes;
+    ShaderDependencies& dependencies;
+
+    std::vector<uint32> segLengths;
+    std::vector<const char *> segments;
+    std::vector<FileContents> fileContents;
+
+    ProcessingState *state;
+
+    IncludeHandler includeHandler;
+    DependencyHandler dependencyHandler;
+
+    GLSLPreprocessor(const IncludePath&, ShaderIncludes&, ShaderDependencies&);
+    ~GLSLPreprocessor();
+
+    void appendString(const std::string&);
+    
+    void addDefines(const PreprocessorDefinitions&);
+
+    bool processRecursively(const std::string&);
+    bool processRecursively(const char *contents, uint32 size);
+    bool processFileRecursively(const std::string&, std::string *, sys::fs::MTime *);
+
+    // internal use only
+    void advanceSegments(const Preprocessor::DirectiveContext&);
+};
 
 } // namespace glt
 

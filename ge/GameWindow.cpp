@@ -39,15 +39,19 @@ struct GameWindow::Data {
 
     WindowEvents events;
 
-    Data(GameWindow& _self, const WindowOptions& opts) :
-        self(_self), owning_win(true),
-        win(new sf::RenderWindow(sf::VideoMode(opts.width, opts.height),
-                                 opts.title,
-                                 sf::Style::Default,
-                                 opts.settings)) {}
-    
-    Data(GameWindow& _self, sf::RenderWindow& w) : 
-        self(_self), owning_win(false),  win(&w) {}
+    Data(GameWindow& _self, bool owns_win, sf::RenderWindow *rw) : 
+        self(_self),
+        owning_win(owns_win),
+        win(rw),
+        grab_mouse(false),
+        have_focus(true),
+        mouse_x(0),
+        mouse_y(0),
+        show_mouse_cursor(true),
+        accum_mouse_moves(true),
+        renderTarget(0),
+        events()
+        {}
         
     ~Data();
 
@@ -59,14 +63,7 @@ struct GameWindow::Data {
 };
 
 void GameWindow::Data::init() {
-    grab_mouse = false;
-    have_focus = true;
-    show_mouse_cursor = true;
-    accum_mouse_moves = true;
-
-    mouse_x = 0;
-    mouse_y = 0;
-
+    ASSERT(renderTarget == 0);
     renderTarget = new WindowRenderTarget(self);
     win->SetActive();
 
@@ -86,10 +83,15 @@ GameWindow::Data::~Data() {
 }
 
 GameWindow::GameWindow(const WindowOptions& opts) :
-    self(new Data(*this, opts)) { self->init(); }
+    self(new Data(*this,
+                  true,
+                  new sf::RenderWindow(sf::VideoMode(opts.width, opts.height),
+                                       opts.title,
+                                       sf::Style::Default,
+                                       opts.settings))) { self->init(); }
 
 GameWindow::GameWindow(sf::RenderWindow& win) :
-    self(new Data(*this, win)) { self->init(); }
+    self(new Data(*this, false, &win)) { self->init(); }
 
 GameWindow::~GameWindow() {
     delete self;
@@ -135,12 +137,14 @@ void GameWindow::Data::handleInputEvents() {
             mouse_y = e.MouseMove.Y;
             
             if (!accum_mouse_moves) {
-                MouseMoved ev(self);
-                ev.dx = mouse_current_x - mouse_x;
-                ev.dy = mouse_y - mouse_current_y;
-                ev.x = mouse_current_x = mouse_x;
-                ev.y = mouse_current_y = mouse_y;
-                if (have_focus && (ev.dx != 0 || ev.dy != 0)) {
+                int32 dx = mouse_current_x - mouse_x;
+                int32 dy = mouse_y - mouse_current_y;
+                
+                mouse_current_x = mouse_x;
+                mouse_current_y = mouse_y;
+
+                if (have_focus && (dx != 0 || dy != 0)) {
+                    MouseMoved ev(self, dx, dy, mouse_x, mouse_y);
                     events.mouseMoved.raise(makeEvent(ev));
                 }
             }
@@ -150,13 +154,13 @@ void GameWindow::Data::handleInputEvents() {
         case sf::Event::MouseButtonPressed:
             mouse_x = e.MouseButton.X;
             mouse_y = e.MouseButton.Y;
-            events.mouseButton.raise(makeEvent(MouseButton(self, true, e.MouseButton)));
+            events.mouseButton.raise(makeEvent(MouseButton(self, true, mouse_x, mouse_y, e.MouseButton)));
             break;
 
         case sf::Event::MouseButtonReleased:
             mouse_x = e.MouseButton.X;
             mouse_y = e.MouseButton.Y;
-            events.mouseButton.raise(makeEvent(MouseButton(self, false, e.MouseButton)));
+            events.mouseButton.raise(makeEvent(MouseButton(self, false, mouse_x, mouse_y, e.MouseButton)));
             break;
             
         case sf::Event::LostFocus:
@@ -221,12 +225,12 @@ void GameWindow::Data::handleInputEvents() {
 
         int32 dx = mouse_current_x - mouse_x;
         int32 dy = mouse_y - mouse_current_y;
+        mouse_current_x = mouse_x;
+        mouse_current_y = mouse_y;
 
         if (have_focus && (dx != 0 || dy != 0)) {
 
-            MouseMoved ev(self);
-            ev.dx = dx; ev.dy = dy;
-            ev.x = mouse_x; ev.y = mouse_y;
+            MouseMoved ev(self, dx, dy, mouse_x, mouse_y);
 
             if (grab_mouse) {
                 mouse_x = win->GetWidth() / 2;

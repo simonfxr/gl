@@ -6,16 +6,12 @@
 #include <vector>
 
 #include "data/Ref.hpp"
-#include "glt/ShaderObject.hpp"
-
-#include "sys/fs/fs.hpp"
 
 namespace glt {
 
-struct ShaderProgram;
+struct ShaderObjectCache;
 
 struct ShaderManager {
-
     enum Verbosity {
         Quiet,
         OnlyErrors,
@@ -27,20 +23,14 @@ struct ShaderManager {
         CompatibilityProfile
     };
 
-    struct CachedShaderObject {
-    private:
-        ShaderManager& sm;
-    public:
-        std::string key;
-        ShaderObject so;
-        sys::fs::MTime mtime;
-        std::vector<Ref<CachedShaderObject> > deps;
-        std::vector<std::pair<std::string, sys::fs::MTime> > incs;
-        CachedShaderObject(ShaderManager& _sm, const std::string& k, const sys::fs::MTime& mt) : sm(_sm), key(k), mtime(mt) {}
-        ~CachedShaderObject();
+    enum ShaderType {
+        GuessShaderType,
+        VertexShader,
+        FragmentShader,
+        GeometryShader,
+        TesselationControl,
+        TesselationEvaluation
     };
-
-    static const Ref<CachedShaderObject> EMPTY_CACHE_ENTRY;
 
     ShaderManager();
     ~ShaderManager();
@@ -60,23 +50,23 @@ struct ShaderManager {
     bool addShaderDirectory(const std::string& directory, bool check_exists = true);
     const std::vector<std::string>& shaderDirectories() const;
 
-    Ref<CachedShaderObject> lookupShaderObject(const std::string& file, const sys::fs::MTime& mtime);
-    bool removeFromCache(CachedShaderObject& so);
-    
-    void cacheShaderObject(Ref<CachedShaderObject>& s);
-
     void setShaderVersion(uint32 vers /* e.g. 330 */, ShaderProfile profile = CompatibilityProfile);
     uint32 shaderVersion() const;
     ShaderProfile shaderProfile() const;
 
     bool cacheShaderObjects() const;
     void cacheShaderObjects(bool docache);
+
+    ShaderCompiler& shaderCompiler();
+}
+
     
 private:
     
+    friend struct ShaderObjectCache;
+
     struct Data;
     friend struct Data;
-    friend struct CachedShaderObject;
     Data * const self;
 
     ShaderManager(const ShaderManager& _);
@@ -86,4 +76,3 @@ private:
 } // namespace glt
 
 #endif
-

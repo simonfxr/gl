@@ -86,8 +86,9 @@ struct WindowEvents {
 };
 
 struct WindowEvent {
+    virtual ~WindowEvent() {}
     GameWindow& window;
-    WindowEvent(GameWindow& win) : window(win) {}
+    explicit WindowEvent(GameWindow& win) : window(win) {}
 };
 
 struct WindowResized : public WindowEvent {
@@ -106,15 +107,19 @@ struct KeyChanged : public WindowEvent {
 struct MouseMoved : public WindowEvent {
     int32 dx, dy;
     uint32 x, y;
-    MouseMoved(GameWindow& win) : WindowEvent(win) {}
+    MouseMoved(GameWindow& win, int32 _dx, int32 _dy, uint32 _x, uint32 _y) :
+        WindowEvent(win),
+        dx(_dx), dy(_dy), x(_x), y(_y) {}
 };
 
 struct MouseButton : public WindowEvent {
     uint32 x, y;
     bool pressed;
     sf::Event::MouseButtonEvent button;
-    MouseButton(GameWindow& win, bool press, const sf::Event::MouseButtonEvent& butn) :
-        WindowEvent(win), pressed(press), button(butn) {}
+    MouseButton(GameWindow& win, bool press, uint32 _x, uint32 _y, const sf::Event::MouseButtonEvent& butn) :
+        WindowEvent(win),
+        x(_x), y(_y),
+        pressed(press), button(butn) {}
 };
 
 struct FocusChanged : public WindowEvent {

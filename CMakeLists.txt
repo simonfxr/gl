@@ -55,6 +55,10 @@ add_definitions("-Wall -fno-exceptions -fno-rtti")
 if(COMP_GCC)
   add_definitions("-fopenmp")
   link_libraries("-fopenmp")
+
+  # if(BUILD_DEBUG)
+  #   add_definitions("-Weffc++")
+  # endif()
 endif()
 
 if(COMP_GCC OR COMP_CLANG)
@@ -262,6 +266,14 @@ target_link_libraries(queryExtension sys glt err ge)
 add_executable(math_test
   math_test.cpp
   ${MATH_SRC})
+
+add_definitions("-DREF_CONCURRENT")
+
+add_executable(ref_test
+  ref_test.cpp
+  ${MATH_SRC})
+
+target_link_libraries(ref_test err)
 
 target_link_libraries(math_test sys err)
 

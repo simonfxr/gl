@@ -1,10 +1,12 @@
 #include "glt/GLSLPreprocessor.hpp"
-
 #include "sys/fs/fs.hpp"
 
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <ifstream>
+#include <set>
+#include <stack>
 
 namespace glt {
 
@@ -51,8 +53,6 @@ fail:
     return false;
 }
 
-} // namespace anon
-
 bool parseFileArg(const Preprocessor::DirectiveContext& ctx, const char *& arg, uint32& len) {
 
     arg = 0; len = 0;
@@ -86,130 +86,226 @@ bool parseFileArg(const Preprocessor::DirectiveContext& ctx, const char *& arg, 
     }
 }
 
-ShaderContents::~ShaderContents() {
-    for (uint32 i = 0; i < contents.size(); ++i) {
-        delete[] contents[i].contents;
+} // namespace anon
+
+struct FileContenxt {
+    const char *pos;
+};
+
+struct ProcessingState {
+    std::set<std::string> visitingFiles;
+    std::set<std::string> deps;
+    std::set<std::string> incs;
+    std::stack<FileContext> stack;
+};
+
+GLSLPreprocessor::GLSLPreprocessor(const IncludePath& incPath,
+                                   ShaderIncludes& incs,
+                                   ShaderDependencies& deps) :
+    includePath(_incPath), includes(incs), dependencies(deps),
+    segLengths(), segments(), fileContents(),
+    state(0), includeHandler(), dependencyHandler()
+{
+    this->installHandler("include", includeHandler);
+    this->installHandler("need", dependencyHandler);
+}
+
+GLSLPreprocessor::~GLSLPreprocessor() {
+    for (index_t i = 0; i < fileContents.size(); ++i)
+        delete[] fileContents[i].contents;
+}
+
+void GLSLPreprocessor::appendString(const std::string& str) {
+    if (!str.empty()) {
+        fileContents.push_back(FileContents(strdup(str.c_str()), str.length));
+        segments.push_back(fc.contents);
+        segLengths.push_back(str.length());
     }
+}
+
+void GLSLPreprocessor::addDefines(const PreprocessorDefinitions& defines) {
+    for (PreprocessorDefinitions::const_iterator it = defines.begin();
+         it != defines.end(); ++it) {
+        std::stringstream defn;
+        defn << "#define " << it->first << " " << it->second << std::endl;
+        appendString(defn.str());
+    }
+}
+
+bool GLSLPreprocessor::processRecursively(const std::string& src) {
+    processRecursively(src.c_str(), src.length());
+}
+
+bool GLSLPreprocessor::processRecursively(const char *contents, uint32 size) {
+
+    if (this->wasError())
+        return false;
+    
+    ASSERT(visitingFiles == 0);
+    
+    std::set<std::string> visiting;
+    visitingFiles = &visiting;    
+    bool success = process(contents, size);
+    visitingFiles = 0;
+    return success;
+}
+
+void GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext& ctx) {
+    FileContext& frame = proc.state->stack.top();
+
+    int32 seglen = ctx.content.data + ctx.lineOffset;
+
+    if (seglen > 0) {
+        segments.push_back(frame.pos);
+        segLengths.push_back(seglen);
+    }
+
+    frame.pos = ctx.content.data + ctx.lineOffset + ctx.lineLength;
+}
+
+bool GLSLPreprocessor::processFileRecursively(const std::string& file, std::string *absolute, sys::fs::MTime *mtime) {
+
+    if (this->wasError())
+        return false;
+
+    sys::fs::Stat filestat = sys::fs::stat(file);
+
+    if (mtime != 0)
+        *mtime = filestat.mtime;
+
+    const char *contents;
+    uint32 size;
+    
+    if (!readFile(this->err(), file, contents, size))
+        return false;
+
+    fileContents.push_back(FileContents(contents, size));
+
+    this->name(filestat.absolute);
+    return processRecursively(contents, size);
 }
 
 void DependencyHandler::directiveEncountered(const Preprocessor::DirectiveContext& ctx) {
+    GLSLPreprocessor& proc = static_cast<GLSLProcessor&>(ctx.processor);
+    
     const char *arg;
     uint32 len;
+
+    // FIXME: add an option to specify ShaderType explicitly
     
     if (!parseFileArg(ctx, arg, len)) {
-        ctx.content.processor.err()
-            << ctx.content.name
-            << ": invalid parameter in #need-directive" << std::endl;
-        ctx.content.processor.setError();
+        proc.err() << ctx.content.name
+                   << ": #need-directive: invalid parameter" << std::endl;
+        proc.setError();
+        return;
     }
 
-    deps.push_back(std::string(arg, len));
+    std::string file(arg, len);
+    std::string realPath = sys::fs::lookupPath(proc.includePath, file);
+    if (realPath.empty()) {
+        proc.err() << ctx.content.name
+                   << ": #need-directive: cannot find file: " << file
+                   << std::endl;
+        proc.setError();
+        return;
+    }
 
-    Include inc;
-    inc.offset = ctx.lineOffset;
-    inc.directiveLineLength = ctx.lineLength;
-    inc.fileToInclude = "";
+    proc.advanceSegments(ctx);
 
-    patches->push_back(inc);
+    ShaderProgram::ShaderType stype;
+    if (!ShaderCompiler::guessShaderType(file, &stype)) {
+        proc.err() << ctx.content.name
+                   << ": #need-directive: cannot guess shader type based on name: " << file
+                   << std::endl;
+        proc.setError();
+        return;
+    }
+
+    std::string absPath = sys::fs::absolutePath(realPath);
+    if (proc.state->deps.insert(absPath).second)
+        proc.dependencies.push_back(ShaderDependency(stype, absPath));
 }
 
-void IncludeHandler::beginProcessing(const Preprocessor::ContentContext& ctx) {
-    UNUSED(ctx);
-    includes.clear();
+void IncludeHandler::beginProcessing(const ContentContext& ctx) {
+    GLSLPreprocessor& proc = static_cast<GLSLProcessor&>(ctx.processor);
+
+    if (proc.state == 0)
+        proc->state = new ProcessingState;
+
+    if (!ctx.name.empty())
+        proc.state->visitingFiles.insert(ctx.name);
+
+    FileContext frame;
+    frame.pos = ctx.data;
+    proc.state->stack.push(frame);        
 }
 
 void IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext& ctx) {
+    GLSLPreprocessor& proc = static_cast<GLSLProcessor&>(ctx.processor);
+
     const char *arg;
     uint32 len;
 
-    if (!parseFileArg(ctx, arg, len)) {
-        ctx.content.processor.err()
-            << ctx.content.name
-            << ": invalid parameter in #include-directive" << std::endl;
-        ctx.content.processor.setError();
+    if (!parseFileArg(ctx, arg, len) || len == 0) {
+        proc << ctx.content.name
+             << ": #include-directive: invalid parameter" << std::endl;
+        proc.setError();
+        return;
     }
 
-    Include inc;
-    inc.offset = ctx.lineOffset;
-    inc.directiveLineLength = ctx.lineLength;
-    inc.fileToInclude = std::string(arg, len);
+    std::string file(arg, len);
+    std::string realPath = sys::fs::lookupPath(proc.includePath, file);
+    if (realPath.empty()) {
+        proc.err() << ctx.content.name
+                   << ": #include-directive: cannot find file: " << file
+                   << std::endl;
+        proc.setError();
+        return;
+    }
 
-    includes.push_back(inc);
+    proc.advanceSegments(ctx);
+
+    sys::fs::Stat filestat = sys::fs::stat(realPath);
+    proc.state->incs.insert(filestat.absolute);
+
+    if (proc.state->visitingFiles.count(filestat.absolute) == 0) {
+        proc.includes.push_back(ShaderInclude(filestat.absolute, filestat.mtime));
+        proc.name(filestat.absolute);
+
+        char *contents;
+        uint32 size;
+
+        if (!readFile(proc.err(), filestat.absolute, contents, size)) {
+            proc.setError();
+            return;
+        }
+
+        proc.fileContents.push_back(FileContents(contents, size));
+        proc.name(filestat.absolute);
+        proc.process(contents, size);
+    }
 }
 
-bool preprocess(const ShaderManager& sm, Preprocessor& proc, const std::string& file, std::vector<Include> *includeBuffer, std::vector<std::pair<std::string, sys::fs::MTime> >& allIncs, const std::string& prefixSrc, ShaderContents& shadersrc) {
+void IncludeHandler::endProcessing(const ContentContext& ctx) {
+    GLSLPreprocessor& proc = static_cast<GLSLProcessor&>(ctx.processor);
 
-    std::auto_ptr<std::vector<Include> > localIncBuf(0);
-
-    if (includeBuffer == 0) {
-        includeBuffer = new std::vector<Include>;
-        localIncBuf = std::auto_ptr<std::vector<Include> >(includeBuffer);
-    }
-
-    char *contents;
-    uint32 size;
+    FileContext& frame = proc.state->stack.top();
+    int32 seglen = ctx.data + ctx.size - frame.pos;
     
-    if (!readFile(sm.err(), file, contents, size))
-        return false;
-
-    if (!prefixSrc.empty()) {
-        FileContents fc;
-        fc.contents = strdup(prefixSrc.c_str());
-        fc.size = prefixSrc.length();
-        shadersrc.segments.push_back(fc.contents);
-        shadersrc.segLengths.push_back(prefixSrc.length());
-        shadersrc.contents.push_back(fc);
-        fc.contents = 0;
-        fc.size = 0;
+    if (seglen > 0) {
+        segments.push_back(frame.pos);
+        segLengths.push_back(seglen);
     }
 
-    {
-        FileContents fc; fc.contents = contents; fc.size = size;
-        shadersrc.contents.push_back(fc);
-        fc.contents = 0; // dont let the destructor delete our content
-        fc.size = 0;
+    proc.state->stack.pop();
+
+    if (!ctx.name.empty())
+        proc.state->visitingFiles.erase(ctx.name);
+
+    if (proc.state->stack.empty()) {
+        delete proc.state;
+        proc.state = 0;
     }
-
-    proc.process(contents, size);
-    if (proc.wasError())
-        return false;
-
-    std::vector<Include> includes = *includeBuffer;
-    const char *pos = contents;
-    includeBuffer->clear();
-
-    for (uint32 i = 0; i < includes.size(); ++i) {
-        Include& inc = includes[i];
-
-        uint32 seglen = contents + inc.offset - pos;
-        if (seglen > 0) {
-            shadersrc.segments.push_back(pos);
-            shadersrc.segLengths.push_back(seglen);
-        }
-        
-        pos = contents + inc.offset + inc.directiveLineLength;
-        
-        if (!inc.fileToInclude.empty()) {
-            std::string realname = sys::fs::lookup(sm.shaderDirectories(), inc.fileToInclude);
-            
-            if (realname.empty()) {
-                ERR("couldnt include file: not found: " + inc.fileToInclude);
-                return false;
-            }
-
-            if (!preprocess(sm, proc, realname, includeBuffer, allIncs, "", shadersrc))
-                return false;
-
-            allIncs.push_back(std::make_pair(realname, sys::fs::getMTime(realname)));
-        }
-    }
-
-    if (pos < contents + size) {
-        shadersrc.segments.push_back(pos);
-        shadersrc.segLengths.push_back(contents + size - pos);
-    }
-
-    return true;
 }
 
 } // namespace glt
