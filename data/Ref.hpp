@@ -207,7 +207,6 @@ struct Ref : public priv::RefBase<T, priv::RefCnt, Ref<T> > {
     const Ref<U>& cast() const { return reinterpret_cast<const Ref<U>&>(*this); }
     
 private:
-    Ref(T *p, atomic::Counter *cnt) : priv::RefBase<T, priv::RefCnt, Ref<T> >(p, cnt) { this->retain(); }
     friend struct WeakRef<T>;
 };
 
@@ -273,7 +272,8 @@ Ref<T>::Ref(RefValue<T>& rv) :
     priv::RefBase<T, priv::RefCnt, Ref<T> >(rv._ptr, rv._cnt)
 {
     ASSERT(rv._cnt != 0);
-    rv.unset();
+    rv._ptr = 0;
+    rv._cnt = 0;
 }
 
 template <typename T>

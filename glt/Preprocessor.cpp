@@ -1,7 +1,9 @@
-#include "glt/Preprocessor.hpp"
-
 #include <cstring>
 #include <iostream>
+
+#include "glt/Preprocessor.hpp"
+
+#include "error/error.hpp"
 
 namespace glt {
 
@@ -52,12 +54,14 @@ void Preprocessor::process(const std::string& str) {
 }
 
 void Preprocessor::process(const char *begin, uint32 size) {
+    
+    if (wasError())
+        return;
+    
     DirectiveContext ctx(*this, self->sourceName);
     
     ctx.content.data = begin;
     ctx.content.size = size;
-
-    clearError();
 
     for (Handlers::const_iterator it = self->handlers.begin();
          it != self->handlers.end(); ++it) {
@@ -152,12 +156,17 @@ void Preprocessor::err(std::ostream& err_) {
 }
 
 bool Preprocessor::setError() {
+    WARN("setting error");
     bool isError = self->errorState;
     self->errorState = true;
     return isError;
 }
 
 bool Preprocessor::wasError() const {
+    if (self->errorState) {
+        WARN("in Error state");
+    }
+        
     return self->errorState;
 }
 

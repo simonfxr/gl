@@ -126,10 +126,12 @@ struct ShaderCompiler {
     ShaderCompiler(glt::ShaderManager& mng) :
         shaderManager(mng),
         defines(),
-        cache(mng.globalShaderCache()),
+        cache(),
         lastError(NoError) {}
 
     ~ShaderCompiler();
+
+    void init();
 
     Error getError() { return lastError; }
 

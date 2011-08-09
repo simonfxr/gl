@@ -1,6 +1,7 @@
 #include "ge/WindowRenderTarget.hpp"
 #include "ge/GameWindow.hpp"
 #include "glt/utils.hpp"
+#include "math/vec3.hpp"
 #include "math/vec4.hpp"
 
 namespace ge {

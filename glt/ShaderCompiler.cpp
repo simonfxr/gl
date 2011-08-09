@@ -108,12 +108,13 @@ struct FileShaderObject : public ShaderObject {
 
 void CompileState::initPreprocessor(ShaderCompiler& compiler, GLSLPreprocessor& proc) {
     ShaderManager& m = compiler.shaderManager;
+    proc.err(std::cerr);
 
     if (m.shaderVersion() != 0) {
         std::ostringstream glversdef;
         glversdef << "#version " << m.shaderVersion()
                   << (m.shaderProfile() == ShaderManager::CoreProfile
-                      ? "core" : "compatibility")
+                      ? " core" : " compatibility")
                   << std::endl;
         proc.appendString(glversdef.str());
     }
@@ -139,6 +140,12 @@ GLuint CompileState::compile(ShaderCompiler& compiler, GLenum shader_type, const
     uint32 nsegments = proc.segments.size();
     const char **segments = &proc.segments[0];
     const GLint *segLengths = reinterpret_cast<const GLint *>(&proc.segLengths[0]);
+
+    // for (uint32 i = 0; i < nsegments; ++i) {
+    //     std::cerr << std::string(segments[i], segLengths[i]);
+    // }
+
+    // std::cerr << "END SHADER SOURCE" << std::endl;
     
     GLuint shader;
     GL_CHECK(shader = glCreateShader(shader_type));
@@ -156,7 +163,7 @@ GLuint CompileState::compile(ShaderCompiler& compiler, GLenum shader_type, const
     GLint success;
     GL_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
     bool ok = success == GL_TRUE;
-    LOG_PUT(compiler, (ok ? "success" : "failed"));
+    LOG_PUT(compiler, (ok ? "success" : "failed")) << std::endl;
     LOG_END(compiler);
 
     if ((!ok && LOG_LEVEL(compiler, err::Error)) || LOG_LEVEL(compiler, err::Info)) {
@@ -368,7 +375,7 @@ ShaderObject *FileSource::loadFile(ShaderCompiler& compiler, ShaderManager::Shad
         return 0;
     }
 
-    GLuint shader = CompileState::compile(compiler, gltype, "", preproc);
+    GLuint shader = CompileState::compile(compiler, gltype, so->source->key, preproc);
     
     if (shader == 0) {
         delete so;
@@ -466,6 +473,10 @@ ShaderCompiler::~ShaderCompiler() {
     
 }
 
+void ShaderCompiler::init() {
+    cache = shaderManager.globalShaderCache();
+}
+
 bool ShaderCompiler::reloadRecursively(ShaderObjectRoots& roots, bool *outdated, ShaderCompileFlags flags) {
     CompileState cstate(*this, flags);
     ShaderObjectRoots newroots;
@@ -482,9 +493,10 @@ bool ShaderCompiler::reloadRecursively(ShaderObjectRoots& roots, bool *outdated,
 }
 
 bool ShaderCompiler::loadString(ShaderObjectRoots& roots, ShaderManager::ShaderType type, const std::string& code, ShaderCompileFlags flags) {
+
     Ref<ShaderSource> src(new StringSource(type, code));
     ShaderObject *so = src->load(*this, flags);
-    
+
     if (so) {
         CompileState cstate(*this, flags);
         Ref<ShaderObject> soref(so);
@@ -500,6 +512,7 @@ bool ShaderCompiler::loadString(ShaderObjectRoots& roots, ShaderManager::ShaderT
 }
 
 bool ShaderCompiler::loadFile(ShaderObjectRoots& roots, ShaderManager::ShaderType type, const std::string& path, bool absolute, ShaderCompileFlags flags) {
+
     ShaderObject *so = FileSource::loadFile(*this, type, path, absolute, flags);
 
     if (so) {

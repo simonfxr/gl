@@ -1,5 +1,6 @@
 
 set(MATH_INLINE TRUE CACHE BOOL "TRUE to inline all math functions")
+set(GLDEBUG TRUE CACHE BOOL "TRUE to check for errors after every OpenGL call")
 
 if (CMAKE_CXX_COMPILER)
   string(REGEX REPLACE "[^/]*/" "" CXX_COMP ${CMAKE_CXX_COMPILER})
@@ -52,6 +53,10 @@ endif()
 
 add_definitions("-Wall -fno-exceptions -fno-rtti")
 
+if(GLDEBUG)
+  add_definitions("-DGLDEBUG")
+endif()
+
 if(COMP_GCC)
   add_definitions("-fopenmp")
   link_libraries("-fopenmp")
@@ -63,7 +68,6 @@ endif()
 
 if(COMP_GCC OR COMP_CLANG)
   add_definitions("-Wextra")
-#  add_definitions("-Wno-switch")
   if(BUILD_DEBUG)
     add_definitions("-ggdb -fstack-protector")
   endif()

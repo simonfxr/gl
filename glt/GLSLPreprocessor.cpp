@@ -148,6 +148,9 @@ void GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext& ctx
 }
 
 bool GLSLPreprocessor::processFileRecursively(const std::string& file, std::string *absolute, sys::fs::ModificationTime *mtime) {
+    if (wasError())
+        return false;
+    
     sys::fs::Stat filestat;
     if (!sys::fs::stat(file, &filestat))
         return false;
@@ -168,7 +171,7 @@ bool GLSLPreprocessor::processFileRecursively(const std::string& file, std::stri
 
     this->name(filestat.absolute);
     process(data, size);
-    return wasError();
+    return !wasError();
 }
 
 void DependencyHandler::directiveEncountered(const Preprocessor::DirectiveContext& ctx) {

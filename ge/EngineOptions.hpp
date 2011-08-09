@@ -34,7 +34,6 @@ struct EngineOptions {
 #ifdef GLDEBUG
         window.settings.DebugContext = true;
 #endif
-
         scriptDirs.push_back("scripts");
     }
 

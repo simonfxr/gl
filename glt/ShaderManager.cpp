@@ -25,9 +25,9 @@ struct ShaderManager::Data {
     uint32 shader_version;
     ShaderProfile shader_profile;
     bool cache_so;
-    ShaderCompiler shaderCompiler;
     Ref<ShaderCache> globalShaderCache;
     PreprocessorDefinitions globalDefines;
+    ShaderCompiler shaderCompiler;
 
     Data(ShaderManager& self) :
         verbosity(Info),
@@ -37,14 +37,17 @@ struct ShaderManager::Data {
         shader_version(0),
         shader_profile(CoreProfile),
         cache_so(true),
-        shaderCompiler(self),
         globalShaderCache(new ShaderCache),
-        globalDefines()
+        globalDefines(),
+        shaderCompiler(self)
         {}
 };
 
 ShaderManager::ShaderManager() :
-    self(new Data(*this)) {}
+    self(new Data(*this))
+{
+    self->shaderCompiler.init();
+}
 
 ShaderManager::~ShaderManager() {
     delete self;
