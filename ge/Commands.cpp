@@ -30,7 +30,7 @@ static void runReloadShaders(const Event<CommandEvent>& e, const Array<CommandAr
     if (args.size() == 0) {
         std::cerr << "reloading shaders" << std::endl;
         e.info.engine.shaderManager().reloadShaders();
-        std::cerr << "all shaders reloaded" << std::endl;
+        // std::cerr << "all shaders reloaded" << std::endl;
     } else {
         ERR("reloadShaders: selectively shader reloading not yet implemented");
     }

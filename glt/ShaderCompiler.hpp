@@ -40,7 +40,7 @@ struct ShaderSource {
     
     virtual ~ShaderSource() {}
     
-    virtual ShaderObject *load(ShaderCompiler&, ShaderCompileFlags) = 0;
+    virtual Ref<ShaderObject> load(ShaderCompiler&, ShaderCompileFlags) = 0;
 
 private:
     ShaderSource(const ShaderSource&);
@@ -58,7 +58,7 @@ struct ShaderObject {
 
     virtual ~ShaderObject() {}
     
-    virtual ShaderObject *reload(ShaderCompiler&, ShaderCompileFlags) = 0;
+    virtual Ref<ShaderObject> reload(Ref<ShaderObject>&, ShaderCompiler&, ShaderCompileFlags) = 0;
     
 private:
     ShaderObject(const ShaderObject&);

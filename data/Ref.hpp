@@ -46,6 +46,7 @@ struct Counter { // not thread safe
     void dec() { decAndGet(); }
     int32 get() const { DEBUG_ASSERT(count != MARK); return count; }
     bool xchg(int32 expected, int32 *val) {
+        DEBUG_ASSERT(count != MARK);
         if (count == expected) {
             count = *val;
             return true;
@@ -102,11 +103,13 @@ public:
     uint32 refCount() const { return _cnt->strong.get(); }
     uint32 weakCount() const { return _cnt->weak.get(); }
     bool valid() const { return _cnt->strong.get() > 0; }
+    const void *identity() const { return _cnt; }
     
     const T *ptr() const { ON_DEBUG(_cnt->strong.get()); return _ptr; }
     T *ptr() { ON_DEBUG(_cnt->strong.get()); return _ptr; }
 
-    bool same(const R& ref) const { return _cnt == ref._cnt; }
+    template <typename T2, typename C2, typename R2>
+    bool same(const RefBase<T2, C2, R2>& ref) const { return identity() == ref.identity(); }
 
     bool operator ==(const T *p) const { return _ptr == p; }
     bool operator !=(const T *p) const { return _ptr != p; }
@@ -278,7 +281,11 @@ Ref<T>::Ref(RefValue<T>& rv) :
 
 template <typename T>
 bool WeakRef<T>::unweak(RefValue<T> *dest) {
+    if (dest->_cnt == this->_cnt)
+        return true;
+    
     if (this->_cnt->strong.getAndInc() > 0) {
+        dest->unset();
         dest->_ptr = this->_ptr;
         dest->_cnt = this->_cnt;
         return true;
@@ -294,7 +301,7 @@ bool WeakRef<T>::unweak(Ref<T> *dest) {
         return true;
     
     if (this->_cnt->strong.getAndInc() > 0) {
-        (*dest).release();
+        dest->release();
         dest->_ptr = this->_ptr;
         dest->_cnt = this->_cnt;
         return true;

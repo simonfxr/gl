@@ -30,6 +30,7 @@ enum IncludesInfo {
 
 const Ref<ShaderSource> NULL_SHADER_SOURCE;
 const Ref<ShaderObjectGraph> NULL_SHADER_GRAPH;
+const Ref<ShaderObject> NULL_SHADER_OBJECT;
 Ref<ShaderCache> NULL_SHADER_CACHE;
 
 std::string hash(const std::string&);
@@ -77,7 +78,7 @@ struct StringSource : public ShaderSource {
     StringSource(ShaderManager::ShaderType ty, const std::string& _code) :
         ShaderSource(hash(_code), ty), code(_code) {}
 
-    ShaderObject *load(ShaderCompiler&, ShaderCompileFlags);
+    Ref<ShaderObject> load(ShaderCompiler&, ShaderCompileFlags);
 };
 
 struct FileSource : public ShaderSource {
@@ -86,16 +87,16 @@ struct FileSource : public ShaderSource {
     
     const std::string& filePath() const { return this->key; }
 
-    ShaderObject *load(ShaderCompiler&, ShaderCompileFlags);
+    Ref<ShaderObject> load(ShaderCompiler&, ShaderCompileFlags);
     
-    static ShaderObject *loadFile(ShaderCompiler&, ShaderManager::ShaderType, const std::string&, bool, ShaderCompileFlags);
+    static Ref<ShaderObject> loadFile(ShaderCompiler&, ShaderManager::ShaderType, const std::string&, bool, ShaderCompileFlags);
 };
 
 struct StringShaderObject : public ShaderObject {
     StringShaderObject(const Ref<StringSource>& src, GLuint hndl) :
         ShaderObject(src.cast<ShaderSource>(), hndl) {}
 
-    ShaderObject *reload(ShaderCompiler&, ShaderCompileFlags);
+    Ref<ShaderObject> reload(Ref<ShaderObject>&, ShaderCompiler&, ShaderCompileFlags);
 };
 
 struct FileShaderObject : public ShaderObject {
@@ -103,7 +104,7 @@ struct FileShaderObject : public ShaderObject {
     FileShaderObject(const Ref<FileSource>& src, sys::fs::ModificationTime _mtime, GLuint hndl) :
         ShaderObject(src.cast<ShaderSource>(), hndl), mtime(_mtime) {}
     
-    ShaderObject *reload(ShaderCompiler&, ShaderCompileFlags);
+    Ref<ShaderObject> reload(Ref<ShaderObject>&, ShaderCompiler&, ShaderCompileFlags);
 };
 
 void CompileState::initPreprocessor(ShaderCompiler& compiler, GLSLPreprocessor& proc) {
@@ -260,12 +261,10 @@ Ref<ShaderObjectGraph> CompileState::loadFile(ShaderObjectRoots& visited, Shader
         }
     }        
 
-    ShaderObject *so = FileSource::loadFile(compiler, type, file, true, flags);
-    if (so == 0)
+    Ref<ShaderObject> so = FileSource::loadFile(compiler, type, file, true, flags);
+    if (!so)
         return NULL_SHADER_GRAPH;
-
-    Ref<ShaderObject> soref(so);
-    return loadRec(visited, soref);
+    return loadRec(visited, so);
 }
 
 Ref<ShaderObjectGraph> CompileState::reloadRec(ShaderObjectRoots& visited, bool *outdated, Ref<ShaderObjectGraph>& graph) {
@@ -273,13 +272,13 @@ Ref<ShaderObjectGraph> CompileState::reloadRec(ShaderObjectRoots& visited, bool 
     ShaderObjectRoots::iterator it = visited.find(graph->root->source->key);
     if (it != visited.end())
         return it->second;
-
-    ShaderObject *newroot = graph->root->reload(compiler, flags);
-    if (newroot == 0)
+    
+    Ref<ShaderObject> newroot = graph->root->reload(graph->root, compiler, flags);
+    if (!newroot)
         return NULL_SHADER_GRAPH;
 
-    Ref<ShaderObjectGraph> newgraph(new ShaderObjectGraph(makeRef(newroot)));
-    *outdated = *outdated || graph->root != newroot;
+    Ref<ShaderObjectGraph> newgraph(new ShaderObjectGraph(newroot));
+    *outdated = *outdated || !graph->root.same(newroot);
     visited[newgraph->root->source->key] = newgraph;
 
     for (ShaderObjects::iterator it = graph->dependencies.begin();
@@ -313,103 +312,95 @@ std::string hash(const std::string& source) {
     return source; // FIXME: implement proper hash
 }
 
-ShaderObject *StringSource::load(ShaderCompiler& compiler, ShaderCompileFlags) {
+Ref<ShaderObject> StringSource::load(ShaderCompiler& compiler, ShaderCompileFlags) {
     GLenum gltype;
 
     if (!CompileState::translateShaderType(type, &gltype)) {
         COMPILER_ERR_MSG(compiler, ShaderCompiler::InvalidShaderType, "unknown ShaderType");
-        return 0;
+        return NULL_SHADER_OBJECT;
     }
 
-    ShaderObject *so = new StringShaderObject(makeRef(new StringSource(type, code)), 0);
+    Ref<ShaderObject> so(new StringShaderObject(makeRef(new StringSource(type, code)), 0));
     GLSLPreprocessor preproc(compiler.shaderManager.shaderDirectories(), so->includes, so->dependencies);
     preproc.name("");
     CompileState::initPreprocessor(compiler, preproc);
 
     preproc.process(code);
 
-    if (preproc.wasError()) {
-        delete so;
-        return 0;
-    }
+    if (preproc.wasError())
+        return NULL_SHADER_OBJECT;
 
     GLuint shader = CompileState::compile(compiler, gltype, "", preproc);
     
-    if (shader == 0) {
-        delete so;
-        return 0;
-    }
+    if (shader == 0)
+        return NULL_SHADER_OBJECT;
     
     so->handle = shader;
     return so;
 }
 
-ShaderObject *FileSource::load(ShaderCompiler& comp, ShaderCompileFlags flags) {
+Ref<ShaderObject> FileSource::load(ShaderCompiler& comp, ShaderCompileFlags flags) {
     return loadFile(comp, type, filePath(), true, flags);
 }
 
-ShaderObject *FileSource::loadFile(ShaderCompiler& compiler, ShaderManager::ShaderType type, const std::string& path0, bool absolute, ShaderCompileFlags) {
+Ref<ShaderObject> FileSource::loadFile(ShaderCompiler& compiler, ShaderManager::ShaderType type, const std::string& path0, bool absolute, ShaderCompileFlags) {
     GLenum gltype;
 
     std::string path = path0;
 
     if (!CompileState::translateShaderType(type, &gltype, path)) {
         COMPILER_ERR_MSG(compiler, ShaderCompiler::InvalidShaderType, "unknown ShaderType");
-        return 0;
+        return NULL_SHADER_OBJECT;
     }
 
     if (!absolute) {
         path = sys::fs::lookup(compiler.shaderManager.shaderDirectories(), path);
         if (path.empty()) {
             COMPILER_ERR_MSG(compiler, ShaderCompiler::FileNotInShaderPath, "file not found");
-            return 0;
+            return NULL_SHADER_OBJECT;
         }
     }
 
-    FileShaderObject *so = new FileShaderObject(makeRef(new FileSource(type, path)), sys::fs::MIN_MODIFICATION_TIME, 0);
+    Ref<FileShaderObject> so(new FileShaderObject(makeRef(new FileSource(type, path)), sys::fs::MIN_MODIFICATION_TIME, 0));
     GLSLPreprocessor preproc(compiler.shaderManager.shaderDirectories(), so->includes, so->dependencies);
     CompileState::initPreprocessor(compiler, preproc);
 
-    if (!preproc.processFileRecursively(path, &so->source->key, &so->mtime)) {
-        delete so;
-        return 0;
-    }
+    if (!preproc.processFileRecursively(path, &so->source->key, &so->mtime))
+        return NULL_SHADER_OBJECT;
 
     GLuint shader = CompileState::compile(compiler, gltype, so->source->key, preproc);
     
-    if (shader == 0) {
-        delete so;
-        return 0;
-    }
+    if (shader == 0)
+        return NULL_SHADER_OBJECT;
     
     so->handle = shader;
-    return so;
+    return so.cast<ShaderObject>();
 }
 
-ShaderObject *StringShaderObject::reload(ShaderCompiler& comp, ShaderCompileFlags flags) {
+Ref<ShaderObject> StringShaderObject::reload(Ref<ShaderObject>& self, ShaderCompiler& comp, ShaderCompileFlags flags) {
     
     switch (CompileState::includesOutdated(includes)) {
-    case IncludesUnchanged: return this;
+    case IncludesUnchanged: return self;
     case IncludesOutdated: break;
-    case IncludesNotFound: return 0;            
+    case IncludesNotFound: return NULL_SHADER_OBJECT;
     }
 
     return source->load(comp, flags);
 }
 
-ShaderObject *FileShaderObject::reload(ShaderCompiler& comp, ShaderCompileFlags flags) {
+Ref<ShaderObject> FileShaderObject::reload(Ref<ShaderObject>& self, ShaderCompiler& comp, ShaderCompileFlags flags) {
     Ref<FileSource> filesource = source.cast<FileSource>();
     ASSERT(filesource);
     
     sys::fs::ModificationTime current_mtime;
     if (!sys::fs::modificationTime(filesource->filePath(), &current_mtime))
-        return 0;
+        return NULL_SHADER_OBJECT;
 
     if (current_mtime == mtime) {
         switch (CompileState::includesOutdated(includes)) {
-        case IncludesUnchanged: return this;
+        case IncludesUnchanged: return self;
         case IncludesOutdated: break;
-        case IncludesNotFound: return 0;            
+        case IncludesNotFound: return NULL_SHADER_OBJECT;        
         }        
     }
 
@@ -433,7 +424,8 @@ void ShaderObjectGraph::linkCache(Ref<ShaderCache>& newcache) {
 
 void ShaderObjectGraph::unlinkCache(Ref<ShaderCache>& newcache) {
     ASSERT(newcache && cache);
-    cache = NULL_SHADER_CACHE.weak();
+    if (cache.same(newcache))
+        cache = NULL_SHADER_CACHE.weak();
 }
 
 ShaderCache::~ShaderCache() {
@@ -495,14 +487,13 @@ bool ShaderCompiler::reloadRecursively(ShaderObjectRoots& roots, bool *outdated,
 bool ShaderCompiler::loadString(ShaderObjectRoots& roots, ShaderManager::ShaderType type, const std::string& code, ShaderCompileFlags flags) {
 
     Ref<ShaderSource> src(new StringSource(type, code));
-    ShaderObject *so = src->load(*this, flags);
+    Ref<ShaderObject> so = src->load(*this, flags);
 
     if (so) {
         CompileState cstate(*this, flags);
-        Ref<ShaderObject> soref(so);
         ShaderObjectRoots newroots(roots);
         
-        if (cstate.loadRec(newroots, soref)) {
+        if (cstate.loadRec(newroots, so)) {
             roots = newroots;
             return true;
         }
@@ -513,14 +504,13 @@ bool ShaderCompiler::loadString(ShaderObjectRoots& roots, ShaderManager::ShaderT
 
 bool ShaderCompiler::loadFile(ShaderObjectRoots& roots, ShaderManager::ShaderType type, const std::string& path, bool absolute, ShaderCompileFlags flags) {
 
-    ShaderObject *so = FileSource::loadFile(*this, type, path, absolute, flags);
+    Ref<ShaderObject> so = FileSource::loadFile(*this, type, path, absolute, flags);
 
     if (so) {
         CompileState cstate(*this, flags);
-        Ref<ShaderObject> soref(so);
         ShaderObjectRoots newroots(roots);
         
-        if (cstate.loadRec(newroots, soref)) {
+        if (cstate.loadRec(newroots, so)) {
             roots = newroots;
             return true;
         }

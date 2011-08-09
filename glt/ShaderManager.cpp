@@ -98,8 +98,15 @@ Ref<ShaderProgram> ShaderManager::declareProgram(const std::string& name) {
 
 void ShaderManager::reloadShaders() {
     ProgramMap::iterator it = self->programs.begin();
-    for (; it != self->programs.end(); ++it)
-        it->second->reload();
+    uint32 n = 0;
+    uint32 failed = 0;
+    for (; it != self->programs.end(); ++it) {
+        if (!it->second->reload())
+            ++failed;
+        ++n;
+    }
+    
+    std::cerr << "all shaders reloaded (" << (n - failed) << " successful, " << failed << " failed)" << std::endl;
 }
 
 std::ostream& ShaderManager::err() const {

@@ -64,8 +64,6 @@ struct ShaderProgram::Data {
     void printProgramLog(GLuint program, std::ostream& out);
 
     void handleCompileError();
-
-    friend struct LogTraits<glt::ShaderProgram::Data>;
 };
 
 ShaderProgram::ShaderProgram(ShaderManager& sm) :
@@ -88,13 +86,17 @@ void ShaderProgram::reset() {
 }
 
 bool ShaderProgram::reload() {
+    ShaderObjectRoots newroots = self->shaders;
+    bool outdated = false;
 
-    ShaderProgram new_prog(*this);
-    bool outdated;
-
-    if (!new_prog.self->sm.shaderCompiler().reloadRecursively(new_prog.self->shaders, &outdated))
+    if (!shaderManager().shaderCompiler().reloadRecursively(newroots, &outdated))
         return false;
 
+    if (!outdated)
+        return true;
+
+    ShaderProgram new_prog(*this);
+    new_prog.self->shaders = newroots;
     if (outdated && new_prog.tryLink()) {
        return replaceWith(new_prog);
     } else {
