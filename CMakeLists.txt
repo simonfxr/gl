@@ -62,7 +62,8 @@ if(COMP_GCC)
 endif()
 
 if(COMP_GCC OR COMP_CLANG)
-  add_definitions("-Wextra -Wno-switch")
+  add_definitions("-Wextra")
+#  add_definitions("-Wno-switch")
   if(BUILD_DEBUG)
     add_definitions("-ggdb -fstack-protector")
   endif()
@@ -148,6 +149,8 @@ set(GLT_SRC
   glt/ShaderManager.cpp
   glt/ShaderProgram.hpp
   glt/ShaderProgram.cpp
+  glt/ShaderCompiler.hpp
+  glt/ShaderCompiler.cpp
   glt/Uniforms.hpp
   glt/Uniforms.cpp
   glt/Preprocessor.hpp
@@ -172,8 +175,6 @@ set(GLT_SRC
   glt/TextureRenderTarget.cpp
   glt/TextureRenderTarget3D.hpp
   glt/TextureRenderTarget3D.cpp
-  glt/ShaderObject.hpp
-  glt/ShaderObject.cpp
   glt/Mesh.hpp
   glt/Mesh.cpp
   glt/glstate.hpp
@@ -267,15 +268,13 @@ add_executable(math_test
   math_test.cpp
   ${MATH_SRC})
 
-add_definitions("-DREF_CONCURRENT")
-
-add_executable(ref_test
-  ref_test.cpp
-  ${MATH_SRC})
-
-target_link_libraries(ref_test err)
-
 target_link_libraries(math_test sys err)
+
+# add_executable(ref_test
+#   ref_test.cpp
+#   ${MATH_SRC})
+
+# target_link_libraries(ref_test err)
 
 # add_executable(teapot
 #   teapot.cpp

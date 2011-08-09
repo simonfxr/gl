@@ -1,3 +1,9 @@
+#include "defs.h"
+
+#ifndef REF_CONCURRENT
+#define REF_CONCURRENT
+#endif
+
 #include "data/Ref.hpp"
 #include "data/SpinLock.hpp"
 #include "data/Atomic.hpp"

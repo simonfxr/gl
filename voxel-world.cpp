@@ -827,6 +827,7 @@ static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points)
 
 #else
 
+    UNUSED(state);
     time(createWorld(*densitiesp));
 
 #endif

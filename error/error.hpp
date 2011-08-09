@@ -10,6 +10,32 @@
 #include <cstdlib>
 #endif
 
+#ifndef ERROR_DEFAULT_STREAM
+#include <iostream>
+#define ERROR_DEFAULT_STREAM ::std::cerr
+#endif
+
+template <typename T>
+struct LogTraits {
+// static LogDestination getDestination(const T&);
+};
+
+template <typename T>
+struct ErrorTraits {
+
+    template <typename E>
+    static void setError(T& value, const E& error) {
+        value.pushError(error);
+    }
+
+    template <typename E>
+    static std::string stringError(const E& error) {
+        std::ostringstream rep;
+        rep << error;
+        return rep.str();
+    }
+};
+
 namespace err {
 
 struct Location {
@@ -40,45 +66,13 @@ struct LogDestination {
         minimumLevel(minLvl), out(_out) {}
 };
 
-template <typename T>
-struct LogTraits {
-// static LogDestination getDestination(const T&);
-};
+void error(const Location& loc, std::ostream&, LogLevel lvl, const std::string& mesg);
 
-template <typename T>
-struct ErrorTraits {
+void error(const Location& loc, std::ostream&, LogLevel lvl, const char *mesg);
 
-    template <typename E>
-    static void setError(T& value, const E& error) {
-        value.pushError(error);
-    }
+void fatalError(const Location& loc, std::ostream&, const std::string& mesg) ATTRS(ATTR_NORETURN);
 
-    template <typename E>
-    static std::string stringError(const E& error) {
-        std::ostringstream rep;
-        rep << error;
-        return rep.str();
-    }
-};
-
-template <typename T>
-LogDestination getLogDestination(const T& v) {
-    return LogTraits<T>::getDestination(v);
-}
-
-template <typename T, typename E>
-void raiseError(const Location& loc, T& value, const E& error, LogLevel lvl, const std::string& message) {
-    ErrorTraits<T>::setError(value, error);
-    logRaiseError(loc, getLogDestination(value), lvl, ErrorTraits<T>::stringError(error), message);
-}
-
-void error(const Location& loc, LogLevel lvl, const std::string& mesg);
-
-void error(const Location& loc, LogLevel lvl, const char *mesg);
-
-void fatalError(const Location& loc, const std::string& mesg) ATTRS(ATTR_NORETURN);
-
-void fatalError(const Location& loc, const char *mesg) ATTRS(ATTR_NORETURN);
+void fatalError(const Location& loc, std::ostream&, const char *mesg) ATTRS(ATTR_NORETURN);
 
 void printError(std::ostream& out, const char *type, const Location& loc, LogLevel lvl, const std::string& mesg);
 
@@ -88,11 +82,39 @@ std::ostream& logBegin(const Location& loc, const LogDestination&, LogLevel);
 
 std::ostream& logWrite(const std::string&);
 
+std::ostream& logWriteErr(const std::string&, const std::string&);
+
 std::ostream& logWrite(const char *);
 
 void logEnd();
 
 void logRaiseError(const Location&, const LogDestination&, LogLevel, const std::string&, const std::string&);
+
+template <typename T>
+LogDestination getLogDestination(const T& v) {
+    return LogTraits<T>::getDestination(v);
+}
+
+template <typename T, typename E>
+void logRaiseError(const Location& loc, T& value, const E& error, LogLevel lvl, const std::string& message) {
+    ErrorTraits<T>::setError(value, error);
+    logRaiseError(loc, getLogDestination(value), lvl, ErrorTraits<T>::stringError(error), message);
+}
+
+template <typename T>
+bool logLevel(const T& value, LogLevel lvl) {
+    return lvl >= getLogDestination(value).minimumLevel;
+}
+
+template <typename T>
+std::ostream& logDestination(const T& value) {
+    return getLogDestination(value).out;
+}
+
+template <typename T, typename E>
+std::ostream& logPutError(const T&, const E& err, const std::string& msg) {
+    return logWriteErr(ErrorTraits<T>::stringError(err), msg);
+}
 
 #ifdef GNU_EXTENSIONS
 #define _CURRENT_LOCATION_OP(op) ::err::Location(__FILE__, __LINE__, __PRETTY_FUNCTION__, op)
@@ -102,7 +124,7 @@ void logRaiseError(const Location&, const LogDestination&, LogLevel, const std::
 
 #define _CURRENT_LOCATION _CURRENT_LOCATION_OP(0)
 
-#define _ERROR(lvl, msg) ::err::error(_CURRENT_LOCATION, lvl, (msg))
+#define _ERROR(lvl, msg) ::err::error(_CURRENT_LOCATION, ERROR_DEFAULT_STREAM, lvl, (msg))
 #define _ASSERT(x, lvl, msg)  do { if (unlikely(!(x))) _ERROR(lvl, msg); } while (0)
 #define _ASSERT_EXPR(x, lvl, msg, expr) ((unlikely(!(x)) ? (_ERROR(lvl, msg), 0) : 0), (expr))
 
@@ -125,9 +147,9 @@ void logRaiseError(const Location&, const LogDestination&, LogLevel, const std::
 #define WARN(msg) _ERROR(::err::Warn, msg)
 
 #ifdef ATTR_NORETURN
-#define FATAL_ERR(msg) ::err::fatalError(_CURRENT_LOCATION, msg)
+#define FATAL_ERR(msg) ::err::fatalError(_CURRENT_LOCATION, ERROR_DEFAULT_STREAM, msg)
 #else
-#define FATAL_ERR(msg) (::err::fatalError(_CURRENT_LOCATION, msg), ::exit(1) /* exit never reached */)
+#define FATAL_ERR(msg) (::err::fatalError(_CURRENT_LOCATION, ERROR_DEFAULT_STREAM, msg), ::exit(1) /* exit never reached */)
 #endif
 
 #define ERR_ONCE(msg) do {                                      \
@@ -140,8 +162,11 @@ void logRaiseError(const Location&, const LogDestination&, LogLevel, const std::
 
 #define LOG_BEGIN(val, lvl) ::err::logBegin(_CURRENT_LOCATION, ::err::getLogDestination((val)), (lvl));
 #define LOG_END(val) (UNUSED(val), ::err::logEnd())
-#define LOG_RAISE(val, err, lvl, msg) ::err::raiseError(_CURRENT_LOCATION, (val), (err), (lvl), msg)
-#define LOG_PUT(msg) ::err::logWrite((msg))
+#define LOG_RAISE(val, ec, lvl, msg) ::err::logRaiseError(_CURRENT_LOCATION, (val), (ec), (lvl), msg)
+#define LOG_PUT(val, msg) (UNUSED(val), ::err::logWrite((msg)))
+#define LOG_PUT_ERR(val, ec, msg) ::err::logPutError(val, ec, msg)
+#define LOG_LEVEL(val, lvl) ::err::logLevel(val, lvl)
+#define LOG_DESTINATION(val) ::err::logDestination(val)
 
 } // namespace err
 #endif

@@ -13,12 +13,48 @@ namespace sys {
 
 namespace fs {
 
+const ModificationTime MIN_MODIFICATION_TIME(0);
+
 bool cwd(const std::string& dir) {
     if (chdir(dir.c_str()) < 0) {
         ERR(strerror(errno));
         return false;
     }
     return true;
+}
+
+std::string cwd() {
+    char path[1024];
+    char *wd = path;
+    
+    if (!getcwd(path, sizeof path)) {
+
+        size_t size = sizeof path;
+        wd = 0;
+        bool success = false;
+
+        while (errno == ERANGE) {
+            size *= 2;
+            delete[] wd;
+            wd = new char[size];
+
+            if (getcwd(wd, size)) {
+                success = true;
+                break;
+            }
+        }
+
+        if (!success) {
+            delete[] wd;
+            return "";
+        }
+    }
+
+    std::string dir(wd);
+    if (wd != path)
+        delete[] wd;
+
+    return dir;
 }
 
 static size_t dropTrailingSlashes(const std::string& path) {
@@ -72,16 +108,52 @@ std::string basename(const std::string& path) {
     return path.substr(pos, end - pos);
 }
 
-MTime getMTime(const std::string& file) {
+std::string extension(const std::string& path) {
+    size_t pos = path.rfind('/');
+    if (pos == std::string::npos)
+        pos = 0;
+    pos = path.find('.', pos);
+    if (pos == std::string::npos)
+        return "";
+    return path.substr(pos + 1);
+}
+
+bool isAbsolute(const std::string& path) {
+    return !path.empty() && path[0] == '/';
+}
+
+std::string absolutePath(const std::string& path) {
+    if (isAbsolute(path))
+        return path;
+
+    std::string dir = cwd();
+    if (dir.empty())
+        return "";
+
+    return dir + "/" + path;
+}
+
+bool stat(const std::string& path, sys::fs::Stat *stat) {
+    ASSERT(stat);
+
+    stat->absolute = absolutePath(path);
+    if (stat->absolute.empty())
+        return false;
+
+    return modificationTime(path, &stat->mtime);
+}
+
+bool modificationTime(const std::string& path, sys::fs::ModificationTime *mtime) {
+    ASSERT(mtime);
+    
     struct stat st;
-    MTime mt;
-    if (stat(file.c_str(), &st) != 0) {
+    if (stat(path.c_str(), &st) != 0) {
         ERR(strerror(errno));
-        mt.timestamp = ~0;
-    } else {
-        mt.timestamp = st.st_mtime;
+        return false;
     }
-    return mt;
+
+    mtime->timestamp = st.st_mtime;
+    return true;
 }
 
 std::string lookup(const std::vector<std::string>& dirs, const std::string& name) {
@@ -101,11 +173,11 @@ bool exists(const std::string& path, ObjectType type) {
     }
 }
 
-bool operator ==(const MTime& a, const MTime& b) {
+bool operator ==(const ModificationTime& a, const ModificationTime& b) {
     return a.timestamp == b.timestamp;
 }
 
-bool operator <(const MTime& a, const MTime& b) {
+bool operator <(const ModificationTime& a, const ModificationTime& b) {
     return a.timestamp < b.timestamp;
 }
 

@@ -110,7 +110,19 @@ public:
 
     bool operator ==(const T *p) const { return _ptr == p; }
     bool operator !=(const T *p) const { return _ptr != p; }
+
+    operator bool() const { return this->_ptr != 0; }
 };
+
+template <typename T, typename C, typename R>
+inline bool operator ==(const T * lhs, const RefBase<T, C, R>& rhs) {
+    return rhs == lhs;
+}
+
+template <typename T, typename C, typename R>
+inline bool operator !=(const T * lhs, const RefBase<T, C, R>& rhs) {
+    return rhs != lhs;
+}
 
 struct RefCnt {
     static void retain(atomic::RefCount *cnt) {
@@ -171,16 +183,29 @@ template <typename T> struct RefValue;
 template <typename T>
 struct Ref : public priv::RefBase<T, priv::RefCnt, Ref<T> > {
     explicit Ref(T *p = 0) : priv::RefBase<T, priv::RefCnt, Ref<T> >(p) {}
+    
     explicit Ref(RefValue<T>&);
+    
     Ref(const Ref<T>& ref) : priv::RefBase<T, priv::RefCnt, Ref<T> >(ref) {}
+    
     Ref<T>& operator =(T *p) { this->set(p); return *this; }
+    
     WeakRef<T> weak();
-    operator bool() const { return this->_ptr != 0; }
+    
     const T& operator *() const { DEBUG_ASSERT(this->valid() && this->_ptr != 0); return *this->_ptr; }
+    
     T& operator *() { DEBUG_ASSERT(this->valid() && this->_ptr != 0); return *this->_ptr; }
 
     const T *operator ->() const { DEBUG_ASSERT(this->valid() && this->_ptr != 0); return this->_ptr; }
+    
     T *operator ->() { DEBUG_ASSERT(this->valid() && this->_ptr != 0); return this->_ptr; }
+    
+    template <typename U>
+    Ref<U>& cast() { return reinterpret_cast<Ref<U>&>(*this); }
+    
+    template <typename U>
+    const Ref<U>& cast() const { return reinterpret_cast<const Ref<U>&>(*this); }
+    
 private:
     Ref(T *p, atomic::Counter *cnt) : priv::RefBase<T, priv::RefCnt, Ref<T> >(p, cnt) { this->retain(); }
     friend struct WeakRef<T>;
@@ -188,12 +213,25 @@ private:
 
 template <typename T>
 struct WeakRef : public priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> > {
+    
     WeakRef() : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(0, new atomic::RefCount(0, 1)) {}
+    
     WeakRef(const WeakRef<T>& ref) : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(ref) {}
+    
     bool unweak(RefValue<T> *dest);
+    
     bool unweak(Ref<T> *dest);
+
+    template <typename U>
+    WeakRef<U>& cast() { return static_cast<WeakRef<U>&>(*this); }
+    
+    template <typename U>
+    const WeakRef<U>& cast() const { return static_cast<const WeakRef<U>&>(*this); }
+    
 private:
+    
     WeakRef(T *p, atomic::RefCount *cnt) : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(p, cnt) { this->retain(); }
+    
     friend struct Ref<T>;
 };
 
@@ -204,21 +242,30 @@ template <typename T>
 struct RefValue {
 private:
     T *_ptr;
-    atomic::Counter *_cnt;
+    atomic::RefCount *_cnt;
 
-    void unset() { _ptr = 0, _cnt = 0; }
-    
-public:
-    RefValue(T *ptr, atomic::Counter *cnt) :
-        _ptr(ptr), _cnt(cnt) {}
-
-    ~RefValue() {
+    void unset() {
         if (_cnt != 0) {
             Ref<T> ref(*this); // force release
         }
+        
+        _ptr = 0;
+        _cnt = 0;
     }
+    
+public:
+
+    RefValue() : _ptr(0), _cnt(0) {}
+
+    ~RefValue() { unset(); }
+
+private:
+    
+    RefValue(T *ptr, atomic::RefCount *cnt) :
+        _ptr(ptr), _cnt(cnt) {}
 
     friend struct Ref<T>;
+    friend struct WeakRef<T>;
 };
 
 template <typename T>
@@ -247,7 +294,7 @@ bool WeakRef<T>::unweak(Ref<T> *dest) {
         return true;
     
     if (this->_cnt->strong.getAndInc() > 0) {
-        (*dest)->release();
+        (*dest).release();
         dest->_ptr = this->_ptr;
         dest->_cnt = this->_cnt;
         return true;

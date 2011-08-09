@@ -8,13 +8,15 @@ namespace sys {
 
 namespace fs {
 
-struct MTime {
+struct ModificationTime {
     time_t timestamp;
+
+    ModificationTime() : timestamp() {}
+    ModificationTime(time_t ts) : timestamp(ts) {}
 };
 
 } // namespace fs
 
 } // namespace sys
-
 
 #endif

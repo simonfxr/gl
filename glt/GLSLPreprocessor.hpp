@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-#include <map>
+#include <set>
 
 #include "glt/Preprocessor.hpp"
 #include "glt/ShaderCompiler.hpp"
@@ -13,18 +13,10 @@ namespace glt {
 
 struct ProcessingState;
 
-struct FileContents {
-    const char *contents;
-    uint32 size;
-
-    FileContents(const char *_contents, uint32 _size) :
-        contents(_contents), size(_size) {}
-};
-
 struct IncludeHandler : public Preprocessor::DirectiveHandler {
-    void beginProcessing(const ContentContext&);
+    void beginProcessing(const Preprocessor::ContentContext&);
     void directiveEncountered(const Preprocessor::DirectiveContext&);
-    void endProcessing(const ContentContext&);
+    void endProcessing(const Preprocessor::ContentContext&);
 };
 
 struct DependencyHandler : public Preprocessor::DirectiveHandler {
@@ -39,7 +31,7 @@ struct GLSLPreprocessor : public Preprocessor {
 
     std::vector<uint32> segLengths;
     std::vector<const char *> segments;
-    std::vector<FileContents> fileContents;
+    std::vector<char *> contents;
 
     ProcessingState *state;
 
@@ -53,9 +45,7 @@ struct GLSLPreprocessor : public Preprocessor {
     
     void addDefines(const PreprocessorDefinitions&);
 
-    bool processRecursively(const std::string&);
-    bool processRecursively(const char *contents, uint32 size);
-    bool processFileRecursively(const std::string&, std::string *, sys::fs::MTime *);
+    bool processFileRecursively(const std::string&, std::string *, sys::fs::ModificationTime *);
 
     // internal use only
     void advanceSegments(const Preprocessor::DirectiveContext&);

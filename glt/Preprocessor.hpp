@@ -28,7 +28,8 @@ struct Preprocessor {
         uint32 beginDirective; // index of first char in directive
         uint32 endDirective;   // index of first char behind directive, so length of directive = endDirective - beginDirective
 
-        DirectiveContext(Preprocessor &proc) : content(proc) {}
+        DirectiveContext(Preprocessor &proc, const std::string& name) :
+            content(proc, name) {}
     };
 
     struct DirectiveHandler {
@@ -47,6 +48,7 @@ struct Preprocessor {
     const std::string& name() const;
     void name(const std::string& name);
 
+    void process(const std::string&);
     void process(const char *contents, uint32 size);
     void process(const char *contents);
 

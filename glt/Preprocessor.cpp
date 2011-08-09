@@ -47,6 +47,10 @@ Preprocessor::~Preprocessor() {
     delete self;
 }
 
+void Preprocessor::process(const std::string& str) {
+    process(str.data(), str.length());
+}
+
 void Preprocessor::process(const char *begin, uint32 size) {
     DirectiveContext ctx(*this, self->sourceName);
     

@@ -16,26 +16,24 @@ struct ShaderSource;
 struct ShaderObject;
 struct ShaderObjectGraph;
 struct ShaderCache;
-struct ShaderObjectCollection;
 
 typedef std::string ShaderSourceKey;
 
 typedef std::map<ShaderSourceKey, WeakRef<ShaderObjectGraph> > ShaderObjects;
 typedef std::map<ShaderSourceKey, WeakRef<ShaderObjectGraph> > ShaderCacheEntries;
 typedef std::map<ShaderSourceKey, Ref<ShaderObjectGraph> > ShaderObjectRoots;
-typedef std::map<std::string, std::string> PreprocessorDefinitions;
 typedef std::vector<std::string> IncludePath;
-typedef std::pair<std::string, sys::fs::MTime> > ShaderInclude;
+typedef std::pair<std::string, sys::fs::ModificationTime> ShaderInclude;
 typedef std::vector<ShaderInclude> ShaderIncludes;
 typedef std::string ShaderSourceFilePath; // absolute path
-typedef std::pair<ShaderProgram::ShaderType, ShaderSourceFilePath> ShaderDependency;
+typedef std::pair<ShaderManager::ShaderType, ShaderSourceFilePath> ShaderDependency;
 typedef std::vector<ShaderDependency> ShaderDependencies;
 
 typedef uint32 ShaderCompileFlags;
 
 struct ShaderSource {
     ShaderSourceKey key;
-    ShaderManager::ShaderType type
+    ShaderManager::ShaderType type;
 
     ShaderSource(const ShaderSourceKey& _key, ShaderManager::ShaderType ty) :
         key(_key), type(ty) {}
@@ -46,7 +44,7 @@ struct ShaderSource {
 
 private:
     ShaderSource(const ShaderSource&);
-    ShaderSource& operator =(const ShaderSource);
+    ShaderSource& operator =(const ShaderSource&);
 };
 
 struct ShaderObject {
@@ -56,7 +54,7 @@ struct ShaderObject {
     ShaderDependencies dependencies;
     
     ShaderObject(const Ref<ShaderSource>& src, GLuint hndl) :
-        source(src), handle(hndl), dependencies(), includes(), cache() {}
+        source(src), handle(hndl), includes(), dependencies() {}
 
     virtual ~ShaderObject() {}
     
@@ -78,8 +76,8 @@ struct ShaderObjectGraph {
 
     ~ShaderObjectGraph();
     
-    void linkCache(const Ref<ShaderCache>&);
-    void unlinkCache(const Ref<ShaderCache>&);
+    void linkCache(Ref<ShaderCache>&);
+    void unlinkCache(Ref<ShaderCache>&);
 };
 
 struct ShaderCache {
@@ -100,13 +98,6 @@ private:
     ShaderCache& operator =(const ShaderCache&);
 };
 
-struct ShaderObjectCollection {
-    ShaderObjectRoots roots;
-
-    ShaderObjectCollection() :
-        roots() {}
-};
-
 static const ShaderCompileFlags SC_LOOKUP_CACHE = 1;
 static const ShaderCompileFlags SC_PUT_CACHE = 2;
 static const ShaderCompileFlags SC_RECURSIVE_RECOMPILE = 3;
@@ -116,18 +107,21 @@ static const ShaderCompileFlags SC_DEFAULT
   = SC_LOOKUP_CACHE | SC_PUT_CACHE | SC_RECURSIVE_RECOMPILE | SC_CHECK_OUTDATED;
 
 struct ShaderCompiler {
-    glt::ShaderManager& shaderManager;
-    PreprocessorDefinitions defines;
-    Ref<ShaderCache> cache;
-    Error lastError;
 
     enum Error {
         NoError,
         CouldntGuessShaderType,
+        InvalidShaderType,
         FileNotFound,
         FileNotInShaderPath,
+        CompilationFailed,
         OpenGLError
     };
+
+    glt::ShaderManager& shaderManager;
+    PreprocessorDefinitions defines;
+    Ref<ShaderCache> cache;
+    Error lastError;
 
     ShaderCompiler(glt::ShaderManager& mng) :
         shaderManager(mng),
@@ -145,17 +139,17 @@ struct ShaderCompiler {
 
     Error clearError() { Error err = lastError; lastError = NoError; return err; }
 
-    bool reloadRecursively(ShaderObjectCollection&, bool *, ShaderCompileFlags flags = SC_DEFAULT);
+    bool reloadRecursively(ShaderObjectRoots&, bool *, ShaderCompileFlags flags = SC_DEFAULT);
 
-    bool loadString(ShaderObjectCollection&, ShaderManager::ShaderType, const std::string&, ShaderCompileFlags flags = SC_DEFAULT);
+    bool loadString(ShaderObjectRoots&, ShaderManager::ShaderType, const std::string&, ShaderCompileFlags flags = SC_DEFAULT);
 
-    bool loadFile(ShaderObjectCollection&, ShaderManager::ShaderType, const std::string&, bool, ShaderCompileFlags flags = SC_DEFAULT);
+    bool loadFile(ShaderObjectRoots&, ShaderManager::ShaderType, const std::string&, bool, ShaderCompileFlags flags = SC_DEFAULT);
     
-    static bool guessShaderType(const std::string& path, ShaderProgram::ShaderType *res);
+    static bool guessShaderType(const std::string& path, ShaderManager::ShaderType *res);
+    
 private:
-    
     ShaderCompiler(const ShaderCompiler&);
-    ShaderCompiler& (const ShaderCompiler&);
+    ShaderCompiler& operator =(const ShaderCompiler&);
 };
 
 } // namespace glt

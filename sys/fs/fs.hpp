@@ -6,15 +6,23 @@
 #include <string>
 #include <vector>
 
+#ifdef SYSTEM_UNIX
+#include "sys/fs/fs_unix.hpp"
+#else
+#error "no Filesystem implementation available"
+#endif
+
 namespace sys {
 
 namespace fs {
 
-struct MTime;
+struct ModificationTime;
+
+extern const ModificationTime MIN_MODIFICATION_TIME;
 
 struct Stat {
     std::string absolute;
-    MTime mtime;
+    ModificationTime mtime;
 };
 
 enum ObjectType {
@@ -25,46 +33,47 @@ enum ObjectType {
 
 bool cwd(const std::string& dir);
 
+std::string cwd();
+
 std::string dirname(const std::string& path);
 
 std::string basename(const std::string& path);
 
-bool getMTime(const std::string& path, sys::fs::MTime *mtime);
+std::string extension(const std::string& path);
 
-bool state(const std::string& path, sys::fs::State *state);
+bool isAbsolute(const std::string& path);
 
-std::string absolutePath(const std::string& path);
+bool modificationTime(const std::string& path, sys::fs::ModificationTime *mtime);
 
-std::string lookup(const std::vector<std::string>& dirs, const std::string& name);
+bool stat(const std::string& path, sys::fs::Stat *stat);
+
+std::string absolutePath(const std::string&);
+
+std::string lookup(const std::vector<std::string>&, const std::string&);
 
 bool exists(const std::string& path, ObjectType type = Any);
 
-bool operator ==(const MTime& a, const MTime& b);
-bool operator <(const MTime& a, const MTime& b);
+bool operator ==(const ModificationTime& a, const ModificationTime& b);
+bool operator <(const ModificationTime& a, const ModificationTime& b);
 
-inline bool operator !=(const MTime& a, const MTime& b) {  return !(a == b); }
-
-inline bool operator <=(const MTime& a, const MTime& b) { return a < b || a == b; }
-
-inline bool operator >=(const MTime& a, const MTime& b) { return !(a < b); }
-
-inline bool operator >(const MTime& a, const MTime& b) { return !(a <= b); }
+inline bool operator !=(const ModificationTime& a, const ModificationTime& b) {  return !(a == b); }
+inline bool operator <=(const ModificationTime& a, const ModificationTime& b) { return a < b || a == b; }
+inline bool operator >=(const ModificationTime& a, const ModificationTime& b) { return !(a < b); }
+inline bool operator >(const ModificationTime& a, const ModificationTime& b) { return !(a <= b); }
 
 // default implementations
 namespace def {
 
 std::string lookup(const std::vector<std::string>& dirs, const std::string& name);
 
+std::string absolutePath(const std::string&);
+
+bool modificationTime(const std::string& path, sys::fs::ModificationTime *);
+
 }
 
 } // namespace fs
 
 } // namespace sys
-
-#ifdef SYSTEM_UNIX
-#include "sys/fs/fs_unix.hpp"
-#else
-#error "no Filesystem implementation available"
-#endif
 
 #endif

@@ -1,28 +1,29 @@
 #include "error/error.hpp"
 #include <iostream>
 #include <stdlib.h>
+#include <fstream>
 
 namespace err {
 
-void error(const Location& loc, LogLevel lvl, const std::string& mesg) {
-    error(loc, lvl, mesg.c_str());
+void error(const Location& loc, std::ostream& out, LogLevel lvl, const std::string& mesg) {
+    error(loc, out, lvl, mesg.c_str());
 }
 
-void error(const Location& loc, LogLevel lvl, const char *mesg) {
+void error(const Location& loc, std::ostream& out, LogLevel lvl, const char *mesg) {
 
-    printError(std::cerr, NULL, loc, lvl, mesg);
+    printError(out, NULL, loc, lvl, mesg);
 
     if (lvl == FatalError || lvl == Assertion || lvl == DebugAssertion)
         abort();
 }
 
-void fatalError(const Location& loc, const std::string& mesg) {
-    fatalError(loc, mesg.c_str());
+void fatalError(const Location& loc, std::ostream& out, const std::string& mesg) {
+    fatalError(loc, out, mesg.c_str());
     abort(); // keep the control flow analyser happy
 }
 
-void fatalError(const Location& loc, const char *mesg) {
-    error(loc, FatalError, mesg);
+void fatalError(const Location& loc, std::ostream& out, const char *mesg) {
+    error(loc, out, FatalError, mesg);
     abort(); // keep the control flow analyser happy
 }
 
@@ -57,6 +58,96 @@ void printError(std::ostream& out, const char *type, const Location& loc, LogLev
         out << "  assertion: " << mesg << std::endl;
     else
         out << "  message: " << mesg << std::endl;
+}
+
+namespace {
+
+struct LogState {
+    int in_log;
+    bool null;
+    Location loc;
+    LogLevel level;
+    std::ofstream null_stream;
+    std::ostream* out;
+
+    LogState() :
+        in_log(0),
+        null(true),
+        loc(_CURRENT_LOCATION),
+        level(Info),
+        null_stream(),
+        out(&null_stream)
+        {}
+};
+
+THREAD_LOCAL(LogState *, log_state);
+
+void initLogState() {
+    if (log_state == 0)
+        log_state = new LogState;
+}
+
+bool checkLogState() {
+    initLogState();
+    
+    if (!log_state->in_log) {
+        ERR("no log begun");
+        // FIXME: provide location info
+        return false;
+    }
+
+    if (log_state->null)
+        return false;
+
+    return true;
+}
+
+} // namespace anon
+
+std::ostream& logBegin(const Location& loc, const LogDestination& dest, LogLevel lvl) {
+    initLogState();
+    ++log_state->in_log;
+    
+    if (log_state->in_log > 1) {
+        ERR("nested logging"); // FIXME: provide location info
+        return log_state->null_stream;
+    }
+    
+    log_state->loc = loc;
+    log_state->null = lvl < dest.minimumLevel;
+    log_state->out = log_state->null ? &log_state->null_stream : &dest.out;
+    
+    return *log_state->out;
+}
+
+std::ostream& logWrite(const std::string& msg) {
+    if (checkLogState())
+        *log_state->out << msg;
+    return *log_state->out;
+}
+
+std::ostream& logWriteErr(const std::string& err, const std::string& msg) {
+    if (checkLogState())
+        error(log_state->loc, *log_state->out, log_state->level, "raised error: " + err + ", reason: " + msg);
+    return *log_state->out;
+}
+
+std::ostream& logWrite(const char *msg) {
+    if (checkLogState())
+        *log_state->out << msg;
+    return *log_state->out;
+}
+
+void logEnd() {
+    if (checkLogState())
+        --log_state->in_log;
+    log_state->out = &log_state->null_stream;
+}
+
+void logRaiseError(const Location& loc, const LogDestination& dest, LogLevel lvl, const std::string& err, const std::string& msg) {
+    if (lvl < dest.minimumLevel)
+        return;
+    error(loc, dest.out, lvl, "raised error: " + err + ", reason: " + msg);
 }
 
 } // namespace err

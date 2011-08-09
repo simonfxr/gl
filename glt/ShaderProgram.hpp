@@ -11,9 +11,6 @@
 
 namespace glt {
 
-template <typename T> struct VertexDesc;
-
-
 struct ShaderProgram {
 
     enum Error {
@@ -28,17 +25,16 @@ struct ShaderProgram {
     };
 
     ShaderProgram(ShaderManager& sm);
-    ShaderProgram(const ShaderProgram&);
-    
+
     ~ShaderProgram();
 
-    ShaderProgram& operator =(const ShaderProgram&);
+    ShaderManager& shaderManager();
 
     GLuint program();
 
-    bool addShaderSrc(ShaderType type, const std::string& src);
+    bool addShaderSrc(const std::string& src, ShaderManager::ShaderType type);
     
-    bool addShaderFile(ShaderType type, const std::string& file, bool absolute = false);
+    bool addShaderFile(const std::string& file, ShaderManager::ShaderType type = ShaderManager::GuessShaderType, bool absolute = false);
     
     bool addShaderFilePair(const std::string& vert_file, const std::string& frag_file, bool absolute = false);
     
@@ -65,23 +61,25 @@ struct ShaderProgram {
 
     bool wasError();
 
+    void pushError(Error);
+
+    static std::string stringError(Error);
+
     bool replaceWith(ShaderProgram& new_program);
 
     GLint uniformLocation(const std::string& name);
 
-    void printError();
-
     bool validate(bool printLogOnError = true);
 
 private:
-
     struct Data;
     friend struct Data;
     
     Data * const self;
-};
 
-Ref<ShaderManager::CachedShaderObject> rebuildShaderObject(ShaderManager& self, Ref<ShaderManager::CachedShaderObject>& so);
+    ShaderProgram(const ShaderProgram&);
+    ShaderProgram& operator =(const ShaderProgram&);
+};
 
 template <typename T>
 bool ShaderProgram::bindAttributes(const VertexDesc<T>& desc) {

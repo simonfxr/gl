@@ -1,12 +1,12 @@
-#include "glt/GLSLPreprocessor.hpp"
-#include "sys/fs/fs.hpp"
-
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-#include <ifstream>
+#include <fstream>
 #include <set>
 #include <stack>
+
+#include "glt/GLSLPreprocessor.hpp"
+#include "sys/fs/fs.hpp"
 
 namespace glt {
 
@@ -88,7 +88,7 @@ bool parseFileArg(const Preprocessor::DirectiveContext& ctx, const char *& arg, 
 
 } // namespace anon
 
-struct FileContenxt {
+struct FileContext {
     const char *pos;
 };
 
@@ -102,8 +102,8 @@ struct ProcessingState {
 GLSLPreprocessor::GLSLPreprocessor(const IncludePath& incPath,
                                    ShaderIncludes& incs,
                                    ShaderDependencies& deps) :
-    includePath(_incPath), includes(incs), dependencies(deps),
-    segLengths(), segments(), fileContents(),
+    includePath(incPath), includes(incs), dependencies(deps),
+    segLengths(), segments(), contents(),
     state(0), includeHandler(), dependencyHandler()
 {
     this->installHandler("include", includeHandler);
@@ -111,14 +111,16 @@ GLSLPreprocessor::GLSLPreprocessor(const IncludePath& incPath,
 }
 
 GLSLPreprocessor::~GLSLPreprocessor() {
-    for (index_t i = 0; i < fileContents.size(); ++i)
-        delete[] fileContents[i].contents;
+    for (index_t i = 0; i < contents.size(); ++i)
+        delete[] contents[i];
 }
 
 void GLSLPreprocessor::appendString(const std::string& str) {
     if (!str.empty()) {
-        fileContents.push_back(FileContents(strdup(str.c_str()), str.length));
-        segments.push_back(fc.contents);
+        char *data = new char[str.length()];
+        memcpy(data, str.data(), str.length());
+        contents.push_back(data);
+        segments.push_back(data);
         segLengths.push_back(str.length());
     }
 }
@@ -132,28 +134,10 @@ void GLSLPreprocessor::addDefines(const PreprocessorDefinitions& defines) {
     }
 }
 
-bool GLSLPreprocessor::processRecursively(const std::string& src) {
-    processRecursively(src.c_str(), src.length());
-}
-
-bool GLSLPreprocessor::processRecursively(const char *contents, uint32 size) {
-
-    if (this->wasError())
-        return false;
-    
-    ASSERT(visitingFiles == 0);
-    
-    std::set<std::string> visiting;
-    visitingFiles = &visiting;    
-    bool success = process(contents, size);
-    visitingFiles = 0;
-    return success;
-}
-
 void GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext& ctx) {
-    FileContext& frame = proc.state->stack.top();
+    FileContext& frame = state->stack.top();
 
-    int32 seglen = ctx.content.data + ctx.lineOffset;
+    int32 seglen = ctx.content.data + ctx.lineOffset - frame.pos;
 
     if (seglen > 0) {
         segments.push_back(frame.pos);
@@ -163,30 +147,32 @@ void GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext& ctx
     frame.pos = ctx.content.data + ctx.lineOffset + ctx.lineLength;
 }
 
-bool GLSLPreprocessor::processFileRecursively(const std::string& file, std::string *absolute, sys::fs::MTime *mtime) {
-
-    if (this->wasError())
+bool GLSLPreprocessor::processFileRecursively(const std::string& file, std::string *absolute, sys::fs::ModificationTime *mtime) {
+    sys::fs::Stat filestat;
+    if (!sys::fs::stat(file, &filestat))
         return false;
 
-    sys::fs::Stat filestat = sys::fs::stat(file);
+    if (absolute != 0)
+        *absolute = filestat.absolute;
 
     if (mtime != 0)
         *mtime = filestat.mtime;
 
-    const char *contents;
+    char *data;
     uint32 size;
     
-    if (!readFile(this->err(), file, contents, size))
+    if (!readFile(this->err(), file, data, size))
         return false;
 
-    fileContents.push_back(FileContents(contents, size));
+    contents.push_back(data);
 
     this->name(filestat.absolute);
-    return processRecursively(contents, size);
+    process(data, size);
+    return wasError();
 }
 
 void DependencyHandler::directiveEncountered(const Preprocessor::DirectiveContext& ctx) {
-    GLSLPreprocessor& proc = static_cast<GLSLProcessor&>(ctx.processor);
+    GLSLPreprocessor& proc = static_cast<GLSLPreprocessor&>(ctx.content.processor);
     
     const char *arg;
     uint32 len;
@@ -201,7 +187,7 @@ void DependencyHandler::directiveEncountered(const Preprocessor::DirectiveContex
     }
 
     std::string file(arg, len);
-    std::string realPath = sys::fs::lookupPath(proc.includePath, file);
+    std::string realPath = sys::fs::lookup(proc.includePath, file);
     if (realPath.empty()) {
         proc.err() << ctx.content.name
                    << ": #need-directive: cannot find file: " << file
@@ -212,7 +198,7 @@ void DependencyHandler::directiveEncountered(const Preprocessor::DirectiveContex
 
     proc.advanceSegments(ctx);
 
-    ShaderProgram::ShaderType stype;
+    ShaderManager::ShaderType stype;
     if (!ShaderCompiler::guessShaderType(file, &stype)) {
         proc.err() << ctx.content.name
                    << ": #need-directive: cannot guess shader type based on name: " << file
@@ -226,11 +212,11 @@ void DependencyHandler::directiveEncountered(const Preprocessor::DirectiveContex
         proc.dependencies.push_back(ShaderDependency(stype, absPath));
 }
 
-void IncludeHandler::beginProcessing(const ContentContext& ctx) {
-    GLSLPreprocessor& proc = static_cast<GLSLProcessor&>(ctx.processor);
+void IncludeHandler::beginProcessing(const Preprocessor::ContentContext& ctx) {
+    GLSLPreprocessor& proc = static_cast<GLSLPreprocessor&>(ctx.processor);
 
     if (proc.state == 0)
-        proc->state = new ProcessingState;
+        proc.state = new ProcessingState;
 
     if (!ctx.name.empty())
         proc.state->visitingFiles.insert(ctx.name);
@@ -241,20 +227,20 @@ void IncludeHandler::beginProcessing(const ContentContext& ctx) {
 }
 
 void IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext& ctx) {
-    GLSLPreprocessor& proc = static_cast<GLSLProcessor&>(ctx.processor);
+    GLSLPreprocessor& proc = static_cast<GLSLPreprocessor&>(ctx.content.processor);
 
     const char *arg;
     uint32 len;
 
     if (!parseFileArg(ctx, arg, len) || len == 0) {
-        proc << ctx.content.name
-             << ": #include-directive: invalid parameter" << std::endl;
+        proc.err() << ctx.content.name
+                   << ": #include-directive: invalid parameter" << std::endl;
         proc.setError();
         return;
     }
 
     std::string file(arg, len);
-    std::string realPath = sys::fs::lookupPath(proc.includePath, file);
+    std::string realPath = sys::fs::lookup(proc.includePath, file);
     if (realPath.empty()) {
         proc.err() << ctx.content.name
                    << ": #include-directive: cannot find file: " << file
@@ -265,7 +251,14 @@ void IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext& 
 
     proc.advanceSegments(ctx);
 
-    sys::fs::Stat filestat = sys::fs::stat(realPath);
+    sys::fs::Stat filestat;
+    if (!sys::fs::stat(realPath, &filestat)) {
+        proc.err() << ctx.content.name
+                   << ": #include-directive: cannot open file: " << realPath
+                   << std::endl;
+        proc.setError();
+        return;
+    }
     proc.state->incs.insert(filestat.absolute);
 
     if (proc.state->visitingFiles.count(filestat.absolute) == 0) {
@@ -280,21 +273,21 @@ void IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext& 
             return;
         }
 
-        proc.fileContents.push_back(FileContents(contents, size));
+        proc.contents.push_back(contents);
         proc.name(filestat.absolute);
         proc.process(contents, size);
     }
 }
 
-void IncludeHandler::endProcessing(const ContentContext& ctx) {
-    GLSLPreprocessor& proc = static_cast<GLSLProcessor&>(ctx.processor);
+void IncludeHandler::endProcessing(const Preprocessor::ContentContext& ctx) {
+    GLSLPreprocessor& proc = static_cast<GLSLPreprocessor&>(ctx.processor);
 
     FileContext& frame = proc.state->stack.top();
     int32 seglen = ctx.data + ctx.size - frame.pos;
     
     if (seglen > 0) {
-        segments.push_back(frame.pos);
-        segLengths.push_back(seglen);
+        proc.segments.push_back(frame.pos);
+        proc.segLengths.push_back(seglen);
     }
 
     proc.state->stack.pop();

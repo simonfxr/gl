@@ -4,14 +4,20 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "data/Ref.hpp"
 
 namespace glt {
 
-struct ShaderObjectCache;
+struct ShaderCompiler;
+struct ShaderProgram;
+struct ShaderCache;
+
+typedef std::map<std::string, std::string> PreprocessorDefinitions;
 
 struct ShaderManager {
+    
     enum Verbosity {
         Quiet,
         OnlyErrors,
@@ -53,18 +59,19 @@ struct ShaderManager {
     void setShaderVersion(uint32 vers /* e.g. 330 */, ShaderProfile profile = CompatibilityProfile);
     uint32 shaderVersion() const;
     ShaderProfile shaderProfile() const;
-
+    
     bool cacheShaderObjects() const;
-    void cacheShaderObjects(bool docache);
+    void cacheShaderObjects(bool);
+
+    const Ref<ShaderCache>& globalShaderCache();
 
     ShaderCompiler& shaderCompiler();
-}
 
+    PreprocessorDefinitions& globalDefines();
+
+    const PreprocessorDefinitions& globalDefines() const;
     
 private:
-    
-    friend struct ShaderObjectCache;
-
     struct Data;
     friend struct Data;
     Data * const self;

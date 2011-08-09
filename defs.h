@@ -68,6 +68,13 @@
 
 #endif
 
+#ifdef GNU_EXTENSIONS
+#define HAVE_THREAD_LOCAL
+#define THREAD_LOCAL(type, var) __thread type var
+#else
+#define THREAD_LOCAL(type, var) type var
+#endif
+
 #define RESTRICT __restrict__
 
 #define LOCAL ATTRS(ATTR_NO_WARN_UNUSED_DEF)

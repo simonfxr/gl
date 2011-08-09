@@ -19,7 +19,7 @@ static void parse_err(const ParseState& s, const err::Location& loc, const std::
     std::ostringstream buf;
     buf << "parsing " << s.filename << "@" << s.line << ":" << s.col;
     buf << " parse-error: " << mesg;
-    err::error(loc, err::Error, buf.str());
+    err::error(loc, ERROR_DEFAULT_STREAM, err::Error, buf.str());
 }
 
 bool getchAny(ParseState& s) {
