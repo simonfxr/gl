@@ -27,6 +27,7 @@
 #include "ge/GameWindow.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
+#include "ge/CommandParams.hpp"
 
 #include "sim.hpp"
 
@@ -136,6 +137,12 @@ struct Game {
     std::vector<SphereInstance> sphere_instances[SPHERE_LOD_MAX];
 
     Game();
+    
+    ~Game() {
+        if (engine != 0)
+            engine->renderManager().shutdown();
+        delete textureRenderTarget;
+    }
 
     void updateIndirectRendering(bool indirect);
     void resizeRenderTargets();
@@ -763,7 +770,7 @@ void Game::link(ge::Engine& e) {
     proc.define(ge::makeCommand(this, &Game::cmdToggleUseInterpolation, ge::NULL_PARAMS,
                                 "toggleUseInterpolation"));
 
-    proc.define(ge::makeCommand(this, &Game::cmdIncWorldSolveIterations, PARAM_ARRAY(ge::IntegerParam),
+    proc.define(ge::makeCommand(this, &Game::cmdIncWorldSolveIterations, ge::INT_PARAMS,
                                 "incWorldSolveIterations"));
 
     proc.define(ge::makeCommand(this, &Game::cmdToggleRenderByDistance, ge::NULL_PARAMS,
@@ -778,13 +785,13 @@ void Game::link(ge::Engine& e) {
     proc.define(ge::makeCommand(this, &Game::cmdSpawnSphere, ge::NULL_PARAMS,
                                 "spawnSphere"));
 
-    proc.define(ge::makeCommand(this, &Game::cmdIncSphereRadius, PARAM_ARRAY(ge::NumberParam),
+    proc.define(ge::makeCommand(this, &Game::cmdIncSphereRadius, ge::NUM_PARAMS,
                                 "incSphereRadius"));
     
-    proc.define(ge::makeCommand(this, &Game::cmdIncSphereSpeed, PARAM_ARRAY(ge::NumberParam),
+    proc.define(ge::makeCommand(this, &Game::cmdIncSphereSpeed, ge::NUM_PARAMS,
                                 "incSphereSpeed"));
 
-    proc.define(ge::makeCommand(this, &Game::cmdIncGameSpeed, PARAM_ARRAY(ge::NumberParam),
+    proc.define(ge::makeCommand(this, &Game::cmdIncGameSpeed, ge::NUM_PARAMS,
                                 "incGameSpeed"));
 
     camera.registerWith(e);
@@ -844,5 +851,6 @@ int main(int argc, char *argv[]) {
     
     opts.parse(&argc, &argv);
     opts.inits.reg(ge::Init, ge::makeEventHandler(&game, &Game::init));
-    return engine.run(opts);    
+    int32 ec = engine.run(opts);
+    return ec;
 }

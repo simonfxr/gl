@@ -1,14 +1,14 @@
-#include "ge/Command.hpp"
-#include "data/Array.hpp"
-#include "ge/Engine.hpp"
-
 #include <sstream>
 #include <vector>
 #include <iostream>
 
-namespace ge {
+#include "data/Array.hpp"
 
-const Array<CommandParamType> NULL_PARAMS(0, 0);
+#include "ge/Command.hpp"
+#include "ge/Engine.hpp"
+#include "ge/CommandParams.hpp"
+
+namespace ge {
 
 Array<CommandArg> NULL_ARGS(0, 0);
 
@@ -27,7 +27,7 @@ void Command::name(const std::string& new_name) {
 Command::Command(const Array<CommandParamType>& ps, const std::string name, const std::string& desc) :
     params(ps), namestr(name), descr(desc)
 {
-//    std::cerr << "creating command: name = " << name << " nparams = " << params.size() << std::endl;
+    // std::cerr << "creating command: params: " << &ps << " name = " << name << " nparams = " << params.size() << std::endl;
 }
 
 
@@ -108,10 +108,9 @@ private:
 
 public:
     StringListCommand(ListCommandHandler hndlr, const std::string& name, const std::string& desc) :
-        Command(PARAM_ARRAY(ListParam), name, desc),
+        Command(LIST_PARAMS, name, desc),
         handler(hndlr) {
-//        std::cerr << "list command: " << parameters().size() << std::endl;
-
+        // std::cerr << "list command: " << parameters().size() << std::endl;
     }
     void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
         for (uint32 i = 0; i < args.size(); ++i) {
@@ -126,7 +125,12 @@ public:
 };
 
 Ref<Command> makeStringListCommand(ListCommandHandler handler, const std::string& name, const std::string& desc) {
-    return Ref<Command>(new StringListCommand(handler, name, desc));
+    Ref<Command> com = Ref<Command>(new StringListCommand(handler, name, desc));
+    std::cerr << "making string list command: " << name << ", " << com->parameters().size();
+    for (uint32 i = 0; i < com->parameters().size(); ++i)
+        std::cerr << " " << com->parameters()[i];
+    std::cerr << std::endl;
+    return com;
 }
 
 struct ListCommand : public Command {
@@ -134,14 +138,19 @@ private:
     ListCommandHandler handler;
 public:
     ListCommand(ListCommandHandler hndlr, const std::string& name, const std::string& desc) :
-        Command(PARAM_ARRAY(ListParam), name, desc), handler(hndlr) {}
+        Command(LIST_PARAMS, name, desc), handler(hndlr) {}
     void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
         handler(e, args);
     }
 };
 
 Ref<Command> makeListCommand(ListCommandHandler handler, const std::string& name, const std::string& desc) {
-    return Ref<Command>(new ListCommand(handler, name, desc));
+    Ref<Command> com = Ref<Command>(new ListCommand(handler, name, desc));
+    std::cerr << "making list command: " << name << ", " << com->parameters().size();
+    for (uint32 i = 0; i < com->parameters().size(); ++i)
+        std::cerr << " " << com->parameters()[i];
+    std::cerr << std::endl;
+    return com;
 }
 
 } // namespace ge

@@ -36,6 +36,8 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
         opts(0)
     {}
 
+    ~Data() {}
+
     bool init(const EngineOptions& opts);
                              
     void tick() OVERRIDE;
@@ -59,7 +61,15 @@ bool runInit(EventSource<InitEvent>& source, const Event<InitEvent>& e);
 
 Engine::Engine() : self(new Data(*this)) {}
 
-Engine::~Engine() { delete self; }
+Engine::~Engine() {
+    if (self != 0) {
+        self->renderManager.shutdown();
+        self->shaderManager.shutdown();
+        delete self->window;
+    }
+    
+    delete self;
+}
 
 GameWindow& Engine::window() {
     ASSERT_MSG(SELF->window != 0, "window not available, too early init phase");

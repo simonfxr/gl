@@ -83,23 +83,23 @@ void initShaderVersion(RunLevel lvl, EngineInitializers& inits) {
 
 static void runInitCommands(const Event<InitEvent>& e) {
     e.info.success = true;
-    using namespace ::ge::commands;
     CommandProcessor& r = e.info.engine.commandProcessor();
+    const Commands& cs = commands();
 
-    r.define(printContextInfo);
-    r.define(reloadShaders);
-    r.define(listBindings);
-    r.define(bindKey);
-    r.define(help);
-    r.define(bindShader);
-    r.define(initGLDebug);
-    r.define(describe);
-    r.define(eval);
-    r.define(load);
-    r.define(addShaderPath);
-    r.define(togglePause);
-    r.define(perspectiveProjection);
-    r.define(postInit);
+    r.define(cs.printContextInfo);
+    r.define(cs.reloadShaders);
+    r.define(cs.listBindings);
+    r.define(cs.bindKey);
+    r.define(cs.help);
+    r.define(cs.bindShader);
+    r.define(cs.initGLDebug);
+    r.define(cs.describe);
+    r.define(cs.eval);
+    r.define(cs.load);
+    r.define(cs.addShaderPath);
+    r.define(cs.togglePause);
+    r.define(cs.perspectiveProjection);
+    r.define(cs.postInit);
 }
 
 void initCommands(RunLevel lvl, EngineInitializers& inits) {

@@ -42,6 +42,9 @@ endif()
 
 project(sim-sfml)
 
+#add_definitions("-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
+link_libraries(tcmalloc)
+
 include_directories("${CMAKE_SOURCE_DIR}/ext/include")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -224,6 +227,8 @@ set(GE_SRC
   ge/Commands.cpp
   ge/CommandArgs.hpp
   ge/CommandArgs.cpp
+  ge/CommandParams.hpp
+  ge/CommandParams.cpp
   ge/KeyBinding.hpp
   ge/KeyBinding.cpp
   ge/CommandProcessor.hpp

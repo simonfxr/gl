@@ -21,6 +21,7 @@
 #include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
 #include "ge/Timer.hpp"
+#include "ge/CommandParams.hpp"
 
 #include "glt/primitives.hpp"
 
@@ -116,6 +117,10 @@ struct State {
 #endif
         fpsTimer(0)
         {}
+
+    ~State() {
+        delete fpsTimer;
+    }
 };
 
 typedef ge::Event<ge::RenderEvent> RenderEv;
@@ -159,7 +164,7 @@ static void initState(State *state, const InitEv& ev) {
     e.shaderManager().verbosity(glt::ShaderManager::Info);
 
     e.commandProcessor().define(makeCommand(incGamma, &state->gamma_correction,
-                                            PARAM_ARRAY(ge::NumberParam),
+                                            ge::NUM_PARAMS,
                                             "incGamma", "increase the value of gamma correction"));
 
     e.commandProcessor().define(makeCommand(runRecreateWorld, state,

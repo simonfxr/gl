@@ -13,6 +13,8 @@ namespace atomic {
 
 static const int32 MARK = -0xAFAFAFAF;
 
+static const int32 DEAD_STRONG = -0x0FFFFFFF;
+
 #ifdef REF_CONCURRENT
 
 struct Counter {
@@ -145,8 +147,8 @@ struct RefCnt {
                 return true;
             }
 
-            int32 dead_val = -0x0FFFFFFF; // highly negative value,
-                                        // makes conversion from weak to strong easier
+            int32 dead_val = atomic::DEAD_STRONG;; // highly negative value,
+                                                   // makes conversion from weak to strong easier
 
             if (cnt->strong.xchg(0, &dead_val)) {
                 // no weak tried to convert
@@ -216,7 +218,7 @@ private:
 template <typename T>
 struct WeakRef : public priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> > {
     
-    WeakRef() : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(0, new atomic::RefCount(0, 1)) {}
+    WeakRef() : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(0, new atomic::RefCount(atomic::DEAD_STRONG, 1)) {}
     
     WeakRef(const WeakRef<T>& ref) : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(ref) {}
     

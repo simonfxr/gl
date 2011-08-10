@@ -1,16 +1,17 @@
+#include <iostream>
+
 #include "ge/Commands.hpp"
 #include "ge/Engine.hpp"
+#include "ge/CommandParams.hpp"
 
 #include "glt/utils.hpp"
 #include "glt/ShaderProgram.hpp"
 
-#include <iostream>
-
 namespace ge {
 
-namespace commands {
+namespace {
 
-static void runPrintContextInfo(const Event<CommandEvent>& e) {
+void runPrintContextInfo(const Event<CommandEvent>& e) {
     const sf::ContextSettings& c = e.info.engine.window().window().GetSettings();
     std::cerr << "OpenGL Context Information"<< std::endl
               << "  Version:\t" << c.MajorVersion << "." << c.MinorVersion << std::endl
@@ -22,11 +23,7 @@ static void runPrintContextInfo(const Event<CommandEvent>& e) {
               << std::endl;
 }
 
-const Ref<Command> printContextInfo = makeCommand(runPrintContextInfo,
-                                                  "printContextInfo",
-                                                  "prints information about the current OpenGL context");
-
-static void runReloadShaders(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+void runReloadShaders(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     if (args.size() == 0) {
         std::cerr << "reloading shaders" << std::endl;
         e.info.engine.shaderManager().reloadShaders();
@@ -36,20 +33,13 @@ static void runReloadShaders(const Event<CommandEvent>& e, const Array<CommandAr
     }
 }
 
-const Ref<Command> reloadShaders = makeStringListCommand(runReloadShaders,
-                                                         "reloadShaders", "reload ShaderPrograms");
-
-static void runListBindings(const Event<CommandEvent>&) {
+void runListBindings(const Event<CommandEvent>&) {
     ERR("list bindings not yet implemented");
 }
 
-const Ref<Command> listBindings = makeCommand(runListBindings, "listBindings", "list all key bindings");
-
-DEFINE_CONST_ARRAY(BIND_KEY_PARAMS, CommandParamType, KeyComboParam, CommandParam);
-
 struct BindKey : public Command {
     BindKey() :
-        Command(BIND_KEY_PARAMS, "bindKey", "bind a command to a key combination") {}
+        Command(KEY_COM_PARAMS, "bindKey", "bind a command to a key combination") {}
     void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
         Ref<Command>& comm = *args[1].command.ref;
         if (!comm) {
@@ -63,15 +53,11 @@ struct BindKey : public Command {
     }
 };
 
-const Ref<Command> bindKey = Ref<Command>(new BindKey);
-
-static void runHelp(const Event<CommandEvent>&) {
+void runHelp(const Event<CommandEvent>&) {
     ERR("help not yet implemented");
 }
 
-const Ref<Command> help = makeCommand(runHelp, "help", "help and command overview");
-
-static void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     if (args.size() == 0) {
         ERR("bindShader: need at least one argument");
         return;
@@ -114,10 +100,6 @@ static void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>&
     e.info.engine.shaderManager().addProgram(*args[0].string, prog);
 }
 
-const Ref<Command> bindShader = makeListCommand(runBindShader,
-                                                "bindShader",
-                                                "compile and linke a ShaderProgram and give it a name");
-
 void runInitGLDebug(const Event<CommandEvent>& e) {
     if (e.info.engine.window().window().GetSettings().DebugContext) {
         glt::initDebug();
@@ -126,48 +108,33 @@ void runInitGLDebug(const Event<CommandEvent>& e) {
     }
 }
 
-const Ref<Command> initGLDebug = makeCommand(runInitGLDebug, "initGLDebug", "initialize OpenGL debug output");
-
 void runDescribe(const Event<CommandEvent>&, const Array<CommandArg>&) {
     ERR("not yet implemented");
 }
 
-const Ref<Command> describe = makeListCommand(runDescribe, "describe", "print a description of its parameters");
-
-static void runEval(const Event<CommandEvent>&, const Array<CommandArg>&) {
+void runEval(const Event<CommandEvent>&, const Array<CommandArg>&) {
     ERR("not yet implemented");
 }
 
-const Ref<Command> eval = makeStringListCommand(runEval, "eval", "parse a string and execute it");
-
-static void runLoad(const Event<CommandEvent>& ev, const Array<CommandArg>& args) {
+void runLoad(const Event<CommandEvent>& ev, const Array<CommandArg>& args) {
     for (uint32 i = 0; i < args.size(); ++i) {
         ev.info.engine.loadScript(*args[i].string);
     }
 }
 
-const Ref<Command> load = makeStringListCommand(runLoad, "load", "execute a script file");
-
-static void runAddShaderPath(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
-    for (uint32 i = 0; i < args.size(); ++i) {
+void runAddShaderPath(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+    for (uint32 i = 0; i < args.size(); ++i)
         e.info.engine.shaderManager().addShaderDirectory(*args[i].string);
-    }
 }
 
-const Ref<Command> addShaderPath = makeStringListCommand(runAddShaderPath, "addShaderPath", "add directories to the shader path");
-
-static void runTogglePause(const Event<CommandEvent>& e) {
+void runTogglePause(const Event<CommandEvent>& e) {
     Engine& eng = e.info.engine;
     eng.gameLoop().pause(!eng.gameLoop().paused());
 }
 
-extern const Ref<Command> togglePause = makeCommand(runTogglePause, "togglePause", "toggle the pause state");
-
-DEFINE_CONST_ARRAY(PERSPECTIVE_PROJECTION_PARAMS, CommandParamType, NumberParam, NumberParam, NumberParam);
-
 struct PerspectiveProjection : public Command {
     PerspectiveProjection() :
-        Command(PERSPECTIVE_PROJECTION_PARAMS, "perspectiveProjection", "set parameters for perspective projection") {}
+        Command(NUM_NUM_NUM_PARAMS, "perspectiveProjection", "set parameters for perspective projection") {}
 
     void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
         double fovDeg = args[0].number;
@@ -183,8 +150,6 @@ struct PerspectiveProjection : public Command {
     }
 };
 
-extern const Ref<Command> perspectiveProjection(new PerspectiveProjection);
-
 struct InitCommandHandler : public EventHandler<InitEvent> {
     Ref<Command> handler;
     InitCommandHandler(const Ref<Command>& hndlr) :
@@ -195,15 +160,58 @@ struct InitCommandHandler : public EventHandler<InitEvent> {
     }
 };
 
-static void runPostInit(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+void runPostInit(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     e.info.engine.addInit(PostInit, Ref<EventHandler<InitEvent> >(new InitCommandHandler(*args[0].command.ref)));
 }
 
-DEFINE_PARAM_ARRAY(POST_INIT_PARAMS, CommandParam);
+} // namespace anon
 
-const Ref<Command> postInit = makeCommand(runPostInit, POST_INIT_PARAMS, "postInit", "execute its argument command in the postInit hook");
+Commands::Commands() :
+    printContextInfo(makeCommand(runPrintContextInfo,
+                                 "printContextInfo",
+                                 "prints information about the current OpenGL context")),
 
-} // namespace commands
+    reloadShaders(makeStringListCommand(runReloadShaders,
+                                        "reloadShaders", "reload ShaderPrograms")),
+
+    listBindings(makeCommand(runListBindings, "listBindings", "list all key bindings")),
+
+    bindKey(new BindKey),
+
+    help(makeCommand(runHelp, "help", "help and command overview")),
+
+    bindShader(makeListCommand(runBindShader,
+                               "bindShader",
+                               "compile and linke a ShaderProgram and give it a name")),
+
+    initGLDebug(makeCommand(runInitGLDebug, "initGLDebug", "initialize OpenGL debug output")),
+
+    describe(makeListCommand(runDescribe, "describe", "print a description of its parameters")),
+
+    eval(makeStringListCommand(runEval, "eval", "parse a string and execute it")),
+
+    load(makeStringListCommand(runLoad, "load", "execute a script file")),
+
+    addShaderPath(makeStringListCommand(runAddShaderPath, "addShaderPath", "add directories to the shader path")),
+
+    togglePause(makeCommand(runTogglePause, "togglePause", "toggle the pause state")),
+
+    perspectiveProjection(new PerspectiveProjection),
+
+    postInit(makeCommand(runPostInit, COM_PARAMS, "postInit", "execute its argument command in the postInit hook"))
+{}
+
+const Commands& commands() {
+    // static Commands *comms = 0;
+    // if (comms == 0) {
+    //     comms = new Commands;
+    // }
+
+    // return *comms;
+
+    static Commands commands;
+    return commands;
+}
 
 } // namespace ge
 

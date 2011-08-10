@@ -70,6 +70,8 @@ struct ShaderManager {
     PreprocessorDefinitions& globalDefines();
 
     const PreprocessorDefinitions& globalDefines() const;
+
+    void shutdown();
     
 private:
     struct Data;

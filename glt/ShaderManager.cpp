@@ -50,7 +50,13 @@ ShaderManager::ShaderManager() :
 }
 
 ShaderManager::~ShaderManager() {
+    shutdown();
     delete self;
+}
+
+void ShaderManager::shutdown() {
+    self->programs.clear();
+    self->globalShaderCache->flush();
 }
 
 void ShaderManager::setShaderVersion(uint32 vers, ShaderProfile prof) {

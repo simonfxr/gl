@@ -1,9 +1,10 @@
-#include "ge/Camera.hpp"
+#include <fstream>
 
 #include "math/real.hpp"
 #include "math/vec3.hpp"
 
-#include <fstream>
+#include "ge/Camera.hpp"
+#include "ge/CommandParams.hpp"
 
 using namespace math;
 
@@ -60,26 +61,26 @@ static void runSetSensitivity(vec2_t *sens, const Event<CommandEvent>&, const Ar
 
 static void initCommands(Camera& cam) {
     cam.commands.move = makeCommand(runMove, &cam.step_accum,
-                                    PARAM_ARRAY(IntegerParam),
+                                    INT_PARAMS,
                                     "moveCamera", "move the camera frame");
     
     cam.commands.saveFrame = makeCommand(runSaveFrame, static_cast<const glt::Frame *>(&cam.frame),
-                                         PARAM_ARRAY(StringParam),
+                                         STR_PARAMS,
                                          "saveCameraFrame",
                                          "save the orientation and position of the camera in a file");
     
     cam.commands.loadFrame = makeCommand(runLoadFrame, &cam.frame,
-                                         PARAM_ARRAY(StringParam),
+                                         STR_PARAMS,
                                          "loadCameraFrame",
                                          "load the orientation and position of the camera from a file");
     
     cam.commands.setStepLength = makeCommand(runSetStepLength, &cam.step_length,
-                                             PARAM_ARRAY(NumberParam),
+                                             NUM_PARAMS,
                                              "setCameraStepLength",
                                              "set the length the camera is allowed to move in one frame");
     
     cam.commands.setSensitivity = makeCommand(runSetSensitivity, &cam.mouse_sensitivity,
-                                              PARAM_ARRAY(ListParam),
+                                              LIST_PARAMS,
                                               "setCameraMouseSensitivity",
                                               "specify the camera sensitivity: "
                                               "either as a pair of numbers (x- and y-sensitvity)"

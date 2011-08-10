@@ -20,7 +20,7 @@ struct CommandEvent : public EngineEvent {
 
 struct Command : public EventHandler<CommandEvent> {
 private:
-    const Array<CommandParamType> params;
+    const Array<CommandParamType>& params;
     std::string namestr;
     std::string descr;
 public:
@@ -34,8 +34,6 @@ public:
     virtual void interactive(const Event<CommandEvent>& ev, const Array<CommandArg>&) = 0;
     virtual void handle(const Event<CommandEvent>& ev);
 };
-
-extern const Array<CommandParamType> NULL_PARAMS;
 
 extern Array<CommandArg> NULL_ARGS;
 
@@ -112,14 +110,6 @@ template <typename T>
 Ref<Command> makeCommand(T *o, void (T::*m)(const Event<CommandEvent>&, const Array<CommandArg>&), const Array<CommandParamType>& params, const std::string& name, const std::string& desc = "") {
     return Ref<Command>(new MemberFunCommand<T, void (T::*)(const Event<CommandEvent>&, const Array<CommandArg>&)>(o, m, params, name, desc));
 }
-
-#ifdef CONST_ARRAY
-#define PARAM_ARRAY(...) CONST_ARRAY(ge::CommandParamType, __VA_ARGS__)
-#else
-#error "CONST_ARRAY not defined"
-#endif
-
-#define DEFINE_PARAM_ARRAY(name, ...) DEFINE_CONST_ARRAY(name, ge::CommandParamType, __VA_ARGS__)
 
 } // namespace ge
 

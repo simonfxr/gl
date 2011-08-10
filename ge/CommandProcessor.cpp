@@ -134,6 +134,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
         if (rest_args)
            err << " or more";
         err << " got " << args.size();
+        err << " (rest_args=" << rest_args << ", nparams=" << nparams << ")";
         ERR(err.str());
     }
 

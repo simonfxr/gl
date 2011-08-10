@@ -85,6 +85,8 @@ struct RenderManager {
 
     void endScene();
 
+    void shutdown();
+
     FrameStatistics frameStatistics();
     
 private:

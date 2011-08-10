@@ -78,8 +78,11 @@ void GameWindow::Data::setMouse(int x, int y) {
 }
 
 GameWindow::Data::~Data() {
-    if (owning_win) delete win;
     delete renderTarget;
+    
+    if (owning_win) {
+        delete win;
+    }
 }
 
 GameWindow::GameWindow(const WindowOptions& opts) :
