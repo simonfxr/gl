@@ -15,7 +15,7 @@ enum KeyState {
     Pressed  = 3,  // 0011
     Down     = 1,  // 0001
     Up       = 4,  // 0100
-    Released = 12, // 1100
+    Released = 12 // 1100
 };
 
 namespace keycode {

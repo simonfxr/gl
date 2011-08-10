@@ -150,6 +150,9 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
             case NumberParam: val_type = Number; break;
             case CommandParam: val_type = CommandRef; break;
             case KeyComboParam: val_type = KeyCombo; break;
+            case VarRefParam: val_type = VarRef; break;
+            case AnyParam: ASSERT_FAIL(); break; 
+            case ListParam: ASSERT_FAIL(); break;
             }
 
             if (val_type != args[i].type) {

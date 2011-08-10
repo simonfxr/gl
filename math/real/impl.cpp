@@ -111,7 +111,7 @@ int32 signum(real x) {
 
 real wrapPi(real x) {
     x += PI;
-    x -= floor(x * (1 / (2 * PI))) * (2 * PI);
+    x -= floorf(x * (1 / (2 * PI))) * (2 * PI);
     x -= PI;
     return x;
 }

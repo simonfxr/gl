@@ -145,6 +145,9 @@ std::ostream& logPutError(const T&, const E& err, const std::string& msg) {
 
 #define ERR(msg) _ERROR(::err::Error, msg)
 #define WARN(msg) _ERROR(::err::Warn, msg)
+#define INFO(msg) _ERROR(::err::Info, msg)
+
+#define ASSERT_FAIL() _ERROR(::err::Assertion, "unreachable")
 
 #ifdef ATTR_NORETURN
 #define FATAL_ERR(msg) ::err::fatalError(_CURRENT_LOCATION, ERROR_DEFAULT_STREAM, msg)

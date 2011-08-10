@@ -26,17 +26,8 @@ DEFINE_PARAM_ARRAY(INT_PARAMS, IntegerParam);
 
 DEFINE_PARAM_ARRAY(STR_PARAMS, StringParam);
 
-static void print(const std::string& name, const Array<CommandParamType>& ps) {
-    std::cerr << "address: " << &ps << " name: " << name << " size: " << ps.size();
-    for (uint32 i = 0; i < ps.size(); ++i)
-        std::cerr << " " << ps[i];
-    std::cerr << std::endl;
-}
-
-#define P_AUX(var) print(AS_STRING(var), var)
-#define P(var) P_AUX(CONCAT(var, _PARAMS))
-
 void initParams() {
+    // P(NULL_PARAMS);
     // P(KEY_COM);
     // P(NUM_NUM_NUM);
     // P(COM);

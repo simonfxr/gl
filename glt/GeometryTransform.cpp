@@ -49,7 +49,7 @@ struct GeometryTransform::Data {
 
     bool flag(uint16 flg) {
         if (unlikely((dirty_flags & flg) != 0)) {
-            dirty_flags &= ~ flg;
+            dirty_flags = uint16(dirty_flags & ~flg);
             return true;
         }
         return false;

@@ -169,7 +169,7 @@ mat4_t inverse(const mat4_t& A) {
         return mat4(0.f);
     }
 
-    det = 1.0 / det;
+    det = recip(det);
     Ainv *= det;
 
     ASSERT(equal(A * Ainv, mat4()));

@@ -88,9 +88,9 @@ static const float DAMPING = 0.97f;
 
 static const vec3_t ROOM_DIMENSIONS = vec3(40.f, 30.f, 40.f) * 2.f;
 
-static float rand1() {
-    return rand() * (1.f / RAND_MAX);
-}
+// static float rand1() {
+//     return rand() * (1.f / RAND_MAX);
+// }
 
 struct BSP;
 struct Box;

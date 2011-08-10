@@ -137,9 +137,9 @@ struct PerspectiveProjection : public Command {
         Command(NUM_NUM_NUM_PARAMS, "perspectiveProjection", "set parameters for perspective projection") {}
 
     void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
-        double fovDeg = args[0].number;
-        double zn = args[1].number;
-        double zf = args[2].number;
+        real fovDeg = real(args[0].number);
+        real zn = real(args[1].number);
+        real zf = real(args[2].number);
 
         glt::RenderManager& rm = e.info.engine.renderManager();
 

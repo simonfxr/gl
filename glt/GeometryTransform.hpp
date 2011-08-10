@@ -79,13 +79,13 @@ struct SavePointArgs {
 protected:
     GeometryTransform* g;
     uint64 cookie;
-    uint32 depth;
+    uint16 depth;
 
     friend struct GeometryTransform;
     friend struct SavePoint;
 
 public:
-    SavePointArgs(GeometryTransform& _g, uint64 _cookie, uint32 _depth) :
+    SavePointArgs(GeometryTransform& _g, uint64 _cookie, uint16 _depth) :
         g(&_g), cookie(_cookie), depth(_depth) {}
 };
 

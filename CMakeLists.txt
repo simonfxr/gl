@@ -69,6 +69,8 @@ if(COMP_GCC)
   # endif()
 endif()
 
+add_definitions("-Wcheck")
+
 if(COMP_GCC OR COMP_CLANG)
   add_definitions("-Wextra")
   if(BUILD_DEBUG)

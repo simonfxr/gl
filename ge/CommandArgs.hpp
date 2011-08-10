@@ -24,7 +24,7 @@ enum CommandParamType {
     CommandParam, // commandref: &comname or quotation: { com1 arg1 arg2 ; com2 arg3 ... }
     VarRefParam, // $var
     AnyParam, // one parameter of any type
-    ListParam, // all remaining params, can only appear as the last parameter
+    ListParam // all remaining params, can only appear as the last parameter
 };
 
 enum CommandType {

@@ -19,6 +19,10 @@ void CommandArg::free() {
         delete command.ref;
         // command.quotation gets deleted by command.ref
         break;
+    case Integer:
+    case Number:
+    case VarRef:
+    case Nil: break;
     }
 
     memset(this, 0, sizeof *this);
