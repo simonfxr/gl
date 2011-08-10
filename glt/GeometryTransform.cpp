@@ -102,7 +102,7 @@ const aligned_mat4_t& GeometryTransform::vpMatrix() const {
 
 const aligned_mat3_t& GeometryTransform::normalMatrix() const {
     if (self->flag(FLAG_NORMAL)) {
-        // transposed of inverse modelView
+        // transpose of inverse modelView
         self->normalMatrix = transpose(inverse(mat3(mvMatrix())));
     }
     return self->normalMatrix;

@@ -8,6 +8,7 @@ namespace ge {
 struct Commands {
     Ref<Command> printContextInfo;
     Ref<Command> reloadShaders;
+    Ref<Command> listCachedShaders;
     Ref<Command> listBindings;
     Ref<Command> bindKey;
     Ref<Command> help;

@@ -6,6 +6,7 @@
 #include <stack>
 
 #include "glt/GLSLPreprocessor.hpp"
+#include "glt/ShaderCompiler.hpp"
 #include "sys/fs/fs.hpp"
 
 namespace glt {
@@ -147,31 +148,23 @@ void GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext& ctx
     frame.pos = ctx.content.data + ctx.lineOffset + ctx.lineLength;
 }
 
-bool GLSLPreprocessor::processFileRecursively(const std::string& file, std::string *absolute, sys::fs::ModificationTime *mtime) {
+void GLSLPreprocessor::processFileRecursively(const std::string& file) {
     if (wasError())
-        return false;
-    
-    sys::fs::Stat filestat;
-    if (!sys::fs::stat(file, &filestat))
-        return false;
+        return;
 
-    if (absolute != 0)
-        *absolute = filestat.absolute;
-
-    if (mtime != 0)
-        *mtime = filestat.mtime;
-
+    ASSERT(sys::fs::isAbsolute(file));
     char *data;
     uint32 size;
     
-    if (!readFile(this->err(), file, data, size))
-        return false;
+    if (!readFile(this->err(), file, data, size)) {
+        setError();
+        return;
+    }
 
     contents.push_back(data);
 
-    this->name(filestat.absolute);
+    this->name(file);
     process(data, size);
-    return !wasError();
 }
 
 void DependencyHandler::directiveEncountered(const Preprocessor::DirectiveContext& ctx) {
@@ -212,7 +205,7 @@ void DependencyHandler::directiveEncountered(const Preprocessor::DirectiveContex
 
     std::string absPath = sys::fs::absolutePath(realPath);
     if (proc.state->deps.insert(absPath).second)
-        proc.dependencies.push_back(ShaderDependency(stype, absPath));
+        proc.dependencies.push_back(makeRef<ShaderSource>(new FileSource(stype, absPath)));
 }
 
 void IncludeHandler::beginProcessing(const Preprocessor::ContentContext& ctx) {

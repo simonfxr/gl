@@ -45,7 +45,7 @@ struct GLSLPreprocessor : public Preprocessor {
     
     void addDefines(const PreprocessorDefinitions&);
 
-    bool processFileRecursively(const std::string&, std::string *, sys::fs::ModificationTime *);
+    void processFileRecursively(const std::string&);
 
     // internal use only
     void advanceSegments(const Preprocessor::DirectiveContext&);

@@ -125,12 +125,7 @@ public:
 };
 
 Ref<Command> makeStringListCommand(ListCommandHandler handler, const std::string& name, const std::string& desc) {
-    Ref<Command> com = Ref<Command>(new StringListCommand(handler, name, desc));
-    std::cerr << "making string list command: " << name << ", " << com->parameters().size();
-    for (uint32 i = 0; i < com->parameters().size(); ++i)
-        std::cerr << " " << com->parameters()[i];
-    std::cerr << std::endl;
-    return com;
+    return Ref<Command>(new StringListCommand(handler, name, desc));
 }
 
 struct ListCommand : public Command {
@@ -145,12 +140,7 @@ public:
 };
 
 Ref<Command> makeListCommand(ListCommandHandler handler, const std::string& name, const std::string& desc) {
-    Ref<Command> com = Ref<Command>(new ListCommand(handler, name, desc));
-    std::cerr << "making list command: " << name << ", " << com->parameters().size();
-    for (uint32 i = 0; i < com->parameters().size(); ++i)
-        std::cerr << " " << com->parameters()[i];
-    std::cerr << std::endl;
-    return com;
+    return Ref<Command>(new ListCommand(handler, name, desc));
 }
 
 } // namespace ge

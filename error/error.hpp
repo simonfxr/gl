@@ -15,24 +15,24 @@
 #define ERROR_DEFAULT_STREAM ::std::cerr
 #endif
 
+#include "error/WithError.hpp"
+
 template <typename T>
 struct LogTraits {
-// static LogDestination getDestination(const T&);
+// static err::LogDestination getDestination(const T&);
 };
 
 template <typename T>
 struct ErrorTraits {
-
-    template <typename E>
-    static void setError(T& value, const E& error) {
-        value.pushError(error);
+    
+    template <typename E, E NoError, std::string(*StringError)(E)>
+    static std::string stringError(const err::WithError<E, NoError, StringError>&, E err) {
+        return err::WithError<E, NoError, StringError>::stringError(err);
     }
-
-    template <typename E>
-    static std::string stringError(const E& error) {
-        std::ostringstream rep;
-        rep << error;
-        return rep.str();
+    
+    template <typename E, E NoError, std::string(*StringError)(E)>
+    static void setError(err::WithError<E, NoError, StringError>& x, E err) {
+        x.pushError(err);
     }
 };
 
@@ -96,9 +96,9 @@ LogDestination getLogDestination(const T& v) {
 }
 
 template <typename T, typename E>
-void logRaiseError(const Location& loc, T& value, const E& error, LogLevel lvl, const std::string& message) {
+void logRaiseError(const Location& loc, T& value, E error, LogLevel lvl, const std::string& message) {
     ErrorTraits<T>::setError(value, error);
-    logRaiseError(loc, getLogDestination(value), lvl, ErrorTraits<T>::stringError(error), message);
+    logRaiseError(loc, getLogDestination(value), lvl, ErrorTraits<T>::stringError(value, error), message);
 }
 
 template <typename T>
@@ -112,8 +112,8 @@ std::ostream& logDestination(const T& value) {
 }
 
 template <typename T, typename E>
-std::ostream& logPutError(const T&, const E& err, const std::string& msg) {
-    return logWriteErr(ErrorTraits<T>::stringError(err), msg);
+std::ostream& logPutError(const T& v, E err, const std::string& msg) {
+    return logWriteErr(ErrorTraits<T>::stringError(v, err), msg);
 }
 
 #ifdef GNU_EXTENSIONS

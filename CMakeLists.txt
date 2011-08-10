@@ -69,7 +69,11 @@ if(COMP_GCC)
   # endif()
 endif()
 
-add_definitions("-Wcheck")
+if(COMP_ICC)
+  add_definitions("-Wcheck")
+  add_definitions("-openmp")
+  link_libraries("-openmp")
+endif()
 
 if(COMP_GCC OR COMP_CLANG)
   add_definitions("-Wextra")

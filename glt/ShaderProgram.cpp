@@ -28,20 +28,39 @@ struct LogTraits<glt::ShaderProgram> {
 
 namespace glt {
 
+namespace ShaderProgramError {
+
+std::string stringError(Type e) {
+
+    const char *err;
+    switch (e) {
+    case NoError: err = "no error"; break;
+    case CompilationFailed: err = "compilation failed"; break;
+    case LinkageFailed: err = "linkage failed"; break;
+    case AttributeNotBound: err = "couldnt bind attribute"; break;
+    case UniformNotKnown: err = "uniform not known"; break;
+    case ValidationFailed: err = "state validation failed"; break;
+    case APIError: err = "error in api usage"; break;
+    default: err = "unknown error"; break;
+    }
+
+    return err;
+}
+
+} // namespace ShaderProgramError
+
 typedef std::map<std::string, GLuint> Attributes;
 
 struct ShaderProgram::Data {
     ShaderProgram& self;
-    Error lastError;
     GLuint program;
     ShaderManager& sm;
-    ShaderObjectRoots shaders;
+    ShaderObjects shaders;
     Attributes attrs;
     bool linked;
 
     Data(ShaderProgram& owner, ShaderManager& _sm) :
         self(owner),
-        lastError(NoError),
         program(0),
         sm(_sm),
         shaders(),
@@ -51,7 +70,6 @@ struct ShaderProgram::Data {
 
     Data(const Data& rhs) :
         self(rhs.self),
-        lastError(rhs.lastError),
         program(0),
         sm(rhs.sm),
         shaders(rhs.shaders),
@@ -63,7 +81,7 @@ struct ShaderProgram::Data {
 
     void printProgramLog(GLuint program, std::ostream& out);
 
-    void handleCompileError();
+    void handleCompileError(ShaderCompilerError::Type);
 };
 
 ShaderProgram::ShaderProgram(ShaderManager& sm) :
@@ -80,43 +98,35 @@ ShaderProgram::~ShaderProgram() {
 void ShaderProgram::reset() {
     GL_CHECK(glDeleteProgram(self->program));
     self->program = 0;
-    self->lastError = NoError;
+    clearError();
     self->shaders.clear();
     self->attrs.clear();
 }
 
 bool ShaderProgram::reload() {
-    ShaderObjectRoots newroots = self->shaders;
-    bool outdated = false;
+    ShaderObjects newshaders;
+    CompileState cstate(self->sm.shaderCompiler(), newshaders);
 
-    if (!shaderManager().shaderCompiler().reloadRecursively(newroots, &outdated))
+    for (ShaderObjects::iterator it = self->shaders.begin();
+         it != self->shaders.end(); ++it) {
+        Ref<CompileJob> job = CompileJob::reload(it->second);
+        cstate.enqueue(job);
+    }
+
+    cstate.compileAll();
+    if (cstate.wasError())
         return false;
 
-    if (!outdated)
+    if (newshaders == self->shaders)
         return true;
 
     ShaderProgram new_prog(*this);
-    new_prog.self->shaders = newroots;
-    if (outdated && new_prog.tryLink()) {
-       return replaceWith(new_prog);
+    new_prog.self->shaders = newshaders;
+    if (new_prog.tryLink()) {
+        return replaceWith(new_prog);
     } else {
         return false;
     }
-}
-
-void ShaderProgram::pushError(ShaderProgram::Error err) {
-    if (self->lastError != NoError)
-        self->lastError = err;
-}
-
-ShaderProgram::Error ShaderProgram::clearError() {
-    Error err = self->lastError;
-    self->lastError = NoError;
-    return err;
-}
-    
-bool ShaderProgram::wasError() {
-    return self->lastError != NoError;
 }
 
 ShaderManager& ShaderProgram::shaderManager() {
@@ -128,16 +138,11 @@ GLuint ShaderProgram::program() {
     return self->program;
 }
 
-void ShaderProgram::Data::handleCompileError() {
-    self.pushError(ShaderProgram::CompilationFailed);
-    sm.shaderCompiler().clearError();
-}
-
 bool ShaderProgram::Data::createProgram() {
     if (program == 0) {
         GL_CHECK(program = glCreateProgram());
         if (program == 0) {
-            RAISE_ERR(self, ShaderProgram::OpenGLError, "couldnt create program");
+            RAISE_ERR(self, ShaderProgramError::OpenGLError, "couldnt create program");
             return false;
         }
     }
@@ -170,18 +175,56 @@ void ShaderProgram::Data::printProgramLog(GLuint program, std::ostream& out) {
     }
 }
 
-bool ShaderProgram::addShaderSrc(const std::string& src, ShaderManager::ShaderType type) {
-    bool ok = self->sm.shaderCompiler().loadString(self->shaders, type, src);
-    if (!ok) self->handleCompileError();
-    else self->linked = false;
-    return ok;
+void ShaderProgram::Data::handleCompileError(ShaderCompilerError::Type) {
+    ERR("compile error occurred"); // FIXME
 }
 
-bool ShaderProgram::addShaderFile(const std::string& file, ShaderManager::ShaderType type, bool absolute) {
-    bool ok = self->sm.shaderCompiler().loadFile(self->shaders, type, file, absolute);
-    if (!ok) self->handleCompileError();
-    else self->linked = false;
-    return ok;    
+bool ShaderProgram::addShaderSrc(const std::string& src, ShaderManager::ShaderType type) {
+    CompileState cstate(self->sm.shaderCompiler(), self->shaders);
+    {
+        Ref<CompileJob> job = CompileJob::load(makeRef<ShaderSource>(new StringSource(type, src)));
+        cstate.enqueue(job);
+    }
+    
+    cstate.compileAll();
+    
+    if (cstate.wasError()) {
+        self->handleCompileError(cstate.getError());
+        return false;
+    }
+
+    return true;
+}
+
+bool ShaderProgram::addShaderFile(const std::string& file0, ShaderManager::ShaderType type, bool absolute) {
+    std::string file = file0;
+    
+    if (!absolute) {
+        file = sys::fs::lookup(self->sm.shaderDirectories(), file);
+        if (file.empty()) {
+            RAISE_ERR(*this, ShaderProgramError::FileNotInPath,
+                      "couldnt find file in shader directories: " + file);
+            return false;
+        }
+    }
+
+    file = sys::fs::absolutePath(file);
+    ASSERT(!file.empty());
+    
+    CompileState cstate(self->sm.shaderCompiler(), self->shaders);
+    {
+        Ref<CompileJob> job = CompileJob::load(makeRef<ShaderSource>(new FileSource(type, file)));
+        cstate.enqueue(job);
+    }
+
+    cstate.compileAll();
+    
+    if (cstate.wasError()) {
+        self->handleCompileError(cstate.getError());
+        return false;
+    }
+
+    return true;
 }
 
 bool ShaderProgram::addShaderFilePair(const std::string& vert_file, const std::string& frag_file, bool absolute) {
@@ -200,7 +243,7 @@ bool ShaderProgram::tryLink() {
 bool ShaderProgram::link() {
 
     if (self->shaders.empty()) {
-        RAISE_ERR(*this, LinkageFailed, "no shader objects to link");
+        RAISE_ERR(*this, ShaderProgramError::LinkageFailed, "no shader objects to link");
         return false;
     }
         
@@ -211,9 +254,9 @@ bool ShaderProgram::link() {
         return true;
 
     std::vector<GLuint> added;
-    for (ShaderObjectRoots::const_iterator it = self->shaders.begin();
+    for (ShaderObjects::const_iterator it = self->shaders.begin();
          it != self->shaders.end(); ++it) {
-        GLuint shader = it->second->root->handle;
+        GLuint shader = it->second->handle;
         GL_CHECK(glAttachShader(self->program, shader));
         added.push_back(shader);        
     }
@@ -230,7 +273,7 @@ bool ShaderProgram::link() {
     LOG_END(*this);
 
     if (!ok) {
-        pushError(LinkageFailed);
+        pushError(ShaderProgramError::LinkageFailed);
 
         for (index_t i = 0; i < added.size(); ++i)
             GL_CHECK(glDetachShader(self->program, added[i]));
@@ -274,13 +317,13 @@ bool ShaderProgram::bindAttribute(const std::string& s, GLuint position) {
 void ShaderProgram::use() {
 
     if (self->program == 0 || !self->linked) {
-        RAISE_ERR(*this, APIError, "program not linked");
+        RAISE_ERR(*this, ShaderProgramError::APIError, "program not linked");
         return;
     }
 
     if (wasError()) {
         LOG_BEGIN(*this, err::Info);
-        LOG_PUT_ERR(*this, self->lastError, "using program despite error");
+        LOG_PUT_ERR(*this, getError(), "using program despite error");
         LOG_END(*this);
     }
     
@@ -291,17 +334,17 @@ bool ShaderProgram::replaceWith(ShaderProgram& new_prog) {
     if (&new_prog != this) {
         ASSERT(&new_prog.self->sm == &self->sm);
 
-        if (new_prog.self->program != 0 && new_prog.self->lastError == NoError) {
+        if (new_prog.self->program != 0 && new_prog.getError() == ShaderProgramError::NoError) {
             reset();
             self->program = new_prog.self->program;
-            self->lastError = NoError;
+            this->lastError = new_prog.lastError;
             self->shaders = new_prog.self->shaders;
             new_prog.self->program = 0;
             new_prog.reset();
             return true;
         } else {
             LOG_BEGIN(*this, err::Info);
-            LOG_PUT_ERR(*this, new_prog.self->lastError, "replaceWith failed");
+            LOG_PUT_ERR(*this, new_prog.getError(), "replaceWith failed");
             LOG_END(*this);
             return false;
         }
@@ -314,32 +357,15 @@ GLint ShaderProgram::uniformLocation(const std::string& name) {
     GLint loc;
     GL_CHECK(loc = glGetUniformLocation(self->program, name.c_str()));
     if (loc == -1)
-        pushError(UniformNotKnown);
+        pushError(ShaderProgramError::UniformNotKnown);
     return loc;
-}
-
-std::string ShaderProgram::stringError(Error e) {
-
-    const char *err;
-    switch (e) {
-    case NoError: err = "no error"; break;
-    case CompilationFailed: err = "compilation failed"; break;
-    case LinkageFailed: err = "linkage failed"; break;
-    case AttributeNotBound: err = "couldnt bind attribute"; break;
-    case UniformNotKnown: err = "uniform not known"; break;
-    case ValidationFailed: err = "state validation failed"; break;
-    case APIError: err = "error in api usage"; break;
-    default: err = "unknown error"; break;
-    }
-
-    return err;
 }
 
 bool ShaderProgram::validate(bool printLogOnError) {
     bool ok = false;
     
     if (self->program == 0) {
-        pushError(APIError);
+        pushError(ShaderProgramError::APIError);
         goto ret;
     }
 
@@ -348,7 +374,7 @@ bool ShaderProgram::validate(bool printLogOnError) {
     GL_CHECK(glGetProgramiv(self->program, GL_VALIDATE_STATUS, &valid));
     
     if (valid == GL_FALSE)
-        pushError(ValidationFailed);
+        pushError(ShaderProgramError::ValidationFailed);
     else
         ok = true;
 

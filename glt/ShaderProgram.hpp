@@ -8,21 +8,31 @@
 #include "data/Ref.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/VertexDescription.hpp"
+#include "error/WithError.hpp"
 
 namespace glt {
 
-struct ShaderProgram {
+namespace ShaderProgramError {
 
-    enum Error {
-        NoError,
-        CompilationFailed,
-        LinkageFailed,
-        AttributeNotBound,
-        UniformNotKnown,
-        ValidationFailed,
-        APIError,
-        OpenGLError
-    };
+enum Type {
+    NoError,
+    FileNotInPath,
+    CompilationFailed,
+    LinkageFailed,
+    AttributeNotBound,
+    UniformNotKnown,
+    ValidationFailed,
+    APIError,
+    OpenGLError
+};
+
+std::string stringError(Type);
+
+}
+
+struct ShaderProgram : public err::WithError<ShaderProgramError::Type,
+                                             ShaderProgramError::NoError,
+                                             ShaderProgramError::stringError> {
 
     ShaderProgram(ShaderManager& sm);
 
@@ -56,14 +66,6 @@ struct ShaderProgram {
     void reset();
 
     bool reload();
-
-    Error clearError();
-
-    bool wasError();
-
-    void pushError(Error);
-
-    static std::string stringError(Error);
 
     bool replaceWith(ShaderProgram& new_program);
 

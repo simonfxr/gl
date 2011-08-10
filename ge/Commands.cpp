@@ -6,6 +6,7 @@
 
 #include "glt/utils.hpp"
 #include "glt/ShaderProgram.hpp"
+#include "glt/ShaderCompiler.hpp"
 
 namespace ge {
 
@@ -31,6 +32,24 @@ void runReloadShaders(const Event<CommandEvent>& e, const Array<CommandArg>& arg
     } else {
         ERR("reloadShaders: selectively shader reloading not yet implemented");
     }
+}
+
+void runListCachedShaders(const Event<CommandEvent>& e) {
+    Ref<glt::ShaderCache> cache = e.info.engine.shaderManager().globalShaderCache();
+    
+    if (!cache) {
+        std::cerr << "no shader cache available" << std::endl;
+        return;
+    }
+
+    uint32 n = 0;    
+    for (glt::ShaderCacheEntries::iterator it = cache->entries.begin();
+         it != cache->entries.end(); ++it) {
+        std::cerr << "cached shader: " << it->first << std::endl;
+        ++n;
+    }
+
+    std::cerr << n << " shaders cached" << std::endl;
 }
 
 void runListBindings(const Event<CommandEvent>&) {
@@ -173,6 +192,8 @@ Commands::Commands() :
 
     reloadShaders(makeStringListCommand(runReloadShaders,
                                         "reloadShaders", "reload ShaderPrograms")),
+
+    listCachedShaders(makeCommand(runListCachedShaders, "listCachedShaders", "list all shader cache entries")),
 
     listBindings(makeCommand(runListBindings, "listBindings", "list all key bindings")),
 

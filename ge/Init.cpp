@@ -88,6 +88,7 @@ static void runInitCommands(const Event<InitEvent>& e) {
 
     r.define(cs.printContextInfo);
     r.define(cs.reloadShaders);
+    r.define(cs.listCachedShaders);
     r.define(cs.listBindings);
     r.define(cs.bindKey);
     r.define(cs.help);

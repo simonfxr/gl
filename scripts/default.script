@@ -4,5 +4,5 @@ initGLDebug
 
 addShaderPath "shaders"
 
-bindKey [+C] &reloadShaders
+bindKey [+C] { listCachedShaders; reloadShaders }
 bindKey [+B] &togglePause
