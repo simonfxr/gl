@@ -139,8 +139,8 @@ int main(int argc, char *argv[]) {
     anim.link(engine);
     ge::EngineOptions opts;
 
-    opts.window.settings.MajorVersion = 4;
-    opts.window.settings.MinorVersion = 1;
+    // opts.window.settings.MajorVersion = 4;
+    // opts.window.settings.MinorVersion = 1;
     
     opts.parse(&argc, &argv);
     opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));
