@@ -79,6 +79,8 @@ struct RenderManager {
 
     void setActiveRenderTarget(RenderTarget *rt);
 
+    void setDefaultRenderTarget();
+
     RenderTarget *activeRenderTarget() const;
 
     void beginScene();

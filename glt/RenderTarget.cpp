@@ -8,14 +8,14 @@ namespace glt {
 struct RenderTarget::Data {
     uint32 width;
     uint32 height;
-    uint32 buffers;
+    RenderTargetBuffers buffers;
     Viewport viewport;
 
     DEBUG_DECL(bool active;)
 
     bool viewport_changed;
 
-    Data(uint32 w, uint32 h, uint32 bs, const Viewport& vp) :
+    Data(uint32 w, uint32 h, RenderTargetBuffers bs, const Viewport& vp) :
         width(w), height(h), buffers(bs),
         viewport(vp),
         viewport_changed(false)

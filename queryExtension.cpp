@@ -15,7 +15,7 @@ struct State {
     char **argv;
 };
 
-void animate(State *state, const ge::Event<ge::EngineEvent>& ev) {
+void animate(State *state, const ge::Event<ge::AnimationEvent>& ev) {
     ge::Engine& e = ev.info.engine;
 
     e.commandProcessor().exec("printContextInfo", ge::NULL_ARGS);

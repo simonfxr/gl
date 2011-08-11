@@ -103,7 +103,7 @@ static void mouseLook(Camera *cam, const Event<MouseMoved>& ev) {
     cam->frame.rotateWorld(rot[0], vec3(0.f, 1.f, 0.f));
 }
 
-static void execStep(Camera *cam, const Event<EngineEvent>&) {
+static void execStep(Camera *cam, const Event<AnimationEvent>&) {
     float lenSq = lengthSq(cam->step_accum);
     
     if (lenSq >= 1e-4f) {

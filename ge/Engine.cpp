@@ -156,7 +156,7 @@ bool Engine::evalCommand(const std::string& cmd) {
 int32 Engine::run(const EngineOptions& opts) {
     if (self->initialized) {
         ERR("Engine already initialized: called run multiply times?");
-        return -1;
+        return 1;
     }
     
     if (opts.mode == EngineOptions::Help) {
@@ -164,8 +164,16 @@ int32 Engine::run(const EngineOptions& opts) {
         return 0;
     }
 
-    if (!opts.workingDirectory.empty())
-        sys::fs::cwd(opts.workingDirectory);
+    std::string wd = opts.workingDirectory;
+    if (opts.workingDirectory.empty() && opts.defaultCD)
+        wd = sys::fs::dirname(opts.binary);
+
+    if (!wd.empty()) {
+        if (!sys::fs::cwd(wd)) {
+            ERR("couldnt change into directory: " + wd);
+            return 1;
+        }
+    }
 
     for (uint32 i = 0; i < opts.scriptDirs.size(); ++i) {
         if (!commandProcessor().addScriptDirectory(opts.scriptDirs[i])) {
@@ -191,8 +199,10 @@ int32 Engine::run(const EngineOptions& opts) {
     if (!runInit(opts.inits.preInit1, initEv))
         return 1;
 
-    if (!opts.initScript.empty()) {
-        loadScript(opts.initScript);
+    if (!opts.inhibitInitScript) {
+        if (!loadScript(sys::fs::basename(opts.binary) + ".script")) {
+            return 1;
+        }
     }
 
     for (uint32 i = 0; i < opts.commands.size(); ++i) {
@@ -232,7 +242,7 @@ int32 Engine::run(const EngineOptions& opts) {
 }
 
 void Engine::Data::tick() {
-    events.animate.raise(makeEvent(EngineEvent(theEngine)));
+    events.animate.raise(makeEvent(AnimationEvent(theEngine)));
 }
 
 void Engine::Data::render(float interpolation) {
@@ -244,7 +254,7 @@ void Engine::Data::render(float interpolation) {
 }
 
 void Engine::Data::handleInputEvents() {
-    events.handleInput.raise(makeEvent(EngineEvent(theEngine)));
+    events.handleInput.raise(makeEvent(InputEvent(theEngine)));
 }
 
 float Engine::Data::now() {
@@ -343,7 +353,7 @@ void mouseButtonChanged(KeyHandler *handler, const Event<MouseButton>& ev) {
         handler->keyReleased(code);
 }
 
-void handleKeyBindings(KeyHandler *handler, const Event<EngineEvent>&) {
+void handleKeyBindings(KeyHandler *handler, const Event<InputEvent>&) {
     handler->handleCommands();
 }
 

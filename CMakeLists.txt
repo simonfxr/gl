@@ -40,6 +40,9 @@ else()
   set(BUILD_OPT "yes")
 endif()
 
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/build)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib)
+
 project(sim-sfml)
 
 #add_definitions("-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
@@ -73,6 +76,10 @@ if(COMP_ICC)
   add_definitions("-Wcheck")
   add_definitions("-openmp")
   link_libraries("-openmp")
+
+  if(BUILD_DEBUG)
+    add_definitions("-diag-enable sc3 -diag-enable sc-parallel3 -diag-enable sc-include")
+  endif()
 endif()
 
 if(COMP_GCC OR COMP_CLANG)
@@ -284,6 +291,14 @@ add_executable(math_test
   ${MATH_SRC})
 
 target_link_libraries(math_test sys err)
+
+add_executable(marching-cubes
+  defs.h
+  marching-cubes/marching-cubes.cpp
+  ${MATH_SRC}
+  ${DATA_SRC})
+
+target_link_libraries(marching-cubes sys err glt ge)
 
 # add_executable(ref_test
 #   ref_test.cpp

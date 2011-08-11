@@ -177,6 +177,11 @@ RenderTarget *RenderManager::defaultRenderTarget() const {
     return self->def_rt;
 }
 
+void RenderManager::setDefaultRenderTarget() {
+    ASSERT(self->def_rt);
+    setActiveRenderTarget(self->def_rt);
+}
+
 void RenderManager::setActiveRenderTarget(RenderTarget* rt) {
     if (rt != self->current_rt) {
         

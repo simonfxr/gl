@@ -59,7 +59,7 @@ struct GameWindow::Data {
     void handleInputEvents();
     void setMouse(int x, int y);
 
-    static void runHandleInputEvents(Data *, const Event<EngineEvent>&);
+    static void runHandleInputEvents(Data *, const Event<InputEvent>&);
 };
 
 void GameWindow::Data::init() {
@@ -290,7 +290,7 @@ WindowEvents& GameWindow::events() {
     return self->events;
 }
 
-void GameWindow::Data::runHandleInputEvents(Data *win, const Event<EngineEvent>&) {
+void GameWindow::Data::runHandleInputEvents(Data *win, const Event<InputEvent>&) {
     win->handleInputEvents();
 }
 

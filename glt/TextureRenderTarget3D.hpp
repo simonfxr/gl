@@ -2,7 +2,9 @@
 #define GLT_TEXTURE_RENDER_TARGET_3D_HPP
 
 #include "defs.h"
+#include "opengl.h"
 #include "glt/TextureRenderTarget.hpp"
+#include "math/ivec3/type.hpp"
 
 namespace glt {
 
@@ -11,11 +13,20 @@ protected:
 
     uint32 _depth;
     uint32 _targetDepth;
-        
+    GLenum _color_format;
+
 public:
 
-    TextureRenderTarget3D(uint32 w, uint32 h, uint32 d, uint32 bs);
-    void resize(uint32 w, uint32 h, uint32 d);
+    struct Params : public TextureRenderTarget::Params {
+        GLenum color_format;
+        explicit Params(GLenum col_format = GL_RGB8, const TextureRenderTarget::Params& ps = TextureRenderTarget::Params()) :
+            TextureRenderTarget::Params(ps),
+            color_format(col_format)
+            {}
+    };
+
+    TextureRenderTarget3D(const math::ivec3_t&, const Params&);
+    void resize(const math::ivec3_t&);
 
     uint32 depth() { return _depth; }
     uint32 targetDepth() { return _targetDepth; }

@@ -69,6 +69,33 @@ void TextureHandle::type(TextureType ty, uint32 ss) {
     _samples = ss;
 }
 
+void TextureHandle::filterMode(TextureHandle::FilterMode mode, TextureHandle::Filter filter) {
+    bind();
+
+    GLenum gltarget = getGLType(_type, _samples);
+    
+    GLenum glmode;
+    switch (mode) {
+    case FilterNearest: glmode = GL_NEAREST; break;
+    case FilterLinear: glmode = GL_LINEAR; break;
+    default: ASSERT_FAIL_MSG("invalid FilterMode");
+    }
+
+    bool min = false;
+    bool mag = false;
+    switch (filter) {
+    case FilterMin: min = true; break;
+    case FilterMag: mag = true; break;
+    case FilterMinMag: min = mag = true; break;
+    default: ASSERT_FAIL_MSG("invalid Filter");
+    }
+
+    if (min)
+        GL_CHECK(glTexParameteri(gltarget, GL_TEXTURE_MIN_FILTER, glmode));
+    if (mag)
+        GL_CHECK(glTexParameteri(gltarget, GL_TEXTURE_MAG_FILTER, glmode));
+}
+
 bool operator ==(const TextureHandle& t1, const TextureHandle& t2) {
     return t1.handle() == t2.handle();
 }

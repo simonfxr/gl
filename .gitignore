@@ -8,19 +8,11 @@
 /Makefile
 /*.mdl
 /*.cam
-/*.so
 /lib*.a
 /config.h
 /log.txt
 /ext/
+/lib/
+/build/
 
 voxel_create_world.cl
-
-create_x11_window.cpp
-multisample
-multisample.cpp
-tokenizer
-simple
-math_test
-queryExtension
-ref_test

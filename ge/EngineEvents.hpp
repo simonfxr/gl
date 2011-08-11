@@ -28,10 +28,20 @@ struct ExitEvent : public EngineEvent {
     ExitEvent(Engine& e, int32 ec) : EngineEvent(e), exitCode(ec) {}
 };
 
+struct AnimationEvent : public EngineEvent {
+    AnimationEvent(Engine& engine) :
+        EngineEvent(engine) {}
+};
+
+struct InputEvent : public EngineEvent {
+    InputEvent(Engine& engine) :
+        EngineEvent(engine) {}
+};
+
 struct EngineEvents {
-    EventSource<EngineEvent> handleInput;
+    EventSource<InputEvent> handleInput;
     
-    EventSource<EngineEvent> animate;
+    EventSource<AnimationEvent> animate;
     
     EventSource<RenderEvent> beforeRender;
     EventSource<RenderEvent> render;

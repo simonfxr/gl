@@ -17,13 +17,13 @@ void error(const Location& loc, std::ostream& out, LogLevel lvl, const char *mes
         abort();
 }
 
-void fatalError(const Location& loc, std::ostream& out, const std::string& mesg) {
-    fatalError(loc, out, mesg.c_str());
+void fatalError(const Location& loc, std::ostream& out, LogLevel lvl, const std::string& mesg) {
+    fatalError(loc, out, lvl, mesg.c_str());
     abort(); // keep the control flow analyser happy
 }
 
-void fatalError(const Location& loc, std::ostream& out, const char *mesg) {
-    error(loc, out, FatalError, mesg);
+void fatalError(const Location& loc, std::ostream& out, LogLevel lvl, const char *mesg) {
+    error(loc, out, lvl, mesg);
     abort(); // keep the control flow analyser happy
 }
 
@@ -43,6 +43,7 @@ void printError(std::ostream& out, const char *type, const Location& loc, LogLev
         case Error: prefix = "ERROR"; break;
         case ErrorOnce: prefix = "ERROR (only reported once)"; break;
         case FatalError: prefix = "FATAL ERROR"; break;
+        case Info: prefix = "INFO"; break;
         default: prefix = "UNKNOWN"; break;
         }
     }

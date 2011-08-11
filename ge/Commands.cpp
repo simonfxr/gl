@@ -143,7 +143,8 @@ void runLoad(const Event<CommandEvent>& ev, const Array<CommandArg>& args) {
 
 void runAddShaderPath(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     for (uint32 i = 0; i < args.size(); ++i)
-        e.info.engine.shaderManager().addShaderDirectory(*args[i].string);
+        if (!e.info.engine.shaderManager().addShaderDirectory(*args[i].string, true))
+            ERR("not a directory: " + *args[i].string);
 }
 
 void runTogglePause(const Event<CommandEvent>& e) {

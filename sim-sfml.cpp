@@ -151,7 +151,7 @@ struct Game {
     void link(ge::Engine& e);
 
     void constrainCameraMovement(const ge::Event<ge::CameraMoved>&);
-    void animate(const ge::Event<ge::EngineEvent>&);
+    void animate(const ge::Event<ge::AnimationEvent>&);
     void renderScene(const ge::Event<ge::RenderEvent>&);
     void renderWorld(float dt);
     
@@ -262,7 +262,7 @@ void Game::constrainCameraMovement(const ge::Event<ge::CameraMoved>& ev) {
         ev.info.allowed_step = vec3(0.f);
 }
 
-void Game::animate(const ge::Event<ge::EngineEvent>& ev) {
+void Game::animate(const ge::Event<ge::AnimationEvent>& ev) {
     float dt = game_speed * ev.info.engine.gameLoop().frameDuration();
     world.simulate(dt);
 }
@@ -387,7 +387,9 @@ void Game::updateIndirectRendering(bool indirect) {
         if (textureRenderTarget == 0) {
             uint32 w = engine->window().window().GetWidth();
             uint32 h = engine->window().window().GetHeight();
-            textureRenderTarget = new glt::TextureRenderTarget(w, h, glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER);
+            glt::TextureRenderTarget::Params ps;
+            ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
+            textureRenderTarget = new glt::TextureRenderTarget(w, h, ps);
         }
         
         rt = textureRenderTarget;

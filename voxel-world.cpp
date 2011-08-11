@@ -31,7 +31,7 @@
 
 #include "glt/CubeMesh.hpp"
 
-#include "sys/clock.hpp"
+#include "sys/measure.hpp"
 
 // #define HS_WORLD_GEN
 
@@ -51,12 +51,6 @@ static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const bool OCCLUSION = true;
 static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
 
-#define time(op) do {                                                   \
-        float _T0_ = ::sys::queryTimer();                               \
-        (op);                                                           \
-        float _diff_ = ::sys::queryTimer() - _T0_;                      \
-        ::std::cerr << #op << " took " << (_diff_ * 1000) << " ms." << ::std::endl; \
-    } while (0)
 
 struct MaterialProperties {
     float ambientContribution;

@@ -7,12 +7,13 @@
 
 namespace glt {
 
-TextureRenderTarget::TextureRenderTarget(uint32 w, uint32 h, uint32 bs, uint32 ss) :
-    RenderTarget(0, 0, bs),
-    texture(Texture2D, ss),
+TextureRenderTarget::TextureRenderTarget(uint32 w, uint32 h, const TextureRenderTarget::Params& ps) :
+    RenderTarget(0, 0, ps.buffers),
+    texture(Texture2D, ps.samples),
     frame_buffer(0),
     depth_buffer(0),
-    samples(ss)
+    samples(ps.samples),
+    default_filter_mode(ps.default_filter_mode)
 {
     resize(w, h);
 }
@@ -106,8 +107,8 @@ void TextureRenderTarget::createTexture(bool delete_old) {
 
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+
+    texture.filterMode(default_filter_mode);
 
     if (ttype == GL_TEXTURE_2D) {
         GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width(), height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, 0));

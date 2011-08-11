@@ -16,7 +16,7 @@ enum OptionCase {
     NoInitScript,
     ScriptDir,
     ShaderDir,
-    NoCD,
+    CD,
     Eval,
     Script,
     CWD,
@@ -39,7 +39,7 @@ const Option OPTIONS[] = {
     { "--no-init-script", NULL, NoInitScript, "inhibit loading of default script file (<program-name>.script)" },
     { "--script-dir", "DIR", ScriptDir, "add DIR to the list of searched script directories" },
     { "--shader-dir", "DIR", ShaderDir, "add DIR to the list of searched shader directories" },
-    { "--no-cd", NULL, NoCD, "dont change into the base directory of the program binary" },
+    { "--cd", "BOOL", CD, "dchange into the base directory of the program binary: yes|no" },
     { "--eval", "COMMAND", Eval, "execute COMMAND as a script command" },
     { "--script", "FILE", Script, "load FILE and execute it as a script" },
     { "--cwd", "DIR", CWD, "change into directory DIR" },
@@ -52,19 +52,12 @@ const Option OPTIONS[] = {
 
 struct State {
     EngineOptions& options;
-    const char *program;
-    bool no_cd;
-    bool no_init;
     
     State(EngineOptions& opts) :
-        options(opts),
-        program(0),
-        no_cd(false),
-        no_init(false)
+        options(opts)
         {}
 
     bool option(OptionCase opt, const char *arg);
-    void end();
 };
 
 #define CMDWARN(msg) WARN(std::string("parsing options: ") + (msg))
@@ -79,7 +72,7 @@ bool State::option(OptionCase opt, const char *arg) {
         options.mode = EngineOptions::Help;
         return true;
     case NoInitScript:
-        no_init = true;
+        options.inhibitInitScript = true;
         return true;
     case ScriptDir:
         options.scriptDirs.push_back(arg);
@@ -87,8 +80,15 @@ bool State::option(OptionCase opt, const char *arg) {
     case ShaderDir:
         options.shaderDirs.push_back(arg);
         return true;
-    case NoCD:
-        no_cd = true;
+    case CD:
+        if (str_eq(arg, "yes")) {
+            options.defaultCD = true;
+        } else if (str_eq(arg, "no")) {
+            options.defaultCD = false;
+        } else {
+            CMDWARN("--cd: not a boolean option");
+            return false;
+        }
         return true;
     case Eval:
         options.commands.push_back(std::make_pair(EngineOptions::Command, std::string(arg)));
@@ -154,17 +154,23 @@ bool State::option(OptionCase opt, const char *arg) {
     }
 }
 
-void State::end() {
-    if (!no_cd && options.workingDirectory.empty() && program != 0) {
-        std::string bin(program);
-        options.workingDirectory = sys::fs::dirname(bin);
-        std::string exec = sys::fs::basename(bin);
-        if (!exec.empty() && !no_init)
-            options.initScript = exec + ".script";
-    }
-}
-
 } // namespace anon
+
+EngineOptions::EngineOptions() :
+    commands(),
+    workingDirectory(),
+    inhibitInitScript(false),
+    defaultCD(false),
+    shaderDirs(),
+    scriptDirs(),
+    window(),
+    mode(Animate)
+{
+#ifdef GLDEBUG
+    window.settings.DebugContext = true;
+#endif
+    scriptDirs.push_back("scripts");
+}
 
 EngineOptions& EngineOptions::parse(int *argcp, char ***argvp) {
 
@@ -175,7 +181,7 @@ EngineOptions& EngineOptions::parse(int *argcp, char ***argvp) {
 
     State state(*this);
     if (argc > 0)
-        state.program = argv[0];
+        binary = sys::fs::absolutePath(argv[0]);
 
     bool done = false;
     int i;
@@ -221,8 +227,6 @@ EngineOptions& EngineOptions::parse(int *argcp, char ***argvp) {
 
         UNUSED(err);
     }
-
-    state.end();
 
     while (i < argc)
         argv[dest++] = argv[i++];

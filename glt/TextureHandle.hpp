@@ -20,6 +20,17 @@ private:
     
 public:
 
+    enum FilterMode {
+        FilterNearest,
+        FilterLinear
+    };
+
+    enum Filter {
+        FilterMin,
+        FilterMag,
+        FilterMinMag
+    };
+
     TextureHandle() : _samples(1), _handle(0), _type(Texture2D)  {}
     TextureHandle(TextureType type, uint32 samples = 1);
     
@@ -36,6 +47,8 @@ public:
     GLenum glType() const;
     
     void type(TextureType new_type, uint32 new_samples = 1);
+
+    void filterMode(FilterMode mode, Filter filter = FilterMinMag);
     
 private:
     TextureHandle(const TextureHandle& _);

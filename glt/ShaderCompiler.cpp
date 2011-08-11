@@ -7,6 +7,7 @@
 #include "glt/GLSLPreprocessor.hpp"
 
 #include "sys/fs/fs.hpp"
+#include "sys/measure.hpp"
 
 template <>
 struct LogTraits<glt::CompileState> {
@@ -22,7 +23,8 @@ namespace glt {
 
 namespace ShaderCompilerError {
 
-std::string stringError(Type e) {
+std::string stringError(Type) {
+    // FIXME: implement
     return "{shader compiler error}";
 }
 
@@ -161,12 +163,14 @@ GLuint compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::
     LOG_PUT(cstate, std::string("compiling ") + (name.empty() ? " embedded code " : name) + " ... ");
         
     GL_CHECK(glShaderSource(shader, nsegments, segments, segLengths));
-    GL_CHECK(glCompileShader(shader));
+    float wct;
+    measure_time(wct, glCompileShader(shader));
+    GL_CHECK_ERRORS();
 
     GLint success;
     GL_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
     bool ok = success == GL_TRUE;
-    LOG_PUT(cstate, (ok ? "success" : "failed")) << std::endl;
+    LOG_PUT(cstate, (ok ? "success" : "failed")) << " (" << (wct * 1000) << " ms)" << std::endl;
     LOG_END(cstate);
 
     if ((!ok && LOG_LEVEL(cstate, err::Error)) || LOG_LEVEL(cstate, err::Info)) {
@@ -436,12 +440,10 @@ ShaderCache::~ShaderCache() {
 bool ShaderCache::lookup(Ref<ShaderObject> *ent, const ShaderSourceKey& key) {
     ShaderCacheEntries::iterator it = entries.find(key);
     if (it != entries.end()) {
-        std::cerr << "CACHE HIT: " << key << std::endl;
         bool alive = it->second.unweak(ent);
         ASSERT(alive);
         return true;
     }
-    std::cerr << "CACHE MISS: " << key << std::endl;
     return false;
 }
 
@@ -450,13 +452,7 @@ bool ShaderCache::put(Ref<ShaderCache>& cache, Ref<ShaderObject>& ent) {
     if (ent->cache.same(cache))
         return false;
     ent->linkCache(cache);
-    bool new_ent = cache->entries.insert(std::make_pair(ent->source->key, ent.weak())).second;
-    if (new_ent) {
-        std::cerr << "CACHE INSERT: " << ent->source->key << std::endl;
-    } else {
-        std::cerr << "CACHE UPDATE: " << ent->source->key << std::endl;
-    }
-    return new_ent;
+    return cache->entries.insert(std::make_pair(ent->source->key, ent.weak())).second;
 }
 
 bool ShaderCache::remove(Ref<ShaderCache>& cache, ShaderObject *ent) {

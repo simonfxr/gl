@@ -5,6 +5,7 @@
 #include "error/error.hpp"
 
 #include "math/vec3.hpp"
+#include "math/vec2.hpp"
 #include "math/ivec3.hpp"
 
 #include "glt/CubeMesh.hpp"
@@ -16,7 +17,16 @@ namespace primitives {
 using namespace math;
 
 template <typename V>
-void cubeoid(CubeMesh<V>& model, const math::point3_t& origin, const math::vec3_t dim, bool evert = false) {
+void rectangle(CubeMesh<V>& model, const math::point3_t& origin, const math::vec2_t& dim) {
+    V vertex;
+    vertex.position = origin; model.add(vertex);
+    vertex.position = origin + vec3(dim[0], 0, 0); model.add(vertex);
+    vertex.position = origin + vec3(dim[0], dim[1], 0); model.add(vertex);
+    vertex.position = origin + vec3(0, dim[1], 0); model.add(vertex);
+}
+
+template <typename V>
+void cubeoid(CubeMesh<V>& model, const math::point3_t& origin, const math::vec3_t& dim, bool evert = false) {
 
     // struct Face {
     //     vec3_t normal;
@@ -59,10 +69,42 @@ void cubeoid(CubeMesh<V>& model, const math::point3_t& origin, const math::vec3_
 }
 
 template <typename Vertex>
+void unitCubeWONormals(CubeMesh<Vertex>& cube) {
+    Vertex v;
+
+    v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
+    v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
+    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
+    v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
+
+    v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
+    v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
+    v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
+    v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
+
+    v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
+    v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
+    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
+    v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
+
+    v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
+    v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
+    v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
+    v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
+
+    v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
+    v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
+    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
+    v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
+
+    v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
+    v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
+    v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
+    v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
+}
+
+template <typename Vertex>
 void unitCube(CubeMesh<Vertex>& cube) {
-
-    using namespace math;
-
     Vertex v;
 
     v.normal = vec4(0.0f, 0.0f, 1.0f, 0.f);					

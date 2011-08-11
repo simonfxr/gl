@@ -10,12 +10,14 @@
 #include <ostream>
 
 #ifdef GLDEBUG
-#define GL_CHECK(op) do {                                \
-        (op);                                            \
-        glt::checkForGLError(_CURRENT_LOCATION_OP(#op)); \
+#define GL_CHECK(op) do {                                       \
+        (op);                                                   \
+        ::glt::checkForGLError(_CURRENT_LOCATION_OP(AS_STRING(op)));    \
     } while (0)
+#define GL_CHECK_ERRORS() ::glt::checkForGLError(_CURRENT_LOCATION)
 #else
 #define GL_CHECK(op) UNUSED(op)
+#define GL_CHECK_ERRORS() UNUSED(0)
 #endif
 
 namespace glt {

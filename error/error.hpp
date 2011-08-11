@@ -70,9 +70,9 @@ void error(const Location& loc, std::ostream&, LogLevel lvl, const std::string& 
 
 void error(const Location& loc, std::ostream&, LogLevel lvl, const char *mesg);
 
-void fatalError(const Location& loc, std::ostream&, const std::string& mesg) ATTRS(ATTR_NORETURN);
+void fatalError(const Location& loc, std::ostream&, LogLevel lvl, const std::string& mesg) ATTRS(ATTR_NORETURN);
 
-void fatalError(const Location& loc, std::ostream&, const char *mesg) ATTRS(ATTR_NORETURN);
+void fatalError(const Location& loc, std::ostream&, LogLevel lvl, const char *mesg) ATTRS(ATTR_NORETURN);
 
 void printError(std::ostream& out, const char *type, const Location& loc, LogLevel lvl, const std::string& mesg);
 
@@ -147,13 +147,17 @@ std::ostream& logPutError(const T& v, E err, const std::string& msg) {
 #define WARN(msg) _ERROR(::err::Warn, msg)
 #define INFO(msg) _ERROR(::err::Info, msg)
 
-#define ASSERT_FAIL() _ERROR(::err::Assertion, "unreachable")
-
 #ifdef ATTR_NORETURN
-#define FATAL_ERR(msg) ::err::fatalError(_CURRENT_LOCATION, ERROR_DEFAULT_STREAM, msg)
+#define _FATAL_ERR(msg, lvl) ::err::fatalError(_CURRENT_LOCATION, ERROR_DEFAULT_STREAM, lvl, msg)
 #else
-#define FATAL_ERR(msg) (::err::fatalError(_CURRENT_LOCATION, ERROR_DEFAULT_STREAM, msg), ::exit(1) /* exit never reached */)
+#define _FATAL_ERR(msg, lvl) (::err::fatalError(_CURRENT_LOCATION, ERROR_DEFAULT_STREAM, lvl, msg), ::exit(1) /* exit never reached */)
 #endif
+
+#define FATAL_ERR(msg) _FATAL_ERR(msg, ::err::FatalError)
+
+#define ASSERT_FAIL_MSG(msg) _FATAL_ERR(msg, ::err::Assertion)
+
+#define ASSERT_FAIL() ASSERT_FAIL_MSG("unreachable")
 
 #define ERR_ONCE(msg) do {                                      \
         static bool _reported = false;                          \

@@ -25,15 +25,17 @@ struct Viewport {
     bool operator !=(const Viewport& vp) const;
 };
 
-static const uint32 RT_COLOR_BUFFER = 1u;
-static const uint32 RT_DEPTH_BUFFER = 2u;
-static const uint32 RT_STENCIL_BUFFER = 4u;
+typedef uint32 RenderTargetBuffers;
+
+static const RenderTargetBuffers RT_COLOR_BUFFER = 1u;
+static const RenderTargetBuffers RT_DEPTH_BUFFER = 2u;
+static const RenderTargetBuffers RT_STENCIL_BUFFER = 4u;
 
 static const uint32 RT_ALL_BUFFERS = RT_COLOR_BUFFER | RT_DEPTH_BUFFER | RT_STENCIL_BUFFER;
 
 struct RenderTarget {
 
-    RenderTarget(uint32 width, uint32 height, uint32 buffers = RT_COLOR_BUFFER, const Viewport& vp = Viewport());
+    RenderTarget(uint32 width, uint32 height, RenderTargetBuffers buffers = RT_COLOR_BUFFER, const Viewport& vp = Viewport());
     virtual ~RenderTarget();
 
     uint32 width() const;
@@ -44,7 +46,7 @@ struct RenderTarget {
     void activate();
     void deactivate();
     void beginScene();
-    void clear(uint32 buffers = RT_ALL_BUFFERS);
+    void clear(RenderTargetBuffers buffers = RT_ALL_BUFFERS);
     void draw();
     void viewport(const Viewport& vp);
 
@@ -54,7 +56,7 @@ protected:
 
     virtual void doActivate() = 0;
     virtual void doDeactivate();
-    virtual void doClear(uint32 buffers);
+    virtual void doClear(RenderTargetBuffers buffers);
     virtual void doDraw();
     virtual void doViewport(const Viewport& vp);
 

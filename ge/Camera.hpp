@@ -36,7 +36,7 @@ struct Camera {
 
     Commands commands;
     
-    Camera(float step_len = 0.1f, vec2_t mouse_sens = vec2(0.0005f, 0.0005f));
+    Camera(float step_len = 0.1f, math::vec2_t mouse_sens = vec2(0.0005f, 0.0005f));
     
     void registerWith(Engine& e);
     void registerCommands(CommandProcessor& proc);

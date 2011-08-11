@@ -15,6 +15,7 @@
 
 #include "error/error.hpp"
 
+#include "sys/measure.hpp"
 #include "sys/fs/fs.hpp"
 
 #define RAISE_ERR(val, ec, msg) LOG_RAISE(val, ec, ::err::Error, msg)
@@ -117,7 +118,19 @@ bool ShaderProgram::reload() {
     if (cstate.wasError())
         return false;
 
-    if (newshaders == self->shaders)
+    bool unchanged = newshaders.size() == self->shaders.size();
+    if (unchanged) {
+        ShaderObjects::const_iterator it1 = self->shaders.begin(),
+                                      it2 = newshaders.begin();
+        for (; it1 != self->shaders.end() && it2 != newshaders.end(); ++it1, ++it2) {
+            if (!it1->second.same(it2->second)) {
+                unchanged = false;
+                break;
+            }
+        }
+    }
+    
+    if (unchanged)
         return true;
 
     ShaderProgram new_prog(*this);
@@ -262,14 +275,16 @@ bool ShaderProgram::link() {
     }
 
     LOG_BEGIN(*this, err::Info);
-    LOG_PUT(*this, "linking... ");
+    LOG_PUT(*this, "linking ... ");
 
-    GL_CHECK(glLinkProgram(self->program));
+    float wct;
+    measure_time(wct, glLinkProgram(self->program));
+    GL_CHECK_ERRORS();
 
     GLint success;
     GL_CHECK(glGetProgramiv(self->program, GL_LINK_STATUS, &success));
     bool ok = success == GL_TRUE;
-    LOG_PUT(*this, ok ? "success" : "failed");
+    LOG_PUT(*this, ok ? "success" : "failed") << " (" << (wct * 1000) << " ms)" << std::endl;
     LOG_END(*this);
 
     if (!ok) {
