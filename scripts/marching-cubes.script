@@ -6,6 +6,8 @@ bindShader "perlin-noise" "perlin-noise.vert" "perlin-noise.frag" 0 "position"
 
 bindShader "render-noise" "render-noise.vert" "render-noise.frag" 0 "position"
 
+bindShader "marching-cubes" "marching-cubes.vert" "marching-cubes.geom" "marching-cubes.frag" 0 "position"
+
 bindKey [W] { addRenderDepth +0.0125 }
 bindKey [S] { addRenderDepth -0.0125 }
 
