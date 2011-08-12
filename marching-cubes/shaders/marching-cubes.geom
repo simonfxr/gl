@@ -6,16 +6,16 @@ uniform vec3 edgeDim;
 uniform float isoLevel;
 uniform mat4 vpMatrix;
 
-int caseToNumPolys(int case) {
-    return texture(caseToNumPolysData, case).x;
+int caseToNumPolys(int cas) {
+    return texture(caseToNumPolysData, cas).x;
 }
 
-ivec3 triangleTable(int case, int num) {
-    return triangleTableData(case + 5 * num).xyz
+ivec3 triangleTable(int cas, int num) {
+    return texture(triangleTableData, cas + 5 * num).xyz;
 }
 
 float sampleVolume(vec3 coord) {
-    return texture(worldVolume, coord);
+    return texture(worldVolume, coord).r;
 }
 
 const ivec2 edge_to_verts[12] = ivec2[12](
@@ -26,11 +26,11 @@ const ivec2 edge_to_verts[12] = ivec2[12](
 );
 
 ivec2 edgeToVertices(int e) {
-    return edge_to_verts(e);
+    return edge_to_verts[e];
 }
 
 layout(points) in;
-layout(triangles, max_vertices = 5) out;
+layout(triangle_strip, max_vertices = 5) out;
 
 #define TRI_POINT(e) mix(coords[e.x], coords[e.y], vec3(abs(vs[e.x] / (vs[e.y] - vs[e.x]))))
 
@@ -51,14 +51,14 @@ void main() {
     coords[7] = coord; vs[7] = sampleVolume(coord);
 
     int cas = 0;
-    cas += int(v0 < isoLevel) << 0;
-    cas += int(v1 < isoLevel) << 1;
-    cas += int(v2 < isoLevel) << 2;
-    cas += int(v3 < isoLevel) << 3;
-    cas += int(v4 < isoLevel) << 4;
-    cas += int(v5 < isoLevel) << 5;
-    cas += int(v6 < isoLevel) << 6;
-    cas += int(v7 < isoLevel) << 7;
+    cas += int(vs[0] < isoLevel) << 0;
+    cas += int(vs[1] < isoLevel) << 1;
+    cas += int(vs[2] < isoLevel) << 2;
+    cas += int(vs[3] < isoLevel) << 3;
+    cas += int(vs[4] < isoLevel) << 4;
+    cas += int(vs[5] < isoLevel) << 5;
+    cas += int(vs[6] < isoLevel) << 6;
+    cas += int(vs[7] < isoLevel) << 7;
 
     if (cas == 0 || cas == 255)
         return;
@@ -84,4 +84,3 @@ void main() {
         EmitPrimitive();
     }
 }
-
