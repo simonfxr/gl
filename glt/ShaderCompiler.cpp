@@ -146,13 +146,13 @@ GLuint compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::
     const char **segments = &proc.segments[0];
     const GLint *segLengths = reinterpret_cast<const GLint *>(&proc.segLengths[0]);
 
-    std::cerr << "BEGIN SHADER SOURCE" << std::endl;
+    // std::cerr << "BEGIN SHADER SOURCE" << std::endl;
 
-    for (uint32 i = 0; i < nsegments; ++i) {
-        std::cerr << std::string(segments[i], segLengths[i]);
-    }
+    // for (uint32 i = 0; i < nsegments; ++i) {
+    //     std::cerr << std::string(segments[i], segLengths[i]);
+    // }
 
-    std::cerr << "END SHADER SOURCE" << std::endl;
+    // std::cerr << "END SHADER SOURCE" << std::endl;
     
     GLuint shader;
     GL_CHECK(shader = glCreateShader(shader_type));

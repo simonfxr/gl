@@ -12,6 +12,8 @@
 
 #include "math/ivec3.hpp"
 
+#include "marching-cubes/tables.hpp"
+
 using namespace math;
 
 static const ivec3_t PERLIN_NOISE_SIZE = ivec3(64);
@@ -28,6 +30,8 @@ struct Anim {
     glt::CubeMesh<SimpleVertex> unitRect;
     glt::CubeMesh<SimpleVertex> unitCube;
     float renderDepth;
+    glt::TextureHandle caseToNumPolysData;
+    glt::TextureHandle triangleTableData;
     
     Anim() :
         engine(0),
@@ -41,7 +45,7 @@ struct Anim {
     void animate(const ge::Event<ge::AnimationEvent>&);
     void render(const ge::Event<ge::RenderEvent>&);
 
-    void renderVolume(glt::TextureHandle& vol);
+    void renderVolume(glt::TextureHandle& vol, const vec3_t& edge_dim, float isoLvl);
 
     void cmdAddRenderDepth(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&);
 };
@@ -96,6 +100,16 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     // glt::primitves::unitCubeWONormals(unitCube);
     // unitCube.send();
 
+    caseToNumPolysData.type(glt::Texture1D);
+    caseToNumPolysData.bind();
+    GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_R8UI, ARRAY_LENGTH(case_to_numpolys), 0, GL_RED, GL_UNSIGNED_BYTE, case_to_numpolys));
+    caseToNumPolysData.filterMode(glt::TextureHandle::FilterNearest);
+
+    triangleTableData.type(glt::Texture1D);
+    triangleTableData.bind();
+    GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB8I, ARRAY_LENGTH(tri_table), 0, GL_RGB, GL_BYTE, tri_table));
+    triangleTableData.filterMode(glt::TextureHandle::FilterNearest);    
+
     bool ok;
     time(ok = initPerlinNoise());
     if (!ok) return;
@@ -139,8 +153,8 @@ int main(int argc, char *argv[]) {
     anim.link(engine);
     ge::EngineOptions opts;
 
-    // opts.window.settings.MajorVersion = 4;
-    // opts.window.settings.MinorVersion = 1;
+    opts.window.settings.MajorVersion = 4;
+    opts.window.settings.MinorVersion = 1;
     
     opts.parse(&argc, &argv);
     opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));

@@ -68,19 +68,19 @@ void main() {
         ivec3 tri = triangleTable(cas, i);
         ivec2 edge;
         vec3 wc;
-        
-        edge = egdeToVertices(tri.x); wc = TRI_POINT(edge);
+
+        edge = edgeToVertices(tri.x); wc = TRI_POINT(edge);
         gl_Position = vpMatrix * vec4(wc, 1);
         EmitVertex();
 
-        edge = egdeToVertices(tri.y); wc = TRI_POINT(edge);
+        edge = edgeToVertices(tri.y); wc = TRI_POINT(edge);
         gl_Position = vpMatrix * vec4(wc, 1);
         EmitVertex();
 
-        edge = egdeToVertices(tri.z); wc = TRI_POINT(edge);
+        edge = edgeToVertices(tri.z); wc = TRI_POINT(edge);
         gl_Position = vpMatrix * vec4(wc, 1);
         EmitVertex();
 
-        EmitPrimitive();
+        EndPrimitive();
     }
 }
