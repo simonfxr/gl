@@ -15,10 +15,13 @@
 #include "math/io.hpp"
 
 #include "marching-cubes/tables.hpp"
+#include "marching-cubes/tables2.hpp"
 
 using namespace math;
 
 static const ivec3_t PERLIN_NOISE_SIZE = ivec3(64);
+
+static const ivec3_t SAMPLER_SIZE = ivec3(53);
 
 struct SimpleVertex {
     vec3_t position;
@@ -26,12 +29,17 @@ struct SimpleVertex {
 
 DEFINE_VERTEX_DESC(SimpleVertex, VERTEX_ATTR(SimpleVertex, position));
 
+void cpu_marching_cubes(glt::Mesh<SimpleVertex>&);
+
+float worldVolume(const vec3_t&);
+
 struct Anim {
     ge::Engine *engine;
     Ref<glt::TextureRenderTarget3D> perlinNoise;
     glt::CubeMesh<SimpleVertex> unitRect;
     glt::CubeMesh<SimpleVertex> unitCube;
     glt::Mesh<SimpleVertex> volumeCube;
+    glt::Mesh<SimpleVertex> cpuMesh;
     float renderDepth;
     glt::TextureHandle caseToNumPolysData;
     glt::TextureHandle triangleTableData;
@@ -110,6 +118,10 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     // glt::primitves::unitCubeWONormals(unitCube);
     // unitCube.send();
 
+    cpuMesh.primType(GL_TRIANGLES);
+    time(cpu_marching_cubes(cpuMesh));
+    cpuMesh.send();
+
     caseToNumPolysData.type(glt::Texture1D);
     caseToNumPolysData.bind();
     GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, ARRAY_LENGTH(case_to_numpolys), 0, GL_RED, GL_UNSIGNED_BYTE, case_to_numpolys));
@@ -122,7 +134,7 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
 
     volumeCube.primType(GL_POINTS);
 
-    ivec3_t volCubeSz = ivec3(32);
+    ivec3_t volCubeSz = SAMPLER_SIZE;
     for (int i = 0; i < volCubeSz[0]; ++i) {
         for (int j = 0; j < volCubeSz[1]; ++j) {
             for (int k = 0; k < volCubeSz[2]; ++k) {
@@ -152,7 +164,7 @@ void Anim::renderVolume(glt::TextureHandle& vol, float isoLvl) {
     
     glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
     const mat4_t& model = gt.modelMatrix();
-    vec3_t edge_dim = (transformPoint(model, vec3(1.f)) - transformPoint(model, vec3(0.f))) / vec3(32);
+    vec3_t edge_dim = (transformPoint(model, vec3(1.f)) - transformPoint(model, vec3(0.f))) / vec3(SAMPLER_SIZE - ivec3(1));
 
     marchingCubesProg->use();
 
@@ -163,11 +175,11 @@ void Anim::renderVolume(glt::TextureHandle& vol, float isoLvl) {
     glt::Uniforms(*marchingCubesProg)
         .optional("caseToNumPolysData", caseToNumPolysData, 0, GL_INT_SAMPLER_1D)
         .optional("triangleTableData", triangleTableData, 1, GL_INT_SAMPLER_1D)
-        .optional("worldVolume", vol, 2)
+        .optional("worldVolume", vol, 2, GL_SAMPLER_3D)
         .optional("modelMatrix", model)
         .optional("vpMatrix", gt.vpMatrix())
         .optional("edgeDim", edge_dim)
-        .optional("texEdgeDim", vec3(1) / vec3(32))
+        .optional("texEdgeDim", vec3(1) / vec3(SAMPLER_SIZE - ivec3(1)))
         .optional("isoLevel", isoLvl);
 
     volumeCube.draw();    
@@ -195,28 +207,182 @@ void Anim::render(const ge::Event<ge::RenderEvent>&) {
     GL_CHECK(glClearColor(1.f, 1.f, 1.f, 1.f));
     engine->renderManager().activeRenderTarget()->clear();
 
-    glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
-    {
-        glt::SavePoint sp(gt.save());
-        
-        gt.scale(vec3(16));
-        
-        renderVolume(perlinNoise->textureHandle(), 0.2f);
-        
-        // Ref<glt::ShaderProgram> identityProg = engine->shaderManager().program("identity");
-        // ASSERT(identityProg);
-        // identityProg->use();
-        // glt::Uniforms(*identityProg)
-        //     .optional("mvpMatrix", gt.mvpMatrix())
-        //     .optional("color", vec4(1, 0, 0, 1));
+    GL_CHECK(glPointSize(2));
 
-        // volumeCube.draw();
-    }
+    Ref<glt::ShaderProgram> idProg = engine->shaderManager().program("identity");
+    ASSERT(idProg);
+    idProg->use();
+    glt::Uniforms(*idProg)
+        .optional("mvpMatrix", engine->renderManager().geometryTransform().mvpMatrix())
+        .optional("color", vec4(1, 0, 0, 1));
+
+    cpuMesh.draw();
+
+    // glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
+    // {
+    //     glt::SavePoint sp(gt.save());
+        
+    //     gt.scale(vec3(16));
+        
+    //     renderVolume(perlinNoise->textureHandle(), 0.2f);
+        
+    //     // Ref<glt::ShaderProgram> identityProg = engine->shaderManager().program("identity");
+    //     // ASSERT(identityProg);
+    //     // identityProg->use();
+    //     // glt::Uniforms(*identityProg)
+    //     //     .optional("mvpMatrix", gt.mvpMatrix())
+    //     //     .optional("color", vec4(1, 0, 0, 1));
+
+    //     // volumeCube.draw();
+    // }
 }
 
 void Anim::cmdAddRenderDepth(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
     renderDepth = clamp(renderDepth + args[0].number, 0, 1);
     std::cerr << "renderDepth: " << renderDepth << std::endl;
+}
+
+vec3_t interpolate(const vec3_t& w1, float y1, const vec3_t& w2, float y2) {
+    ASSERT((y1 < 0) != (y2 < 0));
+    float t = y1 / (y1 - y2);
+    ASSERT(t >= 0 && t <= 1);
+    return w1 + t * (w2 - w1);
+}
+
+void cpu_marching_cubes(glt::Mesh<SimpleVertex>& mesh) {
+    const ivec3_t samples = ivec3(33);
+    const vec3_t sample_nll = vec3(-10);
+    const vec3_t sample_fur = vec3(10);
+
+    const vec3_t step = (sample_fur - sample_nll) / vec3(samples - ivec3(1));
+
+    for (vec3_t wc0 = sample_nll; wc0[0] < sample_fur[0]; wc0[0] += step[0]) {
+        for (wc0[1] = sample_nll[1]; wc0[1] < sample_fur[1]; wc0[1] += step[1]) {
+            for (wc0[2] = sample_nll[2]; wc0[2] < sample_fur[2]; wc0[2] += step[2]) {
+                
+                vec3_t wc = wc0;
+                vec3_t wcs[8];
+                float vs[8];
+
+                wcs[0] = wc;
+                wcs[1] = wc + vec3(step[0], 0, 0);
+                wcs[2] = wc + vec3(step[0], 0, step[2]);
+                wcs[3] = wc + vec3(0, 0, step[2]);
+                wcs[4] = wc + vec3(0, step[1], 0);
+                wcs[5] = wc + vec3(step[0], step[1], 0);
+                wcs[6] = wc + step;
+                wcs[7] = wc + vec3(0, step[1], step[2]);
+
+                for (int i = 0; i < 8; ++i)
+                    vs[i] = worldVolume(wcs[i]);
+
+                int cubeIndex = 0;
+                for (int i = 0; i < 8; ++i)
+                    cubeIndex |= (vs[i] < 0) << i;
+                
+
+                //check if its completely inside or outside
+                /*(step 5)*/ if(!edgeTable[cubeIndex]) continue;
+                                
+                //get linearly interpolated vertices on edges and save into the array
+                vec3_t intVerts[12];
+                /*(step 6)*/
+                if(edgeTable[cubeIndex] & 1) intVerts[0] = interpolate(wcs[0], vs[0], wcs[1], vs[1]);
+                if(edgeTable[cubeIndex] & 2) intVerts[1] = interpolate(wcs[1], vs[1], wcs[2], vs[2]);
+                if(edgeTable[cubeIndex] & 4) intVerts[2] = interpolate(wcs[2], vs[2], wcs[3], vs[3]);
+                if(edgeTable[cubeIndex] & 8) intVerts[3] = interpolate(wcs[3], vs[3], wcs[0], vs[0]);
+                if(edgeTable[cubeIndex] & 16) intVerts[4] = interpolate(wcs[4], vs[4], wcs[5], vs[5]);
+                if(edgeTable[cubeIndex] & 32) intVerts[5] = interpolate(wcs[5], vs[5], wcs[6], vs[6]);
+                if(edgeTable[cubeIndex] & 64) intVerts[6] = interpolate(wcs[6], vs[6], wcs[7], vs[7]);
+                if(edgeTable[cubeIndex] & 128) intVerts[7] = interpolate(wcs[7], vs[7], wcs[4], vs[4]);
+                if(edgeTable[cubeIndex] & 256) intVerts[8] = interpolate(wcs[0], vs[0], wcs[4], vs[4]);
+                if(edgeTable[cubeIndex] & 512) intVerts[9] = interpolate(wcs[1], vs[1], wcs[5], vs[5]);
+                if(edgeTable[cubeIndex] & 1024) intVerts[10] = interpolate(wcs[2], vs[2], wcs[6], vs[6]);
+                if(edgeTable[cubeIndex] & 2048) intVerts[11] = interpolate(wcs[3], vs[3], wcs[7], vs[7]);
+
+                for (int i = 0; triTable[cubeIndex][i] != -1; i += 3) {
+                    for (int j = 0; j < 3; ++j) {
+                        SimpleVertex v;
+                        v.position = intVerts[triTable[cubeIndex][i + j]];
+                        mesh.addVertex(v);
+                    }
+                }
+            }
+        }
+    }
+
+    std::cerr << "mesh created with " << mesh.verticesSize() << " vertices" << std::endl;
+}
+
+// const int edge_to_verts[24] = {
+//     0, 1, 1, 2,2, 3,
+//     3, 0, 4, 5,5, 6,
+//     6, 7, 7, 4,0, 4,
+//     1, 5, 2, 6,3, 7
+// };
+
+// ivec3_t lookup_edge(int e) {
+//     return ivec3(edge_to_verts[e * 2], edge_to_verts[e * 2 + 1], 0);
+// }
+
+// void cpu_marching_cubes(glt::Mesh<SimpleVertex>& mesh) {
+//     const ivec3_t samples = ivec3(111);
+//     const vec3_t sample_nll = vec3(-10);
+//     const vec3_t sample_fur = vec3(10);
+
+//     const vec3_t step = (sample_fur - sample_nll) / vec3(samples - ivec3(1));
+
+//     for (vec3_t wc0 = sample_nll; wc0[0] < sample_fur[0]; wc0[0] += step[0]) {
+//         for (wc0[1] = sample_nll[1]; wc0[1] < sample_fur[1]; wc0[1] += step[1]) {
+//             for (wc0[2] = sample_nll[2]; wc0[2] < sample_fur[2]; wc0[2] += step[2]) {
+//                 vec3_t wc = wc0;
+
+//                 vec3_t wcs[8];
+//                 float vs[8];
+
+//                 wcs[0] = wc; wc[1] += step[1];
+//                 wcs[1] = wc; wc[0] += step[0];
+//                 wcs[2] = wc; wc[1] -= step[1];
+//                 wcs[3] = wc; wc[0] -= step[0]; wc[2] += step[2];
+//                 wcs[4] = wc; wc[1] += step[1];
+//                 wcs[5] = wc; wc[0] += step[0];
+//                 wcs[6] = wc; wc[1] -= step[1];
+//                 wcs[7] = wc;
+
+//                 for (int i = 0; i < 8; ++i)
+//                     vs[i] = worldVolume(wcs[i]);
+
+//                 int cas = 0;
+//                 for (int i = 0; i < 8; ++i)
+//                     cas |= (vs[i] < 0) << i;
+
+//                 if (cas == 0 || cas == 255)
+//                     continue;
+
+//                 int ntri = case_to_numpolys[cas];
+//                 for (int i = 0; i < ntri; ++i) {
+//                     ivec3_t tri = ivec3(tri_table[cas * 15 + i],
+//                                         tri_table[cas * 15 + i + 1],
+//                                         tri_table[cas * 15 + i + 2]);
+
+//                     for (int i = 0; i < 3; ++i) {
+//                         ivec3_t verts = lookup_edge(tri[i]);
+//                         SimpleVertex v;
+//                         v.position = interpolate(wcs[verts[0]], vs[verts[0]], wcs[verts[1]], vs[verts[1]]);
+//                         mesh.addVertex(v);
+//                     }                                        
+//                 }
+//             }
+//         }
+//     }
+
+//     std::cerr << "mesh created with " << mesh.verticesSize() << " vertices" << std::endl;
+// }
+
+float worldVolume(const vec3_t& coord) {
+    // a sphere
+    float rad = 8;
+    return lengthSq(coord) - rad*rad;
 }
 
 int main(int argc, char *argv[]) {

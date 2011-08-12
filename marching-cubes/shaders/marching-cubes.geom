@@ -31,15 +31,21 @@ ivec2 edgeToVertices(int e) {
 }
 
 layout(points) in;
-layout(triangle_strip, max_vertices = 15) out;
+layout(points, max_vertices = 15) out;
 
-in vec3 vTexCoord[1];               
+in vec3 vTexCoord[1];
+
+out bool dead;               
+out vec3 gTexCoord;               
 
 #define TRI_POINT(e) mix(wcs[e.x], wcs[e.y], vec3(abs(vs[e.x] / (vs[e.y] - vs[e.x]))))
 
 void main() {
+    float level = 0;
     vec3 wc = gl_in[0].gl_Position.xyz / gl_in[0].gl_Position.w;
-    vec3 tc = vTexCoord[0];
+    const vec3 wc0 = wc;
+    vec3 tc = vTexCoord[0] * 0.05;
+    const vec3 tc0 = tc;
 
     /* vec3 wc0 = coord; */
     /* vec3 wc1 = coord + vec3(edgeDim.x, 0, 0); */
@@ -65,36 +71,58 @@ void main() {
     wcs[7] = wc; vs[7] = sampleVolume(tc);
 
     int cas = 0;
-    cas += int(vs[0] < isoLevel) << 0;
-    cas += int(vs[1] < isoLevel) << 1;
-    cas += int(vs[2] < isoLevel) << 2;
-    cas += int(vs[3] < isoLevel) << 3;
-    cas += int(vs[4] < isoLevel) << 4;
-    cas += int(vs[5] < isoLevel) << 5;
-    cas += int(vs[6] < isoLevel) << 6;
-    cas += int(vs[7] < isoLevel) << 7;
+    cas += int(vs[0] < level) << 0;
+    cas += int(vs[1] < level) << 1;
+    cas += int(vs[2] < level) << 2;
+    cas += int(vs[3] < level) << 3;
+    cas += int(vs[4] < level) << 4;
+    cas += int(vs[5] < level) << 5;
+    cas += int(vs[6] < level) << 6;
+    cas += int(vs[7] < level) << 7;
+    
+    dead = false;
 
     if (cas == 0 || cas == 255)
-        return;
+        dead = true;
+
+
+    /* if (sign(vs[0]) == sign(vs[1])) */
+    /*     dead = true; */
+
+    /* if (sign(vs[0]) == sign(vs[2])) */
+    /*     dead = true; */
+
+    /* if (sign(vs([0]) == sign(vs[ */
 
     int ntri = caseToNumPolys(cas);
-    for (int i = 0; i < ntri; ++i) {
-        ivec3 tri = triangleTable(cas, i);
-        ivec2 edge;
-        vec3 wc;
 
-        edge = edgeToVertices(tri.x); wc = TRI_POINT(edge);
-        gl_Position = vpMatrix * vec4(wc, 1);
-        EmitVertex();
+    if (ntri < 0)
+        dead = true;
 
-        edge = edgeToVertices(tri.y); wc = TRI_POINT(edge);
-        gl_Position = vpMatrix * vec4(wc, 1);
-        EmitVertex();
+    gTexCoord = tc0;
+    gl_Position = vpMatrix * vec4(wc0, 1);
+    EmitVertex();
 
-        edge = edgeToVertices(tri.z); wc = TRI_POINT(edge);
-        gl_Position = vpMatrix * vec4(wc, 1);
-        EmitVertex();
 
-        EndPrimitive();
-    }
+    
+    
+    /* for (int i = 0; i < ntri; ++i) { */
+    /*     ivec3 tri = triangleTable(cas, i); */
+    /*     ivec2 edge; */
+    /*     vec3 wc; */
+
+    /*     edge = edgeToVertices(tri.x); wc = TRI_POINT(edge); */
+    /*     gl_Position = vpMatrix * vec4(wc, 1); */
+    /*     EmitVertex(); */
+
+    /*     edge = edgeToVertices(tri.y); wc = TRI_POINT(edge); */
+    /*     gl_Position = vpMatrix * vec4(wc, 1); */
+    /*     EmitVertex(); */
+
+    /*     edge = edgeToVertices(tri.z); wc = TRI_POINT(edge); */
+    /*     gl_Position = vpMatrix * vec4(wc, 1); */
+    /*     EmitVertex(); */
+
+    /*     EndPrimitive(); */
+    /* } */
 }
