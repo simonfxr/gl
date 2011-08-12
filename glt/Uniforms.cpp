@@ -34,10 +34,18 @@ std::string descGLType(GLenum ty) {
         CASE(GL_FLOAT_VEC2);
         CASE(GL_FLOAT_VEC3);
         CASE(GL_FLOAT_VEC4);
+        CASE(GL_DOUBLE);
+        CASE(GL_DOUBLE_VEC2);
+        CASE(GL_DOUBLE_VEC3);
+        CASE(GL_DOUBLE_VEC4);
         CASE(GL_INT);
         CASE(GL_INT_VEC2);
         CASE(GL_INT_VEC3);
         CASE(GL_INT_VEC4);
+        CASE(GL_UNSIGNED_INT);
+        CASE(GL_UNSIGNED_INT_VEC2);
+        CASE(GL_UNSIGNED_INT_VEC3);
+        CASE(GL_UNSIGNED_INT_VEC4);
         CASE(GL_BOOL);
         CASE(GL_BOOL_VEC2);
         CASE(GL_BOOL_VEC3);
@@ -51,12 +59,52 @@ std::string descGLType(GLenum ty) {
         CASE(GL_FLOAT_MAT3x4);
         CASE(GL_FLOAT_MAT4x2);
         CASE(GL_FLOAT_MAT4x3);
+        CASE(GL_DOUBLE_MAT2);
+        CASE(GL_DOUBLE_MAT3);
+        CASE(GL_DOUBLE_MAT4);
+        CASE(GL_DOUBLE_MAT2x3);
+        CASE(GL_DOUBLE_MAT2x4);
+        CASE(GL_DOUBLE_MAT3x2);
+        CASE(GL_DOUBLE_MAT3x4);
+        CASE(GL_DOUBLE_MAT4x2);
+        CASE(GL_DOUBLE_MAT4x3);
         CASE(GL_SAMPLER_1D);
         CASE(GL_SAMPLER_2D);
         CASE(GL_SAMPLER_3D);
         CASE(GL_SAMPLER_CUBE);
         CASE(GL_SAMPLER_1D_SHADOW);
         CASE(GL_SAMPLER_2D_SHADOW);
+        CASE(GL_SAMPLER_1D_ARRAY);
+        CASE(GL_SAMPLER_2D_ARRAY);
+        CASE(GL_SAMPLER_1D_ARRAY_SHADOW);
+        CASE(GL_SAMPLER_2D_ARRAY_SHADOW);
+        CASE(GL_SAMPLER_2D_MULTISAMPLE);
+        CASE(GL_SAMPLER_2D_MULTISAMPLE_ARRAY);
+        CASE(GL_SAMPLER_CUBE_SHADOW);
+        CASE(GL_SAMPLER_BUFFER);
+        CASE(GL_SAMPLER_2D_RECT);
+        CASE(GL_SAMPLER_2D_RECT_SHADOW);
+        CASE(GL_INT_SAMPLER_1D);
+        CASE(GL_INT_SAMPLER_2D);
+        CASE(GL_INT_SAMPLER_3D);
+        CASE(GL_INT_SAMPLER_CUBE);
+        CASE(GL_INT_SAMPLER_1D_ARRAY);
+        CASE(GL_INT_SAMPLER_2D_ARRAY);
+        CASE(GL_INT_SAMPLER_2D_MULTISAMPLE);
+        CASE(GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY);
+        CASE(GL_INT_SAMPLER_BUFFER);
+        CASE(GL_INT_SAMPLER_2D_RECT);
+        CASE(GL_UNSIGNED_INT_SAMPLER_1D);
+        CASE(GL_UNSIGNED_INT_SAMPLER_2D);
+        CASE(GL_UNSIGNED_INT_SAMPLER_3D);
+        CASE(GL_UNSIGNED_INT_SAMPLER_CUBE);
+        CASE(GL_UNSIGNED_INT_SAMPLER_1D_ARRAY);
+        CASE(GL_UNSIGNED_INT_SAMPLER_2D_ARRAY);
+        CASE(GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE);
+        CASE(GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY);
+        CASE(GL_UNSIGNED_INT_SAMPLER_BUFFER);
+        CASE(GL_UNSIGNED_INT_SAMPLER_2D_RECT);
+        
     default: return "unknown OpenGL type";
     }
 
@@ -164,6 +212,11 @@ Uniforms& Uniforms::optional(const std::string& name, TextureHandle& texture, ui
     return *this;
 }
 
+Uniforms& Uniforms::optional(const std::string& name, TextureHandle& texture, uint32 active_tex, GLenum type) {
+    setUniform(false, name, prog, type, Tex(texture, active_tex));
+    return *this;
+}
+
 Uniforms& Uniforms::mandatory(const std::string& name, float value) {
     setUniform(true, name, prog, GL_FLOAT, value); return *this;
 }
@@ -192,5 +245,11 @@ Uniforms& Uniforms::mandatory(const std::string& name, TextureHandle& texture, u
     setUniform(true, name, prog, mapGLTextureType(texture.glType()), Tex(texture, active_tex));
     return *this;
 }
+
+Uniforms& Uniforms::mandatory(const std::string& name, TextureHandle& texture, uint32 active_tex, GLenum type) {
+    setUniform(true, name, prog, type, Tex(texture, active_tex));
+    return *this;
+}
+
 
 } // namespace glt

@@ -1,6 +1,9 @@
+uniform mat4 modelMatrix;
 
 in vec3 position;
+out vec3 vTexCoord;
 
 void main() {
-    gl_Position = vec4(position, 1);
+    vTexCoord = position;
+    gl_Position = modelMatrix * vec4(position, 1);
 }

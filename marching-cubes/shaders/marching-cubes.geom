@@ -3,6 +3,7 @@ uniform isampler1D caseToNumPolysData;
 uniform isampler1D triangleTableData;
 uniform sampler3D worldVolume;
 uniform vec3 edgeDim;
+uniform vec3 texEdgeDim;
 uniform float isoLevel;
 uniform mat4 vpMatrix;
 
@@ -30,25 +31,38 @@ ivec2 edgeToVertices(int e) {
 }
 
 layout(points) in;
-layout(triangle_strip, max_vertices = 5) out;
+layout(triangle_strip, max_vertices = 15) out;
 
-#define TRI_POINT(e) mix(coords[e.x], coords[e.y], vec3(abs(vs[e.x] / (vs[e.y] - vs[e.x]))))
+in vec3 vTexCoord[1];               
+
+#define TRI_POINT(e) mix(wcs[e.x], wcs[e.y], vec3(abs(vs[e.x] / (vs[e.y] - vs[e.x]))))
 
 void main() {
-    vec3 coord = gl_in[0].gl_Position.xyz;
+    vec3 wc = gl_in[0].gl_Position.xyz / gl_in[0].gl_Position.w;
+    vec3 tc = vTexCoord[0];
 
-    vec3 coords[8];
+    /* vec3 wc0 = coord; */
+    /* vec3 wc1 = coord + vec3(edgeDim.x, 0, 0); */
+    /* vec3 wc2 = coord + vec3(0, edgeDim.y, 0); */
+
+    /* gl_Position = vpMatrix * vec4(wc0, 1); EmitVertex(); */
+    /* gl_Position = vpMatrix * vec4(wc2, 1); EmitVertex(); */
+    /* gl_Position = vpMatrix * vec4(wc1, 1); EmitVertex(); */
+    /* EndPrimitive(); */
+
+    vec3 wcs[8];
     float vs[8];
 
-    coords[0] = coord; vs[0] = sampleVolume(coord); coord.y += edgeDim.y;
-    coords[1] = coord; vs[1] = sampleVolume(coord); coord.x += edgeDim.x;
-    coords[2] = coord; vs[2] = sampleVolume(coord); coord.y -= edgeDim.y;
-    coords[3] = coord; vs[3] = sampleVolume(coord); coord.x -= edgeDim.z; coord.z += edgeDim.z;
+    wcs[0] = wc; vs[0] = sampleVolume(tc); wc.y += edgeDim.y; tc.y += texEdgeDim.y;
+    wcs[1] = wc; vs[1] = sampleVolume(tc); wc.x += edgeDim.x; tc.x += texEdgeDim.x;
+    wcs[2] = wc; vs[2] = sampleVolume(tc); wc.y -= edgeDim.y; tc.y -= texEdgeDim.y;
+    wcs[3] = wc; vs[3] = sampleVolume(tc); wc.x -= edgeDim.x; wc.z += edgeDim.z;
+    tc.x -= texEdgeDim.x; tc.z += texEdgeDim.z;
     
-    coords[4] = coord; vs[4] = sampleVolume(coord); coord.y += edgeDim.y;
-    coords[5] = coord; vs[5] = sampleVolume(coord); coord.x += edgeDim.x;
-    coords[6] = coord; vs[6] = sampleVolume(coord); coord.y -= edgeDim.y;
-    coords[7] = coord; vs[7] = sampleVolume(coord);
+    wcs[4] = wc; vs[4] = sampleVolume(tc); wc.y += edgeDim.y; tc.y += texEdgeDim.y;
+    wcs[5] = wc; vs[5] = sampleVolume(tc); wc.x += edgeDim.x; tc.x += texEdgeDim.x;
+    wcs[6] = wc; vs[6] = sampleVolume(tc); wc.y -= edgeDim.y; tc.y -= texEdgeDim.y;
+    wcs[7] = wc; vs[7] = sampleVolume(tc);
 
     int cas = 0;
     cas += int(vs[0] < isoLevel) << 0;
