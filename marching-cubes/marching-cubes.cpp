@@ -125,12 +125,12 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     caseToNumPolysData.type(glt::Texture1D);
     caseToNumPolysData.bind();
     
-    GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, ARRAY_LENGTH(edgeTable), 0, GL_RED, GL_UNSIGNED_BYTE, edgeTable));
+    GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, sizeof edgeTable, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, edgeTable));
     caseToNumPolysData.filterMode(glt::TextureHandle::FilterNearest);
 
     triangleTableData.type(glt::Texture1D);
     triangleTableData.bind();
-    GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, ARRAY_LENGTH(triTable) / 3, 0, GL_RED, GL_BYTE, triTable));
+    GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, sizeof triTable, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, triTable));
     triangleTableData.filterMode(glt::TextureHandle::FilterNearest);
 
     volumeCube.primType(GL_POINTS);
@@ -174,8 +174,8 @@ void Anim::renderVolume(glt::TextureHandle& vol, float isoLvl) {
     vol.bind(2);
     
     glt::Uniforms(*marchingCubesProg)
-        .optional("caseToNumPolysData", caseToNumPolysData, 0, GL_INT_SAMPLER_1D)
-        .optional("triangleTableData", triangleTableData, 1, GL_INT_SAMPLER_1D)
+        .optional("caseToNumPolysData", caseToNumPolysData, 0, GL_UNSIGNED_INT_SAMPLER_1D)
+        .optional("triangleTableData", triangleTableData, 1, GL_UNSIGNED_INT_SAMPLER_1D)
         .optional("worldVolume", vol, 2, GL_SAMPLER_3D)
         .optional("modelMatrix", model)
         .optional("vpMatrix", gt.vpMatrix())
@@ -208,34 +208,34 @@ void Anim::render(const ge::Event<ge::RenderEvent>&) {
     GL_CHECK(glClearColor(1.f, 1.f, 1.f, 1.f));
     engine->renderManager().activeRenderTarget()->clear();
 
-    GL_CHECK(glPointSize(2));
+    // GL_CHECK(glPointSize(2));
 
-    Ref<glt::ShaderProgram> idProg = engine->shaderManager().program("identity");
-    ASSERT(idProg);
-    idProg->use();
-    glt::Uniforms(*idProg)
-        .optional("mvpMatrix", engine->renderManager().geometryTransform().mvpMatrix())
-        .optional("color", vec4(1, 0, 0, 1));
+    // Ref<glt::ShaderProgram> idProg = engine->shaderManager().program("identity");
+    // ASSERT(idProg);
+    // idProg->use();
+    // glt::Uniforms(*idProg)
+    //     .optional("mvpMatrix", engine->renderManager().geometryTransform().mvpMatrix())
+    //     .optional("color", vec4(1, 0, 0, 1));
 
-    cpuMesh.draw();
+    // cpuMesh.draw();
 
-    // glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
-    // {
-    //     glt::SavePoint sp(gt.save());
+    glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
+    {
+        glt::SavePoint sp(gt.save());
         
-    //     gt.scale(vec3(16));
+        gt.scale(vec3(16));
         
-    //     renderVolume(perlinNoise->textureHandle(), 0.2f);
+        renderVolume(perlinNoise->textureHandle(), 0.2f);
         
-    //     // Ref<glt::ShaderProgram> identityProg = engine->shaderManager().program("identity");
-    //     // ASSERT(identityProg);
-    //     // identityProg->use();
-    //     // glt::Uniforms(*identityProg)
-    //     //     .optional("mvpMatrix", gt.mvpMatrix())
-    //     //     .optional("color", vec4(1, 0, 0, 1));
+        // Ref<glt::ShaderProgram> identityProg = engine->shaderManager().program("identity");
+        // ASSERT(identityProg);
+        // identityProg->use();
+        // glt::Uniforms(*identityProg)
+        //     .optional("mvpMatrix", gt.mvpMatrix())
+        //     .optional("color", vec4(1, 0, 0, 1));
 
-    //     // volumeCube.draw();
-    // }
+        // volumeCube.draw();
+    }
 }
 
 void Anim::cmdAddRenderDepth(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
@@ -301,7 +301,7 @@ void cpu_marching_cubes(glt::Mesh<SimpleVertex>& mesh) {
                 if(edgeTable[cubeIndex] & 1024) intVerts[10] = interpolate(wcs[2], vs[2], wcs[6], vs[6]);
                 if(edgeTable[cubeIndex] & 2048) intVerts[11] = interpolate(wcs[3], vs[3], wcs[7], vs[7]);
 
-                for (int i = 0; triTable[cubeIndex][i] != -1; i += 3) {
+                for (int i = 0; triTable[cubeIndex][i] != 255; i += 3) {
                     for (int j = 0; j < 3; ++j) {
                         SimpleVertex v;
                         v.position = intVerts[triTable[cubeIndex][i + j]];
