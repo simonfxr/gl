@@ -2,6 +2,7 @@
 #include "ge/Camera.hpp"
 #include "ge/Command.hpp"
 #include "ge/CommandParams.hpp"
+#include "ge/Timer.hpp"
 
 #include "glt/TextureRenderTarget3D.hpp"
 #include "glt/primitives.hpp"
@@ -21,7 +22,7 @@ using namespace math;
 
 static const ivec3_t PERLIN_NOISE_SIZE = ivec3(64);
 
-static const ivec3_t SAMPLER_SIZE = ivec3(53);
+static const ivec3_t SAMPLER_SIZE = ivec3(69);
 
 struct SimpleVertex {
     vec3_t position;
@@ -45,6 +46,7 @@ struct Anim {
     glt::TextureHandle triangleTableData;
 
     ge::Camera camera;
+    Ref<ge::Timer> fpsTimer;
     
     Anim() :
         engine(0),
@@ -155,6 +157,9 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     engine->commandProcessor().define(ge::makeCommand(this, &Anim::cmdAddRenderDepth, ge::NUM_PARAMS,
                                                       "addRenderDepth"));
 
+    fpsTimer = new ge::Timer(*engine);
+    fpsTimer->start(1.f, true);
+
     GL_CHECK(glFinish());
     ev.info.success = true;
 }
@@ -223,7 +228,7 @@ void Anim::render(const ge::Event<ge::RenderEvent>&) {
     {
         glt::SavePoint sp(gt.save());
         
-        gt.scale(vec3(16));
+        gt.scale(vec3(133));
         
         renderVolume(perlinNoise->textureHandle(), 0.2f);
         
@@ -235,6 +240,11 @@ void Anim::render(const ge::Event<ge::RenderEvent>&) {
         //     .optional("color", vec4(1, 0, 0, 1));
 
         // volumeCube.draw();
+    }
+
+    if (fpsTimer->fire()) {
+        glt::FrameStatistics fs = engine->renderManager().frameStatistics();
+        std::cerr << "Timings (FPS/Render Avg/Render Min/Render Max): " << fs.avg_fps << "; " << fs.rt_avg << "; " << fs.rt_min << "; " << fs.rt_max << std::endl;
     }
 }
 

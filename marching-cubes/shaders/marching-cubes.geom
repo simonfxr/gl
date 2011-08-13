@@ -10,23 +10,69 @@ uniform mat4 vpMatrix;
 const uint MAX_USHORT = 65535;
 
 uint edgeTable(int cas) {
-    /* return uint(texelFetch(caseToNumPolysData, cas, 0).r * MAX_USHORT); */
     return texelFetch(caseToNumPolysData, cas, 0).r;
 }
 
 uint triangleTable(int cas, int num) {
-    /* int val = int(texelFetch(triangleTableData, cas * 16 + num, 0).r * 255); */
     return texelFetch(triangleTableData, cas * 16 + num, 0).r;
 }
 
-/* float sampleVolume(vec3 coord) { */
-/*     return texture(worldVolume, coord).r; */
-/* } */
-
-float sampleVolume(vec3 coord) {
-    coord = coord * 2 - vec3(1);
-    return dot(coord, coord) - 1;
+float noise3D(vec3 wc) {
+    return texture(worldVolume, wc).r;
 }
+
+vec3 noise3D3(vec3 p) {
+    return vec3(noise3D(p + vec3(0.089f, -0.193f, 0.521f)),
+                noise3D(p + vec3(-0.239f, -0.181f, 0.619f)),
+                noise3D(p + vec3(-0.107f, 0.157f, 0.487f)));
+}
+
+float sumNoise3D(vec3 p, uint octaves, float fmax, float fuzz, float damp) {
+    float a = 1.f;
+    float f = fmax;
+    float y = 0.f;
+
+    float sign = 1.f;
+    
+    for (uint i = 0; i < octaves; ++i) {
+        y += noise3D(p * f) * a;
+        f = (f / 2) + sign * fuzz;
+        fuzz *= damp;
+        a *= 2;
+        sign = - sign;
+    }
+
+    return y;
+}
+
+float sampleVolume(vec3 p) {
+    vec3 ws_orig = p;
+    vec3 ws = p;
+    float density = 0.f;
+
+    float warp_freq = 0.006f;
+    float warp_stride = 20.f;
+    ws += noise3D3(ws * warp_freq) * warp_stride;
+
+    density += -ws.y;
+
+    float a0 = 0.6f;
+    float f0 = 1.8f;
+
+    /* density = noise3D(p * 0.05f); */
+
+    /* density += noise3D(ws * f0 * 4.03) * 0.25 * a0; */
+    /* density += noise3D(ws * f0 * 1.96) * 0.50 * a0; */
+    /* density += noise3D(ws * f0 * 1.01) * 1.00 * a0; */
+
+//    density += sumNoise3D(ws, 6, f0, 0.03f, 0.5192f) * a0;
+    return density;
+}
+
+/* float sampleVolume(vec3 coord) { */
+/*     coord = coord * 2 - vec3(1); */
+/*     return dot(coord, coord) - 1; */
+/* } */
 
 layout(points) in;
 layout(triangle_strip, max_vertices = 15) out;
@@ -55,14 +101,17 @@ void main() {
     wcs[7] = wc0 + vec3(0, wcstep[1], wcstep[2]);
 
     float vs[8];
-    vs[0] = sampleVolume(tc0);
-    vs[1] = sampleVolume(tc0 + vec3(tcstep[0], 0, 0));
-    vs[2] = sampleVolume(tc0 + vec3(tcstep[0], 0, tcstep[2]));
-    vs[3] = sampleVolume(tc0 + vec3(0, 0, tcstep[2]));
-    vs[4] = sampleVolume(tc0 + vec3(0, tcstep[1], 0));
-    vs[5] = sampleVolume(tc0 + vec3(tcstep[0], tcstep[1], 0));
-    vs[6] = sampleVolume(tc0 + tcstep);
-    vs[7] = sampleVolume(tc0 + vec3(0, tcstep[1], tcstep[2]));
+    /* vs[0] = sampleVolume(tc0); */
+    /* vs[1] = sampleVolume(tc0 + vec3(tcstep[0], 0, 0)); */
+    /* vs[2] = sampleVolume(tc0 + vec3(tcstep[0], 0, tcstep[2])); */
+    /* vs[3] = sampleVolume(tc0 + vec3(0, 0, tcstep[2])); */
+    /* vs[4] = sampleVolume(tc0 + vec3(0, tcstep[1], 0)); */
+    /* vs[5] = sampleVolume(tc0 + vec3(tcstep[0], tcstep[1], 0)); */
+    /* vs[6] = sampleVolume(tc0 + tcstep); */
+    /* vs[7] = sampleVolume(tc0 + vec3(0, tcstep[1], tcstep[2])); */
+
+    for (int i = 0; i < 8; ++i)
+        vs[i] = sampleVolume(wcs[i]);
 
     int cubeIndex = 0;
     for (int i = 0; i < 8; ++i)
