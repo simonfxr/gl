@@ -124,12 +124,13 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
 
     caseToNumPolysData.type(glt::Texture1D);
     caseToNumPolysData.bind();
-    GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, ARRAY_LENGTH(case_to_numpolys), 0, GL_RED, GL_UNSIGNED_BYTE, case_to_numpolys));
+    
+    GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, ARRAY_LENGTH(edgeTable), 0, GL_RED, GL_UNSIGNED_BYTE, edgeTable));
     caseToNumPolysData.filterMode(glt::TextureHandle::FilterNearest);
 
     triangleTableData.type(glt::Texture1D);
     triangleTableData.bind();
-    GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB8, ARRAY_LENGTH(tri_table) / 3, 0, GL_RGB, GL_BYTE, tri_table));
+    GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, ARRAY_LENGTH(triTable) / 3, 0, GL_RED, GL_BYTE, triTable));
     triangleTableData.filterMode(glt::TextureHandle::FilterNearest);
 
     volumeCube.primType(GL_POINTS);

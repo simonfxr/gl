@@ -7,122 +7,83 @@ uniform vec3 texEdgeDim;
 uniform float isoLevel;
 uniform mat4 vpMatrix;
 
-int caseToNumPolys(int cas) {
-    return texture(caseToNumPolysData, cas).x;
+int edgeTable(int cas) {
+    return texture(caseToNumPolysData, cas).r;
 }
 
-ivec3 triangleTable(int cas, int num) {
-    return texture(triangleTableData, cas + 5 * num).xyz;
+int triangleTable(int cas, int num) {
+    return texture(triangleTableData, cas * 16 + num).r;
 }
 
 float sampleVolume(vec3 coord) {
     return texture(worldVolume, coord).r;
 }
 
-const ivec2 edge_to_verts[12] = ivec2[12](
-    ivec2(0, 1), ivec2(1, 2), ivec2(2, 3),
-    ivec2(3, 0), ivec2(4, 5), ivec2(5, 6),
-    ivec2(6, 7), ivec2(7, 4), ivec2(0, 4),
-    ivec2(1, 5), ivec2(2, 6), ivec2(3, 7)
-);
-
-ivec2 edgeToVertices(int e) {
-    return edge_to_verts[e];
-}
-
 layout(points) in;
-layout(points, max_vertices = 15) out;
+layout(triangle_strip, max_vertices = 15) out;
 
 in vec3 vTexCoord[1];
 
-out bool dead;               
-out vec3 gTexCoord;               
-
-#define TRI_POINT(e) mix(wcs[e.x], wcs[e.y], vec3(abs(vs[e.x] / (vs[e.y] - vs[e.x]))))
+vec3 interpolate(vec3 v1, float y1, vec3 v2, float y2) {
+    return v1 + (v2 - v1) * (y1 / (y1 - y2));
+}
 
 void main() {
-    float level = 0;
-    vec3 wc = gl_in[0].gl_Position.xyz / gl_in[0].gl_Position.w;
-    const vec3 wc0 = wc;
-    vec3 tc = vTexCoord[0] * 0.05;
-    const vec3 tc0 = tc;
-
-    /* vec3 wc0 = coord; */
-    /* vec3 wc1 = coord + vec3(edgeDim.x, 0, 0); */
-    /* vec3 wc2 = coord + vec3(0, edgeDim.y, 0); */
-
-    /* gl_Position = vpMatrix * vec4(wc0, 1); EmitVertex(); */
-    /* gl_Position = vpMatrix * vec4(wc2, 1); EmitVertex(); */
-    /* gl_Position = vpMatrix * vec4(wc1, 1); EmitVertex(); */
-    /* EndPrimitive(); */
-
+    vec3 wc0 = gl_in[0].gl_Position.xyz;
+    vec3 tc0 = vTexCoord[0];
+    vec3 wcstep = edgeDim;
+    vec3 tcstep = texEdgeDim;
+        
     vec3 wcs[8];
+    
+    wcs[0] = wc0;
+    wcs[1] = wc0 + vec3(wcstep[0], 0, 0);
+    wcs[2] = wc0 + vec3(wcstep[0], 0, wcstep[2]);
+    wcs[3] = wc0 + vec3(0, 0, wcstep[2]);
+    wcs[4] = wc0 + vec3(0, wcstep[1], 0);
+    wcs[5] = wc0 + vec3(wcstep[0], wcstep[1], 0);
+    wcs[6] = wc0 + wcstep;
+    wcs[7] = wc0 + vec3(0, wcstep[1], wcstep[2]);
+
     float vs[8];
+    vs[0] = sampleVolume(wc0);
+    vs[1] = sampleVolume(wc0 + vec3(tcstep[0], 0, 0));
+    vs[2] = sampleVolume(wc0 + vec3(tcstep[0], 0, tcstep[2]));
+    vs[3] = sampleVolume(wc0 + vec3(0, 0, tcstep[2]));
+    vs[4] = sampleVolume(wc0 + vec3(0, tcstep[1], 0));
+    vs[5] = sampleVolume(wc0 + vec3(tcstep[0], tcstep[1], 0));
+    vs[6] = sampleVolume(wc0 + tcstep);
+    vs[7] = sampleVolume(wc0 + vec3(0, tcstep[1], tcstep[2]));
 
-    wcs[0] = wc; vs[0] = sampleVolume(tc); wc.y += edgeDim.y; tc.y += texEdgeDim.y;
-    wcs[1] = wc; vs[1] = sampleVolume(tc); wc.x += edgeDim.x; tc.x += texEdgeDim.x;
-    wcs[2] = wc; vs[2] = sampleVolume(tc); wc.y -= edgeDim.y; tc.y -= texEdgeDim.y;
-    wcs[3] = wc; vs[3] = sampleVolume(tc); wc.x -= edgeDim.x; wc.z += edgeDim.z;
-    tc.x -= texEdgeDim.x; tc.z += texEdgeDim.z;
-    
-    wcs[4] = wc; vs[4] = sampleVolume(tc); wc.y += edgeDim.y; tc.y += texEdgeDim.y;
-    wcs[5] = wc; vs[5] = sampleVolume(tc); wc.x += edgeDim.x; tc.x += texEdgeDim.x;
-    wcs[6] = wc; vs[6] = sampleVolume(tc); wc.y -= edgeDim.y; tc.y -= texEdgeDim.y;
-    wcs[7] = wc; vs[7] = sampleVolume(tc);
+    int cubeIndex = 0;
+    for (int i = 0; i < 8; ++i)
+        cubeIndex |= int(vs[i] < 0) << i;
 
-    int cas = 0;
-    cas += int(vs[0] < level) << 0;
-    cas += int(vs[1] < level) << 1;
-    cas += int(vs[2] < level) << 2;
-    cas += int(vs[3] < level) << 3;
-    cas += int(vs[4] < level) << 4;
-    cas += int(vs[5] < level) << 5;
-    cas += int(vs[6] < level) << 6;
-    cas += int(vs[7] < level) << 7;
-    
-    dead = false;
+    int edgeCode = edgeTable(cubeIndex);
+    if(edgeCode == 0)
+        return;
+                                
+    vec3 intVerts[12];
 
-    if (cas == 0 || cas == 255)
-        dead = true;
+    if((edgeCode & 1) != 0) intVerts[0] = interpolate(wcs[0], vs[0], wcs[1], vs[1]);
+    if((edgeCode & 2) != 0) intVerts[1] = interpolate(wcs[1], vs[1], wcs[2], vs[2]);
+    if((edgeCode & 4) != 0) intVerts[2] = interpolate(wcs[2], vs[2], wcs[3], vs[3]);
+    if((edgeCode & 8) != 0) intVerts[3] = interpolate(wcs[3], vs[3], wcs[0], vs[0]);
+    if((edgeCode & 16) != 0) intVerts[4] = interpolate(wcs[4], vs[4], wcs[5], vs[5]);
+    if((edgeCode & 32) != 0) intVerts[5] = interpolate(wcs[5], vs[5], wcs[6], vs[6]);
+    if((edgeCode & 64) != 0) intVerts[6] = interpolate(wcs[6], vs[6], wcs[7], vs[7]);
+    if((edgeCode & 128) != 0) intVerts[7] = interpolate(wcs[7], vs[7], wcs[4], vs[4]);
+    if((edgeCode & 256) != 0) intVerts[8] = interpolate(wcs[0], vs[0], wcs[4], vs[4]);
+    if((edgeCode & 512) != 0) intVerts[9] = interpolate(wcs[1], vs[1], wcs[5], vs[5]);
+    if((edgeCode & 1024) != 0) intVerts[10] = interpolate(wcs[2], vs[2], wcs[6], vs[6]);
+    if((edgeCode & 2048) != 0) intVerts[11] = interpolate(wcs[3], vs[3], wcs[7], vs[7]);
 
+    for (int i = 0; triangleTable(cubeIndex, i) != -1; i += 3) {
+        for (int j = 0; j < 3; ++j) {
+            gl_Position = vpMatrix * vec4(intVerts[triangleTable(cubeIndex, i + j)], 1);
+            EmitVertex();
+        }
 
-    /* if (sign(vs[0]) == sign(vs[1])) */
-    /*     dead = true; */
-
-    /* if (sign(vs[0]) == sign(vs[2])) */
-    /*     dead = true; */
-
-    /* if (sign(vs([0]) == sign(vs[ */
-
-    int ntri = caseToNumPolys(cas);
-
-    if (ntri < 0)
-        dead = true;
-
-    gTexCoord = tc0;
-    gl_Position = vpMatrix * vec4(wc0, 1);
-    EmitVertex();
-
-
-    
-    
-    /* for (int i = 0; i < ntri; ++i) { */
-    /*     ivec3 tri = triangleTable(cas, i); */
-    /*     ivec2 edge; */
-    /*     vec3 wc; */
-
-    /*     edge = edgeToVertices(tri.x); wc = TRI_POINT(edge); */
-    /*     gl_Position = vpMatrix * vec4(wc, 1); */
-    /*     EmitVertex(); */
-
-    /*     edge = edgeToVertices(tri.y); wc = TRI_POINT(edge); */
-    /*     gl_Position = vpMatrix * vec4(wc, 1); */
-    /*     EmitVertex(); */
-
-    /*     edge = edgeToVertices(tri.z); wc = TRI_POINT(edge); */
-    /*     gl_Position = vpMatrix * vec4(wc, 1); */
-    /*     EmitVertex(); */
-
-    /*     EndPrimitive(); */
-    /* } */
+        EndPrimitive();
+    }
 }
