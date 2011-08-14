@@ -165,6 +165,7 @@ std::string lookup(const std::vector<std::string>& dirs, const std::string& name
 }
 
 bool exists(const std::string& path, ObjectType *type) {
+    ASSERT(type);
     struct stat info;
     if (stat(path.c_str(), &info) == -1)
         return false;

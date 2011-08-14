@@ -30,7 +30,7 @@ std::string dirname(const std::string& path) {
     size_t pos = path.rfind(SEPARATOR, dropTrailingSeps(path));
     
     if (pos != std::string::npos) {
-		while (pos > 1 && path[pos - 1] == SEPARATOR)
+        while (pos > 1 && path[pos - 1] == SEPARATOR)
             --pos;
     } else {
         pos = 0;
@@ -47,7 +47,7 @@ std::string basename(const std::string& path) {
     if (path.empty())
         return "";
     
-	size_t pos = path.rfind(SEPARATOR, dropTrailingSeps(path));
+    size_t pos = path.rfind(SEPARATOR, dropTrailingSeps(path));
     size_t end = std::string::npos;
 
     if (pos != std::string::npos) {
@@ -74,7 +74,7 @@ std::string extension(const std::string& path) {
 }
 
 std::string dropExtension(const std::string& path) {
-	size_t pos = path.rfind(SEPARATOR);
+    size_t pos = path.rfind(SEPARATOR);
     if (pos == std::string::npos)
         pos = 0;
     pos = path.find('.', pos);
@@ -84,18 +84,19 @@ std::string dropExtension(const std::string& path) {
 }
 
 std::string dropTrailingSeparators(const std::string& path) {
-	size_t pos = dropTrailingSeps(path);
-	if (pos == std::string::npos)
-		return path;
-	return path.substr(0, pos);
+    size_t pos = dropTrailingSeps(path);
+    if (pos == std::string::npos)
+        return path;
+    return path.substr(0, pos);
 }
 
 bool exists(const std::string& path, ObjectType *type) {
-	Stat st;
-	if (!stat(path, &st))
-		return false;
-	*type = st.type;
-	return true;
+    ASSERT(type);
+    Stat st;
+    if (!stat(path, &st))
+        return false;
+    *type = st.type;
+    return true;
 }
 
 std::string lookup(const std::vector<std::string>& dirs, const std::string& name) {
@@ -114,18 +115,19 @@ std::string lookup(const std::vector<std::string>& dirs, const std::string& name
 }
 
 std::string absolutePath(const std::string& path) {
-	Stat st;
-	if (!stat(path, &st))
-		return "";
-	return st.absolute;
+    Stat st;
+    if (!stat(path, &st))
+        return "";
+    return st.absolute;
 }
 
 bool modificationTime(const std::string& path, sys::fs::ModificationTime *mtime) {
-	Stat st;
-	if (!stat(path, &st))
-		return false;
-	*mtime = st.mtime;
-	return true;
+    ASSERT(mtime);
+    Stat st;
+    if (!stat(path, &st))
+        return false;
+    *mtime = st.mtime;
+    return true;
 }
 
 } // namespace def
