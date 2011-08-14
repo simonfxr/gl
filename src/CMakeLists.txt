@@ -47,6 +47,10 @@ if(SYS_LINUX)
   set(SYS_LIBS rt ${SYS_LIBS})
 endif()
 
+if(SYS_WINDOWS)
+	set(SYS_LIBS Shlwapi ${SYS_LIBS})
+endif()
+
 def_lib(sys SOURCES ${SYS_SRC} LIB_DEPEND ${SYS_LIBS})
 
 set(GLT_SRC
@@ -69,11 +73,6 @@ set(GLT_SRC
   glt/Mesh.cpp
   glt/glstate.cpp)
 
-find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
-
-include_directories(${GLEW_INCLUDE_PATH})
-
 set(GLT_LIBS ${GLEW_LIBRARY} ${OPENGL_gl_LIBRARY})
 
 def_lib(glt SOURCES ${GLT_SRC} DEPEND vec-math err sys LIB_DEPEND ${GLT_LIBS})
@@ -94,10 +93,6 @@ set(GE_SRC
   ge/Tokenizer.cpp
   ge/KeyHandler.cpp
   ge/Camera.cpp)
-
-find_package(SFML 2 COMPONENTS system window graphics REQUIRED)
-
-include_directories(${SFML_INCLUDE_DIR})
 
 set(GE_LIBS ${SFML_LIBRARIES})
 

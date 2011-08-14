@@ -1,11 +1,11 @@
-#include "opengl.h"
+#include "opengl.hpp"
 #include "ge/EngineOptions.hpp"
 
 #include "sys/fs/fs.hpp"
 
-#include <cstring>
-#include <cstdio>
-#include <string>
+#include <string.h>
+#include <stdio.h>
+#include <string.h>
 
 namespace ge {
 

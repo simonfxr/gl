@@ -7,7 +7,7 @@
 #include <sstream>
 
 #ifndef ATTR_NORETURN
-#include <cstdlib>
+#include <stdlib.h>
 #endif
 
 #ifndef ERROR_DEFAULT_STREAM

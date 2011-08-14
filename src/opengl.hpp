@@ -1,15 +1,14 @@
-#ifndef OPENGL_H
-#define OPENGL_H
+#ifndef OPENGL_HPP
+#define OPENGL_HPP
 
 #include "defs.h"
 
 #if SYSTEM_WINDOWS
 
 #ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN 1
 #endif
 
-#include <windows.h>
 #endif
 
 #include <GL/glew.h>

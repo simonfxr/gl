@@ -65,9 +65,9 @@ real degToRad(real deg) PURE_FUNC;
 
 real radToDeg(real rad) PURE_FUNC;
 
-real max(real x, real y) PURE_FUNC;
-
-real min(real x, real y) PURE_FUNC;
+//real max(real x, real y) PURE_FUNC;
+//
+//real min(real x, real y) PURE_FUNC;
 
 real saturate(real x) PURE_FUNC;
 

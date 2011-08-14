@@ -5,7 +5,7 @@
 
 #include <iostream>
 #include <map>
-#include <cstdio>
+#include <stdio.h>
 
 namespace glt {
 
@@ -128,8 +128,12 @@ bool ShaderManager::addShaderDirectory(const std::string& dir, bool check_exists
         if (dir == self->shaderDirs[i])
             return true;
 
-    if (check_exists && !sys::fs::exists(dir, sys::fs::Directory))
+	sys::fs::ObjectType type = sys::fs::Directory;
+    if (check_exists && !sys::fs::exists(dir, &type))
         return false;
+
+	if (type != sys::fs::Directory)
+		return false;
     
     self->shaderDirs.push_back(dir);
     return true;

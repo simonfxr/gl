@@ -12,8 +12,8 @@
 #include <vector>
 #include <algorithm>
 
-#include <cstdlib>
-#include <ctime>
+#include <stdlib.h>
+#include <time.h>
 
 #if 0
 

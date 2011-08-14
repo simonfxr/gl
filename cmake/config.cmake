@@ -30,3 +30,17 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+
+include_directories(${GLEW_INCLUDE_PATH})
+
+# if(SYS_WINDOWS)
+#   add_definitions(-DGLEW_STATIC)
+# endif()
+
+find_package(SFML 2 COMPONENTS system window graphics REQUIRED)
+
+include_directories(${SFML_INCLUDE_DIR})
+

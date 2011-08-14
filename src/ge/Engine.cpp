@@ -200,9 +200,12 @@ int32 Engine::run(const EngineOptions& opts) {
         return 1;
 
     if (!opts.inhibitInitScript) {
-        if (!loadScript(sys::fs::basename(opts.binary) + ".script")) {
+		std::string script = sys::fs::basename(opts.binary);
+		if (!script.empty())
+			script = sys::fs::dropExtension(script);
+
+        if (script.empty() || !loadScript(script + ".script"))
             return 1;
-        }
     }
 
     for (uint32 i = 0; i < opts.commands.size(); ++i) {

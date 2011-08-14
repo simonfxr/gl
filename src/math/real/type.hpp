@@ -3,7 +3,7 @@
 
 #include "math/defs.hpp"
 
-MATH_BEGIN_NAMESPACE
+namespace math {
 
 #ifdef MATH_REAL_FLOAT
 typedef float real;
@@ -11,6 +11,6 @@ typedef float real;
 typedef double real;
 #endif
 
-MATH_END_NAMESPACE
+} // namespace math
 
 #endif

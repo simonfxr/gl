@@ -11,7 +11,7 @@ set(GLDEBUG TRUE CACHE BOOL "TRUE to enable error checking after every opengl ca
 
 set(MATH_INLINE TRUE CACHE BOOL "TRUE to inline all custom math functions")
 
-set(GLEW_ROOT_DIRECTORY "" CACHE STRING "GLEW installation directory")
+set(GLEW_ROOT_DIR "" CACHE STRING "GLEW installation directory")
 
 set(SFMLDIR "" CACHE STRING "SFML installation directory")
 

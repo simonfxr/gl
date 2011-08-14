@@ -142,7 +142,7 @@ ReloadState includesNeedReload(const ShaderIncludes& incs) {
 
 GLuint compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::string& name, GLSLPreprocessor& proc) {
 
-    GLsizei nsegments = proc.segments.size();
+    GLsizei nsegments = GLsizei(proc.segments.size());
     const char **segments = &proc.segments[0];
     const GLint *segLengths = reinterpret_cast<const GLint *>(&proc.segLengths[0]);
 
@@ -289,7 +289,7 @@ Ref<ShaderObject> StringSource::load(Ref<ShaderSource>& _self, CompileState& cst
 FileSource::FileSource(ShaderManager::ShaderType ty, const std::string& path) :
     ShaderSource(path, ty)
 {
-    ASSERT(sys::fs::isAbsolute(path));
+    ASSERT_MSG(sys::fs::isAbsolute(path), "path not absolute: " + path);
 }
 
 Ref<ShaderObject> FileSource::load(Ref<ShaderSource>& _self, CompileState& cstate) {

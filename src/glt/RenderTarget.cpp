@@ -1,7 +1,7 @@
 #include "glt/RenderTarget.hpp"
 #include "err/err.hpp"
 #include "glt/utils.hpp"
-#include "opengl.h"
+#include "opengl.hpp"
 
 namespace glt {
 

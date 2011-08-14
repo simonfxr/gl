@@ -1,13 +1,19 @@
-#include "glt/Uniforms.hpp"
+#include "opengl.hpp"
 
-#include "opengl.h"
+#ifdef min
+#error "FOOO"
+#endif
+
+
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-#include "glt/color.hpp"
 
+#include "glt/color.hpp"
 #include "glt/ShaderProgram.hpp"
+#include "glt/Uniforms.hpp"
+
 #include "err/err.hpp"
 #include "glt/utils.hpp"
 

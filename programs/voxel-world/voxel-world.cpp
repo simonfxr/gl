@@ -1,7 +1,7 @@
 #include <iostream>
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <limits.h>
 #include <memory>
 #include <bitset>

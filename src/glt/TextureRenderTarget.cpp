@@ -1,5 +1,5 @@
 #include "glt/TextureRenderTarget.hpp"
-#include "opengl.h"
+#include "opengl.hpp"
 #include "err/err.hpp"
 #include "glt/utils.hpp"
 #include "glt/glstate.hpp"

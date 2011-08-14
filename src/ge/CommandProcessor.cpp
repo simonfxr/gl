@@ -23,8 +23,12 @@ bool CommandProcessor::addScriptDirectory(const std::string& dir, bool check_exi
         if (dir == scriptDirs[i])
             return true;
 
-    if (check_exists && !sys::fs::exists(dir, sys::fs::Directory))
+	sys::fs::ObjectType type = sys::fs::Directory;
+    if (check_exists && !sys::fs::exists(dir, &type))
         return false;
+
+	if (type != sys::fs::Directory)
+		return false;
 
     scriptDirs.push_back(dir);
     return true;

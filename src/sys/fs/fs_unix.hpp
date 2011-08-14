@@ -8,6 +8,8 @@ namespace sys {
 
 namespace fs {
 
+const char SEPARATOR = '/';
+
 struct ModificationTime {
     time_t timestamp;
 

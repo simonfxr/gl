@@ -3,7 +3,7 @@
 #include <cstring>
 
 #include "defs.h"
-#include "opengl.h"
+#include "opengl.hpp"
 
 #include "glt/utils.hpp"
 #include "err/err.hpp"

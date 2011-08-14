@@ -1,12 +1,12 @@
 #include <iostream>
-#include <cstdio>
-#include <cstring>
+#include <stdio.h>
+#include <string.h>
 #include <map>
 #include <set>
 #include <sstream>
 
 #include "defs.h"
-#include "opengl.h"
+#include "opengl.hpp"
 
 #include "glt/ShaderProgram.hpp"
 #include "glt/ShaderManager.hpp"

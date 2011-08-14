@@ -1,5 +1,5 @@
-#include <cstdio>
-#include <cstring>
+#include <stdio.h>
+#include <string.h>
 #include <iostream>
 #include <fstream>
 #include <set>
