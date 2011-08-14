@@ -34,7 +34,7 @@ const Outcode CLIP_FAR    = BIT(PLANE_FAR);
 
 #undef BIT
 
-const Outcode CLIP_MASK  = (1ul << 6) - 1;
+const Outcode CLIP_ALL_MASK  = (1ul << 6) - 1;
 
 } // namespace anon
 
@@ -54,7 +54,7 @@ Outcode testSphere(const ViewFrustum& frust, const math::point3_t& center, float
 Outcode testPoint(const ViewFrustum& frust, const math::point3_t& p);
 
 inline bool clipped(Outcode code) {
-    return (code & CLIP_MASK) != 0;
+    return (code & CLIP_ALL_MASK) != 0;
 }
 
 } // namespace glt

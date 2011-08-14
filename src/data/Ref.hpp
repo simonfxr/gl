@@ -11,7 +11,7 @@
 
 namespace atomic {
 
-static const int32 MARK = -0xAFAFAFAF;
+static const int32 MARK = int32(0xAFAFAFAF);
 
 static const int32 DEAD_STRONG = -0x0FFFFFFF;
 

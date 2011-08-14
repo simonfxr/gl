@@ -142,7 +142,7 @@ ReloadState includesNeedReload(const ShaderIncludes& incs) {
 
 GLuint compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::string& name, GLSLPreprocessor& proc) {
 
-    uint32 nsegments = proc.segments.size();
+    GLsizei nsegments = proc.segments.size();
     const char **segments = &proc.segments[0];
     const GLint *segLengths = reinterpret_cast<const GLint *>(&proc.segLengths[0]);
 
@@ -165,7 +165,7 @@ GLuint compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::
     LOG_PUT(cstate, std::string("compiling ") + (name.empty() ? " embedded code " : name) + " ... ");
         
     GL_CHECK(glShaderSource(shader, nsegments, segments, segLengths));
-    float wct;
+    double wct;
     measure_time(wct, glCompileShader(shader));
     GL_CHECK_ERRORS();
 

@@ -27,8 +27,9 @@
 #else
 
 #define HAVE_ALIGNOF_TYPE
-#define ALIGNOF_TYPE(t) offsetof(struct { char ___c; t ___x; }, ___x)
-#define ALIGNOF_EXPR(e) alignof_not_defined
+// #define ALIGNOF_TYPE(t) offsetof(struct { char ___c; t ___x; }, ___x)
+#define ALIGNOF_TYPE(t) __alignof(t)
+#define ALIGNOF_EXPR(e) alignof_expr_not_defined
 
 #endif
 
@@ -66,11 +67,11 @@
 #ifdef GNU_EXTENSIONS
 #define HAVE_THREAD_LOCAL
 #define THREAD_LOCAL(type, var) __thread type var
+#define RESTRICT __restrict__
 #else
 #define THREAD_LOCAL(type, var) type var
+#define RESTRICT
 #endif
-
-#define RESTRICT __restrict__
 
 #define LOCAL ATTRS(ATTR_NO_WARN_UNUSED_DEF)
 #define LOCAL_CONSTANT ATTRS(ATTR_NO_WARN_UNUSED_DEF)

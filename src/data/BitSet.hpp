@@ -39,8 +39,8 @@ struct BitSet {
     }
 
     void set(bool val) {
-        uint32 s = bits.size();
-        for (uint32 i = 0; i < s; ++i)
+        size_t s = bits.size();
+        for (size_t i = 0; i < s; ++i)
             bits[i] = val;
     }
 

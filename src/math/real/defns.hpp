@@ -7,7 +7,7 @@
 
 MATH_BEGIN_NAMESPACE
 
-static const real MATH_CONSTANT PI = 3.1415926;
+static const real MATH_CONSTANT PI = 3.1415926f;
 
 static const real MATH_CONSTANT POS_INF = std::numeric_limits<real>::infinity();
 

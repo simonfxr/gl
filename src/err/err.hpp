@@ -125,11 +125,11 @@ std::ostream& logPutError(const T& v, E err, const std::string& msg) {
 #define _CURRENT_LOCATION _CURRENT_LOCATION_OP(0)
 
 #define _ERROR(lvl, msg) ::err::error(_CURRENT_LOCATION, ERROR_DEFAULT_STREAM, lvl, (msg))
-#define _ASSERT(x, lvl, msg)  do { if (unlikely(!(x))) _ERROR(lvl, msg); } while (0)
-#define _ASSERT_EXPR(x, lvl, msg, expr) ((unlikely(!(x)) ? (_ERROR(lvl, msg), 0) : 0), (expr))
+#define ___ASSERT(x, lvl, msg)  do { if (unlikely(!(x))) _ERROR(lvl, msg); } while (0)
+#define ___ASSERT_EXPR(x, lvl, msg, expr) ((unlikely(!(x)) ? (_ERROR(lvl, msg), 0) : 0), (expr))
 
 #ifdef DEBUG
-#define DEBUG_ASSERT_MSG(x, msg) _ASSERT(x, ::err::DebugAssertion, msg)
+#define DEBUG___ASSERT_MSG(x, msg) ___ASSERT(x, ::err::DebugAssertion, msg)
 #define DEBUG_ERR(msg) _ERROR(::err::DebugError, msg)
 #else
 #define DEBUG_ASSERT_MSG(x, msg) UNUSED(0)
@@ -138,9 +138,9 @@ std::ostream& logPutError(const T& v, E err, const std::string& msg) {
 
 #define DEBUG_ASSERT(x) DEBUG_ASSERT_MSG(x, AS_STR(x))
 
-#define ASSERT_MSG(x, msg) _ASSERT(x, ::err::Assertion, msg)
+#define ASSERT_MSG(x, msg) ___ASSERT(x, ::err::Assertion, msg)
 #define ASSERT(x) ASSERT_MSG(x, AS_STR(x))
-#define ASSERT_MSG_EXPR(x, msg, expr) _ASSERT_EXPR(x, ::err::Assertion, msg, expr)
+#define ASSERT_MSG_EXPR(x, msg, expr) ___ASSERT_EXPR(x, ::err::Assertion, msg, expr)
 #define ASSERT_EXPR(x, expr) ASSERT_MSG_EXPR(x, AS_STR(x), expr)
 
 #define ERR(msg) _ERROR(::err::Error, msg)

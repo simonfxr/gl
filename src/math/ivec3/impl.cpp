@@ -20,7 +20,7 @@ ivec3_t ivec3(const int32 a[3]) {
 }
 
 ivec3_t operator -(const ivec3_t& a) {
-    return ivec3(0.f) - a;
+    return ivec3(int32(0)) - a;
 }
 
 ivec3_t operator +(const ivec3_t& a, const ivec3_t b) {
@@ -94,11 +94,11 @@ ivec3_t cross(const ivec3_t& a, const ivec3_t& b) {
 }
 
 real length(const ivec3_t& a) {
-    return math::sqrt(lengthSq(a));
+    return math::sqrt(real(lengthSq(a)));
 }
 
 real inverseLength(const ivec3_t& a) {
-    return math::rsqrt(lengthSq(a));
+    return math::rsqrt(real(lengthSq(a)));
 }
 
 int32 lengthSq(const ivec3_t& a) {

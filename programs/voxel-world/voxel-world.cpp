@@ -45,7 +45,8 @@ static const float FPS_UPDATE_INTERVAL = 3.f;
 static const vec3_t BLOCK_DIM = vec3(1.f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
-static const int32 N = 64; // 196;
+#define N int32(64)
+// static const int32 N = 64; // 196;
 static const int32 SPHERE_POINTS_FACE = 8; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const bool OCCLUSION = true;
@@ -127,7 +128,7 @@ static bool writeModel(const std::string& file, const CubeMesh& mdl);
 static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points);
 
 static void incGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
-    *gamma += args[0].number;
+    *gamma += float(args[0].number);
     if (*gamma < 0) *gamma = 0.f;
 }
 
@@ -305,7 +306,7 @@ struct Faces {
     vec3_t f[2]; // front, up, right, bot, down, left
 };
 
-static const uint32 RAY_SAMPLES = 1.9 * (N + 1); // about sqrt(3) * N, maximum ray length
+#define RAY_SAMPLES uint32(1.9 * (real(N) + 1)) // about sqrt(3) * N, maximum ray length
 
 struct Ray {
     Faces lightContrib;
@@ -408,7 +409,7 @@ static void initRays(Rays &rays, vec3_t dirs[]) {
 #pragma omp parallel for reduction(+:cos0, cos1, cos2, cos3, cos4, cos5)
     for (int32 i = 0; i < SPHERE_POINTS; ++i) {
         const direction3_t& d = dirs[i];
-        vec3_t p = N * (d * 0.5f + vec3(0.5f));
+        vec3_t p = real(N) * (d * 0.5f + vec3(0.5f));
         vec3_t step = (p - center) / (10.f * N);
         Faces sum1 = { { vec3(0.f), vec3(0.f) } };
         initRay(rays.rays[i], d, step, sum1);
@@ -664,7 +665,7 @@ static void createWorld(Densities& ds) {
     for (int32 i = 0; i < N; ++i)
         for (int32 j = 0; j < N; ++j)
             for (int32 k = 0; k < N; ++k) {
-                vec3_t wc = (vec3(i, j, k) * (1.f / N) - vec3(0.5f)) * VIRTUAL_DIM;
+                vec3_t wc = (vec3(ivec3(i, j, k)) * (1.f / real(N)) - vec3(0.5f)) * VIRTUAL_DIM;
                 ds.ds[i][j][k] = density(wc);
 //                std::cerr << i << " " << j << " " << k << " -> wc:" << wc << " density: " << ds.ds[i][j][k] << " sign " << signAt(ds, ivec3(i, j, k)) << std::endl;
             }
@@ -767,13 +768,13 @@ static void createModel(CubeMesh& worldModel, const World& world, const World& v
                         float w = dens * 2;
                         col3 = (1 - w) * blue + w * yellow;
                     } else {
-                        float w = (dens - 0.5) * 2;
+                        float w = (dens - 0.5f) * 2;
                         col3 = (1 - w) * yellow + w * red;
                     }
                     
                     glt::color col = glt::color(col3);
 //                    uint32 col = glt::color(randColor()).rgba();
-                    vec3_t offset = BLOCK_DIM * vec3(ii, jj, kk);
+                    vec3_t offset = BLOCK_DIM * vec3(ivec3(ii, jj, kk));
                     for (uint32 r = 0; r < verts.size; ++r) {
                         Vertex v = verts.verts[r];
                         ++stats.faces;
@@ -948,7 +949,7 @@ static void renderBlocks(State *state, ge::Engine& e) {
                       BLOCK_MAT.specularContribution, BLOCK_MAT.shininess);
     us.optional("materialProperties", mat);
     us.optional("gammaCorrection", state->gamma_correction);
-    us.optional("sin_time", sin(e.gameLoop().gameTime()));
+    us.optional("sin_time", math::sin(e.gameLoop().gameTime()));
 
     state->worldModel.drawElements();
 }
@@ -1069,7 +1070,7 @@ static float sumNoise3D(const vec3_t& p, uint32 octaves, float fmin, float phi, 
     
     for (uint32 i = 0; i < octaves; ++i) {
         float x = noise3D(p * freq);
-        if (absval) x = abs(x);
+        if (absval) x = math::abs(x);
         r += a * x;
         freq *= 2;
         a *= phi;
@@ -1116,11 +1117,11 @@ static float noise3D(const vec3_t& pnt) {
 }
 
 void pointsOnSphere(uint32 n, vec3_t *ps) {
-    float inc = PI * (3.f - sqrt(5.f));
+    float inc = PI * (3.f - math::sqrt(5.f));
     float off = 2.f / n;
     for (uint32 k = 0; k < n; ++k) {
         float y = k * off - 1 + (off / 2.f);
-        float r = sqrt(1.f - y * y);
+        float r = math::sqrt(1.f - y * y);
         float phi = k * inc;
         float s, c;
         sincos(phi, s, c);

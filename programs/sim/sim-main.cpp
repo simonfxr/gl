@@ -362,11 +362,11 @@ void Game::renderWorld(float dt) {
         
     wallUniforms.ecLightPos = eyeLightPos;
     wallUniforms.ecSpotDir = ecSpotDirection;
-    wallUniforms.spotAngle = 0.91;
+    wallUniforms.spotAngle = 0.91f;
 
     sphereUniforms.ecLightPos = eyeLightPos;
     sphereUniforms.ecSpotDir = ecSpotDirection;
-    sphereUniforms.spotAngle = 0.91;
+    sphereUniforms.spotAngle = 0.91f;
         
     world.render(renderer, dt);
 }
@@ -531,9 +531,9 @@ SphereLOD Game::calc_sphere_lod(const Sphere& s) {
     // near upper right corner of frustm (view coord)
     vec4_t nur_corner = gt.inverseProjectionMatrix() * vec4(-1.f, -1.f, -1.f, 1.f);
 
-    float x_max = abs(nur_corner[0]);
-    float y_max = abs(nur_corner[1]);
-    float z_min = abs(nur_corner[2]);
+    float x_max = math::abs(nur_corner[0]);
+    float y_max = math::abs(nur_corner[1]);
+    float z_min = math::abs(nur_corner[2]);
     
     float size = min(x_max, y_max);
         
@@ -587,7 +587,7 @@ void Game::render_sphere(const Sphere& s, const SphereModel& m) {
         sphereShader->use();
 
         vec3_t col3 = vec3(1.f);
-        col3 /= lod.level + 1;
+        col3 /= real(lod.level + 1);
         glt::color col = glt::color(col3);
         
         glt::Uniforms us(*sphereShader);
@@ -705,43 +705,43 @@ void Game::render_hud() {
     txtFps.SetPosition(2, 0);
     txtFps.SetColor(sf::Color(255, 255, 0, 180));
 
-    height += txtFps.GetRect().Height + 2;
+    height += uint32(txtFps.GetRect().Height) + 2;
     sf::Text txtSpeed("Sphere speed: " + to_string(sphere_speed) + " m/s");
     txtSpeed.SetCharacterSize(12);
     txtSpeed.SetColor(c);
     txtSpeed.SetPosition(2, height);
 
-    height += txtSpeed.GetRect().Height + 2;    
+    height += uint32(txtSpeed.GetRect().Height) + 2;    
     sf::Text txtMass("Sphere mass: " + to_string(sphere_proto.m) + " kg");
     txtMass.SetCharacterSize(12);
     txtMass.SetColor(c);
     txtMass.SetPosition(2, height);
 
-    height += txtMass.GetRect().Height + 2;
+    height += uint32(txtMass.GetRect().Height) + 2;
     sf::Text txtRad("Sphere radius: " + to_string(sphere_proto.r) + " m");
     txtRad.SetCharacterSize(12);
     txtRad.SetColor(c);
     txtRad.SetPosition(2, height);
 
-    height += txtRad.GetRect().Height + 2;
+    height += uint32(txtRad.GetRect().Height) + 2;
     sf::Text txtAnimSpeed("Animation Speed: " + to_string(game_speed));
     txtAnimSpeed.SetCharacterSize(12);
     txtAnimSpeed.SetColor(c);
     txtAnimSpeed.SetPosition(2, height);
 
-    height += txtAnimSpeed.GetRect().Height + 2;
+    height += uint32(txtAnimSpeed.GetRect().Height) + 2;
     sf::Text txtInter(std::string("Interpolation: ") + (use_interpolation ? "on" : "off"));
     txtInter.SetCharacterSize(12);
     txtInter.SetColor(c);
     txtInter.SetPosition(2, height);
 
-    height += txtInter.GetRect().Height + 2;
+    height += uint32(txtInter.GetRect().Height) + 2;
     sf::Text txtNumBalls(std::string("NO Spheres: ") + to_string(world.numSpheres()));
     txtNumBalls.SetCharacterSize(12);
     txtNumBalls.SetColor(c);
     txtNumBalls.SetPosition(2, height);
 
-    height += txtNumBalls.GetRect().Height + 2;
+    height += uint32(txtNumBalls.GetRect().Height) + 2;
     std::string render_stat = "FPS(Rendering): " + to_string(fs.rt_avg) + " " +
         to_string(fs.rt_current) + " " + to_string(fs.rt_min) + " " + to_string(fs.rt_max);
     sf::Text txtRenderTime(render_stat);
@@ -811,7 +811,7 @@ void Game::cmdIncWorldSolveIterations(const ge::Event<ge::CommandEvent>&, const 
     if (args[0].integer < 0 && world.solve_iterations < - args[0].integer)
         world.solve_iterations = 0;
     else
-        world.solve_iterations += args[0].integer;
+        world.solve_iterations += int32(args[0].integer);
     std::cerr << "number of contact-solver iterations: " << world.solve_iterations << std::endl;
 }
 

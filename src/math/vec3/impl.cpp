@@ -14,7 +14,7 @@ vec3_t vec3(real a) {
 }
 
 vec3_t vec3(const ivec3_t& a) {
-    return vec3(a[0], a[1], a[2]);
+    return vec3(real(a[0]), real(a[1]), real(a[2]));
 }
 
 vec3_t vec3(const vec4_t& a) {
