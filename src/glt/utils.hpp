@@ -2,7 +2,7 @@
 #define GL_UTILS
 
 #include "defs.h"
-#include "opengl.h"
+#include "opengl.hpp"
 
 #include "err/err.hpp"
 

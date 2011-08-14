@@ -2,7 +2,7 @@
 #define GLT_MESH_HPP
 
 #include "defs.h"
-#include "opengl.h"
+#include "opengl.hpp"
 
 #include "math/vec2/type.hpp"
 #include "math/vec3/type.hpp"

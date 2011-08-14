@@ -108,6 +108,10 @@ std::string basename(const std::string& path) {
     return path.substr(pos, end - pos);
 }
 
+std::string dropExtension(const std::string& path) {
+    return def::dropExtension(path);
+}
+
 std::string extension(const std::string& path) {
     size_t pos = path.rfind('/');
     if (pos == std::string::npos)
@@ -160,17 +164,13 @@ std::string lookup(const std::vector<std::string>& dirs, const std::string& name
     return def::lookup(dirs, name);
 }
 
-bool exists(const std::string& path, ObjectType type) {
+bool exists(const std::string& path, ObjectType *type) {
     struct stat info;
     if (stat(path.c_str(), &info) == -1)
         return false;
     int objtype = info.st_mode & S_IFMT;
-    switch (type) {
-    case Any: return true;
-    case File: return objtype == S_IFREG;
-    case Directory: return objtype == S_IFDIR;
-    default: return false;
-    }
+    *type = objtype == S_IFDIR ? Directory : File;
+    return true;
 }
 
 bool operator ==(const ModificationTime& a, const ModificationTime& b) {

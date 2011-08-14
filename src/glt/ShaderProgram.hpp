@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 
-#include "opengl.h"
+#include "opengl.hpp"
 #include "data/Ref.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/VertexDescription.hpp"

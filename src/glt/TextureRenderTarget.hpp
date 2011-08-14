@@ -2,7 +2,7 @@
 #define GLT_TEXTURE_RENDER_TARGET_HPP
 
 #include "defs.h"
-#include "opengl.h"
+#include "opengl.hpp"
 #include "glt/RenderTarget.hpp"
 #include "glt/TextureHandle.hpp"
 

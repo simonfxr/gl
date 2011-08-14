@@ -1,7 +1,7 @@
 #ifndef GLT_TEXTURE_HANDLE_HPP
 #define GLT_TEXTURE_HANDLE_HPP
 
-#include "opengl.h"
+#include "opengl.hpp"
 
 namespace glt {
 

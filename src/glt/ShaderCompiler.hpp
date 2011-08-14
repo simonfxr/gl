@@ -7,7 +7,7 @@
 #include <set>
 #include <queue>
 
-#include "opengl.h"
+#include "opengl.hpp"
 
 #include "data/Ref.hpp"
 

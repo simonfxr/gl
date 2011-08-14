@@ -2,7 +2,7 @@
 #define GENBATCH_HPP
 
 #include "defs.h"
-#include "opengl.h"
+#include "opengl.hpp"
 #include "err/err.hpp"
 
 namespace glt {

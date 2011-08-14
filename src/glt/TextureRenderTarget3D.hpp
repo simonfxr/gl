@@ -2,7 +2,7 @@
 #define GLT_TEXTURE_RENDER_TARGET_3D_HPP
 
 #include "defs.h"
-#include "opengl.h"
+#include "opengl.hpp"
 #include "glt/TextureRenderTarget.hpp"
 #include "math/ivec3/type.hpp"
 
