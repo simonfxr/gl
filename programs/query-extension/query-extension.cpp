@@ -2,14 +2,13 @@
 #include "glt/utils.hpp"
 
 #include "ge/Engine.hpp"
-#include "glt/utils.hpp"
 
 #include <iostream>
 #include <cstring>
 
 #ifdef SYSTEM_UNIX
 #include <GL/glxew.h>
-#define GLEW_IS_SUPPORTED(ext) glxewIsSupported(::glt::gl_str((ext)))
+#define GLEW_IS_SUPPORTED(ext) glxewIsSupported((ext))
 #elif defined(SYSTEM_WINDOWS)
 #include <GL/wglew.h>
 #define GLEW_IS_SUPPORTED(ext) wglewIsSupported((ext))

@@ -45,8 +45,7 @@ static const float FPS_UPDATE_INTERVAL = 3.f;
 static const vec3_t BLOCK_DIM = vec3(1.f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
-#define N int32(64)
-// static const int32 N = 64; // 196;
+static const int32 N = 64; // 196;
 static const int32 SPHERE_POINTS_FACE = 8; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const bool OCCLUSION = true;
@@ -306,19 +305,31 @@ struct Faces {
     vec3_t f[2]; // front, up, right, bot, down, left
 };
 
-#define RAY_SAMPLES uint32(1.9 * (real(N) + 1)) // about sqrt(3) * N, maximum ray length
+static const uint32 RAY_SAMPLES = uint32(1.9 * (real(N) + 1)); // about sqrt(3) * N, maximum ray length
 
 struct Ray {
     Faces lightContrib;
-    ivec3_t offset[RAY_SAMPLES];
+    ivec3_t *offset;
+    Ray() {
+        offset = new ivec3_t[RAY_SAMPLES];
+    }
+    ~Ray() {
+        delete[] offset;
+    }
 };
 
 struct Rays {
     Faces sumcos;
-    Ray rays[SPHERE_POINTS];
+    Ray *rays;
     uint32 faceOffsets[6];
     uint32 faceLengths[6];
     Faces lightContribFace[6];
+    Rays() {
+        rays = new Ray[SPHERE_POINTS];
+    }
+    ~Rays() {
+        delete[] rays;
+    }
 };
 
 struct GlobalOcc {
