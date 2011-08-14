@@ -3,8 +3,8 @@
 #include "opengl.h"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
-#include "math/mat4.hpp"
 #include "math/mat3.hpp"
+#include "math/mat4.hpp"
 #include "glt/color.hpp"
 
 #include "glt/ShaderProgram.hpp"

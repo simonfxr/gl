@@ -141,3 +141,41 @@ macro(def_lib target)
   endif()
 
 endmacro()
+
+macro(def_program target)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
+
+  # parse the arguments
+  sfml_parse_arguments(THIS "SOURCES;DEPEND;LIB_DEPEND" "" ${ARGN})
+
+  add_executable(${target} ${THIS_SOURCES})
+
+  # set_target_properties(${target} PROPERTIES COMPILE_FLAGS 
+  #   "-DPROJECT_PATH=${PROJECT_SOURCE_DIR} -DPROGRAM_PATH=${CMAKE_CURRENT_LIST_DIR}")
+
+  # link the target to its SFML dependencies
+  if(THIS_DEPEND)
+    if(MATH_INLINE)
+      set(all_deps ${THIS_DEPEND})
+      set(THIS_DEPEND)
+      foreach(dep ${all_deps})
+        if(NOT ${dep} STREQUAL "vec-math")
+          set(THIS_DEPEND ${THIS_DEPEND} ${dep})
+        endif()
+      endforeach()
+    endif()
+    target_link_libraries(${target} ${THIS_DEPEND})
+  endif()
+
+  # link the target to its external dependencies
+  if(THIS_LIB_DEPEND)
+    if(BUILD_SHARED)
+      # in shared build, we use the regular linker commands
+      target_link_libraries(${target} ${THIS_LIB_DEPEND})
+    else()
+      # in static build there's no link stage, but with some compilers it is possible to force
+      # the generated static library to directly contain the symbols from its dependencies
+      sfml_static_add_libraries(${target} ${THIS_LIB_DEPEND})
+    endif()
+  endif()
+endmacro()

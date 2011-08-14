@@ -1,6 +1,7 @@
 #include "glt/TextureRenderTarget3D.hpp"
 #include "err/err.hpp"
 #include "glt/utils.hpp"
+#include "math/vec3.hpp"
 #include "math/ivec3.hpp"
 
 namespace glt {

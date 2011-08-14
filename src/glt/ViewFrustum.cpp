@@ -3,6 +3,7 @@
 
 #include "math/vec4.hpp"
 #include "math/mat4.hpp"
+#include "math/plane.hpp"
 
 namespace glt {
 

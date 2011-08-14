@@ -12,6 +12,7 @@
 
 #include "sys/measure.hpp"
 
+#include "math/vec4.hpp"
 #include "math/ivec3.hpp"
 #include "math/io.hpp"
 

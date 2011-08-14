@@ -181,7 +181,8 @@ struct Game {
 };
 
 Game::Game() :
-    renderer(*this)
+    renderer(*this),
+    textureRenderTarget(0)
 {}
 
 void Game::init(const ge::Event<ge::InitEvent>& ev) {

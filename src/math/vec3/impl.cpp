@@ -1,5 +1,7 @@
 #include "math/vec3/defns.hpp"
 #include "math/real.hpp"
+#include "math/ivec3.hpp"
+#include "math/vec4.hpp"
 
 MATH_BEGIN_NAMESPACE
 

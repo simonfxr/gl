@@ -10,7 +10,8 @@ set(MATH_SRC
   math/mat4/impl.cpp
   math/real/impl.cpp
   math/ivec3/impl.cpp
-  math/quat/impl.cpp)
+  math/quat/impl.cpp
+  math/plane.cpp)
 
 if(NOT MATH_INLINE)
   def_lib(vec-math SOURCES ${MATH_SRC})
@@ -40,7 +41,13 @@ elseif(SYS_WINDOWS)
     sys/clock_windows.cpp)
 endif()
 
-def_lib(sys SOURCES ${SYS_SRC})
+set(SYS_LIBS)
+
+if(SYS_LINUX)
+  set(SYS_LIBS rt ${SYS_LIBS})
+endif()
+
+def_lib(sys SOURCES ${SYS_SRC} LIB_DEPEND ${SYS_LIBS})
 
 set(GLT_SRC
   glt/utils.cpp

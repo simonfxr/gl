@@ -3,6 +3,7 @@
 #include "defs.h"
 
 #include "math/vec3.hpp"
+#include "math/vec4.hpp"
 #include "math/plane.hpp"
 
 #include "sys/clock.hpp"
