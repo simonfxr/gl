@@ -22,7 +22,7 @@ void *alloc_aligned(uint64 size, uint32 alignment) {
         mem = 0;
 #else
     mem = malloc(size);
-    if (static_cast<uint64>(mem) & (alignment - 1)) != 0) {
+    if ((uptr(mem) & (alignment - 1)) != 0) {
         ERR("cannot alloc align memory");
         free(mem);
         mem = 0;

@@ -277,7 +277,7 @@ bool ShaderProgram::link() {
     LOG_BEGIN(*this, err::Info);
     LOG_PUT(*this, "linking ... ");
 
-    float wct;
+    double wct;
     measure_time(wct, glLinkProgram(self->program));
     GL_CHECK_ERRORS();
 
@@ -403,7 +403,7 @@ ret:
 
 bool ShaderProgram::bindAttributesGeneric(const VertexDescBase& desc) {
     for (uptr i = 0; i < desc.nattributes; ++i)
-        if (!bindAttribute(desc.attributes[i].name, i))
+        if (!bindAttribute(desc.attributes[i].name, (GLint) i))
             return false;
     return true;
 }

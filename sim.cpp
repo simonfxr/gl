@@ -414,8 +414,8 @@ void World::Data::insertBSP(BSP *&p, int ni, Box volume, uint32 depth, Node *nod
     }
 
     float d = distance(p->plane, center);
-    float d0 = abs(d);
-    float sign = signum(d);
+    float d0 = math::abs(d);
+    float sign = float(signum(d));
     uint32 ni2 = (ni + 1) % 3;
     if (sign == 0.f) sign = 1.f;
     uint32 face = sign > 0 ? 0 : 1;
@@ -457,7 +457,7 @@ void World::Data::findCollisions(std::vector<Contact>& contacts, const BSP *t, i
                         con.x = s1.particle;
                         con.y = s2.particle;
                         con.normal = directionFromTo(p2.pos, center);
-                        con.distance = sqrt(dist2) - r - s2.r;
+                        con.distance = math::sqrt(dist2) - r - s2.r;
                         contacts.push_back(con);
                     }
                 }
@@ -470,8 +470,8 @@ void World::Data::findCollisions(std::vector<Contact>& contacts, const BSP *t, i
     }
 
     float d = distance(t->plane, center);
-    float d0 = abs(d);
-    float sign = signum(d);
+    float d0 = math::abs(d);
+    float sign = float(signum(d));
     uint32 ni2 = (ni + 1) % 3;
     if (sign == 0.f) sign = 1.f;
     uint32 face = sign > 0 ? 0 : 1;

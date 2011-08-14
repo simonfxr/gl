@@ -8,6 +8,8 @@
 
 #ifdef SYSTEM_UNIX
 #include "sys/fs/fs_unix.hpp"
+#elif SYSTEM_WINDOWS
+#include "sys/fs/fs_windows.hpp"
 #else
 #error "no Filesystem implementation available"
 #endif

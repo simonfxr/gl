@@ -142,7 +142,7 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
         for (int j = 0; j < volCubeSz[1]; ++j) {
             for (int k = 0; k < volCubeSz[2]; ++k) {
                 SimpleVertex v;
-                v.position = vec3(i, j, k) / vec3(volCubeSz - ivec3(1));
+                v.position = vec3(ivec3(i, j, k)) / vec3(volCubeSz - ivec3(1));
                 volumeCube.addVertex(v);
             }   
         }

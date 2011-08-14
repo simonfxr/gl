@@ -199,10 +199,10 @@ void sphere(Mesh<Vertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iSt
     for (i = 0; i < iStacks; i++) 
     {
         GLfloat rho = (GLfloat)i * drho;
-        GLfloat srho = (GLfloat)(sin(rho));
-        GLfloat crho = (GLfloat)(cos(rho));
-        GLfloat srhodrho = (GLfloat)(sin(rho + drho));
-        GLfloat crhodrho = (GLfloat)(cos(rho + drho));
+        GLfloat srho = (GLfloat)(math::sin(rho));
+        GLfloat crho = (GLfloat)(math::cos(rho));
+        GLfloat srhodrho = (GLfloat)(math::sin(rho + drho));
+        GLfloat crhodrho = (GLfloat)(math::cos(rho + drho));
 		
         // Many sources of OpenGL sphere drawing code uses a triangle fan
         // for the caps of the sphere. This however introduces texturing 
@@ -215,8 +215,8 @@ void sphere(Mesh<Vertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iSt
         for ( j = 0; j < iSlices; j++) 
         {
             GLfloat theta = (j == iSlices) ? 0.0f : j * dtheta;
-            GLfloat stheta = (GLfloat)(-sin(theta));
-            GLfloat ctheta = (GLfloat)(cos(theta));
+            GLfloat stheta = (GLfloat)(-math::sin(theta));
+            GLfloat ctheta = (GLfloat)(math::cos(theta));
 			
             GLfloat x = stheta * srho;
             GLfloat y = ctheta * srho;
@@ -246,8 +246,8 @@ void sphere(Mesh<Vertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iSt
 			
 
             theta = ((j+1) == iSlices) ? 0.0f : (j+1) * dtheta;
-            stheta = (GLfloat)(-sin(theta));
-            ctheta = (GLfloat)(cos(theta));
+            stheta = (GLfloat)(-math::sin(theta));
+            ctheta = (GLfloat)(math::cos(theta));
 			
             x = stheta * srho;
             y = ctheta * srho;

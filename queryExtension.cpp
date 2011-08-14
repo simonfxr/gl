@@ -1,4 +1,5 @@
 #include "opengl.h"
+#include "glt/utils.hpp"
 
 #include "ge/Engine.hpp"
 #include "glt/utils.hpp"
@@ -6,7 +7,15 @@
 #include <iostream>
 #include <cstring>
 
+#ifdef SYSTEM_UNIX
 #include <GL/glxew.h>
+#define GLEW_IS_SUPPORTED(ext) glxewIsSupported(::glt::gl_str((ext)))
+#elif defined(SYSTEM_WINDOWS)
+#include <GL/wglew.h>
+#define GLEW_IS_SUPPORTED(ext) wglewIsSupported((ext))
+#else
+#error "unknown system"
+#endif
 
 namespace {
 
@@ -23,10 +32,10 @@ void animate(State *state, const ge::Event<ge::AnimationEvent>& ev) {
     for (int i = 1; i < state->argc; ++i) {
         if (strncmp(state->argv[i], "GL_", 3) == 0) {
             bool ok = glt::isExtensionSupported(state->argv[i]);
-            ok = ok || glxewIsSupported(state->argv[i]);
+            ok = ok || GLEW_IS_SUPPORTED(state->argv[i]);
             std::cerr << "extension " << state->argv[i] << ": " << (ok ? "yes" : "no") << std::endl;
         } else {
-            bool ok = glXGetProcAddress(glt::gl_str(state->argv[i])) != 0;
+            bool ok = GLEW_IS_SUPPORTED(state->argv[i]) != 0;
             std::cerr << "function " << state->argv[i] << ": " << (ok ? "yes" : "no") << std::endl;
         }        
     }
