@@ -21,13 +21,13 @@ uint32 buffersOf(GameWindow& win) {
 } // namespace anon
 
 WindowRenderTarget::WindowRenderTarget(GameWindow& w) :
-    RenderTarget(w.window().GetWidth(), w.window().GetHeight(),
+    RenderTarget(SIZE(w.window().GetWidth()), SIZE(w.window().GetHeight()),
                  buffersOf(w)),
     window(w)
 {}
 
 void WindowRenderTarget::resized() {
-    updateSize(window.window().GetWidth(), window.window().GetHeight());
+    updateSize(SIZE(window.window().GetWidth()), SIZE(window.window().GetHeight()));
 }
 
 void WindowRenderTarget::doActivate() {

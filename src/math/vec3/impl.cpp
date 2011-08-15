@@ -185,11 +185,11 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC real& vec3_t::operator[](index_t i) {
+MATH_INLINE_SPEC real& vec3_t::operator[](defs::index i) {
     return components[i];
 }
 
-MATH_INLINE_SPEC real vec3_t::operator[](index_t i) const {
+MATH_INLINE_SPEC real vec3_t::operator[](defs::index i) const {
     return components[i];
 }
 

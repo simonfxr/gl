@@ -10,6 +10,8 @@ struct VertexTraits {
 
 namespace glt {
 
+using namespace defs;
+
 struct Any;
 struct AttrBase;
 template <typename T> struct Attr;
@@ -17,16 +19,16 @@ template <typename T> struct VertexDesc;
 typedef VertexDesc<Any> VertexDescBase;
 
 struct AttrBase {
-    uint32 offset;
-    uint32 alignment;
+    defs::index offset;
+    defs::size alignment;
     GLenum component_type;
-    uint32 ncomponents;
+    defs::size ncomponents;
     bool normalized;
     const char * name;
 
     AttrBase();
-    AttrBase(size_t off, uint32 align, GLenum ty, uint32 ncomp, bool norm = false) :
-        offset(uint32(off)),
+    AttrBase(defs::index off, defs::size align, GLenum ty, defs::size ncomp, bool norm = false) :
+        offset(off),
         alignment(align),
         component_type(ty),
         ncomponents(ncomp),
@@ -37,7 +39,7 @@ struct AttrBase {
 
 template <typename T>
 struct Attr : public AttrBase {
-    Attr(size_t off, uint32 align, GLenum ty, uint32 ncomp, bool norm = false) :
+    Attr(defs::index off, defs::size align, GLenum ty, defs::size ncomp, bool norm = false) :
         AttrBase(off, align, ty, ncomp, norm) {}
     Attr(const AttrBase& base) :
         AttrBase(base) {}
@@ -45,9 +47,9 @@ struct Attr : public AttrBase {
 
 template <typename T>
 struct VertexDesc {
-    uint32 sizeof_vertex;
-    uint32 alignment;
-    uint32 nattributes;
+    size sizeof_vertex;
+    size alignment;
+    size nattributes;
     const Attr<T> *attributes;
 
     VertexDesc() :
@@ -56,8 +58,8 @@ struct VertexDesc {
         nattributes(0),
         attributes(0) {}
 
-    uint32 index(size_t off) const {
-        for (uint32 i = 0; i < nattributes; ++i) {
+    defs::index index(defs::index off) const {
+        for (defs::index i = 0; i < nattributes; ++i) {
             if (off == attributes[i].offset)
                 return i;
         }
@@ -70,7 +72,7 @@ struct VertexDesc {
         desc.sizeof_vertex = sizeof_vertex;
         desc.alignment = alignment;
         desc.nattributes = nattributes;
-        desc.attributes = (const Attr<Any> *) attributes;
+        desc.attributes = reinterpret_cast<const Attr<Any> *>(attributes);
         return desc;
     }
 };

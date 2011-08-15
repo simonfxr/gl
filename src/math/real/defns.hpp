@@ -49,11 +49,11 @@ real squared(real x) PURE_FUNC;
 
 real cubed(real x) PURE_FUNC;
 
-real pow(real x, int32 n) PURE_FUNC;
+real pow(real x, defs::int32 n) PURE_FUNC;
 
 real pow(real x, real y) PURE_FUNC;
 
-int32 signum(real x) PURE_FUNC;
+defs::int32 signum(real x) PURE_FUNC;
 
 // bool signbit(real x) PURE_FUNC;
 
@@ -65,9 +65,9 @@ real degToRad(real deg) PURE_FUNC;
 
 real radToDeg(real rad) PURE_FUNC;
 
-//real max(real x, real y) PURE_FUNC;
-//
-//real min(real x, real y) PURE_FUNC;
+real max(real x, real y) PURE_FUNC;
+
+real min(real x, real y) PURE_FUNC;
 
 real saturate(real x) PURE_FUNC;
 
@@ -75,7 +75,7 @@ real clamp(real x, real lo, real hi) PURE_FUNC;
 
 real smoothstep(real lo_edge, real hi_edge, real x) PURE_FUNC;
 
-real lerp(real a, real b, real t) PURE_FUNC;
+real mix(real a, real b, real t) PURE_FUNC;
 
 MATH_END_NAMESPACE
 

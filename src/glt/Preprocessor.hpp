@@ -4,9 +4,11 @@
 #include <ostream>
 #include <map>
 
-#include "defs.h"
+#include "defs.hpp"
 
 namespace glt {
+
+using namespace defs;
 
 struct Preprocessor {
 
@@ -14,7 +16,7 @@ struct Preprocessor {
         Preprocessor& processor;
         const std::string name;
         const char *data;
-        uint32 size;
+        size_t size;
 
         ContentContext(Preprocessor& proc, const std::string& nam) :
             processor(proc), name(nam) {}
@@ -23,10 +25,10 @@ struct Preprocessor {
     struct DirectiveContext {
         ContentContext content;
         
-        uint32 lineLength;
-        uint32 lineOffset;
-        uint32 beginDirective; // index of first char in directive
-        uint32 endDirective;   // index of first char behind directive, so length of directive = endDirective - beginDirective
+        defs::size lineLength;
+        defs::index lineOffset;
+        defs::index beginDirective; // index of first char in directive
+        defs::index endDirective;   // index of first char behind directive, so length of directive = endDirective - beginDirective
 
         DirectiveContext(Preprocessor &proc, const std::string& name) :
             content(proc, name) {}

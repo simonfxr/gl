@@ -7,7 +7,7 @@
 #include <bitset>
 #include <algorithm>
 
-#include "defs.h"
+#include "defs.hpp"
 
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
@@ -32,8 +32,6 @@
 #include "glt/CubeMesh.hpp"
 
 #include "sys/measure.hpp"
-
-// #define HS_WORLD_GEN
 
 #ifdef HS_WORLD_GEN
 #include <voxel_hs.h>

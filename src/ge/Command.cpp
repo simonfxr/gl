@@ -68,7 +68,7 @@ QuotationCommand::~QuotationCommand() {
 void QuotationCommand::interactive(const Event<CommandEvent>& ev, const Array<CommandArg>&) {
     for (uint32 ip = 0; ip < quotation->size(); ++ip) {
         std::vector<CommandArg>& arg_vec = quotation->operator[](ip);
-        Array<CommandArg> args(&arg_vec[0], arg_vec.size());
+        Array<CommandArg> args(&arg_vec[0], SIZE(arg_vec.size()));
         ev.info.engine.commandProcessor().exec(args);
     }
 }
@@ -113,7 +113,7 @@ public:
         // std::cerr << "list command: " << parameters().size() << std::endl;
     }
     void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
-        for (uint32 i = 0; i < args.size(); ++i) {
+        for (index i = 0; i < args.size(); ++i) {
             if (args[i].type != String) {
                 ERR("expected String argument");
                 return;

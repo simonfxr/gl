@@ -2,7 +2,7 @@
 
 namespace ge {
 
-GameLoop::GameLoop(uint32 ticks_per_second, uint32 max_frame_skip, uint32 max_fps)
+GameLoop::GameLoop(defs::size ticks_per_second, defs::size max_frame_skip, defs::size max_fps)
     : _ticks_per_second(ticks_per_second),
       _max_frame_skip(max_frame_skip),
       _max_fps(max_fps),
@@ -49,7 +49,7 @@ int32 GameLoop::run(GameLoop::Game& logic) {
         
         const float tick_length      = 1.f / _ticks_per_second;
         const float draw_tick_length = _sync || _max_fps == 0 ? 0.f : 1.f / _max_fps;
-        const uint32 loops_max       = _sync ? 1 : _max_frame_skip == 0 ? 0xFFFFFFFFUL : _max_frame_skip;
+        const index loops_max       = _sync ? 1 : _max_frame_skip == 0 ? 0xFFFFFF : _max_frame_skip;
         const bool syncDraw = _sync;
 
         _frame_duration = tick_length;
@@ -58,7 +58,7 @@ int32 GameLoop::run(GameLoop::Game& logic) {
 
         bool reset_time = false;
 
-        uint32 loops = 0;
+        index loops = 0;
 
         _running = true;
         _restart = false;

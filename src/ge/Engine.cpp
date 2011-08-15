@@ -276,7 +276,7 @@ bool Engine::Data::execCommand(std::vector<CommandArg>& args) {
     if (args.size() == 0)
         return true;
     
-    Array<CommandArg> com_args(&args[0], args.size());
+    Array<CommandArg> com_args(&args[0], SIZE(args.size()));
 
     // ON_DEBUG(std::cerr << "executing command: ");
     // ON_DEBUG(prettyCommandArgs(std::cerr, com_args));

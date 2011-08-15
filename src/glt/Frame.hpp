@@ -1,7 +1,7 @@
 #ifndef GLT_FRAME_HPP
 #define GLT_FRAME_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 #include "math/vec3/type.hpp"
 #include "math/vec4/type.hpp"
 #include "math/mat3/type.hpp"

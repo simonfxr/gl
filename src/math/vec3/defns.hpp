@@ -89,7 +89,7 @@ real cos(const vec3_t& a, const vec3_t& b) PURE_FUNC;
 
 vec3_t projectAlong(const vec3_t& a, const vec3_t& x) PURE_FUNC;
 
-bool equal(const vec3_t& a, const vec3_t& b, real epsi = 1e-4) PURE_FUNC;
+bool equal(const vec3_t& a, const vec3_t& b, real epsi = real(1e-4)) PURE_FUNC;
 
 MATH_END_NAMESPACE
 

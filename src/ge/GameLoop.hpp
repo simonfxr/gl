@@ -1,16 +1,18 @@
 #ifndef GAME_LOOP_HPP
 #define GAME_LOOP_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 
 namespace ge {
+
+using namespace defs;
 
 class GameLoop {
 private:
 
-    uint32 _ticks_per_second;
-    uint32 _max_frame_skip;
-    uint32 _max_fps;
+    defs::size _ticks_per_second;
+    defs::size _max_frame_skip;
+    defs::size _max_fps;
 
     bool _running;
     bool _exit;
@@ -43,7 +45,7 @@ public:
         virtual void exit(int32 exit_code) { UNUSED(exit_code); }
     };
      
-    explicit GameLoop(uint32 ticks_per_second, uint32 max_frame_skip = 10, uint32 max_fps = 0);
+    explicit GameLoop(defs::size ticks_per_second, defs::size max_frame_skip = 10, defs::size max_fps = 0);
 
     float gameTime() const { return _now - _skipped_time - _start_time; }
     
@@ -51,21 +53,21 @@ public:
 
     float frameDuration() const { return _frame_duration; }
 
-    uint32 ticksPerSecond() const { return _ticks_per_second; }
+    defs::size ticksPerSecond() const { return _ticks_per_second; }
 
-    void ticksPerSecond(uint32 ticks) {
+    void ticksPerSecond(defs::size ticks) {
         _restart = true;
         _running = false;
         _ticks_per_second = ticks;
     }
 
-    void maxDrawFramesSkipped(uint32 frames) {
+    void maxDrawFramesSkipped(defs::size frames) {
         _restart = true;
         _running = false;
         _max_frame_skip = frames;
     }
 
-    void maxFPS(uint32 max_fps) {
+    void maxFPS(defs::size max_fps) {
         _restart = true;
         _running = false;
         _max_fps = max_fps;

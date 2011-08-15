@@ -26,9 +26,10 @@ bool readFile(std::ostream& err, const std::string& fn, char *& file_contents, u
         goto fail;
 
     {
-        int64 size = ftell(in);
-        if (size < 0)
+        int64 ssize = ftell(in);
+        if (ssize < 0)
             goto fail;
+        size_t size = size_t(ssize);
         if (fseek(in, 0, SEEK_SET) == -1)
             goto fail;
 
@@ -79,7 +80,7 @@ bool parseFileArg(const Preprocessor::DirectiveContext& ctx, const char *& arg, 
         ++begin;
 
     if (begin < end && arg <= begin) {
-        len = begin - arg;
+        len = uint32(begin - arg);
         return true;
     } else {
         arg = 0;
@@ -112,8 +113,8 @@ GLSLPreprocessor::GLSLPreprocessor(const IncludePath& incPath,
 }
 
 GLSLPreprocessor::~GLSLPreprocessor() {
-    for (index_t i = 0; i < contents.size(); ++i)
-        delete[] contents[i];
+    for (defs::index i = 0; i < SIZE(contents.size()); ++i)
+        delete[] contents[size_t(i)];
 }
 
 void GLSLPreprocessor::appendString(const std::string& str) {
@@ -122,7 +123,7 @@ void GLSLPreprocessor::appendString(const std::string& str) {
         memcpy(data, str.data(), str.length());
         contents.push_back(data);
         segments.push_back(data);
-        segLengths.push_back(str.length());
+        segLengths.push_back(uint32(str.length()));
     }
 }
 
@@ -138,11 +139,11 @@ void GLSLPreprocessor::addDefines(const PreprocessorDefinitions& defines) {
 void GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext& ctx) {
     FileContext& frame = state->stack.top();
 
-    int32 seglen = ctx.content.data + ctx.lineOffset - frame.pos;
+    defs::index seglen = SIZE(ctx.content.data + ctx.lineOffset - frame.pos);
 
     if (seglen > 0) {
         segments.push_back(frame.pos);
-        segLengths.push_back(seglen);
+        segLengths.push_back(uint32(seglen));
     }
 
     frame.pos = ctx.content.data + ctx.lineOffset + ctx.lineLength;
@@ -279,11 +280,11 @@ void IncludeHandler::endProcessing(const Preprocessor::ContentContext& ctx) {
     GLSLPreprocessor& proc = static_cast<GLSLPreprocessor&>(ctx.processor);
 
     FileContext& frame = proc.state->stack.top();
-    int32 seglen = ctx.data + ctx.size - frame.pos;
+    defs::index seglen = SIZE(ctx.data + ctx.size - frame.pos);
     
     if (seglen > 0) {
         proc.segments.push_back(frame.pos);
-        proc.segLengths.push_back(seglen);
+        proc.segLengths.push_back(uint32(seglen));
     }
 
     proc.state->stack.pop();

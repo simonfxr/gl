@@ -1,12 +1,14 @@
 #ifndef COLOR_HPP
 #define COLOR_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 
 namespace glt {
+
+using namespace defs;
 
 struct color {
 

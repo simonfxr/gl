@@ -1,7 +1,7 @@
 #ifndef TABLES2_HPP
 #define TABLES2_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 
 // Tables used by Marching Cubes Algorithm
 // these tables came from Paul Baurke's web page at 

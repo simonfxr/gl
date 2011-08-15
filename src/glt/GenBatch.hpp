@@ -1,7 +1,7 @@
 #ifndef GENBATCH_HPP
 #define GENBATCH_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 #include "opengl.hpp"
 #include "err/err.hpp"
 

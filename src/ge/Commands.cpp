@@ -89,7 +89,7 @@ void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) 
 
     Ref<glt::ShaderProgram> prog(new glt::ShaderProgram(e.info.engine.shaderManager()));
 
-    uint32 i;
+    index i;
     for (i = 1; i < args.size() && args[i].type == String; ++i) {
         if (!prog->addShaderFile(*args[i].string)) {
             ERR("bindShader: compilation failed");
@@ -98,7 +98,10 @@ void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) 
     }
 
     for (; i + 1 < args.size() && args[i].type == Integer && args[i + 1].type == String; i += 2) {
-        if (!prog->bindAttribute(*args[i + 1].string, args[i].integer)) {
+        if (args[i].integer < 0) {
+            ERR("bindShader: negative index");
+        }
+        if (!prog->bindAttribute(*args[i + 1].string, GLuint(args[i].integer))) {
             ERR("bindShader: couldnt bind attribute");
             return;
         }
@@ -136,13 +139,13 @@ void runEval(const Event<CommandEvent>&, const Array<CommandArg>&) {
 }
 
 void runLoad(const Event<CommandEvent>& ev, const Array<CommandArg>& args) {
-    for (uint32 i = 0; i < args.size(); ++i) {
+    for (defs::index i = 0; i < SIZE(args.size()); ++i) {
         ev.info.engine.loadScript(*args[i].string);
     }
 }
 
 void runAddShaderPath(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
-    for (uint32 i = 0; i < args.size(); ++i)
+    for (defs::index i = 0; i < args.size(); ++i)
         if (!e.info.engine.shaderManager().addShaderDirectory(*args[i].string, true))
             ERR("not a directory: " + *args[i].string);
 }

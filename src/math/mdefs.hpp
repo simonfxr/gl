@@ -1,7 +1,11 @@
 #ifndef MATH_DEFS_HPP
 #define MATH_DEFS_HPP
 
-#include "defs.h"
+#include "defs.hpp"
+
+#ifndef _DEFS_HPP_INCLUDED_
+#error "defs"
+#endif
 
 #ifdef MATH_INLINE
 

@@ -11,6 +11,8 @@
 
 namespace ge {
 
+using namespace defs;
+
 struct Engine;
 
 struct CommandProcessor {
@@ -22,7 +24,7 @@ private:
 public:
     
     CommandProcessor(Engine& e) : _engine(e) {}
-    uint32 size() const;
+    size size() const;
 
     bool addScriptDirectory(const std::string& dir, bool check_exists = true);
     const std::vector<std::string>& scriptDirectories();

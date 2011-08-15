@@ -129,11 +129,11 @@ void initPreprocessor(ShaderCompiler& compiler, GLSLPreprocessor& proc) {
 }
 
 ReloadState includesNeedReload(const ShaderIncludes& incs) {
-    for (index_t i = 0; i < incs.size(); ++i) {
+    for (index i = 0; i < SIZE(incs.size()); ++i) {
         sys::fs::ModificationTime mtime;
-        if (!sys::fs::modificationTime(incs[i].first, &mtime))
+        if (!sys::fs::modificationTime(incs[size_t(i)].first, &mtime))
             return ReloadFailed;
-        if (mtime != incs[i].second)
+        if (mtime != incs[size_t(i)].second)
             return ReloadOutdated;
     }
 
@@ -196,7 +196,7 @@ void printShaderLog(GLuint shader, std::ostream& out) {
     
     if (log_len > 0) {
         
-        GLchar *log = new GLchar[log_len];
+        GLchar *log = new GLchar[size_t(log_len)];
 
         GLchar *logBegin = log;
         while (logBegin < log + log_len - 1 && isspace(*logBegin))
@@ -221,7 +221,7 @@ bool translateShaderType(ShaderManager::ShaderType type, GLenum *gltype, const s
     if (type == ShaderManager::GuessShaderType && !ShaderCompiler::guessShaderType(basename, &type))
         return false;
     
-    for (index_t i = 0; i < ARRAY_LENGTH(shaderTypeMappings); ++i) {
+    for (index i = 0; i < ARRAY_LENGTH(shaderTypeMappings); ++i) {
         if (shaderTypeMappings[i].type == type) {
             *gltype = shaderTypeMappings[i].glType;
             return true;
@@ -379,8 +379,8 @@ void CompileState::compileAll() {
         } else {
             put(so);
             
-            for (index_t i = 0; i < so->dependencies.size(); ++i) {
-                Ref<CompileJob> job = CompileJob::load(so->dependencies[i]);
+            for (index i = 0; i < SIZE(so->dependencies.size()); ++i) {
+                Ref<CompileJob> job = CompileJob::load(so->dependencies[size_t(i)]);
                 enqueue(job);
             }
         }

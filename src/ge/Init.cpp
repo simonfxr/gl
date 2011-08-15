@@ -73,7 +73,7 @@ static void runInitShaderVersion(const Event<InitEvent>& e) {
         glt::ShaderManager::CoreProfile :
         glt::ShaderManager::CompatibilityProfile;
     
-    int vers = c.MajorVersion * 100 + c.MinorVersion * 10;
+    unsigned vers = c.MajorVersion * 100 + c.MinorVersion * 10;
     e.info.engine.shaderManager().setShaderVersion(vers, prof);
 }
 

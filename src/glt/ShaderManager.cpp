@@ -1,4 +1,4 @@
-#include "defs.h"
+#include "defs.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/ShaderProgram.hpp"
 #include "glt/ShaderCompiler.hpp"

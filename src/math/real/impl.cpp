@@ -3,6 +3,8 @@
 
 MATH_BEGIN_NAMESPACE
 
+using namespace defs;
+
 real sqrt(real x) { 
     return sqrtf(x);
 }
@@ -79,7 +81,7 @@ real cubed(real x) {
 real pow(real x, int32 n) {
     if (n == 0) return 1.f;
     
-    uint32 k = n < 0 ? -n : n;
+    uint32 k = n < 0 ? uint32(-n) : uint32(n);
     real a = 1.f;
     real p = x;
 
@@ -156,7 +158,7 @@ real smoothstep(real lo_edge, real hi_edge, real x) {
     return x*x*(3 - 2*x);
 }
 
-real lerp(real a, real b, real t) {
+real mix(real a, real b, real t) {
     return a + t * (b - a);
 }
 

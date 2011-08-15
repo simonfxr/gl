@@ -48,10 +48,10 @@ mat4_t operator *(const mat4_t& A, const mat4_t& B) {
     //     for (uint32 j = 0; j < 4; ++j)
     //         C(i, j) = dot(AT[j], B[i]);
     
-    for (uint32 j = 0; j < 4; ++j) {
-        for (uint32 i = 0; i < 4; ++i) {
+    for (defs::index j = 0; j < 4; ++j) {
+        for (defs::index i = 0; i < 4; ++i) {
             real c_i_j = 0.f;
-            for (uint32 k = 0; k < 4; ++k)
+            for (defs::index k = 0; k < 4; ++k)
                 c_i_j += A(k, i) * B(j, k);
             C(j, i) = c_i_j;
         }
@@ -114,8 +114,8 @@ vec3_t transformVector(const mat4_t& A, const vec3_t& v) {
 
 mat4_t transpose(const mat4_t& A) {
     mat4_t B;
-    for (uint32 i = 0; i < 4; ++i)
-        for (uint32 j = 0; j < 4; ++j)
+    for (defs::index i = 0; i < 4; ++i)
+        for (defs::index j = 0; j < 4; ++j)
             B(i, j) = A(j, i);
     return B;
 }
@@ -191,20 +191,20 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC const vec4_t& mat4_t::operator[](index_t i) const {
+MATH_INLINE_SPEC const vec4_t& mat4_t::operator[](defs::index i) const {
     return columns[i];
 }
 
-MATH_INLINE_SPEC vec4_t& mat4_t::operator[](index_t i) {
+MATH_INLINE_SPEC vec4_t& mat4_t::operator[](defs::index i) {
     return columns[i];
 }
 
-MATH_INLINE_SPEC real mat4_t::operator()(index_t i, index_t j) const {
+MATH_INLINE_SPEC real mat4_t::operator()(defs::index i, defs::index j) const {
     return components[i * 4 + j];
 }
 
 
-MATH_INLINE_SPEC real& mat4_t::operator()(index_t i, index_t j) {
+MATH_INLINE_SPEC real& mat4_t::operator()(defs::index i, defs::index j) {
     return components[i * 4 + j];
 }
 

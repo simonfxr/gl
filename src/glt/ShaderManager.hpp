@@ -10,6 +10,8 @@
 
 namespace glt {
 
+using namespace defs;
+
 struct ShaderCompiler;
 struct ShaderProgram;
 struct ShaderCache;

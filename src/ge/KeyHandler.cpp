@@ -128,10 +128,10 @@ void KeyHandler::handleCommands() {
     for (; it != self->bindings.end(); ++it) {
         const Ref<KeyBinding>& bind = it->first.binding;
 
-        for (uint32 i = 0; i < bind->size(); ++i) {
+        for (defs::index i = 0; i < bind->size(); ++i) {
 
-            KeyCode code = bind->get(i).code;
-            KeyState reqState = bind->get(i).state;
+            KeyCode code = bind->at(i).code;
+            KeyState reqState = bind->at(i).state;
             KeyState curState = keyState(code);
 
             bool match = (reqState & curState) == reqState;

@@ -42,17 +42,17 @@ struct Renderer {
 };
 
 struct World {
-    uint32 numSpheres();
+    defs::size numSpheres();
 
     bool init();
 
     bool render_by_distance; // try to render near object first
-    uint32 solve_iterations;
+    defs::size solve_iterations;
 
     bool canMoveCamera(const math::vec3_t& position, math::vec3_t& step);
 
     void spawnSphere(const Sphere& sphere, const SphereModel& model);
-    void simulate(float dt);
+    void simulate(math::real dt);
     
     void render(Renderer& renderer, float dt);
 

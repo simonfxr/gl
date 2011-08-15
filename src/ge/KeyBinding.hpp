@@ -1,7 +1,7 @@
 #ifndef GE_KEY_BINDING_HPP
 #define GE_KEY_BINDING_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 
 #include "data/Array.hpp"
 
@@ -10,6 +10,8 @@
 #include <istream>
 
 namespace ge {
+
+using namespace defs;
 
 enum KeyState {
     Pressed  = 3,  // 0011

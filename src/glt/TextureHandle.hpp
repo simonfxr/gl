@@ -5,6 +5,8 @@
 
 namespace glt {
 
+using namespace defs;
+
 enum TextureType {
     Texture1D,
     Texture2D,
@@ -14,7 +16,7 @@ enum TextureType {
 struct TextureHandle {
 private:
 
-    uint32 _samples;
+    size _samples;
     GLuint _handle;
     TextureType _type;
     
@@ -32,7 +34,7 @@ public:
     };
 
     TextureHandle() : _samples(1), _handle(0), _type(Texture2D)  {}
-    TextureHandle(TextureType type, uint32 samples = 1);
+    TextureHandle(TextureType type, size samples = 1);
     
     ~TextureHandle();
 
@@ -42,11 +44,11 @@ public:
     void bind(uint32 active_index);
     
     GLuint handle() const { return _handle; }
-    uint32 samples() const { return _samples; }
+    size samples() const { return _samples; }
     TextureType type() const { return _type; }
     GLenum glType() const;
     
-    void type(TextureType new_type, uint32 new_samples = 1);
+    void type(TextureType new_type, size new_samples = 1);
 
     void filterMode(FilterMode mode, Filter filter = FilterMinMag);
     

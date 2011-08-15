@@ -1,23 +1,25 @@
 #ifndef GLT_RENDER_TARGET_HPP
 #define GLT_RENDER_TARGET_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 
 namespace glt {
 
+using namespace defs;
+
 struct Viewport {
-    uint32 offsetX, offsetY;
-    uint32 width, height;
+    int32 offsetX, offsetY;
+    size width, height;
 
     Viewport() :
         offsetX(0), offsetY(0),
         width(0), height(0) {}
 
-    Viewport(uint32 x, uint32 y, uint32 w, uint32 h) :
+    Viewport(int32 x, int32 y, size w, size h) :
         offsetX(x), offsetY(y),
         width(w), height(h) {}
 
-    Viewport(uint32 w, uint32 h) :
+    Viewport(size w, size h) :
         offsetX(0), offsetY(0),
         width(w), height(h) {}
 
@@ -35,12 +37,12 @@ static const uint32 RT_ALL_BUFFERS = RT_COLOR_BUFFER | RT_DEPTH_BUFFER | RT_STEN
 
 struct RenderTarget {
 
-    RenderTarget(uint32 width, uint32 height, RenderTargetBuffers buffers = RT_COLOR_BUFFER, const Viewport& vp = Viewport());
+    RenderTarget(size width, size height, RenderTargetBuffers buffers = RT_COLOR_BUFFER, const Viewport& vp = Viewport());
     virtual ~RenderTarget();
 
-    uint32 width() const;
-    uint32 height() const;
-    uint32 buffers() const;
+    size width() const;
+    size height() const;
+    RenderTargetBuffers buffers() const;
     const Viewport& viewport() const;
 
     void activate();
@@ -52,7 +54,7 @@ struct RenderTarget {
 
 protected:
 
-    void updateSize(uint32 width, uint32 height);
+    void updateSize(size width, size height);
 
     virtual void doActivate() = 0;
     virtual void doDeactivate();

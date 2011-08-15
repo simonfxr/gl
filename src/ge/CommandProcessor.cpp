@@ -14,8 +14,8 @@ const Ref<Command> NULL_COMMAND_REF;
 
 typedef std::map<std::string, Ref<Command> > CommandMap;
     
-uint32 CommandProcessor::size() const {
-    return commands.size();
+size CommandProcessor::size() const {
+    return SIZE(commands.size());
 }
 
 bool CommandProcessor::addScriptDirectory(const std::string& dir, bool check_exists) {
@@ -126,7 +126,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
 
     const Array<CommandParamType>& params = com->parameters();
     bool rest_args = params.size() > 0 && params[params.size() - 1] == ListParam;
-    uint32 nparams = rest_args ? params.size() - 1 : params.size();
+    defs::size nparams = rest_args ? params.size() - 1 : params.size();
 
     if (nparams != args.size() && !(rest_args && args.size() > nparams)) {
         std::ostringstream err;
@@ -144,7 +144,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
 
     std::vector<Ref<Command> > keepAlive;
     
-    for (uint32 i = 0; i < nparams; ++i) {
+    for (index i = 0; i < nparams; ++i) {
         if (params[i] != AnyParam) {
 
             CommandType val_type = String;

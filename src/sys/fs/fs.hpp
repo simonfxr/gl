@@ -1,7 +1,7 @@
 #ifndef FS_HPP
 #define FS_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 
 #include <string>
 #include <vector>
@@ -15,6 +15,8 @@
 #endif
 
 namespace sys {
+
+using namespace defs;
 
 namespace fs {
 

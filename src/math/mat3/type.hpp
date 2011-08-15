@@ -13,9 +13,9 @@ struct mat3_t {
         real components[9];
     };
 
-    const vec3_t& operator[](index_t) const PURE_FUNC;
-    vec3_t& operator[](index_t) MUT_FUNC;
-    float& operator()(index_t, index_t) MUT_FUNC;
+    const vec3_t& operator[](defs::index) const PURE_FUNC;
+    vec3_t& operator[](defs::index) MUT_FUNC;
+    float& operator()(defs::index, defs::index) MUT_FUNC;
 };
 
 typedef mat3_t aligned_mat3_t ATTRS(ATTR_ALIGNED(16));

@@ -1,7 +1,7 @@
 #ifndef GL_UTILS
 #define GL_UTILS
 
-#include "defs.h"
+#include "defs.hpp"
 #include "opengl.hpp"
 
 #include "err/err.hpp"

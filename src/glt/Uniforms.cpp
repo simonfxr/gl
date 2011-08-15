@@ -133,19 +133,22 @@ void setUniform(bool mandatory, const std::string& name, ShaderProgram& prog, GL
 
     UNUSED(type);
     
-    GLint location;
-    GL_CHECK(location = glGetUniformLocation(prog.program(), name.c_str()));
+    GLint locationi;
+    GL_CHECK(locationi = glGetUniformLocation(prog.program(), name.c_str()));
     
-    if (location == -1) {
+    if (locationi == -1) {
         if (mandatory)
             ERR("unknown uniform");
         return;
     }
+    
+    GLuint location = GLuint(locationi);
 
 #ifdef GLDEBUG
 
-    GLenum actual_type;
-    GL_CHECK(glGetActiveUniformsiv(prog.program(), 1, (const GLuint *) &location, GL_UNIFORM_TYPE, (GLint *) &actual_type));
+    GLint actual_typei;
+    GL_CHECK(glGetActiveUniformsiv(prog.program(), 1, &location, GL_UNIFORM_TYPE, &actual_typei));
+    GLenum actual_type = GLenum(actual_typei);
     if (actual_type != type) {
         std::string err = "uniform types dont match, expected: " + descGLType(type) + ", actual type: " + descGLType(actual_type);
         ERR(err.c_str());
@@ -154,7 +157,7 @@ void setUniform(bool mandatory, const std::string& name, ShaderProgram& prog, GL
 
 #endif
 
-    set(location, value);
+    set(locationi, value);
 }
 
 template <>
@@ -184,7 +187,7 @@ void set(GLint loc, const mat3_t& value) {
 
 template <>
 void set(GLint loc, const Tex& tex) {
-    GL_CHECK(glUniform1i(loc, tex.index));
+    GL_CHECK(glUniform1i(loc, GLint(tex.index)));
 }
 
 } // namespace anon

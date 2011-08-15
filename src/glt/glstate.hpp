@@ -1,9 +1,11 @@
 #ifndef GLSTATE_H
 #define GLSTATE_H
 
-#include "defs.h"
+#include "defs.hpp"
 
 namespace glt {
+
+using namespace defs;
 
 struct State {
     uint32 num_framebuffers;

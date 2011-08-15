@@ -5,7 +5,7 @@
 
 #include <SFML/Graphics.hpp>
 
-#include "defs.h"
+#include "defs.hpp"
 #include "ge/WindowRenderTarget.hpp"
 #include "ge/Event.hpp"
 #include "ge/EngineEvents.hpp"
@@ -14,17 +14,19 @@
 
 namespace ge {
 
+using namespace defs;
+
 struct WindowEvents;
 
 struct WindowOptions {
-    uint32 width;
-    uint32 height;
+    size width;
+    size height;
     std::string title;
     sf::ContextSettings settings;
     
     WindowOptions() :
-        width(640),
-        height(480),
+        width(800),
+        height(600),
         title(""),
         settings(24, 0, 0, 3, 3)
         {}
@@ -92,8 +94,8 @@ struct WindowEvent {
 };
 
 struct WindowResized : public WindowEvent {
-    uint32 width, height;
-    WindowResized(GameWindow& win, uint32 w, uint32 h) :
+    size width, height;
+    WindowResized(GameWindow& win, size w, size h) :
         WindowEvent(win), width(w), height(h) {}
 };
 
@@ -105,18 +107,18 @@ struct KeyChanged : public WindowEvent {
 };
 
 struct MouseMoved : public WindowEvent {
-    int32 dx, dy;
-    uint32 x, y;
-    MouseMoved(GameWindow& win, int32 _dx, int32 _dy, uint32 _x, uint32 _y) :
+    int16 dx, dy;
+    index16 x, y;
+    MouseMoved(GameWindow& win, int16 _dx, int16 _dy, index16 _x, index16 _y) :
         WindowEvent(win),
         dx(_dx), dy(_dy), x(_x), y(_y) {}
 };
 
 struct MouseButton : public WindowEvent {
-    uint32 x, y;
+    index16 x, y;
     bool pressed;
     sf::Event::MouseButtonEvent button;
-    MouseButton(GameWindow& win, bool press, uint32 _x, uint32 _y, const sf::Event::MouseButtonEvent& butn) :
+    MouseButton(GameWindow& win, bool press, index16 _x, index16 _y, const sf::Event::MouseButtonEvent& butn) :
         WindowEvent(win),
         x(_x), y(_y),
         pressed(press), button(butn) {}

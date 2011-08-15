@@ -64,7 +64,7 @@ vec4_t max(const vec4_t& a, const vec4_t& max) PURE_FUNC;
 
 real sum(const vec4_t& a) PURE_FUNC;
 
-bool equal(const vec4_t& a, const vec4_t& b, real epsi = 1e-4) PURE_FUNC;
+bool equal(const vec4_t& a, const vec4_t& b, real epsi = real(1e-4)) PURE_FUNC;
 
 MATH_END_NAMESPACE
 

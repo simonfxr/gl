@@ -1,6 +1,6 @@
 #include "sim.hpp"
 
-#include "defs.h"
+#include "defs.hpp"
 
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
@@ -14,6 +14,8 @@
 
 #include <stdlib.h>
 #include <time.h>
+
+using namespace defs;
 
 #if 0
 
@@ -36,39 +38,39 @@ using namespace math;
 struct Particle {
     point3_t pos;
     vec3_t   vel;
-    float    invMass;
+    real    invMass;
 };
 
 struct ParticleRef {
-    uint16 index;
+    index16 index;
 };
 
 struct SphereRef {
-    uint16 index;
+    index16 index;
 };
 
 namespace {
 
-ParticleRef particleRef(uint16 index) {
-    ParticleRef r; r.index = index; return r;
+ParticleRef particleRef(index idx) {
+    ParticleRef r; r.index = index16(idx); return r;
 }
 
-SphereRef sphereRef(uint16 index) {
-    SphereRef r; r.index = index; return r;
+SphereRef sphereRef(index idx) {
+    SphereRef r; r.index = index16(idx); return r;
 }
 
 }
 
 struct SphereData {
     ParticleRef particle;
-    float r;
+    math::real r;
 };
 
 struct Contact {
     direction3_t normal;
-    float distance;
-    float restitution;
-    float impulse;
+    math::real distance;
+    math::real restitution;
+    math::real impulse;
     ParticleRef x, y;
 };
 
@@ -104,7 +106,7 @@ struct World::Data {
     
     glt::AABB room;
 
-    uint32 solve_iterations;
+    size solve_iterations;
 
     plane3_t walls[6];
     ParticleRef world; // stationary particle with infinite mass
@@ -157,11 +159,11 @@ bool World::init() {
     return true;
 }
 
-uint32 World::numSpheres() {
-    return self->spheres.size();
+size World::numSpheres() {
+    return SIZE(self->spheres.size());
 }
 
-void World::simulate(float dt) {
+void World::simulate(math::real dt) {
     {
         self->solve_iterations = solve_iterations;
         std::vector<Contact> contacts;
@@ -197,7 +199,7 @@ void World::spawnSphere(const Sphere& s, const SphereModel& m) {
     p.pos = s.center;
     
     SphereData sd;
-    sd.particle.index = self->particles.size();
+    sd.particle.index = index16(self->particles.size());
     sd.r = s.r;
 
     self->particles.push_back(p);
@@ -230,14 +232,14 @@ struct SphereDistance {
 } ATTRS(ATTR_ALIGNED(8));
 
 void World::render(Renderer& renderer, float dt) {
-    const uint32 n = self->spheres.size();
+    const size n = SIZE(self->spheres.size());
 
     if (render_by_distance) {
         const point3_t& cam = renderer.camera().origin;
         std::vector<SphereDistance> spheres_ordered;
 
-        for (uint32 i = 0; i < n; ++i) {
-            const SphereData& s = self->spheres[i];
+        for (index i = 0; i < n; ++i) {
+            const SphereData& s = self->spheres[size_t(i)];
             const Particle& p = self->deref(s.particle);
             const point3_t pos = p.pos + p.vel * dt;
 
@@ -252,18 +254,18 @@ void World::render(Renderer& renderer, float dt) {
             spheres_ordered.push_back(d);
         }
 
-        for (uint32 i = 0; i < spheres_ordered.size(); ++i) {
-            const SphereDistance& d = spheres_ordered[i];
+        for (index i = 0; i < SIZE(spheres_ordered.size()); ++i) {
+            const SphereDistance& d = spheres_ordered[UNSIZE(i)];
             Sphere s = self->makeSphere(d.sphere);
             s.center += s.v * dt;
-            renderer.renderSphere(s, self->sphereModels[d.sphere.index]);
+            renderer.renderSphere(s, self->sphereModels[UNSIZE(d.sphere.index)]);
         }
 
     } else {
-        for (uint32 i = 0; i < n; ++i) {
+        for (index i = 0; i < n; ++i) {
             Sphere s = self->makeSphere(sphereRef(i));
             s.center += s.v * dt;
-            renderer.renderSphere(s, self->sphereModels[i]);
+            renderer.renderSphere(s, self->sphereModels[UNSIZE(i)]);
         }
         
     }
@@ -281,12 +283,12 @@ void World::render(Renderer& renderer, float dt) {
     renderer.renderBox(self->room);
 }
 
-int32 World::Data::collidesWall(const point3_t& center, float r, point3_t& out_collision) {
-    float dist_min = r;
+int32 World::Data::collidesWall(const point3_t& center, real r, point3_t& out_collision) {
+    real dist_min = r;
     int32 hit = -1;
 
-    for (uint32 i = 0; i < 6; ++i) {
-        float dist = distance(walls[i], center);
+    for (index i = 0; i < 6; ++i) {
+        real dist = distance(walls[i], center);
         if (dist < r && dist < dist_min) {
             dist_min = dist;
             hit = i;
@@ -298,11 +300,11 @@ int32 World::Data::collidesWall(const point3_t& center, float r, point3_t& out_c
 }
 
 Particle& World::Data::deref(ParticleRef ref) {
-    return particles[ref.index];
+    return particles[UNSIZE(ref.index)];
 }
 
 SphereData& World::Data::deref(SphereRef ref) {
-    return spheres[ref.index];
+    return spheres[UNSIZE(ref.index)];
 }
 
 struct Box {
@@ -417,9 +419,9 @@ void World::Data::insertBSP(BSP *&p, int ni, Box volume, uint32 depth, Node *nod
     float d = distance(p->plane, center);
     float d0 = math::abs(d);
     float sign = float(signum(d));
-    uint32 ni2 = (ni + 1) % 3;
+    index ni2 = (ni + 1) % 3;
     if (sign == 0.f) sign = 1.f;
-    uint32 face = sign > 0 ? 0 : 1;
+    index face = sign > 0 ? 0 : 1;
     
     ++depth;
 
@@ -449,10 +451,10 @@ void World::Data::findCollisions(std::vector<Contact>& contacts, const BSP *t, i
                 const SphereData& s2 = deref(list->sphere);
                 const Particle& p2 = deref(s2.particle);
 
-                if (!collided[s2.particle.index]) {
-                    float dist2 = distanceSq(center, p2.pos);
+                if (!collided[UNSIZE(s2.particle.index)]) {
+                    real dist2 = distanceSq(center, p2.pos);
                     if (dist2 < squared(r + s2.r)) {
-                        collided[s2.particle.index] = true;
+                        collided[UNSIZE(s2.particle.index)] = true;
                         Contact con;
                         const SphereData& s1 = deref(s);
                         con.x = s1.particle;
@@ -473,9 +475,9 @@ void World::Data::findCollisions(std::vector<Contact>& contacts, const BSP *t, i
     float d = distance(t->plane, center);
     float d0 = math::abs(d);
     float sign = float(signum(d));
-    uint32 ni2 = (ni + 1) % 3;
+    index ni2 = (ni + 1) % 3;
     if (sign == 0.f) sign = 1.f;
-    uint32 face = sign > 0 ? 0 : 1;
+    index face = sign > 0 ? 0 : 1;
 
     if (d0 > r) {
         findCollisions(contacts, t->down[face].tree, ni2, collided, s, center, r);
@@ -490,9 +492,9 @@ void World::Data::generateContacts(std::vector<Contact>& contacts, float dt) {
 
     UNUSED(dt);
     
-    uint32 n = spheres.size();
-    for (uint32 i = 0; i < n; ++i) {
-        const SphereData& s1 = spheres[i];
+    size n = SIZE(spheres.size());
+    for (index i = 0; i < n; ++i) {
+        const SphereData& s1 = spheres[UNSIZE(i)];
         const Particle& p1 = deref(s1.particle);
         const point3_t pos1 = p1.pos;
 
@@ -536,8 +538,8 @@ void World::Data::generateContacts(std::vector<Contact>& contacts, float dt) {
     num_nodes = 0;
 
     time_msg("tree building", 
-    for (uint32 i = 0; i < n; ++i) {
-        const SphereData& s1 = spheres[i];
+    for (index i = 0; i < n; ++i) {
+        const SphereData& s1 = spheres[UNSIZE(i)];
         const Particle& p1 = deref(s1.particle);
         Node *node = allocNode();
         ++num_nodes;
@@ -549,14 +551,14 @@ void World::Data::generateContacts(std::vector<Contact>& contacts, float dt) {
     time_msg("testing collisions",
     std::vector<bool> collided(particles.size(), false);
 
-    for (uint32 i = 0; i < n; ++i) {
-        const SphereData& s1 = spheres[i];
+    for (index i = 0; i < n; ++i) {
+        const SphereData& s1 = spheres[UNSIZE(i)];
         const Particle& p1 = deref(s1.particle);
-        uint32 num_coll = contacts.size();
+        size num_coll = SIZE(contacts.size());
         findCollisions(contacts, root, 0, collided, sphereRef(i), p1.pos, s1.r);
-        uint32 k = contacts.size();
-        for (uint32 j = num_coll; j < k; ++j) {
-            collided[contacts[j].y.index] = false;
+        size k = SIZE(contacts.size());
+        for (index j = num_coll; j < k; ++j) {
+            collided[UNSIZE(contacts[UNSIZE(j)].y.index)] = false;
         }
     });
 
@@ -566,11 +568,11 @@ void World::Data::generateContacts(std::vector<Contact>& contacts, float dt) {
 }
 
 void World::Data::solveContacts(std::vector<Contact>& contacts, float dt) {
-    const uint32 n = contacts.size();
+    const size n = SIZE(contacts.size());
 
-    for (uint32 k = 0; k < solve_iterations; ++k) {
+    for (index k = 0; k < solve_iterations; ++k) {
         
-        for (uint32 i = 0; i < n; ++i) {
+        for (index i = 0; i < n; ++i) {
             // const Contact& con = contacts[i];
             // Particle& p1 = deref(con.x);
             // Particle& p2 = deref(con.y);
@@ -586,7 +588,7 @@ void World::Data::solveContacts(std::vector<Contact>& contacts, float dt) {
             //     p2.vel -= p * p2.invMass * n;
             // }
 
-            Contact& con = contacts[i];
+            Contact& con = contacts[UNSIZE(i)];
 
             const vec3_t& n = con.normal;
 
@@ -621,9 +623,9 @@ void World::Data::solveContacts(std::vector<Contact>& contacts, float dt) {
 void World::Data::integrate(float dt) {
     const vec3_t v_grav = GRAVITY * dt;
     
-    uint32 n = particles.size();
-    for (uint32 i = 0; i < n; ++i) {
-        Particle& p = particles[i];
+    size n = SIZE(particles.size());
+    for (size i = 0; i < n; ++i) {
+        Particle& p = particles[UNSIZE(i)];
         p.pos += p.vel * dt;
         if (p.invMass != 0.f)
             p.vel += v_grav;

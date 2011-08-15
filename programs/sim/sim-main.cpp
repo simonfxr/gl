@@ -3,11 +3,8 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
-#include <ctime>
-#include <climits>
-#include <cstring>
 
-#include "defs.h"
+#include "defs.hpp"
 
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
@@ -32,6 +29,7 @@
 #include "sim.hpp"
 
 using namespace math;
+using namespace defs;
 
 static const float SPHERE_DENSITY = 999.f;
 
@@ -49,9 +47,9 @@ static const float GAMMA = 1.8f;
 
 static const glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
 
-static const uint32 AA_SAMPLES = 4;
+static const size AA_SAMPLES = 4;
 
-static const uint32 SPHERE_LOD_MAX = 6;
+static const size SPHERE_LOD_MAX = 6;
 
 struct SphereLOD {
     uint32 level;
@@ -276,8 +274,8 @@ static std::string to_string(T x) {
 }
 
 void Game::windowResized(const ge::Event<ge::WindowResized>& ev) {
-    uint32 width = ev.info.width;
-    uint32 height = ev.info.height;
+    size width = ev.info.width;
+    size height = ev.info.height;
 
     // ge::Engine& e = ev.info.engine;
 
@@ -386,8 +384,8 @@ void Game::updateIndirectRendering(bool indirect) {
     if (indirect) {
 
         if (textureRenderTarget == 0) {
-            uint32 w = engine->window().window().GetWidth();
-            uint32 h = engine->window().window().GetHeight();
+            size w = SIZE(engine->window().window().GetWidth());
+            size h = SIZE(engine->window().window().GetHeight());
             glt::TextureRenderTarget::Params ps;
             ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
             textureRenderTarget = new glt::TextureRenderTarget(w, h, ps);
@@ -406,12 +404,12 @@ void Game::updateIndirectRendering(bool indirect) {
 }
 
 void Game::resizeRenderTargets() {
-    uint32 width = engine->window().window().GetWidth();
-    uint32 height = engine->window().window().GetHeight();
+    size width = SIZE(engine->window().window().GetWidth());
+    size height = SIZE(engine->window().window().GetHeight());
 
     if (indirect_rendering) {
 
-        uint32 stride = 1;
+        size stride = 1;
         while (stride * stride < AA_SAMPLES)
             ++stride;
         
@@ -430,8 +428,8 @@ void Renderer::endRenderSpheres() {
 void Game::end_render_spheres() {
     if (render_spheres_instanced) {
 
-        for (uint32 lod = 0; lod < SPHERE_LOD_MAX; ++lod) {
-            uint32 num = sphere_instances[lod].size();
+        for (index lod = 0; lod < SPHERE_LOD_MAX; ++lod) {
+            size num = SIZE(sphere_instances[lod].size());
 
             if (num == 0)
                 continue;

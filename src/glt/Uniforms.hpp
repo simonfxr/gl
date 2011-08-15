@@ -1,7 +1,7 @@
 #ifndef UNIFORMS_HPP
 #define UNIFORMS_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 
 #include <string>
 #include "glt/TextureHandle.hpp"

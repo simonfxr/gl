@@ -160,12 +160,12 @@ State parseKeycombo(ParseState& s, CommandArg& tok) {
         return Fail;
     }
 
-    KeyBinding *bind = new KeyBinding(new Key[keys.size()], keys.size(), KeyBinding::Owned);
+    KeyBinding *bind = new KeyBinding(new Key[keys.size()], SIZE(keys.size()), KeyBinding::Owned);
     tok.keyBinding = bind;
     tok.type = KeyCombo;
 
-    for (uint32 i = 0; i < keys.size(); ++i)
-        (*bind)[i] = keys[i];
+    for (index i = 0; i < SIZE(keys.size()); ++i)
+        (*bind)[i] = keys[size_t(i)];
 
     return EndToken;
 }

@@ -22,7 +22,7 @@ static void runMove(vec3_t *step_accum, const Event<CommandEvent>&, const Array<
         ERR("argument not >= 1 and <= 12");
         return;
     }
-    *step_accum += dir_table[dir - 1];
+    *step_accum += dir_table[SIZE(dir - 1)];
 }
 
 static void runSaveFrame(const glt::Frame *frame, const Event<CommandEvent>&, const Array<CommandArg>& args) {
@@ -51,9 +51,9 @@ static void runSetStepLength(float *step_len, const Event<CommandEvent>&, const 
 
 static void runSetSensitivity(vec2_t *sens, const Event<CommandEvent>&, const Array<CommandArg>& args) {
     if (args.size() == 1 && args[0].type == Number) {
-        *sens = vec2(args[0].number);
+        *sens = vec2(real(args[0].number));
     } else if (args.size() == 2 && args[0].type == Number && args[1].type == Number) {
-        *sens = vec2(args[0].number, args[1].number);
+        *sens = vec2(real(args[0].number), real(args[1].number));
     } else {
         ERR("invalid arguments");
     }
@@ -139,7 +139,7 @@ void Camera::registerCommands(CommandProcessor& proc) {
 static Array<vec3_t> mkDirTable() {
     Array<vec3_t> dirs(12);
 
-    for (uint32 i = 0; i < 12; ++i)
+    for (defs::index i = 0; i < 12; ++i)
         dirs[i] = vec3(0.f);
 
     dirs[11] = vec3(0.f, 0.f, -1.f);

@@ -1,7 +1,7 @@
 #ifndef ERROR_HPP
 #define ERROR_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 
 #include <string>
 #include <sstream>
@@ -129,7 +129,7 @@ std::ostream& logPutError(const T& v, E err, const std::string& msg) {
 #define ___ASSERT_EXPR(x, lvl, msg, expr) ((unlikely(!(x)) ? (_ERROR(lvl, msg), 0) : 0), (expr))
 
 #ifdef DEBUG
-#define DEBUG___ASSERT_MSG(x, msg) ___ASSERT(x, ::err::DebugAssertion, msg)
+#define DEBUG_ASSERT_MSG(x, msg) ___ASSERT(x, ::err::DebugAssertion, msg)
 #define DEBUG_ERR(msg) _ERROR(::err::DebugError, msg)
 #else
 #define DEBUG_ASSERT_MSG(x, msg) UNUSED(0)

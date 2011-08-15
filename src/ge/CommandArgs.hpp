@@ -14,6 +14,8 @@ struct Ref;
 
 namespace ge {
 
+using namespace defs;
+
 struct Command;
 
 enum CommandParamType {

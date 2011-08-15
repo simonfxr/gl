@@ -1,7 +1,7 @@
 #ifndef GE_KEYHANDLER_HPP
 #define GE_KEYHANDLER_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 
 #include "data/Ref.hpp"
 

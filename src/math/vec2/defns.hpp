@@ -1,7 +1,7 @@
 #ifndef MATH_VEC2_DEFNS_HPP
 #define MATH_VEC2_DEFNS_HPP
 
-#include "math/defs.hpp"
+#include "math/mdefs.hpp"
 #include "math/vec2/type.hpp"
 #include "math/vec3/type.hpp"
 #include "math/vec4/type.hpp"
@@ -80,7 +80,7 @@ real cos(const vec2_t& a, const vec2_t& b) PURE_FUNC;
 
 vec2_t projectAlong(const vec2_t& a, const vec2_t& x) PURE_FUNC;
 
-bool equal(const vec2_t& a, const vec2_t& b, real epsi = 1e-4) PURE_FUNC;
+bool equal(const vec2_t& a, const vec2_t& b, real epsi = 1e-4f) PURE_FUNC;
 
 MATH_END_NAMESPACE
 

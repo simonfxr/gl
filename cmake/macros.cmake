@@ -96,14 +96,10 @@ macro(def_lib target)
   sfml_parse_arguments(THIS "SOURCES;DEPEND;LIB_DEPEND" "" ${ARGN})
 
   # create the target
-  if(BUILD_SHARED)
-    add_library(${target} SHARED ${THIS_SOURCES})
-  else()
-    add_library(${target} STATIC ${THIS_SOURCES})
-  endif()
+  add_library(${target} ${THIS_SOURCES})
 
   # adjust the output file prefix/suffix to match our conventions
-  if(BUILD_SHARED)
+  if(BUILD_SHARED_LIBS)
     if (WINDOWS AND COMP_GCC)
       # on Windows/gcc get rid of "lib" prefix for shared libraries,
       # and transform the ".dll.a" suffix into ".a" for import libraries
@@ -130,7 +126,7 @@ macro(def_lib target)
 
   # link the target to its external dependencies
   if(THIS_LIB_DEPEND)
-    if(BUILD_SHARED)
+    if(BUILD_SHARED_LIBS)
       # in shared build, we use the regular linker commands
       target_link_libraries(${target} ${THIS_LIB_DEPEND})
     else()
@@ -169,7 +165,7 @@ macro(def_program target)
 
   # link the target to its external dependencies
   if(THIS_LIB_DEPEND)
-    if(BUILD_SHARED)
+    if(BUILD_SHARED_LIBS)
       # in shared build, we use the regular linker commands
       target_link_libraries(${target} ${THIS_LIB_DEPEND})
     else()

@@ -1,7 +1,7 @@
 #ifndef DATA_REF_HPP
 #define DATA_REF_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 #include "err/err.hpp"
 #include <iostream>
 
@@ -10,6 +10,8 @@
 #endif
 
 namespace atomic {
+
+using namespace defs;
 
 static const int32 MARK = int32(0xAFAFAFAF);
 
@@ -72,6 +74,7 @@ namespace priv {
 
 template <typename T, typename C, typename R>
 struct RefBase {
+    
 protected:
     T *_ptr; // fat pointer, saves one indirection for pointer uses, but wastes space
     mutable atomic::RefCount *_cnt;
@@ -102,8 +105,8 @@ public:
         return *this;
     }
 
-    uint32 refCount() const { return _cnt->strong.get(); }
-    uint32 weakCount() const { return _cnt->weak.get(); }
+    defs::uint32 refCount() const { return _cnt->strong.get(); }
+    defs::uint32 weakCount() const { return _cnt->weak.get(); }
     bool valid() const { return _cnt->strong.get() > 0; }
     const void *identity() const { return _cnt; }
     
@@ -140,14 +143,14 @@ struct RefCnt {
         if (cnt->strong.decAndGet() == 0) {
             // we are the last strong, only weak are remaining
             
-            int32 val = -1;
+            defs::int32 val = -1;
             if (cnt->weak.xchg(0, &val)) {
                 // last one, delete counter
                 delete cnt;
                 return true;
             }
 
-            int32 dead_val = atomic::DEAD_STRONG;; // highly negative value,
+            defs::int32 dead_val = atomic::DEAD_STRONG;; // highly negative value,
                                                    // makes conversion from weak to strong easier
 
             if (cnt->strong.xchg(0, &dead_val)) {
@@ -170,7 +173,7 @@ struct WeakRefCnt {
         DEBUG_ASSERT(cnt->weak.get() > 0);
         if (cnt->weak.decAndGet() == 0) {
             if (cnt->strong.get() < 0) {
-                int32 val = -1;
+                defs::int32 val = -1;
                 if (cnt->weak.xchg(0, &val))
                     delete cnt;
             }

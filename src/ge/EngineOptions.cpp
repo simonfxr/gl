@@ -105,8 +105,8 @@ bool State::option(OptionCase opt, const char *arg) {
             CMDWARN("invalid OpenGL Version: " + std::string(arg));
             return false;
         } else {
-            options.window.settings.MajorVersion = maj;
-            options.window.settings.MinorVersion = min;
+            options.window.settings.MajorVersion = unsigned(maj);
+            options.window.settings.MinorVersion = unsigned(min);
             return true;
         }
     case GLProfile:

@@ -6,8 +6,8 @@
 namespace glt {
 
 struct RenderTarget::Data {
-    uint32 width;
-    uint32 height;
+    size width;
+    size height;
     RenderTargetBuffers buffers;
     Viewport viewport;
 
@@ -15,7 +15,7 @@ struct RenderTarget::Data {
 
     bool viewport_changed;
 
-    Data(uint32 w, uint32 h, RenderTargetBuffers bs, const Viewport& vp) :
+    Data(size w, size h, RenderTargetBuffers bs, const Viewport& vp) :
         width(w), height(h), buffers(bs),
         viewport(vp),
         viewport_changed(false)
@@ -28,7 +28,7 @@ struct RenderTarget::Data {
     }
 };
 
-RenderTarget::RenderTarget(uint32 w, uint32 h, uint32 bs, const Viewport& vp) :
+RenderTarget::RenderTarget(size w, size h, RenderTargetBuffers bs, const Viewport& vp) :
     self(new Data(w, h, bs, vp))
 {}
 
@@ -37,15 +37,15 @@ RenderTarget::~RenderTarget() {
     delete self;
 }
 
-uint32 RenderTarget::width() const {
+size RenderTarget::width() const {
     return self->width;
 }
 
-uint32 RenderTarget::height() const {
+size RenderTarget::height() const {
     return self->height;
 }
 
-uint32 RenderTarget::buffers() const {
+RenderTargetBuffers RenderTarget::buffers() const {
     return self->buffers;
 }
 
@@ -91,7 +91,7 @@ void RenderTarget::viewport(const Viewport& vp) {
     self->viewport = vp;
 }
 
-void RenderTarget::updateSize(uint32 w, uint32 h) {
+void RenderTarget::updateSize(size w, size h) {
     self->width = w;
     self->height = h;
     self->viewport_changed = self->viewport == Viewport();
@@ -122,7 +122,7 @@ void RenderTarget::doDraw() {
 }
 
 void RenderTarget::doViewport(const Viewport& vp) {
-    GL_CHECK(glViewport(vp.offsetX, vp.offsetY, vp.width, vp.height));
+    GL_CHECK(glViewport(vp.offsetX, vp.offsetY, GLsizei(vp.width), GLsizei(vp.height)));
 }
 
 } // namespace glt

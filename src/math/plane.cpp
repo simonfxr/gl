@@ -1,4 +1,4 @@
-#include "math/defs.hpp"
+#include "math/mdefs.hpp"
 
 #if defined(MATH_PLANE_INLINE) || !defined(MATH_INLINE)
 

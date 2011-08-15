@@ -1,12 +1,14 @@
 #ifndef GLT_VIEWING_FRUSTUM_HPP
 #define GLT_VIEWING_FRUSTUM_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 #include "math/vec3/type.hpp"
 #include "math/mat4/type.hpp"
 #include "math/plane.hpp"
 
 namespace glt {
+
+using namespace defs;
 
 typedef uint32 Outcode;
 

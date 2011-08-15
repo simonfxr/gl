@@ -1,7 +1,7 @@
 #ifndef ERR_WITH_ERROR_HPP
 #define ERR_WITH_ERROR_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 
 #include <string>
 #include <sstream>

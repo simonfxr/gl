@@ -1,7 +1,7 @@
 #ifndef GEOMETRY_TRANSFORM_HPP
 #define GEOMETRY_TRANSFORM_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 
 #include "math/vec3/type.hpp"
 #include "math/vec4/type.hpp"
@@ -13,6 +13,8 @@
 #include <iostream>
 
 namespace glt {
+
+using namespace defs;
 
 static const uint32 GEOMETRY_TRANSFORM_MAX_DEPTH = 16;
 
@@ -64,7 +66,7 @@ struct GeometryTransform {
 
     math::vec3_t transformVector(const math::vec3_t& v) const;
 
-    uint32 depth() const;
+    size depth() const;
 
 private:
 

@@ -30,7 +30,7 @@ void CommandArg::free() {
 
 void prettyKeyCombo(std::ostream& out, const KeyBinding& bind) {
     const char *sep = "[";
-    for (uint32 i = 0; i < bind.size(); ++i) {
+    for (defs::index i = 0; i < bind.size(); ++i) {
         out << sep;
         sep = ", ";
         const Key& k = bind[i];
@@ -65,7 +65,7 @@ void prettyQuot(std::ostream& out, const Quotation& q) {
         if (i > 0)
             out << ';';
         out << ' ';
-        prettyCommandArgs(out, Array<CommandArg>(const_cast<CommandArg *>(&q[i][0]), q[i].size()));
+        prettyCommandArgs(out, Array<CommandArg>(const_cast<CommandArg *>(&q[i][0]), SIZE(q[i].size())));
     }
     out << " }";
 }
@@ -99,7 +99,7 @@ void prettyCommandArg(std::ostream& out, const ge::CommandArg& arg, bool first) 
 
 void prettyCommandArgs(std::ostream& out, const Array<CommandArg>& args) {
     const char *sep = "";
-    for (uint32 i = 0; i < args.size(); ++i) {
+    for (defs::index i = 0; i < args.size(); ++i) {
         out << sep;
         prettyCommandArg(out, args[i], i == 0);
         sep = " ";

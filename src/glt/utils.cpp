@@ -2,7 +2,7 @@
 #include <sstream>
 #include <cstring>
 
-#include "defs.h"
+#include "defs.hpp"
 #include "opengl.hpp"
 
 #include "glt/utils.hpp"
@@ -45,10 +45,11 @@ bool printGLErrors(std::ostream& out) {
 }
 
 bool isExtensionSupported(const char *extension) {
-    GLint n;
-    glGetIntegerv(GL_NUM_EXTENSIONS, &n);
+    GLint ni;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &ni);
+    GLuint n = GLuint(ni);
     
-    for(GLint i = 0; i < n; i++)
+    for(GLuint i = 0; i < n; i++)
         if(strcmp(extension, gl_unstr(glGetStringi(GL_EXTENSIONS, i))) == 0)
             return true;
 
@@ -82,7 +83,7 @@ struct ARBDebug : public GLDebug {
 
     explicit ARBDebug(GLsizei buf_len) :
         message_buffer_length(buf_len),
-        message_buffer(new char[buf_len]) {}
+        message_buffer(new char[size_t(buf_len)]) {}
     
     ~ARBDebug();
     
@@ -166,7 +167,7 @@ struct AMDDebug : public GLDebug {
 
     explicit AMDDebug(GLsizei buf_len) :
         message_buffer_length(buf_len),
-        message_buffer(new char[buf_len]) {}
+        message_buffer(new char[size_t(buf_len)]) {}
     
     ~AMDDebug();
     

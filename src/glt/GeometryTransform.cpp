@@ -149,7 +149,7 @@ void GeometryTransform::pop() {
 
 SavePointArgs GeometryTransform::save() {
     uint64 cookie = self->mods[self->depth];
-    uint32 depth  = self->depth;
+    uint16 depth  = self->depth;
     dup();
     return SavePointArgs(*this, cookie, depth);
 }
@@ -199,7 +199,7 @@ vec3_t GeometryTransform::transformVector(const vec3_t& v) const {
     return vec3(transform(vec4(v, 0.f)));
 }
 
-uint32 GeometryTransform::depth() const {
+size GeometryTransform::depth() const {
     return self->depth + 1;
 }
 

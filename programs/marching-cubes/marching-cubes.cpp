@@ -20,6 +20,7 @@
 #include "marching-cubes/tables2.hpp"
 
 using namespace math;
+using namespace defs;
 
 static const ivec3_t PERLIN_NOISE_SIZE = ivec3(64);
 
@@ -89,7 +90,7 @@ bool Anim::initPerlinNoise() {
 
     perlinProg->use();
 
-    for (index_t i = 0; i < perlinNoise->depth(); ++i) {
+    for (index i = 0; i < perlinNoise->depth(); ++i) {
         perlinNoise->targetDepth(i);
 
         engine->renderManager().beginScene();
@@ -250,7 +251,7 @@ void Anim::render(const ge::Event<ge::RenderEvent>&) {
 }
 
 void Anim::cmdAddRenderDepth(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
-    renderDepth = clamp(renderDepth + args[0].number, 0, 1);
+    renderDepth = clamp(real(renderDepth + args[0].number), 0.f, 1.f);
     std::cerr << "renderDepth: " << renderDepth << std::endl;
 }
 
@@ -404,8 +405,8 @@ int main(int argc, char *argv[]) {
     anim.link(engine);
     ge::EngineOptions opts;
 
-    opts.window.settings.MajorVersion = 4;
-    opts.window.settings.MinorVersion = 1;
+    // opts.window.settings.MajorVersion = 4;
+    // opts.window.settings.MinorVersion = 1;
     
     opts.parse(&argc, &argv);
     opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));

@@ -1,4 +1,4 @@
-#include "defs.h"
+#include "defs.hpp"
 #include "glt/TextureHandle.hpp"
 #include "err/err.hpp"
 #include "glt/utils.hpp"
@@ -8,7 +8,7 @@ namespace glt {
 
 namespace {
 
-GLenum getGLType(TextureType ty, uint32 ss) {
+GLenum getGLType(TextureType ty, size ss) {
 
     switch (ty) {
     case Texture1D: return GL_TEXTURE_1D;
@@ -28,7 +28,7 @@ GLenum getGLType(TextureType ty, uint32 ss) {
 
 } // namespace anon
 
-TextureHandle::TextureHandle(TextureType ty, uint32 samples) :
+TextureHandle::TextureHandle(TextureType ty, size samples) :
     _samples(samples),
     _handle(0),
     _type(ty)
@@ -63,7 +63,7 @@ GLenum TextureHandle::glType() const {
     return getGLType(_type, _samples);
 }
 
-void TextureHandle::type(TextureType ty, uint32 ss) {
+void TextureHandle::type(TextureType ty, size ss) {
     ASSERT_MSG((ty == _type && ss == _samples)  || _handle == 0, "cannot change type, texture already created");
     _type = ty;
     _samples = ss;
@@ -74,7 +74,7 @@ void TextureHandle::filterMode(TextureHandle::FilterMode mode, TextureHandle::Fi
 
     GLenum gltarget = getGLType(_type, _samples);
     
-    GLenum glmode;
+    GLint glmode;
     switch (mode) {
     case FilterNearest: glmode = GL_NEAREST; break;
     case FilterLinear: glmode = GL_LINEAR; break;

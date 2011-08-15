@@ -5,10 +5,12 @@
 
 namespace glt {
 
+using namespace defs;
+
 template <typename T>
 struct CubeMesh : public Mesh<T> {
 
-    CubeMesh(const VertexDesc<T>& layout = VertexTraits<T>::description(), uint32 initial_nverts = MIN_NUM_VERTICES, uint32 initial_nelems = MIN_NUM_ELEMENTS) :
+    CubeMesh(const VertexDesc<T>& layout = VertexTraits<T>::description(), size initial_nverts = MIN_NUM_VERTICES, size initial_nelems = MIN_NUM_ELEMENTS) :
         Mesh<T>(layout, GL_TRIANGLES, initial_nverts, initial_nelems)
         {
             this->drawType(DrawElements);
@@ -16,7 +18,7 @@ struct CubeMesh : public Mesh<T> {
 
     void add(const T& vert) {
         this->addVertex(vert);
-        uint32 s = this->verticesSize();
+        uint32 s = uint32(this->verticesSize());
         if (s % 4 == 0) {
             this->addElement(s - 4);
             this->addElement(s - 3);

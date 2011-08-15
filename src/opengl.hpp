@@ -1,7 +1,7 @@
 #ifndef OPENGL_HPP
 #define OPENGL_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 
 #if SYSTEM_WINDOWS
 

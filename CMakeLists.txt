@@ -2,10 +2,10 @@
 cmake_minimum_required(VERSION 2.8)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build (Debug or Release)" FORCE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "build type Debug|Release|RelWithDebInfo|MinSizeRel" FORCE)
 endif()
 
-set(BUILD_SHARED TRUE CACHE BOOL "TRUE to build shared libs, FALSE to build static libs")
+set(BUILD_SHARED_LIBS TRUE CACHE BOOL "TRUE to build shared libs, FALSE to build static libs")
 
 set(GLDEBUG TRUE CACHE BOOL "TRUE to enable error checking after every opengl call")
 
@@ -14,6 +14,10 @@ set(MATH_INLINE TRUE CACHE BOOL "TRUE to inline all custom math functions")
 set(GLEW_ROOT_DIR "" CACHE STRING "GLEW installation directory")
 
 set(SFMLDIR "" CACHE STRING "SFML installation directory")
+
+set(USE_OPENMP TRUE CACHE BOOL "enable openmp support")
+
+set(USE_LTO FALSE CACHE BOOL "enable link time optimisations")
 
 project(gl-stuff)
 

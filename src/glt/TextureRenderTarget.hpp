@@ -1,18 +1,20 @@
 #ifndef GLT_TEXTURE_RENDER_TARGET_HPP
 #define GLT_TEXTURE_RENDER_TARGET_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 #include "opengl.hpp"
 #include "glt/RenderTarget.hpp"
 #include "glt/TextureHandle.hpp"
 
 namespace glt {
 
+using namespace defs;
+
 struct TextureRenderTarget EXPLICIT : public RenderTarget {
     TextureHandle texture;
     GLuint frame_buffer;
     GLuint depth_buffer;
-    uint32 samples;
+    size samples;
     GLenum color_format;
     TextureHandle::FilterMode default_filter_mode;
     
@@ -20,20 +22,20 @@ struct TextureRenderTarget EXPLICIT : public RenderTarget {
 
     struct Params {
         RenderTargetBuffers buffers;
-        uint32 samples;
+        size samples;
         TextureHandle::FilterMode default_filter_mode;
 
         explicit Params(RenderTargetBuffers _buffers = RT_COLOR_BUFFER,
-               uint32 _samples = 1,
+               size _samples = 1,
                TextureHandle::FilterMode _default_filter_mode = TextureHandle::FilterNearest) :
             buffers(_buffers), samples(_samples), default_filter_mode(_default_filter_mode)
             {}
     };
 
-    TextureRenderTarget(uint32 w, uint32 h, const Params&);
+    TextureRenderTarget(size w, size h, const Params&);
     ~TextureRenderTarget();
 
-    void resize(uint32 width, uint32 height);
+    void resize(size width, size height);
 
     TextureHandle::FilterMode defaultFilterMode() { return default_filter_mode; }
 

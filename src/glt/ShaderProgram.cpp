@@ -1,11 +1,10 @@
 #include <iostream>
 #include <stdio.h>
-#include <string.h>
 #include <map>
 #include <set>
 #include <sstream>
 
-#include "defs.h"
+#include "defs.hpp"
 #include "opengl.hpp"
 
 #include "glt/ShaderProgram.hpp"
@@ -168,7 +167,7 @@ void ShaderProgram::Data::printProgramLog(GLuint program, std::ostream& out) {
     
     if (log_len > 0) {
         
-        GLchar *log = new GLchar[log_len];
+        GLchar *log = new GLchar[size_t(log_len)];
         GLchar *logBegin = log;
 
         while (logBegin < log + log_len - 1 && isspace(*logBegin))
@@ -290,8 +289,8 @@ bool ShaderProgram::link() {
     if (!ok) {
         pushError(ShaderProgramError::LinkageFailed);
 
-        for (index_t i = 0; i < added.size(); ++i)
-            GL_CHECK(glDetachShader(self->program, added[i]));
+        for (index i = 0; i < SIZE(added.size()); ++i)
+            GL_CHECK(glDetachShader(self->program, added[size_t(i)]));
     }
 
     bool write_llog = true;
@@ -402,8 +401,8 @@ ret:
 }
 
 bool ShaderProgram::bindAttributesGeneric(const VertexDescBase& desc) {
-    for (uptr i = 0; i < desc.nattributes; ++i)
-        if (!bindAttribute(desc.attributes[i].name, (GLint) i))
+    for (index i = 0; i < desc.nattributes; ++i)
+        if (!bindAttribute(desc.attributes[i].name, GLuint(i)))
             return false;
     return true;
 }

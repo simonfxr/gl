@@ -1,7 +1,7 @@
 #ifndef MATH_QUAT_DEFNS_HPP
 #define MATH_QUAT_DEFNS_HPP
 
-#include "math/defs.hpp"
+#include "math/mdefs.hpp"
 #include "math/quat/type.hpp"
 #include "math/vec4/type.hpp"
 #include "math/vec3/type.hpp"

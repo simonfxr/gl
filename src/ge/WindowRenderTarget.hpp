@@ -1,7 +1,7 @@
 #ifndef GLT_WINDOW_RENDER_TARGET_HPP
 #define GLT_WINDOW_RENDER_TARGET_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 #include "glt/RenderTarget.hpp"
 
 namespace ge {

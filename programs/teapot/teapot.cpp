@@ -6,7 +6,7 @@
 
 #include <SFML/Graphics/Image.hpp>
 
-#include "defs.h"
+#include "defs.hpp"
 #include "mesh.h"
 
 #include "math/vec2.hpp"

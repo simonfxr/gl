@@ -1,51 +1,51 @@
 #ifndef DATA_BITSET_HPP
 #define DATA_BITSET_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 #include <vector>
 
 struct BitSet {
     std::vector<bool> bits;
 
-    BitSet(uint32 n = 0, bool val = false) :
-        bits(n, val) {}
+    BitSet(defs::size n = 0, bool val = false) :
+        bits(UNSIZE(n), val) {}
 
-    bool operator [](uint32 i) const {
-        return bits[i];
+    bool operator [](defs::index i) const {
+        return bits[UNSIZE(i)];
     }
 
     struct reference {
         BitSet& set;
-        int i;
+        defs::index i;
         
-        reference(BitSet& s, uint32 idx) :
-            set(s), i(idx) {}
+        reference(BitSet& s, defs::index idx) :
+            set(s), i(ASSERT_SIZE(idx)) {}
         
         reference& operator =(bool val) {
-            set.bits[i] = val;
+            set.bits[defs::uptr(i)] = val;
             return *this;
         }
 
         reference& operator =(const reference& ref) {
-            set.bits[i] = ref.set.bits[ref.i];
+            set.bits[defs::uptr(i)] = ref.set.bits[defs::uptr(ref.i)];
             return *this;
         }
         
-        operator bool() { return set.bits[i]; }
+        operator bool() { return set.bits[defs::uptr(i)]; }
     };
 
-    reference operator[](uint32 i) {
+    reference operator[](defs::index i) {
         return reference(*this, i);
     }
 
     void set(bool val) {
-        size_t s = bits.size();
-        for (size_t i = 0; i < s; ++i)
-            bits[i] = val;
+        defs::size s = SIZE(bits.size());
+        for (defs::index i = 0; i < s; ++i)
+            bits[defs::uptr(i)] = val;
     }
 
-    void resize(uint32 s) {
-        bits.resize(s);
+    void resize(defs::size s) {
+        bits.resize(UNSIZE(s));
     }
 };
 

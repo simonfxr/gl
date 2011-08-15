@@ -8,7 +8,7 @@ namespace glt {
 
 TextureRenderTarget3D::TextureRenderTarget3D(const math::ivec3_t& s, const TextureRenderTarget3D::Params& ps) :
     TextureRenderTarget(0, 0, ps),
-    _depth(s[2]),
+    _depth(SIZE(s[2])),
     _targetDepth(0),
     _color_format(ps.color_format)
 {
@@ -16,7 +16,7 @@ TextureRenderTarget3D::TextureRenderTarget3D(const math::ivec3_t& s, const Textu
 }
 
 void TextureRenderTarget3D::resize(const math::ivec3_t& s) {
-    uint32 w = s[0], h = s[1], d = s[2];
+    size w = SIZE(s[0]), h = SIZE(s[1]), d = SIZE(s[2]);
     if (width() == w && height() == h) {
         
         if (depth() == d)
@@ -47,12 +47,12 @@ void TextureRenderTarget3D::createTexture(bool delete_old) {
     GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT));
     GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT));
 
-    uint32 layer = _targetDepth;
+    index layer = _targetDepth;
     _targetDepth = layer + 1; // force update
     targetDepth(layer);
 }
 
-void TextureRenderTarget3D::targetDepth(uint32 td) {
+void TextureRenderTarget3D::targetDepth(index td) {
     if (td != _targetDepth) {
         _targetDepth = td;
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));    

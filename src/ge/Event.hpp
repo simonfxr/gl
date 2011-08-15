@@ -1,12 +1,14 @@
 #ifndef GE_EVENT_HPP
 #define GE_EVENT_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 #include "data/Ref.hpp"
 
 #include <vector>
 
 namespace ge {
+
+using namespace defs;
 
 struct Unit {};
 
@@ -107,16 +109,16 @@ private:
 
 template <typename T>
 void EventSource<T>::raise(const Event<T>& e) {
-    for (uint32 i = 0; i < handlers.size(); ++i)
-        handlers[i]->handle(e);
+    for (defs::index i = 0; i < SIZE(handlers.size()); ++i)
+        handlers[size_t(i)]->handle(e);
 }
 
 template <typename T>
 bool EventSource<T>::reg(const Ref<EventHandler<T> >& handler) {
     if (handler.ptr() == 0)
         return true;
-    for (uint32 i = 0; i < handlers.size(); ++i)
-        if (handlers[i].ptr() == handler.ptr())
+    for (defs::index i = 0; i < SIZE(handlers.size()); ++i)
+        if (handlers[size_t(i)].same(handler))
             return false;
     handlers.push_back(handler);
     return true;
@@ -126,8 +128,8 @@ template <typename T>
 bool EventSource<T>::unreg(const Ref<EventHandler<T> >& handler) {
     if (handler.ptr() == 0)
         return true;
-    for (uint32 i = 0; i < handlers.size(); ++i)
-        if (handlers[i].ptr() == handler.ptr()) {
+    for (defs::index i = 0; i < SIZE(handlers.size()); ++i)
+        if (handlers[size_t(i)].same(handler)) {
             handlers.erase(handlers.begin() + i);
             return true;
         }

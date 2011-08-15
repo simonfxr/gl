@@ -1,7 +1,7 @@
 #ifndef PLANE_HPP
 #define PLANE_HPP
 
-#include "math/defs.hpp"
+#include "math/mdefs.hpp"
 #include "math/vec3/type.hpp"
 #include "math/vec4/type.hpp"
 #include "math/mat3/type.hpp"

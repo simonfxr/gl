@@ -50,7 +50,7 @@ Preprocessor::~Preprocessor() {
 }
 
 void Preprocessor::process(const std::string& str) {
-    process(str.data(), str.length());
+    process(str.data(), uint32(str.length()));
 }
 
 void Preprocessor::process(const char *begin, uint32 size) {
@@ -96,12 +96,12 @@ void Preprocessor::process(const char *begin, uint32 size) {
         while (directiveEnd < eol && !isspace(*directiveEnd))
             ++directiveEnd;
 
-        ctx.lineLength = eol - lineBegin;
-        ctx.lineOffset = lineBegin - begin;
-        ctx.beginDirective = directiveBegin - begin;
-        ctx.endDirective = directiveEnd - begin;
+        ctx.lineLength = SIZE(eol - lineBegin);
+        ctx.lineOffset = SIZE(lineBegin - begin);
+        ctx.beginDirective = SIZE(directiveBegin - begin);
+        ctx.endDirective = SIZE(directiveEnd - begin);
 
-        std::string key(directiveBegin, directiveEnd - directiveBegin);
+        std::string key(directiveBegin, size_t(directiveEnd - directiveBegin));
 
         Handlers::const_iterator it = self->handlers.find(key);
         if (it != self->handlers.end())
@@ -119,7 +119,7 @@ void Preprocessor::process(const char *begin, uint32 size) {
 }
 
 void Preprocessor::process(const char *contents) {
-    process(contents, strlen(contents));
+    process(contents, uint32(strlen(contents)));
 }
 
 Preprocessor::DirectiveHandler& Preprocessor::defaultHandler(Preprocessor::DirectiveHandler& handler) {

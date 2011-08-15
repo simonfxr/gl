@@ -4,6 +4,8 @@
 
 namespace ge {
 
+using namespace defs;
+
 struct StaticInit {
     const char *table[keycode::Count];
     std::map<std::string, KeyCode> revtable;
@@ -164,7 +166,7 @@ const char *prettyKeyCode(KeyCode code) {
 }
 
 int compareKeyBinding(const KeyBinding& x, const KeyBinding& y) {
-    for (uint32 i = 0; i < x.size() && y.size(); ++i) {
+    for (defs::index i = 0; i < x.size() && y.size(); ++i) {
         int32 diff = int32(y[i].code) - int32(x[i].code);
         if (diff != 0)
             return diff;

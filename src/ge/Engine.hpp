@@ -1,7 +1,7 @@
 #ifndef GE_ENGINE_HPP
 #define GE_ENGINE_HPP
 
-#include "defs.h"
+#include "defs.hpp"
 
 #include <string>
 #include <istream>
