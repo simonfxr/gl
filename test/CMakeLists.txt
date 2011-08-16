@@ -1,3 +1,4 @@
 
-include(${PROJECT_SOURCE_DIR}/cmake/config.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/macros.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/program.cmake)
+
+def_program(chan SOURCES chan.cpp DEPEND ge)

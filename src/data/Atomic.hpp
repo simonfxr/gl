@@ -10,7 +10,7 @@ struct Atomic {
 
     Atomic() {}
 
-    T getLazy() const { return value; }
+    T lazyGet() const { return value; }
 
     T get() const { return *(const volatile T *) &value; }
     
