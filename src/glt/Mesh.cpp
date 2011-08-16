@@ -206,15 +206,15 @@ void MeshBase::initVertexAttribs() {
             enabled_attributes[2 * i + 1] = enabled_attributes[2 * i];
 
             const Attr<Any>& a = desc.attributes[i];
-            GL_CHECK(glVertexAttribPointer(i, a.ncomponents, a.component_type,
+            GL_CHECK(glVertexAttribPointer(GLuint(i), a.ncomponents, a.component_type,
                                            a.normalized ? GL_TRUE : GL_FALSE,
                                            desc.sizeof_vertex,
-                                           (void *) (size_t) a.offset));
+                                           reinterpret_cast<void *>(a.offset)));
 
             if (enabled_attributes[2 * i])
-                GL_CHECK(glEnableVertexAttribArray(i));
+                GL_CHECK(glEnableVertexAttribArray(GLuint(i)));
             else
-                GL_CHECK(glDisableVertexAttribArray(i));
+                GL_CHECK(glDisableVertexAttribArray(GLuint(i)));
     }
 }
 
@@ -258,7 +258,7 @@ void MeshBase::send(GLenum usageHint) {
     if (element_buffer_name != 0) {
         GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_name));
         GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                              UNSIZE(elements_size) * sizeof (GLuint),
+                              GLsizeiptr(UNSIZE(elements_size) * sizeof (GLuint)),
                               element_data, usageHint));
         gpu_elements_size = elements_size;
     }
@@ -291,9 +291,9 @@ void MeshBase::enableAttributes() {
             enabled_attributes[2 * i + 1] = enabled_attributes[2 * i];
         
             if (enabled_attributes[2 * i])
-                GL_CHECK(glEnableVertexAttribArray(i));
+                GL_CHECK(glEnableVertexAttribArray(GLuint(i)));
             else
-                GL_CHECK(glDisableVertexAttribArray(i));
+                GL_CHECK(glDisableVertexAttribArray(GLuint(i)));
         }
     }
 }

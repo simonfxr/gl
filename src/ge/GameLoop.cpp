@@ -47,8 +47,8 @@ int32 GameLoop::run(GameLoop::Game& logic) {
 
     do {
         
-        const float tick_length      = 1.f / _ticks_per_second;
-        const float draw_tick_length = _sync || _max_fps == 0 ? 0.f : 1.f / _max_fps;
+        const float tick_length      = 1.f / float(_ticks_per_second);
+        const float draw_tick_length = _sync || _max_fps == 0 ? 0.f : 1.f / float(_max_fps);
         const index loops_max       = _sync ? 1 : _max_frame_skip == 0 ? 0xFFFFFF : _max_frame_skip;
         const bool syncDraw = _sync;
 
@@ -80,7 +80,7 @@ int32 GameLoop::run(GameLoop::Game& logic) {
 
                 if (loops >= loops_max) {
                     ++running_behind;
-                    if (running_behind * tick_length < _keepup_threshold)
+                    if (float(running_behind) * tick_length < _keepup_threshold)
                         goto behind;
                     reset_time = true;
                     break;

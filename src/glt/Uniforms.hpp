@@ -32,6 +32,8 @@ struct Uniforms {
     Uniforms& optional(const std::string& name, const mat4_t& value);
     Uniforms& optional(const std::string& name, const mat3_t& value);
     Uniforms& optional(const std::string& name, color value);
+    Uniforms& optional(const std::string& name, GLint value);
+    Uniforms& optional(const std::string& name, GLuint value);
     Uniforms& optional(const std::string& name, TextureHandle& texture, uint32 active_tex);
     Uniforms& optional(const std::string& name, TextureHandle& texture, uint32 active_tex, GLenum type);
     
@@ -41,6 +43,8 @@ struct Uniforms {
     Uniforms& mandatory(const std::string& name, const mat4_t& value);
     Uniforms& mandatory(const std::string& name, const mat3_t& value);
     Uniforms& mandatory(const std::string& name, color value);
+    Uniforms& mandatory(const std::string& name, GLint value);
+    Uniforms& mandatory(const std::string& name, GLuint value);
     Uniforms& mandatory(const std::string& name, TextureHandle& texture, uint32 active_tex);
     Uniforms& mandatory(const std::string& name, TextureHandle& texture, uint32 active_tex, GLenum type);
 

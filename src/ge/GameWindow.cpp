@@ -140,8 +140,8 @@ void GameWindow::Data::handleInputEvents() {
             mouse_y = index16(e.MouseMove.Y);
             
             if (!accum_mouse_moves) {
-                int16 dx = mouse_current_x - mouse_x;
-                int16 dy = mouse_y - mouse_current_y;
+                int16 dx = int16(mouse_current_x - mouse_x);
+                int16 dy = int16(mouse_y - mouse_current_y);
                 
                 mouse_current_x = mouse_x;
                 mouse_current_y = mouse_y;
@@ -226,8 +226,8 @@ void GameWindow::Data::handleInputEvents() {
         events.windowResized.raise(makeEvent(WindowResized(self, new_w, new_h)));
     } else {
 
-        int16 dx = mouse_current_x - mouse_x;
-        int16 dy = mouse_y - mouse_current_y;
+        int16 dx = int16(mouse_current_x - mouse_x);
+        int16 dy = int16(mouse_y - mouse_current_y);
         mouse_current_x = mouse_x;
         mouse_current_y = mouse_y;
 

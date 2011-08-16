@@ -9,14 +9,29 @@
 namespace glt {
 
 struct TextureRenderTarget3D EXPLICIT : public TextureRenderTarget {
+public:
+
+    enum AttachmentType {
+        AttachmentLayered,
+        AttachmentLayer
+    };
+
+    struct Attachment {
+        AttachmentType type;
+        defs::index index;
+        Attachment(AttachmentType _type, defs::index _index = 0) :
+            type(_type), index(_index) {}
+    };
+    
 protected:
 
     size _depth;
-    index _targetDepth;
     GLenum _color_format;
+    Attachment _targetAttachment;
 
 public:
 
+    
     struct Params : public TextureRenderTarget::Params {
         GLenum color_format;
         explicit Params(GLenum col_format = GL_RGB8, const TextureRenderTarget::Params& ps = TextureRenderTarget::Params()) :
@@ -28,9 +43,9 @@ public:
     TextureRenderTarget3D(const math::ivec3_t&, const Params&);
     void resize(const math::ivec3_t&);
 
-    size depth() { return _depth; }
-    index targetDepth() { return _targetDepth; }
-    void targetDepth(index td);
+    size depth() const { return _depth; }
+    Attachment targetAttachment() const { return _targetAttachment; }
+    void targetAttachment(const Attachment&);
     
     virtual void createTexture(bool delete_old = true) EXPLICIT;
 };

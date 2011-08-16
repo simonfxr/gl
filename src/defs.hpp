@@ -43,7 +43,7 @@
 
 #endif
 
-#define ARRAY_LENGTH(x) size(sizeof (x) / sizeof *(x))
+#define ARRAY_LENGTH(x) ::defs::size(sizeof (x) / sizeof *(x))
 
 #define UNUSED(x) ((void) (x))
 

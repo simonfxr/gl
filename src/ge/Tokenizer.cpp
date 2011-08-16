@@ -350,7 +350,7 @@ State parseNum(ParseState& s, CommandArg& tok) {
 
     if (oneDigit && (s.c == 'e' || s.c == 'E')) {
         int p = parsePow(s);
-        num = math::pow(k, p);
+        num = ::pow(double(k), p);
         isNum = true;
     } else if (s.c == '.') {
         getch(s);
@@ -367,7 +367,7 @@ State parseNum(ParseState& s, CommandArg& tok) {
         if (s.c == 'e' || s.c == 'E')
             p = parsePow(s);
 
-        num = (k + fract / div) * math::pow(10, p);
+        num = (double(k) + double(fract) / div) * ::pow(10, p);
         isNum = true;
     }
 

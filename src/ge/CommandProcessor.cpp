@@ -162,7 +162,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
             if (val_type != args[i].type) {
                 if (val_type == Number && args[i].type == Integer) {
                     args[i].type = Integer;
-                    args[i].number = args[i].integer;
+                    args[i].number = double(args[i].integer);
                 } else if (val_type == CommandRef && args[i].type == String) {
                     Ref<Command> comArg = command(*args[i].string);
                     if (!comArg) {

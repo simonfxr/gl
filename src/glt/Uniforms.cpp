@@ -150,7 +150,7 @@ void setUniform(bool mandatory, const std::string& name, ShaderProgram& prog, GL
     GL_CHECK(glGetActiveUniformsiv(prog.program(), 1, &location, GL_UNIFORM_TYPE, &actual_typei));
     GLenum actual_type = GLenum(actual_typei);
     if (actual_type != type) {
-        std::string err = "uniform types dont match, expected: " + descGLType(type) + ", actual type: " + descGLType(actual_type);
+        std::string err = "uniform \"" + name + "\": types dont match, got: " + descGLType(type) + ", expected: " + descGLType(actual_type);
         ERR(err.c_str());
         return;
     }
@@ -190,6 +190,16 @@ void set(GLint loc, const Tex& tex) {
     GL_CHECK(glUniform1i(loc, GLint(tex.index)));
 }
 
+template <>
+void set(GLint loc, const GLint& val) {
+    GL_CHECK(glUniform1i(loc, val));
+}
+
+template <>
+void set(GLint loc, const GLuint& val) {
+    GL_CHECK(glUniform1ui(loc, val));
+}
+
 } // namespace anon
 
 Uniforms& Uniforms::optional(const std::string& name, float value) {
@@ -214,6 +224,16 @@ Uniforms& Uniforms::optional(const std::string& name, const mat3_t& value) {
 
 Uniforms& Uniforms::optional(const std::string& name, color value) {
     return optional(name, value.vec4()); 
+}
+
+Uniforms& Uniforms::optional(const std::string& name, GLint value) {
+    setUniform(false, name, prog, GL_INT, value);
+    return *this;
+}
+
+Uniforms& Uniforms::optional(const std::string& name, GLuint value) {
+    setUniform(false, name, prog, GL_UNSIGNED_INT, value);
+    return *this;
 }
 
 Uniforms& Uniforms::optional(const std::string& name, TextureHandle& texture, uint32 active_tex) {
@@ -248,6 +268,16 @@ Uniforms& Uniforms::mandatory(const std::string& name, const mat3_t& value) {
 
 Uniforms& Uniforms::mandatory(const std::string& name, color value) {
     return mandatory(name, value.vec4());
+}
+
+Uniforms& Uniforms::mandatory(const std::string& name, GLint value) {
+    setUniform(true, name, prog, GL_INT, value);
+    return *this;
+}
+
+Uniforms& Uniforms::mandatory(const std::string& name, GLuint value) {
+    setUniform(true, name, prog, GL_UNSIGNED_INT, value);
+    return *this;
 }
 
 Uniforms& Uniforms::mandatory(const std::string& name, TextureHandle& texture, uint32 active_tex) {

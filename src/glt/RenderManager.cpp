@@ -62,9 +62,9 @@ struct RenderManager::Data {
         framet0 = now();
         float diff = framet0 - stat_snapshot;
         if (diff >= FS_UPDATE_INTERVAL) {
-            stats.avg_fps = uint32(num_frames / diff);
+            stats.avg_fps = uint32(float(num_frames) / diff);
             if (renderAcc != 0)
-                stats.rt_avg = uint32(num_frames / renderAcc);
+                stats.rt_avg = uint32(float(num_frames) / renderAcc);
             renderAcc = 0.f;
             num_frames = 0;
             stat_snapshot = framet0;
@@ -75,7 +75,7 @@ struct RenderManager::Data {
         float diff2 = framet0 - stat_fast_snapshot;
         if (diff2 >= FS_UPDATE_INTERVAL_FAST) {
             if (renderAccFast != 0)
-                stats.rt_current = uint32(num_frames_fast / renderAccFast);
+                stats.rt_current = uint32(float(num_frames_fast) / renderAccFast);
             renderAccFast = 0.f;
             num_frames_fast = 0;
             stat_fast_snapshot = framet0;

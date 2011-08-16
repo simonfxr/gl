@@ -80,15 +80,18 @@ if(BUILD_DEBUG AND COMP_CLANG)
 endif()
 
 if(COMP_GCCLIKE)
-  add_definitions(-Wall -Wextra -Wconversion -Wsign-conversion -Wold-style-cast -Werror -fno-exceptions -fno-rtti)
+  add_definitions(
+    -Wall -Wextra 
+#    -Wconversion -Wsign-conversion -Wold-style-cast -Wdouble-promotion 
+#    -Werror 
+    -fno-exceptions -fno-rtti)
 endif()
 
 if(COMP_GCC)
-  add_definitions(-Wdouble-promotion)
   add_definitions(
 #    -Wsuggest-attribute=const 
 #    -Wsuggest-attribute=pure 
-    -Wsuggest-attribute=noreturn
+#    -Wsuggest-attribute=noreturn
     )
 endif()
 

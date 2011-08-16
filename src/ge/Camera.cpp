@@ -32,7 +32,7 @@ static void runSaveFrame(const glt::Frame *frame, const Event<CommandEvent>&, co
         return;
     }
     
-    out.write((const char *) frame, sizeof *frame);
+    out.write(reinterpret_cast<const char *>(frame), sizeof *frame);
 }
 
 static void runLoadFrame(glt::Frame *frame, const Event<CommandEvent>&, const Array<CommandArg>& args) {
@@ -42,7 +42,7 @@ static void runLoadFrame(glt::Frame *frame, const Event<CommandEvent>&, const Ar
         return;
     }
 
-    in.read((char *) frame, sizeof *frame);
+    in.read(reinterpret_cast<char *>(frame), sizeof *frame);
 }
 
 static void runSetStepLength(float *step_len, const Event<CommandEvent>&, const Array<CommandArg>& args) {

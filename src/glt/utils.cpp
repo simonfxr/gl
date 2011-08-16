@@ -185,7 +185,7 @@ AMDDebug::~AMDDebug() {
 
 GLDebug *AMDDebug::init() {
 
-    if (!GLEW_AMD_debug_output)
+    if (!glewIsSupported("GLEW_AMD_debug_output"))
         return 0;
 
     glDebugMessageEnableAMD(0, 0, 0, NULL, GL_TRUE);

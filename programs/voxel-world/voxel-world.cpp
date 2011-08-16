@@ -1089,7 +1089,7 @@ static float sumNoise3D(const vec3_t& p, uint32 octaves, float fmin, float phi, 
 }
 
 static float lerp2(float t, float a, float b) {
-    return lerp(a, b, t);
+    return mix(a, b, t);
 }
 
 static float noise3D(const vec3_t& pnt) {

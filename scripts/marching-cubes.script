@@ -1,8 +1,8 @@
 load "default.script"
 
-addShaderPath "marching-cubes/shaders"
+#addShaderPath "marching-cubes/shaders"
 
-bindShader "perlin-noise" "perlin-noise.vert" "perlin-noise.frag" 0 "position"
+bindShader "perlin-noise" "perlin-noise.vert" "perlin-noise.geom" "perlin-noise.frag" 0 "position"
 
 bindShader "render-noise" "render-noise.vert" "render-noise.frag" 0 "position"
 
@@ -10,18 +10,18 @@ bindShader "marching-cubes" "marching-cubes.vert" "marching-cubes.geom" "marchin
 
 bindShader "identity" "identity.vert" "identity.frag" 0 "position"
 
-perspectiveProjection 35 1 100
+#perspectiveProjection 35 1 100
 
-bindKey [W] { moveCamera 12 }
-bindKey [D] { moveCamera 3 }
-bindKey [S] { moveCamera 6 }
-bindKey [A] { moveCamera 9 }
+# bindKey [W] { moveCamera 12 }
+# bindKey [D] { moveCamera 3 }
+# bindKey [S] { moveCamera 6 }
+# bindKey [A] { moveCamera 9 }
 
-bindKey [+U] { saveCameraFrame "marching-cubes.cam" }
-bindKey [+I] { loadCameraFrame "marching-cubes.cam" }
+# bindKey [+U] { saveCameraFrame "marching-cubes.cam" }
+# bindKey [+I] { loadCameraFrame "marching-cubes.cam" }
 
-postInit { 
-    setCameraStepLength 1
-    setCameraMouseSensitivity 0.00075
-    loadCameraFrame "marching-cubes.cam"
-}
+# postInit { 
+#     setCameraStepLength 1
+#     setCameraMouseSensitivity 0.00075
+#     loadCameraFrame "marching-cubes.cam"
+# }

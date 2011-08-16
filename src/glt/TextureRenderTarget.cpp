@@ -93,6 +93,8 @@ void TextureRenderTarget::resize(size w, size h) {
 #undef CASE
         
         ERR(str_status);
+    } else {
+        std::cerr << "framebuffer complete" << std::endl;
     }
 }
 

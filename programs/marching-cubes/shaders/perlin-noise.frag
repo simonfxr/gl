@@ -1,6 +1,7 @@
-uniform float depth;
+uniform mat4 worldMatrix;
 
-in vec2 vTexCoord;
+in vec3 gTexCoord;
+
 out float fNoise;
 
 /* const int Permu[512] = int[512]( */
@@ -95,5 +96,6 @@ float noise3D(vec3 pnt) {
 }
 
 void main() {
-    fNoise = noise3D(vec3(vTexCoord, depth) * 16);
+    vec4 wc = worldMatrix * vec4(gTexCoord, 1);
+    fNoise = noise3D(wc.xyz / wc.w);
 }

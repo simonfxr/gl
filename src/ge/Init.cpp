@@ -38,7 +38,7 @@ static void runInitGLEW(const Event<InitEvent>& e) {
     GLenum err = glewInit();
 
     if (GLEW_OK != err) {
-        ERR(std::string("GLEW Error: ") + (const char *) glewGetErrorString(err));
+        ERR(std::string("GLEW Error: ") + glt::gl_unstr(glewGetErrorString(err)));
         return;
     }
 

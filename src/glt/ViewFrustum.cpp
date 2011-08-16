@@ -34,7 +34,7 @@ Outcode testSphere(const ViewFrustum& frust, const vec3_t& center, float rad) {
 
     for (uint32 i = 0; i < 1; ++i)
         if (distance(frust.planes[i], center) + rad < 0)
-            code |= 1ul << i;
+            code |= Outcode(1) << i;
 
     return code;
 

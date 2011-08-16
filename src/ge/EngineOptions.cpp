@@ -198,7 +198,7 @@ EngineOptions& EngineOptions::parse(int *argcp, char ***argvp) {
                 goto skip_args;
             }
 
-            for (int opt = 0; opt < (int) ARRAY_LENGTH(OPTIONS); ++opt) {
+            for (defs::index opt = 0; opt < ARRAY_LENGTH(OPTIONS); ++opt) {
                 if (str_eq(argv[i], OPTIONS[opt].option)) {
                     bool has_arg = OPTIONS[opt].option_arg != 0;
 
@@ -243,22 +243,22 @@ void EngineOptions::printHelp() {
 
     int max_col = 0;
 
-    for (int i = 0; i < (int) ARRAY_LENGTH(OPTIONS); ++i) {
-        int w = 2;
-        w += strlen(OPTIONS[i].option);
+    for (defs::index i = 0; i < ARRAY_LENGTH(OPTIONS); ++i) {
+        defs::index w = 2;
+        w += SIZE(strlen(OPTIONS[i].option));
         if (OPTIONS[i].option_arg != 0)
-            w += 1 + strlen(OPTIONS[i].option_arg);
+            w += 1 + SIZE(strlen(OPTIONS[i].option_arg));
         if (w > max_col)
             max_col = w;
     }
 
-    for (int i = 0; i < (int) ARRAY_LENGTH(OPTIONS); ++i) {
-        int w = 2;
+    for (defs::index i = 0; i < ARRAY_LENGTH(OPTIONS); ++i) {
+        defs::index w = 2;
         out << "  " << OPTIONS[i].option;
-        w += strlen(OPTIONS[i].option);
+        w += SIZE(strlen(OPTIONS[i].option));
         if (OPTIONS[i].option_arg != 0) {
             out << " " << OPTIONS[i].option_arg;
-            w += 1 + strlen(OPTIONS[i].option_arg);
+            w += 1 + SIZE(strlen(OPTIONS[i].option_arg));
         }
 
         while (w++ <  max_col + 3)
