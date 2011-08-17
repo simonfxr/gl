@@ -44,6 +44,7 @@ struct TextureRenderTarget EXPLICIT : public RenderTarget {
     virtual void createTexture(bool delete_old = true);
 
 protected:
+    virtual void doDeactivate() OVERRIDE;
     virtual void doActivate() OVERRIDE;
 };
 

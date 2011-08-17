@@ -1,6 +1,6 @@
 load "default.script"
 
-#addShaderPath "marching-cubes/shaders"
+addShaderPath "programs/marching-cubes/shaders"
 
 bindShader "perlin-noise" "perlin-noise.vert" "perlin-noise.geom" "perlin-noise.frag" 0 "position"
 
@@ -9,6 +9,12 @@ bindShader "render-noise" "render-noise.vert" "render-noise.frag" 0 "position"
 bindShader "marching-cubes" "marching-cubes.vert" "marching-cubes.geom" "marching-cubes.frag" 0 "position"
 
 bindShader "identity" "identity.vert" "identity.frag" 0 "position"
+
+postInit { 
+    bindKey [+W] { addRenderDepth +0.05 }
+    bindKey [+S] { addRenderDepth -0.05 }
+}
+
 
 #perspectiveProjection 35 1 100
 

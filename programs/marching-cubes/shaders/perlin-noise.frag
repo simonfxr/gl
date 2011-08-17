@@ -42,7 +42,11 @@ out float fNoise;
 /*     ); */
 
 int P(int i) {
-    i &= 255;
+    if (i < 0) {
+        i = 256 - ((-i) & 255);
+    } else {
+        i &= 255;
+    }
     i = 2 * i * i + i;
     return i & 255;
 }
@@ -56,7 +60,7 @@ float grad(int hash, float x, float y, float z) {
     return ((h&1) == 0 ? u : -u) + ((h&2) == 0 ? v : -v);
 }
 
-float lerp2(float t, float a, float b) {
+float lerp(float t, float a, float b) {
     return a + t * (b - a);
 }
 
@@ -85,17 +89,23 @@ float noise3D(vec3 pnt) {
     int A = P(X  )+Y, AA = P(A)+Z, AB = P(A+1)+Z,      
         B = P(X+1)+Y, BA = P(B)+Z, BB = P(B+1)+Z;      
 
-    return lerp2(w, lerp2(v, lerp2(u, grad(P(AA  ), x  , y  , z  ),  
+    return lerp(w, lerp(v, lerp(u, grad(P(AA  ), x  , y  , z  ),  
                                    grad(P(BA  ), x-1, y  , z  )), 
-                          lerp2(u, grad(P(AB  ), x  , y-1, z  ),  
+                          lerp(u, grad(P(AB  ), x  , y-1, z  ),  
                                 grad(P(BB  ), x-1, y-1, z  ))),
-                 lerp2(v, lerp2(u, grad(P(AA+1), x  , y  , z-1),  
+                 lerp(v, lerp(u, grad(P(AA+1), x  , y  , z-1),  
                                 grad(P(BA+1), x-1, y  , z-1)), 
-                       lerp2(u, grad(P(AB+1), x  , y-1, z-1),
+                       lerp(u, grad(P(AB+1), x  , y-1, z-1),
                              grad(P(BB+1), x-1, y-1, z-1))));
 }
 
 void main() {
-    vec4 wc = worldMatrix * vec4(gTexCoord, 1);
+    float scale = 16;
+    mat4 wMatrix = mat4(vec4(scale, 0, 0, 0),
+                        vec4(0, scale, 0, 0),
+                        vec4(0,0,scale, 0),
+                        vec4(0,0,0,1));
+                             
+    vec4 wc = wMatrix * vec4(gTexCoord, 1);
     fNoise = noise3D(wc.xyz / wc.w);
 }

@@ -93,8 +93,6 @@ void TextureRenderTarget::resize(size w, size h) {
 #undef CASE
         
         ERR(str_status);
-    } else {
-        std::cerr << "framebuffer complete" << std::endl;
     }
 }
 
@@ -123,6 +121,11 @@ void TextureRenderTarget::createTexture(bool delete_old) {
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));    
     GL_CHECK(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture.handle(), 0));
 }
+
+void TextureRenderTarget::doDeactivate() {
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+}
+
 
 void TextureRenderTarget::doActivate() {
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));

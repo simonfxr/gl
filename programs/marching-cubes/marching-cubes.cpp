@@ -22,7 +22,7 @@
 using namespace math;
 using namespace defs;
 
-static const ivec3_t PERLIN_NOISE_SIZE = ivec3(64);
+static const ivec3_t PERLIN_NOISE_SIZE = ivec3(32);
 
 static const ivec3_t SAMPLER_SIZE = ivec3(69);
 
@@ -39,7 +39,7 @@ float worldVolume(const vec3_t&);
 struct Anim {
     ge::Engine *engine;
     Ref<glt::TextureRenderTarget3D> perlinNoise;
-    glt::CubeMesh<SimpleVertex> unitRect;
+    glt::Mesh<SimpleVertex> unitRect;
     glt::CubeMesh<SimpleVertex> unitCube;
     glt::Mesh<SimpleVertex> volumeCube;
     glt::Mesh<SimpleVertex> cpuMesh;
@@ -79,14 +79,9 @@ bool Anim::initPerlinNoise() {
         glt::TextureRenderTarget3D::Params ps;
         ps.default_filter_mode = glt::TextureHandle::FilterLinear;
         ps.color_format = GL_R32F;
-        perlinNoise = new glt::TextureRenderTarget3D(PERLIN_NOISE_SIZE, ps);
+        perlinNoise = new glt::TextureRenderTarget3D(PERLIN_NOISE_SIZE + ivec3(1), ps);
     }
 
-    perlinNoise->targetAttachment(glt::TextureRenderTarget3D::Attachment(glt::TextureRenderTarget3D::AttachmentLayered));
-
-    engine->renderManager().beginScene();
-    std::cerr << "begin scene" << std::endl;
-    
     GL_CHECK(glDisable(GL_DEPTH_TEST));
 
     Ref<glt::ShaderProgram> perlinProg = engine->shaderManager().program("perlin-noise");
@@ -94,10 +89,22 @@ bool Anim::initPerlinNoise() {
         return false;
 
     perlinProg->use();
-    glt::Uniforms(*perlinProg).optional("layers", GLuint(perlinNoise->depth()));
-    unitRect.draw();
-    engine->renderManager().endScene();
 
+    for (index i = 0; i < perlinNoise->depth(); ++i) {
+        perlinNoise->targetAttachment(glt::TextureRenderTarget3D::Attachment(
+                                          glt::TextureRenderTarget3D::AttachmentLayer, i));
+
+        engine->renderManager().beginScene();
+        engine->renderManager().setActiveRenderTarget(perlinNoise.ptr());
+
+        glt::Uniforms(*perlinProg).optional("depth", float(i) / (perlinNoise->depth() - 1));
+
+        unitRect.draw();
+        engine->renderManager().endScene();
+    }
+
+    engine->renderManager().setDefaultRenderTarget();
+    
     GL_CHECK(glFinish());
     
     return true;
@@ -107,8 +114,17 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     camera.registerWith(*engine);
     camera.registerCommands(engine->commandProcessor());
 
-    glt::primitives::rectangle(unitRect, vec3(-1, -1, 0), vec2(2, 2));
-    unitRect.send();
+    {
+        SimpleVertex v;
+        unitRect.primType(GL_TRIANGLES);
+        v.position = vec3(-1.f, -1.f, 0.f); unitRect.addVertex(v);
+        v.position = vec3(1.f, -1.f, 0); unitRect.addVertex(v);
+        v.position = vec3(-1.f, 1, 0); unitRect.addVertex(v);
+        v.position = vec3(-1.f, 1, 0); unitRect.addVertex(v);
+        v.position = vec3(1, -1.f, 0); unitRect.addVertex(v);
+        v.position = vec3(1, 1, 0); unitRect.addVertex(v);
+        unitRect.send();
+    }
 
     engine->window().grabMouse(true);
     engine->window().showMouseCursor(false);
@@ -116,9 +132,9 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     // glt::primitves::unitCubeWONormals(unitCube);
     // unitCube.send();
 
-    cpuMesh.primType(GL_TRIANGLES);
-    time(cpu_marching_cubes(cpuMesh));
-    cpuMesh.send();
+    // cpuMesh.primType(GL_TRIANGLES);
+    // time(cpu_marching_cubes(cpuMesh));
+    // cpuMesh.send();
 
     caseToNumPolysData.type(glt::Texture1D);
     caseToNumPolysData.bind();

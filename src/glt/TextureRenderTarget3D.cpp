@@ -59,17 +59,13 @@ void TextureRenderTarget3D::createTexture(bool delete_old) {
     _targetAttachment.type = other;  // force update
     _targetAttachment.index = 0;
     targetAttachment(current);
-    std::cerr << "texture3D created" << std::endl;
 }
 
 void TextureRenderTarget3D::targetAttachment(const TextureRenderTarget3D::Attachment& ta) {
     if (ta.type != _targetAttachment.type ||
         (ta.type == AttachmentLayer && ta.index != _targetAttachment.index)) {
-
-        std::cerr << "setting target attachment" << std::endl;
         
         _targetAttachment = ta;
-        texture.bind();
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));
 
         switch (ta.type) {
@@ -77,33 +73,13 @@ void TextureRenderTarget3D::targetAttachment(const TextureRenderTarget3D::Attach
             GL_CHECK(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture.handle(), 0));
             break;
         case AttachmentLayer:
-            GL_CHECK(glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, texture.handle(), 0, ta.index));    
+            texture.bind();
+            GL_CHECK(glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, texture.handle(), 0, ta.index));
+            // texture.bind();
+            // GL_CHECK(glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture.handle(), ta.index, 0));    
             break;
         default: ASSERT_FAIL();
         }
-
-            GLenum status;
-    GL_CHECK(status = glCheckFramebufferStatus(GL_FRAMEBUFFER));
-    if (status != GL_FRAMEBUFFER_COMPLETE) {
-
-        const char *str_status = "unknown framebuffer status";
-#define CASE(s) case s: str_status = #s; break
-        switch (status) {
-            CASE(GL_FRAMEBUFFER_UNSUPPORTED);
-            CASE(GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
-            CASE(GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
-            CASE(GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER);
-            CASE(GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER);
-            CASE(GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE);
-            CASE(GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS);
-//            CASE(GL_FRAMEBUFFER_INCOMPLETE_LAYER_COUNT);
-        }
-#undef CASE
-        
-        ERR(str_status);
-    } else {
-        std::cerr << "framebuffer complete" << std::endl;
-    }
 
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));        
     }

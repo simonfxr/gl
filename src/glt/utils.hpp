@@ -12,7 +12,7 @@
 #ifdef GLDEBUG
 #define GL_CHECK(op) do {                                       \
         (op);                                                   \
-        ::glt::checkForGLError(_CURRENT_LOCATION_OP(AS_STRING(op)));    \
+        ::glt::checkForGLError(_CURRENT_LOCATION_OP(#op));    \
     } while (0)
 #define GL_CHECK_ERRORS() ::glt::checkForGLError(_CURRENT_LOCATION)
 #else
@@ -21,6 +21,10 @@
 #endif
 
 namespace glt {
+
+bool printOpenGLCalls();
+
+void printOpenGLCalls(bool);
 
 std::string getGLErrorString(GLenum err);
 

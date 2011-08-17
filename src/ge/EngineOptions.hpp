@@ -29,6 +29,7 @@ struct EngineOptions {
     std::vector<std::string> scriptDirs;
     WindowOptions window;
     Mode mode;
+    bool traceOpenGL;
 
     mutable EngineInitializers inits;
 

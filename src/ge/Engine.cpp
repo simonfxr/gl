@@ -1,3 +1,5 @@
+#include "glt/utils.hpp"
+
 #include "ge/Engine.hpp"
 #include "ge/Tokenizer.hpp"
 
@@ -164,6 +166,14 @@ int32 Engine::run(const EngineOptions& opts) {
         return 0;
     }
 
+    if (opts.traceOpenGL) {
+#ifdef GLDEBUG
+        glt::printOpenGLCalls(true);
+#else
+        WARN("cannot enable OpenGL tracing: not compiled with GLDEBUG");
+#endif
+    }
+    
     std::string wd = opts.workingDirectory;
     if (opts.workingDirectory.empty() && opts.defaultCD)
         wd = sys::fs::dirname(opts.binary);

@@ -10,6 +10,20 @@
 
 namespace glt {
 
+namespace {
+
+bool print_opengl_calls = false;
+
+};
+
+bool printOpenGLCalls() {
+    return print_opengl_calls;
+}
+
+void printOpenGLCalls(bool yesno) {
+    print_opengl_calls = yesno;
+}
+
 std::string getGLErrorString(GLenum err) {
 
     switch (err) {
@@ -184,10 +198,6 @@ AMDDebug::~AMDDebug() {
 }
 
 GLDebug *AMDDebug::init() {
-
-    if (!glewIsSupported("GLEW_AMD_debug_output"))
-        return 0;
-
     glDebugMessageEnableAMD(0, 0, 0, NULL, GL_TRUE);
 
     GLenum err = glGetError();
@@ -250,6 +260,11 @@ void printGLError(const err::Location& loc, GLenum err) {
 }
 
 bool checkForGLError(const err::Location& loc) {
+
+    if (print_opengl_calls && loc.operation != 0) {
+        std::cerr << "OPENGL " << loc.operation << " " << loc.file << ":" << loc.line << std::endl;
+    }
+    
     bool was_error = false;
 
     for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
@@ -265,18 +280,16 @@ bool initDebug() {
     GLDebug *dbg = 0;
     const char *debug_impl = 0;
 
-    glewInit();
-
-    if (isExtensionSupported("GL_ARB_debug_output")) {
-        debug_impl = "GL_ARB_debug_output";
-        dbg = ARBDebug::init();
-    }
-    
     if (dbg == 0 && isExtensionSupported("GL_AMD_debug_output")) {
         debug_impl = "GL_AMD_debug_output";
         dbg = AMDDebug::init();
     }
 
+    if (dbg == 0 && isExtensionSupported("GL_ARB_debug_output")) {
+        debug_impl = "GL_ARB_debug_output";
+        dbg = ARBDebug::init();
+    }
+    
     bool initialized;
 
     if (dbg == 0) {

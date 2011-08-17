@@ -23,6 +23,7 @@ enum OptionCase {
     GLVersion,
     GLProfile,
     GLDebug,
+    GLTrace,
     AASamples,
     GlewExp
 };
@@ -46,6 +47,7 @@ const Option OPTIONS[] = {
     { "--gl-version", "VERSION", GLVersion, "set the OpenGL context version: MAJOR.MINOR" },
     { "--gl-profile", "TYPE", GLProfile, "set the OpenGL profile type: core|compatibility" },
     { "--gl-debug", "BOOL", GLDebug, "create a OpenGL debug context: yes|no" },
+    { "--gl-trace", "BOOL", GLTrace, "print every OpenGL call: yes|no" },
     { "--aa-samples", "NUM", AASamples, "set the number of FSAA Samples" },
     { "--glew-experimental", "BOOL", GlewExp, "set the glewExperimental flag: yes|no" }
 };
@@ -129,6 +131,16 @@ bool State::option(OptionCase opt, const char *arg) {
             return false;
         }
         return true;
+    case GLTrace:
+        if (str_eq(arg, "yes")) {
+            options.traceOpenGL = true;
+        } else if (str_eq(arg, "no")) {
+            options.traceOpenGL = false;
+        } else {
+            CMDWARN("--gl-trace: not a boolean option");
+            return false;
+        }
+        return true;
     case AASamples:
         unsigned samples;
         if (sscanf(arg, "%u", &samples) != 1) {
@@ -164,7 +176,8 @@ EngineOptions::EngineOptions() :
     shaderDirs(),
     scriptDirs(),
     window(),
-    mode(Animate)
+    mode(Animate),
+    traceOpenGL(false)
 {
 #ifdef GLDEBUG
     window.settings.DebugContext = true;
