@@ -22,9 +22,9 @@
 using namespace math;
 using namespace defs;
 
-static const ivec3_t PERLIN_NOISE_SIZE = ivec3(32);
+static const ivec3_t PERLIN_NOISE_SIZE = ivec3(113);
 
-static const ivec3_t SAMPLER_SIZE = ivec3(69);
+static const ivec3_t SAMPLER_SIZE = ivec3(77);
 
 struct SimpleVertex {
     vec3_t position;
@@ -104,7 +104,8 @@ bool Anim::initPerlinNoise() {
     }
 
     engine->renderManager().setDefaultRenderTarget();
-    
+
+    GL_CHECK(glEnable(GL_DEPTH_TEST));
     GL_CHECK(glFinish());
     
     return true;
@@ -181,24 +182,21 @@ void Anim::renderVolume(glt::TextureHandle& vol, float isoLvl) {
     ASSERT(marchingCubesProg);
     
     glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
-    const mat4_t& model = gt.modelMatrix();
-    vec3_t edge_dim = (transformPoint(model, vec3(1.f)) - transformPoint(model, vec3(0.f))) / vec3(SAMPLER_SIZE - ivec3(1));
 
     marchingCubesProg->use();
 
     caseToNumPolysData.bind(0);
     triangleTableData.bind(1);
     vol.bind(2);
-    
+
     glt::Uniforms(*marchingCubesProg)
         .optional("caseToNumPolysData", caseToNumPolysData, 0, GL_UNSIGNED_INT_SAMPLER_1D)
         .optional("triangleTableData", triangleTableData, 1, GL_UNSIGNED_INT_SAMPLER_1D)
         .optional("worldVolume", vol, 2, GL_SAMPLER_3D)
-        .optional("modelMatrix", model)
-        .optional("vpMatrix", gt.vpMatrix())
-        .optional("edgeDim", edge_dim)
-        .optional("texEdgeDim", vec3(1) / vec3(SAMPLER_SIZE - ivec3(1)))
-        .optional("isoLevel", isoLvl);
+        .optional("mvMatrix", gt.mvMatrix())
+        .optional("normalMatrix", gt.normalMatrix())
+        .optional("projectionMatrix", gt.projectionMatrix())
+        .optional("texEdgeDim", vec3(1) / vec3(SAMPLER_SIZE - ivec3(1)));
 
     volumeCube.draw();    
 }
@@ -208,22 +206,23 @@ void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
 }
 
 void Anim::render(const ge::Event<ge::RenderEvent>&) {
-    GL_CHECK(glDisable(GL_DEPTH_TEST));
-
-    Ref<glt::ShaderProgram> noiseProg = engine->shaderManager().program("render-noise");
-    ASSERT(noiseProg);
-
-    noiseProg->use();
-    perlinNoise->textureHandle().bind(0);
+    // GL_CHECK(glDisable(GL_DEPTH_TEST));
     
-    glt::Uniforms(*noiseProg)
-        .optional("noise", perlinNoise->textureHandle(), 0)
-        .optional("depth", renderDepth);
 
-    unitRect.draw();
+    // Ref<glt::ShaderProgram> noiseProg = engine->shaderManager().program("render-noise");
+    // ASSERT(noiseProg);
 
-    // GL_CHECK(glClearColor(1.f, 1.f, 1.f, 1.f));
-    // engine->renderManager().activeRenderTarget()->clear();
+    // noiseProg->use();
+    // perlinNoise->textureHandle().bind(0);
+    
+    // glt::Uniforms(*noiseProg)
+    //     .optional("noise", perlinNoise->textureHandle(), 0)
+    //     .optional("depth", renderDepth);
+
+    // unitRect.draw();
+
+    GL_CHECK(glClearColor(1.f, 1.f, 1.f, 1.f));
+    engine->renderManager().activeRenderTarget()->clear();
 
     // // GL_CHECK(glPointSize(2));
 
@@ -236,23 +235,23 @@ void Anim::render(const ge::Event<ge::RenderEvent>&) {
 
     // // cpuMesh.draw();
 
-    // glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
-    // {
-    //     glt::SavePoint sp(gt.save());
+    glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
+    {
+        glt::SavePoint sp(gt.save());
         
-    //     gt.scale(vec3(133));
+        gt.scale(vec3(133));
         
-    //     renderVolume(perlinNoise->textureHandle(), 0.2f);
+        renderVolume(perlinNoise->textureHandle(), 0.2f);
         
-    //     // Ref<glt::ShaderProgram> identityProg = engine->shaderManager().program("identity");
-    //     // ASSERT(identityProg);
-    //     // identityProg->use();
-    //     // glt::Uniforms(*identityProg)
-    //     //     .optional("mvpMatrix", gt.mvpMatrix())
-    //     //     .optional("color", vec4(1, 0, 0, 1));
+        // Ref<glt::ShaderProgram> identityProg = engine->shaderManager().program("identity");
+        // ASSERT(identityProg);
+        // identityProg->use();
+        // glt::Uniforms(*identityProg)
+        //     .optional("mvpMatrix", gt.mvpMatrix())
+        //     .optional("color", vec4(1, 0, 0, 1));
 
-    //     // volumeCube.draw();
-    // }
+        // volumeCube.draw();
+    }
 
     if (fpsTimer->fire()) {
         glt::FrameStatistics fs = engine->renderManager().frameStatistics();

@@ -100,7 +100,7 @@ float noise3D(vec3 pnt) {
 }
 
 void main() {
-    float scale = 16;
+    float scale = 3;
     mat4 wMatrix = mat4(vec4(scale, 0, 0, 0),
                         vec4(0, scale, 0, 0),
                         vec4(0,0,scale, 0),

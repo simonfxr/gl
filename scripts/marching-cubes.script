@@ -10,24 +10,23 @@ bindShader "marching-cubes" "marching-cubes.vert" "marching-cubes.geom" "marchin
 
 bindShader "identity" "identity.vert" "identity.frag" 0 "position"
 
-postInit { 
-    bindKey [+W] { addRenderDepth +0.05 }
-    bindKey [+S] { addRenderDepth -0.05 }
-}
-
-
-#perspectiveProjection 35 1 100
-
-# bindKey [W] { moveCamera 12 }
-# bindKey [D] { moveCamera 3 }
-# bindKey [S] { moveCamera 6 }
-# bindKey [A] { moveCamera 9 }
-
-# bindKey [+U] { saveCameraFrame "marching-cubes.cam" }
-# bindKey [+I] { loadCameraFrame "marching-cubes.cam" }
-
 # postInit { 
-#     setCameraStepLength 1
-#     setCameraMouseSensitivity 0.00075
-#     loadCameraFrame "marching-cubes.cam"
+#     bindKey [+W] { addRenderDepth +0.05 }
+#     bindKey [+S] { addRenderDepth -0.05 }
 # }
+
+perspectiveProjection 35 0.5 800
+
+bindKey [W] { moveCamera 12 }
+bindKey [D] { moveCamera 3 }
+bindKey [S] { moveCamera 6 }
+bindKey [A] { moveCamera 9 }
+
+bindKey [+U] { saveCameraFrame "marching-cubes.cam" }
+bindKey [+I] { loadCameraFrame "marching-cubes.cam" }
+
+postInit { 
+    setCameraStepLength 4
+    setCameraMouseSensitivity 0.00075
+    loadCameraFrame "marching-cubes.cam"
+}
