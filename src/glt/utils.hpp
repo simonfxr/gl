@@ -36,6 +36,22 @@ bool isExtensionSupported(const char *extension);
 
 bool initDebug();
 
+// in kilobytes
+struct GLMemFree {
+    defs::size freeVBO;
+    defs::size freeTexture;
+    defs::size freeRenderbuffer;
+};
+
+struct GLMemInfo {
+    GLMemFree current;
+    GLMemFree initial;
+};
+
+bool initMemInfo();
+
+bool getMemInfo(GLMemInfo*);
+
 inline const GLubyte *gl_str(const char *str) {
     return reinterpret_cast<const GLubyte *>(str);
 }

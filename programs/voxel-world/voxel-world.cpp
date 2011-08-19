@@ -131,7 +131,7 @@ static void incGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Arr
 
 static void runRecreateWorld(State *state, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
     state->worldModel.freeGPU();
-    time(initWorld(state, state->worldModel, state->sphere_points));
+    time_op(initWorld(state, state->worldModel, state->sphere_points));
 }
 
 int blah(void *foo) {
@@ -184,7 +184,7 @@ static void initState(State *state, const InitEv& ev) {
 
 #ifdef HS_WORLD_GEN
     int ret;
-    time(ret = hs_voxel_init(&state->voxel_state));
+    time_op(ret = hs_voxel_init(&state->voxel_state));
     if (ret != 0) {
         ERR("hs_voxel_begin() failed");
         return;
@@ -825,7 +825,7 @@ static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points)
 #ifdef HS_WORLD_GEN
 
     int ret;
-    time(ret = hs_voxel_create_world(state->voxel_state, &densitiesp->ds[0][0][0], N));
+    time_op(ret = hs_voxel_create_world(state->voxel_state, &densitiesp->ds[0][0][0], N));
     if (ret == -1) {
         ERR("hs_voxel_create_world() failed");
         return false;
@@ -837,21 +837,21 @@ static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points)
 #else
 
     UNUSED(state);
-    time(createWorld(*densitiesp));
+    time_op(createWorld(*densitiesp));
 
 #endif
 
 
     
-    time(createGeometry(world, *densitiesp));
+    time_op(createGeometry(world, *densitiesp));
     
     std::auto_ptr<Rays> raysp(new Rays);
     Rays& rays = *raysp;
-    time(initRays(rays, sphere_points));
+    time_op(initRays(rays, sphere_points));
     std::cerr << "rays crossing planes: " << rays.sumcos.f[0] << ", " << rays.sumcos.f[1] << std::endl;
 
     World *visptmp;
-    time(visptmp = filterOccluded(world));
+    time_op(visptmp = filterOccluded(world));
     std::auto_ptr<World> visp(visptmp);
     World& vis = *visp;
 
@@ -885,9 +885,9 @@ static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points)
 
     std::auto_ptr<GlobalOcc> occmapp(new GlobalOcc);
     GlobalOcc& occmap = *occmapp;
-    time(createOcclusionMap(occmap, hull, worldOrVis, rays));
+    time_op(createOcclusionMap(occmap, hull, worldOrVis, rays));
 
-    // time({
+    // time_op({
     //         for (uint32 i = 0; i < 15; ++i)
     //             andWorld(worldAndVis, world, vis);
     //         });
@@ -900,7 +900,7 @@ static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points)
     for (uint32 i = 0; i < verts.size; ++i)
         verts.verts[i] = cubeModel.at(i);
 
-    time(createModel(worldModel, world, vis, occmap, verts, permut, stats, *densitiesp));
+    time_op(createModel(worldModel, world, vis, occmap, verts, permut, stats, *densitiesp));
 
     std::cerr << "blocks: " << stats.blocks << ", visible blocks: " << stats.visBlocks << std::endl;
     std::cerr << "faces: " << stats.faces << ", visible faces: " << stats.visFaces << std::endl;
@@ -934,7 +934,7 @@ static void renderBlocks(State *state, ge::Engine& e) {
     glt::RenderManager& rm = e.renderManager();
     glt::SavePoint sp(rm.geometryTransform().save());
 
-    // float phi = gameTime() * 0.1f;
+    // float phi = gameTime_Op() * 0.1f;
 
     // vec3_t center = BLOCK_DIM * N * 0.5f;
 

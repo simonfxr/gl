@@ -6,3 +6,5 @@ addShaderPath "shaders"
 
 bindKey [+C] &reloadShaders
 bindKey [+B] &togglePause
+bindKey [+M] &printMemInfo
+

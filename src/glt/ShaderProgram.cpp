@@ -189,6 +189,7 @@ void ShaderProgram::Data::printProgramLog(GLuint program, std::ostream& out) {
 
 void ShaderProgram::Data::handleCompileError(ShaderCompilerError::Type) {
     ERR("compile error occurred"); // FIXME
+    self.pushError(ShaderProgramError::CompilationFailed);
 }
 
 bool ShaderProgram::addShaderSrc(const std::string& src, ShaderManager::ShaderType type) {

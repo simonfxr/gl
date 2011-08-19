@@ -18,6 +18,7 @@ EngineInitializers::EngineInitializers(bool default_init) {
         initInitStats(*this);
         initCommands(PreInit0, *this);
         initGLEW(PreInit1, *this);
+        initMemInfo(PreInit1, *this);
         initShaderVersion(PreInit1, *this);
     }
 }
@@ -66,6 +67,16 @@ void initInitStats(EngineInitializers& inits) {
     inits.reg(PostInit, makeEventHandler(runPostInitStats, initT0));
 }
 
+static void runInitMemInfo(const Event<InitEvent>& e) {
+    e.info.success = true;
+    if (!glt::initMemInfo())
+        std::cerr << "couldnt init OpenGL Memory Info" << std::endl;
+}
+
+void initMemInfo(RunLevel lvl, EngineInitializers& inits) {
+    inits.reg(lvl, makeEventHandler(runInitMemInfo));
+}
+
 static void runInitShaderVersion(const Event<InitEvent>& e) {
     e.info.success = true;
     const sf::ContextSettings& c = e.info.engine.window().window().GetSettings();
@@ -87,6 +98,7 @@ static void runInitCommands(const Event<InitEvent>& e) {
     const Commands& cs = commands();
 
     r.define(cs.printContextInfo);
+    r.define(cs.printMemInfo);
     r.define(cs.reloadShaders);
     r.define(cs.listCachedShaders);
     r.define(cs.listBindings);

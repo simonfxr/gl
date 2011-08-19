@@ -1,8 +1,10 @@
+uniform float depth;
+
 in vec3 position;
 
-out vec2 vTexCoord;
+out vec3 vTexCoord;
 
 void main() {
-    gl_Position = vec4(position, 1.0);
-    vTexCoord = position.xy * 0.5 + vec2(0.5);
+    vTexCoord = vec3(position.xy, depth);
+    gl_Position = vec4(position * 2 - vec3(1, 1, 0), 1);
 }

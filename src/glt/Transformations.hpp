@@ -11,6 +11,8 @@ math::mat4_t perspectiveProjection(float radViewAngle, float aspectRatio, float 
 
 math::mat3_t rotationMatrix(float radAngle, const math::direction3_t& axis);
 
+math::mat4_t scaleMatrix(const math::vec3_t& scale);
+
 } // namespace glt
 
 #endif

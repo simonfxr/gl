@@ -11,11 +11,11 @@
         ret = ::sys::queryTimer() - _T0_;                               \
     } while (0)
 
-#define time(op) do {                                                   \
+#define time_op(...) do {                                                   \
         double _T0_ = ::sys::queryTimer();                               \
-        (op);                                                           \
+        __VA_ARGS__;                                                           \
         double _diff_ = ::sys::queryTimer() - _T0_;                      \
-        ::std::cerr << #op << " took " << (_diff_ * 1000) << " ms." << ::std::endl; \
+        ::std::cerr << #__VA_ARGS__ << " took " << (_diff_ * 1000) << " ms." << ::std::endl; \
     } while (0)
 
 #else
@@ -25,7 +25,7 @@
       ret = 0;                                  \
   } while (0) 
 
-#define time(op) do {                           \
+#define time_op(op) do {                           \
         (op);                                   \
     } while (0)
 

@@ -31,7 +31,7 @@ void initShaderVersion(RunLevel lvl, EngineInitializers&);
 
 void initCommands(RunLevel lvl, EngineInitializers&);
 
-void initDebug(RunLevel lvl, EngineInitializers&);
+void initMemInfo(RunLevel lvl, EngineInitializers&);
 
 void initInitStats(EngineInitializers& inits);
 
