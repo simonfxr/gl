@@ -7,8 +7,6 @@ uniform mat4 mvMatrix;
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
 
-const uint MAX_USHORT = 65535;
-
 uint edgeTable(int cas) {
     return texelFetch(caseToNumPolysData, cas, 0).r;
 }
@@ -17,17 +15,24 @@ uint triangleTable(int cas, int num) {
     return texelFetch(triangleTableData, cas * 16 + num, 0).r;
 }
 
-float sampleVolume(vec3 coord) {
-    /* coord = coord * 2 - vec3(1); */
-    /* return dot(coord, coord) - 1; */
-    return texture(worldVolume, coord, 0).r;
+float sampleVolume(vec3 uvw) {
+    /* vec4 wc4 = worldMatrix * vec4(uvw, 1); */
+    /* vec3 wc = wc4.xyz / wc4.w; */
+
+    /* float rad = 0.3; */
+    /* vec3 center = vec3(0.5, 0, 0); */
+
+
+    /* vec3 diff = wc - center; */
+    /* return dot(diff, diff) - rad * rad; */
+    return texture(worldVolume, uvw, 0).r;
 }
 
 layout(points) in;
 
 layout(triangle_strip, max_vertices = 15) out;
 
-out vec3 ecPosition;               
+out vec3 ecPosition;
 out vec3 ecNormal;
 
 vec3 interpolate(vec3 v1, float y1, vec3 v2, float y2) {
@@ -35,13 +40,16 @@ vec3 interpolate(vec3 v1, float y1, vec3 v2, float y2) {
 }
 
 vec3 gradientAt(vec3 uvw) {
+
+    vec3 off = texEdgeDim;
+    
     vec3 grad;
-    grad.x = sampleVolume(uvw + vec3(texEdgeDim.x, 0, 0)) -
-        sampleVolume(uvw - vec3(texEdgeDim.x, 0, 0));
-    grad.y = sampleVolume(uvw + vec3(0, texEdgeDim.y, 0)) -
-        sampleVolume(uvw - vec3(0, texEdgeDim.y, 0));
-    grad.z = sampleVolume(uvw + vec3(0, 0, texEdgeDim.z)) -
-        sampleVolume(uvw - vec3(0, 0, texEdgeDim.z));
+    grad.x = sampleVolume(uvw + vec3(off.x, 0, 0)) -
+        sampleVolume(uvw - vec3(off.x, 0, 0));
+    grad.y = sampleVolume(uvw + vec3(0, off.y, 0)) -
+        sampleVolume(uvw - vec3(0, off.y, 0));
+    grad.z = sampleVolume(uvw + vec3(0, 0, off.z)) -
+        sampleVolume(uvw - vec3(0, 0, off.z));
     return grad;
 }
 

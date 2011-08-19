@@ -1,11 +1,15 @@
 #include "defs.hpp"
 #include "data/Atomic.hpp"
+#include "sys/measure.hpp"
 
 #include <SFML/System/Thread.hpp>
+#include <SFML/System.hpp>
 
 #include <iostream>
 
 using namespace defs;
+
+namespace {
 
 template <typename T>
 void set_volatile(T& ref, const T& val) {
@@ -56,11 +60,11 @@ struct Chan {
 
     bool get(T *value) {
         Node *first = head;
-        Node *next = first->next.lazyGet();
+        Node *next = first->next.get();
 
         if (next == 0) {
-            next = first->next.get();
-            if (next == 0)
+            // next = first->next.get();
+            // if (next == 0)
                 return false;
         }
         
@@ -71,21 +75,32 @@ struct Chan {
     }
 };
 
-static const int N = 10000000;
+const int N = 10000000;
 
 Chan<int> chan;
+Atomic<int64> sum_producer;
+Atomic<int64> sum_consumer;
+sf::Mutex start_producer;
+sf::Mutex start_consumer;
+
+
+}
 
 static void producer(void) {
+    start_producer.Lock();
+
     int64 sum = 0;
     Chan<int> &c = chan;
     for (int i = 0; i < N; ++i)
         sum += i, c.put(i);
     c.put(N);
 
-    std::cerr << "PRODUCER: " << sum << std::endl;
+    sum_producer.set(sum);
 }
 
 static void consumer(void) {
+    start_consumer.Lock();
+
     int64 sum = 0;
     int i = 0;
     Chan<int> &c = chan;
@@ -95,7 +110,7 @@ static void consumer(void) {
             ;
     }
 
-    std::cerr << "CONSUMER: " << sum << std::endl;
+    sum_consumer.set(sum);
 }
 
 int main(void) {
@@ -103,11 +118,18 @@ int main(void) {
     sf::Thread producer_thread(producer);
     sf::Thread consumer_thread(consumer);
 
+    start_producer.Lock();
+    start_consumer.Lock();
     producer_thread.Launch();
     consumer_thread.Launch();
+    start_producer.Unlock();
+    start_consumer.Unlock();
 
-    producer_thread.Wait();
-    consumer_thread.Wait();
+    time_op(producer_thread.Wait(),
+            consumer_thread.Wait());
+
+    std::cerr << "PRODUCER: " << sum_producer.get() << std::endl;
+    std::cerr << "CONSUMER: " << sum_consumer.get() << std::endl;
 
     return 0;
 }

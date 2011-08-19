@@ -306,4 +306,53 @@ bool initDebug() {
     return initialized;
 }
 
+namespace {
+
+bool mem_info_initialized = false;
+bool mem_info_available = false;
+GLMemFree initial_free;
+
+enum MemInfoField {
+    FREE_TOTAL,
+    FREE_MAX_BLOCK,
+    FREE_AUX_TOTAL,
+    FREE_AUX_MAX_BLOCK,
+    FREE_COUNT
+};
+
+void queryMemFree(GLMemFree *free) {
+    GLint info[FREE_COUNT];
+    GL_CHECK(glGetIntegerv(GL_VBO_FREE_MEMORY_ATI, info));
+    free->freeVBO = info[FREE_TOTAL];
+    GL_CHECK(glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, info));
+    free->freeTexture = info[FREE_TOTAL];
+    GL_CHECK(glGetIntegerv(GL_RENDERBUFFER_FREE_MEMORY_ATI, info));
+    free->freeRenderbuffer = info[FREE_TOTAL];    
+}
+
+} // namespace anon
+
+bool initMemInfo() {
+    if (mem_info_initialized)
+        return mem_info_available;
+    mem_info_initialized = true;
+    mem_info_available = isExtensionSupported("GL_ATI_meminfo");
+    if (mem_info_available)
+        queryMemFree(&initial_free);
+    return true;
+}
+
+bool getMemInfo(GLMemInfo* mi) {
+    
+    if (!mem_info_available) {
+        if (!mem_info_initialized)
+            ERR("meminfo not initialized");
+        return false;
+    }
+
+    queryMemFree(&mi->current);
+    mi->initial = initial_free;
+    return true;
+}
+
 } // namespace glt

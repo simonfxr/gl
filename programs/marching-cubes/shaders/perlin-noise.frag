@@ -1,6 +1,6 @@
 uniform mat4 worldMatrix;
 
-in vec3 gTexCoord;
+in vec3 vTexCoord;
 
 out float fNoise;
 
@@ -100,12 +100,7 @@ float noise3D(vec3 pnt) {
 }
 
 void main() {
-    float scale = 3;
-    mat4 wMatrix = mat4(vec4(scale, 0, 0, 0),
-                        vec4(0, scale, 0, 0),
-                        vec4(0,0,scale, 0),
-                        vec4(0,0,0,1));
-                             
-    vec4 wc = wMatrix * vec4(gTexCoord, 1);
-    fNoise = noise3D(wc.xyz / wc.w);
+    vec4 wc4 = worldMatrix * vec4(vTexCoord, 1);
+    vec3 wc = wc4.xyz / wc4.w;
+    fNoise = noise3D(wc);
 }

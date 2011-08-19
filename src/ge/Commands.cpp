@@ -24,6 +24,22 @@ void runPrintContextInfo(const Event<CommandEvent>& e) {
               << std::endl;
 }
 
+void runPrintMemInfo(const Event<CommandEvent>&) {
+    glt::GLMemInfo info;
+    if (!glt::getMemInfo(&info)) {
+        ERR("couldnt query amount of free memory");
+        return;
+    }
+
+    float fracVBO = float(info.current.freeVBO) / float(info.initial.freeVBO);
+    float fracTex = float(info.current.freeTexture) / float(info.initial.freeTexture);
+    float fracRBO = float(info.current.freeRenderbuffer) / float(info.initial.freeRenderbuffer);
+    std::cerr << "OpenGL Free Memory: " << std::endl
+              << "  VBO: " << info.current.freeVBO << " kbyte (" << (fracVBO * 100) << "%)" << std::endl
+              << "  Texture: " << info.current.freeVBO << " kbyte (" << (fracTex * 100) << "%)" << std::endl
+              << "  Renderbuffer: " << info.current.freeVBO << " kbyte (" << (fracRBO * 100) << "%)" << std::endl;
+}
+
 void runReloadShaders(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     if (args.size() == 0) {
         std::cerr << "reloading shaders" << std::endl;
@@ -193,6 +209,11 @@ Commands::Commands() :
     printContextInfo(makeCommand(runPrintContextInfo,
                                  "printContextInfo",
                                  "prints information about the current OpenGL context")),
+
+    printMemInfo(makeCommand(runPrintMemInfo,
+                             "printMemInfo",
+                             "prints information about current (approximatly) amout of free memory on the GPU")),
+
 
     reloadShaders(makeStringListCommand(runReloadShaders,
                                         "reloadShaders", "reload ShaderPrograms")),

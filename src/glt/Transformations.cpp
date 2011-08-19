@@ -34,4 +34,13 @@ mat3_t rotationMatrix(float theta, const direction3_t& n) {
                      n[2] * n[2] * (1 - c) + c));
 }
 
+math::mat4_t scaleMatrix(const vec3_t& scale) {
+
+    return mat4(vec4(scale[0], 0, 0, 0),
+                vec4(0, scale[1], 0, 0),
+                vec4(0, 0, scale[2], 0),
+                vec4(0, 0, 0, 1));
+
+}
+
 } // namespace glt
