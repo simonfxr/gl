@@ -102,7 +102,12 @@ float noise3D(vec3 pnt) {
 void main() {
     vec4 wc4 = worldMatrix * vec4(vTexCoord, 1);
     vec3 wc = wc4.xyz / wc4.w;
-    /* wc += vec3(15, 3, 7); */
-    /* wc *= 2.7; */
-    fNoise = noise3D(wc);
+    /* /\* wc += vec3(15, 3, 7); *\/ */
+    /* wc *= 0.6; */
+    /* fNoise = noise3D(wc); */
+
+    float rad = 3;
+    vec3 center = vec3(2.5, 0.5, 2.5);
+    float len = length(wc - center);
+    fNoise = len - rad;
 }

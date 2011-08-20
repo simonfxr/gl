@@ -2,10 +2,8 @@
 uniform usampler1D caseToNumPolysData;
 uniform usampler1D triangleTableData;
 uniform sampler3D worldVolume;
+uniform mat4 worldMatrix;
 uniform vec3 texEdgeDim;
-uniform mat4 mvMatrix;
-uniform mat4 projectionMatrix;
-uniform mat3 normalMatrix;
 
 int edgeTable(int cas) {
     return int(texelFetch(caseToNumPolysData, cas, 0).r);
@@ -16,24 +14,24 @@ int triangleTable(int cas, int num) {
 }
 
 float sampleVolume(vec3 uvw) {
-    /* vec4 wc4 = worldMatrix * vec4(uvw, 1); */
-    /* vec3 wc = wc4.xyz / wc4.w; */
+    vec4 wc4 = worldMatrix * vec4(uvw, 1);
+    vec3 wc = wc4.xyz / wc4.w;
 
-    /* float rad = 0.3; */
-    /* vec3 center = vec3(0.5, 0, 0); */
+    float rad = 2;
+    vec3 center = vec3(3, 1, 3);
 
 
-    /* vec3 diff = wc - center; */
-    /* return dot(diff, diff) - rad * rad; */
-    return texture(worldVolume, uvw, 0).r;
+    vec3 diff = wc - center;
+    return dot(diff, diff) - rad * rad;
+//    return texture(worldVolume, uvw, 0).r;
 }
 
 layout(points) in;
 
-layout(triangle_strip, max_vertices = 15) out;
+layout(triangle_strip, max_vertices = 16) out;
 
-out vec3 ecPosition;
-out vec3 ecNormal;
+out vec3 gPosition;
+out vec3 gNormal;
 
 vec3 interpolate(vec3 v1, float y1, vec3 v2, float y2) {
     return v1 + (v2 - v1) * (y1 / (y1 - y2));
@@ -98,10 +96,8 @@ void main() {
     for (int i = 0; triangleTable(cubeIndex, i) != 255; i += 3) {
         for (int j = 0; j < 3; ++j) {
             vec3 uvw = intVerts[triangleTable(cubeIndex, i + j)];
-            vec4 ecPos4 = mvMatrix * vec4(uvw, 1);
-            ecPosition = ecPos4.xyz;
-            gl_Position = projectionMatrix * ecPos4;
-            ecNormal = normalMatrix * normalize(gradientAt(uvw));
+            gPosition = uvw;
+            gNormal = normalize(gradientAt(uvw));
             EmitVertex();
         }
 

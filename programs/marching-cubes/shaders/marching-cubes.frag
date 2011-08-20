@@ -8,5 +8,6 @@ void main() {
     vec3 V = normalize(-ecPosition);
     float diff = max(0, dot(N, V));
     vec3 color = vec3(0.5);
-    fColor = vec4(color * (0.2 + 0.8 * diff), 1);
+    float DiffContr = 0;
+    fColor = vec4(color * (DiffContr * (diff - 1) + 1), 1);
 }

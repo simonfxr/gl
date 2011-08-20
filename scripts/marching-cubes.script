@@ -2,13 +2,9 @@ load "default.script"
 
 addShaderPath "programs/marching-cubes/shaders"
 
-bindShader "world" "perlin-noise.vert" "julia.frag" 0 "position"
+bindShader "world" "perlin-noise.vert" "perlin-noise.frag" 0 "position"
 
-#bindShader "marching-cubes" "marching-cubes.vert" "marching-cubes.geom" "marching-cubes.frag" 0 "position"
-
-bindShader "feedback" "feedback.vert" "feedback.frag" 0 "position" 1 "normal"
-
-bindShader "identity" "identity.vert" "identity.frag" 0 "position"
+bindShader "render-polygon" "render-polygon.vert" "render-polygon.frag" 0 "position" 1 "normal"
 
 # postInit { 
 #     bindKey [+W] { addRenderDepth +0.05 }

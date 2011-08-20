@@ -1,4 +1,4 @@
-uniform mat4 viewMatrix;
+uniform mat4 mvMatrix;
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
 
@@ -10,7 +10,7 @@ out vec3 ecNormal;
 
 void main() {
     ecNormal = normalMatrix * position;
-    vec4 ecPos4 = viewMatrix * vec4(position, 1);
+    vec4 ecPos4 = mvMatrix * vec4(position, 1);
     ecPosition = ecPos4.xyz;
     gl_Position = projectionMatrix * ecPos4;
 }

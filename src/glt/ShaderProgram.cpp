@@ -411,7 +411,7 @@ bool ShaderProgram::bindAttributesGeneric(const VertexDescBase& desc) {
 bool ShaderProgram::bindStreamOutVaryings(const Array<std::string>& vars) {
     
     if (self->linked) {
-        WARN("cannot change varyings: already linked");
+        RAISE_ERR(*this, ShaderProgramError::APIError, "program alredy linked");
         return false;
     }
     
