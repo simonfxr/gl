@@ -7,12 +7,12 @@ uniform mat4 mvMatrix;
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
 
-uint edgeTable(int cas) {
-    return texelFetch(caseToNumPolysData, cas, 0).r;
+int edgeTable(int cas) {
+    return int(texelFetch(caseToNumPolysData, cas, 0).r);
 }
 
-uint triangleTable(int cas, int num) {
-    return texelFetch(triangleTableData, cas * 16 + num, 0).r;
+int triangleTable(int cas, int num) {
+    return int(texelFetch(triangleTableData, cas * 16 + num, 0).r);
 }
 
 float sampleVolume(vec3 uvw) {
@@ -76,7 +76,7 @@ void main() {
     for (int i = 0; i < 8; ++i)
         cubeIndex |= int(vs[i] < 0) << i;
 
-    uint edgeCode = edgeTable(cubeIndex);
+    int edgeCode = edgeTable(cubeIndex);
     if(edgeCode == 0)
         return;
 

@@ -28,7 +28,7 @@ struct WindowOptions {
         width(800),
         height(600),
         title(""),
-        settings(24, 0, 0, 3, 3)
+        settings()
         {}
 };
 
