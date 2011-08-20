@@ -408,4 +408,19 @@ bool ShaderProgram::bindAttributesGeneric(const VertexDescBase& desc) {
     return true;
 }
 
+bool ShaderProgram::bindStreamOutVaryings(const Array<std::string>& vars) {
+    
+    if (self->linked) {
+        WARN("cannot change varyings: already linked");
+        return false;
+    }
+    
+    std::vector<const char *> cvars(UNSIZE(vars.size()));
+    for (index i = 0; i < vars.size(); ++i)
+        cvars[i] = vars[i].c_str();
+    GLsizei len = GLsizei(vars.size());
+    GL_CHECK(glTransformFeedbackVaryings(program(), len, &cvars[0], GL_INTERLEAVED_ATTRIBS));
+    return true;
+}
+
 } // namespace glt

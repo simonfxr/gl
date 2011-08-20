@@ -2,7 +2,7 @@ load "default.script"
 
 addShaderPath "programs/marching-cubes/shaders"
 
-bindShader "world" "perlin-noise.vert" "perlin-noise.frag" 0 "position"
+bindShader "world" "perlin-noise.vert" "julia.frag" 0 "position"
 
 #bindShader "marching-cubes" "marching-cubes.vert" "marching-cubes.geom" "marching-cubes.frag" 0 "position"
 

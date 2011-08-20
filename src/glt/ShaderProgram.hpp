@@ -6,6 +6,7 @@
 
 #include "opengl.hpp"
 #include "data/Ref.hpp"
+#include "data/Array.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/VertexDescription.hpp"
 #include "err/WithError.hpp"
@@ -53,6 +54,8 @@ struct ShaderProgram : public err::WithError<ShaderProgramError::Type,
     bool addShaderFilePair(const std::string& basename, bool absolute = false);
 
     bool bindAttribute(const std::string& name, GLuint position);
+
+    bool bindStreamOutVaryings(const Array<std::string>&);
     
     template <typename T>
     bool bindAttributes(const VertexDesc<T>& desc = VertexTraits<T>::description());

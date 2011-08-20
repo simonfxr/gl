@@ -22,14 +22,14 @@ else()
   set(CXX_COMPILER "")
 endif()
 
-if(${CXX_COMPILER} STREQUAL "g++")
+if(${CXX_COMPILER} MATCHES "g\\+\\+")
   set(COMP_GCC TRUE)
   set(COMP_GCCLIKE TRUE)
-elseif(${CXX_COMPILER} STREQUAL "clang++")
-  set(COMP_CLANG)
+elseif(${CXX_COMPILER} MATCHES "clang\\+\\+")
+  set(COMP_CLANG TRUE)
   set(COMP_GCCLIKE TRUE)
-elseif(${CXX_COMPILER} STREQUAL "icpc")
-  set(COMP_ICC)
+elseif(${CXX_COMPILER} MATCHES "icpc")
+  set(COMP_ICC TRUE)
   set(COMP_GCCLIKE TRUE)
 endif()
 
@@ -80,10 +80,18 @@ if(BUILD_DEBUG AND COMP_CLANG)
 endif()
 
 if(COMP_GCCLIKE)
+  add_definitions(-Wall)
+  if (NOT COMP_ICC)
+    add_definitions(-Wextra)
+  else()
+    add_definitions(-diag-disable 10120)
+    link_libraries("-diag-disable 11000" "-diag-disable 11006" "-diag-disable 11001")
+  endif()
   add_definitions(
-    -Wall -Wextra 
-#    -Wconversion -Wsign-conversion -Wold-style-cast -Wdouble-promotion 
-#    -Werror 
+    # -Wconversion -Wsign-conversion 
+    # -Werror 
+    # -Wold-style-cast 
+    # -Wdouble-promotion 
     -fno-exceptions -fno-rtti)
 endif()
 

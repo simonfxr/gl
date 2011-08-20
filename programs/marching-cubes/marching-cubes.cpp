@@ -25,7 +25,7 @@ using namespace defs;
 
 static const vec3_t WORLD_BLOCK_SCALE = vec3(32);
 
-static const ivec3_t SAMPLER_SIZE = ivec3(32);
+static const ivec3_t SAMPLER_SIZE = ivec3(64);
 
 struct WorldVertex {
     vec3_t position;
@@ -221,7 +221,8 @@ void Anim::renderWorld() {
         rm.setActiveRenderTarget(worldVolume.ptr());
         glt::Uniforms(*worldProgram)
             .mandatory("depth", float(i) * invDim)
-            .mandatory("worldMatrix", rm.geometryTransform().modelMatrix() * scaleM);
+            .mandatory("worldMatrix", rm.geometryTransform().modelMatrix() * scaleM)
+            .optional("time", engine->gameLoop().gameTime());
         
         unitRect.draw();
         rm.setActiveRenderTarget(0);
@@ -275,9 +276,9 @@ void Anim::render(const ge::Event<ge::RenderEvent>&) {
 
     glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
     {
-        float scale = 2.7;
-        renderBlock(vec3(0.f), vec3(0.5f) * scale);
-        renderBlock(vec3(0.5f, 0.f, 0.f) * scale, vec3(1.f, 0.5f, 0.5f) * scale);
+        float scale = 1;
+        renderBlock(vec3(-1.f) * scale, vec3(1.f) * scale);
+//        renderBlock(vec3(0.5f, 0.f, 0.f) * scale, vec3(1.f, 0.5f, 0.5f) * scale);
     }
 
     if (fpsTimer->fire()) {
