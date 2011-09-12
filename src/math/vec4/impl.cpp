@@ -3,6 +3,14 @@
 
 MATH_BEGIN_NAMESPACE
 
+const real * begin(const vec4_t& v) {
+    return v.components;
+}
+
+real * begin(vec4_t &v) {
+    return v.components;
+}
+
 vec4_t vec4(float x, float y, float z, float w) {
     vec4_t v; v[0] = x; v[1] = y; v[2] = z; v[3] = w; return v;
 }

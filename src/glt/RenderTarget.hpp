@@ -2,6 +2,7 @@
 #define GLT_RENDER_TARGET_HPP
 
 #include "defs.hpp"
+#include <glt/color.hpp>
 
 namespace glt {
 
@@ -44,6 +45,8 @@ struct RenderTarget {
     size height() const;
     RenderTargetBuffers buffers() const;
     const Viewport& viewport() const;
+    color clearColor() const;
+    void clearColor(color);
 
     void activate();
     void deactivate();
@@ -58,7 +61,7 @@ protected:
 
     virtual void doActivate() = 0;
     virtual void doDeactivate();
-    virtual void doClear(RenderTargetBuffers buffers);
+    virtual void doClear(RenderTargetBuffers buffers, color col);
     virtual void doDraw();
     virtual void doViewport(const Viewport& vp);
 

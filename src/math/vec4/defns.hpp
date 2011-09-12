@@ -6,6 +6,10 @@
 
 MATH_BEGIN_NAMESPACE
 
+const real * begin(const vec4_t&) PURE_FUNC;
+
+real * begin(vec4_t &) MUT_FUNC;
+
 vec4_t vec4(real x, real y, real z, real w) PURE_FUNC;
 
 vec4_t vec4(real a) PURE_FUNC;

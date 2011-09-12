@@ -311,17 +311,18 @@ void Anim::renderPolygon(const Block& block) {
     glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
     glt::SavePoint sp(gt.save());
 
+    const aligned_mat4_t model = gt.modelMatrix();
+    const mat4_t scaleM = glt::scaleMatrix(WORLD_BLOCK_SCALE);
+    gt.loadModelMatrix(scaleM * model);
     gt.translate(block.aabb_min);
     gt.scale(block.aabb_max - block.aabb_min);
 
-    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+//    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
         
     renderPolygonProgram->use();
-
-    const mat4_t scaleM = glt::scaleMatrix(WORLD_BLOCK_SCALE);
     
     glt::Uniforms(*renderPolygonProgram)
-        .mandatory("mvMatrix", gt.viewMatrix() * (scaleM * gt.modelMatrix()))
+        .mandatory("mvMatrix", gt.mvMatrix())
         .mandatory("projectionMatrix", gt.projectionMatrix())
         .mandatory("normalMatrix", gt.normalMatrix());
         

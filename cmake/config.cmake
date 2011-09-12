@@ -1,4 +1,9 @@
 
+if(BUILD_ARCH32)
+  add_definitions(-m32)
+  link_libraries(-m32)
+endif()
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   set(SYS_WINDOWS TRUE)
   add_definitions(-DSYSTEM_WINDOWS=1)
@@ -149,4 +154,3 @@ include_directories(${GLEW_INCLUDE_PATH})
 find_package(SFML 2 COMPONENTS system window graphics REQUIRED)
 
 include_directories(${SFML_INCLUDE_DIR})
-

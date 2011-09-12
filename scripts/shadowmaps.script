@@ -1,0 +1,21 @@
+load "default.script"
+
+addShaderPath "programs/shadow-maps/shaders"
+
+perspectiveProjection 35 0.5 800
+
+bindKey [W] { moveCamera 12 }
+bindKey [D] { moveCamera 3 }
+bindKey [S] { moveCamera 6 }
+bindKey [A] { moveCamera 9 }
+
+bindKey [+U] { saveCameraFrame "shadow-maps.cam" }
+bindKey [+I] { loadCameraFrame "shadow-maps.cam" }
+
+postInit { 
+    setCameraStepLength 4
+    setCameraMouseSensitivity 0.00075
+    loadCameraFrame "shadow-maps.cam"
+}
+
+bindShader "identity" "identity.vert" "identity.frag" 0 "position"

@@ -14,6 +14,7 @@ int triangleTable(int cas, int num) {
 }
 
 float sampleVolume(vec3 uvw) {
+    uvw = clamp(uvw, vec3(0), vec3(1));
     vec4 wc4 = worldMatrix * vec4(uvw, 1);
     vec3 wc = wc4.xyz / wc4.w;
 
@@ -38,7 +39,6 @@ vec3 interpolate(vec3 v1, float y1, vec3 v2, float y2) {
 }
 
 vec3 gradientAt(vec3 uvw) {
-
     vec3 off = texEdgeDim;
     
     vec3 grad;

@@ -19,6 +19,8 @@ set(USE_OPENMP TRUE CACHE BOOL "enable openmp support")
 
 set(USE_LTO FALSE CACHE BOOL "enable link time optimisations")
 
+set(BUILD_ARCH32 FALSE CACHE BOOL "TRUE to force 32-bit build on 64bit platform")
+
 project(gl-stuff)
 
 include_directories(src)

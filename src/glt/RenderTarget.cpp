@@ -10,14 +10,16 @@ struct RenderTarget::Data {
     size height;
     RenderTargetBuffers buffers;
     Viewport viewport;
-
-    DEBUG_DECL(bool active;)
+    color clearColor;
 
     bool viewport_changed;
+
+    DEBUG_DECL(bool active;)
 
     Data(size w, size h, RenderTargetBuffers bs, const Viewport& vp) :
         width(w), height(h), buffers(bs),
         viewport(vp),
+        clearColor(),
         viewport_changed(false)
         {
             ON_DEBUG(active = false);
@@ -49,6 +51,14 @@ RenderTargetBuffers RenderTarget::buffers() const {
     return self->buffers;
 }
 
+color RenderTarget::clearColor() const {
+    return self->clearColor;
+}
+
+void RenderTarget::clearColor(glt::color col) {
+    self->clearColor = col;
+}
+
 const Viewport& RenderTarget::viewport() const {
     return self->viewport;
 }
@@ -78,7 +88,7 @@ void RenderTarget::beginScene() {
 void RenderTarget::clear(uint32 buffers) {
     DEBUG_ASSERT_MSG(self->active, "RenderTarget not active");
     buffers &= self->buffers;
-    doClear(buffers);
+    doClear(buffers, self->clearColor);
 }
 
 void RenderTarget::draw() {
@@ -101,11 +111,13 @@ void RenderTarget::doDeactivate() {
     // noop
 }
 
-void RenderTarget::doClear(uint32 buffers) {
+void RenderTarget::doClear(uint32 buffers, color c) {
     GLbitfield bits = 0;
 
-    if (buffers & RT_COLOR_BUFFER)
-        bits |= GL_COLOR_BUFFER_BIT;
+    if (buffers & RT_COLOR_BUFFER) {
+        const math::vec4_t col4 = c.vec4();
+        GL_CHECK(glClearBufferfv(GL_COLOR, 0, math::begin(col4)));
+    }
 
     if (buffers & RT_DEPTH_BUFFER)
         bits |= GL_DEPTH_BUFFER_BIT;
