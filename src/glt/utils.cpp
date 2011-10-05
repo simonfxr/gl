@@ -70,6 +70,8 @@ bool isExtensionSupported(const char *extension) {
     return false;
 }
 
+void printGLError(const err::Location& loc, GLenum err);
+
 namespace {
 
 struct GLDebug {
@@ -117,8 +119,10 @@ GLDebug *ARBDebug::init() {
     glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
     
     GLenum err = glGetError();
-    if (err != GL_NO_ERROR)
+    if (err != GL_NO_ERROR) {
+        printGLError(_CURRENT_LOCATION, err);
         return 0;
+    }
 
     GLsizei max_len;
     glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH_ARB, &max_len);
@@ -201,8 +205,10 @@ GLDebug *AMDDebug::init() {
     glDebugMessageEnableAMD(0, 0, 0, NULL, GL_TRUE);
 
     GLenum err = glGetError();
-    if (err != GL_NO_ERROR)
+    if (err != GL_NO_ERROR) {
+        printGLError(_CURRENT_LOCATION, err);
         return 0;
+    }
 
     GLsizei max_len;
     glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH_AMD, &max_len);
@@ -280,13 +286,15 @@ bool initDebug() {
     GLDebug *dbg = 0;
     const char *debug_impl = 0;
 
-    if (dbg == 0 && isExtensionSupported("GL_AMD_debug_output")) {
+    if (dbg == 0 && GLEW_AMD_debug_output) {
         debug_impl = "GL_AMD_debug_output";
+        std::cerr << "trying AMD debug" << std::endl;
         dbg = AMDDebug::init();
     }
 
-    if (dbg == 0 && isExtensionSupported("GL_ARB_debug_output")) {
+    if (dbg == 0 && GLEW_ARB_debug_output) {
         debug_impl = "GL_ARB_debug_output";
+        std::cerr << "trying ARB debug" << std::endl;
         dbg = ARBDebug::init();
     }
     

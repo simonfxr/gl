@@ -94,6 +94,13 @@ set(GE_SRC
   ge/KeyHandler.cpp
   ge/Camera.cpp)
 
-set(GE_LIBS ${SFML_LIBRARIES})
+ set(GE_LIBS 
+   ${SFML_LIBRARIES}
+#   ${SFML_SYSTEM_LIBRARY_DEBUG} 
+#   ${SFML_WINDOW_LIBRARY_DEBUG}
+#   ${SFML_GRAPHICS_LIBRAY_DEBUG}
+)
+
+
 
 def_lib(ge SOURCES ${GE_SRC} DEPEND vec-math err sys glt LIB_DEPEND ${GE_LIBS})

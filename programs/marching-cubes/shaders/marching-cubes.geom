@@ -14,17 +14,17 @@ int triangleTable(int cas, int num) {
 }
 
 float sampleVolume(vec3 uvw) {
-    uvw = clamp(uvw, vec3(0), vec3(1));
-    vec4 wc4 = worldMatrix * vec4(uvw, 1);
-    vec3 wc = wc4.xyz / wc4.w;
+    /* uvw = clamp(uvw, vec3(0), vec3(1)); */
+    /* vec4 wc4 = worldMatrix * vec4(uvw, 1); */
+    /* vec3 wc = wc4.xyz / wc4.w; */
 
-    float rad = 2;
-    vec3 center = vec3(3, 1, 3);
+    /* float rad = 2; */
+    /* vec3 center = vec3(3, 1, 3); */
 
 
-    vec3 diff = wc - center;
-    return dot(diff, diff) - rad * rad;
-//    return texture(worldVolume, uvw, 0).r;
+    /* vec3 diff = wc - center; */
+    /* return dot(diff, diff) - rad * rad; */
+    return texture(worldVolume, uvw, 0).r;
 }
 
 layout(points) in;

@@ -35,16 +35,21 @@ void Anim::link() {
         ground.primType(GL_QUADS);
         Vertex1 v;
         real scale = 10.f;
-        v.position = vec3(-1.f, 0.f, -1.f) * scale; ground.addVertex(v);
-        v.position = vec3(+1.f, 0.f, -1.f) * scale; ground.addVertex(v);
-        v.position = vec3(+1.f, 0.f, +1.f) * scale; ground.addVertex(v);
+        
         v.position = vec3(-1.f, 0.f, +1.f) * scale; ground.addVertex(v);
+        v.position = vec3(+1.f, 0.f, +1.f) * scale; ground.addVertex(v);        
+        v.position = vec3(+1.f, 0.f, -1.f) * scale; ground.addVertex(v);
+        v.position = vec3(-1.f, 0.f, -1.f) * scale; ground.addVertex(v);
+
         ground.send();
     }
 }
 
 void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     link();
+
+    engine.window().grabMouse(true);
+    engine.window().showMouseCursor(false);
 
     engine.renderManager().defaultRenderTarget()->clearColor(glt::color(vec3(1.f, 1.f, 1.f)));
     
