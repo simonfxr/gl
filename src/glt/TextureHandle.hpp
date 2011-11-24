@@ -42,7 +42,8 @@ public:
     
     void bind();
     void bind(uint32 active_index);
-    
+
+    GLuint ensureHandle();
     GLuint handle() const { return _handle; }
     size samples() const { return _samples; }
     TextureType type() const { return _type; }

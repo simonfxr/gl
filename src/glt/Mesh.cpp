@@ -27,7 +27,7 @@ void *alloc_aligned(defs::size size, defs::size alignment) {
 #else
     mem = malloc(size);
     if ((uptr(mem) & (alignment - 1)) != 0) {
-        ERR("cannot alloc align memory");
+        ERR("cannot alloc aligned memory");
         free(mem);
         mem = 0;
     }
@@ -144,9 +144,9 @@ void MeshBase::initBase(const VertexDescBase& layout, size initial_nverts, size 
     element_data = new uint32[UNSIZE(elements_capacity)];
     desc = layout;
     enabled_attributes.resize(layout.nattributes * 2);
-    enabled_attributes.set(true);
+    enabled_attributes.set(false);
     for (defs::index i = 0; i < layout.nattributes; ++i)
-        enabled_attributes[i * 2 + 1] = false;
+        enableAttribute(i, true);
 }
 
 void MeshBase::free() {
@@ -203,18 +203,11 @@ void MeshBase::initVertexAttribs() {
     ASSERT(vertex_array_name != 0); // must also be bound
 
     for (defs::index i = 0; i < desc.nattributes; ++i) {
-            enabled_attributes[2 * i + 1] = enabled_attributes[2 * i];
-
             const Attr<Any>& a = desc.attributes[i];
             GL_CHECK(glVertexAttribPointer(GLuint(i), a.ncomponents, a.component_type,
                                            a.normalized ? GL_TRUE : GL_FALSE,
                                            desc.sizeof_vertex,
                                            reinterpret_cast<void *>(a.offset)));
-
-            if (enabled_attributes[2 * i])
-                GL_CHECK(glEnableVertexAttribArray(GLuint(i)));
-            else
-                GL_CHECK(glDisableVertexAttribArray(GLuint(i)));
     }
 }
 
@@ -280,10 +273,9 @@ void MeshBase::drawType(DrawType type) {
 }
 
 void MeshBase::enableAttributes() {
-    if (vertex_array_name == 0)
-        initVertexArray();
     ASSERT(vertex_buffer_name != 0);
-    
+    ASSERT(vertex_array_name != 0);
+
     GL_CHECK(glBindVertexArray(vertex_array_name));
 
     for (defs::index i = 0; i < desc.nattributes; ++i) {
@@ -291,9 +283,11 @@ void MeshBase::enableAttributes() {
             enabled_attributes[2 * i + 1] = enabled_attributes[2 * i];
         
             if (enabled_attributes[2 * i])
-                GL_CHECK(glEnableVertexAttribArray(GLuint(i)));
+                GL_CHECK(glEnableVertexArrayAttribEXT(vertex_array_name, GLuint(i)));
+                // GL_CHECK(glEnableVertexAttribArray(GLuint(i)));
             else
-                GL_CHECK(glDisableVertexAttribArray(GLuint(i)));
+                GL_CHECK(glDisableVertexArrayAttribEXT(vertex_array_name, GLuint(i)));
+                // GL_CHECK(glDisableVertexAttribArray(GLuint(i)));
         }
     }
 }
@@ -413,7 +407,13 @@ bool MeshBase::attributeEnabled(defs::index i) {
         ERR("index out of range");
         return false;
     }
+
     return enabled_attributes[i * 2];
+
+    // GLint is_enabled;
+    // GL_CHECK(glGetVertexArrayIntegeri_vEXT(vertex_array_name, i, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &is_enabled));
+    
+    // return is_enabled == GL_TRUE;
 }
 
 void MeshBase::setSize(size size) {

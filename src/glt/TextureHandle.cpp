@@ -46,11 +46,17 @@ void TextureHandle::free() {
     _handle = 0;
 }
 
-void TextureHandle::bind() {
+GLuint TextureHandle::ensureHandle() {
     if (_handle == 0) {
         GL_CHECK(glGenTextures(1, &_handle));
         ++glstate.num_textures;
     }
+
+    return _handle;
+}
+
+void TextureHandle::bind() {
+    ensureHandle();
     GL_CHECK(glBindTexture(getGLType(_type, _samples), _handle));
 }
 
@@ -70,7 +76,8 @@ void TextureHandle::type(TextureType ty, size ss) {
 }
 
 void TextureHandle::filterMode(TextureHandle::FilterMode mode, TextureHandle::Filter filter) {
-    bind();
+    // bind();
+    ensureHandle();
 
     GLenum gltarget = getGLType(_type, _samples);
     
@@ -91,9 +98,11 @@ void TextureHandle::filterMode(TextureHandle::FilterMode mode, TextureHandle::Fi
     }
 
     if (min)
-        GL_CHECK(glTexParameteri(gltarget, GL_TEXTURE_MIN_FILTER, glmode));
+        // GL_CHECK(glTexParameteri(gltarget, GL_TEXTURE_MIN_FILTER, glmode));
+        GL_CHECK(glTextureParameteriEXT(_handle, gltarget, GL_TEXTURE_MIN_FILTER, glmode));
     if (mag)
-        GL_CHECK(glTexParameteri(gltarget, GL_TEXTURE_MAG_FILTER, glmode));
+        // GL_CHECK(glTexParameteri(gltarget, GL_TEXTURE_MAG_FILTER, glmode));
+        GL_CHECK(glTextureParameteriEXT(_handle, gltarget, GL_TEXTURE_MAG_FILTER, glmode));
 }
 
 bool operator ==(const TextureHandle& t1, const TextureHandle& t2) {

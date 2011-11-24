@@ -344,7 +344,7 @@ void Game::renderScene(const ge::Event<ge::RenderEvent>& ev) {
         textureRenderTarget->textureHandle().bind(0);
         glt::Uniforms(*postprocShader)
             .optional("gammaCorrection", GAMMA)
-            .mandatory("textures", textureRenderTarget->textureHandle(), 0);
+            .mandatory("textures", glt::Sampler(textureRenderTarget->textureHandle(), 0));
         
         rectBatch.draw();        
     }
@@ -459,7 +459,7 @@ void Game::end_render_spheres() {
                 .optional("pMatrix", gt.projectionMatrix())
                 .optional("ecLight", sphereUniforms.ecLightPos)
                 .optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA)
-                .mandatory("instanceData", sphereMap, 0);
+                .mandatory("instanceData", glt::Sampler(sphereMap, 0));
 
             sphereBatches[lod].drawInstanced(num);
 

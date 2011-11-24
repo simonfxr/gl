@@ -291,9 +291,9 @@ void Anim::makePolygon(const Block& block) {
     GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
 
     glt::Uniforms(*marchingCubesProgram)
-        .mandatory("caseToNumPolysData", caseToNumPolysData, 0, GL_UNSIGNED_INT_SAMPLER_1D)
-        .mandatory("triangleTableData", triangleTableData, 1, GL_UNSIGNED_INT_SAMPLER_1D)
-        .optional("worldVolume", worldVolume->textureHandle(), 2, GL_SAMPLER_3D)
+        .mandatory("caseToNumPolysData", glt::Sampler(caseToNumPolysData, 0, GL_UNSIGNED_INT_SAMPLER_1D))
+        .mandatory("triangleTableData", glt::Sampler(triangleTableData, 1, GL_UNSIGNED_INT_SAMPLER_1D))
+        .optional("worldVolume", glt::Sampler(worldVolume->textureHandle(), 2, GL_SAMPLER_3D))
         .mandatory("texEdgeDim", vec3(1) / vec3(SAMPLER_SIZE))
         .optional("worldMatrix", gt.modelMatrix())
 //        .mandatory("projectionMatrix", gt.projectionMatrix())

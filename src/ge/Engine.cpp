@@ -59,17 +59,15 @@ bool runInit(EventSource<InitEvent>& source, const Event<InitEvent>& e);
 
 } // namespace anon
 
-#define SELF ASSERT_EXPR(self != 0, self)
+// #define SELF ASSERT_EXPR(self != 0, self)
+#define SELF self
 
 Engine::Engine() : self(new Data(*this)) {}
 
 Engine::~Engine() {
-    if (self != 0) {
-        self->renderManager.shutdown();
-        self->shaderManager.shutdown();
-        delete self->window;
-    }
-    
+    self->renderManager.shutdown();
+    self->shaderManager.shutdown();
+    delete self->window;
     delete self;
 }
 
@@ -210,9 +208,9 @@ int32 Engine::run(const EngineOptions& opts) {
         return 1;
 
     if (!opts.inhibitInitScript) {
-		std::string script = sys::fs::basename(opts.binary);
-		if (!script.empty())
-			script = sys::fs::dropExtension(script);
+        std::string script = sys::fs::basename(opts.binary);
+        if (!script.empty())
+            script = sys::fs::dropExtension(script);
 
         if (script.empty() || !loadScript(script + ".script"))
             return 1;

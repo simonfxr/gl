@@ -21,16 +21,6 @@ namespace glt {
 
 namespace {
 
-struct Tex {
-    TextureHandle& t;
-    uint32 index;
-
-    Tex(TextureHandle& _t, uint32 i) : t(_t), index(i) {}
-};
-
-template <typename T>
-void set(GLint loc, const T& value);
-
 std::string descGLType(GLenum ty) {
 
 #define CASE(ty) case ty: return #ty;
@@ -117,19 +107,40 @@ std::string descGLType(GLenum ty) {
 #undef CASE
 }
 
-GLenum mapGLTextureType(GLenum texture_target) {
-    switch (texture_target) {
-    case GL_TEXTURE_1D: return GL_SAMPLER_1D;
-    case GL_TEXTURE_2D: return GL_SAMPLER_2D;
-    case GL_TEXTURE_3D: return GL_SAMPLER_3D;
-    default:
-        ERR("invalid TextureTarget type");
-        return GL_FLOAT_MAT4;
-    }
+void programUniform(GLuint program, GLint loc, float value) {
+    GL_CHECK(glProgramUniform1fv(program, loc, 1, &value));
+}
+
+void programUniform(GLuint program, GLint loc, const vec4_t& value) {
+    GL_CHECK(glProgramUniform4fv(program, loc, 1, value.components));
+}
+
+void programUniform(GLuint program, GLint loc, const vec3_t& value) {
+    GL_CHECK(glProgramUniform3fv(program, loc, 1, value.components));
+}
+
+void programUniform(GLuint program, GLint loc, const mat4_t& value) {
+    GL_CHECK(glProgramUniformMatrix4fv(program, loc, 1, GL_FALSE, value.components));
+}
+
+void programUniform(GLuint program, GLint loc, const mat3_t& value) {
+    GL_CHECK(glProgramUniformMatrix3fv(program, loc, 1, GL_FALSE, value.components));
+}
+
+void programUniform(GLuint program, GLint loc, const Sampler& sampler) {
+    GL_CHECK(glProgramUniform1i(program, loc, GLint(sampler.index)));
+}
+
+void programUniform(GLuint program, GLint loc, GLint val) {
+    GL_CHECK(glProgramUniform1i(program, loc, val));
+}
+
+void programUniform(GLuint program, GLint loc, GLuint val) {
+    GL_CHECK(glProgramUniform1ui(program, loc, val));
 }
 
 template <typename T>
-void setUniform(bool mandatory, const std::string& name, ShaderProgram& prog, GLenum type, const T& value) {
+void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GLenum type, const T& value) {
 
     UNUSED(type);
     
@@ -157,138 +168,60 @@ void setUniform(bool mandatory, const std::string& name, ShaderProgram& prog, GL
 
 #endif
 
-    set(locationi, value);
-}
-
-template <>
-void set(GLint loc, const float& value) {
-    glUniform1fv(loc, 1, &value);
-}
-
-template <>
-void set(GLint loc, const vec4_t& value) {
-    glUniform4fv(loc, 1, value.components);
-}
-
-template <>
-void set(GLint loc, const vec3_t& value) {
-    glUniform3fv(loc, 1, value.components);
-}
-
-template <>
-void set(GLint loc, const mat4_t& value) {
-    glUniformMatrix4fv(loc, 1, GL_FALSE, value.components);
-}
-
-template <>
-void set(GLint loc, const mat3_t& value) {
-    glUniformMatrix3fv(loc, 1, GL_FALSE, value.components);
-}
-
-template <>
-void set(GLint loc, const Tex& tex) {
-    GL_CHECK(glUniform1i(loc, GLint(tex.index)));
-}
-
-template <>
-void set(GLint loc, const GLint& val) {
-    GL_CHECK(glUniform1i(loc, val));
-}
-
-template <>
-void set(GLint loc, const GLuint& val) {
-    GL_CHECK(glUniform1ui(loc, val));
+    programUniform(prog.program(), locationi, value);
 }
 
 } // namespace anon
 
-Uniforms& Uniforms::optional(const std::string& name, float value) {
-    setUniform(false, name, prog, GL_FLOAT, value); return *this;
+void Uniforms::set(bool mandatory, const std::string& name, float value) {
+    setUniform(mandatory, prog, name, GL_FLOAT, value);
 }
 
-Uniforms& Uniforms::optional(const std::string& name, const vec4_t& value) {
-    setUniform(false, name, prog, GL_FLOAT_VEC4, value); return *this;
+void Uniforms::set(bool mandatory, const std::string& name, const vec4_t& value) {
+    setUniform(mandatory, prog, name, GL_FLOAT_VEC4, value);
 }
 
-Uniforms& Uniforms::optional(const std::string& name, const vec3_t& value) {
-    setUniform(false, name, prog, GL_FLOAT_VEC3, value); return *this;
+void Uniforms::set(bool mandatory, const std::string& name, const vec3_t& value) {
+    setUniform(mandatory, prog, name, GL_FLOAT_VEC3, value);
 }
 
-Uniforms& Uniforms::optional(const std::string& name, const mat4_t& value) {
-    setUniform(false, name, prog, GL_FLOAT_MAT4, value); return *this;
+void Uniforms::set(bool mandatory, const std::string& name, const mat4_t& value) {
+    setUniform(mandatory, prog, name, GL_FLOAT_MAT4, value);
 }
 
-Uniforms& Uniforms::optional(const std::string& name, const mat3_t& value) {
-    setUniform(false, name, prog, GL_FLOAT_MAT3, value); return *this;
+void Uniforms::set(bool mandatory, const std::string& name, const mat3_t& value) {
+    setUniform(mandatory, prog, name, GL_FLOAT_MAT3, value);
 }
 
-Uniforms& Uniforms::optional(const std::string& name, color value) {
-    return optional(name, value.vec4()); 
+void Uniforms::set(bool mandatory, const std::string& name, color value) {
+    setUniform(mandatory, prog, name, GL_FLOAT_VEC4, value.vec4());
 }
 
-Uniforms& Uniforms::optional(const std::string& name, GLint value) {
-    setUniform(false, name, prog, GL_INT, value);
-    return *this;
+void Uniforms::set(bool mandatory, const std::string& name, GLint value) {
+    setUniform(mandatory, prog, name, GL_INT, value);
 }
 
-Uniforms& Uniforms::optional(const std::string& name, GLuint value) {
-    setUniform(false, name, prog, GL_UNSIGNED_INT, value);
-    return *this;
+void Uniforms::set(bool mandatory, const std::string& name, GLuint value) {
+    setUniform(mandatory, prog, name, GL_UNSIGNED_INT, value);
 }
 
-Uniforms& Uniforms::optional(const std::string& name, TextureHandle& texture, uint32 active_tex) {
-    setUniform(false, name, prog, mapGLTextureType(texture.glType()), Tex(texture, active_tex));
-    return *this;
+void Uniforms::set(bool mandatory, const std::string& name, const Sampler& sampler) {
+    setUniform(mandatory, prog, name, sampler.type, sampler);
 }
 
-Uniforms& Uniforms::optional(const std::string& name, TextureHandle& texture, uint32 active_tex, GLenum type) {
-    setUniform(false, name, prog, type, Tex(texture, active_tex));
-    return *this;
+GLenum mapGLTextureType(GLenum texture_target) {
+    switch (texture_target) {
+    case GL_TEXTURE_1D:
+        return GL_SAMPLER_1D;
+    case GL_TEXTURE_2D:
+//    case GL_TEXTURE_2D_MULTISAMPLE:
+        return GL_SAMPLER_2D;
+    case GL_TEXTURE_3D:
+        return GL_SAMPLER_3D;
+    default:
+        ERR("invalid TextureTarget type");
+        return GL_FLOAT_MAT4;
+    }
 }
-
-Uniforms& Uniforms::mandatory(const std::string& name, float value) {
-    setUniform(true, name, prog, GL_FLOAT, value); return *this;
-}
-
-Uniforms& Uniforms::mandatory(const std::string& name, const vec4_t& value) {
-    setUniform(true, name, prog, GL_FLOAT_VEC4, value); return *this;
-}
-
-Uniforms& Uniforms::mandatory(const std::string& name, const vec3_t& value) {
-    setUniform(true, name, prog, GL_FLOAT_VEC3, value); return *this;
-}
-
-Uniforms& Uniforms::mandatory(const std::string& name, const mat4_t& value) {
-    setUniform(true, name, prog, GL_FLOAT_MAT4, value); return *this;
-}
-
-Uniforms& Uniforms::mandatory(const std::string& name, const mat3_t& value) {
-    setUniform(true, name, prog, GL_FLOAT_MAT3, value); return *this;
-}
-
-Uniforms& Uniforms::mandatory(const std::string& name, color value) {
-    return mandatory(name, value.vec4());
-}
-
-Uniforms& Uniforms::mandatory(const std::string& name, GLint value) {
-    setUniform(true, name, prog, GL_INT, value);
-    return *this;
-}
-
-Uniforms& Uniforms::mandatory(const std::string& name, GLuint value) {
-    setUniform(true, name, prog, GL_UNSIGNED_INT, value);
-    return *this;
-}
-
-Uniforms& Uniforms::mandatory(const std::string& name, TextureHandle& texture, uint32 active_tex) {
-    setUniform(true, name, prog, mapGLTextureType(texture.glType()), Tex(texture, active_tex));
-    return *this;
-}
-
-Uniforms& Uniforms::mandatory(const std::string& name, TextureHandle& texture, uint32 active_tex, GLenum type) {
-    setUniform(true, name, prog, type, Tex(texture, active_tex));
-    return *this;
-}
-
 
 } // namespace glt
