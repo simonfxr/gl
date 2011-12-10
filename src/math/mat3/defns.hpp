@@ -59,6 +59,8 @@ mat3_t transpose(const mat3_t& A) PURE_FUNC;
 
 bool equal(const mat3_t& A, const mat3_t& B, real epsi = real(1e-4)) PURE_FUNC;
 
+mat3_t coordinateSystem(const vec3_t& a) PURE_FUNC;
+
 MATH_END_NAMESPACE
 
 #endif

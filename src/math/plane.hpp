@@ -45,6 +45,8 @@ float distance(const plane3_t& P, const point3_t& a) PURE_FUNC;
 
 point3_t projectOnto(const plane3_t& P, const point3_t& a) PURE_FUNC;
 
+direction3_t transformNormal(const mat3_t& A, const direction3_t& n) PURE_FUNC;
+
 plane3_t transform(const mat3_t& A, const plane3_t& P) PURE_FUNC;
 
 plane3_t transform(const mat4_t& A, const plane3_t& P) PURE_FUNC;

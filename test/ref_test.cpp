@@ -14,40 +14,55 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <stdlib.h>
+
+using namespace defs;
+
+typedef defs::index index_t;
 
 typedef index_t ThreadID;
 
-static const index_t NUM_THREADS = 4;
-static const index_t DATA_SIZE = 4000000;
+static const index_t NUM_THREADS = 32;
+static const index_t DATA_SIZE = 400000;
 
-static SpinLock printLock;
+static sf::Mutex printLock;
 
 sf::ThreadLocalPtr<ThreadID> thread_id;
 
+static void acq(sf::Mutex& mtx) {
+    mtx.Lock();
+}
+
+static void rel(sf::Mutex& mtx) {
+    mtx.Unlock();
+}
+
 struct Data {
     int id;
-    unsigned alive;
+    Atomic<int32> alive;
     int value;
 
-    Atomic<uint32> num_alive;
+    Atomic<int32> num_alive;
 
     Data(int _id, int _value) :
-        id(_id), alive(id), value(_value)
+        id(_id), alive(_id), value(_value)
     {
         num_alive.inc();
     }
 
     ~Data() {
-        ASSERT(alive != 0xDEADBEEF);
-        alive = 0xDEADBEEF;
+        int32 dead = 0xDEADBEEF;
+        bool ok = alive.xchg(id, &dead);
+        ASSERT(ok);
         num_alive.dec();
 
-        // printLock.acquire();
+        // acq(printLock);
         // std::cerr << "[Thread " << *thread_id << "] deleting data " << id << std::endl;
-        // printLock.release();        
+        // rel(printLock);
     }
 
     int compute() {
+        ASSERT(alive.get() == id);
         return value;
     }
 };
@@ -58,9 +73,15 @@ static Ref<Data> NULL_DATA;
 static sf::Mutex data_lock;
 static Ref<Data> *data = 0;
 
-static SpinLock init_locks[NUM_THREADS];
-static SpinLock start_locks[NUM_THREADS];
-volatile long computed_sums[NUM_THREADS];
+static struct {
+    sf::Mutex init_lock;
+    sf::Mutex start_lock;
+    unsigned int rand_state;
+    bool is_started;
+    long computed_sum;
+} thread_data[NUM_THREADS];
+
+#define THREAD (thread_data[*thread_id])
 
 static void gen_data(Ref<Data> *data, index_t num) {
     for (index_t i = 0; i < num; ++i)
@@ -71,45 +92,31 @@ static void fill_data(Ref<Data> *localData) {
     for (index_t i = 0; i < DATA_SIZE; ++i)
         localData[i] = data[i];
 
-    data_lock.Lock();
-
     for (index_t i = 0; i < DATA_SIZE - 1; ++i) {
-        index_t j = i + rand() % (DATA_SIZE - i);
+        index_t j = i + rand_r(&THREAD.rand_state) % (DATA_SIZE - i);
         Ref<Data> tmp = localData[i];
         localData[i] = localData[j];
         localData[j] = tmp;
     }
-    
-    data_lock.Unlock();
 }
 
-
-void acq_lock(SpinLock *lock) {
-    lock->acquire();
-}
-
-void rel_lock(SpinLock *lock) {
-    lock->release();
-}
-
-void del_ref(Ref<Data> *ref) {
-    delete ref;
-}
 
 static void worker(ThreadID id) {
-
     thread_id = &id;
+
+    acq(THREAD.start_lock);
+    THREAD.is_started = true;
 
     Ref<Data> LOCAL_NULL_DATA;
     Ref<Data> *localData = new Ref<Data>[DATA_SIZE];
     fill_data(localData);
 
-    printLock.acquire();
-    std::cerr << "[Thread " << id << "] initialized" << std::endl;
-    printLock.release();
+    // acq(printLock);
+    // std::cerr << "[Thread " << id << "] initialized" << std::endl;
+    // rel(printLock);
 
-    init_locks[id].release();
-    start_locks[id].acquire();
+    rel(THREAD.start_lock);
+    acq(THREAD.init_lock);
 
     int64 sum = 0;
 
@@ -120,11 +127,11 @@ static void worker(ThreadID id) {
 
     delete[] localData;
 
-    printLock.acquire();
-    std::cerr << "[Thread " << id << "] computed sum: " << sum << std::endl;
-    printLock.release();
+    // acq(printLock);
+    // std::cerr << "[Thread " << id << "] computed sum: " << sum << std::endl;
+    // rel(printLock);
 
-    computed_sums[id] = sum;
+    THREAD.computed_sum = sum;
 }
 
 int main(void) {
@@ -133,44 +140,56 @@ int main(void) {
     data = new Ref<Data>[DATA_SIZE];
     gen_data(data, DATA_SIZE);
 
+    unsigned garbage[64];
+    unsigned seed = 0;
+    for (index_t i = 0; i < ARRAY_LENGTH(garbage); ++i)
+        seed = ((seed << 11) | (seed >> 21)) ^ garbage[i];
+    srand(seed);
+
     for (index_t i = 0; i < NUM_THREADS; ++i) {
-        init_locks[i].acquire();
-        start_locks[i].acquire();
+        acq(thread_data[i].init_lock);
+        thread_data[i].rand_state = rand();
         threads[i] = new sf::Thread(worker, i);
         threads[i]->Launch();
     }
 
-    printLock.acquire();
+    acq(printLock);
     std::cerr << "[main] Threads started" << std::endl;
-    printLock.release();
+    rel(printLock);
 
-    for (index_t i = 0; i < NUM_THREADS; ++i)
-        init_locks[i].acquire();
+    for (index_t i = 0; i < NUM_THREADS; ++i) {
+        for (;;) {
+            acq(thread_data[i].start_lock);
+            if (thread_data[i].is_started)
+                break;
+            rel(thread_data[i].start_lock);
+        }
+    }
 
-    printLock.acquire();
+    acq(printLock);
     std::cerr << "[main] Threads initialized" << std::endl;
-    printLock.release();
+    rel(printLock);
 
     delete[] data;
     data = 0;
 
     for (index_t i = 0; i < NUM_THREADS; ++i)
-        start_locks[i].release();
+        rel(thread_data[i].init_lock);
 
-    printLock.acquire();
+    acq(printLock);
     std::cerr << "[main] Threads begin work" << std::endl;
-    printLock.release();
+    rel(printLock);
 
     for (index_t i = 0; i < NUM_THREADS; ++i) {
-        printLock.acquire();
+        acq(printLock);
         std::cerr << "Waiting for thread: " << i << std::endl;
-        printLock.release();
+        rel(printLock);
         
         threads[i]->Wait();
         
-        printLock.acquire();
+        acq(printLock);
         std::cerr << "Thread finished: " << i << std::endl;
-        printLock.release();
+        rel(printLock);
     }
 
     for (index_t i = 0; i < NUM_THREADS; ++i)
@@ -178,7 +197,7 @@ int main(void) {
 
     bool failed = false;
     for (index_t i = 1; i < NUM_THREADS; ++i) {
-        if (computed_sums[i] != computed_sums[0]) {
+        if (thread_data[i].computed_sum != thread_data[i].computed_sum) {
             std::cerr << "ERROR: computed sums inconsistent!" << std::endl;
             failed = true;
         }
@@ -188,5 +207,5 @@ int main(void) {
         std::cerr << "SUCCESS: all sums are consistent" << std::endl;
     }
 
-    return 0;
+    return failed ? 1 : 0;
 }

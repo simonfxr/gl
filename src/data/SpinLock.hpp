@@ -1,11 +1,12 @@
 #ifndef DATA_SPINLOCK_HPP
 #define DATA_SPINLOCK_HPP
 
+#include "defs.hpp"
 #include <sched.h>
 
 // realy dumb (just for fun)
 struct SpinLock {
-    int32 lock;
+    defs::int32 lock;
 
     SpinLock() : lock(0) {}
 

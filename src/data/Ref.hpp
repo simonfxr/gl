@@ -137,10 +137,14 @@ struct RefCnt {
         DEBUG_ASSERT(cnt->strong.get() > 0);
         cnt->strong.inc();
     }
+
+    
     
     static bool release(atomic::RefCount *cnt) {
-        DEBUG_ASSERT(cnt->strong.get() > 0);
-        if (cnt->strong.decAndGet() == 0) {
+        defs::int32 alive = cnt->strong.decAndGet();
+        DEBUG_ASSERT(alive >= 0);
+        
+        if (alive == 0) {
             // we are the last strong, only weak are remaining
             
             defs::int32 val = -1;
@@ -150,8 +154,9 @@ struct RefCnt {
                 return true;
             }
 
-            defs::int32 dead_val = atomic::DEAD_STRONG;; // highly negative value,
-                                                   // makes conversion from weak to strong easier
+            // highly negative value,
+            // makes conversion from weak to strong easier
+            defs::int32 dead_val = atomic::DEAD_STRONG;; 
 
             if (cnt->strong.xchg(0, &dead_val)) {
                 // no weak tried to convert
@@ -160,6 +165,22 @@ struct RefCnt {
         }
 
         return false;
+    }
+
+    // calling this function implies at least one weak count is remaining
+    static bool tryRetain(atomic::RefCount *cnt) {
+        defs::int32 value = cnt->strong.getAndInc();
+        if (value >= 0) {
+            // the case of value == 0 is slightly subtle
+            // as at least one weak is alive at this point
+            // the xchg on weak in RefCnt::release will fail
+            // the xchg on strong in RefCnt::release will also fail
+            // as we bumped the strong count above zero
+            return true;
+        } else {
+            cnt->strong.dec();
+            return false;
+        }
     }
 };
 
@@ -288,14 +309,13 @@ template <typename T>
 bool WeakRef<T>::unweak(RefValue<T> *dest) {
     if (dest->_cnt == this->_cnt)
         return true;
-    
-    if (this->_cnt->strong.getAndInc() > 0) {
+
+    if (priv::RefCnt::tryRetain(this->_cnt)) {
         dest->unset();
         dest->_ptr = this->_ptr;
         dest->_cnt = this->_cnt;
         return true;
     } else {
-        this->_cnt->strong.dec();
         return false;
     }
 }
@@ -305,13 +325,12 @@ bool WeakRef<T>::unweak(Ref<T> *dest) {
     if (dest->_cnt == this->_cnt)
         return true;
     
-    if (this->_cnt->strong.getAndInc() > 0) {
+    if (priv::RefCnt::tryRetain(this->_cnt)) {
         dest->release();
         dest->_ptr = this->_ptr;
         dest->_cnt = this->_cnt;
         return true;
     } else {
-        this->_cnt->strong.dec();
         return false;
     }
 }

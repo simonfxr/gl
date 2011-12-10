@@ -44,21 +44,32 @@ float distance(const plane3_t& P, const point3_t& a) {
 }
 
 point3_t projectOnto(const plane3_t& P, const point3_t& a) {
-//    return a + (-dot(P.normal, a) + P.dist) * P.normal;
-    point3_t b = P.normal * P.dist;
-    point3_t a_par = dot(P.normal, a) * P.normal;
-    return b + a - a_par;
+    return (P.dist - dot(P.normal, a)) * P.normal + a;
+}
+
+direction3_t transformNormal(const mat3_t& A, const direction3_t& n) {
+    // transforming the normal like a normal vector might break
+    // orthogonality for non orthonormal transforms
+    // we have 2 options:
+    //  i)  n' = inverse(transpose(A)) * n
+    //  ii) transform the basis vectors to build a new basis
+    // option 2 might be faster for a single plane
+    // to transform many planes option 1 might be faster
+
+    mat3_t basis = coordinateSystem(n);
+    return normalize(cross(transformVector(A, basis[1]),
+                           transformVector(A, basis[2])));
 }
 
 plane3_t transform(const mat3_t& A, const plane3_t& P) {
+    direction3_t n = transformNormal(A, P.normal);
     point3_t a = transformPoint(A, P.normal * P.dist);
-    direction3_t n = normalize(transformVector(A, P.normal));
     return plane(n, dot(a, n));
 }
 
 plane3_t transform(const mat4_t& A, const plane3_t& P) {
+    direction3_t n = transformNormal(mat3(A), P.normal);
     point3_t a = transformPoint(A, P.normal * P.dist);
-    direction3_t n = normalize(transformVector(A, P.normal));
     return plane(n, dot(a, n));
 }
 

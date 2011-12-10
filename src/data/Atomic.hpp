@@ -1,6 +1,8 @@
 #ifndef DATA_ATOMIC_HPP
 #define DATA_ATOMIC_HPP
 
+#include "defs.hpp"
+
 template <typename T>
 struct Atomic {
     T value;

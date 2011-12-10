@@ -177,6 +177,20 @@ bool equal(const mat3_t& A, const mat3_t& B, real epsi) {
     return equal(A[0], B[0], epsi) && equal(A[1], B[1], epsi) && equal(A[2], B[2], epsi);
 }
 
+mat3_t coordinateSystem(const vec3_t& a) {
+    vec3_t aa = abs(a);
+    vec3_t b;
+
+    if (aa[0] > aa[1] && aa[0] > aa[2])
+        b = vec3(- a[2], 0, a[0]);
+    else if (aa[1] > aa[2])
+        b = vec3(a[1], - a[0], 0);
+    else
+        b = vec3(0, a[2], - a[1]);
+        
+    return mat3(a, b, cross(a, b));
+}
+
 MATH_END_NAMESPACE
 
 namespace math {
