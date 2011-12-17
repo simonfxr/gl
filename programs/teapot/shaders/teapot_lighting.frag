@@ -7,7 +7,7 @@ uniform float spotSmooth;
 const float spotOn = 0.96;
 const float spotOff = 0.955;
 
-vec4 PointLight(vec3 position, vec3 normal, vec3 lightPos,
+vec4 TeapotLighting(vec3 position, vec3 normal, vec3 lightPos,
                 vec4 intensity_diff, vec4 intensity_spec, float shininess) {
 
     vec3 l = normalize(lightPos - position);
