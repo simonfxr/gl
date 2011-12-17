@@ -65,6 +65,8 @@ struct RenderManager::Data {
             stats.avg_fps = uint32(float(num_frames) / diff);
             if (renderAcc != 0)
                 stats.rt_avg = uint32(float(num_frames) / renderAcc);
+            else
+                stats.rt_avg = 0;
             renderAcc = 0.f;
             num_frames = 0;
             stat_snapshot = framet0;
@@ -76,6 +78,8 @@ struct RenderManager::Data {
         if (diff2 >= FS_UPDATE_INTERVAL_FAST) {
             if (renderAccFast != 0)
                 stats.rt_current = uint32(float(num_frames_fast) / renderAccFast);
+            else
+                stats.rt_avg = 0;
             renderAccFast = 0.f;
             num_frames_fast = 0;
             stat_fast_snapshot = framet0;
