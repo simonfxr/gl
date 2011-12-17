@@ -18,6 +18,8 @@ struct ShaderCache;
 
 typedef std::map<std::string, std::string> PreprocessorDefinitions;
 
+typedef std::vector<std::string> ShaderDirectories;
+
 struct ShaderManager {
     
     enum Verbosity {
@@ -55,8 +57,10 @@ struct ShaderManager {
     std::ostream& err() const;
     void err(std::ostream& out);
 
+    bool prependShaderDirectory(const std::string& directory, bool check_exists = true);
     bool addShaderDirectory(const std::string& directory, bool check_exists = true);
-    const std::vector<std::string>& shaderDirectories() const;
+    bool removeShaderDirectory(const std::string& dir);
+    const ShaderDirectories& shaderDirectories() const;
 
     void setShaderVersion(uint32 vers /* e.g. 330 */, ShaderProfile profile = CompatibilityProfile);
     uint32 shaderVersion() const;

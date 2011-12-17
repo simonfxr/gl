@@ -10,6 +10,6 @@ struct Vertex {
     math::direction3_t normal;
 };
 
-int32 parse_sply(const char *filename, CubeMesh& model);
+defs::int32 parse_sply(const char *filename, CubeMesh& model);
 
 #endif

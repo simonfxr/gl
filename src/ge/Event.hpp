@@ -10,13 +10,14 @@ namespace ge {
 
 using namespace defs;
 
-struct Unit {};
-
 template <typename T>
 struct Event {
     T info;
-    Event() {}
-    explicit Event(const T& _info) : info(_info) {}
+    mutable bool abort;
+    bool canAbort;
+    Event() : info(), abort(false), canAbort(true) {}
+    explicit Event(const T& _info) :
+        info(_info), abort(false), canAbort(true) {}
 };
 
 template <typename T>
@@ -95,7 +96,7 @@ Ref<EventHandler<E> > makeVoidEventHandler(F f) {
 
 template <typename T>
 struct EventSource {
-    void raise(const Event<T>& evnt);
+    bool raise(const Event<T>& evnt);
     bool reg(const Ref<EventHandler<T> >& handler);
     bool unreg(const Ref<EventHandler<T> >& handler);
     void clear();
@@ -108,9 +109,14 @@ private:
 };
 
 template <typename T>
-void EventSource<T>::raise(const Event<T>& e) {
-    for (defs::index i = 0; i < SIZE(handlers.size()); ++i)
+bool EventSource<T>::raise(const Event<T>& e) {
+    for (defs::index i = 0; i < SIZE(handlers.size()); ++i) {
         handlers[size_t(i)]->handle(e);
+        if (e.canAbort && e.abort)
+            return false;
+    }
+
+    return true;
 }
 
 template <typename T>

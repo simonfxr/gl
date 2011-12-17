@@ -21,6 +21,8 @@ set(USE_LTO FALSE CACHE BOOL "enable link time optimisations")
 
 set(BUILD_ARCH32 FALSE CACHE BOOL "TRUE to force 32-bit build on 64bit platform")
 
+set(USE_VOXEL_OPENCL FALSE CACHE BOOL "use opencl for the voxel-world program")
+
 project(gl-stuff)
 
 include_directories(src)

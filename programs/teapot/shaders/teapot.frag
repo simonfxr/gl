@@ -1,6 +1,6 @@
 
 
-#include "gamma.h"
+// #include "gamma.h"
 #include "teapot_lighting.h"
 
 uniform vec3 ecLight;
@@ -22,5 +22,6 @@ void main() {
                                         vec4(diffuseContribution), vec4(specularContribution), shininess));
     
     vec3 shaded_rgb = (radiance + vec3(ambientContribution)) * surfaceColor.rgb;
-    color = gammaCorrect(vec4(min(vec3(1), shaded_rgb), surfaceColor.a));
+    color = vec4(min(vec3(1), shaded_rgb), surfaceColor.a);
+//    color = gammaCorrect(color);
 }

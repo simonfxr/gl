@@ -1,4 +1,4 @@
-#include "point_light2.h"
+// #include "point_light2.h"
 
 uniform vec3 spotDirection;
 uniform float useSpot;

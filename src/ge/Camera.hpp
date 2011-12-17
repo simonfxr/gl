@@ -11,12 +11,24 @@
 
 namespace ge {
 
+struct Camera;
+
 struct CameraMoved {
+    Camera& camera;
     math::vec3_t step;
     mutable math::vec3_t allowed_step;
 
-    CameraMoved(const math::vec3_t& s) :
-        step(s), allowed_step(s) {}
+    CameraMoved(Camera& cam, const math::vec3_t& s) :
+        camera(cam), step(s), allowed_step(s) {}
+};
+
+struct CameraRotated {
+    Camera& camera;
+    math::vec2_t angle;
+    mutable math::vec2_t allowed_angle;
+    
+    CameraRotated(Camera& cam, const math::vec2_t& a) :
+        camera(cam), angle(a), allowed_angle(a) {}
 };
 
 struct Camera {
@@ -24,7 +36,9 @@ struct Camera {
     float step_length;
     math::vec2_t mouse_sensitivity;
     glt::Frame frame;
+    
     EventSource<CameraMoved> moved;
+    EventSource<CameraRotated> rotated;
 
     struct Commands {
         Ref<Command> move;

@@ -19,6 +19,8 @@ struct Commands {
     Ref<Command> eval;
     Ref<Command> load;
     Ref<Command> addShaderPath;
+    Ref<Command> prependShaderPath;
+    Ref<Command> removeShaderPath;
     Ref<Command> togglePause;
     Ref<Command> perspectiveProjection;
     Ref<Command> postInit;

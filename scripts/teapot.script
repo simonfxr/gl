@@ -1,5 +1,8 @@
 load "default.script"
 
+removeShaderPath "shaders"
+prependShaderPath "programs/teapot/shaders"
+
 bindShader "teapot" "teapot.vert" "teapot.frag" 0 "position" 1 "normal"
 bindShader "teapotTextured" "teapot_textured.vert" "teapot_textured.frag" 0 "position" 1 "normal" 2 "texCoord"
 
@@ -20,4 +23,5 @@ postInit {
     setCameraStepLength 1
     setCameraMouseSensitivity 0.00075
     loadCameraFrame "teapot.cam"
+    setDataDir "programs/teapot/data"
 }

@@ -7,6 +7,8 @@
 
 namespace glt {
 
+using namespace defs;
+
 struct Attr {
     GLint size;
     GLenum type;

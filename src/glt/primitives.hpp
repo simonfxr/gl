@@ -14,6 +14,22 @@ namespace glt {
 
 namespace primitives {
 
+void setPoint(math::vec3_t& a, const math::vec3_t& b) {
+    a = b;
+}
+
+void setPoint(math::vec4_t& a, const math::vec3_t& b) {
+    a = math::vec4(b, 1.f);
+}
+
+void setVec(math::vec3_t& a, const math::vec3_t& b) {
+    a = b;
+}
+
+void setVec(math::vec4_t& a, const math::vec3_t& b) {
+    a = math::vec4(b, 0.f);
+}
+
 using namespace math;
 
 template <typename V>
@@ -143,6 +159,51 @@ void unitCube(CubeMesh<Vertex>& cube) {
     v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
     v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
 }
+
+template <typename Vertex>
+void unitCube3(Mesh<Vertex>& cube) {
+    Vertex v;
+
+    v.normal = vec3(0.0f, 0.0f, 1.0f);
+    v.position = vec3(0.f, 0.f,  1.0f); cube.addVertex(v);
+    v.position = vec3( 1.0f, 0.f,  1.0f); cube.addVertex(v);
+    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.addVertex(v);
+    v.position = vec3(0.f,  1.0f,  1.0f); cube.addVertex(v);
+
+    v.normal = vec3( 0.0f, 0.0f, -1.f);
+    v.position = vec3(0.f, 0.f, 0.f); cube.addVertex(v);
+    v.position = vec3(0.f,  1.0f, 0.f); cube.addVertex(v);
+    v.position = vec3( 1.0f,  1.0f, 0.f); cube.addVertex(v);
+    v.position = vec3( 1.0f, 0.f, 0.f); cube.addVertex(v);
+
+    v.normal = vec3( 0.0f, 1.0f, 0.0f);
+    v.position = vec3(0.f,  1.0f, 0.f); cube.addVertex(v);
+    v.position = vec3(0.f,  1.0f,  1.0f); cube.addVertex(v);
+    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.addVertex(v);
+    v.position = vec3( 1.0f,  1.0f, 0.f); cube.addVertex(v);
+
+    v.normal = vec3( 0.0f, -1.f, 0.0f);
+    v.position = vec3(0.f, 0.f, 0.f); cube.addVertex(v);
+    v.position = vec3( 1.0f, 0.f, 0.f); cube.addVertex(v);
+    v.position = vec3( 1.0f, 0.f,  1.0f); cube.addVertex(v);
+    v.position = vec3(0.f, 0.f,  1.0f); cube.addVertex(v);
+
+    v.normal = vec3( 1.0f, 0.0f, 0.0f);					
+    v.position = vec3( 1.0f, 0.f, 0.f); cube.addVertex(v);
+    v.position = vec3( 1.0f,  1.0f, 0.f); cube.addVertex(v);
+    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.addVertex(v);
+    v.position = vec3( 1.0f, 0.f,  1.0f); cube.addVertex(v);
+
+    v.normal = vec3(-1.f, 0.0f, 0.0f);					
+    v.position = vec3(0.f, 0.f, 0.f); cube.addVertex(v);
+    v.position = vec3(0.f, 0.f,  1.0f); cube.addVertex(v);
+    v.position = vec3(0.f,  1.0f,  1.0f); cube.addVertex(v);
+    v.position = vec3(0.f,  1.0f, 0.f); cube.addVertex(v);
+
+    cube.primType(GL_QUADS);
+    cube.drawType(DrawArrays);
+}
+
 
 template <typename Vertex>
 void unitCubeEverted(CubeMesh<Vertex>& cube) {
@@ -278,8 +339,8 @@ void sphere(Mesh<Vertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iSt
 
             for (uint32 i = 0; i < 3; ++i) {
                 Vertex v;
-                v.position = vec4(vVertex[i], 1.f);
-                v.normal = vNormal[i];
+                setPoint(v.position, vVertex[i]);
+                setVec(v.normal, vNormal[i]);
                 sphereBatch.addVertex(v);
             }
 			
@@ -294,8 +355,8 @@ void sphere(Mesh<Vertex>& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iSt
 
             for (uint32 i = 0; i < 3; ++i) {
                 Vertex v;
-                v.position = vec4(vVertex[i], 1.f);
-                v.normal = vNormal[i];
+                setPoint(v.position, vVertex[i]);
+                setVec(v.normal, vNormal[i]);
                 sphereBatch.addVertex(v);
             }
         }

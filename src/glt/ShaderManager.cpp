@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <map>
+#include <algorithm>
 #include <stdio.h>
 
 namespace glt {
@@ -123,16 +124,34 @@ void ShaderManager::err(std::ostream& err) {
     self->err = &err;
 }
 
+bool ShaderManager::prependShaderDirectory(const std::string& dir, bool check_exists) {
+    removeShaderDirectory(dir);
+
+    sys::fs::ObjectType type;
+    if (check_exists && (!sys::fs::exists(dir, &type) || type != sys::fs::Directory))
+        return false;
+
+    self->shaderDirs.insert(self->shaderDirs.begin(), dir);
+    return true;
+}
+
 bool ShaderManager::addShaderDirectory(const std::string& dir, bool check_exists) {
-    for (uint32 i = 0; i < self->shaderDirs.size(); ++i)
-        if (dir == self->shaderDirs[i])
-            return true;
+    removeShaderDirectory(dir);
 
     sys::fs::ObjectType type;
     if (check_exists && (!sys::fs::exists(dir, &type) || type != sys::fs::Directory))
         return false;
     
     self->shaderDirs.push_back(dir);
+    return true;
+}
+
+bool ShaderManager::removeShaderDirectory(const std::string& dir) {
+    ShaderDirectories& dirs = self->shaderDirs;
+    ShaderDirectories::iterator it = find(dirs.begin(), dirs.end(), dir);
+    if (it == dirs.end())
+        return false;
+    dirs.erase(it);
     return true;
 }
 

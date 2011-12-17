@@ -166,6 +166,18 @@ void runAddShaderPath(const Event<CommandEvent>& e, const Array<CommandArg>& arg
             ERR("not a directory: " + *args[i].string);
 }
 
+void runPrependShaderPath(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+    for (defs::index i = args.size(); i > 0; --i) {
+        if (!e.info.engine.shaderManager().prependShaderDirectory(*args[i - 1].string, true))
+            ERR("not a directory: " + *args[i - 1].string);
+    }
+}
+
+void runRemoveShaderPath(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+    for (defs::index i = 0; i < args.size(); ++i)
+        e.info.engine.shaderManager().removeShaderDirectory(*args[i].string);
+}
+
 void runTogglePause(const Event<CommandEvent>& e) {
     Engine& eng = e.info.engine;
     eng.gameLoop().pause(!eng.gameLoop().paused());
@@ -239,6 +251,10 @@ Commands::Commands() :
     load(makeStringListCommand(runLoad, "load", "execute a script file")),
 
     addShaderPath(makeStringListCommand(runAddShaderPath, "addShaderPath", "add directories to the shader path")),
+
+    prependShaderPath(makeStringListCommand(runPrependShaderPath, "prependShaderPath", "add directories to the front of the shader path")),
+
+    removeShaderPath(makeStringListCommand(runRemoveShaderPath, "removeShaderPath", "remove directories from the shader path")),
 
     togglePause(makeCommand(runTogglePause, "togglePause", "toggle the pause state")),
 

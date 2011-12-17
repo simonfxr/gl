@@ -98,9 +98,14 @@ Camera::Camera(float step_len, vec2_t mouse_sens) :
 static void mouseLook(Camera *cam, const Event<MouseMoved>& ev) {
 //    std::cerr << "mouse look" << std::endl;
     vec2_t rot = vec2(ev.info.dx, ev.info.dy) * cam->mouse_sensitivity;
-//    std::cerr << "dx: " << ev.info.dx << " dy: " << ev.info.dy << " rotY: " << rot.y << " rotX: " << rot.x << std::endl;
-    cam->frame.rotateLocal(- rot[1], vec3(1.f, 0.f, 0.f));
-    cam->frame.rotateWorld(rot[0], vec3(0.f, 1.f, 0.f));
+//    std::cerr << "dx: " << ev.info.dx << " dy: " << ev.info.dy << "
+//    rotY: " << rot.y << " rotX: " << rot.x << std::endl;
+
+    Event<CameraRotated> re = makeEvent(CameraRotated(*cam, vec2(-rot[1], rot[0])));
+    if (cam->rotated.raise(re)) {
+        cam->frame.rotateLocal(re.info.allowed_angle[0], vec3(1.f, 0.f, 0.f));
+        cam->frame.rotateWorld(re.info.allowed_angle[1], vec3(0.f, 1.f, 0.f));
+    }
 }
 
 static void execStep(Camera *cam, const Event<AnimationEvent>&) {
@@ -109,9 +114,9 @@ static void execStep(Camera *cam, const Event<AnimationEvent>&) {
     if (lenSq >= 1e-4f) {
 //        std::cerr << "camera step" << std::endl;
         vec3_t local_step = cam->step_length * normalize(cam->step_accum);
-        Event<CameraMoved> ev = makeEvent(CameraMoved(transformVector(cam->frame, local_step)));
-        cam->moved.raise(ev);
-        cam->frame.translateWorld(ev.info.allowed_step);
+        Event<CameraMoved> ev = makeEvent(CameraMoved(*cam, transformVector(cam->frame, local_step)));
+        if (cam->moved.raise(ev))
+            cam->frame.translateWorld(ev.info.allowed_step);
     }
     
     cam->step_accum = vec3(0.f);

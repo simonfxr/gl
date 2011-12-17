@@ -7,6 +7,7 @@
 #include "math/vec3.hpp"
 
 using namespace math;
+using namespace defs;
 
 int32 parse_sply(const char *filename, CubeMesh& model) {
     FILE *data = fopen(filename, "rb");
@@ -25,7 +26,7 @@ int32 parse_sply(const char *filename, CubeMesh& model) {
     while (fgets(line, sizeof line, data) != 0 && verts.size() < nverts) {
         point3_t p;
         direction3_t n;
-        int nparsed = sscanf(line, "%f %f %f %f %f %f", &p.x, &p.y, &p.z, &n.x, &n.y, &n.z);
+        int nparsed = sscanf(line, "%f %f %f %f %f %f", &p[0], &p[1], &p[2], &n[0], &n[1], &n[2]);
 
         if (nparsed != 6) {
             fclose(data);

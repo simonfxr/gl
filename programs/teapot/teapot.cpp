@@ -9,25 +9,29 @@
 #include "defs.hpp"
 #include "mesh.h"
 
+#include "math/real.hpp"
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-#include "math/math.hpp"
+#include "math/io.hpp"
 
 #include "glt/utils.hpp"
 #include "glt/Uniforms.hpp"
 #include "glt/Frame.hpp"
 #include "glt/color.hpp"
+#include "glt/primitives.hpp"
 
 #include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
+#include "ge/CommandParams.hpp"
 
 #include "parse_sply.hpp"
 
 using namespace math;
 using namespace ge;
+using namespace defs;
 
 static const point3_t LIGHT_CENTER_OF_ROTATION = vec3(0.f, 15.f, 0.f);
 static const float  LIGHT_ROTATION_RAD = 15.f;
@@ -101,7 +105,7 @@ struct Anim {
     Mesh sphereModel;
     CubeMesh2 cubeModel;
 
-    sf::Image woodTexture;
+    sf::Texture woodTexture;
 
     Teapot teapot1;
     Teapot teapot2;
@@ -122,13 +126,17 @@ struct Anim {
     bool spotlight_smooth;
     direction3_t ec_spotlight_dir;
 
+    std::string data_dir;
+
+    Ref<Command> setDataDirCommand;
+
     Anim(ge::Engine& e) :
-        engine(e),
+        engine(e)
         {}
 
-    void linkEvents(const Event<InitEvent>& e);
     void init(const Event<InitEvent>&);
-    void animate(const Event<EngineEvent>&);
+    void link(const Event<InitEvent>&);
+    void animate(const Event<AnimationEvent>&);
     void renderScene(const Event<RenderEvent>&);
     vec3_t lightPosition(float interpolation);
     void setupTeapotShader(const std::string& prog, const vec4_t& surfaceColor, const MaterialProperties& mat);
@@ -136,37 +144,34 @@ struct Anim {
     void renderGround();
     void renderLight();
     void renderTable(const std::string& shader);
-    void windowResized(const Event<WindowResized>&);
+    // void windowResized(const Event<WindowResized>&);
     void mouseMoved(const Event<MouseMoved>&);
-    void keyStateChanged(const Event<KeyChanged>&);
-    void handleInput(const Event<EngineEvent>&);
+    // void keyStateChanged(const Event<KeyChanged>&);
+    // void handleInput(const Event<InputEvent>&);
+    void setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args);
 };
 
-
-static void makeUnitCube(CubeMesh2& cube);
-static void makeSphere(Mesh& sphere, float rad, int32 stacks, int32 slices);
-
-std::ostream& operator <<(std::ostream& out, const vec3_t& v) {
-    return out << "(" << v.x << ", " << v.y << ", " << v.z << ")";
-}
-
-void Anim::link() {
-    engine.events().handleInput.reg(makeEventHandler(this, &Anim::handleInput));
+void Anim::link(const Event<InitEvent>& e) {
+    // engine.events().handleInput.reg(makeEventHandler(this, &Anim::handleInput));
     engine.events().animate.reg(makeEventHandler(this, &Anim::animate));
     engine.events().render.reg(makeEventHandler(this, &Anim::renderScene));
     GameWindow& win = engine.window();
-    win.events().windowResized.reg(makeEventHandler(this, &Anim::windowResized));
+    // win.events().windowResized.reg(makeEventHandler(this, &Anim::windowResized));
     win.events().mouseMoved.reg(makeEventHandler(this, &Anim::mouseMoved));
-    win.events().keyChanged.reg(makeEventHandler(this, &Anim::keyStateChanged));
+    // win.events().keyChanged.reg(makeEventHandler(this, &Anim::keyStateChanged));
     e.info.success = true;
 }
 
 void Anim::init(const Event<InitEvent>& e) {
     engine.window().showMouseCursor(false);
     engine.window().grabMouse(true);
-    
-    engine.shaderManager().addPath("shaders");
-    engine.shaderManager().addPath("../shaders");
+
+    camera.registerWith(engine);
+    camera.registerCommands(engine.commandProcessor());
+
+    setDataDirCommand = makeCommand(this, &Anim::setDataDir, ge::STR_PARAMS,
+                                    "setDataDir", "set the texture directory");
+    engine.commandProcessor().define(setDataDirCommand);    
 
     engine.gameLoop().ticksPerSecond(100);
     engine.gameLoop().sync(true);
@@ -202,12 +207,16 @@ void Anim::init(const Event<InitEvent>& e) {
     QUAD_MESH(teapotModel);
     FREEZE_MESH(teapotModel);
 
-    QUAD_MESH(groundModel);
-    makeUnitCube(cubeModel);
+    QUAD_MESH(cubeModel);
+    glt::primitives::unitCube3(cubeModel);
+    FREEZE_MESH(cubeModel);
 
-    makeSphere(sphereModel, 1.f, 26, 13);
+    glt::primitives::sphere(sphereModel, 1.f, 26, 13);
+    sphereModel.send();
 
     {
+        QUAD_MESH(groundModel);
+
         Vertex v;
         v.normal = vec3(0.f, 1.f, 0.f);
         v.position = vec3(0.f, 0.f, 0.f); ADD_VERTEX(groundModel, v);
@@ -218,10 +227,9 @@ void Anim::init(const Event<InitEvent>& e) {
         FREEZE_MESH(groundModel);
     }
 
-    camera.setOrigin(vec3(6.36, 5.87, 1.97));
-    camera.setXZ(normalize(vec3(-0.29, 0.f, 0.95f)),
-                 normalize(vec3(-0.8f, -0.54f, -0.25f)));
-
+    camera.frame.origin = vec3(6.36, 5.87, 1.97);
+    camera.frame.setXZ(normalize(vec3(-0.29, 0.f, 0.95f)),
+                       normalize(vec3(-0.8f, -0.54f, -0.25f)));
     
     teapot1.frame.setXZ(vec3(1.f, 0.f, 0.f), vec3(0.f, 1.f, 0.f));
     teapot1.frame.origin = vec3(5.f, 4.f, 4.f);
@@ -244,7 +252,7 @@ void Anim::init(const Event<InitEvent>& e) {
     e.info.success = true;
 }
 
-void Anim::animate(const Event<EngineEvent>&) {
+void Anim::animate(const Event<AnimationEvent>&) {
     light_angular_position = wrapPi(light_angular_position + light_rotation_speed);
 }
 
@@ -417,17 +425,17 @@ void Anim::renderTable(const std::string& shader) {
     }
 }
 
-void Anim::windowResized(const Event<WindowResized>& e) {
-    uint32 width = e.info.width;
-    uint32 height = e.info.height;
-    std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
-    GL_CHECK(glViewport(0, 0, width, height));
+// void Anim::windowResized(const Event<WindowResized>& e) {
+//     uint32 width = e.info.width;
+//     uint32 height = e.info.height;
+//     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
+//     GL_CHECK(glViewport(0, 0, width, height));
 
-    float fov = degToRad(17.5f);
-    float aspect = float(width) / float(height);
+//     float fov = degToRad(17.5f);
+//     float aspect = float(width) / float(height);
 
-    engine.renderManager().setPerspectiveProjection(fov, aspect, 0.1f, 100.f);
-}
+//     engine.renderManager().setPerspectiveProjection(fov, aspect, 0.1f, 100.f);
+// }
 
 void Anim::mouseMoved(const Event<MouseMoved>& e) {
     int32 dx = e.info.dx;
@@ -435,89 +443,64 @@ void Anim::mouseMoved(const Event<MouseMoved>& e) {
 
     dx = - dx;
 
-    if (engine.window().keyState(sf::Key::M) <= Down) {
-
-        teapot1.frame.rotateWorld(-dx * 0.001f, camera.localY());
-        teapot1.frame.rotateWorld(dy * 0.001f, camera.localX());
-
-    } else {
-        float rotX = dx * 0.001f;
-        float rotY = dy * 0.001f;
-
-        camera.rotateLocal(rotY, vec3(1.f, 0.f, 0.f));
-        camera.rotateWorld(-rotX, vec3(0.f, 1.f, 0.f));
+    if (engine.keyHandler().keyState(ge::keycode::M) <= Pressed) {
+        teapot1.frame.rotateWorld(-dx * 0.001f, camera.frame.localY());
+        teapot1.frame.rotateWorld(dy * 0.001f, camera.frame.localX());
+        e.abort = true;        
     }
 }
 
-void Anim::handleInput(const Event<EngineEvent>&) {
-    vec3_t step = vec3(0.f);
+// void Anim::keyStateChanged(const Event<KeyChanged>& e) {
+//     if (!e.info.pressed) return;
 
-    GameWindow& w = engine.window();
+//     const sf::Event::KeyEvent& key = e.info.key;
 
-    namespace K = sf::Key;
+//     using namespace sf::Key;
 
-    if (w.keyState(K::W) <= Down)
-        step += vec3(0.f, 0.f, 1.f);
-    if (w.keyState(K::S) <= Down)
-        step += vec3(0.f, 0.f, -1.f);
-    if (w.keyState(K::A) <= Down)
-        step += vec3(1.f, 0.f, 0.f);
-    if (w.keyState(K::D) <= Down)
-        step += vec3(-1.f, 0.f, 0.f);
-
-    static const float STEP = 0.1f;
-
-    if (lengthSq(step) != 0.f)
-        camera.translateLocal(STEP * normalize(step));
-}
-
-void Anim::keyStateChanged(const Event<KeyChanged>& e) {
-    if (!e.info.pressed) return;
-
-    const sf::Event::KeyEvent& key = e.info.key;
-
-    using namespace sf::Key;
-
-    switch (key.Code) {
-    case C: engine.shaderManager().reloadShaders(); break;
-    case B: engine.gameLoop().pause(!engine.gameLoop().paused()); break;
-    case F:
-        wireframe_mode = !wireframe_mode;
-        GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, wireframe_mode ? GL_LINE : GL_FILL));
-        break;
-    case H:
+//     switch (key.Code) {
+//     case C: engine.shaderManager().reloadShaders(); break;
+//     case B: engine.gameLoop().pause(!engine.gameLoop().paused()); break;
+//     case F:
+//         wireframe_mode = !wireframe_mode;
+//         GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, wireframe_mode ? GL_LINE : GL_FILL));
+//         break;
+//     case H:
         
-        if (shade_mode == SHADE_MODE_DEFAULT)
-            shade_mode = 0;
-        else
-            shade_mode = SHADE_MODE_DEFAULT;
-        break;
-    case J: shade_mode ^= SHADE_MODE_AMBIENT; break;
-    case K: shade_mode ^= SHADE_MODE_DIFFUSE; break;
-    case L: shade_mode ^= SHADE_MODE_SPECULAR; break;
-    case O: gamma_correction += 0.05f; break;
-    case P: gamma_correction -= 0.05f; break;
-    case G:
-        if (use_spotlight && spotlight_smooth) {
-            use_spotlight = false;
-            spotlight_smooth = false;
-        } else if (use_spotlight) {
-            spotlight_smooth = true;
-        } else {
-            use_spotlight = true;
-        }
-        break;
-    }
+//         if (shade_mode == SHADE_MODE_DEFAULT)
+//             shade_mode = 0;
+//         else
+//             shade_mode = SHADE_MODE_DEFAULT;
+//         break;
+//     case J: shade_mode ^= SHADE_MODE_AMBIENT; break;
+//     case K: shade_mode ^= SHADE_MODE_DIFFUSE; break;
+//     case L: shade_mode ^= SHADE_MODE_SPECULAR; break;
+//     case O: gamma_correction += 0.05f; break;
+//     case P: gamma_correction -= 0.05f; break;
+//     case G:
+//         if (use_spotlight && spotlight_smooth) {
+//             use_spotlight = false;
+//             spotlight_smooth = false;
+//         } else if (use_spotlight) {
+//             spotlight_smooth = true;
+//         } else {
+//             use_spotlight = true;
+//         }
+//         break;
+//     }
+// }
+
+void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args) {
+    data_dir = *args[0].string;
 }
 
 int main(int argc, char *argv[]) {
-    EngineOpts opts;
+    EngineOptions opts;
     Engine engine;
     Anim anim(engine);
 
-    opts.parseOpts(&argc, &argv);
-    anim.link();
+    opts.parse(&argc, &argv);
     opts.inits.init.reg(makeEventHandler(&anim, &Anim::init));
+    opts.inits.init.reg(makeEventHandler(&anim, &Anim::link));
     
     return engine.run(opts);
 }

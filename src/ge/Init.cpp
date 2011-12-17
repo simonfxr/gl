@@ -110,6 +110,8 @@ static void runInitCommands(const Event<InitEvent>& e) {
     r.define(cs.eval);
     r.define(cs.load);
     r.define(cs.addShaderPath);
+    r.define(cs.prependShaderPath);
+    r.define(cs.removeShaderPath);
     r.define(cs.togglePause);
     r.define(cs.perspectiveProjection);
     r.define(cs.postInit);

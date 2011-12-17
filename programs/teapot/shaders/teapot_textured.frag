@@ -1,6 +1,6 @@
 
 
-#include "gamma.h"
+// #include "gamma.h"
 #include "point_light2.h"
 
 uniform vec3 ecLight;
@@ -25,5 +25,6 @@ void main() {
 
     vec4 baseColor = texture(texData, fragTexCoord);
     vec3 shaded_rgb = (radiance + vec3(ambientContribution)) * baseColor.rgb;
-    color = gammaCorrect(vec4(min(vec3(1), shaded_rgb), baseColor.a));
+    color = vec4(min(vec3(1), shaded_rgb), baseColor.a);
+//    color = gammaCorrect(color);
 }
