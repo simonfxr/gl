@@ -48,6 +48,7 @@ struct KeyHandler::Data {
     uint32 frame_id;
     CommandBindings bindings;
     State states[keycode::Count];
+    EventSource<KeyPressed> keyPressedEvent;
 
     Data(CommandProcessor& proc);
 };
@@ -74,6 +75,7 @@ void KeyHandler::keyPressed(KeyCode code) {
     int32 idx = int32(code);
     CHECK_KEYCODE(idx);
     self->states[idx] = State(true, self->frame_id);
+    self->keyPressedEvent.raise(makeEvent(KeyPressed(*this, code)));
 }
     
 void KeyHandler::keyReleased(KeyCode code) {
@@ -110,6 +112,10 @@ Ref<Command> KeyHandler::unregisterBinding(const Ref<KeyBinding>& binding) {
         return NULL_COMMAND;
     else
         return it->second;
+}
+
+EventSource<KeyPressed>& KeyHandler::keyPressedEvent() {
+    return self->keyPressedEvent;
 }
 
 // static const char *prettyKeyState(KeyState state) {

@@ -65,9 +65,7 @@ int32 parse_sply(const char *filename, CubeMesh& model) {
         model.addElement(i);
         model.addElement(j);
         model.addElement(k);
-        model.addElement(k);
         model.addElement(l);
-        model.addElement(i);
         
 #else
         

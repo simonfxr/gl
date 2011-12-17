@@ -146,7 +146,7 @@ struct Anim {
     void renderTable(const std::string& shader);
     // void windowResized(const Event<WindowResized>&);
     void mouseMoved(const Event<MouseMoved>&);
-    // void keyStateChanged(const Event<KeyChanged>&);
+    void keyPressed(const Event<KeyPressed>&);
     // void handleInput(const Event<InputEvent>&);
     void setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args);
 };
@@ -158,7 +158,7 @@ void Anim::link(const Event<InitEvent>& e) {
     GameWindow& win = engine.window();
     // win.events().windowResized.reg(makeEventHandler(this, &Anim::windowResized));
     win.events().mouseMoved.reg(makeEventHandler(this, &Anim::mouseMoved));
-    // win.events().keyChanged.reg(makeEventHandler(this, &Anim::keyStateChanged));
+    engine.keyHandler().keyPressedEvent().reg(makeEventHandler(this, &Anim::keyPressed));
     e.info.success = true;
 }
 
@@ -188,24 +188,6 @@ void Anim::init(const Event<InitEvent>& e) {
     light_angular_position = 0.f;
 
     gamma_correction = 1.35f;
-    
-    if (!woodTexture.LoadFromFile("data/wood.jpg")) {
-        std::cerr << "couldnt load data/wood.jpg" << std::endl;
-        return;
-    }
-
-    woodTexture.SetSmooth(true);
-
-    int32 nfaces = parse_sply("data/teapot.sply", teapotModel);
-    if (nfaces < 0) {
-        std::cerr << "couldnt parse teapot model" << std::endl;
-        return;
-    } else {
-        std::cerr << "parsed teapot model: " << nfaces << " vertices" << std::endl;
-    }
-
-    QUAD_MESH(teapotModel);
-    FREEZE_MESH(teapotModel);
 
     QUAD_MESH(cubeModel);
     glt::primitives::unitCube3(cubeModel);
@@ -340,8 +322,8 @@ void Anim::setupTeapotShader(const std::string& progname, const vec4_t& surfaceC
     us.optional("ecLight", ecLight);
     us.optional("gammaCorrection", gamma_correction);
     us.optional("spotDirection", ec_spotlight_dir);
-    us.optional("useSpot", use_spotlight);
-    us.optional("spotSmooth", spotlight_smooth);
+    us.optional("useSpot", 1.f * use_spotlight);
+    us.optional("spotSmooth", 1.f * spotlight_smooth);
 }
 
 void Anim::renderLight() {
@@ -450,47 +432,60 @@ void Anim::mouseMoved(const Event<MouseMoved>& e) {
     }
 }
 
-// void Anim::keyStateChanged(const Event<KeyChanged>& e) {
-//     if (!e.info.pressed) return;
+void Anim::keyPressed(const Event<KeyPressed>& e) {
+    using namespace ge::keycode;
 
-//     const sf::Event::KeyEvent& key = e.info.key;
-
-//     using namespace sf::Key;
-
-//     switch (key.Code) {
-//     case C: engine.shaderManager().reloadShaders(); break;
-//     case B: engine.gameLoop().pause(!engine.gameLoop().paused()); break;
-//     case F:
-//         wireframe_mode = !wireframe_mode;
-//         GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, wireframe_mode ? GL_LINE : GL_FILL));
-//         break;
-//     case H:
+    switch (e.info.key) {
+    case F:
+        wireframe_mode = !wireframe_mode;
+        GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, wireframe_mode ? GL_LINE : GL_FILL));
+        break;
+    case H:
         
-//         if (shade_mode == SHADE_MODE_DEFAULT)
-//             shade_mode = 0;
-//         else
-//             shade_mode = SHADE_MODE_DEFAULT;
-//         break;
-//     case J: shade_mode ^= SHADE_MODE_AMBIENT; break;
-//     case K: shade_mode ^= SHADE_MODE_DIFFUSE; break;
-//     case L: shade_mode ^= SHADE_MODE_SPECULAR; break;
-//     case O: gamma_correction += 0.05f; break;
-//     case P: gamma_correction -= 0.05f; break;
-//     case G:
-//         if (use_spotlight && spotlight_smooth) {
-//             use_spotlight = false;
-//             spotlight_smooth = false;
-//         } else if (use_spotlight) {
-//             spotlight_smooth = true;
-//         } else {
-//             use_spotlight = true;
-//         }
-//         break;
-//     }
-// }
+        if (shade_mode == SHADE_MODE_DEFAULT)
+            shade_mode = 0;
+        else
+            shade_mode = SHADE_MODE_DEFAULT;
+        break;
+    case J: shade_mode ^= SHADE_MODE_AMBIENT; break;
+    case K: shade_mode ^= SHADE_MODE_DIFFUSE; break;
+    case L: shade_mode ^= SHADE_MODE_SPECULAR; break;
+    case O: gamma_correction += 0.05f; break;
+    case P: gamma_correction -= 0.05f; break;
+    case G:
+        if (use_spotlight && spotlight_smooth) {
+            use_spotlight = false;
+            spotlight_smooth = false;
+        } else if (use_spotlight) {
+            spotlight_smooth = true;
+        } else {
+            use_spotlight = true;
+        }
+        break;
+    }
+}
 
 void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args) {
     data_dir = *args[0].string;
+
+    if (!woodTexture.LoadFromFile(data_dir + "/wood.jpg")) {
+        std::cerr << "couldnt load data/wood.jpg" << std::endl;
+        return;
+    }
+
+    woodTexture.SetSmooth(true);
+
+    int32 nfaces = parse_sply((data_dir + "/teapot.sply").c_str(), teapotModel);
+    if (nfaces < 0) {
+        std::cerr << "couldnt parse teapot model" << std::endl;
+        return;
+    } else {
+        std::cerr << "parsed teapot model: " << nfaces << " vertices" << std::endl;
+    }
+
+    QUAD_MESH(teapotModel);
+    teapotModel.drawType(glt::DrawElements);
+    FREEZE_MESH(teapotModel);
 }
 
 int main(int argc, char *argv[]) {

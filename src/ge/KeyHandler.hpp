@@ -10,6 +10,16 @@
 
 namespace ge {
 
+struct KeyHandler;
+
+struct KeyPressed {
+    KeyHandler& handler;
+    keycode::KeyCode key;
+
+    KeyPressed(KeyHandler& h, keycode::KeyCode k) :
+        handler(h), key(k) {}
+};
+
 struct KeyHandler {
 
     KeyHandler(CommandProcessor& proc);
@@ -29,6 +39,8 @@ struct KeyHandler {
     Ref<Command> unregisterBinding(const Ref<KeyBinding>& binding);
 
     void handleCommands();
+
+    EventSource<KeyPressed>& keyPressedEvent();
 
 private:
     struct Data;
