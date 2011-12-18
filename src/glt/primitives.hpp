@@ -165,40 +165,40 @@ void unitCube3(Mesh<Vertex>& cube) {
     Vertex v;
 
     v.normal = vec3(0.0f, 0.0f, 1.0f);
-    v.position = vec3(0.f, 0.f,  1.0f); cube.addVertex(v);
-    v.position = vec3( 1.0f, 0.f,  1.0f); cube.addVertex(v);
-    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.addVertex(v);
-    v.position = vec3(0.f,  1.0f,  1.0f); cube.addVertex(v);
+    v.position = vec3(0.f, 0.f,  1.0f); v.texCoord = vec2(0, 0); cube.addVertex(v);
+    v.position = vec3( 1.0f, 0.f,  1.0f); v.texCoord = vec2(1, 0); cube.addVertex(v);
+    v.position = vec3( 1.0f,  1.0f,  1.0f); v.texCoord = vec2(1, 1); cube.addVertex(v);
+    v.position = vec3(0.f,  1.0f,  1.0f); v.texCoord = vec2(0, 1); cube.addVertex(v);
 
     v.normal = vec3( 0.0f, 0.0f, -1.f);
-    v.position = vec3(0.f, 0.f, 0.f); cube.addVertex(v);
-    v.position = vec3(0.f,  1.0f, 0.f); cube.addVertex(v);
-    v.position = vec3( 1.0f,  1.0f, 0.f); cube.addVertex(v);
-    v.position = vec3( 1.0f, 0.f, 0.f); cube.addVertex(v);
+    v.position = vec3(0.f, 0.f, 0.f); v.texCoord = vec2(0, 0); cube.addVertex(v);
+    v.position = vec3(0.f,  1.0f, 0.f); v.texCoord = vec2(0, 1); cube.addVertex(v);
+    v.position = vec3( 1.0f,  1.0f, 0.f); v.texCoord = vec2(1, 1); cube.addVertex(v);
+    v.position = vec3( 1.0f, 0.f, 0.f); v.texCoord = vec2(1, 0); cube.addVertex(v);
 
     v.normal = vec3( 0.0f, 1.0f, 0.0f);
-    v.position = vec3(0.f,  1.0f, 0.f); cube.addVertex(v);
-    v.position = vec3(0.f,  1.0f,  1.0f); cube.addVertex(v);
-    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.addVertex(v);
-    v.position = vec3( 1.0f,  1.0f, 0.f); cube.addVertex(v);
+    v.position = vec3(0.f,  1.0f, 0.f); v.texCoord = vec2(0, 0); cube.addVertex(v);
+    v.position = vec3(0.f,  1.0f,  1.0f); v.texCoord = vec2(0, 1); cube.addVertex(v);
+    v.position = vec3( 1.0f,  1.0f,  1.0f); v.texCoord = vec2(1, 1); cube.addVertex(v);
+    v.position = vec3( 1.0f,  1.0f, 0.f); v.texCoord = vec2(1, 0); cube.addVertex(v);
 
     v.normal = vec3( 0.0f, -1.f, 0.0f);
-    v.position = vec3(0.f, 0.f, 0.f); cube.addVertex(v);
-    v.position = vec3( 1.0f, 0.f, 0.f); cube.addVertex(v);
-    v.position = vec3( 1.0f, 0.f,  1.0f); cube.addVertex(v);
-    v.position = vec3(0.f, 0.f,  1.0f); cube.addVertex(v);
+    v.position = vec3(0.f, 0.f, 0.f); v.texCoord = vec2(0, 0); cube.addVertex(v);
+    v.position = vec3( 1.0f, 0.f, 0.f); v.texCoord = vec2(1, 0); cube.addVertex(v);
+    v.position = vec3( 1.0f, 0.f,  1.0f); v.texCoord = vec2(1, 1); cube.addVertex(v);
+    v.position = vec3(0.f, 0.f,  1.0f); v.texCoord = vec2(0, 1); cube.addVertex(v);
 
     v.normal = vec3( 1.0f, 0.0f, 0.0f);					
-    v.position = vec3( 1.0f, 0.f, 0.f); cube.addVertex(v);
-    v.position = vec3( 1.0f,  1.0f, 0.f); cube.addVertex(v);
-    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.addVertex(v);
-    v.position = vec3( 1.0f, 0.f,  1.0f); cube.addVertex(v);
+    v.position = vec3( 1.0f, 0.f, 0.f); v.texCoord = vec2(0, 0); cube.addVertex(v);
+    v.position = vec3( 1.0f,  1.0f, 0.f); v.texCoord = vec2(1, 0); cube.addVertex(v);
+    v.position = vec3( 1.0f,  1.0f,  1.0f); v.texCoord = vec2(1, 1); cube.addVertex(v);
+    v.position = vec3( 1.0f, 0.f,  1.0f); v.texCoord = vec2(0, 1); cube.addVertex(v);
 
     v.normal = vec3(-1.f, 0.0f, 0.0f);					
-    v.position = vec3(0.f, 0.f, 0.f); cube.addVertex(v);
-    v.position = vec3(0.f, 0.f,  1.0f); cube.addVertex(v);
-    v.position = vec3(0.f,  1.0f,  1.0f); cube.addVertex(v);
-    v.position = vec3(0.f,  1.0f, 0.f); cube.addVertex(v);
+    v.position = vec3(0.f, 0.f, 0.f); v.texCoord = vec2(0, 0); cube.addVertex(v);
+    v.position = vec3(0.f, 0.f,  1.0f); v.texCoord = vec2(0, 1); cube.addVertex(v);
+    v.position = vec3(0.f,  1.0f,  1.0f); v.texCoord = vec2(1, 1); cube.addVertex(v);
+    v.position = vec3(0.f,  1.0f, 0.f); v.texCoord = vec2(1, 0); cube.addVertex(v);
 
     cube.primType(GL_QUADS);
     cube.drawType(DrawArrays);

@@ -131,6 +131,10 @@ void programUniform(GLuint program, GLint loc, const Sampler& sampler) {
     GL_CHECK(glProgramUniform1i(program, loc, GLint(sampler.index)));
 }
 
+void programUniform(GLuint program, GLint loc, const BoundSampler& sampler) {
+    GL_CHECK(glProgramUniform1i(program, loc, GLint(sampler.index)));
+}
+
 void programUniform(GLuint program, GLint loc, GLint val) {
     GL_CHECK(glProgramUniform1i(program, loc, val));
 }
@@ -149,7 +153,7 @@ void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GL
     
     if (locationi == -1) {
         if (mandatory)
-            ERR("unknown uniform");
+            ERR("unknown uniform: " + name);
         return;
     }
     
@@ -206,6 +210,10 @@ void Uniforms::set(bool mandatory, const std::string& name, GLuint value) {
 }
 
 void Uniforms::set(bool mandatory, const std::string& name, const Sampler& sampler) {
+    setUniform(mandatory, prog, name, sampler.type, sampler);
+}
+
+void Uniforms::set(bool mandatory, const std::string& name, const BoundSampler& sampler) {
     setUniform(mandatory, prog, name, sampler.type, sampler);
 }
 

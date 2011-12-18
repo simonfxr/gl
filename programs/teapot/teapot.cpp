@@ -179,10 +179,10 @@ void Anim::init(const Event<InitEvent>& e) {
     use_spotlight = false;
     spotlight_smooth = false;
 
-    wireframe_mode = true;
-    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+    wireframe_mode = false;
+    // GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
 
-    shade_mode = 0;
+    shade_mode = SHADE_MODE_DEFAULT;
 
     light_rotation_speed = 0.0025f;
     light_angular_position = 0.f;
@@ -324,6 +324,7 @@ void Anim::setupTeapotShader(const std::string& progname, const vec4_t& surfaceC
     us.optional("spotDirection", ec_spotlight_dir);
     us.optional("useSpot", 1.f * use_spotlight);
     us.optional("spotSmooth", 1.f * spotlight_smooth);
+    us.optional("texData", glt::BoundSampler(GL_SAMPLER_2D, 0));
 }
 
 void Anim::renderLight() {
@@ -372,6 +373,7 @@ void Anim::renderTable(const std::string& shader) {
 
     gt.dup();
 
+    GL_CHECK(glActiveTexture(GL_TEXTURE0));
     woodTexture.Bind();
 
     vec4_t color = glt::color(0xcd, 0x85, 0x3f).vec4();

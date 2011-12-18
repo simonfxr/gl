@@ -42,6 +42,16 @@ struct Sampler {
         {}
 };
 
+struct BoundSampler {
+    GLenum type;
+    uint32 index;
+
+    BoundSampler() {}
+
+    BoundSampler(GLenum ty, uint32 i) :
+        type(ty), index(i) {}
+};
+
 struct Uniforms {
     ShaderProgram& prog;
     Uniforms(ShaderProgram& _prog) : prog(_prog) {}
@@ -56,6 +66,7 @@ private:
     void set(bool mandatory, const std::string& name, GLint value);
     void set(bool mandatory, const std::string& name, GLuint value);
     void set(bool mandatory, const std::string& name, const Sampler& sampler);
+    void set(bool mandatory, const std::string& name, const BoundSampler& sampler);
 
 public:
 
