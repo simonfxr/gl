@@ -21,7 +21,7 @@ DEFINE_VERTEX_DESC(Vertex,
                    VERTEX_ATTR(Vertex, position),
                    VERTEX_ATTR(Vertex, normal));
 
-static const vec2_t PLANE_DIM = vec2(30.f);
+static const real PLANE_DIM = 30.f;
 
 static const real SPHERE_RAD = 10.f;
 
@@ -146,7 +146,7 @@ void Anim::renderPlane() {
     glt::GeometryTransform& gt = engine.renderManager().geometryTransform();
     glt::SavePoint sp(gt.save());
 
-    gt.scale(vec3(PLANE_DIM[0], 1.f, PLANE_DIM[1]));
+    gt.scale(vec3(PLANE_DIM));
     gt.translate(- vec3(0.5f, 0.f, 0.5f));
 
     Ref<glt::ShaderProgram> shader = engine.shaderManager().program("plane");
