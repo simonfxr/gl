@@ -1,5 +1,7 @@
 #include "glt/RenderManager.hpp"
 
+#include "opengl.hpp"
+#include "glt/utils.hpp"
 #include "glt/Transformations.hpp"
 
 #include "math/vec3.hpp"
@@ -221,6 +223,7 @@ void RenderManager::endScene() {
     ASSERT_MSG(self->inScene, "cannot endScene() without beginScene()");
     self->inScene = false;
     self->transform.restore(self->transformStateBOS);
+    GL_CHECK(glFinish());
     if (self->current_rt != 0)
         self->current_rt->draw();
     self->statEnd();

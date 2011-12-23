@@ -123,41 +123,41 @@ template <typename Vertex>
 void unitCube(CubeMesh<Vertex>& cube) {
     Vertex v;
 
-    v.normal = vec4(0.0f, 0.0f, 1.0f, 0.f);					
-    v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
-    v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
-    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
-    v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
+    setVec(v.normal, vec3(0.0f, 0.0f, 1.0f));
+    setPoint(v.position, vec3(0.f, 0.f,  1.0f)); cube.add(v);
+    setPoint(v.position, vec3( 1.0f, 0.f,  1.0f)); cube.add(v);
+    setPoint(v.position, vec3( 1.0f,  1.0f,  1.0f)); cube.add(v);
+    setPoint(v.position, vec3(0.f,  1.0f,  1.0f)); cube.add(v);
 
-    v.normal = vec4( 0.0f, 0.0f, -1.f, 0.f);					
-    v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
-    v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
-    v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
-    v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
+    setVec(v.normal, vec3( 0.0f, 0.0f, -1.f));					
+    setPoint(v.position, vec3(0.f, 0.f, 0.f)); cube.add(v);
+    setPoint(v.position, vec3(0.f,  1.0f, 0.f)); cube.add(v);
+    setPoint(v.position, vec3( 1.0f,  1.0f, 0.f)); cube.add(v);
+    setPoint(v.position, vec3( 1.0f, 0.f, 0.f)); cube.add(v);
 
-    v.normal = vec4( 0.0f, 1.0f, 0.0f, 0.f);					
-    v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
-    v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
-    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
-    v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
+    setVec(v.normal, vec3( 0.0f, 1.0f, 0.0f));
+    setPoint(v.position, vec3(0.f,  1.0f, 0.f)); cube.add(v);
+    setPoint(v.position, vec3(0.f,  1.0f,  1.0f)); cube.add(v);
+    setPoint(v.position, vec3( 1.0f,  1.0f,  1.0f)); cube.add(v);
+    setPoint(v.position, vec3( 1.0f,  1.0f, 0.f)); cube.add(v);
 
-    v.normal = vec4( 0.0f, -1.f, 0.0f, 0.f);					
-    v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
-    v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
-    v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
-    v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
+    setVec(v.normal, vec3( 0.0f, -1.f, 0.0f));
+    setPoint(v.position, vec3(0.f, 0.f, 0.f)); cube.add(v);
+    setPoint(v.position, vec3( 1.0f, 0.f, 0.f)); cube.add(v);
+    setPoint(v.position, vec3( 1.0f, 0.f,  1.0f)); cube.add(v);
+    setPoint(v.position, vec3(0.f, 0.f,  1.0f)); cube.add(v);
 
-    v.normal = vec4( 1.0f, 0.0f, 0.0f, 0.f);					
-    v.position = vec3( 1.0f, 0.f, 0.f); cube.add(v);
-    v.position = vec3( 1.0f,  1.0f, 0.f); cube.add(v);
-    v.position = vec3( 1.0f,  1.0f,  1.0f); cube.add(v);
-    v.position = vec3( 1.0f, 0.f,  1.0f); cube.add(v);
+    setVec(v.normal, vec3( 1.0f, 0.0f, 0.0f));
+    setPoint(v.position, vec3( 1.0f, 0.f, 0.f)); cube.add(v);
+    setPoint(v.position, vec3( 1.0f,  1.0f, 0.f)); cube.add(v);
+    setPoint(v.position, vec3( 1.0f,  1.0f,  1.0f)); cube.add(v);
+    setPoint(v.position, vec3( 1.0f, 0.f,  1.0f)); cube.add(v);
 
-    v.normal = vec4(-1.f, 0.0f, 0.0f, 0.f);					
-    v.position = vec3(0.f, 0.f, 0.f); cube.add(v);
-    v.position = vec3(0.f, 0.f,  1.0f); cube.add(v);
-    v.position = vec3(0.f,  1.0f,  1.0f); cube.add(v);
-    v.position = vec3(0.f,  1.0f, 0.f); cube.add(v);
+    setVec(v.normal, vec3(-1.f, 0.0f, 0.0f));
+    setPoint(v.position, vec3(0.f, 0.f, 0.f)); cube.add(v);
+    setPoint(v.position, vec3(0.f, 0.f,  1.0f)); cube.add(v);
+    setPoint(v.position, vec3(0.f,  1.0f,  1.0f)); cube.add(v);
+    setPoint(v.position, vec3(0.f,  1.0f, 0.f)); cube.add(v);
 }
 
 template <typename Vertex>

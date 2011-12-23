@@ -1,0 +1,21 @@
+load "default.script"
+
+addShaderPath "programs/stereoproj/shaders"
+
+bindShader "plane" "plane.vert" "plane.frag" 0 "position" 1 "normal"
+
+perspectiveProjection 35 0.5 200
+
+bindKey [W] { moveCamera 12 }
+bindKey [D] { moveCamera 3 }
+bindKey [S] { moveCamera 6 }
+bindKey [A] { moveCamera 9 }
+
+bindKey [+U] { saveCameraFrame "stereoproj.cam" }
+bindKey [+I] { loadCameraFrame "stereoproj.cam" }
+
+postInit { 
+    setCameraStepLength 1
+    setCameraMouseSensitivity 0.00075
+    loadCameraFrame "stereoproj.cam"
+}

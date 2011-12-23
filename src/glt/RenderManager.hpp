@@ -90,7 +90,7 @@ struct RenderManager {
     void shutdown();
 
     FrameStatistics frameStatistics();
-    
+
 private:
 
     struct Data;
