@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 namespace ge {
 
@@ -25,6 +26,7 @@ enum OptionCase {
     GLDebug,
     GLTrace,
     AASamples,
+    VSync,
     GlewExp
 };
 
@@ -49,6 +51,7 @@ const Option OPTIONS[] = {
     { "--gl-debug", "BOOL", GLDebug, "create a OpenGL debug context: yes|no" },
     { "--gl-trace", "BOOL", GLTrace, "print every OpenGL call: yes|no" },
     { "--aa-samples", "NUM", AASamples, "set the number of FSAA Samples" },
+    { "--vsync", "BOOL", VSync, "enable vertical sync: yes|no" },
     { "--glew-experimental", "BOOL", GlewExp, "set the glewExperimental flag: yes|no" }
 };
 
@@ -68,6 +71,27 @@ bool str_eq(const char *a, const char *b) {
     return strcmp(a, b) == 0;
 }
 
+bool str_eqi(const char *a, const char *b) {
+    if (a == b) return true;
+    if (a == 0 || b == 0) return false;
+    
+    while (tolower(*a) == tolower(*b++))
+        if (*a++ == '\0')
+            return false;
+
+    return true;
+}
+
+bool parse_bool(const char *arg, bool& dest) {
+    if (str_eqi(arg, "yes") || str_eqi(arg, "true"))
+        dest = true;
+    else if (str_eqi(arg, "no") || str_eqi(arg, "false"))
+        dest = false;
+    else
+        return false;
+    return true;
+}
+
 bool State::option(OptionCase opt, const char *arg) {
     switch (OPTIONS[opt].option_case) {
     case Help:
@@ -83,11 +107,7 @@ bool State::option(OptionCase opt, const char *arg) {
         options.shaderDirs.push_back(arg);
         return true;
     case CD:
-        if (str_eq(arg, "yes")) {
-            options.defaultCD = true;
-        } else if (str_eq(arg, "no")) {
-            options.defaultCD = false;
-        } else {
+        if (!parse_bool(arg, options.defaultCD)) {
             CMDWARN("--cd: not a boolean option");
             return false;
         }
@@ -122,21 +142,13 @@ bool State::option(OptionCase opt, const char *arg) {
         }
         return true;
     case GLDebug:
-        if (str_eq(arg, "yes")) {
-            options.window.settings.DebugContext = true;
-        } else if (str_eq(arg, "no")) {
-            options.window.settings.DebugContext = false;
-        } else {
+        if (!parse_bool(arg, options.window.settings.DebugContext)) {
             CMDWARN("--gl-debug: not a boolean option");
             return false;
         }
         return true;
     case GLTrace:
-        if (str_eq(arg, "yes")) {
-            options.traceOpenGL = true;
-        } else if (str_eq(arg, "no")) {
-            options.traceOpenGL = false;
-        } else {
+        if (!parse_bool(arg, options.traceOpenGL)) {
             CMDWARN("--gl-trace: not a boolean option");
             return false;
         }
@@ -150,15 +162,20 @@ bool State::option(OptionCase opt, const char *arg) {
         
         options.window.settings.AntialiasingLevel = samples;
         return true;
+    case VSync: {
+        if (!parse_bool(arg, options.window.vsync)) {
+            CMDWARN("--vsync: not a boolean option");
+            return false;
+        }
+        return true;
+    }
     case GlewExp:
-        if (str_eq(arg, "yes")) {
-            glewExperimental = GL_TRUE;
-        } else if (str_eq(arg, "no")) {
-            glewExperimental = GL_FALSE;
-        } else {
+        bool yesno;
+        if (!parse_bool(arg, yesno)) {
             CMDWARN("--gl-debug: not a boolean option");
             return false;
         }
+        glewExperimental = yesno ? GL_TRUE : GL_FALSE;
         return true;
     default:
         FATAL_ERR("unhandled option_case");

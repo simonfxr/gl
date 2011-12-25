@@ -15,10 +15,12 @@ using namespace defs;
 
 struct Engine;
 
+typedef std::map<std::string, Ref<Command> > CommandMap;
+
 struct CommandProcessor {
-private:
+public:
     Engine& _engine;
-    std::map<std::string, Ref<Command> > commands;
+    CommandMap commands;
     std::vector<std::string> scriptDirs;
     
 public:

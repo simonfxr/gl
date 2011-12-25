@@ -97,11 +97,11 @@ bool Engine::loadScript(const std::string& name, bool quiet) {
         goto not_found;
 
     {
-        std::ifstream inp(file.c_str());
-        if (!inp.is_open() || !inp.good())
+        Ref<std::ifstream> filestream(new std::ifstream(file.c_str()));
+        if (!filestream->is_open() || !filestream->good())
             goto not_found;
-        
         std::cerr << "loading script: " << file << std::endl;
+        Ref<Input> inp(new IStreamInput(filestream.cast<std::istream>()));
         return loadStream(inp, file);
     }
 
@@ -115,16 +115,15 @@ not_found:
     return false;
 }
 
-bool Engine::loadStream(std::istream& inp, const std::string& inp_name) {
+bool Engine::loadStream(Ref<Input>& inp, const std::string& inp_name) {
     bool ok = true;
     std::vector<CommandArg> args;
     ParseState state(inp, inp_name);
     bool done = false;
     while (!done) {
-        
         ok = tokenize(state, args);
         if (!ok) {
-            if (!state.eof)
+            if (state.in_state != Input::Eof)
                 ERR("parsing failed: " + state.filename);
             else
                 ok = true;
@@ -149,7 +148,7 @@ bool Engine::loadStream(std::istream& inp, const std::string& inp_name) {
 }
 
 bool Engine::evalCommand(const std::string& cmd) {
-    std::istringstream inp(cmd);
+    Ref<Input> inp(new IStreamInput(makeRef(new std::istringstream(cmd)).cast<std::istream>()));
     return loadStream(inp, "<unknown>");
 }
 

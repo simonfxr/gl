@@ -45,7 +45,7 @@ public:
         virtual void exit(int32 exit_code) { UNUSED(exit_code); }
     };
      
-    explicit GameLoop(defs::size ticks_per_second, defs::size max_frame_skip = 10, defs::size max_fps = 0);
+    explicit GameLoop(defs::size ticks_per_second, defs::size max_frame_skip = 10, defs::size max_fps = 250);
 
     float gameTime() const { return _now - _skipped_time - _start_time; }
     

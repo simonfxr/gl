@@ -21,6 +21,7 @@ void runPrintContextInfo(const Event<CommandEvent>& e) {
               << "  Antialiasing:\t" << c.AntialiasingLevel << std::endl
               << "  CoreProfile:\t" << (c.CoreProfile ? "yes" : "no") << std::endl
               << "  DebugContext:\t" << (c.DebugContext ? "yes" : "no") << std::endl
+              << "  VSync:\t" << (e.info.engine.window().vsync() ? "yes" : "no") << std::endl
               << std::endl;
 }
 
@@ -46,6 +47,16 @@ void runReloadShaders(const Event<CommandEvent>& e, const Array<CommandArg>& arg
         e.info.engine.shaderManager().reloadShaders();
         // std::cerr << "all shaders reloaded" << std::endl;
     } else {
+        glt::ShaderManager& sm = e.info.engine.shaderManager();
+        for (index i = 0; i < args.size(); ++i) {
+            Ref<glt::ShaderProgram> prog = sm.program(*args[i].string);
+            if (!prog) {
+                WARN("reloadShaders: " + *args[i].string + " not defined");
+            } else {
+                if (!prog->reload())
+                    WARN("reloadShaders: failed to reload program " + *args[i].string);
+            }
+        }
         ERR("reloadShaders: selectively shader reloading not yet implemented");
     }
 }
@@ -88,8 +99,14 @@ struct BindKey : public Command {
     }
 };
 
-void runHelp(const Event<CommandEvent>&) {
-    ERR("help not yet implemented");
+void runHelp(const Event<CommandEvent>& ev) {
+    ge::CommandProcessor& cp = ev.info.engine.commandProcessor();
+    std::cerr << "List of Commands: " << std::endl;
+    
+    for (CommandMap::const_iterator it = cp.commands.begin();
+         it != cp.commands.end(); ++it) {
+        it->second->interactiveDescription();
+    }
 }
 
 void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) {

@@ -37,6 +37,8 @@ void WindowRenderTarget::doActivate() {
 
 void WindowRenderTarget::doDraw() {
     window.window().Display();
+    if (window.vsync())
+        GL_CHECK(glFinish());
 }
 
 } // namespace ge

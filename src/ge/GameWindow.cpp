@@ -28,6 +28,7 @@ struct GameWindow::Data {
     
     bool grab_mouse;
     bool have_focus;
+    bool vsync;
 
     index16 mouse_x;
     index16 mouse_y;
@@ -45,30 +46,33 @@ struct GameWindow::Data {
         win(rw),
         grab_mouse(false),
         have_focus(true),
+        vsync(false),
         mouse_x(0),
         mouse_y(0),
         show_mouse_cursor(true),
         accum_mouse_moves(true),
         renderTarget(0),
-        events()
+        events()        
         {}
         
     ~Data();
 
-    void init();
+    void init(const WindowOptions& opts);
     void handleInputEvents();
     void setMouse(int x, int y);
 
     static void runHandleInputEvents(Data *, const Event<InputEvent>&);
 };
 
-void GameWindow::Data::init() {
+void GameWindow::Data::init(const WindowOptions& opts) {
     ASSERT(renderTarget == 0);
     renderTarget = new WindowRenderTarget(self);
     win->SetActive();
 
     win->EnableKeyRepeat(false);
-    win->EnableVerticalSync(false);
+    
+    vsync = opts.vsync;
+    win->EnableVerticalSync(opts.vsync);
     
     events.windowResized.reg(makeEventHandler(resizeRenderTarget));
 }
@@ -91,10 +95,10 @@ GameWindow::GameWindow(const WindowOptions& opts) :
                   new sf::RenderWindow(sf::VideoMode(uint32(opts.width), uint32(opts.height)),
                                        opts.title,
                                        sf::Style::Default,
-                                       opts.settings))) { self->init(); }
+                                       opts.settings))) { self->init(opts); }
 
 GameWindow::GameWindow(sf::RenderWindow& win) :
-    self(new Data(*this, false, &win)) { self->init(); }
+    self(new Data(*this, false, &win)) { self->init(WindowOptions()); }
 
 GameWindow::~GameWindow() {
     delete self;
@@ -272,6 +276,17 @@ void GameWindow::accumulateMouseMoves(bool accum) {
 
 bool GameWindow::accumulateMouseMoves() {
     return self->accum_mouse_moves;
+}
+
+void GameWindow::vsync(bool enable) {
+    if (self->vsync != enable) {
+        self->vsync = enable;
+        self->win->EnableVerticalSync(enable);
+    }
+}
+
+bool GameWindow::vsync() {
+    return self->vsync;
 }
     
 sf::RenderWindow& GameWindow::window() {

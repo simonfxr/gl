@@ -23,12 +23,14 @@ struct WindowOptions {
     size height;
     std::string title;
     sf::ContextSettings settings;
+    bool vsync;
     
     WindowOptions() :
         width(800),
         height(600),
         title(""),
-        settings()
+        settings(),
+        vsync(false)
         {}
 };
 
@@ -37,14 +39,17 @@ struct GameWindow {
     GameWindow(const WindowOptions& opts = WindowOptions());
     ~GameWindow();
 
-    void grabMouse(bool grab = true);
+    void grabMouse(bool grab);
     bool grabMouse() const;
 
-    void showMouseCursor(bool show = true);
+    void showMouseCursor(bool show);
     bool showMouseCursor() const;
 
-    void accumulateMouseMoves(bool accum = true);
+    void accumulateMouseMoves(bool accum);
     bool accumulateMouseMoves();
+
+    void vsync(bool enable);
+    bool vsync();
     
     sf::RenderWindow& window();
 

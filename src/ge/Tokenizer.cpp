@@ -18,20 +18,21 @@ enum State {
 #define PARSE_ERROR(s, mesg) parse_err((s), _CURRENT_LOCATION, (mesg))
 
 static void parse_err(const ParseState& s, const err::Location& loc, const std::string& mesg) {
-    std::ostringstream buf;
-    buf << "parsing " << s.filename << "@" << s.line << ":" << s.col;
-    buf << " parse-error: " << mesg;
-    err::error(loc, ERROR_DEFAULT_STREAM, err::Error, buf.str());
+    if (s.in_state != Input::Blocked) {
+        std::ostringstream buf;
+        buf << "parsing " << s.filename << "@" << s.line << ":" << s.col;
+        buf << " parse-error: " << mesg;
+        err::error(loc, ERROR_DEFAULT_STREAM, err::Error, buf.str());
+    }
 }
 
 bool getchAny(ParseState& s) {
     char lastC = s.rawC;
-    
-    s.in.get(s.c);
+
+    s.in_state = s.in->next(s.c);
     s.rawC = s.c;
-    if (!s.in.good()) {
+    if (s.in_state != Input::OK) {
         s.c = s.rawC = 0;
-        s.eof = true;
         return false;        
     }
 
@@ -445,9 +446,25 @@ State statement(ParseState& s, std::vector<CommandArg>& toks, bool quot) {
 
 bool tokenize(ParseState& s, std::vector<CommandArg>& args) {
     getch(s);
-    if (s.eof)
+    if (s.in_state == Input::Eof)
         return false;
     return statement(s, args, false) != Fail;
+}
+
+Input::State IStreamInput::next(char &c) {
+    in->get(c);
+    if (!in->good()) {
+        if (in->eof())
+            return Input::Eof;
+        else
+            return Input::Error;
+    }
+
+    return Input::OK;  
+}
+
+void IStreamInput::close() {
+    
 }
 
 } // namespace ge

@@ -138,8 +138,6 @@ struct RefCnt {
         cnt->strong.inc();
     }
 
-    
-    
     static bool release(atomic::RefCount *cnt) {
         defs::int32 alive = cnt->strong.decAndGet();
         DEBUG_ASSERT(alive >= 0);

@@ -101,6 +101,4 @@ set(GE_SRC
 #   ${SFML_GRAPHICS_LIBRAY_DEBUG}
 )
 
-
-
 def_lib(ge SOURCES ${GE_SRC} DEPEND vec-math err sys glt LIB_DEPEND ${GE_LIBS})

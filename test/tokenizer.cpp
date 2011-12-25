@@ -1,4 +1,4 @@
-#include "error/error.hpp"
+#include "err/err.hpp"
 
 #include "ge/Tokenizer.hpp"
 #include "ge/Engine.hpp"
@@ -10,6 +10,7 @@
 #include <sstream>
 
 using namespace ge;
+using namespace defs;
 
 static void printArgs(const std::vector<CommandArg>& args);
 
@@ -82,10 +83,71 @@ static void printArgs(const std::vector<CommandArg>& args) {
     std::cout << std::endl;
 }
 
+struct BufferedInput : public Input {
+    bool from_buffer;
+    std::vector<char> buffer;
+    index buffer_pos;
+    Ref<Input> in;
+    BufferedInput(const Ref<Input>& _in) : from_buffer(false), in(_in) {}
+    void Input::State next(char&);
+    
+    void readFromBuffer() {
+        from_buffer = true;
+        buffer_pos = 0;
+    }
+
+    void clearBuffer() {
+        buffer_pos = 0;
+        buffer.clear();
+    }
+};
+
+Input::State BufferedInput::next(char& c) {
+    if (from_buffer) {
+        if (buffer_pos < SIZE(buffer.size())) {
+            c = buffer[buffer_pos++];
+            return Input::Ok;
+        } else {
+            from_buffer = false;
+        }
+    }
+
+    Input::State s = in->next(c);
+    if (s == Input::OK)
+        buffer.push_back(c);
+    
+    return s;
+}
+
+enum TokenizeResult {
+    TokenizeOk,
+    TokenizeFailed,
+    TokenizeIncomplete
+};
+
+TokenizeResult tryTokenize(ParseState& state, Ref<BufferedInput>& in, std::vector<ge::CommandArg>& args) {
+    state.in = in.cast<Input>();
+    in->readFromBuffer();
+    index len = args.size();
+    ParseState activeState = state;
+    bool ok = tokenize(activeState, args);
+    
+    if (!ok && activeState.in_state == Input::Blocked) {
+        args.erase(args.begin() + len, args.end());
+        return TokenizeIncomplete;
+    }
+
+    in->clearBuffer();
+    state = activeState;
+    return ok ? TokenizeOk : TokenizeFailed;
+}
+
 int main(int argc, char *argv[]) {
     ge::Engine eng;
     ge::CommandProcessor proc(eng);
     ge::ParseState state(std::cin, proc, "<interactive>");
+    Ref<std::istream> in_stream = 
+    Ref<BufferedInput> in(new BufferedInput(makeRef(new IStreamInput(makeRef
 
     while (std::cin.good()) {
         std::vector<ge::CommandArg> args;

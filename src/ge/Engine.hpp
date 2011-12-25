@@ -4,7 +4,6 @@
 #include "defs.hpp"
 
 #include <string>
-#include <istream>
 
 #include "ge/EngineOptions.hpp"
 #include "ge/GameWindow.hpp"
@@ -13,6 +12,7 @@
 #include "ge/EngineEvents.hpp"
 #include "ge/Init.hpp"
 #include "ge/Command.hpp"
+#include "ge/Tokenizer.hpp"
 #include "ge/CommandProcessor.hpp"
 #include "ge/KeyHandler.hpp"
 
@@ -41,7 +41,7 @@ struct Engine {
 
     float now();
 
-    bool loadStream(std::istream& inp, const std::string& input_name);
+    bool loadStream(Ref<Input>& inp, const std::string& input_name);
     bool loadScript(const std::string& file, bool quiet = false);
     bool evalCommand(const std::string& cmd);
 
