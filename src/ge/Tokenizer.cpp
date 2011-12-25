@@ -46,13 +46,10 @@ bool getchAny(ParseState& s) {
         }
     }
 
+    // std::cerr << "getchAny: '" << s.rawC << "' -> '" << s.c << "'" << std::endl;
+
     ++s.col;
     return true;
-}
-
-void skipLine(ParseState& s) {
-    while (getchAny(s) && s.c != '\n')
-        ;
 }
 
 bool getch(ParseState& s) {
@@ -70,6 +67,12 @@ bool getch(ParseState& s) {
 //    std::cerr << "getch: state = " << ok << ", eof = " << s.eof << ", c = " << s.c << std::endl;
 
     return ok;
+}
+
+bool skipStatement(ParseState& s) {
+    while (getch(s) && s.c != ';')
+        ;
+    return s.c == ';';
 }
 
 void skipSpace(ParseState& s) {
@@ -174,24 +177,24 @@ State parseKeycombo(ParseState& s, CommandArg& tok) {
 State parseString(ParseState& s, CommandArg& tok) {
     char delim = s.c == '"'  ? '"' :
                  s.c == '\'' ? '\'' : ' ';
-    getch(s);
+    getchAny(s);
     std::ostringstream buf;
     if (delim != ' ') {
         while (s.c != 0 && s.c != delim) {
             char suf;
             if (s.c == '\\') {
-                getch(s);
+                getchAny(s);
                 if (s.c == 0)
                     return Fail;
                 char esc;
-                switch (s.c) {
+                switch (s.rawC) {
                 case 'n': esc = '\n'; break;
                 case 't': esc = '\t'; break;
                 case 'r': esc = '\r'; break;
                 case 'v': esc = '\v'; break;
                 case '\\':
                 case '"':
-                case '\'': esc = s.c; break;
+                case '\'': esc = s.rawC; break;
                 default:
                     PARSE_ERROR(s, "invalid escape sequence in string literal");
                     return Fail;
@@ -199,16 +202,16 @@ State parseString(ParseState& s, CommandArg& tok) {
 
                 suf = esc;
             } else {
-                suf = s.c;
+                suf = s.rawC;
             }
 
             buf << suf;
-            getch(s);
+            getchAny(s);
         }
     } else {
         while (s.c != 0 && s.c != ';' && !isspace(s.c)) {
             buf << s.c;
-            getch(s);
+            getchAny(s);
         }
     }
 
@@ -234,7 +237,7 @@ State parseCommandRef(ParseState& s, CommandArg& arg) {
 //         }
 
         arg.type = CommandRef;
-        arg.command.ref = new Ref<Command>(0);
+        arg.command.ref = new Ref<Command>();
         arg.command.name = new std::string(sym);
         arg.command.quotation = 0;
 
@@ -440,7 +443,10 @@ State statement(ParseState& s, std::vector<CommandArg>& toks, bool quot) {
         if (s.c == ';' || s.c == 0)
             break;
     }
-    
+
+    if (s.c == 0 && s.in_state != Input::Eof)
+        return Fail;
+
     return EndStatement;
 }
 
@@ -451,10 +457,10 @@ bool tokenize(ParseState& s, std::vector<CommandArg>& args) {
     return statement(s, args, false) != Fail;
 }
 
-Input::State IStreamInput::next(char &c) {
-    in->get(c);
-    if (!in->good()) {
-        if (in->eof())
+Input::State readStream(std::istream& in, char &c) {
+    in.get(c);
+    if (!in.good()) {
+        if (in.eof())
             return Input::Eof;
         else
             return Input::Error;
@@ -463,8 +469,8 @@ Input::State IStreamInput::next(char &c) {
     return Input::OK;  
 }
 
-void IStreamInput::close() {
-    
+void IFStreamInput::close() {
+    this->in.close();
 }
 
 } // namespace ge

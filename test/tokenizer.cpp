@@ -9,6 +9,11 @@
 #include <vector>
 #include <sstream>
 
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <fcntl.h>
+
 using namespace ge;
 using namespace defs;
 
@@ -16,7 +21,7 @@ static void printArgs(const std::vector<CommandArg>& args);
 
 void printKeyCombo(const KeyBinding& bind) {
     const char *sep = "[";
-    for (uint32 i = 0; i < bind.size(); ++i) {
+    for (defs::index i = 0; i < bind.size(); ++i) {
         std::cout << sep;
         sep = ", ";
         const Key& k = bind[i];
@@ -83,13 +88,64 @@ static void printArgs(const std::vector<CommandArg>& args) {
     std::cout << std::endl;
 }
 
+Input::State readFile(int fd, size& count, char *bytes) {
+    size_t n = UNSIZE(count);
+    ssize_t k = read(fd, static_cast<void *>(bytes), n);
+    if (k > 0) {
+        count = UNSIZE(k);
+        return Input::OK;
+    } else if (k == 0) {
+        count = 0;
+        return Input::Eof;
+    } else {
+        count = 0;
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            errno = 0;
+            return Input::Blocked;
+        } else {
+            ERR(strerror(errno));
+            errno = 0;
+            return Input::Error;
+        }
+    }
+}
+
+bool setNonblocking(int fd) {
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1)
+        flags = 0;
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        ERR(strerror(errno));
+        return false;
+    }
+    INFO("set non blocking");
+    return true;
+}
+
+struct NonblockingFile : public Input {
+    int fd;
+    NonblockingFile(int _fd) :
+        fd(_fd)
+    {
+        setNonblocking(fd);
+    }
+
+    Input::State next(char& c) {
+        size s = 1;
+        return readFile(fd, s, &c);
+    }
+
+    void close() {}
+};
+
 struct BufferedInput : public Input {
     bool from_buffer;
     std::vector<char> buffer;
-    index buffer_pos;
+    defs::index buffer_pos;
     Ref<Input> in;
     BufferedInput(const Ref<Input>& _in) : from_buffer(false), in(_in) {}
-    void Input::State next(char&);
+    Input::State next(char&);
+    void close() { in->close(); }
     
     void readFromBuffer() {
         from_buffer = true;
@@ -106,7 +162,7 @@ Input::State BufferedInput::next(char& c) {
     if (from_buffer) {
         if (buffer_pos < SIZE(buffer.size())) {
             c = buffer[buffer_pos++];
-            return Input::Ok;
+            return Input::OK;
         } else {
             from_buffer = false;
         }
@@ -126,9 +182,9 @@ enum TokenizeResult {
 };
 
 TokenizeResult tryTokenize(ParseState& state, Ref<BufferedInput>& in, std::vector<ge::CommandArg>& args) {
-    state.in = in.cast<Input>();
+    state.in = in;
     in->readFromBuffer();
-    index len = args.size();
+    defs::index len = args.size();
     ParseState activeState = state;
     bool ok = tokenize(activeState, args);
     
@@ -145,22 +201,56 @@ TokenizeResult tryTokenize(ParseState& state, Ref<BufferedInput>& in, std::vecto
 int main(int argc, char *argv[]) {
     ge::Engine eng;
     ge::CommandProcessor proc(eng);
-    ge::ParseState state(std::cin, proc, "<interactive>");
-    Ref<std::istream> in_stream = 
-    Ref<BufferedInput> in(new BufferedInput(makeRef(new IStreamInput(makeRef
+    Ref<Input> in(new NonblockingFile(STDIN_FILENO));
+    // Ref<Input> in(new IStreamInput<std::istream>(std::cin));
+    Ref<BufferedInput> bufin(new BufferedInput(in));
+    ge::ParseState state(bufin, "<interactive>");
+    bool skip_statement = false;
+    bool incomplete = false;
 
-    while (std::cin.good()) {
+    while (state.in_state == Input::OK || state.in_state == Input::Blocked) {
         std::vector<ge::CommandArg> args;
-        if (!ge::tokenize(state, args)) {
-            ERR("tokenize failed");
-            skipLine(state);
-            continue;
+
+        if (skip_statement) {
+            if (!skipStatement(state)) {
+                INFO("skipping");
+                continue;
+            }
+
+            skip_statement = false;
+            bufin->clearBuffer();
         }
+        
+        TokenizeResult res = tryTokenize(state, bufin, args);
+        
+        switch (res) {
+        case TokenizeOk:
 
-        printArgs(args);
+            incomplete = false;
+            INFO("ok");
+            std::cerr << "STATEMENT: ";
+            printArgs(args);
+            for (uint32 i = 0; i < args.size(); ++i)
+                args[i].free();
+            break;
+            
+        case TokenizeFailed:
+            
+            INFO("failed");
+            skip_statement = true;
+            incomplete = false;
+            
+            break;
+            
+        case TokenizeIncomplete:
 
-        for (uint32 i = 0; i < args.size(); ++i)
-            args[i].free();
+            if (!incomplete) {
+                INFO("incomplete");
+                incomplete = true;
+            }
+
+            break;
+        }
     }
     
     return 0;

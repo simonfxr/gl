@@ -97,11 +97,11 @@ bool Engine::loadScript(const std::string& name, bool quiet) {
         goto not_found;
 
     {
-        Ref<std::ifstream> filestream(new std::ifstream(file.c_str()));
-        if (!filestream->is_open() || !filestream->good())
+        std::ifstream filestream(file.c_str());
+        if (!filestream.is_open() || !filestream.good())
             goto not_found;
         std::cerr << "loading script: " << file << std::endl;
-        Ref<Input> inp(new IStreamInput(filestream.cast<std::istream>()));
+        Ref<Input> inp(new IFStreamInput(filestream));
         return loadStream(inp, file);
     }
 
@@ -148,7 +148,8 @@ bool Engine::loadStream(Ref<Input>& inp, const std::string& inp_name) {
 }
 
 bool Engine::evalCommand(const std::string& cmd) {
-    Ref<Input> inp(new IStreamInput(makeRef(new std::istringstream(cmd)).cast<std::istream>()));
+    std::istringstream stream(cmd);
+    Ref<Input> inp(new IStreamInput<std::istream>(stream));
     return loadStream(inp, "<unknown>");
 }
 

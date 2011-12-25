@@ -83,9 +83,11 @@ protected:
     void retain() const { C::retain(_cnt); }
     void release() const { if (C::release(_cnt)) delete _ptr; }
 
-    RefBase(T *p, atomic::RefCount *cnt) : _ptr(p), _cnt(cnt) { }
-    
-    void set(T *p) {
+    template <typename O>
+    RefBase(O *p, atomic::RefCount *cnt) : _ptr(p), _cnt(cnt) { }
+
+    template <typename O>
+    void set(O *p) {
         if (likely(p != _ptr)) {
             release(); // could reuse old counter, but makes debugging harder
             _ptr = p;
@@ -94,11 +96,25 @@ protected:
     }
 
 public:
-    explicit RefBase(T *p = 0) : _ptr(p), _cnt(new atomic::RefCount(1, 0)) {}
+    template <typename O>
+    explicit RefBase(O *p = 0) : _ptr(p), _cnt(new atomic::RefCount(1, 0)) {}
+    
     RefBase(const RefBase<T, C, R>& ref) : _ptr(ref._ptr), _cnt(ref._cnt)  { retain(); }
+    
+    template <typename O, typename S>
+    RefBase(const RefBase<O, C, S>& ref) : _ptr(ref._ptr), _cnt(ref._cnt) { retain(); }
+    
     ~RefBase() { release(); }
 
     RefBase<T, C, R>& operator =(const RefBase<T, C, R>& ref) {
+        ref.retain();
+        release();
+        _ptr = ref._ptr; _cnt = ref._cnt;
+        return *this;
+    }
+
+    template <typename O, typename S>
+    RefBase<T, C, R>& operator =(const RefBase<O, C, S>& ref) {
         ref.retain();
         release();
         _ptr = ref._ptr; _cnt = ref._cnt;
@@ -116,19 +132,25 @@ public:
     template <typename T2, typename C2, typename R2>
     bool same(const RefBase<T2, C2, R2>& ref) const { return identity() == ref.identity(); }
 
-    bool operator ==(const T *p) const { return _ptr == p; }
-    bool operator !=(const T *p) const { return _ptr != p; }
+    template <typename O>
+    bool operator ==(const O *p) const { return _ptr == p; }
+    
+    template <typename O>
+    bool operator !=(const O *p) const { return _ptr != p; }
 
     operator bool() const { return this->_ptr != 0; }
+
+    template <typename X, typename Y, typename Z>
+    friend struct RefBase;
 };
 
-template <typename T, typename C, typename R>
-inline bool operator ==(const T * lhs, const RefBase<T, C, R>& rhs) {
+template <typename T, typename O, typename C, typename R>
+inline bool operator ==(const O* lhs, const RefBase<T, C, R>& rhs) {
     return rhs == lhs;
 }
 
-template <typename T, typename C, typename R>
-inline bool operator !=(const T * lhs, const RefBase<T, C, R>& rhs) {
+template <typename T, typename O, typename C, typename R>
+inline bool operator !=(const O* lhs, const RefBase<T, C, R>& rhs) {
     return rhs != lhs;
 }
 
@@ -209,13 +231,28 @@ template <typename T> struct RefValue;
 
 template <typename T>
 struct Ref : public priv::RefBase<T, priv::RefCnt, Ref<T> > {
-    explicit Ref(T *p = 0) : priv::RefBase<T, priv::RefCnt, Ref<T> >(p) {}
+
+    typedef T ptr_type;
+    typedef Ref<T> type;
+    typedef priv::RefBase<T, priv::RefCnt, Ref<T> > base_type;
+
+    Ref() : base_type(static_cast<T *>(0)) {}
+
+    template <typename O>
+    explicit Ref(O *p = 0) : base_type(p) {}
+
+    template <typename O>
+    explicit Ref(RefValue<O>&);
     
-    explicit Ref(RefValue<T>&);
-    
-    Ref(const Ref<T>& ref) : priv::RefBase<T, priv::RefCnt, Ref<T> >(ref) {}
+    Ref(const Ref<T>& ref) : base_type(ref) {}
+
+    template <typename O>
+    Ref(const Ref<O>& ref) : base_type(ref) {}
     
     Ref<T>& operator =(T *p) { this->set(p); return *this; }
+
+    template <typename O>
+    Ref<T>& operator =(O *p) { this->set(p); return *this; }
     
     WeakRef<T> weak();
     
@@ -239,20 +276,29 @@ private:
 
 template <typename T>
 struct WeakRef : public priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> > {
+
+    typedef T ptr_type;
+    typedef WeakRef<T> type;
+    typedef priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> > base_type;
     
-    WeakRef() : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(0, new atomic::RefCount(atomic::DEAD_STRONG, 1)) {}
+    WeakRef() : base_type(static_cast<T *>(0), new atomic::RefCount(atomic::DEAD_STRONG, 1)) {}
     
-    WeakRef(const WeakRef<T>& ref) : priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> >(ref) {}
-    
-    bool unweak(RefValue<T> *dest);
-    
-    bool unweak(Ref<T> *dest);
+    WeakRef(const WeakRef<T>& ref) : base_type(ref) {}
+
+    template <typename O>
+    WeakRef(const WeakRef<O>& ref) : base_type(ref) {}
+
+    template <typename O>
+    bool unweak(RefValue<O> *dest);
+
+    template <typename O>
+    bool unweak(Ref<O> *dest);
 
     template <typename U>
-    WeakRef<U>& cast() { return static_cast<WeakRef<U>&>(*this); }
+    WeakRef<U>& cast() { return reinterpret_cast<WeakRef<U>&>(*this); }
     
     template <typename U>
-    const WeakRef<U>& cast() const { return static_cast<const WeakRef<U>&>(*this); }
+    const WeakRef<U>& cast() const { return reinterpret_cast<const WeakRef<U>&>(*this); }
     
 private:
     
@@ -286,8 +332,9 @@ public:
     ~RefValue() { unset(); }
 
 private:
-    
-    RefValue(T *ptr, atomic::RefCount *cnt) :
+
+    template <typename O>
+    RefValue(O *ptr, atomic::RefCount *cnt) :
         _ptr(ptr), _cnt(cnt) {}
 
     friend struct Ref<T>;
@@ -295,8 +342,9 @@ private:
 };
 
 template <typename T>
-Ref<T>::Ref(RefValue<T>& rv) :
-    priv::RefBase<T, priv::RefCnt, Ref<T> >(rv._ptr, rv._cnt)
+template <typename O>
+Ref<T>::Ref(RefValue<O>& rv) :
+    Ref<T>::base_type(rv._ptr, rv._cnt)
 {
     ASSERT(rv._cnt != 0);
     rv._ptr = 0;
@@ -304,7 +352,8 @@ Ref<T>::Ref(RefValue<T>& rv) :
 }
 
 template <typename T>
-bool WeakRef<T>::unweak(RefValue<T> *dest) {
+template <typename O>
+bool WeakRef<T>::unweak(RefValue<O> *dest) {
     if (dest->_cnt == this->_cnt)
         return true;
 
@@ -319,7 +368,8 @@ bool WeakRef<T>::unweak(RefValue<T> *dest) {
 }
 
 template <typename T>
-bool WeakRef<T>::unweak(Ref<T> *dest) {
+template <typename O>
+bool WeakRef<T>::unweak(Ref<O> *dest) {
     if (dest->_cnt == this->_cnt)
         return true;
     

@@ -15,6 +15,16 @@ else()
   message(ERROR "untested OS: ${CMAKE_SYSTEM_NAME}")
 endif()
 
+if(SYS_UNIX)
+  if(BUILD_ARCH32)
+    set(CMAKE_PREFIX_PATH)
+    set(CMAKE_LIBRARY_PATH
+      /usr/local/lib32
+      /usr/lib32
+      ${CMAKE_LIBRARY_PATH})
+  endif()
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX)
   set(COMP_GCCLIKE TRUE)
 elseif(MSVC_VERSION)
@@ -140,7 +150,12 @@ endif()
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+
+if(BUILD_ARCH32)
+  set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib32)
+else()
+  set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+endif()
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)

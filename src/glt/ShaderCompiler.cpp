@@ -64,7 +64,7 @@ ReloadState includesNeedReload(const ShaderIncludes&);
 
 struct StringShaderObject : public ShaderObject {
     StringShaderObject(const Ref<StringSource>& src, GLuint hndl) :
-        ShaderObject(src.cast<ShaderSource>(), hndl) {}
+        ShaderObject(src, hndl) {}
 
     ReloadState needsReload();
 };
@@ -72,7 +72,7 @@ struct StringShaderObject : public ShaderObject {
 struct FileShaderObject : public ShaderObject {
     sys::fs::ModificationTime mtime;
     FileShaderObject(const Ref<FileSource>& src, sys::fs::ModificationTime _mtime, GLuint hndl) :
-        ShaderObject(src.cast<ShaderSource>(), hndl), mtime(_mtime) {}
+        ShaderObject(src, hndl), mtime(_mtime) {}
 
     ReloadState needsReload();
 };
