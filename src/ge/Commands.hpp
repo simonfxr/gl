@@ -24,6 +24,7 @@ struct Commands {
     Ref<Command> togglePause;
     Ref<Command> perspectiveProjection;
     Ref<Command> postInit;
+    Ref<Command> startReplServer;
 
     Commands();
 };

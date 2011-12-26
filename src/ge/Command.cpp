@@ -30,7 +30,6 @@ Command::Command(const Array<CommandParamType>& ps, const std::string name, cons
     // std::cerr << "creating command: params: " << &ps << " name = " << name << " nparams = " << params.size() << std::endl;
 }
 
-
 void Command::handle(const Event<CommandEvent>& ev) {
     if (params.size() == 0 || params[params.size() - 1] == ListParam)
         interactive(ev, NULL_ARGS);

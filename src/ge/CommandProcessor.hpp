@@ -13,6 +13,8 @@ namespace ge {
 
 using namespace defs;
 
+struct Input;
+
 struct Engine;
 
 typedef std::map<std::string, Ref<Command> > CommandMap;
@@ -44,6 +46,16 @@ public:
     bool exec(Ref<Command>& com, Array<CommandArg>& args, const std::string &com_name = "");
 
     bool exec(Array<CommandArg>& args);
+
+    bool execCommand(std::vector<CommandArg>& args);
+    
+    bool execCommand(Array<CommandArg>& args);
+
+    bool loadStream(Ref<Input>& inp, const std::string& input_name);
+    
+    bool loadScript(const std::string& file, bool quiet = false);
+    
+    bool evalCommand(const std::string& cmd);
 
     CommandArg cast(const CommandArg& val, CommandType type);
 

@@ -20,6 +20,7 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
     GameLoop gameLoop;
     CommandProcessor commandProcessor;
     KeyHandler keyHandler;
+    ReplServer replServer;
 
     bool initialized;
     const EngineOptions *opts; // only during init
@@ -34,6 +35,7 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
         gameLoop(30),
         commandProcessor(engine),
         keyHandler(commandProcessor),
+        replServer(engine),
         initialized(false),
         opts(0)
     {}
@@ -82,6 +84,8 @@ CommandProcessor& Engine::commandProcessor() { return SELF->commandProcessor; }
 
 KeyHandler& Engine::keyHandler() { return SELF->keyHandler; }
 
+ReplServer& Engine::replServer() { return SELF->replServer; }
+
 glt::ShaderManager& Engine::shaderManager() { return SELF->shaderManager; }
 
 glt::RenderManager& Engine::renderManager() { return SELF->renderManager; }
@@ -89,69 +93,6 @@ glt::RenderManager& Engine::renderManager() { return SELF->renderManager; }
 EngineEvents& Engine::events() { return SELF->events; }
 
 float Engine::now() { return SELF->now(); }
-
-bool Engine::loadScript(const std::string& name, bool quiet) {
-
-    std::string file = sys::fs::lookup(commandProcessor().scriptDirectories(), name);
-    if (file.empty())
-        goto not_found;
-
-    {
-        std::ifstream filestream(file.c_str());
-        if (!filestream.is_open() || !filestream.good())
-            goto not_found;
-        std::cerr << "loading script: " << file << std::endl;
-        Ref<Input> inp(new IFStreamInput(filestream));
-        return loadStream(inp, file);
-    }
-
-not_found:
-    
-    std::cerr << "loading script: " << name << " -> not found" << std::endl;
-    
-    if (!quiet)
-        ERR(("opening script: " + name).c_str());
-
-    return false;
-}
-
-bool Engine::loadStream(Ref<Input>& inp, const std::string& inp_name) {
-    bool ok = true;
-    std::vector<CommandArg> args;
-    ParseState state(inp, inp_name);
-    bool done = false;
-    while (!done) {
-        ok = tokenize(state, args);
-        if (!ok) {
-            if (state.in_state != Input::Eof)
-                ERR("parsing failed: " + state.filename);
-            else
-                ok = true;
-            done = true;
-            goto next;
-        }
-        
-        ok = self->execCommand(args);
-        if (!ok) {
-            ERR("executing command");
-            done = true;
-            goto next;
-        }
-        
-    next:;
-        for (uint32 i = 0; i < args.size(); ++i)
-            args[i].free();
-        args.clear();
-    }
-
-    return ok;
-}
-
-bool Engine::evalCommand(const std::string& cmd) {
-    std::istringstream stream(cmd);
-    Ref<Input> inp(new IStreamInput<std::istream>(stream));
-    return loadStream(inp, "<unknown>");
-}
 
 int32 Engine::run(const EngineOptions& opts) {
     if (self->initialized) {
@@ -212,7 +153,7 @@ int32 Engine::run(const EngineOptions& opts) {
         if (!script.empty())
             script = sys::fs::dropExtension(script);
 
-        if (script.empty() || !loadScript(script + ".script"))
+        if (script.empty() || !commandProcessor().loadScript(script + ".script"))
             return 1;
     }
 
@@ -220,11 +161,11 @@ int32 Engine::run(const EngineOptions& opts) {
         bool ok;
         std::string command;
         if (opts.commands[i].first == EngineOptions::Script) {
-            ok = loadScript(opts.commands[i].second);
+            ok = commandProcessor().loadScript(opts.commands[i].second);
             if (!ok)
                 command = "script";
         } else {
-            ok = evalCommand(opts.commands[i].second);
+            ok = commandProcessor().evalCommand(opts.commands[i].second);
             if (!ok)
                 command = "command";
         }
@@ -280,29 +221,6 @@ void Engine::Data::exit(int32 exit_code) {
     events.exit.raise(makeEvent(ExitEvent(theEngine, exit_code)));
 }
 
-bool Engine::Data::execCommand(std::vector<CommandArg>& args) {
-    if (args.size() == 0)
-        return true;
-    
-    Array<CommandArg> com_args(&args[0], SIZE(args.size()));
-
-    // ON_DEBUG(std::cerr << "executing command: ");
-    // ON_DEBUG(prettyCommandArgs(std::cerr, com_args));
-    // ON_DEBUG(std::cerr << std::endl);
-    
-    bool ok = commandProcessor.exec(com_args);
-
-    if (!ok) {
-        std::ostringstream err;
-        err << "executing command failed: ";
-        prettyCommandArgs(err, com_args);
-        err << std::endl;
-        ERR(err.str());
-    }
-    
-    return ok;
-}
-
 bool Engine::Data::init(const EngineOptions& opts) {
     this->opts = &opts;
     window = new GameWindow(opts.window);
@@ -321,7 +239,6 @@ void Engine::addInit(RunLevel lvl, const Ref<EventHandler<InitEvent> >& comm) {
 
     SELF->opts->inits.reg(lvl, comm);
 }
-
 
 namespace {
 

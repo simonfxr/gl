@@ -1,5 +1,6 @@
 #include "ge/CommandProcessor.hpp"
 #include "ge/Event.hpp"
+#include "ge/Tokenizer.hpp"
 
 #include "err/err.hpp"
 
@@ -212,6 +213,95 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
 
     com->interactive(makeEvent(CommandEvent(engine(), *this)), args);
     return true;
+}
+
+bool CommandProcessor::loadScript(const std::string& name, bool quiet) {
+
+    std::string file = sys::fs::lookup(scriptDirectories(), name);
+    if (file.empty())
+        goto not_found;
+
+    {
+        std::ifstream filestream(file.c_str());
+        if (!filestream.is_open() || !filestream.good())
+            goto not_found;
+        std::cerr << "loading script: " << file << std::endl;
+        Ref<Input> inp(new IFStreamInput(filestream));
+        return loadStream(inp, file);
+    }
+
+not_found:
+    
+    std::cerr << "loading script: " << name << " -> not found" << std::endl;
+    
+    if (!quiet)
+        ERR(("opening script: " + name).c_str());
+
+    return false;
+}
+
+bool CommandProcessor::loadStream(Ref<Input>& inp, const std::string& inp_name) {
+    bool ok = true;
+    std::vector<CommandArg> args;
+    ParseState state(inp, inp_name);
+    bool done = false;
+    while (!done) {
+        ok = tokenize(state, args);
+        if (!ok) {
+            if (state.in_state != Input::Eof)
+                ERR("parsing failed: " + state.filename);
+            else
+                ok = true;
+            done = true;
+            goto next;
+        }
+        
+        ok = execCommand(args);
+        if (!ok) {
+            ERR("executing command");
+            done = true;
+            goto next;
+        }
+        
+    next:;
+        for (uint32 i = 0; i < args.size(); ++i)
+            args[i].free();
+        args.clear();
+    }
+
+    return ok;
+}
+
+bool CommandProcessor::evalCommand(const std::string& cmd) {
+    std::istringstream stream(cmd);
+    Ref<Input> inp(new IStreamInput<std::istream>(stream));
+    return loadStream(inp, "<unknown>");
+}
+
+bool CommandProcessor::execCommand(std::vector<CommandArg>& args) {
+    Array<CommandArg> com_args(&args[0], SIZE(args.size()));
+    return execCommand(com_args);
+}
+    
+bool CommandProcessor::execCommand(Array<CommandArg>& args) {
+    if (args.size() == 0)
+        return true;
+
+    // ON_DEBUG(std::cerr << "executing command: ");
+    // ON_DEBUG(prettyCommandArgs(std::cerr, com_args));
+    // ON_DEBUG(std::cerr << std::endl);
+    
+    bool ok = exec(args);
+
+    if (!ok) {
+        std::ostringstream err;
+        err << "executing command failed: ";
+        prettyCommandArgs(err, args);
+        err << std::endl;
+        ERR(err.str());
+    }
+    
+    return ok;
 }
 
 CommandParamType CommandProcessor::commandParamType(CommandType type) {

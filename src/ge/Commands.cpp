@@ -10,6 +10,8 @@
 
 namespace ge {
 
+using namespace math;
+
 namespace {
 
 void runPrintContextInfo(const Event<CommandEvent>& e) {
@@ -105,8 +107,11 @@ void runHelp(const Event<CommandEvent>& ev) {
     
     for (CommandMap::const_iterator it = cp.commands.begin();
          it != cp.commands.end(); ++it) {
-        it->second->interactiveDescription();
+        std::cerr << "    " << it->first << std::endl;
     }
+
+    std::cerr << std::endl
+              << "use describe <command name> to get more information about a specific command" << std::endl;
 }
 
 void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
@@ -163,8 +168,18 @@ void runInitGLDebug(const Event<CommandEvent>& e) {
     }
 }
 
-void runDescribe(const Event<CommandEvent>&, const Array<CommandArg>&) {
-    ERR("not yet implemented");
+void runDescribe(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+
+    CommandProcessor& proc = e.info.engine.commandProcessor();
+    
+    for (index i = 0; i < args.size(); ++i) {
+        Ref<Command> com = proc.command(*args[i].string);
+        if (!com) {
+            std::cerr << "unknown command: " << *args[i].string << std::endl;
+        } else {
+            std::cerr << com->interactiveDescription() << std::endl;
+        }
+    }
 }
 
 void runEval(const Event<CommandEvent>&, const Array<CommandArg>&) {
@@ -173,7 +188,7 @@ void runEval(const Event<CommandEvent>&, const Array<CommandArg>&) {
 
 void runLoad(const Event<CommandEvent>& ev, const Array<CommandArg>& args) {
     for (defs::index i = 0; i < SIZE(args.size()); ++i) {
-        ev.info.engine.loadScript(*args[i].string);
+        ev.info.engine.commandProcessor().loadScript(*args[i].string);
     }
 }
 
@@ -232,6 +247,34 @@ void runPostInit(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     e.info.engine.addInit(PostInit, Ref<EventHandler<InitEvent> >(new InitCommandHandler(*args[0].command.ref)));
 }
 
+void runStartReplServer(const Event<CommandEvent>& ev, const Array<CommandArg>& args) {
+    Engine& e = ev.info.engine;
+    ReplServer& serv = e.replServer();
+
+    if (serv.running()) {
+        ERR("REPL server already running");
+        return;
+    }
+
+    int64 port = args[0].integer;
+    uint16 p16 = uint16(port);
+    
+    if (port < 0 || p16 != port) {
+        ERR("invalid port");
+        return;
+    }
+
+    if (!serv.start(sys::io::IPA_LOCAL, p16)) {
+        ERR("failed to start REPL server");
+        return;
+    }
+
+    INFO("REPL server started");
+
+    e.events().handleInput.reg(serv.ioHandler());
+    
+}
+
 } // namespace anon
 
 Commands::Commands() :
@@ -277,7 +320,9 @@ Commands::Commands() :
 
     perspectiveProjection(new PerspectiveProjection),
 
-    postInit(makeCommand(runPostInit, COM_PARAMS, "postInit", "execute its argument command in the postInit hook"))
+    postInit(makeCommand(runPostInit, COM_PARAMS, "postInit", "execute its argument command in the postInit hook")),
+
+    startReplServer(makeCommand(runStartReplServer, INT_PARAMS, "startReplServer", "start a REPL server on the given port"))
 {}
 
 const Commands& commands() {

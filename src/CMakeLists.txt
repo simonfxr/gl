@@ -96,7 +96,8 @@ set(GE_SRC
   ge/CommandProcessor.cpp
   ge/Tokenizer.cpp
   ge/KeyHandler.cpp
-  ge/Camera.cpp)
+  ge/Camera.cpp
+  ge/ReplServer.cpp)
 
  set(GE_LIBS 
    ${SFML_LIBRARIES}
