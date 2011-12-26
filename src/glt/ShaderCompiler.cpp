@@ -6,7 +6,7 @@
 #include "glt/utils.hpp"
 #include "glt/GLSLPreprocessor.hpp"
 
-#include "sys/fs/fs.hpp"
+#include "sys/fs.hpp"
 #include "sys/measure.hpp"
 
 template <>

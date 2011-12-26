@@ -8,7 +8,7 @@
 
 #ifdef SYSTEM_UNIX
 #include "sys/fs/fs_unix.hpp"
-#elif SYSTEM_WINDOWS
+#elif defined(SYSTEM_WINDOWS)
 #include "sys/fs/fs_windows.hpp"
 #else
 #error "no Filesystem implementation available"
@@ -16,9 +16,9 @@
 
 namespace sys {
 
-using namespace defs;
-
 namespace fs {
+
+using namespace defs;
 
 struct ModificationTime;
 
@@ -30,7 +30,7 @@ enum ObjectType {
 };
 
 struct Stat {
-	ObjectType type;
+    ObjectType type;
     std::string absolute;
     ModificationTime mtime;
 };

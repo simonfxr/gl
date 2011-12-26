@@ -7,7 +7,7 @@
 
 #include "glt/GLSLPreprocessor.hpp"
 #include "glt/ShaderCompiler.hpp"
-#include "sys/fs/fs.hpp"
+#include "sys/fs.hpp"
 
 namespace glt {
 

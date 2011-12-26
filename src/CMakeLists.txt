@@ -23,16 +23,20 @@ set(ERR_SRC
 def_lib(err SOURCES ${ERR_SRC})
 
 set(SYS_SRC
-  sys/fs/fs.hpp
+  sys/fs.hpp
   sys/fs/fs_default.cpp
-  sys/clock.hpp)
+  sys/clock.hpp
+  sys/endian.hpp
+  sys/io.hpp)
 
 if(SYS_UNIX)
   set(SYS_SRC
     ${SYS_SRC}
     sys/fs/fs_unix.hpp
     sys/fs/fs_unix.cpp
-    sys/clock_unix.cpp)
+    sys/clock_unix.cpp
+    sys/io/io_unix.hpp
+    sys/io/io_unix.cpp)
 elseif(SYS_WINDOWS)
   set(SYS_SRC
     ${SYS_SRC}

@@ -11,7 +11,7 @@
 
 #include "data/Ref.hpp"
 
-#include "sys/fs/fs.hpp"
+#include "sys/fs.hpp"
 
 #include "glt/ShaderManager.hpp"
 

@@ -15,7 +15,7 @@
 #include "err/err.hpp"
 
 #include "sys/measure.hpp"
-#include "sys/fs/fs.hpp"
+#include "sys/fs.hpp"
 
 #define RAISE_ERR(val, ec, msg) LOG_RAISE(val, ec, ::err::Error, msg)
 

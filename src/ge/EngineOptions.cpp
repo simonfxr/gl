@@ -1,7 +1,7 @@
 #include "opengl.hpp"
 #include "ge/EngineOptions.hpp"
 
-#include "sys/fs/fs.hpp"
+#include "sys/fs.hpp"
 
 #include <string.h>
 #include <stdio.h>
