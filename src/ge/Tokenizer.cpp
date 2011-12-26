@@ -36,6 +36,8 @@ bool getchAny(ParseState& s) {
         return false;        
     }
 
+    // std::cerr << "getch: '" << s.rawC << "'" << std::endl;
+
     if (s.c == '\n' || s.c == '\r') {
         if (lastC == '\r' && s.c == '\n') {
             return getchAny(s);
@@ -45,8 +47,6 @@ bool getchAny(ParseState& s) {
             s.c = s.rawC = '\n';
         }
     }
-
-    // std::cerr << "getchAny: '" << s.rawC << "' -> '" << s.c << "'" << std::endl;
 
     ++s.col;
     return true;
@@ -177,9 +177,10 @@ State parseKeycombo(ParseState& s, CommandArg& tok) {
 State parseString(ParseState& s, CommandArg& tok) {
     char delim = s.c == '"'  ? '"' :
                  s.c == '\'' ? '\'' : ' ';
-    getchAny(s);
+    
     std::ostringstream buf;
     if (delim != ' ') {
+        getchAny(s);
         while (s.c != 0 && s.c != delim) {
             char suf;
             if (s.c == '\\') {
@@ -211,7 +212,7 @@ State parseString(ParseState& s, CommandArg& tok) {
     } else {
         while (s.c != 0 && s.c != ';' && !isspace(s.c)) {
             buf << s.c;
-            getchAny(s);
+            getch(s);
         }
     }
 

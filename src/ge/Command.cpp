@@ -38,7 +38,33 @@ void Command::handle(const Event<CommandEvent>& ev) {
 }
 
 std::string Command::interactiveDescription() const {
-    return description();
+    std::ostringstream desc;
+    desc << "command " << name() << std::endl
+         << "  params:";
+
+    const char *delim = " ";
+    for (index i = 0; i < parameters().size(); ++i) {
+        desc << delim;
+        delim = ", ";
+        switch (parameters()[i]) {
+        case StringParam: desc << "string"; break;
+        case IntegerParam: desc << "int"; break;
+        case NumberParam: desc << "num"; break;
+        case KeyComboParam: desc << "key"; break;
+        case CommandParam: desc << "command"; break;
+        case VarRefParam: desc << "var"; break;
+        case AnyParam: desc << "?"; break;
+        case ListParam: desc << "*"; break;
+        }
+    }
+
+    if (parameters().size() == 0)
+        desc << " none";
+
+    desc << std::endl
+         << "  description: " << description() << std::endl;
+        
+    return desc.str();
 }
 
 static std::string describe(const std::string& source, int line, int column, const std::string& desc, Quotation *quot) {
