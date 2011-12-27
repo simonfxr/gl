@@ -9,8 +9,6 @@
 
 #include "glt/ShaderManager.hpp"
 
-#include <iostream>
-
 namespace ge {
 
 EngineInitializers::EngineInitializers(bool default_init) {
@@ -35,7 +33,7 @@ void EngineInitializers::reg(RunLevel lvl, const Ref<EventHandler<InitEvent> >& 
 }
 
 static void runInitGLEW(const Event<InitEvent>& e) {
-    std::cerr << "initializing GLEW - experimental option: " << (glewExperimental == GL_TRUE ? "yes" : "no") << std::endl;
+    e.info.engine.out() << "initializing GLEW - experimental option: " << (glewExperimental == GL_TRUE ? "yes" : "no") << sys::io::endl;
     GLenum err = glewInit();
 
     if (GLEW_OK != err) {
@@ -58,7 +56,7 @@ static void runPreInitStats(Ref<float> t0, const Event<InitEvent>& e) {
 static void runPostInitStats(Ref<float> t0, const Event<InitEvent>& e) {
     e.info.success = true;
     uint32 ms = uint32((e.info.engine.now() - *t0) * 1000);
-    std::cerr << "initialized in " << ms << " ms" << std::endl;
+    e.info.engine.out() << "initialized in " << ms << " ms" << sys::io::endl;
 }
 
 void initInitStats(EngineInitializers& inits) {
@@ -70,7 +68,7 @@ void initInitStats(EngineInitializers& inits) {
 static void runInitMemInfo(const Event<InitEvent>& e) {
     e.info.success = true;
     if (!glt::initMemInfo())
-        std::cerr << "couldnt init OpenGL Memory Info" << std::endl;
+        e.info.engine.out() << "couldnt init OpenGL Memory Info" << sys::io::endl;
 }
 
 void initMemInfo(RunLevel lvl, EngineInitializers& inits) {

@@ -3,10 +3,8 @@
 #include "glt/ShaderProgram.hpp"
 #include "glt/ShaderCompiler.hpp"
 
-#include <iostream>
 #include <map>
 #include <algorithm>
-#include <stdio.h>
 
 namespace glt {
 
@@ -20,7 +18,7 @@ typedef std::map<std::string, Ref<ShaderProgram> > ProgramMap;
 
 struct ShaderManager::Data {
     Verbosity verbosity;
-    std::ostream *err;
+    sys::io::OutStream *out;
     std::vector<std::string> shaderDirs;
     ProgramMap programs;
     uint32 shader_version;
@@ -32,7 +30,7 @@ struct ShaderManager::Data {
 
     Data(ShaderManager& self) :
         verbosity(Info),
-        err(&std::cerr),
+        out(&sys::io::stdout()),
         shaderDirs(),
         programs(),
         shader_version(0),
@@ -113,15 +111,15 @@ void ShaderManager::reloadShaders() {
         ++n;
     }
     
-    std::cerr << "all shaders reloaded (" << (n - failed) << " successful, " << failed << " failed)" << std::endl;
+    out() << "all shaders reloaded (" << (n - failed) << " successful, " << failed << " failed)" << sys::io::endl;
 }
 
-std::ostream& ShaderManager::err() const {
-    return *self->err;
+sys::io::OutStream& ShaderManager::out() const {
+    return *self->out;
 }
 
-void ShaderManager::err(std::ostream& err) {
-    self->err = &err;
+void ShaderManager::out(sys::io::OutStream& out) {
+    self->out = &out;
 }
 
 bool ShaderManager::prependShaderDirectory(const std::string& dir, bool check_exists) {

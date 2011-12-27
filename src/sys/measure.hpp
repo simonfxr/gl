@@ -2,6 +2,7 @@
 #define GE_TIME_HPP
 
 #include "sys/clock.hpp"
+#include "sys/io/Stream.hpp"
 
 #ifndef TIMING_DISABLE
 
@@ -15,7 +16,7 @@
         double _T0_ = ::sys::queryTimer();                               \
         __VA_ARGS__;                                                           \
         double _diff_ = ::sys::queryTimer() - _T0_;                      \
-        ::std::cerr << #__VA_ARGS__ << " took " << (_diff_ * 1000) << " ms." << ::std::endl; \
+        ::sys::io::stdout() << #__VA_ARGS__ << " took " << (_diff_ * 1000) << " ms." << ::sys::io::endl; \
     } while (0)
 
 #else

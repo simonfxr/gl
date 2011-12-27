@@ -7,6 +7,7 @@
 #include <map>
 
 #include "data/Ref.hpp"
+#include "sys/io/Stream.hpp"
 
 namespace glt {
 
@@ -54,8 +55,8 @@ struct ShaderManager {
     Verbosity verbosity() const;
     void verbosity(Verbosity v);
 
-    std::ostream& err() const;
-    void err(std::ostream& out);
+    sys::io::OutStream& out() const;
+    void out(sys::io::OutStream& out);
 
     bool prependShaderDirectory(const std::string& directory, bool check_exists = true);
     bool addShaderDirectory(const std::string& directory, bool check_exists = true);

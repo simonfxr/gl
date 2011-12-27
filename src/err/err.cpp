@@ -1,37 +1,34 @@
 #include "err/err.hpp"
-#include <iostream>
 #include <stdlib.h>
-#include <fstream>
 
 namespace err {
 
-void error(const Location& loc, std::ostream& out, LogLevel lvl, const std::string& mesg) {
+void error(const Location& loc, sys::io::OutStream& out, LogLevel lvl, const std::string& mesg) {
     error(loc, out, lvl, mesg.c_str());
 }
 
-void error(const Location& loc, std::ostream& out, LogLevel lvl, const char *mesg) {
-
+void error(const Location& loc, sys::io::OutStream& out, LogLevel lvl, const char *mesg) {
     printError(out, NULL, loc, lvl, mesg);
 
     if (lvl == FatalError || lvl == Assertion || lvl == DebugAssertion)
         abort();
 }
 
-void fatalError(const Location& loc, std::ostream& out, LogLevel lvl, const std::string& mesg) {
+void fatalError(const Location& loc, sys::io::OutStream& out, LogLevel lvl, const std::string& mesg) {
     fatalError(loc, out, lvl, mesg.c_str());
     abort(); // keep the control flow analyser happy
 }
 
-void fatalError(const Location& loc, std::ostream& out, LogLevel lvl, const char *mesg) {
+void fatalError(const Location& loc, sys::io::OutStream& out, LogLevel lvl, const char *mesg) {
     error(loc, out, lvl, mesg);
     abort(); // keep the control flow analyser happy
 }
 
-void printError(std::ostream& out, const char *type, const Location& loc, LogLevel lvl, const std::string& mesg) {
+void printError(sys::io::OutStream& out, const char *type, const Location& loc, LogLevel lvl, const std::string& mesg) {
     printError(out, type, loc, lvl, mesg.c_str());
 }
 
-void printError(std::ostream& out, const char *type, const Location& loc, LogLevel lvl, const char *mesg) {
+void printError(sys::io::OutStream& out, const char *type, const Location& loc, LogLevel lvl, const char *mesg) {
     const char *prefix = type;
 
     if (prefix == 0) {
@@ -49,16 +46,16 @@ void printError(std::ostream& out, const char *type, const Location& loc, LogLev
     }
 
     out << "[" << prefix << "]"
-        << " in " << loc.function << std::endl
-        << "  at " << loc.file << ":" << loc.line << std::endl;
+        << " in " << loc.function << sys::io::endl
+        << "  at " << loc.file << ":" << loc.line << sys::io::endl;
 
     if (loc.operation != 0)
-        out << "  operation: " << loc.operation << std::endl;
+        out << "  operation: " << loc.operation << sys::io::endl;
 
     if (lvl == DebugAssertion || lvl == Assertion)
-        out << "  assertion: " << mesg << std::endl;
+        out << "  assertion: " << mesg << sys::io::endl;
     else
-        out << "  message: " << mesg << std::endl;
+        out << "  message: " << mesg << sys::io::endl;
 }
 
 namespace {
@@ -68,8 +65,8 @@ struct LogState {
     bool null;
     Location loc;
     LogLevel level;
-    std::ofstream null_stream;
-    std::ostream* out;
+    sys::io::NullStream null_stream;
+    sys::io::OutStream* out;
 
     LogState() :
         in_log(0),
@@ -105,7 +102,7 @@ bool checkLogState() {
 
 } // namespace anon
 
-std::ostream& logBegin(const Location& loc, const LogDestination& dest, LogLevel lvl) {
+sys::io::OutStream& logBegin(const Location& loc, const LogDestination& dest, LogLevel lvl) {
     initLogState();
     ++log_state->in_log;
     
@@ -121,19 +118,19 @@ std::ostream& logBegin(const Location& loc, const LogDestination& dest, LogLevel
     return *log_state->out;
 }
 
-std::ostream& logWrite(const std::string& msg) {
+sys::io::OutStream& logWrite(const std::string& msg) {
     if (checkLogState())
         *log_state->out << msg;
     return *log_state->out;
 }
 
-std::ostream& logWriteErr(const std::string& err, const std::string& msg) {
+sys::io::OutStream& logWriteErr(const std::string& err, const std::string& msg) {
     if (checkLogState())
         error(log_state->loc, *log_state->out, log_state->level, "raised error: " + err + ", reason: " + msg);
     return *log_state->out;
 }
 
-std::ostream& logWrite(const char *msg) {
+sys::io::OutStream& logWrite(const char *msg) {
     if (checkLogState())
         *log_state->out << msg;
     return *log_state->out;

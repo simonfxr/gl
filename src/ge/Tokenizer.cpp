@@ -9,6 +9,8 @@
 
 namespace ge {
 
+namespace {
+
 enum State {
     EndToken,
     EndStatement,
@@ -17,8 +19,8 @@ enum State {
 
 #define PARSE_ERROR(s, mesg) parse_err((s), _CURRENT_LOCATION, (mesg))
 
-static void parse_err(const ParseState& s, const err::Location& loc, const std::string& mesg) {
-    if (s.in_state != Input::Blocked) {
+void parse_err(const ParseState& s, const err::Location& loc, const std::string& mesg) {
+    if (s.in_state != sys::io::StreamBlocked) {
         std::ostringstream buf;
         buf << "parsing " << s.filename << "@" << s.line << ":" << s.col;
         buf << " parse-error: " << mesg;
@@ -26,12 +28,19 @@ static void parse_err(const ParseState& s, const err::Location& loc, const std::
     }
 }
 
+sys::io::StreamResult next(sys::io::InStream& in, char &c) {
+    size s = 1;
+    sys::io::StreamResult res = in.read(s, &c);
+    ASSERT(res != sys::io::StreamOK || s == 1);
+    return res;
+}
+
 bool getchAny(ParseState& s) {
     char lastC = s.rawC;
 
-    s.in_state = s.in->next(s.c);
+    s.in_state = next(*s.in, s.c);
     s.rawC = s.c;
-    if (s.in_state != Input::OK) {
+    if (s.in_state != sys::io::StreamOK) {
         s.c = s.rawC = 0;
         return false;        
     }
@@ -67,12 +76,6 @@ bool getch(ParseState& s) {
 //    std::cerr << "getch: state = " << ok << ", eof = " << s.eof << ", c = " << s.c << std::endl;
 
     return ok;
-}
-
-bool skipStatement(ParseState& s) {
-    while (getch(s) && s.c != ';')
-        ;
-    return s.c == ';';
 }
 
 void skipSpace(ParseState& s) {
@@ -445,33 +448,25 @@ State statement(ParseState& s, std::vector<CommandArg>& toks, bool quot) {
             break;
     }
 
-    if (s.c == 0 && s.in_state != Input::Eof)
+    if (s.c == 0 && s.in_state != sys::io::StreamEOF)
         return Fail;
 
     return EndStatement;
 }
 
+} // namespace anon
+
+bool skipStatement(ParseState& s) {
+    while (getch(s) && s.c != ';')
+        ;
+    return s.c == ';';
+}
+
 bool tokenize(ParseState& s, std::vector<CommandArg>& args) {
     getch(s);
-    if (s.in_state == Input::Eof)
+    if (s.in_state != sys::io::StreamOK)
         return false;
     return statement(s, args, false) != Fail;
-}
-
-Input::State readStream(std::istream& in, char &c) {
-    in.get(c);
-    if (!in.good()) {
-        if (in.eof())
-            return Input::Eof;
-        else
-            return Input::Error;
-    }
-
-    return Input::OK;  
-}
-
-void IFStreamInput::close() {
-    this->in.close();
 }
 
 } // namespace ge

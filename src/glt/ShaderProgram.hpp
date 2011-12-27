@@ -2,7 +2,6 @@
 #define GLT_SHADER_PROGRAM_HPP
 
 #include <string>
-#include <iostream>
 
 #include "opengl.hpp"
 #include "data/Ref.hpp"

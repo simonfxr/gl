@@ -4,7 +4,9 @@
 #include "defs.hpp"
 
 #include <sstream>
+#include <string>
 #include <stdio.h>
+#include <vector>
 
 namespace sys {
 
@@ -30,63 +32,69 @@ enum StreamResult {
 
 namespace {
 
-typedef uint32 StreamState;
+typedef uint32 StreamFlags;
 
-const StreamState SS_IN_EOF = 1;
-const StreamState SS_OUT_EOF = 2;
-const StreamState SS_CLOSED = 4;
-const StreamState SS_DONT_CLOSE = 8;
+const StreamFlags SS_IN_EOF = 1;
+const StreamFlags SS_OUT_EOF = 2;
+const StreamFlags SS_CLOSED = 4;
+const StreamFlags SS_DONT_CLOSE = 8;
 
 } // namespace anon
 
-struct StreamStateImpl {
-private:
-    StreamState _state;
-public:
-    StreamStateImpl() : _state(0) {}
-    StreamState state() const { return _state; }
-    bool dontClose() const { return (_state & SS_DONT_CLOSE) != 0; }
-    void dontClose(bool dont) {
-        _state = dont
-            ? _state | SS_DONT_CLOSE
-            : _state & ~SS_DONT_CLOSE;
-    }
+struct BasicStreamState {
 protected:
-    void state(StreamState s) { _state = s; }
+    virtual StreamFlags& basic_state() = 0;
+    virtual StreamFlags basic_state() const = 0;
 };
 
-struct BasicStream {
-    virtual ~BasicStream() {}
-
+struct BasicStream : public virtual BasicStreamState {
     void close() {
-        StreamState s = basic_state();
+        close_flush();
+        StreamFlags& s = basic_state();
         if ((s & SS_CLOSED) == 0) {
-            basic_state(s | SS_CLOSED);
             basic_close();
+            s |= SS_CLOSED;
         }
     }
 
+    void dontClose(bool dont) {
+        StreamFlags& s = basic_state();
+        s = dont ? s | SS_DONT_CLOSE
+                 : s & ~SS_DONT_CLOSE;
+    }
+
+    bool flags(StreamFlags flags) const {
+        return (basic_state() & flags) == flags;
+    }
+
+    bool closed() const { return flags(SS_CLOSED); }
+    
+    bool inEOF() const { return flags(SS_IN_EOF);  }
+
+    bool outEOF() const { return flags(SS_OUT_EOF); }
+
+    bool writeable() const {
+        StreamFlags s = basic_state();
+        return (s & SS_CLOSED) == 0 && (s & SS_OUT_EOF) == 0;
+    }
     
 protected:
-    virtual StreamState basic_state() const = 0;
-    virtual void basic_state(StreamState) = 0;
     virtual void basic_close() {}
+    virtual void close_flush() {}
 
     void destructor() {
-        StreamState st = basic_state();
+        StreamFlags& st = basic_state();
         if ((st & SS_CLOSED) == 0 &&
             (st & SS_DONT_CLOSE) == 0) {
-            basic_state(st | SS_CLOSED);
             basic_close();
+            st |= SS_CLOSED;
         }        
     }
 };
 
-struct InStream : public BasicStream {
-    virtual ~InStream() {}
-    
+struct BasicInStream : public BasicStreamState {
     StreamResult read(size& s, char *b) {
-        StreamState st = this->basic_state();
+        StreamFlags& st = basic_state();
         
         if ((st & SS_CLOSED) != 0) {
             s = 0;
@@ -100,20 +108,18 @@ struct InStream : public BasicStream {
         
         StreamResult r = basic_read(s, b);
         if (r == StreamEOF)
-            this->basic_state(this->basic_state() | SS_IN_EOF);
+            st |= SS_IN_EOF;
         
         return r;
     }
     
 protected:
-    virtual StreamResult basic_read(size&, char *) = 0;
+    virtual StreamResult basic_read(size&, char *) = 0;    
 };
 
-struct OutStream : public BasicStream {
-    virtual ~OutStream() {}
-
+struct BasicOutStream : public BasicStreamState {
     StreamResult write(size& s, const char *b) {
-        StreamState st = this->basic_state();
+        StreamFlags& st = basic_state();
         
         if ((st & SS_CLOSED) != 0) {
             s = 0;
@@ -127,97 +133,159 @@ struct OutStream : public BasicStream {
         
         StreamResult r = basic_write(s, b);
         if (r == StreamEOF)
-            this->basic_state(this->basic_state() | SS_OUT_EOF);
+            st |= SS_OUT_EOF;
         
         return r;
     }
 
-    void flush() { basic_flush(); }
+    StreamResult flush() {
+        StreamFlags& st = basic_state();
+
+        if ((st & SS_CLOSED) != 0)
+            return StreamClosed;
+
+        if ((st & SS_OUT_EOF) != 0)
+            return StreamEOF;
+        
+        StreamResult r = basic_flush();
+        if (r == StreamEOF)
+            st |= SS_OUT_EOF;
+
+        return r;
+    }
 
 protected:
     virtual StreamResult basic_write(size&, const char *) = 0;
-    virtual void basic_flush() {}
+    virtual StreamResult basic_flush() { return StreamOK; }
 };
 
-struct AbstractInStream : public InStream, public StreamStateImpl {
-    virtual ~AbstractInStream() {
-        this->destructor();
-    }
-protected:
-    StreamState basic_state() const {
-        return this->state();
-    }
+struct StreamState {
+private:
+    StreamFlags _state;
+public:
+    StreamState() : _state(0) {}
+    StreamFlags state() const { return _state; }
     
-    void basic_state(StreamState s) {
-        this->state(s);
-    }
+protected:
+    StreamFlags& state() { return _state; }
 };
 
-struct AbstractOutStream : public OutStream, public StreamStateImpl {
-    virtual ~AbstractOutStream() {
-        this->destructor();
-    }
-protected:
-    StreamState basic_state() const {
-        return this->state();
-    }
-    
-    void basic_state(StreamState s) {
-        this->state(s);
-    }
+struct InStream : public virtual BasicStream, public BasicInStream {
+    virtual ~InStream() {}
 };
 
-struct IOStream : public InStream, public OutStream, public StreamStateImpl {
-    virtual ~IOStream() {
-        InStream::destructor();
-    }
+struct OutStream : public virtual BasicStream, public BasicOutStream {
+    virtual ~OutStream() {}
 protected:
-    StreamState basic_state() const {
-        return this->state();
-    }
-    
-    void basic_state(StreamState s) {
-        this->state(s);
-    }
+    void close_flush() { flush(); }
+};
 
-    virtual void basic_close() {
-        InStream::basic_close();
-    }
+struct IOStream : public InStream, public OutStream {
+    virtual ~IOStream() {}
+};
 
+struct AbstractIOStream : public StreamState, public IOStream {
+    virtual ~AbstractIOStream() {}
+protected:
+    StreamFlags basic_state() const { return state(); }
+    StreamFlags& basic_state() { return state(); }  
+};
+
+struct AbstractOutStream : public StreamState, public OutStream {
+    virtual ~AbstractOutStream() {}
+protected:
+    StreamFlags basic_state() const { return state(); }
+    StreamFlags& basic_state() { return state(); }
+};
+
+struct AbstractInStream : public StreamState, public InStream {
+    virtual ~AbstractInStream() {}
+protected:
+    StreamFlags basic_state() const { return state(); }
+    StreamFlags& basic_state() { return state(); }
 };
 
 struct StdOutStream : public AbstractOutStream {
     std::ostream& out;
     StdOutStream(std::ostream&);
-    
+    ~StdOutStream() { destructor(); }
 protected:
-    StreamResult basic_write(size& s, const char *b);
-    void basic_flush();
+    StreamResult basic_write(size&, const char *);
+    StreamResult basic_flush();
 };
 
-struct FileStream : public IOStream {
-    FILE *file;
-    FileStream(FILE *);
+struct StdInStream : public AbstractInStream {
+    std::istream& in;
+    StdInStream(std::istream&);
+    ~StdInStream() { destructor(); }
+protected:
+    StreamResult basic_read(size&, char *);
+};
 
+struct FileStream : public AbstractIOStream {
+    FILE *file;
+    FileStream(FILE *file = 0);
+    FileStream(const std::string& path, const std::string& mode);
+    ~FileStream() { destructor(); }
+
+    bool isOpen() const { return file != 0; }
+    bool open(const std::string& path, const std::string& mode);
+    
 protected:
     StreamResult basic_read(size&, char *);
     StreamResult basic_write(size&, const char *);
     void basic_close();
-    void basic_flush();
+    StreamResult basic_flush();
 };
 
-template <typename T>
-OutStream& operator <<(OutStream& out, const T x) {
-    std::ostringstream s;
-    s << x;
-    const std::string str = s.str();
-    size n = str.size();
-    out.write(n, str.data());
-    return out;
-}
+struct NullStream : public AbstractIOStream {
+    NullStream() { close(); }
+protected:
+    StreamResult basic_read(size&, char *);
+    StreamResult basic_write(size&, const char *);
+};
 
-inline OutStream& operator <<(OutStream& out, OutStream& (*func)(OutStream&)) {
-    return func(out);
+struct RecordingStream : public AbstractInStream {
+    enum State {
+        Recording,
+        Replaying
+    };
+    
+    InStream *in;
+    std::vector<char> recorded;
+    State state;
+    defs::index cursor;
+
+    RecordingStream(InStream& in);
+
+    void replay();
+    void record();
+    void reset();
+    void clear();
+
+protected:
+    void basic_close();
+    StreamResult basic_read(size&, char *);
+};
+
+OutStream& operator <<(OutStream& out, const std::string& str);
+
+OutStream& operator <<(OutStream& out, const char *str);
+
+OutStream& operator <<(OutStream& out, OutStream& (*func)(OutStream&));
+
+OutStream& operator <<(OutStream& out, std::ostringstream&);
+
+OutStream& operator <<(OutStream& out, std::stringstream&);
+
+template <typename T>
+OutStream& operator <<(OutStream& out, const T& x) {
+    if (out.writeable()) {
+        std::ostringstream s;
+        s << x;
+        out << s;
+    }
+    return out;
 }
 
 } // namespace io

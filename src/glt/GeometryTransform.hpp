@@ -10,8 +10,6 @@
 
 #include "err/err.hpp"
 
-#include <iostream>
-
 namespace glt {
 
 using namespace defs;

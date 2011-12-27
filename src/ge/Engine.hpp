@@ -41,9 +41,6 @@ struct Engine {
     sys::io::OutStream& out();
     void out(sys::io::OutStream&);
 
-    sys::io::OutStream& err();
-    void err(sys::io::OutStream&);
-
     float now();
 
     void addInit(RunLevel lvl, const Ref<EventHandler<InitEvent> >& comm);

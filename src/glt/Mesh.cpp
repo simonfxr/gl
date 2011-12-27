@@ -7,7 +7,6 @@
 #endif
 
 #include <cstring>
-#include <iostream>
 
 namespace glt {
 

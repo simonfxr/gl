@@ -347,12 +347,14 @@ void Anim::render(const ge::Event<ge::RenderEvent>&) {
 //     }
 
     
-    for (int i = 0; i < blocks.size(); ++i)
+    for (index i = 0; i < SIZE(blocks.size()); ++i)
         renderPolygon(blocks[i]);
 
     if (fpsTimer->fire()) {
         glt::FrameStatistics fs = engine->renderManager().frameStatistics();
-        std::cerr << "Timings (FPS/Render Avg/Render Min/Render Max): " << fs.avg_fps << "; " << fs.rt_avg << "; " << fs.rt_min << "; " << fs.rt_max << std::endl;
+        sys::io::stdout() << "Timings (FPS/Render Avg/Render Min/Render Max): "
+                          << fs.avg_fps << "; " << fs.rt_avg << "; " << fs.rt_min << "; " << fs.rt_max
+                          << sys::io::endl;
     }
 }
 

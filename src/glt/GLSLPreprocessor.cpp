@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <iostream>
 #include <fstream>
 #include <set>
 #include <stack>
@@ -13,7 +12,7 @@ namespace glt {
 
 namespace {
 
-bool readFile(std::ostream& err, const std::string& fn, char *& file_contents, uint32& file_size) {
+bool readFile(sys::io::OutStream& err, const std::string& fn, char *& file_contents, uint32& file_size) {
 
     FILE *in = fopen(fn.c_str(), "r");
     if (in == 0)
@@ -51,7 +50,7 @@ bool readFile(std::ostream& err, const std::string& fn, char *& file_contents, u
 
 fail:
     
-    err << "unable to read file: " << fn << std::endl;
+    err << "unable to read file: " << fn << sys::io::endl;
     return false;
 }
 
@@ -157,7 +156,7 @@ void GLSLPreprocessor::processFileRecursively(const std::string& file) {
     char *data;
     uint32 size;
     
-    if (!readFile(this->err(), file, data, size)) {
+    if (!readFile(out(), file, data, size)) {
         setError();
         return;
     }
@@ -177,8 +176,8 @@ void DependencyHandler::directiveEncountered(const Preprocessor::DirectiveContex
     // FIXME: add an option to specify ShaderType explicitly
     
     if (!parseFileArg(ctx, arg, len)) {
-        proc.err() << ctx.content.name
-                   << ": #need-directive: invalid parameter" << std::endl;
+        proc.out() << ctx.content.name
+                   << ": #need-directive: invalid parameter" << sys::io::endl;
         proc.setError();
         return;
     }
@@ -186,9 +185,9 @@ void DependencyHandler::directiveEncountered(const Preprocessor::DirectiveContex
     std::string file(arg, len);
     std::string realPath = sys::fs::lookup(proc.includePath, file);
     if (realPath.empty()) {
-        proc.err() << ctx.content.name
+        proc.out() << ctx.content.name
                    << ": #need-directive: cannot find file: " << file
-                   << std::endl;
+                   << sys::io::endl;
         proc.setError();
         return;
     }
@@ -197,9 +196,9 @@ void DependencyHandler::directiveEncountered(const Preprocessor::DirectiveContex
 
     ShaderManager::ShaderType stype;
     if (!ShaderCompiler::guessShaderType(file, &stype)) {
-        proc.err() << ctx.content.name
+        proc.out() << ctx.content.name
                    << ": #need-directive: cannot guess shader type based on name: " << file
-                   << std::endl;
+                   << sys::io::endl;
         proc.setError();
         return;
     }
@@ -230,8 +229,8 @@ void IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext& 
     uint32 len;
 
     if (!parseFileArg(ctx, arg, len) || len == 0) {
-        proc.err() << ctx.content.name
-                   << ": #include-directive: invalid parameter" << std::endl;
+        proc.out() << ctx.content.name
+                   << ": #include-directive: invalid parameter" << sys::io::endl;
         proc.setError();
         return;
     }
@@ -239,9 +238,9 @@ void IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext& 
     std::string file(arg, len);
     std::string realPath = sys::fs::lookup(proc.includePath, file);
     if (realPath.empty()) {
-        proc.err() << ctx.content.name
+        proc.out() << ctx.content.name
                    << ": #include-directive: cannot find file: " << file
-                   << std::endl;
+                   << sys::io::endl;
         proc.setError();
         return;
     }
@@ -250,9 +249,9 @@ void IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext& 
 
     sys::fs::Stat filestat;
     if (!sys::fs::stat(realPath, &filestat)) {
-        proc.err() << ctx.content.name
+        proc.out() << ctx.content.name
                    << ": #include-directive: cannot open file: " << realPath
-                   << std::endl;
+                   << sys::io::endl;
         proc.setError();
         return;
     }
@@ -265,7 +264,7 @@ void IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext& 
         char *contents;
         uint32 size;
 
-        if (!readFile(proc.err(), filestat.absolute, contents, size)) {
+        if (!readFile(proc.out(), filestat.absolute, contents, size)) {
             proc.setError();
             return;
         }

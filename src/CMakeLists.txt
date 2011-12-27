@@ -28,6 +28,7 @@ set(SYS_SRC
   sys/clock.hpp
   sys/endian.hpp
   sys/io.hpp
+  sys/io.cpp
   sys/io/Stream.hpp
   sys/io/Stream.cpp)
 

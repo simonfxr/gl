@@ -1,5 +1,4 @@
 #include <cstring>
-#include <iostream>
 
 #include "glt/Preprocessor.hpp"
 
@@ -30,14 +29,14 @@ void Preprocessor::DirectiveHandler::directiveEncountered(const Preprocessor::Di
 struct Preprocessor::Data {
     Preprocessor::DirectiveHandler *defaultHandler;
     bool errorState;
-    std::ostream *errorStream;
+    sys::io::OutStream  *out;
     Preprocessor::Handlers handlers;
     std::string sourceName;
     
     Data() :
         defaultHandler(&glt::nullHandler),
         errorState(false),
-        errorStream(&std::cerr)
+        out(&sys::io::stdout())
         {}
 };
 
@@ -147,12 +146,12 @@ Preprocessor::DirectiveHandler* Preprocessor::installHandler(const std::string& 
     return old;
 }
 
-std::ostream& Preprocessor::err() const {
-    return *self->errorStream;
+sys::io::OutStream& Preprocessor::out() {
+    return *self->out;
 }
 
-void Preprocessor::err(std::ostream& err_) {
-    self->errorStream = &err_;
+void Preprocessor::out(sys::io::OutStream& out) {
+    self->out = &out;
 }
 
 bool Preprocessor::setError() {

@@ -1,6 +1,5 @@
 #include <vector>
 #include <limits>
-#include <iostream>
 
 #include "defs.hpp"
 #include "math/real.hpp"

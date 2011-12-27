@@ -6,14 +6,14 @@
 
 #include "data/Ref.hpp"
 
+#include "sys/io/Stream.hpp"
+
 #include <map>
 #include <vector>
 
 namespace ge {
 
 using namespace defs;
-
-struct Input;
 
 struct Engine;
 
@@ -51,7 +51,7 @@ public:
     
     bool execCommand(Array<CommandArg>& args);
 
-    bool loadStream(Ref<Input>& inp, const std::string& input_name);
+    bool loadStream(sys::io::InStream& inp, const std::string& input_name);
     
     bool loadScript(const std::string& file, bool quiet = false);
     

@@ -19,7 +19,6 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
     ReplServer replServer;
 
     sys::io::OutStream *out;
-    sys::io::OutStream *err;
 
     bool initialized;
     const EngineOptions *opts; // only during init
@@ -36,7 +35,6 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
         keyHandler(commandProcessor),
         replServer(engine),
         out(&sys::io::stdout()),
-        err(&sys::io::stderr()),
         initialized(false),
         opts(0)
     {}
@@ -99,14 +97,6 @@ sys::io::OutStream& Engine::out() {
 
 void Engine::out(sys::io::OutStream& s) {
     self->out = &s;
-}
-
-sys::io::OutStream& Engine::err() {
-    return *self->err;
-}
-
-void Engine::err(sys::io::OutStream& s) {
-    self->err = &s;
 }
 
 float Engine::now() { return SELF->now(); }

@@ -3,7 +3,6 @@
 
 #include "defs.hpp"
 #include "err/err.hpp"
-#include <iostream>
 
 #ifdef REF_CONCURRENT
 #include "data/Atomic.hpp"

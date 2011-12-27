@@ -2,6 +2,7 @@
 #include "ge/EngineOptions.hpp"
 
 #include "sys/fs.hpp"
+#include "sys/io/Stream.hpp"
 
 #include <string.h>
 #include <stdio.h>
@@ -267,9 +268,9 @@ EngineOptions& EngineOptions::parse(int *argcp, char ***argvp) {
 }
 
 void EngineOptions::printHelp() {
-    std::ostream& out = std::cerr;
+    sys::io::OutStream& out = sys::io::stderr();
 
-    out << "Engine options: " << std::endl;
+    out << "Engine options: " << sys::io::endl;
 
     int max_col = 0;
 
@@ -294,10 +295,10 @@ void EngineOptions::printHelp() {
         while (w++ <  max_col + 3)
             out << ' ';
         
-        out << OPTIONS[i].description << std::endl;
+        out << OPTIONS[i].description << sys::io::endl;
     }
 
-    out << std::endl;
+    out << sys::io::endl;
 }
 
 } // namespace ge

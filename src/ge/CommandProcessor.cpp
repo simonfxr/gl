@@ -173,7 +173,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
                         else
                             err << "executing unknown Command: ";
                         err << " command not found: " << *args[i].string;
-                        ERR(err.str().c_str());
+                        ERR(err.str());
                         return false;
                     }
                     keepAlive.push_back(comArg);
@@ -188,7 +188,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
                         else
                             err << "executing unknown Command: ";
                         err << " invalid KeyCombo, position: " << (i + 1);
-                        ERR(err.str().c_str());
+                        ERR(err.str());
                         return false;
                     }
                 } else {
@@ -200,7 +200,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
                     err << " type mismatch, position: " << (i + 1);
                     err << ", expected: " << prettyCommandType(val_type);
                     err << ", got: " << prettyCommandType(args[i].type);
-                    ERR(err.str().c_str());
+                    ERR(err.str());
                     return false;
                 }
             } else if (val_type == CommandRef) {
@@ -222,17 +222,16 @@ bool CommandProcessor::loadScript(const std::string& name, bool quiet) {
         goto not_found;
 
     {
-        std::ifstream filestream(file.c_str());
-        if (!filestream.is_open() || !filestream.good())
+        sys::io::FileStream filestream;
+        if (!filestream.open(file, "rb"))
             goto not_found;
-        std::cerr << "loading script: " << file << std::endl;
-        Ref<Input> inp(new IFStreamInput(filestream));
-        return loadStream(inp, file);
+        sys::io::stdout() << "loading script: " << file << sys::io::endl;
+        return loadStream(filestream, file);
     }
 
 not_found:
     
-    std::cerr << "loading script: " << name << " -> not found" << std::endl;
+    sys::io::stdout() << "loading script: " << name << " -> not found" << sys::io::endl;
     
     if (!quiet)
         ERR(("opening script: " + name).c_str());
@@ -240,7 +239,7 @@ not_found:
     return false;
 }
 
-bool CommandProcessor::loadStream(Ref<Input>& inp, const std::string& inp_name) {
+bool CommandProcessor::loadStream(sys::io::InStream& inp, const std::string& inp_name) {
     bool ok = true;
     std::vector<CommandArg> args;
     ParseState state(inp, inp_name);
@@ -248,7 +247,7 @@ bool CommandProcessor::loadStream(Ref<Input>& inp, const std::string& inp_name) 
     while (!done) {
         ok = tokenize(state, args);
         if (!ok) {
-            if (state.in_state != Input::Eof)
+            if (state.in_state != sys::io::StreamEOF)
                 ERR("parsing failed: " + state.filename);
             else
                 ok = true;
@@ -274,8 +273,8 @@ bool CommandProcessor::loadStream(Ref<Input>& inp, const std::string& inp_name) 
 
 bool CommandProcessor::evalCommand(const std::string& cmd) {
     std::istringstream stream(cmd);
-    Ref<Input> inp(new IStreamInput<std::istream>(stream));
-    return loadStream(inp, "<unknown>");
+    sys::io::StdInStream inp(stream);
+    return loadStream(inp, "<eval string>");
 }
 
 bool CommandProcessor::execCommand(std::vector<CommandArg>& args) {
@@ -287,9 +286,9 @@ bool CommandProcessor::execCommand(Array<CommandArg>& args) {
     if (args.size() == 0)
         return true;
 
-    // ON_DEBUG(std::cerr << "executing command: ");
-    // ON_DEBUG(prettyCommandArgs(std::cerr, com_args));
-    // ON_DEBUG(std::cerr << std::endl);
+    // ON_DEBUG(sys::io::stdout() << "executing command: ");
+    // ON_DEBUG(prettyCommandArgs(sys::io::stdout(), com_args));
+    // ON_DEBUG(sys::io::stdout() << sys::io::endl);
     
     bool ok = exec(args);
 

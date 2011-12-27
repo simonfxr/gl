@@ -5,9 +5,9 @@
 #include "opengl.hpp"
 
 #include "err/err.hpp"
+#include "sys/io/Stream.hpp"
 
 #include <string>
-#include <ostream>
 
 #ifdef GLDEBUG
 #define GL_CHECK(op) do {                                       \
@@ -28,7 +28,7 @@ void printOpenGLCalls(bool);
 
 std::string getGLErrorString(GLenum err);
 
-bool printGLErrors(std::ostream& out);
+bool printGLErrors(sys::io::OutStream& out);
 
 bool checkForGLError(const err::Location& loc);
 

@@ -11,96 +11,22 @@ using namespace sys::io;
 
 namespace {
 
-const size HANDLE_BUF_SIZE = 4096;
-
-struct HandleInput : public Input {
-    Handle handle;
-    char buf[HANDLE_BUF_SIZE];
-    index buf_pos;
-    index buf_end;
-    bool eof;
-
-    HandleInput() :
-        buf_pos(0),
-        buf_end(0),
-        eof(false)
-        {}
-    
-    Input::State next(char&);
-    void close() {}
-};
-
-Input::State HandleInput::next(char& c) {
-    if (buf_pos < buf_end) {
-        c = buf[buf_pos++];
-        return Input::OK;
-    } else if (eof) {
-        return Input::Eof;
-    } else {
-        size s = HANDLE_BUF_SIZE;
-        HandleError err = read(handle, s, buf);
-        switch (err) {
-        case HE_OK:
-            buf_pos = 0;
-            buf_end = s;
-            c = buf[buf_pos++];
-            return Input::OK;
-        case HE_BLOCKED: return Input::Blocked;
-        case HE_EOF:
-            eof = true;
-            return Input::Eof;
-        case HE_UNKNOWN:
-            return Input::Error;
-        default:
-            ASSERT_FAIL();
-        }
-    }
-}
-
-struct BufferedInput : public Input {
-    std::vector<char> buffer;
-    defs::index buffer_pos;
-    Ref<Input> in;
-    
-    BufferedInput(const Ref<Input>& _in) :
-        buffer_pos(0),
-        in(_in)
-        {}
-    
-    Input::State next(char&);
-    void close() { in->close(); }
-};
-
-Input::State BufferedInput::next(char& c) {
-    
-    if (buffer_pos < SIZE(buffer.size())) {
-        c = buffer[buffer_pos++];
-        return Input::OK;
-    }
-
-    Input::State s = in->next(c);
-    if (s == Input::OK) {
-        buffer.push_back(c);
-        ++buffer_pos;
-    }
-    
-    return s;
-}
-
 enum TokenizeResult {
     TokenizeOk,
     TokenizeFailed,
     TokenizeIncomplete
 };
 
-TokenizeResult tryTokenize(ParseState& state, Ref<BufferedInput>& in, std::vector<ge::CommandArg>& args) {
-    state.in = in;
-    in->buffer_pos = 0;
+TokenizeResult tryTokenize(ParseState& state, RecordingStream& in, std::vector<ge::CommandArg>& args) {
+    state.in = &in;
+    in.reset();
+    in.replay();
+    
     defs::index len = args.size();
     ParseState activeState = state;
     bool ok = tokenize(activeState, args);
     
-    if (!ok && activeState.in_state == Input::Blocked) {
+    if (!ok && activeState.in_state == sys::io::StreamBlocked) {
         args.erase(args.begin() + len, args.end());
         return TokenizeIncomplete;
     }
@@ -108,8 +34,7 @@ TokenizeResult tryTokenize(ParseState& state, Ref<BufferedInput>& in, std::vecto
     state = activeState;
 
     if (ok) {
-        in->buffer_pos = 0;
-        in->buffer.clear();
+        in.clear();
         return TokenizeOk;
     } else {
         return TokenizeFailed;
@@ -117,8 +42,8 @@ TokenizeResult tryTokenize(ParseState& state, Ref<BufferedInput>& in, std::vecto
 }
 
 struct Client {
-    Ref<HandleInput> input;
-    Ref<BufferedInput> buf_input;
+    HandleStream stream;
+    RecordingStream recorder;
     
     int id;
     ParseState parse_state;
@@ -127,9 +52,8 @@ struct Client {
     std::vector<CommandArg> statement;
     
     Client() :
-        input(new HandleInput),
-        buf_input(new BufferedInput(input)),
-        parse_state(Ref<Input>(), "<repl>"),
+        recorder(stream),
+        parse_state(recorder, "<repl>"),
         skip_statement(false)
         {}
 };
@@ -142,10 +66,27 @@ void initClient(Client& c) {
 
 bool handleClient(Engine& e, Client& c) {
 
+    {
+        c.recorder.record();
+        size s = 1;
+        char ch;
+        sys::io::StreamResult res = c.recorder.read(s, &ch);
+        
+        if (s == 0) {
+            if (res == sys::io::StreamBlocked)
+                return true;
+            else
+                return false;
+        }
+    }
+
     if (c.skip_statement) {
+
+        c.recorder.reset();
+        c.recorder.replay();
         
         if (!skipStatement(c.parse_state)) {
-            if (c.parse_state.in_state == Input::Blocked)
+            if (c.parse_state.in_state == sys::io::StreamBlocked)
                 return true;
             else
                 return false;
@@ -153,13 +94,13 @@ bool handleClient(Engine& e, Client& c) {
         
         c.skip_statement = false;
 
-        if (c.parse_state.in_state == Input::Blocked)
+        if (c.parse_state.in_state == sys::io::StreamBlocked)
             return true;
-        if (c.parse_state.in_state == Input::Error)
+        if (c.parse_state.in_state != sys::io::StreamOK)
             return false;
     }
 
-    TokenizeResult res = tryTokenize(c.parse_state, c.buf_input, c.statement);
+    TokenizeResult res = tryTokenize(c.parse_state, c.recorder, c.statement);
 
     switch (res) {
     case TokenizeOk:
@@ -178,18 +119,17 @@ bool handleClient(Engine& e, Client& c) {
         break;
     }
 
-    if (c.parse_state.in_state == Input::Eof ||
-        c.parse_state.in_state == Input::Error)
-        return false;
-    else
+    if (c.parse_state.in_state == sys::io::StreamOK ||
+        c.parse_state.in_state == sys::io::StreamBlocked)
         return true;
+    else
+        return false;
 }
 
 void closeClient(Client& c) {
-    close(c.input->handle);
+    c.stream.close();
     for (index i = 0; i < SIZE(c.statement.size()); ++i)
         c.statement[i].free();
-    c.statement.clear();
 }
 
 } // namespace anon
@@ -246,14 +186,14 @@ void ReplServer::acceptClients() {
     ASSERT(self->running);
     
     while (accept(self->server,
-                  &self->clients[self->clients.size() - 1].input->handle) == SE_OK) {
+                  &self->clients[self->clients.size() - 1].stream.handle) == SE_OK) {
         
         Client& c = self->clients[self->clients.size() - 1];
         c.id = self->next_id++;
         INFO("accepted client");
-        if (elevate(c.input->handle, mode(c.input->handle) | HM_NONBLOCKING) != HE_OK) {
+        if (elevate(c.stream.handle, mode(c.stream.handle) | HM_NONBLOCKING) != HE_OK) {
             ERR("couldnt set nonblocking handle mode, closing connection");
-            close(c.input->handle);
+            c.stream.close();
         } else {
             initClient(c);
             self->clients.push_back(Client());

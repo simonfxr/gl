@@ -12,6 +12,10 @@ typedef int FileDescriptor;
 struct Handle {
     HandleMode mode;
     FileDescriptor fd;
+    Handle() :
+        mode(0),
+        fd(-1)
+        {}
 };
 
 struct Socket {

@@ -1,22 +1,25 @@
 #include "sys/io.hpp"
+#include "sys/io/Stream.hpp"
 #include "err/err.hpp"
+#include "data/Ref.hpp"
 
 #include <vector>
 
 using namespace defs;
 using namespace sys;
 
-const size BUF_SIZE = 4096;
+static const size BUF_SIZE = 4096;
 
 struct Client {
-    io::Handle handle;
+    Ref<io::HandleStream> stream;
     int id;
-    char buffer[BUF_SIZE];
     bool reading;
+    char buffer[BUF_SIZE];
     index buf_pos;
     index buf_end;
 
     Client() :
+        stream(new io::HandleStream),
         id(0),
         reading(true),
         buf_pos(0),
@@ -40,13 +43,12 @@ int main(void) {
 
     for (;;) {
 
-        while (io::accept(server, &clients[clients.size() - 1].handle) == io::SE_OK) {
+        while (io::accept(server, &clients[clients.size() - 1].stream->handle) == io::SE_OK) {
             Client& c = clients[clients.size() - 1];
             c.id = id++;
-            std::cerr << "accepted client " << c.id << std::endl;
-            io::elevate(c.handle, io::mode(c.handle) | io::HM_NONBLOCKING);
+            sys::io::stdout() << "accepted client " << c.id << sys::io::endl;
+            io::elevate(c.stream->handle, io::mode(c.stream->handle) | io::HM_NONBLOCKING);
             clients.push_back(Client());
-
         }
 
         for (index i = 0; i < SIZE(clients.size()) - 1; ++i) {
@@ -55,40 +57,42 @@ int main(void) {
             
             if (c.reading) {
                 index size = c.buf_end - c.buf_pos;
-                io::HandleError err;
-                err = io::read(c.handle, size, c.buffer + c.buf_pos);
-                if (err == io::HE_OK) {
-                    c.buf_pos += size;
-                    if (c.buf_pos == c.buf_end) {
-                        c.reading = false;
-                        c.buf_pos = 0;
-                    }                        
-                } else if (err == io::HE_EOF) {
+                io::StreamResult err;
+                err = c.stream->read(size, c.buffer + c.buf_pos);
+                c.buf_pos += size;
+                if (c.buf_pos == c.buf_end) {
+                    c.reading = false;
+                    c.buf_pos = 0;
+                }
+
+                if (err == io::StreamEOF || err == io::StreamError) {
                     close = true;
-                } else if (err == io::HE_BLOCKED && c.buf_pos > 0) {
+                } else if (err == io::StreamBlocked && c.buf_pos > 0) {
                     c.reading = false;
                     c.buf_end = c.buf_pos;
                     c.buf_pos = 0;
                 }
+                
             } else {
                 index size = c.buf_end - c.buf_pos;
-                io::HandleError err;
-                err = io::write(c.handle, size, c.buffer + c.buf_pos);
-                if (err == io::HE_OK) {
-                    c.buf_pos += size;
-                    if (c.buf_pos == c.buf_end) {
-                        c.reading = true;
-                        c.buf_pos = 0;
-                        c.buf_end = BUF_SIZE;
-                    }
-                } else if (err == io::HE_EOF) {
-                    close = true;
+                io::StreamResult err;
+                err = c.stream->write(size, c.buffer + c.buf_pos);
+                c.buf_pos += size;
+                
+                if (c.buf_pos == c.buf_end) {
+                    c.reading = true;
+                    c.buf_pos = 0;
+                    c.buf_end = BUF_SIZE;
+                    err = c.stream->flush();
                 }
+
+                if (err == io::StreamEOF || err == io::StreamError)
+                    close = true;
             }
 
             if (close) {
-                std::cerr << "closing connection to client " << c.id << std::endl;
-                io::close(c.handle);
+                sys::io::stdout() << "closing connection to client " << c.id << sys::io::endl;
+                c.stream->close();
                 clients.erase(clients.begin() + i);
             }
         }

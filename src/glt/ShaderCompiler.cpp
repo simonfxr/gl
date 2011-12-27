@@ -12,7 +12,7 @@
 template <>
 struct LogTraits<glt::CompileState> {
     static err::LogDestination getDestination(const glt::CompileState& cstate) {
-        return err::LogDestination(err::Info, const_cast<glt::CompileState&>(cstate).compiler.shaderManager.err());
+        return err::LogDestination(err::Info, const_cast<glt::CompileState&>(cstate).compiler.shaderManager.out());
     }
 };
 
@@ -54,7 +54,7 @@ const ShaderTypeMapping shaderTypeMappings[] = {
 
 GLuint compilePreprocessed(CompileState&, GLenum, const std::string&, GLSLPreprocessor&);
 
-void printShaderLog(GLuint, std::ostream& out);
+void printShaderLog(GLuint, sys::io::OutStream& out);
 
 bool translateShaderType(ShaderManager::ShaderType type, GLenum *gltype, const std::string& basename = "");
 
@@ -113,14 +113,14 @@ Ref<ShaderObject> CompileJobObject::exec(CompileState& cstate) {
 
 void initPreprocessor(ShaderCompiler& compiler, GLSLPreprocessor& proc) {
     ShaderManager& m = compiler.shaderManager;
-    proc.err(std::cerr);
+    proc.out(m.out());
 
     if (m.shaderVersion() != 0) {
         std::ostringstream glversdef;
         glversdef << "#version " << m.shaderVersion()
                   << (m.shaderProfile() == ShaderManager::CoreProfile
                       ? " core" : " compatibility")
-                  << std::endl;
+                  << sys::io::endl;
         proc.appendString(glversdef.str());
     }
 
@@ -146,13 +146,13 @@ GLuint compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::
     const char **segments = &proc.segments[0];
     const GLint *segLengths = reinterpret_cast<const GLint *>(&proc.segLengths[0]);
 
-    // std::cerr << "BEGIN SHADER SOURCE" << std::endl;
+    // std::cerr << "BEGIN SHADER SOURCE" << sys::io::endl;
 
     // for (uint32 i = 0; i < nsegments; ++i) {
     //     std::cerr << std::string(segments[i], segLengths[i]);
     // }
 
-    // std::cerr << "END SHADER SOURCE" << std::endl;
+    // std::cerr << "END SHADER SOURCE" << sys::io::endl;
     
     GLuint shader;
     GL_CHECK(shader = glCreateShader(shader_type));
@@ -172,7 +172,7 @@ GLuint compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::
     GLint success;
     GL_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
     bool ok = success == GL_TRUE;
-    LOG_PUT(cstate, (ok ? "success" : "failed")) << " (" << (wct * 1000) << " ms)" << std::endl;
+    LOG_PUT(cstate, (ok ? "success" : "failed")) << " (" << (wct * 1000) << " ms)" << sys::io::endl;
     LOG_END(cstate);
 
     if ((!ok && LOG_LEVEL(cstate, err::Error)) || LOG_LEVEL(cstate, err::Info)) {
@@ -190,7 +190,7 @@ GLuint compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::
     return shader;
 }
 
-void printShaderLog(GLuint shader, std::ostream& out) {
+void printShaderLog(GLuint shader, sys::io::OutStream& out) {
     GLint log_len;
     GL_CHECK(glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len));
     
@@ -203,13 +203,13 @@ void printShaderLog(GLuint shader, std::ostream& out) {
             ++logBegin;
 
         if (logBegin == log + log_len - 1)  {
-            out << "shader compile log empty" << std::endl;
+            out << "shader compile log empty" << sys::io::endl;
         } else {
-            out << "shader compile log: " << std::endl;
+            out << "shader compile log: " << sys::io::endl;
             GL_CHECK(glGetShaderInfoLog(shader, log_len, NULL, log));
             
-            out << log << std::endl
-                << "end compile log" << std::endl;
+            out << log << sys::io::endl
+                << "end compile log" << sys::io::endl;
         }
         
         delete[] log;

@@ -3,6 +3,8 @@
 
 #include "defs.hpp"
 
+#include "sys/io/Stream.hpp"
+
 #include <string>
 #include <sstream>
 
@@ -11,8 +13,7 @@
 #endif
 
 #ifndef ERROR_DEFAULT_STREAM
-#include <iostream>
-#define ERROR_DEFAULT_STREAM ::std::cerr
+#define ERROR_DEFAULT_STREAM ::sys::io::stdout()
 #endif
 
 #include "err/WithError.hpp"
@@ -60,31 +61,31 @@ enum LogLevel {
 
 struct LogDestination {
     LogLevel minimumLevel;
-    std::ostream& out;
+    sys::io::OutStream& out;
 
-    LogDestination(LogLevel minLvl, std::ostream& _out) :
+    LogDestination(LogLevel minLvl, sys::io::OutStream& _out) :
         minimumLevel(minLvl), out(_out) {}
 };
 
-void error(const Location& loc, std::ostream&, LogLevel lvl, const std::string& mesg);
+void error(const Location& loc, sys::io::OutStream&, LogLevel lvl, const std::string& mesg);
 
-void error(const Location& loc, std::ostream&, LogLevel lvl, const char *mesg);
+void error(const Location& loc, sys::io::OutStream&, LogLevel lvl, const char *mesg);
 
-void fatalError(const Location& loc, std::ostream&, LogLevel lvl, const std::string& mesg) ATTRS(ATTR_NORETURN);
+void fatalError(const Location& loc, sys::io::OutStream&, LogLevel lvl, const std::string& mesg) ATTRS(ATTR_NORETURN);
 
-void fatalError(const Location& loc, std::ostream&, LogLevel lvl, const char *mesg) ATTRS(ATTR_NORETURN);
+void fatalError(const Location& loc, sys::io::OutStream&, LogLevel lvl, const char *mesg) ATTRS(ATTR_NORETURN);
 
-void printError(std::ostream& out, const char *type, const Location& loc, LogLevel lvl, const std::string& mesg);
+void printError(sys::io::OutStream& out, const char *type, const Location& loc, LogLevel lvl, const std::string& mesg);
 
-void printError(std::ostream& out, const char *type, const Location& loc, LogLevel lvl, const char *mesg);
+void printError(sys::io::OutStream& out, const char *type, const Location& loc, LogLevel lvl, const char *mesg);
 
-std::ostream& logBegin(const Location& loc, const LogDestination&, LogLevel);
+sys::io::OutStream& logBegin(const Location& loc, const LogDestination&, LogLevel);
 
-std::ostream& logWrite(const std::string&);
+sys::io::OutStream& logWrite(const std::string&);
 
-std::ostream& logWriteErr(const std::string&, const std::string&);
+sys::io::OutStream& logWriteErr(const std::string&, const std::string&);
 
-std::ostream& logWrite(const char *);
+sys::io::OutStream& logWrite(const char *);
 
 void logEnd();
 
@@ -107,12 +108,12 @@ bool logLevel(const T& value, LogLevel lvl) {
 }
 
 template <typename T>
-std::ostream& logDestination(const T& value) {
+sys::io::OutStream& logDestination(const T& value) {
     return getLogDestination(value).out;
 }
 
 template <typename T, typename E>
-std::ostream& logPutError(const T& v, E err, const std::string& msg) {
+sys::io::OutStream& logPutError(const T& v, E err, const std::string& msg) {
     return logWriteErr(ErrorTraits<T>::stringError(v, err), msg);
 }
 

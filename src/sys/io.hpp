@@ -3,8 +3,10 @@
 
 #include "defs.hpp"
 #include "sys/endian.hpp"
+#include "sys/io/Stream.hpp"
 
 #include <string>
+
 
 namespace sys {
 
@@ -15,8 +17,12 @@ using namespace defs;
 struct Handle;
 struct Socket;
 struct IPAddr;
+struct HandleStream;
 
 namespace {
+
+const size HANDLE_READ_BUFFER_SIZE = 1024;
+const size HANDLE_WRITE_BUFFER_SIZE = 1024;
 
 typedef uint32 HandleMode;
 
@@ -49,6 +55,20 @@ enum HandleError {
     HE_UNKNOWN
 };
 
+} // namespace io
+
+} // namespace sys
+
+#ifdef SYSTEM_UNIX
+#include "sys/io/io_unix.hpp"
+#else
+#error "no IO implementation available"
+#endif
+
+namespace sys {
+
+namespace io {
+
 HandleError open(const std::string&, HandleMode, Handle *);
 
 HandleMode mode(Handle&);
@@ -75,14 +95,26 @@ SocketError accept(Socket&, Handle *);
 
 SocketError close(Socket&);
 
+struct HandleStream : public AbstractIOStream {
+    Handle handle;
+    char read_buffer[HANDLE_READ_BUFFER_SIZE];
+    char write_buffer[HANDLE_WRITE_BUFFER_SIZE];
+    defs::index read_cursor;
+    defs::index write_cursor;
+
+    HandleStream(const Handle& = Handle());
+    ~HandleStream();
+
+protected:
+    void basic_close();
+    StreamResult basic_flush();
+    StreamResult basic_read(size&, char *);
+    StreamResult basic_write(size&, const char *);
+    StreamResult flush_buffer();
+};
+
 } // namespace io
 
 } // namespace sys
-
-#ifdef SYSTEM_UNIX
-#include "sys/io/io_unix.hpp"
-#else
-#error "no IO implementation available"
-#endif
 
 #endif

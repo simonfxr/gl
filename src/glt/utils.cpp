@@ -1,4 +1,3 @@
-#include <iostream>
 #include <sstream>
 #include <cstring>
 
@@ -49,11 +48,11 @@ std::string getGLErrorString(GLenum err) {
     }
 }
 
-bool printGLErrors(std::ostream& out) {
+bool printGLErrors(sys::io::OutStream& out) {
     bool was_error = false;
     
     for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
-        out << "OpenGL error occurred: " << getGLErrorString(err) << std::endl;
+        out << "OpenGL error occurred: " << getGLErrorString(err) << sys::io::endl;
     
     return was_error;
 }
@@ -175,7 +174,7 @@ void ARBDebug::printDebugMessages(const err::Location& loc) {
              << ", type: " << stype << ", id: " << id
              << "  message: " << message_buffer;
 
-        err::printError(std::cerr, "OpenGL DEBUG", loc, err::Error, mesg.str());               }
+        err::printError(sys::io::stdout(), "OpenGL DEBUG", loc, err::Error, mesg.str());               }
 }
 
 struct AMDDebug : public GLDebug {
@@ -253,7 +252,7 @@ void AMDDebug::printDebugMessages(const err::Location& loc) {
         mesg << "category: " << scat << ", severity: " << ssev
              << ", id: " << id << "  message: " << message_buffer;
 
-        err::printError(std::cerr, "OpenGL DEBUG", loc, err::Error, mesg.str());
+        err::printError(sys::io::stdout(), "OpenGL DEBUG", loc, err::Error, mesg.str());
     }
 }
 
@@ -262,13 +261,13 @@ GLDebug *glDebug = new NoDebug();
 } // namespace anon
 
 void printGLError(const err::Location& loc, GLenum err) {
-    err::printError(std::cerr, "OpenGL Error", loc, err::Error, getGLErrorString(err));
+    err::printError(sys::io::stdout(), "OpenGL Error", loc, err::Error, getGLErrorString(err));
 }
 
 bool checkForGLError(const err::Location& loc) {
 
     if (print_opengl_calls && loc.operation != 0) {
-        std::cerr << "OPENGL " << loc.operation << " " << loc.file << ":" << loc.line << std::endl;
+        sys::io::stdout() << "OPENGL " << loc.operation << " " << loc.file << ":" << loc.line << sys::io::endl;
     }
     
     bool was_error = false;
@@ -288,24 +287,24 @@ bool initDebug() {
 
     if (dbg == 0 && GLEW_AMD_debug_output) {
         debug_impl = "GL_AMD_debug_output";
-        std::cerr << "trying AMD debug" << std::endl;
+        sys::io::stdout() << "trying AMD debug" << sys::io::endl;
         dbg = AMDDebug::init();
     }
 
     if (dbg == 0 && GLEW_ARB_debug_output) {
         debug_impl = "GL_ARB_debug_output";
-        std::cerr << "trying ARB debug" << std::endl;
+        sys::io::stdout() << "trying ARB debug" << sys::io::endl;
         dbg = ARBDebug::init();
     }
     
     bool initialized;
 
     if (dbg == 0) {
-        std::cerr << "couldnt initialize Debug Output, no debug implementaion available" << std::endl;
+        sys::io::stdout() << "couldnt initialize Debug Output, no debug implementaion available" << sys::io::endl;
         dbg = new NoDebug();
         initialized = false;
     } else {
-        std::cerr << "initialized Debug Output using " << debug_impl << std::endl;
+        sys::io::stdout() << "initialized Debug Output using " << debug_impl << sys::io::endl;
         initialized = true;
     }
 

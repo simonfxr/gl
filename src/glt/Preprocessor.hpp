@@ -1,10 +1,11 @@
 #ifndef PREPROCESSOR_HPP
 #define PREPROCESSOR_HPP
 
-#include <ostream>
+#include "defs.hpp"
+#include "sys/io/Stream.hpp"
+
 #include <map>
 
-#include "defs.hpp"
 
 namespace glt {
 
@@ -61,8 +62,8 @@ struct Preprocessor {
     
     DirectiveHandler *installHandler(const std::string& directive, DirectiveHandler& handler);
 
-    std::ostream& err() const;
-    void err(std::ostream& err);
+    sys::io::OutStream& out();
+    void out(sys::io::OutStream& out);
     
     bool setError();
     bool wasError() const;

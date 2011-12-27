@@ -1,4 +1,3 @@
-#include <iostream>
 #include <stdio.h>
 #include <map>
 #include <set>
@@ -22,7 +21,7 @@
 template <>
 struct LogTraits<glt::ShaderProgram> {
     static err::LogDestination getDestination(const glt::ShaderProgram& x) {
-        return err::LogDestination(err::Info, const_cast<glt::ShaderProgram&>(x).shaderManager().err());
+        return err::LogDestination(err::Info, const_cast<glt::ShaderProgram&>(x).shaderManager().out());
     }
 };
 
@@ -79,7 +78,7 @@ struct ShaderProgram::Data {
 
     bool createProgram();
 
-    void printProgramLog(GLuint program, std::ostream& out);
+    void printProgramLog(GLuint program, sys::io::OutStream& out);
 
     void handleCompileError(ShaderCompilerError::Type);
 };
@@ -161,7 +160,7 @@ bool ShaderProgram::Data::createProgram() {
     return true;
 }
 
-void ShaderProgram::Data::printProgramLog(GLuint program, std::ostream& out) {
+void ShaderProgram::Data::printProgramLog(GLuint program, sys::io::OutStream& out) {
     GLint log_len;
     GL_CHECK(glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_len));
     
@@ -174,13 +173,13 @@ void ShaderProgram::Data::printProgramLog(GLuint program, std::ostream& out) {
             ++logBegin;
 
         if (logBegin == log + log_len - 1) {
-            out << "link log empty" << std::endl;
+            out << "link log empty" << sys::io::endl;
         } else {
-            out << "link log: " << std::endl;
+            out << "link log: " << sys::io::endl;
             GL_CHECK(glGetProgramInfoLog(program, log_len, NULL, log));
     
-            out << log << std::endl
-                << "end link log" << std::endl;
+            out << log << sys::io::endl
+                << "end link log" << sys::io::endl;
         }
             
         delete[] log;
@@ -284,7 +283,7 @@ bool ShaderProgram::link() {
     GLint success;
     GL_CHECK(glGetProgramiv(self->program, GL_LINK_STATUS, &success));
     bool ok = success == GL_TRUE;
-    LOG_PUT(*this, ok ? "success" : "failed") << " (" << (wct * 1000) << " ms)" << std::endl;
+    LOG_PUT(*this, ok ? "success" : "failed") << " (" << (wct * 1000) << " ms)" << sys::io::endl;
     LOG_END(*this);
 
     if (!ok) {
