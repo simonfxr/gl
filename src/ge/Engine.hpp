@@ -18,6 +18,8 @@
 #include "glt/ShaderProgram.hpp"
 #include "glt/Uniforms.hpp"
 
+#include "sys/io/Stream.hpp"
+
 namespace ge {
 
 struct Engine {
@@ -33,8 +35,14 @@ struct Engine {
     
     glt::ShaderManager& shaderManager();
     glt::RenderManager& renderManager();
-    
+
     EngineEvents& events();
+
+    sys::io::OutStream& out();
+    void out(sys::io::OutStream&);
+
+    sys::io::OutStream& err();
+    void err(sys::io::OutStream&);
 
     float now();
 

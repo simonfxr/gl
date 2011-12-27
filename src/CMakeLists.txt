@@ -27,7 +27,9 @@ set(SYS_SRC
   sys/fs/fs_default.cpp
   sys/clock.hpp
   sys/endian.hpp
-  sys/io.hpp)
+  sys/io.hpp
+  sys/io/Stream.hpp
+  sys/io/Stream.cpp)
 
 if(SYS_UNIX)
   set(SYS_SRC

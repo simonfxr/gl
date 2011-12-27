@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "ge/Commands.hpp"
 #include "ge/Engine.hpp"
 #include "ge/CommandParams.hpp"
@@ -16,18 +14,19 @@ namespace {
 
 void runPrintContextInfo(const Event<CommandEvent>& e) {
     const sf::ContextSettings& c = e.info.engine.window().window().GetSettings();
-    std::cerr << "OpenGL Context Information"<< std::endl
-              << "  Version:\t" << c.MajorVersion << "." << c.MinorVersion << std::endl
-              << "  DepthBits:\t" << c.DepthBits << std::endl
-              << "  StencilBits:\t" << c.StencilBits << std::endl
-              << "  Antialiasing:\t" << c.AntialiasingLevel << std::endl
-              << "  CoreProfile:\t" << (c.CoreProfile ? "yes" : "no") << std::endl
-              << "  DebugContext:\t" << (c.DebugContext ? "yes" : "no") << std::endl
-              << "  VSync:\t" << (e.info.engine.window().vsync() ? "yes" : "no") << std::endl
-              << std::endl;
+    e.info.engine.out()
+        << "OpenGL Context Information" << sys::io::endl
+        << "  Version:\t" << c.MajorVersion << "." << c.MinorVersion << sys::io::endl
+        << "  DepthBits:\t" << c.DepthBits << sys::io::endl
+        << "  StencilBits:\t" << c.StencilBits << sys::io::endl
+        << "  Antialiasing:\t" << c.AntialiasingLevel << sys::io::endl
+        << "  CoreProfile:\t" << (c.CoreProfile ? "yes" : "no") << sys::io::endl
+        << "  DebugContext:\t" << (c.DebugContext ? "yes" : "no") << sys::io::endl
+        << "  VSync:\t" << (e.info.engine.window().vsync() ? "yes" : "no") << sys::io::endl
+        << sys::io::endl;
 }
 
-void runPrintMemInfo(const Event<CommandEvent>&) {
+void runPrintMemInfo(const Event<CommandEvent>& e) {
     glt::GLMemInfo info;
     if (!glt::getMemInfo(&info)) {
         ERR("couldnt query amount of free memory");
@@ -37,17 +36,19 @@ void runPrintMemInfo(const Event<CommandEvent>&) {
     float fracVBO = float(info.current.freeVBO) / float(info.initial.freeVBO);
     float fracTex = float(info.current.freeTexture) / float(info.initial.freeTexture);
     float fracRBO = float(info.current.freeRenderbuffer) / float(info.initial.freeRenderbuffer);
-    std::cerr << "OpenGL Free Memory: " << std::endl
-              << "  VBO: " << info.current.freeVBO << " kbyte (" << (fracVBO * 100) << "%)" << std::endl
-              << "  Texture: " << info.current.freeVBO << " kbyte (" << (fracTex * 100) << "%)" << std::endl
-              << "  Renderbuffer: " << info.current.freeVBO << " kbyte (" << (fracRBO * 100) << "%)" << std::endl;
+    e.info.engine.out()
+        << "OpenGL Free Memory: " << sys::io::endl
+        << "  VBO: " << info.current.freeVBO << " kbyte (" << (fracVBO * 100) << "%)" << sys::io::endl
+        << "  Texture: " << info.current.freeVBO << " kbyte (" << (fracTex * 100) << "%)" << sys::io::endl
+        << "  Renderbuffer: " << info.current.freeVBO << " kbyte (" << (fracRBO * 100) << "%)" << sys::io::endl;
 }
 
 void runReloadShaders(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+    
     if (args.size() == 0) {
-        std::cerr << "reloading shaders" << std::endl;
+        e.info.engine.out() << "reloading shaders" << sys::io::endl;
         e.info.engine.shaderManager().reloadShaders();
-        // std::cerr << "all shaders reloaded" << std::endl;
+        // std::cerr << "all shaders reloaded" << sys::io::endl;
     } else {
         glt::ShaderManager& sm = e.info.engine.shaderManager();
         for (index i = 0; i < args.size(); ++i) {
@@ -67,18 +68,18 @@ void runListCachedShaders(const Event<CommandEvent>& e) {
     Ref<glt::ShaderCache> cache = e.info.engine.shaderManager().globalShaderCache();
     
     if (!cache) {
-        std::cerr << "no shader cache available" << std::endl;
+        e.info.engine.out() << "no shader cache available" << sys::io::endl;
         return;
     }
 
     uint32 n = 0;    
     for (glt::ShaderCacheEntries::iterator it = cache->entries.begin();
          it != cache->entries.end(); ++it) {
-        std::cerr << "cached shader: " << it->first << std::endl;
+        e.info.engine.out() << "cached shader: " << it->first << sys::io::endl;
         ++n;
     }
 
-    std::cerr << n << " shaders cached" << std::endl;
+    e.info.engine.out() << n << " shaders cached" << sys::io::endl;
 }
 
 void runListBindings(const Event<CommandEvent>&) {
@@ -103,15 +104,16 @@ struct BindKey : public Command {
 
 void runHelp(const Event<CommandEvent>& ev) {
     ge::CommandProcessor& cp = ev.info.engine.commandProcessor();
-    std::cerr << "List of Commands: " << std::endl;
+    ev.info.engine.out() << "list of Commands: " << sys::io::endl;
     
     for (CommandMap::const_iterator it = cp.commands.begin();
          it != cp.commands.end(); ++it) {
-        std::cerr << "    " << it->first << std::endl;
+        ev.info.engine.out() << "    " << it->first << sys::io::endl;
     }
 
-    std::cerr << std::endl
-              << "use describe <command name> to get more information about a specific command" << std::endl;
+    ev.info.engine.out()
+        << sys::io::endl
+        << "use describe <command name> to get more information about a specific command" << sys::io::endl;
 }
 
 void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
@@ -155,7 +157,7 @@ void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) 
         return;
     }
 
-    std::cerr << "bound program: " << *args[0].string << std::endl;
+    e.info.engine.out() << "bound program: " << *args[0].string << sys::io::endl;
 
     e.info.engine.shaderManager().addProgram(*args[0].string, prog);
 }
@@ -164,7 +166,7 @@ void runInitGLDebug(const Event<CommandEvent>& e) {
     if (e.info.engine.window().window().GetSettings().DebugContext) {
         glt::initDebug();
     } else {
-        std::cerr << "cannot initialize OpenGL debug output: no debug context" << std::endl;
+        e.info.engine.out() << "cannot initialize OpenGL debug output: no debug context" << sys::io::endl;
     }
 }
 
@@ -175,9 +177,9 @@ void runDescribe(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     for (index i = 0; i < args.size(); ++i) {
         Ref<Command> com = proc.command(*args[i].string);
         if (!com) {
-            std::cerr << "unknown command: " << *args[i].string << std::endl;
+            e.info.engine.out() << "unknown command: " << *args[i].string << sys::io::endl;
         } else {
-            std::cerr << com->interactiveDescription() << std::endl;
+            e.info.engine.out() << com->interactiveDescription() << sys::io::endl;
         }
     }
 }

@@ -8,10 +8,6 @@
 #include "sys/clock.hpp"
 #include "sys/fs.hpp"
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-
 namespace ge {
 
 struct Engine::Data EXPLICIT : public GameLoop::Game {
@@ -21,6 +17,9 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
     CommandProcessor commandProcessor;
     KeyHandler keyHandler;
     ReplServer replServer;
+
+    sys::io::OutStream *out;
+    sys::io::OutStream *err;
 
     bool initialized;
     const EngineOptions *opts; // only during init
@@ -36,6 +35,8 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
         commandProcessor(engine),
         keyHandler(commandProcessor),
         replServer(engine),
+        out(&sys::io::stdout()),
+        err(&sys::io::stderr()),
         initialized(false),
         opts(0)
     {}
@@ -91,6 +92,22 @@ glt::ShaderManager& Engine::shaderManager() { return SELF->shaderManager; }
 glt::RenderManager& Engine::renderManager() { return SELF->renderManager; }
 
 EngineEvents& Engine::events() { return SELF->events; }
+
+sys::io::OutStream& Engine::out() {
+    return *self->out;
+}
+
+void Engine::out(sys::io::OutStream& s) {
+    self->out = &s;
+}
+
+sys::io::OutStream& Engine::err() {
+    return *self->err;
+}
+
+void Engine::err(sys::io::OutStream& s) {
+    self->err = &s;
+}
 
 float Engine::now() { return SELF->now(); }
 
