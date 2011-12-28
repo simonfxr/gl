@@ -23,6 +23,8 @@ set(BUILD_ARCH32 FALSE CACHE BOOL "TRUE to force 32-bit build on 64bit platform"
 
 set(USE_VOXEL_OPENCL FALSE CACHE BOOL "use opencl for the voxel-world program")
 
+set(USE_UNWIND_STACKTRACES TRUE CACHE BOOL "use libunwind and libdw to print a stacktrace on errors")
+
 project(gl-stuff)
 
 include_directories(src)

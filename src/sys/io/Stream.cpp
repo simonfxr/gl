@@ -40,10 +40,15 @@ OutStream& stderr() {
     return streams().stderr;
 }
 
-OutStream& endl(OutStream& out) {
-    out << "\n";
-    return out;
-}
+// OutStream& endl(OutStream& out) {
+//     out << "\n";
+//     return out;
+// }
+
+struct StreamEndl {
+    StreamEndl() {}
+};
+const StreamEndl endl;
 
 OutStream& operator <<(OutStream& out, const std::string& str) {
     if (!out.outEOF()) {
@@ -54,13 +59,15 @@ OutStream& operator <<(OutStream& out, const std::string& str) {
 }
 
 OutStream& operator <<(OutStream& out, const char *str) {
+    if (str == 0)
+        return out;
     size s = SIZE(strlen(str));
     out.write(s, str);
     return out;
 }
 
-OutStream& operator <<(OutStream& out, OutStream& (*func)(OutStream&)) {
-    return func(out);
+OutStream& operator <<(OutStream& out, const StreamEndl&) {
+    return out << "\n";
 }
 
 OutStream& operator <<(OutStream& out, std::ostringstream& s) {
@@ -216,17 +223,11 @@ RecordingStream::RecordingStream(InStream& _in) :
 {}
 
 void RecordingStream::replay() {
-    if (state != Replaying) {
-        state = Replaying;
-        cursor = 0;
-    }
+    state = Replaying;
 }
 
 void RecordingStream::record() {
-    if (state != Recording) {
-        state = Recording;
-        cursor = 0;
-    }
+    state = Recording;
 }
 
 void RecordingStream::reset() {
@@ -243,22 +244,25 @@ void RecordingStream::basic_close() {
 }
 
 StreamResult RecordingStream::basic_read(size& s, char *b) {
+    StreamResult res;
+    
     switch (state) {
-    case Recording: 
-    {
-        StreamResult res = in->read(s, b);
+        
+    case Recording: {
+        
+        res = in->read(s, b);
         for (defs::index i = 0; i < s; ++i)
             recorded.push_back(b[i]);
-        return res;
+        break;
     }
     
-    case Replaying:
-    {
+    case Replaying: {
+        
         size rem = SIZE(recorded.size()) - cursor;
         if (s <= rem) {
             memcpy(b, &recorded[cursor], s);
             cursor += s;
-            return StreamOK;
+            res = StreamOK;
         } else {
 
             if (rem > 0) {
@@ -267,18 +271,24 @@ StreamResult RecordingStream::basic_read(size& s, char *b) {
                 s -= rem;
             }
 
-            StreamResult res = in->read(s, b);
+            res = in->read(s, b);
+            for (defs::index i = 0; i < s; ++i)
+                recorded.push_back(b[i]);
+            
             s += rem;
 
             cursor = 0;
             state = Recording;
-            return res;
         }
+
+        break;
         
     }   
     default:
         ASSERT_FAIL();
     }
+
+    return res;
 }
 
 } // namespace io

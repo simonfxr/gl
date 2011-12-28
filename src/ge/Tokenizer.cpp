@@ -24,7 +24,7 @@ void parse_err(const ParseState& s, const err::Location& loc, const std::string&
         std::ostringstream buf;
         buf << "parsing " << s.filename << "@" << s.line << ":" << s.col;
         buf << " parse-error: " << mesg;
-        err::error(loc, ERROR_DEFAULT_STREAM, err::Error, buf.str());
+        err::error(loc, err::Error, err::ErrorArgs(buf.str()));
     }
 }
 
@@ -45,7 +45,7 @@ bool getchAny(ParseState& s) {
         return false;        
     }
 
-    // std::cerr << "getch: '" << s.rawC << "'" << std::endl;
+//    sys::io::stdout() << "getch: '" << s.rawC << "'" << sys::io::endl;
 
     if (s.c == '\n' || s.c == '\r') {
         if (lastC == '\r' && s.c == '\n') {

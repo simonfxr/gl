@@ -20,7 +20,14 @@ endif()
 set(ERR_SRC
   err/err.cpp)
 
-def_lib(err SOURCES ${ERR_SRC})
+set(ERR_LIB)
+
+if(USE_UNWIND_STACKTRACES)
+  add_definitions(-DUNWIND_STACKTRACES=1)
+  set(ERR_LIB unwind dw)
+endif()
+
+def_lib(err SOURCES ${ERR_SRC} LIB_DEPEND ${ERR_LIB})
 
 set(SYS_SRC
   sys/fs.hpp

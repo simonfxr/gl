@@ -50,8 +50,11 @@ StreamResult HandleStream::basic_flush() {
 StreamResult HandleStream::basic_read(size& s, char *buf) {
 
     if (s <= read_cursor) {
-        read_cursor -= s;
         memcpy(buf, read_buffer, s);
+        read_cursor -= s;
+        if (read_cursor > 0)
+            memmove(read_buffer, read_buffer + s, read_cursor);
+
         return StreamOK;
     }
 
@@ -86,6 +89,7 @@ StreamResult HandleStream::basic_read(size& s, char *buf) {
     }
 
     s = n;
+
     return convertErr(err);
 }
 

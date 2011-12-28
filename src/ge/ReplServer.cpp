@@ -17,60 +17,58 @@ enum TokenizeResult {
     TokenizeIncomplete
 };
 
-TokenizeResult tryTokenize(ParseState& state, RecordingStream& in, std::vector<ge::CommandArg>& args) {
-    state.in = &in;
-    in.reset();
-    in.replay();
-    
-    defs::index len = args.size();
-    ParseState activeState = state;
-    bool ok = tokenize(activeState, args);
-    
-    if (!ok && activeState.in_state == sys::io::StreamBlocked) {
-        args.erase(args.begin() + len, args.end());
-        return TokenizeIncomplete;
-    }
-
-    state = activeState;
-
-    if (ok) {
-        in.clear();
-        return TokenizeOk;
-    } else {
-        return TokenizeFailed;
-    }
-}
-
-struct Client {
-    HandleStream stream;
+struct ClientStream {
+    HandleStream conn;
     RecordingStream recorder;
-    
-    int id;
-    ParseState parse_state;
-    bool skip_statement;
 
-    std::vector<CommandArg> statement;
-    
-    Client() :
-        recorder(stream),
-        parse_state(recorder, "<repl>"),
-        skip_statement(false)
+    ClientStream(const Handle& h) :
+        conn(h),
+        recorder(conn)
         {}
 };
 
-void initClient(Client& c) {
+struct Client {
+    int id;
+    Ref<ClientStream> stream;
+    ParseState parse_state;
+    bool skip_statement;
+    
+    Client(int _id, Handle h);
+    bool handle(Engine&);
+    bool handleIO(Engine&);
+};
+
+Client::Client(int _id, Handle h) :
+    id(_id),
+    stream(new ClientStream(h)),
+    parse_state(stream->recorder, ""),
+    skip_statement(false)
+{
     std::ostringstream name;
-    name << "<repl " << c.id << ">";
-    c.parse_state.filename = name.str();
+    name << "<repl " << id << ">";
+    parse_state.filename = name.str();
 }
 
-bool handleClient(Engine& e, Client& c) {
+bool Client::handle(Engine& e) {
+    sys::io::OutStream& out = e.out();
+    e.out(stream->conn);
+    bool ok = handleIO(e);
+    e.out(out);
+    return ok;
+}
+
+bool Client::handleIO(Engine& e) {
+    sys::io::StreamResult res = stream->conn.flush();
+    if (res == sys::io::StreamBlocked)
+        return true;
+    if (res != sys::io::StreamOK)
+        return false;
 
     {
-        c.recorder.record();
+        stream->recorder.record();
         size s = 1;
         char ch;
-        sys::io::StreamResult res = c.recorder.read(s, &ch);
+        sys::io::StreamResult res = stream->recorder.read(s, &ch);
         
         if (s == 0) {
             if (res == sys::io::StreamBlocked)
@@ -80,56 +78,64 @@ bool handleClient(Engine& e, Client& c) {
         }
     }
 
-    if (c.skip_statement) {
+    stream->recorder.reset();
+    stream->recorder.replay();
 
-        c.recorder.reset();
-        c.recorder.replay();
+    if (skip_statement) {
         
-        if (!skipStatement(c.parse_state)) {
-            if (c.parse_state.in_state == sys::io::StreamBlocked)
+        if (!skipStatement(parse_state)) {
+            if (parse_state.in_state == sys::io::StreamBlocked)
                 return true;
             else
                 return false;
         }
         
-        c.skip_statement = false;
+        skip_statement = false;
 
-        if (c.parse_state.in_state == sys::io::StreamBlocked)
+        if (parse_state.in_state == sys::io::StreamBlocked)
             return true;
-        if (c.parse_state.in_state != sys::io::StreamOK)
+        
+        if (parse_state.in_state != sys::io::StreamOK)
             return false;
     }
 
-    TokenizeResult res = tryTokenize(c.parse_state, c.recorder, c.statement);
+    std::vector<CommandArg> statement;
+    bool parsed;
+    bool incomplete;
 
-    switch (res) {
-    case TokenizeOk:
-        // INFO("parsed statement");
-        // std::cout << "statement: ";
-        // printArgs(c.statement);
-        e.commandProcessor().execCommand(c.statement);
-        for (index i = 0; i < SIZE(c.statement.size()); ++i)
-            c.statement[i].free();
-        c.statement.clear();
-        break;
-    case TokenizeIncomplete:
-        break;
-    case TokenizeFailed:
-        c.skip_statement = true;
-        break;
+    {
+        ParseState activeState = parse_state;
+        parsed  = tokenize(activeState, statement);
+        if (!parsed && activeState.in_state == sys::io::StreamBlocked) {
+            incomplete = true;
+        } else {
+            parse_state = activeState;
+            incomplete = false;
+        }
     }
 
-    if (c.parse_state.in_state == sys::io::StreamOK ||
-        c.parse_state.in_state == sys::io::StreamBlocked)
-        return true;
-    else
-        return false;
-}
+    if (parsed)
+        e.commandProcessor().execCommand(statement);
 
-void closeClient(Client& c) {
-    c.stream.close();
-    for (index i = 0; i < SIZE(c.statement.size()); ++i)
-        c.statement[i].free();
+    if (parsed || !incomplete)
+        stream->recorder.clear();
+
+    if (!parsed && !incomplete)
+        skip_statement = true;
+       
+    for (index i = 0; i < SIZE(statement.size()); ++i)
+        statement[i].free();
+
+    if (parse_state.in_state != sys::io::StreamOK &&
+        parse_state.in_state != sys::io::StreamBlocked)
+        return false;
+
+    res = stream->conn.flush();
+    if (res != sys::io::StreamOK &&
+        res != sys::io::StreamBlocked)
+        return false;
+    else
+        return true;
 }
 
 } // namespace anon
@@ -169,7 +175,6 @@ bool ReplServer::start(const IPAddr& listen_addr, uint16 port) {
     
     if (listen(SP_TCP, listen_addr, port, SM_NONBLOCKING, &self->server) != SE_OK)
         return false;
-    self->clients.push_back(Client());
     self->running = true;
     return true;
 }
@@ -184,31 +189,25 @@ Ref<EventHandler<InputEvent> >& ReplServer::ioHandler() {
 
 void ReplServer::acceptClients() {
     ASSERT(self->running);
-    
-    while (accept(self->server,
-                  &self->clients[self->clients.size() - 1].stream.handle) == SE_OK) {
-        
-        Client& c = self->clients[self->clients.size() - 1];
-        c.id = self->next_id++;
+
+    Handle handle;
+    while (accept(self->server, &handle) == SE_OK) {
         INFO("accepted client");
-        if (elevate(c.stream.handle, mode(c.stream.handle) | HM_NONBLOCKING) != HE_OK) {
+        if (elevate(handle, mode(handle) | HM_NONBLOCKING) != HE_OK) {
             ERR("couldnt set nonblocking handle mode, closing connection");
-            c.stream.close();
+            sys::io::close(handle);
         } else {
-            initClient(c);
-            self->clients.push_back(Client());
+            self->clients.push_back(Client(self->next_id++, handle));
         }
     }
 }
 
 void ReplServer::handleClients() {
-
     ASSERT(self->running);
     
-    for (index i = 0; i < SIZE(self->clients.size() - 1); ++i) {
-        if (!handleClient(self->engine, self->clients[i])) {
+    for (index i = 0; i < SIZE(self->clients.size()); ++i) {
+        if (!self->clients[i].handle(self->engine)) {
             INFO("closing connection to client");
-            closeClient(self->clients[i]);
             self->clients.erase(self->clients.begin() + i);
         }
     }
@@ -224,11 +223,7 @@ void ReplServer::handleInputEvent(const Event<InputEvent>&) {
 }
 
 void ReplServer::shutdown() {
-
     ASSERT(self->running);
-    
-    for (index i = 0; i < SIZE(self->clients.size() - 1); ++i)
-        closeClient(self->clients[i]);
 
     self->clients.clear();
     close(self->server);

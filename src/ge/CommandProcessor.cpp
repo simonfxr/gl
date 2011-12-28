@@ -1,6 +1,9 @@
+#define ERROR_NO_IMPLICIT_OUT
+
 #include "ge/CommandProcessor.hpp"
 #include "ge/Event.hpp"
 #include "ge/Tokenizer.hpp"
+#include "ge/Engine.hpp"
 
 #include "err/err.hpp"
 
@@ -52,18 +55,18 @@ bool CommandProcessor::define(const Ref<Command>& comm, bool unique) {
     
 bool CommandProcessor::define(const std::string comname, const Ref<Command>& comm, bool unique) {
     if (!comm) {
-        ERR((comname + ": null command").c_str());
+        ERR(engine().out(), (comname + ": null command").c_str());
         return false;
     }
 
     if (comname.empty()) {
-        ERR("cannot define command without name");
+        ERR(engine().out(), "cannot define command without name");
         return false;
     }
     
     bool dup = command(comname);
     if (dup && unique) {
-        ERR(("duplicate command name: " + comname).c_str());
+        ERR(engine().out(), ("duplicate command name: " + comname).c_str());
         return false;
     }
     
@@ -74,7 +77,7 @@ bool CommandProcessor::define(const std::string comname, const Ref<Command>& com
 bool CommandProcessor::exec(const std::string& comname, Array<CommandArg>& args) {
     Ref<Command> com = command(comname);
     if (!com) {
-        ERR(("command not found: " + comname).c_str());
+        ERR(engine().out(), ("command not found: " + comname).c_str());
         return false;
     }
     return exec(com, args, comname);
@@ -82,7 +85,7 @@ bool CommandProcessor::exec(const std::string& comname, Array<CommandArg>& args)
 
 bool coerceKeyCombo(CommandArg& arg) {
     UNUSED(arg);
-    ERR_ONCE("not yet implemented");
+    ERR_ONCE(ERROR_DEFAULT_STREAM, "not yet implemented");
     // TODO: implement
     return false;
 }
@@ -101,14 +104,14 @@ bool CommandProcessor::exec(Array<CommandArg>& args) {
             comm = command(*com_name);
         }
     } else {
-        ERR("cannot execute command: invalid type");
+        ERR(engine().out(), "cannot execute command: invalid type");
         return false;
     }
 
     if (!comm) {
         comm = command(*com_name);
         if (!comm) {
-            ERR("unknown command: " + *com_name);
+            ERR(engine().out(), "unknown command: " + *com_name);
             return false;
         }
     }
@@ -121,7 +124,7 @@ bool CommandProcessor::exec(Array<CommandArg>& args) {
 bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const std::string& comname) {
 
     if (!com) {
-        ERR("Command == 0");
+        ERR(engine().out(), "Command == 0");
         return false;
     }
 
@@ -140,7 +143,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
            err << " or more";
         err << " got " << args.size();
         err << " (rest_args=" << rest_args << ", nparams=" << nparams << ")";
-        ERR(err.str());
+        ERR(engine().out(), err.str());
     }
 
     std::vector<Ref<Command> > keepAlive;
@@ -173,7 +176,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
                         else
                             err << "executing unknown Command: ";
                         err << " command not found: " << *args[i].string;
-                        ERR(err.str());
+                        ERR(engine().out(), err.str());
                         return false;
                     }
                     keepAlive.push_back(comArg);
@@ -188,7 +191,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
                         else
                             err << "executing unknown Command: ";
                         err << " invalid KeyCombo, position: " << (i + 1);
-                        ERR(err.str());
+                        ERR(engine().out(), err.str());
                         return false;
                     }
                 } else {
@@ -200,7 +203,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
                     err << " type mismatch, position: " << (i + 1);
                     err << ", expected: " << prettyCommandType(val_type);
                     err << ", got: " << prettyCommandType(args[i].type);
-                    ERR(err.str());
+                    ERR(engine().out(), err.str());
                     return false;
                 }
             } else if (val_type == CommandRef) {
@@ -234,7 +237,7 @@ not_found:
     sys::io::stdout() << "loading script: " << name << " -> not found" << sys::io::endl;
     
     if (!quiet)
-        ERR(("opening script: " + name).c_str());
+        ERR(engine().out(), ("opening script: " + name).c_str());
 
     return false;
 }
@@ -248,7 +251,7 @@ bool CommandProcessor::loadStream(sys::io::InStream& inp, const std::string& inp
         ok = tokenize(state, args);
         if (!ok) {
             if (state.in_state != sys::io::StreamEOF)
-                ERR("parsing failed: " + state.filename);
+                ERR(engine().out(), "parsing failed: " + state.filename);
             else
                 ok = true;
             done = true;
@@ -257,7 +260,7 @@ bool CommandProcessor::loadStream(sys::io::InStream& inp, const std::string& inp
         
         ok = execCommand(args);
         if (!ok) {
-            ERR("executing command");
+            ERR(engine().out(), "executing command");
             done = true;
             goto next;
         }
@@ -297,7 +300,7 @@ bool CommandProcessor::execCommand(Array<CommandArg>& args) {
         err << "executing command failed: ";
         prettyCommandArgs(err, args);
         err << std::endl;
-        ERR(err.str());
+        ERR(engine().out(), err.str());
     }
     
     return ok;
@@ -311,9 +314,9 @@ CommandParamType CommandProcessor::commandParamType(CommandType type) {
     case KeyCombo: return KeyComboParam;
     case CommandRef: return CommandParam;
     case VarRef: return VarRefParam;
-    case Nil: ERR("Nil has no declarable type");
+    case Nil: ERR(ERROR_DEFAULT_STREAM, "Nil has no declarable type");
     default:
-        ERR("invalid type: returning IntegerParam");
+        ERR(ERROR_DEFAULT_STREAM, "invalid type: returning IntegerParam");
         return IntegerParam;
     }
 }
@@ -321,13 +324,13 @@ CommandParamType CommandProcessor::commandParamType(CommandType type) {
 CommandArg CommandProcessor::cast(const CommandArg& val, CommandType type) {
     UNUSED(val);
     UNUSED(type);
-    FATAL_ERR("not yet implemented");
+    FATAL_ERR(ERROR_DEFAULT_STREAM, "not yet implemented");
 }
 
 bool CommandProcessor::isAssignable(CommandParamType lval, CommandType rval) {
     UNUSED(lval);
     UNUSED(rval);
-    FATAL_ERR("not yet implemented");
+    FATAL_ERR(ERROR_DEFAULT_STREAM, "not yet implemented");
 }       
 
 const char *prettyCommandType(CommandType type) {

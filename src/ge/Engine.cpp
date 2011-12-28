@@ -97,6 +97,7 @@ sys::io::OutStream& Engine::out() {
 
 void Engine::out(sys::io::OutStream& s) {
     self->out = &s;
+    shaderManager().out(s);
 }
 
 float Engine::now() { return SELF->now(); }

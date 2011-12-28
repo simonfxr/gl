@@ -16,11 +16,13 @@ using namespace defs;
 
 struct OutStream;
 struct InStream;
+struct StreamEndl;
 
 OutStream& stdout();
 OutStream& stderr();
 
-OutStream& endl(OutStream&);
+// OutStream& endl(OutStream&);
+extern const StreamEndl endl;
 
 enum StreamResult {
     StreamOK,
@@ -272,7 +274,7 @@ OutStream& operator <<(OutStream& out, const std::string& str);
 
 OutStream& operator <<(OutStream& out, const char *str);
 
-OutStream& operator <<(OutStream& out, OutStream& (*func)(OutStream&));
+OutStream& operator <<(OutStream& out, const StreamEndl&);
 
 OutStream& operator <<(OutStream& out, std::ostringstream&);
 

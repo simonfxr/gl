@@ -64,7 +64,7 @@ struct VertexDesc {
                 return i;
         }
         
-        FATAL_ERR("invalid attribute offset");
+        FATAL_ERR(ERROR_DEFAULT_STREAM, "invalid attribute offset");
     }
 
     const VertexDescBase generic() const {

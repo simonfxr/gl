@@ -122,7 +122,7 @@ mat4_t transpose(const mat4_t& A) {
 
 real determinant(const mat4_t& A) {
     UNUSED(A);
-    FATAL_ERR("not yet implemented");
+    FATAL_ERR(ERROR_DEFAULT_STREAM, "not yet implemented");
 }
 
 mat4_t inverse(const mat4_t& A) {
@@ -165,7 +165,7 @@ mat4_t inverse(const mat4_t& A) {
 
     real det = m[0]*inv[0] + m[1]*inv[4] + m[2]*inv[8] + m[3]*inv[12];
     if (det == 0.f) {
-        ERR("matrix has no inverse");
+        ERR(ERROR_DEFAULT_STREAM, "matrix has no inverse");
         return mat4(0.f);
     }
 

@@ -120,7 +120,7 @@ void initPreprocessor(ShaderCompiler& compiler, GLSLPreprocessor& proc) {
         glversdef << "#version " << m.shaderVersion()
                   << (m.shaderProfile() == ShaderManager::CoreProfile
                       ? " core" : " compatibility")
-                  << sys::io::endl;
+                  << std::endl;
         proc.appendString(glversdef.str());
     }
 

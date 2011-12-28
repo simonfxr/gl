@@ -1,53 +1,130 @@
 #include "err/err.hpp"
 #include <stdlib.h>
 
+#ifdef UNWIND_STACKTRACES
+#define UNW_LOCAL_ONLY
+
+#include <elfutils/libdwfl.h>
+#include <libunwind.h>
+#include <assert.h>
+#include <unistd.h>
+#endif
+
 namespace err {
 
-void error(const Location& loc, sys::io::OutStream& out, LogLevel lvl, const std::string& mesg) {
-    error(loc, out, lvl, mesg.c_str());
+namespace {
+
+void print_stacktrace(sys::io::OutStream&, int skip = 0) ATTRS(ATTR_NOINLINE);
+
+#ifdef UNWIND_STACKTRACES
+
+void debugInfo(sys::io::OutStream& out, const void *ip) {
+
+    char *debuginfo_path = 0;
+
+    Dwfl_Callbacks callbacks;
+    callbacks.find_elf = dwfl_linux_proc_find_elf;
+    callbacks.find_debuginfo = dwfl_standard_find_debuginfo;
+    callbacks.debuginfo_path = &debuginfo_path;
+
+    Dwfl *dwfl = dwfl_begin(&callbacks);
+    assert(dwfl!=NULL);
+
+    assert(dwfl_linux_proc_report (dwfl, getpid())==0);
+    assert(dwfl_report_end (dwfl, NULL, NULL)==0);
+
+    Dwarf_Addr addr = Dwarf_Addr(ip);
+
+    Dwfl_Module *module = dwfl_addrmodule (dwfl, addr);
+
+    const char *function_name = dwfl_module_addrname(module, addr);
+
+    out << function_name << "(";
+
+    Dwfl_Line *line = dwfl_getsrc(dwfl, addr);
+    if (line != 0) {
+        int nline;
+        Dwarf_Addr addr;
+        const char *filename = dwfl_lineinfo(line, &addr, &nline, 0, 0, 0);
+        out << filename << ":" << nline;
+    } else {
+        out << "ip: " << ip;
+    }
 }
 
-void error(const Location& loc, sys::io::OutStream& out, LogLevel lvl, const char *mesg) {
-    printError(out, NULL, loc, lvl, mesg);
+void print_stacktrace(sys::io::OutStream& out, int skip) {
+    unw_context_t uc;
+    unw_getcontext(&uc);
+
+    unw_cursor_t cursor;
+    unw_init_local(&cursor, &uc);
+
+    out << "  stacktrace: (most recent call first)" << sys::io::endl;
+
+    while (unw_step(&cursor) > 0) {
+        unw_word_t ip;
+        unw_get_reg(&cursor, UNW_REG_IP, &ip);
+
+        // unw_word_t offset;
+        // char name[256];
+        // unw_get_proc_name(&cursor, name,sizeof(name), &offset);
+
+        if (skip <= 0) {
+            out << "    ";
+            debugInfo(out, (void *)((void **) ip - 1));
+            out << ")" << sys::io::endl;
+        } else {
+            skip--;
+        }
+    }
+
+    out << "  end of stacktrace" << sys::io::endl;
+}
+
+#else
+
+void print_stacktrace(sys::io::OutStream& out, int) {
+    out << "  stacktrace: not available" << sys::io::endl;
+}
+
+#endif
+
+} // namespace anon
+
+void error(const Location& loc, LogLevel lvl, const ErrorArgs& args) {
+    printError(args.out, 0, loc, lvl, args.mesg);
 
     if (lvl == FatalError || lvl == Assertion || lvl == DebugAssertion)
         abort();
 }
 
-void fatalError(const Location& loc, sys::io::OutStream& out, LogLevel lvl, const std::string& mesg) {
-    fatalError(loc, out, lvl, mesg.c_str());
+void fatalError(const Location& loc, LogLevel lvl, const ErrorArgs& args) {
+    error(loc, lvl, args);
     abort(); // keep the control flow analyser happy
-}
-
-void fatalError(const Location& loc, sys::io::OutStream& out, LogLevel lvl, const char *mesg) {
-    error(loc, out, lvl, mesg);
-    abort(); // keep the control flow analyser happy
-}
-
-void printError(sys::io::OutStream& out, const char *type, const Location& loc, LogLevel lvl, const std::string& mesg) {
-    printError(out, type, loc, lvl, mesg.c_str());
 }
 
 void printError(sys::io::OutStream& out, const char *type, const Location& loc, LogLevel lvl, const char *mesg) {
     const char *prefix = type;
+    bool st = false;
 
     if (prefix == 0) {
         switch (lvl) {
-        case DebugError: prefix = "ERROR (Debug)"; break;
-        case DebugAssertion: prefix = "ASSERTION failed (Debug)"; break;
+        case DebugError: prefix = "ERROR (Debug)"; st = true; break;
+        case DebugAssertion: prefix = "ASSERTION failed (Debug)"; st = true; break;
         case Warn: prefix = "WARNING"; break;
-        case Assertion: prefix = "ASSERTION failed"; break;
-        case Error: prefix = "ERROR"; break;
-        case ErrorOnce: prefix = "ERROR (only reported once)"; break;
-        case FatalError: prefix = "FATAL ERROR"; break;
+        case Assertion: prefix = "ASSERTION failed"; st = true; break;
+        case Error: prefix = "ERROR"; st = true; break;
+        case ErrorOnce: prefix = "ERROR (only reported once)"; st = true; break;
+        case FatalError: prefix = "FATAL ERROR"; st = true; break;
         case Info: prefix = "INFO"; break;
-        default: prefix = "UNKNOWN"; break;
+        default: prefix = "UNKNOWN"; st = true; break;
         }
     }
 
     out << "[" << prefix << "]"
         << " in " << loc.function << sys::io::endl
         << "  at " << loc.file << ":" << loc.line << sys::io::endl;
+
 
     if (loc.operation != 0)
         out << "  operation: " << loc.operation << sys::io::endl;
@@ -56,6 +133,9 @@ void printError(sys::io::OutStream& out, const char *type, const Location& loc, 
         out << "  assertion: " << mesg << sys::io::endl;
     else
         out << "  message: " << mesg << sys::io::endl;
+    
+    if (st)
+        print_stacktrace(out);
 }
 
 namespace {
@@ -73,7 +153,6 @@ struct LogState {
         null(true),
         loc(_CURRENT_LOCATION),
         level(Info),
-        null_stream(),
         out(&null_stream)
         {}
 };
@@ -126,7 +205,7 @@ sys::io::OutStream& logWrite(const std::string& msg) {
 
 sys::io::OutStream& logWriteErr(const std::string& err, const std::string& msg) {
     if (checkLogState())
-        error(log_state->loc, *log_state->out, log_state->level, "raised error: " + err + ", reason: " + msg);
+        error(log_state->loc, log_state->level, ErrorArgs(*log_state->out, "raised error: " + err + ", reason: " + msg));
     return *log_state->out;
 }
 
@@ -145,7 +224,7 @@ void logEnd() {
 void logRaiseError(const Location& loc, const LogDestination& dest, LogLevel lvl, const std::string& err, const std::string& msg) {
     if (lvl < dest.minimumLevel)
         return;
-    error(loc, dest.out, lvl, "raised error: " + err + ", reason: " + msg);
+    error(loc, lvl, ErrorArgs(dest.out, "raised error: " + err + ", reason: " + msg));
 }
 
 } // namespace err

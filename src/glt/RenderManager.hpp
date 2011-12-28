@@ -43,7 +43,7 @@ struct Projection {
             perspective.z_far = 100.f;
             break;
         default:
-            FATAL_ERR("invalid Projection::Type enum");
+            FATAL_ERR(ERROR_DEFAULT_STREAM, "invalid Projection::Type enum");
         }
     }
 

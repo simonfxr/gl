@@ -174,7 +174,7 @@ void ARBDebug::printDebugMessages(const err::Location& loc) {
              << ", type: " << stype << ", id: " << id
              << "  message: " << message_buffer;
 
-        err::printError(sys::io::stdout(), "OpenGL DEBUG", loc, err::Error, mesg.str());               }
+        err::printError(sys::io::stdout(), "OpenGL DEBUG", loc, err::Error, mesg.str().c_str());               }
 }
 
 struct AMDDebug : public GLDebug {
@@ -252,7 +252,7 @@ void AMDDebug::printDebugMessages(const err::Location& loc) {
         mesg << "category: " << scat << ", severity: " << ssev
              << ", id: " << id << "  message: " << message_buffer;
 
-        err::printError(sys::io::stdout(), "OpenGL DEBUG", loc, err::Error, mesg.str());
+        err::printError(sys::io::stdout(), "OpenGL DEBUG", loc, err::Error, mesg.str().c_str());
     }
 }
 
@@ -261,7 +261,7 @@ GLDebug *glDebug = new NoDebug();
 } // namespace anon
 
 void printGLError(const err::Location& loc, GLenum err) {
-    err::printError(sys::io::stdout(), "OpenGL Error", loc, err::Error, getGLErrorString(err));
+    err::printError(sys::io::stdout(), "OpenGL Error", loc, err::Error, getGLErrorString(err).c_str());
 }
 
 bool checkForGLError(const err::Location& loc) {

@@ -1,3 +1,5 @@
+#define ERROR_NO_IMPLICIT_OUT
+
 #include "ge/Commands.hpp"
 #include "ge/Engine.hpp"
 #include "ge/CommandParams.hpp"
@@ -29,7 +31,7 @@ void runPrintContextInfo(const Event<CommandEvent>& e) {
 void runPrintMemInfo(const Event<CommandEvent>& e) {
     glt::GLMemInfo info;
     if (!glt::getMemInfo(&info)) {
-        ERR("couldnt query amount of free memory");
+        ERR(e.info.engine.out(), "couldnt query amount of free memory");
         return;
     }
 
@@ -54,13 +56,12 @@ void runReloadShaders(const Event<CommandEvent>& e, const Array<CommandArg>& arg
         for (index i = 0; i < args.size(); ++i) {
             Ref<glt::ShaderProgram> prog = sm.program(*args[i].string);
             if (!prog) {
-                WARN("reloadShaders: " + *args[i].string + " not defined");
+                WARN(e.info.engine.out(), "reloadShaders: " + *args[i].string + " not defined");
             } else {
                 if (!prog->reload())
-                    WARN("reloadShaders: failed to reload program " + *args[i].string);
+                    WARN(e.info.engine.out(), "reloadShaders: failed to reload program " + *args[i].string);
             }
         }
-        ERR("reloadShaders: selectively shader reloading not yet implemented");
     }
 }
 
@@ -82,8 +83,8 @@ void runListCachedShaders(const Event<CommandEvent>& e) {
     e.info.engine.out() << n << " shaders cached" << sys::io::endl;
 }
 
-void runListBindings(const Event<CommandEvent>&) {
-    ERR("list bindings not yet implemented");
+void runListBindings(const Event<CommandEvent>& e) {
+    ERR(e.info.engine.out(), "list bindings not yet implemented");
 }
 
 struct BindKey : public Command {
@@ -92,7 +93,7 @@ struct BindKey : public Command {
     void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
         Ref<Command>& comm = *args[1].command.ref;
         if (!comm) {
-            ERR("cannot bind key: null command");
+            ERR(e.info.engine.out(), "cannot bind key: null command");
             return;
         }
         KeyBinding bind = args[0].keyBinding->clone();
@@ -118,12 +119,12 @@ void runHelp(const Event<CommandEvent>& ev) {
 
 void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     if (args.size() == 0) {
-        ERR("bindShader: need at least one argument");
+        ERR(e.info.engine.out(), "bindShader: need at least one argument");
         return;
     }
 
     if (!args[0].type == String) {
-        ERR("bindShader: first argument not a string");
+        ERR(e.info.engine.out(), "bindShader: first argument not a string");
         return;
     }
 
@@ -132,28 +133,28 @@ void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) 
     index i;
     for (i = 1; i < args.size() && args[i].type == String; ++i) {
         if (!prog->addShaderFile(*args[i].string)) {
-            ERR("bindShader: compilation failed");
+            ERR(e.info.engine.out(), "bindShader: compilation failed");
             return;
         }
     }
 
     for (; i + 1 < args.size() && args[i].type == Integer && args[i + 1].type == String; i += 2) {
         if (args[i].integer < 0) {
-            ERR("bindShader: negative index");
+            ERR(e.info.engine.out(), "bindShader: negative index");
         }
         if (!prog->bindAttribute(*args[i + 1].string, GLuint(args[i].integer))) {
-            ERR("bindShader: couldnt bind attribute");
+            ERR(e.info.engine.out(), "bindShader: couldnt bind attribute");
             return;
         }
     }
 
     if (i != args.size()) {
-        ERR("bindShader: invalid argument");
+        ERR(e.info.engine.out(), "bindShader: invalid argument");
         return;
     }
 
     if (prog->wasError() || !prog->tryLink()) {
-        ERR("bindShader: linking failed");
+        ERR(e.info.engine.out(), "bindShader: linking failed");
         return;
     }
 
@@ -184,8 +185,8 @@ void runDescribe(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     }
 }
 
-void runEval(const Event<CommandEvent>&, const Array<CommandArg>&) {
-    ERR("not yet implemented");
+void runEval(const Event<CommandEvent>& e, const Array<CommandArg>&) {
+    ERR(e.info.engine.out(), "not yet implemented");
 }
 
 void runLoad(const Event<CommandEvent>& ev, const Array<CommandArg>& args) {
@@ -197,13 +198,13 @@ void runLoad(const Event<CommandEvent>& ev, const Array<CommandArg>& args) {
 void runAddShaderPath(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     for (defs::index i = 0; i < args.size(); ++i)
         if (!e.info.engine.shaderManager().addShaderDirectory(*args[i].string, true))
-            ERR("not a directory: " + *args[i].string);
+            ERR(e.info.engine.out(), "not a directory: " + *args[i].string);
 }
 
 void runPrependShaderPath(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
     for (defs::index i = args.size(); i > 0; --i) {
         if (!e.info.engine.shaderManager().prependShaderDirectory(*args[i - 1].string, true))
-            ERR("not a directory: " + *args[i - 1].string);
+            ERR(e.info.engine.out(), "not a directory: " + *args[i - 1].string);
     }
 }
 
@@ -254,7 +255,7 @@ void runStartReplServer(const Event<CommandEvent>& ev, const Array<CommandArg>& 
     ReplServer& serv = e.replServer();
 
     if (serv.running()) {
-        ERR("REPL server already running");
+        ERR(ev.info.engine.out(), "REPL server already running");
         return;
     }
 
@@ -262,16 +263,16 @@ void runStartReplServer(const Event<CommandEvent>& ev, const Array<CommandArg>& 
     uint16 p16 = uint16(port);
     
     if (port < 0 || p16 != port) {
-        ERR("invalid port");
+        ERR(ev.info.engine.out(), "invalid port");
         return;
     }
 
     if (!serv.start(sys::io::IPA_LOCAL, p16)) {
-        ERR("failed to start REPL server");
+        ERR(ev.info.engine.out(), "failed to start REPL server");
         return;
     }
 
-    INFO("REPL server started");
+    INFO(ev.info.engine.out(), "REPL server started");
 
     e.events().handleInput.reg(serv.ioHandler());
     
