@@ -84,7 +84,7 @@ void runListCachedShaders(const Event<CommandEvent>& e) {
 }
 
 void runListBindings(const Event<CommandEvent>& e) {
-    ERR(e.info.engine.out(), "list bindings not yet implemented");
+    e.info.engine.keyHandler().handleListBindings(e);
 }
 
 struct BindKey : public Command {

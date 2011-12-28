@@ -5,7 +5,7 @@
 
 namespace ge {
 
-void prettyCommandArg(std::ostream& out, const ge::CommandArg& arg, bool first);
+void prettyCommandArg(sys::io::OutStream& out, const ge::CommandArg& arg, bool first);
 
 CommandArg::CommandArg() { memset(this, 0, sizeof *this); }
 
@@ -28,7 +28,7 @@ void CommandArg::free() {
     memset(this, 0, sizeof *this);
 }
 
-void prettyKeyCombo(std::ostream& out, const KeyBinding& bind) {
+void prettyKeyCombo(sys::io::OutStream& out, const KeyBinding& bind) {
     const char *sep = "[";
     for (defs::index i = 0; i < bind.size(); ++i) {
         out << sep;
@@ -54,7 +54,7 @@ void prettyKeyCombo(std::ostream& out, const KeyBinding& bind) {
     out << "]";
 }
 
-void prettyQuot(std::ostream& out, const Quotation& q) {
+void prettyQuot(sys::io::OutStream& out, const Quotation& q) {
     if (q.size() == 0) {
         out << " { } ";
         return;
@@ -70,11 +70,11 @@ void prettyQuot(std::ostream& out, const Quotation& q) {
     out << " }";
 }
 
-void prettyCommandArg(std::ostream& out, const ge::CommandArg& arg) {
+void prettyCommandArg(sys::io::OutStream& out, const ge::CommandArg& arg) {
     prettyCommandArg(out, arg, false);
 }
 
-void prettyCommandArg(std::ostream& out, const ge::CommandArg& arg, bool first) {
+void prettyCommandArg(sys::io::OutStream& out, const ge::CommandArg& arg, bool first) {
     switch (arg.type) {
     case String:
         out << '"' << *arg.string << '"'; break;
@@ -97,7 +97,7 @@ void prettyCommandArg(std::ostream& out, const ge::CommandArg& arg, bool first) 
     }
 }
 
-void prettyCommandArgs(std::ostream& out, const Array<CommandArg>& args) {
+void prettyCommandArgs(sys::io::OutStream& out, const Array<CommandArg>& args) {
     const char *sep = "";
     for (defs::index i = 0; i < args.size(); ++i) {
         out << sep;

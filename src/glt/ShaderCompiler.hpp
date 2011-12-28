@@ -35,6 +35,7 @@ typedef std::pair<std::string, sys::fs::ModificationTime> ShaderInclude;
 typedef std::vector<ShaderInclude> ShaderIncludes;
 typedef std::string ShaderSourceFilePath; // absolute path
 typedef std::vector<Ref<ShaderSource> > ShaderDependencies;
+typedef std::map<ShaderSourceKey, Ref<ShaderSource> > ShaderRootDependencies;
 
 typedef uint32 ShaderCompileFlags;
 

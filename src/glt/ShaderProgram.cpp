@@ -55,6 +55,7 @@ struct ShaderProgram::Data {
     GLuint program;
     ShaderManager& sm;
     ShaderObjects shaders;
+    ShaderRootDependencies rootdeps;
     Attributes attrs;
     bool linked;
 
@@ -106,9 +107,10 @@ bool ShaderProgram::reload() {
     ShaderObjects newshaders;
     CompileState cstate(self->sm.shaderCompiler(), newshaders);
 
-    for (ShaderObjects::iterator it = self->shaders.begin();
-         it != self->shaders.end(); ++it) {
-        Ref<CompileJob> job = CompileJob::reload(it->second);
+    for (ShaderRootDependencies::const_iterator it = self->rootdeps.begin();
+         it != self->rootdeps.end(); ++it) {
+        
+        Ref<CompileJob> job = CompileJob::reload(self->shaders[it->first]);
         cstate.enqueue(job);
     }
 
@@ -193,8 +195,11 @@ void ShaderProgram::Data::handleCompileError(ShaderCompilerError::Type) {
 
 bool ShaderProgram::addShaderSrc(const std::string& src, ShaderManager::ShaderType type) {
     CompileState cstate(self->sm.shaderCompiler(), self->shaders);
+    Ref<ShaderSource> source(new StringSource(type, src));
+    
     {
-        Ref<CompileJob> job = CompileJob::load(makeRef<ShaderSource>(new StringSource(type, src)));
+        self->rootdeps.insert(std::make_pair(source->key, source));
+        Ref<CompileJob> job = CompileJob::load(source);
         cstate.enqueue(job);
     }
     
@@ -202,6 +207,7 @@ bool ShaderProgram::addShaderSrc(const std::string& src, ShaderManager::ShaderTy
     
     if (cstate.wasError()) {
         self->handleCompileError(cstate.getError());
+        self->rootdeps.erase(source->key);
         return false;
     }
 
@@ -224,8 +230,11 @@ bool ShaderProgram::addShaderFile(const std::string& file0, ShaderManager::Shade
     ASSERT(!file.empty());
     
     CompileState cstate(self->sm.shaderCompiler(), self->shaders);
+    Ref<ShaderSource> source(new FileSource(type, file));
+
     {
-        Ref<CompileJob> job = CompileJob::load(makeRef<ShaderSource>(new FileSource(type, file)));
+        self->rootdeps.insert(std::make_pair(source->key, source));
+        Ref<CompileJob> job = CompileJob::load(source);
         cstate.enqueue(job);
     }
 
@@ -233,6 +242,7 @@ bool ShaderProgram::addShaderFile(const std::string& file0, ShaderManager::Shade
     
     if (cstate.wasError()) {
         self->handleCompileError(cstate.getError());
+        self->rootdeps.erase(source->key);
         return false;
     }
 

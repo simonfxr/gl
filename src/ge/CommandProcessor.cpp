@@ -297,8 +297,9 @@ bool CommandProcessor::execCommand(Array<CommandArg>& args) {
 
     if (!ok) {
         std::ostringstream err;
+        sys::io::StdOutStream errout(err);
         err << "executing command failed: ";
-        prettyCommandArgs(err, args);
+        prettyCommandArgs(errout, args);
         err << std::endl;
         ERR(engine().out(), err.str());
     }

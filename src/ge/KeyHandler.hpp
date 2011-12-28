@@ -42,6 +42,8 @@ struct KeyHandler {
 
     EventSource<KeyPressed>& keyPressedEvent();
 
+    void handleListBindings(const Event<CommandEvent>&);
+
 private:
     struct Data;
     Data * const self;

@@ -1,4 +1,5 @@
 #include "ge/KeyHandler.hpp"
+#include "ge/Engine.hpp"
 
 #include <map>
 #include <cstring>
@@ -156,6 +157,19 @@ void KeyHandler::handleCommands() {
     }
     
     ++self->frame_id;
+}
+
+void KeyHandler::handleListBindings(const Event<CommandEvent>& e) {
+    sys::io::OutStream& out = e.info.engine.out();
+    CommandBindings::const_iterator it = self->bindings.begin();
+    for (; it != self->bindings.end(); ++it) {
+        const Ref<KeyBinding>& bind = it->first.binding;
+        out << "  ";
+        prettyKeyCombo(out, *bind);
+        out << " -> ";
+        out << it->second->name();
+        out << sys::io::endl;
+    }    
 }
 
 } // namespace ge

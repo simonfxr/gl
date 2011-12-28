@@ -5,9 +5,11 @@
 
 #include "data/Array.hpp"
 
+#include "sys/io/Stream.hpp"
+
 #include <string>
 #include <vector>
-#include <ostream>
+
 
 template <typename T>
 struct Ref;
@@ -63,11 +65,11 @@ struct CommandArg {
     void free();
 };
 
-void prettyKeyCombo(std::ostream& out, const KeyBinding& binding);
+void prettyKeyCombo(sys::io::OutStream& out, const KeyBinding& binding);
 
-void prettyCommandArg(std::ostream& out, const CommandArg& arg);
+void prettyCommandArg(sys::io::OutStream& out, const CommandArg& arg);
 
-void prettyCommandArgs(std::ostream& out, const Array<CommandArg>& args);
+void prettyCommandArgs(sys::io::OutStream& out, const Array<CommandArg>& args);
 
 } // namepspace ge
 
