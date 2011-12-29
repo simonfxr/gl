@@ -53,6 +53,8 @@ real pow(real x, defs::int32 n) PURE_FUNC;
 
 real pow(real x, real y) PURE_FUNC;
 
+real floor(real x) PURE_FUNC;
+
 defs::int32 signum(real x) PURE_FUNC;
 
 // bool signbit(real x) PURE_FUNC;

@@ -100,6 +100,9 @@ real pow(real x, real y) {
     return powf(x, y);
 }
 
+real floor(real x) {
+    return ::floorf(x);
+}
 
 int32 signum(real x) {
     return x < 0.f ? -1 :

@@ -204,7 +204,7 @@ void MeshBase::initVertexAttribs() {
     for (defs::index i = 0; i < desc.nattributes; ++i) {
             const Attr<Any>& a = desc.attributes[i];
             GL_CHECK(glVertexAttribPointer(GLuint(i), a.ncomponents, a.component_type,
-                                           a.normalized ? GL_TRUE : GL_FALSE,
+                                           gl_bool(a.normalized),
                                            desc.sizeof_vertex,
                                            reinterpret_cast<void *>(a.offset)));
     }

@@ -27,11 +27,11 @@ size LOCAL_CONSTANT MIN_NUM_ELEMENTS = 8;
 
 } // namespace anon
 
-#define _TYPE_WITNESS(t) static_cast<t *>(0)
+#define _TYPE_WITNESS(t) t()
 
-#define VERTEX_ATTR(type, field) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), _TYPE_WITNESS(type)->field), AS_STRING(field))
+#define VERTEX_ATTR(type, field) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), _TYPE_WITNESS(type).field), AS_STRING(field))
 
-#define VERTEX_ATTR_AS(type, field, fieldtype) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), *_TYPE_WITNESS(fieldtype)), AS_STRING(field))
+#define VERTEX_ATTR_AS(type, field, fieldtype) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), _TYPE_WITNESS(fieldtype)), AS_STRING(field))
 
 #define VERTEX_ATTRS(type, ...)                                         \
     ({ static const glt::Attr<type> _vertex_attrs[] = { __VA_ARGS__ };  \

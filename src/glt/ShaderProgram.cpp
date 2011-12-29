@@ -292,7 +292,7 @@ bool ShaderProgram::link() {
 
     GLint success;
     GL_CHECK(glGetProgramiv(self->program, GL_LINK_STATUS, &success));
-    bool ok = success == GL_TRUE;
+    bool ok = gl_unbool(success);
     LOG_PUT(*this, ok ? "success" : "failed") << " (" << (wct * 1000) << " ms)" << sys::io::endl;
     LOG_END(*this);
 

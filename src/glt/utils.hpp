@@ -60,6 +60,18 @@ inline const char *gl_unstr(const GLubyte *glstr) {
     return reinterpret_cast<const char *>(glstr);
 }
 
+inline GLboolean gl_bool(bool b) {
+    return b ? GLboolean(GL_TRUE) : GLboolean(GL_FALSE);
+}
+
+inline bool gl_unbool(GLboolean b) {
+    return b != GLboolean(GL_FALSE) ? true : false;
+}
+
+inline bool gl_unbool(GLint b) {
+    return b != GLint(GL_FALSE) ? true : false;
+}
+
 } // namespace glt
 
 #endif

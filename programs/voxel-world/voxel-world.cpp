@@ -1100,13 +1100,13 @@ static float noise3D(const vec3_t& pnt) {
     float y = pnt[1];
     float z = pnt[2];
     
-    int X = (int) floor(x) & 255,                  
-        Y = (int) floor(y) & 255,                  
-        Z = (int) floor(z) & 255;
+    int X = (int) math::floor(x) & 255,                  
+        Y = (int) math::floor(y) & 255,                  
+        Z = (int) math::floor(z) & 255;
     
-    x -= floor(x);                                
-    y -= floor(y);                                
-    z -= floor(z);
+    x -= math::floor(x);                                
+    y -= math::floor(y);                                
+    z -= math::floor(z);
     
     float u = fade(x);                                
     float v = fade(y);                                

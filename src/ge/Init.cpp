@@ -33,7 +33,7 @@ void EngineInitializers::reg(RunLevel lvl, const Ref<EventHandler<InitEvent> >& 
 }
 
 static void runInitGLEW(const Event<InitEvent>& e) {
-    e.info.engine.out() << "initializing GLEW - experimental option: " << (glewExperimental == GL_TRUE ? "yes" : "no") << sys::io::endl;
+    e.info.engine.out() << "initializing GLEW - experimental option: " << (glt::gl_unbool(glewExperimental) ? "yes" : "no") << sys::io::endl;
     GLenum err = glewInit();
 
     if (GLEW_OK != err) {

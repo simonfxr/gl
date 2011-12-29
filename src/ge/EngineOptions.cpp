@@ -1,5 +1,6 @@
 #include "opengl.hpp"
 #include "ge/EngineOptions.hpp"
+#include "glt/utils.hpp"
 
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
@@ -176,7 +177,7 @@ bool State::option(OptionCase opt, const char *arg) {
             CMDWARN("--gl-debug: not a boolean option");
             return false;
         }
-        glewExperimental = yesno ? GL_TRUE : GL_FALSE;
+        glewExperimental = glt::gl_bool(yesno);
         return true;
     default:
         FATAL_ERR("unhandled option_case");

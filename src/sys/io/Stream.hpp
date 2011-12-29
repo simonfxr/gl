@@ -94,7 +94,7 @@ protected:
     }
 };
 
-struct BasicInStream : public BasicStreamState {
+struct BasicInStream : public virtual BasicStreamState {
     StreamResult read(size& s, char *b) {
         StreamFlags& st = basic_state();
         
@@ -119,7 +119,7 @@ protected:
     virtual StreamResult basic_read(size&, char *) = 0;    
 };
 
-struct BasicOutStream : public BasicStreamState {
+struct BasicOutStream : public virtual BasicStreamState {
     StreamResult write(size& s, const char *b) {
         StreamFlags& st = basic_state();
         
