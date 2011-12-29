@@ -68,7 +68,7 @@ bool parseFileArg(const Preprocessor::DirectiveContext& ctx, const char *& arg, 
 
     char term = *begin == '"' ? '"' :
                 *begin == '<' ? '>' :
-                                0;
+                                '\0';
 
     if (term == 0) return false;
 
