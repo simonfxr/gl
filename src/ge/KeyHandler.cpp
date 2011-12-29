@@ -161,14 +161,29 @@ void KeyHandler::handleCommands() {
 
 void KeyHandler::handleListBindings(const Event<CommandEvent>& e) {
     sys::io::OutStream& out = e.info.engine.out();
-    CommandBindings::const_iterator it = self->bindings.begin();
+    CommandBindings::iterator it = self->bindings.begin();
     for (; it != self->bindings.end(); ++it) {
         const Ref<KeyBinding>& bind = it->first.binding;
         out << "  ";
-        prettyKeyCombo(out, *bind);
+        {
+            CommandPrettyPrinter printer;
+            printer.out(out);
+            printer.print(*bind);
+        }
         out << " -> ";
-        out << it->second->name();
-        out << sys::io::endl;
+        QuotationCommand *quot = it->second->castToQuotation();
+        if (quot == 0) {
+            out << it->second->name();
+            out << sys::io::endl;
+        } else {
+            out << sys::io::endl;
+            {
+                CommandPrettyPrinter printer;
+                printer.out(out);
+                printer.print(*quot->quotation);
+            }
+            out << sys::io::endl;
+        }
     }    
 }
 

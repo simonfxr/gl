@@ -1,11 +1,12 @@
 #include "ge/CommandArgs.hpp"
 #include "ge/Command.hpp"
 
+#include "sys/io/Stream.hpp"
+
 #include <cstring>
+#include <sstream>
 
 namespace ge {
-
-void prettyCommandArg(sys::io::OutStream& out, const ge::CommandArg& arg, bool first);
 
 CommandArg::CommandArg() { memset(this, 0, sizeof *this); }
 
@@ -28,10 +29,65 @@ void CommandArg::free() {
     memset(this, 0, sizeof *this);
 }
 
-void prettyKeyCombo(sys::io::OutStream& out, const KeyBinding& bind) {
+struct PrettyQuotation {
+    std::vector<std::string> statements;
+    std::ostringstream out;
+    sys::io::StdOutStream out_stream;
+    size len;
+
+    PrettyQuotation() :
+        out_stream(out),
+        len(0)        
+        {}
+};
+
+struct CommandPrettyPrinter::State {
+    sys::io::OutStream *out;
+    sys::io::OutStream *current_out;
+    
+    size line_len;
+    size block_indent;
+    bool ignore_empty_statements;
+
+    std::vector<Ref<PrettyQuotation> > quotations;
+
+    State() :
+        out(&sys::io::stdout()),
+        current_out(out),
+        line_len(80),
+        block_indent(4),
+        ignore_empty_statements(true)
+        {}
+};
+
+CommandPrettyPrinter::CommandPrettyPrinter() :
+    self(new State)
+{}
+
+CommandPrettyPrinter::~CommandPrettyPrinter() {
+    flush();
+    delete self;
+}
+
+void CommandPrettyPrinter::out(sys::io::OutStream& _out) {
+    self->out = &_out;
+    if (self->quotations.empty())
+        self->current_out = self->out;
+}
+
+void CommandPrettyPrinter::lineLength(size len) { self->line_len = len; }
+
+void CommandPrettyPrinter::blockIndent(size indent) { self->block_indent = indent; }
+
+void CommandPrettyPrinter::ignoreEmptyStatements(bool ignore) {
+    self->ignore_empty_statements = ignore;
+}
+
+void CommandPrettyPrinter::print(const KeyBinding& bind) {
     const char *sep = "[";
+    
     for (defs::index i = 0; i < bind.size(); ++i) {
-        out << sep;
+        *self->current_out << sep;
         sep = ", ";
         const Key& k = bind[i];
         char pre = 0;
@@ -43,67 +99,111 @@ void prettyKeyCombo(sys::io::OutStream& out, const KeyBinding& bind) {
         }
                 
         if (pre != 0)
-            out << pre;
+            *self->current_out << pre;
             
         const char *sym = prettyKeyCode(k.code);
         if (sym == 0)
-            out << "<unknown key code: " << k.code << ">";
+            *self->current_out << "<unknown key code: " << k.code << ">";
         else
-            out << sym;
+            *self->current_out << sym;
     }
-    out << "]";
+    
+    *self->current_out << "]";
 }
 
-void prettyQuot(sys::io::OutStream& out, const Quotation& q) {
-    if (q.size() == 0) {
-        out << " { } ";
-        return;
-    }
-
-    out << "{";
-    for (uint32 i = 0; i < q.size(); ++i) {
-        if (i > 0)
-            out << ';';
-        out << ' ';
-        prettyCommandArgs(out, Array<CommandArg>(const_cast<CommandArg *>(&q[i][0]), SIZE(q[i].size())));
-    }
-    out << " }";
-}
-
-void prettyCommandArg(sys::io::OutStream& out, const ge::CommandArg& arg) {
-    prettyCommandArg(out, arg, false);
-}
-
-void prettyCommandArg(sys::io::OutStream& out, const ge::CommandArg& arg, bool first) {
+void CommandPrettyPrinter::print(const CommandArg& arg, bool first) {
     switch (arg.type) {
     case String:
-        out << '"' << *arg.string << '"'; break;
+        *self->current_out << '"' << *arg.string << '"'; break;
     case Integer:
-        out << arg.integer; break;
+        *self->current_out << arg.integer; break;
     case Number:
-        out << arg.number; break;
-    case KeyCombo: prettyKeyCombo(out, *arg.keyBinding); break;
+        *self->current_out << arg.number; break;
+    case KeyCombo: print(*arg.keyBinding); break;
     case CommandRef:
         if (!first)
-            out << '&';
-        out << *arg.command.name;
+            *self->current_out << '&';
+        *self->current_out << *arg.command.name;
         if (arg.command.quotation != 0)
-            prettyQuot(out, *arg.command.quotation);
+            print(*arg.command.quotation);
         break;
     case VarRef:
-        out << '$' << *arg.var; break;
+        *self->current_out << '$' << *arg.var; break;
     default:
-        out << "invalid type: " << arg.type;
+        *self->current_out << "invalid type: " << arg.type;
     }
 }
 
-void prettyCommandArgs(sys::io::OutStream& out, const Array<CommandArg>& args) {
+void CommandPrettyPrinter::print(const Array<CommandArg>& statement) {
+
+    if (self->ignore_empty_statements && statement.size() == 0)
+        return;
+
     const char *sep = "";
-    for (defs::index i = 0; i < args.size(); ++i) {
-        out << sep;
-        prettyCommandArg(out, args[i], i == 0);
+    for (defs::index i = 0; i < statement.size(); ++i) {
+        *self->current_out << sep;
+        print(statement[i], i == 0);
         sep = " ";
     }
+}
+
+void CommandPrettyPrinter::print(const std::vector<CommandArg>& statement) {
+    Array<CommandArg> arr(const_cast<CommandArg *>(&statement.front()), SIZE(statement.size()));
+    print(arr);
+}
+
+void CommandPrettyPrinter::print(const Quotation& q) {
+    openQuotation();
+    
+    for (defs::index i = 0; i < SIZE(q.size()); ++i) {
+        print(q[i]);
+        Ref<PrettyQuotation>& pq = self->quotations.back();
+        pq->statements.push_back(pq->out.str());
+        pq->out.str("");
+        pq->len += pq->statements.back().length();
+    }
+    
+    closeQuotation();
+}
+
+void CommandPrettyPrinter::openQuotation() {
+    self->quotations.push_back(makeRef(new PrettyQuotation));
+    self->current_out = &self->quotations.back()->out_stream;
+}
+
+void CommandPrettyPrinter::closeQuotation() {
+
+    // FIXME: output is ugly
+    
+    size depth = SIZE(self->quotations.size());
+    size indent = self->block_indent * depth;
+    Ref<PrettyQuotation>& q = self->quotations.back();
+    size nln = q->statements.size();
+
+    self->current_out = depth == 1 ? self->out : &self->quotations[depth - 2]->out_stream;
+    
+    if (nln == 0) {
+        printSpaces(indent);
+        *self->current_out << "{}";
+    } else {
+        *self->current_out << "{";
+        for (defs::index i = 0; i < nln; ++i) {
+            printSpaces(indent);
+            *self->current_out << q->statements[i] << sys::io::endl;
+        }
+        *self->current_out << "}";
+    }
+
+    self->quotations.pop_back();
+}
+
+void CommandPrettyPrinter::printSpaces(size n) {
+    for (size i = 0; i < n; ++i)
+        *self->current_out << " ";
+}
+    
+void CommandPrettyPrinter::flush() {
+    
 }
 
 } // namespace ge

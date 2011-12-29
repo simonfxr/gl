@@ -11,6 +11,7 @@
 namespace ge {
 
 struct CommandProcessor;
+struct QuotationCommand;
 
 struct CommandEvent : public EngineEvent {
     CommandEvent(Engine& e, CommandProcessor& proc) :
@@ -33,6 +34,7 @@ public:
     std::string interactiveDescription() const;
     virtual void interactive(const Event<CommandEvent>& ev, const Array<CommandArg>&) = 0;
     virtual void handle(const Event<CommandEvent>& ev);
+    virtual QuotationCommand *castToQuotation() { return 0; }
 };
 
 extern Array<CommandArg> NULL_ARGS;
@@ -44,6 +46,7 @@ struct QuotationCommand EXPLICIT : public Command {
     ~QuotationCommand();
 
     void interactive(const Event<CommandEvent>& ev, const Array<CommandArg>&) OVERRIDE;
+    QuotationCommand *castToQuotation() { return this; }
 
 private:
 

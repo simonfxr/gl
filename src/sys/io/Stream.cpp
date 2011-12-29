@@ -91,47 +91,47 @@ OutStream& operator <<(OutStream& out, std::stringstream& s) {
 // }
 
 
-StdOutStream::StdOutStream(std::ostream& _out)
-    : out(_out)
+StdOutStream::StdOutStream(std::ostream& o)
+    : _out(&o)
 {
-    if (_out.eof())
+    if (o.eof())
         basic_state() |= SS_OUT_EOF;
 }
 
 StreamResult StdOutStream::basic_write(size& s, const char *b) {
     std::streamsize n = UNSIZE(s);
-    out.write(b, n);
-    if (out.good())
+    _out->write(b, n);
+    if (_out->good())
         return StreamOK;
     s = 0; // FIXME: how many were written?
-    if (out.eof())
+    if (_out->eof())
         return StreamEOF;
     return StreamError;
 }
 
 StreamResult StdOutStream::basic_flush() {
-    out.flush();
-    if (out.good())
+    _out->flush();
+    if (_out->good())
         return StreamOK;
-    if (out.eof())
+    if (_out->eof())
         return StreamEOF;
     return StreamError;
 }
 
-StdInStream::StdInStream(std::istream& _in) :
-    in(_in)
+StdInStream::StdInStream(std::istream& i) :
+    _in(&i)
 {
-    if (in.eof())
+    if (_in->eof())
         basic_state() |= SS_IN_EOF;
 }
 
 StreamResult StdInStream::basic_read(size& s, char *b) {
     std::streamsize n = UNSIZE(s);
-    in.read(b, n);
-    if (in.good())
+    _in->read(b, n);
+    if (_in->good())
         return StreamOK;
     s = 0;
-    if (in.eof())
+    if (_in->eof())
         return StreamEOF;
     return StreamError;
 }

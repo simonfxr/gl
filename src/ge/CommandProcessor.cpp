@@ -299,8 +299,13 @@ bool CommandProcessor::execCommand(Array<CommandArg>& args) {
         std::ostringstream err;
         sys::io::StdOutStream errout(err);
         err << "executing command failed: ";
-        prettyCommandArgs(errout, args);
-        err << std::endl;
+
+        {
+            CommandPrettyPrinter printer;
+            printer.out(errout);
+            printer.print(args);
+        }
+        
         ERR(engine().out(), err.str());
     }
     

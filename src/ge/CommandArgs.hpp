@@ -65,11 +65,31 @@ struct CommandArg {
     void free();
 };
 
-void prettyKeyCombo(sys::io::OutStream& out, const KeyBinding& binding);
+struct CommandPrettyPrinter {
+    CommandPrettyPrinter();
+    ~CommandPrettyPrinter();
 
-void prettyCommandArg(sys::io::OutStream& out, const CommandArg& arg);
+    void out(sys::io::OutStream& _out);
+    void lineLength(size len);
+    void blockIndent(size indent);
+    void ignoreEmptyStatements(bool);
 
-void prettyCommandArgs(sys::io::OutStream& out, const Array<CommandArg>& args);
+    void print(const KeyBinding& bind);
+    void print(const CommandArg& arg, bool first = false);
+    void print(const Array<CommandArg>&);
+    void print(const std::vector<CommandArg>&);
+    void print(const Quotation&);
+    void printSpaces(size);
+
+    void openQuotation();
+    void closeQuotation();
+    
+    void flush();
+
+private:
+    struct State;
+    State * const self;
+};
 
 } // namepspace ge
 

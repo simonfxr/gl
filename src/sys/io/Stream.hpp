@@ -208,16 +208,17 @@ protected:
 };
 
 struct StdOutStream : public AbstractOutStream {
-    std::ostream& out;
+    std::ostream *_out;
     StdOutStream(std::ostream&);
     ~StdOutStream() { destructor(); }
+    void out(std::ostream& o) { _out = &o; }
 protected:
     StreamResult basic_write(size&, const char *);
     StreamResult basic_flush();
 };
 
 struct StdInStream : public AbstractInStream {
-    std::istream& in;
+    std::istream *_in;
     StdInStream(std::istream&);
     ~StdInStream() { destructor(); }
 protected:
