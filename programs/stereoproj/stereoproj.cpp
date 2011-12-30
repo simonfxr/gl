@@ -89,11 +89,12 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
         B = vec3(h1 * (1/3.f), 0, s/2);
         C = vec3(h1 * (1/3.f), 0, -s/2);
         D = vec3(0, h2, 0);
-        
-#define TRI(a, b, c)                            \
-        v.normal = - cross(b - a, c - a);       \
-        v.position = a; t.addVertex(v);         \
-        v.position = b; t.addVertex(v);         \
+
+#define TRI(a, b, c) TRI0(a, b, c)
+#define TRI0(a, b, c)                            \
+        v.normal = cross(b - a, c - a);          \
+        v.position = a; t.addVertex(v);          \
+        v.position = b; t.addVertex(v);          \
         v.position = c; t.addVertex(v);
 
         
@@ -105,6 +106,7 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
         TRI(C, A, D);
 
 #undef TRI
+#undef TRI0
     }
 
     tetrahedron.drawType(glt::DrawArrays);
