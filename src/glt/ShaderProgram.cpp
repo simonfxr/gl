@@ -68,11 +68,12 @@ struct ShaderProgram::Data {
         linked(false)
         {}
 
-    Data(const Data& rhs) :
-        self(rhs.self),
+    Data(ShaderProgram& owner, const Data& rhs) :
+        self(owner),
         program(0),
         sm(rhs.sm),
         shaders(rhs.shaders),
+        rootdeps(rhs.rootdeps),
         attrs(rhs.attrs),
         linked(false)
         {}        
@@ -88,7 +89,7 @@ ShaderProgram::ShaderProgram(ShaderManager& sm) :
     self(new Data(*this, sm)) {}
 
 ShaderProgram::ShaderProgram(const ShaderProgram& prog) :
-    self(new Data(*prog.self)) {}
+    self(new Data(*this, *prog.self)) {}
 
 ShaderProgram::~ShaderProgram() {
     reset();
@@ -101,6 +102,7 @@ void ShaderProgram::reset() {
     clearError();
     self->shaders.clear();
     self->attrs.clear();
+    self->rootdeps.clear();
 }
 
 bool ShaderProgram::reload() {
@@ -275,6 +277,13 @@ bool ShaderProgram::link() {
     if (self->linked)
         return true;
 
+    
+    for (Attributes::const_iterator it = self->attrs.begin();
+         it != self->attrs.end(); ++it) {
+        GL_CHECK(glBindAttribLocation(self->program, it->second, it->first.c_str()));
+        // FIXME: check wether attrib was added correctly
+    }
+
     std::vector<GLuint> added;
     for (ShaderObjects::const_iterator it = self->shaders.begin();
          it != self->shaders.end(); ++it) {
@@ -326,14 +335,13 @@ bool ShaderProgram::link() {
 }
 
 bool ShaderProgram::bindAttribute(const std::string& s, GLuint position) {
-    if (!self->createProgram())
-        return false;
-    
-    GL_CHECK(glBindAttribLocation(self->program, position, s.c_str()));
 
-    self->attrs[s] = position;
+    if (self->linked) {
+        RAISE_ERR(*this, ShaderProgramError::APIError, "program already linked");
+        return false;
+    }
     
-    // FIXME: check wether attrib was added correctly
+    self->attrs[s] = position;
     
     return true;
 }
@@ -362,6 +370,7 @@ bool ShaderProgram::replaceWith(ShaderProgram& new_prog) {
             reset();
             self->program = new_prog.self->program;
             this->lastError = new_prog.lastError;
+            self->rootdeps = new_prog.self->rootdeps;
             self->shaders = new_prog.self->shaders;
             new_prog.self->program = 0;
             new_prog.reset();
@@ -418,6 +427,8 @@ bool ShaderProgram::bindAttributesGeneric(const VertexDescBase& desc) {
 }
 
 bool ShaderProgram::bindStreamOutVaryings(const Array<std::string>& vars) {
+
+    // FIXME: record vars to set stream out varyings again if relinked
     
     if (self->linked) {
         RAISE_ERR(*this, ShaderProgramError::APIError, "program alredy linked");

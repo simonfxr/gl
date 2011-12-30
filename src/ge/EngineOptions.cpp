@@ -198,6 +198,8 @@ EngineOptions::EngineOptions() :
     mode(Animate),
     traceOpenGL(false)
 {
+    window.settings.MajorVersion = 4;
+    window.settings.MinorVersion = 4;
 #ifdef GLDEBUG
     window.settings.DebugContext = true;
 #endif

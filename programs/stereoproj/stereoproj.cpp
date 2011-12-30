@@ -82,15 +82,16 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
 
     {
         real s = 1.f;
+        real h1 = math::sqrt(3) / 2.f * s;
+        real h2 = math::sqrt(6) / 3.f * s;
         point3_t A, B, C, D;
-        real h = math::sqrt(0.75f) * s;
-        A = vec3(-h/2, 0.f, 0.f);
-        B = vec3(h/2, 0.f, s/2);
-        C = vec3(h/2, 0.f, -s/2);
-        D = vec3(0.f, h, 0.f);
+        A = vec3(- h1 * (2/3.f), 0, 0);
+        B = vec3(h1 * (1/3.f), 0, s/2);
+        C = vec3(h1 * (1/3.f), 0, -s/2);
+        D = vec3(0, h2, 0);
         
 #define TRI(a, b, c)                            \
-        v.normal = cross(b - a, c - a);         \
+        v.normal = - cross(b - a, c - a);       \
         v.position = a; t.addVertex(v);         \
         v.position = b; t.addVertex(v);         \
         v.position = c; t.addVertex(v);

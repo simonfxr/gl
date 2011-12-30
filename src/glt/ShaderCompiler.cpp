@@ -8,6 +8,7 @@
 
 #include "sys/fs.hpp"
 #include "sys/measure.hpp"
+#include "sys/io/Stream.hpp"
 
 template <>
 struct LogTraits<glt::CompileState> {
@@ -354,7 +355,7 @@ void CompileState::compileAll() {
         
         Ref<CompileJob>& job = toCompile.front();
         const ShaderSourceKey& key = job->source()->key;
-        
+
         ShaderObjects::const_iterator it = compiled.find(key);
         if (it != compiled.end())
             continue;
