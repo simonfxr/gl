@@ -1,12 +1,13 @@
 
 in vec3 ecNormal;
 in vec3 ecPosition;
+in vec3 vertColor;
 
 out vec4 color;
 
 void main() {
     vec3 N = normalize(ecNormal);
-    vec3 C = vec3(0.6);
+    vec3 C = vertColor;
     vec3 V = - normalize(ecPosition);
     float D = dot(N, V);
     vec3 shadedColor = (max(dot(N, C), 0) / dot(C, C)) * C;

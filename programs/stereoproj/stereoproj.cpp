@@ -5,6 +5,7 @@
 #include "glt/utils.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/primitives.hpp"
+#include "glt/color.hpp"
 
 #include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
@@ -15,11 +16,13 @@ using namespace math;
 struct Vertex {
     point3_t position;
     direction3_t normal;
+    glt::color color;
 };
 
 DEFINE_VERTEX_DESC(Vertex,
                    VERTEX_ATTR(Vertex, position),
-                   VERTEX_ATTR(Vertex, normal));
+                   VERTEX_ATTR(Vertex, normal),
+                   VERTEX_ATTR(Vertex, color));
 
 static const real PLANE_DIM = 30.f;
 
@@ -90,9 +93,10 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
         C = vec3(h1 * (1/3.f), 0, -s/2);
         D = vec3(0, h2, 0);
 
-#define TRI(a, b, c) TRI0(a, b, c)
-#define TRI0(a, b, c)                            \
+#define TRI(a, b, c, col) TRI0(a, b, c, col)
+#define TRI0(a, b, c, col)                       \
         v.normal = cross(b - a, c - a);          \
+        v.color = (col);                         \
         v.position = a; t.addVertex(v);          \
         v.position = b; t.addVertex(v);          \
         v.position = c; t.addVertex(v);
@@ -100,10 +104,10 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
         
         glt::Mesh<Vertex>& t = tetrahedron;
         Vertex v;
-        TRI(A, C, B);
-        TRI(A, B, D);
-        TRI(B, C, D);
-        TRI(C, A, D);
+        TRI(A, C, B, glt::color(0xFF, 0, 0));
+        TRI(A, B, D, glt::color(0, 0xFF, 0));
+        TRI(B, C, D, glt::color(0, 0, 0xFF));
+        TRI(C, A, D, glt::color(0xFF, 0xFF, 0));
 
 #undef TRI
 #undef TRI0
