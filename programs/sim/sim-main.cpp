@@ -703,43 +703,43 @@ void Game::render_hud() {
     txtFps.SetPosition(2, 0);
     txtFps.SetColor(sf::Color(255, 255, 0, 180));
 
-    height += uint32(txtFps.GetRect().Height) + 2;
+    height += uint32(txtFps.GetGlobalBounds().Height) + 2;
     sf::Text txtSpeed("Sphere speed: " + to_string(sphere_speed) + " m/s");
     txtSpeed.SetCharacterSize(12);
     txtSpeed.SetColor(c);
     txtSpeed.SetPosition(2, height);
 
-    height += uint32(txtSpeed.GetRect().Height) + 2;    
+    height += uint32(txtSpeed.GetGlobalBounds().Height) + 2;    
     sf::Text txtMass("Sphere mass: " + to_string(sphere_proto.m) + " kg");
     txtMass.SetCharacterSize(12);
     txtMass.SetColor(c);
     txtMass.SetPosition(2, height);
 
-    height += uint32(txtMass.GetRect().Height) + 2;
+    height += uint32(txtMass.GetGlobalBounds().Height) + 2;
     sf::Text txtRad("Sphere radius: " + to_string(sphere_proto.r) + " m");
     txtRad.SetCharacterSize(12);
     txtRad.SetColor(c);
     txtRad.SetPosition(2, height);
 
-    height += uint32(txtRad.GetRect().Height) + 2;
+    height += uint32(txtRad.GetGlobalBounds().Height) + 2;
     sf::Text txtAnimSpeed("Animation Speed: " + to_string(game_speed));
     txtAnimSpeed.SetCharacterSize(12);
     txtAnimSpeed.SetColor(c);
     txtAnimSpeed.SetPosition(2, height);
 
-    height += uint32(txtAnimSpeed.GetRect().Height) + 2;
+    height += uint32(txtAnimSpeed.GetGlobalBounds().Height) + 2;
     sf::Text txtInter(std::string("Interpolation: ") + (use_interpolation ? "on" : "off"));
     txtInter.SetCharacterSize(12);
     txtInter.SetColor(c);
     txtInter.SetPosition(2, height);
 
-    height += uint32(txtInter.GetRect().Height) + 2;
+    height += uint32(txtInter.GetGlobalBounds().Height) + 2;
     sf::Text txtNumBalls(std::string("NO Spheres: ") + to_string(world.numSpheres()));
     txtNumBalls.SetCharacterSize(12);
     txtNumBalls.SetColor(c);
     txtNumBalls.SetPosition(2, height);
 
-    height += uint32(txtNumBalls.GetRect().Height) + 2;
+    height += uint32(txtNumBalls.GetGlobalBounds().Height) + 2;
     std::string render_stat = "FPS(Rendering): " + to_string(fs.rt_avg) + " " +
         to_string(fs.rt_current) + " " + to_string(fs.rt_min) + " " + to_string(fs.rt_max);
     sf::Text txtRenderTime(render_stat);
@@ -747,7 +747,7 @@ void Game::render_hud() {
     txtRenderTime.SetColor(c);
     txtRenderTime.SetPosition(2, height);
 
-    engine->window().window().SaveGLStates();
+    // engine->window().window().SaveGLStates(); // FIXME
     
     engine->window().window().Draw(txtFps);
     engine->window().window().Draw(txtSpeed);
@@ -758,7 +758,7 @@ void Game::render_hud() {
     engine->window().window().Draw(txtNumBalls);
     engine->window().window().Draw(txtRenderTime);
     
-    engine->window().window().RestoreGLStates();
+    // engine->window().window().RestoreGLStates(); // FIXME
 }
 
 void Game::link(ge::Engine& e) {
