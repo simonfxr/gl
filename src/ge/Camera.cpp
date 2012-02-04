@@ -108,7 +108,7 @@ static void mouseLook(Camera *cam, const Event<MouseMoved>& ev) {
     }
 }
 
-static void execStep(Camera *cam, const Event<AnimationEvent>&) {
+static void execStep(Camera *cam, const Event<InputEvent>&) {
     float lenSq = lengthSq(cam->step_accum);
     
     if (lenSq >= 1e-4f) {
@@ -129,7 +129,7 @@ static void setCamMat(glt::Frame *frame, const Event<RenderEvent>& e) {
 
 void Camera::registerWith(Engine& e) {
     e.window().events().mouseMoved.reg(makeEventHandler(mouseLook, this));
-    e.events().animate.reg(makeEventHandler(execStep, this));
+    e.events().handleInput.reg(makeEventHandler(execStep, this));
     e.events().beforeRender.reg(makeEventHandler(setCamMat, &frame));
 }
 

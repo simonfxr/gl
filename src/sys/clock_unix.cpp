@@ -6,12 +6,22 @@
 #include <string>
 #include <string.h>
 #include <errno.h>
+#include <math.h>
 
 namespace sys {
 
 static double getTime() {
     struct timespec tv;
-    clock_gettime(CLOCK_MONOTONIC, &tv);
+    
+    while (clock_gettime(CLOCK_MONOTONIC, &tv) == -1) {
+        if (errno == EINTR) {
+            errno = 0;
+        } else {
+            ERR(std::string("clock_gettime failed") + strerror(errno));
+            return NAN;
+        }
+    }
+    
     return double(tv.tv_sec) + double(tv.tv_nsec) * (1 / 1e9);
 }
 
@@ -21,11 +31,18 @@ double queryTimer() {
 }
 
 void sleep(double secs) {
-    struct timespec tv;
+    struct timespec tv, rmtv;
     tv.tv_sec = time_t(secs);
     tv.tv_nsec = long(secs * 1e9);
-    if (nanosleep(&tv, NULL) == -1)
-        ERR(std::string("sleep failed: ") + strerror(errno));
+
+    while (nanosleep(&tv, &rmtv) == -1) {
+        if (errno == EINTR) {
+            errno = 0;
+            tv = rmtv;
+        } else {
+            ERR(std::string("sleep failed: ") + strerror(errno));
+        }
+    }
 }
 
 }
