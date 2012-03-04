@@ -538,13 +538,18 @@ SphereLOD Game::calc_sphere_lod(const Sphere& s) {
     // calculate lod, use projected radius on screen
     float r_proj = s.r / ecCoord[2] * z_min;
     float screen_rad = r_proj / size;
+    if (screen_rad < 0)
+        screen_rad = 0;
 
     screen_rad *= 2;
 
     SphereLOD lod;
-    lod.level = uint32(screen_rad * SPHERE_LOD_MAX);
+    lod.level = index(screen_rad * SPHERE_LOD_MAX);
     if (lod.level >= SPHERE_LOD_MAX)
         lod.level = SPHERE_LOD_MAX - 1;
+
+    ASSERT(0 <= lod.level); ASSERT(lod.level < SPHERE_LOD_MAX);
+    
     return lod;
 }
 
@@ -569,7 +574,7 @@ void Game::render_sphere(const Sphere& s, const SphereModel& m) {
         inst.colorShininess = vec4(vec3(m.color.vec4()), m.shininess);
         
 #endif
-        
+        DEBUG_ASSERT(0 <= lod.level && lod.level < SPHERE_LOD_MAX);
         sphere_instances[lod.level].push_back(inst);
         
     } else {
