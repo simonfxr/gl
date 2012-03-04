@@ -104,10 +104,11 @@ struct State {
 #endif
 
     State() :
-#ifdef HS_WORLD_GEN
-        voxel_state(0),
-#endif
         fpsTimer(0)
+
+#ifdef HS_WORLD_GEN
+        ,voxel_state(0)
+#endif
         {}
 
     ~State() {

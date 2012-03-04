@@ -3,12 +3,9 @@
 
 #include "defs.hpp"
 
-#ifndef _DEFS_HPP_INCLUDED_
-#error "defs"
-#endif
-
 #ifdef MATH_INLINE
 
+#define MATH_FUNC inline
 #define PURE_FUNC ATTRS(ATTR_FORCE_INLINE, ATTR_NO_WARN_UNUSED_DEF, ATTR_NOTHROW)
 #define MUT_FUNC ATTRS(ATTR_FORCE_INLINE, ATTR_NO_WARN_UNUSED_DEF, ATTR_NOTHROW)
 #define MATH_BEGIN_NAMESPACE namespace math { namespace {
@@ -18,6 +15,7 @@
 
 #else
 
+#define MATH_FUNC
 #define PURE_FUNC ATTRS(ATTR_NOTHROW)
 #define MUT_FUNC ATTRS(ATTR_NOTHROW)
 #define MATH_BEGIN_NAMESPACE namespace math {

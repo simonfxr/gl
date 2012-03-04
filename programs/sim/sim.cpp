@@ -175,7 +175,7 @@ void World::simulate(math::real dt) {
 }
 
 bool World::canMoveCamera(const math::vec3_t& position, math::vec3_t& step) {
-    vec3_t out_coll;
+    vec3_t out_coll = vec3(real(0));
     vec3_t new_pos = position + step;
     int32 hit = self->collidesWall(new_pos, CAMERA_SPHERE_RAD, out_coll);
 

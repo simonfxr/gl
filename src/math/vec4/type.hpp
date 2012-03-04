@@ -8,8 +8,8 @@ namespace math {
 struct vec4_t {
     real components[4];
 
-    real& operator[](defs::index) MUT_FUNC;
-    real operator[](defs::index) const PURE_FUNC;
+MATH_FUNC     real& operator[](defs::index) MUT_FUNC;
+MATH_FUNC     real operator[](defs::index) const PURE_FUNC;
 };
 
 typedef vec4_t point4_t;

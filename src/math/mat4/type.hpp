@@ -13,10 +13,10 @@ struct mat4_t {
         real components[16];
     };
 
-    const vec4_t& operator[](defs::index) const PURE_FUNC;
-    vec4_t& operator[](defs::index) MUT_FUNC;
-    real operator()(defs::index, defs::index) const PURE_FUNC;
-    real& operator()(defs::index, defs::index) MUT_FUNC;
+MATH_FUNC     const vec4_t& operator[](defs::index) const PURE_FUNC;
+MATH_FUNC     vec4_t& operator[](defs::index) MUT_FUNC;
+MATH_FUNC     real operator()(defs::index, defs::index) const PURE_FUNC;
+MATH_FUNC     real& operator()(defs::index, defs::index) MUT_FUNC;
 };
 
 typedef mat4_t aligned_mat4_t ATTRS(ATTR_ALIGNED(16));

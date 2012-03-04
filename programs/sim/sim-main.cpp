@@ -52,7 +52,7 @@ static const size AA_SAMPLES = 4;
 static const size SPHERE_LOD_MAX = 6;
 
 struct SphereLOD {
-    uint32 level;
+    index level;
 };
 
 #define SPHERE_INSTANCED_TEXTURED
@@ -235,7 +235,7 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
         { 26, 13 }, { 36, 18 }
     };
 
-    for (uint32 i = 0; i < SPHERE_LOD_MAX; ++i) {
+    for (index i = 0; i < SPHERE_LOD_MAX; ++i) {
         glt::primitives::sphere(sphereBatches[i], 1.f, sphere_params[i].a, sphere_params[i].b);
         sphereBatches[i].send();
     }

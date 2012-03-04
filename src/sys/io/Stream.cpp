@@ -21,7 +21,6 @@ struct Streams {
     {
         stdout.dontClose(true);
         stderr.dontClose(true);
-        std::cerr << "Streams init" << std::endl;
     }
 };
 
@@ -67,7 +66,9 @@ OutStream& operator <<(OutStream& out, const char *str) {
 }
 
 OutStream& operator <<(OutStream& out, const StreamEndl&) {
-    return out << "\n";
+    out << "\n";
+    out.flush();
+    return out;
 }
 
 OutStream& operator <<(OutStream& out, std::ostringstream& s) {
