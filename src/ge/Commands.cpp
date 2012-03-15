@@ -15,15 +15,15 @@ using namespace math;
 namespace {
 
 void runPrintContextInfo(const Event<CommandEvent>& e) {
-    const sf::ContextSettings& c = e.info.engine.window().window().GetSettings();
+    const sf::ContextSettings& c = e.info.engine.window().window().getSettings();
     e.info.engine.out()
         << "OpenGL Context Information" << sys::io::endl
-        << "  Version:\t" << c.MajorVersion << "." << c.MinorVersion << sys::io::endl
-        << "  DepthBits:\t" << c.DepthBits << sys::io::endl
-        << "  StencilBits:\t" << c.StencilBits << sys::io::endl
-        << "  Antialiasing:\t" << c.AntialiasingLevel << sys::io::endl
-        << "  CoreProfile:\t" << (c.CoreProfile ? "yes" : "no") << sys::io::endl
-        << "  DebugContext:\t" << (c.DebugContext ? "yes" : "no") << sys::io::endl
+        << "  Version:\t" << c.majorVersion << "." << c.minorVersion << sys::io::endl
+        << "  DepthBits:\t" << c.depthBits << sys::io::endl
+        << "  StencilBits:\t" << c.stencilBits << sys::io::endl
+        << "  Antialiasing:\t" << c.antialiasingLevel << sys::io::endl
+        << "  CoreProfile:\t" << (c.coreProfile ? "yes" : "no") << sys::io::endl
+        << "  DebugContext:\t" << (c.debugContext ? "yes" : "no") << sys::io::endl
         << "  VSync:\t" << (e.info.engine.window().vsync() ? "yes" : "no") << sys::io::endl
         << sys::io::endl;
 }
@@ -164,7 +164,7 @@ void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) 
 }
 
 void runInitGLDebug(const Event<CommandEvent>& e) {
-    if (e.info.engine.window().window().GetSettings().DebugContext) {
+    if (e.info.engine.window().window().getSettings().debugContext) {
         glt::initDebug();
     } else {
         e.info.engine.out() << "cannot initialize OpenGL debug output: no debug context" << sys::io::endl;

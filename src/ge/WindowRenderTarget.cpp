@@ -9,11 +9,11 @@ namespace ge {
 namespace {
 
 uint32 buffersOf(GameWindow& win) {
-    const sf::ContextSettings& cs = win.window().GetSettings();
+    const sf::ContextSettings& cs = win.window().getSettings();
     uint32 bs = glt::RT_COLOR_BUFFER;
-    if (cs.DepthBits > 0)
+    if (cs.depthBits > 0)
         bs |= glt::RT_DEPTH_BUFFER;
-    if (cs.StencilBits > 0)
+    if (cs.stencilBits > 0)
         bs |= glt::RT_STENCIL_BUFFER;
     return bs;
 }
@@ -21,22 +21,22 @@ uint32 buffersOf(GameWindow& win) {
 } // namespace anon
 
 WindowRenderTarget::WindowRenderTarget(GameWindow& w) :
-    RenderTarget(SIZE(w.window().GetWidth()), SIZE(w.window().GetHeight()),
+    RenderTarget(SIZE(w.window().getSize().x), SIZE(w.window().getSize().y),
                  buffersOf(w)),
     window(w)
 {}
 
 void WindowRenderTarget::resized() {
-    updateSize(SIZE(window.window().GetWidth()), SIZE(window.window().GetHeight()));
+    updateSize(SIZE(window.window().getSize().x), SIZE(window.window().getSize().y));
 }
 
 void WindowRenderTarget::doActivate() {
-    window.window().SetActive();
+    window.window().setActive();
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }
 
 void WindowRenderTarget::doDraw() {
-    window.window().Display();
+    window.window().display();
     if (window.vsync())
         GL_CHECK(glFinish());
 }

@@ -77,12 +77,12 @@ void initMemInfo(RunLevel lvl, EngineInitializers& inits) {
 
 static void runInitShaderVersion(const Event<InitEvent>& e) {
     e.info.success = true;
-    const sf::ContextSettings& c = e.info.engine.window().window().GetSettings();
-    glt::ShaderManager::ShaderProfile prof = c.CoreProfile ?
+    const sf::ContextSettings& c = e.info.engine.window().window().getSettings();
+    glt::ShaderManager::ShaderProfile prof = c.coreProfile ?
         glt::ShaderManager::CoreProfile :
         glt::ShaderManager::CompatibilityProfile;
     
-    unsigned vers = c.MajorVersion * 100 + c.MinorVersion * 10;
+    unsigned vers = c.majorVersion * 100 + c.minorVersion * 10;
     e.info.engine.shaderManager().setShaderVersion(vers, prof);
 }
 

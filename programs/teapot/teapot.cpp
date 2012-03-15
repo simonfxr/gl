@@ -374,7 +374,7 @@ void Anim::renderTable(const std::string& shader) {
     gt.dup();
 
     GL_CHECK(glActiveTexture(GL_TEXTURE0));
-    woodTexture.Bind();
+    woodTexture.bind();
 
     vec4_t color = glt::color(0xcd, 0x85, 0x3f).vec4();
     MaterialProperties mat;
@@ -470,12 +470,12 @@ void Anim::keyPressed(const Event<KeyPressed>& e) {
 void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args) {
     data_dir = *args[0].string;
 
-    if (!woodTexture.LoadFromFile(data_dir + "/wood.jpg")) {
+    if (!woodTexture.loadFromFile(data_dir + "/wood.jpg")) {
         std::cerr << "couldnt load data/wood.jpg" << std::endl;
         return;
     }
 
-    woodTexture.SetSmooth(true);
+    woodTexture.setSmooth(true);
 
     int32 nfaces = parse_sply((data_dir + "/teapot.sply").c_str(), teapotModel);
     if (nfaces < 0) {

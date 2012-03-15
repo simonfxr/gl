@@ -269,7 +269,7 @@ void sigExit(Engine *engine, const Event<WindowEvent>&) {
 }
 
 void keyChanged(KeyHandler *handler, const Event<KeyChanged>& ev) {
-    KeyCode code = fromSFML(ev.info.key.Code);
+    KeyCode code = fromSFML(ev.info.key.code);
     if (ev.info.pressed)
         handler->keyPressed(code);
     else
@@ -282,7 +282,7 @@ void focusChanged(KeyHandler *handler, const Event<FocusChanged>& ev) {
 }
 
 void mouseButtonChanged(KeyHandler *handler, const Event<MouseButton>& ev) {
-    KeyCode code = fromSFML(ev.info.button.Button);
+    KeyCode code = fromSFML(ev.info.button.button);
     if (ev.info.pressed)
         handler->keyPressed(code);
     else

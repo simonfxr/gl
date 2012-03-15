@@ -129,22 +129,22 @@ bool State::option(OptionCase opt, const char *arg) {
             CMDWARN("invalid OpenGL Version: " + std::string(arg));
             return false;
         } else {
-            options.window.settings.MajorVersion = unsigned(maj);
-            options.window.settings.MinorVersion = unsigned(min);
+            options.window.settings.majorVersion = unsigned(maj);
+            options.window.settings.minorVersion = unsigned(min);
             return true;
         }
     case GLProfile:
         if (str_eq(arg, "core")) {
-            options.window.settings.CoreProfile = true;
+            options.window.settings.coreProfile = true;
         } else if (str_eq(arg, "compat") || str_eq(arg, "compatibility")) {
-            options.window.settings.CoreProfile = false;
+            options.window.settings.coreProfile = false;
         } else {
             CMDWARN("--gl-profile: invalid OpenGL Profile type: " + std::string(arg));
             return false;
         }
         return true;
     case GLDebug:
-        if (!parse_bool(arg, options.window.settings.DebugContext)) {
+        if (!parse_bool(arg, options.window.settings.debugContext)) {
             CMDWARN("--gl-debug: not a boolean option");
             return false;
         }
@@ -162,7 +162,7 @@ bool State::option(OptionCase opt, const char *arg) {
             return false;
         }
         
-        options.window.settings.AntialiasingLevel = samples;
+        options.window.settings.antialiasingLevel = samples;
         return true;
     case VSync: {
         if (!parse_bool(arg, options.window.vsync)) {
@@ -198,10 +198,10 @@ EngineOptions::EngineOptions() :
     mode(Animate),
     traceOpenGL(false)
 {
-    window.settings.MajorVersion = 4;
-    window.settings.MinorVersion = 4;
+    window.settings.majorVersion = 4;
+    window.settings.minorVersion = 4;
 #ifdef GLDEBUG
-    window.settings.DebugContext = true;
+    window.settings.debugContext = true;
 #endif
     scriptDirs.push_back("scripts");
 }

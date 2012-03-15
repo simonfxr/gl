@@ -66,18 +66,18 @@ struct GameWindow::Data {
 void GameWindow::Data::init(const WindowOptions& opts) {
     ASSERT(renderTarget == 0);
     renderTarget = new WindowRenderTarget(self);
-    win->SetActive();
+    win->setActive();
 
-    win->EnableKeyRepeat(false);
+    win->setKeyRepeatEnabled(false);
     
     vsync = opts.vsync;
-    win->EnableVerticalSync(opts.vsync);
+    win->setVerticalSyncEnabled(opts.vsync);
     
     events.windowResized.reg(makeEventHandler(resizeRenderTarget));
 }
 
 void GameWindow::Data::setMouse(int x, int y) {
-    sf::Mouse::SetPosition(sf::Vector2i(x, y), *win);
+    sf::Mouse::setPosition(sf::Vector2i(x, y), *win);
 }
 
 GameWindow::Data::~Data() {
@@ -117,30 +117,30 @@ void GameWindow::Data::handleInputEvents() {
     size new_h = 0;
 
     sf::Event e;
-    while (win->PollEvent(e)) {
+    while (win->pollEvent(e)) {
         
-        switch (e.Type) {
+        switch (e.type) {
         case sf::Event::Closed:
             events.windowClosed.raise(makeEvent(WindowEvent(self)));
             break;
             
         case sf::Event::Resized:
             was_resize = true;
-            new_w = SIZE(e.Size.Width);
-            new_h = SIZE(e.Size.Height);
+            new_w = SIZE(e.size.width);
+            new_h = SIZE(e.size.height);
             break;
             
         case sf::Event::KeyPressed:
-            events.keyChanged.raise(makeEvent(KeyChanged(self, true, e.Key)));
+            events.keyChanged.raise(makeEvent(KeyChanged(self, true, e.key)));
             break;
             
         case sf::Event::KeyReleased:
-            events.keyChanged.raise(makeEvent(KeyChanged(self, false, e.Key)));
+            events.keyChanged.raise(makeEvent(KeyChanged(self, false, e.key)));
             break;
             
         case sf::Event::MouseMoved:
-            mouse_x = index16(e.MouseMove.X);
-            mouse_y = index16(e.MouseMove.Y);
+            mouse_x = index16(e.mouseMove.x);
+            mouse_y = index16(e.mouseMove.y);
             
             if (!accum_mouse_moves) {
                 int16 dx = int16(mouse_current_x - mouse_x);
@@ -158,22 +158,22 @@ void GameWindow::Data::handleInputEvents() {
             break;
             
         case sf::Event::MouseButtonPressed:
-            mouse_x = index16(e.MouseButton.X);
-            mouse_y = index16(e.MouseButton.Y);
-            events.mouseButton.raise(makeEvent(MouseButton(self, true, mouse_x, mouse_y, e.MouseButton)));
+            mouse_x = index16(e.mouseButton.x);
+            mouse_y = index16(e.mouseButton.y);
+            events.mouseButton.raise(makeEvent(MouseButton(self, true, mouse_x, mouse_y, e.mouseButton)));
             break;
 
         case sf::Event::MouseButtonReleased:
-            mouse_x = index16(e.MouseButton.X);
-            mouse_y = index16(e.MouseButton.Y);
-            events.mouseButton.raise(makeEvent(MouseButton(self, false, mouse_x, mouse_y, e.MouseButton)));
+            mouse_x = index16(e.mouseButton.x);
+            mouse_y = index16(e.mouseButton.y);
+            events.mouseButton.raise(makeEvent(MouseButton(self, false, mouse_x, mouse_y, e.mouseButton)));
             break;
             
         case sf::Event::LostFocus:
             
             if (have_focus) {
                 have_focus = false;
-                win->ShowMouseCursor(true);
+                win->setMouseCursorVisible(true);
                 events.focusChanged.raise(makeEvent(FocusChanged(self, false)));
             }
             
@@ -185,11 +185,11 @@ void GameWindow::Data::handleInputEvents() {
                 have_focus = true;
 
                 if (!show_mouse_cursor)
-                    win->ShowMouseCursor(false);
+                    win->setMouseCursorVisible(false);
             
                 if (grab_mouse) {
-                    uint32 win_w = win->GetWidth();
-                    uint32 win_h = win->GetHeight();
+                    uint32 win_w = win->getSize().x;
+                    uint32 win_h = win->getSize().y;
                 
                     mouse_current_x = mouse_x = index16(win_w / 2);
                     mouse_current_y = mouse_y = index16(win_h / 2);
@@ -239,8 +239,8 @@ void GameWindow::Data::handleInputEvents() {
             MouseMoved ev(self, dx, dy, mouse_x, mouse_y);
 
             if (grab_mouse) {
-                mouse_x = index16(win->GetWidth() / 2);
-                mouse_y = index16(win->GetHeight() / 2);
+                mouse_x = index16(win->getSize().x / 2);
+                mouse_y = index16(win->getSize().y / 2);
 
                 setMouse(mouse_x, mouse_y);
             }
@@ -261,7 +261,7 @@ bool GameWindow::grabMouse() const {
 void GameWindow::showMouseCursor(bool show) {
     if (show != self->show_mouse_cursor) {
         self->show_mouse_cursor = show;
-        self->win->ShowMouseCursor(show);
+        self->win->setMouseCursorVisible(show);
     }
 }
 
@@ -280,7 +280,7 @@ bool GameWindow::accumulateMouseMoves() {
 void GameWindow::vsync(bool enable) {
     if (self->vsync != enable) {
         self->vsync = enable;
-        self->win->EnableVerticalSync(enable);
+        self->win->setVerticalSyncEnabled(enable);
     }
 }
 
