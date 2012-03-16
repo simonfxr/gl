@@ -30,11 +30,11 @@ static sf::Mutex printLock;
 sf::ThreadLocalPtr<ThreadID> thread_id;
 
 static void acq(sf::Mutex& mtx) {
-    mtx.Lock();
+    mtx.lock();
 }
 
 static void rel(sf::Mutex& mtx) {
-    mtx.Unlock();
+    mtx.unlock();
 }
 
 struct Data {
@@ -150,7 +150,7 @@ int main(void) {
         acq(thread_data[i].init_lock);
         thread_data[i].rand_state = rand();
         threads[i] = new sf::Thread(worker, i);
-        threads[i]->Launch();
+        threads[i]->launch();
     }
 
     acq(printLock);
@@ -185,7 +185,7 @@ int main(void) {
         std::cerr << "Waiting for thread: " << i << std::endl;
         rel(printLock);
         
-        threads[i]->Wait();
+        threads[i]->wait();
         
         acq(printLock);
         std::cerr << "Thread finished: " << i << std::endl;

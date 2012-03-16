@@ -87,7 +87,7 @@ sf::Mutex start_consumer;
 }
 
 static void producer(void) {
-    start_producer.Lock();
+    start_producer.lock();
 
     int64 sum = 0;
     Chan<int> &c = chan;
@@ -99,7 +99,7 @@ static void producer(void) {
 }
 
 static void consumer(void) {
-    start_consumer.Lock();
+    start_consumer.lock();
 
     int64 sum = 0;
     int i = 0;
@@ -118,15 +118,15 @@ int main(void) {
     sf::Thread producer_thread(producer);
     sf::Thread consumer_thread(consumer);
 
-    start_producer.Lock();
-    start_consumer.Lock();
-    producer_thread.Launch();
-    consumer_thread.Launch();
-    start_producer.Unlock();
-    start_consumer.Unlock();
+    start_producer.lock();
+    start_consumer.lock();
+    producer_thread.launch();
+    consumer_thread.launch();
+    start_producer.unlock();
+    start_consumer.unlock();
 
-    time_op(producer_thread.Wait(),
-            consumer_thread.Wait());
+    time_op(producer_thread.wait(),
+            consumer_thread.wait());
 
     std::cerr << "PRODUCER: " << sum_producer.get() << std::endl;
     std::cerr << "CONSUMER: " << sum_consumer.get() << std::endl;
