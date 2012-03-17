@@ -13,15 +13,19 @@ in vec3 ecPosition;
 out vec4 color;
 
 void main() {
-    float ambientContribution = materialProperties.x;
-    float diffuseContribution = materialProperties.y;
-    float specularContribution = materialProperties.z;
-    float shininess = materialProperties.w;
-
-    vec3 radiance = vec3(TeapotLighting(ecPosition, normalize(ecNormal), ecLight,
+    if (renderNormal) {
+        color = vec4(normalize(ecNormal), 1);
+    } else {
+        float ambientContribution = materialProperties.x;
+        float diffuseContribution = materialProperties.y;
+        float specularContribution = materialProperties.z;
+        float shininess = materialProperties.w;
+        
+        vec3 radiance = vec3(TeapotLighting(ecPosition, normalize(ecNormal), ecLight,
                                         vec4(diffuseContribution), vec4(specularContribution), shininess));
-    
-    vec3 shaded_rgb = (radiance + vec3(ambientContribution)) * surfaceColor.rgb;
-    color = vec4(min(vec3(1), shaded_rgb), surfaceColor.a);
+        
+        vec3 shaded_rgb = (radiance + vec3(ambientContribution)) * surfaceColor.rgb;
+        color = vec4(min(vec3(1), shaded_rgb), surfaceColor.a);
 //    color = gammaCorrect(color);
+    }    
 }

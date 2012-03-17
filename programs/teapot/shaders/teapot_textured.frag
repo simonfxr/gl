@@ -16,16 +16,20 @@ in vec2 fragTexCoord;
 out vec4 color;
 
 void main() {
-    float ambientContribution = materialProperties.x;
-    float diffuseContribution = materialProperties.y;
-    float specularContribution = materialProperties.z;
-    float shininess = materialProperties.w;
-
-    vec3 radiance = vec3(TeapotLighting(ecPosition, normalize(ecNormal), ecLight,
-                                    vec4(diffuseContribution), vec4(specularContribution), shininess));
-
-    vec4 baseColor = texture(texData, fragTexCoord);
-    vec3 shaded_rgb = (radiance + vec3(ambientContribution)) * baseColor.rgb;
-    color = vec4(min(vec3(1), shaded_rgb), baseColor.a);
+    if (renderNormal) {
+        color = vec4(normalize(ecNormal), 1);
+    } else {
+        float ambientContribution = materialProperties.x;
+        float diffuseContribution = materialProperties.y;
+        float specularContribution = materialProperties.z;
+        float shininess = materialProperties.w;
+        
+        vec3 radiance = vec3(TeapotLighting(ecPosition, normalize(ecNormal), ecLight,
+                                            vec4(diffuseContribution), vec4(specularContribution), shininess));
+        
+        vec4 baseColor = texture(texData, fragTexCoord);
+        vec3 shaded_rgb = (radiance + vec3(ambientContribution)) * baseColor.rgb;
+        color = vec4(min(vec3(1), shaded_rgb), baseColor.a);
 //    color = gammaCorrect(color);
+    }
 }

@@ -118,7 +118,7 @@ void TextureRenderTarget::createTexture(bool delete_old) {
         ERR("unexpected Texture type");
     }
 
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));    
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));
     GL_CHECK(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture.handle(), 0));
 }
 

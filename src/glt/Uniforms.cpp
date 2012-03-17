@@ -222,8 +222,9 @@ GLenum mapGLTextureType(GLenum texture_target) {
     case GL_TEXTURE_1D:
         return GL_SAMPLER_1D;
     case GL_TEXTURE_2D:
-//    case GL_TEXTURE_2D_MULTISAMPLE:
         return GL_SAMPLER_2D;
+    case GL_TEXTURE_2D_MULTISAMPLE:
+        return GL_SAMPLER_2D_MULTISAMPLE;
     case GL_TEXTURE_3D:
         return GL_SAMPLER_3D;
     default:

@@ -5,6 +5,7 @@ prependShaderPath "programs/teapot/shaders"
 
 bindShader "teapot" "teapot.vert" "teapot.frag" 0 "position" 1 "normal"
 bindShader "teapotTextured" "teapot_textured.vert" "teapot_textured.frag" 0 "position" 1 "normal" 2 "texCoord"
+bindShader "postproc" "postproc.vert" "postproc.frag" 0 "position" 1 "normal"
 
 perspectiveProjection 35 1 800.0
 

@@ -547,6 +547,8 @@ SphereLOD Game::calc_sphere_lod(const Sphere& s) {
     lod.level = index(screen_rad * SPHERE_LOD_MAX);
     if (lod.level >= SPHERE_LOD_MAX)
         lod.level = SPHERE_LOD_MAX - 1;
+    if (lod.level < 0)
+        lod.level = 0;
 
     ASSERT(0 <= lod.level); ASSERT(lod.level < SPHERE_LOD_MAX);
     
