@@ -6,6 +6,7 @@
 uniform vec3 ecLight;
 uniform vec4 surfaceColor;
 uniform vec4 materialProperties;
+uniform float glow;
 
 in vec3 ecNormal;
 in vec3 ecPosition;
@@ -14,7 +15,7 @@ out vec4 color;
 
 void main() {
     if (renderNormal) {
-        color = vec4(normalize(ecNormal), 1);
+        color = vec4(normalize(ecNormal), glow);
     } else {
         float ambientContribution = materialProperties.x;
         float diffuseContribution = materialProperties.y;
@@ -25,7 +26,7 @@ void main() {
                                         vec4(diffuseContribution), vec4(specularContribution), shininess));
         
         vec3 shaded_rgb = (radiance + vec3(ambientContribution)) * surfaceColor.rgb;
-        color = vec4(min(vec3(1), shaded_rgb), surfaceColor.a);
+        color = vec4(min(vec3(1), shaded_rgb), glow);
 //    color = gammaCorrect(color);
-    }    
+    }
 }

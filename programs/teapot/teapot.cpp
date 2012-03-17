@@ -78,6 +78,7 @@ struct MaterialProperties {
     float diffuseContribution;
     float specularContribution;
     float shininess;
+    float glow;
 };
 
 struct Teapot {
@@ -118,6 +119,8 @@ struct Anim {
     direction3_t ec_spotlight_dir;
 
     Ref<glt::TextureRenderTarget> tex_render_target;
+    Ref<glt::TextureRenderTarget> glow_render_target_src;
+    Ref<glt::TextureRenderTarget> glow_render_target_dst;
 
     std::string data_dir;
 
@@ -228,6 +231,7 @@ void Anim::init(const Event<InitEvent>& e) {
     teapot1.material.diffuseContribution = 0.6f;
     teapot1.material.specularContribution = 0.2f;
     teapot1.material.shininess = 110;
+    teapot1.material.glow = 0;
     teapot1.color = glt::color(0xFF, 0xFF, 0xFF);
 
     teapot2.frame.setXZ(vec3(1.f, 0.f, 0.f), vec3(0.f, 1.f, 0.f));
@@ -237,6 +241,7 @@ void Anim::init(const Event<InitEvent>& e) {
     teapot2.material.diffuseContribution = 0.6f;
     teapot2.material.specularContribution = 0.15f;
     teapot2.material.shininess = 35;
+    teapot2.material.glow = 0.2;
     teapot2.color = glt::color(0xFF, 0x8C, 0x00);
 
     {
@@ -247,6 +252,24 @@ void Anim::init(const Event<InitEvent>& e) {
         ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
         tex_render_target = makeRef(new glt::TextureRenderTarget(w, h, ps));
         engine.renderManager().setDefaultRenderTarget(tex_render_target.ptr());
+    }
+
+    {
+        size w = 512;
+        size h = 512;
+        glt::TextureRenderTarget::Params ps;
+        ps.buffers = glt::RT_COLOR_BUFFER;
+
+        glow_render_target_src = makeRef(new glt::TextureRenderTarget(w, h, ps));
+        glow_render_target_src->textureHandle().bind();
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+
+
+        glow_render_target_dst = makeRef(new glt::TextureRenderTarget(w, h, ps));
+        glow_render_target_dst->textureHandle().bind();
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
     }
 
     e.info.success = true;
@@ -264,11 +287,14 @@ vec3_t Anim::lightPosition(real interpolation) {
 
 void Anim::renderScene(const Event<RenderEvent>& e) {
     real interpolation = e.info.interpolation;
-
-    GL_CHECK(glEnable(GL_DEPTH_TEST));
     glt::RenderManager& rm = engine.renderManager();
-    rm.activeRenderTarget()->clearColor(glt::color(vec4(1.f, 1.f, 1.f, 1.f)));
+
+    rm.setActiveRenderTarget(tex_render_target.ptr());
+    rm.activeRenderTarget()->clearColor(glt::color(vec4(0.65, 0.65, 0.65, 0.f)));
     rm.activeRenderTarget()->clear();
+
+    GL_CHECK(glDisable(GL_BLEND));
+    GL_CHECK(glEnable(GL_DEPTH_TEST));
 
     light = lightPosition(interpolation);
     
@@ -306,16 +332,52 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     renderTeapot(teapot1);
     renderTeapot(teapot2);
 
+    GL_CHECK(glDisable(GL_DEPTH_TEST));
+
+    { // create the glow texture
+        engine.renderManager().setActiveRenderTarget(glow_render_target_src.ptr());
+        Ref<glt::ShaderProgram> glow_pass0 = engine.shaderManager().program("glow_pass0");
+        ASSERT(glow_pass0);
+        glow_pass0->use();
+        tex_render_target->textureHandle().bind(0);
+        glt::Uniforms(*glow_pass0)
+            .optional("texture0", glt::Sampler(tex_render_target->textureHandle(), 0));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+        screenQuad.draw();
+    }
+
+    // blur the glow texture
+    Ref<glt::TextureRenderTarget> from = glow_render_target_src;
+    Ref<glt::TextureRenderTarget> to = glow_render_target_dst;
+    for (int pass = 0; pass < 3; ++pass) {
+
+        engine.renderManager().setActiveRenderTarget(to.ptr());
+        Ref<glt::ShaderProgram> glow_pass1 = engine.shaderManager().program("glow_pass1");
+        ASSERT(glow_pass1);
+        glow_pass1->use();
+        from->textureHandle().bind(0);
+        glt::Uniforms(*glow_pass1)
+            .mandatory("texture0", glt::Sampler(from->textureHandle(), 0));
+        screenQuad.draw();
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+
+        Ref<glt::TextureRenderTarget> tmp = from;
+        from = to;
+        to = tmp;
+    }
+
     { // render texture to window framebuffer
         engine.renderManager().setActiveRenderTarget(&engine.window().renderTarget());
-        GL_CHECK(glDisable(GL_DEPTH_TEST));
+
         Ref<glt::ShaderProgram> postprocShader = engine.shaderManager().program("postproc");
         ASSERT(postprocShader);
         postprocShader->use();
 
         tex_render_target->textureHandle().bind(0);
+        glow_render_target_dst->textureHandle().bind(1);
         glt::Uniforms(*postprocShader)
-            .mandatory("texture0", glt::Sampler(tex_render_target->textureHandle(), 0));
+            .optional("texture0", glt::Sampler(tex_render_target->textureHandle(), 0))
+            .optional("texture1", glt::Sampler(from->textureHandle(), 1));
         screenQuad.draw();
     }
 }
@@ -363,6 +425,7 @@ void Anim::setupTeapotShader(const std::string& progname, const vec4_t& surfaceC
     us.optional("useSpot", 1.f * use_spotlight);
     us.optional("spotSmooth", 1.f * spotlight_smooth);
     us.optional("texData", glt::BoundSampler(GL_SAMPLER_2D, 0));
+    us.optional("glow", mat.glow);
 }
 
 void Anim::renderLight() {
@@ -372,7 +435,7 @@ void Anim::renderLight() {
     rm.geometryTransform().translate(light);
     rm.geometryTransform().scale(vec3(0.66f));
 
-    MaterialProperties mat = { 0.8f, 0.2f, 1.f, 120.f };
+    MaterialProperties mat = { 0.8f, 0.2f, 1.f, 120.f, 0.8 };
 
     setupTeapotShader("teapot", vec4(1.f, 1.f, 0.f, 1.f), mat);
     sphereModel.draw();
@@ -396,7 +459,7 @@ void Anim::renderGround() {
     rm.geometryTransform().scale(vec3(50.f));
     rm.geometryTransform().translate(vec3(-0.5f, 0.f, -0.5f));
 
-    MaterialProperties mat = { 0.f, 1.f, 0.f, 30.f };
+    MaterialProperties mat = { 0.f, 1.f, 0.f, 30.f, 0 };
     vec4_t color = glt::color(0xcd, 0xc9, 0xc9).vec4();
     setupTeapotShader("teapot", color, mat);
     groundModel.draw();
