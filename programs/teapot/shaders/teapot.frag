@@ -2,6 +2,7 @@
 
 // #include "gamma.h"
 #include "teapot_lighting.h"
+#include "color.h"
 
 uniform vec3 ecLight;
 uniform vec4 surfaceColor;
@@ -29,4 +30,6 @@ void main() {
         color = vec4(min(vec3(1), shaded_rgb), glow);
 //    color = gammaCorrect(color);
     }
+
+    color = applyColor(color);
 }
