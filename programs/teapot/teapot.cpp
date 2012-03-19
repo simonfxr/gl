@@ -48,8 +48,6 @@ struct ScreenVertex {
     vec3_t normal;
 };
 
-#if defined(MESH_MESH)
-
 DEFINE_VERTEX_DESC(Vertex,
                     VERTEX_ATTR(Vertex, position),
                     VERTEX_ATTR(Vertex, normal));
@@ -62,10 +60,6 @@ DEFINE_VERTEX_DESC(Vertex2,
 DEFINE_VERTEX_DESC(ScreenVertex,
                    VERTEX_ATTR(ScreenVertex, position),
                    VERTEX_ATTR(ScreenVertex, normal));
-
-#else
-#error "no meshtype defined"
-#endif
 
 static const uint32 SHADE_MODE_AMBIENT = 1;
 static const uint32 SHADE_MODE_DIFFUSE = 2;
@@ -188,28 +182,27 @@ void Anim::init(const Event<InitEvent>& e) {
 
     gamma_correction = 1.35f;
 
-    QUAD_MESH(cubeModel);
+    cubeModel.primType(GL_QUADS);
     glt::primitives::unitCube3(cubeModel);
-    FREEZE_MESH(cubeModel);
+    cubeModel.send();
 
     glt::primitives::sphere(sphereModel, 1.f, 26, 13);
     sphereModel.send();
 
     {
-        QUAD_MESH(groundModel);
+        groundModel.primType(GL_QUADS);
 
         Vertex v;
         v.normal = vec3(0.f, 1.f, 0.f);
-        v.position = vec3(0.f, 0.f, 0.f); ADD_VERTEX(groundModel, v);
-        v.position = vec3(1.f, 0.f, 0.f); ADD_VERTEX(groundModel, v);
-        v.position = vec3(1.f, 0.f, 1.f); ADD_VERTEX(groundModel, v);
-        v.position = vec3(0.f, 0.f, 1.f); ADD_VERTEX(groundModel, v);
+        v.position = vec3(0.f, 0.f, 0.f); groundModel.addVertex(v);
+        v.position = vec3(1.f, 0.f, 0.f); groundModel.addVertex(v);
+        v.position = vec3(1.f, 0.f, 1.f); groundModel.addVertex(v);
+        v.position = vec3(0.f, 0.f, 1.f); groundModel.addVertex(v);
 
-        FREEZE_MESH(groundModel);
+        groundModel.send();
     }
 
     {
-        QUAD_MESH(screenQuad);
         ScreenVertex v;
         v.normal = vec3(0.f, 0.f, 1.f);
         v.position = vec3(0, 0, 0); screenQuad.add(v);
@@ -217,7 +210,7 @@ void Anim::init(const Event<InitEvent>& e) {
         v.position = vec3(1, 1, 0); screenQuad.add(v);
         v.position = vec3(0, 1, 0); screenQuad.add(v);
         
-        FREEZE_MESH(screenQuad);
+        screenQuad.send();
     }
 
     camera.frame.origin = vec3(6.36, 5.87, 1.97);
@@ -589,9 +582,9 @@ void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args)
         std::cerr << "parsed teapot model: " << nfaces << " vertices" << std::endl;
     }
 
-    QUAD_MESH(teapotModel);
+    teapotModel.primType(GL_QUADS);
     teapotModel.drawType(glt::DrawElements);
-    FREEZE_MESH(teapotModel);
+    teapotModel.send();
 }
 
 int main(int argc, char *argv[]) {

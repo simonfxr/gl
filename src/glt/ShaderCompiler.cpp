@@ -147,13 +147,6 @@ GLuint compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::
     const char **segments = &proc.segments[0];
     const GLint *segLengths = reinterpret_cast<const GLint *>(&proc.segLengths[0]);
 
-    // std::cerr << "BEGIN SHADER SOURCE" << sys::io::endl;
-
-    // for (uint32 i = 0; i < nsegments; ++i) {
-    //     std::cerr << std::string(segments[i], segLengths[i]);
-    // }
-
-    // std::cerr << "END SHADER SOURCE" << sys::io::endl;
     
     GLuint shader;
     GL_CHECK(shader = glCreateShader(shader_type));
@@ -163,7 +156,22 @@ GLuint compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::
     }
 
     LOG_BEGIN(cstate, err::Info);
-    LOG_PUT(cstate, std::string("compiling ") + (name.empty() ? " embedded code " : name) + " ... ");
+    LOG_PUT(cstate, std::string("compiling ") + (name.empty() ? " <embedded code> " : name) + " ... ");
+
+#if 0
+
+    {
+        sys::io::OutStream& out = cstate.compiler.shaderManager.out();
+        out << sys::io::endl;
+        out << "BEGIN SHADER SOURCE" << sys::io::endl;
+        
+        for (uint32 i = 0; i < nsegments; ++i)
+            out << std::string(segments[i], segLengths[i]);
+
+        out << "END SHADER SOURCE" << sys::io::endl;
+    }
+
+#endif
         
     GL_CHECK(glShaderSource(shader, nsegments, segments, segLengths));
     double wct;

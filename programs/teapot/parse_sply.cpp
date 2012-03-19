@@ -44,12 +44,8 @@ int32 parse_sply(const char *filename, CubeMesh& model) {
 
     uint32 faces = 0;
 
-#ifdef MESH_MESH
-
     for (uint32 i = 0; i < verts.size(); ++i)
         model.addVertex(verts[i]);
-
-#endif
 
     while (fgets(line, sizeof line, data) != 0 && faces < nfaces) {
         uint32 n, i, j, k, l;
@@ -60,21 +56,10 @@ int32 parse_sply(const char *filename, CubeMesh& model) {
             return -1;
         }
 
-#ifdef MESH_MESH
-        
         model.addElement(i);
         model.addElement(j);
         model.addElement(k);
         model.addElement(l);
-        
-#else
-        
-        ADD_VERTEX(model, verts.at(i));
-        ADD_VERTEX(model, verts.at(j));
-        ADD_VERTEX(model, verts.at(k));
-        ADD_VERTEX(model, verts.at(l));
-
-#endif
 
         ++faces;
     }

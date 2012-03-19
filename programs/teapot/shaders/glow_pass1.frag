@@ -7,14 +7,14 @@ out vec4 color;
 
 void main() {
 
-    vec4 sample = vec4(0);
+    vec4 samp = vec4(0);
     vec2 texelSize = vec2(1) / textureSize(texture0, 0);
     int n = 7;
     float n2 = float(n - 1) / 2;
     for (int i = 0; i < n; ++i)
         for (int j = 0; j < n; ++j)
-            sample += texture(texture0, texCoord + (vec2(ivec2(i , j)) - vec2(n2)) * texelSize);
-    sample /= float(n * n);
+            samp += texture(texture0, texCoord + (vec2(ivec2(i , j)) - vec2(n2)) * texelSize);
+    samp /= float(n * n);
 
-    color = sample;
+    color = samp;
 }
