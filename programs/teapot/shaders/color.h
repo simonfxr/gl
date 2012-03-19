@@ -1,8 +1,10 @@
 
 vec4 applyColor(vec4 color) {
-    return color.argb;
+//    return color.argb;
+    return color;
 }
 
 vec4 unapplyColor(vec4 color) {
-    return color.bgar;
+    return color;
+//    return color.bgar;
 }

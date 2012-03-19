@@ -252,6 +252,7 @@ void Anim::init(const Event<InitEvent>& e) {
         size h = 512;
         glt::TextureRenderTarget::Params ps;
         ps.buffers = glt::RT_COLOR_BUFFER;
+        ps.filter_mode = glt::TextureSampler::FilterLinear;
         glow_render_target_src = makeRef(new glt::TextureRenderTarget(w, h, ps));
         glow_render_target_dst = makeRef(new glt::TextureRenderTarget(w, h, ps));
     }
