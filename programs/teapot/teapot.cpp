@@ -252,17 +252,8 @@ void Anim::init(const Event<InitEvent>& e) {
         size h = 512;
         glt::TextureRenderTarget::Params ps;
         ps.buffers = glt::RT_COLOR_BUFFER;
-
         glow_render_target_src = makeRef(new glt::TextureRenderTarget(w, h, ps));
-        glow_render_target_src->textureHandle().bind();
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-
-
         glow_render_target_dst = makeRef(new glt::TextureRenderTarget(w, h, ps));
-        glow_render_target_dst->textureHandle().bind();
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
     }
 
     e.info.success = true;
@@ -332,11 +323,11 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
         Ref<glt::ShaderProgram> glow_pass0 = engine.shaderManager().program("glow_pass0");
         ASSERT(glow_pass0);
         glow_pass0->use();
-        tex_render_target->textureHandle().bind(0);
+        tex_render_target->sampler().bind(0);
         glt::Uniforms(*glow_pass0)
-            .optional("texture0", glt::Sampler(tex_render_target->textureHandle(), 0));
-        GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+            .optional("texture0", glt::Sampler(tex_render_target->sampler(), 0));
         screenQuad.draw();
+        tex_render_target->sampler().unbind(0);
     }
 
     // blur the glow texture
@@ -348,11 +339,11 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
         Ref<glt::ShaderProgram> glow_pass1 = engine.shaderManager().program("glow_pass1");
         ASSERT(glow_pass1);
         glow_pass1->use();
-        from->textureHandle().bind(0);
+        from->sampler().bind(0);
         glt::Uniforms(*glow_pass1)
-            .mandatory("texture0", glt::Sampler(from->textureHandle(), 0));
+            .mandatory("texture0", glt::Sampler(from->sampler(), 0));
         screenQuad.draw();
-        GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+        from->sampler().unbind(0);
 
         Ref<glt::TextureRenderTarget> tmp = from;
         from = to;
@@ -366,12 +357,14 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
         ASSERT(postprocShader);
         postprocShader->use();
 
-        tex_render_target->textureHandle().bind(0);
-        glow_render_target_dst->textureHandle().bind(1);
+        tex_render_target->sampler().bind(0);
+        glow_render_target_dst->sampler().bind(1);
         glt::Uniforms(*postprocShader)
-            .optional("texture0", glt::Sampler(tex_render_target->textureHandle(), 0))
-            .optional("texture1", glt::Sampler(from->textureHandle(), 1));
+            .optional("texture0", glt::Sampler(tex_render_target->sampler(), 0))
+            .optional("texture1", glt::Sampler(from->sampler(), 1));
         screenQuad.draw();
+        tex_render_target->sampler().unbind(0);
+        glow_render_target_dst->sampler().unbind(1);
     }
 }
 
@@ -417,7 +410,7 @@ void Anim::setupTeapotShader(const std::string& progname, const vec4_t& surfaceC
     us.optional("spotDirection", ec_spotlight_dir);
     us.optional("useSpot", 1.f * use_spotlight);
     us.optional("spotSmooth", 1.f * spotlight_smooth);
-    us.optional("texData", glt::BoundSampler(GL_SAMPLER_2D, 0));
+    us.optional("texData", glt::BoundTexture(GL_SAMPLER_2D, 0));
     us.optional("glow", mat.glow);
 }
 

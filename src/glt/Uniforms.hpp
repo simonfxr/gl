@@ -4,7 +4,7 @@
 #include "defs.hpp"
 
 #include <string>
-#include "glt/TextureHandle.hpp"
+#include "glt/TextureSampler.hpp"
 
 namespace math {
 
@@ -24,32 +24,31 @@ struct color;
 
 GLenum mapGLTextureType(GLenum texture_target);
 
-struct Sampler {
+struct BoundTexture {
     GLenum type;
-    TextureHandle& tex;
     uint32 index;
 
-    Sampler(TextureHandle& _tex, uint32 _index) :
-        type(mapGLTextureType(_tex.glType())),
-        tex(_tex),
-        index(_index)
-        {}
+    BoundTexture() {}
 
-    Sampler(TextureHandle& _tex, uint32 _index, GLenum _type) :
-        type(_type),
-        tex(_tex),
-        index(_index)
-        {}
+    BoundTexture(GLenum ty, uint32 i) :
+        type(ty), index(i) {}
 };
 
-struct BoundSampler {
+struct Sampler {
     GLenum type;
+    TextureSampler& sampler;
     uint32 index;
 
-    BoundSampler() {}
-
-    BoundSampler(GLenum ty, uint32 i) :
-        type(ty), index(i) {}
+    Sampler(TextureSampler& _sampler, uint32 _index) :
+        type(mapGLTextureType(_sampler.data()->glType())),
+        sampler(_sampler),
+        index(_index)
+        {}
+    Sampler(TextureSampler& _sampler, uint32 _index, GLenum _type) :
+        type(_type),
+        sampler(_sampler),
+        index(_index)
+        {}
 };
 
 struct Uniforms {
@@ -65,8 +64,8 @@ private:
     void set(bool mandatory, const std::string& name, color value);
     void set(bool mandatory, const std::string& name, GLint value);
     void set(bool mandatory, const std::string& name, GLuint value);
+    void set(bool mandatory, const std::string& name, const BoundTexture& sampler);
     void set(bool mandatory, const std::string& name, const Sampler& sampler);
-    void set(bool mandatory, const std::string& name, const BoundSampler& sampler);
 
 public:
 

@@ -10,7 +10,7 @@ TextureRenderTarget3D::TextureRenderTarget3D(const math::ivec3_t& s, const Textu
     TextureRenderTarget(0, 0, ps),
     _depth(SIZE(s[2])),
     _color_format(ps.color_format),
-    _targetAttachment(Attachment(AttachmentLayer, 0))
+    _target_attachment(Attachment(AttachmentLayer, 0))
 {
     resize(s);
 }
@@ -34,20 +34,19 @@ void TextureRenderTarget3D::resize(const math::ivec3_t& s) {
 
 void TextureRenderTarget3D::createTexture(bool delete_old) {
     if (delete_old)
-        texture.free();
+        _sampler.data()->free();
     
-    texture.type(Texture3D);
-    texture.bind();
+    _sampler.data()->type(Texture3D);
+    
+    _sampler.data()->bind(0, false);
+    GL_CHECK(glTexImage3D(GL_TEXTURE_3D, 0, GLint(_color_format), width(), height(), _depth,
+                          0, GL_RGB, GL_UNSIGNED_BYTE, 0));
+    _sampler.data()->unbind(0, false);
 
-    GL_CHECK(glTexImage3D(GL_TEXTURE_3D, 0, GLint(_color_format), width(), height(), _depth, 0, GL_RGB, GL_UNSIGNED_BYTE, 0));
+    _sampler.filterMode(this->filterMode());
+    _sampler.clampMode(this->clampMode());
 
-    texture.filterMode(this->defaultFilterMode());
-
-    GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT));
-
-    Attachment current = _targetAttachment;
+    Attachment current = _target_attachment;
     AttachmentType other;
 
     switch (current.type) {
@@ -56,31 +55,31 @@ void TextureRenderTarget3D::createTexture(bool delete_old) {
     default: ASSERT_FAIL();
     }
 
-    _targetAttachment.type = other;  // force update
-    _targetAttachment.index = 0;
+    _target_attachment.type = other;  // force update
+    _target_attachment.index = 0;
     targetAttachment(current);
 }
 
 void TextureRenderTarget3D::targetAttachment(const TextureRenderTarget3D::Attachment& ta) {
-    if (ta.type != _targetAttachment.type ||
-        (ta.type == AttachmentLayer && ta.index != _targetAttachment.index)) {
+    if (ta.type != _target_attachment.type ||
+        (ta.type == AttachmentLayer && ta.index != _target_attachment.index)) {
         
-        _targetAttachment = ta;
-        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));
+        _target_attachment = ta;
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, _frame_buffer));
 
         switch (ta.type) {
         case AttachmentLayered:
-            GL_CHECK(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture.handle(), 0));
+            GL_CHECK(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _sampler.data()->handle(), 0));
             break;
         case AttachmentLayer:
-            texture.bind();
-            GL_CHECK(glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, texture.handle(), 0, ta.index));
-            // texture.bind();
-            // GL_CHECK(glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture.handle(), ta.index, 0));    
+            _sampler.data()->bind(0, false);
+            GL_CHECK(glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, _sampler.data()->handle(), 0, ta.index));
+            // _sampler.data()->bind();
+            // GL_CHECK(glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _sampler.data()->handle(), ta.index, 0));    
+            _sampler.data()->unbind(0, false);
             break;
         default: ASSERT_FAIL();
         }
-
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));        
     }
 }

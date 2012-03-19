@@ -341,12 +341,12 @@ void Game::renderScene(const ge::Event<ge::RenderEvent>& ev) {
         ASSERT(postprocShader);
         postprocShader->use();
         
-        textureRenderTarget->textureHandle().bind(0);
+        textureRenderTarget->sampler().bind(0);
         glt::Uniforms(*postprocShader)
             .optional("gammaCorrection", GAMMA)
-            .mandatory("textures", glt::Sampler(textureRenderTarget->textureHandle(), 0));
-        
-        rectBatch.draw();        
+            .mandatory("textures", glt::Sampler(textureRenderTarget->sampler(), 0));
+        rectBatch.draw();
+        textureRenderTarget->sampler().unbind(0);
     }
 
     render_hud();
@@ -435,12 +435,11 @@ void Game::end_render_spheres() {
                 continue;
 
 #ifdef SPHERE_INSTANCED_TEXTURED
-            glt::TextureHandle sphereMap(glt::Texture1D);
-            sphereMap.bind();
+            glt::TextureSampler sphereMap(makeRef(new glt::TextureData(glt::Texture1D)));
 
-            GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-            GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-            GL_CHECK(glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+            sphereMap.filterMode(glt::TextureSampler::FilterNearest);
+            sphereMap.clampMode(glt::TextureSampler::ClampRepeat);
+            sphereMap.bind(0);
             GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, num * 2, 0, GL_RGBA, GL_FLOAT, &sphere_instances[lod][0]));
 
             sphere_instances[lod].clear();
@@ -449,10 +448,7 @@ void Game::end_render_spheres() {
             ASSERT(sphereInstancedShader);
             sphereInstancedShader->use();
 
-            sphereMap.bind(0);
-
             glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
-
             glt::Uniforms(*sphereInstancedShader)
                 .optional("normalMatrix", gt.normalMatrix())
                 .optional("vMatrix", gt.mvMatrix())
@@ -462,7 +458,7 @@ void Game::end_render_spheres() {
                 .mandatory("instanceData", glt::Sampler(sphereMap, 0));
 
             sphereBatches[lod].drawInstanced(num);
-
+            sphereMap.unbind(0);
             sphereMap.free();
 
 #elif defined(SPHERE_INSTANCED_ARRAY)

@@ -81,7 +81,8 @@ set(GLT_SRC
   glt/ViewFrustum.cpp
   glt/RenderManager.cpp
   glt/RenderTarget.cpp
-  glt/TextureHandle.cpp
+  glt/TextureData.cpp
+  glt/TextureSampler.cpp
   glt/TextureRenderTarget.cpp
   glt/TextureRenderTarget3D.cpp
   glt/Mesh.cpp

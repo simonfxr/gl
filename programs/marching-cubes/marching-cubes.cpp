@@ -71,8 +71,8 @@ struct Anim {
     Ref<glt::TextureRenderTarget3D> worldVolume;
     glt::Mesh<MCVertex> volumeCube;
 
-    glt::TextureHandle caseToNumPolysData;
-    glt::TextureHandle triangleTableData;
+    glt::TextureSampler caseToNumPolysData;
+    glt::TextureSampler triangleTableData;
     
     Ref<glt::ShaderProgram> worldProgram;
     Ref<glt::ShaderProgram> marchingCubesProgram;
@@ -127,22 +127,22 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
 
     {
         glt::TextureRenderTarget3D::Params ps;
-        ps.default_filter_mode = glt::TextureHandle::FilterLinear;
+        ps.filter_mode = glt::TextureSampler::FilterLinear;
         ps.color_format = GL_R32F;
         worldVolume = new glt::TextureRenderTarget3D(SAMPLER_SIZE + ivec3(1), ps);
     }
 
-    caseToNumPolysData.type(glt::Texture1D);
-    caseToNumPolysData.bind();
+    caseToNumPolysData.data()->type(glt::Texture1D);
+    caseToNumPolysData.data()->bind(0, false);
     
     GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, sizeof edgeTable, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, edgeTable));
-    caseToNumPolysData.filterMode(glt::TextureHandle::FilterNearest);
+    caseToNumPolysData.filterMode(glt::TextureSampler::FilterNearest);
 
-    triangleTableData.type(glt::Texture1D);
-    triangleTableData.bind();
+    triangleTableData.data()->type(glt::Texture1D);
+    triangleTableData.bind(0, false);
     GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, sizeof triTable, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, triTable));
-    triangleTableData.filterMode(glt::TextureHandle::FilterNearest);
-    GL_CHECK(glBindTexture(GL_TEXTURE_1D, 0));
+    triangleTableData.filterMode(glt::TextureSampler::FilterNearest);
+    triangleTableData.unbind(0, false);
 
     volumeCube.primType(GL_POINTS);
 
@@ -284,7 +284,7 @@ void Anim::makePolygon(const Block& block) {
 
     caseToNumPolysData.bind(0);
     triangleTableData.bind(1);
-    worldVolume->textureHandle().bind(2);
+    worldVolume->sampler().bind(2);
 
     GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     GL_CHECK(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
@@ -293,7 +293,7 @@ void Anim::makePolygon(const Block& block) {
     glt::Uniforms(*marchingCubesProgram)
         .mandatory("caseToNumPolysData", glt::Sampler(caseToNumPolysData, 0, GL_UNSIGNED_INT_SAMPLER_1D))
         .mandatory("triangleTableData", glt::Sampler(triangleTableData, 1, GL_UNSIGNED_INT_SAMPLER_1D))
-        .optional("worldVolume", glt::Sampler(worldVolume->textureHandle(), 2, GL_SAMPLER_3D))
+        .optional("worldVolume", glt::Sampler(worldVolume->sampler(), 2, GL_SAMPLER_3D))
         .mandatory("texEdgeDim", vec3(1) / vec3(SAMPLER_SIZE))
         .optional("worldMatrix", gt.modelMatrix())
 //        .mandatory("projectionMatrix", gt.projectionMatrix())

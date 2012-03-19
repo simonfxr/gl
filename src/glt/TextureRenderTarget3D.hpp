@@ -27,16 +27,15 @@ protected:
 
     size _depth;
     GLenum _color_format;
-    Attachment _targetAttachment;
+    Attachment _target_attachment;
 
 public:
 
-    
     struct Params : public TextureRenderTarget::Params {
         GLenum color_format;
-        explicit Params(GLenum col_format = GL_RGB8, const TextureRenderTarget::Params& ps = TextureRenderTarget::Params()) :
-            TextureRenderTarget::Params(ps),
-            color_format(col_format)
+        Params() :
+            TextureRenderTarget::Params(),
+            color_format(GL_RGB8)
             {}
     };
 
@@ -44,7 +43,7 @@ public:
     void resize(const math::ivec3_t&);
 
     size depth() const { return _depth; }
-    Attachment targetAttachment() const { return _targetAttachment; }
+    Attachment targetAttachment() const { return _target_attachment; }
     void targetAttachment(const Attachment&);
     
     virtual void createTexture(bool delete_old = true) EXPLICIT;

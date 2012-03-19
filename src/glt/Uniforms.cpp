@@ -127,11 +127,11 @@ void programUniform(GLuint program, GLint loc, const mat3_t& value) {
     GL_CHECK(glProgramUniformMatrix3fv(program, loc, 1, GL_FALSE, value.components));
 }
 
-void programUniform(GLuint program, GLint loc, const Sampler& sampler) {
+void programUniform(GLuint program, GLint loc, const BoundTexture& sampler) {
     GL_CHECK(glProgramUniform1i(program, loc, GLint(sampler.index)));
 }
 
-void programUniform(GLuint program, GLint loc, const BoundSampler& sampler) {
+void programUniform(GLuint program, GLint loc, const Sampler& sampler) {
     GL_CHECK(glProgramUniform1i(program, loc, GLint(sampler.index)));
 }
 
@@ -209,11 +209,11 @@ void Uniforms::set(bool mandatory, const std::string& name, GLuint value) {
     setUniform(mandatory, prog, name, GL_UNSIGNED_INT, value);
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, const Sampler& sampler) {
+void Uniforms::set(bool mandatory, const std::string& name, const BoundTexture& sampler) {
     setUniform(mandatory, prog, name, sampler.type, sampler);
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, const BoundSampler& sampler) {
+void Uniforms::set(bool mandatory, const std::string& name, const Sampler& sampler) {
     setUniform(mandatory, prog, name, sampler.type, sampler);
 }
 

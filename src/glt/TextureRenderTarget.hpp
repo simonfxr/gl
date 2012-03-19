@@ -4,31 +4,34 @@
 #include "defs.hpp"
 #include "opengl.hpp"
 #include "glt/RenderTarget.hpp"
-#include "glt/TextureHandle.hpp"
+#include "glt/TextureSampler.hpp"
 
 namespace glt {
 
 using namespace defs;
 
 struct TextureRenderTarget EXPLICIT : public RenderTarget {
-    TextureHandle texture;
-    GLuint frame_buffer;
-    GLuint depth_buffer;
-    size samples;
-    GLenum color_format;
-    TextureHandle::FilterMode default_filter_mode;
+    TextureSampler _sampler;
+    GLuint _frame_buffer;
+    GLuint _depth_buffer;
+    size _samples;
+    GLenum _color_format;
+    TextureSampler::FilterMode _filter_mode;
+    TextureSampler::ClampMode _clamp_mode;
     
-    TextureHandle& textureHandle();
+    TextureSampler& sampler() { return _sampler; }
 
     struct Params {
         RenderTargetBuffers buffers;
         size samples;
-        TextureHandle::FilterMode default_filter_mode;
+        TextureSampler::FilterMode filter_mode;
+        TextureSampler::ClampMode clamp_mode;
 
-        explicit Params(RenderTargetBuffers _buffers = RT_COLOR_BUFFER,
-               size _samples = 1,
-               TextureHandle::FilterMode _default_filter_mode = TextureHandle::FilterNearest) :
-            buffers(_buffers), samples(_samples), default_filter_mode(_default_filter_mode)
+        Params() :
+            buffers(RT_COLOR_BUFFER),
+            samples(1),
+            filter_mode(TextureSampler::FilterNearest),
+            clamp_mode(TextureSampler::ClampToEdge)
             {}
     };
 
@@ -37,9 +40,11 @@ struct TextureRenderTarget EXPLICIT : public RenderTarget {
 
     void resize(size width, size height);
 
-    TextureHandle::FilterMode defaultFilterMode() { return default_filter_mode; }
+    TextureSampler::FilterMode filterMode() { return _filter_mode; }
+    void filterMode(TextureSampler::FilterMode m) { _filter_mode = m; }
 
-    void defaultFilterMode(TextureHandle::FilterMode m) { default_filter_mode = m; }
+    TextureSampler::ClampMode clampMode() { return _clamp_mode; }
+    void clampMode(TextureSampler::ClampMode m) { _clamp_mode = m; }
     
     virtual void createTexture(bool delete_old = true);
 

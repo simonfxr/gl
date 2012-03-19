@@ -166,6 +166,7 @@ inline uptr ___check_unsize(SizeT s) {
 template <typename SizeT>
 inline SizeT ___assert_size(SizeT s) {
 #ifdef SIGNED_SIZE
+//    ASSERT(s >= 0);
 #endif
     return s;
 }
@@ -173,6 +174,8 @@ inline SizeT ___assert_size(SizeT s) {
 #define SIZE(x) ::defs::___check_size(x)
 #define UNSIZE(x) ::defs::___check_unsize(x)
 #define ASSERT_SIZE(x) ::defs::___assert_size(x)
+
+#define DEF_ENUM_BITOR(ty) inline ty operator |(ty a, ty b) { return ty(a | b); }
 
 } // namespace defs
 
