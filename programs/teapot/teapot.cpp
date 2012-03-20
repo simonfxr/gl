@@ -254,8 +254,8 @@ void Anim::init(const Event<InitEvent>& e) {
     }
 
     {
-        size w = 256;
-        size h = 256;
+        size w = 512;
+        size h = 512;
         glt::TextureRenderTarget::Params ps;
         ps.buffers = glt::RT_COLOR_BUFFER;
         ps.filter_mode = glt::TextureSampler::FilterLinear;
@@ -291,12 +291,12 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
 #endif
 
     rm.setActiveRenderTarget(render_target);
-    rm.activeRenderTarget()->clearColor(glt::color(vec4(vec3(0.f), bg_alpha)));
+    rm.activeRenderTarget()->clearColor(glt::color(vec4(vec3(0.65f), bg_alpha)));
     rm.activeRenderTarget()->clear();
 
     GL_CHECK(glDisable(GL_BLEND));
-    GL_CHECK(glDisable(GL_DITHER));
     GL_CHECK(glEnable(GL_DEPTH_TEST));
+    GL_CHECK(glDisable(GL_ALPHA_TEST));
 
     light = lightPosition(interpolation);
     
