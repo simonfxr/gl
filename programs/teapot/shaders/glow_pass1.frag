@@ -8,8 +8,8 @@ out vec4 color;
 void main() {
 
     vec4 samp = vec4(0);
-    vec2 texelSize = vec2(1) / textureSize(texture0, 0);
-    int n = 7;
+    vec2 texelSize = vec2(1) / (textureSize(texture0, 0) - vec3(1));
+    int n = 5;
     float n2 = float(n - 1) / 2;
     for (int i = 0; i < n; ++i)
         for (int j = 0; j < n; ++j)

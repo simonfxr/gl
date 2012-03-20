@@ -254,8 +254,8 @@ void Anim::init(const Event<InitEvent>& e) {
     }
 
     {
-        size w = 512;
-        size h = 512;
+        size w = 256;
+        size h = 256;
         glt::TextureRenderTarget::Params ps;
         ps.buffers = glt::RT_COLOR_BUFFER;
         ps.filter_mode = glt::TextureSampler::FilterLinear;
@@ -291,7 +291,7 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
 #endif
 
     rm.setActiveRenderTarget(render_target);
-    rm.activeRenderTarget()->clearColor(glt::color(vec4(0.65, 0.65, 0.65, bg_alpha)));
+    rm.activeRenderTarget()->clearColor(glt::color(vec4(vec3(0.f), bg_alpha)));
     rm.activeRenderTarget()->clear();
 
     GL_CHECK(glDisable(GL_BLEND));
@@ -352,7 +352,7 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     // blur the glow texture
     Ref<glt::TextureRenderTarget> from = glow_render_target_src;
     Ref<glt::TextureRenderTarget> to = glow_render_target_dst;
-    for (int pass = 0; pass < 3; ++pass) {
+    for (int pass = 0; pass < 5; ++pass) {
 
         engine.renderManager().setActiveRenderTarget(to.ptr());
         Ref<glt::ShaderProgram> glow_pass1 = engine.shaderManager().program("glow_pass1");

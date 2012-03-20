@@ -450,7 +450,7 @@ void MeshBase::freeHost() {
 }
 
 void MeshBase::freeGPU() {
-    GLuint names[2] = {vertex_buffer_name, 0};
+    GLuint names[2];
     int len = 0;
 
     if (vertex_buffer_name != 0) {

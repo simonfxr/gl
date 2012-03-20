@@ -31,5 +31,5 @@ void main() {
 //    color = gammaCorrect(color);
     }
 
-    color = applyColor(color);
+    color = encodeColor(color);
 }
