@@ -116,12 +116,13 @@ ARBDebug::~ARBDebug() {
 
 GLDebug *ARBDebug::init() {
     glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-    
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
         printGLError(_CURRENT_LOCATION, err);
         return 0;
     }
+
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
 
     GLsizei max_len;
     glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH_ARB, &max_len);
@@ -315,9 +316,9 @@ bool initDebug() {
 
 namespace {
 
-bool mem_info_initialized = false;
-bool mem_info_available = false;
-GLMemFree initial_free;
+bool ati_mem_info_initialized = false;
+bool ati_mem_info_available = false;
+GLMemInfoATI::GLMemFree initial_free;
 
 enum MemInfoField {
     FREE_TOTAL,
@@ -327,7 +328,7 @@ enum MemInfoField {
     FREE_COUNT
 };
 
-void queryMemFree(GLMemFree *free) {
+void queryMemFreeATI(GLMemInfoATI::GLMemFree *free) {
     GLint info[FREE_COUNT];
     GL_CHECK(glGetIntegerv(GL_VBO_FREE_MEMORY_ATI, info));
     free->freeVBO = info[FREE_TOTAL];
@@ -339,26 +340,66 @@ void queryMemFree(GLMemFree *free) {
 
 } // namespace anon
 
-bool initMemInfo() {
-    if (mem_info_initialized)
-        return mem_info_available;
-    mem_info_initialized = true;
-    mem_info_available = isExtensionSupported("GL_ATI_meminfo");
-    if (mem_info_available)
-        queryMemFree(&initial_free);
-    return true;
+bool GLMemInfoATI::init() {
+    if (ati_mem_info_initialized)
+        return ati_mem_info_available;
+    ati_mem_info_initialized = true;
+    ati_mem_info_available = bool(GLEW_ATI_meminfo);
+    if (ati_mem_info_available)
+        queryMemFreeATI(&initial_free);
+    return ati_mem_info_available;
 }
 
-bool getMemInfo(GLMemInfo* mi) {
+bool GLMemInfoATI::info(GLMemInfoATI *mi) {
     
-    if (!mem_info_available) {
-        if (!mem_info_initialized)
-            ERR("meminfo not initialized");
+    if (!ati_mem_info_initialized) {
+        ERR("GLMemInfoATI not initialized");
         return false;
     }
 
-    queryMemFree(&mi->current);
+    if (!ati_mem_info_available)
+        return false;
+
+    queryMemFreeATI(&mi->current);
     mi->initial = initial_free;
+    return true;
+}
+
+namespace {
+bool nv_mem_info_initialized = false;
+bool nv_mem_info_available = false;
+
+} // namespace anon
+
+bool GLMemInfoNV::init() {
+    if (nv_mem_info_initialized)
+        return nv_mem_info_available;
+    nv_mem_info_initialized = true;
+    nv_mem_info_available = bool(GLEW_NVX_gpu_memory_info);
+    return nv_mem_info_available;
+}
+
+bool GLMemInfoNV::info(GLMemInfoNV *mi) {
+    if (!nv_mem_info_initialized) {
+        ERR("GLMemInfoNV not initialized");
+        return false;
+    }
+
+    if (!nv_mem_info_available)
+        return false;
+
+    GLint total, total_dedicated, current, evicted, num_evictions;
+    GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &total_dedicated));
+    GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &total));
+    GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &current));
+    GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX, &num_evictions));
+    GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX, &evicted));
+
+    mi->total = total;
+    mi->total_dedicated = total_dedicated;
+    mi->current = current;
+    mi->evicted = evicted;
+    mi->num_evictions = num_evictions;
     return true;
 }
 

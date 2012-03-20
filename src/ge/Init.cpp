@@ -67,8 +67,8 @@ void initInitStats(EngineInitializers& inits) {
 
 static void runInitMemInfo(const Event<InitEvent>& e) {
     e.info.success = true;
-    if (!glt::initMemInfo())
-        e.info.engine.out() << "couldnt init OpenGL Memory Info" << sys::io::endl;
+    glt::GLMemInfoATI::init();
+    glt::GLMemInfoNV::init();
 }
 
 void initMemInfo(RunLevel lvl, EngineInitializers& inits) {

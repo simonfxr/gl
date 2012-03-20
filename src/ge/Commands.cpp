@@ -29,20 +29,33 @@ void runPrintContextInfo(const Event<CommandEvent>& e) {
 }
 
 void runPrintMemInfo(const Event<CommandEvent>& e) {
-    glt::GLMemInfo info;
-    if (!glt::getMemInfo(&info)) {
-        ERR(e.info.engine.out(), "couldnt query amount of free memory");
-        return;
+    bool success = false;
+    glt::GLMemInfoATI info;
+    if (glt::GLMemInfoATI::info(&info)) {
+        success = true;
+        float fracVBO = float(info.current.freeVBO) / float(info.initial.freeVBO);
+        float fracTex = float(info.current.freeTexture) / float(info.initial.freeTexture);
+        float fracRBO = float(info.current.freeRenderbuffer) / float(info.initial.freeRenderbuffer);
+        e.info.engine.out()
+            << "OpenGL Free Memory: " << sys::io::endl
+            << "  VBO: " << info.current.freeVBO << " kbyte (" << (fracVBO * 100) << "%)" << sys::io::endl
+            << "  Texture: " << info.current.freeVBO << " kbyte (" << (fracTex * 100) << "%)" << sys::io::endl
+            << "  Renderbuffer: " << info.current.freeVBO << " kbyte (" << (fracRBO * 100) << "%)" << sys::io::endl;
     }
 
-    float fracVBO = float(info.current.freeVBO) / float(info.initial.freeVBO);
-    float fracTex = float(info.current.freeTexture) / float(info.initial.freeTexture);
-    float fracRBO = float(info.current.freeRenderbuffer) / float(info.initial.freeRenderbuffer);
-    e.info.engine.out()
-        << "OpenGL Free Memory: " << sys::io::endl
-        << "  VBO: " << info.current.freeVBO << " kbyte (" << (fracVBO * 100) << "%)" << sys::io::endl
-        << "  Texture: " << info.current.freeVBO << " kbyte (" << (fracTex * 100) << "%)" << sys::io::endl
-        << "  Renderbuffer: " << info.current.freeVBO << " kbyte (" << (fracRBO * 100) << "%)" << sys::io::endl;
+    glt::GLMemInfoNV info_nv;
+    if (!success && glt::GLMemInfoNV::info(&info_nv)) {
+        success = true;
+
+        e.info.engine.out()
+            << "OpenGL Memory Information:" << sys::io::endl
+            << "  total: " << info_nv.total << " kbyte, dedicated: " << info_nv.total_dedicated << " kbyte" << sys::io::endl
+            << "  current: " << info_nv.current << " kbyte" << sys::io::endl
+            << "  evicted: " << info_nv.evicted << " kbyte, " << info_nv.num_evictions << " evictions" << sys::io::endl;
+    }
+
+    if (!success)
+        ERR(e.info.engine.out(), "couldnt query amount of free memory");
 }
 
 void runReloadShaders(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
