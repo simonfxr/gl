@@ -30,6 +30,12 @@
 
 #include "parse_sply.hpp"
 
+#define RENDER_GLOW 1
+
+#if !(defined(RENDER_GLOW) || defined(RENDER_NOGLOW))
+#error "no glowmode defined"
+#endif
+
 using namespace math;
 using namespace ge;
 using namespace defs;
@@ -274,11 +280,22 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     real interpolation = e.info.interpolation;
     glt::RenderManager& rm = engine.renderManager();
 
-    rm.setActiveRenderTarget(tex_render_target.ptr());
-    rm.activeRenderTarget()->clearColor(glt::color(vec4(0.65, 0.65, 0.65, 0.f)));
+    glt::RenderTarget *render_target;
+    real bg_alpha;
+#if RENDER_NOGLOW
+    render_target = &engine.window().renderTarget();
+    bg_alpha = 1.f;
+#else
+    render_target = tex_render_target.ptr();
+    bg_alpha = 0.f;
+#endif
+
+    rm.setActiveRenderTarget(render_target);
+    rm.activeRenderTarget()->clearColor(glt::color(vec4(0.65, 0.65, 0.65, bg_alpha)));
     rm.activeRenderTarget()->clear();
 
     GL_CHECK(glDisable(GL_BLEND));
+    GL_CHECK(glDisable(GL_DITHER));
     GL_CHECK(glEnable(GL_DEPTH_TEST));
 
     light = lightPosition(interpolation);
@@ -317,6 +334,7 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     renderTeapot(teapot1);
     renderTeapot(teapot2);
 
+#if RENDER_GLOW
     GL_CHECK(glDisable(GL_DEPTH_TEST));
 
     { // create the glow texture
@@ -367,6 +385,7 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
         tex_render_target->sampler().unbind(0);
         glow_render_target_dst->sampler().unbind(1);
     }
+#endif
 }
 
 void Anim::onWindowResized(const Event<WindowResized>& ev) {
@@ -412,7 +431,11 @@ void Anim::setupTeapotShader(const std::string& progname, const vec4_t& surfaceC
     us.optional("useSpot", 1.f * use_spotlight);
     us.optional("spotSmooth", 1.f * spotlight_smooth);
     us.optional("texData", glt::BoundTexture(GL_SAMPLER_2D, 0));
-    us.optional("glow", mat.glow);
+#if RENDER_NOGLOW
+    us.optional("glow", real(1));
+#else
+    us.optional("glow", mat.glow  /* real(0.8) */);
+#endif
 }
 
 void Anim::renderLight() {

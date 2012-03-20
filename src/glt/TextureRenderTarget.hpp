@@ -47,6 +47,8 @@ struct TextureRenderTarget EXPLICIT : public RenderTarget {
     void clampMode(TextureSampler::ClampMode m) { _clamp_mode = m; }
     
     virtual void createTexture(bool delete_old = true);
+    
+    static bool checkFramebufferStatus(GLuint buffer, GLenum target);
 
 protected:
     virtual void doDeactivate() OVERRIDE;
