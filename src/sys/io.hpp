@@ -16,7 +16,7 @@ using namespace defs;
 
 struct Handle;
 struct Socket;
-struct IPAddr;
+struct IPAddr4;
 struct HandleStream;
 
 namespace {
@@ -43,8 +43,8 @@ const SocketMode SM_NONBLOCKING = 1;
 
 } // namespace anon
 
-extern const IPAddr IPA_ANY;
-extern const IPAddr IPA_LOCAL;
+extern const IPAddr4 IPA_ANY;
+extern const IPAddr4 IPA_LOCAL;
 
 enum HandleError {
     HE_OK,
@@ -55,12 +55,23 @@ enum HandleError {
     HE_UNKNOWN
 };
 
+struct IPAddr4 {
+    uint32 addr4; // bigendian/network byte order
+    IPAddr4() {}
+    IPAddr4(uint8 a, uint8 b, uint8 c, uint8 d)
+        : addr4(hton((uint32(a) << 24) | (uint32(b) << 16) | (uint32(c) << 8) | uint32(d))) {}
+        
+    IPAddr4(uint32 addr) : addr4(addr) {}
+};
+
 } // namespace io
 
 } // namespace sys
 
 #ifdef SYSTEM_UNIX
 #include "sys/io/io_unix.hpp"
+#elif defined(SYSTEM_WINDOWS)
+#include "sys/io/io_windows.hpp"
 #else
 #error "no IO implementation available"
 #endif
@@ -89,7 +100,7 @@ enum SocketError {
     SE_UNKNOWN
 };
 
-SocketError listen(SocketProto, const IPAddr&, uint16, SocketMode, Socket *);
+SocketError listen(SocketProto, const IPAddr4&, uint16, SocketMode, Socket *);
 
 SocketError accept(Socket&, Handle *);
 

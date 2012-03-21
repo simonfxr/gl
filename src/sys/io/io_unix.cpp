@@ -13,8 +13,8 @@ namespace io {
 
 using namespace defs;
 
-const IPAddr IPA_ANY(0, 0, 0, 0);
-const IPAddr IPA_LOCAL(127, 0, 0, 1);
+const IPAddr4 IPA_ANY(0, 0, 0, 0);
+const IPAddr4 IPA_LOCAL(127, 0, 0, 1);
 
 namespace {
 
@@ -186,7 +186,7 @@ HandleError close(Handle& h) {
         return HE_OK;
 }
 
-SocketError listen(SocketProto proto, const IPAddr& addr, uint16 port, SocketMode mode, Socket *s) {
+SocketError listen(SocketProto proto, const IPAddr4& addr, uint16 port, SocketMode mode, Socket *s) {
 
     const int BACKLOG = 16;
 

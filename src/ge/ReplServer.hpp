@@ -17,7 +17,7 @@ struct ReplServer {
     ReplServer(Engine&);
     ~ReplServer();
 
-    bool start(const sys::io::IPAddr&, uint16);
+    bool start(const sys::io::IPAddr4&, uint16);
     bool running();
 
     void acceptClients();

@@ -166,7 +166,7 @@ ReplServer::~ReplServer() {
     delete self;
 }
 
-bool ReplServer::start(const IPAddr& listen_addr, uint16 port) {
+bool ReplServer::start(const IPAddr4& listen_addr, uint16 port) {
     
     if (self->running) {
         ERR("already running");

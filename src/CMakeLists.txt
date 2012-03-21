@@ -30,29 +30,22 @@ endif()
 def_lib(err SOURCES ${ERR_SRC} LIB_DEPEND ${ERR_LIB})
 
 set(SYS_SRC
-  sys/fs.hpp
   sys/fs/fs_default.cpp
-  sys/clock.hpp
-  sys/endian.hpp
-  sys/io.hpp
   sys/io.cpp
-  sys/io/Stream.hpp
   sys/io/Stream.cpp)
 
 if(SYS_UNIX)
   set(SYS_SRC
     ${SYS_SRC}
-    sys/fs/fs_unix.hpp
     sys/fs/fs_unix.cpp
     sys/clock_unix.cpp
-    sys/io/io_unix.hpp
     sys/io/io_unix.cpp)
 elseif(SYS_WINDOWS)
   set(SYS_SRC
     ${SYS_SRC}
-    sys/fs/fs_windows.hpp
     sys/fs/fs_windows.cpp
-    sys/clock_windows.cpp)
+    sys/clock_windows.cpp
+    sys/io/io_windows.cpp)
 endif()
 
 set(SYS_LIBS)
