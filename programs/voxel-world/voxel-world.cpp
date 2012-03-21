@@ -1,5 +1,3 @@
-#include <iostream>
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -408,7 +406,7 @@ static void initRays(Rays &rays, vec3_t dirs[]) {
     rays.faceLengths[5] = SPHERE_POINTS - off;
 
     for (uint32 i = 0; i < 6; ++i) {
-        std::cerr << "side " << i << ": " << "number of rays: " << rays.faceLengths[i] << " beginning at " << rays.faceOffsets[i] << std::endl;
+        sys::io::stderr() << "side " << i << ": " << "number of rays: " << rays.faceLengths[i] << " beginning at " << rays.faceOffsets[i] << sys::io::endl;
     }
     
     const vec3_t center = vec3(N * 0.5f);
@@ -677,7 +675,7 @@ static void createWorld(Densities& ds) {
             for (int32 k = 0; k < N; ++k) {
                 vec3_t wc = (vec3(ivec3(i, j, k)) * (1.f / real(N)) - vec3(0.5f)) * VIRTUAL_DIM;
                 ds.ds[i][j][k] = density(wc);
-//                std::cerr << i << " " << j << " " << k << " -> wc:" << wc << " density: " << ds.ds[i][j][k] << " sign " << signAt(ds, ivec3(i, j, k)) << std::endl;
+//                sys::io::stderr() << i << " " << j << " " << k << " -> wc:" << wc << " density: " << ds.ds[i][j][k] << " sign " << signAt(ds, ivec3(i, j, k)) << sys::io::endl;
             }
 }
 
@@ -688,7 +686,7 @@ static void createGeometry(World& world, const Densities& ds) {
         for (int32 j = 0; j < N; ++j)
             for (int32 k = 0; k < N; ++k) {
                 world(i, j, k) = blockAt(ds, ivec3(i, j, k));
-//                std::cerr << "block At " << i << " " << j << " " << k << " -> " << world(i,j,k) << std::endl;
+//                sys::io::stderr() << "block At " << i << " " << j << " " << k << " -> " << world(i,j,k) << sys::io::endl;
             }
 }
 
@@ -791,7 +789,7 @@ static void createModel(CubeMesh& worldModel, const World& world, const World& v
                         if (visibleFace(world, vis, ii, jj, kk, vec3(v.normal))) {
                             ++stats.visFaces;
                             ivec3_t n = ivec3(vec3(v.normal));
-//                            std::cerr << "n: " << vec3(n) << std::endl;
+//                            sys::io::stderr() << "n: " << vec3(n) << sys::io::endl;
                             int32 face = n[0] + n[1] * 2 + n[2] * 3;
                             int32 side = face < 0 ? 1 : 0;
                             face = abs(face) - 1;
@@ -849,7 +847,7 @@ static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points)
     std::auto_ptr<Rays> raysp(new Rays);
     Rays& rays = *raysp;
     time_op(initRays(rays, sphere_points));
-    std::cerr << "rays crossing planes: " << rays.sumcos.f[0] << ", " << rays.sumcos.f[1] << std::endl;
+    sys::io::stderr() << "rays crossing planes: " << rays.sumcos.f[0] << ", " << rays.sumcos.f[1] << sys::io::endl;
 
     World *visptmp;
     time_op(visptmp = filterOccluded(world));
@@ -903,8 +901,8 @@ static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points)
 
     time_op(createModel(worldModel, world, vis, occmap, verts, permut, stats, *densitiesp));
 
-    std::cerr << "blocks: " << stats.blocks << ", visible blocks: " << stats.visBlocks << std::endl;
-    std::cerr << "faces: " << stats.faces << ", visible faces: " << stats.visFaces << std::endl;
+    sys::io::stderr() << "blocks: " << stats.blocks << ", visible blocks: " << stats.visBlocks << sys::io::endl;
+    sys::io::stderr() << "faces: " << stats.faces << ", visible faces: " << stats.visFaces << sys::io::endl;
     
     worldModel.send();
     worldModel.freeHost();
@@ -927,7 +925,7 @@ static void renderScene(State *state, const RenderEv& ev) {
 
     if (state->fpsTimer->fire()) {
         glt::FrameStatistics fs = e.renderManager().frameStatistics();
-        std::cerr << "Timings (FPS/Render Avg/Render Min/Render Max): " << fs.avg_fps << "; " << fs.rt_avg << "; " << fs.rt_min << "; " << fs.rt_max << std::endl;
+        sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): " << fs.avg_fps << "; " << fs.rt_avg << "; " << fs.rt_min << "; " << fs.rt_max << sys::io::endl;
     }
 }
 

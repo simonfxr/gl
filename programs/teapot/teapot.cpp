@@ -1,9 +1,3 @@
-#include <iostream>
-#include <cstdio>
-#include <cstring>
-
-#include <GL/glew.h>
-
 #include <SFML/Graphics/Image.hpp>
 
 #include "defs.hpp"
@@ -585,7 +579,7 @@ void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args)
     data_dir = *args[0].string;
 
     if (!woodTexture.loadFromFile(data_dir + "/wood.jpg")) {
-        std::cerr << "couldnt load data/wood.jpg" << std::endl;
+        ERR("couldnt load data/wood.jpg");
         return;
     }
 
@@ -593,10 +587,10 @@ void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args)
 
     int32 nfaces = parse_sply((data_dir + "/teapot.sply").c_str(), teapotModel);
     if (nfaces < 0) {
-        std::cerr << "couldnt parse teapot model" << std::endl;
+        ERR("couldnt parse teapot model");
         return;
     } else {
-        std::cerr << "parsed teapot model: " << nfaces << " vertices" << std::endl;
+        sys::io::stdout() << "parsed teapot model: " << nfaces << " vertices" << sys::io::endl;
     }
 
     teapotModel.primType(GL_QUADS);

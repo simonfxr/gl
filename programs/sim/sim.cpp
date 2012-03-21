@@ -8,7 +8,6 @@
 
 #include "sys/clock.hpp"
 
-#include <iostream>
 #include <vector>
 #include <algorithm>
 

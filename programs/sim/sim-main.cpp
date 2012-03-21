@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -283,7 +282,7 @@ void Game::windowResized(const ge::Event<ge::WindowResized>& ev) {
     // ASSERT(e.renderManager().renderTarget().width() == width);
     // ASSERT(e.renderManager().renderTarget().height() == height);
     
-    std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
+    sys::io::stderr() << "new window dimensions: " << width << "x" << height << sys::io::endl;
 
     resizeRenderTargets();
 }
@@ -623,7 +622,7 @@ void Game::render_box(const glt::AABB& box) {
     point3_t center = box.center();
     vec3_t dim = 0.5f * box.dimensions();
 
-//    std::cerr << "render box: " << center << "dim: " << dim << std::endl;
+//    sys::io::stderr() << "render box: " << center << "dim: " << dim << sys::io::endl;
 
     gt.translate(center);
     gt.scale(dim);
@@ -685,10 +684,10 @@ void Game::render_con(const point3_t& a, const point3_t& b) {
     us.optional("color", CONNECTION_COLOR);
     us.optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
 
-    // std::cerr << "con: a = " << va << ", b = " << vb << std::endl
+    // sys::io::stderr() << "con: a = " << va << ", b = " << vb << sys::io::endl
     //           << "  a' = " << gt.transformPoint(vec3(0.f))
     //           << ", b' = " << gt.transformPoint(vec3(1.f, 0.f, 0.f))
-    //           << std::endl;
+    //           << sys::io::endl;
 
     lineBatch.draw();
 
@@ -807,7 +806,7 @@ void Game::link(ge::Engine& e) {
 
 void Game::cmdToggleUseInterpolation(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
     use_interpolation = !use_interpolation;
-    std::cerr << "use interpolation: " << (use_interpolation ? "yes" : "no") << std::endl;
+    sys::io::stderr() << "use interpolation: " << (use_interpolation ? "yes" : "no") << sys::io::endl;
 }
 
 void Game::cmdIncWorldSolveIterations(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
@@ -815,22 +814,22 @@ void Game::cmdIncWorldSolveIterations(const ge::Event<ge::CommandEvent>&, const 
         world.solve_iterations = 0;
     else
         world.solve_iterations += int32(args[0].integer);
-    std::cerr << "number of contact-solver iterations: " << world.solve_iterations << std::endl;
+    sys::io::stderr() << "number of contact-solver iterations: " << world.solve_iterations << sys::io::endl;
 }
 
 void Game::cmdToggleRenderByDistance(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
     world.render_by_distance = !world.render_by_distance;
-    std::cerr << "render by distance: " << (world.render_by_distance ? "yes" : "no") << std::endl;
+    sys::io::stderr() << "render by distance: " << (world.render_by_distance ? "yes" : "no") << sys::io::endl;
 }
 
 void Game::cmdToggleRenderSpheresInstanced(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
     render_spheres_instanced = !render_spheres_instanced;
-    std::cerr << "instanced rendering: " << (render_spheres_instanced ? "yes" : "no") << std::endl;
+    sys::io::stderr() << "instanced rendering: " << (render_spheres_instanced ? "yes" : "no") << sys::io::endl;
 }
 
 void Game::cmdToggleIndirectRendering(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
     updateIndirectRendering(!indirect_rendering);
-    std::cerr << "indirect rendering: " << (indirect_rendering ? "yes" : "no") << std::endl;
+    sys::io::stderr() << "indirect rendering: " << (indirect_rendering ? "yes" : "no") << sys::io::endl;
 }
 
 void Game::cmdSpawnSphere(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {

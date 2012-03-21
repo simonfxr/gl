@@ -3,7 +3,6 @@
 
 #include "ge/Engine.hpp"
 
-#include <iostream>
 #include <cstring>
 
 #ifdef SYSTEM_UNIX
@@ -32,10 +31,10 @@ void animate(State *state, const ge::Event<ge::AnimationEvent>& ev) {
         if (strncmp(state->argv[i], "GL_", 3) == 0) {
             bool ok = glt::isExtensionSupported(state->argv[i]);
             ok = ok || GLEW_IS_SUPPORTED(state->argv[i]);
-            std::cerr << "extension " << state->argv[i] << ": " << (ok ? "yes" : "no") << std::endl;
+            sys::io::stderr() << "extension " << state->argv[i] << ": " << (ok ? "yes" : "no") << sys::io::endl;
         } else {
             bool ok = GLEW_IS_SUPPORTED(state->argv[i]) != 0;
-            std::cerr << "function " << state->argv[i] << ": " << (ok ? "yes" : "no") << std::endl;
+            sys::io::stderr() << "function " << state->argv[i] << ": " << (ok ? "yes" : "no") << sys::io::endl;
         }        
     }
     
@@ -51,7 +50,7 @@ int main(int argc, char *argv[]) {
     opts.parse(&argc, &argv);
     for (int i = 1; i < argc; ++i)
         if (argv[i] != 0 && argv[i][0] == '-')
-            std::cerr << "unknown option: " << argv[i] << std::endl;
+            sys::io::stderr() << "unknown option: " << argv[i] << sys::io::endl;
 
     State state;
     state.argc = argc;
