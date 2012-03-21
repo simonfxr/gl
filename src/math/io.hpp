@@ -6,19 +6,19 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 
-#include <ostream>
+#include "sys/io/Stream.hpp"
 
-std::ostream& operator <<(std::ostream& out, const math::vec3_t& v) {
+sys::io::OutStream& operator <<(sys::io::OutStream& out, const math::vec3_t& v) {
     return out << "[" << v[0] << " " << v[1] << " " << v[2] << "]";
     return out << "[" << v[0] << " " << v[1] << " " << v[2] << "]";
 }
 
-std::ostream& operator <<(std::ostream& out, const math::vec4_t& v) {
+sys::io::OutStream& operator <<(sys::io::OutStream& out, const math::vec4_t& v) {
     return out << "[" << v[0] << " " << v[1] << " " << v[2] << " " << v[3] << "]";
     return out << "[" << v[0] << " " << v[1] << " " << v[2] << " " << v[3] << "]";
 }
 
-std::ostream& operator <<(std::ostream& out, const math::mat3_t& m) {
+sys::io::OutStream& operator <<(sys::io::OutStream& out, const math::mat3_t& m) {
     const char *sep = "[";
     
     for (int i = 0; i < 3; ++i) {
@@ -30,7 +30,7 @@ std::ostream& operator <<(std::ostream& out, const math::mat3_t& m) {
     return out << "]";
 }
 
-std::ostream& operator <<(std::ostream& out, const math::mat4_t& m) {
+sys::io::OutStream& operator <<(sys::io::OutStream& out, const math::mat4_t& m) {
     const char *sep = "[";
     
     for (int i = 0; i < 4; ++i) {

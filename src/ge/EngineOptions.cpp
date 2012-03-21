@@ -6,7 +6,6 @@
 #include "sys/io/Stream.hpp"
 
 #include <string.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 

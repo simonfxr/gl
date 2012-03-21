@@ -1,6 +1,5 @@
 #include <sstream>
 #include <vector>
-#include <iostream>
 
 #include "data/Array.hpp"
 
