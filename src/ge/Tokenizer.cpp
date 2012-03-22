@@ -79,6 +79,7 @@ bool getch(ParseState& s) {
 }
 
 void skipSpace(ParseState& s) {
+
     while (isspace(s.c))
         getch(s);
 }
@@ -428,13 +429,15 @@ State statement(ParseState& s, std::vector<CommandArg>& toks, bool quot) {
     State st;
     bool first = true;
     for (;;) {
-        if (!first) getch(s);
+        if (!first) {
+            getch(s);
+        }
         if (quot) {
             skipSpace(s);
             if (s.c == '}')
                 return EndToken;
         }
-        
+
         if (s.c == ';' || s.c == 0)
             break;
         CommandArg tok;

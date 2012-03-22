@@ -171,18 +171,17 @@ void ShaderProgram::Data::printProgramLog(GLuint program, sys::io::OutStream& ou
     if (log_len > 0) {
         
         GLchar *log = new GLchar[size_t(log_len)];
-        GLchar *logBegin = log;
+        GL_CHECK(glGetProgramInfoLog(program, log_len, NULL, log));
 
+        GLchar *logBegin = log;
         while (logBegin < log + log_len - 1 && isspace(*logBegin))
             ++logBegin;
 
         if (logBegin == log + log_len - 1) {
             out << "link log empty" << sys::io::endl;
         } else {
-            out << "link log: " << sys::io::endl;
-            GL_CHECK(glGetProgramInfoLog(program, log_len, NULL, log));
-    
-            out << log << sys::io::endl
+            out << "link log: " << sys::io::endl
+                << log << sys::io::endl
                 << "end link log" << sys::io::endl;
         }
             

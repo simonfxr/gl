@@ -143,7 +143,9 @@ FileStream::FileStream(FILE *_file) :
     file(_file)
 {}
 
-FileStream::FileStream(const std::string& path, const std::string& mode) {
+FileStream::FileStream(const std::string& path, const std::string& mode) :
+    file(0)
+{
     open(path, mode);
 }
 
@@ -151,6 +153,11 @@ bool FileStream::open(const std::string& path, const std::string& mode) {
     if (isOpen())
         return false;
     file = fopen(path.c_str(), mode.c_str());
+    if (file == 0) {
+        ERR("couldnt open file: " + path);
+    } else {
+        ERR("openend file: " + path);
+    }
     return file != 0;
 }
 

@@ -266,7 +266,7 @@ void Anim::animate(const Event<AnimationEvent>&) {
 
 vec3_t Anim::lightPosition(real interpolation) {
     real theta = wrapPi(light_angular_position + interpolation * light_rotation_speed);
-    vec3_t d = vec3(cos(theta), 0.f, sin(theta));
+    vec3_t d = vec3(math::cos(theta), 0.f, math::sin(theta));
     return d * LIGHT_ROTATION_RAD + LIGHT_CENTER_OF_ROTATION;
 }
 

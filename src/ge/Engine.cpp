@@ -120,7 +120,7 @@ int32 Engine::run(const EngineOptions& opts) {
         WARN("cannot enable OpenGL tracing: not compiled with GLDEBUG");
 #endif
     }
-    
+
     std::string wd = opts.workingDirectory;
     if (opts.workingDirectory.empty() && opts.defaultCD)
         wd = sys::fs::dirname(opts.binary);
@@ -131,6 +131,12 @@ int32 Engine::run(const EngineOptions& opts) {
             return 1;
         }
     }
+
+#ifdef SYSTEM_WINDOWS
+    if (!sys::fs::cwd("Z:/dev/gl")) {
+        ERR("couldnt change into Z:/dev/gl");
+    }
+#endif
 
     for (uint32 i = 0; i < opts.scriptDirs.size(); ++i) {
         if (!commandProcessor().addScriptDirectory(opts.scriptDirs[i])) {

@@ -1,4 +1,3 @@
-#define ERROR_NO_IMPLICIT_OUT
 
 #include "ge/CommandProcessor.hpp"
 #include "ge/Event.hpp"
@@ -225,14 +224,14 @@ bool CommandProcessor::loadScript(const std::string& name, bool quiet) {
         goto not_found;
 
     {
-        sys::io::FileStream filestream;
-        if (!filestream.open(file, "rb"))
+        sys::io::FileStream filestream(file, "rb");
+        if (!filestream.isOpen())
             goto not_found;
         sys::io::stdout() << "loading script: " << file << sys::io::endl;
         return loadStream(filestream, file);
     }
 
-not_found:
+not_found: 
     
     sys::io::stdout() << "loading script: " << name << " -> not found" << sys::io::endl;
     
@@ -281,18 +280,19 @@ bool CommandProcessor::evalCommand(const std::string& cmd) {
 }
 
 bool CommandProcessor::execCommand(std::vector<CommandArg>& args) {
-    Array<CommandArg> com_args(&args[0], SIZE(args.size()));
-    return execCommand(com_args);
+    if (args.size() > 0) {
+        Array<CommandArg> com_args(&args[0], SIZE(args.size()));
+        return execCommand(com_args);
+    } else {
+        Array<CommandArg> com_args(0, 0);
+        return execCommand(com_args);
+    }
 }
     
 bool CommandProcessor::execCommand(Array<CommandArg>& args) {
     if (args.size() == 0)
         return true;
 
-    // ON_DEBUG(sys::io::stdout() << "executing command: ");
-    // ON_DEBUG(prettyCommandArgs(sys::io::stdout(), com_args));
-    // ON_DEBUG(sys::io::stdout() << sys::io::endl);
-    
     bool ok = exec(args);
 
     if (!ok) {

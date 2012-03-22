@@ -142,11 +142,6 @@ macro(def_program target)
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
   # parse the arguments
   sfml_parse_arguments(THIS "SOURCES;DEPEND;LIB_DEPEND" "NO_GUI_APP" ${ARGN})
-  if(THIS_NO_GUI_APP)
-    set(THIS_GUI_APP FALSE)
-  else()
-    set(THIS_GUI_APP TRUE)
-  endif()
 
   # create the target
   if(THIS_GUI_APP AND SYS_WINDOWS)

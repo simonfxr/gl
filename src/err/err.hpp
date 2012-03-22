@@ -187,5 +187,7 @@ sys::io::OutStream& logPutError(const T& v, E err, const std::string& msg) {
 #define LOG_LEVEL(val, lvl) ::err::logLevel(val, lvl)
 #define LOG_DESTINATION(val) ::err::logDestination(val)
 
+#define TRACE(...) INFO(__VA_ARGS__)
+
 } // namespace err
 #endif

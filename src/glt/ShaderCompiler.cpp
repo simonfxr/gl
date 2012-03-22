@@ -206,6 +206,7 @@ void printShaderLog(GLuint shader, sys::io::OutStream& out) {
     if (log_len > 0) {
         
         GLchar *log = new GLchar[size_t(log_len)];
+        GL_CHECK(glGetShaderInfoLog(shader, log_len, NULL, log));
 
         GLchar *logBegin = log;
         while (logBegin < log + log_len - 1 && isspace(*logBegin))
@@ -214,10 +215,8 @@ void printShaderLog(GLuint shader, sys::io::OutStream& out) {
         if (logBegin == log + log_len - 1)  {
             out << "shader compile log empty" << sys::io::endl;
         } else {
-            out << "shader compile log: " << sys::io::endl;
-            GL_CHECK(glGetShaderInfoLog(shader, log_len, NULL, log));
-            
-            out << log << sys::io::endl
+            out << "shader compile log: " << sys::io::endl
+                << log << sys::io::endl
                 << "end compile log" << sys::io::endl;
         }
         
