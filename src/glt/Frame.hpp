@@ -1,7 +1,7 @@
 #ifndef GLT_FRAME_HPP
 #define GLT_FRAME_HPP
 
-#include "defs.hpp"
+#include "glt/conf.hpp"
 #include "math/vec3/type.hpp"
 #include "math/vec4/type.hpp"
 #include "math/mat3/type.hpp"
@@ -12,7 +12,7 @@ namespace glt {
 /* represents a local right handed coordinate system
  * x_axis is perpendicular to z_axis
  */
-struct Frame {
+struct GLT_API Frame {
 
     math::point3_t origin;
     math::direction3_t x_axis;
@@ -43,19 +43,19 @@ struct Frame {
     void normalize();
 };
 
-math::vec4_t transform(const Frame& fr, const math::vec4_t& v);
+GLT_API math::vec4_t transform(const Frame& fr, const math::vec4_t& v);
 
-math::point3_t transformPoint(const Frame& fr, const math::point3_t& p);
+GLT_API math::point3_t transformPoint(const Frame& fr, const math::point3_t& p);
 
-math::vec3_t transformVector(const Frame& fr, const math::vec3_t& v);
+GLT_API math::vec3_t transformVector(const Frame& fr, const math::vec3_t& v);
 
-math::mat3_t rotationLocalToWorld(const Frame& fr);
+GLT_API math::mat3_t rotationLocalToWorld(const Frame& fr);
 
-math::mat3_t rotationWorldToLocal(const Frame& fr);
+GLT_API math::mat3_t rotationWorldToLocal(const Frame& fr);
 
-math::mat4_t transformationLocalToWorld(const Frame& fr);
+GLT_API math::mat4_t transformationLocalToWorld(const Frame& fr);
 
-math::mat4_t transformationWorldToLocal(const Frame& fr);
+GLT_API math::mat4_t transformationWorldToLocal(const Frame& fr);
 
 } // namespace glt
 

@@ -1,7 +1,7 @@
 #ifndef GLT_VIEWING_FRUSTUM_HPP
 #define GLT_VIEWING_FRUSTUM_HPP
 
-#include "defs.hpp"
+#include "glt/conf.hpp"
 #include "math/vec3/type.hpp"
 #include "math/mat4/type.hpp"
 #include "math/plane.hpp"
@@ -41,7 +41,7 @@ const Outcode CLIP_ALL_MASK  = (1ul << 6) - 1;
 } // namespace anon
 
 // a four sided pyramid frustum, used to represent a viewing volume
-struct ViewFrustum {
+struct GLT_API ViewFrustum {
     
     // clip planes in world coordinates, normales point in the volume
     math::plane3_t planes[VIEW_FRUSTUM_PLANES];
@@ -51,9 +51,9 @@ struct ViewFrustum {
     void update(const math::mat4_t& mvpMatrix);
 };
 
-Outcode testSphere(const ViewFrustum& frust, const math::point3_t& center, float rad);
+GLT_API Outcode testSphere(const ViewFrustum& frust, const math::point3_t& center, float rad);
 
-Outcode testPoint(const ViewFrustum& frust, const math::point3_t& p);
+GLT_API Outcode testPoint(const ViewFrustum& frust, const math::point3_t& p);
 
 inline bool clipped(Outcode code) {
     return (code & CLIP_ALL_MASK) != 0;

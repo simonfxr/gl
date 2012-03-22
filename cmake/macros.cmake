@@ -1,17 +1,7 @@
 # most of the following code is adopted from SFML
 
-# some of these macros are inspired from the boost/cmake macros
-
-# this macro adds external dependencies to a static target,
-# compensating for the lack of a link step when building a static library.
-# every compiler has its own way of doing it:
-# - VC++ supports it directly through the static library flags
-# - MinGW/gcc doesn't support it, but as a static library is nothing more than an archive,
-#   we can simply merge the external dependencies to our generated target as a post-build step
-# - we don't do anything for other compilers and OSes; static build is not encouraged on Unix (Linux, Mac OS X)
-#   where shared libraries are properly managed and have many advantages over static libraries
 macro(sfml_static_add_libraries target)
-  if(WINDOWS AND COMPILER_GCC)
+  if(WINDOWS AND COMP_GCC)
     # Windows - gcc
     foreach(lib ${ARGN})
       if(NOT ${lib} MATCHES ".*/.*")
@@ -27,14 +17,14 @@ macro(sfml_static_add_libraries target)
         COMMAND del *.o /f /q
         VERBATIM)
     endforeach()
-  elseif(MSVC)
+  elseif(COMP_CL)
     # Visual C++
     set(LIBRARIES "")
     foreach(lib ${ARGN})
       if(NOT ${lib} MATCHES ".*\\.lib")
         set(lib ${lib}.lib)
       endif()
-      if(MSVC_IDE AND COMPILER_MSVC LESS 2010)
+      if(MSVC_IDE AND MSVC_VERSION LESS 2010)
         # for Visual Studio projects < 2010, we must add double quotes
         # around paths because they may contain spaces
         set(LIBRARIES "${LIBRARIES} &quot\\;${lib}&quot\\;")
@@ -43,6 +33,9 @@ macro(sfml_static_add_libraries target)
       endif()
     endforeach()
     set_target_properties(${target} PROPERTIES STATIC_LIBRARY_FLAGS ${LIBRARIES})
+  else()
+    # All other platforms
+    target_link_libraries(${target} ${ARGN})
   endif()
 endmacro()
 
@@ -98,29 +91,36 @@ macro(def_lib target)
   # create the target
   add_library(${target} ${THIS_SOURCES})
 
+  # define the export symbol of the module
+  string(REPLACE "-" "_" NAME_UPPER "${target}")
+  string(TOUPPER "${NAME_UPPER}" NAME_UPPER)
+  set_target_properties(${target} PROPERTIES DEFINE_SYMBOL ${NAME_UPPER}_EXPORTS)
+
   # adjust the output file prefix/suffix to match our conventions
   if(BUILD_SHARED_LIBS)
-    if (WINDOWS AND COMP_GCC)
+    if (SYS_WINDOWS AND COMP_GCC)
       # on Windows/gcc get rid of "lib" prefix for shared libraries,
       # and transform the ".dll.a" suffix into ".a" for import libraries
       set_target_properties(${target} PROPERTIES PREFIX "")
       set_target_properties(${target} PROPERTIES IMPORT_SUFFIX ".a")
     endif()
-  else()
-    set_target_properties(${target} PROPERTIES POSTFIX -s)
+  endif()
+
+  # for gcc >= 4.0 on Windows, apply the STATIC_STD_LIBS option if it is enabled
+  if(SYS_WINDOWS AND COMP_GCC AND STATIC_STD_LIBS)
+    if(NOT GCC_VERSION VERSION_LESS "4")
+      set_target_properties(${target} PROPERTIES LINK_FLAGS "-static-libgcc -static-libstdc++")
+    endif()
+  endif()
+
+  # If using gcc >= 4.0 or clang >= 3.0 on a non-Windows platform, we must hide public symbols by default
+  # (exported ones are explicitely marked)
+  if(NOT SYS_WINDOWS AND (COMP_GCC OR COMP_CLANG OR COMP_ICC))
+    set_target_properties(${target} PROPERTIES COMPILE_FLAGS -fvisibility=hidden)
   endif()
 
   # link the target to its SFML dependencies
   if(THIS_DEPEND)
-    if(MATH_INLINE)
-      set(all_deps ${THIS_DEPEND})
-      set(THIS_DEPEND)
-      foreach(dep ${all_deps})
-        if(NOT ${dep} STREQUAL "vec-math")
-          set(THIS_DEPEND ${THIS_DEPEND} ${dep})
-        endif()
-      endforeach()
-    endif()
     target_link_libraries(${target} ${THIS_DEPEND})
   endif()
 
@@ -139,39 +139,33 @@ macro(def_lib target)
 endmacro()
 
 macro(def_program target)
+
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
-
   # parse the arguments
-  sfml_parse_arguments(THIS "SOURCES;DEPEND;LIB_DEPEND" "" ${ARGN})
+  sfml_parse_arguments(THIS "SOURCES;DEPEND;LIB_DEPEND" "NO_GUI_APP" ${ARGN})
+  if(THIS_NO_GUI_APP)
+    set(THIS_GUI_APP FALSE)
+  else()
+    set(THIS_GUI_APP TRUE)
+  endif()
 
-  add_executable(${target} ${THIS_SOURCES})
+  # create the target
+  if(THIS_GUI_APP AND SYS_WINDOWS)
+    add_executable(${target} WIN32 ${THIS_SOURCES})
+    target_link_libraries(${target} sfml-main)
+  else()
+    add_executable(${target} ${THIS_SOURCES})
+  endif()
 
-  # set_target_properties(${target} PROPERTIES COMPILE_FLAGS 
-  #   "-DPROJECT_PATH=${PROJECT_SOURCE_DIR} -DPROGRAM_PATH=${CMAKE_CURRENT_LIST_DIR}")
+  # for gcc >= 4.0 on Windows, apply the STATIC_STD_LIBS option if it is enabled
+  if(SYS_WINDOWS AND COMP_GCC AND STATIC_STD_LIBS)
+    if(NOT GCC_VERSION VERSION_LESS "4")
+      set_target_properties(${target} PROPERTIES LINK_FLAGS "-static-libgcc -static-libstdc++")
+    endif()
+  endif()
 
   # link the target to its SFML dependencies
   if(THIS_DEPEND)
-    if(MATH_INLINE)
-      set(all_deps ${THIS_DEPEND})
-      set(THIS_DEPEND)
-      foreach(dep ${all_deps})
-        if(NOT ${dep} STREQUAL "vec-math")
-          set(THIS_DEPEND ${THIS_DEPEND} ${dep})
-        endif()
-      endforeach()
-    endif()
     target_link_libraries(${target} ${THIS_DEPEND})
-  endif()
-
-  # link the target to its external dependencies
-  if(THIS_LIB_DEPEND)
-    if(BUILD_SHARED_LIBS)
-      # in shared build, we use the regular linker commands
-      target_link_libraries(${target} ${THIS_LIB_DEPEND})
-    else()
-      # in static build there's no link stage, but with some compilers it is possible to force
-      # the generated static library to directly contain the symbols from its dependencies
-      sfml_static_add_libraries(${target} ${THIS_LIB_DEPEND})
-    endif()
   endif()
 endmacro()

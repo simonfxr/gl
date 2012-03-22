@@ -1,7 +1,7 @@
 #ifndef GL_UTILS
 #define GL_UTILS
 
-#include "defs.hpp"
+#include "glt/conf.hpp"
 #include "opengl.hpp"
 
 #include "err/err.hpp"
@@ -22,22 +22,21 @@
 
 namespace glt {
 
-bool printOpenGLCalls();
+GLT_API bool printOpenGLCalls();
 
-void printOpenGLCalls(bool);
+GLT_API void printOpenGLCalls(bool);
 
-std::string getGLErrorString(GLenum err);
+GLT_API std::string getGLErrorString(GLenum err);
 
-bool printGLErrors(sys::io::OutStream& out);
+GLT_API bool printGLErrors(sys::io::OutStream& out);
 
-bool checkForGLError(const err::Location& loc);
+GLT_API bool checkForGLError(const err::Location& loc);
 
-bool isExtensionSupported(const char *extension);
+GLT_API bool isExtensionSupported(const char *extension);
 
-bool initDebug();
+GLT_API bool initDebug();
 
-
-struct GLMemInfoATI {
+struct GLT_API GLMemInfoATI {
 
     struct GLMemFree {
         // in kb
@@ -53,7 +52,7 @@ struct GLMemInfoATI {
     static bool info(GLMemInfoATI *);
 };
 
-struct GLMemInfoNV {
+struct GLT_API GLMemInfoNV {
 
     // in kb
     defs::size total;

@@ -1,7 +1,7 @@
 #ifndef FS_HPP
 #define FS_HPP
 
-#include "defs.hpp"
+#include "sys/conf.hpp"
 
 #include <string>
 #include <vector>
@@ -35,34 +35,34 @@ struct Stat {
     ModificationTime mtime;
 };
 
-bool cwd(const std::string& dir);
+SYS_API bool cwd(const std::string& dir);
 
-std::string cwd();
+SYS_API std::string cwd();
 
-std::string dirname(const std::string& path);
+SYS_API std::string dirname(const std::string& path);
 
-std::string basename(const std::string& path);
+SYS_API std::string basename(const std::string& path);
 
-std::string extension(const std::string& path);
+SYS_API std::string extension(const std::string& path);
 
-std::string dropExtension(const std::string& path);
+SYS_API std::string dropExtension(const std::string& path);
 
-std::string dropTrailingSeparators(const std::string& path);
+SYS_API std::string dropTrailingSeparators(const std::string& path);
 
-bool isAbsolute(const std::string& path);
+SYS_API bool isAbsolute(const std::string& path);
 
-bool modificationTime(const std::string& path, sys::fs::ModificationTime *mtime);
+SYS_API bool modificationTime(const std::string& path, sys::fs::ModificationTime *mtime);
 
-bool stat(const std::string& path, sys::fs::Stat *stat);
+SYS_API bool stat(const std::string& path, sys::fs::Stat *stat);
 
-std::string absolutePath(const std::string&);
+SYS_API std::string absolutePath(const std::string&);
 
-std::string lookup(const std::vector<std::string>&, const std::string&);
+SYS_API std::string lookup(const std::vector<std::string>&, const std::string&);
 
-bool exists(const std::string& path, ObjectType *type);
+SYS_API bool exists(const std::string& path, ObjectType *type);
 
-bool operator ==(const ModificationTime& a, const ModificationTime& b);
-bool operator <(const ModificationTime& a, const ModificationTime& b);
+SYS_API bool operator ==(const ModificationTime& a, const ModificationTime& b);
+SYS_API bool operator <(const ModificationTime& a, const ModificationTime& b);
 
 inline bool operator !=(const ModificationTime& a, const ModificationTime& b) {  return !(a == b); }
 inline bool operator <=(const ModificationTime& a, const ModificationTime& b) { return a < b || a == b; }
@@ -72,23 +72,23 @@ inline bool operator >(const ModificationTime& a, const ModificationTime& b) { r
 // default implementations
 namespace def {
 
-std::string dirname(const std::string& path);
+SYS_API std::string dirname(const std::string& path);
 
-std::string basename(const std::string& path);
+SYS_API std::string basename(const std::string& path);
 
-std::string extension(const std::string& path);
+SYS_API std::string extension(const std::string& path);
 
-std::string dropExtension(const std::string& path);
+SYS_API std::string dropExtension(const std::string& path);
 
-std::string dropTrailingSeparators(const std::string& path);
+SYS_API std::string dropTrailingSeparators(const std::string& path);
 
-bool exists(const std::string& path, ObjectType *type);
+SYS_API bool exists(const std::string& path, ObjectType *type);
 
-std::string lookup(const std::vector<std::string>& dirs, const std::string& name);
+SYS_API std::string lookup(const std::vector<std::string>& dirs, const std::string& name);
 
-std::string absolutePath(const std::string&);
+SYS_API std::string absolutePath(const std::string&);
 
-bool modificationTime(const std::string& path, sys::fs::ModificationTime *);
+SYS_API bool modificationTime(const std::string& path, sys::fs::ModificationTime *);
 
 }
 

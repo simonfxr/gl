@@ -3,6 +3,7 @@
 
 #include "glt/Frame.hpp"
 
+#include "ge/conf.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Command.hpp"
 #include "ge/Event.hpp"
@@ -13,7 +14,7 @@ namespace ge {
 
 struct Camera;
 
-struct CameraMoved {
+struct GE_API CameraMoved {
     Camera& camera;
     math::vec3_t step;
     mutable math::vec3_t allowed_step;
@@ -22,7 +23,7 @@ struct CameraMoved {
         camera(cam), step(s), allowed_step(s) {}
 };
 
-struct CameraRotated {
+struct GE_API CameraRotated {
     Camera& camera;
     math::vec2_t angle;
     mutable math::vec2_t allowed_angle;
@@ -31,7 +32,7 @@ struct CameraRotated {
         camera(cam), angle(a), allowed_angle(a) {}
 };
 
-struct Camera {
+struct GE_API Camera {
     math::vec3_t step_accum;
     float step_length;
     math::vec2_t mouse_sensitivity;

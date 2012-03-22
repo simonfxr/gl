@@ -3,44 +3,50 @@
 
 #define SIGNED_SIZE
 
+#ifdef SYSTEM_WINDOWS
+#  define WIN32_LEAND_AND_MEAN 1
+#  define VC_EXTRALEAN 1
+#endif
+
 #include <stdint.h>
 
 #ifdef CXX0X
-#define EXPLICIT explicit
-#define OVERRIDE override
+#  define EXPLICIT explicit
+#  define OVERRIDE override
 #else
-#define EXPLICIT
-#define OVERRIDE
+#  define EXPLICIT
+#  define OVERRIDE
+#endif
+
+#ifdef SYSTEM_WINDOWS
+#  define SHARED_IMPORT __declspec(dllimport)
+#  define SHARED_EXPORT __declspec(dllexport)
+#else
+#  define SHARED_IMPORT __attribute__((visibility("default")))
+#  define SHARED_EXPORT SHARED_IMPORT
 #endif
 
 #ifdef GNU_EXTENSIONS
-#define likely(e) __builtin_expect((e) != 0, 1)
-#define unlikely(e) __builtin_expect((e) != 0, 0)
+#define likely(e) __builtin_expect(bool(e) != false, 1)
+#define unlikely(e) __builtin_expect(bool(e) != false, 0)
 #else
-#define likely(e) (e)
-#define unlikely(e) (e)
+#  define likely(e) (e)
+#  define unlikely(e) (e)
 #endif
 
 #ifdef GNU_EXTENSIONS
-
-#define HAVE_ALIGNOF_EXPR
-#define HAVE_ALIGNOF_TYPE
-#define ALIGNOF_EXPR(e) __alignof__(e)
-#define ALIGNOF_TYPE(t) __alignof__(t)
-
+#  define HAVE_ALIGNOF_EXPR
+#  define HAVE_ALIGNOF_TYPE
+#  define ALIGNOF_EXPR(e) __alignof__(e)
+#  define ALIGNOF_TYPE(t) __alignof__(t)
 #elif defined(COMPILER_CL)
-
-#define HAVE_ALIGNOF_TYPE
-
-#define ALIGNOF_TYPE(t) __alignof(t)
-#define ALIGNOF_EXPR(e) alignof_expr_not_defined
-
+#  define HAVE_ALIGNOF_TYPE
+#  define ALIGNOF_TYPE(t) __alignof(t)
+#  define ALIGNOF_EXPR(e) alignof_expr_not_defined
 #else
-
-#define HAVE_ALIGNOF_TYPE
-#define ALIGNOF_TYPE(t) offsetof(struct { char ___c; t ___x; }, ___x)
-#define ALIGNOF_EXPR(e) alignof_expr_not_defined
-
+#  define HAVE_ALIGNOF_TYPE
+#  define ALIGNOF_TYPE(t) offsetof(struct { char ___c; t ___x; }, ___x)
+#  define ALIGNOF_EXPR(e) alignof_expr_not_defined
 #endif
 
 #define ARRAY_LENGTH(x) ::defs::size(sizeof (x) / sizeof *(x))
@@ -48,39 +54,37 @@
 #define UNUSED(x) ((void) (x))
 
 #ifdef DEBUG
-#define ON_DEBUG(x) do { (x); } while (0)
-#define DEBUG_DECL(x) x
+#  define ON_DEBUG(x) do { (x); } while (0)
+#  define DEBUG_DECL(x) x
 #else
-#define ON_DEBUG(x) ((void) 0)
-#define DEBUG_DECL(x)
+#  define ON_DEBUG(x) ((void) 0)
+#  define DEBUG_DECL(x)
 #endif
 
 #ifdef GNU_EXTENSIONS
-#define ATTRS(...) __attribute__((__VA_ARGS__))
+#  define ATTRS(...) __attribute__((__VA_ARGS__))
 #else
-#define ATTRS(...)
+#  define ATTRS(...)
 #endif
 
 #ifdef GNU_EXTENSIONS
-
-#define ATTR_WARN_UNUSED warn_unused_result
-#define ATTR_NO_WARN_UNUSED_DEF unused
-#define ATTR_ALIGNED(n) aligned(n)
-#define ATTR_NOINLINE noinline
-#define ATTR_NOTHROW nothrow
-#define ATTR_FORCE_INLINE always_inline
-#define ATTR_NORETURN noreturn
-#define ATTR_PACKED packed
-
+#  define ATTR_WARN_UNUSED warn_unused_result
+#  define ATTR_NO_WARN_UNUSED_DEF unused
+#  define ATTR_ALIGNED(n) aligned(n)
+#  define ATTR_NOINLINE noinline
+#  define ATTR_NOTHROW nothrow
+#  define ATTR_FORCE_INLINE always_inline
+#  define ATTR_NORETURN noreturn
+#  define ATTR_PACKED packed
 #endif
 
 #ifdef GNU_EXTENSIONS
-#define HAVE_THREAD_LOCAL
-#define THREAD_LOCAL(type, var) __thread type var
-#define RESTRICT __restrict__
+#  define HAVE_THREAD_LOCAL
+#  define THREAD_LOCAL(type, var) __thread type var
+#  define RESTRICT __restrict__
 #else
-#define THREAD_LOCAL(type, var) type var
-#define RESTRICT
+#  define THREAD_LOCAL(type, var) type var
+#  define RESTRICT
 #endif
 
 #define LOCAL ATTRS(ATTR_NO_WARN_UNUSED_DEF)
@@ -175,7 +179,7 @@ inline SizeT ___assert_size(SizeT s) {
 #define UNSIZE(x) ::defs::___check_unsize(x)
 #define ASSERT_SIZE(x) ::defs::___assert_size(x)
 
-#define DEF_ENUM_BITOR(ty) inline ty operator |(ty a, ty b) { return ty(a | b); }
+#define DEF_ENUM_BITOR(ty) inline ty operator |(ty a, ty b) { return ty(int(a) | int(b)); }
 
 } // namespace defs
 

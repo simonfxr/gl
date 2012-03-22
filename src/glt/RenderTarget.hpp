@@ -1,14 +1,14 @@
 #ifndef GLT_RENDER_TARGET_HPP
 #define GLT_RENDER_TARGET_HPP
 
-#include "defs.hpp"
-#include <glt/color.hpp>
+#include "glt/conf.hpp"
+#include "glt/color.hpp"
 
 namespace glt {
 
 using namespace defs;
 
-struct Viewport {
+struct GLT_API Viewport {
     int32 offsetX, offsetY;
     size width, height;
 
@@ -36,7 +36,7 @@ static const RenderTargetBuffers RT_STENCIL_BUFFER = 4u;
 
 static const uint32 RT_ALL_BUFFERS = RT_COLOR_BUFFER | RT_DEPTH_BUFFER | RT_STENCIL_BUFFER;
 
-struct RenderTarget {
+struct GLT_API RenderTarget {
 
     RenderTarget(size width, size height, RenderTargetBuffers buffers = RT_COLOR_BUFFER, const Viewport& vp = Viewport());
     virtual ~RenderTarget();

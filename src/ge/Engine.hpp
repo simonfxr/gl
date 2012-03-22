@@ -1,7 +1,7 @@
 #ifndef GE_ENGINE_HPP
 #define GE_ENGINE_HPP
 
-#include "defs.hpp"
+#include "ge/conf.hpp"
 
 #include "ge/EngineOptions.hpp"
 #include "ge/GameWindow.hpp"
@@ -22,7 +22,7 @@
 
 namespace ge {
 
-struct Engine {
+struct GE_API Engine {
 
     Engine();
     ~Engine();

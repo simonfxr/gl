@@ -1,7 +1,7 @@
 #ifndef GLT_TEXTURE_RENDER_TARGET_HPP
 #define GLT_TEXTURE_RENDER_TARGET_HPP
 
-#include "defs.hpp"
+#include "glt/conf.hpp"
 #include "opengl.hpp"
 #include "glt/RenderTarget.hpp"
 #include "glt/TextureSampler.hpp"
@@ -10,7 +10,7 @@ namespace glt {
 
 using namespace defs;
 
-struct TextureRenderTarget EXPLICIT : public RenderTarget {
+struct GLT_API TextureRenderTarget EXPLICIT : public RenderTarget {
     TextureSampler _sampler;
     GLuint _frame_buffer;
     GLuint _depth_buffer;

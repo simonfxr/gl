@@ -1,11 +1,13 @@
 #ifndef GE_TIMER_HPP
 #define GE_TIMER_HPP
 
+#include "ge/conf.hpp"
+
 namespace ge {
 
 struct Engine;
 
-struct Timer {
+struct GE_API Timer {
 
     enum State {
         Inactive,

@@ -10,7 +10,7 @@
 
 namespace glt {
 
-struct FrameStatistics {
+struct GLT_API FrameStatistics {
     uint32 avg_fps;
     uint32 rt_avg;
     uint32 rt_current;
@@ -18,7 +18,7 @@ struct FrameStatistics {
     uint32 rt_min;
 };
 
-struct Projection {
+struct GLT_API Projection {
     enum Type {
         Identity,
         Perspective
@@ -59,7 +59,7 @@ struct Projection {
     static Projection identity() { return Projection(Identity); }
 };
 
-struct RenderManager {
+struct GLT_API RenderManager {
     RenderManager();
     ~RenderManager();
     
@@ -101,15 +101,15 @@ private:
     RenderManager& operator =(const RenderManager& _);
 };
 
-math::vec4_t project(const RenderManager& rm, const math::point3_t& localCoord);
+GLT_API math::vec4_t project(const RenderManager& rm, const math::point3_t& localCoord);
 
-math::vec4_t projectWorld(const RenderManager& rm, const math::point3_t& worldCoord);
+GLT_API math::vec4_t projectWorld(const RenderManager& rm, const math::point3_t& worldCoord);
 
-math::vec4_t projectView(const RenderManager& rm, const math::point3_t& eyeCoord);
+GLT_API math::vec4_t projectView(const RenderManager& rm, const math::point3_t& eyeCoord);
 
-Outcode testSphere(const RenderManager& rm, const math::point3_t& center, float rad);
+GLT_API Outcode testSphere(const RenderManager& rm, const math::point3_t& center, float rad);
 
-Outcode testPoint(const RenderManager& rm, const math::point3_t& p);
+GLT_API Outcode testPoint(const RenderManager& rm, const math::point3_t& p);
 
 } // namespace glt
 

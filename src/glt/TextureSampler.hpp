@@ -1,6 +1,7 @@
 #ifndef GLT_TEXTURE_SAMPLER_HPP
 #define GLT_TEXTURE_SAMPLER_HPP
 
+#include "glt/conf.hpp"
 #include "opengl.hpp"
 #include "data/Ref.hpp"
 #include "glt/TextureData.hpp"
@@ -9,7 +10,7 @@ namespace glt {
 
 using namespace defs;
 
-struct TextureSampler {
+struct GLT_API TextureSampler {
 private:
     Ref<TextureData> _data;
     GLuint _sampler;

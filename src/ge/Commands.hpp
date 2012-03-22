@@ -5,7 +5,7 @@
 
 namespace ge {
 
-struct Commands {
+struct GE_API Commands {
     Ref<Command> printContextInfo;
     Ref<Command> printMemInfo;
     Ref<Command> reloadShaders;

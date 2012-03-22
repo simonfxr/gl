@@ -1,7 +1,7 @@
 #ifndef UNIFORMS_HPP
 #define UNIFORMS_HPP
 
-#include "defs.hpp"
+#include "glt/conf.hpp"
 
 #include <string>
 #include "glt/TextureSampler.hpp"
@@ -22,9 +22,9 @@ namespace glt {
 struct ShaderProgram;
 struct color;
 
-GLenum mapGLTextureType(GLenum texture_target);
+GLT_API GLenum mapGLTextureType(GLenum texture_target);
 
-struct BoundTexture {
+struct GLT_API BoundTexture {
     GLenum type;
     uint32 index;
 
@@ -34,7 +34,7 @@ struct BoundTexture {
         type(ty), index(i) {}
 };
 
-struct Sampler {
+struct GLT_API Sampler {
     GLenum type;
     TextureSampler& sampler;
     uint32 index;
@@ -51,7 +51,7 @@ struct Sampler {
         {}
 };
 
-struct Uniforms {
+struct GLT_API Uniforms {
     ShaderProgram& prog;
     Uniforms(ShaderProgram& _prog) : prog(_prog) {}
 

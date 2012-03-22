@@ -13,21 +13,25 @@ set(MATH_SRC
   math/quat/impl.cpp
   math/plane.cpp)
 
+
 if(NOT MATH_INLINE)
   def_lib(vec-math SOURCES ${MATH_SRC})
+  set(VEC_LIB vec-math)
+else()
+  set(VEC_LIB)
 endif()
 
 set(ERR_SRC
   err/err.cpp)
 
-set(ERR_LIB)
+set(ERR_LIBS)
 
 if(USE_UNWIND_STACKTRACES)
   add_definitions(-DUNWIND_STACKTRACES=1)
-  set(ERR_LIB unwind dw)
+  set(ERR_LIBS unwind dw)
 endif()
 
-def_lib(err SOURCES ${ERR_SRC} LIB_DEPEND ${ERR_LIB})
+#def_lib(err SOURCES ${ERR_SRC} LIB_DEPEND ${ERR_LIB})
 
 set(SYS_SRC
   sys/fs/fs_default.cpp
@@ -55,10 +59,10 @@ if(SYS_LINUX)
 endif()
 
 if(SYS_WINDOWS)
-	set(SYS_LIBS Shlwapi ${SYS_LIBS})
+  set(SYS_LIBS Shlwapi ${SYS_LIBS})
 endif()
 
-def_lib(sys SOURCES ${SYS_SRC} LIB_DEPEND ${SYS_LIBS})
+def_lib(sys SOURCES ${SYS_SRC} ${ERR_SRC} LIB_DEPEND ${SYS_LIBS} ${ERR_LIBS})
 
 set(GLT_SRC
   glt/utils.cpp
@@ -83,7 +87,7 @@ set(GLT_SRC
 
 set(GLT_LIBS ${GLEW_LIBRARY} ${OPENGL_gl_LIBRARY})
 
-def_lib(glt SOURCES ${GLT_SRC} DEPEND vec-math err sys LIB_DEPEND ${GLT_LIBS})
+def_lib(glt SOURCES ${GLT_SRC} DEPEND ${VEC_LIB} sys LIB_DEPEND ${GLT_LIBS})
 
 set(GE_SRC
   ge/GameLoop.cpp
@@ -110,4 +114,4 @@ set(GE_SRC
 #   ${SFML_GRAPHICS_LIBRAY_DEBUG}
 )
 
-def_lib(ge SOURCES ${GE_SRC} DEPEND vec-math err sys glt LIB_DEPEND ${GE_LIBS})
+def_lib(ge SOURCES ${GE_SRC} DEPEND ${VEC_LIB} sys glt LIB_DEPEND ${GE_LIBS})

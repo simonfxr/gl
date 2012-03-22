@@ -1,6 +1,7 @@
 #ifndef GE_COMMAND_ARGS_HPP
 #define GE_COMMAND_ARGS_HPP
 
+#include "ge/conf.hpp"
 #include "ge/KeyBinding.hpp"
 
 #include "data/Array.hpp"
@@ -45,7 +46,7 @@ struct CommandArg;
 
 typedef std::vector<std::vector<CommandArg> > Quotation;
 
-struct CommandArg {
+struct GE_API CommandArg {
     CommandArg();
 
     CommandType type;
@@ -65,7 +66,7 @@ struct CommandArg {
     void free();
 };
 
-struct CommandPrettyPrinter {
+struct GE_API CommandPrettyPrinter {
     CommandPrettyPrinter();
     ~CommandPrettyPrinter();
 

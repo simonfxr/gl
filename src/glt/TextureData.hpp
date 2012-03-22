@@ -1,6 +1,7 @@
 #ifndef GLT_TEXTURE_DATA_HPP
 #define GLT_TEXTURE_DATA_HPP
 
+#include "glt/conf.hpp"
 #include "opengl.hpp"
 
 namespace glt {
@@ -13,7 +14,7 @@ enum TextureType {
     Texture3D
 };
 
-struct TextureData {
+struct GLT_API TextureData {
 private:
     size _samples;
     GLuint _handle;

@@ -1,7 +1,7 @@
 #ifndef GLSTATE_H
 #define GLSTATE_H
 
-#include "defs.hpp"
+#include "glt/conf.hpp"
 
 namespace glt {
 
@@ -15,9 +15,9 @@ struct State {
     uint32 num_vertex_arrays;
 };
 
-extern State glstate;
+extern GLT_API State glstate;
 
-void printState();
+void GLT_API printState();
 
 } // namespace glt
 

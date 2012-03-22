@@ -1,7 +1,7 @@
 #ifndef GLT_MESH_HPP
 #define GLT_MESH_HPP
 
-#include "defs.hpp"
+#include "glt/conf.hpp"
 #include "opengl.hpp"
 
 #include "math/vec2/type.hpp"
@@ -59,7 +59,7 @@ enum DrawType {
     DrawElements        
 };
 
-struct MeshBase {
+struct GLT_API MeshBase {
 private:
     GLuint vertex_array_name;
     GLuint element_buffer_name;

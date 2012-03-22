@@ -13,13 +13,13 @@ namespace ge {
 struct CommandProcessor;
 struct QuotationCommand;
 
-struct CommandEvent : public EngineEvent {
+struct GE_API CommandEvent : public EngineEvent {
     CommandEvent(Engine& e, CommandProcessor& proc) :
         EngineEvent(e), processor(proc) {}
     CommandProcessor& processor;
 };
 
-struct Command : public EventHandler<CommandEvent> {
+struct GE_API Command : public EventHandler<CommandEvent> {
 private:
     const Array<CommandParamType>& params;
     std::string namestr;
@@ -37,9 +37,9 @@ public:
     virtual QuotationCommand *castToQuotation() { return 0; }
 };
 
-extern Array<CommandArg> NULL_ARGS;
+extern GE_API Array<CommandArg> NULL_ARGS;
 
-struct QuotationCommand EXPLICIT : public Command {
+struct GE_API QuotationCommand EXPLICIT : public Command {
     Quotation * const quotation;
     
     QuotationCommand(const std::string& source, int line, int column, const std::string& desc, Quotation *quot);
@@ -56,13 +56,13 @@ private:
 
 typedef void (*CommandHandler)(const Event<CommandEvent>&);
 
-Ref<Command> makeCommand(CommandHandler handler, const std::string& name, const std::string& desc);
+GE_API Ref<Command> makeCommand(CommandHandler handler, const std::string& name, const std::string& desc);
 
 typedef void (*ListCommandHandler)(const Event<CommandEvent>&, const Array<CommandArg>&);
 
-Ref<Command> makeListCommand(ListCommandHandler handler, const std::string& name, const std::string& desc);
+GE_API Ref<Command> makeListCommand(ListCommandHandler handler, const std::string& name, const std::string& desc);
 
-Ref<Command> makeCommand(ListCommandHandler handler, const Array<CommandParamType>& params, const std::string& name, const std::string& desc);
+GE_API Ref<Command> makeCommand(ListCommandHandler handler, const Array<CommandParamType>& params, const std::string& name, const std::string& desc);
 
 template <typename S>
 struct StateCommandHandler {
@@ -72,7 +72,7 @@ struct StateCommandHandler {
 template <typename S>
 Ref<Command> makeCommand(typename StateCommandHandler<S>::type handler, S state, const Array<CommandParamType>& params, const std::string& name, const std::string& desc);
 
-Ref<Command> makeStringListCommand(ListCommandHandler handler, const std::string& name, const std::string& desc);
+GE_API Ref<Command> makeStringListCommand(ListCommandHandler handler, const std::string& name, const std::string& desc);
 
 template <typename S>
 struct StateHandler : public Command {

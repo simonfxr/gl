@@ -1,7 +1,7 @@
 #ifndef SYS_IO_HPP
 #define SYS_IO_HPP
 
-#include "defs.hpp"
+#include "sys/conf.hpp"
 #include "sys/endian.hpp"
 #include "sys/io/Stream.hpp"
 
@@ -43,8 +43,8 @@ const SocketMode SM_NONBLOCKING = 1;
 
 } // namespace anon
 
-extern const IPAddr4 IPA_ANY;
-extern const IPAddr4 IPA_LOCAL;
+extern SYS_API const IPAddr4 IPA_ANY;
+extern SYS_API const IPAddr4 IPA_LOCAL;
 
 enum HandleError {
     HE_OK,
@@ -55,7 +55,7 @@ enum HandleError {
     HE_UNKNOWN
 };
 
-struct IPAddr4 {
+struct SYS_API IPAddr4 {
     uint32 addr4; // bigendian/network byte order
     IPAddr4() {}
     IPAddr4(uint8 a, uint8 b, uint8 c, uint8 d)
@@ -80,17 +80,17 @@ namespace sys {
 
 namespace io {
 
-HandleError open(const std::string&, HandleMode, Handle *);
+SYS_API HandleError open(const std::string&, HandleMode, Handle *);
 
-HandleMode mode(Handle&);
+SYS_API HandleMode mode(Handle&);
 
-HandleError elevate(Handle&, HandleMode);
+SYS_API HandleError elevate(Handle&, HandleMode);
 
-HandleError read(Handle&, size&, char *);
+SYS_API HandleError read(Handle&, size&, char *);
 
-HandleError write(Handle&, size&, const char *);
+SYS_API HandleError write(Handle&, size&, const char *);
 
-HandleError close(Handle&);
+SYS_API HandleError close(Handle&);
 
 enum SocketError {
     SE_OK,
@@ -100,13 +100,13 @@ enum SocketError {
     SE_UNKNOWN
 };
 
-SocketError listen(SocketProto, const IPAddr4&, uint16, SocketMode, Socket *);
+SYS_API SocketError listen(SocketProto, const IPAddr4&, uint16, SocketMode, Socket *);
 
-SocketError accept(Socket&, Handle *);
+SYS_API SocketError accept(Socket&, Handle *);
 
-SocketError close(Socket&);
+SYS_API SocketError close(Socket&);
 
-struct HandleStream : public AbstractIOStream {
+struct SYS_API HandleStream : public AbstractIOStream {
     Handle handle;
     char read_buffer[HANDLE_READ_BUFFER_SIZE];
     char write_buffer[HANDLE_WRITE_BUFFER_SIZE];

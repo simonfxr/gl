@@ -25,8 +25,10 @@ struct Streams {
 };
 
 Streams& streams() {
-    static Streams strs;
-    return strs;
+    static Streams *strs;
+    if (strs == 0)
+        strs = new Streams;
+    return *strs;
 }
 
 } // namespace anon

@@ -1,7 +1,7 @@
 #ifndef GE_EVENT_HPP
 #define GE_EVENT_HPP
 
-#include "defs.hpp"
+#include "ge/conf.hpp"
 #include "data/Ref.hpp"
 
 #include <vector>

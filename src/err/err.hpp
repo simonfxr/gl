@@ -1,8 +1,7 @@
 #ifndef ERROR_HPP
 #define ERROR_HPP
 
-#include "defs.hpp"
-
+#include "err/conf.hpp"
 #include "sys/io/Stream.hpp"
 
 #include <string>
@@ -85,23 +84,23 @@ struct ErrorArgs {
 #endif
 };
 
-void error(const Location& loc, LogLevel lvl, const ErrorArgs&);
+ERR_API void error(const Location& loc, LogLevel lvl, const ErrorArgs&);
 
-void fatalError(const Location& loc, LogLevel lvl, const ErrorArgs&) ATTRS(ATTR_NORETURN);
+ERR_API void fatalError(const Location& loc, LogLevel lvl, const ErrorArgs&) ATTRS(ATTR_NORETURN);
 
-void printError(sys::io::OutStream& out, const char *type, const Location& loc, LogLevel lvl, const char *mesg);
+ERR_API void printError(sys::io::OutStream& out, const char *type, const Location& loc, LogLevel lvl, const char *mesg);
 
-sys::io::OutStream& logBegin(const Location& loc, const LogDestination&, LogLevel);
+ERR_API sys::io::OutStream& logBegin(const Location& loc, const LogDestination&, LogLevel);
 
-sys::io::OutStream& logWrite(const std::string&);
+ERR_API sys::io::OutStream& logWrite(const std::string&);
 
-sys::io::OutStream& logWriteErr(const std::string&, const std::string&);
+ERR_API sys::io::OutStream& logWriteErr(const std::string&, const std::string&);
 
-sys::io::OutStream& logWrite(const char *);
+ERR_API sys::io::OutStream& logWrite(const char *);
 
-void logEnd();
+ERR_API void logEnd();
 
-void logRaiseError(const Location&, const LogDestination&, LogLevel, const std::string&, const std::string&);
+ERR_API void logRaiseError(const Location&, const LogDestination&, LogLevel, const std::string&, const std::string&);
 
 template <typename T>
 LogDestination getLogDestination(const T& v) {

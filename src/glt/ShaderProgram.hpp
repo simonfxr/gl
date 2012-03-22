@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "glt/conf.hpp"
 #include "opengl.hpp"
 #include "data/Ref.hpp"
 #include "data/Array.hpp"
@@ -28,13 +29,13 @@ enum Type {
     OpenGLError
 };
 
-std::string stringError(Type);
+std::string GLT_API stringError(Type);
 
 }
 
-struct ShaderProgram : public err::WithError<ShaderProgramError::Type,
-                                             ShaderProgramError::NoError,
-                                             ShaderProgramError::stringError> {
+struct GLT_API ShaderProgram : public err::WithError<ShaderProgramError::Type,
+                                                     ShaderProgramError::NoError,
+                                                     ShaderProgramError::stringError> {
 
     ShaderProgram(ShaderManager& sm);
 

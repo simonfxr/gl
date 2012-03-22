@@ -1,7 +1,7 @@
 #ifndef SYS_IO_STREAM_HPP
 #define SYS_IO_STREAM_HPP
 
-#include "defs.hpp"
+#include "sys/conf.hpp"
 
 #include <sstream>
 #include <string>
@@ -18,11 +18,10 @@ struct OutStream;
 struct InStream;
 struct StreamEndl;
 
-OutStream& stdout();
-OutStream& stderr();
+SYS_API OutStream& stdout();
+SYS_API OutStream& stderr();
 
-// OutStream& endl(OutStream&);
-extern const StreamEndl endl;
+extern SYS_API const StreamEndl endl;
 
 enum StreamResult {
     StreamOK,
@@ -43,13 +42,13 @@ const StreamFlags SS_DONT_CLOSE = 8;
 
 } // namespace anon
 
-struct BasicStreamState {
+struct SYS_API BasicStreamState {
 protected:
     virtual StreamFlags& basic_state() = 0;
     virtual StreamFlags basic_state() const = 0;
 };
 
-struct BasicStream : public virtual BasicStreamState {
+struct SYS_API BasicStream : public virtual BasicStreamState {
     void close() {
         close_flush();
         StreamFlags& s = basic_state();
@@ -94,7 +93,7 @@ protected:
     }
 };
 
-struct BasicInStream : public virtual BasicStreamState {
+struct SYS_API BasicInStream : public virtual BasicStreamState {
     StreamResult read(size& s, char *b) {
         StreamFlags& st = basic_state();
         
@@ -119,7 +118,7 @@ protected:
     virtual StreamResult basic_read(size&, char *) = 0;    
 };
 
-struct BasicOutStream : public virtual BasicStreamState {
+struct SYS_API BasicOutStream : public virtual BasicStreamState {
     StreamResult write(size& s, const char *b) {
         StreamFlags& st = basic_state();
         
@@ -161,7 +160,7 @@ protected:
     virtual StreamResult basic_flush() { return StreamOK; }
 };
 
-struct StreamState {
+struct SYS_API StreamState {
 private:
     StreamFlags _state;
 public:
@@ -172,42 +171,42 @@ protected:
     StreamFlags& state() { return _state; }
 };
 
-struct InStream : public virtual BasicStream, public BasicInStream {
+struct SYS_API InStream : public virtual BasicStream, public BasicInStream {
     virtual ~InStream() {}
 };
 
-struct OutStream : public virtual BasicStream, public BasicOutStream {
+struct SYS_API OutStream : public virtual BasicStream, public BasicOutStream {
     virtual ~OutStream() {}
 protected:
     void close_flush() { flush(); }
 };
 
-struct IOStream : public InStream, public OutStream {
+struct SYS_API IOStream : public InStream, public OutStream {
     virtual ~IOStream() {}
 };
 
-struct AbstractIOStream : public StreamState, public IOStream {
+struct SYS_API AbstractIOStream : public StreamState, public IOStream {
     virtual ~AbstractIOStream() {}
 protected:
     StreamFlags basic_state() const { return state(); }
     StreamFlags& basic_state() { return state(); }  
 };
 
-struct AbstractOutStream : public StreamState, public OutStream {
+struct SYS_API AbstractOutStream : public StreamState, public OutStream {
     virtual ~AbstractOutStream() {}
 protected:
     StreamFlags basic_state() const { return state(); }
     StreamFlags& basic_state() { return state(); }
 };
 
-struct AbstractInStream : public StreamState, public InStream {
+struct SYS_API AbstractInStream : public StreamState, public InStream {
     virtual ~AbstractInStream() {}
 protected:
     StreamFlags basic_state() const { return state(); }
     StreamFlags& basic_state() { return state(); }
 };
 
-struct StdOutStream : public AbstractOutStream {
+struct SYS_API StdOutStream : public AbstractOutStream {
     std::ostream *_out;
     StdOutStream(std::ostream&);
     ~StdOutStream() { destructor(); }
@@ -217,7 +216,7 @@ protected:
     StreamResult basic_flush();
 };
 
-struct StdInStream : public AbstractInStream {
+struct SYS_API StdInStream : public AbstractInStream {
     std::istream *_in;
     StdInStream(std::istream&);
     ~StdInStream() { destructor(); }
@@ -225,7 +224,7 @@ protected:
     StreamResult basic_read(size&, char *);
 };
 
-struct FileStream : public AbstractIOStream {
+struct SYS_API FileStream : public AbstractIOStream {
     FILE *file;
     FileStream(FILE *file = 0);
     FileStream(const std::string& path, const std::string& mode);
@@ -241,14 +240,14 @@ protected:
     StreamResult basic_flush();
 };
 
-struct NullStream : public AbstractIOStream {
+struct SYS_API NullStream : public AbstractIOStream {
     NullStream() { close(); }
 protected:
     StreamResult basic_read(size&, char *);
     StreamResult basic_write(size&, const char *);
 };
 
-struct RecordingStream : public AbstractInStream {
+struct SYS_API RecordingStream : public AbstractInStream {
     enum State {
         Recording,
         Replaying
@@ -271,15 +270,15 @@ protected:
     StreamResult basic_read(size&, char *);
 };
 
-OutStream& operator <<(OutStream& out, const std::string& str);
+SYS_API OutStream& operator <<(OutStream& out, const std::string& str);
 
-OutStream& operator <<(OutStream& out, const char *str);
+SYS_API OutStream& operator <<(OutStream& out, const char *str);
 
-OutStream& operator <<(OutStream& out, const StreamEndl&);
+SYS_API OutStream& operator <<(OutStream& out, const StreamEndl&);
 
-OutStream& operator <<(OutStream& out, std::ostringstream&);
+SYS_API OutStream& operator <<(OutStream& out, std::ostringstream&);
 
-OutStream& operator <<(OutStream& out, std::stringstream&);
+SYS_API OutStream& operator <<(OutStream& out, std::stringstream&);
 
 template <typename T>
 OutStream& operator <<(OutStream& out, const T& x) {

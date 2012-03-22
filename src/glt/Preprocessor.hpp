@@ -1,7 +1,7 @@
 #ifndef PREPROCESSOR_HPP
 #define PREPROCESSOR_HPP
 
-#include "defs.hpp"
+#include "glt/conf.hpp"
 #include "sys/io/Stream.hpp"
 
 #include <map>
@@ -11,7 +11,7 @@ namespace glt {
 
 using namespace defs;
 
-struct Preprocessor {
+struct GLT_API Preprocessor {
 
     struct ContentContext {
         Preprocessor& processor;

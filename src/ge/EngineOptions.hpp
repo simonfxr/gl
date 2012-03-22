@@ -8,7 +8,7 @@
 
 namespace ge {
 
-struct EngineOptions {
+struct GE_API EngineOptions {
 
     enum CommandType {
         Script,

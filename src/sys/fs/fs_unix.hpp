@@ -1,7 +1,7 @@
 #ifndef FS_UNIX_HPP
 #define FS_UNIX_HPP
 
-#include "defs.hpp"
+#include "sys/conf.hpp"
 #include <ctime>
 
 namespace sys {

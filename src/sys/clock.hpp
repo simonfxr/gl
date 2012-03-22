@@ -1,10 +1,13 @@
 #ifndef SYS_CLOCK_HPP
+#define SYS_CLOCK_HPP
+
+#include "sys/conf.hpp"
 
 namespace sys {
 
-double queryTimer();
+SYS_API double queryTimer();
 
-void sleep(double secs);
+SYS_API void sleep(double secs);
 
 } // namespace sys
 

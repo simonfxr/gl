@@ -1,6 +1,7 @@
 #include "sys/fs.hpp"
 #include "err/err.hpp"
 
+#include <windows.h>
 #include <Shlwapi.h>
 
 namespace sys {

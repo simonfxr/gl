@@ -13,17 +13,17 @@ namespace glt {
 
 struct ProcessingState;
 
-struct IncludeHandler : public Preprocessor::DirectiveHandler {
+struct GLT_API IncludeHandler : public Preprocessor::DirectiveHandler {
     void beginProcessing(const Preprocessor::ContentContext&);
     void directiveEncountered(const Preprocessor::DirectiveContext&);
     void endProcessing(const Preprocessor::ContentContext&);
 };
 
-struct DependencyHandler : public Preprocessor::DirectiveHandler {
+struct GLT_API DependencyHandler : public Preprocessor::DirectiveHandler {
     void directiveEncountered(const Preprocessor::DirectiveContext&);
 };
 
-struct GLSLPreprocessor : public Preprocessor {
+struct GLT_API GLSLPreprocessor : public Preprocessor {
 
     const IncludePath& includePath;
     ShaderIncludes& includes;

@@ -1,17 +1,17 @@
 #ifndef SYS_FS_WINDOWS_HPP
 #define SYS_FS_WINDOWS_HPP
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN 1
-#endif
-
-#include <Windows.h>
-
 namespace sys {
 
 namespace fs {
 
 const char SEPARATOR = '\\';
+
+// avoid windows.h
+typedef struct _FILETIME {
+  int32 dwLowDateTime;
+  int32 dwHighDateTime;
+} FILETIME;
 
 struct ModificationTime {
 	FILETIME mtime;

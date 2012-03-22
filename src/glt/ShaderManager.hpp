@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 
+#include "glt/conf.hpp"
 #include "data/Ref.hpp"
 #include "sys/io/Stream.hpp"
 
@@ -21,7 +22,7 @@ typedef std::map<std::string, std::string> PreprocessorDefinitions;
 
 typedef std::vector<std::string> ShaderDirectories;
 
-struct ShaderManager {
+struct GLT_API ShaderManager {
     
     enum Verbosity {
         Quiet,

@@ -1,13 +1,13 @@
 #ifndef GAME_LOOP_HPP
 #define GAME_LOOP_HPP
 
-#include "defs.hpp"
+#include "ge/conf.hpp"
 
 namespace ge {
 
 using namespace defs;
 
-class GameLoop {
+class GE_API GameLoop {
 private:
 
     defs::size _ticks_per_second;

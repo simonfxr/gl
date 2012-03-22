@@ -5,7 +5,7 @@
 
 #include <SFML/Graphics.hpp>
 
-#include "defs.hpp"
+#include "ge/conf.hpp"
 #include "ge/WindowRenderTarget.hpp"
 #include "ge/Event.hpp"
 #include "ge/EngineEvents.hpp"
@@ -18,7 +18,7 @@ using namespace defs;
 
 struct WindowEvents;
 
-struct WindowOptions {
+struct GE_API WindowOptions {
     size width;
     size height;
     std::string title;
@@ -34,7 +34,7 @@ struct WindowOptions {
         {}
 };
 
-struct GameWindow {
+struct GE_API GameWindow {
     GameWindow(sf::RenderWindow& win);
     GameWindow(const WindowOptions& opts = WindowOptions());
     ~GameWindow();
@@ -83,7 +83,7 @@ struct MouseMoved;
 struct MouseButton;
 struct FocusChanged;
 
-struct WindowEvents {
+struct GE_API WindowEvents {
     EventSource<WindowEvent> windowClosed;
     EventSource<FocusChanged> focusChanged;
     EventSource<WindowResized> windowResized;
@@ -92,26 +92,26 @@ struct WindowEvents {
     EventSource<MouseButton> mouseButton;
 };
 
-struct WindowEvent {
+struct GE_API WindowEvent {
     virtual ~WindowEvent() {}
     GameWindow& window;
     explicit WindowEvent(GameWindow& win) : window(win) {}
 };
 
-struct WindowResized : public WindowEvent {
+struct GE_API WindowResized : public WindowEvent {
     size width, height;
     WindowResized(GameWindow& win, size w, size h) :
         WindowEvent(win), width(w), height(h) {}
 };
 
-struct KeyChanged : public WindowEvent {
+struct GE_API KeyChanged : public WindowEvent {
     sf::Event::KeyEvent key;
     bool pressed;
     KeyChanged(GameWindow& win, bool press, const sf::Event::KeyEvent& e) :
         WindowEvent(win), key(e), pressed(press) {}
 };
 
-struct MouseMoved : public WindowEvent {
+struct GE_API MouseMoved : public WindowEvent {
     int16 dx, dy;
     index16 x, y;
     MouseMoved(GameWindow& win, int16 _dx, int16 _dy, index16 _x, index16 _y) :
@@ -119,7 +119,7 @@ struct MouseMoved : public WindowEvent {
         dx(_dx), dy(_dy), x(_x), y(_y) {}
 };
 
-struct MouseButton : public WindowEvent {
+struct GE_API MouseButton : public WindowEvent {
     index16 x, y;
     bool pressed;
     sf::Event::MouseButtonEvent button;
@@ -129,7 +129,7 @@ struct MouseButton : public WindowEvent {
         pressed(press), button(butn) {}
 };
 
-struct FocusChanged : public WindowEvent {
+struct GE_API FocusChanged : public WindowEvent {
     bool focused;
     FocusChanged(GameWindow& win, bool focus) : WindowEvent(win), focused(focus) {}
 };

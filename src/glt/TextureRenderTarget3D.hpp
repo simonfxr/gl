@@ -1,14 +1,14 @@
 #ifndef GLT_TEXTURE_RENDER_TARGET_3D_HPP
 #define GLT_TEXTURE_RENDER_TARGET_3D_HPP
 
-#include "defs.hpp"
+#include "glt/conf.hpp"
 #include "opengl.hpp"
 #include "glt/TextureRenderTarget.hpp"
 #include "math/ivec3/type.hpp"
 
 namespace glt {
 
-struct TextureRenderTarget3D EXPLICIT : public TextureRenderTarget {
+struct GLT_API TextureRenderTarget3D EXPLICIT : public TextureRenderTarget {
 public:
 
     enum AttachmentType {

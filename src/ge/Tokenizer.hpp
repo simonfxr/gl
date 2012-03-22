@@ -13,7 +13,7 @@
 
 namespace ge {
 
-struct ParseState {
+struct GE_API ParseState {
     char c;
     char rawC;
     std::string filename;
@@ -32,9 +32,9 @@ struct ParseState {
         line(1), col(0) {}
 };
 
-bool skipStatement(ParseState& state);
+GE_API bool skipStatement(ParseState& state);
 
-bool tokenize(ParseState& state, std::vector<CommandArg>& args);
+GE_API bool tokenize(ParseState& state, std::vector<CommandArg>& args);
 
 } // namespace ge
 

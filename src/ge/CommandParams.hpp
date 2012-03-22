@@ -5,23 +5,23 @@
 
 namespace ge {
 
-extern const Array<CommandParamType> NULL_PARAMS;
+extern GE_API const Array<CommandParamType> NULL_PARAMS;
 
-extern const Array<CommandParamType> KEY_COM_PARAMS;
+extern GE_API const Array<CommandParamType> KEY_COM_PARAMS;
 
-extern const Array<CommandParamType> NUM_NUM_NUM_PARAMS;
+extern GE_API const Array<CommandParamType> NUM_NUM_NUM_PARAMS;
 
-extern const Array<CommandParamType> COM_PARAMS;
+extern GE_API const Array<CommandParamType> COM_PARAMS;
 
-extern const Array<CommandParamType> LIST_PARAMS;
+extern GE_API const Array<CommandParamType> LIST_PARAMS;
 
-extern const Array<CommandParamType> NUM_PARAMS;
+extern GE_API const Array<CommandParamType> NUM_PARAMS;
 
-extern const Array<CommandParamType> INT_PARAMS;
+extern GE_API const Array<CommandParamType> INT_PARAMS;
 
-extern const Array<CommandParamType> STR_PARAMS;
+extern GE_API const Array<CommandParamType> STR_PARAMS;
 
-void initParams();
+GE_API void initParams();
 
 } // namespace ge
 

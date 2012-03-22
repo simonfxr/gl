@@ -7,14 +7,11 @@
 #include <set>
 #include <queue>
 
+#include "glt/conf.hpp"
 #include "opengl.hpp"
-
 #include "data/Ref.hpp"
-
 #include "sys/fs.hpp"
-
 #include "glt/ShaderManager.hpp"
-
 #include "err/WithError.hpp"
 
 namespace glt {
@@ -39,7 +36,7 @@ typedef std::map<ShaderSourceKey, Ref<ShaderSource> > ShaderRootDependencies;
 
 typedef uint32 ShaderCompileFlags;
 
-struct ShaderSource {
+struct GLT_API ShaderSource {
     ShaderSourceKey key;
     ShaderManager::ShaderType type;
 
@@ -61,7 +58,7 @@ enum ReloadState {
     ReloadFailed
 };
 
-struct ShaderObject {
+struct GLT_API ShaderObject {
     Ref<ShaderSource> source;
     GLuint handle;
     ShaderIncludes includes;
@@ -84,7 +81,7 @@ private:
     ShaderObject& operator =(const ShaderObject&);
 };
 
-struct ShaderCache {
+struct GLT_API ShaderCache {
     ShaderCacheEntries entries;
 
     ShaderCache() :
@@ -121,11 +118,11 @@ enum Type {
     OpenGLError
 };
 
-std::string stringError(Type);
+std::string GLT_API stringError(Type);
 
 } // namespace ShaderCompilerError
 
-struct ShaderCompiler {
+struct GLT_API ShaderCompiler {
     glt::ShaderManager& shaderManager;
     PreprocessorDefinitions defines;
     Ref<ShaderCache> cache;
@@ -146,7 +143,7 @@ private:
     ShaderCompiler& operator =(const ShaderCompiler&);
 };
 
-struct CompileJob {
+struct GLT_API CompileJob {
     virtual ~CompileJob() {}
     virtual Ref<ShaderSource>& source() = 0;
     virtual Ref<ShaderObject> exec(CompileState&) = 0;
@@ -155,7 +152,7 @@ struct CompileJob {
     static Ref<CompileJob> reload(const Ref<ShaderObject>&);
 };
 
-struct CompileState : public err::WithError<ShaderCompilerError::Type,
+struct GLT_API CompileState : public err::WithError<ShaderCompilerError::Type,
                                             ShaderCompilerError::NoError,
                                             ShaderCompilerError::stringError> {
     ShaderCompiler& compiler;
@@ -178,7 +175,7 @@ struct CompileState : public err::WithError<ShaderCompilerError::Type,
     Ref<ShaderObject> reload(Ref<ShaderObject>&);
 };
 
-struct StringSource : public ShaderSource {
+struct GLT_API StringSource : public ShaderSource {
     std::string code;
     
     StringSource(ShaderManager::ShaderType ty, const std::string& _code);
@@ -186,7 +183,7 @@ struct StringSource : public ShaderSource {
     Ref<ShaderObject> load(Ref<ShaderSource>&, CompileState&);
 };
 
-struct FileSource : public ShaderSource {
+struct GLT_API FileSource : public ShaderSource {
     FileSource(ShaderManager::ShaderType ty, const std::string& path);
     
     const std::string& filePath() const { return this->key; }

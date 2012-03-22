@@ -10,9 +10,7 @@ using namespace math;
 
 namespace ge {
 
-static Array<vec3_t> mkDirTable();
-
-static const Array<vec3_t> dir_table = mkDirTable();
+static Array<vec3_t> &getDirTable();
 
 static void initCommands(Camera& cam);
 
@@ -22,7 +20,7 @@ static void runMove(vec3_t *step_accum, const Event<CommandEvent>&, const Array<
         ERR("argument not >= 1 and <= 12");
         return;
     }
-    *step_accum += dir_table[SIZE(dir - 1)];
+    *step_accum += getDirTable()[SIZE(dir - 1)];
 }
 
 static void runSaveFrame(const glt::Frame *frame, const Event<CommandEvent>&, const Array<CommandArg>& args) {
@@ -141,8 +139,7 @@ void Camera::registerCommands(CommandProcessor& proc) {
     proc.define(commands.setSensitivity);
 }
 
-static Array<vec3_t> mkDirTable() {
-    Array<vec3_t> dirs(12);
+static Array<vec3_t> mkDirTable(Array<vec3_t>& dirs) {
 
     for (defs::index i = 0; i < 12; ++i)
         dirs[i] = vec3(0.f);
@@ -155,6 +152,15 @@ static Array<vec3_t> mkDirTable() {
     // TODO: add all the clock directions
 
     return dirs;
+}
+
+Array<vec3_t> *dir_table_p = 0;
+static Array<vec3_t> &getDirTable() {
+    if (dir_table_p == 0) {
+        dir_table_p = new Array<vec3_t>(12);
+        mkDirTable(*dir_table_p);
+    }
+    return *dir_table_p;
 }
 
 } // namespace ge

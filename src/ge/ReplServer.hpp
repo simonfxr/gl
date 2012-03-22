@@ -12,7 +12,7 @@ struct Engine;
 
 using namespace defs;
 
-struct ReplServer {
+struct GE_API ReplServer {
 
     ReplServer(Engine&);
     ~ReplServer();

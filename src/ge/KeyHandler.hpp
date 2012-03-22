@@ -1,10 +1,8 @@
 #ifndef GE_KEYHANDLER_HPP
 #define GE_KEYHANDLER_HPP
 
-#include "defs.hpp"
-
+#include "ge/conf.hpp"
 #include "data/Ref.hpp"
-
 #include "ge/KeyBinding.hpp"
 #include "ge/CommandProcessor.hpp"
 
@@ -12,7 +10,7 @@ namespace ge {
 
 struct KeyHandler;
 
-struct KeyPressed {
+struct GE_API KeyPressed {
     KeyHandler& handler;
     keycode::KeyCode key;
 
@@ -20,7 +18,7 @@ struct KeyPressed {
         handler(h), key(k) {}
 };
 
-struct KeyHandler {
+struct GE_API KeyHandler {
 
     KeyHandler(CommandProcessor& proc);
     

@@ -1,13 +1,9 @@
 #ifndef GE_KEY_BINDING_HPP
 #define GE_KEY_BINDING_HPP
 
-#include "defs.hpp"
-
+#include "ge/conf.hpp"
 #include "data/Array.hpp"
-
 #include <SFML/Window/Event.hpp>
-
-#include <istream>
 
 namespace ge {
 
@@ -148,15 +144,15 @@ struct Key {
 
 typedef Array<Key> KeyBinding;
 
-KeyCode fromSFML(sf::Keyboard::Key key);
+GE_API KeyCode fromSFML(sf::Keyboard::Key key);
 
-KeyCode fromSFML(sf::Mouse::Button button);
+GE_API KeyCode fromSFML(sf::Mouse::Button button);
 
-const char *prettyKeyCode(KeyCode code);
+GE_API const char *prettyKeyCode(KeyCode code);
 
-bool parseKeyCode(const std::string& str, KeyCode *code);
+GE_API bool parseKeyCode(const std::string& str, KeyCode *code);
 
-int compareKeyBinding(const KeyBinding& x, const KeyBinding& y);
+GE_API int compareKeyBinding(const KeyBinding& x, const KeyBinding& y);
 
 } // namespace ge
 

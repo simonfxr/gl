@@ -13,7 +13,7 @@ enum RunLevel {
     PostInit
 };
 
-struct EngineInitializers {
+struct GE_API EngineInitializers {
     
     EventSource<InitEvent> preInit0;
     EventSource<InitEvent> preInit1;
@@ -25,15 +25,15 @@ struct EngineInitializers {
     void reg(RunLevel lvl, const Ref<EventHandler<InitEvent> >& handler);
 };
 
-void initGLEW(RunLevel lvl, EngineInitializers&);
+GE_API void initGLEW(RunLevel lvl, EngineInitializers&);
 
-void initShaderVersion(RunLevel lvl, EngineInitializers&);
+GE_API void initShaderVersion(RunLevel lvl, EngineInitializers&);
 
-void initCommands(RunLevel lvl, EngineInitializers&);
+GE_API void initCommands(RunLevel lvl, EngineInitializers&);
 
-void initMemInfo(RunLevel lvl, EngineInitializers&);
+GE_API void initMemInfo(RunLevel lvl, EngineInitializers&);
 
-void initInitStats(EngineInitializers& inits);
+GE_API void initInitStats(EngineInitializers& inits);
 
 } // namespace ge
 

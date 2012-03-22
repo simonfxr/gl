@@ -1,7 +1,7 @@
 #ifndef GEOMETRY_TRANSFORM_HPP
 #define GEOMETRY_TRANSFORM_HPP
 
-#include "defs.hpp"
+#include "glt/conf.hpp"
 
 #include "math/vec3/type.hpp"
 #include "math/vec4/type.hpp"
@@ -19,7 +19,7 @@ static const uint32 GEOMETRY_TRANSFORM_MAX_DEPTH = 16;
 struct SavePoint;
 struct SavePointArgs;
 
-struct GeometryTransform {
+struct GLT_API GeometryTransform {
 
     GeometryTransform();
     ~GeometryTransform();
@@ -75,7 +75,7 @@ private:
     Data * const self;
 };
 
-struct SavePointArgs {    
+struct GLT_API SavePointArgs {    
 protected:
     GeometryTransform* g;
     uint64 cookie;
@@ -89,7 +89,7 @@ public:
         g(&_g), cookie(_cookie), depth(_depth) {}
 };
 
-struct SavePoint {
+struct GLT_API SavePoint {
     const SavePointArgs args;
     SavePoint(const SavePointArgs& _args) : args(_args)  {}
     

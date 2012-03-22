@@ -19,7 +19,7 @@ struct Engine;
 
 typedef std::map<std::string, Ref<Command> > CommandMap;
 
-struct CommandProcessor {
+struct GE_API CommandProcessor {
 public:
     Engine& _engine;
     CommandMap commands;
