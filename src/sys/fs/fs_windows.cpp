@@ -8,17 +8,42 @@ namespace sys {
 
 namespace fs {
 
-const ModificationTime MIN_MODIFICATION_TIME(0, 0);
+union ModTime {
+    ModificationTime::FILETIME mtime;
+    FILETIME ftime;
+};
+
+namespace {
+
+ModificationTime::FILETIME zeroFileTime() {
+    ModificationTime::FILETIME mtime;
+    memset(reinterpret_cast<void *>(&mtime), 0, sizeof mtime);
+    return mtime;
+}
+
+} // namespace anon
+
+SYS_API const ModificationTime MIN_MODIFICATION_TIME(zeroFileTime());
 
 bool operator ==(const ModificationTime& a, const ModificationTime& b) {
-    return a.mtime.dwHighDateTime == b.mtime.dwHighDateTime &&
-        a.mtime.dwLowDateTime == b.mtime.dwLowDateTime;
+    ModTime ta;
+    ta.mtime = a.mtime;
+    ModTime tb;
+    tb.mtime = b.mtime;
+    
+    return ta.ftime.dwHighDateTime == tb.ftime.dwHighDateTime &&
+        ta.ftime.dwLowDateTime == tb.ftime.dwLowDateTime;
 }
 
 bool operator <(const ModificationTime& a, const ModificationTime& b) {
-    return a.mtime.dwHighDateTime < b.mtime.dwHighDateTime ||
-            (a.mtime.dwHighDateTime == b.mtime.dwHighDateTime &&
-            a.mtime.dwLowDateTime < b.mtime.dwLowDateTime);
+    ModTime ta;
+    ta.mtime = a.mtime;
+    ModTime tb;
+    tb.mtime = b.mtime;
+
+    return ta.ftime.dwHighDateTime < tb.ftime.dwHighDateTime ||
+            (ta.ftime.dwHighDateTime == tb.ftime.dwHighDateTime &&
+            ta.ftime.dwLowDateTime < tb.ftime.dwLowDateTime);
 }
 
 bool cwd(const std::string& dir) {
@@ -71,7 +96,7 @@ bool stat(const std::string& path, sys::fs::Stat *stat) {
     if (GetFileAttributesExA(path.c_str(), GetFileExInfoStandard, &attrs) == 0)
         return false;
 
-    stat->mtime = attrs.ftLastWriteTime;
+    memcpy(&stat->mtime.mtime, &attrs.ftLastWriteTime, sizeof stat->mtime.mtime);
     stat->type = (attrs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 ? Directory : File;
     stat->absolute = absolutePath(path);
 

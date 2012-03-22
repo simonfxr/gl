@@ -3,7 +3,7 @@
 
 #include "defs.hpp"
 
-#if defined(SYS_EXPORTS)
+#ifdef SYS_EXPORTS
 #  define SYS_API SHARED_EXPORT
 #else
 #  define SYS_API SHARED_IMPORT

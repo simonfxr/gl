@@ -95,11 +95,6 @@ macro(def_lib target)
   string(REPLACE "-" "_" NAME_UPPER "${target}")
   string(TOUPPER "${NAME_UPPER}" NAME_UPPER)
   set_target_properties(${target} PROPERTIES DEFINE_SYMBOL ${NAME_UPPER}_EXPORTS)
-
-  if(BUILD_SHARED_LIBS)
-    set_target_properties(${target} PROPERTIES DEFINE_SYMBOL BUILD_SHARED)
-  endif()
-
   # adjust the output file prefix/suffix to match our conventions
   if(BUILD_SHARED_LIBS)
     if (SYS_WINDOWS AND COMP_GCC)
@@ -156,7 +151,7 @@ macro(def_program target)
   # create the target
   if(THIS_GUI_APP AND SYS_WINDOWS)
     add_executable(${target} WIN32 ${THIS_SOURCES})
-    target_link_libraries(${target} sfml-main)
+    target_link_libraries(${target} win-main)
   else()
     add_executable(${target} ${THIS_SOURCES})
   endif()

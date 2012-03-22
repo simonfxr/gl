@@ -238,7 +238,7 @@ struct Ref : public priv::RefBase<T, priv::RefCnt, Ref<T> > {
     Ref() : base_type(static_cast<T *>(0)) {}
 
     template <typename O>
-    explicit Ref(O *p = 0) : base_type(p) {}
+    explicit Ref(O *p) : base_type(p) {}
 
     template <typename O>
     explicit Ref(RefValue<O>&);

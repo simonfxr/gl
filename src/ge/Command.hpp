@@ -1,6 +1,7 @@
 #ifndef GE_COMMAND_HPP
 #define GE_COMMAND_HPP
 
+#include "ge/conf.hpp"
 #include "ge/EngineEvents.hpp"
 #include "ge/CommandArgs.hpp"
 

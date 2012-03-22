@@ -8,7 +8,9 @@
 #  define VC_EXTRALEAN 1
 #endif
 
+#ifndef SYSTEM_WINDOWS
 #include <stdint.h>
+#endif
 
 #ifdef CXX0X
 #  define EXPLICIT explicit
@@ -116,6 +118,29 @@
 
 namespace defs {
 
+#ifdef SYSTEM_WINDOWS
+
+    typedef unsigned char uint8;
+    typedef unsigned short uint16;
+    typedef unsigned uint32;
+    typedef unsigned long long uint64;
+    
+    typedef signed char int8;
+    typedef short int16;
+    typedef int int32;
+    typedef long long int64;
+
+    typedef int32 int32_t;
+
+#if PTR_BITS == 32
+    typedef int32 iptr;
+    typedef uint32 uptr;
+#else
+    typedef int64 iptr;
+    typedef uint64 uptr;
+#endif
+
+#else
 #define IALIAS(t) typedef t##_t t;
 
 IALIAS(uint8);
@@ -132,6 +157,8 @@ IALIAS(int64);
 
 typedef uintptr_t uptr;
 typedef intptr_t iptr;
+#endif
+
 
 typedef iptr int_t;
 typedef uptr uint_t;

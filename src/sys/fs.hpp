@@ -22,7 +22,7 @@ using namespace defs;
 
 struct ModificationTime;
 
-extern const ModificationTime MIN_MODIFICATION_TIME;
+extern SYS_API const ModificationTime MIN_MODIFICATION_TIME;
 
 enum ObjectType {
     File,

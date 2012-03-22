@@ -1,9 +1,9 @@
-#ifndef ERR_DEFS_HPP
-#define ERR_DEFS_HPP
+#ifndef ERR_CONF_HPP
+#define ERR_CONF_HPP
 
 #include "defs.hpp"
 
-#if defined(SYS_EXPORTS)
+#ifdef SYS_EXPORTS
 #  define ERR_API SHARED_EXPORT
 #else
 #  define ERR_API SHARED_IMPORT

@@ -16,8 +16,8 @@ struct Streams {
     FileStream stderr;
 
     Streams() :
-        stdout(::stdout),
-        stderr(::stderr)
+        stdout(STDOUT_FILE),
+        stderr(STDERR_FILE)
     {
         stdout.dontClose(true);
         stderr.dontClose(true);
@@ -190,6 +190,7 @@ void FileStream::basic_close() {
 }
 
 StreamResult FileStream::basic_flush() {
+#ifdef SYSTEM_UNIX
     int ret;
     
     while ((ret = fflush(file)) != 0 && errno == EINTR)
@@ -207,6 +208,16 @@ StreamResult FileStream::basic_flush() {
     if (feof(file))
         return StreamEOF;
     return StreamError;
+
+#else
+
+    if (fflush(file) == 0)
+        return StreamOK;
+    if (feof(file))
+        return StreamEOF;
+    else
+        return StreamError;
+#endif
 }
 
 StreamResult NullStream::basic_read(size& s, char *) {

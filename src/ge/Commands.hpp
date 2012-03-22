@@ -29,7 +29,7 @@ struct GE_API Commands {
     Commands();
 };
 
-const Commands& commands();
+GE_API const Commands& commands();
 
 } // namespace ge
 

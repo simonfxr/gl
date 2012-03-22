@@ -1,27 +1,24 @@
 #ifndef SYS_FS_WINDOWS_HPP
 #define SYS_FS_WINDOWS_HPP
 
+#include "sys/conf.hpp"
+
 namespace sys {
 
 namespace fs {
 
 const char SEPARATOR = '\\';
+#define SIZEOF_FILETIME 8
 
-// avoid windows.h
-typedef struct _FILETIME {
-  int32 dwLowDateTime;
-  int32 dwHighDateTime;
-} FILETIME;
-
+// mimic FILETIME
 struct ModificationTime {
-	FILETIME mtime;
-	ModificationTime() {}
-	ModificationTime(FILETIME _mtime) :
-	    mtime(_mtime) {}
-	ModificationTime(DWORD lo, DWORD hi) {
-		mtime.dwLowDateTime = lo;
-		mtime.dwHighDateTime = hi;
-	}
+    struct FILETIME {
+        char data[SIZEOF_FILETIME];
+    };
+    FILETIME mtime;
+    ModificationTime() {}
+    ModificationTime(const FILETIME& _mtime) :
+        mtime(_mtime) {}
 };
 
 } // namespace fs

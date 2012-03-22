@@ -4,6 +4,10 @@ if(BUILD_ARCH32)
   link_libraries(-m32)
 endif()
 
+if(BUILD_SHARED_LIBS)
+  add_definitions(-DBUILD_SHARED=1)
+endif()
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   set(SYS_WINDOWS TRUE)
   add_definitions(-DSYSTEM_WINDOWS=1)

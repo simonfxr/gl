@@ -8,6 +8,16 @@
 #include <stdio.h>
 #include <vector>
 
+#ifdef SYSTEM_WINDOWS
+#  undef stdout
+#  undef stderr
+#  define STDOUT_FILE (&__iob_func()[1])
+#  define STDERR_FILE (&__iob_func()[2])
+#else
+#  define STDOUT_FILE ::stdout
+#  define STDERR_FILE ::stderr
+#endif
+
 namespace sys {
 
 namespace io {
