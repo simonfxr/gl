@@ -96,6 +96,10 @@ macro(def_lib target)
   string(TOUPPER "${NAME_UPPER}" NAME_UPPER)
   set_target_properties(${target} PROPERTIES DEFINE_SYMBOL ${NAME_UPPER}_EXPORTS)
 
+  if(BUILD_SHARED_LIBS)
+    set_target_properties(${target} PROPERTIES DEFINE_SYMBOL BUILD_SHARED)
+  endif()
+
   # adjust the output file prefix/suffix to match our conventions
   if(BUILD_SHARED_LIBS)
     if (SYS_WINDOWS AND COMP_GCC)

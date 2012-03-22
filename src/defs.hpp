@@ -18,12 +18,17 @@
 #  define OVERRIDE
 #endif
 
-#ifdef SYSTEM_WINDOWS
-#  define SHARED_IMPORT __declspec(dllimport)
-#  define SHARED_EXPORT __declspec(dllexport)
+#ifdef BUILD_SHARED
+#  ifdef SYSTEM_WINDOWS
+#    define SHARED_IMPORT __declspec(dllimport)
+#    define SHARED_EXPORT __declspec(dllexport)
+#  else
+#    define SHARED_IMPORT __attribute__((visibility("default")))
+#    define SHARED_EXPORT SHARED_IMPORT
+#  endif
 #else
-#  define SHARED_IMPORT __attribute__((visibility("default")))
-#  define SHARED_EXPORT SHARED_IMPORT
+#  define SHARED_IMPORT
+#  define SHARED_EXPORT
 #endif
 
 #ifdef GNU_EXTENSIONS
