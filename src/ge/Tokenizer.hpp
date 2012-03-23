@@ -7,8 +7,6 @@
 
 #include "sys/io/Stream.hpp"
 
-#include <istream>
-#include <fstream>
 #include <vector>
 
 namespace ge {

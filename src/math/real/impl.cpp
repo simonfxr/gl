@@ -1,12 +1,41 @@
 #include "math/real/defns.hpp"
-#include <cmath>
+
+#ifndef NO_MATH_H
+#  include <cmath>
+#  define MATH_CIMPORT(...)
+#  define MATH_CFUNC(f) ::f
+#else
+#  define MATH_CIMPORT(...) extern "C" __VA_ARGS__ ATTRS(ATTR_NOTHROW)
+#  define MATH_CFUNC(f) ::math::cmath::f
+#endif
 
 MATH_BEGIN_NAMESPACE
 
+#if NO_MATH_H
+
+namespace cmath {
+
+MATH_CIMPORT(float sqrtf(float));
+MATH_CIMPORT(float sinf(float));
+MATH_CIMPORT(float cosf(float));
+MATH_CIMPORT(float tanf(float));
+MATH_CIMPORT(float asinf(float));
+MATH_CIMPORT(float acosf(float));
+MATH_CIMPORT(float atanf(float));
+MATH_CIMPORT(float atan2f(float, float));
+MATH_CIMPORT(float fmodf(float, float));
+MATH_CIMPORT(float fabsf(float));
+MATH_CIMPORT(float powf(float, float));
+MATH_CIMPORT(float floorf(float));
+
+} // namespace cmath
+
+#endif
+
 using namespace defs;
 
-real sqrt(real x) { 
-    return sqrtf(x);
+real sqrt(real x) {
+    return MATH_CFUNC(sqrtf)(x);
 }
 
 real recip(real x) {
@@ -22,31 +51,31 @@ real rsqrt(real x) {
 }
 
 real sin(real rad) {
-    return sinf(rad);
+    return MATH_CFUNC(sinf)(rad);
 }
 
 real cos(real rad) {
-    return cosf(rad);
+    return MATH_CFUNC(cosf)(rad);
 }
 
 real tan(real rad) {
-    return tanf(rad);
+    return MATH_CFUNC(tanf)(rad);
 }
 
 real asin(real x) {
-    return asinf(x);
+    return MATH_CFUNC(asinf)(x);
 }
 
 real acos(real x) {
-    return acosf(x);
+    return MATH_CFUNC(acosf)(x);
 }
 
 real atan(real x) {
-    return atanf(x);
+    return MATH_CFUNC(atanf)(x);
 }
 
 real atan2(real x, real y) {
-    return atan2f(x, y);
+    return MATH_CFUNC(atan2f)(x, y);
 }
 
 void sincos(real rad, real& out_sin, real& out_cos) {
@@ -59,7 +88,7 @@ real cotan(real rad) {
 }
 
 real abs(real x) {
-    return fabsf(x);
+    return MATH_CFUNC(fabsf)(x);
 }
 
 real length(real x) {
@@ -97,11 +126,11 @@ real pow(real x, int32 n) {
 }
 
 real pow(real x, real y) {
-    return powf(x, y);
+    return MATH_CFUNC(powf)(x, y);
 }
 
 real floor(real x) {
-    return ::floorf(x);
+    return MATH_CFUNC(floorf)(x);
 }
 
 int32 signum(real x) {
@@ -116,7 +145,7 @@ int32 signum(real x) {
 
 real wrapPi(real x) {
     x += PI;
-    x -= floorf(x * (1 / (2 * PI))) * (2 * PI);
+    x -= MATH_CFUNC(floorf)(x * (1 / (2 * PI))) * (2 * PI);
     x -= PI;
     return x;
 }
@@ -124,11 +153,11 @@ real wrapPi(real x) {
 real wrap(real x, real period) {
 #ifdef MATH_MATH_INLINE
     if (unlikely(x < -period || x > period))
-        return fmodf(x, period);
+        return MATH_CFUNC(fmodf)(x, period);
     else
         return x;
 #else
-    return fmodf(x, period);
+    return MATH_CFUNC(fmodf)(x, period);
 #endif
 }
 
@@ -158,7 +187,7 @@ real clamp(real x, real lo, real hi) {
 
 real smoothstep(real lo_edge, real hi_edge, real x) {
     x = saturate((x - lo_edge)/(hi_edge - lo_edge)); 
-    return x*x*(3 - 2*x);
+    return x*x*(real(3) - 2*x);
 }
 
 real mix(real a, real b, real t) {
@@ -166,3 +195,6 @@ real mix(real a, real b, real t) {
 }
 
 MATH_END_NAMESPACE
+
+#undef MATH_CIMPORT
+#undef MATH_CFUNC

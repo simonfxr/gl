@@ -40,6 +40,10 @@ struct ShaderManager::Data {
         globalDefines(),
         shaderCompiler(self)
         {}
+
+private:
+    Data(const Data&);
+    Data& operator =(const Data&);
 };
 
 ShaderManager::ShaderManager() :

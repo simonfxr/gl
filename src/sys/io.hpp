@@ -36,7 +36,6 @@ typedef uint32 SocketProto;
 
 const SocketProto SP_TCP = 1;
 
-
 typedef uint32 SocketMode;
 
 const SocketMode SM_NONBLOCKING = 1;
@@ -57,7 +56,7 @@ enum HandleError {
 
 struct SYS_API IPAddr4 {
     uint32 addr4; // bigendian/network byte order
-    IPAddr4() {}
+    IPAddr4() : addr4() {}
     IPAddr4(uint8 a, uint8 b, uint8 c, uint8 d)
         : addr4(hton((uint32(a) << 24) | (uint32(b) << 16) | (uint32(c) << 8) | uint32(d))) {}
         

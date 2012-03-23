@@ -25,6 +25,10 @@ set(USE_VOXEL_OPENCL FALSE CACHE BOOL "use opencl for the voxel-world program")
 
 set(USE_UNWIND_STACKTRACES TRUE CACHE BOOL "use libunwind and libdw to print a stacktrace on errors")
 
+set(USE_CXX11 TRUE CACHE BOOL "compile with support for the c++11 standard")
+
+set(USE_NO_MATH_H TRUE CACHE BOOL "dont import math.h in math library")
+
 project(gl-stuff)
 
 include_directories(src)

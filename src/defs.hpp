@@ -12,8 +12,8 @@
 #include <stdint.h>
 #endif
 
-#ifdef CXX0X
-#  define EXPLICIT explicit
+#ifdef CXX11
+#  define EXPLICIT
 #  define OVERRIDE override
 #else
 #  define EXPLICIT
@@ -34,8 +34,8 @@
 #endif
 
 #ifdef GNU_EXTENSIONS
-#define likely(e) __builtin_expect(bool(e) != false, 1)
-#define unlikely(e) __builtin_expect(bool(e) != false, 0)
+#  define likely(e) __builtin_expect(bool(e) != false, 1)
+#  define unlikely(e) __builtin_expect(bool(e) != false, 0)
 #else
 #  define likely(e) (e)
 #  define unlikely(e) (e)
@@ -120,28 +120,26 @@ namespace defs {
 
 #ifdef SYSTEM_WINDOWS
 
-    typedef unsigned char uint8;
-    typedef unsigned short uint16;
-    typedef unsigned uint32;
-    typedef unsigned long long uint64;
+typedef unsigned char uint8;
+typedef unsigned short uint16;
+typedef unsigned uint32;
+typedef unsigned long long uint64;
     
-    typedef signed char int8;
-    typedef short int16;
-    typedef int int32;
-    typedef long long int64;
+typedef signed char int8;
+typedef short int16;
+typedef int int32;
+typedef long long int64;
 
-    typedef int32 int32_t;
-
-#if PTR_BITS == 32
-    typedef int32 iptr;
-    typedef uint32 uptr;
-#else
-    typedef int64 iptr;
-    typedef uint64 uptr;
-#endif
+#  if PTR_BITS == 32
+typedef int32 iptr;
+typedef uint32 uptr;
+#  else
+typedef int64 iptr;
+typedef uint64 uptr;
+#  endif
 
 #else
-#define IALIAS(t) typedef t##_t t;
+#  define IALIAS(t) typedef t##_t t;
 
 IALIAS(uint8);
 IALIAS(uint16);
@@ -153,7 +151,7 @@ IALIAS(int16);
 IALIAS(int32);
 IALIAS(int64);
 
-#undef IALIAS
+#  undef IALIAS
 
 typedef uintptr_t uptr;
 typedef intptr_t iptr;

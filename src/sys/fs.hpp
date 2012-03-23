@@ -33,6 +33,9 @@ struct Stat {
     ObjectType type;
     std::string absolute;
     ModificationTime mtime;
+
+    Stat() :
+        type(), absolute(), mtime() {}
 };
 
 SYS_API bool cwd(const std::string& dir);

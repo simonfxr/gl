@@ -1,9 +1,23 @@
 #include "sys/io/Stream.hpp"
 #include "err/err.hpp"
 
-#include <string.h>
-#include <errno.h>
+#include <cstring>
+#include <cstdio>
 #include <iostream>
+
+#ifdef SYSTEM_UNIX
+#  include <errno.h>
+#endif
+
+#ifdef SYSTEM_WINDOWS
+#  undef stdout
+#  undef stderr
+#  define STDOUT_FILE (&__iob_func()[1])
+#  define STDERR_FILE (&__iob_func()[2])
+#else
+#  define STDOUT_FILE ::stdout
+#  define STDERR_FILE ::stderr
+#endif
 
 namespace sys {
 
@@ -11,13 +25,21 @@ namespace io {
 
 namespace {
 
+FILE *castFILE(FileStream::FILE *p) {
+    return reinterpret_cast<FILE *>(p);
+}
+
+FileStream::FILE *castFILE(FILE *p) {
+    return reinterpret_cast<FileStream::FILE* >(p);
+}
+
 struct Streams {
     FileStream stdout;
     FileStream stderr;
 
     Streams() :
-        stdout(STDOUT_FILE),
-        stderr(STDERR_FILE)
+        stdout(castFILE(STDOUT_FILE)),
+        stderr(castFILE(STDERR_FILE))
     {
         stdout.dontClose(true);
         stderr.dontClose(true);
@@ -41,14 +63,10 @@ OutStream& stderr() {
     return streams().stderr;
 }
 
-// OutStream& endl(OutStream& out) {
-//     out << "\n";
-//     return out;
-// }
-
 struct StreamEndl {
     StreamEndl() {}
 };
+
 const StreamEndl endl;
 
 OutStream& operator <<(OutStream& out, const std::string& str) {
@@ -139,12 +157,12 @@ StreamResult StdInStream::basic_read(size& s, char *b) {
     return StreamError;
 }
 
-FileStream::FileStream(FILE *_file) :
-    file(_file)
+FileStream::FileStream(FileStream::FILE *file) :
+    _file(file)
 {}
 
 FileStream::FileStream(const std::string& path, const std::string& mode) :
-    file(0)
+    _file(0)
 {
     open(path, mode);
 }
@@ -152,26 +170,19 @@ FileStream::FileStream(const std::string& path, const std::string& mode) :
 bool FileStream::open(const std::string& path, const std::string& mode) {
     if (isOpen())
         return false;
-    file = fopen(path.c_str(), mode.c_str());
-    if (file == 0) {
-        ERR("couldnt open file: " + path);
-    } else {
-        ERR("openend file: " + path);
-    }
-    return file != 0;
+    _file = castFILE(fopen(path.c_str(), mode.c_str()));
+    return _file != 0;
 }
-
-
 
 StreamResult FileStream::basic_read(size& s, char *buf) {
     size_t n = UNSIZE(s);
-    size_t k = fread(reinterpret_cast<void *>(buf), 1, n, file);
+    size_t k = fread(reinterpret_cast<void *>(buf), 1, n, castFILE(_file));
     s = SIZE(k);
     if (n == k)
         return StreamOK;
-    if (feof(file))
+    if (feof(castFILE(_file)))
         return StreamEOF;
-    if (ferror(file)) {
+    if (ferror(castFILE(_file))) {
         return StreamError;
     }
 
@@ -180,27 +191,27 @@ StreamResult FileStream::basic_read(size& s, char *buf) {
 
 StreamResult FileStream::basic_write(size& s, const char *buf) {
     size_t n = UNSIZE(s);
-    size_t k = fwrite(reinterpret_cast<const void *>(buf), 1, n, file);
+    size_t k = fwrite(reinterpret_cast<const void *>(buf), 1, n, castFILE(_file));
     s = SIZE(k);
     if (n == k)
         return StreamOK;
-    if (feof(file))
+    if (feof(castFILE(_file)))
         return StreamEOF;
-    if (ferror(file))
+    if (ferror(castFILE(_file)))
         return StreamError;
 
     ASSERT_FAIL();
 }
 
 void FileStream::basic_close() {
-    fclose(file);
+    fclose(castFILE(_file));
 }
 
 StreamResult FileStream::basic_flush() {
 #ifdef SYSTEM_UNIX
     int ret;
     
-    while ((ret = fflush(file)) != 0 && errno == EINTR)
+    while ((ret = fflush(castFILE(_file))) != 0 && errno == EINTR)
         errno = 0;
 
     if (ret == 0)
@@ -212,15 +223,15 @@ StreamResult FileStream::basic_flush() {
     if (err == EAGAIN || err == EWOULDBLOCK)
         return StreamBlocked;
     
-    if (feof(file))
+    if (feof(castFILE(_file)))
         return StreamEOF;
     return StreamError;
 
 #else
 
-    if (fflush(file) == 0)
+    if (fflush(castFILE(_file)) == 0)
         return StreamOK;
-    if (feof(file))
+    if (feof(castFILE(_file)))
         return StreamEOF;
     else
         return StreamError;
@@ -239,6 +250,7 @@ StreamResult NullStream::basic_write(size& s, const char *) {
 
 RecordingStream::RecordingStream(InStream& _in) :
     in(&_in),
+    recorded(),
     state(Recording),
     cursor(0)
 {}

@@ -87,6 +87,10 @@ endif()
 if(BUILD_OPT)
   if(COMP_GCC)
     add_definitions(-march=native -Ofast)
+    add_definitions(#enable graphite
+      -floop-interchange
+      -floop-strip-mine
+      -floop-block)
   elseif(COMP_CLANG)
     add_definitions(-march=native -O3 -ffast-math)
   elseif(COMP_ICC)
@@ -107,12 +111,24 @@ if(BUILD_OPT)
   endif()
 endif()
 
+if(USE_CXX11)
+  add_definitions(-DCXX11=1)
+  if(COMP_GCCLIKE)
+    add_definitions(-std=c++0x)
+  endif()
+endif()
+
+if(USE_NO_MATH_H)
+  add_definitions(-DNO_MATH_H=1)
+endif()
+
 if(BUILD_DEBUG AND COMP_CLANG)
   add_definitions(-ftrapv -fcatch-undefined-behavior)
 endif()
 
 if(COMP_GCCLIKE)
   add_definitions(-Wall)
+  #add_definitions(-Weffc++)
   if (NOT COMP_ICC)
     add_definitions(-Wextra)
   else()
@@ -123,7 +139,7 @@ if(COMP_GCCLIKE)
     # -Wconversion -Wsign-conversion 
     # -Werror 
     # -Wold-style-cast 
-    # -Wdouble-promotion 
+     -Wdouble-promotion 
     -fno-exceptions -fno-rtti)
 endif()
 
@@ -131,7 +147,7 @@ if(COMP_GCC)
   add_definitions(
 #    -Wsuggest-attribute=const 
 #    -Wsuggest-attribute=pure 
-#    -Wsuggest-attribute=noreturn
+    -Wsuggest-attribute=noreturn
     )
 endif()
 

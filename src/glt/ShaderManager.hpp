@@ -1,7 +1,6 @@
 #ifndef SHADER_MANAGER_HPP
 #define SHADER_MANAGER_HPP
 
-#include <ostream>
 #include <string>
 #include <vector>
 #include <map>

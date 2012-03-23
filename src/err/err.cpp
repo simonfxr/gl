@@ -155,6 +155,10 @@ struct LogState {
         level(Info),
         out(&null_stream)
         {}
+    
+private:
+    LogState(const LogState&);
+    LogState& operator =(const LogState&);
 };
 
 THREAD_LOCAL(LogState *, log_state);

@@ -20,6 +20,8 @@ struct Handle {
 
 struct Socket {
     FileDescriptor socket;
+    Socket() :
+        socket() {}
 };
 
 } // namespace io

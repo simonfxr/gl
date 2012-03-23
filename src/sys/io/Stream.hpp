@@ -5,18 +5,7 @@
 
 #include <sstream>
 #include <string>
-#include <stdio.h>
 #include <vector>
-
-#ifdef SYSTEM_WINDOWS
-#  undef stdout
-#  undef stderr
-#  define STDOUT_FILE (&__iob_func()[1])
-#  define STDERR_FILE (&__iob_func()[2])
-#else
-#  define STDOUT_FILE ::stdout
-#  define STDERR_FILE ::stderr
-#endif
 
 namespace sys {
 
@@ -53,12 +42,17 @@ const StreamFlags SS_DONT_CLOSE = 8;
 } // namespace anon
 
 struct SYS_API BasicStreamState {
+public:
+    virtual ~BasicStreamState() {}
 protected:
     virtual StreamFlags& basic_state() = 0;
     virtual StreamFlags basic_state() const = 0;
 };
 
 struct SYS_API BasicStream : public virtual BasicStreamState {
+
+    virtual ~BasicStream() {}
+    
     void close() {
         close_flush();
         StreamFlags& s = basic_state();
@@ -95,15 +89,17 @@ protected:
 
     void destructor() {
         StreamFlags& st = basic_state();
-        if ((st & SS_CLOSED) == 0 &&
-            (st & SS_DONT_CLOSE) == 0) {
+        if ((st & (SS_CLOSED | SS_DONT_CLOSE)) == 0) {
             basic_close();
             st |= SS_CLOSED;
-        }        
+        }
     }
 };
 
 struct SYS_API BasicInStream : public virtual BasicStreamState {
+
+    virtual ~BasicInStream() {}
+    
     StreamResult read(size& s, char *b) {
         StreamFlags& st = basic_state();
         
@@ -125,10 +121,13 @@ struct SYS_API BasicInStream : public virtual BasicStreamState {
     }
     
 protected:
-    virtual StreamResult basic_read(size&, char *) = 0;    
+    virtual StreamResult basic_read(size&, char *) = 0;
 };
 
 struct SYS_API BasicOutStream : public virtual BasicStreamState {
+
+    virtual ~BasicOutStream() {}
+    
     StreamResult write(size& s, const char *b) {
         StreamFlags& st = basic_state();
         
@@ -174,6 +173,7 @@ struct SYS_API StreamState {
 private:
     StreamFlags _state;
 public:
+    virtual ~StreamState() {}
     StreamState() : _state(0) {}
     StreamFlags state() const { return _state; }
     
@@ -224,6 +224,9 @@ struct SYS_API StdOutStream : public AbstractOutStream {
 protected:
     StreamResult basic_write(size&, const char *);
     StreamResult basic_flush();
+private:
+    StdOutStream(const StdOutStream&);
+    StdOutStream operator =(const StdOutStream&);
 };
 
 struct SYS_API StdInStream : public AbstractInStream {
@@ -232,22 +235,29 @@ struct SYS_API StdInStream : public AbstractInStream {
     ~StdInStream() { destructor(); }
 protected:
     StreamResult basic_read(size&, char *);
+private:
+    StdInStream(const StdInStream&);
+    StdInStream& operator =(const StdInStream&);
 };
 
 struct SYS_API FileStream : public AbstractIOStream {
-    FILE *file;
+    struct FILE; // use as dummy type, avoid importing stdio.h, on
+                 // windows stdin/stdout/stderr are macros, which
+                 // clashes with our definitions
+    FILE *_file;
     FileStream(FILE *file = 0);
     FileStream(const std::string& path, const std::string& mode);
     ~FileStream() { destructor(); }
-
-    bool isOpen() const { return file != 0; }
+    bool isOpen() const { return _file != 0; }
     bool open(const std::string& path, const std::string& mode);
-    
 protected:
     StreamResult basic_read(size&, char *);
     StreamResult basic_write(size&, const char *);
     void basic_close();
     StreamResult basic_flush();
+private:
+    FileStream(const FileStream&);
+    FileStream& operator =(const FileStream&);
 };
 
 struct SYS_API NullStream : public AbstractIOStream {
@@ -278,6 +288,10 @@ struct SYS_API RecordingStream : public AbstractInStream {
 protected:
     void basic_close();
     StreamResult basic_read(size&, char *);
+
+private:
+    RecordingStream(const RecordingStream&);
+    RecordingStream& operator =(const RecordingStream&);
 };
 
 SYS_API OutStream& operator <<(OutStream& out, const std::string& str);
