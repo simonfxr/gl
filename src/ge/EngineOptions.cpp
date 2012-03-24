@@ -5,9 +5,9 @@
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
 
-#include <string.h>
-#include <string.h>
-#include <ctype.h>
+#include <cstdio>
+#include <cstring>
+#include <cctype>
 
 namespace ge {
 

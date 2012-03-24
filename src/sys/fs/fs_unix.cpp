@@ -5,6 +5,7 @@
 #include <string>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -13,9 +14,12 @@ namespace sys {
 
 namespace fs {
 
+STATIC_ASSERT(sizeof(time_t) == sizeof(ModificationTime::time_t));
+    
 const ModificationTime MIN_MODIFICATION_TIME(0);
 
 bool cwd(const std::string& dir) {
+
     if (chdir(dir.c_str()) < 0) {
         ERR(strerror(errno));
         return false;

@@ -130,24 +130,24 @@ if(COMP_GCCLIKE)
   add_definitions(-Wall)
   #add_definitions(-Weffc++)
   if (NOT COMP_ICC)
-    add_definitions(-Wextra)
+    add_definitions(-Wextra -Wdouble-promotion)
   else()
-    add_definitions(-diag-disable 10120)
+    add_definitions("-diag-disable 10120")
     link_libraries("-diag-disable 11000" "-diag-disable 11006" "-diag-disable 11001")
   endif()
   add_definitions(
     # -Wconversion -Wsign-conversion 
     # -Werror 
-    # -Wold-style-cast 
-     -Wdouble-promotion 
-    -fno-exceptions -fno-rtti)
+    # -Wold-style-cast
+    )
+   add_definitions(-fno-exceptions -fno-rtti)
 endif()
 
 if(COMP_GCC)
   add_definitions(
 #    -Wsuggest-attribute=const 
 #    -Wsuggest-attribute=pure 
-    -Wsuggest-attribute=noreturn
+#    -Wsuggest-attribute=noreturn
     )
 endif()
 

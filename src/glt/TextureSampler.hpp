@@ -24,7 +24,7 @@ public:
 
     enum Filter {
         FilterMin = 1,
-        FilterMag = 2,
+        FilterMag = 2
     };
 
     enum ClampMode {

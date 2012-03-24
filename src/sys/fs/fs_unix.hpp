@@ -2,7 +2,6 @@
 #define FS_UNIX_HPP
 
 #include "sys/conf.hpp"
-#include <ctime>
 
 namespace sys {
 
@@ -11,6 +10,7 @@ namespace fs {
 const char SEPARATOR = '/';
 
 struct ModificationTime {
+    typedef long time_t;
     time_t timestamp;
 
     ModificationTime() : timestamp() {}

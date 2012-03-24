@@ -116,6 +116,8 @@
 #define AS_STRING_AUX6(a) AS_STRING_AUX7(a)
 #define AS_STRING_AUX7(a) #a
 
+#define STATIC_ASSERT(p) typedef char __compile_time_assert##__LINE__[1 - 2 * !(p)]
+
 namespace defs {
 
 #ifdef SYSTEM_WINDOWS
