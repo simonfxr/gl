@@ -69,11 +69,9 @@ struct GLT_API ShaderObject {
         source(src), handle(hndl), includes(), dependencies(), cache() {}
 
     virtual ~ShaderObject();
-
-    virtual ReloadState needsReload() = 0;
-
-    void linkCache(Ref<ShaderCache>&);
     
+    virtual ReloadState needsReload() = 0;
+    void linkCache(Ref<ShaderCache>&);
     void unlinkCache(Ref<ShaderCache>&);
     
 private:
@@ -153,8 +151,8 @@ struct GLT_API CompileJob {
 };
 
 struct GLT_API CompileState : public err::WithError<ShaderCompilerError::Type,
-                                            ShaderCompilerError::NoError,
-                                            ShaderCompilerError::stringError> {
+                                                    ShaderCompilerError::NoError,
+                                                    ShaderCompilerError::stringError> {
     ShaderCompiler& compiler;
     const ShaderCompileFlags flags;
     ShaderObjects &compiled;
@@ -165,30 +163,22 @@ struct GLT_API CompileState : public err::WithError<ShaderCompilerError::Type,
         compiler(comp), flags(flgs), compiled(_compiled), inQueue(), toCompile() {}
 
     void enqueue(Ref<CompileJob>&);
-
     void compileAll();
-
     void put(const Ref<ShaderObject>&);
-    
     Ref<ShaderObject> load(Ref<ShaderSource>&);
-
     Ref<ShaderObject> reload(Ref<ShaderObject>&);
 };
 
 struct GLT_API StringSource : public ShaderSource {
     std::string code;
-    
     StringSource(ShaderManager::ShaderType ty, const std::string& _code);
-    
-    Ref<ShaderObject> load(Ref<ShaderSource>&, CompileState&);
+    virtual Ref<ShaderObject> load(Ref<ShaderSource>&, CompileState&) FINAL OVERRIDE;
 };
 
 struct GLT_API FileSource : public ShaderSource {
     FileSource(ShaderManager::ShaderType ty, const std::string& path);
-    
     const std::string& filePath() const { return this->key; }
-    
-    Ref<ShaderObject> load(Ref<ShaderSource>&, CompileState&);
+    virtual Ref<ShaderObject> load(Ref<ShaderSource>&, CompileState&) FINAL OVERRIDE;
 };
 
 } // namespace glt

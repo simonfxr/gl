@@ -13,11 +13,11 @@
 #endif
 
 #ifdef CXX11
-#  define EXPLICIT
 #  define OVERRIDE override
+#  define FINAL final
 #else
-#  define EXPLICIT
 #  define OVERRIDE
+#  define FINAL
 #endif
 
 #ifdef BUILD_SHARED

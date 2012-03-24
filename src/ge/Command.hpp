@@ -40,13 +40,13 @@ public:
 
 extern GE_API Array<CommandArg> NULL_ARGS;
 
-struct GE_API QuotationCommand EXPLICIT : public Command {
+struct GE_API QuotationCommand : public Command {
     Quotation * const quotation;
     
     QuotationCommand(const std::string& source, int line, int column, const std::string& desc, Quotation *quot);
     ~QuotationCommand();
 
-    void interactive(const Event<CommandEvent>& ev, const Array<CommandArg>&) OVERRIDE;
+    virtual void interactive(const Event<CommandEvent>& ev, const Array<CommandArg>&) OVERRIDE;
     QuotationCommand *castToQuotation() { return this; }
 
 private:
@@ -96,7 +96,7 @@ Ref<Command> makeCommand(typename StateCommandHandler<S>::type handler, S state,
 }
 
 template <typename T, typename M>
-struct MemberFunCommand EXPLICIT : public Command {
+struct MemberFunCommand : public Command {
 private:
     T *o;
     M m;

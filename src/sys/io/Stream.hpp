@@ -198,22 +198,22 @@ struct SYS_API IOStream : public InStream, public OutStream {
 struct SYS_API AbstractIOStream : public StreamState, public IOStream {
     virtual ~AbstractIOStream() {}
 protected:
-    StreamFlags basic_state() const { return state(); }
-    StreamFlags& basic_state() { return state(); }  
+    virtual StreamFlags basic_state() const FINAL OVERRIDE { return state(); }
+    virtual StreamFlags& basic_state() FINAL OVERRIDE { return state(); }  
 };
 
 struct SYS_API AbstractOutStream : public StreamState, public OutStream {
     virtual ~AbstractOutStream() {}
 protected:
-    StreamFlags basic_state() const { return state(); }
-    StreamFlags& basic_state() { return state(); }
+    virtual StreamFlags basic_state() const FINAL OVERRIDE { return state(); }
+    virtual StreamFlags& basic_state() FINAL OVERRIDE { return state(); }
 };
 
 struct SYS_API AbstractInStream : public StreamState, public InStream {
     virtual ~AbstractInStream() {}
 protected:
-    StreamFlags basic_state() const { return state(); }
-    StreamFlags& basic_state() { return state(); }
+    virtual StreamFlags basic_state() const FINAL OVERRIDE { return state(); }
+    virtual StreamFlags& basic_state() FINAL OVERRIDE { return state(); }
 };
 
 struct SYS_API StdOutStream : public AbstractOutStream {
@@ -222,8 +222,8 @@ struct SYS_API StdOutStream : public AbstractOutStream {
     ~StdOutStream() { destructor(); }
     void out(std::ostream& o) { _out = &o; }
 protected:
-    StreamResult basic_write(size&, const char *);
-    StreamResult basic_flush();
+    virtual StreamResult basic_write(size&, const char *) FINAL OVERRIDE;
+    virtual StreamResult basic_flush() FINAL OVERRIDE;
 private:
     StdOutStream(const StdOutStream&);
     StdOutStream operator =(const StdOutStream&);
@@ -234,7 +234,7 @@ struct SYS_API StdInStream : public AbstractInStream {
     StdInStream(std::istream&);
     ~StdInStream() { destructor(); }
 protected:
-    StreamResult basic_read(size&, char *);
+    virtual StreamResult basic_read(size&, char *) FINAL OVERRIDE;
 private:
     StdInStream(const StdInStream&);
     StdInStream& operator =(const StdInStream&);
@@ -251,10 +251,10 @@ struct SYS_API FileStream : public AbstractIOStream {
     bool isOpen() const { return _file != 0; }
     bool open(const std::string& path, const std::string& mode);
 protected:
-    StreamResult basic_read(size&, char *);
-    StreamResult basic_write(size&, const char *);
-    void basic_close();
-    StreamResult basic_flush();
+    virtual StreamResult basic_read(size&, char *) FINAL OVERRIDE;
+    virtual StreamResult basic_write(size&, const char *) FINAL OVERRIDE;
+    virtual void basic_close() FINAL OVERRIDE;
+    virtual StreamResult basic_flush() FINAL OVERRIDE;
 private:
     FileStream(const FileStream&);
     FileStream& operator =(const FileStream&);
@@ -263,8 +263,8 @@ private:
 struct SYS_API NullStream : public AbstractIOStream {
     NullStream() { close(); }
 protected:
-    StreamResult basic_read(size&, char *);
-    StreamResult basic_write(size&, const char *);
+    virtual StreamResult basic_read(size&, char *) FINAL OVERRIDE;
+    virtual StreamResult basic_write(size&, const char *) FINAL OVERRIDE;
 };
 
 struct SYS_API RecordingStream : public AbstractInStream {
@@ -286,8 +286,8 @@ struct SYS_API RecordingStream : public AbstractInStream {
     void clear();
 
 protected:
-    void basic_close();
-    StreamResult basic_read(size&, char *);
+    virtual void basic_close() FINAL OVERRIDE;
+    virtual StreamResult basic_read(size&, char *) FINAL OVERRIDE;
 
 private:
     RecordingStream(const RecordingStream&);

@@ -10,7 +10,7 @@
 
 namespace ge {
 
-struct Engine::Data EXPLICIT : public GameLoop::Game {
+struct Engine::Data : public GameLoop::Game {
     Engine& theEngine; // owning engine
     GameWindow *window;
     GameLoop gameLoop;
@@ -43,12 +43,12 @@ struct Engine::Data EXPLICIT : public GameLoop::Game {
 
     bool init(const EngineOptions& opts);
                              
-    void tick() OVERRIDE;
-    void render(float interpolation) OVERRIDE;
-    void handleInputEvents() OVERRIDE;
-    float now() OVERRIDE;
-    void sleep(float secs) OVERRIDE;
-    void exit(int32 exit_code) OVERRIDE;
+    virtual void tick() FINAL OVERRIDE;
+    virtual void render(float interpolation) FINAL OVERRIDE;
+    virtual void handleInputEvents() FINAL OVERRIDE;
+    virtual float now() FINAL OVERRIDE;
+    virtual void sleep(float secs) FINAL OVERRIDE;
+    virtual void exit(int32 exit_code) FINAL OVERRIDE;
 
     void registerHandlers();
     bool execCommand(std::vector<CommandArg>& args);

@@ -10,7 +10,7 @@ namespace glt {
 
 using namespace defs;
 
-struct GLT_API TextureRenderTarget EXPLICIT : public RenderTarget {
+struct GLT_API TextureRenderTarget : public RenderTarget {
     TextureSampler _sampler;
     GLuint _frame_buffer;
     GLuint _depth_buffer;

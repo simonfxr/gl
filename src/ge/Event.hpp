@@ -32,12 +32,12 @@ struct EventHandler {
 };
 
 template <typename F, typename E>
-struct FunctorHandler EXPLICIT : public EventHandler<E> {
+struct FunctorHandler : public EventHandler<E> {
 private:
     F f;
 public:
     explicit FunctorHandler(const F& _f) : f(_f) {}
-    void handle(const Event<E>& ev) OVERRIDE { f(ev); }
+    virtual void handle(const Event<E>& ev) FINAL OVERRIDE { f(ev); }
 };
 
 template <typename F, typename E>
@@ -51,13 +51,13 @@ Ref<EventHandler<E> > makeEventHandler(void (*fun)(const Event<E>&)) {
 }
 
 template <typename S, typename F, typename E>
-struct FunctorStateHandler EXPLICIT : public EventHandler<E> {
+struct FunctorStateHandler : public EventHandler<E> {
 private:
     S s;
     F f;    
 public:
     FunctorStateHandler(S _s, const F& _f) : s(_s), f(_f) {}
-    void handle(const Event<E>& ev) OVERRIDE { f(s, ev); }
+    virtual void handle(const Event<E>& ev) FINAL OVERRIDE { f(s, ev); }
 };
 
 template <typename S, typename E>
@@ -66,13 +66,13 @@ Ref<EventHandler<E> > makeEventHandler(void (*fun)(S s, const Event<E>&), S s) {
 }
 
 template <typename T, typename M, typename E>
-struct MemberFunHandler EXPLICIT : public EventHandler<E> {
+struct MemberFunHandler : public EventHandler<E> {
 private:
     T *o;
     M m;
 public:
     MemberFunHandler(T *_o, M _m) : o(_o), m(_m) {}
-    void handle(const Event<E>& ev) OVERRIDE { (o->*m)(ev); }
+    virtual void handle(const Event<E>& ev) FINAL OVERRIDE { (o->*m)(ev); }
 };
 
 template <typename T, typename E>
@@ -81,12 +81,12 @@ Ref<EventHandler<E> > makeEventHandler(T *o, void (T::*m)(const Event<E>&)) {
 }
 
 template <typename F, typename E>
-struct VoidFunctorHandler EXPLICIT : public EventHandler<E> {
+struct VoidFunctorHandler : public EventHandler<E> {
 private:
     F f;
 public:
     explicit VoidFunctorHandler(const F& _f) : f(_f) {}
-    void handle(const Event<E>& ev) OVERRIDE { UNUSED(ev); f(); }
+    virtual void handle(const Event<E>& ev) FINAL OVERRIDE { UNUSED(ev); f(); }
 };
 
 template <typename F, typename E>

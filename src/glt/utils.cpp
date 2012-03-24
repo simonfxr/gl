@@ -86,7 +86,7 @@ private:
 
 struct NoDebug : public GLDebug {
     NoDebug() {}
-    virtual void printDebugMessages(const err::Location&) {}
+    virtual void printDebugMessages(const err::Location&) FINAL OVERRIDE {}
 
 private:
     NoDebug(const NoDebug&);
@@ -104,7 +104,7 @@ struct ARBDebug : public GLDebug {
     ~ARBDebug();
     
     static GLDebug* init();
-    virtual void printDebugMessages(const err::Location& loc);
+    virtual void printDebugMessages(const err::Location& loc) FINAL OVERRIDE;
     
 private:
     ARBDebug(const ARBDebug&);
@@ -191,7 +191,7 @@ struct AMDDebug : public GLDebug {
     ~AMDDebug();
     
     static GLDebug* init();
-    virtual void printDebugMessages(const err::Location& loc);
+    virtual void printDebugMessages(const err::Location& loc) FINAL OVERRIDE;
 
 private:
     AMDDebug(const AMDDebug&);

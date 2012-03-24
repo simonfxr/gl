@@ -8,7 +8,7 @@ namespace ge {
 
 struct GameWindow;
 
-struct GE_API WindowRenderTarget EXPLICIT : public glt::RenderTarget {
+struct GE_API WindowRenderTarget : public glt::RenderTarget {
 private:
     GameWindow& window;
 
@@ -17,8 +17,8 @@ public:
     void resized();
     
 protected:
-    void doActivate() OVERRIDE;
-    void doDraw() OVERRIDE;
+    virtual void doActivate() FINAL OVERRIDE;
+    virtual void doDraw() FINAL OVERRIDE;
 };
 
 } // namespace ge

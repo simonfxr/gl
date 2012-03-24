@@ -14,13 +14,13 @@ namespace glt {
 struct ProcessingState;
 
 struct GLT_API IncludeHandler : public Preprocessor::DirectiveHandler {
-    void beginProcessing(const Preprocessor::ContentContext&);
-    void directiveEncountered(const Preprocessor::DirectiveContext&);
-    void endProcessing(const Preprocessor::ContentContext&);
+    virtual void beginProcessing(const Preprocessor::ContentContext&) FINAL OVERRIDE;
+    virtual void directiveEncountered(const Preprocessor::DirectiveContext&) FINAL OVERRIDE;
+    virtual void endProcessing(const Preprocessor::ContentContext&) FINAL OVERRIDE;
 };
 
 struct GLT_API DependencyHandler : public Preprocessor::DirectiveHandler {
-    void directiveEncountered(const Preprocessor::DirectiveContext&);
+    virtual void directiveEncountered(const Preprocessor::DirectiveContext&) FINAL OVERRIDE;
 };
 
 struct GLT_API GLSLPreprocessor : public Preprocessor {
