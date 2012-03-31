@@ -7,6 +7,7 @@
 #include "glt/utils.hpp"
 #include "glt/ShaderProgram.hpp"
 #include "glt/ShaderCompiler.hpp"
+#include "glt/GLObject.hpp"
 
 namespace ge {
 
@@ -26,6 +27,10 @@ void runPrintContextInfo(const Event<CommandEvent>& e) {
         << "  DebugContext:\t" << (c.debugContext ? "yes" : "no") << sys::io::endl
         << "  VSync:\t" << (e.info.engine.window().vsync() ? "yes" : "no") << sys::io::endl
         << sys::io::endl;
+}
+
+void runPrintGLInstanceStats(const Event<CommandEvent>& e) {
+    glt::printStats(e.info.engine.out());
 }
 
 void runPrintMemInfo(const Event<CommandEvent>& e) {
@@ -338,7 +343,11 @@ Commands::Commands() :
 
     postInit(makeCommand(runPostInit, COM_PARAMS, "postInit", "execute its argument command in the postInit hook")),
 
-    startReplServer(makeCommand(runStartReplServer, INT_PARAMS, "startReplServer", "start a REPL server on the given port"))
+    startReplServer(makeCommand(runStartReplServer, INT_PARAMS, "startReplServer", "start a REPL server on the given port")),
+
+    printGLInstanceStats(makeCommand(runPrintGLInstanceStats, "printGLInstanceStats", "print number of the allocated opengl object per type"))
+
+    
 {}
 
 const Commands& commands() {

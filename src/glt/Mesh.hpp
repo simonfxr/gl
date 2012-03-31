@@ -10,6 +10,7 @@
 
 #include "glt/color.hpp"
 #include "glt/VertexDescription.hpp"
+#include "glt/GLObject.hpp"
 
 #include "err/err.hpp"
 
@@ -61,9 +62,9 @@ enum DrawType {
 
 struct GLT_API MeshBase {
 private:
-    GLuint vertex_array_name;
-    GLuint element_buffer_name;
-    GLuint vertex_buffer_name;
+    GLVertexArrayObject vertex_array_name;
+    GLBufferObject element_buffer_name;
+    GLBufferObject vertex_buffer_name;
 
     GLenum usage_hint;
     GLenum prim_type;

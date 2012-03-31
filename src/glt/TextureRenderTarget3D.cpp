@@ -65,15 +65,15 @@ void TextureRenderTarget3D::targetAttachment(const TextureRenderTarget3D::Attach
         (ta.type == AttachmentLayer && ta.index != _target_attachment.index)) {
         
         _target_attachment = ta;
-        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, _frame_buffer));
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, *_frame_buffer));
 
         switch (ta.type) {
         case AttachmentLayered:
-            GL_CHECK(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _sampler.data()->handle(), 0));
+            GL_CHECK(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, *_sampler.data()->handle(), 0));
             break;
         case AttachmentLayer:
             _sampler.data()->bind(0, false);
-            GL_CHECK(glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, _sampler.data()->handle(), 0, ta.index));
+            GL_CHECK(glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, *_sampler.data()->handle(), 0, ta.index));
             // _sampler.data()->bind();
             // GL_CHECK(glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _sampler.data()->handle(), ta.index, 0));    
             _sampler.data()->unbind(0, false);

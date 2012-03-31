@@ -114,6 +114,7 @@ static void runInitCommands(const Event<InitEvent>& e) {
     r.define(cs.perspectiveProjection);
     r.define(cs.postInit);
     r.define(cs.startReplServer);
+    r.define(cs.printGLInstanceStats);
 }
 
 void initCommands(RunLevel lvl, EngineInitializers& inits) {

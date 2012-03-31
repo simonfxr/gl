@@ -5,6 +5,7 @@
 #include "glt/ShaderCompiler.hpp"
 #include "glt/utils.hpp"
 #include "glt/GLSLPreprocessor.hpp"
+#include "glt/GLObject.hpp"
 
 #include "sys/fs.hpp"
 #include "sys/measure.hpp"
@@ -53,9 +54,9 @@ const ShaderTypeMapping shaderTypeMappings[] = {
     { "tevl", ShaderManager::TesselationEvaluation, GL_TESS_EVALUATION_SHADER }
 };
 
-GLuint compilePreprocessed(CompileState&, GLenum, const std::string&, GLSLPreprocessor&);
+bool compilePreprocessed(CompileState&, GLenum, const std::string&, GLSLPreprocessor&, GLShaderObject&);
 
-void printShaderLog(GLuint, sys::io::OutStream& out);
+void printShaderLog(GLShaderObject&, sys::io::OutStream& out);
 
 bool translateShaderType(ShaderManager::ShaderType type, GLenum *gltype, const std::string& basename = "");
 
@@ -141,18 +142,16 @@ ReloadState includesNeedReload(const ShaderIncludes& incs) {
     return ReloadUptodate;
 }
 
-GLuint compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::string& name, GLSLPreprocessor& proc) {
+bool compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::string& name, GLSLPreprocessor& proc, GLShaderObject& shader) {
 
     GLsizei nsegments = GLsizei(proc.segments.size());
     const char **segments = &proc.segments[0];
     const GLint *segLengths = reinterpret_cast<const GLint *>(&proc.segLengths[0]);
 
-    
-    GLuint shader;
-    GL_CHECK(shader = glCreateShader(shader_type));
-    if (shader == 0) {
+    shader.ensure(shader_type);
+    if (!shader.valid()) {
         COMPILER_ERR_MSG(cstate, ShaderCompilerError::OpenGLError, "couldnt create shader");
-        return 0;
+        return false;
     }
 
     LOG_BEGIN(cstate, err::Info);
@@ -173,13 +172,13 @@ GLuint compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::
 
 #endif
         
-    GL_CHECK(glShaderSource(shader, nsegments, segments, segLengths));
+    GL_CHECK(glShaderSource(*shader, nsegments, segments, segLengths));
     double wct;
-    measure_time(wct, glCompileShader(shader));
+    measure_time(wct, glCompileShader(*shader));
     GL_CHECK_ERRORS();
 
     GLint success;
-    GL_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
+    GL_CHECK(glGetShaderiv(*shader, GL_COMPILE_STATUS, &success));
     bool ok = success == GL_TRUE;
     LOG_PUT(cstate, (ok ? "success" : "failed")) << " (" << (wct * 1000) << " ms)" << sys::io::endl;
     LOG_END(cstate);
@@ -192,21 +191,20 @@ GLuint compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::
     
     if (!ok) {
         cstate.pushError(ShaderCompilerError::CompilationFailed);
-        GL_CHECK(glDeleteShader(shader));
-        shader = 0;
+        shader.release();
     }
 
-    return shader;
+    return shader.valid();
 }
 
-void printShaderLog(GLuint shader, sys::io::OutStream& out) {
+void printShaderLog(GLShaderObject& shader, sys::io::OutStream& out) {
     GLint log_len;
-    GL_CHECK(glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len));
+    GL_CHECK(glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &log_len));
     
     if (log_len > 0) {
         
         GLchar *log = new GLchar[size_t(log_len)];
-        GL_CHECK(glGetShaderInfoLog(shader, log_len, NULL, log));
+        GL_CHECK(glGetShaderInfoLog(*shader, log_len, NULL, log));
 
         GLchar *logBegin = log;
         while (logBegin < log + log_len - 1 && isspace(*logBegin))
@@ -290,12 +288,8 @@ Ref<ShaderObject> StringSource::load(Ref<ShaderSource>& _self, CompileState& cst
     if (preproc.wasError())
         return NULL_SHADER_OBJECT;
 
-    GLuint shader = compilePreprocessed(cstate, gltype, "", preproc);
-    
-    if (shader == 0)
+    if (!compilePreprocessed(cstate, gltype, "", preproc, so->handle))
         return NULL_SHADER_OBJECT;
-    
-    so->handle = shader;
     return so;
 }
 
@@ -331,12 +325,8 @@ Ref<ShaderObject> FileSource::load(Ref<ShaderSource>& _self, CompileState& cstat
     if (preproc.wasError())
         return NULL_SHADER_OBJECT;
 
-    GLuint shader = compilePreprocessed(cstate, gltype, so->source->key, preproc);
-    
-    if (shader == 0)
+    if (!compilePreprocessed(cstate, gltype, so->source->key, preproc, so->handle))
         return NULL_SHADER_OBJECT;
-
-    so->handle = shader;
     return so;
 }
 

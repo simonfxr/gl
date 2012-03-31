@@ -5,6 +5,7 @@
 #include "opengl.hpp"
 #include "glt/RenderTarget.hpp"
 #include "glt/TextureSampler.hpp"
+#include "glt/GLObject.hpp"
 
 namespace glt {
 
@@ -12,8 +13,8 @@ using namespace defs;
 
 struct GLT_API TextureRenderTarget : public RenderTarget {
     TextureSampler _sampler;
-    GLuint _frame_buffer;
-    GLuint _depth_buffer;
+    GLFramebufferObject _frame_buffer;
+    GLRenderbufferObject _depth_buffer;
     size _samples;
     GLenum _color_format;
     TextureSampler::FilterMode _filter_mode;
@@ -36,7 +37,7 @@ struct GLT_API TextureRenderTarget : public RenderTarget {
     };
 
     TextureRenderTarget(size w, size h, const Params&);
-    ~TextureRenderTarget();
+    virtual ~TextureRenderTarget();
 
     void resize(size width, size height);
 
@@ -48,7 +49,7 @@ struct GLT_API TextureRenderTarget : public RenderTarget {
     
     virtual void createTexture(bool delete_old = true);
     
-    static bool checkFramebufferStatus(GLuint buffer, GLenum target);
+    static bool checkFramebufferStatus(GLFramebufferObject &buffer, GLenum target);
 
 protected:
     virtual void doDeactivate() OVERRIDE;

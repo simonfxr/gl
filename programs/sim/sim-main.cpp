@@ -466,9 +466,9 @@ void Game::end_render_spheres() {
             ASSERT(sphereInstanced2Shader);
             sphereInstanced2Shader->use();
 
-            GLuint per_instance_vbo;
-            GL_CHECK(glGenBuffers(1, &per_instance_vbo));
-            GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, per_instance_vbo));
+            GLBufferObject per_instance_vbo;
+            per_instance_vbo.ensure();
+            GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, *per_instance_vbo));
             GL_CHECK(glBufferData(GL_ARRAY_BUFFER, sizeof (SphereInstance) * num, &sphere_instances[lod][0], GL_STREAM_DRAW));
 
             sphereBatches[lod].bind();
@@ -508,10 +508,8 @@ void Game::end_render_spheres() {
                 GL_CHECK(glDisableVertexAttribArray(attr_mvMatrix + col));
             }
 
-
             GL_CHECK(glDisableVertexAttribArray(attr_colorShininess));
             GL_CHECK(glBindVertexArray(0));
-            GL_CHECK(glDeleteBuffers(1, &per_instance_vbo));
 #endif 
         }
     }

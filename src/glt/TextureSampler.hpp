@@ -5,6 +5,7 @@
 #include "opengl.hpp"
 #include "data/Ref.hpp"
 #include "glt/TextureData.hpp"
+#include "glt/GLObject.hpp"
 
 namespace glt {
 
@@ -13,7 +14,7 @@ using namespace defs;
 struct GLT_API TextureSampler {
 private:
     Ref<TextureData> _data;
-    GLuint _sampler;
+    GLSamplerObject _sampler;
 
 public:
 
@@ -44,10 +45,10 @@ public:
 
     void free();
 
-    GLuint sampler() const { return _sampler; }
+    const GLSamplerObject& sampler() const { return _sampler; }
     const Ref<TextureData>& data() const { return _data; }
     Ref<TextureData>& data() { return _data; }
-    GLuint ensureSampler();
+    GLSamplerObject& ensureSampler();
 
     void filterMode(FilterMode, Filter filter = Filter(FilterMin | FilterMag));
     void clampMode(ClampMode, Axis axis = Axis(S | T | R));

@@ -149,7 +149,7 @@ void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GL
     UNUSED(type);
     
     GLint locationi;
-    GL_CHECK(locationi = glGetUniformLocation(prog.program(), name.c_str()));
+    GL_CHECK(locationi = glGetUniformLocation(*prog.program(), name.c_str()));
     
     if (locationi == -1) {
         if (mandatory)
@@ -162,7 +162,7 @@ void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GL
 #ifdef GLDEBUG
 
     GLint actual_typei;
-    GL_CHECK(glGetActiveUniformsiv(prog.program(), 1, &location, GL_UNIFORM_TYPE, &actual_typei));
+    GL_CHECK(glGetActiveUniformsiv(*prog.program(), 1, &location, GL_UNIFORM_TYPE, &actual_typei));
     GLenum actual_type = GLenum(actual_typei);
     if (actual_type != type) {
         std::string err = "uniform \"" + name + "\": types dont match, got: " + descGLType(type) + ", expected: " + descGLType(actual_type);
@@ -172,7 +172,7 @@ void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GL
 
 #endif
 
-    programUniform(prog.program(), locationi, value);
+    programUniform(*prog.program(), locationi, value);
 }
 
 } // namespace anon

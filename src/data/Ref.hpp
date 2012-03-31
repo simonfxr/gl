@@ -47,9 +47,13 @@ struct SeqCounter { // not thread safe
     int32 get() const { DEBUG_ASSERT(count != MARK && count >= 0); return count; }
     bool xchg(int32 expected, int32 *val) {
         DEBUG_ASSERT(count != MARK && expected >= 0 && *val >= 0);
-        ASSERT(count == expected);
-        count = *val;
-        return true;
+        if (count == expected) {
+            count = *val;
+            return true;
+        } else {
+            *val = count;
+            return false;
+        }
     }
 };
 
