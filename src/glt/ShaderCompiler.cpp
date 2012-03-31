@@ -212,7 +212,12 @@ void printShaderLog(GLuint shader, sys::io::OutStream& out) {
         while (logBegin < log + log_len - 1 && isspace(*logBegin))
             ++logBegin;
 
-        if (logBegin == log + log_len - 1)  {
+        GLchar *end = log + log_len - 1;
+        while (end > logBegin && isspace(end[-1]))
+            --end;
+        *end = 0;
+
+        if (logBegin == end)  {
             out << "shader compile log empty" << sys::io::endl;
         } else {
             out << "shader compile log: " << sys::io::endl
