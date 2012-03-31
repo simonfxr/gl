@@ -430,10 +430,10 @@ Ref<ShaderObject> CompileState::reload(Ref<ShaderObject>& so) {
 }
 
 ShaderObject::~ShaderObject() {
-    RefValue<ShaderCache> cref;
-    if (cache && cache.unweak(&cref)) {
-        Ref<ShaderCache> c(cref);
-        ShaderCache::remove(c, this);
+    if (cache) {
+        Ref<ShaderCache> c(cache);
+        if (c)
+            ShaderCache::remove(c, this);
     }
 }
 
@@ -455,7 +455,7 @@ ShaderCache::~ShaderCache() {
 bool ShaderCache::lookup(Ref<ShaderObject> *ent, const ShaderSourceKey& key) {
     ShaderCacheEntries::iterator it = entries.find(key);
     if (it != entries.end()) {
-        bool alive = it->second.unweak(ent);
+        bool alive = it->second.strong(ent);
         ASSERT(alive);
         return true;
     }
