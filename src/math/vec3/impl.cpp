@@ -21,8 +21,13 @@ vec3_t vec3(const vec4_t& a) {
     return vec3(a[0], a[1], a[2]);
 }
 
-vec3_t vec3(const real a[3]) {
+vec3_t vec3(const vec3_t::buffer a) {
     return vec3(a[0], a[1], a[2]);
+}
+
+void load(vec3_t::buffer b, const vec3_t& v) {
+    for (defs::index i = 0; i < vec3_t::size; ++i)
+        b[i] = v[i];
 }
 
 vec3_t operator -(const vec3_t& a) {

@@ -43,8 +43,11 @@ struct Location {
     int line;
     const char *function;
     const char *operation; // may be null
-    Location(const char *_file, int _line, const char *_function, const char *_operation = 0) :
-        file(_file), line(_line), function(_function), operation(_operation) {}
+
+    static Location make(const char *_file, int _line, const char *_function, const char *_operation = 0) {
+        Location loc = { _file, _line, _function, _operation };
+        return loc;
+    }
 };
 
 enum LogLevel {
@@ -129,10 +132,26 @@ sys::io::OutStream& logPutError(const T& v, E err, const std::string& msg) {
 }
 
 #ifdef GNU_EXTENSIONS
-#define _CURRENT_LOCATION_OP(op) ::err::Location(__FILE__, __LINE__, __PRETTY_FUNCTION__, op)
+#  define _INIT_CURRENT_LOCATION_OP(op) ::err::Location::make(__FILE__, __LINE__, __PRETTY_FUNCTION__, op)
+
+#  define _CURRENT_LOCATION_OP_DYNAMIC(op) _INIT_CURRENT_LOCATION_OP(op)
+// #  define _CURRENT_LOCATION_OP_STATIC(op)                               \
+//     (*({ static const ::err::Location CONCAT(__loc__, __LINE__)         \
+//                 = _INIT_CURRENT_LOCATION_OP(op);                        \
+//             &CONCAT(__loc__, __LINE__); }))
+#  define _CURRENT_LOCATION_OP_STATIC(op) _CURRENT_LOCATION_OP_DYNAMIC(op)
+
+
+#  define _CURRENT_LOCATION_OP(op)                                      \
+    (__builtin_constant_p((op)) ?                                       \
+     _CURRENT_LOCATION_OP_STATIC(op)                                    \
+     : _CURRENT_LOCATION_OP_DYNAMIC(op))
 #else
-#define _CURRENT_LOCATION_OP(op) ::err::Location(__FILE__, __LINE__, __FUNCTION__, op)
+
+#  define _CURRENT_LOCATION_OP(op) ::err::Location::make(__FILE__, __LINE__, __FUNCTION__, op)
+
 #endif
+
 
 #define _CURRENT_LOCATION _CURRENT_LOCATION_OP(0)
 

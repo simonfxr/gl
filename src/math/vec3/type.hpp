@@ -6,10 +6,16 @@
 namespace math {
 
 struct vec3_t {
-    real components[3];
+    static const defs::size size = 3;
+    static const defs::size padded_size = 3;
+    typedef real component_type;
+    typedef component_type buffer[size];
 
-MATH_FUNC     real& operator[](defs::index) MUT_FUNC;
-MATH_FUNC     real operator[](defs::index) const PURE_FUNC;
+    MATH_FUNC real& operator[](defs::index) MUT_FUNC;
+    MATH_FUNC real operator[](defs::index) const PURE_FUNC;
+    
+private:
+    real components[padded_size];
 };
 
 typedef vec3_t point3_t;

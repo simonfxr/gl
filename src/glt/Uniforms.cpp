@@ -116,7 +116,9 @@ void programUniform(GLuint program, GLint loc, const vec4_t& value) {
 }
 
 void programUniform(GLuint program, GLint loc, const vec3_t& value) {
-    GL_CHECK(glProgramUniform3fv(program, loc, 1, value.components));
+    vec3_t::buffer data;
+    load(data, value);
+    GL_CHECK(glProgramUniform3fv(program, loc, 1, data));
 }
 
 void programUniform(GLuint program, GLint loc, const mat4_t& value) {
@@ -124,7 +126,9 @@ void programUniform(GLuint program, GLint loc, const mat4_t& value) {
 }
 
 void programUniform(GLuint program, GLint loc, const mat3_t& value) {
-    GL_CHECK(glProgramUniformMatrix3fv(program, loc, 1, GL_FALSE, value.components));
+    mat3_t::buffer data;
+    load(data, value);
+    GL_CHECK(glProgramUniformMatrix3fv(program, loc, 1, GL_FALSE, data));
 }
 
 void programUniform(GLuint program, GLint loc, const BoundTexture& sampler) {
