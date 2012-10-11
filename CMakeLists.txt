@@ -27,6 +27,8 @@ set(USE_UNWIND_STACKTRACES TRUE CACHE BOOL "use libunwind and libdw to print a s
 
 set(USE_CXX11 TRUE CACHE BOOL "compile with support for the c++11 standard")
 
+set(USE_CXX11_FINAL_OVERRIDE TRUE CACHE BOOL "use the new c++11 override and final keywords")
+
 set(USE_NO_MATH_H TRUE CACHE BOOL "dont import math.h in math library")
 
 project(gl-stuff)

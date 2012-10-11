@@ -135,10 +135,12 @@ sys::io::OutStream& logPutError(const T& v, E err, const std::string& msg) {
 #  define _INIT_CURRENT_LOCATION_OP(op) ::err::Location::make(__FILE__, __LINE__, __PRETTY_FUNCTION__, op)
 
 #  define _CURRENT_LOCATION_OP_DYNAMIC(op) _INIT_CURRENT_LOCATION_OP(op)
-// #  define _CURRENT_LOCATION_OP_STATIC(op)                               \
-//     (*({ static const ::err::Location CONCAT(__loc__, __LINE__)         \
-//                 = _INIT_CURRENT_LOCATION_OP(op);                        \
-//             &CONCAT(__loc__, __LINE__); }))
+#if 0
+#  define _CURRENT_LOCATION_OP_STATIC(op)                               \
+    (*({ static const ::err::Location CONCAT(__loc__, __LINE__)         \
+                = _INIT_CURRENT_LOCATION_OP(op);                        \
+            &CONCAT(__loc__, __LINE__); }))
+#endif
 #  define _CURRENT_LOCATION_OP_STATIC(op) _CURRENT_LOCATION_OP_DYNAMIC(op)
 
 
