@@ -17,11 +17,11 @@ namespace atomic {
 
 using namespace defs;
 
-static const int32 MARK = int32(0xAFAFAFAF);
+DEBUG_DECL(static const int32 MARK = int32(0xAFAFAFAF);)
 
 struct AtomicCounter {
     Atomic<int32> count;
-
+    
     AtomicCounter(int32 initial) :
         count(initial) {}
 
@@ -33,7 +33,7 @@ struct AtomicCounter {
     int32 get() const { int32 val = count.get(); DEBUG_ASSERT(val != MARK); return val; }
     bool xchg(int32 expected, int32 *val) {
         return count.xchg(expected, val);
-    }    
+    }
 };
 
 struct SeqCounter { // not thread safe
