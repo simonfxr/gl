@@ -40,7 +40,7 @@ public:
     };
 
     TextureSampler() : _data(new TextureData), _sampler(0) {}
-    TextureSampler(const Ref<TextureData>& data) : _data(data), _sampler(0) {}
+    explicit TextureSampler(const Ref<TextureData>& data) : _data(data), _sampler(0) {}
     ~TextureSampler();
 
     void free();

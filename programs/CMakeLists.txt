@@ -1,5 +1,6 @@
 
 add_subdirectory(marching-cubes)
+add_subdirectory(marching-cubes.old)
 add_subdirectory(query-extension)
 add_subdirectory(sim)
 add_subdirectory(teapot)
