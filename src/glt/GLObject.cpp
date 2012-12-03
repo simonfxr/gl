@@ -56,6 +56,7 @@ void init_table() {
     KIND(glGenTextures, glDeleteTextures, Texture);
     KIND(glGenTransformFeedbacks, glDeleteTransformFeedbacks, TransformFeedback);
     KIND(glGenVertexArrays, glDeleteVertexArrays, VertexArray);
+    KIND(glGenQueries, glDeleteQueries, Query);
 #undef KIND
 
     ASSERT(i == ObjectType::Count);
@@ -67,14 +68,14 @@ void generate(ObjectType::Type t, GLsizei n, GLuint *names) {
     init_table();
     ASSERT(0 <= t && t < ObjectType::Count);
     ASSERT(kind_table[t].generator != 0);
-    GL_CHECK(kind_table[t].generator(n, names));
+    GL_CALL(kind_table[t].generator, n, names);
     for (GLsizei i = 0; i < n; ++i)
         if (names[i] != 0)
             ++instance_count[t];
 }
 
 void generateShader(GLenum shader_type, GLuint *name) {
-    GL_CHECK(*name = glCreateShader(shader_type));
+    GL_ASSIGN_CALL(*name, glCreateShader, shader_type);
     if (*name != 0)
         ++instance_count[ObjectType::Shader];
 }
@@ -82,7 +83,7 @@ void generateShader(GLenum shader_type, GLuint *name) {
 void release(ObjectType::Type t, GLsizei n, const GLuint *names) {
     init_table();
     ASSERT(0 <= t && t < ObjectType::Count);
-    GL_CHECK(kind_table[t].destructor(n, names));
+    GL_CALL(kind_table[t].destructor, n, names);
     for (GLsizei i = 0; i < n; ++i)
         if (names[i] != 0)
             --instance_count[t];
@@ -92,7 +93,8 @@ void printStats(sys::io::OutStream& out) {
     init_table();
     out << "Active OpenGL Objects:" << sys::io::endl;
     for (index i = 0; i < ObjectType::Count; ++i)
-        out << "  " << kind_table[i].kind << "s: " << instance_count[i] << sys::io::endl;
+        if (instance_count[i] > 0)
+            out << "  " << kind_table[i].kind << "s: " << instance_count[i] << sys::io::endl;
 }
 
 } // namespace glt

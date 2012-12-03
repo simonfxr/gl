@@ -57,7 +57,7 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     camera.frame.origin = vec3(0.f, 30.f, 0.f);
     camera.frame.setXZ(vec3(1, 0, 0), vec3(0, 1, 0));
 
-    GL_CHECK(glEnable(GL_CULL_FACE));
+    GL_CALL(glEnable, GL_CULL_FACE);
 
     engine.gameLoop().ticksPerSecond(100);
     engine.gameLoop().sync(false);

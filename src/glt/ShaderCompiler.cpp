@@ -172,13 +172,13 @@ bool compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::st
 
 #endif
         
-    GL_CHECK(glShaderSource(*shader, nsegments, segments, segLengths));
+    GL_CALL(glShaderSource, *shader, nsegments, segments, segLengths);
     double wct;
     measure_time(wct, glCompileShader(*shader));
     GL_CHECK_ERRORS();
 
     GLint success;
-    GL_CHECK(glGetShaderiv(*shader, GL_COMPILE_STATUS, &success));
+    GL_CALL(glGetShaderiv, *shader, GL_COMPILE_STATUS, &success);
     bool ok = success == GL_TRUE;
     LOG_PUT(cstate, (ok ? "success" : "failed")) << " (" << (wct * 1000) << " ms)" << sys::io::endl;
     LOG_END(cstate);
@@ -199,12 +199,12 @@ bool compilePreprocessed(CompileState& cstate, GLenum shader_type, const std::st
 
 void printShaderLog(GLShaderObject& shader, sys::io::OutStream& out) {
     GLint log_len;
-    GL_CHECK(glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &log_len));
+    GL_CALL(glGetShaderiv, *shader, GL_INFO_LOG_LENGTH, &log_len);
     
     if (log_len > 0) {
         
         GLchar *log = new GLchar[size_t(log_len)];
-        GL_CHECK(glGetShaderInfoLog(*shader, log_len, NULL, log));
+        GL_CALL(glGetShaderInfoLog, *shader, log_len, NULL, log);
 
         GLchar *logBegin = log;
         while (logBegin < log + log_len - 1 && isspace(*logBegin))

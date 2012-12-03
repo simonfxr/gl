@@ -114,14 +114,10 @@ out vec4 color;
 void main() {
     color = vec4(1, 0, 0, 1);
 }
-    
+
 );
 
 namespace {
-
-typedef GLuint GLTransformFeedback;
-typedef GLuint GLArrayBuffer;
-typedef GLuint GLVertexArray;
 
 struct Program {
     ge::Engine& engine;
@@ -129,9 +125,10 @@ struct Program {
     Ref<glt::ShaderProgram> renderProgram;
     glt::Mesh<QuadVertex> quadMesh;
 
-    GLTransformFeedback quadStream;
-    GLVertexArray quadStreamArray;
-    GLArrayBuffer quadStreamData;
+    glt::GLTransformFeedbackObject quadStream;
+    glt::GLVertexArrayObject quadStreamArray;
+    glt::GLBufferObject quadStreamData;
+    GLuint primitives_written;
 
     Program(ge::Engine&);
     void init(const ge::Event<ge::InitEvent>&);
@@ -175,36 +172,45 @@ void Program::init(const ge::Event<ge::InitEvent>& ev) {
         quadMesh.send();
     }
 
-    GL_CHECK(glGenBuffers(1, &quadStreamData));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, quadStreamData));
-    GL_CHECK(glBufferData(GL_ARRAY_BUFFER, 6 * sizeof (QuadStreamVertex), 0, GL_STREAM_DRAW));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    quadStreamData.generate();
+    GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, *quadStreamData);
+    GL_CALL(glBufferData, GL_ARRAY_BUFFER, 6 * sizeof (QuadStreamVertex), 0, GL_STREAM_DRAW);
+    GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
-    GL_CHECK(glGenVertexArrays(1, &quadStreamArray));
-    GL_CHECK(glBindVertexArray(quadStreamArray));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, quadStreamData));
-    GL_CHECK(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof (QuadStreamVertex), 0));
-    GL_CHECK(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof (QuadStreamVertex), (void *) offsetof(QuadStreamVertex, normal)));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
-    GL_CHECK(glEnableVertexAttribArray(0));
-    GL_CHECK(glEnableVertexAttribArray(1));
-    GL_CHECK(glBindVertexArray(0));
+    quadStreamArray.generate();
+    GL_CALL(glBindVertexArray, *quadStreamArray);
+    GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, *quadStreamData);
+    GL_CALL(glVertexAttribPointer, 0, 3, GL_FLOAT, GL_FALSE, sizeof (QuadStreamVertex), 0);
+    GL_CALL(glVertexAttribPointer, 1, 3, GL_FLOAT, GL_FALSE, sizeof (QuadStreamVertex), (void *) offsetof(QuadStreamVertex, normal));
+    GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
-    GL_CHECK(glGenTransformFeedbacks(1, &quadStream));
-    GL_CHECK(glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, quadStream));
-    GL_CHECK(glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, quadStreamData));
-    GL_CHECK(glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0));
+    GL_CALL(glEnableVertexAttribArray, 0);
+    GL_CALL(glEnableVertexAttribArray, 1);
+    GL_CALL(glBindVertexArray, 0);
 
-    GL_CHECK(glEnable(GL_RASTERIZER_DISCARD));
+    quadStream.generate();
+    GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, *quadStream);
+    GL_CALL(glBindBufferBase, GL_TRANSFORM_FEEDBACK_BUFFER, 0, *quadStreamData);
+    GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, 0);
+
+    glt::GLQueryObject num_written_query;
+    num_written_query.generate();
+    GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
     quadProgram->use();
-    GL_CHECK(glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, quadStream));
-    GL_CHECK(glBeginTransformFeedback(GL_TRIANGLES));
+    GL_CALL(glBeginQuery, GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, *num_written_query);
+    GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, *quadStream);
+    GL_CALL(glBeginTransformFeedback, GL_TRIANGLES);
     quadMesh.draw();
-    GL_CHECK(glEndTransformFeedback());
-    GL_CHECK(glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0));
-    GL_CHECK(glDisable(GL_RASTERIZER_DISCARD));
+    GL_CALL(glEndTransformFeedback);
+    GL_CALL(glEndQuery, GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
+    GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, 0);
+    GL_CALL(glDisable, GL_RASTERIZER_DISCARD);
 
-    GL_CHECK(glFinish());
+    GL_CALL(glGetQueryObjectuiv, *num_written_query, GL_QUERY_RESULT, &primitives_written);
+
+    sys::io::stderr() << "num written: " << primitives_written << sys::io::endl;
+
+    GL_CALL(glFinish);
 
 //    return;
     ev.info.success = true;
@@ -216,11 +222,13 @@ void Program::link() {
 
 void Program::render(const ge::Event<ge::RenderEvent>&) {
     glt::RenderManager& rm = engine.renderManager();
+    rm.activeRenderTarget()->clearColor(glt::color(0xFF, 0xFF, 0xFF));
     rm.activeRenderTarget()->clear();
     renderProgram->use();
-    GL_CHECK(glBindVertexArray(quadStreamArray));
-    GL_CHECK(glDrawTransformFeedback(GL_TRIANGLES, quadStream));
-    GL_CHECK(glBindVertexArray(0));
+    GL_CALL(glBindVertexArray, *quadStreamArray);
+//    GL_CALL(glDrawTransformFeedbackInstanced, GL_TRIANGLES, *quadStream, 1);
+    GL_CALL(glDrawArraysInstanced, GL_TRIANGLES, 0, primitives_written * 3, 1);
+    GL_CALL(glBindVertexArray, 0);
 }
 
 } // namespace

@@ -915,9 +915,9 @@ static void renderBlocks(State *state, ge::Engine& e);
 static void renderScene(State *state, const RenderEv& ev) {
     ge::Engine& e = ev.info.engine;
 
-    GL_CHECK(glClearColor(1.f, 1.f, 1.f, 1.f));
-    GL_CHECK(glEnable(GL_DEPTH_TEST));
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    GL_CALL(glClearColor, 1.f, 1.f, 1.f, 1.f);
+    GL_CALL(glEnable, GL_DEPTH_TEST);
+    GL_CALL(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     state->ecLightDir = e.renderManager().geometryTransform().transformVector(LIGHT_DIR);
 

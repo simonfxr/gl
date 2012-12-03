@@ -19,6 +19,7 @@ enum Type {
     Texture,
     TransformFeedback,
     VertexArray,
+    Query,
     Count
 };
 
@@ -36,6 +37,7 @@ typedef GLObject<ObjectType::Sampler> GLSamplerObject;
 typedef GLObject<ObjectType::Texture> GLTextureObject;
 typedef GLObject<ObjectType::TransformFeedback> GLTransformFeedbackObject;
 typedef GLObject<ObjectType::VertexArray> GLVertexArrayObject;
+typedef GLObject<ObjectType::Query> GLQueryObject;
 
 GLT_API void generate(ObjectType::Type t, GLsizei n, GLuint *names);
 GLT_API void release(ObjectType::Type t, GLsizei n, const GLuint *names);
@@ -90,7 +92,7 @@ template <>
 struct GLObject<ObjectType::Shader> :
         public GLObjectBase<ObjectType::Shader> {
 
-    GLObject(GLuint name = 0) : 
+    explicit GLObject(GLuint name = 0) : 
         GLObjectBase<ObjectType::Shader>(name) {}
 
     void generate(GLenum type) {

@@ -41,7 +41,14 @@ void debugInfo(sys::io::OutStream& out, const void *ip) {
 
     out << function_name << "(";
 
-    Dwfl_Line *line = dwfl_getsrc(dwfl, addr);
+    Dwfl_Line *line = 0;
+    for (int i = -0xF; i < 0x10; ++i) {
+        const char *baddr = reinterpret_cast<const char *>(addr);
+        line = dwfl_getsrc(dwfl, Dwarf_Addr(baddr + i));
+        if (line != 0)
+            break;
+    }
+
     if (line != 0) {
         int nline;
         Dwarf_Addr addr;

@@ -173,7 +173,7 @@ void Anim::init(const Event<InitEvent>& e) {
     spotlight_smooth = false;
 
     wireframe_mode = false;
-    // GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+    // GL_CALL(glPolygonMode, GL_FRONT_AND_BACK, GL_LINE);
 
     shade_mode = SHADE_MODE_DEFAULT;
 
@@ -288,9 +288,9 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     rm.activeRenderTarget()->clearColor(glt::color(vec4(vec3(0.65f), bg_alpha)));
     rm.activeRenderTarget()->clear();
 
-    GL_CHECK(glDisable(GL_BLEND));
-    GL_CHECK(glEnable(GL_DEPTH_TEST));
-    GL_CHECK(glDisable(GL_ALPHA_TEST));
+    GL_CALL(glDisable, GL_BLEND);
+    GL_CALL(glEnable, GL_DEPTH_TEST);
+    GL_CALL(glDisable, GL_ALPHA_TEST);
 
     light = lightPosition(interpolation);
     
@@ -329,7 +329,7 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     renderTeapot(teapot2);
 
 #if RENDER_GLOW
-    GL_CHECK(glDisable(GL_DEPTH_TEST));
+    GL_CALL(glDisable, GL_DEPTH_TEST);
 
     { // create the glow texture
         engine.renderManager().setActiveRenderTarget(glow_render_target_src.ptr());
@@ -478,7 +478,7 @@ void Anim::renderTable(const std::string& shader) {
 
     gt.dup();
 
-    GL_CHECK(glActiveTexture(GL_TEXTURE0));
+    GL_CALL(glActiveTexture, GL_TEXTURE0);
     woodTexture.bind();
 
     vec4_t color = glt::color(0xcd, 0x85, 0x3f).vec4();
@@ -513,7 +513,7 @@ void Anim::renderTable(const std::string& shader) {
         }
     }
 
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+    GL_CALL(glBindTexture, GL_TEXTURE_2D, 0);
     
 }
 
@@ -521,7 +521,7 @@ void Anim::renderTable(const std::string& shader) {
 //     uint32 width = e.info.width;
 //     uint32 height = e.info.height;
 //     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
-//     GL_CHECK(glViewport(0, 0, width, height));
+//     GL_CALL(glViewport, 0, 0, width, height);
 
 //     real fov = degToRad(17.5f);
 //     real aspect = real(width) / real(height);
@@ -548,7 +548,7 @@ void Anim::keyPressed(const Event<KeyPressed>& e) {
     switch (e.info.key) {
     case F:
         wireframe_mode = !wireframe_mode;
-        GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, wireframe_mode ? GL_LINE : GL_FILL));
+        GL_CALL(glPolygonMode, GL_FRONT_AND_BACK, wireframe_mode ? GL_LINE : GL_FILL);
         break;
     case H:
         

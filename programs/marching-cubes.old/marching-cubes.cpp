@@ -26,7 +26,7 @@ using namespace defs;
 
 static const vec3_t WORLD_BLOCK_SCALE = vec3(32);
 
-static const ivec3_t SAMPLER_SIZE = ivec3(64);
+static const ivec3_t SAMPLER_SIZE = ivec3(32);
 
 struct WorldVertex {
     vec3_t position;
@@ -114,7 +114,7 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
         caseToNumPolysData.data()->type(glt::Texture1D);
         caseToNumPolysData.bind(0);
     
-        GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, sizeof edgeTable, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, edgeTable));
+        GL_CALL(glTexImage1D, GL_TEXTURE_1D, 0, GL_R32UI, sizeof edgeTable, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, edgeTable);
         caseToNumPolysData.filterMode(glt::TextureSampler::FilterNearest);
         caseToNumPolysData.unbind(0);
     }
@@ -122,7 +122,7 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     {
         triangleTableData.data()->type(glt::Texture1D);
         triangleTableData.bind(0);
-        GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_R32UI, sizeof triTable, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, triTable));
+        GL_CALL(glTexImage1D, GL_TEXTURE_1D, 0, GL_R32UI, sizeof triTable, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, triTable);
         triangleTableData.filterMode(glt::TextureSampler::FilterNearest);
         caseToNumPolysData.unbind(0);
     }
@@ -152,7 +152,7 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
 
     // GLuint prog = marchingCubesProgram->program();
     // const char *vars[] = { "gPosition", "gNormal" };
-    // GL_CHECK(glTransformFeedbackVaryings(prog, ARRAY_LENGTH(vars), vars, GL_INTERLEAVED_ATTRIBS));
+    // GL_CALL(glTransformFeedbackVaryings, prog, ARRAY_LENGTH(vars), vars, GL_INTERLEAVED_ATTRIBS);
     
     if (!marchingCubesProgram->tryLink())
         return;
@@ -171,21 +171,21 @@ void Anim::renderBlock(const vec3_t& aabb_min, const vec3_t& aabb_max) {
     glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
     glt::SavePoint sp(gt.save());
 
-    // GL_CHECK(glBindVertexArray(0));
+    // GL_CALL(glBindVertexArray, 0);
 
     // GLuint feedback_buf;
-    // GL_CHECK(glGenBuffers(1, &feedback_buf));
-    // GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, feedback_buf));
+    // GL_CALL(glGenBuffers, 1, &feedback_buf);
+    // GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, feedback_buf);
     // GLsizeiptr max_size = dot(SAMPLER_SIZE, SAMPLER_SIZE) * 15 * sizeof (MCFeedbackVertex);
-    // GL_CHECK(glBufferData(GL_ARRAY_BUFFER, max_size, 0, GL_STREAM_DRAW));
-    // GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    // GL_CALL(glBufferData, GL_ARRAY_BUFFER, max_size, 0, GL_STREAM_DRAW);
+    // GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
     GLuint feedback;
-    // GL_CHECK(glGenTransformFeedbacks(1, &feedback));
-    // GL_CHECK(glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, feedback));
-    // GL_CHECK(glEnable(GL_RASTERIZER_DISCARD));
-    // GL_CHECK(glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, feedback_buf));
-    // GL_CHECK(glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0));
+    // GL_CALL(glGenTransformFeedbacks, 1, &feedback);
+    // GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, feedback);
+    // GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
+    // GL_CALL(glBindBufferBase, GL_TRANSFORM_FEEDBACK_BUFFER, 0, feedback_buf);
+    // GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, 0);
 
     vec3_t fuzz = vec3(0.01f);
     vec3_t max = aabb_max + fuzz;
@@ -201,14 +201,14 @@ void Anim::renderBlock(const vec3_t& aabb_min, const vec3_t& aabb_max) {
     //     .optional("projectionMatrix", gt.projectionMatrix())
     //     .optional("normalMatrix", gt.normalMatrix());
 
-    // GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, feedback_buf));
-    // GL_CHECK(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof (MCFeedbackVertex), 0));
-    // GL_CHECK(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof (MCFeedbackVertex), (void *) 12));
-    // GL_CHECK(glDrawTransformFeedback(GL_TRIANGLES, feedback));
+    // GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, feedback_buf);
+    // GL_CALL(glVertexAttribPointer, 0, 3, GL_FLOAT, GL_FALSE, sizeof (MCFeedbackVertex), 0);
+    // GL_CALL(glVertexAttribPointer, 1, 3, GL_FLOAT, GL_FALSE, sizeof (MCFeedbackVertex), (void *) 12);
+    // GL_CALL(glDrawTransformFeedback, GL_TRIANGLES, feedback);
 }
 
 void Anim::renderWorld() {
-    GL_CHECK(glDisable(GL_DEPTH_TEST));
+    GL_CALL(glDisable, GL_DEPTH_TEST);
     worldProgram->use();
     glt::RenderManager& rm = engine->renderManager();
 
@@ -235,7 +235,7 @@ void Anim::renderWorld() {
     }
 
     rm.setDefaultRenderTarget();
-    GL_CHECK(glEnable(GL_DEPTH_TEST));
+    GL_CALL(glEnable, GL_DEPTH_TEST);
 }
 
 void Anim::renderVolume(GLuint feedback) {
@@ -247,7 +247,7 @@ void Anim::renderVolume(GLuint feedback) {
     caseToNumPolysData.bind(0);
     triangleTableData.bind(1);
     worldVolume->sampler().bind(2);
-    worldVolume->sampler().clampMode(glt::TextureSampler::ClampToEdge);
+    worldVolume->clampMode(glt::TextureSampler::ClampToEdge);
 
     mat4_t scaleM = glt::scaleMatrix(WORLD_BLOCK_SCALE);
     vec3_t inv_tex_scale = vec3(SAMPLER_SIZE - ivec3(1)) / vec3(SAMPLER_SIZE);
@@ -261,12 +261,12 @@ void Anim::renderVolume(GLuint feedback) {
         .mandatory("projectionMatrix", gt.projectionMatrix())
         .mandatory("normalMatrix", gt.normalMatrix());
 
-    // GL_CHECK(glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, feedback));
-    // GL_CHECK(glEnable(GL_RASTERIZER_DISCARD));
-    // GL_CHECK(glBeginTransformFeedback(GL_TRIANGLES));
+    // GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, feedback);
+    // GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
+    // GL_CALL(glBeginTransformFeedback, GL_TRIANGLES);
     volumeCube.draw();
-    // GL_CHECK(glEndTransformFeedback());
-    // GL_CHECK(glDisable(GL_RASTERIZER_DISCARD));
+    // GL_CALL(glEndTransformFeedback, );
+    // GL_CALL(glDisable, GL_RASTERIZER_DISCARD);
 }
 
 void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
@@ -274,7 +274,7 @@ void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
 }
 
 void Anim::render(const ge::Event<ge::RenderEvent>&) {
-    GL_CHECK(glClearColor(1.f, 1.f, 1.f, 1.f));
+    engine->renderManager().activeRenderTarget()->clearColor(glt::color(1.f, 1.f, 1.f));
     engine->renderManager().activeRenderTarget()->clear();
 
     glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
