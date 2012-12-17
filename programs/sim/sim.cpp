@@ -619,15 +619,36 @@ void World::Data::solveContacts(std::vector<Contact>& contacts, float dt) {
     }
 }
 
+static vec3_t potentialAccel(const point3_t& p0) {
+
+    //    return GRAVITY;
+
+    vec3_t p = p0;
+        
+    // our potential energy equation is: U = m * sqrt(x^2 + z^2)
+    // so force is - m * (2 x, 0, 2 z)
+    return vec3(p[0] * real(2), real(0), p[2] * real(2)) * real(-2) + GRAVITY;
+
+    // r = sqrt(x^2 + z^2)
+    // U = sin(r * omega) * r * alpha
+    // grad U = cos(r * omega) * omega * alpha / r^2 * (x^2, 0, z^2)
+    // real omega = real(0.25);
+    // real alpha = real(3);
+    // real r = sqrt(squared(p[0]) + squared(p[2]));
+    // if (r < real(1e-4))
+    //     return vec3(real(0));
+    // return real(-1) * cos(r * omega) * omega * alpha / (r * r) * vec3(squared(p[0]), 0, squared(p[2])) + GRAVITY;
+}
+
 void World::Data::integrate(float dt) {
-    const vec3_t v_grav = GRAVITY * dt;
     
     size n = SIZE(particles.size());
     for (size i = 0; i < n; ++i) {
         Particle& p = particles[UNSIZE(i)];
+        vec3_t a = potentialAccel(p.pos);
         p.pos += p.vel * dt;
         if (p.invMass != 0.f)
-            p.vel += v_grav;
+            p.vel += a * dt;
     }
 }
 

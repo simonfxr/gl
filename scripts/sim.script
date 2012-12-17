@@ -39,6 +39,9 @@ postInit {
     bindKey [MXButton1] { incSphereSpeed -0.1 }
     bindKey [MXButton2] { incSphereSpeed +0.1 }
 
+    bindKey [N] { incSphereSpeed -0.1 }
+    bindKey [M] { incSphereSpeed +0.1 }
+
     bindKey [+E] { incSphereRadius +0.1 }
     bindKey [+Q] { incSphereRadius -0.1 }
 }
