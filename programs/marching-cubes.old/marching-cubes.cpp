@@ -11,6 +11,7 @@
 #include "glt/utils.hpp"
 #include "glt/Transformations.hpp"
 
+#include "err/err.hpp"
 #include "sys/measure.hpp"
 
 #include "math/vec4.hpp"
@@ -25,16 +26,7 @@ using namespace defs;
 
 static const vec3_t WORLD_BLOCK_SCALE = vec3(32);
 
-static const ivec3_t SAMPLER_SIZE = ivec3(8);
-
-static const size BLOCK_DATA_SIZE = (SAMPLER_SIZE[0] * SAMPLER_SIZE[1] * SAMPLER_SIZE[2]) * 2; // may not fit in worst case
-
-static const ivec3_t BLOCKS = ivec3(10, 3, 10);
-static const ivec3_t ORIGIN = ivec3(0, 0, 0);
-
-typedef GLuint GLTransformFeedback;
-typedef GLuint GLArrayBuffer;
-typedef GLuint GLVertexArray;
+static const ivec3_t SAMPLER_SIZE = ivec3(32);
 
 struct WorldVertex {
     vec3_t position;
@@ -57,14 +49,6 @@ DEFINE_VERTEX_DESC(MCFeedbackVertex,
                    VERTEX_ATTR(MCFeedbackVertex, position),
                    VERTEX_ATTR(MCFeedbackVertex, normal));
 
-struct Block {
-    vec3_t aabb_min;
-    vec3_t aabb_max;
-    GLTransformFeedback stream;
-    GLArrayBuffer data;
-    GLVertexArray array;    
-};
-
 struct Anim {
     ge::Engine *engine;
     glt::Mesh<WorldVertex> unitRect; // a slice in the world volume
@@ -76,12 +60,10 @@ struct Anim {
     
     Ref<glt::ShaderProgram> worldProgram;
     Ref<glt::ShaderProgram> marchingCubesProgram;
-    Ref<glt::ShaderProgram> renderPolygonProgram;
+    Ref<glt::ShaderProgram> feedbackProgram;
     
     ge::Camera camera;
     Ref<ge::Timer> fpsTimer;
-
-    std::vector<Block> blocks;
 
     Anim() :
         engine(0) {}
@@ -91,13 +73,9 @@ struct Anim {
     void animate(const ge::Event<ge::AnimationEvent>&);
     void render(const ge::Event<ge::RenderEvent>&);
 
-    void initBlock(Block *block);
-    void destroyBlock(Block *block);
-
-    void makeBlock(Block& block, const vec3_t& aabb_min, const vec3_t& aabb_max);
-    void makeSampleVolume();
-    void makePolygon(const Block&);
-    void renderPolygon(const Block&);
+    void renderBlock(const vec3_t& aabb_min, const vec3_t& aabb_max);
+    void renderWorld();
+    void renderVolume(GLuint feedback);
 };
 
 void Anim::link(ge::Engine& e) {
@@ -132,17 +110,22 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
         worldVolume = new glt::TextureRenderTarget3D(SAMPLER_SIZE + ivec3(1), ps);
     }
 
-    caseToNumPolysData.data()->type(glt::Texture1D);
-    caseToNumPolysData.data()->bind(0, false);
+    {
+        caseToNumPolysData.data()->type(glt::Texture1D);
+        caseToNumPolysData.bind(0);
     
-    GL_CALL(glTexImage1D, GL_TEXTURE_1D, 0, GL_R32UI, sizeof edgeTable, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, edgeTable);
-    caseToNumPolysData.filterMode(glt::TextureSampler::FilterNearest);
+        GL_CALL(glTexImage1D, GL_TEXTURE_1D, 0, GL_R32UI, sizeof edgeTable, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, edgeTable);
+        caseToNumPolysData.filterMode(glt::TextureSampler::FilterNearest);
+        caseToNumPolysData.unbind(0);
+    }
 
-    triangleTableData.data()->type(glt::Texture1D);
-    triangleTableData.bind(0, false);
-    GL_CALL(glTexImage1D, GL_TEXTURE_1D, 0, GL_R32UI, sizeof triTable, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, triTable);
-    triangleTableData.filterMode(glt::TextureSampler::FilterNearest);
-    triangleTableData.unbind(0, false);
+    {
+        triangleTableData.data()->type(glt::Texture1D);
+        triangleTableData.bind(0);
+        GL_CALL(glTexImage1D, GL_TEXTURE_1D, 0, GL_R32UI, sizeof triTable, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, triTable);
+        triangleTableData.filterMode(glt::TextureSampler::FilterNearest);
+        caseToNumPolysData.unbind(0);
+    }
 
     volumeCube.primType(GL_POINTS);
 
@@ -164,93 +147,72 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     marchingCubesProgram = new glt::ShaderProgram(engine->shaderManager());
     marchingCubesProgram->addShaderFile("marching-cubes.vert");
     marchingCubesProgram->addShaderFile("marching-cubes.geom");
+    marchingCubesProgram->addShaderFile("marching-cubes.frag");
     marchingCubesProgram->bindAttributes<MCVertex>();
-    std::string vars[] = { "gPosition", "gNormal" };
-    marchingCubesProgram->bindStreamOutVaryings(Array<std::string>(vars, ARRAY_LENGTH(vars)));
+
+    // GLuint prog = marchingCubesProgram->program();
+    // const char *vars[] = { "gPosition", "gNormal" };
+    // GL_CALL(glTransformFeedbackVaryings, prog, ARRAY_LENGTH(vars), vars, GL_INTERLEAVED_ATTRIBS);
+    
     if (!marchingCubesProgram->tryLink())
         return;
 
-    renderPolygonProgram = engine->shaderManager().program("render-polygon");
-    if (!renderPolygonProgram)
+    feedbackProgram = engine->shaderManager().program("feedback");
+    if (!feedbackProgram)
         return;
-
-    size num_blocks = BLOCKS[0] * BLOCKS[1] * BLOCKS[2];
-    blocks.resize(num_blocks);
-
-    int id = 0;
-    for (int i = 0; i < BLOCKS[0]; ++i) {
-        for (int j = 0; j < BLOCKS[1]; ++j) {
-            for (int k = 0; k < BLOCKS[2]; ++k, ++id) {
-                ivec3_t idx = ivec3(i, j, k) + ORIGIN;
-                Block *block = &blocks[id];
-                initBlock(block);
-                makeBlock(*block, vec3(idx), vec3(idx + ivec3(1)));
-            }
-        }
-    }
     
     fpsTimer = new ge::Timer(*engine);
     fpsTimer->start(1.f, true);
 
-    GL_CALL(glFinish, );
-
     ev.info.success = true;
 }
 
-void Anim::initBlock(Block *block) {
-    ASSERT(block);
-    
-    GL_CALL(glGenBuffers, 1, &block->data);
-    GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, block->data);
-    GL_CALL(glBufferData, GL_ARRAY_BUFFER, BLOCK_DATA_SIZE * sizeof (MCFeedbackVertex), 0, GL_STREAM_DRAW);
-    GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
-
-    GL_CALL(glGenVertexArrays, 1, &block->array);
-    GL_CALL(glBindVertexArray, block->array);
-    
-    GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, block->data);
-    GL_CALL(glVertexAttribPointer, 0, 3, GL_FLOAT, GL_FALSE, sizeof (MCFeedbackVertex), 0);
-    GL_CALL(glVertexAttribPointer, 1, 3, GL_FLOAT, GL_FALSE, sizeof (MCFeedbackVertex), (void *) offsetof(MCFeedbackVertex, normal));
-    GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
-    
-    GL_CALL(glEnableVertexAttribArray, 0);
-    GL_CALL(glEnableVertexAttribArray, 1);
-    GL_CALL(glBindVertexArray, 0);
-
-    GL_CALL(glGenTransformFeedbacks, 1, &block->stream);
-    GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, block->stream);
-    GL_CALL(glBindBufferBase, GL_TRANSFORM_FEEDBACK_BUFFER, 0, block->data);
-    GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, 0);
-}
-
-void Anim::destroyBlock(Block *block) {
-    GL_CALL(glDeleteTransformFeedbacks, 1, &block->stream); block->stream = 0;
-    GL_CALL(glDeleteVertexArrays, 1, &block->array); block->array = 0;
-    GL_CALL(glDeleteBuffers, 1, &block->data); block->data = 0;
-}
-
-void Anim::makeBlock(Block& block, const vec3_t& aabb_min, const vec3_t& aabb_max) {
+void Anim::renderBlock(const vec3_t& aabb_min, const vec3_t& aabb_max) {
     glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
     glt::SavePoint sp(gt.save());
 
-    vec3_t fuzz = vec3(0.f);
+    // GL_CALL(glBindVertexArray, 0);
+
+    // GLuint feedback_buf;
+    // GL_CALL(glGenBuffers, 1, &feedback_buf);
+    // GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, feedback_buf);
+    // GLsizeiptr max_size = dot(SAMPLER_SIZE, SAMPLER_SIZE) * 15 * sizeof (MCFeedbackVertex);
+    // GL_CALL(glBufferData, GL_ARRAY_BUFFER, max_size, 0, GL_STREAM_DRAW);
+    // GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
+
+    GLuint feedback;
+    // GL_CALL(glGenTransformFeedbacks, 1, &feedback);
+    // GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, feedback);
+    // GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
+    // GL_CALL(glBindBufferBase, GL_TRANSFORM_FEEDBACK_BUFFER, 0, feedback_buf);
+    // GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, 0);
+
+    vec3_t fuzz = vec3(0.01f);
     vec3_t max = aabb_max + fuzz;
-
-    block.aabb_min = aabb_min;
-    block.aabb_max = max;
-
+        
     gt.translate(aabb_min);
     gt.scale(max - aabb_min);
-    makeSampleVolume();
-    makePolygon(block);
+    renderWorld();
+    renderVolume(feedback);
+
+    // feedbackProgram->use();
+    // glt::Uniforms(*feedbackProgram)
+    //     .optional("viewMatrix", gt.viewMatrix())
+    //     .optional("projectionMatrix", gt.projectionMatrix())
+    //     .optional("normalMatrix", gt.normalMatrix());
+
+    // GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, feedback_buf);
+    // GL_CALL(glVertexAttribPointer, 0, 3, GL_FLOAT, GL_FALSE, sizeof (MCFeedbackVertex), 0);
+    // GL_CALL(glVertexAttribPointer, 1, 3, GL_FLOAT, GL_FALSE, sizeof (MCFeedbackVertex), (void *) 12);
+    // GL_CALL(glDrawTransformFeedback, GL_TRIANGLES, feedback);
 }
 
-void Anim::makeSampleVolume() {
+void Anim::renderWorld() {
+    GL_CALL(glDisable, GL_DEPTH_TEST);
+    worldProgram->use();
     glt::RenderManager& rm = engine->renderManager();
 
-    GL_CALL(glDisable, GL_DEPTH_TEST);
-    
-    worldProgram->use();
+    rm.setActiveRenderTarget(0);
 
     vec3_t tex_scale = vec3(SAMPLER_SIZE - ivec3(1)) / vec3(SAMPLER_SIZE - ivec3(2));
     mat4_t scaleM = glt::scaleMatrix(tex_scale);
@@ -259,6 +221,8 @@ void Anim::makeSampleVolume() {
     for (index i = 0; i < worldVolume->depth(); ++i) {
         worldVolume->targetAttachment(glt::TextureRenderTarget3D::Attachment(
                                           glt::TextureRenderTarget3D::AttachmentLayer, i));
+
+        
 
         rm.setActiveRenderTarget(worldVolume.ptr());
         glt::Uniforms(*worldProgram)
@@ -274,61 +238,35 @@ void Anim::makeSampleVolume() {
     GL_CALL(glEnable, GL_DEPTH_TEST);
 }
 
-void Anim::makePolygon(const Block& block) {
+void Anim::renderVolume(GLuint feedback) {
     glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
-    glt::SavePoint(gt.save());
-
-    GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
+    glt::SavePoint sp(gt.save());
 
     marchingCubesProgram->use();
 
     caseToNumPolysData.bind(0);
     triangleTableData.bind(1);
     worldVolume->sampler().bind(2);
+    worldVolume->clampMode(glt::TextureSampler::ClampToEdge);
 
-    GL_CALL(glTexParameteri, GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    GL_CALL(glTexParameteri, GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    GL_CALL(glTexParameteri, GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    mat4_t scaleM = glt::scaleMatrix(WORLD_BLOCK_SCALE);
+    vec3_t inv_tex_scale = vec3(SAMPLER_SIZE - ivec3(1)) / vec3(SAMPLER_SIZE);
 
     glt::Uniforms(*marchingCubesProgram)
         .mandatory("caseToNumPolysData", glt::Sampler(caseToNumPolysData, 0, GL_UNSIGNED_INT_SAMPLER_1D))
         .mandatory("triangleTableData", glt::Sampler(triangleTableData, 1, GL_UNSIGNED_INT_SAMPLER_1D))
-        .optional("worldVolume", glt::Sampler(worldVolume->sampler(), 2, GL_SAMPLER_3D))
+        .mandatory("worldVolume", glt::Sampler(worldVolume->sampler(), 2, GL_SAMPLER_3D))
         .mandatory("texEdgeDim", vec3(1) / vec3(SAMPLER_SIZE))
-        .optional("worldMatrix", gt.modelMatrix())
-//        .mandatory("projectionMatrix", gt.projectionMatrix())
-        ;
-
-    GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, block.stream);
-    GL_CALL(glBeginTransformFeedback, GL_TRIANGLES);
-    volumeCube.draw();
-    GL_CALL(glEndTransformFeedback, );
-
-    GL_CALL(glDisable, GL_RASTERIZER_DISCARD);
-}
-
-void Anim::renderPolygon(const Block& block) {
-    glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
-    glt::SavePoint sp(gt.save());
-
-    const aligned_mat4_t model = gt.modelMatrix();
-    const mat4_t scaleM = glt::scaleMatrix(WORLD_BLOCK_SCALE);
-    gt.loadModelMatrix(scaleM * model);
-    gt.translate(block.aabb_min);
-    gt.scale(block.aabb_max - block.aabb_min);
-
-//    GL_CALL(glPolygonMode, GL_FRONT_AND_BACK, GL_LINE);
-        
-    renderPolygonProgram->use();
-    
-    glt::Uniforms(*renderPolygonProgram)
-        .mandatory("mvMatrix", gt.mvMatrix())
+        .mandatory("mvMatrix", gt.viewMatrix() * (scaleM * gt.modelMatrix()))
         .mandatory("projectionMatrix", gt.projectionMatrix())
         .mandatory("normalMatrix", gt.normalMatrix());
-        
-    GL_CALL(glBindVertexArray, block.array);
-    GL_CALL(glDrawTransformFeedback, GL_TRIANGLES, block.stream);
-    GL_CALL(glBindVertexArray, 0);
+
+    // GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, feedback);
+    // GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
+    // GL_CALL(glBeginTransformFeedback, GL_TRIANGLES);
+    volumeCube.draw();
+    // GL_CALL(glEndTransformFeedback, );
+    // GL_CALL(glDisable, GL_RASTERIZER_DISCARD);
 }
 
 void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
@@ -336,25 +274,19 @@ void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
 }
 
 void Anim::render(const ge::Event<ge::RenderEvent>&) {
-    GL_CALL(glClearColor, 1.f, 1.f, 1.f, 1.f);
+    engine->renderManager().activeRenderTarget()->clearColor(glt::color(1.f, 1.f, 1.f));
     engine->renderManager().activeRenderTarget()->clear();
 
-//     glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
-//     {
-//         float scale = 1;
-//         renderBlock(vec3(-1.f) * scale, vec3(1.f) * scale);
-// //        renderBlock(vec3(0.5f, 0.f, 0.f) * scale, vec3(1.f, 0.5f, 0.5f) * scale);
-//     }
-
-    
-    for (index i = 0; i < SIZE(blocks.size()); ++i)
-        renderPolygon(blocks[i]);
+    glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
+    {
+        float scale = 1;
+        renderBlock(vec3(-1.f) * scale, vec3(1.f) * scale);
+//        renderBlock(vec3(0.5f, 0.f, 0.f) * scale, vec3(1.f, 0.5f, 0.5f) * scale);
+    }
 
     if (fpsTimer->fire()) {
         glt::FrameStatistics fs = engine->renderManager().frameStatistics();
-        sys::io::stdout() << "Timings (FPS/Render Avg/Render Min/Render Max): "
-                          << fs.avg_fps << "; " << fs.rt_avg << "; " << fs.rt_min << "; " << fs.rt_max
-                          << sys::io::endl;
+        sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): " << fs.avg_fps << "; " << fs.rt_avg << "; " << fs.rt_min << "; " << fs.rt_max << sys::io::endl;
     }
 }
 

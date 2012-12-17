@@ -162,4 +162,16 @@ macro(def_program target)
   if(THIS_DEPEND)
     target_link_libraries(${target} ${THIS_DEPEND})
   endif()
+
+  if(THIS_LIB_DEPEND)
+    if(BUILD_SHARED_LIBS)
+      # in shared build, we use the regular linker commands
+      target_link_libraries(${target} ${THIS_LIB_DEPEND})
+    else()
+      # in static build there's no link stage, but with some compilers it is possible to force
+      # the generated static library to directly contain the symbols from its dependencies
+      sfml_static_add_libraries(${target} ${THIS_LIB_DEPEND})
+    endif()
+  endif()
+
 endmacro()

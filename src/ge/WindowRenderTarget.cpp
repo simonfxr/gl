@@ -32,13 +32,13 @@ void WindowRenderTarget::resized() {
 
 void WindowRenderTarget::doActivate() {
     window.window().setActive();
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+    GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, 0);
 }
 
 void WindowRenderTarget::doDraw() {
     window.window().display();
     if (window.vsync())
-        GL_CHECK(glFinish());
+        GL_CALL(glFinish, );
 }
 
 } // namespace ge

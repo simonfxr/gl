@@ -26,9 +26,9 @@ void TextureSampler::filterMode(FilterMode mode, Filter filter) {
     }
 
     if ((int(filter) & FilterMin) != 0)
-        GL_CHECK(glSamplerParameteri(*_sampler, GL_TEXTURE_MIN_FILTER, glmode));
+        GL_CALL(glSamplerParameteri, *_sampler, GL_TEXTURE_MIN_FILTER, glmode);
     if ((int(filter) & FilterMag) != 0)
-        GL_CHECK(glSamplerParameteri(*_sampler, GL_TEXTURE_MAG_FILTER, glmode));
+        GL_CALL(glSamplerParameteri, *_sampler, GL_TEXTURE_MAG_FILTER, glmode);
 }
 
 void TextureSampler::clampMode(ClampMode mode, Axis axis) {
@@ -44,21 +44,21 @@ void TextureSampler::clampMode(ClampMode mode, Axis axis) {
     axis = Axis(int(axis) & availableAxes(_data->type()));
 
     if ((int(axis) & S))
-        GL_CHECK(glSamplerParameteri(*_sampler, GL_TEXTURE_WRAP_S, glmode));
+        GL_CALL(glSamplerParameteri, *_sampler, GL_TEXTURE_WRAP_S, glmode);
     if ((int(axis) & T))
-        GL_CHECK(glSamplerParameteri(*_sampler, GL_TEXTURE_WRAP_T, glmode));
+        GL_CALL(glSamplerParameteri, *_sampler, GL_TEXTURE_WRAP_T, glmode);
     if ((int(axis) & R))
-        GL_CHECK(glSamplerParameteri(*_sampler, GL_TEXTURE_WRAP_R, glmode));
+        GL_CALL(glSamplerParameteri, *_sampler, GL_TEXTURE_WRAP_R, glmode);
 }
 
 void TextureSampler::bind(uint32 idx, bool set_active_idx) {
     ensureSampler();
-    GL_CHECK(glBindSampler(idx, *_sampler));
+    GL_CALL(glBindSampler, idx, *_sampler);
     _data->bind(idx, set_active_idx);
 }
 
 void TextureSampler::unbind(uint32 idx, bool set_active_idx) {
-    GL_CHECK(glBindSampler(idx, 0));
+    GL_CALL(glBindSampler, idx, 0);
     _data->unbind(idx, set_active_idx);
 }
 

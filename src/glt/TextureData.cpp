@@ -45,15 +45,15 @@ GLTextureObject& TextureData::ensureHandle() {
 
 void TextureData::bind(uint32 idx, bool set_active_idx) {
     if (set_active_idx)
-        GL_CHECK(glActiveTexture(GL_TEXTURE0 + idx));
+        GL_CALL(glActiveTexture, GL_TEXTURE0 + idx);
     ensureHandle();
-    GL_CHECK(glBindTexture(getGLType(_type, _samples), *_handle));
+    GL_CALL(glBindTexture, getGLType(_type, _samples), *_handle);
 }
 
 void TextureData::unbind(uint32 idx, bool set_active_idx) {
     if (set_active_idx)
-        GL_CHECK(glActiveTexture(GL_TEXTURE0 + idx));
-    GL_CHECK(glBindTexture(getGLType(_type, _samples), 0));
+        GL_CALL(glActiveTexture, GL_TEXTURE0 + idx);
+    GL_CALL(glBindTexture, getGLType(_type, _samples), 0);
 }
 
 GLenum TextureData::glType() const {

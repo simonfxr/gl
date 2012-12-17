@@ -16,4 +16,3 @@ def_program(voxel-world
   SOURCES voxel-world.cpp 
   DEPEND ge
   LIB_DEPEND ${VOXEL_LIB_DEPEND})
-

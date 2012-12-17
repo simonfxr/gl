@@ -116,7 +116,7 @@ void RenderTarget::doClear(uint32 buffers, color c) {
 
     if (buffers & RT_COLOR_BUFFER) {
         const math::vec4_t col4 = c.vec4();
-        GL_CHECK(glClearBufferfv(GL_COLOR, 0, math::begin(col4)));
+        GL_CALL(glClearBufferfv, GL_COLOR, 0, math::begin(col4));
     }
 
     if (buffers & RT_DEPTH_BUFFER)
@@ -126,7 +126,7 @@ void RenderTarget::doClear(uint32 buffers, color c) {
         bits |= GL_STENCIL_BUFFER_BIT;
 
     if (bits != 0)
-        GL_CHECK(glClear(bits));
+        GL_CALL(glClear, bits);
 }
 
 void RenderTarget::doDraw() {
@@ -134,7 +134,7 @@ void RenderTarget::doDraw() {
 }
 
 void RenderTarget::doViewport(const Viewport& vp) {
-    GL_CHECK(glViewport(vp.offsetX, vp.offsetY, GLsizei(vp.width), GLsizei(vp.height)));
+    GL_CALL(glViewport, vp.offsetX, vp.offsetY, GLsizei(vp.width), GLsizei(vp.height));
 }
 
 } // namespace glt

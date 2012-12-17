@@ -40,11 +40,11 @@ void TextureRenderTarget::resize(size w, size h) {
         _depth_buffer.ensure();
 
         if (_samples == 1)
-            GL_CHECK(glNamedRenderbufferStorageEXT(*_depth_buffer, GL_DEPTH_COMPONENT, w, h));
+            GL_CALL(glNamedRenderbufferStorageEXT, *_depth_buffer, GL_DEPTH_COMPONENT, w, h);
         else
-            GL_CHECK(glNamedRenderbufferStorageMultisampleEXT(*_depth_buffer, _samples, GL_DEPTH_COMPONENT, w, h));
+            GL_CALL(glNamedRenderbufferStorageMultisampleEXT, *_depth_buffer, _samples, GL_DEPTH_COMPONENT, w, h);
         
-        GL_CHECK(glNamedFramebufferRenderbufferEXT(*_frame_buffer, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, *_depth_buffer));
+        GL_CALL(glNamedFramebufferRenderbufferEXT, *_frame_buffer, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, *_depth_buffer);
     }
 
     checkFramebufferStatus(_frame_buffer, GL_FRAMEBUFFER);
@@ -62,28 +62,28 @@ void TextureRenderTarget::createTexture(bool delete_old) {
 
     _sampler.data()->bind(0, false);
     if (ttype == GL_TEXTURE_2D) {
-        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GLsizei(width()), GLsizei(height()), 0, GL_RGBA, GL_UNSIGNED_BYTE, 0));
+        GL_CALL(glTexImage2D, GL_TEXTURE_2D, 0, GL_RGBA, GLsizei(width()), GLsizei(height()), 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     } else if (ttype == GL_TEXTURE_2D_MULTISAMPLE) {
-        GL_CHECK(glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, _samples, GL_RGBA, width(), height(), GL_FALSE));
+        GL_CALL(glTexImage2DMultisample, GL_TEXTURE_2D_MULTISAMPLE, _samples, GL_RGBA, width(), height(), GL_FALSE);
     } else {
         ERR("unexpected Texture type");
     }
     _sampler.data()->unbind(0, false);
 
-    GL_CHECK(glNamedFramebufferTextureEXT(*_frame_buffer, GL_COLOR_ATTACHMENT0, *_sampler.data()->handle(), 0));
+    GL_CALL(glNamedFramebufferTextureEXT, *_frame_buffer, GL_COLOR_ATTACHMENT0, *_sampler.data()->handle(), 0);
 }
 
 void TextureRenderTarget::doActivate() {
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, *_frame_buffer));
+    GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, *_frame_buffer);
 }
 
 void TextureRenderTarget::doDeactivate() {
-    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+    GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, 0);
 }
 
 bool TextureRenderTarget::checkFramebufferStatus(GLFramebufferObject& buffer, GLenum target) {
     GLenum status;
-    GL_CHECK(status = glCheckNamedFramebufferStatusEXT(*buffer, target));
+    GL_ASSIGN_CALL(status, glCheckNamedFramebufferStatusEXT, *buffer, target);
     if (status == GL_FRAMEBUFFER_COMPLETE)
         return true;
 
