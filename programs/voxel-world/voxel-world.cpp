@@ -302,7 +302,7 @@ struct Faces {
     vec3_t f[2]; // front, up, right, bot, down, left
 };
 
-static const uint32 RAY_SAMPLES = uint32(1.9 * (real(N) + 1)); // about sqrt(3) * N, maximum ray length
+static const uint32 RAY_SAMPLES = uint32(real(1.9) * (real(N) + 1)); // about sqrt(3) * N, maximum ray length
 
 struct Ray {
     Faces lightContrib;
@@ -772,7 +772,7 @@ static void createModel(CubeMesh& worldModel, const World& world, const World& v
                     vec3_t red = vec3(1.f, 0.f, 0.f);
 
                     vec3_t col3;
-                    if (dens <= 0.5) {
+                    if (dens <= real(0.5)) {
                         float w = dens * 2;
                         col3 = (1 - w) * blue + w * yellow;
                     } else {
@@ -915,9 +915,9 @@ static void renderBlocks(State *state, ge::Engine& e);
 static void renderScene(State *state, const RenderEv& ev) {
     ge::Engine& e = ev.info.engine;
 
-    GL_CHECK(glClearColor(1.f, 1.f, 1.f, 1.f));
-    GL_CHECK(glEnable(GL_DEPTH_TEST));
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    GL_CALL(glClearColor, 1.f, 1.f, 1.f, 1.f);
+    GL_CALL(glEnable, GL_DEPTH_TEST);
+    GL_CALL(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     state->ecLightDir = e.renderManager().geometryTransform().transformVector(LIGHT_DIR);
 

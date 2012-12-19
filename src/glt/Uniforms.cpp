@@ -108,39 +108,43 @@ std::string descGLType(GLenum ty) {
 }
 
 void programUniform(GLuint program, GLint loc, float value) {
-    GL_CHECK(glProgramUniform1fv(program, loc, 1, &value));
+    GL_CALL(glProgramUniform1fv, program, loc, 1, &value);
 }
 
 void programUniform(GLuint program, GLint loc, const vec4_t& value) {
-    GL_CHECK(glProgramUniform4fv(program, loc, 1, value.components));
+    GL_CALL(glProgramUniform4fv, program, loc, 1, value.components);
 }
 
 void programUniform(GLuint program, GLint loc, const vec3_t& value) {
-    GL_CHECK(glProgramUniform3fv(program, loc, 1, value.components));
+    vec3_t::buffer data;
+    load(data, value);
+    GL_CALL(glProgramUniform3fv, program, loc, 1, data);
 }
 
 void programUniform(GLuint program, GLint loc, const mat4_t& value) {
-    GL_CHECK(glProgramUniformMatrix4fv(program, loc, 1, GL_FALSE, value.components));
+    GL_CALL(glProgramUniformMatrix4fv, program, loc, 1, GL_FALSE, value.components);
 }
 
 void programUniform(GLuint program, GLint loc, const mat3_t& value) {
-    GL_CHECK(glProgramUniformMatrix3fv(program, loc, 1, GL_FALSE, value.components));
+    mat3_t::buffer data;
+    load(data, value);
+    GL_CALL(glProgramUniformMatrix3fv, program, loc, 1, GL_FALSE, data);
 }
 
 void programUniform(GLuint program, GLint loc, const BoundTexture& sampler) {
-    GL_CHECK(glProgramUniform1i(program, loc, GLint(sampler.index)));
+    GL_CALL(glProgramUniform1i, program, loc, GLint(sampler.index));
 }
 
 void programUniform(GLuint program, GLint loc, const Sampler& sampler) {
-    GL_CHECK(glProgramUniform1i(program, loc, GLint(sampler.index)));
+    GL_CALL(glProgramUniform1i, program, loc, GLint(sampler.index));
 }
 
 void programUniform(GLuint program, GLint loc, GLint val) {
-    GL_CHECK(glProgramUniform1i(program, loc, val));
+    GL_CALL(glProgramUniform1i, program, loc, val);
 }
 
 void programUniform(GLuint program, GLint loc, GLuint val) {
-    GL_CHECK(glProgramUniform1ui(program, loc, val));
+    GL_CALL(glProgramUniform1ui, program, loc, val);
 }
 
 template <typename T>
@@ -149,7 +153,7 @@ void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GL
     UNUSED(type);
     
     GLint locationi;
-    GL_CHECK(locationi = glGetUniformLocation(prog.program(), name.c_str()));
+    GL_ASSIGN_CALL(locationi, glGetUniformLocation, *prog.program(), name.c_str());
     
     if (locationi == -1) {
         if (mandatory)
@@ -162,7 +166,7 @@ void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GL
 #ifdef GLDEBUG
 
     GLint actual_typei;
-    GL_CHECK(glGetActiveUniformsiv(prog.program(), 1, &location, GL_UNIFORM_TYPE, &actual_typei));
+    GL_CALL(glGetActiveUniformsiv, *prog.program(), 1, &location, GL_UNIFORM_TYPE, &actual_typei);
     GLenum actual_type = GLenum(actual_typei);
     if (actual_type != type) {
         std::string err = "uniform \"" + name + "\": types dont match, got: " + descGLType(type) + ", expected: " + descGLType(actual_type);
@@ -172,7 +176,7 @@ void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GL
 
 #endif
 
-    programUniform(prog.program(), locationi, value);
+    programUniform(*prog.program(), locationi, value);
 }
 
 } // namespace anon

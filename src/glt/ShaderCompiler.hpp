@@ -12,6 +12,7 @@
 #include "data/Ref.hpp"
 #include "sys/fs.hpp"
 #include "glt/ShaderManager.hpp"
+#include "glt/GLObject.hpp"
 #include "err/WithError.hpp"
 
 namespace glt {
@@ -60,7 +61,7 @@ enum ReloadState {
 
 struct GLT_API ShaderObject {
     Ref<ShaderSource> source;
-    GLuint handle;
+    GLShaderObject handle;
     ShaderIncludes includes;
     ShaderDependencies dependencies;
     WeakRef<ShaderCache> cache;

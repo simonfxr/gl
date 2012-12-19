@@ -11,13 +11,15 @@ MATH_FUNC mat3_t mat3() PURE_FUNC;
 
 MATH_FUNC mat3_t mat3(real x) PURE_FUNC;
 
-MATH_FUNC mat3_t mat3(const real mat[9]) PURE_FUNC;
+MATH_FUNC mat3_t mat3(const mat3_t::buffer) PURE_FUNC;
 
 MATH_FUNC mat3_t mat3(const vec3_t& c1, const vec3_t& c2, const vec3_t& c3) PURE_FUNC;
 
 MATH_FUNC mat3_t mat3(const mat4_t& A) PURE_FUNC;
 
 MATH_FUNC mat3_t mat3(const quat_t& q) PURE_FUNC;
+
+MATH_FUNC void load(mat3_t::buffer, const mat3_t&) MUT_FUNC;
 
 MATH_FUNC mat3_t operator +(const mat3_t& A, const mat3_t& B) PURE_FUNC;
 

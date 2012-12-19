@@ -9,6 +9,7 @@
 #include "data/Array.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/VertexDescription.hpp"
+#include "glt/GLObject.hpp"
 #include "err/WithError.hpp"
 
 namespace glt {
@@ -43,7 +44,7 @@ struct GLT_API ShaderProgram : public err::WithError<ShaderProgramError::Type,
 
     ShaderManager& shaderManager();
 
-    GLuint program();
+    GLProgramObject& program();
 
     bool addShaderSrc(const std::string& src, ShaderManager::ShaderType type);
     

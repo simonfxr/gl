@@ -1,5 +1,6 @@
 
 add_subdirectory(marching-cubes)
+add_subdirectory(marching-cubes.old)
 add_subdirectory(query-extension)
 add_subdirectory(sim)
 add_subdirectory(teapot)
@@ -8,3 +9,4 @@ add_subdirectory(feedback)
 add_subdirectory(shadow-maps)
 add_subdirectory(stereoproj)
 add_subdirectory(simple)
+add_subdirectory(quasi)

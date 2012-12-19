@@ -16,10 +16,11 @@ mat3_t mat3(real x) {
     return mat3(vec3(x), vec3(x), vec3(x));
 }
 
-mat3_t mat3(const real mat[9]) {
+mat3_t mat3(const mat3_t::buffer mat) {
     mat3_t A;
-    for (uint32 i = 0; i < 9; ++i)
-        A.components[i] = mat[i];
+    A[0] = vec3(&mat[0]);
+    A[1] = vec3(&mat[3]);
+    A[2] = vec3(&mat[6]);
     return A;
 }
 
@@ -38,6 +39,12 @@ mat3_t mat3(const quat_t& q) {
     return mat3(vec3(1 - 2 * yy - 2 * zz, 2 * x * y - 2 * w * z, 2 * x * z + 2 * w * y),
                 vec3(2 * x * y + 2 * w * z, 1 - 2 * xx - 2 * zz, 2 * y * z - 2 * w * x),
                 vec3(2 * x * z - 2 * w * y, 2 * y * z + 2 * w * x, 1 - 2 * xx - 2 * yy));
+}
+
+void load(mat3_t::buffer b, const mat3_t& m) {
+    load(&b[0], m[0]);
+    load(&b[3], m[1]);
+    load(&b[6], m[2]);
 }
 
 mat3_t operator +(const mat3_t& A, const mat3_t& B) {
@@ -97,7 +104,8 @@ mat3_t& operator /=(mat3_t& A, real x) {
 
 real determinant(const mat3_t& A) {
     const mat3_t AT = transpose(A);
-    struct { const real *data; } m = { AT.components };
+    struct { mat3_t::buffer data; } m;
+    load(m.data, AT);
 
     real t4 = m.data[0]*m.data[4];
     real t6 = m.data[0]*m.data[5];
@@ -113,9 +121,9 @@ real determinant(const mat3_t& A) {
 
 mat3_t inverse(const mat3_t& A) {
     const mat3_t AT = transpose(A);
-    mat3_t B;
-    struct { const real *data; } m = { AT.components };
-    real *data = B.components;
+    struct { mat3_t::buffer data; } m;
+    load(m.data, AT);
+    mat3_t::buffer data;
 
     real t4 = m.data[0]*m.data[4];
     real t6 = m.data[0]*m.data[5];
@@ -140,6 +148,7 @@ mat3_t inverse(const mat3_t& A) {
     data[7] = -(m.data[0]*m.data[7]-t12)*t17;                
     data[8] = (t4-t8)*t17;
 
+    mat3_t B = mat3(data);
     mat3_t Ainv = transpose(B);
 
     ASSERT(equal(A * Ainv, mat3()));
@@ -204,7 +213,7 @@ MATH_INLINE_SPEC vec3_t& mat3_t::operator[](defs::index i) {
 }
 
 MATH_INLINE_SPEC real& mat3_t::operator()(defs::index i, defs::index j) {
-    return components[i * 3 + j];
+    return components[i * vec3_t::padded_size + j];
 }
 
 } // namespace math

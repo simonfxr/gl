@@ -1,6 +1,8 @@
 #include <vector>
 #include <limits>
 
+#include <SFML/Graphics.hpp>
+
 #include "defs.hpp"
 #include "math/real.hpp"
 #include "err/err.hpp"
@@ -15,6 +17,23 @@ namespace {
 
 static void resizeRenderTarget(const Event<WindowResized>& e) {
     e.info.window.renderTarget().resized();
+}
+
+template <typename T, typename U>
+static void copyContextInfo(const T& a, U& b) {
+    b.depthBits = a.depthBits;
+    b.stencilBits = a.stencilBits;
+    b.antialiasingLevel = a.antialiasingLevel;
+    b.majorVersion = a.majorVersion;
+    b.minorVersion = a.minorVersion;
+    b.debugContext = a.debugContext;
+    b.coreProfile = a.coreProfile;
+}
+
+static sf::ContextSettings toSFContextSettings(const GLContextInfo& a) {
+    sf::ContextSettings b;
+    copyContextInfo(a, b);
+    return b;
 }
 
 } // namespace anon
@@ -94,10 +113,7 @@ GameWindow::GameWindow(const WindowOptions& opts) :
                   new sf::RenderWindow(sf::VideoMode(uint32(opts.width), uint32(opts.height)),
                                        opts.title,
                                        sf::Style::Default,
-                                       opts.settings))) { self->init(opts); }
-
-GameWindow::GameWindow(sf::RenderWindow& win) :
-    self(new Data(*this, false, &win)) { self->init(WindowOptions()); }
+                                       toSFContextSettings(opts.settings)))) { self->init(opts); }
 
 GameWindow::~GameWindow() {
     delete self;
@@ -287,10 +303,6 @@ void GameWindow::vsync(bool enable) {
 bool GameWindow::vsync() {
     return self->vsync;
 }
-    
-sf::RenderWindow& GameWindow::window() {
-    return *self->win;
-}
 
 bool GameWindow::focused() const {
     return self->have_focus;
@@ -311,5 +323,26 @@ void GameWindow::Data::runHandleInputEvents(Data *win, const Event<InputEvent>&)
 void GameWindow::registerHandlers(EngineEvents& evnts) {
     evnts.handleInput.reg(makeEventHandler(Data::runHandleInputEvents, self));
 }
+
+size GameWindow::windowHeight() const {
+    return self->win->getSize().y;
+}
+
+size GameWindow::windowWidth() const {
+    return self->win->getSize().x;
+}
+
+void GameWindow::setActive() {
+    self->win->setActive();
+}
+
+void GameWindow::swapBuffers() {
+    self->win->display();
+}
+
+void GameWindow::contextInfo(GLContextInfo& info) const {
+    copyContextInfo(self->win->getSettings(), info);
+}
+
 
 } // namespace ge

@@ -7,6 +7,7 @@
 #include "glt/utils.hpp"
 #include "glt/ShaderProgram.hpp"
 #include "glt/ShaderCompiler.hpp"
+#include "glt/GLObject.hpp"
 
 namespace ge {
 
@@ -15,7 +16,8 @@ using namespace math;
 namespace {
 
 void runPrintContextInfo(const Event<CommandEvent>& e) {
-    const sf::ContextSettings& c = e.info.engine.window().window().getSettings();
+    ge::GLContextInfo c;
+    e.info.engine.window().contextInfo(c);
     e.info.engine.out()
         << "OpenGL Context Information" << sys::io::endl
         << "  Version:\t" << c.majorVersion << "." << c.minorVersion << sys::io::endl
@@ -26,6 +28,10 @@ void runPrintContextInfo(const Event<CommandEvent>& e) {
         << "  DebugContext:\t" << (c.debugContext ? "yes" : "no") << sys::io::endl
         << "  VSync:\t" << (e.info.engine.window().vsync() ? "yes" : "no") << sys::io::endl
         << sys::io::endl;
+}
+
+void runPrintGLInstanceStats(const Event<CommandEvent>& e) {
+    glt::printStats(e.info.engine.out());
 }
 
 void runPrintMemInfo(const Event<CommandEvent>& e) {
@@ -177,7 +183,9 @@ void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) 
 }
 
 void runInitGLDebug(const Event<CommandEvent>& e) {
-    if (e.info.engine.window().window().getSettings().debugContext) {
+    ge::GLContextInfo c;
+    e.info.engine.window().contextInfo(c);
+    if (c.debugContext) {
         glt::initDebug();
     } else {
         e.info.engine.out() << "cannot initialize OpenGL debug output: no debug context" << sys::io::endl;
@@ -338,7 +346,11 @@ Commands::Commands() :
 
     postInit(makeCommand(runPostInit, COM_PARAMS, "postInit", "execute its argument command in the postInit hook")),
 
-    startReplServer(makeCommand(runStartReplServer, INT_PARAMS, "startReplServer", "start a REPL server on the given port"))
+    startReplServer(makeCommand(runStartReplServer, INT_PARAMS, "startReplServer", "start a REPL server on the given port")),
+
+    printGLInstanceStats(makeCommand(runPrintGLInstanceStats, "printGLInstanceStats", "print number of the allocated opengl object per type"))
+
+    
 {}
 
 const Commands& commands() {

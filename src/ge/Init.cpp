@@ -77,7 +77,8 @@ void initMemInfo(RunLevel lvl, EngineInitializers& inits) {
 
 static void runInitShaderVersion(const Event<InitEvent>& e) {
     e.info.success = true;
-    const sf::ContextSettings& c = e.info.engine.window().window().getSettings();
+    ge::GLContextInfo c;
+    e.info.engine.window().contextInfo(c);
     glt::ShaderManager::ShaderProfile prof = c.coreProfile ?
         glt::ShaderManager::CoreProfile :
         glt::ShaderManager::CompatibilityProfile;
@@ -114,6 +115,7 @@ static void runInitCommands(const Event<InitEvent>& e) {
     r.define(cs.perspectiveProjection);
     r.define(cs.postInit);
     r.define(cs.startReplServer);
+    r.define(cs.printGLInstanceStats);
 }
 
 void initCommands(RunLevel lvl, EngineInitializers& inits) {

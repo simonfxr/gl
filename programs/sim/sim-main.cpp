@@ -324,16 +324,16 @@ void Game::renderScene(const ge::Event<ge::RenderEvent>& ev) {
         interpolation = 0.f;
 
     renderManager.activeRenderTarget()->clear(glt::RT_DEPTH_BUFFER);
-    GL_CHECK(glEnable(GL_DEPTH_TEST));
+    GL_CALL(glEnable, GL_DEPTH_TEST);
 
-    e.window().window().setActive();
+//    e.window().window().setActive();
 
     float dt = interpolation * game_speed * e.gameLoop().frameDuration();
 
     renderWorld(dt);
 
     if (indirect_rendering) {
-        GL_CHECK(glDisable(GL_DEPTH_TEST));
+        GL_CALL(glDisable, GL_DEPTH_TEST);
         
         renderManager.setActiveRenderTarget(&e.window().renderTarget());
         Ref<glt::ShaderProgram> postprocShader = e.shaderManager().program("postproc");
@@ -383,8 +383,8 @@ void Game::updateIndirectRendering(bool indirect) {
     if (indirect) {
 
         if (textureRenderTarget == 0) {
-            size w = SIZE(engine->window().window().getSize().x);
-            size h = SIZE(engine->window().window().getSize().y);
+            size w = engine->window().windowWidth();
+            size h = engine->window().windowHeight();
             glt::TextureRenderTarget::Params ps;
             ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
             textureRenderTarget = new glt::TextureRenderTarget(w, h, ps);
@@ -403,8 +403,8 @@ void Game::updateIndirectRendering(bool indirect) {
 }
 
 void Game::resizeRenderTargets() {
-    size width = SIZE(engine->window().window().getSize().x);
-    size height = SIZE(engine->window().window().getSize().y);
+    size width = engine->window().windowWidth();
+    size height = engine->window().windowHeight();
 
     if (indirect_rendering) {
 
@@ -439,7 +439,7 @@ void Game::end_render_spheres() {
             sphereMap.filterMode(glt::TextureSampler::FilterNearest);
             sphereMap.clampMode(glt::TextureSampler::ClampRepeat);
             sphereMap.bind(0);
-            GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, num * 2, 0, GL_RGBA, GL_FLOAT, &sphere_instances[lod][0]));
+            GL_CALL(glTexImage1D, GL_TEXTURE_1D, 0, GL_RGBA32F, num * 2, 0, GL_RGBA, GL_FLOAT, &sphere_instances[lod][0]);
 
             sphere_instances[lod].clear();
 
@@ -466,34 +466,34 @@ void Game::end_render_spheres() {
             ASSERT(sphereInstanced2Shader);
             sphereInstanced2Shader->use();
 
-            GLuint per_instance_vbo;
-            GL_CHECK(glGenBuffers(1, &per_instance_vbo));
-            GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, per_instance_vbo));
-            GL_CHECK(glBufferData(GL_ARRAY_BUFFER, sizeof (SphereInstance) * num, &sphere_instances[lod][0], GL_STREAM_DRAW));
+            GLBufferObject per_instance_vbo;
+            per_instance_vbo.ensure();
+            GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, *per_instance_vbo);
+            GL_CALL(glBufferData, GL_ARRAY_BUFFER, sizeof (SphereInstance) * num, &sphere_instances[lod][0], GL_STREAM_DRAW);
 
             sphereBatches[lod].bind();
             GLint attr_mvMatrix;
-            GL_CHECK(attr_mvMatrix = glGetAttribLocation(sphereInstanced2Shader->program(), "mvMatrix"));
+            GL_ASSIGN_CALL(attr_mvMatrix, glGetAttribLocation, sphereInstanced2Shader->program(), "mvMatrix");
             ASSERT(attr_mvMatrix >= 0);
             GLint attr_colorShininess;
-            GL_CHECK(attr_colorShininess = glGetAttribLocation(sphereInstanced2Shader->program(), "colorShininess"));
+            GL_ASSIGN_CALL(attr_colorShininess, glGetAttribLocation, sphereInstanced2Shader->program(), "colorShininess");
             ASSERT(attr_colorShininess >= 0);
 
             for (uint32 col = 0; col < 4; ++col) {
-                GL_CHECK(glVertexAttribPointer(attr_mvMatrix + col, 4, GL_FLOAT, GL_FALSE,
+                GL_CALL(glVertexAttribPointer,attr_mvMatrix + col, 4, GL_FLOAT, GL_FALSE,
                                                sizeof (vec4_t),
-                                               (void *) (offsetof(SphereInstance, mvMatrix) + col * sizeof (vec4_t))));
-                GL_CHECK(glVertexAttribDivisor(attr_mvMatrix + col, 1));
-                GL_CHECK(glEnableVertexAttribArray(attr_mvMatrix + col));
+                                               (void *) (offsetof(SphereInstance, mvMatrix) + col * sizeof (vec4_t)));
+                GL_CALL(glVertexAttribDivisor, attr_mvMatrix + col, 1);
+                GL_CALL(glEnableVertexAttribArray, attr_mvMatrix + col);
             }
 
-            GL_CHECK(glVertexAttribPointer(attr_colorShininess, 4, GL_FLOAT, GL_FALSE,
-                                           sizeof (SphereInstance),
-                                           (void *) offsetof(SphereInstance, colorShininess)));
-            GL_CHECK(glVertexAttribDivisor(attr_colorShininess, 1));
-            GL_CHECK(glEnableVertexAttribArray(attr_colorShininess));
+            GL_CALL(glVertexAttribPointer, attr_colorShininess, 4, GL_FLOAT, GL_FALSE,
+                    sizeof (SphereInstance),
+                    (void *) offsetof(SphereInstance, colorShininess));
+            GL_CALL(glVertexAttribDivisor, attr_colorShininess, 1);
+            GL_CALL(glEnableVertexAttribArray, attr_colorShininess);
 
-            GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+            GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
             glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
             glt::Uniforms(*sphereInstanced2Shader)
@@ -505,13 +505,11 @@ void Game::end_render_spheres() {
             sphereBatches[lod].bind();
 
             for (uint32 col = 0; col < 4; ++col) {
-                GL_CHECK(glDisableVertexAttribArray(attr_mvMatrix + col));
+                GL_CALL(glDisableVertexAttribArray, attr_mvMatrix + col);
             }
 
-
-            GL_CHECK(glDisableVertexAttribArray(attr_colorShininess));
-            GL_CHECK(glBindVertexArray(0));
-            GL_CHECK(glDeleteBuffers(1, &per_instance_vbo));
+            GL_CALL(glDisableVertexAttribArray, attr_colorShininess);
+            GL_CALL(glBindVertexArray, 0);
 #endif 
         }
     }
@@ -615,7 +613,7 @@ void Renderer::renderBox(const glt::AABB& box) {
 void Game::render_box(const glt::AABB& box) {
     glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
 
-    GL_CHECK(glCullFace(GL_FRONT));
+    GL_CALL(glCullFace, GL_FRONT);
 
     glt::SavePoint sp(gt.save());
 
@@ -647,7 +645,7 @@ void Game::render_box(const glt::AABB& box) {
     
     wallBatch.draw();
 
-    GL_CHECK(glCullFace(GL_BACK));    
+    GL_CALL(glCullFace, GL_BACK);    
 }
 
 void Renderer::renderConnection(const point3_t& a, const point3_t& b) {
@@ -663,8 +661,8 @@ void Game::render_con(const point3_t& a, const point3_t& b) {
     m.color = glt::color(0x00, 0xFF, 0x00);
     render_sphere(s, m);
 
-    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-    GL_CHECK(glLineWidth(10.f));
+    GL_CALL(glPolygonMode, GL_FRONT_AND_BACK, GL_LINE);
+    GL_CALL(glLineWidth, 10.f);
 
     glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
 
@@ -691,7 +689,7 @@ void Game::render_con(const point3_t& a, const point3_t& b) {
 
     lineBatch.draw();
 
-    GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+    GL_CALL(glPolygonMode, GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void Game::render_hud() {

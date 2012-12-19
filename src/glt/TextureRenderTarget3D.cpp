@@ -39,9 +39,9 @@ void TextureRenderTarget3D::createTexture(bool delete_old) {
     _sampler.data()->type(Texture3D);
     
     _sampler.data()->bind(0, false);
-    GL_CHECK(glTexImage3D(GL_TEXTURE_3D, 0, GLint(_color_format), width(), height(), _depth,
-                          0, GL_RGB, GL_UNSIGNED_BYTE, 0));
-    _sampler.data()->unbind(0, false);
+    GL_CALL(glTexImage3D, GL_TEXTURE_3D, 0, GLint(_color_format), width(), height(), _depth,
+            0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+_sampler.data()->unbind(0, false);
 
     _sampler.filterMode(this->filterMode());
     _sampler.clampMode(this->clampMode());
@@ -65,22 +65,22 @@ void TextureRenderTarget3D::targetAttachment(const TextureRenderTarget3D::Attach
         (ta.type == AttachmentLayer && ta.index != _target_attachment.index)) {
         
         _target_attachment = ta;
-        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, _frame_buffer));
+        GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, *_frame_buffer);
 
         switch (ta.type) {
         case AttachmentLayered:
-            GL_CHECK(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _sampler.data()->handle(), 0));
+            GL_CALL(glFramebufferTexture, GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, *_sampler.data()->handle(), 0);
             break;
         case AttachmentLayer:
             _sampler.data()->bind(0, false);
-            GL_CHECK(glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, _sampler.data()->handle(), 0, ta.index));
+            GL_CALL(glFramebufferTexture3D, GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, *_sampler.data()->handle(), 0, ta.index);
             // _sampler.data()->bind();
-            // GL_CHECK(glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _sampler.data()->handle(), ta.index, 0));    
+            // GL_CALL(glFramebufferTextureLayer, GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _sampler.data()->handle(), ta.index, 0);    
             _sampler.data()->unbind(0, false);
             break;
         default: ASSERT_FAIL();
         }
-        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));        
+        GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, 0);        
     }
 }
 

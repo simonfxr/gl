@@ -3,6 +3,7 @@
 
 #include "glt/conf.hpp"
 #include "opengl.hpp"
+#include "glt/GLObject.hpp"
 
 namespace glt {
 
@@ -15,9 +16,11 @@ enum TextureType {
 };
 
 struct GLT_API TextureData {
+public:
+
 private:
     size _samples;
-    GLuint _handle;
+    GLTextureObject _handle;
     TextureType _type;
     
 public:
@@ -31,8 +34,8 @@ public:
     void bind(uint32 idx, bool set_active_idx = true);
     void unbind(uint32 idx, bool set_active_idx = true);
 
-    GLuint ensureHandle();
-    GLuint handle() const { return _handle; }
+    GLTextureObject& ensureHandle();
+    const GLTextureObject& handle() const { return _handle; }
     size samples() const { return _samples; }
     TextureType type() { return _type; }
     GLenum glType() const;
@@ -45,7 +48,7 @@ private:
 };
 
 inline bool operator ==(const TextureData& t1, const TextureData& t2) {
-    return t1.handle() == t2.handle();
+    return t1.handle()._name == t2.handle()._name;
 }
 
 inline bool operator !=(const TextureData& t1, const TextureData& t2) {

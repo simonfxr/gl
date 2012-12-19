@@ -3,8 +3,6 @@
 
 #include <string>
 
-#include <SFML/Graphics.hpp>
-
 #include "ge/conf.hpp"
 #include "ge/WindowRenderTarget.hpp"
 #include "ge/Event.hpp"
@@ -18,11 +16,31 @@ using namespace defs;
 
 struct WindowEvents;
 
+struct GE_API GLContextInfo {
+    unsigned int depthBits;
+    unsigned int stencilBits;
+    unsigned int antialiasingLevel;
+    unsigned int majorVersion;
+    unsigned int minorVersion;
+    bool debugContext;
+    bool coreProfile;
+
+    GLContextInfo()
+        : depthBits(8)
+        , stencilBits(0)
+        , antialiasingLevel(0)
+        , majorVersion(0)
+        , minorVersion(0)
+        , debugContext(false)
+        , coreProfile(false)
+        {}
+};
+
 struct GE_API WindowOptions {
     size width;
     size height;
     std::string title;
-    sf::ContextSettings settings;
+    GLContextInfo settings;
     bool vsync;
     
     WindowOptions() :
@@ -35,7 +53,6 @@ struct GE_API WindowOptions {
 };
 
 struct GE_API GameWindow {
-    GameWindow(sf::RenderWindow& win);
     GameWindow(const WindowOptions& opts = WindowOptions());
     ~GameWindow();
 
@@ -51,13 +68,21 @@ struct GE_API GameWindow {
     void vsync(bool enable);
     bool vsync();
     
-    sf::RenderWindow& window();
-
     bool focused() const;
 
     bool init();
 
     WindowRenderTarget& renderTarget();
+
+    void setActive();
+
+    void swapBuffers();
+
+    void contextInfo(GLContextInfo& info) const;
+
+    size windowHeight() const;
+
+    size windowWidth() const;
 
     WindowEvents& events();
 

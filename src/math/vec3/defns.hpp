@@ -15,7 +15,9 @@ MATH_FUNC vec3_t vec3(const ivec3_t& a) PURE_FUNC;
 
 MATH_FUNC vec3_t vec3(const vec4_t& a) PURE_FUNC;
 
-MATH_FUNC vec3_t vec3(const real a[3]) PURE_FUNC;
+MATH_FUNC vec3_t vec3(const vec3_t::buffer) PURE_FUNC;
+
+MATH_FUNC void load(vec3_t::buffer, const vec3_t&) MUT_FUNC;
 
 MATH_FUNC vec3_t operator -(const vec3_t& a) PURE_FUNC;
 

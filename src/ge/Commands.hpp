@@ -25,6 +25,7 @@ struct GE_API Commands {
     Ref<Command> perspectiveProjection;
     Ref<Command> postInit;
     Ref<Command> startReplServer;
+    Ref<Command> printGLInstanceStats;
 
     Commands();
 };

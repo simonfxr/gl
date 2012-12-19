@@ -331,11 +331,11 @@ enum MemInfoField {
 
 void queryMemFreeATI(GLMemInfoATI::GLMemFree *free) {
     GLint info[FREE_COUNT];
-    GL_CHECK(glGetIntegerv(GL_VBO_FREE_MEMORY_ATI, info));
+    GL_CALL(glGetIntegerv, GL_VBO_FREE_MEMORY_ATI, info);
     free->freeVBO = info[FREE_TOTAL];
-    GL_CHECK(glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, info));
+    GL_CALL(glGetIntegerv, GL_TEXTURE_FREE_MEMORY_ATI, info);
     free->freeTexture = info[FREE_TOTAL];
-    GL_CHECK(glGetIntegerv(GL_RENDERBUFFER_FREE_MEMORY_ATI, info));
+    GL_CALL(glGetIntegerv, GL_RENDERBUFFER_FREE_MEMORY_ATI, info);
     free->freeRenderbuffer = info[FREE_TOTAL];    
 }
 
@@ -390,11 +390,11 @@ bool GLMemInfoNV::info(GLMemInfoNV *mi) {
         return false;
 
     GLint total, total_dedicated, current, evicted, num_evictions;
-    GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &total_dedicated));
-    GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &total));
-    GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &current));
-    GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX, &num_evictions));
-    GL_CHECK(glGetIntegerv(GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX, &evicted));
+    GL_CALL(glGetIntegerv, GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &total_dedicated);
+    GL_CALL(glGetIntegerv, GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &total);
+    GL_CALL(glGetIntegerv, GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &current);
+    GL_CALL(glGetIntegerv, GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX, &num_evictions);
+    GL_CALL(glGetIntegerv, GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX, &evicted);
 
     mi->total = total;
     mi->total_dedicated = total_dedicated;

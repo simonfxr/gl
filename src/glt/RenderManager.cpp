@@ -223,7 +223,7 @@ void RenderManager::endScene() {
     ASSERT_MSG(self->inScene, "cannot endScene() without beginScene()");
     self->inScene = false;
     self->transform.restore(self->transformStateBOS);
-    GL_CHECK(glFinish());
+    GL_CALL(glFinish, );
     if (self->current_rt != 0)
         self->current_rt->draw();
     self->statEnd();

@@ -1,7 +1,6 @@
 #include "glt/TextureData.hpp"
 #include "err/err.hpp"
 #include "glt/utils.hpp"
-#include "glt/glstate.hpp"
 
 namespace glt {
 
@@ -37,32 +36,24 @@ TextureData::~TextureData() {
 }
 
 void TextureData::free() {
-    if (_handle != 0) {
-        --glstate.num_textures;
-        GL_CHECK(glDeleteTextures(1, &_handle));
-    }
-    _handle = 0;
+    _handle.release();
 }
 
-GLuint TextureData::ensureHandle() {
-    if (_handle == 0) {
-        GL_CHECK(glGenTextures(1, &_handle));
-        ++glstate.num_textures;
-    }
-    return _handle;
+GLTextureObject& TextureData::ensureHandle() {
+    return _handle.ensure();
 }
 
 void TextureData::bind(uint32 idx, bool set_active_idx) {
     if (set_active_idx)
-        GL_CHECK(glActiveTexture(GL_TEXTURE0 + idx));
+        GL_CALL(glActiveTexture, GL_TEXTURE0 + idx);
     ensureHandle();
-    GL_CHECK(glBindTexture(getGLType(_type, _samples), _handle));
+    GL_CALL(glBindTexture, getGLType(_type, _samples), *_handle);
 }
 
 void TextureData::unbind(uint32 idx, bool set_active_idx) {
     if (set_active_idx)
-        GL_CHECK(glActiveTexture(GL_TEXTURE0 + idx));
-    GL_CHECK(glBindTexture(getGLType(_type, _samples), 0));
+        GL_CALL(glActiveTexture, GL_TEXTURE0 + idx);
+    GL_CALL(glBindTexture, getGLType(_type, _samples), 0);
 }
 
 GLenum TextureData::glType() const {
@@ -70,7 +61,7 @@ GLenum TextureData::glType() const {
 }
 
 void TextureData::type(TextureType ty, size ss) {
-    ASSERT_MSG((ty == _type && ss == _samples) || _handle == 0,
+    ASSERT_MSG((ty == _type && ss == _samples) || *_handle == 0,
                "cannot change type, texture already created");
     _type = ty;
     _samples = ss;

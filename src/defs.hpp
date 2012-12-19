@@ -13,11 +13,13 @@
 #endif
 
 #ifdef CXX11
-#  define OVERRIDE override
-#  define FINAL final
-#else
-#  define OVERRIDE
-#  define FINAL
+#  ifdef CXX11_FINAL_OVERRIDE
+#    define OVERRIDE override
+#    define FINAL final
+#  else
+#    define OVERRIDE
+#    define FINAL
+#  endif
 #endif
 
 #ifdef BUILD_SHARED
