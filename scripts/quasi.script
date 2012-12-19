@@ -1,0 +1,5 @@
+load "default.script"
+
+addShaderPath "programs/quasi/shaders"
+
+bindShader "render" "render.vert" "render.frag" 0 "position"
