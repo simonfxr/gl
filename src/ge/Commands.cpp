@@ -16,7 +16,8 @@ using namespace math;
 namespace {
 
 void runPrintContextInfo(const Event<CommandEvent>& e) {
-    const sf::ContextSettings& c = e.info.engine.window().window().getSettings();
+    ge::GLContextInfo c;
+    e.info.engine.window().contextInfo(c);
     e.info.engine.out()
         << "OpenGL Context Information" << sys::io::endl
         << "  Version:\t" << c.majorVersion << "." << c.minorVersion << sys::io::endl
@@ -182,7 +183,9 @@ void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) 
 }
 
 void runInitGLDebug(const Event<CommandEvent>& e) {
-    if (e.info.engine.window().window().getSettings().debugContext) {
+    ge::GLContextInfo c;
+    e.info.engine.window().contextInfo(c);
+    if (c.debugContext) {
         glt::initDebug();
     } else {
         e.info.engine.out() << "cannot initialize OpenGL debug output: no debug context" << sys::io::endl;

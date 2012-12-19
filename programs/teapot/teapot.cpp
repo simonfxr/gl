@@ -1,4 +1,5 @@
 #include <SFML/Graphics/Image.hpp>
+#include <SFML/Graphics.hpp>
 
 #include "defs.hpp"
 #include "mesh.h"
@@ -238,8 +239,8 @@ void Anim::init(const Event<InitEvent>& e) {
     teapot2.color = glt::color(0xFF, 0x8C, 0x00);
 
     {
-        size w = SIZE(engine.window().window().getSize().x);
-        size h = SIZE(engine.window().window().getSize().y);
+        size w = engine.window().windowWidth();
+        size h = engine.window().windowHeight();
         glt::TextureRenderTarget::Params ps;
         ps.samples = 4;
         ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
@@ -383,8 +384,8 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
 }
 
 void Anim::onWindowResized(const Event<WindowResized>& ev) {
-    size w = SIZE(ev.info.window.window().getSize().x);
-    size h = SIZE(ev.info.window.window().getSize().y);
+    size w = ev.info.window.windowWidth();
+    size h = ev.info.window.windowHeight();
     engine.renderManager().setActiveRenderTarget(0);
     tex_render_target->resize(w, h);
     engine.renderManager().setDefaultRenderTarget(tex_render_target.ptr());

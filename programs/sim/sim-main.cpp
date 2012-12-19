@@ -326,7 +326,7 @@ void Game::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     renderManager.activeRenderTarget()->clear(glt::RT_DEPTH_BUFFER);
     GL_CALL(glEnable, GL_DEPTH_TEST);
 
-    e.window().window().setActive();
+//    e.window().window().setActive();
 
     float dt = interpolation * game_speed * e.gameLoop().frameDuration();
 
@@ -383,8 +383,8 @@ void Game::updateIndirectRendering(bool indirect) {
     if (indirect) {
 
         if (textureRenderTarget == 0) {
-            size w = SIZE(engine->window().window().getSize().x);
-            size h = SIZE(engine->window().window().getSize().y);
+            size w = engine->window().windowWidth();
+            size h = engine->window().windowHeight();
             glt::TextureRenderTarget::Params ps;
             ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
             textureRenderTarget = new glt::TextureRenderTarget(w, h, ps);
@@ -403,8 +403,8 @@ void Game::updateIndirectRendering(bool indirect) {
 }
 
 void Game::resizeRenderTargets() {
-    size width = SIZE(engine->window().window().getSize().x);
-    size height = SIZE(engine->window().window().getSize().y);
+    size width = engine->window().windowWidth();
+    size height = engine->window().windowHeight();
 
     if (indirect_rendering) {
 

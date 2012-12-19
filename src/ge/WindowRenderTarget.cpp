@@ -9,7 +9,8 @@ namespace ge {
 namespace {
 
 uint32 buffersOf(GameWindow& win) {
-    const sf::ContextSettings& cs = win.window().getSettings();
+    GLContextInfo cs;
+    win.contextInfo(cs);
     uint32 bs = glt::RT_COLOR_BUFFER;
     if (cs.depthBits > 0)
         bs |= glt::RT_DEPTH_BUFFER;
@@ -21,25 +22,24 @@ uint32 buffersOf(GameWindow& win) {
 } // namespace anon
 
 WindowRenderTarget::WindowRenderTarget(GameWindow& w) :
-    RenderTarget(SIZE(w.window().getSize().x), SIZE(w.window().getSize().y),
+    RenderTarget(SIZE(w.windowWidth()), SIZE(w.windowHeight()),
                  buffersOf(w)),
     window(w)
 {}
 
 void WindowRenderTarget::resized() {
-    updateSize(SIZE(window.window().getSize().x), SIZE(window.window().getSize().y));
+    updateSize(SIZE(window.windowWidth()), SIZE(window.windowHeight()));
 }
 
 void WindowRenderTarget::doActivate() {
-    window.window().setActive();
+    window.setActive();
     GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, 0);
 }
 
 void WindowRenderTarget::doDraw() {
-    window.window().display();
+    window.swapBuffers();
     if (window.vsync())
-        GL_CALL(glFinish, );
+        GL_CALL(glFinish);
 }
 
 } // namespace ge
-
