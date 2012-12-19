@@ -7,7 +7,7 @@ namespace ge {
 
 struct Engine;
 
-struct GE_API Timer {
+struct Timer {
 
     enum State {
         Inactive,

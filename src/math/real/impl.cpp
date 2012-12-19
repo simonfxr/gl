@@ -5,13 +5,17 @@
 #  define MATH_CIMPORT(...)
 #  define MATH_CFUNC(f) ::f
 #else
-#  define MATH_CIMPORT(...) extern "C" __VA_ARGS__ ATTRS(ATTR_NOTHROW)
+#  ifdef SYSTEM_WINDOWS
+#    define MATH_CIMPORT(...) extern "C" __VA_ARGS__ ATTRS(ATTR_NOTHROW)
+#  else
+#    define MATH_CIMPORT(...) extern "C" __VA_ARGS__ ATTRS(ATTR_NOTHROW)
+#  endif
 #  define MATH_CFUNC(f) ::math::cmath::f
 #endif
 
 MATH_BEGIN_NAMESPACE
 
-#if NO_MATH_H
+#ifdef NO_MATH_H
 
 namespace cmath {
 
@@ -24,7 +28,9 @@ MATH_CIMPORT(float acosf(float));
 MATH_CIMPORT(float atanf(float));
 MATH_CIMPORT(float atan2f(float, float));
 MATH_CIMPORT(float fmodf(float, float));
-MATH_CIMPORT(float fabsf(float));
+#ifndef SYSTEM_WINDOWS
+  MATH_CIMPORT(float fabsf(float));
+#endif
 MATH_CIMPORT(float powf(float, float));
 MATH_CIMPORT(float floorf(float));
 
@@ -88,7 +94,11 @@ real cotan(real rad) {
 }
 
 real abs(real x) {
+#ifdef SYSTEM_WINDOWS
+    return x < real(0) ? - x : x;
+#else
     return MATH_CFUNC(fabsf)(x);
+#endif
 }
 
 real length(real x) {
