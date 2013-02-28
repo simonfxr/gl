@@ -126,7 +126,7 @@ if(USE_NO_MATH_H)
 endif()
 
 if(BUILD_DEBUG AND COMP_CLANG)
-  add_definitions(-ftrapv -fcatch-undefined-behavior)
+#  add_definitions(-ftrapv -fcatch-undefined-behavior)
 endif()
 
 if(COMP_GCCLIKE)
