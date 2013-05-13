@@ -50,6 +50,11 @@ vec2_t operator /(const vec2_t& v, real a) {
     return v * math::recip(a);
 }
 
+vec2_t operator /(const vec2_t& v, const vec2_t& a) {
+    return v * math::recip(a);
+}
+
+
 vec2_t& operator +=(vec2_t& v, const vec2_t& a) {
     return v = v + a;
 }
@@ -130,6 +135,10 @@ vec2_t max(const vec2_t& a, const vec2_t& b) {
 
 real sum(const vec2_t& a) {
     return a[0] + a[1];
+}
+
+vec2_t recip(const vec2_t& a) {
+    return vec2(real(1) / a[0], real(1) / a[1]);
 }
 
 vec2_t linearInterpolate(const vec2_t& a, const vec2_t& b, real t) {
