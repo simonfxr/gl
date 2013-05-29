@@ -92,10 +92,10 @@ void CommandPrettyPrinter::print(const KeyBinding& bind) {
         const Key& k = bind[i];
         char pre = 0;
         switch (k.state) {
-        case Up: pre = '!'; break;
-        case Down: pre = 0; break;
-        case Pressed: pre = '+'; break;
-        case Released: pre = '-'; break;
+        case keystate::Up: pre = '!'; break;
+        case keystate::Down: pre = 0; break;
+        case keystate::Pressed: pre = '+'; break;
+        case keystate::Released: pre = '-'; break;
         }
                 
         if (pre != 0)

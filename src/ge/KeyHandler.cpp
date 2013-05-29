@@ -87,6 +87,13 @@ void KeyHandler::keyReleased(KeyCode code) {
         self->states[idx] = State(false, self->frame_id);
 }
 
+void KeyHandler::keyEvent(Key key) {
+    if (key.state == keystate::Pressed)
+        keyPressed(key.code);
+    else if (key.state == keystate::Released)
+        keyReleased(key.code);
+}
+
 void KeyHandler::clearStates() {
     memset(self->states, 0, sizeof self->states);
     self->frame_id = 1;
@@ -98,9 +105,9 @@ KeyState KeyHandler::keyState(KeyCode code) {
     State state = self->states[idx];
 
     if (state.timestamp == self->frame_id)
-        return state.down ? Pressed : Released;
+        return state.down ? keystate::Pressed : keystate::Released;
     else
-        return state.down ? Down : Up;
+        return state.down ? keystate::Down : keystate::Up;
 }
 
 void KeyHandler::registerBinding(const Ref<KeyBinding>& binding, const Ref<Command>& comm) {

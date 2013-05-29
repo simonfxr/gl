@@ -2,6 +2,7 @@
 #include <limits>
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Window/Event.hpp>
 
 #include "defs.hpp"
 #include "math/real.hpp"
@@ -14,6 +15,18 @@ namespace ge {
 
 
 namespace {
+
+KeyCode fromSFML(sf::Keyboard::Key key);
+
+KeyCode fromSFML(sf::Mouse::Button button);
+
+KeyCode fromSFML(sf::Keyboard::Key key) {
+    return static_cast<KeyCode>(key);
+}
+
+KeyCode fromSFML(sf::Mouse::Button button) {
+    return KeyCode(int32(button) + int32(keycode::KeyCount) + 1);
+}
 
 static void resizeRenderTarget(const Event<WindowResized>& e) {
     e.info.window.renderTarget().resized();
@@ -83,6 +96,12 @@ struct GameWindow::Data {
 };
 
 void GameWindow::Data::init(const WindowOptions& opts) {
+
+    
+    ASSERT(int(keycode::KeyCount) == int(sf::Keyboard::KeyCount));
+    ASSERT(int(keycode::Count) - int(keycode::KeyCount) - 1 == int(sf::Mouse::ButtonCount));
+
+    
     ASSERT(renderTarget == 0);
     renderTarget = new WindowRenderTarget(self);
     win->setActive();
@@ -146,14 +165,16 @@ void GameWindow::Data::handleInputEvents() {
             new_h = SIZE(e.size.height);
             break;
             
-        case sf::Event::KeyPressed:
-            events.keyChanged.raise(makeEvent(KeyChanged(self, true, e.key)));
+        case sf::Event::KeyPressed: {
+            Key key = Key::make(keystate::Pressed, fromSFML(e.key.code));
+            events.keyChanged.raise(makeEvent(KeyChanged(self, key)));
             break;
-            
-        case sf::Event::KeyReleased:
-            events.keyChanged.raise(makeEvent(KeyChanged(self, false, e.key)));
+        }
+        case sf::Event::KeyReleased: {
+            Key key = Key::make(keystate::Released, fromSFML(e.key.code));
+            events.keyChanged.raise(makeEvent(KeyChanged(self, key)));
             break;
-            
+        }
         case sf::Event::MouseMoved:
             mouse_x = index16(e.mouseMove.x);
             mouse_y = index16(e.mouseMove.y);
@@ -173,18 +194,20 @@ void GameWindow::Data::handleInputEvents() {
             
             break;
             
-        case sf::Event::MouseButtonPressed:
+        case sf::Event::MouseButtonPressed: {
             mouse_x = index16(e.mouseButton.x);
             mouse_y = index16(e.mouseButton.y);
-            events.mouseButton.raise(makeEvent(MouseButton(self, true, mouse_x, mouse_y, e.mouseButton)));
+            Key button = Key::make(keystate::Pressed, fromSFML(e.mouseButton.button));
+            events.mouseButton.raise(makeEvent(MouseButton(self, mouse_x, mouse_y, button)));
             break;
-
-        case sf::Event::MouseButtonReleased:
+        }
+        case sf::Event::MouseButtonReleased: {
             mouse_x = index16(e.mouseButton.x);
             mouse_y = index16(e.mouseButton.y);
-            events.mouseButton.raise(makeEvent(MouseButton(self, false, mouse_x, mouse_y, e.mouseButton)));
+            Key button = Key::make(keystate::Released, fromSFML(e.mouseButton.button));
+            events.mouseButton.raise(makeEvent(MouseButton(self, mouse_x, mouse_y, button)));
             break;
-            
+        }
         case sf::Event::LostFocus:
             
             if (have_focus) {

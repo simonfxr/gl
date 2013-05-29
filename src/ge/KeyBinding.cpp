@@ -14,14 +14,6 @@ struct StaticInit {
 
 static const StaticInit global;
 
-KeyCode fromSFML(sf::Keyboard::Key key) {
-    return static_cast<KeyCode>(key);
-}
-
-KeyCode fromSFML(sf::Mouse::Button button) {
-    return KeyCode(int32(button) + int32(keycode::KeyCount) + 1);
-}
-
 const char *keycodeStrings(KeyCode code) {
 #define K(k) case keycode::k: return #k
     switch (code) {
@@ -176,4 +168,3 @@ int compareKeyBinding(const KeyBinding& x, const KeyBinding& y) {
 }
 
 } // namespace ge
-

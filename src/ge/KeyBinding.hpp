@@ -3,18 +3,23 @@
 
 #include "ge/conf.hpp"
 #include "data/Array.hpp"
-#include <SFML/Window/Event.hpp>
 
 namespace ge {
 
 using namespace defs;
 
+namespace keystate {
+
 enum KeyState {
     Pressed  = 3,  // 0011
     Down     = 1,  // 0001
     Up       = 4,  // 0100
-    Released = 12 // 1100
+    Released = 12  // 1100
 };
+
+} // namespace keystate
+
+typedef keystate::KeyState KeyState;
 
 namespace keycode {
 
@@ -140,13 +145,16 @@ typedef keycode::KeyCode KeyCode;
 struct Key {
     KeyState state;
     KeyCode code;
+
+    static Key make(KeyState s, KeyCode c) {
+        Key key;
+        key.state = s;
+        key.code = c;
+        return key;
+    }
 };
 
 typedef Array<Key> KeyBinding;
-
-GE_API KeyCode fromSFML(sf::Keyboard::Key key);
-
-GE_API KeyCode fromSFML(sf::Mouse::Button button);
 
 GE_API const char *prettyKeyCode(KeyCode code);
 

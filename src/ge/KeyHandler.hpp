@@ -28,6 +28,8 @@ struct GE_API KeyHandler {
     
     void keyReleased(KeyCode code);
 
+    void keyEvent(Key key);
+
     void clearStates();
 
     KeyState keyState(KeyCode code);

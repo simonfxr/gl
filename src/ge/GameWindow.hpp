@@ -130,10 +130,9 @@ struct GE_API WindowResized : public WindowEvent {
 };
 
 struct GE_API KeyChanged : public WindowEvent {
-    sf::Event::KeyEvent key;
-    bool pressed;
-    KeyChanged(GameWindow& win, bool press, const sf::Event::KeyEvent& e) :
-        WindowEvent(win), key(e), pressed(press) {}
+    Key key;
+    KeyChanged(GameWindow& win, const Key& k) :
+        WindowEvent(win), key(k) {}
 };
 
 struct GE_API MouseMoved : public WindowEvent {
@@ -146,12 +145,12 @@ struct GE_API MouseMoved : public WindowEvent {
 
 struct GE_API MouseButton : public WindowEvent {
     index16 x, y;
-    bool pressed;
-    sf::Event::MouseButtonEvent button;
-    MouseButton(GameWindow& win, bool press, index16 _x, index16 _y, const sf::Event::MouseButtonEvent& butn) :
+    Key button;
+    
+    MouseButton(GameWindow& win, index16 _x, index16 _y, const Key& butn) :
         WindowEvent(win),
         x(_x), y(_y),
-        pressed(press), button(butn) {}
+        button(butn) {}
 };
 
 struct GE_API FocusChanged : public WindowEvent {

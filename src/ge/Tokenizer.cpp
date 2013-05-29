@@ -126,15 +126,15 @@ State parseKeycombo(ParseState& s, CommandArg& tok) {
         skipSpace(s);
         Key k;
         if (s.c == '!')
-            k.state = Up;
+            k.state = keystate::Up;
         else if (s.c == '+')
-            k.state = Pressed;
+            k.state = keystate::Pressed;
         else if (s.c == '-')
-            k.state = Released;
+            k.state = keystate::Released;
         else
-            k.state = Down;
+            k.state = keystate::Down;
 
-        if (k.state != Down) {
+        if (k.state != keystate::Down) {
             getch(s); skipSpace(s);
         }
 
