@@ -17,6 +17,7 @@ struct Engine::Data : public GameLoop::Game {
     CommandProcessor commandProcessor;
     KeyHandler keyHandler;
     ReplServer replServer;
+    bool skipRender;
 
     sys::io::OutStream *out;
 
@@ -121,6 +122,8 @@ int32 Engine::run(const EngineOptions& opts) {
 #endif
     }
 
+    self->skipRender = opts.disableRender;
+
     std::string wd = opts.workingDirectory;
     if (opts.workingDirectory.empty() && opts.defaultCD)
         wd = sys::fs::dirname(opts.binary);
@@ -131,12 +134,6 @@ int32 Engine::run(const EngineOptions& opts) {
             return 1;
         }
     }
-
-#ifdef SYSTEM_WINDOWS
-    if (!sys::fs::cwd("Z:/dev/gl")) {
-        ERR("couldnt change into Z:/dev/gl");
-    }
-#endif
 
     for (uint32 i = 0; i < opts.scriptDirs.size(); ++i) {
         if (!commandProcessor().addScriptDirectory(opts.scriptDirs[i])) {
@@ -190,7 +187,6 @@ int32 Engine::run(const EngineOptions& opts) {
         }
     }
 
-    
     if (!runInit(opts.inits.init, initEv))
         return 1;
 
@@ -213,9 +209,13 @@ void Engine::Data::tick() {
 
 void Engine::Data::render(float interpolation) {
     events.beforeRender.raise(makeEvent(RenderEvent(theEngine, interpolation)));
-    renderManager.beginScene();
-    events.render.raise(makeEvent(RenderEvent(theEngine, interpolation)));
-    renderManager.endScene();
+    if (!skipRender) {
+        glt::printGLTrace(_CURRENT_LOCATION_OP("BEGIN SCENE"));
+        renderManager.beginScene();
+        events.render.raise(makeEvent(RenderEvent(theEngine, interpolation)));
+        renderManager.endScene();
+        glt::printGLTrace(_CURRENT_LOCATION_OP("END SCENE"));
+    }
     events.afterRender.raise(makeEvent(RenderEvent(theEngine, interpolation)));
 }
 

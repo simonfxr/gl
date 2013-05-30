@@ -48,7 +48,7 @@ int32 GameLoop::run(GameLoop::Game& logic) {
     do {
         
         const float tick_length      = 1.f / float(_ticks_per_second);
-        const float draw_tick_length = _sync || _max_fps == 0 ? 0.f : 1.f / float(_max_fps);
+        const float draw_tick_length = (_sync || _max_fps == 0) ? 0.f : 1.f / float(_max_fps);
         const index loops_max       = _sync ? 1 : _max_frame_skip == 0 ? 0xFFFFFF : _max_frame_skip;
         const bool syncDraw = _sync;
 

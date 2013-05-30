@@ -40,7 +40,7 @@ struct Anim {
 void Anim::init(const ge::Event<ge::InitEvent>& ev) {
 
     engine.gameLoop().ticksPerSecond(1000);
-    engine.gameLoop().maxFPS(60);
+    engine.gameLoop().maxFPS(59);
     
     engine.window().showMouseCursor(true);
 
@@ -69,7 +69,7 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     p1.radius = 0.05f;
     p2.radius = 0.05f;
 
-    p1.color  = p2.color = glt::color(0xFF, 0, 0);
+    p1.color = p2.color = vec4(1, 0, 0, 1);
     p1.position = vec2(simulation.x1, 0);
 
     real sin_phi, cos_phi;

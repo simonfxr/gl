@@ -3,6 +3,7 @@
 
 #include "ge/Engine.hpp"
 #include "math/vec2.hpp"
+#include "math/vec4.hpp"
 #include "glt/color.hpp"
 
 #include "glt/Mesh.hpp"
@@ -22,7 +23,8 @@ struct ParticleRenderer {
     struct Particle {
         math::vec2_t position;
         math::real radius;
-        glt::color color;
+        math::real __padding;
+        math::vec4_t color;
     };
 
     bool init(ge::Engine*, const Opts&);
@@ -41,14 +43,26 @@ DEFINE_VERTEX_DESC(Vertex2D, VERTEX_ATTR(Vertex2D, position));
 
 DEF_SHADER(PARTICLE_VERTEX_SHADER,
   uniform mat4 mvpMatrix;
+  uniform sampler1D instanceData;
+           
   in vec2 position;
+  out vec4 color;
+           
   void main() {
-      gl_Position = mvpMatrix * vec4(position, 0, 1);
+
+      vec4 data1 = texelFetch(instanceData, gl_InstanceID * 2, 0);
+      vec4 data2 = texelFetch(instanceData, gl_InstanceID * 2, 0);
+
+      vec2 center = data1.xy;
+      float radius = data1.z;
+      color = data2.rgba;
+
+      gl_Position = mvpMatrix * vec4(position * vec2(radius) + center, 0, 1);
   } 
 );
 
 DEF_SHADER(PARTICLE_FRAGMENT_SHADER,
-  uniform vec4 color;
+  in vec4 color;
   out vec4 fragColor;
   void main() {
       fragColor = color;
@@ -73,7 +87,6 @@ bool ParticleRenderer::init(ge::Engine *e, const ParticleRenderer::Opts& opts) {
     this->circle_mesh = makeRef(new glt::Mesh<Vertex2D>());
     this->circle_mesh->primType(GL_TRIANGLE_FAN);
 
-
     Vertex2D vertex;
     vertex.position = math::vec2(0.f);
     this->circle_mesh->addVertex(vertex);
@@ -93,27 +106,26 @@ bool ParticleRenderer::init(ge::Engine *e, const ParticleRenderer::Opts& opts) {
 
 void ParticleRenderer::renderParticles(const ge::Event<ge::RenderEvent>& ev, defs::size n, const ParticleRenderer::Particle *ps) {
 
+    glt::TextureSampler particle_sampler(makeRef(new glt::TextureData(glt::Texture1D)));
+    
+    particle_sampler.filterMode(glt::TextureSampler::FilterNearest);
+    particle_sampler.clampMode(glt::TextureSampler::ClampRepeat);
+    particle_sampler.bind(0);
+    GL_CALL(glTexImage1D, GL_TEXTURE_1D, 0, GL_RGBA32F, n * 2, 0, GL_RGBA, GL_FLOAT, ps);
     ASSERT(this->shader->validate());
     this->shader->use();
 
     glt::RenderManager& rm = ev.info.engine.renderManager();
     glt::GeometryTransform& gt = rm.geometryTransform();
+    glt::SavePoint sp(gt.save());
+
+    gt.scale(vec3(recip(this->opts.world_size[0]), recip(this->opts.world_size[1]), real(1.f)));
+
+    glt::Uniforms us(*this->shader);
+    us.optional("mvpMatrix", gt.mvpMatrix());
+    us.optional("instanceData", glt::Sampler(particle_sampler, 0));
     
-
-    for (defs::index i = 0; i < n; ++i) {
-        const Particle& p = ps[i];
-        glt::SavePoint sp(gt.save());
-
-        vec2_t orig = p.position / this->opts.world_size;
-        gt.translate(vec3(orig[0], orig[1], 0));
-        gt.scale(math::vec3(p.radius));
-
-        glt::Uniforms us(*this->shader);
-        us.optional("mvpMatrix", gt.mvpMatrix());
-        us.optional("color", p.color);
-
-        this->circle_mesh->draw();        
-    }
+    this->circle_mesh->drawInstanced(n);        
 }
 
 #endif
