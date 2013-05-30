@@ -50,13 +50,13 @@ struct ScreenVertex {
 };
 
 DEFINE_VERTEX_DESC(Vertex,
-                    VERTEX_ATTR(Vertex, position),
-                    VERTEX_ATTR(Vertex, normal));
+                   VERTEX_ATTR(Vertex, position),
+                   VERTEX_ATTR(Vertex, normal));
 
 DEFINE_VERTEX_DESC(Vertex2,
-                    VERTEX_ATTR(Vertex2, position),
-                    VERTEX_ATTR(Vertex2, normal),
-                    VERTEX_ATTR(Vertex2, texCoord));
+                   VERTEX_ATTR(Vertex2, position),
+                   VERTEX_ATTR(Vertex2, normal),
+                   VERTEX_ATTR(Vertex2, texCoord));
 
 DEFINE_VERTEX_DESC(ScreenVertex,
                    VERTEX_ATTR(ScreenVertex, position),
@@ -480,7 +480,7 @@ void Anim::renderTable(const std::string& shader) {
     gt.dup();
 
     GL_CALL(glActiveTexture, GL_TEXTURE0);
-    woodTexture.bind();
+    sf::Texture::bind(&woodTexture);
 
     vec4_t color = glt::color(0xcd, 0x85, 0x3f).vec4();
     MaterialProperties mat;
@@ -536,7 +536,7 @@ void Anim::mouseMoved(const Event<MouseMoved>& e) {
 
     dx = - dx;
 
-    if (engine.keyHandler().keyState(ge::keycode::M) <= Pressed) {
+    if (engine.keyHandler().keyState(ge::keycode::M) <= keystate::Pressed) {
         teapot1.frame.rotateWorld(-dx * 0.001f, camera.frame.localY());
         teapot1.frame.rotateWorld(dy * 0.001f, camera.frame.localX());
         e.abort = true;        
