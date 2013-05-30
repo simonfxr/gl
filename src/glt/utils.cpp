@@ -267,7 +267,8 @@ void printGLError(const err::Location& loc, GLenum err) {
 }
 
 void printGLTrace(const err::Location& loc) {
-    sys::io::stdout() << "OPENGL " << loc.operation << " " << loc.file << ":" << loc.line << sys::io::endl;
+    if (print_opengl_calls)
+        sys::io::stdout() << "OPENGL " << loc.operation << " " << loc.file << ":" << loc.line << sys::io::endl;
 }
 
 bool checkForGLError(const err::Location& loc) {

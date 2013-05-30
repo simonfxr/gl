@@ -10,14 +10,18 @@
 #include <string>
 
 #ifdef GLDEBUG
+#define GL_TRACE(msg) do {                                              \
+        ::glt::printGLTrace(_CURRENT_LOCATION_OP(msg));                 \
+    } while(0)
 #define GL_CHECK(op) do {                                       \
         (op);                                                   \
-        ::glt::checkForGLError(_CURRENT_LOCATION_OP(#op));    \
+        ::glt::checkForGLError(_CURRENT_LOCATION_OP(#op));      \
     } while (0)
 #define GL_CHECK_ERRORS() ::glt::checkForGLError(_CURRENT_LOCATION)
 #else
 #define GL_CHECK(op) UNUSED(op)
 #define GL_CHECK_ERRORS() UNUSED(0)
+#define GL_TRACE(loc)
 #endif
 
 #define GL_CALL(fn, ...) GL_CHECK(fn(__VA_ARGS__))

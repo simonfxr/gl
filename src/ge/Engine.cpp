@@ -210,11 +210,11 @@ void Engine::Data::tick() {
 void Engine::Data::render(float interpolation) {
     events.beforeRender.raise(makeEvent(RenderEvent(theEngine, interpolation)));
     if (!skipRender) {
-        glt::printGLTrace(_CURRENT_LOCATION_OP("BEGIN SCENE"));
+        GL_TRACE("BEGIN_SCENE");
         renderManager.beginScene();
         events.render.raise(makeEvent(RenderEvent(theEngine, interpolation)));
         renderManager.endScene();
-        glt::printGLTrace(_CURRENT_LOCATION_OP("END SCENE"));
+        GL_TRACE("END_SCENE");
     }
     events.afterRender.raise(makeEvent(RenderEvent(theEngine, interpolation)));
 }
