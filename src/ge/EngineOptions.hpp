@@ -30,6 +30,7 @@ struct GE_API EngineOptions {
     WindowOptions window;
     Mode mode;
     bool traceOpenGL;
+    bool disableRender;
 
     mutable EngineInitializers inits;
 

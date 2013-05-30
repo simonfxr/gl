@@ -28,7 +28,8 @@ enum OptionCase {
     GLTrace,
     AASamples,
     VSync,
-    GlewExp
+    GlewExp,
+    DisableRender
 };
 
 struct Option {
@@ -53,7 +54,8 @@ const Option OPTIONS[] = {
     { "--gl-trace", "BOOL", GLTrace, "print every OpenGL call: yes|no" },
     { "--aa-samples", "NUM", AASamples, "set the number of FSAA Samples" },
     { "--vsync", "BOOL", VSync, "enable vertical sync: yes|no" },
-    { "--glew-experimental", "BOOL", GlewExp, "set the glewExperimental flag: yes|no" }
+    { "--glew-experimental", "BOOL", GlewExp, "set the glewExperimental flag: yes|no" },
+    { "--disable-render", "BOOL", DisableRender, "disable calling the renderfunction" }
 };
 
 struct State {
@@ -178,6 +180,12 @@ bool State::option(OptionCase opt, const char *arg) {
         }
         glewExperimental = glt::gl_bool(yesno);
         return true;
+    case DisableRender:
+        if (!parse_bool(arg, options.disableRender)) {
+            CMDWARN("--disable-render: not a boolean option");
+            return false;
+        }
+        return true;
     default:
         FATAL_ERR("unhandled option_case");
         return false;
@@ -195,10 +203,11 @@ EngineOptions::EngineOptions() :
     scriptDirs(),
     window(),
     mode(Animate),
-    traceOpenGL(false)
+    traceOpenGL(false),
+    disableRender(false)
 {
     window.settings.majorVersion = 4;
-    window.settings.minorVersion = 4;
+    window.settings.minorVersion = 9;
 #ifdef GLDEBUG
     window.settings.debugContext = true;
 #endif

@@ -32,6 +32,8 @@ MATH_FUNC vec2_t operator *(const vec2_t& a, const vec2_t& b) PURE_FUNC;
 
 MATH_FUNC vec2_t operator /(const vec2_t& v, real a) PURE_FUNC;
 
+MATH_FUNC vec2_t operator /(const vec2_t& v, const vec2_t& a) PURE_FUNC;
+
 MATH_FUNC vec2_t& operator +=(vec2_t& v, const vec2_t& a) MUT_FUNC;
 
 MATH_FUNC vec2_t& operator -=(vec2_t& v, const vec2_t& a) MUT_FUNC;
@@ -71,6 +73,8 @@ MATH_FUNC vec2_t min(const vec2_t& a, const vec2_t& max) PURE_FUNC;
 MATH_FUNC vec2_t max(const vec2_t& a, const vec2_t& max) PURE_FUNC;
 
 MATH_FUNC real sum(const vec2_t& a) PURE_FUNC;
+
+MATH_FUNC vec2_t recip(const vec2_t& a) PURE_FUNC;
 
 MATH_FUNC vec2_t linearInterpolate(const vec2_t& a, const vec2_t& b, real t) PURE_FUNC;
 
