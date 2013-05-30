@@ -125,9 +125,9 @@ if(USE_NO_MATH_H)
   add_definitions(-DNO_MATH_H=1)
 endif()
 
-# if(BUILD_DEBUG AND COMP_CLANG)
-#   add_definitions(-ftrapv -fcatch-undefined-behavior)
-# endif()
+if(BUILD_DEBUG AND COMP_CLANG)
+#  add_definitions(-ftrapv -fcatch-undefined-behavior)
+endif()
 
 if(COMP_GCCLIKE)
   add_definitions(-Wall)
