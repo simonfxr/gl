@@ -91,7 +91,7 @@ def_lib(glt SOURCES ${GLT_SRC} DEPEND ${VEC_LIB} sys LIB_DEPEND ${GLT_LIBS})
 
 set(GE_SRC
   ge/GameLoop.cpp
-  ge/GameWindow.cpp
+  ge/GameWindowGLFW.cpp
   ge/WindowRenderTarget.cpp
   ge/Engine.cpp
   ge/EngineOptions.cpp
