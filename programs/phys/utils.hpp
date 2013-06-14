@@ -51,7 +51,7 @@ DEF_SHADER(PARTICLE_VERTEX_SHADER,
   void main() {
 
       vec4 data1 = texelFetch(instanceData, gl_InstanceID * 2, 0);
-      vec4 data2 = texelFetch(instanceData, gl_InstanceID * 2, 0);
+      vec4 data2 = texelFetch(instanceData, gl_InstanceID * 2 + 1, 0);
 
       vec2 center = data1.xy;
       float radius = data1.z;

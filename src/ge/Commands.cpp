@@ -160,6 +160,7 @@ void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) 
     for (; i + 1 < args.size() && args[i].type == Integer && args[i + 1].type == String; i += 2) {
         if (args[i].integer < 0) {
             ERR(e.info.engine.out(), "bindShader: negative index");
+            return;
         }
         if (!prog->bindAttribute(*args[i + 1].string, GLuint(args[i].integer))) {
             ERR(e.info.engine.out(), "bindShader: couldnt bind attribute");
