@@ -86,11 +86,96 @@ static void resizeRenderTarget(const Event<WindowResized>& e) {
 }
 
 static KeyCode convertGLFWKey(int key) {
-    return keycode::A;
+
+    if (GLFW_KEY_A <= key && key <= GLFW_KEY_Z)
+        return keycode::KeyCode(key - GLFW_KEY_A + int(keycode::A));
+    if (GLFW_KEY_0 <= key && key <= GLFW_KEY_9)
+        return keycode::KeyCode(key - GLFW_KEY_0 + int(keycode::Num0));
+    if (GLFW_KEY_KP_0 <= key && key <= GLFW_KEY_KP_9)
+        return keycode::KeyCode(key - GLFW_KEY_KP_0 + int(keycode::Numpad0));
+    if (GLFW_KEY_F1 <= key && key <= GLFW_KEY_F15)
+        return keycode::KeyCode(key - GLFW_KEY_F1 + int(keycode::F1));
+    if (GLFW_KEY_F16 <= key && key <= GLFW_KEY_F25) {
+        ERR("invalid function key > F15 pressed");
+        return keycode::Space;
+    }
+
+#define K(a, b) case GLFW_KEY_##a: return keycode::b; break
+
+    switch (key) {
+        K(SPACE, Space);
+        K(APOSTROPHE, Quote);
+        K(COMMA, Comma);
+        K(MINUS, Dash);
+        K(PERIOD, Period);
+        K(SLASH, Slash);
+        K(SEMICOLON, SemiColon);
+        K(EQUAL, Equal);
+        K(LEFT_BRACKET, LBracket);
+        K(BACKSLASH, BackSlash);
+        K(RIGHT_BRACKET, RBracket);
+        K(GRAVE_ACCENT, Tilde); // TODO: add key
+        K(WORLD_1, Tilde);      // TODO: add key
+        K(WORLD_2, Tilde);      // TODO: add key
+        K(ESCAPE, Escape);
+        K(ENTER, Return);
+        K(TAB, Tab);
+        K(BACKSPACE, Back);
+        K(INSERT, Insert);
+        K(DELETE, Delete);
+        K(RIGHT, Right);
+        K(LEFT, Left);
+        K(DOWN, Down);
+        K(UP, Up);
+        K(PAGE_UP, PageUp);
+        K(PAGE_DOWN, PageDown);
+        K(HOME, Home);
+        K(END, End);
+        K(CAPS_LOCK, Tilde);    // TODO: add key
+        K(SCROLL_LOCK, Tilde);  // TODO: add key
+        K(NUM_LOCK, Tilde);     // TODO: add key
+        K(PRINT_SCREEN, Tilde); // TODO: add key
+        K(PAUSE, Pause);
+        K(KP_DECIMAL, Period);
+        K(KP_DIVIDE, Slash);
+        K(KP_MULTIPLY, Multiply);
+        K(KP_SUBTRACT, Dash);
+        K(KP_ADD, Add);
+        K(KP_ENTER, Return);
+        K(KP_EQUAL, Equal);
+        K(LEFT_SHIFT, LShift);
+        K(LEFT_CONTROL, LControl);
+        K(LEFT_ALT, LAlt);
+        K(LEFT_SUPER, LSystem);
+        K(RIGHT_SHIFT, RShift);
+        K(RIGHT_CONTROL, RControl);
+        K(RIGHT_ALT, RAlt);
+        K(RIGHT_SUPER, RSystem);
+        K(MENU, Menu);
+    default:
+        ERR("invalid key");
+        return keycode::Tilde;
+    }
+
+#undef K
 }
 
 static KeyCode convertGLFWMouseButton(int button) {
-    return keycode::A;
+#define B(a, b) case GLFW_MOUSE_BUTTON_##a: return keycode::b; break
+    switch (button) {
+        B(1, MLeft);
+        B(2, MRight);
+        B(3, MMiddle);
+        B(4, MXButton1);
+        B(5, MXButton2);
+        B(6, MXButton1);
+        B(7, MXButton2);
+        B(8, MXButton1);
+    default:
+        ERR("invalid button");
+        return keycode::MXButton1;
+    }
+#undef B
 }
 
 } // namespace anon

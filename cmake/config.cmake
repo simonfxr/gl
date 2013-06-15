@@ -202,7 +202,4 @@ include_directories(${GLEW_INCLUDE_PATH})
 #   add_definitions(-DGLEW_STATIC)
 # endif()
 
-find_package(SFML 2 COMPONENTS system window graphics REQUIRED)
-
-include_directories(${SFML_INCLUDE_DIR})
-link_libraries(glfw)
+find_package(glfw REQUIRED)
