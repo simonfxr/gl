@@ -32,6 +32,8 @@ struct GameWindow::Data {
 
     WindowEvents events;
 
+    GLContextInfo context_info;
+
     struct EventState {
         index16 mouse_current_x, mouse_current_y;
         bool was_resize;
@@ -189,10 +191,18 @@ GLFWwindow *GameWindow::Data::makeWindow(const WindowOptions& opts) {
     glfwSetErrorCallback(Data::glfw_error_callback);
 
     glfwWindowHint(GLFW_SAMPLES, opts.settings.antialiasingLevel);
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, opts.settings.majorVersion);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, opts.settings.minorVersion);
+
+    int profile;
+    if (opts.settings.majorVersion > 3 ||
+        (opts.settings.majorVersion == 3 && opts.settings.minorVersion >= 2))
+        profile = opts.settings.coreProfile ? GLFW_OPENGL_CORE_PROFILE : GLFW_OPENGL_COMPAT_PROFILE;
+    else
+        profile = GLFW_OPENGL_ANY_PROFILE;
+    glfwWindowHint(GLFW_OPENGL_PROFILE, profile);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, opts.settings.debugContext ? GL_TRUE : GL_FALSE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, opts.settings.coreProfile ? GLFW_OPENGL_CORE_PROFILE : GLFW_OPENGL_COMPAT_PROFILE);
 
     GLFWwindow *win = glfwCreateWindow(opts.width, opts.height, opts.title.c_str(), NULL, NULL);
     return win;
@@ -204,6 +214,7 @@ GameWindow::Data *GameWindow::Data::getUserPointer(GLFWwindow *w) {
 }
 
 void GameWindow::Data::glfw_error_callback(int error, const char *desc) {
+    UNUSED(error);
     ERR("GLFW error: " + std::string(desc));
 }
 
@@ -220,6 +231,7 @@ void GameWindow::Data::glfw_window_close_callback(GLFWwindow *win) {
 }
 
 void GameWindow::Data::glfw_window_refresh_callback(GLFWwindow *win) {
+    UNUSED(win);
     // NOOP
 }
 
@@ -251,15 +263,18 @@ void GameWindow::Data::glfw_window_focus_callback(GLFWwindow *win, int focus_gai
 }
 
 void GameWindow::Data::glfw_window_pos_callback(GLFWwindow *win, int x, int y) {
+    UNUSED(win); UNUSED(x); UNUSED(y);
     // NOOP
 }
 
 void GameWindow::Data::glfw_window_iconify_callback(GLFWwindow *win, int iconified) {
-
+    UNUSED(win); UNUSED(iconified);
+    // NOOP
 }
 
 void GameWindow::Data::glfw_framebuffer_size_callback(GLFWwindow *win, int w, int h) {
-    
+    UNUSED(win); UNUSED(w); UNUSED(h);
+    // NOOP
 }
 
 // static void GameWindow::Data::glfw_char_callback(GLFWwindow *win, unsigned int codepoint) {
@@ -290,6 +305,7 @@ void GameWindow::Data::glfw_cursor_pos_callback(GLFWwindow *win, double x, doubl
 }
 
 void GameWindow::Data::glfw_key_callback(GLFWwindow *win, int key, int scancode, int action, int mods) {
+    UNUSED(scancode); UNUSED(mods);
 
     if (action == GLFW_REPEAT)
         return;
@@ -301,6 +317,7 @@ void GameWindow::Data::glfw_key_callback(GLFWwindow *win, int key, int scancode,
 }
 
 void GameWindow::Data::glfw_mouse_button_callback(GLFWwindow *win, int button, int action, int mods) {
+    UNUSED(mods);
     GameWindow::Data *me = getUserPointer(win);
     Key b = Key::make(action == GLFW_PRESS ? keystate::Pressed : keystate::Released,
                       convertGLFWMouseButton(button));
@@ -308,6 +325,7 @@ void GameWindow::Data::glfw_mouse_button_callback(GLFWwindow *win, int button, i
 }
 
 void GameWindow::Data::glfw_mouse_scroll_callback(GLFWwindow *win, double xoffset, double yoffset) {
+    UNUSED(win); UNUSED(xoffset); UNUSED(yoffset);
     // NOOP
 }
 
@@ -317,7 +335,6 @@ void GameWindow::Data::init(const WindowOptions& opts) {
     renderTarget = new WindowRenderTarget(self);
 
     glfwSetWindowUserPointer(win, this);
-
 
     glfwSetWindowSizeCallback(win, glfw_window_size_callback);
     glfwSetWindowCloseCallback(win, glfw_window_close_callback);
@@ -329,7 +346,7 @@ void GameWindow::Data::init(const WindowOptions& opts) {
     glfwSetCursorPosCallback(win, glfw_cursor_pos_callback);
     glfwSetKeyCallback(win, glfw_key_callback);
     glfwSetMouseButtonCallback(win, glfw_mouse_button_callback);
-//    glfwSetMouseScrollCallback(win, glfw_mouse_scroll_callback);
+    glfwSetScrollCallback(win, glfw_mouse_scroll_callback);
     
     glfwMakeContextCurrent(win);
     
@@ -337,6 +354,12 @@ void GameWindow::Data::init(const WindowOptions& opts) {
 //    win->setVerticalSyncEnabled(opts.vsync);
     
     events.windowResized.reg(makeEventHandler(resizeRenderTarget));
+
+    context_info = opts.settings;
+    context_info.majorVersion = glfwGetWindowAttrib(win, GLFW_CONTEXT_VERSION_MAJOR);
+    context_info.minorVersion = glfwGetWindowAttrib(win, GLFW_CONTEXT_VERSION_MINOR);
+    context_info.debugContext = glfwGetWindowAttrib(win, GLFW_OPENGL_DEBUG_CONTEXT) == GL_TRUE;
+    context_info.coreProfile = glfwGetWindowAttrib(win, GLFW_OPENGL_PROFILE) == GLFW_OPENGL_CORE_PROFILE;
 }
 
 void GameWindow::Data::setMouse(int x, int y) {
@@ -487,13 +510,7 @@ void GameWindow::swapBuffers() {
 }
 
 void GameWindow::contextInfo(GLContextInfo& info) const {
-    // info.depthBits = glfwGetWindowAttrib(self->win, GLFW_DEPTH_BITS);
-    // info.stencilBits = glfwGetWindowAttrib(self->win, GLFW_STENCIL_BITS);
-    // info.antialiasingLevel = glfwGetWindowAttrib(self->win, GLFW_SAMPLES);
-    // info.majorVersion = glfwGetWindowAttrib(self->win, GLFW_CONTEXT_VERSION_MAJOR);
-    // info.minorVersion = glfwGetWindowAttrib(self->win, GLFW_CONTEXT_VERSION_MINOR);
-    // info.debugContext = glfwGetWindowAttrib(self->win, GLFW_OPENGL_DEBUG_CONTEXT) == GL_TRUE;
-    // info.coreProfile = glfwGetWindowAttrib(self->win, GLFW_OPENGL_PROFILE) == GLFW_OPENGL_CORE_PROFILE;
+    info = self->context_info;
 }
 
 } // namespace ge
