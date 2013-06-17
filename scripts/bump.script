@@ -1,0 +1,23 @@
+load "default.script"
+
+prependShaderPath "programs/bump/shaders"
+bindShader "sphere" "sphere.vert" "sphere.frag" 0 "position" 2 "normal"
+
+perspectiveProjection 35 0.5 200
+
+bindKey [W] { moveCamera 12 }
+bindKey [D] { moveCamera 3 }
+bindKey [S] { moveCamera 6 }
+bindKey [A] { moveCamera 9 }
+
+bindKey [+U] { saveCameraFrame "bump.cam" }
+bindKey [+I] { loadCameraFrame "bump.cam" }
+
+bindKey [+O] { incGamma -0.1 }
+bindKey [+P] { incGamma +0.1 }
+
+postInit { 
+    setCameraStepLength 1
+    setCameraMouseSensitivity 0.00075
+    loadCameraFrame "bump.cam"
+}

@@ -31,6 +31,7 @@ int main(int argc, char *argv[]) {
     ge::EngineOptions opts;
     Anim anim;
     anim.link();
+    opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));
     opts.parse(&argc, &argv);
     return anim.engine.run(opts);
 }
