@@ -3,20 +3,29 @@ const float Ambient = 0.3;
 const float Diffuse = 0.9;
 const float Specular = 0.3;
 
+const float BumpDensity = 16;
+const float BumpSize = 0.15;
+
 in vec3 tsLight;
 in vec3 tsEye;
-in vec3 ecNormal;
-flat in vec3 ecNormal0;
+in vec2 uv;
 
 out vec4 fragColor;
 
 void main() {
 
-    vec3 off = normalize(ecNormal) - ecNormal0;
-
     vec3 light = normalize(tsLight);
     vec3 eye = normalize(tsEye);
-    vec3 normal = vec3(0, 0, 1) - off;
+
+    vec2 dn = fract(BumpDensity * uv) - vec2(0.5);
+    float h = dot(dn, dn);
+    float idn = inversesqrt(h + 1);
+    if (h > BumpSize) {
+        dn = vec2(0);
+        idn = 1;
+    }
+
+    vec3 normal = idn * vec3(dn.x, dn.y, 1);
 
     float d = clamp(dot(normal, light), 0, 1);
     /* float s = clamp(dot(eye, reflect(lightDir, normal)), 0, 1); */

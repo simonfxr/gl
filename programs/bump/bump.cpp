@@ -33,7 +33,7 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     engine.window().showMouseCursor(false);
     engine.window().grabMouse(true);
 
-    glt::primitives::sphere(sphere_model, 10.f, 20, 10);
+    glt::primitives::sphere(sphere_model, 10.f, 200, 100);
     sphere_model.send();
 
     light_position = vec3(0.f, 0.f, -100.f);
