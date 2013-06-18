@@ -31,8 +31,6 @@ if(USE_UNWIND_STACKTRACES)
   set(ERR_LIBS unwind dw)
 endif()
 
-#def_lib(err SOURCES ${ERR_SRC} LIB_DEPEND ${ERR_LIB})
-
 set(SYS_SRC
   sys/fs/fs_default.cpp
   sys/io.cpp
@@ -107,12 +105,11 @@ set(GE_SRC
   ge/Camera.cpp
   ge/ReplServer.cpp)
 
- set(GE_LIBS 
-   ${GLFW_LIBRARY}
-#   ${SFML_SYSTEM_LIBRARY_DEBUG} 
-#   ${SFML_WINDOW_LIBRARY_DEBUG}
-#   ${SFML_GRAPHICS_LIBRAY_DEBUG}
-)
+set(GE_LIBS 
+  ${GLFW_LIBRARY}
+  ${SFML_SYSTEM_LIBRARY_DEBUG} 
+  ${SFML_WINDOW_LIBRARY_DEBUG}
+  ${SFML_GRAPHICS_LIBRAY_DEBUG})
 
 def_lib(ge SOURCES ${GE_SRC} DEPEND ${VEC_LIB} sys glt LIB_DEPEND ${GE_LIBS})
 

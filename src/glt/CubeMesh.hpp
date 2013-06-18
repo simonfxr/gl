@@ -23,15 +23,16 @@ struct CubeMesh : public Mesh<T> {
             this->addElement(s - 4);
             this->addElement(s - 3);
             this->addElement(s - 2);
+            this->addElement(s - 4);
             this->addElement(s - 2);
             this->addElement(s - 1);
-            this->addElement(s - 4);
         }
     }
 
     uint32 size() { return this->verticesSize(); }
 
-    void primType(GLenum) { ERR("primType not available"); }
+    void primType(GLenum) { ERR("cannot change primType"); }
+    
 };
 
 } // namespace glt
