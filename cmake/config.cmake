@@ -1,6 +1,14 @@
 
 include(${PROJECT_SOURCE_DIR}/cmake/detect_env.cmake)
 
+macro(cache_var var)
+    set(${var} ${${var}} CACHE STRING "" FORCE)
+endmacro()
+
+macro(cache_var_type var type)
+  set(${var} ${${var}} CACHE ${type} "" FORCE)
+endmacro()
+
 include(CheckTypeSize)
 check_type_size(void* SIZEOF_VOID_PTR)
 if(${SIZEOF_VOID_PTR} EQUAL "4")
@@ -86,6 +94,7 @@ if(BUILD_OPT)
       link_libraries(${LTO_FLAGS})
     elseif(COMP_CLANG)
       add_definitions(-O4)
+      link_libraries(-O4)
     else()
       message(WARNING "LTO not supported for compiler: \"${CMAKE_CXX_COMPILER}\"")
     endif()
@@ -111,8 +120,9 @@ if(BUILD_DEBUG AND COMP_CLANG)
 endif()
 
 if(COMP_GCCLIKE)
-  add_definitions(-Wall -Werror)
-#  add_definitions(-Weffc++)
+  add_definitions(-Wall)
+  # add_definitions(-Werror)
+  # add_definitions(-Weffc++)
   if (NOT COMP_ICC)
     add_definitions(-Wextra)
   else()
@@ -127,8 +137,8 @@ if(COMP_GCCLIKE)
     # -Werror 
     # -Wold-style-cast
     )
-  
-  add_definitions(-fno-exceptions -fno-rtti)
+
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
 endif()
 
 if(COMP_GCC)
@@ -150,8 +160,18 @@ if(BUILD_DEBUG)
   endif()
 endif()
 
-if (USE_OPENMP AND NEED_OPENMP)
-  find_package(OpenMP)
+if(USE_OPENMP)
+
+  if(NOT DEFINED OPENMP_FOUND)
+    find_package(OpenMP)
+    if(OPENMP_FOUND)
+      cache_var(OpenMP_C_FLAGS)
+      cache_var(OpenMP_CXX_FLAGS)
+      cache_var(OpenMP_EXE_LINKER_FLAGS)
+    endif()
+    cache_var_type(OPENMP_FOUND BOOL)
+  endif()
+
   if(OPENMP_FOUND)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
