@@ -21,7 +21,7 @@
 #include "ge/CommandParams.hpp"
 
 #include "parse_sply.hpp"
-#include "dump_bmp.hpp"
+#include "dump_bmp.h"
 
 #define RENDER_GLOW 1
 // #define RENDER_NOGLOW 1
@@ -575,6 +575,7 @@ void Anim::keyPressed(const Event<KeyPressed>& e) {
             use_spotlight = true;
         }
         break;
+    default:;
     }
 }
 

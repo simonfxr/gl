@@ -192,7 +192,7 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     fpsTimer = new ge::Timer(*engine);
     fpsTimer->start(1.f, true);
 
-    GL_CALL(glFinish, );
+    GL_CALL(glFinish);
 
     ev.info.success = true;
 }

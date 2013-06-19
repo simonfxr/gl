@@ -1,4 +1,4 @@
-#include "dump_bmp.hpp"
+#include "dump_bmp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,7 +77,7 @@ static int32_t decode32(int32_t x)
 
 static void convert_pixels(const uint32_t *src, Pixel24 *dst, unsigned size)
 {
-    int i;
+    unsigned i;
     for (i = 0; i < size; ++i)
     {
         uint32_t p = src[i];
@@ -123,7 +123,7 @@ BMPError bmp_dump(int fd, int w, int h, const uint32_t *pixels)
     {
         Pixel24 pixel_buf[BUF_SIZE];
 
-        int i;
+        unsigned i;
         for (i = 0; i < w * h / BUF_SIZE; ++i)
         {
             convert_pixels(pixels + i * BUF_SIZE, pixel_buf, BUF_SIZE);

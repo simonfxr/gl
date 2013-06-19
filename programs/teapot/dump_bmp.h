@@ -1,5 +1,5 @@
-#ifndef DUMP_BMP_HPP
-#define DUMP_BMP_HPP
+#ifndef DUMP_BMP_H
+#define DUMP_BMP_H
 
 #include <stdint.h>
 

@@ -82,6 +82,7 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
 
 
 real Sim:: acc_x1(real x1, real dx1_dt, real phi, real dphi_dt) {
+    UNUSED(x1); UNUSED(dx1_dt);
     real sin_phi, cos_phi;
     sincos(phi, sin_phi, cos_phi);
     return (l * m2 * sin_phi * squared(dphi_dt) + g * m2 * cos_phi * sin_phi) /
@@ -89,6 +90,7 @@ real Sim:: acc_x1(real x1, real dx1_dt, real phi, real dphi_dt) {
 }
 
 real Sim::acc_phi(real x1, real dx1_dt, real phi, real dphi_dt) {
+    UNUSED(x1); UNUSED(dx1_dt);
     real sin_phi, cos_phi;
     sincos(phi, sin_phi, cos_phi);
     return - (l * m2 * cos_phi * sin_phi * squared(dphi_dt) + g * (m1 + m2) * sin_phi) /

@@ -75,7 +75,7 @@ struct Anim {
 
     void renderBlock(const vec3_t& aabb_min, const vec3_t& aabb_max);
     void renderWorld();
-    void renderVolume(GLuint feedback);
+    void renderVolume();
 };
 
 void Anim::link(ge::Engine& e) {
@@ -180,7 +180,7 @@ void Anim::renderBlock(const vec3_t& aabb_min, const vec3_t& aabb_max) {
     // GL_CALL(glBufferData, GL_ARRAY_BUFFER, max_size, 0, GL_STREAM_DRAW);
     // GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
-    GLuint feedback;
+    // GLuint feedback;
     // GL_CALL(glGenTransformFeedbacks, 1, &feedback);
     // GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, feedback);
     // GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
@@ -193,7 +193,7 @@ void Anim::renderBlock(const vec3_t& aabb_min, const vec3_t& aabb_max) {
     gt.translate(aabb_min);
     gt.scale(max - aabb_min);
     renderWorld();
-    renderVolume(feedback);
+    renderVolume();
 
     // feedbackProgram->use();
     // glt::Uniforms(*feedbackProgram)
@@ -238,7 +238,7 @@ void Anim::renderWorld() {
     GL_CALL(glEnable, GL_DEPTH_TEST);
 }
 
-void Anim::renderVolume(GLuint feedback) {
+void Anim::renderVolume() {
     glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
     glt::SavePoint sp(gt.save());
 
@@ -250,7 +250,7 @@ void Anim::renderVolume(GLuint feedback) {
     worldVolume->clampMode(glt::TextureSampler::ClampToEdge);
 
     mat4_t scaleM = glt::scaleMatrix(WORLD_BLOCK_SCALE);
-    vec3_t inv_tex_scale = vec3(SAMPLER_SIZE - ivec3(1)) / vec3(SAMPLER_SIZE);
+    // vec3_t inv_tex_scale = vec3(SAMPLER_SIZE - ivec3(1)) / vec3(SAMPLER_SIZE);
 
     glt::Uniforms(*marchingCubesProgram)
         .mandatory("caseToNumPolysData", glt::Sampler(caseToNumPolysData, 0, GL_UNSIGNED_INT_SAMPLER_1D))
@@ -277,7 +277,7 @@ void Anim::render(const ge::Event<ge::RenderEvent>&) {
     engine->renderManager().activeRenderTarget()->clearColor(glt::color(1.f, 1.f, 1.f));
     engine->renderManager().activeRenderTarget()->clear();
 
-    glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
+//    glt::GeometryTransform& gt = engine->renderManager().geometryTransform();
     {
         float scale = 1;
         renderBlock(vec3(-1.f) * scale, vec3(1.f) * scale);
