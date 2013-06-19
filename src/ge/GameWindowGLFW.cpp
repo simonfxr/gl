@@ -349,6 +349,8 @@ void GameWindow::Data::init(const WindowOptions& opts) {
     glfwSetScrollCallback(win, glfw_mouse_scroll_callback);
     
     glfwMakeContextCurrent(win);
+    GL_CHECK_ERRORS();
+    
     
     vsync = opts.vsync;
 //    win->setVerticalSyncEnabled(opts.vsync);
