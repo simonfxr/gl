@@ -47,6 +47,21 @@ GLT_API bool isExtensionSupported(const char *extension);
 
 GLT_API bool initDebug();
 
+namespace glvendor {
+
+enum OpenGLVendor {
+    Unknown,
+    Nvidia,
+    ATI,
+    Intel
+};
+
+} // namespace glvendor
+
+typedef glvendor::OpenGLVendor OpenGLVendor;
+
+GLT_API void ignoreDebugMessage(OpenGLVendor, GLuint);
+
 struct GLT_API GLMemInfoATI {
 
     struct GLMemFree {

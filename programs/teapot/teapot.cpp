@@ -1,6 +1,3 @@
-#include <SFML/Graphics/Image.hpp>
-#include <SFML/Graphics.hpp>
-
 #include "defs.hpp"
 #include "mesh.h"
 
@@ -24,8 +21,10 @@
 #include "ge/CommandParams.hpp"
 
 #include "parse_sply.hpp"
+#include "dump_bmp.hpp"
 
-#define RENDER_GLOW 1
+// #define RENDER_GLOW 1
+#define RENDER_NOGLOW 1
 
 #if !(defined(RENDER_GLOW) || defined(RENDER_NOGLOW))
 #error "no glowmode defined"
@@ -92,7 +91,7 @@ struct Anim {
     CubeMesh2 cubeModel;
     glt::CubeMesh<ScreenVertex> screenQuad;
 
-    sf::Texture woodTexture;
+    glt::TextureSampler woodTexture;
 
     Teapot teapot1;
     Teapot teapot2;
@@ -183,15 +182,20 @@ void Anim::init(const Event<InitEvent>& e) {
 
     gamma_correction = 1.35f;
 
+#ifdef MESH_MESH
     cubeModel.primType(GL_QUADS);
-    glt::primitives::unitCube3(cubeModel);
+    cubeModel.drawType(glt::DrawArrays);
+#endif
+    glt::primitives::unitCube(cubeModel);
     cubeModel.send();
 
     glt::primitives::sphere(sphereModel, 1.f, 26, 13);
     sphereModel.send();
 
     {
+#ifdef MESH_MESH
         groundModel.primType(GL_QUADS);
+#endif
 
         Vertex v;
         v.normal = vec3(0.f, 1.f, 0.f);
@@ -479,8 +483,7 @@ void Anim::renderTable(const std::string& shader) {
 
     gt.dup();
 
-    GL_CALL(glActiveTexture, GL_TEXTURE0);
-    sf::Texture::bind(&woodTexture);
+    woodTexture.bind(0);
 
     vec4_t color = glt::color(0xcd, 0x85, 0x3f).vec4();
     MaterialProperties mat;
@@ -514,8 +517,7 @@ void Anim::renderTable(const std::string& shader) {
         }
     }
 
-    GL_CALL(glBindTexture, GL_TEXTURE_2D, 0);
-    
+    woodTexture.unbind(0);
 }
 
 // void Anim::windowResized(const Event<WindowResized>& e) {
@@ -579,12 +581,25 @@ void Anim::keyPressed(const Event<KeyPressed>& e) {
 void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args) {
     data_dir = *args[0].string;
 
-    if (!woodTexture.loadFromFile(data_dir + "/wood.jpg")) {
-        ERR("couldnt load data/wood.jpg");
+    int w, h;
+    uint32_t *wood_data;
+    FILE *file = fopen((data_dir + "/wood.bmp").c_str(), "rb");
+    if (file == NULL) {
+        ERR("couldnt open data/wood.bmp");
         return;
+    } else {
+        if (bmp_read(fileno(file), &w, &h, &wood_data) != BMP_OK) { 
+            ERR("couldnt load data/wood.bmp");
+            fclose(file);
+            return;
+        }
+        fclose(file);
     }
 
-    woodTexture.setSmooth(true);
+    GL_CALL(glTextureImage2DEXT, *woodTexture.data()->ensureHandle(), GL_TEXTURE_2D,
+            0, GL_RGB8, GLint(w), GLint(h), 0, GL_RGBA, GL_UNSIGNED_BYTE, wood_data);
+    free(wood_data);
+    woodTexture.filterMode(glt::TextureSampler::FilterLinear);
 
     int32 nfaces = parse_sply((data_dir + "/teapot.sply").c_str(), teapotModel);
     if (nfaces < 0) {
@@ -594,7 +609,9 @@ void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args)
         sys::io::stdout() << "parsed teapot model: " << nfaces << " vertices" << sys::io::endl;
     }
 
+#ifdef MESH_MESH
     teapotModel.primType(GL_QUADS);
+#endif
     teapotModel.drawType(glt::DrawElements);
     teapotModel.send();
 }

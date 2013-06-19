@@ -1,5 +1,6 @@
 #include <sstream>
 #include <cstring>
+#include <set>
 
 #include "defs.hpp"
 #include "opengl.hpp"
@@ -75,14 +76,54 @@ void printGLError(const err::Location& loc, GLenum err);
 namespace {
 
 struct GLDebug {
+
+    std::set<GLint> ignored;
+    OpenGLVendor vendor;
+
+    GLDebug();
     virtual ~GLDebug() {}
+    void init();
     virtual void printDebugMessages(const err::Location&) = 0;
-    GLDebug() {}
+    bool shouldIgnore(GLint);
+    void ignoreMessage(OpenGLVendor vendor, GLuint id);
 
 private:
     GLDebug(const GLDebug&);
     GLDebug& operator =(const GLDebug &);
 };
+
+GLDebug::GLDebug() {
+    vendor = glvendor::Unknown;
+}
+
+void GLDebug::init() {
+    const GLubyte *gl_vendor_str = glGetString(GL_VENDOR);
+    if (gl_vendor_str == 0) {
+        vendor = glvendor::Unknown;
+        return;
+    }
+
+    const char *vendor_str = reinterpret_cast<const char *>(gl_vendor_str);
+    if (strcmp(vendor_str, "NVIDIA Corporation") == 0)
+        vendor = glvendor::Nvidia;
+    else if (strcmp(vendor_str, "ATI Technologies") == 0)
+        vendor = glvendor::ATI;
+    else if (strcmp(vendor_str, "INTEL") == 0)
+        vendor = glvendor::Intel;
+    else
+        vendor = glvendor::Unknown;
+}
+
+bool GLDebug::shouldIgnore(GLint id) {
+    return ignored.find(id) != ignored.end();
+}
+
+void GLDebug::ignoreMessage(OpenGLVendor id_vendor, GLuint id) {
+    INFO("called ignoreMessage");
+    if (vendor != glvendor::Unknown && vendor == id_vendor) {
+        ignored.insert(id);
+    }
+}
 
 struct NoDebug : public GLDebug {
     NoDebug() {}
@@ -99,7 +140,8 @@ struct ARBDebug : public GLDebug {
 
     explicit ARBDebug(GLsizei buf_len) :
         message_buffer_length(buf_len),
-        message_buffer(new char[size_t(buf_len)]) {}
+        message_buffer(new char[size_t(buf_len)])
+        { GLDebug::init(); }
     
     ~ARBDebug();
     
@@ -139,6 +181,9 @@ void ARBDebug::printDebugMessages(const err::Location& loc) {
     while (glGetDebugMessageLogARB(1, message_buffer_length,
                                    &source, &type, &id, &severity,
                                    &length, message_buffer) > 0) {
+
+        if (shouldIgnore(id))
+            continue;
 
 #define sym_case(v, c) case c: v = #c; break
 
@@ -186,7 +231,8 @@ struct AMDDebug : public GLDebug {
 
     explicit AMDDebug(GLsizei buf_len) :
         message_buffer_length(buf_len),
-        message_buffer(new char[size_t(buf_len)]) {}
+        message_buffer(new char[size_t(buf_len)])
+        { GLDebug::init(); }
     
     ~AMDDebug();
     
@@ -226,7 +272,10 @@ void AMDDebug::printDebugMessages(const err::Location& loc) {
     while (glGetDebugMessageLogAMD(1, message_buffer_length,
                                    &category, &severity, &id, &length,
                                    message_buffer) > 0) {
-
+        
+        if (shouldIgnore(id))
+            continue;
+        
 #define sym_case(v, c) case c: v = #c; break
         
         const char *scat = "unknown";
@@ -261,6 +310,11 @@ void AMDDebug::printDebugMessages(const err::Location& loc) {
 GLDebug *glDebug = new NoDebug();
 
 } // namespace anon
+
+void ignoreDebugMessage(OpenGLVendor vendor, GLuint id) {
+    if (glDebug)
+        glDebug->ignoreMessage(vendor, id);
+}
 
 void printGLError(const err::Location& loc, GLenum err) {
     err::printError(sys::io::stdout(), "OpenGL Error", loc, err::Error, getGLErrorString(err).c_str());

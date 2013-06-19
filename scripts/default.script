@@ -8,3 +8,6 @@ bindKey [+C] &reloadShaders
 bindKey [+B] &togglePause
 bindKey [+M] &printMemInfo
 
+ignoreGLDebugMessage "Nvidia" 131204 #bogus warning about mipmap levels
+ignoreGLDebugMessage "Nvidia" 131185 #buffer will use video memory
+ignoreGLDebugMessage "Nvidia" 131169 #driver allocated multisample storage

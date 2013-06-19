@@ -164,6 +164,7 @@ endif()
 
 if(BUILD_DEBUG)
   add_definitions(-DDEBUG=1)
+  add_definitions(-ggdb)
 endif()
 
 if (USE_OPENMP AND NEED_OPENMP)
@@ -194,6 +195,3 @@ find_package(GLEW REQUIRED)
 include_directories(${GLEW_INCLUDE_PATH})
 
 find_package(glfw REQUIRED)
-
-find_package(SFML 2 COMPONENTS system window graphics REQUIRED)
-include_directories(${SFML_INCLUDE_DIR})

@@ -26,6 +26,8 @@ DEFINE_PARAM_ARRAY(INT_PARAMS, IntegerParam);
 
 DEFINE_PARAM_ARRAY(STR_PARAMS, StringParam);
 
+DEFINE_PARAM_ARRAY(STR_INT_PARAMS, StringParam, IntegerParam);
+
 void initParams() {
     // P(NULL_PARAMS);
     // P(KEY_COM);

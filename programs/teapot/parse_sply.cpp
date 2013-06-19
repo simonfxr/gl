@@ -55,10 +55,23 @@ int32 parse_sply(const char *filename, CubeMesh& model) {
             return -1;
         }
 
+        #ifdef MESH_CUBEMESH
+
+        model.addElement(i);
+        model.addElement(j);
+        model.addElement(k);
+        model.addElement(i);
+        model.addElement(k);
+        model.addElement(l);
+
+        #else
+
         model.addElement(i);
         model.addElement(j);
         model.addElement(k);
         model.addElement(l);
+
+        #endif
 
         ++faces;
     }

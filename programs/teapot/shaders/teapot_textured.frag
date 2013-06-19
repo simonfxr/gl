@@ -28,8 +28,8 @@ void main() {
         
         vec3 radiance = vec3(TeapotLighting(ecPosition, normalize(ecNormal), ecLight,
                                             vec4(diffuseContribution), vec4(specularContribution), shininess));
-        
-        vec4 baseColor = texture(texData, fragTexCoord);
+
+        vec4 baseColor = vec4(texture(texData, fragTexCoord).rgb, 1);
         vec3 shaded_rgb = (radiance + vec3(ambientContribution)) * baseColor.rgb;
         color = vec4(min(vec3(1), shaded_rgb), glow);
 //    color = gammaCorrect(color);
