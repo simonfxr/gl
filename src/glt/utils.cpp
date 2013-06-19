@@ -119,10 +119,8 @@ bool GLDebug::shouldIgnore(GLint id) {
 }
 
 void GLDebug::ignoreMessage(OpenGLVendor id_vendor, GLuint id) {
-    INFO("called ignoreMessage");
-    if (vendor != glvendor::Unknown && vendor == id_vendor) {
+    if (vendor != glvendor::Unknown && vendor == id_vendor)
         ignored.insert(id);
-    }
 }
 
 struct NoDebug : public GLDebug {

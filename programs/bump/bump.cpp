@@ -33,7 +33,7 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     engine.window().showMouseCursor(false);
     engine.window().grabMouse(true);
 
-    glt::primitives::sphere(sphere_model, 10.f, 200, 100);
+    glt::primitives::sphere(sphere_model, 1.f, 200, 100);
     sphere_model.send();
 
     light_position = vec3(0.f, 0.f, -100.f);
@@ -58,12 +58,16 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>&) {
     ASSERT_MSG(program, "sphere program not found");
     glt::RenderManager& rm = engine.renderManager();
 
+    vec3_t ecLight = transformPoint(rm.geometryTransform().viewMatrix(), light_position);
+
+    rm.geometryTransform().dup();
+    rm.geometryTransform().scale(vec3(10.f)); // scale radius of sphere
     program->use();
     glt::Uniforms(*program)
         .optional("mvpMatrix", rm.geometryTransform().mvpMatrix())
         .optional("mvMatrix", rm.geometryTransform().mvMatrix())
         .optional("normalMatrix", rm.geometryTransform().normalMatrix())
-        .optional("ecLight", rm.geometryTransform().transformPoint(light_position));
+        .optional("ecLight", ecLight);
     sphere_model.draw();
 }
 

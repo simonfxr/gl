@@ -1,7 +1,7 @@
 load "default.script"
 
 prependShaderPath "programs/bump/shaders"
-bindShader "sphere" "sphere.vert" "sphere.frag" 0 "position" 2 "normal"
+bindShader "sphere" "sphere.vert" "sphere.frag" 0 "position" 1 "normal"
 
 perspectiveProjection 35 0.5 200
 

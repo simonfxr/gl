@@ -31,8 +31,8 @@ void main() {
         sin_phi = normal.y / d;
     }
 
-    vec3 ecTangent = normalMatrix * normalize(vec3(cos_theta * cos_phi, cos_theta * sin_phi, - sin_theta));
-    vec3 ecBinormal = cross(ecNormal, ecTangent);
+    vec3 ecTangent = normalize(normalMatrix * normalize(vec3(cos_theta * cos_phi, cos_theta * sin_phi, - sin_theta)));
+    vec3 ecBinormal = normalize(cross(ecNormal, ecTangent));
     mat3 iTBN = transpose(mat3(ecTangent, ecBinormal, ecNormal));
 
     uv.x = asin(normal.x) / 3.14159625358 + 0.5;

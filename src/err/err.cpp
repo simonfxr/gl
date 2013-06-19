@@ -8,6 +8,8 @@
 #include <libunwind.h>
 #include <assert.h>
 #include <unistd.h>
+#include <cxxabi.h>
+
 #endif
 
 namespace err {
@@ -36,15 +38,18 @@ void debugInfo(sys::io::OutStream& out, const void *ip) {
     Dwarf_Addr addr = Dwarf_Addr(ip);
 
     Dwfl_Module *module = dwfl_addrmodule (dwfl, addr);
-
+    
     const char *function_name = dwfl_module_addrname(module, addr);
-
-    out << function_name << "(";
+    int status = 0;
+    char *demangled = abi::__cxa_demangle(function_name, 0, 0, &status);
+        
+    out << (demangled ? demangled : function_name) << "[";
+    if (demangled) free(demangled);
 
     Dwfl_Line *line = 0;
-    for (int i = -0xF; i < 0x10; ++i) {
-        const char *baddr = reinterpret_cast<const char *>(addr);
-        line = dwfl_getsrc(dwfl, Dwarf_Addr(baddr + i));
+    for (int i = -0xF; i <= 0xF; ++i) {
+        
+        line = dwfl_getsrc(dwfl, Dwarf_Addr((const char *) addr + i));
         if (line != 0)
             break;
     }
@@ -55,7 +60,7 @@ void debugInfo(sys::io::OutStream& out, const void *ip) {
         const char *filename = dwfl_lineinfo(line, &addr, &nline, 0, 0, 0);
         out << filename << ":" << nline;
     } else {
-        out << "ip: " << ip;
+        out << "ip: " << ip << "]";
     }
 }
 
@@ -79,7 +84,7 @@ void print_stacktrace(sys::io::OutStream& out, int skip) {
         if (skip <= 0) {
             out << "    ";
             debugInfo(out, (void *)((void **) ip - 1));
-            out << ")" << sys::io::endl;
+            out << sys::io::endl;
         } else {
             skip--;
         }
