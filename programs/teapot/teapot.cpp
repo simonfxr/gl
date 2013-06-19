@@ -23,8 +23,8 @@
 #include "parse_sply.hpp"
 #include "dump_bmp.hpp"
 
-// #define RENDER_GLOW 1
-#define RENDER_NOGLOW 1
+#define RENDER_GLOW 1
+// #define RENDER_NOGLOW 1
 
 #if !(defined(RENDER_GLOW) || defined(RENDER_NOGLOW))
 #error "no glowmode defined"
@@ -186,7 +186,7 @@ void Anim::init(const Event<InitEvent>& e) {
     cubeModel.primType(GL_QUADS);
     cubeModel.drawType(glt::DrawArrays);
 #endif
-    glt::primitives::unitCube(cubeModel);
+    glt::primitives::unitCube3(cubeModel);
     cubeModel.send();
 
     glt::primitives::sphere(sphereModel, 1.f, 26, 13);
