@@ -89,8 +89,6 @@ static void convert_pixels(const uint32_t *src, Pixel24 *dst, unsigned size)
     }
 }
 
-#define jump(lab) (({ goto lab; }), 0)
-
 BMPError bmp_dump(int fd, int w, int h, const uint32_t *pixels)
 {
     
@@ -119,7 +117,8 @@ BMPError bmp_dump(int fd, int w, int h, const uint32_t *pixels)
     prefix.header = header;
     prefix.info = info;
 
-    write(fd, &prefix, sizeof prefix) >= 0 || jump(write_err);
+    if (write(fd, &prefix, sizeof prefix) < 0)
+        goto write_err;
 
     {
         Pixel24 pixel_buf[BUF_SIZE];
@@ -128,16 +127,17 @@ BMPError bmp_dump(int fd, int w, int h, const uint32_t *pixels)
         for (i = 0; i < w * h / BUF_SIZE; ++i)
         {
             convert_pixels(pixels + i * BUF_SIZE, pixel_buf, BUF_SIZE);
-            write(fd, pixel_buf, sizeof pixel_buf) >= 0 || jump(write_err);
+            if (write(fd, pixel_buf, sizeof pixel_buf) < 0)
+                goto write_err;
         }
 
-    
         unsigned offset   = i * BUF_SIZE;
         unsigned rem_size = w * h - offset;
         if (rem_size > 0)
         {
             convert_pixels(pixels + offset, pixel_buf, rem_size);
-            write(fd, pixel_buf, sizeof *pixel_buf * rem_size) >= 0 || jump(write_err);
+            if (write(fd, pixel_buf, sizeof *pixel_buf * rem_size) < 0)
+                goto write_err;
         }
     }
 
@@ -162,7 +162,8 @@ BMPError bmp_read(int fd, int *wp, int *hp, uint32_t **pixelsp) {
     *pixelsp = NULL;
 
     BMPPrefix prefix;
-    read(fd, &prefix, sizeof prefix) == (ssize_t) sizeof prefix || jump(read_err);
+    if (read(fd, &prefix, sizeof prefix) != (ssize_t) sizeof prefix)
+        goto read_err;
 
     if (decodeU16(prefix.header.magic) != MAGIC)
         return BMP_FORMAT;
@@ -178,8 +179,10 @@ BMPError bmp_read(int fd, int *wp, int *hp, uint32_t **pixelsp) {
         return BMP_IO;
 
     offset = decodeU32(prefix.header.payload_byte_offset) - sizeof (BMPPrefix);
-    if (offset > 0)
-        lseek(fd, offset, SEEK_CUR) != (off_t) -1 || jump(read_err);
+    if (offset > 0) {
+        if (lseek(fd, offset, SEEK_CUR) == (off_t) -1)
+            goto read_err;
+    }
 
     pixels = (uint32_t *) malloc(w * h * sizeof(uint32_t));
     if (!pixels)
@@ -187,7 +190,8 @@ BMPError bmp_read(int fd, int *wp, int *hp, uint32_t **pixelsp) {
 
     bytes = (unsigned char *) pixels;
     
-    read(fd, bytes + w * h, w * h * 3) == w * h * 3 || jump(read_err);
+    if (read(fd, bytes + w * h, w * h * 3) != w * h * 3)
+        goto read_err;
 
     data = (Pixel24 *)(bytes + w * h);
     for (i = 0; i < w * h; ++i) {
