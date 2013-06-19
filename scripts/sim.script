@@ -1,5 +1,7 @@
 load "default.script"
 
+prependShaderPath "programs/sim/shaders"
+
 bindShader "wall" "brick.vert" "brick.frag" 0 "vertex" 1 "normal"
 bindShader "sphere" "sphere.vert" "sphere.frag" 0 "vertex" 1 "normal"
 bindShader "identity" "identity.vert" "identity.frag" 0 "vertex" 1 "normal"

@@ -1,6 +1,5 @@
 load "default.script"
 
-removeShaderPath "shaders"
 prependShaderPath "programs/teapot/shaders"
 
 bindShader "teapot" "teapot.vert" "teapot.frag" 0 "position" 1 "normal"

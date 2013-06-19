@@ -1,3 +1,4 @@
+#include "constants.h"
 
 uniform mat4 mvMatrix;
 uniform mat4 mvpMatrix;
@@ -33,10 +34,9 @@ void main() {
 
     vec3 ecTangent = normalize(normalMatrix * normalize(vec3(cos_theta * cos_phi, cos_theta * sin_phi, - sin_theta)));
     vec3 ecBinormal = normalize(cross(ecNormal, ecTangent));
-    mat3 iTBN = transpose(mat3(ecTangent, ecBinormal, ecNormal));
 
-    uv.x = asin(normal.x) / 3.14159625358 + 0.5;
-    uv.y = asin(normal.y) / 3.14159625358 + 0.5;
+    uv.x = asin(normal.x) / M_PI + 0.5;
+    uv.y = asin(normal.y) / M_PI + 0.5;
 
 #define INVERSE_TBN(v) vec3(dot(v, ecTangent), dot(v, ecBinormal), dot(v, ecNormal))
     tsLight = INVERSE_TBN(ecLightDir);
