@@ -138,12 +138,14 @@ int32 Engine::run(const EngineOptions& opts) {
     for (uint32 i = 0; i < opts.scriptDirs.size(); ++i) {
         if (!commandProcessor().addScriptDirectory(opts.scriptDirs[i])) {
             ERR("script directory not found: " + opts.scriptDirs[i]);
+            return 1;
         }
     }
 
     for (uint32 i = 0; i < opts.shaderDirs.size(); ++i) {
         if (!shaderManager().addShaderDirectory(opts.shaderDirs[i])) {
             ERR("shader directory not found: " + opts.shaderDirs[i]);
+            return 1;
         }
     }
 

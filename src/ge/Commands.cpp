@@ -193,6 +193,27 @@ void runInitGLDebug(const Event<CommandEvent>& e) {
     }
 }
 
+void runIgnoreGLDebugMessage(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+    const std::string& vendor_str = *args[0].string;
+    GLint id = static_cast<GLint>(args[1].integer);
+    glt::OpenGLVendor vendor;
+
+    if (vendor_str == "Nvidia")
+        vendor = glt::glvendor::Nvidia;
+    else if (vendor_str == "ATI")
+        vendor = glt::glvendor::ATI;
+    else if (vendor_str == "Intel")
+        vendor = glt::glvendor::Intel;
+    else
+        vendor = glt::glvendor::Unknown;
+
+    if (vendor != glt::glvendor::Unknown) {
+        glt::ignoreDebugMessage(vendor, id);
+    } else {
+        e.info.engine.out() << "invalid opengl vendor: " << vendor_str;
+    }
+}
+
 void runDescribe(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
 
     CommandProcessor& proc = e.info.engine.commandProcessor();
@@ -311,23 +332,26 @@ Commands::Commands() :
                              "printMemInfo",
                              "prints information about current (approximatly) amout of free memory on the GPU")),
 
-
+    
     reloadShaders(makeStringListCommand(runReloadShaders,
                                         "reloadShaders", "reload ShaderPrograms")),
-
+    
     listCachedShaders(makeCommand(runListCachedShaders, "listCachedShaders", "list all shader cache entries")),
-
+    
     listBindings(makeCommand(runListBindings, "listBindings", "list all key bindings")),
-
+    
     bindKey(new BindKey),
-
+                                                                             
     help(makeCommand(runHelp, "help", "help and command overview")),
-
+                                                                             
     bindShader(makeListCommand(runBindShader,
                                "bindShader",
                                "compile and linke a ShaderProgram and give it a name")),
 
     initGLDebug(makeCommand(runInitGLDebug, "initGLDebug", "initialize OpenGL debug output")),
+
+    ignoreGLDebugMessage(makeCommand(runIgnoreGLDebugMessage, STR_INT_PARAMS, "ignoreGLDebugMessage",
+                                     "for opengl vendor <vendor> add the message <id> to the list of ignored messages")),
 
     describe(makeListCommand(runDescribe, "describe", "print a description of its parameters")),
 

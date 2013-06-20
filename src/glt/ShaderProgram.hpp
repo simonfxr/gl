@@ -59,7 +59,7 @@ struct GLT_API ShaderProgram : public err::WithError<ShaderProgramError::Type,
     bool bindStreamOutVaryings(const Array<std::string>&);
     
     template <typename T>
-    bool bindAttributes(const VertexDesc<T>& desc);
+    bool bindAttributes(const VertexDesc<T>& desc = VertexTraits<T>::description());
     
     bool bindAttributesGeneric(const VertexDescBase& desc);
 

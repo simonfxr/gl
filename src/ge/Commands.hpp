@@ -15,6 +15,7 @@ struct GE_API Commands {
     Ref<Command> help;
     Ref<Command> bindShader;
     Ref<Command> initGLDebug;
+    Ref<Command> ignoreGLDebugMessage;
     Ref<Command> describe;
     Ref<Command> eval;
     Ref<Command> load;

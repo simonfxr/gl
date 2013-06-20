@@ -21,6 +21,8 @@ extern GE_API const Array<CommandParamType> INT_PARAMS;
 
 extern GE_API const Array<CommandParamType> STR_PARAMS;
 
+extern GE_API const Array<CommandParamType> STR_INT_PARAMS;
+
 GE_API void initParams();
 
 } // namespace ge
