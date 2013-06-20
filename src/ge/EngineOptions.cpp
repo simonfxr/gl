@@ -206,8 +206,8 @@ EngineOptions::EngineOptions() :
     traceOpenGL(false),
     disableRender(false)
 {
-    window.settings.majorVersion = 3;
-    window.settings.minorVersion = 3;
+    window.settings.majorVersion = 4;
+    window.settings.minorVersion = 9;
 #ifdef GLDEBUG
     window.settings.debugContext = true;
 #endif

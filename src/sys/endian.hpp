@@ -33,22 +33,18 @@ inline uint16 ntoh(uint16 a) {
 #define UNDEFINED ERR(std::string("not yet implemented"))
 
 inline uint32 hton(uint32) {
-    UNDEFINED;
     return 0;
 }
 
 inline uint16 hton(uint16) {
-    UNDEFINED;
     return 0;
 }
 
 inline uint32 ntoh(uint32 a) {
-    UNDEFINED;
     return 0;
 }
 
 inline uint16 ntoh(uint16 a) {
-    UNDEFINED;
     return 0;
 }
 #undef UNDEFINED

@@ -12,14 +12,16 @@
 #include <stdint.h>
 #endif
 
-#ifdef CXX11
-#  ifdef CXX11_FINAL_OVERRIDE
-#    define OVERRIDE override
-#    define FINAL final
-#  else
-#    define OVERRIDE
-#    define FINAL
-#  endif
+#ifndef CXX11
+#undef CXX11_FINAL_OVERRIDE
+#endif
+
+#ifdef CXX11_FINAL_OVERRIDE
+#  define OVERRIDE override
+#  define FINAL final
+#else
+#  define OVERRIDE
+#  define FINAL
 #endif
 
 #ifdef BUILD_SHARED

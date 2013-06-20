@@ -105,7 +105,6 @@ static void runInitCommands(const Event<InitEvent>& e) {
     r.define(cs.help);
     r.define(cs.bindShader);
     r.define(cs.initGLDebug);
-    r.define(cs.ignoreGLDebugMessage);
     r.define(cs.describe);
     r.define(cs.eval);
     r.define(cs.load);
