@@ -8,6 +8,7 @@
 #include "ge/GameWindow.hpp"
 #include "ge/Event.hpp"
 
+#include "opengl.hpp"
 #include "GLFW/glfw3.h"
 
 namespace ge {

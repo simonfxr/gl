@@ -15,14 +15,16 @@ using namespace math;
 
 struct Vertex {
     vec3_t position;
-    vec3_t normal;
-    real tri_id;
+    vec3_t tangent;
+    vec3_t binormal;
+    vec2_t uv;
 };
 
 DEFINE_VERTEX_DESC(Vertex,
                    VERTEX_ATTR(Vertex, position),
-                   VERTEX_ATTR(Vertex, normal),
-                   VERTEX_ATTR(Vertex, tri_id)
+                   VERTEX_ATTR(Vertex, tangent),
+                   VERTEX_ATTR(Vertex, binormal),
+                   VERTEX_ATTR(Vertex, uv)
 );
 
 template <typename Vertex>
@@ -47,14 +49,11 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     engine.window().showMouseCursor(false);
     engine.window().grabMouse(true);
 
-//    glt::primitives::
-    icoSphere(sphere_model, 0);
+//    icoSphere(sphere_model, 3);
+    sphere(sphere_model, 1.f, 200, 100);
     sphere_model.send();
 
-//    GL_CALL(glDisable, GL_CULL_FACE);
-
-//    GL_CALL(glPolygonMode, GL_FRONT_AND_BACK, GL_LINE);
-
+    GL_CALL(glEnable, GL_DEPTH_TEST);
     light_position = vec3(0.f, 0.f, -100.f);
 
     camera.frame.origin = vec3(0.f);
@@ -273,7 +272,6 @@ void icoSphere(glt::Mesh<V>& mesh, size subdivs) {
             vec3_t p = ps[k];
             glt::primitives::setPoint(v.position, p);
             glt::primitives::setVec(v.normal, p);
-            v.tri_id = tri.tri_id;
             mesh.addVertex(v);
         }
     }
