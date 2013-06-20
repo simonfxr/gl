@@ -36,6 +36,8 @@ struct ErrorTraits {
     }
 };
 
+extern "C" ERR_API void __clang_trap_function();
+
 namespace err {
 
 struct Location {

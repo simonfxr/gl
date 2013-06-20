@@ -12,6 +12,8 @@
 
 #endif
 
+extern "C" void __clang_trap_function() {}
+
 namespace err {
 
 namespace {

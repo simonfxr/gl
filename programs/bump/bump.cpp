@@ -183,11 +183,8 @@ void icoSphere(glt::Mesh<V>& mesh, size subdivs) {
 
     struct Tri {
         index32 a, b, c;
-        real tri_id;
         Tri(index32 _a, index32 _b, index32 _c) :
-            a(_a), b(_b), c(_c), tri_id(0) {}
-        Tri(index32 _a, index32 _b, index32 _c, real _tri_id) :
-            a(_a), b(_b), c(_c), tri_id(_tri_id) {}
+            a(_a), b(_b), c(_c) {}
     };
     
     std::vector<vec3_t> vertices;
@@ -199,22 +196,23 @@ void icoSphere(glt::Mesh<V>& mesh, size subdivs) {
 #define X .525731112119133606 
 #define Z .850650808352039932
 
-    const GLfloat vertex_data[12][3] = {    
+    const real vertex_data[12][3] = {    
         {-X, 0.0, Z}, {X, 0.0, Z}, {-X, 0.0, -Z}, {X, 0.0, -Z},    
         {0.0, Z, X}, {0.0, Z, -X}, {0.0, -Z, X}, {0.0, -Z, -X},    
         {Z, X, 0.0}, {-Z, X, 0.0}, {Z, -X, 0.0}, {-Z, -X, 0.0} 
     };
 
-    const GLuint elements[20][3] = { 
+    const GLushort elements[20][3] = { 
         {0,4,1}, {0,9,4}, {9,5,4}, {4,5,8}, {4,8,1},    
         {8,10,1}, {8,3,10}, {5,3,8}, {5,2,3}, {2,7,3},    
         {7,10,3}, {7,6,10}, {7,11,6}, {11,0,6}, {0,1,6}, 
-        {6,1,10}, {9,0,11}, {9,11,2}, {9,2,5}, {7,2,11} };
+        {6,1,10}, {9,0,11}, {9,11,2}, {9,2,5}, {7,2,11}
+    };
 
     for (index i = 0; i < 12; ++i)
         vertices.push_back(vec3(vertex_data[i]));
     for (index i = 0; i < 20; ++i)
-        tris.push_back(Tri(elements[i][0], elements[i][1], elements[i][2], i));
+        tris.push_back(Tri(elements[i][0], elements[i][1], elements[i][2]));
 
     std::vector<Tri> tris2;
     std::vector<Tri> *from, *to;
@@ -263,19 +261,47 @@ void icoSphere(glt::Mesh<V>& mesh, size subdivs) {
     to->clear();
     vertex_cache.clear();
 
+    mesh.primType(GL_TRIANGLES);
+    mesh.drawType(glt::DrawElements);
+
+    V v;
+    for (index i = 0; i < SIZE(vertices.size()); ++i) {
+        vec3_t normal = vertices[i];
+
+        real cos_theta = normal[2];
+        real sin_theta = sqrt(normal[0] * normal[0] + normal[1] + normal[1]);
+
+        real cos_phi, sin_phi;
+        if (sin_theta == 0.f) {
+            cos_phi = 1.f;
+            sin_phi = 0.f;
+        } else {
+            cos_phi = normal[0] / sin_theta;
+            sin_phi = normal[1] / sin_theta;
+        }
+
+        vec3_t tangent = vec3(cos_theta * cos_phi, cos_theta * sin_phi, - sin_theta);
+        vec3_t binormal = cross(tangent, normal);
+        binormal = normalize(binormal - dot(binormal, tangent) * tangent);
+        vec2_t uv;
+        uv[0] = real(.5) + atan2(normal[2], normal[0]) * inverse(real(2) * PI);
+        uv[1] = real(.5) - asin(normal[1]) * inverse(PI);
+        uv[0] *= signum(dot(cross(tangent, binormal), normal));
+        
+        glt::primitives::setPoint(v.position, normal);
+        glt::primitives::setVec(v.tangent, tangent);
+        glt::primitives::setVec(v.binormal, binormal);
+        v.uv = uv;
+        mesh.addVertex(v);
+    }
+
+    vertices.clear();
+
     for (index i = 0; i < SIZE(from->size()); ++i) {
         Tri tri = (*from)[i];
         
-        vec3_t ps[3] = { vertices[tri.c], vertices[tri.b], vertices[tri.a] };
-        for (index k = 0; k < 3; ++k) {
-            V v;
-            vec3_t p = ps[k];
-            glt::primitives::setPoint(v.position, p);
-            glt::primitives::setVec(v.normal, p);
-            mesh.addVertex(v);
-        }
+        mesh.addElement(tri.a);
+        mesh.addElement(tri.b);
+        mesh.addElement(tri.c);
     }
-
-    mesh.primType(GL_TRIANGLES);
-    mesh.drawType(glt::DrawArrays);
 }

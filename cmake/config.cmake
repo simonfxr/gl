@@ -116,7 +116,7 @@ if(USE_NO_MATH_H)
 endif()
 
 if(BUILD_DEBUG AND COMP_CLANG)
-  add_definitions(-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error)
+  add_definitions(-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error -ftrap-function=__clang_trap_function)
 endif()
 
 if(COMP_GCCLIKE)
