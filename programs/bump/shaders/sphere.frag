@@ -1,4 +1,6 @@
 
+uniform vec3 ecLight;
+
 const float Ambient = 0.3;
 const float Diffuse = 0.9;
 const float Specular = 0;
@@ -6,10 +8,10 @@ const float Specular = 0;
 const float BumpDensity = 16;
 const float BumpSize = 0.15;
 
-in vec3 tsLight;
-in vec3 tsEye;
-in vec2 fragUV;
+in vec3 ecNormal;
+in vec3 ecPosition;
 in vec3 N;
+in vec3 color;
 
 out vec4 fragColor;
 
@@ -22,6 +24,17 @@ vec3 sampleTexture(vec2 uv) {
 }
 
 void main() {
+
+    vec3 l = normalize(ecLight - ecPosition);
+    vec3 n = normalize(ecNormal);
+
+/*     float d = clamp(dot(n, l), 0, 1); */
+
+/* //    fragColor.rgb = vec3(0); */
+/*     fragColor.rgb = (0.2 + 0.8 * d) * vec3(1, 0, 1); */
+/*     fragColor.a = 1; */
+    fragColor.rgb = color;
+    fragColor.a = 1;
 
     /* vec2 uv = fragUV; */
 
@@ -50,5 +63,5 @@ void main() {
     /* fragColor.rgb = (Ambient + d * Diffuse) * albedo + s * Specular * lightColor; */
     /* fragColor.a = 1; */
 
-    fragColor = vec4(N * 0.5 + vec3(0.5), 1);
+    /* fragColor = vec4(N * 0.5 + vec3(0.5), 1); */
 }
