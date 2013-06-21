@@ -45,7 +45,7 @@ if(COMP_GCC OR COMP_ICC)
 else()
   set(USE_OPENMP_DEF FALSE)
 endif()
-set_option(USE_OPENMP ${USE_OPENMP_DEF} CACHE BOOL "enable openmp support")
+set_option(USE_OPENMP ${USE_OPENMP_DEF} BOOL "enable openmp support")
 
 set_option(USE_LTO FALSE BOOL "enable link time optimisations")
 

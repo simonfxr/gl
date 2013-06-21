@@ -210,5 +210,3 @@ endif()
 
 include_directories(${GLEW_INCLUDE_PATH})
 include_directories(${GLFW_INCLUDE_PATH})
-
-
