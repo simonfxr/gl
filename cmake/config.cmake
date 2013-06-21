@@ -193,8 +193,16 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/lib)
 
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
+
+if(NOT DEFINED GLEW_LIBRARY)
+  find_package(GLEW REQUIRED)
+endif()
+
+if(NOT DEFINED GLFW_LIBRARY)
+  find_package(glfw REQUIRED)
+endif()
 
 include_directories(${GLEW_INCLUDE_PATH})
+include_directories(${GLFW_INCLUDE_PATH})
 
-find_package(glfw REQUIRED)
+

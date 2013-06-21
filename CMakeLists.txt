@@ -4,12 +4,12 @@ cmake_minimum_required(VERSION 2.8)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect_env.cmake)
 
 macro(set_option var default type docstring)
-    if(NOT DEFINED ${var})
-        set(${var} ${default})
-    endif()
-    set(${var} ${${var}} CACHE ${type} ${docstring} FORCE)
+  if(NOT DEFINED ${var})
+    set(${var} ${default})
+  endif()
+  set(${var} ${${var}} CACHE ${type} ${docstring} FORCE)
 endmacro()
-
+  
 set_option(BUILD_TYPE DebugOpt STRING "build type Debug|DebugOpt|Release")
 if(BUILD_TYPE STREQUAL "DebugOpt")
   set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
@@ -28,22 +28,17 @@ set_option(GLDEBUG ${GLDEBUG_DEFAULT} BOOL "TRUE to enable error checking after 
 
 set_option(MATH_INLINE TRUE BOOL "TRUE to inline all custom math functions")
 
-set(GLEW_INC_DEF "")
-set(GLEW_LIB_DEF "")
-set(GLFW_INC_DEF "")
-set(GLFW_LIB_DEF "")
-
 if(SYS_WINDOWS)
   set(GLEW_INC_DEF ${CMAKE_CURRENT_LIST_DIR}/ext/glew/include)
   set(GLEW_LIB_DEF ${CMAKE_CURRENT_LIST_DIR}/ext/glew/lib/glew32.lib)
   set(GLFW_INC_DEF ${CMAKE_CURRENT_LIST_DIR}/ext/glfw3/include)
   set(GLFW_LIB_DEF ${CMAKE_CURRENT_LIST_DIR}/ext/glfw3/lib-msvc110/glfw3dll.lib)
-endif()
 
-set_option(GLEW_INCLUDE_PATH ${GLEW_INC_DEF} PATH "GLEW include directory")
-set_option(GLEW_LIBRARY ${GLEW_LIB_DEF} PATH "GLEW library")
-set_option(GLFW_INCLUDE_PATH ${GLFW_INC_DEF} PATH "GLEW include directory")
-set_option(GLFW_LIBRARY ${GLFW_LIB_DEF} PATH "GLFW library")
+  set_option(GLEW_INCLUDE_PATH "${GLEW_INC_DEF}" PATH "path to GLEW headers")
+  set_option(GLEW_LIBRARY "${GLEW_LIB_DEF}" PATH "path to GLEW library")
+  set_option(GLFW_INCLUDE_PATH "${GLFW_INC_DEF}" PATH "path to GLFW headers")
+  set_option(GLFW_LIBRARY "${GLFW_LIB_DEF}" PATH "path to GLEW library")
+endif()
 
 if(COMP_GCC OR COMP_ICC)
   set(USE_OPENMP_DEF TRUE)
@@ -56,10 +51,10 @@ set_option(USE_LTO FALSE BOOL "enable link time optimisations")
 
 set_option(BUILD_ARCH32 FALSE CACHE BOOL "TRUE to force 32-bit build on 64bit platform")
 
-set(USE_VOXEL_OPENCL FALSE CACHE BOOL "use opencl for the voxel-world program")
+set_option(USE_VOXEL_OPENCL FALSE BOOL "use opencl for the voxel-world program")
 
 if(SYS_LINUX)
-  set(USE_UNWIND_STACKTRACES TRUE CACHE BOOL "use libunwind and libdw to print a stacktrace on errors")
+  set_option(USE_UNWIND_STACKTRACES TRUE BOOL "use libunwind and libdw to print a stacktrace on errors")
 endif()
 
 set(USE_CXX11_DEF TRUE)
@@ -69,10 +64,10 @@ if(COMP_CL)
   set(USE_CXX11_FINAL_OVERRIDE_DEF FALSE)
 endif()
 
-set(USE_CXX11 ${USE_CXX11_DEF} CACHE BOOL "compile with support for the c++11 standard")
-set(USE_CXX11_FINAL_OVERRIDE ${USE_CXX11_FINAL_OVERRIDE_DEF} CACHE BOOL "use the new c++11 override and final keywords")
+set_option(USE_CXX11 ${USE_CXX11_DEF} BOOL "compile with support for the c++11 standard")
+set_option(USE_CXX11_FINAL_OVERRIDE ${USE_CXX11_FINAL_OVERRIDE_DEF} BOOL "use the new c++11 override and final keywords")
 
-set(USE_NO_MATH_H TRUE CACHE BOOL "dont import math.h in math library")
+set_option(USE_NO_MATH_H TRUE BOOL "dont import math.h in math library")
 
 project(gl)
 
