@@ -1,14 +1,4 @@
-add_subdirectory(bump)
-add_subdirectory(feedback)
-add_subdirectory(marching-cubes)
-add_subdirectory(marching-cubes.old)
-add_subdirectory(opengl-raw)
-add_subdirectory(phys)
-add_subdirectory(quasi)
-add_subdirectory(query-extension)
-add_subdirectory(shadow-maps)
-add_subdirectory(sim)
-add_subdirectory(simple)
-add_subdirectory(stereoproj)
-add_subdirectory(teapot)
-add_subdirectory(voxel-world)
+
+include(${PROJECT_SOURCE_DIR}/cmake/program.cmake)
+
+def_program(hello-gl SOURCES hello-gl.cpp cutil.c DEPEND ge)

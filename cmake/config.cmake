@@ -36,6 +36,12 @@ if(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_SHARED=1)
 endif()
 
+if(BITS32)
+  add_definitions(-DPTR_BITS=32)
+elseif(BITS64)
+  add_definitions(-DPTR_BITS=64)
+endif()
+
 if(SYS_UNIX)
   if(BUILD_ARCH32)
     set(CMAKE_PREFIX_PATH)
@@ -62,7 +68,7 @@ if(COMP_GCCLIKE)
 endif()
 
 if(COMP_CL)
-  add_definitions(-DCOMPILER_CL)
+  add_definitions(-DCOMPILER_CL=1)
 endif()
 
 if(BUILD_OPT)
