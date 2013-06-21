@@ -9,7 +9,13 @@
 #include "ge/Event.hpp"
 
 #include "opengl.hpp"
-#include "GLFW/glfw3.h"
+#include <GLFW/glfw3.h>
+
+#ifdef SYSTEM_LINUX
+#  define GLFW_EXPOSE_NATIVE_X11 1
+#  define GLFW_EXPOSE_NATIVE_GLX 1
+#  include <GLFW/glfw3native.h>
+#endif
 
 namespace ge {
 
@@ -363,6 +369,37 @@ void GameWindow::Data::init(const WindowOptions& opts) {
     context_info.minorVersion = glfwGetWindowAttrib(win, GLFW_CONTEXT_VERSION_MINOR);
     context_info.debugContext = glfwGetWindowAttrib(win, GLFW_OPENGL_DEBUG_CONTEXT) == GL_TRUE;
     context_info.coreProfile = glfwGetWindowAttrib(win, GLFW_OPENGL_PROFILE) == GLFW_OPENGL_CORE_PROFILE;
+
+#ifdef SYSTEM_LINUX
+
+    Display *dpy = glfwGetX11Display();
+    GLXContext context = glfwGetGLXContext(win);
+    int fbconf_id, xscreen;
+    glXQueryContext(dpy, context, GLX_FBCONFIG_ID, &fbconf_id);
+    glXQueryContext(dpy, context, GLX_SCREEN, &xscreen);
+    int num_fbconfs;
+    GLXFBConfig *fbconfs = glXGetFBConfigs(dpy, xscreen, &num_fbconfs);
+
+    int i;
+    for (i = 0; i < num_fbconfs; ++i) {
+        int id;
+        glXGetFBConfigAttrib(dpy, fbconfs[i], GLX_FBCONFIG_ID, &id);
+        if (id == fbconf_id) {
+            int val;
+            glXGetFBConfigAttrib(dpy, fbconfs[i], GLX_DEPTH_SIZE, &val);
+            context_info.depthBits = unsigned(val);
+            glXGetFBConfigAttrib(dpy, fbconfs[i], GLX_STENCIL_SIZE, &val);
+            context_info.stencilBits = unsigned(val);
+            glXGetFBConfigAttrib(dpy, fbconfs[i], GLX_SAMPLE_BUFFERS_ARB, &val);
+            if (val == 1) val = 0;
+            context_info.antialiasingLevel = unsigned(val);
+            break;
+        }
+    }
+
+    XFree(fbconfs);
+
+#endif
 }
 
 void GameWindow::Data::setMouse(int x, int y) {

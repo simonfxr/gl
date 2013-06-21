@@ -54,6 +54,7 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     sphere_model.send();
 
     GL_CALL(glEnable, GL_DEPTH_TEST);
+    GL_CALL(glEnable, GL_MULTISAMPLE);
     light_position = vec3(0.f, 0.f, -100.f);
 
     camera.frame.origin = vec3(0.f);
@@ -168,7 +169,7 @@ void sphere(glt::Mesh<Vertex>& mesh, real rad, int slices, int stacks) {
                 v.uv = uv[k];                                           \
                                                                         \
                 for (int j = 0; j < 2; ++j)                             \
-                    if (a[j] > 0 && b[j] > 0 && abs(v.uv[j]) < 0.05f)   \
+                    if (a[j] > 0 && b[j] > 0 && abs(v.uv[j]) < 0.5f)   \
                         v.uv[j] = signum(v.uv[j]) * (1.0f - abs(v.uv[j])); \
                                                                         \
                 mesh.addVertex(v);                                      \

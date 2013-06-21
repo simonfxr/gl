@@ -25,19 +25,32 @@ else()
   set(GLDEBUG_DEFAULT TRUE)
 endif()
 set_option(GLDEBUG ${GLDEBUG_DEFAULT} BOOL "TRUE to enable error checking after every opengl call")
-unset(GLDEBUG_DEFAULT)
 
 set_option(MATH_INLINE TRUE BOOL "TRUE to inline all custom math functions")
 
-set_option(GLEW_ROOT_DIR "" PATH "GLEW installation directory")
+set(GLEW_INC_DEF "")
+set(GLEW_LIB_DEF "")
+set(GLFW_INC_DEF "")
+set(GLFW_LIB_DEF "")
+
+if(SYS_WINDOWS)
+  set(GLEW_INC_DEF ${CMAKE_CURRENT_LIST_DIR}/ext/glew/include)
+  set(GLEW_LIB_DEF ${CMAKE_CURRENT_LIST_DIR}/ext/glew/lib/glew32.lib)
+  set(GLFW_INC_DEF ${CMAKE_CURRENT_LIST_DIR}/ext/glfw3/include)
+  set(GLFW_LIB_DEF ${CMAKE_CURRENT_LIST_DIR}/ext/glfw3/lib-msvc110/glfw3dll.lib)
+endif()
+
+set_option(GLEW_INCLUDE_PATH ${GLEW_INC_DEF} PATH "GLEW include directory")
+set_option(GLEW_LIBRARY ${GLEW_LIB_DEF} PATH "GLEW library")
+set_option(GLFW_INCLUDE_PATH ${GLFW_INC_DEF} PATH "GLEW include directory")
+set_option(GLFW_LIBRARY ${GLFW_LIB_DEF} PATH "GLFW library")
 
 if(COMP_GCC OR COMP_ICC)
-  set(USE_OPENMP_DEFAULT TRUE)
+  set(USE_OPENMP_DEF TRUE)
 else()
-  set(USE_OPENMP_DEFAULT FALSE)
+  set(USE_OPENMP_DEF FALSE)
 endif()
-set_option(USE_OPENMP TRUE CACHE ${USE_OPENMP_DEFAULT} "enable openmp support")
-unset(USE_OPENMP_DEFAULT)
+set_option(USE_OPENMP ${USE_OPENMP_DEF} CACHE BOOL "enable openmp support")
 
 set_option(USE_LTO FALSE BOOL "enable link time optimisations")
 
@@ -49,9 +62,15 @@ if(SYS_LINUX)
   set(USE_UNWIND_STACKTRACES TRUE CACHE BOOL "use libunwind and libdw to print a stacktrace on errors")
 endif()
 
-set(USE_CXX11 TRUE CACHE BOOL "compile with support for the c++11 standard")
+set(USE_CXX11_DEF TRUE)
+set(USE_CXX11_FINAL_OVERRIDE_DEF TRUE)
+if(COMP_CL)
+  set(USE_CXX11_DEF FALSE)
+  set(USE_CXX11_FINAL_OVERRIDE_DEF FALSE)
+endif()
 
-set(USE_CXX11_FINAL_OVERRIDE TRUE CACHE BOOL "use the new c++11 override and final keywords")
+set(USE_CXX11 ${USE_CXX11_DEF} CACHE BOOL "compile with support for the c++11 standard")
+set(USE_CXX11_FINAL_OVERRIDE ${USE_CXX11_FINAL_OVERRIDE_DEF} CACHE BOOL "use the new c++11 override and final keywords")
 
 set(USE_NO_MATH_H TRUE CACHE BOOL "dont import math.h in math library")
 

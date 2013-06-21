@@ -5,7 +5,7 @@ if(UNIX)
 endif()
 
 if(WIN32)
-  set(SYS_WINDOWS)
+  set(SYS_WINDOWS TRUE)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
