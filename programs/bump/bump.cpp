@@ -6,6 +6,9 @@
 #include "glt/Transformations.hpp"
 #include "glt/utils.hpp"
 
+#include "math/mat3.hpp"
+#include "math/mat4.hpp"
+
 #include <vector>
 #include <map>
 #include <algorithm>
@@ -79,8 +82,7 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>&) {
 
     vec3_t ecLight = transformPoint(rm.geometryTransform().viewMatrix(), light_position);
 
-
-    real phi = real(engine.gameLoop().animationFrameID()) * inverse(real(100)) * 0.1f;
+    real phi = real(engine.gameLoop().animationFrameID()) * inverse(real(100)) * 1.3f;
 
     rm.geometryTransform().dup();
     rm.geometryTransform().scale(vec3(10.f)); // scale radius of sphere
@@ -96,6 +98,8 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>&) {
 }
 
 int main(int argc, char *argv[]) {
+
+    
     ge::EngineOptions opts;
     Anim anim;
     anim.link();
@@ -141,8 +145,8 @@ void sphere(glt::Mesh<Vertex>& mesh, real rad, int slices, int stacks) {
             tangent[II] = vec3(ca * cb, ca * sb, - sa);                 \
             binormal[II] = cross(tangent[II], normal[II]);              \
             binormal[II] = normalize(binormal[II] - dot(binormal[II], tangent[II]) * tangent[II]); \
-            uv[II][0] = real(.5) + atan2(normal[II][2], normal[II][0]) * inverse(real(2) * PI); \
-            uv[II][1] = real(.5) - asin(normal[II][1]) * inverse(PI);   \
+            uv[II][0] = real(.5) + ::math::atan2(normal[II][2], normal[II][0]) * inverse(real(2) * PI); \
+            uv[II][1] = real(.5) - ::math::asin(normal[II][1]) * inverse(PI);   \
             uv[II][0] *= signum(dot(cross(binormal[II], tangent[II]), normal[II]))
             
             CALC(0, stheta, ctheta, sphi, cphi);
@@ -152,7 +156,7 @@ void sphere(glt::Mesh<Vertex>& mesh, real rad, int slices, int stacks) {
 
 #undef CALC
 
-#define TEST(uv, JJ, v) ((abs(uv[0][JJ]) v) + (abs(uv[1][JJ]) v) + (abs(uv[2][JJ]) v))
+#define TEST(uv, JJ, v) ((::math::abs(uv[0][JJ]) v) + (::math::abs(uv[1][JJ]) v) + (::math::abs(uv[2][JJ]) v))
             
 #define ADD_MESH  do {                                                  \
             int a[2], b[2];                                             \
@@ -169,8 +173,8 @@ void sphere(glt::Mesh<Vertex>& mesh, real rad, int slices, int stacks) {
                 v.uv = uv[k];                                           \
                                                                         \
                 for (int j = 0; j < 2; ++j)                             \
-                    if (a[j] > 0 && b[j] > 0 && abs(v.uv[j]) < 0.5f)   \
-                        v.uv[j] = signum(v.uv[j]) * (1.0f - abs(v.uv[j])); \
+                    if (a[j] > 0 && b[j] > 0 && ::math::abs(v.uv[j]) < 0.5f)   \
+                        v.uv[j] = signum(v.uv[j]) * (1.0f - ::math::abs(v.uv[j])); \
                                                                         \
                 mesh.addVertex(v);                                      \
             }                                                           \
@@ -300,8 +304,8 @@ void icoSphere(glt::Mesh<V>& mesh, size subdivs) {
         vec3_t binormal = cross(tangent, normal);
         binormal = normalize(binormal - dot(binormal, tangent) * tangent);
         vec2_t uv;
-        uv[0] = real(.5) + atan2(normal[2], normal[0]) * inverse(real(2) * PI);
-        uv[1] = real(.5) - asin(normal[1]) * inverse(PI);
+        uv[0] = real(.5) + ::math::atan2(normal[2], normal[0]) * inverse(real(2) * PI);
+        uv[1] = real(.5) - ::math::asin(normal[1]) * inverse(PI);
         uv[0] *= signum(dot(cross(tangent, binormal), normal));
         
         glt::primitives::setPoint(v.position, normal);

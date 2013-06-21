@@ -1,6 +1,19 @@
 
 cmake_minimum_required(VERSION 2.8)
 
+if(NOT DEFINED BUILD_TYPE)
+  set(BUILD_TYPE DebugOpt)
+endif()
+set(BUILD_TYPE ${BUILD_TYPE} CACHE STRING "build type Debug|DebugOpt|Release" FORCE)
+
+if(BUILD_TYPE STREQUAL "DebugOpt")
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
+else()
+  set(CMAKE_BUILD_TYPE ${BUILD_TYPE} CACHE STRING "" FORCE)
+endif()
+
+project(gl)
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect_env.cmake)
 
 macro(set_option var default type docstring)
@@ -10,13 +23,6 @@ macro(set_option var default type docstring)
   set(${var} ${${var}} CACHE ${type} ${docstring} FORCE)
 endmacro()
   
-set_option(BUILD_TYPE DebugOpt STRING "build type Debug|DebugOpt|Release")
-if(BUILD_TYPE STREQUAL "DebugOpt")
-  set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
-else()
-  set(CMAKE_BUILD_TYPE ${BUILD_TYPE} CACHE STRING "" FORCE)
-endif()
-
 set_option(BUILD_SHARED_LIBS TRUE BOOL "TRUE to build shared libs, FALSE to build static libs")
 
 if(BUILD_TYPE STREQUAL "Release")
@@ -49,7 +55,9 @@ set_option(USE_OPENMP ${USE_OPENMP_DEF} BOOL "enable openmp support")
 
 set_option(USE_LTO FALSE BOOL "enable link time optimisations")
 
-set_option(BUILD_ARCH32 FALSE CACHE BOOL "TRUE to force 32-bit build on 64bit platform")
+if(BITS64)
+  set_option(BUILD_ARCH32 FALSE BOOL "TRUE to force 32-bit build on 64bit platform")
+endif()
 
 set_option(USE_VOXEL_OPENCL FALSE BOOL "use opencl for the voxel-world program")
 
@@ -68,8 +76,6 @@ set_option(USE_CXX11 ${USE_CXX11_DEF} BOOL "compile with support for the c++11 s
 set_option(USE_CXX11_FINAL_OVERRIDE ${USE_CXX11_FINAL_OVERRIDE_DEF} BOOL "use the new c++11 override and final keywords")
 
 set_option(USE_NO_MATH_H TRUE BOOL "dont import math.h in math library")
-
-project(gl)
 
 include_directories(src)
 

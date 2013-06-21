@@ -3,14 +3,12 @@
 
 #include "defs.hpp"
 #include "err/err.hpp"
-#include "data/Atomic.hpp"
 
-#ifndef REF_COUNTER_TYPE
-#  ifdef REF_CONCURRENT
-#    define REF_COUNTER_TYPE ::atomic::AtomicCounter
-#  else
-#    define REF_COUNTER_TYPE ::atomic::SeqCounter
-#  endif
+#ifdef REF_CONCURRENT
+#  include "data/Atomic.hpp"
+#  define REF_COUNTER_TYPE ::atomic::AtomicCounter
+#else
+#  define REF_COUNTER_TYPE ::atomic::SeqCounter
 #endif
 
 namespace atomic {
@@ -19,6 +17,7 @@ using namespace defs;
 
 DEBUG_DECL(static const int32 MARK = int32(0xAFAFAFAF);)
 
+#ifdef REF_CONCURRENT
 struct AtomicCounter {
     Atomic<int32> count;
     
@@ -35,6 +34,7 @@ struct AtomicCounter {
         return count.xchg(expected, val);
     }
 };
+#endif
 
 struct SeqCounter { // not thread safe
     int32 count; 

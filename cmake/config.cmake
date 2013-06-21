@@ -1,24 +1,5 @@
 
-include(${PROJECT_SOURCE_DIR}/cmake/detect_env.cmake)
-
-macro(cache_var var)
-    set(${var} ${${var}} CACHE STRING "" FORCE)
-endmacro()
-
-macro(cache_var_type var type)
-  set(${var} ${${var}} CACHE ${type} "" FORCE)
-endmacro()
-
-include(CheckTypeSize)
-check_type_size(void* SIZEOF_VOID_PTR)
-if(${SIZEOF_VOID_PTR} EQUAL "4")
-  set(BITS32 TRUE)
-elseif(${SIZEOF_VOID_PTR} EQUAL "8")
-  set(BITS64 TRUE)
-else()
-  message(FATAL_ERROR "Unsupported architecture")
-  return()
-endif()
+#include(${PROJECT_SOURCE_DIR}/cmake/detect_env.cmake)
 
 if(SYS_WINDOWS)
   add_definitions(-DSYSTEM_WINDOWS=1)
@@ -197,6 +178,10 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/lib)
+
+if(SYS_WINDOWS)
+  set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/bin)
+endif()
 
 find_package(OpenGL REQUIRED)
 

@@ -109,7 +109,3 @@ set(GE_LIBS
   ${GLFW_LIBRARY})
 
 def_lib(ge SOURCES ${GE_SRC} DEPEND ${VEC_LIB} sys glt LIB_DEPEND ${GE_LIBS})
-
-if(SYS_WINDOWS)
-  add_library(win-main STATIC win-main.cpp)
-endif()

@@ -1,14 +1,1 @@
-load "scripts/default.script"
-
-bindKey [W] { moveCamera 12 }
-bindKey [D] { moveCamera 3 }
-bindKey [S] { moveCamera 6 }
-bindKey [A] { moveCamera 9 }
-
-postInit { 
-    setCameraStepLength 1
-    setCameraMouseSensitivity 0.00075
-}
-
-bindShader "triangle" "simple_triangle.vert" "simple_triangle.frag" 0 "position" 1 "color"
-
+load "default.script"

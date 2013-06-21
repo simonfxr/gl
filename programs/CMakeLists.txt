@@ -1,4 +1,10 @@
 
-include(${PROJECT_SOURCE_DIR}/cmake/program.cmake)
-
-def_program(hello-gl SOURCES hello-gl.cpp cutil.c DEPEND ge)
+add_subdirectory(bump)
+add_subdirectory(glfw-test)
+add_subdirectory(hello-gl)
+add_subdirectory(opengl-raw)
+add_subdirectory(query-extension)
+add_subdirectory(sim)
+add_subdirectory(simple)
+#add_subdirectory(teapot)
+add_subdirectory(voxel-world)

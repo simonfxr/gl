@@ -84,6 +84,8 @@ struct GE_API GameWindow {
 
     size windowWidth() const;
 
+    void windowSize(size& width, size& height) const;
+
     WindowEvents& events();
 
     void registerBinding(const KeyBinding& bind, Ref<Command>& com);

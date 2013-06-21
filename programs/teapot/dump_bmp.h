@@ -1,7 +1,7 @@
 #ifndef DUMP_BMP_H
 #define DUMP_BMP_H
 
-#include <stdint.h>
+#include "defs.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,9 +16,9 @@ typedef enum BMPError BMPError;
  * the first row is the uppermost row in the image
  */
 
-BMPError bmp_dump(int fd, int w, int h, const uint32_t *pixels);
+BMPError bmp_dump(int fd, int w, int h, const uint32 *pixels);
 
-BMPError bmp_read(int fd, int *w, int *h, uint32_t **pixels);
+BMPError bmp_read(int fd, int *w, int *h, uint32 **pixels);
 
 #ifdef __cplusplus
 }

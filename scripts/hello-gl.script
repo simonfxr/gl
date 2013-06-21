@@ -1,0 +1,6 @@
+
+load "default.script"
+
+prependShaderPath "programs/hello-gl/shaders"
+
+bindShader "hello-gl" "hello-gl.vert" "hello-gl.frag" 0 "position"

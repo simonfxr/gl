@@ -529,17 +529,25 @@ void GameWindow::registerHandlers(EngineEvents& evnts) {
     evnts.handleInput.reg(makeEventHandler(Data::runHandleInputEvents, self));
 }
 
+size GameWindow::windowWidth() const {
+    size w, h;
+    windowSize(w, h);
+    return w;
+}
+
 size GameWindow::windowHeight() const {
-    int w, h;
-    glfwGetWindowSize(self->win, &w, &h);
+    size w, h;
+    windowSize(w, h);
     return h;
 }
 
-size GameWindow::windowWidth() const {
+void GameWindow::windowSize(size& width, size& height) const {
     int w, h;
     glfwGetWindowSize(self->win, &w, &h);
-    return w;
+    width = SIZE(w);
+    height = SIZE(h);
 }
+
 
 void GameWindow::setActive() {
     // NOOP

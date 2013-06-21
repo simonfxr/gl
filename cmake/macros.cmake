@@ -143,13 +143,7 @@ macro(def_program target)
   # parse the arguments
   sfml_parse_arguments(THIS "SOURCES;DEPEND;LIB_DEPEND" "NO_GUI_APP" ${ARGN})
 
-  # create the target
-  if(THIS_GUI_APP AND SYS_WINDOWS)
-    add_executable(${target} WIN32 ${THIS_SOURCES})
-    target_link_libraries(${target} win-main)
-  else()
-    add_executable(${target} ${THIS_SOURCES})
-  endif()
+  add_executable(${target} ${THIS_SOURCES})
 
   # for gcc >= 4.0 on Windows, apply the STATIC_STD_LIBS option if it is enabled
   if(SYS_WINDOWS AND COMP_GCC AND STATIC_STD_LIBS)

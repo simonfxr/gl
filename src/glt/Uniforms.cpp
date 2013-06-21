@@ -165,13 +165,15 @@ void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GL
 
 #ifdef GLDEBUG
 
-    GLint actual_typei;
+    GLint actual_typei = -1;
     GL_CALL(glGetActiveUniformsiv, *prog.program(), 1, &location, GL_UNIFORM_TYPE, &actual_typei);
-    GLenum actual_type = GLenum(actual_typei);
-    if (actual_type != type) {
-        std::string err = "uniform \"" + name + "\": types dont match, got: " + descGLType(type) + ", expected: " + descGLType(actual_type);
-        ERR(err.c_str());
-        return;
+    if (actual_typei != -1) {
+        GLenum actual_type = GLenum(actual_typei);
+        if (actual_type != type) {
+            std::string err = "uniform \"" + name + "\": types dont match, got: " + descGLType(type) + ", expected: " + descGLType(actual_type);
+            ERR(err.c_str());
+            return;
+        }
     }
 
 #endif

@@ -33,6 +33,7 @@ struct RenderManager::Data {
     RenderTarget *current_rt;
 
     Projection projection;
+    bool projection_outdated;
 
     float stat_snapshot;
     float stat_fast_snapshot;
@@ -135,6 +136,7 @@ GeometryTransform& RenderManager::geometryTransform() {
 
 void RenderManager::setDefaultProjection(const Projection& proj) {
     self->projection = proj;
+    self->projection_outdated = true;
 }
 
 void RenderManager::updateProjection(float aspectRatio) {
@@ -156,6 +158,7 @@ void RenderManager::updateProjection(float aspectRatio) {
     default:
         ERR("invalid projection type");
     }
+    self->projection_outdated = false;
 }
 
 void RenderManager::setDefaultRenderTarget(RenderTarget *rt, bool delete_after) {
@@ -214,6 +217,12 @@ void RenderManager::beginScene() {
 
     setActiveRenderTarget(self->def_rt);
     self->current_rt->beginScene();
+    if (self->projection_outdated) {
+        size w = self->current_rt->width();
+        size h = self->current_rt->height();
+        float aspect_ratio = float(w) / float(h);
+        updateProjection(aspect_ratio);
+    }
 
     self->transformStateBOS = self->transform.save();
     self->frustum.update(self->transform.vpMatrix());

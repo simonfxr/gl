@@ -12,6 +12,7 @@
 namespace sys {
 
 using namespace defs;
+
 #ifdef SYSTEM_UNIX
 inline uint32 hton(uint32 a) {
     return htonl(a);
@@ -29,12 +30,15 @@ inline uint16 ntoh(uint16 a) {
     return ntohs(a);
 }
 #else
-//assume host uses little endian
-#define UNDEFINED ERR(std::string("not yet implemented"))
 
-inline uint32 hton(uint32) {
-    UNDEFINED;
-    return 0;
+#define UNDEFINED ::err::fatalError(_CURRENT_LOCATION, ::err::FatalError, ::err::ErrorArgs(sys::io::stdout(), "not yet implemented"))
+
+inline uint32 hton(uint32 x) {
+//    UNDEFINED;
+    // assume little endian
+#define BYTE(x, i, j) (((x >> (8 * i)) & 0xFF) << (8 * j))
+    return BYTE(x, 0, 3) | BYTE(x, 1, 2) | BYTE(x, 2, 1) | BYTE(x, 3, 0);
+#undef BYTE
 }
 
 inline uint16 hton(uint16) {
