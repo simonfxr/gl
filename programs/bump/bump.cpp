@@ -141,7 +141,8 @@ void sphere(glt::Mesh<Vertex>& mesh, real rad, int slices, int stacks) {
             binormal[II] = cross(tangent[II], normal[II]);              \
             binormal[II] = normalize(binormal[II] - dot(binormal[II], tangent[II]) * tangent[II]); \
             uv[II][0] = real(.5) + atan2(normal[II][2], normal[II][0]) * inverse(real(2) * PI); \
-            uv[II][1] = real(.5) - asin(normal[II][1]) * inverse(PI)
+            uv[II][1] = real(.5) - asin(normal[II][1]) * inverse(PI);   \
+            uv[II][0] *= signum(dot(cross(binormal[II], tangent[II]), normal[II]))
             
             CALC(0, stheta, ctheta, sphi, cphi);
             CALC(1, stheta2, ctheta2, sphi, cphi);
@@ -149,17 +150,30 @@ void sphere(glt::Mesh<Vertex>& mesh, real rad, int slices, int stacks) {
             CALC(3, stheta2, ctheta2, sphi2, cphi2);
 
 #undef CALC
+
+#define TEST(uv, JJ, v) ((abs(uv[0][JJ]) v) + (abs(uv[1][JJ]) v) + (abs(uv[2][JJ]) v))
             
-#define ADD_MESH                                                        \
+#define ADD_MESH  do {                                                  \
+            int a[2], b[2];                                             \
+            a[0] = TEST(uv, 0, < 0.05f);                                \
+            a[1] = TEST(uv, 1, < 0.05f);                                \
+            b[0] = TEST(uv, 0, > 0.95f);                                \
+            b[1] = TEST(uv, 1, > 0.95f);                                \
+                                                                        \
             for (int k = 0; k < 3; ++k) {                               \
                 Vertex v;                                               \
                 glt::primitives::setPoint(v.position, position[k]);     \
                 glt::primitives::setVec(v.tangent, tangent[k]);         \
                 glt::primitives::setVec(v.binormal, binormal[k]);       \
-                uv[k][0] *= dot(cross(binormal[k], tangent[k]), normal[k]) < real(0) ? real(-1) : real(1); \
                 v.uv = uv[k];                                           \
+                                                                        \
+                for (int j = 0; j < 2; ++j)                             \
+                    if (a[j] > 0 && b[j] > 0 && abs(v.uv[j]) < 0.05f)   \
+                        v.uv[j] = signum(v.uv[j]) * (1.0f - abs(v.uv[j])); \
+                                                                        \
                 mesh.addVertex(v);                                      \
-            }
+            }                                                           \
+        } while (0)
 
             ADD_MESH;
 
@@ -170,6 +184,7 @@ void sphere(glt::Mesh<Vertex>& mesh, real rad, int slices, int stacks) {
 
             ADD_MESH;
 #undef ADD_MESH
+#undef TEST
 
         }
     }
