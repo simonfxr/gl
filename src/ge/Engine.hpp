@@ -1,6 +1,8 @@
 #ifndef GE_ENGINE_HPP
 #define GE_ENGINE_HPP
 
+#include "data/Ref.hpp"
+
 #include "ge/conf.hpp"
 
 #include "ge/EngineOptions.hpp"
@@ -9,6 +11,7 @@
 #include "ge/Event.hpp"
 #include "ge/EngineEvents.hpp"
 #include "ge/Init.hpp"
+#include "ge/Plugin.hpp"
 #include "ge/CommandProcessor.hpp"
 #include "ge/KeyHandler.hpp"
 #include "ge/ReplServer.hpp"
@@ -46,6 +49,8 @@ struct GE_API Engine {
     void addInit(RunLevel lvl, const Ref<EventHandler<InitEvent> >& comm);
 
     defs::int32 run(const EngineOptions& opts = EngineOptions());
+
+    void enablePlugin(Plugin&);
 
 private:
     Engine(const Engine&);

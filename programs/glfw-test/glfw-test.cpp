@@ -18,6 +18,9 @@ int main(int argc, const char *argv[]) {
     fprintf(log, "Program started\n");
 
     GLFWwindow* window;
+    float aspect_ratio;
+    int fb_width, fb_height;
+    GLenum glew_err;
 
     /* Initialize the library */
     if (!glfwInit()) {
@@ -41,9 +44,9 @@ int main(int argc, const char *argv[]) {
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
-    GLenum err = glewInit();
-    if (err != GLEW_OK) {
-	fprintf(log, "GLEW Error: %s\n", glewGetErrorString(err));
+    glew_err = glewInit();
+    if (glew_err != GLEW_OK) {
+	fprintf(log, "GLEW Error: %s\n", glewGetErrorString(glew_err));
 	ret = -1;
 	goto err_win;
     }
@@ -59,15 +62,13 @@ int main(int argc, const char *argv[]) {
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
-	float ratio;
-	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
-	ratio = width / (float) height;
-	glViewport(0, 0, width, height);
+	glfwGetFramebufferSize(window, &fb_width, &fb_height);
+	aspect_ratio = fb_width / (float) fb_height;
+	glViewport(0, 0, fb_width, fb_height);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+	glOrtho(-aspect_ratio, aspect_ratio, -1.f, 1.f, 1.f, -1.f);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);

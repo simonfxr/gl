@@ -32,7 +32,6 @@ void WindowRenderTarget::resized() {
 }
 
 void WindowRenderTarget::doActivate() {
-    window.setActive();
     GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, 0);
 }
 

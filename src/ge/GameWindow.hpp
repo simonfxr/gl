@@ -56,14 +56,8 @@ struct GE_API GameWindow {
     GameWindow(const WindowOptions& opts = WindowOptions());
     ~GameWindow();
 
-    void grabMouse(bool grab);
-    bool grabMouse() const;
-
     void showMouseCursor(bool show);
     bool showMouseCursor() const;
-
-    void accumulateMouseMoves(bool accum);
-    bool accumulateMouseMoves();
 
     void vsync(bool enable);
     bool vsync();
@@ -73,8 +67,6 @@ struct GE_API GameWindow {
     bool init();
 
     WindowRenderTarget& renderTarget();
-
-    void setActive();
 
     void swapBuffers();
 
@@ -86,11 +78,9 @@ struct GE_API GameWindow {
 
     void windowSize(size& width, size& height) const;
 
+    void setMouse(index16, index16);
+
     WindowEvents& events();
-
-    void registerBinding(const KeyBinding& bind, Ref<Command>& com);
-
-    bool unregisterBinding(const KeyBinding& bind);
 
     void registerHandlers(EngineEvents& evnts);
 
@@ -105,6 +95,7 @@ private:
 
 struct WindowEvent;
 struct WindowResized;
+struct FramebufferResized;
 struct KeyChanged;
 struct MouseMoved;
 struct MouseButton;
@@ -114,6 +105,7 @@ struct GE_API WindowEvents {
     EventSource<WindowEvent> windowClosed;
     EventSource<FocusChanged> focusChanged;
     EventSource<WindowResized> windowResized;
+    EventSource<FramebufferResized> framebufferResized;
     EventSource<KeyChanged> keyChanged;
     EventSource<MouseMoved> mouseMoved;
     EventSource<MouseButton> mouseButton;
@@ -128,6 +120,12 @@ struct GE_API WindowEvent {
 struct GE_API WindowResized : public WindowEvent {
     size width, height;
     WindowResized(GameWindow& win, size w, size h) :
+        WindowEvent(win), width(w), height(h) {}
+};
+
+struct GE_API FramebufferResized: public WindowEvent {
+    size width, height;
+    FramebufferResized(GameWindow& win, size w, size h) :
         WindowEvent(win), width(w), height(h) {}
 };
 

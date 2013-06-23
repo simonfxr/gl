@@ -25,12 +25,11 @@ struct GameWindow::Data {
     const bool owning_win;
     GLFWwindow *win;
     
-    bool grab_mouse;
     bool have_focus;
     bool vsync;
 
-    index16 mouse_x;
-    index16 mouse_y;
+    double mouse_x;
+    double  mouse_y;
 
     bool show_mouse_cursor;
     bool accum_mouse_moves;
@@ -41,25 +40,15 @@ struct GameWindow::Data {
 
     GLContextInfo context_info;
 
-    struct EventState {
-        index16 mouse_current_x, mouse_current_y;
-        bool was_resize;
-        size16 new_win_w, new_win_h;
-    };
-
-    EventState *ev_state;
-
     Data(GameWindow& _self, bool owns_win, GLFWwindow *rw) : 
         self(_self),
         owning_win(owns_win),
         win(rw),
-        grab_mouse(false),
         have_focus(true),
         vsync(false),
         mouse_x(0),
         mouse_y(0),
         show_mouse_cursor(true),
-        accum_mouse_moves(true),
         renderTarget(0),
         events()        
         {}
@@ -68,7 +57,7 @@ struct GameWindow::Data {
 
     void init(const WindowOptions& opts);
     void handleInputEvents();
-    void setMouse(int x, int y);
+    void setMouse(index16 x, index16 y);
 
     static GLFWwindow *makeWindow(const WindowOptions& opts);
     static void runHandleInputEvents(Data *, const Event<InputEvent>&);
@@ -227,9 +216,7 @@ void GameWindow::Data::glfw_error_callback(int error, const char *desc) {
 
 void GameWindow::Data::glfw_window_size_callback(GLFWwindow *win, int w, int h) {
     GameWindow::Data *me = getUserPointer(win);
-    me->ev_state->was_resize = true;
-    me->ev_state->new_win_w = w;
-    me->ev_state->new_win_h = h;
+    me->events.windowResized.raise(makeEvent(WindowResized(me->self, SIZE(w), SIZE(h))));
 }
 
 void GameWindow::Data::glfw_window_close_callback(GLFWwindow *win) {
@@ -247,23 +234,8 @@ void GameWindow::Data::glfw_window_focus_callback(GLFWwindow *win, int focus_gai
 
     if (focus_gained == GL_TRUE && !me->have_focus) {
         me->have_focus = true;
-
-        if (me->grab_mouse) {
-            int w, h;
-            glfwGetWindowSize(win, &w, &h);
-            me->mouse_x = index16(w / 2);
-            me->mouse_y = index16(h / 2);
-
-            me->ev_state->mouse_current_x = me->mouse_x;
-            me->ev_state->mouse_current_y = me->mouse_y;
-
-            me->setMouse(me->mouse_x, me->mouse_y);
-        }
-        
         me->events.focusChanged.raise(makeEvent(FocusChanged(me->self, true)));
-        
     } else if (focus_gained == GL_FALSE && me->have_focus) {
-        
         me->have_focus = false;
         me->events.focusChanged.raise(makeEvent(FocusChanged(me->self, false)));
     }
@@ -280,8 +252,8 @@ void GameWindow::Data::glfw_window_iconify_callback(GLFWwindow *win, int iconifi
 }
 
 void GameWindow::Data::glfw_framebuffer_size_callback(GLFWwindow *win, int w, int h) {
-    UNUSED(win); UNUSED(w); UNUSED(h);
-    // NOOP
+    GameWindow::Data *me = getUserPointer(win);
+    me->events.framebufferResized.raise(makeEvent(FramebufferResized(me->self, SIZE(w), SIZE(h))));
 }
 
 // static void GameWindow::Data::glfw_char_callback(GLFWwindow *win, unsigned int codepoint) {
@@ -294,21 +266,15 @@ void GameWindow::Data::glfw_framebuffer_size_callback(GLFWwindow *win, int w, in
 
 void GameWindow::Data::glfw_cursor_pos_callback(GLFWwindow *win, double x, double y) {
     GameWindow::Data *me = getUserPointer(win);
-    me->mouse_x = index16(x);
-    me->mouse_y = index16(y);
+
+    int16 dx = int16(-(x - me->mouse_x));
+    int16 dy = int16(-(y - me->mouse_y));
+
+    me->mouse_x = x;
+    me->mouse_y = y;
     
-    if (!me->accum_mouse_moves) {
-        int16 dx = int16(me->ev_state->mouse_current_x - me->mouse_x);
-        int16 dy = int16(me->mouse_y - me->ev_state->mouse_current_y);
-        
-        me->ev_state->mouse_current_x = me->mouse_x;
-        me->ev_state->mouse_current_y = me->mouse_y;
-        
-        if (me->have_focus && (dx != 0 || dy != 0)) {
-            MouseMoved ev(me->self, dx, dy, me->mouse_x, me->mouse_y);
-            me->events.mouseMoved.raise(makeEvent(ev));
-        }
-    }
+    if (dx != 0 || dy != 0)
+        me->events.mouseMoved.raise(makeEvent(MouseMoved(me->self, dx, dy, int16(x), int16(y))));
 }
 
 void GameWindow::Data::glfw_key_callback(GLFWwindow *win, int key, int scancode, int action, int mods) {
@@ -402,8 +368,10 @@ void GameWindow::Data::init(const WindowOptions& opts) {
 #endif
 }
 
-void GameWindow::Data::setMouse(int x, int y) {
+void GameWindow::Data::setMouse(index16 x, index16 y) {
     glfwSetCursorPos(win, x, y);
+    mouse_x = x;
+    mouse_y = y;
 }
 
 GameWindow::Data::~Data() {
@@ -429,54 +397,7 @@ bool GameWindow::init() {
 }
 
 void GameWindow::Data::handleInputEvents() {
-
-    Data::EventState state;
-    state.mouse_current_x = this->mouse_x;
-    state.mouse_current_y = this->mouse_y;
-    state.was_resize = false;
-
-    this->ev_state = &state;
     glfwPollEvents();
-    this->ev_state = 0;
-
-    if (state.was_resize) {
-        if (grab_mouse) {
-            mouse_x = index16(state.new_win_w / 2);
-            mouse_y = index16(state.new_win_h / 2);
-            setMouse(mouse_x, mouse_y);
-        }
-
-        events.windowResized.raise(makeEvent(WindowResized(self, state.new_win_w, state.new_win_h)));
-    } else {
-
-        int16 dx = int16(state.mouse_current_x - mouse_x);
-        int16 dy = int16(mouse_y - state.mouse_current_y);
-
-        if (have_focus && (dx != 0 || dy != 0)) {
-
-            MouseMoved ev(self, dx, dy, mouse_x, mouse_y);
-
-            if (grab_mouse) {
-                int w, h;
-                glfwGetWindowSize(win, &w, &h);
-                mouse_x = index16(w / 2);
-                mouse_y = index16(h / 2);
-
-                setMouse(mouse_x, mouse_y);
-            }
-
-            events.mouseMoved.raise(makeEvent(ev));
-        }
-
-    }
-}
-
-void GameWindow::grabMouse(bool grab) {
-    self->grab_mouse = grab;
-}
-
-bool GameWindow::grabMouse() const {
-    return self->grab_mouse;
 }
 
 void GameWindow::showMouseCursor(bool show) {
@@ -488,14 +409,6 @@ void GameWindow::showMouseCursor(bool show) {
 
 bool GameWindow::showMouseCursor() const {
     return self->show_mouse_cursor;
-}
-
-void GameWindow::accumulateMouseMoves(bool accum) {
-    self->accum_mouse_moves = accum;
-}
-
-bool GameWindow::accumulateMouseMoves() {
-    return self->accum_mouse_moves;
 }
 
 void GameWindow::vsync(bool enable) {
@@ -548,9 +461,8 @@ void GameWindow::windowSize(size& width, size& height) const {
     height = SIZE(h);
 }
 
-
-void GameWindow::setActive() {
-    // NOOP
+void GameWindow::setMouse(index16 x, index16 y) {
+    self->setMouse(x, y);
 }
 
 void GameWindow::swapBuffers() {

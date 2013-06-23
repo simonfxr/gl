@@ -254,6 +254,8 @@ void Engine::addInit(RunLevel lvl, const Ref<EventHandler<InitEvent> >& comm) {
     SELF->opts->inits.reg(lvl, comm);
 }
 
+
+
 namespace {
 
 bool runInit(EventSource<InitEvent>& source, const Event<InitEvent>& e) {
@@ -307,6 +309,11 @@ void Engine::Data::registerHandlers() {
     window->events().mouseButton.reg(makeEventHandler(handlers::mouseButtonChanged, &keyHandler));
     window->events().windowResized.reg(makeEventHandler(handlers::updateProjectionMatrix, &theEngine));
     theEngine.events().handleInput.reg(makeEventHandler(handlers::handleKeyBindings, &keyHandler));
+}
+
+void Engine::enablePlugin(Plugin& p) {
+    p.registerWith(*this);
+    p.registerCommands(commandProcessor());
 }
 
 } // namespace ge

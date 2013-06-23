@@ -32,7 +32,7 @@ struct GE_API CameraRotated {
         camera(cam), angle(a), allowed_angle(a) {}
 };
 
-struct GE_API Camera {
+struct GE_API Camera : public Plugin {
     math::vec3_t step_accum;
     float step_length;
     math::vec2_t mouse_sensitivity;
@@ -53,8 +53,8 @@ struct GE_API Camera {
     
     Camera(float step_len = 0.1f, math::vec2_t mouse_sens = math::vec2(0.0005f, 0.0005f));
     
-    void registerWith(Engine& e);
-    void registerCommands(CommandProcessor& proc);
+    void registerWith(Engine& e) FINAL OVERRIDE;
+    void registerCommands(CommandProcessor& proc) FINAL OVERRIDE;
 };
 
 } // namespace ge

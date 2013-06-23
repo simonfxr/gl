@@ -68,9 +68,9 @@ private:
     CommandProcessor& operator =(const CommandProcessor&);
 };
 
-const char *prettyCommandType(CommandType type);
+GE_API const char *prettyCommandType(CommandType type);
 
-const char *prettyCommandParamType(CommandParamType type);
+GE_API const char *prettyCommandParamType(CommandParamType type);
 
 } // namespace ge
 

@@ -102,8 +102,10 @@ set(GE_SRC
   ge/CommandProcessor.cpp
   ge/Tokenizer.cpp
   ge/KeyHandler.cpp
-  ge/Camera.cpp
-  ge/ReplServer.cpp)
+  ge/ReplServer.cpp
+  ge/Plugin.cpp
+  ge/MouseLookPlugin.cpp
+  ge/Camera.cpp)
 
 set(GE_LIBS 
   ${GLFW_LIBRARY})

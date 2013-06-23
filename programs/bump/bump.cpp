@@ -1,5 +1,6 @@
 #include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
+#include "ge/MouseLookPlugin.hpp"
 
 #include "glt/primitives.hpp"
 #include "glt/Mesh.hpp"
@@ -40,6 +41,8 @@ struct Anim {
     ge::Engine engine;
     glt::Mesh<Vertex> sphere_model;
     ge::Camera camera;
+    ge::MouseLookPlugin mouse_look;
+    
     vec3_t light_position;
         
     void init(const ge::Event<ge::InitEvent>&);
@@ -49,8 +52,7 @@ struct Anim {
 };
 
 void Anim::init(const ge::Event<ge::InitEvent>& ev) {
-    engine.window().showMouseCursor(false);
-    engine.window().grabMouse(true);
+    ev.info.engine.enablePlugin(mouse_look);
 
 //    icoSphere(sphere_model, 3);
     sphere(sphere_model, 1.f, 200, 100);
@@ -61,8 +63,7 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     light_position = vec3(0.f, 0.f, -100.f);
 
     camera.frame.origin = vec3(0.f);
-    camera.registerWith(engine);
-    camera.registerCommands(engine.commandProcessor());
+    ev.info.engine.enablePlugin(camera);
     
     ev.info.success = true;
 }

@@ -363,6 +363,10 @@ void GameWindow::swapBuffers() {
     self->win->display();
 }
 
+void GameWindow::setMouse(index16 x, index16 y) {
+    self->setMouse(x, y);
+}
+
 void GameWindow::contextInfo(GLContextInfo& info) const {
     copyContextInfo(self->win->getSettings(), info);
 }
