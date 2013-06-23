@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <cstdio>
 
 #include "sys/fs.hpp"
 #include "err/err.hpp"

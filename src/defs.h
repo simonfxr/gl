@@ -3,6 +3,11 @@
 
 #define SIGNED_SIZE
 
+#ifndef DEFS_BEGIN_NAMESPACE
+#  define DEFS_BEGIN_NAMESPACE
+#  define DEFS_END_NAMESPACE
+#endif
+
 #ifdef SYSTEM_WINDOWS
 #  define WIN32_LEAND_AND_MEAN 1
 #  define VC_EXTRALEAN 1
@@ -123,6 +128,8 @@
 
 #define STATIC_ASSERT(p) typedef char __compile_time_assert##__LINE__[1 - 2 * !(p)]
 
+DEFS_BEGIN_NAMESPACE
+
 #ifdef SYSTEM_WINDOWS
 
 typedef unsigned char uint8;
@@ -183,5 +190,7 @@ typedef size index;
 typedef size16 index16;
 typedef size32 index32;
 typedef size64 index64;
+
+DEFS_END_NAMESPACE
 
 #endif

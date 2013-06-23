@@ -1,9 +1,12 @@
 #ifndef _DEFS_HPP_INCLUDED_
 #define _DEFS_HPP_INCLUDED_
 
-namespace defs {
+#define DEFS_BEGIN_NAMESPACE namespace defs {
+#define DEFS_END_NAMESPACE }
 
 #include "defs.h"
+
+namespace defs {
 
 template <typename IntT>
 inline size ___check_size(IntT x) {

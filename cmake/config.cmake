@@ -1,5 +1,11 @@
 
-#include(${PROJECT_SOURCE_DIR}/cmake/detect_env.cmake)
+macro(cache_var_type var type)
+  set(${var} ${${var}} CACHE ${type} "" FORCE)
+endmacro()
+
+macro(cache_var var)
+  cache_var_type(${var} STRING)
+endmacro()
 
 if(SYS_WINDOWS)
   add_definitions(-DSYSTEM_WINDOWS=1)
@@ -55,7 +61,7 @@ endif()
 if(BUILD_OPT)
   if(COMP_GCC)
     if(BUILD_DEBUG)
-      add_definitions(-march=native -Og)
+      add_definitions(-march=native -O1)
     else()
       add_definitions(-march=native -Ofast)
       add_definitions(#enable graphite
