@@ -9,15 +9,14 @@ namespace ge {
 struct MouseLookPlugin::Data {
     Data();
 
-    Engine *engine;
-    bool should_grab;
-    bool grabbed;
-    
-    Ref<Command> cmdGrabMouse;
-    Ref<Command> cmdUngrabMouse;
+    Engine *_engine;
+    bool _should_grab;
+    State _state;
+    Camera *_camera;
+    Commands _commands;
 
-    void grabChanged(bool _grabbed);
-    void setGrab(bool grab);
+    void stateChanged(State new_state);
+    void setState(State new_state);
 
     // commands
     void runGrabMouse(const Event<CommandEvent>&, const Array<CommandArg>&);
@@ -30,52 +29,64 @@ struct MouseLookPlugin::Data {
 };
 
 MouseLookPlugin::Data::Data() :
-    engine(0),
-    should_grab(true),
-    grabbed(false),
-    cmdGrabMouse(makeCommand(this, &MouseLookPlugin::Data::runGrabMouse, NULL_PARAMS, "grabMouse", "")),
-    cmdUngrabMouse(makeCommand(this, &MouseLookPlugin::Data::runUngrabMouse, NULL_PARAMS, "ungrabMouse", ""))
-{}
+    _engine(0),
+    _should_grab(true),
+    _state(Free),
+    _camera(0),
+    _commands()
+{
+    _commands.grab = makeCommand(this, &MouseLookPlugin::Data::runGrabMouse, NULL_PARAMS, "mouseLook.grab", "");
+    _commands.ungrab = makeCommand(this, &MouseLookPlugin::Data::runUngrabMouse, NULL_PARAMS, "mouseLook.ungrab", "");
+}
 
-void MouseLookPlugin::Data::grabChanged(bool _grabbed) {
-    grabbed = _grabbed;
-    GameWindow& win = engine->window();
-    if (_grabbed) {
+void MouseLookPlugin::Data::stateChanged(State new_state) {
+    if (_engine == 0)
+        return;
+    
+    GameWindow& win = _engine->window();
+    switch (new_state) {
+    case Grabbing: {
+        if (_camera)
+            _camera->mouseLook(true);
         size w, h;
         win.windowSize(w, h);
         win.setMouse(w / 2, h / 2);
         win.showMouseCursor(false);
-    } else {
+    } break;
+    case Free: {
         win.showMouseCursor(true);
+        if (_camera)
+            _camera->mouseLook(false);
+    } break;
     }
 }
 
-void MouseLookPlugin::Data::setGrab(bool grab) {
-    if (should_grab != grab) {
-        should_grab = grab;
-        if (engine)
-            grabChanged(should_grab);
+void MouseLookPlugin::Data::setState(State new_state) {
+    if (_state != new_state) {
+        _state = new_state;
+        stateChanged(new_state);
     }
 }
 
 void MouseLookPlugin::Data::runGrabMouse(const Event<CommandEvent>&, const Array<CommandArg>&) {
-    setGrab(true);
+    if (_should_grab)
+        setState(Grabbing);
 }
 
 void MouseLookPlugin::Data::runUngrabMouse(const Event<CommandEvent>&, const Array<CommandArg>&) {
-    setGrab(false);
+    setState(Free);
 }
 
 void MouseLookPlugin::Data::handleMouseClick(const Event<MouseButton>& ev) {
-    if (!grabbed && should_grab) {
-        grabChanged(true);
+    if (_should_grab && _state == Free) {
+        setState(Grabbing);
         ev.abort = true;
     }
 }
 
 void MouseLookPlugin::Data::handleMouseMove(const Event<MouseMoved>& ev) {
     GameWindow& win = ev.info.window;
-    if (grabbed) {
+    if (_state == Grabbing) {
         size w, h;
         win.windowSize(w, h);
         win.setMouse(w / 2, h / 2);
@@ -83,8 +94,7 @@ void MouseLookPlugin::Data::handleMouseMove(const Event<MouseMoved>& ev) {
 }
 
 void MouseLookPlugin::Data::handleFocusChanged(const Event<FocusChanged>& ev) {
-    INFO(std::string("focused? ") + (ev.info.focused ? "yes" : "no"));
-    grabChanged(ev.info.focused);
+    setState(Free);
 }
 
 MouseLookPlugin::MouseLookPlugin() :
@@ -95,17 +105,37 @@ MouseLookPlugin::~MouseLookPlugin() {
     delete self;
 }
 
-void MouseLookPlugin::grabMouse(bool grab) {
-    self->setGrab(grab);
+void MouseLookPlugin::shouldGrabMouse(bool grab) {
+    self->_should_grab = grab;
+    self->setState(grab ? Grabbing : Free);
 }
 
-bool MouseLookPlugin::grabMouse() const {
-    return self->should_grab;
+bool MouseLookPlugin::shouldGrabMouse() const {
+    return self->_should_grab;
+}
+
+void MouseLookPlugin::state(MouseLookPlugin::State state) {
+    self->setState(state);
+}
+
+MouseLookPlugin::State MouseLookPlugin::state() const {
+    return self->_state;
+}
+
+void MouseLookPlugin::camera(Camera *cam) {
+    self->_camera = cam;
+}
+
+Camera *MouseLookPlugin::camera() {
+    return self->_camera;
+}
+
+MouseLookPlugin::Commands& MouseLookPlugin::commands() {
+    return self->_commands;
 }
 
 void MouseLookPlugin::registerWith(Engine& e) {
-    self->engine = &e;
-    self->grabChanged(self->should_grab);
+    self->_engine = &e;
     GameWindow& win = e.window();
     win.events().mouseButton.reg(makeEventHandler(self, &MouseLookPlugin::Data::handleMouseClick));
     win.events().mouseMoved.reg(makeEventHandler(self, &MouseLookPlugin::Data::handleMouseMove));
@@ -113,8 +143,8 @@ void MouseLookPlugin::registerWith(Engine& e) {
 }
 
 void MouseLookPlugin::registerCommands(CommandProcessor& proc) {
-    proc.define(self->cmdGrabMouse);
-    proc.define(self->cmdUngrabMouse);
+    proc.define(self->_commands.grab);
+    proc.define(self->_commands.ungrab);
 }
 
 } // namespace ge

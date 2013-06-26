@@ -52,7 +52,7 @@ struct Anim {
 };
 
 void Anim::init(const ge::Event<ge::InitEvent>& ev) {
-    ev.info.engine.enablePlugin(mouse_look);
+
 
 //    icoSphere(sphere_model, 3);
     sphere(sphere_model, 1.f, 200, 100);
@@ -62,8 +62,11 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     GL_CALL(glEnable, GL_MULTISAMPLE);
     light_position = vec3(0.f, 0.f, -100.f);
 
-    camera.frame.origin = vec3(0.f);
+    
+    ev.info.engine.enablePlugin(mouse_look);
+    mouse_look.camera(&camera);
     ev.info.engine.enablePlugin(camera);
+    camera.frame().origin = vec3(0.f);
     
     ev.info.success = true;
 }

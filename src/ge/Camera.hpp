@@ -33,28 +33,52 @@ struct GE_API CameraRotated {
 };
 
 struct GE_API Camera : public Plugin {
-    math::vec3_t step_accum;
-    float step_length;
-    math::vec2_t mouse_sensitivity;
-    glt::Frame frame;
-    
-    EventSource<CameraMoved> moved;
-    EventSource<CameraRotated> rotated;
+
+    struct Events {
+        EventSource<CameraMoved> moved;
+        EventSource<CameraRotated> rotated;
+    };
 
     struct Commands {
         Ref<Command> move;
         Ref<Command> saveFrame;
         Ref<Command> loadFrame;
-        Ref<Command> setStepLength;
-        Ref<Command> setSensitivity;
+        Ref<Command> speed;
+        Ref<Command> sensitivity;
     };
 
-    Commands commands;
+    Camera();
+    ~Camera();
+
+    Commands& commands();
+
+    Events& events();
+
+    math::vec2_t mouseSensitivity() const;
+    void mouseSensitivity(const math::vec2_t&);
+
+    real speed() const;
+    void speed(real);
+
+    glt::Frame& frame();
+    void frame(const glt::Frame&);
+
+    const std::string& framePath() const;
+    void framePath(const std::string&);
+
+    void mouseMoved(index16 dx, index16 dy);
     
-    Camera(float step_len = 0.1f, math::vec2_t mouse_sens = math::vec2(0.0005f, 0.0005f));
+    void mouseLook(bool enable);
     
     void registerWith(Engine& e) FINAL OVERRIDE;
     void registerCommands(CommandProcessor& proc) FINAL OVERRIDE;
+
+private:
+    struct Data;
+    Data * const self;
+
+    Camera(const Camera&);
+    Camera& operator =(const Camera&);
 };
 
 } // namespace ge

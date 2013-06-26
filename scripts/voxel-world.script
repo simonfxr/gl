@@ -1,4 +1,5 @@
 load "default.script"
+load "camera.script"
 
 prependShaderPath "programs/voxel-world/shaders"
 
@@ -6,21 +7,7 @@ bindShader "voxel" "voxel.vert" "voxel.frag" 0 "position" 1 "color" 2 "normal"
 
 perspectiveProjection 35 1 800.0
 
-bindKey [W] { moveCamera 12 }
-bindKey [D] { moveCamera 3 }
-bindKey [S] { moveCamera 6 }
-bindKey [A] { moveCamera 9 }
-
-bindKey [+U] { saveCameraFrame "voxel.cam" }
-bindKey [+I] { loadCameraFrame "voxel.cam" }
-
 bindKey [+O] { incGamma -0.1 }
 bindKey [+P] { incGamma +0.1 }
 
 bindKey [+R] { recreateWorld }
-
-postInit { 
-    setCameraStepLength 1
-    setCameraMouseSensitivity 0.00075
-    loadCameraFrame "voxel.cam"
-}

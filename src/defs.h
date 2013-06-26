@@ -15,11 +15,11 @@
 #endif
 
 #ifndef SYSTEM_WINDOWS
-#include <stdint.h>
+#  include <stdint.h>
 #endif
 
 #ifndef CXX11
-#undef CXX11_FINAL_OVERRIDE
+#  undef CXX11_FINAL_OVERRIDE
 #endif
 
 #ifdef CXX11_FINAL_OVERRIDE
@@ -36,7 +36,7 @@
 #    define SHARED_EXPORT __declspec(dllexport)
 #  else
 #    define SHARED_IMPORT __attribute__((visibility("default")))
-#    define SHARED_EXPORT SHARED_IMPORT
+#    define SHARED_EXPORT __attribute__((visibility("default")))
 #  endif
 #else
 #  define SHARED_IMPORT
@@ -116,7 +116,7 @@
 
 #define CONCAT3(a, b, c) CONCAT(a, CONCAT(b, c))
 
-#define AS_STR(a) AS_STRING(a)
+#define AS_STR(a) AS_STRING_AUX1(a)
 #define AS_STRING(a) AS_STRING_AUX1(a)
 #define AS_STRING_AUX1(a) AS_STRING_AUX2(a)
 #define AS_STRING_AUX2(a) AS_STRING_AUX3(a)

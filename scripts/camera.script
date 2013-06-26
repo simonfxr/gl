@@ -1,0 +1,14 @@
+
+bindKey [W] { camera.move 12 }
+bindKey [D] { camera.move 3 }
+bindKey [S] { camera.move 6 }
+bindKey [A] { camera.move 9 }
+
+bindKey [+U] { camera.saveFrame }
+bindKey [+I] { camera.loadFrame }
+
+postInit { 
+    camera.speed 1
+    camera.sensitivity 0.00075
+    camera.loadFrame
+}

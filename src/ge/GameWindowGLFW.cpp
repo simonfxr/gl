@@ -268,7 +268,7 @@ void GameWindow::Data::glfw_cursor_pos_callback(GLFWwindow *win, double x, doubl
     GameWindow::Data *me = getUserPointer(win);
 
     int16 dx = int16(-(x - me->mouse_x));
-    int16 dy = int16(-(y - me->mouse_y));
+    int16 dy = int16(y - me->mouse_y);
 
     me->mouse_x = x;
     me->mouse_y = y;

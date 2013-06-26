@@ -23,6 +23,7 @@
 #include "ge/GameWindow.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
+#include "ge/MouseLookPlugin.hpp"
 #include "ge/CommandParams.hpp"
 
 #include "sim.hpp"
@@ -99,6 +100,7 @@ typedef glt::CubeMesh<Vertex> CubeMesh;
 struct Game {
 
     ge::Camera camera;
+    ge::MouseLookPlugin mouse_look;
 
     CubeMesh wallBatch;
     Mesh sphereBatches[SPHERE_LOD_MAX];
@@ -208,8 +210,6 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
     e.gameLoop().sync(false);
     
     use_interpolation = true;
-    e.window().grabMouse(true);
-    e.window().showMouseCursor(false);
 
     if (!world.init())
         return;
@@ -239,7 +239,7 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
         sphereBatches[i].send();
     }
 
-    camera.frame.origin = vec3(0.f, 0.f, 0.f);
+    camera.frame().origin = vec3(0.f, 0.f, 0.f);
 
     update_sphere_mass();
 
@@ -256,7 +256,7 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
 
 void Game::constrainCameraMovement(const ge::Event<ge::CameraMoved>& ev) {
     ev.info.allowed_step = ev.info.step;
-    if (!world.canMoveCamera(camera.frame.origin, ev.info.allowed_step))
+    if (!world.canMoveCamera(camera.frame().origin, ev.info.allowed_step))
         ev.info.allowed_step = vec3(0.f);
 }
 
@@ -301,8 +301,8 @@ static glt::color randomColor() {
 }
 
 void Game::spawn_sphere() {
-    vec3_t direction = - camera.frame.localZ();
-    sphere_proto.center = camera.frame.origin + direction * (sphere_proto.r + 1.1f);
+    vec3_t direction = - camera.frame().localZ();
+    sphere_proto.center = camera.frame().origin + direction * (sphere_proto.r + 1.1f);
     sphere_proto.v = direction * sphere_speed;
 
     SphereModel model;
@@ -373,7 +373,7 @@ const glt::ViewFrustum& Renderer::frustum() {
 }
 
 const glt::Frame& Renderer::camera() {
-    return game.camera.frame;
+    return game.camera.frame();
 }
 
 
@@ -797,9 +797,10 @@ void Game::link(ge::Engine& e) {
     proc.define(ge::makeCommand(this, &Game::cmdIncGameSpeed, ge::NUM_PARAMS,
                                 "incGameSpeed"));
 
-    camera.registerWith(e);
-    camera.registerCommands(e.commandProcessor());
-    camera.moved.reg(ge::makeEventHandler(this, &Game::constrainCameraMovement));
+    mouse_look.camera(&camera);
+    e.enablePlugin(camera);
+    e.enablePlugin(mouse_look);
+    camera.events().moved.reg(ge::makeEventHandler(this, &Game::constrainCameraMovement));
 }
 
 void Game::cmdToggleUseInterpolation(const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {

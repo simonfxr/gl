@@ -134,21 +134,19 @@ struct Anim {
     void renderGround();
     void renderLight();
     void renderTable(const std::string& shader);
-    // void windowResized(const Event<WindowResized>&);
+
     void mouseMoved(const Event<MouseMoved>&);
     void keyPressed(const Event<KeyPressed>&);
-    // void handleInput(const Event<InputEvent>&);
+
     void setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args);
     
     void onWindowResized(const Event<WindowResized>&);
 };
 
 void Anim::link(const Event<InitEvent>& e) {
-    // engine.events().handleInput.reg(makeEventHandler(this, &Anim::handleInput));
     engine.events().animate.reg(makeEventHandler(this, &Anim::animate));
     engine.events().render.reg(makeEventHandler(this, &Anim::renderScene));
     GameWindow& win = engine.window();
-    // win.events().windowResized.reg(makeEventHandler(this, &Anim::windowResized));
     win.events().mouseMoved.reg(makeEventHandler(this, &Anim::mouseMoved));
     win.events().windowResized.reg(makeEventHandler(this, &Anim::onWindowResized));
     engine.keyHandler().keyPressedEvent().reg(makeEventHandler(this, &Anim::keyPressed));
@@ -519,18 +517,6 @@ void Anim::renderTable(const std::string& shader) {
 
     woodTexture.unbind(0);
 }
-
-// void Anim::windowResized(const Event<WindowResized>& e) {
-//     uint32 width = e.info.width;
-//     uint32 height = e.info.height;
-//     std::cerr << "new window dimensions: " << width << "x" << height << std::endl;
-//     GL_CALL(glViewport, 0, 0, width, height);
-
-//     real fov = degToRad(17.5f);
-//     real aspect = real(width) / real(height);
-
-//     engine.renderManager().setPerspectiveProjection(fov, aspect, 0.1f, 100.f);
-// }
 
 void Anim::mouseMoved(const Event<MouseMoved>& e) {
     int32 dx = e.info.dx;

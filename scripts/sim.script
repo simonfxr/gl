@@ -1,4 +1,5 @@
 load "default.script"
+load "camera.script"
 
 prependShaderPath "programs/sim/shaders"
 
@@ -11,18 +12,8 @@ bindShader "sphereInstanced2" "sphere_instanced2.vert" "sphere_instanced.frag" 0
 
 perspectiveProjection 35 0.5 200
 
-bindKey [W] { moveCamera 12 }
-bindKey [D] { moveCamera 3 }
-bindKey [S] { moveCamera 6 }
-bindKey [A] { moveCamera 9 }
-
-bindKey [+U] { saveCameraFrame "sim-sfml.cam" }
-bindKey [+I] { loadCameraFrame "sim-sfml.cam" }
-
 postInit { 
-    setCameraStepLength 0.1
-    setCameraMouseSensitivity 0.00075
-#    loadCameraFrame "sim-sfml.cam"
+    camera.speed 0.1
 
     bindKey [+MLeft] &spawnSphere
 

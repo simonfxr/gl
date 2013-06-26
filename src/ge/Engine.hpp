@@ -44,6 +44,8 @@ struct GE_API Engine {
     sys::io::OutStream& out();
     void out(sys::io::OutStream&);
 
+    const std::string programName() const;
+
     float now();
 
     void addInit(RunLevel lvl, const Ref<EventHandler<InitEvent> >& comm);

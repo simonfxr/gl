@@ -18,6 +18,7 @@ struct Engine::Data : public GameLoop::Game {
     KeyHandler keyHandler;
     ReplServer replServer;
     bool skipRender;
+    std::string programName;
 
     sys::io::OutStream *out;
 
@@ -103,6 +104,10 @@ void Engine::out(sys::io::OutStream& s) {
 
 float Engine::now() { return SELF->now(); }
 
+const std::string Engine::programName() const {
+    return self->programName;
+}
+
 int32 Engine::run(const EngineOptions& opts) {
     if (self->initialized) {
         ERR("Engine already initialized: called run multiply times?");
@@ -127,6 +132,8 @@ int32 Engine::run(const EngineOptions& opts) {
     std::string wd = opts.workingDirectory;
     if (opts.workingDirectory.empty() && opts.defaultCD)
         wd = sys::fs::dirname(opts.binary);
+
+    self->programName = sys::fs::basename(opts.binary);
 
     if (!wd.empty()) {
         if (!sys::fs::cwd(wd)) {

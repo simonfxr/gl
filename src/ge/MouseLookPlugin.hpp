@@ -2,18 +2,38 @@
 #define GE_MOUSE_LOOK_PLUGIN_HPP
 
 #include "ge/Plugin.hpp"
+#include "ge/Camera.hpp"
 
 namespace ge {
 
 struct GE_API MouseLookPlugin : public Plugin {
+
+    enum State {
+        Grabbing,
+        Free
+    };
+
+    struct Commands {
+        Ref<Command> grab;
+        Ref<Command> ungrab;
+    };
+
     MouseLookPlugin();
     ~MouseLookPlugin();
 
-    void grabMouse(bool grab);
-    bool grabMouse() const;
+    void shouldGrabMouse(bool grab);
+    bool shouldGrabMouse() const;
 
-    virtual void registerWith(Engine&) FINAL OVERRIDE;
-    virtual void registerCommands(CommandProcessor&) FINAL OVERRIDE;
+    State state() const;
+    void state(State state);
+
+    void camera(Camera *);
+    Camera *camera();
+
+    Commands& commands();
+
+    void registerWith(Engine&) FINAL OVERRIDE;
+    void registerCommands(CommandProcessor&) FINAL OVERRIDE;
 
 private:
     struct Data;

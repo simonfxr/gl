@@ -2,6 +2,10 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
+*.ninja
+/.ninja_log
+/.ninja_deps
+/.shake.database
 /*.mdl
 /*.cam
 /ext/

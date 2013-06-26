@@ -18,6 +18,7 @@
 
 #include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
+#include "ge/MouseLookPlugin.hpp"
 #include "ge/Timer.hpp"
 #include "ge/CommandParams.hpp"
 
@@ -84,6 +85,8 @@ typedef ge::Event<ge::InitEvent> InitEv;
 
 struct State {
     ge::Camera camera;
+    ge::MouseLookPlugin mouse_look;
+    
     CubeMesh worldModel;
 
     vec3_t sphere_points[SPHERE_POINTS];
@@ -161,10 +164,10 @@ static void initState(State *state, const InitEv& ev) {
     e.commandProcessor().define(makeCommand(runRecreateWorld, state,
                                             ge::NULL_PARAMS,
                                             "recreateWorld", "recreate the entire world"));
-    
-    state->camera.registerWith(e);
-    state->camera.registerCommands(e.commandProcessor());
-    
+
+    state->mouse_look.camera(&state->camera);
+    e.enablePlugin(state->camera);
+    e.enablePlugin(state->mouse_look);
     e.events().render.reg(makeEventHandler(renderScene, state));
 
     e.gameLoop().ticksPerSecond(100);
@@ -172,8 +175,6 @@ static void initState(State *state, const InitEv& ev) {
 
     state->gamma_correction = 1.8f;
     
-    e.window().grabMouse(true);
-
     state->fpsTimer = new ge::Timer(e);
     state->fpsTimer->start(FPS_UPDATE_INTERVAL, true);
 

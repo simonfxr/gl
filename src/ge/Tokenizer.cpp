@@ -99,7 +99,7 @@ bool symFirst(char c) {
 }
 
 bool symChar(char c) {
-    return symFirst(c) || (c >= '0' && c <= '9');
+    return symFirst(c) || (c >= '0' && c <= '9') || (c == '.');
 }
 
 std::string parseSym(ParseState& s) {

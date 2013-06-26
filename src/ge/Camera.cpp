@@ -1,6 +1,7 @@
 #include <fstream>
 
 #include "math/real.hpp"
+#include "math/vec2.hpp"
 #include "math/vec3.hpp"
 
 #include "ge/Camera.hpp"
@@ -10,157 +11,293 @@ using namespace math;
 
 namespace ge {
 
-static Array<vec3_t> &getDirTable();
+struct Handlers {
+    Ref<EventHandler<MouseMoved> > mouseMoved;
+    Ref<EventHandler<InputEvent> > handleInput;
+    Ref<EventHandler<RenderEvent> > beforeRender;
+};
 
-static void initCommands(Camera& cam);
+struct Camera::Data {
 
-static void runMove(vec3_t *step_accum, const Event<CommandEvent>&, const Array<CommandArg>& args) {
+    real _speed;
+    vec2_t _mouse_sensitivity;
+    glt::Frame _frame;
+    Commands _commands;
+    Events _events;
+    vec3_t _step_accum;
+    Handlers _handlers;
+    bool _mouse_look;
+    Engine *_engine;
+    std::string _frame_path;
+
+    Data(Camera *);
+
+    void mouseMoved(Camera *cam, index16 dx, index16 dy);
+
+    // commands
+    void runMove(const Event<CommandEvent>&, const Array<CommandArg>&);
+    void runSaveFrame(const Event<CommandEvent>&, const Array<CommandArg>&);
+    void runLoadFrame(const Event<CommandEvent>&, const Array<CommandArg>&);
+    void runSpeed(const Event<CommandEvent>&, const Array<CommandArg>&);
+    void runSensitivity(const Event<CommandEvent>&, const Array<CommandArg>&);
+
+    // event handlers
+    static void handleMouseMoved(Camera *, const Event<MouseMoved>&);
+    static void handleInput(Camera *, const Event<InputEvent>&);
+    void handleBeforeRender(const Event<RenderEvent>&);
+};
+
+namespace {
+
+const Array<vec3_t> *the_dir_table;
+const Array<vec3_t> &dirTable();
+
+} // namespace anon
+
+Camera::Data::Data(Camera *me) :
+    _speed(real(0.1)),
+    _mouse_sensitivity(vec2(real(0.00075))),
+    _frame(),
+    _commands(),
+    _events(),
+    _step_accum(vec3(real(0))),
+    _handlers(),
+    _mouse_look(false),
+    _engine(0),
+    _frame_path()
+{
+    _commands.move = makeCommand(this, &Data::runMove,
+                                 INT_PARAMS,
+                                 "camera.move", "move the camera frame");
+    
+    _commands.saveFrame = makeCommand(this, &Data::runSaveFrame,
+                                      LIST_PARAMS,
+                                      "camera.saveFrame",
+                                      "save the orientation and position of the camera in a file");
+    
+    _commands.loadFrame = makeCommand(this, &Data::runLoadFrame,
+                                      LIST_PARAMS,
+                                      "camera.loadFrame",
+                                      "load the orientation and position of the camera from a file");
+    
+    _commands.speed = makeCommand(this, &Data::runSpeed,
+                                  NUM_PARAMS,
+                                  "camera.speed",
+                                  "set the length the camera is allowed to move in one frame");
+    
+    _commands.sensitivity = makeCommand(this, &Data::runSensitivity,
+                                        LIST_PARAMS,
+                                        "camera.sensitivity",
+                                        "specify the camera sensitivity: "
+                                        "either as a pair of numbers (x- and y-sensitvity)"
+                                        "or as a single number (x- = y-sensitvity)");
+
+    _handlers.mouseMoved = makeEventHandler(&Data::handleMouseMoved, me);
+    _handlers.handleInput = makeEventHandler(&Data::handleInput, me);
+    _handlers.beforeRender = makeEventHandler(this, &Data::handleBeforeRender);
+}
+
+void Camera::Data::runMove(const Event<CommandEvent>&, const Array<CommandArg>& args) {
     int64 dir = args[0].integer;
     if (dir < 1 || dir > 12) {
         ERR("argument not >= 1 and <= 12");
         return;
     }
-    *step_accum += getDirTable()[SIZE(dir - 1)];
+    _step_accum += dirTable()[SIZE(dir - 1)];
 }
 
-static void runSaveFrame(const glt::Frame *frame, const Event<CommandEvent>&, const Array<CommandArg>& args) {
-    std::ofstream out(args[0].string->c_str());
+void Camera::Data::runSaveFrame(const Event<CommandEvent>&, const Array<CommandArg>& args) {
+
+    const std::string *path;
+    if (args.size() == 0)
+        path = &_frame_path;
+    else if (args.size() == 1 && args[0].type == String)
+        path = args[0].string;
+    else {
+        ERR("invalid parameters: expect 0 or 1 filepath");
+    }
+    
+    std::ofstream out(path->c_str());
     if (!out.is_open()) {
-        ERR("couldnt open file: " + *args[0].string);
+        ERR("couldnt open file: " + *path);
         return;
     }
     
-    out.write(reinterpret_cast<const char *>(frame), sizeof *frame);
+    out.write(reinterpret_cast<const char *>(&_frame), sizeof _frame);
 }
 
-static void runLoadFrame(glt::Frame *frame, const Event<CommandEvent>&, const Array<CommandArg>& args) {
-    std::ifstream in(args[0].string->c_str());
+void Camera::Data::runLoadFrame(const Event<CommandEvent>&, const Array<CommandArg>& args) {
+
+    const std::string *path;
+    if (args.size() == 0)
+        path = &_frame_path;
+    else if (args.size() == 1 && args[0].type == String)
+        path = args[0].string;
+    else {
+        ERR("invalid parameters: expect 0 or 1 filepath");
+    }
+
+    std::ifstream in(path->c_str());
     if (!in.is_open()) {
-        ERR("couldnt open file: " + *args[0].string);
+        ERR("couldnt open file: " + *path);
         return;
     }
 
-    in.read(reinterpret_cast<char *>(frame), sizeof *frame);
+    in.read(reinterpret_cast<char *>(&_frame), sizeof _frame);
 }
 
-static void runSetStepLength(float *step_len, const Event<CommandEvent>&, const Array<CommandArg>& args) {
-    *step_len = float(args[0].number);
+void Camera::Data::runSpeed(const Event<CommandEvent>&, const Array<CommandArg>& args) {
+    _speed = float(args[0].number);
 }
 
-static void runSetSensitivity(vec2_t *sens, const Event<CommandEvent>&, const Array<CommandArg>& args) {
+void Camera::Data::runSensitivity(const Event<CommandEvent>&, const Array<CommandArg>& args) {
     if (args.size() == 1 && args[0].type == Number) {
-        *sens = vec2(real(args[0].number));
+        _mouse_sensitivity = vec2(real(args[0].number));
     } else if (args.size() == 2 && args[0].type == Number && args[1].type == Number) {
-        *sens = vec2(real(args[0].number), real(args[1].number));
+        _mouse_sensitivity = vec2(real(args[0].number), real(args[1].number));
     } else {
         ERR("invalid arguments");
     }
 }
 
-static void initCommands(Camera& cam) {
-    cam.commands.move = makeCommand(runMove, &cam.step_accum,
-                                    INT_PARAMS,
-                                    "moveCamera", "move the camera frame");
-    
-    cam.commands.saveFrame = makeCommand(runSaveFrame, static_cast<const glt::Frame *>(&cam.frame),
-                                         STR_PARAMS,
-                                         "saveCameraFrame",
-                                         "save the orientation and position of the camera in a file");
-    
-    cam.commands.loadFrame = makeCommand(runLoadFrame, &cam.frame,
-                                         STR_PARAMS,
-                                         "loadCameraFrame",
-                                         "load the orientation and position of the camera from a file");
-    
-    cam.commands.setStepLength = makeCommand(runSetStepLength, &cam.step_length,
-                                             NUM_PARAMS,
-                                             "setCameraStepLength",
-                                             "set the length the camera is allowed to move in one frame");
-    
-    cam.commands.setSensitivity = makeCommand(runSetSensitivity, &cam.mouse_sensitivity,
-                                              LIST_PARAMS,
-                                              "setCameraMouseSensitivity",
-                                              "specify the camera sensitivity: "
-                                              "either as a pair of numbers (x- and y-sensitvity)"
-                                              "or as a single number (x- = y-sensitvity)");
+void Camera::Data::handleMouseMoved(Camera *cam, const Event<MouseMoved>& ev) {
+    cam->mouseMoved(ev.info.dx, ev.info.dy);
 }
 
-Camera::Camera(float step_len, vec2_t mouse_sens) :
-    step_accum(vec3(0.f)),
-    step_length(step_len),
-    mouse_sensitivity(mouse_sens)
-{
-    initCommands(*this);
-}
-
-static void mouseLook(Camera *cam, const Event<MouseMoved>& ev) {
-//    std::cerr << "mouse look" << std::endl;
-    vec2_t rot = vec2(ev.info.dx, ev.info.dy) * cam->mouse_sensitivity;
-//    std::cerr << "dx: " << ev.info.dx << " dy: " << ev.info.dy << "
-//    rotY: " << rot.y << " rotX: " << rot.x << std::endl;
-
-    Event<CameraRotated> re = makeEvent(CameraRotated(*cam, vec2(-rot[1], rot[0])));
-    if (cam->rotated.raise(re)) {
-        cam->frame.rotateLocal(re.info.allowed_angle[0], vec3(1.f, 0.f, 0.f));
-        cam->frame.rotateWorld(re.info.allowed_angle[1], vec3(0.f, 1.f, 0.f));
-    }
-}
-
-static void execStep(Camera *cam, const Event<InputEvent>&) {
-    float lenSq = lengthSq(cam->step_accum);
-    
+void Camera::Data::handleInput(Camera *cam, const Event<InputEvent>&) {
+    Data *self = cam->self;
+    real lenSq = lengthSq(self->_step_accum);
     if (lenSq >= 1e-4f) {
-//        std::cerr << "camera step" << std::endl;
-        vec3_t local_step = cam->step_length * normalize(cam->step_accum);
-        Event<CameraMoved> ev = makeEvent(CameraMoved(*cam, transformVector(cam->frame, local_step)));
-        if (cam->moved.raise(ev))
-            cam->frame.translateWorld(ev.info.allowed_step);
+        vec3_t local_step = self->_speed * normalize(self->_step_accum);
+        Event<CameraMoved> ev = makeEvent(CameraMoved(*cam, transformVector(self->_frame, local_step)));
+        if (self->_events.moved.raise(ev))
+            self->_frame.translateWorld(ev.info.allowed_step);
     }
     
-    cam->step_accum = vec3(0.f);
+    self->_step_accum = vec3(0.f);
 }
 
-static void setCamMat(glt::Frame *frame, const Event<RenderEvent>& e) {
-//    frame->normalize();
-    e.info.engine.renderManager().geometryTransform().loadViewMatrix(transformationWorldToLocal(*frame));
+void Camera::Data::handleBeforeRender(const Event<RenderEvent>& e) {
+//    frame->normalize(); TODO: why dont we call that?
+    e.info.engine.renderManager().geometryTransform().loadViewMatrix(transformationWorldToLocal(_frame));
+}
+
+void Camera::Data::mouseMoved(Camera *cam, index16 dx, index16 dy) {
+    Data *self = cam->self;
+    vec2_t rot = vec2(dx, dy) * _mouse_sensitivity;
+    Event<CameraRotated> re = makeEvent(CameraRotated(*cam, vec2(-rot[1], rot[0])));
+    if (self->_events.rotated.raise(re)) {
+        self->_frame.rotateLocal(re.info.allowed_angle[0], vec3(1.f, 0.f, 0.f));
+        self->_frame.rotateWorld(re.info.allowed_angle[1], vec3(0.f, 1.f, 0.f));
+    }
+}
+
+namespace {
+
+const Array<vec3_t>& dirTable() {
+    if (the_dir_table == 0) {
+        Array<vec3_t> &dirs = *new Array<vec3_t>(12);
+        the_dir_table = &dirs;
+        
+        for (defs::index i = 0; i < 12; ++i)
+            dirs[i] = vec3(0.f);
+        
+        dirs[11] = vec3(0.f, 0.f, -1.f);
+        dirs[5]  = vec3(0.f, 0.f, +1.f);
+        dirs[2]  = vec3(+1.f, 0.f, 0.f);
+        dirs[8]  = vec3(-1.f, 0.f, 0.f);
+        
+        // TODO: add all the clock directions
+    }
+    return *the_dir_table;
+}
+
+} // namespace anon
+
+Camera::Camera() :
+    self(new Data(this))
+{}
+
+Camera::~Camera() {
+    delete self;
+}
+
+Camera::Commands& Camera::commands() {
+    return self->_commands;
+}
+
+Camera::Events& Camera::events() {
+    return self->_events;
+}
+
+math::vec2_t Camera::mouseSensitivity() const {
+    return self->_mouse_sensitivity;
+}
+
+void  Camera::mouseSensitivity(const math::vec2_t& v) {
+    self->_mouse_sensitivity = v;
+}
+
+real Camera::speed() const {
+    return self->_speed;
+}
+
+void Camera::speed(real s) {
+    self->_speed = s;
+}
+
+glt::Frame& Camera::frame() {
+    return self->_frame;
+}
+
+void Camera::frame(const glt::Frame& frame) {
+    self->_frame = frame;
+}
+
+const std::string& Camera::framePath() const {
+    return self->_frame_path;
+}
+
+void Camera::framePath(const std::string& path) {
+    self->_frame_path = path;
+}
+
+void Camera::mouseMoved(index16 dx, index16 dy) {
+    self->mouseMoved(this, dx, dy);
+}
+
+void Camera::mouseLook(bool enable) {
+    if (self->_mouse_look != enable) {
+        self->_mouse_look = enable;
+
+        if (!self->_engine)
+            return;
+        
+        if (enable)
+            self->_engine->window().events().mouseMoved.reg(self->_handlers.mouseMoved);
+        else
+            self->_engine->window().events().mouseMoved.unreg(self->_handlers.mouseMoved);
+    }
 }
 
 void Camera::registerWith(Engine& e) {
-    e.window().events().mouseMoved.reg(makeEventHandler(mouseLook, this));
-    e.events().handleInput.reg(makeEventHandler(execStep, this));
-    e.events().beforeRender.reg(makeEventHandler(setCamMat, &frame));
+    self->_engine = &e;
+    if (self->_frame_path.empty())
+        self->_frame_path = e.programName() + ".cam";
+    e.events().beforeRender.reg(self->_handlers.beforeRender);
+    self->_engine->events().handleInput.reg(self->_handlers.handleInput);
+    if (self->_mouse_look) {
+        self->_mouse_look = false; // force registering of eventhandlers
+        mouseLook(true);
+    }
 }
 
 void Camera::registerCommands(CommandProcessor& proc) {
-    proc.define(commands.move);
-    proc.define(commands.saveFrame);
-    proc.define(commands.loadFrame);
-    proc.define(commands.setStepLength);
-    proc.define(commands.setSensitivity);
-}
-
-static Array<vec3_t> mkDirTable(Array<vec3_t>& dirs) {
-
-    for (defs::index i = 0; i < 12; ++i)
-        dirs[i] = vec3(0.f);
-
-    dirs[11] = vec3(0.f, 0.f, -1.f);
-    dirs[5]  = vec3(0.f, 0.f, +1.f);
-    dirs[2]  = vec3(+1.f, 0.f, 0.f);
-    dirs[8]  = vec3(-1.f, 0.f, 0.f);
-
-    // TODO: add all the clock directions
-
-    return dirs;
-}
-
-Array<vec3_t> *dir_table_p = 0;
-static Array<vec3_t> &getDirTable() {
-    if (dir_table_p == 0) {
-        dir_table_p = new Array<vec3_t>(12);
-        mkDirTable(*dir_table_p);
-    }
-    return *dir_table_p;
+    proc.define(self->_commands.move);
+    proc.define(self->_commands.saveFrame);
+    proc.define(self->_commands.loadFrame);
+    proc.define(self->_commands.speed);
+    proc.define(self->_commands.sensitivity);
 }
 
 } // namespace ge
