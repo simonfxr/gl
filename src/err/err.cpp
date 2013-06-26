@@ -62,8 +62,10 @@ void debugInfo(sys::io::OutStream& out, const void *ip) {
         const char *filename = dwfl_lineinfo(line, &addr, &nline, 0, 0, 0);
         out << filename << ":" << nline;
     } else {
-        out << "ip: " << ip << "]";
+        out << "ip: " << ip;
     }
+
+    out << ']';
 }
 
 void print_stacktrace(sys::io::OutStream& out, int skip) {

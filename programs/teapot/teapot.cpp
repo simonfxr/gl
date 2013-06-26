@@ -18,6 +18,7 @@
 
 #include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
+#include "ge/MouseLookPlugin.hpp"
 #include "ge/CommandParams.hpp"
 
 #include "parse_sply.hpp"
@@ -84,6 +85,7 @@ struct Teapot {
 struct Anim {
     ge::Engine& engine;
     ge::Camera camera;
+    ge::MouseLookPlugin mouse_look;
     
     CubeMesh groundModel;
     CubeMesh teapotModel;
@@ -154,11 +156,10 @@ void Anim::link(const Event<InitEvent>& e) {
 }
 
 void Anim::init(const Event<InitEvent>& e) {
-    engine.window().showMouseCursor(false);
-    engine.window().grabMouse(true);
 
-    camera.registerWith(engine);
-    camera.registerCommands(engine.commandProcessor());
+    mouse_look.camera(&camera);
+    engine.enablePlugin(camera);
+    engine.enablePlugin(mouse_look);
 
     setDataDirCommand = makeCommand(this, &Anim::setDataDir, ge::STR_PARAMS,
                                     "setDataDir", "set the texture directory");
@@ -216,9 +217,9 @@ void Anim::init(const Event<InitEvent>& e) {
         screenQuad.send();
     }
 
-    camera.frame.origin = vec3(6.36, 5.87, 1.97);
-    camera.frame.setXZ(normalize(vec3(-0.29, 0.f, 0.95f)),
-                       normalize(vec3(-0.8f, -0.54f, -0.25f)));
+    camera.frame().origin = vec3(6.36, 5.87, 1.97);
+    camera.frame().setXZ(normalize(vec3(-0.29, 0.f, 0.95f)),
+                         normalize(vec3(-0.8f, -0.54f, -0.25f)));
     
     teapot1.frame.setXZ(vec3(1.f, 0.f, 0.f), vec3(0.f, 1.f, 0.f));
     teapot1.frame.origin = vec3(5.f, 4.f, 4.f);
@@ -350,20 +351,27 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     Ref<glt::TextureRenderTarget> from = glow_render_target_src;
     Ref<glt::TextureRenderTarget> to = glow_render_target_dst;
     for (int pass = 0; pass < 5; ++pass) {
+        Ref<glt::ShaderProgram> glow_pass1a = engine.shaderManager().program("glow_pass1a");
+        Ref<glt::ShaderProgram> glow_pass1b = engine.shaderManager().program("glow_pass1b");
+
+        ASSERT(glow_pass1a);
+        ASSERT(glow_pass1b);
 
         engine.renderManager().setActiveRenderTarget(to.ptr());
-        Ref<glt::ShaderProgram> glow_pass1 = engine.shaderManager().program("glow_pass1");
-        ASSERT(glow_pass1);
-        glow_pass1->use();
+        glow_pass1a->use();
         from->sampler().bind(0);
-        glt::Uniforms(*glow_pass1)
+        glt::Uniforms(*glow_pass1a)
             .mandatory("texture0", glt::Sampler(from->sampler(), 0));
         screenQuad.draw();
         from->sampler().unbind(0);
 
-        Ref<glt::TextureRenderTarget> tmp = from;
-        from = to;
-        to = tmp;
+        engine.renderManager().setActiveRenderTarget(from.ptr());
+        glow_pass1b->use();
+        to->sampler().bind(0);
+        glt::Uniforms(*glow_pass1b)
+            .mandatory("texture0", glt::Sampler(to->sampler(), 0));
+        screenQuad.draw();
+        to->sampler().unbind(0);
     }
 
     { // render texture to window framebuffer
@@ -525,8 +533,8 @@ void Anim::mouseMoved(const Event<MouseMoved>& e) {
     dx = - dx;
 
     if (engine.keyHandler().keyState(ge::keycode::M) <= keystate::Pressed) {
-        teapot1.frame.rotateWorld(-dx * 0.001f, camera.frame.localY());
-        teapot1.frame.rotateWorld(dy * 0.001f, camera.frame.localX());
+        teapot1.frame.rotateWorld(-dx * 0.001f, camera.frame().localY());
+        teapot1.frame.rotateWorld(dy * 0.001f, camera.frame().localX());
         e.abort = true;        
     }
 }

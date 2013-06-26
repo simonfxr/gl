@@ -1,4 +1,5 @@
 load "default.script"
+load "camera.script"
 
 prependShaderPath "programs/teapot/shaders"
 
@@ -6,24 +7,15 @@ bindShader "teapot" "teapot.vert" "teapot.frag" 0 "position" 1 "normal"
 bindShader "teapotTextured" "teapot_textured.vert" "teapot_textured.frag" 0 "position" 1 "normal" 2 "texCoord"
 bindShader "postproc" "postproc.vert" "postproc.frag" 0 "position" 1 "normal"
 bindShader "glow_pass0" "glow_pass0.vert" "glow_pass0.frag" 0 "position" 1 "normal"
-bindShader "glow_pass1" "glow_pass1.vert" "glow_pass1.frag" 0 "position" 1 "normal"
+bindShader "glow_pass1a" "glow_pass1.vert" "glow_pass1a.frag" 0 "position" 1 "normal"
+bindShader "glow_pass1b" "glow_pass1.vert" "glow_pass1b.frag" 0 "position" 1 "normal"
 
 perspectiveProjection 35 1 800.0
-
-bindKey [W] { moveCamera 12 }
-bindKey [D] { moveCamera 3 }
-bindKey [S] { moveCamera 6 }
-bindKey [A] { moveCamera 9 }
-
-bindKey [+U] { saveCameraFrame "teapot.cam" }
-bindKey [+I] { loadCameraFrame "teapot.cam" }
 
 bindKey [+O] { incGamma -0.1 }
 bindKey [+P] { incGamma +0.1 }
 
 postInit {
-    setCameraStepLength 0.3
-    setCameraMouseSensitivity 0.00075
-    loadCameraFrame "teapot.cam"
+    camera.speed 0.3
     setDataDir "programs/teapot/data"
 }
