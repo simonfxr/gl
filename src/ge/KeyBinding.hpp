@@ -4,6 +4,8 @@
 #include "ge/conf.hpp"
 #include "data/Array.hpp"
 
+#include <string>
+
 namespace ge {
 
 using namespace defs;

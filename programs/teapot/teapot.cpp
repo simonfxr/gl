@@ -383,7 +383,7 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     ASSERT(glow_pass1);
     glow_pass1->use();
 
-    for (int pass = 0; pass < 1; ++pass) {
+    for (int pass = 0; pass < 3; ++pass) {
         engine.renderManager().setActiveRenderTarget(to.ptr());
         from->sampler().bind(0);
         glt::Uniforms(*glow_pass1)

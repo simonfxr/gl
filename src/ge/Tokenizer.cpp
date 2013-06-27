@@ -168,7 +168,7 @@ State parseKeycombo(ParseState& s, CommandArg& tok) {
         return Fail;
     }
 
-    KeyBinding *bind = new KeyBinding(new Key[keys.size()], SIZE(keys.size()), KeyBinding::Owned);
+    KeyBinding *bind = new KeyBinding(SIZE(keys.size()));
     tok.keyBinding = bind;
     tok.type = KeyCombo;
 

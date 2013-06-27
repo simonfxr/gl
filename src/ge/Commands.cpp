@@ -115,9 +115,7 @@ struct BindKey : public Command {
             ERR(e.info.engine.out(), "cannot bind key: null command");
             return;
         }
-        KeyBinding bind = args[0].keyBinding->clone();
-        bind.setDelete(false);
-        Ref<KeyBinding> binding(new KeyBinding(&bind[0], bind.size(), KeyBinding::Owned));
+        Ref<KeyBinding> binding(new KeyBinding(*args[0].keyBinding));
         e.info.engine.keyHandler().registerBinding(binding, comm);
     }
 };

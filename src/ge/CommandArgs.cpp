@@ -1,6 +1,8 @@
 #include "ge/CommandArgs.hpp"
 #include "ge/Command.hpp"
 
+#include "data/SharedArray.hpp"
+
 #include "sys/io/Stream.hpp"
 
 #include <cstring>
@@ -148,7 +150,7 @@ void CommandPrettyPrinter::print(const Array<CommandArg>& statement) {
 }
 
 void CommandPrettyPrinter::print(const std::vector<CommandArg>& statement) {
-    Array<CommandArg> arr(const_cast<CommandArg *>(&statement.front()), SIZE(statement.size()));
+    SharedArray<CommandArg> arr(SIZE(statement.size()), const_cast<CommandArg *>(&statement.front()));
     print(arr);
 }
 

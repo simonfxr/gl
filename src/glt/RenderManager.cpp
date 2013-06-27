@@ -4,6 +4,7 @@
 #include "glt/utils.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/GLObject.hpp"
+#include "glt/GLPerfCounter.hpp"
 
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
@@ -38,8 +39,10 @@ struct RenderManager::Data {
 
     uint64 frame_id_current;
     uint64 frame_id_next;
-    index active_query;
-    GLQueryObject frame_duration_query[2];
+
+    bool perf_initialized;
+    GLPerfCounter perf_counter;
+    
     double sum_elapsed;
     double min_elapsed;
     double max_elapsed;
@@ -55,7 +58,7 @@ struct RenderManager::Data {
         projection_outdated(true),
         frame_id_current(0),
         frame_id_next(0),
-        active_query(0),
+        perf_initialized(false),
         stats()
         {}
 
@@ -204,19 +207,19 @@ FrameStatistics RenderManager::frameStatistics() {
 }
 
 void RenderManager::Data::beginStats() {
-    if (!frame_duration_query[active_query].valid()) { 
-        // first or second frame
-        frame_duration_query[active_query].ensure();
-    } else {
-        GLuint64 ns_elapsed;
-        GL_CALL(glGetQueryObjectui64v, *frame_duration_query[active_query], GL_QUERY_RESULT, &ns_elapsed);
-        
-        stats.last = double(ns_elapsed) * 1e-9;
+    if (!perf_initialized) {
+        perf_initialized = true;
+        perf_counter.init(2);
+    }
+
+    perf_counter.begin();
+    stats.last = perf_counter.query();
+    if (stats.last > 0) {
         sum_elapsed += stats.last;
         if (stats.last > max_elapsed)
             max_elapsed = stats.last;
         if (stats.last < min_elapsed)
-            min_elapsed = stats.last;
+        min_elapsed = stats.last;
         
         if (frame_id_current >= frame_id_next) {
             stats.min = min_elapsed;
@@ -229,13 +232,10 @@ void RenderManager::Data::beginStats() {
             max_elapsed = 0.0;
         }
     }
-
-    GL_CALL(glBeginQuery, GL_TIME_ELAPSED, *frame_duration_query[active_query]);
 }
 
 void RenderManager::Data::endStats() {
-    GL_CALL(glEndQuery, GL_TIME_ELAPSED);
-    active_query = (active_query + 1) % 2;
+    perf_counter.end();
     ++frame_id_current;
 }
 

@@ -81,7 +81,8 @@ set(GLT_SRC
   glt/TextureRenderTarget.cpp
   glt/TextureRenderTarget3D.cpp
   glt/Mesh.cpp
-  glt/GLObject.cpp)
+  glt/GLObject.cpp
+  glt/GLPerfCounter.cpp)
 
 set(GLT_LIBS ${GLEW_LIBRARY} ${OPENGL_gl_LIBRARY})
 
