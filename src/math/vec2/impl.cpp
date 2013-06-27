@@ -22,6 +22,11 @@ vec2_t vec2(const real a[2]) {
     return vec2(a[0], a[1]);
 }
 
+void load(vec2_t::buffer buf, const vec2_t& v) {
+    buf[0] = v[0];
+    buf[1] = v[1];
+}
+
 vec2_t operator -(const vec2_t& a) {
     return vec2(0.f) - a;
 }

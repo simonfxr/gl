@@ -5,6 +5,7 @@
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
+#include "math/mat2.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/io.hpp"
@@ -20,12 +21,15 @@
 #include "ge/Camera.hpp"
 #include "ge/MouseLookPlugin.hpp"
 #include "ge/CommandParams.hpp"
+#include "ge/Timer.hpp"
 
 #include "parse_sply.hpp"
 #include "dump_bmp.h"
 
 #define RENDER_GLOW 1
 // #define RENDER_NOGLOW 1
+
+#include "shaders/glow_pass_constants.h"
 
 #if !(defined(RENDER_GLOW) || defined(RENDER_NOGLOW))
 #error "no glowmode defined"
@@ -37,7 +41,6 @@ using namespace defs;
 
 static const point3_t LIGHT_CENTER_OF_ROTATION = vec3(0.f, 15.f, 0.f);
 static const float  LIGHT_ROTATION_RAD = 15.f;
-static const size KERNEL_SIZE = 19;
 
 struct Vertex2 {
     vec3_t position;
@@ -120,6 +123,8 @@ struct Anim {
     Ref<glt::TextureRenderTarget> glow_render_target_src;
     Ref<glt::TextureRenderTarget> glow_render_target_dst;
 
+    Ref<Timer> fpsTimer;
+
     std::string data_dir;
 
     Ref<Command> setDataDirCommand;
@@ -158,11 +163,14 @@ void Anim::link(const Event<InitEvent>& e) {
     e.info.success = true;
 }
 
-void Anim::init(const Event<InitEvent>& e) {
+void Anim::init(const Event<InitEvent>& ev) {
 
     mouse_look.camera(&camera);
     engine.enablePlugin(camera);
     engine.enablePlugin(mouse_look);
+
+    fpsTimer = makeRef(new Timer(engine));
+    fpsTimer->start(1.f, true);
 
     setDataDirCommand = makeCommand(this, &Anim::setDataDir, ge::STR_PARAMS,
                                     "setDataDir", "set the texture directory");
@@ -278,7 +286,7 @@ void Anim::init(const Event<InitEvent>& e) {
         }
     }
 
-    e.info.success = true;
+    ev.info.success = true;
 }
 
 void Anim::animate(const Event<AnimationEvent>&) {
@@ -367,28 +375,30 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     // blur the glow texture
     Ref<glt::TextureRenderTarget> from = glow_render_target_src;
     Ref<glt::TextureRenderTarget> to = glow_render_target_dst;
-    for (int pass = 0; pass < 5; ++pass) {
-        Ref<glt::ShaderProgram> glow_pass1a = engine.shaderManager().program("glow_pass1a");
-        Ref<glt::ShaderProgram> glow_pass1b = engine.shaderManager().program("glow_pass1b");
+    Ref<glt::ShaderProgram> glow_pass1 = engine.shaderManager().program("glow_pass1");
 
-        ASSERT(glow_pass1a);
-        ASSERT(glow_pass1b);
+    mat2_t texMat0 = mat2();
+    mat2_t texMat1 = mat2(vec2(0, 1), vec2(1, 0));
 
+    ASSERT(glow_pass1);
+    glow_pass1->use();
+
+    for (int pass = 0; pass < 1; ++pass) {
         engine.renderManager().setActiveRenderTarget(to.ptr());
-        glow_pass1a->use();
         from->sampler().bind(0);
-        glt::Uniforms(*glow_pass1a)
+        glt::Uniforms(*glow_pass1)
             .mandatory("texture0", glt::Sampler(from->sampler(), 0))
-            .optional("kernel", glow_kernel);
+            .optional("kernel", glow_kernel)
+            .optional("texMat", texMat0);
         screenQuad.draw();
         from->sampler().unbind(0);
 
         engine.renderManager().setActiveRenderTarget(from.ptr());
-        glow_pass1b->use();
         to->sampler().bind(0);
-        glt::Uniforms(*glow_pass1b)
+        glt::Uniforms(*glow_pass1)
             .mandatory("texture0", glt::Sampler(to->sampler(), 0))
-            .optional("kernel", glow_kernel);
+            .optional("kernel", glow_kernel)
+            .optional("texMat", texMat1);
         screenQuad.draw();
         to->sampler().unbind(0);
     }
@@ -410,6 +420,16 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
         glow_render_target_dst->sampler().unbind(1);
     }
 #endif
+
+    if (fpsTimer->fire()) {
+#define INV(x) (((x) * (x)) < 0.00001 ? 999999999.0 : 1.0 / (x))
+        glt::FrameStatistics fs = engine.renderManager().frameStatistics();
+        double fps = INV(fs.avg);
+        double min = INV(fs.max);
+        double max = INV(fs.min);
+        double avg = INV(fs.avg);
+        sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): " << fps << "; " << avg << "; " << min << "; " << max << sys::io::endl;
+    }
 }
 
 void Anim::onWindowResized(const Event<WindowResized>& ev) {

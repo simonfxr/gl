@@ -3,6 +3,7 @@
 #include "opengl.hpp"
 #include "glt/utils.hpp"
 #include "glt/Transformations.hpp"
+#include "glt/GLObject.hpp"
 
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
@@ -17,15 +18,15 @@ namespace glt {
 
 using namespace math;
 
-static const float FS_UPDATE_INTERVAL = 1.f;
-static const float FS_UPDATE_INTERVAL_FAST = 0.1f;
+static const size FS_UPDATE_INTERVAL = 100;
+
 
 struct RenderManager::Data {
     ViewFrustum frustum;
     GeometryTransform transform;
     bool inScene;
     SavePointArgs transformStateBOS; // transform state in begin of scene
-
+    
     bool owning_def_rt;
     RenderTarget *def_rt;
 
@@ -35,14 +36,13 @@ struct RenderManager::Data {
     Projection projection;
     bool projection_outdated;
 
-    float stat_snapshot;
-    float stat_fast_snapshot;
-    float framet0;
-    float renderAcc;
-    float renderAccFast;
-    uint32 num_frames_fast;
-    uint32 num_frames;
-    
+    uint64 frame_id_current;
+    uint64 frame_id_next;
+    index active_query;
+    GLQueryObject frame_duration_query[2];
+    double sum_elapsed;
+    double min_elapsed;
+    double max_elapsed;
     FrameStatistics stats;
 
     Data() :
@@ -51,54 +51,16 @@ struct RenderManager::Data {
         owning_def_rt(false),
         def_rt(0),
         current_rt(0),
-        stat_snapshot(NEG_INF),
-        stat_fast_snapshot(NEG_INF),
-        renderAcc(1.f),
-        renderAccFast(1.f)
+        projection(),
+        projection_outdated(true),
+        frame_id_current(0),
+        frame_id_next(0),
+        active_query(0),
+        stats()
         {}
 
-    float now() {
-        return float(sys::queryTimer());
-    }
-
-    void statBegin() {
-        framet0 = now();
-        float diff = framet0 - stat_snapshot;
-        if (diff >= FS_UPDATE_INTERVAL) {
-            stats.avg_fps = uint32(float(num_frames) / diff);
-            if (renderAcc != 0)
-                stats.rt_avg = uint32(float(num_frames) / renderAcc);
-            else
-                stats.rt_avg = 0;
-            renderAcc = 0.f;
-            num_frames = 0;
-            stat_snapshot = framet0;
-            stats.rt_min = 0xFFFFFFFF;
-            stats.rt_max = 0;
-        }
-
-        float diff2 = framet0 - stat_fast_snapshot;
-        if (diff2 >= FS_UPDATE_INTERVAL_FAST) {
-            if (renderAccFast != 0)
-                stats.rt_current = uint32(float(num_frames_fast) / renderAccFast);
-            else
-                stats.rt_avg = 0;
-            renderAccFast = 0.f;
-            num_frames_fast = 0;
-            stat_fast_snapshot = framet0;
-        }
-    }
-
-    void statEnd() {
-        float frameDur = now() - framet0;
-        renderAcc += frameDur;
-        renderAccFast += frameDur;
-        uint32 fps = uint32(frameDur != 0 ? math::recip(frameDur) : 0);
-        stats.rt_max = std::max(stats.rt_max, fps);
-        stats.rt_min = std::min(stats.rt_min, fps);
-        ++num_frames;
-        ++num_frames_fast;
-    }
+    void beginStats();
+    void endStats();
 };
 
 RenderManager::RenderManager() :
@@ -211,7 +173,7 @@ void RenderManager::beginScene() {
     ASSERT_MSG(!self->inScene, "nested beginScene()");
     ASSERT_MSG(self->current_rt != 0 || self->def_rt != 0, "no RenderTarget specified");
 
-    self->statBegin();
+    self->beginStats();
     
     self->inScene = true;
 
@@ -232,14 +194,49 @@ void RenderManager::endScene() {
     ASSERT_MSG(self->inScene, "cannot endScene() without beginScene()");
     self->inScene = false;
     self->transform.restore(self->transformStateBOS);
-    GL_CALL(glFinish);
+    self->endStats(); // dont count swap buffers
     if (self->current_rt != 0)
         self->current_rt->draw();
-    self->statEnd();
 }
 
 FrameStatistics RenderManager::frameStatistics() {
     return self->stats;
+}
+
+void RenderManager::Data::beginStats() {
+    if (!frame_duration_query[active_query].valid()) { 
+        // first or second frame
+        frame_duration_query[active_query].ensure();
+    } else {
+        GLuint64 ns_elapsed;
+        GL_CALL(glGetQueryObjectui64v, *frame_duration_query[active_query], GL_QUERY_RESULT, &ns_elapsed);
+        
+        stats.last = double(ns_elapsed) * 1e-9;
+        sum_elapsed += stats.last;
+        if (stats.last > max_elapsed)
+            max_elapsed = stats.last;
+        if (stats.last < min_elapsed)
+            min_elapsed = stats.last;
+        
+        if (frame_id_current >= frame_id_next) {
+            stats.min = min_elapsed;
+            stats.max = max_elapsed;
+            stats.avg = sum_elapsed / double(FS_UPDATE_INTERVAL + (frame_id_current - frame_id_next));
+            
+            frame_id_next = frame_id_current + FS_UPDATE_INTERVAL;
+            sum_elapsed = 0.0;
+            min_elapsed = std::numeric_limits<double>::infinity();
+            max_elapsed = 0.0;
+        }
+    }
+
+    GL_CALL(glBeginQuery, GL_TIME_ELAPSED, *frame_duration_query[active_query]);
+}
+
+void RenderManager::Data::endStats() {
+    GL_CALL(glEndQuery, GL_TIME_ELAPSED);
+    active_query = (active_query + 1) % 2;
+    ++frame_id_current;
 }
 
 vec4_t project(const RenderManager& rm, const point3_t& localCoord) {

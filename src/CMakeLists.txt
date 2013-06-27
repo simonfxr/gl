@@ -6,13 +6,13 @@ set(MATH_SRC
   math/vec2/impl.cpp
   math/vec3/impl.cpp
   math/vec4/impl.cpp
+  math/mat2/impl.cpp
   math/mat3/impl.cpp
   math/mat4/impl.cpp
   math/real/impl.cpp
   math/ivec3/impl.cpp
   math/quat/impl.cpp
   math/plane.cpp)
-
 
 if(NOT MATH_INLINE)
   def_lib(vec-math SOURCES ${MATH_SRC})

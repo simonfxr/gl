@@ -925,8 +925,13 @@ static void renderScene(State *state, const RenderEv& ev) {
     renderBlocks(state, e);
 
     if (state->fpsTimer->fire()) {
+#define INV(x) (((x) * (x)) < 0.00001 ? 999999999.0 : 1.0 / (x))
         glt::FrameStatistics fs = e.renderManager().frameStatistics();
-        sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): " << fs.avg_fps << "; " << fs.rt_avg << "; " << fs.rt_min << "; " << fs.rt_max << sys::io::endl;
+        double fps = INV(fs.avg);
+        double min = INV(fs.max);
+        double max = INV(fs.min);
+        double avg = INV(fs.avg);
+        sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): " << fps << "; " << avg << "; " << min << "; " << max << sys::io::endl;
     }
 }
 

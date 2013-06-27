@@ -7,13 +7,14 @@ bindShader "teapot" "teapot.vert" "teapot.frag" 0 "position" 1 "normal"
 bindShader "teapotTextured" "teapot_textured.vert" "teapot_textured.frag" 0 "position" 1 "normal" 2 "texCoord"
 bindShader "postproc" "postproc.vert" "postproc.frag" 0 "position" 1 "normal"
 bindShader "glow_pass0" "glow_pass0.vert" "glow_pass0.frag" 0 "position" 1 "normal"
-bindShader "glow_pass1a" "glow_pass1.vert" "glow_pass1a.frag" 0 "position" 1 "normal"
-bindShader "glow_pass1b" "glow_pass1.vert" "glow_pass1b.frag" 0 "position" 1 "normal"
+bindShader "glow_pass1" "glow_pass1.vert" "glow_pass1.frag" 0 "position" 1 "normal"
 
 perspectiveProjection 35 1 800.0
 
 bindKey [+O] { incGamma -0.1 }
 bindKey [+P] { incGamma +0.1 }
+
+ignoreGLDebugMessage "Nvidia" 1281
 
 postInit {
     camera.speed 0.3

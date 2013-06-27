@@ -11,11 +11,13 @@
 namespace glt {
 
 struct GLT_API FrameStatistics {
-    uint32 avg_fps;
-    uint32 rt_avg;
-    uint32 rt_current;
-    uint32 rt_max;
-    uint32 rt_min;
+    double avg;
+    double min, max;
+    double last;
+
+    FrameStatistics() :
+        avg(0), min(0), max(0), last(0)
+    {}
 };
 
 struct GLT_API Projection {

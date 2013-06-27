@@ -4,9 +4,10 @@
 #error "FOOO"
 #endif
 
-
+#include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
+#include "math/mat2.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 
@@ -125,6 +126,12 @@ void programUniform(GLuint program, GLint loc, const vec3_t& value) {
     GL_CALL(glProgramUniform3fv, program, loc, 1, data);
 }
 
+void programUniform(GLuint program, GLint loc, const vec2_t& value) {
+    vec2_t::buffer data;
+    load(data, value);
+    GL_CALL(glProgramUniform2fv, program, loc, 1, data);
+}
+
 void programUniform(GLuint program, GLint loc, const mat4_t& value) {
     GL_CALL(glProgramUniformMatrix4fv, program, loc, 1, GL_FALSE, value.components);
 }
@@ -133,6 +140,12 @@ void programUniform(GLuint program, GLint loc, const mat3_t& value) {
     mat3_t::buffer data;
     load(data, value);
     GL_CALL(glProgramUniformMatrix3fv, program, loc, 1, GL_FALSE, data);
+}
+
+void programUniform(GLuint program, GLint loc, const mat2_t& value) {
+    mat2_t::buffer data;
+    load(data, value);
+    GL_CALL(glProgramUniformMatrix2fv, program, loc, 1, GL_FALSE, data);
 }
 
 void programUniform(GLuint program, GLint loc, const BoundTexture& sampler) {
@@ -170,7 +183,7 @@ void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GL
 #ifdef GLDEBUG
 
     GLint actual_typei = -1;
-    GL_CALL(glGetActiveUniformsiv, *prog.program(), 1, &location, GL_UNIFORM_TYPE, &actual_typei);
+    //   GL_CALL(glGetActiveUniformsiv, *prog.program(), 1, &location, GL_UNIFORM_TYPE, &actual_typei);
     if (actual_typei != -1) {
         GLenum actual_type = GLenum(actual_typei);
         if (actual_type != type) {
@@ -203,12 +216,20 @@ void Uniforms::set(bool mandatory, const std::string& name, const vec3_t& value)
     setUniform(mandatory, prog, name, GL_FLOAT_VEC3, value);
 }
 
+void Uniforms::set(bool mandatory, const std::string& name, const vec2_t& value) {
+    setUniform(mandatory, prog, name, GL_FLOAT_VEC2, value);
+}
+
 void Uniforms::set(bool mandatory, const std::string& name, const mat4_t& value) {
     setUniform(mandatory, prog, name, GL_FLOAT_MAT4, value);
 }
 
 void Uniforms::set(bool mandatory, const std::string& name, const mat3_t& value) {
     setUniform(mandatory, prog, name, GL_FLOAT_MAT3, value);
+}
+
+void Uniforms::set(bool mandatory, const std::string& name, const mat2_t& value) {
+    setUniform(mandatory, prog, name, GL_FLOAT_MAT2, value);
 }
 
 void Uniforms::set(bool mandatory, const std::string& name, color value) {
