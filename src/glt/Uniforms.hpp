@@ -5,6 +5,7 @@
 
 #include <string>
 #include "glt/TextureSampler.hpp"
+#include "data/Array.hpp"
 
 namespace math {
 
@@ -57,6 +58,7 @@ struct GLT_API Uniforms {
 
 private:
     void set(bool mandatory, const std::string& name, float value);
+    void set(bool mandatory, const std::string& name, const Array<float>& value);
     void set(bool mandatory, const std::string& name, const vec4_t& value);
     void set(bool mandatory, const std::string& name, const vec3_t& value);
     void set(bool mandatory, const std::string& name, const mat4_t& value);

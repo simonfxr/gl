@@ -33,7 +33,7 @@ MATH_CIMPORT(float fmodf(float, float));
 #endif
 MATH_CIMPORT(float powf(float, float));
 MATH_CIMPORT(float floorf(float));
-
+MATH_CIMPORT(float expf(float));
 } // namespace cmath
 
 #endif
@@ -91,6 +91,10 @@ void sincos(real rad, real& out_sin, real& out_cos) {
 
 real cotan(real rad) {
     return recip(tan(rad));
+}
+
+real exp(real x) {
+    return MATH_CFUNC(expf)(x);
 }
 
 real abs(real x) {

@@ -39,6 +39,8 @@ MATH_FUNC void sincos(real rad, real& out_sin, real& out_cos) PURE_FUNC;
 
 MATH_FUNC real cotan(real rad) PURE_FUNC; // 1/tan
 
+MATH_FUNC real exp(real x) PURE_FUNC;
+
 MATH_FUNC real abs(real x) PURE_FUNC;
 
 MATH_FUNC real length(real x) PURE_FUNC;

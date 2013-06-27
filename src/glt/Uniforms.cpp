@@ -111,6 +111,10 @@ void programUniform(GLuint program, GLint loc, float value) {
     GL_CALL(glProgramUniform1fv, program, loc, 1, &value);
 }
 
+void programUniform(GLuint program, GLint loc, const Array<float>& value) {
+    GL_CALL(glProgramUniform1fv, program, loc, value.size(), &value[0]);
+}
+
 void programUniform(GLuint program, GLint loc, const vec4_t& value) {
     GL_CALL(glProgramUniform4fv, program, loc, 1, value.components);
 }
@@ -184,6 +188,10 @@ void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GL
 } // namespace anon
 
 void Uniforms::set(bool mandatory, const std::string& name, float value) {
+    setUniform(mandatory, prog, name, GL_FLOAT, value);
+}
+
+void Uniforms::set(bool mandatory, const std::string& name, const Array<float>& value) {
     setUniform(mandatory, prog, name, GL_FLOAT, value);
 }
 

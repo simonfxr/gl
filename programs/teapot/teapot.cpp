@@ -37,6 +37,7 @@ using namespace defs;
 
 static const point3_t LIGHT_CENTER_OF_ROTATION = vec3(0.f, 15.f, 0.f);
 static const float  LIGHT_ROTATION_RAD = 15.f;
+static const size KERNEL_SIZE = 19;
 
 struct Vertex2 {
     vec3_t position;
@@ -86,6 +87,7 @@ struct Anim {
     ge::Engine& engine;
     ge::Camera camera;
     ge::MouseLookPlugin mouse_look;
+    Array<float> glow_kernel;
     
     CubeMesh groundModel;
     CubeMesh teapotModel;
@@ -123,7 +125,8 @@ struct Anim {
     Ref<Command> setDataDirCommand;
 
     Anim(ge::Engine& e) :
-        engine(e)
+        engine(e),
+        glow_kernel(KERNEL_SIZE)
         {}
 
     void init(const Event<InitEvent>&);
@@ -261,6 +264,20 @@ void Anim::init(const Event<InitEvent>& e) {
         glow_render_target_dst = makeRef(new glt::TextureRenderTarget(w, h, ps));
     }
 
+    {
+        const size N = KERNEL_SIZE;
+        const float N2 = float(N - 1) * 0.5f;
+        for (index i = 0; i < glow_kernel.size(); ++i) {
+            float x = float(i) - N2;
+
+            const float SIG = 0.84089642;
+            const float SIG2 = SIG * SIG;
+            const float SQRT_PI = 1.7724538509055;
+            const float SQRT_2  = 1.4142135623730;
+            glow_kernel[i] = 1.f / (SQRT_PI * SQRT_2 * SIG) * exp(-1/(2 * SIG2) * (x * x));
+        }
+    }
+
     e.info.success = true;
 }
 
@@ -361,7 +378,8 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
         glow_pass1a->use();
         from->sampler().bind(0);
         glt::Uniforms(*glow_pass1a)
-            .mandatory("texture0", glt::Sampler(from->sampler(), 0));
+            .mandatory("texture0", glt::Sampler(from->sampler(), 0))
+            .optional("kernel", glow_kernel);
         screenQuad.draw();
         from->sampler().unbind(0);
 
@@ -369,7 +387,8 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
         glow_pass1b->use();
         to->sampler().bind(0);
         glt::Uniforms(*glow_pass1b)
-            .mandatory("texture0", glt::Sampler(to->sampler(), 0));
+            .mandatory("texture0", glt::Sampler(to->sampler(), 0))
+            .optional("kernel", glow_kernel);
         screenQuad.draw();
         to->sampler().unbind(0);
     }
