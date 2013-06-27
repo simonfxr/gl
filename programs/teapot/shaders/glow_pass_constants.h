@@ -1,0 +1,7 @@
+#ifndef GLOW_PASS_CONSTANTS_H
+#define GLOW_PASS_CONSTANTS_H
+
+#define KERNEL_SIZE 19
+
+#endif
+
