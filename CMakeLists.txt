@@ -77,6 +77,10 @@ set_option(USE_CXX11_FINAL_OVERRIDE ${USE_CXX11_FINAL_OVERRIDE_DEF} BOOL "use th
 
 set_option(USE_NO_MATH_H TRUE BOOL "dont import math.h in math library")
 
+if(COMP_CLANG)
+  set_option(USE_CLANG_ADDRESS_SANITIZER FALSE BOOL "enable -fsanitize=address")
+endif()
+
 include_directories(src)
 
 add_subdirectory(src)

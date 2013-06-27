@@ -112,6 +112,11 @@ if(BUILD_DEBUG AND COMP_CLANG)
   add_definitions(-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error -ftrap-function=__clang_trap_function)
 endif()
 
+if(COMP_CLANG AND USE_CLANG_ADDRESS_SANITIZER)
+  add_definitions(-fsanitize=address -fno-omit-frame-pointer)
+  link_libraries(-fsanitize=address)
+endif()
+
 if(COMP_GCCLIKE)
   add_definitions(-Wall)
   # add_definitions(-Werror)
@@ -150,6 +155,10 @@ if(BUILD_DEBUG)
   add_definitions(-DDEBUG=1)
   if(COMP_GCCLIKE)
     add_definitions(-ggdb)
+  endif()
+
+  if(COMP_GCCLIKE)
+    add_definitions(-fno-omit-frame-pointer)
   endif()
 endif()
 

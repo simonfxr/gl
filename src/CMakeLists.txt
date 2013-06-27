@@ -85,6 +85,10 @@ set(GLT_SRC
 
 set(GLT_LIBS ${GLEW_LIBRARY} ${OPENGL_gl_LIBRARY})
 
+if(SYS_LINUX)
+  set(GLT_LIBS ${GLT_LIBS} X11)
+endif()
+
 def_lib(glt SOURCES ${GLT_SRC} DEPEND ${VEC_LIB} sys LIB_DEPEND ${GLT_LIBS})
 
 set(GE_SRC
