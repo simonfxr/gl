@@ -36,13 +36,15 @@
 #include <voxel_hs.h>
 #endif
 
+#define USE_PERMUT 1
+
 using namespace math;
 
 static const float FPS_UPDATE_INTERVAL = 3.f;
 static const vec3_t BLOCK_DIM = vec3(1.f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
-static const int32 N = 32; // 196;
+static const int32 N = 196; // 196;
 static const int32 SPHERE_POINTS_FACE = 8; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const bool OCCLUSION = true;
@@ -134,17 +136,6 @@ static void incGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Arr
 static void runRecreateWorld(State *state, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
     state->worldModel.freeGPU();
     time_op(initWorld(state, state->worldModel, state->sphere_points));
-}
-
-int blah(void *foo) {
-
-    int *baz = 0;
-    int val = 3;
-
-    if (foo != 0)
-        baz = &val;
-
-    return *baz;    
 }
 
 static void initState(State *state, const InitEv& ev) {
@@ -754,9 +745,16 @@ static void createModel(CubeMesh& worldModel, const World& world, const World& v
     for (int32 i = 0; i < N; ++i) {
         for (int32 j = 0; j < N; ++j) {
             for (int32 k = 0; k < N; ++k) {
+#ifdef USE_PERMUT
                 uint32 ii = permut[i];
                 uint32 jj = permut[permut[j]];
                 uint32 kk = permut[permut[permut[k]]];
+#else
+                UNUSED(permut);
+                uint32 ii = i;
+                uint32 jj = j;
+                uint32 kk = k;
+#endif
 
                 if (world(ii, jj, kk))
                     ++stats.blocks;
