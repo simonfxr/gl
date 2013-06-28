@@ -3,6 +3,7 @@
 
 #include "ge/Engine.hpp"
 #include "ge/Tokenizer.hpp"
+#include "ge/ge.hpp"
 
 #include "err/err.hpp"
 
@@ -18,11 +19,7 @@ struct Engine::Data : public GameLoop::Game {
         ModuleInit() {
             sys::moduleInit();
             glt::moduleInit();
-        }
-
-        ~ModuleInit() {
-            sys::moduleExit();
-            glt::moduleExit();
+            ge::moduleInit();
         }
     };
 
@@ -338,6 +335,12 @@ void Engine::Data::registerHandlers() {
 void Engine::enablePlugin(Plugin& p) {
     p.registerWith(*this);
     p.registerCommands(commandProcessor());
+}
+
+void Engine::moduleExit() {
+    glt::moduleExit();
+    sys::moduleExit();
+    ge::moduleExit();
 }
 
 } // namespace ge

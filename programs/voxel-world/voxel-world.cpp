@@ -989,39 +989,41 @@ static bool writeModel(const std::string& file, const CubeMesh& mdl) {
 }
 
 int main(int argc, char *argv[]) {
+    int32 ret = 0;
+    {
+        ge::EngineOptions opts;
+        opts.parse(&argc, &argv);
+        
+        bool read_mdl = false;
+        bool write_mdl = false;
 
-    ge::EngineOptions opts;
-    opts.parse(&argc, &argv);
-
-    bool read_mdl = false;
-    bool write_mdl = false;
-
-    for (int32 i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "--read") == 0)
-            read_mdl = true;
-        else if (strcmp(argv[i], "--no-read") == 0)
-            read_mdl = false;
-        else if (strcmp(argv[i], "--write") == 0)
-            write_mdl = true;
-        else if (strcmp(argv[i], "--no-write") == 0)
-            write_mdl = false;
-    }
-
-    State state;
-    
-    state.read_model = read_mdl;
-    state.write_model = write_mdl;
-
-    ge::Engine engine;
-
-    opts.inits.reg(ge::Init, makeEventHandler(initState, &state));
-
-    int32 ret = engine.run(opts);
-
+        for (int32 i = 1; i < argc; ++i) {
+            if (strcmp(argv[i], "--read") == 0)
+                read_mdl = true;
+            else if (strcmp(argv[i], "--no-read") == 0)
+                read_mdl = false;
+            else if (strcmp(argv[i], "--write") == 0)
+                write_mdl = true;
+            else if (strcmp(argv[i], "--no-write") == 0)
+                write_mdl = false;
+        }
+        
+        State state;
+        
+        state.read_model = read_mdl;
+        state.write_model = write_mdl;
+        
+        ge::Engine engine;
+        
+        opts.inits.reg(ge::Init, makeEventHandler(initState, &state));
+        
+        ret = engine.run(opts);
+        
 #ifdef HS_WORLD_GEN
-    hs_voxel_destroy(state.voxel_state);
+        hs_voxel_destroy(state.voxel_state);
 #endif
-
+    }
+    ge::Engine::moduleExit();
     return ret;
 }
 

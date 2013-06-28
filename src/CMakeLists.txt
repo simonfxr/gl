@@ -97,7 +97,7 @@ def_lib(glt SOURCES ${GLT_SRC} DEPEND ${VEC_LIB} sys LIB_DEPEND ${GLT_LIBS})
 
 set(GE_SRC
   ge/GameLoop.cpp
-  ge/GameWindowGLFW.cpp
+  ge/GameWindow.cpp
   ge/WindowRenderTarget.cpp
   ge/Engine.cpp
   ge/EngineOptions.cpp
@@ -113,7 +113,8 @@ set(GE_SRC
   ge/ReplServer.cpp
   ge/Plugin.cpp
   ge/MouseLookPlugin.cpp
-  ge/Camera.cpp)
+  ge/Camera.cpp
+  ge/ge.cpp)
 
 set(GE_LIBS 
   ${GLFW_LIBRARY})

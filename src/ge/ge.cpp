@@ -1,11 +1,11 @@
-#define DEFINE_GLT_MODULE
+#define DEFINE_GE_MODULE
 
-#include "glt/glt.hpp"
-#include "glt/module.hpp"
+#include "ge/ge.hpp"
+#include "ge/module.hpp"
 
 #include <assert.h>
 
-namespace glt {
+namespace ge {
 
 Module *module;
 
@@ -20,4 +20,4 @@ void moduleExit() {
     module = 0;
 }
 
-} // namespace glt
+} // namespace ge

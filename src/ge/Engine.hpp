@@ -54,6 +54,8 @@ struct GE_API Engine {
 
     void enablePlugin(Plugin&);
 
+    static void moduleExit();
+
 private:
     Engine(const Engine&);
     Engine& operator =(const Engine&);

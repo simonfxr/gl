@@ -17,6 +17,7 @@ void moduleInit() {
 void moduleExit() {
     assert(module != 0);
     delete module;
+    module = 0;
 }
 
 } // namespace sys
