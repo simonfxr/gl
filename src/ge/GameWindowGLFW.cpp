@@ -379,6 +379,8 @@ GameWindow::Data::~Data() {
     
     if (owning_win) {
         glfwDestroyWindow(win);
+        win = 0;
+        glfwTerminate();
     }
 }
 

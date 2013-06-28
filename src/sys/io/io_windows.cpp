@@ -8,9 +8,6 @@ namespace io {
 #define UNDEFINED ERR("not yet implemented"); return HE_UNKNOWN
 #define UNDEFINED_S ERR("not yet implemented"); return SE_UNKNOWN
 
-const IPAddr4 IPA_ANY(0,0,0,0);
-const IPAddr4 IPA_LOCAL(127,0,0,0);
-
 HandleError open(const std::string&, HandleMode, Handle *) {
     UNDEFINED;
 }

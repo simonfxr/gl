@@ -210,6 +210,11 @@ void RenderManager::Data::beginStats() {
     if (!perf_initialized) {
         perf_initialized = true;
         perf_counter.init(2);
+
+        sum_elapsed = 0;
+        min_elapsed = 0;
+        max_elapsed = 0;
+        frame_id_next = frame_id_current + FS_UPDATE_INTERVAL;
     }
 
     perf_counter.begin();

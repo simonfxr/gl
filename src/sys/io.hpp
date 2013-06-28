@@ -31,7 +31,6 @@ const HandleMode HM_WRITE = 2;
 const HandleMode HM_APPEND = 4;
 const HandleMode HM_NONBLOCKING = 8;
 
-
 typedef uint32 SocketProto;
 
 const SocketProto SP_TCP = 1;
@@ -42,8 +41,8 @@ const SocketMode SM_NONBLOCKING = 1;
 
 } // namespace anon
 
-extern SYS_API const IPAddr4 IPA_ANY;
-extern SYS_API const IPAddr4 IPA_LOCAL;
+SYS_API const IPAddr4 IPA_ANY();
+SYS_API const IPAddr4 IPA_LOCAL();
 
 enum HandleError {
     HE_OK,
@@ -56,7 +55,7 @@ enum HandleError {
 
 struct SYS_API IPAddr4 {
     uint32 addr4; // bigendian/network byte order
-    IPAddr4() : addr4() {}
+    IPAddr4() : addr4(0) {}
     IPAddr4(uint8 a, uint8 b, uint8 c, uint8 d)
         : addr4(hton((uint32(a) << 24) | (uint32(b) << 16) | (uint32(c) << 8) | uint32(d))) {}
         

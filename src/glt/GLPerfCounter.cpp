@@ -24,20 +24,22 @@ void GLPerfCounter::init(size s) {
 }
 
 void GLPerfCounter::begin() {
-    if (!_queries[_active_query].valid()) {
-        _queries[_active_query].ensure();
+    if (!_queries[_active_query].begin.valid()) {
+        _queries[_active_query].begin.ensure();
+        _queries[_active_query].end.ensure();
         _last_query = -1.0;
     } else {
-        GLuint64 ns_elapsed;
-        GL_CALL(glGetQueryObjectui64v, *_queries[_active_query], GL_QUERY_RESULT, &ns_elapsed);
-        _last_query = double(ns_elapsed) * 1e-9;
+        GLuint64 ns_t0, ns_t1;
+        GL_CALL(glGetQueryObjectui64v, *_queries[_active_query].begin, GL_QUERY_RESULT, &ns_t0);
+        GL_CALL(glGetQueryObjectui64v, *_queries[_active_query].end, GL_QUERY_RESULT, &ns_t1);
+        _last_query = double(ns_t1 - ns_t0) * 1e-9;
     }
 
-    GL_CALL(glBeginQuery, GL_TIME_ELAPSED, *_queries[_active_query]);
+    GL_CALL(glQueryCounter, *_queries[_active_query].begin, GL_TIMESTAMP);
 }
 
 void GLPerfCounter::end() {
-    GL_CALL(glEndQuery, GL_TIME_ELAPSED);
+    GL_CALL(glQueryCounter, *_queries[_active_query].end, GL_TIMESTAMP);
     _active_query = (_active_query + 1) % UNSIZE(_queries.size());
 }
 

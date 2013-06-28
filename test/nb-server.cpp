@@ -34,7 +34,7 @@ int main(void) {
     clients.push_back(Client());
     int id = 0;
 
-    if (io::listen(io::SP_TCP, io::IPA_LOCAL, 1337, io::SM_NONBLOCKING, &server) != io::SE_OK) {
+    if (io::listen(io::SP_TCP, io::IPA_LOCAL(), 1337, io::SM_NONBLOCKING, &server) != io::SE_OK) {
         ERR("failed to start server");
         return 1;
     }

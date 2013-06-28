@@ -1,5 +1,6 @@
 #include "sys/io/Stream.hpp"
 #include "err/err.hpp"
+#include "sys/module.hpp"
 
 #include <cstring>
 #include <cstdio>
@@ -23,41 +24,26 @@ FileStream::FILE *castFILE(FILE *p) {
     return reinterpret_cast<FileStream::FILE* >(p);
 }
 
-struct Streams {
-    FileStream stdout;
-    FileStream stderr;
-
-    Streams() :
-        stdout(castFILE(STDOUT_FILE)),
-        stderr(castFILE(STDERR_FILE))
-    {
-        stdout.dontClose(true);
-        stderr.dontClose(true);
-    }
-};
-
-Streams& streams() {
-    static Streams *strs;
-    if (strs == 0)
-        strs = new Streams;
-    return *strs;
-}
-
 } // namespace anon
 
+Streams::Streams() :
+    stdout(castFILE(STDOUT_FILE)),
+    stderr(castFILE(STDERR_FILE))
+{
+    stdout.dontClose(true);
+    stderr.dontClose(true);
+}
+
 OutStream& stdout() {
-    return streams().stdout;
+    return module->io_streams.stdout;
 }
 
 OutStream& stderr() {
-    return streams().stderr;
+    return module->io_streams.stderr;
 }
 
-struct StreamEndl {
-    StreamEndl() {}
-};
-
-const StreamEndl endl;
+struct StreamEndl {};
+const StreamEndl endl = {};
 
 OutStream& operator <<(OutStream& out, const std::string& str) {
     if (!out.outEOF()) {

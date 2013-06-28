@@ -16,7 +16,7 @@ namespace fs {
 
 STATIC_ASSERT(sizeof(time_t) == sizeof(ModificationTime::time_t));
     
-const ModificationTime MIN_MODIFICATION_TIME(0);
+const ModificationTime MIN_MODIFICATION_TIME = {};
 
 bool cwd(const std::string& dir) {
 

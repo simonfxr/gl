@@ -7,8 +7,6 @@
 #include "err/err.hpp"
 #include "sys/io/Stream.hpp"
 
-#include <string>
-
 #ifdef GLDEBUG
 #define GL_TRACE(msg) do {                                              \
         ::glt::printGLTrace(_CURRENT_LOCATION_OP(msg));                 \
@@ -31,22 +29,6 @@
 
 namespace glt {
 
-GLT_API bool printOpenGLCalls();
-
-GLT_API void printOpenGLCalls(bool);
-
-GLT_API void printGLTrace(const err::Location& loc);
-
-GLT_API std::string getGLErrorString(GLenum err);
-
-GLT_API bool printGLErrors(sys::io::OutStream& out);
-
-GLT_API bool checkForGLError(const err::Location& loc);
-
-GLT_API bool isExtensionSupported(const char *extension);
-
-GLT_API bool initDebug();
-
 namespace glvendor {
 
 enum OpenGLVendor {
@@ -60,10 +42,27 @@ enum OpenGLVendor {
 
 typedef glvendor::OpenGLVendor OpenGLVendor;
 
+GLT_API bool printOpenGLCalls();
+
+GLT_API void printOpenGLCalls(bool);
+
+GLT_API void printGLTrace(const err::Location& loc);
+
+GLT_API std::string getGLErrorString(GLenum err);
+
+GLT_API bool printGLErrors(sys::io::OutStream& out);
+
+GLT_API void printGLError(const err::Location& loc, GLenum err);
+
+GLT_API bool checkForGLError(const err::Location& loc);
+
+GLT_API bool isExtensionSupported(const char *extension);
+
+GLT_API bool initDebug();
+
 GLT_API void ignoreDebugMessage(OpenGLVendor, GLuint);
 
 struct GLT_API GLMemInfoATI {
-
     struct GLMemFree {
         // in kb
         defs::size freeVBO;
@@ -79,7 +78,6 @@ struct GLT_API GLMemInfoATI {
 };
 
 struct GLT_API GLMemInfoNV {
-
     // in kb
     defs::size total;
     defs::size total_dedicated;

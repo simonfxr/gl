@@ -79,6 +79,8 @@ set_option(USE_NO_MATH_H TRUE BOOL "dont import math.h in math library")
 
 if(COMP_CLANG)
   set_option(USE_CLANG_ADDRESS_SANITIZER FALSE BOOL "enable -fsanitize=address")
+
+  set_option(USE_CLANG_TRAP_UNDEFINED FALSE BOOL "enable -fsanitize=undefined-trap")
 endif()
 
 include_directories(src)

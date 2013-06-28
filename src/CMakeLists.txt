@@ -34,7 +34,8 @@ endif()
 set(SYS_SRC
   sys/fs/fs_default.cpp
   sys/io.cpp
-  sys/io/Stream.cpp)
+  sys/io/Stream.cpp
+  sys/sys.cpp)
 
 if(SYS_UNIX)
   set(SYS_SRC
@@ -82,7 +83,9 @@ set(GLT_SRC
   glt/TextureRenderTarget3D.cpp
   glt/Mesh.cpp
   glt/GLObject.cpp
-  glt/GLPerfCounter.cpp)
+  glt/GLPerfCounter.cpp
+  glt/GLDebug.cpp
+  glt/glt.cpp)
 
 set(GLT_LIBS ${GLEW_LIBRARY} ${OPENGL_gl_LIBRARY})
 

@@ -13,9 +13,6 @@ namespace io {
 
 using namespace defs;
 
-const IPAddr4 IPA_ANY(0, 0, 0, 0);
-const IPAddr4 IPA_LOCAL(127, 0, 0, 1);
-
 namespace {
 
 #define OPTION(a, o) (((a) & (o)) == (o))

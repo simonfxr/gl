@@ -1,4 +1,5 @@
 #include "glt/utils.hpp"
+#include "glt/glt.hpp"
 
 #include "ge/Engine.hpp"
 #include "ge/Tokenizer.hpp"
@@ -7,10 +8,26 @@
 
 #include "sys/clock.hpp"
 #include "sys/fs.hpp"
+#include "sys/sys.hpp"
 
 namespace ge {
 
 struct Engine::Data : public GameLoop::Game {
+
+    struct ModuleInit {
+        ModuleInit() {
+            sys::moduleInit();
+            glt::moduleInit();
+        }
+
+        ~ModuleInit() {
+            sys::moduleExit();
+            glt::moduleExit();
+        }
+    };
+
+    ModuleInit __module_init;
+    
     Engine& theEngine; // owning engine
     GameWindow *window;
     GameLoop gameLoop;

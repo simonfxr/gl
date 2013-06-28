@@ -1,8 +1,8 @@
 #include "sys/io.hpp"
 #include "err/err.hpp"
+#include "sys/module.hpp"
 
 #include <string.h>
-
 
 namespace sys {
 
@@ -25,6 +25,19 @@ StreamResult convertErr(HandleError err) {
 }
 
 } // namespace anon
+
+IO::IO() :
+    ipa_any(0),
+    ipa_local(127, 0, 0, 1)
+{}
+
+const IPAddr4 IPA_ANY() {
+    return module->io.ipa_any;
+}
+
+const IPAddr4 IPA_LOCAL() {
+    return module->io.ipa_local;
+}
 
 HandleStream::HandleStream(const Handle& h) :
     handle(h),

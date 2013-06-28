@@ -7,7 +7,17 @@
 namespace glt {
 
 struct GLPerfCounter {
-    Array<GLQueryObject> _queries;
+    
+    // we use GL_TIMESTAMP
+    // instead of GL_TIME_ELAPSED
+    // to allow nesting
+
+    struct Counter {
+        GLQueryObject begin;
+        GLQueryObject end;
+    };
+    
+    Array<Counter> _queries;
     defs::index _active_query;
     double _last_query;
 
