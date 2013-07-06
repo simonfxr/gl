@@ -64,7 +64,7 @@ void APIENTRY opengl_error_callback(GLenum source, GLenum type, GLuint id, GLenu
     std::cerr << message << std::endl;
 }
 
-#define DEF_GL_SHADER(name, src) const char * const name = #src
+#define DEF_GL_SHADER(name, src) const char * const name = "#version 330\n" #src
 
 DEF_GL_SHADER(VERTEX_SHADER,
 
@@ -231,7 +231,7 @@ int main() {
         mat4_t rotationMatrix = mat4(glt::rotationMatrix(time * 0.2f, normalize(vec3(1.f, 1.f, 1.f))));
         mat4_t projectionMatrix = glt::perspectiveProjection(45.f, real(width) / real(height), 0.5f, 600.f);
         mat4_t mvMatrix = mat4();
-        mvMatrix[3] = vec4(0.f, 0.f, -5.f, 1.f);
+        mvMatrix[3] = vec4(0.f, 0.f, -3.f, 1.f);
         mvMatrix = mvMatrix * rotationMatrix;
 
         mat4_t mvpMatrix = projectionMatrix * mvMatrix;
