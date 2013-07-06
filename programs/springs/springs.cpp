@@ -1,12 +1,14 @@
 #include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
 #include "ge/MouseLookPlugin.hpp"
+#include "ge/Timer.hpp"
 
 #include "glt/primitives.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/utils.hpp"
 #include "glt/Uniforms.hpp"
+#include "glt/GLPerfCounter.hpp"
 
 #include "data/SharedArray.hpp"
 
@@ -17,7 +19,7 @@
 #include <map>
 #include <algorithm>
 
-const size N_SPRINGS = 10;
+const size N_SPRINGS = 20;
 
 using namespace defs;
 using namespace math;
@@ -61,7 +63,17 @@ struct Anim {
     GLuint particle_vel_tex[2];
     GLuint particle_conn_tex;
 
+    ge::Timer fpsTimer;
+
+    glt::GLPerfCounter physics_perf_counter;
+    double pc_sum;
+    int pc_count;
+
     Ref<glt::ShaderProgram> physics_prog;
+
+    Anim() :
+        fpsTimer(engine)
+        {}
     
     void init(const ge::Event<ge::InitEvent>&);
     void link();
@@ -76,11 +88,16 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     engine.enablePlugin(camera);
     camera.frame().origin = vec3(0.f);
 
-    engine.gameLoop().ticksPerSecond(400);
+    engine.gameLoop().ticksPerSecond(300);
+    engine.gameLoop().pause(true);
+
+    fpsTimer.start(1.f, true);
 
     glt::primitives::sphere(sphere_model, 1.f, 30, 15);
     sphere_model.send();
     sphere_model.enableAttribute(1, false); // disable normals
+
+    physics_perf_counter.init(2);
 
     particle_source = 0;
     std::vector<vec4_t> particle_pos_mass;
@@ -90,15 +107,17 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     for (index i = 0; i < N_SPRINGS; ++i) {
         for (index j = 0; j < N_SPRINGS; ++j) {
             // arrange in grid of N_SPRINGS by N_SPRINGS 
-            vec3_t pos = vec3(real(i * N_SPRINGS), 0, real(j * N_SPRINGS));
+            vec3_t x = vec3(real(i * N_SPRINGS), 0, real(j * N_SPRINGS));
             real inv_mass = real(N_SPRINGS * N_SPRINGS); // accumulated
                                                          // mass is 1
             if ((i == 0 || i == N_SPRINGS - 1) || (j == 0 || j == N_SPRINGS - 1)) {
                 inv_mass = 0.f; // the edges have infinite mass;
             }
 
+            float d = length(x - vec3(real(N_SPRINGS) * 0.5f, 0, real(N_SPRINGS) * 0.5f));
+            x[1] += 0.5 * d;
             
-            particle_pos_mass.push_back(vec4(pos[0], pos[1], pos[2], inv_mass));
+            particle_pos_mass.push_back(vec4(x[0], x[1], x[2], inv_mass));
             particle_vel.push_back(vec3(real(0)));
 #define INDEX(i, j) ((i) * N_SPRINGS + (j))
             particle_conn.push_back(i > 0 ? INDEX(i - 1, j) : INDEX(i, j));
@@ -192,16 +211,31 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>&) {
     GL_CALL(glActiveTexture, GL_TEXTURE0);
     GL_CALL(glBindTexture, GL_TEXTURE_BUFFER, particle_pos_mass_tex[particle_source]);
 
-    prog->use();
-    glt::Uniforms(*prog)
-        .optional("color", glt::color(0xFF, 0, 0))
-        .optional("mvpMatrix", engine.renderManager().geometryTransform().mvpMatrix())
-        .mandatory("particle_data1", glt::BoundTexture(GL_SAMPLER_BUFFER, 0));
+    {
+        glt::GeometryTransform& gt = engine.renderManager().geometryTransform();
+        prog->use();
+        glt::Uniforms(*prog)
+            .optional("color", glt::color(0xFF, 0, 0))
+            .optional("vpMatrix", gt.vpMatrix())
+            .optional("grid_size", real(N_SPRINGS))
+            .mandatory("particle_data1", glt::BoundTexture(GL_SAMPLER_BUFFER, 0));
+    }
 
-    sphere_model.drawInstanced(N_SPRINGS * N_SPRINGS);    
+    sphere_model.drawInstanced(N_SPRINGS * N_SPRINGS);
+
+    ++pc_count;
+    pc_sum += physics_perf_counter.query();
+
+    if (fpsTimer.fire()) {
+        sys::io::stdout() << "simulation fps: " << (1/physics_perf_counter.query()) << ", avg: " << (pc_count / pc_sum) << sys::io::endl;
+        pc_sum = 0.0;
+        pc_count = 0;
+    }
 }
 
 void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
+    physics_perf_counter.begin();
+    
     GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
 
     index particle_dest = (1 + particle_source) % 2;
@@ -211,11 +245,13 @@ void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
     GL_CALL(glActiveTexture, GL_TEXTURE0);
     GL_CALL(glBindTexture, GL_TEXTURE_BUFFER, particle_pos_mass_tex[particle_source]);
 
-
+    real dt = engine.gameLoop().frameDuration();
+    real damp_coeff = 0.99f; // damping over the period of 1 sec;
+    real damping = pow(damp_coeff, dt);
     glt::Uniforms(*physics_prog)
-        .optional("dt", engine.gameLoop().frameDuration())
-        .optional("D", 0.1f)
-        .optional("damping", 0.98f)
+        .optional("dt", dt)
+        .optional("D", 1.f)
+        .optional("damping", damp_coeff)
         .mandatory("position_mass_sampler", glt::BoundTexture(GL_SAMPLER_BUFFER, 0));
     
     GL_CALL(glBindBufferBase, GL_TRANSFORM_FEEDBACK_BUFFER, 0, particle_pos_mass_handle[particle_dest]);
@@ -230,6 +266,8 @@ void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
     GL_CALL(glDisable, GL_RASTERIZER_DISCARD);
 
     particle_source = particle_dest;
+
+    physics_perf_counter.end();
 }
 
 int main(int argc, char *argv[]) {

@@ -6,7 +6,7 @@
 
 namespace glt {
 
-struct GLPerfCounter {
+struct GLT_API GLPerfCounter {
     
     // we use GL_TIMESTAMP
     // instead of GL_TIME_ELAPSED

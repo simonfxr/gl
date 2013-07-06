@@ -33,7 +33,7 @@ void main() {
     vec3 a = inv_mass == 0 ? vec3(0) : F * inv_mass + vec3(0, -9.81, 0);
 
     pos += dt * v + (0.5 * dt * dt) * a;
-    v += dt * damping * a;
+    v = (v + dt * a) * damping;
     
     out1.position_mass = vec4(pos, inv_mass);
     out2.velocity = v;
