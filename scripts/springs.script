@@ -5,7 +5,7 @@ prependShaderPath "programs/springs/shaders"
 
 bindShader "sphere" "sphere.vert" "sphere.frag" 0 "position"
 
-perspectiveProjection 45 0.5 200
+perspectiveProjection 45 0.5 400
 
 bindKey [+O] { incGamma -0.1 }
 bindKey [+P] { incGamma +0.1 }
