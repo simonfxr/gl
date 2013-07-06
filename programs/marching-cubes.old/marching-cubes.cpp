@@ -3,6 +3,7 @@
 #include "ge/Command.hpp"
 #include "ge/CommandParams.hpp"
 #include "ge/Timer.hpp"
+#include "ge/MouseLookPlugin.hpp"
 
 #include "glt/TextureRenderTarget3D.hpp"
 #include "glt/primitives.hpp"
@@ -63,6 +64,7 @@ struct Anim {
     Ref<glt::ShaderProgram> feedbackProgram;
     
     ge::Camera camera;
+    ge::MouseLookPlugin mouse_look;
     Ref<ge::Timer> fpsTimer;
 
     Anim() :
@@ -85,11 +87,10 @@ void Anim::link(ge::Engine& e) {
 }
 
 void Anim::init(const ge::Event<ge::InitEvent>& ev) {
-    camera.registerWith(*engine);
-    camera.registerCommands(engine->commandProcessor());
 
-    engine->window().grabMouse(true);
-    engine->window().showMouseCursor(false);
+    mouse_look.camera(&camera);
+    engine->enablePlugin(camera);
+    engine->enablePlugin(mouse_look);
 
     {
         WorldVertex v;
@@ -285,8 +286,14 @@ void Anim::render(const ge::Event<ge::RenderEvent>&) {
     }
 
     if (fpsTimer->fire()) {
+#define INV(x) (((x) * (x)) == 0 ? -1 : 1.0 / (x))
         glt::FrameStatistics fs = engine->renderManager().frameStatistics();
-        sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): " << fs.avg_fps << "; " << fs.rt_avg << "; " << fs.rt_min << "; " << fs.rt_max << sys::io::endl;
+        double fps = INV(fs.avg);
+        double min = INV(fs.max);
+        double max = INV(fs.min);
+        double avg = INV(fs.avg);
+        sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): " << fps << "; " << avg << "; " << min << "; " << max << sys::io::endl;
+#undef INV
     }
 }
 

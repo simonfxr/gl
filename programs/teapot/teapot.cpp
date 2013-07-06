@@ -422,7 +422,7 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
 #endif
 
     if (fpsTimer->fire()) {
-#define INV(x) (((x) * (x)) < 0.00001 ? 999999999.0 : 1.0 / (x))
+#define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
         glt::FrameStatistics fs = engine.renderManager().frameStatistics();
         double fps = INV(fs.avg);
         double min = INV(fs.max);

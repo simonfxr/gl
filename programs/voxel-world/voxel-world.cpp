@@ -44,10 +44,10 @@ static const float FPS_UPDATE_INTERVAL = 3.f;
 static const vec3_t BLOCK_DIM = vec3(1.f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
-static const int32 N = 32; // 196;
+static const int32 N = 512; // 196;
 static const int32 SPHERE_POINTS_FACE = 8; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
-static const bool OCCLUSION = true;
+static const bool OCCLUSION = false;
 static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
 
 
@@ -682,13 +682,13 @@ static void createGeometry(World& world, const Densities& ds) {
             }
 }
 
-static void createOcclusionMap(GlobalOcc& occ, const World& hull, const World& world, const Rays& rays) {
+static void createOcclusionMap(GlobalOcc* occ, const World& hull, const World& world, const Rays& rays) {
 #pragma omp parallel for
     for (int32 i = 0; i < N; ++i)
         for (int32 j = 0; j < N; ++j)
             for (int32 k = 0; k < N; ++k)
                 if (hull(i, j, k))
-                    occ.lambertFactor[i][j][k] = trace(world, rays, ivec3(i, j, k));
+                    occ->lambertFactor[i][j][k] = trace(world, rays, ivec3(i, j, k));
 }
 
 static void andWorld(World& r, const World& a, const World& b) {
@@ -735,7 +735,7 @@ struct Stats {
     uint32 visBlocks;
 };
 
-static void createModel(CubeMesh& worldModel, const World& world, const World& vis, const GlobalOcc& occmap, const Vertices& verts, const uint32 *permut, Stats& stats, const Densities& ds) {
+static void createModel(CubeMesh& worldModel, const World& world, const World& vis, const GlobalOcc* occmap, const Vertices& verts, const uint32 *permut, Stats& stats, const Densities& ds) {
 
     stats.blocks = 0;
     stats.visBlocks = 0;
@@ -762,7 +762,9 @@ static void createModel(CubeMesh& worldModel, const World& world, const World& v
                 if (vis(ii, jj, kk) && world(ii, jj, kk)) {
                     ++stats.visBlocks;
 
-                    const Faces& diffContr = occmap.lambertFactor[ii][jj][kk];
+                    const Faces *diffContr;
+                    if (OCCLUSION)
+                        diffContr = &occmap->lambertFactor[ii][jj][kk];
 
                     float dens = ds.ds[ii][jj][kk];
 
@@ -794,7 +796,7 @@ static void createModel(CubeMesh& worldModel, const World& world, const World& v
                             face = abs(face) - 1;
                             v.position *= BLOCK_DIM;
                             v.position += offset;
-                            v.normal[3] = OCCLUSION ? diffContr.f[side][face] : 1.f;
+                            v.normal[3] = OCCLUSION ? diffContr->f[side][face] : 1.f;
                             v.color = col.rgba;
                             worldModel.add(v);
                         }
@@ -880,27 +882,29 @@ static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points)
             for (int32 k = 0; k < N; ++k)
                 hull(i, j, k) = hasNeighbours(world, vis, ivec3(i, j, k));
 
-
-    std::auto_ptr<GlobalOcc> occmapp(new GlobalOcc);
-    GlobalOcc& occmap = *occmapp;
-    time_op(createOcclusionMap(occmap, hull, worldOrVis, rays));
-
+    GlobalOcc *occmap = 0;
+    if (OCCLUSION) {
+        occmap = new GlobalOcc;
+        time_op(createOcclusionMap(occmap, hull, worldOrVis, rays));
+    }
+    
     // time_op({
     //         for (uint32 i = 0; i < 15; ++i)
     //             andWorld(worldAndVis, world, vis);
     //         });
-
+        
     Stats stats;
-
+        
     std::auto_ptr<Vertices> vertsp(new Vertices(cubeModel.size()));
     Vertices& verts = *vertsp;
-
+    
     for (uint32 i = 0; i < verts.size; ++i)
         verts.verts[i] = cubeModel.at(i);
-
+    
     INFO("created verts");
     
     time_op(createModel(worldModel, world, vis, occmap, verts, permut, stats, *densitiesp));
+    delete occmap; occmap = 0;
 
     sys::io::stderr() << "blocks: " << stats.blocks << ", visible blocks: " << stats.visBlocks << sys::io::endl;
     sys::io::stderr() << "faces: " << stats.faces << ", visible faces: " << stats.visFaces << sys::io::endl;

@@ -19,9 +19,6 @@ namespace glt {
 
 using namespace math;
 
-static const size FS_UPDATE_INTERVAL = 100;
-
-
 struct RenderManager::Data {
     ViewFrustum frustum;
     GeometryTransform transform;
@@ -38,7 +35,7 @@ struct RenderManager::Data {
     bool projection_outdated;
 
     uint64 frame_id_current;
-    uint64 frame_id_next;
+    uint64 frame_id_last;
 
     bool perf_initialized;
     GLPerfCounter perf_counter;
@@ -57,7 +54,7 @@ struct RenderManager::Data {
         projection(),
         projection_outdated(true),
         frame_id_current(0),
-        frame_id_next(0),
+        frame_id_last(0),
         perf_initialized(false),
         stats()
         {}
@@ -203,6 +200,15 @@ void RenderManager::endScene() {
 }
 
 FrameStatistics RenderManager::frameStatistics() {
+    self->stats.min = self->min_elapsed;
+    self->stats.max = self->max_elapsed;
+    self->stats.avg = self->sum_elapsed / double(self->frame_id_current - self->frame_id_last);
+    
+    self->frame_id_last = self->frame_id_current;
+    self->sum_elapsed = 0.0;
+    self->min_elapsed = std::numeric_limits<double>::infinity();
+    self->max_elapsed = 0.0;
+    
     return self->stats;
 }
 
@@ -214,7 +220,7 @@ void RenderManager::Data::beginStats() {
         sum_elapsed = 0;
         min_elapsed = 0;
         max_elapsed = 0;
-        frame_id_next = frame_id_current + FS_UPDATE_INTERVAL;
+        frame_id_last = frame_id_current;
     }
 
     perf_counter.begin();
@@ -225,17 +231,6 @@ void RenderManager::Data::beginStats() {
             max_elapsed = stats.last;
         if (stats.last < min_elapsed)
         min_elapsed = stats.last;
-        
-        if (frame_id_current >= frame_id_next) {
-            stats.min = min_elapsed;
-            stats.max = max_elapsed;
-            stats.avg = sum_elapsed / double(FS_UPDATE_INTERVAL + (frame_id_current - frame_id_next));
-            
-            frame_id_next = frame_id_current + FS_UPDATE_INTERVAL;
-            sum_elapsed = 0.0;
-            min_elapsed = std::numeric_limits<double>::infinity();
-            max_elapsed = 0.0;
-        }
     }
 }
 

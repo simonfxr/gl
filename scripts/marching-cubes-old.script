@@ -1,4 +1,5 @@
 load "default.script"
+load "camera.script"
 
 addShaderPath "programs/marching-cubes.old/shaders"
 
@@ -16,17 +17,3 @@ bindShader "identity" "identity.vert" "identity.frag" 0 "position"
 # }
 
 perspectiveProjection 35 0.5 800
-
-bindKey [W] { moveCamera 12 }
-bindKey [D] { moveCamera 3 }
-bindKey [S] { moveCamera 6 }
-bindKey [A] { moveCamera 9 }
-
-bindKey [+U] { saveCameraFrame "marching-cubes.cam" }
-bindKey [+I] { loadCameraFrame "marching-cubes.cam" }
-
-postInit { 
-    setCameraStepLength 4
-    setCameraMouseSensitivity 0.00075
-    loadCameraFrame "marching-cubes.cam"
-}
