@@ -5,8 +5,14 @@
 #include "glt/ShaderProgram.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/CubeMesh.hpp"
+#include "glt/TextureRenderTarget.hpp"
+#include "glt/utils.hpp"
+
+#include "shaders/quasi_constants.h"
 
 #include "ge/Engine.hpp"
+
+static const bool MULTISAMPLING = false; // via multisample texture
 
 using namespace math;
 
@@ -18,12 +24,16 @@ DEFINE_VERTEX_DESC(Vertex,
                    VERTEX_ATTR(Vertex, position));
 
 struct Anim {
+    ge::Engine engine;
     glt::CubeMesh<Vertex> quadBatch;
+    Ref<glt::TextureRenderTarget> render_texture;
     
     void init(const ge::Event<ge::InitEvent>&);
     void link(ge::Engine& e);
     void animate(const ge::Event<ge::AnimationEvent>&);
     void renderScene(const ge::Event<ge::RenderEvent>&);
+    
+    void handleWindowResized(const ge::Event<ge::WindowResized>& ev);
 };
 
 void Anim::init(const ge::Event<ge::InitEvent>& ev) {
@@ -39,12 +49,27 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
         quadBatch.send();
     }
 
+    if (MULTISAMPLING) {
+        size w = engine.window().windowWidth();
+        size h = engine.window().windowHeight();
+        glt::TextureRenderTarget::Params ps;
+        ps.samples = NUM_SAMPLES;
+        ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
+        render_texture = makeRef(new glt::TextureRenderTarget(w, h, ps));
+        engine.renderManager().setDefaultRenderTarget(render_texture.ptr());
+
+        GL_CALL(glEnable, GL_MULTISAMPLE);
+    }
+
+    GL_CALL(glDisable, GL_DEPTH_TEST);
+
     ev.info.success = true;
 }
 
 void Anim::link(ge::Engine& e) {
     e.events().animate.reg(ge::makeEventHandler(this, &Anim::animate));
     e.events().render.reg(ge::makeEventHandler(this, &Anim::renderScene));
+    e.window().events().windowResized.reg(ge::makeEventHandler(this, &Anim::handleWindowResized));
 }
 
 void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
@@ -55,10 +80,15 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     ge::Engine& e = ev.info.engine;
     real time = e.gameLoop().gameTime() + ev.info.interpolation * e.gameLoop().frameDuration();
 
-    Ref<glt::ShaderProgram> renderShader = e.shaderManager().program("render");
-    if (!renderShader) {
-        ASSERT_FAIL();
+    glt::RenderManager& rm = engine.renderManager();
+
+    if (MULTISAMPLING) {
+        rm.setActiveRenderTarget(render_texture.ptr());
+        render_texture->clear();
     }
+
+    Ref<glt::ShaderProgram> renderShader = e.shaderManager().program("render");
+    ASSERT(renderShader);
 
     renderShader->use();
     glt::Uniforms(*renderShader)
@@ -67,15 +97,36 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
         .optional("transform", mat3());
 
     quadBatch.draw();
+
+    if (MULTISAMPLING) {
+        rm.setActiveRenderTarget(&engine.window().renderTarget());
+        Ref<glt::ShaderProgram> postproc = e.shaderManager().program("postproc");
+        ASSERT(postproc);
+
+        postproc->use();
+
+        render_texture->sampler().bind(0);
+        glt::Uniforms(*postproc)
+            .optional("texture0", glt::Sampler(render_texture->sampler(), 0));
+        quadBatch.draw();
+    }
 }
 
+void Anim::handleWindowResized(const ge::Event<ge::WindowResized>& ev) {
+    if (MULTISAMPLING) {
+        size w = ev.info.window.windowWidth();
+        size h = ev.info.window.windowHeight();
+        engine.renderManager().setActiveRenderTarget(0);
+        render_texture->resize(w, h);
+        engine.renderManager().setDefaultRenderTarget(render_texture.ptr());
+    }
+}
 
 int main(int argc, char *argv[]) {
-    ge::Engine engine;
-    ge::EngineOptions opts;
     Anim anim;
-    
+    ge::EngineOptions opts;
+
     opts.parse(&argc, &argv);
     opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));
-    return engine.run(opts);
+    return anim.engine.run(opts);
 }

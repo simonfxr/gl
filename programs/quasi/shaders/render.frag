@@ -54,10 +54,12 @@ vec2 kart(vec2 p) {
 
 vec3 eval(vec2 p0) {
     vec2 p1 = p0 + (1 * time) * normalize(vec2(1, 2));
-    vec2 p2 = p0;
+
+    float rot = time * 0.05;
+    vec2 p2 = p0 + (time * 0.5 * (sin(time * 0.05) + 2)) * vec2(cos(rot), sin(rot));
     
     vec2 f;
-    float tau = time * 0.05;
+    float tau = time * 0.10;
     float omega = 0.02 * sin(tau) + 0.01 * cos(2 * tau);
     f.x = snoise(p1 * omega + vec2(39, 113)) + snoise(p1 * omega * 2 + vec2(13, 27)) * 0.5;
     f.y = snoise(p1 * omega + vec2(19, 111)) + snoise(p1 * omega * 2 + vec2(-7, 3)) * 0.5;
@@ -124,6 +126,6 @@ void main() {
         albedo = eval(applyTransform2(position));
     }
     
-    albedo = smoothstep(0, 1, albedo);
+    albedo = pow(albedo, vec3(5));
     color = gammaCorrect(vec4(albedo, 1));
 }
