@@ -6,6 +6,9 @@
 uniform float time;
 uniform mat3 transform;
 
+const bool SPLIT_SCREEN = false;
+const bool APPLY_TRANSFORM = false;
+
 in vec2 worldPosition;
 out vec4 color;
 
@@ -49,24 +52,28 @@ vec2 kart(vec2 p) {
     return p.x * vec2(cos(p.y), sin(p.y));
 }
 
-vec3 eval(vec2 p) {
+vec3 eval(vec2 p0) {
+    vec2 p1 = p0 + (1 * time) * normalize(vec2(1, 2));
+    vec2 p2 = p0;
+    
     vec2 f;
-    float omega = 0.02;
-    f.x = snoise(p * omega + vec2(39, 113)) + snoise(p * omega * 2 + vec2(13, 27)) * 0.5;
-    f.y = snoise(p * omega + vec2(19, 111)) + snoise(p * omega * 2 + vec2(-7, 3)) * 0.5;
+    float tau = time * 0.05;
+    float omega = 0.02 * sin(tau) + 0.01 * cos(2 * tau);
+    f.x = snoise(p1 * omega + vec2(39, 113)) + snoise(p1 * omega * 2 + vec2(13, 27)) * 0.5;
+    f.y = snoise(p1 * omega + vec2(19, 111)) + snoise(p1 * omega * 2 + vec2(-7, 3)) * 0.5;
     
     /* f = normalize(f); */
 
     /* f *= snoise(p * 1.55 + vec2(-17, 33)); */
 
-    vec2 pol = polar(p);
+    vec2 pol = polar(p2);
     float r = pol.x;
     float phi = pol.y;
         
 //    f *= 2 * (snoise(p * omega * 3 + vec2(31, -11)) + 1);
     float w = 0.5;
 
-    return evalCrystal(p * (w * sin(phi) + 1) + f) * vec3(1);
+    return evalCrystal(p2 * (w * sin(phi) + 1) + f) * vec3(1);
 
     return length(f) * vec3(1);
 }
@@ -95,16 +102,10 @@ vec2 applyTransform2(vec2 v) {
 }
 
 void main() {
-
-    const bool split = true;
     vec2 position = worldPosition;
-
     vec3 albedo = vec3(0);
 
-    
-
-    if (split) {
-
+    if (SPLIT_SCREEN) {
         const float border = 0.01;
         const float border2 = border * 0.5;
         
@@ -123,7 +124,6 @@ void main() {
         albedo = eval(applyTransform2(position));
     }
     
-
     albedo = smoothstep(0, 1, albedo);
     color = gammaCorrect(vec4(albedo, 1));
 }

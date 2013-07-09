@@ -18,7 +18,6 @@ DEFINE_VERTEX_DESC(Vertex,
                    VERTEX_ATTR(Vertex, position));
 
 struct Anim {
-
     glt::CubeMesh<Vertex> quadBatch;
     
     void init(const ge::Event<ge::InitEvent>&);
