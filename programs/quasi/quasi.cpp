@@ -27,6 +27,8 @@ struct Anim {
     ge::Engine engine;
     glt::CubeMesh<Vertex> quadBatch;
     Ref<glt::TextureRenderTarget> render_texture;
+
+    float time_print_fps;
     
     void init(const ge::Event<ge::InitEvent>&);
     void link(ge::Engine& e);
@@ -38,6 +40,8 @@ struct Anim {
 
 void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     link(ev.info.engine);
+
+    time_print_fps = 0;
     
     {
         Vertex v;
@@ -109,6 +113,18 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
         glt::Uniforms(*postproc)
             .optional("texture0", glt::Sampler(render_texture->sampler(), 0));
         quadBatch.draw();
+    }
+
+    if (time >= time_print_fps) {
+        time_print_fps = time + 1.f;
+
+        #define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
+        glt::FrameStatistics fs = engine.renderManager().frameStatistics();
+        double fps = INV(fs.avg);
+        double min = INV(fs.max);
+        double max = INV(fs.min);
+        double avg = INV(fs.avg);
+        engine.out() << "Timings (FPS/Render Avg/Render Min/Render Max): " << fps << "; " << avg << "; " << min << "; " << max << sys::io::endl;
     }
 }
 

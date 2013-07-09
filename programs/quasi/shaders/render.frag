@@ -126,6 +126,6 @@ void main() {
         albedo = eval(applyTransform2(position));
     }
     
-    albedo = pow(albedo, vec3(5));
+    albedo = vec3(log(0.6 + length(albedo)));
     color = gammaCorrect(vec4(albedo, 1));
 }
