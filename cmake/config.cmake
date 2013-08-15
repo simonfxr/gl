@@ -203,3 +203,4 @@ endif()
 
 include_directories(${GLEW_INCLUDE_PATH})
 include_directories(${GLFW_INCLUDE_PATH})
+include_directories(${PROJECT_SOURCE_DIR}/ext/include)

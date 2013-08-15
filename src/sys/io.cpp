@@ -61,13 +61,16 @@ StreamResult HandleStream::basic_flush() {
 }
 
 StreamResult HandleStream::basic_read(size& s, char *buf) {
-
+    if (s == 0)
+        return StreamOK;
+    
     if (s <= read_cursor) {
         memcpy(buf, read_buffer, s);
         read_cursor -= s;
         if (read_cursor > 0)
             memmove(read_buffer, read_buffer + s, read_cursor);
 
+        ASSERT(s > 0);
         return StreamOK;
     }
 
@@ -102,8 +105,9 @@ StreamResult HandleStream::basic_read(size& s, char *buf) {
     }
 
     s = n;
-
-    return convertErr(err);
+    StreamResult res = convertErr(err);
+    ASSERT(res != StreamOK || s > 0);
+    return res;
 }
 
 StreamResult HandleStream::basic_write(size& s, const char *buf) {

@@ -2,6 +2,7 @@
 #define SYS_IO_STREAM_HPP
 
 #include "sys/conf.hpp"
+#include "sys/fiber.hpp"
 
 #include <sstream>
 #include <string>
@@ -277,31 +278,15 @@ protected:
     virtual StreamResult basic_write(size&, const char *) FINAL OVERRIDE;
 };
 
-struct SYS_API RecordingStream : public AbstractInStream {
-    enum State {
-        Recording,
-        Replaying
-    };
-    
+struct SYS_API CooperativeInStream : public AbstractInStream {
     InStream *in;
-    std::vector<char> recorded;
-    State state;
-    defs::index cursor;
+    Fiber *io_handler; // switched to on blocking reads
+    Fiber *stream_user;
 
-    RecordingStream(InStream& in);
-
-    void replay();
-    void record();
-    void reset();
-    void clear();
-
+    CooperativeInStream(InStream *in, Fiber *io_handler, Fiber *stream_user);
 protected:
     virtual void basic_close() FINAL OVERRIDE;
     virtual StreamResult basic_read(size&, char *) FINAL OVERRIDE;
-
-private:
-    RecordingStream(const RecordingStream&);
-    RecordingStream& operator =(const RecordingStream&);
 };
 
 SYS_API OutStream& operator <<(OutStream& out, const std::string& str);

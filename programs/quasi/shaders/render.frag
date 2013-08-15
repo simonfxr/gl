@@ -53,7 +53,9 @@ vec2 kart(vec2 p) {
 }
 
 vec3 eval(vec2 p0) {
-    vec2 p1 = p0 + (1 * time) * normalize(vec2(1, 2));
+    float rot1 = time * 0.05;
+    vec2 p1 = p0 + (1 * time) * normalize(vec2(1, 2)) + vec2(sin(rot1), cos(rot1)) * (0.5 * time);
+    
 
     float rot = time * 0.05;
     vec2 p2 = p0 + (time * 0.5 * (sin(time * 0.05) + 2)) * vec2(cos(rot), sin(rot));
@@ -127,5 +129,6 @@ void main() {
     }
     
     albedo = vec3(log(0.6 + length(albedo)));
+//    albedo = vec3(pow(1 - exp(-3 * length(albedo)), 60)) * 0.8;
     color = gammaCorrect(vec4(albedo, 1));
 }

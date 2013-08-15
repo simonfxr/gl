@@ -2,6 +2,8 @@
 include(${PROJECT_SOURCE_DIR}/cmake/config.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/macros.cmake)
 
+set(FIBER_LIB ${PROJECT_SOURCE_DIR}/ext/lib/libfiber.so)
+
 set(MATH_SRC
   math/vec2/impl.cpp
   math/vec3/impl.cpp
@@ -35,7 +37,8 @@ set(SYS_SRC
   sys/fs/fs_default.cpp
   sys/io.cpp
   sys/io/Stream.cpp
-  sys/sys.cpp)
+  sys/sys.cpp
+  sys/fiber.cpp)
 
 if(SYS_UNIX)
   set(SYS_SRC
@@ -55,6 +58,7 @@ set(SYS_LIBS)
 
 if(SYS_LINUX)
   set(SYS_LIBS rt ${SYS_LIBS})
+  set(SYS_LIBS ${FIBER_LIB} ${SYS_LIBS})
 endif()
 
 if(SYS_WINDOWS)

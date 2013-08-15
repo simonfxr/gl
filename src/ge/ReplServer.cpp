@@ -2,6 +2,8 @@
 #include "ge/Tokenizer.hpp"
 #include "ge/Engine.hpp"
 
+#include "sys/fiber.hpp"
+
 #include <vector>
 #include <sstream>
 
@@ -17,132 +19,115 @@ enum TokenizeResult {
     TokenizeIncomplete
 };
 
-struct ClientStream {
-    HandleStream conn;
-    RecordingStream recorder;
-
-    ClientStream(const Handle& h) :
-        conn(h),
-        recorder(conn)
-        {}
+enum ParsingState {
+    ParsingGotStatement,
+    ParsingYield,
+    ParsingStop
 };
 
 struct Client {
     int id;
-    Ref<ClientStream> stream;
+    Fiber parser_fiber;
+    Fiber *client_fiber;
+    ParsingState state;
+    HandleStream hstream;
+    CooperativeInStream in_stream;
     ParseState parse_state;
-    bool skip_statement;
+
+    std::vector<CommandArg> statement;
     
     Client(int _id, Handle h);
+    ~Client();
+    
     bool handle(Engine&);
     bool handleIO(Engine&);
 };
 
+struct ParserArgs {
+    Client *client;
+};
+
+static void run_parser_fiber(void *args0) {
+    ParserArgs *args = reinterpret_cast<ParserArgs *>(args0);
+    Client *c = args->client;
+    while (c->state != ParsingStop) {
+        bool ok = tokenize(c->parse_state, c->statement);
+        if (ok) {
+            c->state = ParsingGotStatement;
+        } else {
+            c->state = ParsingYield;
+            fiber_switch(&c->parser_fiber, c->client_fiber);
+            if (c->state == ParsingStop)
+                break;
+            skipStatement(c->parse_state);
+            c->state = ParsingYield;
+        }
+        fiber_switch(&c->parser_fiber, c->client_fiber);
+    }
+    
+    fiber_set_alive(&c->parser_fiber, 0);
+    INFO("run_parser_fiber returns");
+    fiber_switch(&c->parser_fiber, c->client_fiber);
+}
+
 Client::Client(int _id, Handle h) :
     id(_id),
-    stream(new ClientStream(h)),
-    parse_state(stream->recorder, ""),
-    skip_statement(false)
+    parser_fiber(),
+    client_fiber(sys::fiber::toplevel()),
+    state(ParsingYield),
+    hstream(h),
+    in_stream(&hstream, client_fiber, &parser_fiber),
+    parse_state(in_stream, "")
 {
+    fiber_alloc(&parser_fiber, 65536);
+    ParserArgs args;
+    args.client = this;
+    fiber_push_return(&parser_fiber, run_parser_fiber, (void *) &args, sizeof args);
     std::ostringstream name;
     name << "<repl " << id << ">";
     parse_state.filename = name.str();
 }
 
+Client::~Client() {
+    INFO("invoking ~Client()");
+    if (fiber_is_alive(&parser_fiber)) {
+        state = ParsingStop;
+        fiber_switch(client_fiber, &parser_fiber);
+    }
+    ASSERT(!fiber_is_alive(&parser_fiber));
+    fiber_destroy(&parser_fiber);
+}
+
 bool Client::handle(Engine& e) {
     sys::io::OutStream& out = e.out();
-    e.out(stream->conn);
+    e.out(hstream);
     bool ok = handleIO(e);
     e.out(out);
     return ok;
 }
 
 bool Client::handleIO(Engine& e) {
-    sys::io::StreamResult res = stream->conn.flush();
-    if (res == sys::io::StreamBlocked)
-        return true;
-    if (res != sys::io::StreamOK)
-        return false;
-
-    {
-        stream->recorder.record();
-        size s = 1;
-        char ch;
-        sys::io::StreamResult res = stream->recorder.read(s, &ch);
-        
-        if (s == 0) {
-            if (res == sys::io::StreamBlocked)
-                return true;
-            else
-                return false;
-        }
-    }
-
-    stream->recorder.reset();
-    stream->recorder.replay();
-
-    if (skip_statement) {
-        
-        if (!skipStatement(parse_state)) {
-            if (parse_state.in_state == sys::io::StreamBlocked)
-                return true;
-            else
-                return false;
-        }
-        
-        skip_statement = false;
-
-        if (parse_state.in_state == sys::io::StreamBlocked)
-            return true;
-        
-        if (parse_state.in_state != sys::io::StreamOK)
-            return false;
-    }
-
-    std::vector<CommandArg> statement;
-    bool parsed;
-    bool incomplete;
-
-    {
-        ParseState activeState = parse_state;
-        parsed  = tokenize(activeState, statement);
-        if (!parsed && activeState.in_state == sys::io::StreamBlocked) {
-            incomplete = true;
-        } else {
-            parse_state = activeState;
-            incomplete = false;
-        }
-    }
-
-    if (parsed)
+    fiber_switch(client_fiber, &parser_fiber);
+    switch (state) {
+    case ParsingGotStatement:
         e.commandProcessor().execCommand(statement);
-
-    if (parsed || !incomplete)
-        stream->recorder.clear();
-
-    if (!parsed && !incomplete)
-        skip_statement = true;
-       
-    for (index i = 0; i < SIZE(statement.size()); ++i)
-        statement[i].free();
-
-    if (parse_state.in_state != sys::io::StreamOK &&
-        parse_state.in_state != sys::io::StreamBlocked)
-        return false;
-
-    res = stream->conn.flush();
-    if (res != sys::io::StreamOK &&
-        res != sys::io::StreamBlocked)
-        return false;
-    else
-        return true;
+        for (index i = 0; i < SIZE(statement.size()); ++i)
+            statement[i].free();
+        statement.clear();
+    case ParsingYield:
+    case ParsingStop:
+        ; // do nothing
+    }
+    
+    sys::io::StreamResult res = parse_state.in_state;
+    return res == sys::io::StreamBlocked || res == sys::io::StreamOK;
 }
 
 } // namespace anon
 
 struct ReplServer::Data {
     Socket server;
-    std::vector<Client> clients;
+    std::vector<Ref<Client>> clients;
     bool running;
     int next_id;
     Engine& engine;
@@ -197,7 +182,7 @@ void ReplServer::acceptClients() {
             ERR("couldnt set nonblocking handle mode, closing connection");
             sys::io::close(handle);
         } else {
-            self->clients.push_back(Client(self->next_id++, handle));
+            self->clients.push_back(makeRef(new Client(self->next_id++, handle)));
         }
     }
 }
@@ -206,7 +191,7 @@ void ReplServer::handleClients() {
     ASSERT(self->running);
     
     for (index i = 0; i < SIZE(self->clients.size()); ++i) {
-        if (!self->clients[i].handle(self->engine)) {
+        if (!self->clients[i]->handle(self->engine)) {
             INFO("closing connection to client");
             self->clients.erase(self->clients.begin() + i);
         }

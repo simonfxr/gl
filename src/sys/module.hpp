@@ -4,6 +4,7 @@
 #include "sys/conf.hpp"
 #include "sys/io/Stream.hpp"
 #include "sys/io.hpp"
+#include "sys/fiber.hpp"
 
 #ifdef DEFINE_SYS_MODULE
 #  define SYS_MODULE_ACCESS
@@ -25,15 +26,22 @@ struct Streams {
 struct IO {
     const IPAddr4 ipa_any;
     const IPAddr4 ipa_local;
-    
+
     IO();
 };
 
 } // namespace io
 
+struct Fibers {
+    Fiber toplevel;
+    
+    Fibers();
+};
+
 struct Module {
     io::Streams io_streams;
     io::IO io;
+    Fibers fibers;
 };
 
 extern Module * SYS_MODULE_ACCESS module;

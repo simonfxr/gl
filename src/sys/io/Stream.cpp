@@ -224,80 +224,26 @@ StreamResult NullStream::basic_write(size& s, const char *) {
     return StreamEOF;
 }
 
-RecordingStream::RecordingStream(InStream& _in) :
-    in(&_in),
-    recorded(),
-    state(Recording),
-    cursor(0)
+CooperativeInStream::CooperativeInStream(InStream *_in, Fiber *ioh, Fiber *su) :
+    in(_in), io_handler(ioh), stream_user(su)
 {}
 
-void RecordingStream::replay() {
-    state = Replaying;
-}
-
-void RecordingStream::record() {
-    state = Recording;
-}
-
-void RecordingStream::reset() {
-    cursor = 0;
-}
-
-void RecordingStream::clear() {
-    recorded.clear();
-    cursor = 0;
-}
-
-void RecordingStream::basic_close() {
+void CooperativeInStream::basic_close() {
     in->close();
 }
 
-StreamResult RecordingStream::basic_read(size& s, char *b) {
-    StreamResult res;
-    
-    switch (state) {
-        
-    case Recording: {
-        
-        res = in->read(s, b);
-        for (defs::index i = 0; i < s; ++i)
-            recorded.push_back(b[i]);
-        break;
+StreamResult CooperativeInStream::basic_read(size& s, char *buf) {
+    size n = s;
+    for (;;) {
+        s = n;
+        StreamResult res = in->read(s, buf);
+        if (res == StreamOK)
+            return res;
+        else if (res == StreamBlocked) 
+            fiber_switch(stream_user, io_handler);
+        else
+            return res; // error
     }
-    
-    case Replaying: {
-        
-        size rem = SIZE(recorded.size()) - cursor;
-        if (s <= rem) {
-            memcpy(b, &recorded[cursor], s);
-            cursor += s;
-            res = StreamOK;
-        } else {
-
-            if (rem > 0) {
-                memcpy(b, &recorded[cursor], rem);
-                b += rem;
-                s -= rem;
-            }
-
-            res = in->read(s, b);
-            for (defs::index i = 0; i < s; ++i)
-                recorded.push_back(b[i]);
-            
-            s += rem;
-
-            cursor = 0;
-            state = Recording;
-        }
-
-        break;
-        
-    }   
-    default:
-        ASSERT_FAIL();
-    }
-
-    return res;
 }
 
 } // namespace io
