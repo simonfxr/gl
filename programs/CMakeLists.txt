@@ -1,6 +1,7 @@
 add_subdirectory(bump)
 add_subdirectory(glfw-test)
 add_subdirectory(hello-gl)
+add_subdirectory(julia-fractal)
 add_subdirectory(marching-cubes.old)
 add_subdirectory(opengl-raw)
 add_subdirectory(quasi)
