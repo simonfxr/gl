@@ -1,0 +1,3 @@
+load "default.script"
+
+addShaderPath "programs/mc/shaders"
