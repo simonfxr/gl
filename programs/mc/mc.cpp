@@ -1,13 +1,15 @@
 #include "ge/Engine.hpp"
 
 #include "math/real.hpp"
-#include "math/vec2.hpp"
+#include "math/vec4.hpp"
+#include "math/mat4.hpp"
 
 #include "glt/ShaderProgram.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/CubeMesh.hpp"
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/utils.hpp"
+#include "glt/GLSLPreprocessor.hpp"
 
 #include "shaders/shader_constants.h"
 
@@ -24,6 +26,8 @@
 #include <GL/glx.h>
 #endif
 
+static const size N = 256;
+
 using namespace math;
 
 struct Vertex {
@@ -39,6 +43,13 @@ struct Anim {
     
     cl::Context cl_ctx;
     cl::CommandQueue cl_q;
+
+    cl::Program cl_program;
+    cl::Kernel kernel_generateSphereVolume;
+    cl::Kernel kernel_computeHistogramBaseLevel;
+
+    cl::Image3D volumeData;
+    std::vector<cl::Image3D> images;
     
     void init(const ge::Event<ge::InitEvent>&);
     void initCL(const ge::Event<ge::InitEvent>&);
@@ -169,8 +180,74 @@ void Anim::initCL(const ge::Event<ge::InitEvent>& ev) {
         ERR("creating command queue failed");
         return;
     }
-        
 
+#define IS_POWER_OF_2(x) (((x - 1) & x) == 0)
+
+    ASSERT_MSG(IS_POWER_OF_2(N), "N has to be a power of 2!");
+    ASSERT_MSG(N <= 256, "N has to be <= 256");        
+
+#define CL_ERR(msg) do { if (err != CL_SUCCESS) { ERR(msg); return; } } while (0)
+
+    volumeData = cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_R, CL_UNSIGNED_INT8), N, N, N, 0, 0, 0, &err);
+    CL_ERR("creating volume 3d image failed");
+
+    images.push_back(cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_RGBA, CL_UNSIGNED_INT8), N, N, N, 0, 0, 0, &err));
+    CL_ERR("creating histogram base level failed");
+    
+    size sz = N / 2;
+    int i = 0;
+    int max_size = 5;
+
+    // apparently creating a 3d texture of size 1x1x1 fails
+    // while (sz > 0) {
+    while (sz > 1) {
+        engine.out() << "sz = " << sz << sys::io::endl;
+        max_size *= 8;
+        cl_channel_type type;
+        if (max_size >= (1 << 16))
+            type = CL_UNSIGNED_INT32;
+        else if (max_size >= (1 << 8))
+            type = CL_UNSIGNED_INT16;
+        else
+            type = CL_UNSIGNED_INT8;
+        images.push_back(cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_R, type), sz, sz, sz, 0, 0, 0, &err));
+        CL_ERR("creating histogram level failed");
+        sz /= 2;
+    }
+
+    char *source_code;
+    uint32 code_size;
+
+    if (!glt::readFile(engine.out(), "programs/mc/cl/program.cl", source_code, code_size)) {
+        ERR("failed reading CL program");
+        return;
+    }
+
+    cl::Program::Sources source(1, std::make_pair(source_code, code_size));
+    cl_program = cl::Program(cl_ctx, source, &err);
+    CL_ERR("creating program failed");
+
+    std::stringstream num;
+    num << N;
+    err = cl_program.build(devices, (std::string("-I programs/mc/ -DSIZE=") + num.str()).c_str());
+    engine.out() << "building cl program: " << (err == CL_SUCCESS ? "success" : "failed") << ", log:" << sys::io::endl;
+    engine.out() << cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(dev) << sys::io::endl;
+
+    if (err != CL_SUCCESS)
+        return;
+
+    kernel_generateSphereVolume = cl::Kernel(cl_program, "generateSphereVolume", &err);
+    CL_ERR("creating kernel failed: generateSphereVolume");
+    kernel_computeHistogramBaseLevel = cl::Kernel(cl_program, "computeHistogramBaseLevel", &err);
+    CL_ERR("creating kernel failed: computeHistogramBaseLevel");
+
+    kernel_generateSphereVolume.setArg(0, volumeData);
+    kernel_generateSphereVolume.setArg(1, mat4());
+    kernel_generateSphereVolume.setArg(2, vec4(0.f));
+    kernel_generateSphereVolume.setArg(3, 1.f);
+
+    cl_q.enqueueNDRangeKernel(kernel_generateSphereVolume, cl::NullRange, cl::NDRange(N, N, N), cl::NullRange);
+    
     ev.info.success = true;
 }
 

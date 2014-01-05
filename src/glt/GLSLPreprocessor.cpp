@@ -10,8 +10,6 @@
 
 namespace glt {
 
-namespace {
-
 bool readFile(sys::io::OutStream& err, const std::string& fn, char *& file_contents, uint32& file_size) {
 
     FILE *in = fopen(fn.c_str(), "r");
@@ -53,6 +51,8 @@ fail:
     err << "unable to read file: " << fn << sys::io::endl;
     return false;
 }
+
+namespace {
 
 bool parseFileArg(const Preprocessor::DirectiveContext& ctx, const char *& arg, uint32& len) {
 

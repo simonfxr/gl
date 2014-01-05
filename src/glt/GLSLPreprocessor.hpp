@@ -51,6 +51,8 @@ struct GLT_API GLSLPreprocessor : public Preprocessor {
     void advanceSegments(const Preprocessor::DirectiveContext&);
 };
 
+GLT_API bool readFile(sys::io::OutStream& err, const std::string& fn, char *& file_contents, uint32& file_size);
+
 } // namespace glt
 
 #endif
