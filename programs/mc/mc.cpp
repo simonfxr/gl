@@ -8,6 +8,7 @@
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/utils.hpp"
 #include "glt/GLSLPreprocessor.hpp"
+#include "glt/geometric.hpp"
 
 #include "sys/measure.hpp"
 
@@ -36,7 +37,7 @@
 #define INFO_PRINT(...)
 #define INFO_TIME(...) __VA_ARGS__
 
-static const size DEFAULT_N = 256;
+static const size DEFAULT_N = 128;
 
 using namespace math;
 
@@ -48,6 +49,31 @@ struct Vertex {
 DEFINE_VERTEX_DESC(Vertex,
                    VERTEX_ATTR(Vertex, position),
                    VERTEX_ATTR(Vertex, normal));
+
+struct MCState {
+    vec3_t cube_origin; // lower left corner on backside
+    vec3_t cube_dim;
+
+
+    bool init;
+    
+    int32 count[8];
+    int32 num_tris;
+
+    GLuint vao;
+    GLuint vbo;
+    cl::BufferGL vbo_buf;
+    
+    cl::Image3D volume;
+    std::vector<cl::Image3D> images;
+    cl::Event readHistoJob;
+    cl::Event writeVBOJob;
+};
+
+#define MC_SIZE_X 4
+#define MC_SIZE_Y 4
+#define MC_SIZE_Z 4
+#define NUM_MC (MC_SIZE_X * MC_SIZE_Y * MC_SIZE_Z)
 
 struct Anim {
     ge::Engine engine;
@@ -71,21 +97,23 @@ struct Anim {
     char *mdl_base;
     char *mdl_data;
 
+    MCState mc[NUM_MC];
+
     double sum_tris;
-    uint max_tris;
+    double max_tris;
     uint num_renders;
 
-    cl::Image3D volumeData;
-    std::vector<cl::Image3D> images;
-    
     void init(const ge::Event<ge::InitEvent>&);
     void initCL(const ge::Event<ge::InitEvent>&);
     void initCLKernels(bool *success);
-    void initCLData(bool *success);
+    void initMC(MCState& st, vec3_t orig, vec3_t dim, bool *success);
 
-    void computeVolumeData(real time);
-    size computeHistogram();
-    void constructVertices(size num_tris, GLuint *vbo);
+    void computeVolumeData(MCState& st, real time);
+    void computeHistogram(MCState& st);
+    void constructVertices0(MCState& st);
+    void constructVertices1(MCState& st);
+
+    void renderMC(MCState& st, glt::ShaderProgram&, vec3_t ecLight);
     
     void link(ge::Engine& e);
     void animate(const ge::Event<ge::AnimationEvent>&);
@@ -238,10 +266,21 @@ void Anim::initCL(const ge::Event<ge::InitEvent>& ev) {
     bool ok = false;
     initCLKernels(&ok);
     if (!ok) return;
-    
-    ok = false;
-    initCLData(&ok);
-    if (!ok) return;
+
+    vec3_t dim = real(2) * recip(vec3(real(MC_SIZE_X), real(MC_SIZE_Y), real(MC_SIZE_Z)));
+
+    for (int i = 0; i < MC_SIZE_X; ++i) {
+        for (int j = 0; j < MC_SIZE_Y; ++j) {
+            for (int k = 0; k < MC_SIZE_Z; ++k) {
+                vec3_t corner = vec3(real(i), real(j), real(k)) * dim - vec3(real(1));
+                int idx = i * (MC_SIZE_Y * MC_SIZE_Z) + j * MC_SIZE_Z + k;
+                ok = false;
+                initMC(mc[idx], corner, dim, &ok);
+                if (!ok)
+                    return;
+            }
+        }
+    }
 
     ev.info.success = true;
 }
@@ -283,19 +322,28 @@ void Anim::initCLKernels(bool *success) {
     *success = true;
 }
 
-
-void Anim::initCLData(bool *success) {
-
+void Anim::initMC(MCState& mc, vec3_t orig, vec3_t dim, bool *success) {
 #define IS_POWER_OF_2(x) (((x - 1) & x) == 0)
     int cl_err;
     
     ASSERT_MSG(IS_POWER_OF_2(N), "N has to be a power of 2!");
-    ASSERT_MSG(N <= 512, "N has to be <= 512");        
+    ASSERT_MSG(N <= 512, "N has to be <= 512");
 
-    volumeData = cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_R, CL_FLOAT), N, N, N, 0, 0, 0, &cl_err);
+#undef IS_POWER_OF_2
+
+    mc.init = false;
+    mc.vbo = 0;
+    mc.vao = 0;
+
+    mc.cube_origin = orig;
+    mc.cube_dim = dim;
+
+    mc.volume = cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_R, CL_HALF_FLOAT), N, N, N, 0, 0, 0, &cl_err);
     CL_ERR("creating volume 3d image failed");
 
-    images.push_back(cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_RG, CL_UNSIGNED_INT8), N, N, N, 0, 0, 0, &cl_err));
+    mc.images.clear();
+    
+    mc.images.push_back(cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_RG, CL_UNSIGNED_INT8), N, N, N, 0, 0, 0, &cl_err));
     CL_ERR("creating histogram base level failed");
     
     size sz = N / 2;
@@ -313,7 +361,7 @@ void Anim::initCLData(bool *success) {
             type = CL_UNSIGNED_INT16;
         else
             type = CL_UNSIGNED_INT8;
-        images.push_back(cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_R, type), sz, sz, sz, 0, 0, 0, &cl_err));
+        mc.images.push_back(cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_R, type), sz, sz, sz, 0, 0, 0, &cl_err));
         CL_ERR("creating histogram level failed");
         sz /= 2;
     }
@@ -321,12 +369,32 @@ void Anim::initCLData(bool *success) {
     *success = true;
 }
 
+void Anim::computeVolumeData(MCState& mc, real time) {
+    mat4_t M = mat4();
+    mc.init = true;
+    
+    M *= glt::translateTransform(mc.cube_origin);
+    M *= glt::scaleTransform(mc.cube_dim);
+    M *= glt::scaleTransform(real(1) / real(N - 2));
 
-size Anim::computeHistogram() {
+    time *= 0.2;
+    const vec4_t C = vec4(-1, 0.2 * cos(time * 0.11), sin(time * 0.1), 0);
+    
+    kernel_generateSphereVolume.setArg(0, mc.volume);
+    kernel_generateSphereVolume.setArg(1, M);
+    kernel_generateSphereVolume.setArg(2, C);
 
-    kernel_computeHistogramBaseLevel.setArg(0, images[0]);
-    kernel_computeHistogramBaseLevel.setArg(1, volumeData);
-//    kernel_computeHistogramBaseLevel.setArg(2, ISOLEVEL);
+    cl_q.enqueueNDRangeKernel(
+        kernel_generateSphereVolume,
+        cl::NullRange, cl::NDRange(N, N, N), cl::NullRange);
+}
+
+void Anim::computeHistogram(MCState& mc) {
+    if (!mc.init)
+        return;
+
+    kernel_computeHistogramBaseLevel.setArg(0, mc.images[0]);
+    kernel_computeHistogramBaseLevel.setArg(1, mc.volume);
 
     cl_q.enqueueNDRangeKernel(
         kernel_computeHistogramBaseLevel,
@@ -337,8 +405,8 @@ size Anim::computeHistogram() {
     while (sz > 2) {
         sz /= 2;
 
-        kernel_computeHistogramLevel.setArg(0, images[i]);
-        kernel_computeHistogramLevel.setArg(1, images[i+1]);
+        kernel_computeHistogramLevel.setArg(0, mc.images[i]);
+        kernel_computeHistogramLevel.setArg(1, mc.images[i+1]);
 
         cl_q.enqueueNDRangeKernel(
             kernel_computeHistogramLevel,
@@ -347,23 +415,14 @@ size Anim::computeHistogram() {
         ++i;
     }
 
-    ASSERT(i + 1 == SIZE(images.size()));
+    ASSERT(i + 1 == SIZE(mc.images.size()));
 
-    int32 count[8];
     cl::size_t<3> origin;
     cl::size_t<3> cube;
     origin[0] = origin[1] = origin[2] = 0;
     cube[0] = cube[1] = cube[2] = 2;
-    cl_q.enqueueReadImage(images[images.size() - 1], CL_FALSE, origin, cube, 0, 0, count);
-    INFO_TIME(cl_q.finish());
-
-    int32 total = 0;
-    for (defs::index i = 0; i < 8; ++i)
-        total += count[i];
-
-    INFO_PRINT(engine.out() << "number of triangles: " << total << sys::io::endl);
-
-    return total;
+    cl_q.enqueueReadImage(mc.images[mc.images.size() - 1], CL_FALSE,
+                          origin, cube, 0, 0, mc.count, 0, &mc.readHistoJob);
 }
 
 static double eventExecutionTime(cl::Event& ev) {
@@ -374,88 +433,95 @@ static double eventExecutionTime(cl::Event& ev) {
     return double(t1) * 1e-9;
 }
 
-void Anim::computeVolumeData(real time) {
-    kernel_generateSphereVolume.setArg(0, volumeData);
-    kernel_generateSphereVolume.setArg(1, mat4());
-    kernel_generateSphereVolume.setArg(2, vec4(real(N) * 0.5f));
-    kernel_generateSphereVolume.setArg(3, real(N) * 0.25f);
-    kernel_generateSphereVolume.setArg(4, time);
 
-    cl_q.enqueueNDRangeKernel(
-        kernel_generateSphereVolume,
-        cl::NullRange, cl::NDRange(N, N, N), cl::NullRange);
+void Anim::constructVertices0(MCState& mc) {
+    if (!mc.init)
+        return;
+    mc.readHistoJob.wait();
 
-    // cl::size_t<3> origin;
-    // cl::size_t<3> cube;
-    // origin[0] = origin[1] = origin[2] = 0;
-    // cube[0] = cube[1] = cube[2] = N;
-    // size_t bytes = N * N * N * 2;
-    // char *buf = new char[bytes];
-    // cl_q.enqueueReadImage(volumeData, CL_FALSE, origin, cube, 0, 0, buf);
-//    cl_q.finish();
+    mc.num_tris = 0;
+    for (defs::index i = 0; i < 8; ++i)
+        mc.num_tris += mc.count[i];
 
-    // FILE *file = fopen("foo.raw", "w");
-    // fwrite(buf, bytes, 1, file);
-    // fclose(file);
+    if (mc.num_tris == 0)
+        return;
 
-    // delete[] buf;
+    GL_CALL(glGenBuffers, 1, &mc.vbo);
+    GL_CALL(glGenVertexArrays, 1, &mc.vao);
 
-    // uint32 buf_size;
-    // if (!glt::readFile(engine.out(), "sphere.vbo", mdl_base, buf_size)) {
-    //     ERR("failed to read sphere vbo data");
-    //     return;
-    // }
+    GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, mc.vbo);
+    GL_CALL(glBufferData, GL_ARRAY_BUFFER, mc.num_tris * 3 * 2 * sizeof(vec3_t), 0, GL_STREAM_DRAW);
+    GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
-    // mdl_num_tris = * (int *) mdl_base;
-    // mdl_data = mdl_base + 4;
-    // engine.out() << "read vertex buffer with " << mdl_num_tris << " triangles" << sys::io::endl;
-    // ASSERT(mdl_num_tris * 3 * 24 == buf_size - 4);
+    mc.vbo_buf = cl::BufferGL(cl_ctx, CL_MEM_WRITE_ONLY, mc.vbo);
 }
 
-void Anim::constructVertices(size num_tris, GLuint *vbop) {
-
-// #define PROFILE(...) __VA_ARGS__
-#define PROFILE(...) 
-    
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    *vbop = vbo;
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, num_tris * 3 * 2 * sizeof(vec3_t), 0, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+void Anim::constructVertices1(MCState& mc) {
+    if (mc.num_tris == 0 || !mc.init)
+        return;
 
     defs::index i;
-    for (i = 0; i < SIZE(images.size()); ++i)
-        kernel_histogramTraversal.setArg(i, images[i]);
+    for (i = 0; i < SIZE(mc.images.size()); ++i)
+        kernel_histogramTraversal.setArg(i, mc.images[i]);
 
-    PROFILE(cl::Event evAcq, evKernel, evRel);
+    kernel_histogramTraversal.setArg(i, mc.volume); ++i;
+    kernel_histogramTraversal.setArg(i, mc.vbo_buf); ++i;
+    kernel_histogramTraversal.setArg(i, mc.num_tris);
 
-    cl::BufferGL vbo_buf(cl_ctx, CL_MEM_WRITE_ONLY, vbo);
-    kernel_histogramTraversal.setArg(i, volumeData); ++i;
-    kernel_histogramTraversal.setArg(i, vbo_buf); ++i;
-//    kernel_histogramTraversal.setArg(i, ISOLEVEL); ++i;
-    kernel_histogramTraversal.setArg(i, num_tris);
-
-    std::vector<cl::Memory> gl_objs;
-    gl_objs.push_back(vbo_buf);
-
-    cl_q.enqueueAcquireGLObjects(&gl_objs, 0 PROFILE(, &evAcq));
-
-    int global_work_size = (num_tris / 64 + 1) * 64;
+    int global_work_size = (mc.num_tris / 64 + 1) * 64;
     cl_q.enqueueNDRangeKernel(
         kernel_histogramTraversal,
         cl::NullRange, cl::NDRange(global_work_size),
         cl::NDRange(64),
-        0 PROFILE(, &evKernel));
+        0);
+}
 
-    cl_q.enqueueReleaseGLObjects(&gl_objs, 0 PROFILE(, &evRel));
-    cl_q.finish();
+void Anim::renderMC(MCState& mc, glt::ShaderProgram& program, vec3_t ecLight) {
 
-    PROFILE(engine.out()
-            << "Acquire took: " << eventExecutionTime(evAcq) * 1000 << " ms" << sys::io::endl
-            << "Kernel took: " << eventExecutionTime(evKernel) * 1000 << " ms" << sys::io::endl
-            << "Release took: " << eventExecutionTime(evRel) * 1000 << " ms" << sys::io::endl);
+    if (mc.num_tris == 0 || !mc.init)
+        return;
+    
+    glt::RenderManager& rm = engine.renderManager();
+    glt::GeometryTransform& gt = rm.geometryTransform();
+    
+    mat4_t M = mat4();
+    
+    M *= glt::translateTransform(mc.cube_origin);
+    M *= glt::scaleTransform(mc.cube_dim);
+    M *= glt::scaleTransform(real(1) / real(N - 2));
 
+    gt.dup();
+    gt.concat(M);
+
+    glt::Uniforms(program)
+        .optional("mvpMatrix", gt.mvpMatrix())
+        .optional("mvMatrix", gt.mvMatrix())
+        .optional("normalMatrix", gt.normalMatrix())
+        .optional("ecLight", ecLight)
+        .optional("albedo", vec3(real(1)));
+
+    gt.pop();
+
+    const glt::VertexDesc<Vertex>& desc = VertexTraits<Vertex>::description();
+    
+    for (defs::index i = 0; i < desc.nattributes; ++i) {
+        const glt::Attr<Vertex>& a = desc.attributes[i];
+        GL_CALL(glVertexArrayVertexAttribOffsetEXT,
+                mc.vao,
+                mc.vbo,
+                GLuint(i), a.ncomponents, a.component_type,
+                a.normalized ? GL_TRUE : GL_FALSE,
+                desc.sizeof_vertex,
+                GLintptr(a.offset));
+        GL_CALL(glEnableVertexArrayAttribEXT, mc.vao, GLuint(i));
+    }
+
+    GL_CALL(glBindVertexArray, mc.vao);
+    GL_CALL(glDrawArrays, GL_TRIANGLES, 0, mc.num_tris * 3);
+    GL_CALL(glBindVertexArray, 0);
+
+    GL_CALL(glDeleteBuffers, 1, &mc.vbo);
+    GL_CALL(glDeleteVertexArrays, 1, &mc.vao);
 }
 
 void Anim::link(ge::Engine& e) {
@@ -473,80 +539,47 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     real time = e.gameLoop().gameTime();
 
     glt::RenderManager& rm = engine.renderManager();
-
     rm.activeRenderTarget()->clear();
-    
     glt::GeometryTransform& gt = rm.geometryTransform();
-
-    size num_tris;
-    GLuint vbo;
-
-    computeVolumeData(time);
-    INFO_TIME(num_tris = computeHistogram());
-    INFO_TIME(constructVertices(num_tris, &vbo));
-
-    if (num_tris > max_tris)
-        max_tris = num_tris;
-    sum_tris += num_tris;
-    num_renders++;
-    
-    // {
-    //     num_tris = mdl_num_tris;
-    //     glGenBuffers(1, &vbo);
-    //     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    //     glBufferData(GL_ARRAY_BUFFER, num_tris * 3 * sizeof(Vertex), mdl_data, GL_STATIC_DRAW);
-    //     glBindBuffer(GL_ARRAY_BUFFER, 0);
-        
-    // }
 
     Ref<glt::ShaderProgram> program = engine.shaderManager().program("render");
     ASSERT(program);
 
     program->use();
 
-
     point3_t wcLight = vec3(1, 1, 1);
     point3_t ecLight = vec3(transform(gt.viewMatrix(), vec4(wcLight, real(1))));
 
-    gt.dup();
-    gt.translate(- vec3(real(1)));
-    gt.scale(vec3(real(2)));
-    gt.scale(vec3(real(1) / real(N)));
+    time_op(for (int i = 0; i < NUM_MC; ++i)
+                computeVolumeData(mc[i], time));
+    time_op(for (int i = 0; i < NUM_MC; ++i)
+                computeHistogram(mc[i]));
+    time_op(for (int i = 0; i < NUM_MC; ++i)
+                constructVertices0(mc[i]));
+
+    std::vector<cl::Memory> gl_objs;
+    for (int i = 0; i < NUM_MC; ++i)
+        if (mc[i].num_tris > 0 && mc[i].init)
+            gl_objs.push_back(mc[i].vbo_buf);
+
+    cl_q.enqueueAcquireGLObjects(&gl_objs);
+    for (int i = 0; i < NUM_MC; ++i)
+        constructVertices1(mc[i]);
+
+    cl_q.enqueueReleaseGLObjects(&gl_objs);
+    cl_q.finish();
     
-    glt::Uniforms(*program)
-        .optional("mvpMatrix", rm.geometryTransform().mvpMatrix())
-        .optional("mvMatrix", rm.geometryTransform().mvMatrix())
-        .optional("normalMatrix", rm.geometryTransform().normalMatrix())
-        .optional("ecLight", ecLight)
-        .optional("albedo", vec3(real(1)));
+    time_op(for (int i = 0; i < NUM_MC; ++i)
+                renderMC(mc[i], *program, ecLight));
 
-    gt.pop();
+    double ntris = 0;
+    for (int i = 0; i < NUM_MC; ++i)
+        ntris += mc[i].num_tris;
 
-    GLuint vao;
-    glGenVertexArrays(1, &vao);
-
-    const glt::VertexDesc<Vertex>& desc = VertexTraits<Vertex>::description();
-    
-    for (defs::index i = 0; i < desc.nattributes; ++i) {
-        const glt::Attr<Vertex>& a = desc.attributes[i];
-        GL_CALL(glVertexArrayVertexAttribOffsetEXT,
-                vao,
-                vbo,
-                GLuint(i), a.ncomponents, a.component_type,
-                a.normalized ? GL_TRUE : GL_FALSE,
-                desc.sizeof_vertex,
-                GLintptr(a.offset));
-        GL_CALL(glEnableVertexArrayAttribEXT, vao, GLuint(i));
-    }
-
-    GL_CALL(glBindVertexArray, vao);
-    GL_CALL(glDrawArrays, GL_TRIANGLES, 0, num_tris * 3);
-    GL_CALL(glBindVertexArray, 0);
-
-    glFinish();
-
-    glDeleteBuffers(1, &vbo);
-    glDeleteVertexArrays(1, &vao);
+    if (ntris > max_tris)
+        max_tris = ntris;
+    sum_tris += ntris;
+    ++num_renders;
 
     if (time >= time_print_fps) {
         time_print_fps = time + 1.f;

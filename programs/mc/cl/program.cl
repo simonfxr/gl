@@ -130,9 +130,15 @@ int4 scanHistogramLevel(int index, __read_only image3d_t histo, int4 pos) {
     return pos;
 }
 
+float sampleVolume4(__read_only image3d_t volumeData, int4 p) {
+    /* int x = (int) read_imageui(volumeData, sampler, (int4) (p.x, p.y, p.z, 0)).s0; */
+    /* return (float)(x - ISOLEVEL) * (1.f / (float) ISOLEVEL); */
+    return read_imagef(volumeData, sampler, p).s0;
+}
+
+
 float sampleVolume(__read_only image3d_t volumeData, int3 p) {
-    int x = (int) read_imageui(volumeData, sampler, (int4) (p.x, p.y, p.z, 0)).s0;
-    return (float)(x - ISOLEVEL) * (1.f / (float) ISOLEVEL);
+    return sampleVolume4(volumeData, (int4)(p.x, p.y, p.z, 0));
 }
 
 ushort make_iso(float x) {
@@ -145,7 +151,8 @@ ushort make_iso(float x) {
 }
 
 void storeVolume(__write_only image3d_t vol, int4 p, float x) {
-    write_imageui(vol, p, make_iso(x));
+//    write_imageui(vol, p, make_iso(x));
+    write_imagef(vol, p, x);
 }
 
 float3 calculateGradient(__read_only image3d_t volumeData, int3 p) {
@@ -182,7 +189,7 @@ __kernel void histogramTraversal(
     int target = get_global_id(0);
     if(target >= sum)
         target = 0;
-    
+
     int4 cubePosition = {0,0,0,0}; // x,y,z,sum
 #if SIZE > 512
     cubePosition = scanHistogramLevel(target, hp9, cubePosition);
@@ -210,29 +217,28 @@ __kernel void histogramTraversal(
 
     uint edge_code = read_imageui(hp0, sampler, cubePosition).s1;
 
+    float off;
+//    off = 1 - (float)(cubePosition.x == SIZE - 1 || cubePosition.y == SIZE - 1 || cubePosition.z == SIZE - 1);
+    off = 1;
+    
+    
     // max 5 triangles
     for(int i = (target-cubePosition.s3)*3; i < (target-cubePosition.s3+1)*3; i++) { // for each vertex in triangle
         const uchar edge = triangle_edge_table[edge_code*16 + i];
-        const int3 point0 = (int3)(cubePosition.x + offsets3[edge*6], cubePosition.y + offsets3[edge*6+1], cubePosition.z + offsets3[edge*6+2]);
-        const int3 point1 = (int3)(cubePosition.x + offsets3[edge*6+3], cubePosition.y + offsets3[edge*6+4], cubePosition.z + offsets3[edge*6+5]);
+        const int3 p0 = (int3)(cubePosition.x + offsets3[edge*6], cubePosition.y + offsets3[edge*6+1], cubePosition.z + offsets3[edge*6+2]);
+        const int3 p1 = (int3)(cubePosition.x + offsets3[edge*6+3], cubePosition.y + offsets3[edge*6+4], cubePosition.z + offsets3[edge*6+5]);
         
-        // Store vertex in VBO
-	
-        const float3 forwardDifference0 = - calculateGradient(volume, point0);
-        const float3 forwardDifference1 = - calculateGradient(volume, point1);
+        const float3 n0 = normalize(calculateGradient(volume, p0));
+        const float3 n1 = normalize(calculateGradient(volume, p1));
         
-        float v0 = sampleVolume(volume, point0);
-        float v1 = sampleVolume(volume, point1);
+        float v0 = sampleVolume(volume, p0);
+        float v1 = sampleVolume(volume, p1);
         const float diff = native_divide(v0, v0 - v1);
-        
-        const float3 vertex = mix((float3)(point0.x, point0.y, point0.z), (float3)(point1.x, point1.y, point1.z), diff);
-
-        const float3 normal = normalize(mix(normalize(forwardDifference0), normalize(forwardDifference1), diff));
-        
+        const float3 vertex = mix(convert_float3(p0), convert_float3(p1), diff) * off;
+        const float3 normal = normalize(mix(n0, n1, diff)) * off;
         
         vstore3(vertex, target*6 + vertexNr*2, VBOBuffer);
         vstore3(normal, target*6 + vertexNr*2 + 1, VBOBuffer);
-
         ++vertexNr;
     }
 }
@@ -244,18 +250,17 @@ __kernel void computeHistogramBaseLevel(
     __write_only image3d_t histo_base,
     __read_only image3d_t data)
 {
-    ushort isolevel = ISOLEVEL;
     int4 pos = { get_global_id(0), get_global_id(1), get_global_id(2), 0 };
 
     uchar cube_index = 0;
-    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[0]).x > isolevel) << 0;
-    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[1]).x > isolevel) << 1;
-    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[3]).x > isolevel) << 2;
-    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[2]).x > isolevel) << 3;
-    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[4]).x > isolevel) << 4;
-    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[5]).x > isolevel) << 5;
-    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[7]).x > isolevel) << 6;
-    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[6]).x > isolevel) << 7;
+    cube_index |= (sampleVolume4(data, pos + cube_offsets[0]) < 0) << 0;
+    cube_index |= (sampleVolume4(data, pos + cube_offsets[1]) < 0) << 1;
+    cube_index |= (sampleVolume4(data, pos + cube_offsets[3]) < 0) << 2;
+    cube_index |= (sampleVolume4(data, pos + cube_offsets[2]) < 0) << 3;
+    cube_index |= (sampleVolume4(data, pos + cube_offsets[4]) < 0) << 4;
+    cube_index |= (sampleVolume4(data, pos + cube_offsets[5]) < 0) << 5;
+    cube_index |= (sampleVolume4(data, pos + cube_offsets[7]) < 0) << 6;
+    cube_index |= (sampleVolume4(data, pos + cube_offsets[6]) < 0) << 7;
 
     write_imageui(histo_base, pos, (uint4) { triangle_count_table[cube_index], cube_index, 0, 0});
 }
@@ -296,34 +301,30 @@ float4 qmul(float4 a, float4 b) {
 }
 
 float J(vec4 z, vec4 c) {
-    for (int i = 0; i < 9; ++i)
+    for (int i = 0; i < 7; ++i)
         z = qmul(z, z) + c;
     return length(z);
 }
 
 __kernel void generateSphereVolume(__write_only image3d_t data,
                                    __private mat4 transform,
-                                   __private vec3 center,
-                                   __private float radius,
-                                   __private float time)
+                                   __private float4 C)
 {
     int4 pos = { get_global_id(0), get_global_id(1), get_global_id(2), 0 };
-    /* float3 wc = convert_float3(pos.xyz); */
-    /* wc -= (float3) (SIZE / 2); */
-    /* wc /= (float)(SIZE / 2); */
 
-    /* const float RAD = 1; */
-    /* const float4 C = (float4)(-1, 0.2, sin(time * 0.1), 0); */
-    
-    /* float4 wc4 = (float4)(wc.xyz, 0); */
-    /* float l = J(wc4, C) - 1; */
-    /* float value = l; */
-    
-    
     vec4 wc = multM4V4(transform, convert_float4((int4)(pos.xyz, 1)));
+    wc.w = 0.f;
+    
+//    const float4 C = (float4)(-1, 0.2 , sin(time * 0.1), 0);
 
-    vec3 dist = wc - center;
-    float value = dot3(dist, dist) / (radius * radius)  - 1;
+    float l = J(wc, C) - 1;
+    float value = l;
+    
+    
+    /* vec4 wc = multM4V4(transform, convert_float4((int4)(pos.xyz, 1))); */
+
+    /* vec3 dist = wc - center; */
+    /* float value = dot3(dist, dist) / (radius * radius)  - 1; */
 
     
     storeVolume(data, pos, value);
