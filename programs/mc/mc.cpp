@@ -1,5 +1,3 @@
-#include "ge/Engine.hpp"
-
 #include "math/real.hpp"
 #include "math/vec4.hpp"
 #include "math/mat4.hpp"
@@ -16,6 +14,8 @@
 #include "shaders/shader_constants.h"
 
 #include "ge/Engine.hpp"
+#include "ge/Camera.hpp"
+#include "ge/MouseLookPlugin.hpp"
 
 #include <vector>
 #include <string>
@@ -49,6 +49,9 @@ struct Anim {
     ge::Engine engine;
     real time_print_fps;
 
+    ge::Camera camera;
+    ge::MouseLookPlugin mouse_look;
+    
     size N;
     cl::Context cl_ctx;
     cl::CommandQueue cl_q;
@@ -59,6 +62,10 @@ struct Anim {
     cl::Kernel kernel_computeHistogramBaseLevel;
     cl::Kernel kernel_computeHistogramLevel;
     cl::Kernel kernel_histogramTraversal;
+
+    size mdl_num_tris;
+    char *mdl_base;
+    char *mdl_data;
 
     cl::Image3D volumeData;
     std::vector<cl::Image3D> images;
@@ -128,6 +135,11 @@ T log2(T x) {
 }
 
 void Anim::initCL(const ge::Event<ge::InitEvent>& ev) {
+
+    ev.info.engine.enablePlugin(mouse_look);
+    mouse_look.camera(&camera);
+    ev.info.engine.enablePlugin(camera);
+    camera.frame().origin = vec3(0.f);
 
     N = DEFAULT_N;
     
@@ -318,6 +330,17 @@ void Anim::initCLData(bool *success) {
 
     delete[] buf;
 
+    uint32 buf_size;
+    if (!glt::readFile(engine.out(), "sphere.vbo", mdl_base, buf_size)) {
+        ERR("failed to read sphere vbo data");
+        return;
+    }
+
+    mdl_num_tris = * (int *) mdl_base;
+    mdl_data = mdl_base + 4;
+    engine.out() << "read vertex buffer with " << mdl_num_tris << " triangles" << sys::io::endl;
+    ASSERT(mdl_num_tris * 3 * 24 == buf_size - 4);
+
     *success = true;
 }
 
@@ -434,12 +457,24 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     real time = e.gameLoop().gameTime() + ev.info.interpolation * e.gameLoop().frameDuration();
 
     glt::RenderManager& rm = engine.renderManager();
+
+    rm.activeRenderTarget()->clear();
+    
     glt::GeometryTransform& gt = rm.geometryTransform();
 
     size num_tris;
     GLuint vbo;
-    time_op(num_tris = computeHistogram());
-    time_op(constructVertices(num_tris, &vbo));
+
+    // time_op(num_tris = computeHistogram());
+    // time_op(constructVertices(num_tris, &vbo));
+    {
+        num_tris = mdl_num_tris;
+        glGenBuffers(1, &vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, num_tris * 3 * sizeof(Vertex), mdl_data, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        
+    }
 
     Ref<glt::ShaderProgram> program = engine.shaderManager().program("render");
     ASSERT(program);
@@ -453,12 +488,15 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
 
     point3_t wcLight = vec3(real(N));
     point3_t ecLight = vec3(transform(gt.mvMatrix(), vec4(wcLight, real(1))));
+
+//    glDisable(GL_CULL_FACE);
     
     glt::Uniforms(*program)
         .optional("mvpMatrix", rm.geometryTransform().mvpMatrix())
         .optional("mvMatrix", rm.geometryTransform().mvMatrix())
         .optional("normalMatrix", rm.geometryTransform().normalMatrix())
-        .optional("ecLight", ecLight);
+        .optional("ecLight", ecLight)
+        .optional("albedo", vec3(real(1)));
 
     gt.pop();
 

@@ -1,5 +1,8 @@
 #include "gpu-mc.hpp"
 
+#include <cstdio>
+#include <assert.h>
+
 // Define some globals
 GLuint VBO_ID = 0;
 Program program;
@@ -120,7 +123,7 @@ void renderScene() {
             std::cout << "No triangles were extracted. Check isovalue." << std::endl;
             return;
         }
-        
+
         // Create new VBO
         glGenBuffers(1, &VBO_ID);
         glBindBuffer(GL_ARRAY_BUFFER, VBO_ID);
@@ -150,6 +153,25 @@ void renderScene() {
     glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
     // Normal Buffer
     glBindBuffer(GL_ARRAY_BUFFER, VBO_ID);
+
+    static int written = 0;
+    if (written == 0) {
+        written = 1;
+        // while (glGetError() != GL_NO_ERROR)
+        //     ;
+        FILE *file = fopen("sphere.vbo", "w");
+        GLsizeiptr sz = totalSum * 3 * 24;
+        char *buf = new char[sz + 4];
+        memset(buf, 0, sz);
+        *(int *) buf = (int) totalSum;
+        glGetBufferSubData(GL_ARRAY_BUFFER, 0, sz, buf + 4);
+//        assert(glGetError() != GL_NO_ERROR);
+        fwrite(buf, sz + 4, 1, file);
+        delete[] buf;
+        fflush(file);
+        fclose(file);
+    }
+    
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
 
