@@ -31,6 +31,10 @@
 #endif
 
 #define CL_ERR(msg) do { if (cl_err != CL_SUCCESS) { ERR(msg); return; } } while (0)
+//#define INFO_PRINT(...) __VA_ARGS__
+//#define INFO_TIME(...) time_op(__VA_ARGS__)
+#define INFO_PRINT(...)
+#define INFO_TIME(...) __VA_ARGS__
 
 static const size DEFAULT_N = 256;
 
@@ -89,6 +93,9 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     link(ev.info.engine);
     time_print_fps = 0;
 
+//    GL_CALL(glDisable, GL_CULL_FACE);
+    GL_CALL(glEnable, GL_CULL_FACE);
+    
     ev.info.success = true;
 }
 
@@ -378,13 +385,13 @@ size Anim::computeHistogram() {
     origin[0] = origin[1] = origin[2] = 0;
     cube[0] = cube[1] = cube[2] = 2;
     cl_q.enqueueReadImage(images[images.size() - 1], CL_FALSE, origin, cube, 0, 0, count);
-    time_op(cl_q.finish());
+    INFO_TIME(cl_q.finish());
 
     int32 total = 0;
     for (defs::index i = 0; i < 8; ++i)
         total += count[i];
 
-    engine.out() << "number of triangles: " << total << sys::io::endl;
+    INFO_PRINT(engine.out() << "number of triangles: " << total << sys::io::endl);
 
     return total;
 }
@@ -465,31 +472,30 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     size num_tris;
     GLuint vbo;
 
-    // time_op(num_tris = computeHistogram());
-    // time_op(constructVertices(num_tris, &vbo));
-    {
-        num_tris = mdl_num_tris;
-        glGenBuffers(1, &vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, num_tris * 3 * sizeof(Vertex), mdl_data, GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    INFO_TIME(num_tris = computeHistogram());
+    INFO_TIME(constructVertices(num_tris, &vbo));
+    // {
+    //     num_tris = mdl_num_tris;
+    //     glGenBuffers(1, &vbo);
+    //     glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    //     glBufferData(GL_ARRAY_BUFFER, num_tris * 3 * sizeof(Vertex), mdl_data, GL_STATIC_DRAW);
+    //     glBindBuffer(GL_ARRAY_BUFFER, 0);
         
-    }
+    // }
 
     Ref<glt::ShaderProgram> program = engine.shaderManager().program("render");
     ASSERT(program);
 
     program->use();
 
+
+    point3_t wcLight = vec3(1, 1, 1);
+    point3_t ecLight = vec3(transform(gt.viewMatrix(), vec4(wcLight, real(1))));
+
     gt.dup();
     gt.translate(- vec3(real(1)));
     gt.scale(vec3(real(2)));
     gt.scale(vec3(real(1) / real(N)));
-
-    point3_t wcLight = vec3(real(N));
-    point3_t ecLight = vec3(transform(gt.mvMatrix(), vec4(wcLight, real(1))));
-
-//    glDisable(GL_CULL_FACE);
     
     glt::Uniforms(*program)
         .optional("mvpMatrix", rm.geometryTransform().mvpMatrix())
@@ -519,10 +525,12 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
 
     GL_CALL(glBindVertexArray, vao);
     GL_CALL(glDrawArrays, GL_TRIANGLES, 0, num_tris * 3);
+    GL_CALL(glBindVertexArray, 0);
 
     glFinish();
 
     glDeleteBuffers(1, &vbo);
+    glDeleteVertexArrays(1, &vao);
 
     if (time >= time_print_fps) {
         time_print_fps = time + 1.f;

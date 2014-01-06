@@ -6,3 +6,8 @@ addShaderPath "programs/mc/shaders"
 bindShader "render" "render.vert" "render.frag" 0 "position" 1 "normal"
 
 perspectiveProjection 45 0.5 200
+
+postInit { 
+    camera.speed 0.2
+    camera.sensitivity 0.00015
+}

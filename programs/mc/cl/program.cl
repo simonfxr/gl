@@ -1,13 +1,21 @@
+//#pragma OPENCL EXTENSION cl_amd_printf:enable
 #pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
 
-constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
+__constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
+
+__constant int4 cube_offsets[8] = {
+    {0, 0, 0, 0},
+    {1, 0, 0, 0},
+    {0, 0, 1, 0},
+    {1, 0, 1, 0},
+    {0, 1, 0, 0},
+    {1, 1, 0, 0},
+    {0, 1, 1, 0},
+    {1, 1, 1, 0},
+};
 
 __constant uchar triangle_count_table[256] = {
 #include "cl/triangle_count_table.h"
-};
-
-__constant char triangle_edge_table[4096] = {
-#include "cl/triangle_edge_table.h"
 };
 
 __constant char offsets3[72] = {
@@ -49,36 +57,169 @@ __constant char offsets3[72] = {
     0,1,1
 };
 
-__constant int4 cube_offsets[8] = {
-    {0, 0, 0, 0},
-    {1, 0, 0, 0},
-    {0, 0, 1, 0},
-    {1, 0, 1, 0},
-    {0, 1, 0, 0},
-    {1, 1, 0, 0},
-    {0, 1, 1, 0},
-    {1, 1, 1, 0},
+__constant char triangle_edge_table[4096] = {
+#include "cl/triangle_edge_table.h"
 };
 
+
 __kernel void computeHistogramLevel(
-    __read_only image3d_t source,
-    __write_only image3d_t dest)
-{
-    int4 wpos = { get_global_id(0), get_global_id(1), get_global_id(2), 0 };
-    int4 rpos = wpos * 2;
+		__read_only image3d_t readHistoPyramid, 
+		__write_only image3d_t writeHistoPyramid
+	) {	
 
-    int count = 0;
-    count += read_imagei(source, sampler, rpos + cube_offsets[0]).x;
-    count += read_imagei(source, sampler, rpos + cube_offsets[1]).x;
-    count += read_imagei(source, sampler, rpos + cube_offsets[2]).x;
-    count += read_imagei(source, sampler, rpos + cube_offsets[3]).x;
-    count += read_imagei(source, sampler, rpos + cube_offsets[4]).x;
-    count += read_imagei(source, sampler, rpos + cube_offsets[5]).x;
-    count += read_imagei(source, sampler, rpos + cube_offsets[6]).x;
-    count += read_imagei(source, sampler, rpos + cube_offsets[7]).x;
+	int4 writePos = {get_global_id(0), get_global_id(1), get_global_id(2), 0};
+	int4 readPos = writePos*2;
+	int writeValue = read_imagei(readHistoPyramid, sampler, readPos).x + // 0
+		read_imagei(readHistoPyramid, sampler, readPos+cube_offsets[1]).x + // 1
+		read_imagei(readHistoPyramid, sampler, readPos+cube_offsets[2]).x + // 2
+		read_imagei(readHistoPyramid, sampler, readPos+cube_offsets[3]).x + // 3
+		read_imagei(readHistoPyramid, sampler, readPos+cube_offsets[4]).x + // 4
+		read_imagei(readHistoPyramid, sampler, readPos+cube_offsets[5]).x + // 5
+		read_imagei(readHistoPyramid, sampler, readPos+cube_offsets[6]).x + // 6
+		read_imagei(readHistoPyramid, sampler, readPos+cube_offsets[7]).x; // 7
 
-    write_imagei(dest, wpos, count);
+	write_imagei(writeHistoPyramid, writePos, writeValue);
 }
+
+int4 scanHPLevel(int target, __read_only image3d_t hp, int4 current) {
+	
+	int8 neighbors = {
+		read_imagei(hp, sampler, current).x,
+		read_imagei(hp, sampler, current + cube_offsets[1]).x,
+		read_imagei(hp, sampler, current + cube_offsets[2]).x,
+		read_imagei(hp, sampler, current + cube_offsets[3]).x,
+		read_imagei(hp, sampler, current + cube_offsets[4]).x,
+		read_imagei(hp, sampler, current + cube_offsets[5]).x,
+		read_imagei(hp, sampler, current + cube_offsets[6]).x,
+		read_imagei(hp, sampler, current + cube_offsets[7]).x
+	};
+
+	int acc = current.s3 + neighbors.s0;
+	int8 cmp;
+	cmp.s0 = acc <= target;
+	acc += neighbors.s1;
+	cmp.s1 = acc <= target;
+	acc += neighbors.s2;
+	cmp.s2 = acc <= target;
+	acc += neighbors.s3;
+	cmp.s3 = acc <= target;
+	acc += neighbors.s4;
+	cmp.s4 = acc <= target;
+	acc += neighbors.s5;
+	cmp.s5 = acc <= target;
+	acc += neighbors.s6;
+	cmp.s6 = acc <= target;
+	cmp.s7 = 0;
+
+
+	current += cube_offsets[(cmp.s0+cmp.s1+cmp.s2+cmp.s3+cmp.s4+cmp.s5+cmp.s6+cmp.s7)];
+	current.s0 = current.s0*2;
+	current.s1 = current.s1*2;
+	current.s2 = current.s2*2;
+	current.s3 = current.s3 +
+		cmp.s0*neighbors.s0 + 
+		cmp.s1*neighbors.s1 + 
+		cmp.s2*neighbors.s2 + 
+		cmp.s3*neighbors.s3 + 
+		cmp.s4*neighbors.s4 + 
+		cmp.s5*neighbors.s5 + 
+		cmp.s6*neighbors.s6 + 
+		cmp.s7*neighbors.s7;
+	return current;
+
+}
+
+__kernel void histogramTraversal(
+        __read_only image3d_t hp0, // Largest HP
+		__read_only image3d_t hp1,
+		__read_only image3d_t hp2,
+		__read_only image3d_t hp3,
+		__read_only image3d_t hp4,
+		__read_only image3d_t hp5,
+        #if SIZE > 64
+		__read_only image3d_t hp6,
+        #endif
+        #if SIZE > 128
+		__read_only image3d_t hp7,
+        #endif
+        #if SIZE > 256
+		__read_only image3d_t hp8, 
+        #endif
+        #if SIZE > 512
+		__read_only image3d_t hp9, 
+        #endif
+        __global float * VBOBuffer,
+		__private int isolevel,
+		__private int sum
+        ) {
+	
+	int target = get_global_id(0);
+	if(target >= sum)
+		target = 0;
+
+	int4 cubePosition = {0,0,0,0}; // x,y,z,sum
+    #if SIZE > 512
+    cubePosition = scanHPLevel(target, hp9, cubePosition);
+    #endif
+    #if SIZE > 256
+    cubePosition = scanHPLevel(target, hp8, cubePosition);
+    #endif
+    #if SIZE > 128
+    cubePosition = scanHPLevel(target, hp7, cubePosition);
+    #endif
+    #if SIZE > 64
+    cubePosition = scanHPLevel(target, hp6, cubePosition);
+    #endif
+    cubePosition = scanHPLevel(target, hp5, cubePosition);
+    cubePosition = scanHPLevel(target, hp4, cubePosition);
+    cubePosition = scanHPLevel(target, hp3, cubePosition);
+    cubePosition = scanHPLevel(target, hp2, cubePosition);
+    cubePosition = scanHPLevel(target, hp1, cubePosition);
+    cubePosition = scanHPLevel(target, hp0, cubePosition);
+	cubePosition.x = cubePosition.x / 2;
+	cubePosition.y = cubePosition.y / 2;
+	cubePosition.z = cubePosition.z / 2;
+
+    char vertexNr = 0;
+	const int4 cubeData = read_imagei(hp0, sampler, cubePosition);
+
+	// max 5 triangles
+	for(int i = (target-cubePosition.s3)*3; i < (target-cubePosition.s3+1)*3; i++) { // for each vertex in triangle
+		const uchar edge = triangle_edge_table[cubeData.y*16 + i];
+		const int3 point0 = (int3)(cubePosition.x + offsets3[edge*6], cubePosition.y + offsets3[edge*6+1], cubePosition.z + offsets3[edge*6+2]);
+		const int3 point1 = (int3)(cubePosition.x + offsets3[edge*6+3], cubePosition.y + offsets3[edge*6+4], cubePosition.z + offsets3[edge*6+5]);
+
+        // Store vertex in VBO
+		
+        const float3 forwardDifference0 = (float3)(
+                (float)(-read_imagei(hp0, sampler, (int4)(point0.x+1, point0.y, point0.z, 0)).z+read_imagei(hp0, sampler, (int4)(point0.x-1, point0.y, point0.z, 0)).z),
+                (float)(-read_imagei(hp0, sampler, (int4)(point0.x, point0.y+1, point0.z, 0)).z+read_imagei(hp0, sampler, (int4)(point0.x, point0.y-1, point0.z, 0)).z),
+                (float)(-read_imagei(hp0, sampler, (int4)(point0.x, point0.y, point0.z+1, 0)).z+read_imagei(hp0, sampler, (int4)(point0.x, point0.y, point0.z-1, 0)).z)
+            );
+        const float3 forwardDifference1 = (float3)(
+                (float)(-read_imagei(hp0, sampler, (int4)(point1.x+1, point1.y, point1.z, 0)).z+read_imagei(hp0, sampler, (int4)(point1.x-1, point1.y, point1.z, 0)).z),
+                (float)(-read_imagei(hp0, sampler, (int4)(point1.x, point1.y+1, point1.z, 0)).z+read_imagei(hp0, sampler, (int4)(point1.x, point1.y-1, point1.z, 0)).z),
+                (float)(-read_imagei(hp0, sampler, (int4)(point1.x, point1.y, point1.z+1, 0)).z+read_imagei(hp0, sampler, (int4)(point1.x, point1.y, point1.z-1, 0)).z)
+            );
+
+	    const int value0 = read_imagei(hp0, sampler, (int4)(point0.x, point0.y, point0.z, 0)).z;
+		const float diff = native_divide(
+			(float)(isolevel-value0), 
+			(float)(read_imagei(hp0, sampler, (int4)(point1.x, point1.y, point1.z, 0)).z - value0));
+        
+		const float3 vertex = mix((float3)(point0.x, point0.y, point0.z), (float3)(point1.x, point1.y, point1.z), diff);
+
+		const float3 normal = normalize(mix(normalize(forwardDifference0), normalize(forwardDifference1), diff));
+
+
+		vstore3(vertex, target*6 + vertexNr*2, VBOBuffer);
+		vstore3(normal, target*6 + vertexNr*2 + 1, VBOBuffer);
+
+
+        ++vertexNr;
+    }
+}
+
 
 __kernel void computeHistogramBaseLevel(
     __write_only image3d_t histo_base,
@@ -101,6 +242,29 @@ __kernel void computeHistogramBaseLevel(
 
     write_imageui(histo_base, pos, (uint4) { triangle_count_table[cube_index], cube_index, value, 1 });
 }
+
+/* __kernel void computeHistogramBaseLevel( */
+/* 		__write_only image3d_t histoPyramid,  */
+/* 		__read_only image3d_t rawData, */
+/* 		__private int isolevel */
+/* 		) { */
+/*     int4 pos = {get_global_id(0), get_global_id(1), get_global_id(2), 0}; */
+
+/*     // Find cube class nr */
+/* 	const uchar first = read_imagei(rawData, sampler, pos).x; */
+/*     const uchar cubeindex =  */
+/*     ((first > isolevel)) | */
+/*     ((read_imagei(rawData, sampler, pos + cube_offsets[1]).x > isolevel) << 1) | */
+/*     ((read_imagei(rawData, sampler, pos + cube_offsets[3]).x > isolevel) << 2) | */
+/*     ((read_imagei(rawData, sampler, pos + cube_offsets[2]).x > isolevel) << 3) | */
+/*     ((read_imagei(rawData, sampler, pos + cube_offsets[4]).x > isolevel) << 4) | */
+/*     ((read_imagei(rawData, sampler, pos + cube_offsets[5]).x > isolevel) << 5) | */
+/*     ((read_imagei(rawData, sampler, pos + cube_offsets[7]).x > isolevel) << 6) | */
+/*     ((read_imagei(rawData, sampler, pos + cube_offsets[6]).x > isolevel) << 7); */
+
+/*     // Store number of triangles */
+/* 	write_imageui(histoPyramid, pos, (uint4)(triangle_count_table[cubeindex], cubeindex, first, 0)); */
+/* } */
 
 typedef float16 mat4;
 typedef float4 vec4;
@@ -151,145 +315,4 @@ __kernel void generateSphereVolume(__write_only image3d_t data,
     value = 255 - value;
     pos.s3 = 0;
     write_imagei(data, pos, (uchar) (int) value);
-}
-
-int4 scanHistogramLevel(int index, __read_only image3d_t histo, int4 pos) {
-
-    int8 neighbors = {
-        read_imagei(histo, sampler, pos + cube_offsets[0]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[1]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[2]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[3]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[4]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[5]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[6]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[7]).x
-    };
-    
-    int acc = pos.s3;
-    int8 cmp;
-
-    acc += neighbors.s0;
-    cmp.s0 = acc <= index;
-    acc += neighbors.s1;
-    cmp.s1 = acc <= index;
-    acc += neighbors.s2;
-    cmp.s2 = acc <= index;
-    acc += neighbors.s3;
-    cmp.s3 = acc <= index;
-    acc += neighbors.s4;
-    cmp.s4 = acc <= index;
-    acc += neighbors.s5;
-    cmp.s5 = acc <= index;
-    acc += neighbors.s6;
-    cmp.s6 = acc <= index;
-    cmp.s7 = 0;
-
-    pos += cube_offsets[cmp.s0 + cmp.s1 + cmp.s2 + cmp.s3 +
-                        cmp.s4 + cmp.s5 + cmp.s6 + cmp.s7];
-
-    pos.s0 *= 2;
-    pos.s1 *= 2;
-    pos.s2 *= 2;
-    
-    neighbors *= cmp;
-    pos.s3 +=
-        neighbors.s0 + neighbors.s1 + neighbors.s2 + neighbors.s3 +
-        neighbors.s4 + neighbors.s5 + neighbors.s6 + neighbors.s7;
-    
-    return pos;
-}
-
-float3 calculateGradient(__read_only image3d_t h0, int4 p) {
-    int dx = read_imagei(h0, sampler, p + (int4) { 1, 0, 0, 0 }).s2 -
-        read_imagei(h0, sampler, (int4) { -1, 0, 0, 0 }).s2;
-    int dy = read_imagei(h0, sampler, p + (int4) { 0, 1, 0, 0 }).s2 -
-        read_imagei(h0, sampler, (int4) { 0, -1, 0, 0 }).s2;
-    int dz = read_imagei(h0, sampler, p + (int4) { 0, 0, 1, 0 }).s2 -
-        read_imagei(h0, sampler, (int4) { 0, 0, -1, 0 }).s2;
-
-    // should be halfed, but doesnt matter, will be normalized anyway
-    return convert_float3((int3) { dx, dy, dz });
-}
-
-float3 normalize3(float3 a) {
-    float il = rsqrt(a.x * a.x + a.y * a.y + a.z * a.z);
-    return a * il;
-}
-
-__kernel void histogramTraversal(
-    __read_only image3d_t h0,
-    __read_only image3d_t h1,
-    __read_only image3d_t h2,
-       __read_only image3d_t h3,
-    __read_only image3d_t h4,
-    __read_only image3d_t h5,
-    #if N > 64
-    __read_only image3d_t h6,
-    #endif
-    #if N > 128
-    __read_only image3d_t h7,
-    #endif
-    #if N > 256
-    __read_only image3d_t h8,
-    #endif
-    __global float *vbo,
-    __private int isolevel,
-    __private int num_tris)
-{
-
-    int index = get_global_id(0);
-    if (index >= num_tris)
-        index = 0;
-
-    int4 cube_position = (int4) 0;
-
-    #if N > 256
-    cube_position = scanHistogramLevel(index, h8, cube_position);
-    #endif
-    #if N > 128
-    cube_position = scanHistogramLevel(index, h7, cube_position);
-    #endif
-    #if N > 64
-    cube_position = scanHistogramLevel(index, h6, cube_position);
-    #endif
-    cube_position = scanHistogramLevel(index, h5, cube_position);
-    cube_position = scanHistogramLevel(index, h4, cube_position);
-    cube_position = scanHistogramLevel(index, h3, cube_position);
-    cube_position = scanHistogramLevel(index, h2, cube_position);
-    cube_position = scanHistogramLevel(index, h1, cube_position);
-    cube_position = scanHistogramLevel(index, h0, cube_position);
-
-    cube_position.s0 /= 2;
-    cube_position.s1 /= 2;
-    cube_position.s2 /= 2;
-
-    const int4 cube_data = read_imagei(h0, sampler, cube_position);
-
-    int vertex_index = index * 6;
-    for (int i = (index - cube_position.s3) * 3; i < (index - cube_position.s3 + 1) * 3; ++i) {
-        const uchar edge = triangle_edge_table[cube_data.s1 * 16 + i];
-        const int4 p0 = (int4)(cube_position.x + offsets3[edge * 6 + 0],
-                               cube_position.y + offsets3[edge * 6 + 1],
-                               cube_position.z + offsets3[edge * 6 + 2], 0);
-        
-        const int4 p1 = (int4)(cube_position.x + offsets3[edge * 6 + 3],
-                               cube_position.y + offsets3[edge * 6 + 4],
-                               cube_position.z + offsets3[edge * 6 + 5], 0);
-
-        float3 n0 = normalize3(- calculateGradient(h0, p0));
-        float3 n1 = normalize3(- calculateGradient(h0, p1));
-
-        int v0 = read_imagei(h0, sampler, p0).s2;
-        int v1 = read_imagei(h0, sampler, p1).s2;
-        const float t = native_divide((float)(isolevel - v0), (float)(v1 - v0));
-
-        float3 pos = mix(convert_float3(p0.xyz), convert_float3(p1.xyz), t);
-        float3 normal = normalize(mix(n0, n1, t));
-
-        vstore3(pos, vertex_index * 2, vbo);
-        vstore3(normal, vertex_index * 2 + 1, vbo);
-        ++vertex_index;
-    }
-
 }
