@@ -148,6 +148,7 @@ __kernel void generateSphereVolume(__write_only image3d_t data,
     else if (value > 255)
         value = 255;
 
+    value = 255 - value;
     pos.s3 = 0;
     write_imagei(data, pos, (uchar) (int) value);
 }
@@ -284,7 +285,7 @@ __kernel void histogramTraversal(
         const float t = native_divide((float)(isolevel - v0), (float)(v1 - v0));
 
         float3 pos = mix(convert_float3(p0.xyz), convert_float3(p1.xyz), t);
-        float3 normal = mix(n0, n1, t);
+        float3 normal = normalize(mix(n0, n1, t));
 
         vstore3(pos, vertex_index * 2, vbo);
         vstore3(normal, vertex_index * 2 + 1, vbo);

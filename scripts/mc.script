@@ -1,3 +1,5 @@
 load "default.script"
 
 addShaderPath "programs/mc/shaders"
+
+bindShader "render" "render.vert" "render.frag" 0 "position" 1 "normal"

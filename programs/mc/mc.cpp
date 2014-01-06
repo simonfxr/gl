@@ -24,6 +24,8 @@
 #include <CL/cl.h>
 #include <CL/cl.hpp>
 
+#include <cstdio>
+
 #ifdef SYSTEM_LINUX
 #include <GL/glx.h>
 #endif
@@ -35,11 +37,13 @@ static const size DEFAULT_N = 256;
 using namespace math;
 
 struct Vertex {
-    vec2_t position;
+    point3_t position;
+    direction3_t normal;
 };
 
 DEFINE_VERTEX_DESC(Vertex,
-                   VERTEX_ATTR(Vertex, position));
+                   VERTEX_ATTR(Vertex, position),
+                   VERTEX_ATTR(Vertex, normal));
 
 struct Anim {
     ge::Engine engine;
@@ -65,7 +69,7 @@ struct Anim {
     void initCLData(bool *success);
 
     size computeHistogram();
-    void constructVertices(size num_tris);
+    void constructVertices(size num_tris, GLuint *vbo);
     
     void link(ge::Engine& e);
     void animate(const ge::Event<ge::AnimationEvent>&);
@@ -204,7 +208,7 @@ void Anim::initCL(const ge::Event<ge::InitEvent>& ev) {
         return;
     }
 
-    cl_q = cl::CommandQueue(cl_ctx, cl_device, 0, &cl_err);
+    cl_q = cl::CommandQueue(cl_ctx, cl_device, CL_QUEUE_PROFILING_ENABLE, &cl_err);
     CL_ERR("creating command queue failed");
 
     bool ok = false;
@@ -299,6 +303,21 @@ void Anim::initCLData(bool *success) {
         kernel_generateSphereVolume,
         cl::NullRange, cl::NDRange(N, N, N), cl::NullRange);
 
+    cl::size_t<3> origin;
+    cl::size_t<3> cube;
+    origin[0] = origin[1] = origin[2] = 0;
+    cube[0] = cube[1] = cube[2] = N;
+    size_t bytes = N * N * N;
+    char *buf = new char[bytes];
+    cl_q.enqueueReadImage(volumeData, CL_FALSE, origin, cube, 0, 0, buf);
+    cl_q.finish();
+
+    FILE *file = fopen("foo.raw", "w");
+    fwrite(buf, bytes, 1, file);
+    fclose(file);
+
+    delete[] buf;
+
     *success = true;
 }
 
@@ -336,7 +355,7 @@ size Anim::computeHistogram() {
     origin[0] = origin[1] = origin[2] = 0;
     cube[0] = cube[1] = cube[2] = 2;
     cl_q.enqueueReadImage(images[images.size() - 1], CL_FALSE, origin, cube, 0, 0, count);
-    cl_q.finish();
+    time_op(cl_q.finish());
 
     int32 total = 0;
     for (defs::index i = 0; i < 8; ++i)
@@ -347,10 +366,22 @@ size Anim::computeHistogram() {
     return total;
 }
 
-void Anim::constructVertices(size num_tris) {
+static double eventExecutionTime(cl::Event& ev) {
+    cl_ulong t0, t1;
+    ev.getProfilingInfo(CL_PROFILING_COMMAND_START, &t0);
+    ev.getProfilingInfo(CL_PROFILING_COMMAND_END, &t1);
+    t1 -= t0;
+    return double(t1) * 1e-9;
+}
 
+void Anim::constructVertices(size num_tris, GLuint *vbop) {
+
+// #define PROFILE(...) __VA_ARGS__
+#define PROFILE(...) 
+    
     GLuint vbo;
     glGenBuffers(1, &vbo);
+    *vbop = vbo;
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, num_tris * 3 * 2 * sizeof(vec3_t), 0, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -359,6 +390,8 @@ void Anim::constructVertices(size num_tris) {
     for (i = 0; i < SIZE(images.size()); ++i)
         kernel_histogramTraversal.setArg(i, images[i]);
 
+    PROFILE(cl::Event evAcq, evKernel, evRel);
+
     cl::BufferGL vbo_buf(cl_ctx, CL_MEM_WRITE_ONLY, vbo);
     kernel_histogramTraversal.setArg(i, vbo_buf); ++i;
     kernel_histogramTraversal.setArg(i, 128); ++i;
@@ -366,18 +399,24 @@ void Anim::constructVertices(size num_tris) {
 
     std::vector<cl::Memory> gl_objs;
     gl_objs.push_back(vbo_buf);
-    cl_q.enqueueAcquireGLObjects(&gl_objs);
+
+    cl_q.enqueueAcquireGLObjects(&gl_objs, 0 PROFILE(, &evAcq));
 
     int global_work_size = (num_tris / 64 + 1) * 64;
     cl_q.enqueueNDRangeKernel(
         kernel_histogramTraversal,
         cl::NullRange, cl::NDRange(global_work_size),
-        cl::NDRange(64));
+        cl::NDRange(64),
+        0 PROFILE(, &evKernel));
 
-    cl_q.enqueueReleaseGLObjects(&gl_objs);
+    cl_q.enqueueReleaseGLObjects(&gl_objs, 0 PROFILE(, &evRel));
     cl_q.finish();
 
-    glDeleteBuffers(1, &vbo);
+    PROFILE(engine.out()
+            << "Acquire took: " << eventExecutionTime(evAcq) * 1000 << " ms" << sys::io::endl
+            << "Kernel took: " << eventExecutionTime(evKernel) * 1000 << " ms" << sys::io::endl
+            << "Release took: " << eventExecutionTime(evRel) * 1000 << " ms" << sys::io::endl);
+
 }
 
 void Anim::link(ge::Engine& e) {
@@ -387,9 +426,7 @@ void Anim::link(ge::Engine& e) {
 }
 
 void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
-    size num_tris;
-    time_op(num_tris = computeHistogram());
-    time_op(constructVertices(num_tris));
+    // empty
 }
 
 void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
@@ -397,6 +434,57 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     real time = e.gameLoop().gameTime() + ev.info.interpolation * e.gameLoop().frameDuration();
 
     glt::RenderManager& rm = engine.renderManager();
+    glt::GeometryTransform& gt = rm.geometryTransform();
+
+    size num_tris;
+    GLuint vbo;
+    time_op(num_tris = computeHistogram());
+    time_op(constructVertices(num_tris, &vbo));
+
+    Ref<glt::ShaderProgram> program = engine.shaderManager().program("render");
+    ASSERT(program);
+
+    program->use();
+
+    gt.dup();
+    gt.translate(- vec3(real(1)));
+    gt.scale(vec3(real(2)));
+    gt.scale(vec3(real(1) / real(N)));
+
+    point3_t wcLight = vec3(real(N));
+    point3_t ecLight = vec3(transform(gt.mvMatrix(), vec4(wcLight, real(1))));
+    
+    glt::Uniforms(*program)
+        .optional("mvpMatrix", rm.geometryTransform().mvpMatrix())
+        .optional("mvMatrix", rm.geometryTransform().mvMatrix())
+        .optional("normalMatrix", rm.geometryTransform().normalMatrix())
+        .optional("ecLight", ecLight);
+
+    gt.pop();
+
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+
+    const glt::VertexDesc<Vertex>& desc = VertexTraits<Vertex>::description();
+    
+    for (defs::index i = 0; i < desc.nattributes; ++i) {
+        const glt::Attr<Vertex>& a = desc.attributes[i];
+        GL_CALL(glVertexArrayVertexAttribOffsetEXT,
+                vao,
+                vbo,
+                GLuint(i), a.ncomponents, a.component_type,
+                a.normalized ? GL_TRUE : GL_FALSE,
+                desc.sizeof_vertex,
+                GLintptr(a.offset));
+        GL_CALL(glEnableVertexArrayAttribEXT, vao, GLuint(i));
+    }
+
+    GL_CALL(glBindVertexArray, vao);
+    GL_CALL(glDrawArrays, GL_TRIANGLES, 0, num_tris * 3);
+
+    glFinish();
+
+    glDeleteBuffers(1, &vbo);
 
     if (time >= time_print_fps) {
         time_print_fps = time + 1.f;
