@@ -79,6 +79,7 @@ struct Anim {
     void initCLKernels(bool *success);
     void initCLData(bool *success);
 
+    void computeVolumeData(real time);
     size computeHistogram();
     void constructVertices(size num_tris, GLuint *vbo);
     
@@ -285,7 +286,7 @@ void Anim::initCLData(bool *success) {
     int cl_err;
     
     ASSERT_MSG(IS_POWER_OF_2(N), "N has to be a power of 2!");
-    ASSERT_MSG(N <= 256, "N has to be <= 256");        
+    ASSERT_MSG(N <= 512, "N has to be <= 512");        
 
     volumeData = cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_R, CL_UNSIGNED_INT16), N, N, N, 0, 0, 0, &cl_err);
     CL_ERR("creating volume 3d image failed");
@@ -312,41 +313,6 @@ void Anim::initCLData(bool *success) {
         CL_ERR("creating histogram level failed");
         sz /= 2;
     }
-
-    kernel_generateSphereVolume.setArg(0, volumeData);
-    kernel_generateSphereVolume.setArg(1, mat4());
-    kernel_generateSphereVolume.setArg(2, vec4(real(N) * 0.5f));
-    kernel_generateSphereVolume.setArg(3, real(N) * 0.25f);
-
-    cl_q.enqueueNDRangeKernel(
-        kernel_generateSphereVolume,
-        cl::NullRange, cl::NDRange(N, N, N), cl::NullRange);
-
-    cl::size_t<3> origin;
-    cl::size_t<3> cube;
-    origin[0] = origin[1] = origin[2] = 0;
-    cube[0] = cube[1] = cube[2] = N;
-    size_t bytes = N * N * N * 2;
-    char *buf = new char[bytes];
-    cl_q.enqueueReadImage(volumeData, CL_FALSE, origin, cube, 0, 0, buf);
-    cl_q.finish();
-
-    FILE *file = fopen("foo.raw", "w");
-    fwrite(buf, bytes, 1, file);
-    fclose(file);
-
-    delete[] buf;
-
-    uint32 buf_size;
-    if (!glt::readFile(engine.out(), "sphere.vbo", mdl_base, buf_size)) {
-        ERR("failed to read sphere vbo data");
-        return;
-    }
-
-    mdl_num_tris = * (int *) mdl_base;
-    mdl_data = mdl_base + 4;
-    engine.out() << "read vertex buffer with " << mdl_num_tris << " triangles" << sys::io::endl;
-    ASSERT(mdl_num_tris * 3 * 24 == buf_size - 4);
 
     *success = true;
 }
@@ -402,6 +368,44 @@ static double eventExecutionTime(cl::Event& ev) {
     ev.getProfilingInfo(CL_PROFILING_COMMAND_END, &t1);
     t1 -= t0;
     return double(t1) * 1e-9;
+}
+
+void Anim::computeVolumeData(real time) {
+    kernel_generateSphereVolume.setArg(0, volumeData);
+    kernel_generateSphereVolume.setArg(1, mat4());
+    kernel_generateSphereVolume.setArg(2, vec4(real(N) * 0.5f));
+    kernel_generateSphereVolume.setArg(3, real(N) * 0.25f);
+    kernel_generateSphereVolume.setArg(4, time);
+
+    cl_q.enqueueNDRangeKernel(
+        kernel_generateSphereVolume,
+        cl::NullRange, cl::NDRange(N, N, N), cl::NullRange);
+
+    // cl::size_t<3> origin;
+    // cl::size_t<3> cube;
+    // origin[0] = origin[1] = origin[2] = 0;
+    // cube[0] = cube[1] = cube[2] = N;
+    // size_t bytes = N * N * N * 2;
+    // char *buf = new char[bytes];
+    // cl_q.enqueueReadImage(volumeData, CL_FALSE, origin, cube, 0, 0, buf);
+//    cl_q.finish();
+
+    // FILE *file = fopen("foo.raw", "w");
+    // fwrite(buf, bytes, 1, file);
+    // fclose(file);
+
+    // delete[] buf;
+
+    // uint32 buf_size;
+    // if (!glt::readFile(engine.out(), "sphere.vbo", mdl_base, buf_size)) {
+    //     ERR("failed to read sphere vbo data");
+    //     return;
+    // }
+
+    // mdl_num_tris = * (int *) mdl_base;
+    // mdl_data = mdl_base + 4;
+    // engine.out() << "read vertex buffer with " << mdl_num_tris << " triangles" << sys::io::endl;
+    // ASSERT(mdl_num_tris * 3 * 24 == buf_size - 4);
 }
 
 void Anim::constructVertices(size num_tris, GLuint *vbop) {
@@ -473,6 +477,7 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     size num_tris;
     GLuint vbo;
 
+    computeVolumeData(time);
     INFO_TIME(num_tris = computeHistogram());
     INFO_TIME(constructVertices(num_tris, &vbo));
     // {
