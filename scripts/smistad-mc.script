@@ -1,0 +1,7 @@
+load "default.script"
+
+prependShaderPath "programs/mc/shaders"
+
+bindShader "render" "render.vert" "render.frag" 0 "position" 1 "normal"
+
+perspectiveProjection 45 0.5 10
