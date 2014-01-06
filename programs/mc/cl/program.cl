@@ -1,6 +1,8 @@
 //#pragma OPENCL EXTENSION cl_amd_printf:enable
 #pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
 
+#define ISOLEVEL 32768
+
 __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 
 __constant int4 cube_offsets[8] = {
@@ -129,29 +131,40 @@ int4 scanHPLevel(int target, __read_only image3d_t hp, int4 current) {
 
 }
 
+float sampleVolume(__read_only image3d_t volumeData, int3 p) {
+    return (int) read_imageui(volumeData, sampler, (int4) (p.x, p.y, p.z, 0)).s0;
+}
+
+float3 calculateGradient(__read_only image3d_t volumeData, int3 p) {
+    float dx = (float) sampleVolume(volumeData, p + (int3)(1, 0, 0)) - (float) sampleVolume(volumeData, p - (int3)(1, 0, 0));
+    float dy = (float) sampleVolume(volumeData, p + (int3)(0, 1, 0)) - (float) sampleVolume(volumeData, p - (int3)(0, 1, 0));
+    float dz = (float) sampleVolume(volumeData, p + (int3)(0, 0, 1)) - (float) sampleVolume(volumeData, p - (int3)(0, 0, 1));
+    return (float3) (dx, dy, dz);
+}
+
 __kernel void histogramTraversal(
         __read_only image3d_t hp0, // Largest HP
-		__read_only image3d_t hp1,
-		__read_only image3d_t hp2,
-		__read_only image3d_t hp3,
-		__read_only image3d_t hp4,
-		__read_only image3d_t hp5,
+        __read_only image3d_t hp1,
+        __read_only image3d_t hp2,
+        __read_only image3d_t hp3,
+        __read_only image3d_t hp4,
+        __read_only image3d_t hp5,
         #if SIZE > 64
-		__read_only image3d_t hp6,
+        __read_only image3d_t hp6,
         #endif
         #if SIZE > 128
-		__read_only image3d_t hp7,
+        __read_only image3d_t hp7,
         #endif
         #if SIZE > 256
-		__read_only image3d_t hp8, 
+        __read_only image3d_t hp8, 
         #endif
         #if SIZE > 512
-		__read_only image3d_t hp9, 
+        __read_only image3d_t hp9, 
         #endif
+        __read_only image3d_t volume,
         __global float * VBOBuffer,
-		__private int isolevel,
-		__private int sum
-        ) {
+        __private int sum)
+{
 	
 	int target = get_global_id(0);
 	if(target >= sum)
@@ -176,45 +189,36 @@ __kernel void histogramTraversal(
     cubePosition = scanHPLevel(target, hp2, cubePosition);
     cubePosition = scanHPLevel(target, hp1, cubePosition);
     cubePosition = scanHPLevel(target, hp0, cubePosition);
-	cubePosition.x = cubePosition.x / 2;
-	cubePosition.y = cubePosition.y / 2;
-	cubePosition.z = cubePosition.z / 2;
-
+    cubePosition.x = cubePosition.x / 2;
+    cubePosition.y = cubePosition.y / 2;
+    cubePosition.z = cubePosition.z / 2;
+    
     char vertexNr = 0;
-	const int4 cubeData = read_imagei(hp0, sampler, cubePosition);
 
-	// max 5 triangles
-	for(int i = (target-cubePosition.s3)*3; i < (target-cubePosition.s3+1)*3; i++) { // for each vertex in triangle
-		const uchar edge = triangle_edge_table[cubeData.y*16 + i];
-		const int3 point0 = (int3)(cubePosition.x + offsets3[edge*6], cubePosition.y + offsets3[edge*6+1], cubePosition.z + offsets3[edge*6+2]);
-		const int3 point1 = (int3)(cubePosition.x + offsets3[edge*6+3], cubePosition.y + offsets3[edge*6+4], cubePosition.z + offsets3[edge*6+5]);
+    uint edge_code = read_imageui(hp0, sampler, cubePosition).s1;
 
-        // Store vertex in VBO
-		
-        const float3 forwardDifference0 = (float3)(
-                (float)(-read_imagei(hp0, sampler, (int4)(point0.x+1, point0.y, point0.z, 0)).z+read_imagei(hp0, sampler, (int4)(point0.x-1, point0.y, point0.z, 0)).z),
-                (float)(-read_imagei(hp0, sampler, (int4)(point0.x, point0.y+1, point0.z, 0)).z+read_imagei(hp0, sampler, (int4)(point0.x, point0.y-1, point0.z, 0)).z),
-                (float)(-read_imagei(hp0, sampler, (int4)(point0.x, point0.y, point0.z+1, 0)).z+read_imagei(hp0, sampler, (int4)(point0.x, point0.y, point0.z-1, 0)).z)
-            );
-        const float3 forwardDifference1 = (float3)(
-                (float)(-read_imagei(hp0, sampler, (int4)(point1.x+1, point1.y, point1.z, 0)).z+read_imagei(hp0, sampler, (int4)(point1.x-1, point1.y, point1.z, 0)).z),
-                (float)(-read_imagei(hp0, sampler, (int4)(point1.x, point1.y+1, point1.z, 0)).z+read_imagei(hp0, sampler, (int4)(point1.x, point1.y-1, point1.z, 0)).z),
-                (float)(-read_imagei(hp0, sampler, (int4)(point1.x, point1.y, point1.z+1, 0)).z+read_imagei(hp0, sampler, (int4)(point1.x, point1.y, point1.z-1, 0)).z)
-            );
-
-	    const int value0 = read_imagei(hp0, sampler, (int4)(point0.x, point0.y, point0.z, 0)).z;
-		const float diff = native_divide(
-			(float)(isolevel-value0), 
-			(float)(read_imagei(hp0, sampler, (int4)(point1.x, point1.y, point1.z, 0)).z - value0));
+    // max 5 triangles
+    for(int i = (target-cubePosition.s3)*3; i < (target-cubePosition.s3+1)*3; i++) { // for each vertex in triangle
+        const uchar edge = triangle_edge_table[edge_code*16 + i];
+        const int3 point0 = (int3)(cubePosition.x + offsets3[edge*6], cubePosition.y + offsets3[edge*6+1], cubePosition.z + offsets3[edge*6+2]);
+        const int3 point1 = (int3)(cubePosition.x + offsets3[edge*6+3], cubePosition.y + offsets3[edge*6+4], cubePosition.z + offsets3[edge*6+5]);
         
-		const float3 vertex = mix((float3)(point0.x, point0.y, point0.z), (float3)(point1.x, point1.y, point1.z), diff);
+        // Store vertex in VBO
+	
+        const float3 forwardDifference0 = - calculateGradient(volume, point0);
+        const float3 forwardDifference1 = - calculateGradient(volume, point1);
+        
+        int v0 = sampleVolume(volume, point0);
+        int v1 = sampleVolume(volume, point1);
+        const float diff = native_divide((float)(ISOLEVEL-v0), (float)(v1 - v0));
+        
+        const float3 vertex = mix((float3)(point0.x, point0.y, point0.z), (float3)(point1.x, point1.y, point1.z), diff);
 
-		const float3 normal = normalize(mix(normalize(forwardDifference0), normalize(forwardDifference1), diff));
-
-
-		vstore3(vertex, target*6 + vertexNr*2, VBOBuffer);
-		vstore3(normal, target*6 + vertexNr*2 + 1, VBOBuffer);
-
+        const float3 normal = normalize(mix(normalize(forwardDifference0), normalize(forwardDifference1), diff));
+        
+        
+        vstore3(vertex, target*6 + vertexNr*2, VBOBuffer);
+        vstore3(normal, target*6 + vertexNr*2 + 1, VBOBuffer);
 
         ++vertexNr;
     }
@@ -223,24 +227,22 @@ __kernel void histogramTraversal(
 
 __kernel void computeHistogramBaseLevel(
     __write_only image3d_t histo_base,
-    __read_only image3d_t data,
-    __private int isolevel)
+    __read_only image3d_t data)
 {
+    ushort isolevel = ISOLEVEL;
     int4 pos = { get_global_id(0), get_global_id(1), get_global_id(2), 0 };
 
-    uchar value = read_imagei(data, sampler, pos).x;
     uchar cube_index = 0;
+    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[0]).x > isolevel) << 0;
+    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[1]).x > isolevel) << 1;
+    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[3]).x > isolevel) << 2;
+    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[2]).x > isolevel) << 3;
+    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[4]).x > isolevel) << 4;
+    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[5]).x > isolevel) << 5;
+    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[7]).x > isolevel) << 6;
+    cube_index |= (read_imageui(data, sampler, pos + cube_offsets[6]).x > isolevel) << 7;
 
-    cube_index |= value > isolevel;
-    cube_index |= (read_imagei(data, sampler, pos + cube_offsets[1]).x > isolevel) << 1;
-    cube_index |= (read_imagei(data, sampler, pos + cube_offsets[3]).x > isolevel) << 2;
-    cube_index |= (read_imagei(data, sampler, pos + cube_offsets[2]).x > isolevel) << 3;
-    cube_index |= (read_imagei(data, sampler, pos + cube_offsets[4]).x > isolevel) << 4;
-    cube_index |= (read_imagei(data, sampler, pos + cube_offsets[5]).x > isolevel) << 5;
-    cube_index |= (read_imagei(data, sampler, pos + cube_offsets[7]).x > isolevel) << 6;
-    cube_index |= (read_imagei(data, sampler, pos + cube_offsets[6]).x > isolevel) << 7;
-
-    write_imageui(histo_base, pos, (uint4) { triangle_count_table[cube_index], cube_index, value, 1 });
+    write_imageui(histo_base, pos, (uint4) { triangle_count_table[cube_index], cube_index, 0, 0});
 }
 
 /* __kernel void computeHistogramBaseLevel( */
@@ -293,6 +295,15 @@ float dot3(vec3 a, vec3 b) {
     return a.s0 + a.s1 + a.s2;
 }
 
+ushort make_iso(float x) {
+    x = clamp(x, -1.f, 1.f);
+    x *= 32768;
+    x += 32768;
+    x = clamp(x, 0.f, 65535.f);
+    x = 65535.f - x;
+    return (ushort) (int) x;
+}
+
 __kernel void generateSphereVolume(__write_only image3d_t data,
                                    __private mat4 transform,
                                    __private vec3 center,
@@ -304,15 +315,5 @@ __kernel void generateSphereVolume(__write_only image3d_t data,
     vec3 dist = wc - center;
     float value = dot3(dist, dist) / (radius * radius)  - 1;
 
-    value *= 128;
-    value += 128;
-
-    if (value < 0)
-        value = 0; // shouldnt happen
-    else if (value > 255)
-        value = 255;
-
-    value = 255 - value;
-    pos.s3 = 0;
-    write_imagei(data, pos, (uchar) (int) value);
+    write_imageui(data, pos, make_iso(value));
 }

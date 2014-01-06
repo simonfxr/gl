@@ -287,10 +287,10 @@ void Anim::initCLData(bool *success) {
     ASSERT_MSG(IS_POWER_OF_2(N), "N has to be a power of 2!");
     ASSERT_MSG(N <= 256, "N has to be <= 256");        
 
-    volumeData = cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_R, CL_UNSIGNED_INT8), N, N, N, 0, 0, 0, &cl_err);
+    volumeData = cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_R, CL_UNSIGNED_INT16), N, N, N, 0, 0, 0, &cl_err);
     CL_ERR("creating volume 3d image failed");
 
-    images.push_back(cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_RGBA, CL_UNSIGNED_INT8), N, N, N, 0, 0, 0, &cl_err));
+    images.push_back(cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_RG, CL_UNSIGNED_INT8), N, N, N, 0, 0, 0, &cl_err));
     CL_ERR("creating histogram base level failed");
     
     size sz = N / 2;
@@ -326,7 +326,7 @@ void Anim::initCLData(bool *success) {
     cl::size_t<3> cube;
     origin[0] = origin[1] = origin[2] = 0;
     cube[0] = cube[1] = cube[2] = N;
-    size_t bytes = N * N * N;
+    size_t bytes = N * N * N * 2;
     char *buf = new char[bytes];
     cl_q.enqueueReadImage(volumeData, CL_FALSE, origin, cube, 0, 0, buf);
     cl_q.finish();
@@ -356,7 +356,7 @@ size Anim::computeHistogram() {
 
     kernel_computeHistogramBaseLevel.setArg(0, images[0]);
     kernel_computeHistogramBaseLevel.setArg(1, volumeData);
-    kernel_computeHistogramBaseLevel.setArg(2, 128);
+//    kernel_computeHistogramBaseLevel.setArg(2, ISOLEVEL);
 
     cl_q.enqueueNDRangeKernel(
         kernel_computeHistogramBaseLevel,
@@ -423,8 +423,9 @@ void Anim::constructVertices(size num_tris, GLuint *vbop) {
     PROFILE(cl::Event evAcq, evKernel, evRel);
 
     cl::BufferGL vbo_buf(cl_ctx, CL_MEM_WRITE_ONLY, vbo);
+    kernel_histogramTraversal.setArg(i, volumeData); ++i;
     kernel_histogramTraversal.setArg(i, vbo_buf); ++i;
-    kernel_histogramTraversal.setArg(i, 128); ++i;
+//    kernel_histogramTraversal.setArg(i, ISOLEVEL); ++i;
     kernel_histogramTraversal.setArg(i, num_tris);
 
     std::vector<cl::Memory> gl_objs;
