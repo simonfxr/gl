@@ -71,6 +71,10 @@ struct Anim {
     char *mdl_base;
     char *mdl_data;
 
+    double sum_tris;
+    uint max_tris;
+    uint num_renders;
+
     cl::Image3D volumeData;
     std::vector<cl::Image3D> images;
     
@@ -288,7 +292,7 @@ void Anim::initCLData(bool *success) {
     ASSERT_MSG(IS_POWER_OF_2(N), "N has to be a power of 2!");
     ASSERT_MSG(N <= 512, "N has to be <= 512");        
 
-    volumeData = cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_R, CL_UNSIGNED_INT16), N, N, N, 0, 0, 0, &cl_err);
+    volumeData = cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_R, CL_FLOAT), N, N, N, 0, 0, 0, &cl_err);
     CL_ERR("creating volume 3d image failed");
 
     images.push_back(cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_RG, CL_UNSIGNED_INT8), N, N, N, 0, 0, 0, &cl_err));
@@ -466,7 +470,7 @@ void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
 
 void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     ge::Engine& e = ev.info.engine;
-    real time = e.gameLoop().gameTime() + ev.info.interpolation * e.gameLoop().frameDuration();
+    real time = e.gameLoop().gameTime();
 
     glt::RenderManager& rm = engine.renderManager();
 
@@ -480,6 +484,12 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     computeVolumeData(time);
     INFO_TIME(num_tris = computeHistogram());
     INFO_TIME(constructVertices(num_tris, &vbo));
+
+    if (num_tris > max_tris)
+        max_tris = num_tris;
+    sum_tris += num_tris;
+    num_renders++;
+    
     // {
     //     num_tris = mdl_num_tris;
     //     glGenBuffers(1, &vbo);
@@ -548,6 +558,14 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
         double max = INV(fs.min);
         double avg = INV(fs.avg);
         engine.out() << "Timings (FPS/Render Avg/Render Min/Render Max): " << fps << "; " << avg << "; " << min << "; " << max << sys::io::endl;
+
+        double avg_tris = sum_tris / num_renders;
+        
+        engine.out() << "Avg Tris: " << avg_tris << " Max Tris: " << max_tris << sys::io::endl;
+
+        max_tris = 0;
+        num_renders = 0;
+        sum_tris = 0;
     }
 }
 
