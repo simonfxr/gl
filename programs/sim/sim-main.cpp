@@ -206,8 +206,8 @@ void Game::init(const ge::Event<ge::InitEvent>& ev) {
         rectBatch.send();
     }
 
-    e.gameLoop().ticksPerSecond(100);
-    e.gameLoop().sync(false);
+    e.gameLoop().ticks(100);
+    e.gameLoop().syncDraw(false);
     
     use_interpolation = true;
 
@@ -261,7 +261,7 @@ void Game::constrainCameraMovement(const ge::Event<ge::CameraMoved>& ev) {
 }
 
 void Game::animate(const ge::Event<ge::AnimationEvent>& ev) {
-    float dt = game_speed * ev.info.engine.gameLoop().frameDuration();
+    float dt = game_speed * ev.info.engine.gameLoop().tickDuration();
     world.simulate(dt);
 }
 
@@ -328,7 +328,7 @@ void Game::renderScene(const ge::Event<ge::RenderEvent>& ev) {
 
 //    e.window().window().setActive();
 
-    float dt = interpolation * game_speed * e.gameLoop().frameDuration();
+    float dt = interpolation * game_speed * e.gameLoop().tickDuration();
 
     renderWorld(dt);
 

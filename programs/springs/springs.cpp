@@ -88,7 +88,7 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     engine.enablePlugin(camera);
     camera.frame().origin = vec3(0.f);
 
-    engine.gameLoop().ticksPerSecond(300);
+    engine.gameLoop().ticks(300);
     engine.gameLoop().pause(true);
 
     fpsTimer.start(1.f, true);
@@ -114,8 +114,8 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
                 inv_mass = 0.f; // the edges have infinite mass;
             }
 
-            float d = length(x - vec3(real(N_SPRINGS) * 0.5f, 0, real(N_SPRINGS) * 0.5f));
-            x[1] += 0.5 * d;
+            float d = length(x - vec3(real(N_SPRINGS) * real(0.5), 0, real(N_SPRINGS) * real(0.5)));
+            x[1] += real(0.5) * d;
             
             particle_pos_mass.push_back(vec4(x[0], x[1], x[2], inv_mass));
             particle_vel.push_back(vec3(real(0)));
@@ -245,8 +245,8 @@ void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
     GL_CALL(glActiveTexture, GL_TEXTURE0);
     GL_CALL(glBindTexture, GL_TEXTURE_BUFFER, particle_pos_mass_tex[particle_source]);
 
-    real dt = engine.gameLoop().frameDuration();
-    real damp_coeff = 0.99f; // damping over the period of 1 sec;
+    real dt = engine.gameLoop().tickDuration();
+    real damp_coeff = real(0.99); // damping over the period of 1 sec;
     real damping = pow(damp_coeff, dt);
     glt::Uniforms(*physics_prog)
         .optional("dt", dt)

@@ -46,7 +46,7 @@ struct Engine::Data : public GameLoop::Game {
 
     Data(Engine& engine) :
         theEngine(engine),
-        gameLoop(30),
+        gameLoop(60, 5, 120),
         commandProcessor(engine),
         keyHandler(commandProcessor),
         replServer(engine),
@@ -60,11 +60,11 @@ struct Engine::Data : public GameLoop::Game {
     bool init(const EngineOptions& opts);
                              
     virtual void tick() FINAL OVERRIDE;
-    virtual void render(float interpolation) FINAL OVERRIDE;
+    virtual void render(double interpolation) FINAL OVERRIDE;
     virtual void handleInputEvents() FINAL OVERRIDE;
-    virtual float now() FINAL OVERRIDE;
-    virtual void sleep(float secs) FINAL OVERRIDE;
-    virtual void exit(int32 exit_code) FINAL OVERRIDE;
+    virtual GameLoop::time now() FINAL OVERRIDE;
+    virtual void sleep(GameLoop::time secs) FINAL OVERRIDE;
+    virtual void atExit(int32 exit_code) FINAL OVERRIDE;
 
     void registerHandlers();
     bool execCommand(std::vector<CommandArg>& args);
@@ -228,7 +228,7 @@ void Engine::Data::tick() {
     events.animate.raise(makeEvent(AnimationEvent(theEngine)));
 }
 
-void Engine::Data::render(float interpolation) {
+void Engine::Data::render(double interpolation) {
     events.beforeRender.raise(makeEvent(RenderEvent(theEngine, interpolation)));
     if (!skipRender) {
         GL_TRACE("BEGIN_SCENE");
@@ -244,15 +244,15 @@ void Engine::Data::handleInputEvents() {
     events.handleInput.raise(makeEvent(InputEvent(theEngine)));
 }
 
-float Engine::Data::now() {
+GameLoop::time Engine::Data::now() {
     return float(sys::queryTimer());
 }
 
-void Engine::Data::sleep(float secs) {
+void Engine::Data::sleep(GameLoop::time secs) {
     sys::sleep(secs);
 }
 
-void Engine::Data::exit(int32 exit_code) {
+void Engine::Data::atExit(int32 exit_code) {
     events.exit.raise(makeEvent(ExitEvent(theEngine, exit_code)));
 }
 

@@ -176,8 +176,8 @@ void Anim::init(const Event<InitEvent>& ev) {
                                     "setDataDir", "set the texture directory");
     engine.commandProcessor().define(setDataDirCommand);    
 
-    engine.gameLoop().ticksPerSecond(100);
-    engine.gameLoop().sync(true);
+    engine.gameLoop().ticks(100);
+    engine.gameLoop().syncDraw(true);
 
     use_spotlight = false;
     spotlight_smooth = false;

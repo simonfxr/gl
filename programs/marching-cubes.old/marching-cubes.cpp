@@ -229,7 +229,7 @@ void Anim::renderWorld() {
         glt::Uniforms(*worldProgram)
             .mandatory("depth", float(i) * invDim)
             .mandatory("worldMatrix", rm.geometryTransform().modelMatrix() * scaleM)
-            .optional("time", engine->gameLoop().gameTime());
+            .optional("time", engine->gameLoop().tickTime());
         
         unitRect.draw();
         rm.setActiveRenderTarget(0);

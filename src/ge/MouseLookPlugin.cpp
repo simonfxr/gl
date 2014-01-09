@@ -93,7 +93,7 @@ void MouseLookPlugin::Data::handleMouseMove(const Event<MouseMoved>& ev) {
     }
 }
 
-void MouseLookPlugin::Data::handleFocusChanged(const Event<FocusChanged>& ev) {
+void MouseLookPlugin::Data::handleFocusChanged(const Event<FocusChanged>&) {
     setState(Free);
 }
 

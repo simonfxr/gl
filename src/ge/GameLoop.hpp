@@ -2,98 +2,64 @@
 #define GAME_LOOP_HPP
 
 #include "ge/conf.hpp"
+#include "math/real.hpp"
 
 namespace ge {
 
 using namespace defs;
 
-class GE_API GameLoop {
-private:
+struct GE_API GameLoop {
 
-    defs::size _ticks_per_second;
-    defs::size _max_frame_skip;
-    defs::size _max_fps;
-
-    bool _running;
-    bool _exit;
-    bool _restart;
-    bool _paused;
-    bool _sync;
-    
-    float _now;
-    float _skipped_time;
-    float _start_time;
-
-    float _keepup_threshold;
-
-    float _frame_duration;
-
-    int32 _exit_code;
-
-    uint64 _animation_frame_id;
-    uint64 _render_frame_id;
-
-public:
+    typedef double time;
 
     struct Game {
         virtual ~Game() {};
         virtual void tick() = 0;
-        virtual void render(float interpolation) = 0;
+        virtual void render(double interpolation) = 0;
         virtual void handleInputEvents() = 0;
-        virtual float now() = 0;
-        virtual void sleep(float seconds) { UNUSED(seconds); }
-        virtual void exit(int32 exit_code) { UNUSED(exit_code); }
+        virtual time now() = 0;
+        virtual void sleep(time seconds) = 0;
+        virtual void atExit(int32 exit_code) { UNUSED(exit_code); }
     };
      
-    explicit GameLoop(defs::size ticks_per_second, defs::size max_frame_skip = 10, defs::size max_fps = 250);
-
-    float gameTime() const { return _now - _skipped_time - _start_time; }
+    explicit GameLoop(defs::size ticks, defs::size max_skip = 10, defs::size max_fps = 120);
+    ~GameLoop();
     
-    float realTime() const { return _now - _start_time; }
-
-    float frameDuration() const { return _frame_duration; }
-
-    defs::size ticksPerSecond() const { return _ticks_per_second; }
-
-    void ticksPerSecond(defs::size ticks) {
-        _restart = true;
-        _running = false;
-        _ticks_per_second = ticks;
-    }
-
-    void maxDrawFramesSkipped(defs::size frames) {
-        _restart = true;
-        _running = false;
-        _max_frame_skip = frames;
-    }
-
-    void maxFPS(defs::size max_fps) {
-        _restart = true;
-        _running = false;
-        _max_fps = max_fps;
-    }
-
-    void updateKeepupThreshold(float secs) {
-        _keepup_threshold = secs;
-    }
-
-    // synchronize drawing with simulation (draw every simulation frame exactly once)
-    void sync(bool yesno) {
-        _restart = true;
-        _running = false;
-        _sync = yesno;
-    }
-
-    uint64 renderFrameID() const { return _render_frame_id; }
-    uint64 animationFrameID() const { return _animation_frame_id; }
-
-    void exit(int32 exit_code = 0);
+    math::real tickTime() const;
     
-    void pause(bool pause);
+    math::real realTime() const;
+
+    math::real tickDuration() const;
+
+    defs::size ticks() const;
+    void ticks(defs::size ticks);
+
+    defs::size maxFramesSkipped() const;
+    void maxFramesSkipped(defs::size frames);
+
+    defs::size maxFPS() const;
+    void maxFPS(defs::size max_fps);
+
+    bool syncDraw() const;
+    void syncDraw(bool sync);
+
+    uint64 tickID() const;
+    uint64 frameID() const;
 
     bool paused() const;
+    void pause(bool pause = true);
+
+    void exit(int32 exit_code = 0);
 
     int32 run(Game& logic);
+
+private:
+    private:
+    GameLoop(const GameLoop&);
+    GameLoop& operator =(const GameLoop&);
+
+    struct Data;
+    Data * const self;
 };
 
 } // namespace ge

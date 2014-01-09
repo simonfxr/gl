@@ -44,7 +44,7 @@ static const float FPS_UPDATE_INTERVAL = 3.f;
 static const vec3_t BLOCK_DIM = vec3(1.f);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
-static const int32 N = 512; // 196;
+static const int32 N = 196; // 196;
 static const int32 SPHERE_POINTS_FACE = 8; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const bool OCCLUSION = false;
@@ -161,8 +161,8 @@ static void initState(State *state, const InitEv& ev) {
     e.enablePlugin(state->mouse_look);
     e.events().render.reg(makeEventHandler(renderScene, state));
 
-    e.gameLoop().ticksPerSecond(100);
-    e.gameLoop().sync(true);
+    e.gameLoop().ticks(100);
+    e.gameLoop().syncDraw(true);
 
     state->gamma_correction = 1.8f;
     
@@ -967,7 +967,7 @@ static void renderBlocks(State *state, ge::Engine& e) {
                       BLOCK_MAT.specularContribution, BLOCK_MAT.shininess);
     us.optional("materialProperties", mat);
     us.optional("gammaCorrection", state->gamma_correction);
-    us.optional("sin_time", math::sin(e.gameLoop().gameTime()));
+    us.optional("sin_time", math::sin(e.gameLoop().tickTime()));
 
     state->worldModel.drawElements();
 }

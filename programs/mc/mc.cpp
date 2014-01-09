@@ -377,8 +377,8 @@ void Anim::computeVolumeData(MCState& mc, real time) {
     M *= glt::scaleTransform(mc.cube_dim);
     M *= glt::scaleTransform(real(1) / real(N - 2));
 
-    time *= 0.2;
-    const vec4_t C = vec4(-1, 0.2 * cos(time * 0.11), sin(time * 0.1), 0);
+    time *= real(0.2);
+    const vec4_t C = vec4(-1, real(0.2) * cos(time * real(0.11)), sin(time * real(0.1)), 0);
     
     kernel_generateSphereVolume.setArg(0, mc.volume);
     kernel_generateSphereVolume.setArg(1, M);
@@ -536,7 +536,7 @@ void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
 
 void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     ge::Engine& e = ev.info.engine;
-    real time = e.gameLoop().gameTime();
+    real time = e.gameLoop().tickTime();
 
     glt::RenderManager& rm = engine.renderManager();
     rm.activeRenderTarget()->clear();

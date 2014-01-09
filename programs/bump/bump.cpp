@@ -86,7 +86,7 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>&) {
 
     vec3_t ecLight = transformPoint(rm.geometryTransform().viewMatrix(), light_position);
 
-    real phi = real(engine.gameLoop().animationFrameID()) * inverse(real(100)) * 1.3f;
+    real phi = real(engine.gameLoop().tickID()) * inverse(real(100)) * 1.3f;
 
     rm.geometryTransform().dup();
     rm.geometryTransform().scale(vec3(10.f)); // scale radius of sphere

@@ -1,179 +1,200 @@
 #include "ge/GameLoop.hpp"
+#include "err/err.hpp"
 
 namespace ge {
 
-GameLoop::GameLoop(defs::size ticks_per_second, defs::size max_frame_skip, defs::size max_fps)
-    : _ticks_per_second(ticks_per_second),
-      _max_frame_skip(max_frame_skip),
-      _max_fps(max_fps),
-      _running(true),
-      _exit(false),
-      _restart(false),
-      _paused(false),
-      _sync(false),
-      _now(0),
-      _skipped_time(0),
-      _start_time(0),
-      _keepup_threshold(0.5f),
-      _frame_duration(0),
-      _exit_code(0),
-      _animation_frame_id(0),
-      _render_frame_id(0)      
+using namespace defs;
+
+struct GameLoop::Data {
+
+    uint64 tick_id;
+    uint64 frame_id;
+    Game *game;
+
+    time clock;
+    time clock_offset;
+    time tick_time;
+    time tick_duration;
+    time frame_duration;
+
+    size max_skip;
+    
+    int32 exit_code;
+
+    bool paused;
+    bool sync_draw;
+    bool stop;
+    bool initialized;
+
+    Data();
+    time now();
+};
+
+GameLoop::time GameLoop::Data::now() {
+    return game->now() - clock_offset;
+}
+
+GameLoop::Data::Data() :
+    tick_id(0),
+    frame_id(0),
+    game(nullptr),
+    clock(0),
+    clock_offset(0),
+    tick_time(0),
+    tick_duration(time(1) / time(60)),
+    frame_duration(time(1) / time(250)),
+    max_skip(10),
+    exit_code(0),
+    paused(false),
+    sync_draw(false),
+    stop(false),
+    initialized(false)
 {}
 
+GameLoop::GameLoop(defs::size _ticks, defs::size max_skip, defs::size max_fps) :
+    self(new Data)
+{
+    ticks(_ticks);
+    maxFramesSkipped(max_skip);
+    maxFPS(max_fps);
+}
+
+GameLoop::~GameLoop() {
+    delete self;
+}
+
+math::real GameLoop::tickTime() const {
+    return math::real(self->tick_time);
+}
+
+math::real GameLoop::realTime() const {
+    return math::real(self->clock);
+}
+
+math::real GameLoop::tickDuration() const {
+    return math::real(self->frame_duration);
+}
+
+defs::size GameLoop::ticks() const {
+    return defs::size(time(1) / self->frame_duration);
+}
+
+void GameLoop::ticks(defs::size n) {
+    self->frame_duration = time(1) / time(n);
+}
+
+defs::size GameLoop::maxFramesSkipped() const {
+    return self->max_skip;
+}
+
+void GameLoop::maxFramesSkipped(defs::size max_skip) {
+    self->max_skip = max_skip;
+}
+
+defs::size GameLoop::maxFPS() const {
+    return self->frame_duration == 0 ? 0 : size(1 / self->frame_duration);
+}
+
+void GameLoop::maxFPS(defs::size max_fps) {
+    self->frame_duration = (max_fps == 0 ? time(0) : time(1) / time(max_fps));
+}
+
+bool GameLoop::syncDraw() const {
+    return self->sync_draw;
+}
+
+void GameLoop::syncDraw(bool yesno) {
+    self->sync_draw = yesno;
+}
+
+uint64 GameLoop::tickID() const {
+    return self->tick_id;
+}
+
+uint64 GameLoop::frameID() const {
+    return self->frame_id;
+}
+
 void GameLoop::exit(int32 exit_code) {
-    _running = false;
-    _restart = false;
-    _exit = true;
-    _exit_code = exit_code;
+    self->exit_code = exit_code;
+    self->stop = true;
 }
 
-int32 GameLoop::run(GameLoop::Game& logic) {
-    
-    _start_time = logic.now();
-    _skipped_time = 0.f;
-    _exit = false;
-
-    float next_game_tick = _start_time;
-    float next_draw_tick = _start_time;
-
-    enum LoopState {
-        LoopBegin,
-        LoopTick,
-        LoopRender
-    };
-
-    LoopState state = LoopBegin;
-
-    do {
-        
-        const float tick_length      = 1.f / float(_ticks_per_second);
-        const float draw_tick_length = (_sync || _max_fps == 0) ? 0.f : 1.f / float(_max_fps);
-        const index loops_max       = _sync ? 1 : _max_frame_skip == 0 ? 0xFFFFFF : _max_frame_skip;
-        const bool syncDraw = _sync;
-
-        _frame_duration = tick_length;
-        
-        int running_behind = 0;
-
-        bool reset_time = false;
-
-        index loops = 0;
-
-        _running = true;
-        _restart = false;
-
-        LoopState s1 = state;
-        state = LoopBegin;
-
-        switch (s1) {
-        case LoopBegin: break;
-        case LoopTick: goto tick;
-        case LoopRender: goto render;
-        }
-            
-        while (_running) {
-            
-            loops = 0;
-            
-            while ((_now = logic.now()) >= next_game_tick && _running) {
-
-                if (loops >= loops_max) {
-                    ++running_behind;
-                    if (float(running_behind) * tick_length < _keepup_threshold)
-                        goto behind;
-                    reset_time = true;
-                    break;
-                }
-                
-                logic.handleInputEvents();
-                    
-                if (unlikely(!_running)) {
-                    state = LoopTick;
-                    goto out;
-                }
-
-            tick:
-
-                if (likely(!_paused)) {
-                    logic.tick();
-                    ++_animation_frame_id;
-                } else {
-                    _skipped_time += tick_length;
-                }
-                
-                next_game_tick += tick_length;
-                ++loops;
-            }
-
-            running_behind = 0;
-
-        behind:;
-
-            if (unlikely(!_running)) {
-                state = LoopRender;
-                goto out;
-            }
-
-        render:
-
-            if (unlikely(_now < next_draw_tick || (syncDraw && loops == 0))) {
-                
-                bool skip_rendering;
-                float diff;
-                
-                if (!syncDraw && next_draw_tick < next_game_tick) {
-                    skip_rendering = false;
-                    diff = next_draw_tick - _now;
-                } else {
-                    skip_rendering = true;
-                    diff = next_game_tick - _now;
-                }
-
-                if (diff > 0.f)
-                    logic.sleep(diff);
-
-                if (skip_rendering)
-                    goto draw_skipped;
-            }
-            
-            if (likely(!_paused && !syncDraw)) {
-                float interpolation = (_now + tick_length - next_game_tick) / tick_length;
-                logic.render(interpolation);
-            } else {
-                logic.render(0.f);
-            }
-
-            ++_render_frame_id;            
-            next_draw_tick += draw_tick_length;
-
-        draw_skipped:
-
-            if (reset_time) {
-                reset_time = false;
-                float now = logic.now();
-                float behind = now - next_game_tick;
-                if (behind > 0.f) {
-                    _skipped_time += behind;
-                    next_game_tick = now;
-                    next_draw_tick = now;
-                }
-            }
-        }
-
-    out:;
-        
-    } while (!_exit && _restart);
-
-    return _exit_code;
-}
-
-void GameLoop::pause(bool _pause) {
-    _paused = _pause;
+void GameLoop::pause(bool paused) {
+    self->paused = paused;
 }
 
 bool GameLoop::paused() const {
-    return _paused;
+    return self->paused;
+}
+
+int32 GameLoop::run(Game& logic) {
+    self->game = &logic;
+
+    time start_time = self->game->now();
+    time next_tick = self->clock;
+    time next_draw = self->clock;
+
+    if (!self->initialized) {
+        self->initialized = true;
+        self->clock_offset = start_time;
+    } else {
+        self->clock_offset = start_time - self->clock;
+    }
+    
+    while (!self->stop) {
+
+        size lim = self->sync_draw ? 1 : self->max_skip;
+
+        for (defs::index i = 0; ; ++i) {
+            self->clock = self->now();
+            
+            if (self->clock < next_tick || i >= lim || self->stop)
+                break;
+
+            self->game->handleInputEvents();
+            if (self->stop)
+                break;
+            
+            if (!self->paused) {
+                self->game->tick();
+                ++self->tick_id;
+                self->tick_time += self->tick_duration;
+            }
+
+            next_tick += self->tick_duration;
+            
+        }
+
+        if (self->stop)
+            break;
+
+        double interpolation;
+        if (self->sync_draw || self->paused || self->clock >= next_tick)
+            interpolation = 0;
+        else
+            interpolation = 1 - (next_tick - self->clock) / self->tick_duration;
+        
+        ASSERT(interpolation >= 0);
+        ASSERT(interpolation <= 1);
+
+        self->game->render(interpolation);
+        ++self->frame_id;
+        next_draw = self->clock + self->frame_duration;
+
+        self->clock = self->now();
+
+        time diff = (next_tick < next_draw ? next_tick : next_draw) - self->clock;
+        if (diff > 0)
+            self->game->sleep(diff);
+    }
+
+    self->game->atExit(self->exit_code);
+
+    self->game = nullptr;
+    self->stop = false;
+    return self->exit_code;
 }
 
 } // namespace ge
+

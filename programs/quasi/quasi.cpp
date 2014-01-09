@@ -82,7 +82,7 @@ void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
 
 void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     ge::Engine& e = ev.info.engine;
-    real time = e.gameLoop().gameTime() + ev.info.interpolation * e.gameLoop().frameDuration();
+    real time = e.gameLoop().tickTime() + ev.info.interpolation * e.gameLoop().tickDuration();
 
     glt::RenderManager& rm = engine.renderManager();
 
