@@ -31,7 +31,7 @@ float evalFractal(vec2 x) {
     
     const float L = 1000;
     int i = 0;
-    int N = 1000;
+    int N = 200;
 
     while (i < N && dot(x, x) < L * L) {
         x = cmul(x, x) + C;

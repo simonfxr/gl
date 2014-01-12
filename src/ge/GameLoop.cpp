@@ -41,9 +41,9 @@ GameLoop::Data::Data() :
     clock(0),
     clock_offset(0),
     tick_time(0),
-    tick_duration(time(1) / time(60)),
-    frame_duration(time(1) / time(250)),
-    max_skip(10),
+    tick_duration(0),
+    frame_duration(0),
+    max_skip(0),
     exit_code(0),
     paused(false),
     sync_draw(false),
@@ -80,7 +80,7 @@ defs::size GameLoop::ticks() const {
 }
 
 void GameLoop::ticks(defs::size n) {
-    self->frame_duration = time(1) / time(n);
+    self->tick_duration = time(1) / time(n);
 }
 
 defs::size GameLoop::maxFramesSkipped() const {
@@ -144,12 +144,17 @@ int32 GameLoop::run(Game& logic) {
     
     while (!self->stop) {
 
-        size lim = self->sync_draw ? 1 : self->max_skip;
+        size lim = self->sync_draw || self->max_skip == 0 ? 1 : self->max_skip;
 
         for (defs::index i = 0; ; ++i) {
             self->clock = self->now();
-            
-            if (self->clock < next_tick || i >= lim || self->stop)
+
+            /*
+             * if sync_draw, it may be that self->clock < next_tick,
+             * make sure this doesnt happen
+             */ 
+            if ((!self->sync_draw || i > 0) &&
+                ( self->clock < next_tick || i >= lim || self->stop) )
                 break;
 
             self->game->handleInputEvents();
@@ -180,7 +185,7 @@ int32 GameLoop::run(Game& logic) {
 
         self->game->render(interpolation);
         ++self->frame_id;
-        next_draw = self->clock + self->frame_duration;
+        next_draw = (self->sync_draw ? next_tick : self->clock + self->frame_duration);
 
         self->clock = self->now();
 

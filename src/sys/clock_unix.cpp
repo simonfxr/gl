@@ -13,7 +13,7 @@ namespace sys {
 static double getTime() {
     struct timespec tv;
     
-    while (clock_gettime(CLOCK_MONOTONIC, &tv) == -1) {
+    while (clock_gettime(CLOCK_MONOTONIC_RAW, &tv) == -1) {
         if (errno == EINTR) {
             errno = 0;
         } else {

@@ -72,7 +72,7 @@ struct MCState {
 
 #define MC_SIZE_X 4
 #define MC_SIZE_Y 4
-#define MC_SIZE_Z 4
+#define MC_SIZE_Z 3
 #define NUM_MC (MC_SIZE_X * MC_SIZE_Y * MC_SIZE_Z)
 
 struct Anim {
@@ -125,6 +125,9 @@ struct Anim {
 void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     link(ev.info.engine);
     time_print_fps = 0;
+
+    engine.gameLoop().ticks(30);
+    engine.gameLoop().syncDraw(true);
 
 //    GL_CALL(glDisable, GL_CULL_FACE);
     GL_CALL(glEnable, GL_CULL_FACE);
