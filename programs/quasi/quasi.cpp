@@ -12,8 +12,6 @@
 
 #include "ge/Engine.hpp"
 
-static const bool MULTISAMPLING = false; // via multisample texture
-
 using namespace math;
 
 struct Vertex {
@@ -26,7 +24,6 @@ DEFINE_VERTEX_DESC(Vertex,
 struct Anim {
     ge::Engine engine;
     glt::CubeMesh<Vertex> quadBatch;
-    Ref<glt::TextureRenderTarget> render_texture;
 
     float time_print_fps;
     
@@ -34,8 +31,6 @@ struct Anim {
     void link(ge::Engine& e);
     void animate(const ge::Event<ge::AnimationEvent>&);
     void renderScene(const ge::Event<ge::RenderEvent>&);
-    
-    void handleWindowResized(const ge::Event<ge::WindowResized>& ev);
 };
 
 void Anim::init(const ge::Event<ge::InitEvent>& ev) {
@@ -53,16 +48,11 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
         quadBatch.send();
     }
 
-    if (MULTISAMPLING) {
-        size w = engine.window().windowWidth();
-        size h = engine.window().windowHeight();
-        glt::TextureRenderTarget::Params ps;
-        ps.samples = NUM_SAMPLES;
-        ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
-        render_texture = makeRef(new glt::TextureRenderTarget(w, h, ps));
-        engine.renderManager().setDefaultRenderTarget(render_texture.ptr());
-
+    ge::GLContextInfo context_info;
+    engine.window().contextInfo(context_info);
+    if (context_info.antialiasingLevel > 0) {
         GL_CALL(glEnable, GL_MULTISAMPLE);
+        engine.out() << "enableing multisampling" << sys::io::endl;
     }
 
     GL_CALL(glDisable, GL_DEPTH_TEST);
@@ -73,7 +63,6 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
 void Anim::link(ge::Engine& e) {
     e.events().animate.reg(ge::makeEventHandler(this, &Anim::animate));
     e.events().render.reg(ge::makeEventHandler(this, &Anim::renderScene));
-    e.window().events().windowResized.reg(ge::makeEventHandler(this, &Anim::handleWindowResized));
 }
 
 void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
@@ -83,13 +72,6 @@ void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
 void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     ge::Engine& e = ev.info.engine;
     real time = e.gameLoop().tickTime() + ev.info.interpolation * e.gameLoop().tickDuration();
-
-    glt::RenderManager& rm = engine.renderManager();
-
-    if (MULTISAMPLING) {
-        rm.setActiveRenderTarget(render_texture.ptr());
-        render_texture->clear();
-    }
 
     Ref<glt::ShaderProgram> renderShader = e.shaderManager().program("render");
     ASSERT(renderShader);
@@ -102,19 +84,7 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
 
     quadBatch.draw();
 
-    if (MULTISAMPLING) {
-        rm.setActiveRenderTarget(&engine.window().renderTarget());
-        Ref<glt::ShaderProgram> postproc = e.shaderManager().program("postproc");
-        ASSERT(postproc);
-
-        postproc->use();
-
-        render_texture->sampler().bind(0);
-        glt::Uniforms(*postproc)
-            .optional("texture0", glt::Sampler(render_texture->sampler(), 0));
-        quadBatch.draw();
-    }
-
+    time = e.gameLoop().realTime();
     if (time >= time_print_fps) {
         time_print_fps = time + 1.f;
 
@@ -125,16 +95,6 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
         double max = INV(fs.min);
         double avg = INV(fs.avg);
         engine.out() << "Timings (FPS/Render Avg/Render Min/Render Max): " << fps << "; " << avg << "; " << min << "; " << max << sys::io::endl;
-    }
-}
-
-void Anim::handleWindowResized(const ge::Event<ge::WindowResized>& ev) {
-    if (MULTISAMPLING) {
-        size w = ev.info.window.windowWidth();
-        size h = ev.info.window.windowHeight();
-        engine.renderManager().setActiveRenderTarget(0);
-        render_texture->resize(w, h);
-        engine.renderManager().setDefaultRenderTarget(render_texture.ptr());
     }
 }
 
