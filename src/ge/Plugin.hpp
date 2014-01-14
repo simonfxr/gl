@@ -5,8 +5,8 @@
 
 namespace ge {
 
-struct GE_API Engine;
-struct GE_API CommandProcessor;
+struct Engine;
+struct CommandProcessor;
 
 struct GE_API Plugin {
     Plugin();

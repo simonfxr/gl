@@ -122,7 +122,7 @@ std::string absolutePath(const std::string& path) {
     return st.absolute;
 }
 
-bool modificationTime(const std::string& path, sys::fs::ModificationTime *mtime) {
+bool modificationTime(const std::string& path, sys::fs::FileTime *mtime) {
     ASSERT(mtime);
     Stat st;
     if (!stat(path, &st))

@@ -32,16 +32,16 @@ std::string stringError(Type) {
 
 }
 
-namespace {
+#define NULL_SHADER_SOURCE Ref<ShaderSource>()
+#define NULL_SHADER_OBJECT Ref<ShaderObject>()
+#define NULL_SHADER_CACHE  Ref<ShaderCache>()
 
-const Ref<ShaderSource> NULL_SHADER_SOURCE;
-const Ref<ShaderObject> NULL_SHADER_OBJECT;
-Ref<ShaderCache> NULL_SHADER_CACHE;
+namespace {
 
 std::string hash(const std::string&);
 
 struct ShaderTypeMapping {
-    std::string fileExtension;
+    const char *fileExtension;
     ShaderManager::ShaderType type;
     GLenum glType;
 };
@@ -72,8 +72,8 @@ struct StringShaderObject : public ShaderObject {
 };
 
 struct FileShaderObject : public ShaderObject {
-    sys::fs::ModificationTime mtime;
-    FileShaderObject(const Ref<FileSource>& src, sys::fs::ModificationTime _mtime, GLuint hndl) :
+    sys::fs::FileTime mtime;
+    FileShaderObject(const Ref<FileSource>& src, sys::fs::FileTime _mtime, GLuint hndl) :
         ShaderObject(src, hndl), mtime(_mtime) {}
 
     virtual ReloadState needsReload() FINAL OVERRIDE;
@@ -132,7 +132,7 @@ void initPreprocessor(ShaderCompiler& compiler, GLSLPreprocessor& proc) {
 
 ReloadState includesNeedReload(const ShaderIncludes& incs) {
     for (index i = 0; i < SIZE(incs.size()); ++i) {
-        sys::fs::ModificationTime mtime;
+        sys::fs::FileTime mtime;
         if (!sys::fs::modificationTime(incs[size_t(i)].first, &mtime))
             return ReloadFailed;
         if (mtime != incs[size_t(i)].second)
@@ -253,7 +253,7 @@ ReloadState StringShaderObject::needsReload() {
 ReloadState FileShaderObject::needsReload() {
     Ref<FileSource>& filesource = source.cast<FileSource>();
     
-    sys::fs::ModificationTime current_mtime;
+    sys::fs::FileTime current_mtime;
     if (!sys::fs::modificationTime(filesource->filePath(), &current_mtime))
         return ReloadFailed;
 
@@ -310,7 +310,7 @@ Ref<ShaderObject> FileSource::load(Ref<ShaderSource>& _self, CompileState& cstat
         return NULL_SHADER_OBJECT;
     }
 
-    sys::fs::ModificationTime mtime;
+    sys::fs::FileTime mtime;
     if (!sys::fs::modificationTime(filePath(), &mtime)) {
         COMPILER_ERR_MSG(cstate, ShaderCompilerError::FileNotFound, "couldnt query mtime");
         return NULL_SHADER_OBJECT;
@@ -490,7 +490,7 @@ bool ShaderCompiler::guessShaderType(const std::string& path, ShaderManager::Sha
     std::string ext = sys::fs::extension(path);
     
     for (uint32 i = 0; i < ARRAY_LENGTH(shaderTypeMappings); ++i) {
-        if (shaderTypeMappings[i].fileExtension.compare(ext) == 0) {
+        if (ext.compare(shaderTypeMappings[i].fileExtension) == 0) {
             *res = shaderTypeMappings[i].type;
             return true;
         }

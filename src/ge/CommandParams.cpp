@@ -1,5 +1,5 @@
 #include "ge/CommandParams.hpp"
-#include "data/SharedArray.hpp"
+#include "data/StaticArray.hpp"
 
 #ifdef CONST_ARRAY
 #define PARAM_ARRAY(...) CONST_ARRAY(ge::CommandParamType, __VA_ARGS__)
@@ -11,7 +11,7 @@
 
 namespace ge {
 
-const SharedArray<CommandParamType> NULL_PARAMS(0, 0);
+const Array<CommandParamType> NULL_PARAMS = ARRAY_INITIALIZER(CommandParamType);
 
 DEFINE_PARAM_ARRAY(KEY_COM_PARAMS, KeyComboParam, CommandParam);
 
@@ -28,17 +28,6 @@ DEFINE_PARAM_ARRAY(INT_PARAMS, IntegerParam);
 DEFINE_PARAM_ARRAY(STR_PARAMS, StringParam);
 
 DEFINE_PARAM_ARRAY(STR_INT_PARAMS, StringParam, IntegerParam);
-
-void initParams() {
-    // P(NULL_PARAMS);
-    // P(KEY_COM);
-    // P(NUM_NUM_NUM);
-    // P(COM);
-    // P(LIST);
-    // P(NUM);
-    // P(INT);
-    // P(STR);
-}
 
 } // namespace ge
 

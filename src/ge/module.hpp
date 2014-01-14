@@ -14,8 +14,16 @@ struct GameWindowInit {
     ~GameWindowInit();
 };
 
+struct KeyBindingState {
+    KeyBindingState();
+    ~KeyBindingState();
+    struct Data;
+    Data * const self;
+};
+
 struct Module {
-    GameWindowInit __game_window_init; 
+    GameWindowInit __game_window_init;
+    KeyBindingState key_binding;
 };
 
 extern Module * GE_MODULE_ACCESS module;

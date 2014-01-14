@@ -428,15 +428,6 @@ void Anim::computeHistogram(MCState& mc) {
                           origin, cube, 0, 0, mc.count, 0, &mc.readHistoJob);
 }
 
-static double eventExecutionTime(cl::Event& ev) {
-    cl_ulong t0, t1;
-    ev.getProfilingInfo(CL_PROFILING_COMMAND_START, &t0);
-    ev.getProfilingInfo(CL_PROFILING_COMMAND_END, &t1);
-    t1 -= t0;
-    return double(t1) * 1e-9;
-}
-
-
 void Anim::constructVertices0(MCState& mc) {
     if (!mc.init)
         return;

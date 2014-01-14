@@ -1,4 +1,5 @@
 #include "ge/KeyBinding.hpp"
+#include "ge/module.hpp"
 
 #include <map>
 
@@ -6,13 +7,22 @@ namespace ge {
 
 using namespace defs;
 
-struct StaticInit {
+struct KeyBindingState::Data {
     const char *table[keycode::Count];
     std::map<std::string, KeyCode> revtable;
-    StaticInit();
+    
+    Data();
 };
 
-static const StaticInit global;
+KeyBindingState::KeyBindingState() :
+    self(new Data)
+{}
+
+KeyBindingState::~KeyBindingState() {
+    delete self;
+}
+
+#define global (*module->key_binding.self)
 
 const char *keycodeStrings(KeyCode code) {
 #define K(k) case keycode::k: return #k
@@ -132,7 +142,7 @@ const char *keycodeStrings(KeyCode code) {
 #undef K
 }
 
-StaticInit::StaticInit() {
+KeyBindingState::Data::Data() {
     for (uint32 i = 0; i < keycode::Count; ++i)
         table[i] = keycodeStrings(KeyCode(i));
 

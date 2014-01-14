@@ -49,8 +49,20 @@ struct Camera::Data {
 
 namespace {
 
-const Array<vec3_t> *the_dir_table;
-const Array<vec3_t> &dirTable();
+const math::real the_dir_table[3 * 12] = {
+    0.5f, 0.f, -0.8660254037844386f,
+    0.8660254037844387f, 0.f, -0.5f,
+    1.f, 0.f, 0.f,
+    0.8660254037844384f, 0.f, 0.5f,
+    0.5f, 0.f, 0.8660254037844386f,
+    0.f, 0.f, 1.f,
+    -0.5f, 0.f, 0.8660254037844384f,
+    -0.8660254037844386f, 0.f, 0.5f,
+    -1.f, 0.f, 0.f,
+    -0.8660254037844387f, 0.f, -0.5f,
+    -0.5f, 0.f, -0.8660254037844387f,
+    0.f, 0.f, -1.f
+};
 
 } // namespace anon
 
@@ -103,7 +115,7 @@ void Camera::Data::runMove(const Event<CommandEvent>&, const Array<CommandArg>& 
         ERR("argument not >= 1 and <= 12");
         return;
     }
-    _step_accum += dirTable()[SIZE(dir - 1)];
+    _step_accum += vec3(&the_dir_table[3 * (dir - 1)]);
 }
 
 void Camera::Data::runSaveFrame(const Event<CommandEvent>&, const Array<CommandArg>& args) {
@@ -115,6 +127,7 @@ void Camera::Data::runSaveFrame(const Event<CommandEvent>&, const Array<CommandA
         path = args[0].string;
     else {
         ERR("invalid parameters: expect 0 or 1 filepath");
+        return;
     }
     
     std::ofstream out(path->c_str());
@@ -135,6 +148,7 @@ void Camera::Data::runLoadFrame(const Event<CommandEvent>&, const Array<CommandA
         path = args[0].string;
     else {
         ERR("invalid parameters: expect 0 or 1 filepath");
+        return;
     }
 
     std::ifstream in(path->c_str());
@@ -191,28 +205,6 @@ void Camera::Data::mouseMoved(Camera *cam, index16 dx, index16 dy) {
         self->_frame.rotateWorld(re.info.allowed_angle[1], vec3(0.f, 1.f, 0.f));
     }
 }
-
-namespace {
-
-const Array<vec3_t>& dirTable() {
-    if (the_dir_table == 0) {
-        Array<vec3_t> &dirs = *new Array<vec3_t>(12);
-        the_dir_table = &dirs;
-        
-        for (defs::index i = 0; i < 12; ++i)
-            dirs[i] = vec3(0.f);
-        
-        dirs[11] = vec3(0.f, 0.f, -1.f);
-        dirs[5]  = vec3(0.f, 0.f, +1.f);
-        dirs[2]  = vec3(+1.f, 0.f, 0.f);
-        dirs[8]  = vec3(-1.f, 0.f, 0.f);
-        
-        // TODO: add all the clock directions
-    }
-    return *the_dir_table;
-}
-
-} // namespace anon
 
 Camera::Camera() :
     self(new Data(this))

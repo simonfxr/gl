@@ -11,6 +11,8 @@
 
 namespace ge {
 
+extern GE_API const Array<CommandArg> NULL_ARGS;
+
 struct CommandProcessor;
 struct QuotationCommand;
 
@@ -37,8 +39,6 @@ public:
     virtual void handle(const Event<CommandEvent>& ev);
     virtual QuotationCommand *castToQuotation() { return 0; }
 };
-
-extern GE_API Array<CommandArg> NULL_ARGS;
 
 struct GE_API QuotationCommand : public Command {
     Quotation * const quotation;

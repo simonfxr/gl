@@ -20,9 +20,16 @@ namespace fs {
 
 using namespace defs;
 
-struct ModificationTime;
+// unix time stamp
+struct FileTime {
+    uint32 seconds;
+};
 
-extern SYS_API const ModificationTime MIN_MODIFICATION_TIME;
+namespace {
+
+const ATTRS(ATTR_NO_WARN_UNUSED_DEF) FileTime MIN_FILE_TIME = { 0 };
+
+} // namespace
 
 enum ObjectType {
     File,
@@ -32,7 +39,7 @@ enum ObjectType {
 struct Stat {
     ObjectType type;
     std::string absolute;
-    ModificationTime mtime;
+    FileTime mtime;
 
     Stat() :
         type(), absolute(), mtime() {}
@@ -54,7 +61,7 @@ SYS_API std::string dropTrailingSeparators(const std::string& path);
 
 SYS_API bool isAbsolute(const std::string& path);
 
-SYS_API bool modificationTime(const std::string& path, sys::fs::ModificationTime *mtime);
+SYS_API bool modificationTime(const std::string& path, sys::fs::FileTime *mtime);
 
 SYS_API bool stat(const std::string& path, sys::fs::Stat *stat);
 
@@ -64,13 +71,18 @@ SYS_API std::string lookup(const std::vector<std::string>&, const std::string&);
 
 SYS_API bool exists(const std::string& path, ObjectType *type);
 
-SYS_API bool operator ==(const ModificationTime& a, const ModificationTime& b);
-SYS_API bool operator <(const ModificationTime& a, const ModificationTime& b);
+inline bool operator ==(const FileTime& a, const FileTime& b) {
+    return a.seconds == b.seconds;
+}
 
-inline bool operator !=(const ModificationTime& a, const ModificationTime& b) {  return !(a == b); }
-inline bool operator <=(const ModificationTime& a, const ModificationTime& b) { return a < b || a == b; }
-inline bool operator >=(const ModificationTime& a, const ModificationTime& b) { return !(a < b); }
-inline bool operator >(const ModificationTime& a, const ModificationTime& b) { return !(a <= b); }
+inline bool operator <(const FileTime& a, const FileTime& b) {
+    return a.seconds < b.seconds;
+}
+
+inline bool operator !=(const FileTime& a, const FileTime& b) {  return !(a == b); }
+inline bool operator <=(const FileTime& a, const FileTime& b) { return a < b || a == b; }
+inline bool operator >=(const FileTime& a, const FileTime& b) { return !(a < b); }
+inline bool operator >(const FileTime& a, const FileTime& b) { return !(a <= b); }
 
 // default implementations
 namespace def {
@@ -91,7 +103,7 @@ SYS_API std::string lookup(const std::vector<std::string>& dirs, const std::stri
 
 SYS_API std::string absolutePath(const std::string&);
 
-SYS_API bool modificationTime(const std::string& path, sys::fs::ModificationTime *);
+SYS_API bool modificationTime(const std::string& path, sys::fs::FileTime *);
 
 }
 

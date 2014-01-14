@@ -5,7 +5,7 @@
 
 namespace math {
 
-struct vec3_t {
+struct ATTRS(ATTR_PACKED) vec3_t {
     static const defs::size size = 3;
     static const defs::size padded_size = 3;
     typedef real component_type;

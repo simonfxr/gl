@@ -54,7 +54,7 @@ struct KeyHandler::Data {
     Data(CommandProcessor& proc);
 };
 
-static Ref<Command> NULL_COMMAND;
+#define NULL_COMMAND Ref<Command>()
 
 KeyHandler::Data::Data(CommandProcessor& proc) :
     processor(proc), frame_id(1)

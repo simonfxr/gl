@@ -63,7 +63,7 @@ struct SphereLOD {
 
 // dont change layout (directly mapped to texture)
 struct SphereInstance {
-    point3_t pos;
+    vec3_t pos;
     float rad;
     vec3_t col_rgb;
     float shininess;

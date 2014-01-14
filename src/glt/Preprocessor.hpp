@@ -69,7 +69,7 @@ struct GLT_API Preprocessor {
     bool wasError() const;
     bool clearError();
 
-    static DirectiveHandler& nullHandler();
+//    static DirectiveHandler& nullHandler();
 
 private:
 

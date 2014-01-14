@@ -140,7 +140,7 @@ void runBindShader(const Event<CommandEvent>& e, const Array<CommandArg>& args) 
         return;
     }
 
-    if (!args[0].type == String) {
+    if (args[0].type != String) {
         ERR(e.info.engine.out(), "bindShader: first argument not a string");
         return;
     }

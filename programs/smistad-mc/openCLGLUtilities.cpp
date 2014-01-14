@@ -64,7 +64,7 @@ cl::Context createCLGLContext(cl_device_type type, cl_vendor vendor) {
 }
 
 
-cl::Device getValidGLCLInteropDevice(cl::Platform platform, cl_context_properties* properties) {
+cl::Device getValidGLCLInteropDevice(cl::Platform, cl_context_properties* properties) {
     // Function for finding a valid device for CL-GL context. 
     // Thanks to Jim Vaughn for this contribution
 	cl::Device displayDevice;

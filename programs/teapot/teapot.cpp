@@ -26,6 +26,8 @@
 #include "parse_sply.hpp"
 #include "dump_bmp.h"
 
+#include <vector>
+
 #define RENDER_GLOW 1
 // #define RENDER_NOGLOW 1
 
@@ -90,7 +92,7 @@ struct Anim {
     ge::Engine& engine;
     ge::Camera camera;
     ge::MouseLookPlugin mouse_look;
-    Array<float> glow_kernel;
+    std::vector<float> glow_kernel;
     
     CubeMesh groundModel;
     CubeMesh teapotModel;
@@ -164,6 +166,8 @@ void Anim::link(const Event<InitEvent>& e) {
 }
 
 void Anim::init(const Event<InitEvent>& ev) {
+
+    engine.out() << "in init()" << sys::io::endl;
 
     mouse_look.camera(&camera);
     engine.enablePlugin(camera);
@@ -275,7 +279,7 @@ void Anim::init(const Event<InitEvent>& ev) {
     {
         const size N = KERNEL_SIZE;
         const float N2 = float(N - 1) * 0.5f;
-        for (index i = 0; i < glow_kernel.size(); ++i) {
+        for (index i = 0; i < SIZE(glow_kernel.size()); ++i) {
             float x = float(i) - N2;
 
             const float SIG = 0.84089642;
@@ -383,12 +387,13 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     ASSERT(glow_pass1);
     glow_pass1->use();
 
+    Array<float> kernel = { SIZE(glow_kernel.size()), &glow_kernel[0] };
     for (int pass = 0; pass < 3; ++pass) {
         engine.renderManager().setActiveRenderTarget(to.ptr());
         from->sampler().bind(0);
         glt::Uniforms(*glow_pass1)
             .mandatory("texture0", glt::Sampler(from->sampler(), 0))
-            .optional("kernel", glow_kernel)
+            .optional("kernel", kernel)
             .optional("texMat", texMat0);
         screenQuad.draw();
         from->sampler().unbind(0);
@@ -397,7 +402,7 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
         to->sampler().bind(0);
         glt::Uniforms(*glow_pass1)
             .mandatory("texture0", glt::Sampler(to->sampler(), 0))
-            .optional("kernel", glow_kernel)
+            .optional("kernel", kernel)
             .optional("texMat", texMat1);
         screenQuad.draw();
         to->sampler().unbind(0);

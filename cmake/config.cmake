@@ -98,7 +98,7 @@ if(USE_NO_MATH_H)
 endif()
 
 if(COMP_CLANG)
-  add_definitions(-Wglobal-constructors)
+#  add_definitions(-Wglobal-constructors)
 endif()
 
 if(COMP_CLANG AND USE_CLANG_TRAP_UNDEFINED)

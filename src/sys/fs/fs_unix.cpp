@@ -14,10 +14,6 @@ namespace sys {
 
 namespace fs {
 
-STATIC_ASSERT(sizeof(time_t) == sizeof(ModificationTime::time_t));
-    
-const ModificationTime MIN_MODIFICATION_TIME = {};
-
 bool cwd(const std::string& dir) {
 
     if (chdir(dir.c_str()) < 0) {
@@ -151,7 +147,7 @@ bool stat(const std::string& path, sys::fs::Stat *stat) {
     return modificationTime(path, &stat->mtime);
 }
 
-bool modificationTime(const std::string& path, sys::fs::ModificationTime *mtime) {
+bool modificationTime(const std::string& path, sys::fs::FileTime *mtime) {
     ASSERT(mtime);
     
     struct stat st;
@@ -160,7 +156,7 @@ bool modificationTime(const std::string& path, sys::fs::ModificationTime *mtime)
         return false;
     }
 
-    mtime->timestamp = st.st_mtime;
+    mtime->seconds = st.st_mtime;
     return true;
 }
 
@@ -176,14 +172,6 @@ bool exists(const std::string& path, ObjectType *type) {
     int objtype = info.st_mode & S_IFMT;
     *type = objtype == S_IFDIR ? Directory : File;
     return true;
-}
-
-bool operator ==(const ModificationTime& a, const ModificationTime& b) {
-    return a.timestamp == b.timestamp;
-}
-
-bool operator <(const ModificationTime& a, const ModificationTime& b) {
-    return a.timestamp < b.timestamp;
 }
 
 } // namespace fs

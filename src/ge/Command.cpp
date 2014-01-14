@@ -2,7 +2,6 @@
 #include <vector>
 
 #include "data/Array.hpp"
-#include "data/SharedArray.hpp"
 
 #include "ge/Command.hpp"
 #include "ge/Engine.hpp"
@@ -10,7 +9,7 @@
 
 namespace ge {
 
-Array<CommandArg> NULL_ARGS = Array<CommandArg>();
+const Array<CommandArg> NULL_ARGS = ARRAY_INITIALIZER(CommandArg);
 
 std::string Command::name() const {
     if (!namestr.empty())
@@ -31,10 +30,11 @@ Command::Command(const Array<CommandParamType>& ps, const std::string name, cons
 }
 
 void Command::handle(const Event<CommandEvent>& ev) {
-    if (params.size() == 0 || params[params.size() - 1] == ListParam)
+    if (params.size() == 0 || params[params.size() - 1] == ListParam) {
         interactive(ev, NULL_ARGS);
-    else
+    } else {
         ERR("cannot execute command without arguments: " + name());
+    }
 }
 
 std::string Command::interactiveDescription() const {
@@ -92,8 +92,8 @@ QuotationCommand::~QuotationCommand() {
 
 void QuotationCommand::interactive(const Event<CommandEvent>& ev, const Array<CommandArg>&) {
     for (uint32 ip = 0; ip < quotation->size(); ++ip) {
-        std::vector<CommandArg>& arg_vec = quotation->operator[](ip);
-        SharedArray<CommandArg> args(SIZE(arg_vec.size()), &arg_vec[0]);
+        const std::vector<CommandArg>& arg_vec = quotation->operator[](ip);
+        OwnedArray<CommandArg> args(SIZE(arg_vec.size()), &arg_vec[0]);
         ev.info.engine.commandProcessor().exec(args);
     }
 }

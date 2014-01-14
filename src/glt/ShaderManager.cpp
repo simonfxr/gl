@@ -8,11 +8,7 @@
 
 namespace glt {
 
-namespace {
-
-const Ref<ShaderProgram> NULL_PROGRAM_REF;
-
-} // namespace anon
+#define NULL_PROGRAM_REF Ref<ShaderProgram>()
 
 typedef std::map<std::string, Ref<ShaderProgram> > ProgramMap;
 

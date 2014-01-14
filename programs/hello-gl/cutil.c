@@ -1,3 +1,5 @@
+#include "defs.h"
+
 #include <GL/glew.h>
 #include <math.h>
 #include <stdio.h>
@@ -36,7 +38,7 @@ static short le_short(unsigned char *bytes)
 
 void *read_tga(const char *filename, int *width, int *height)
 {
-    struct tga_header {
+    struct ATTRS(ATTR_PACKED) tga_header {
        char  id_length;
        char  color_map_type;
        char  data_type_code;
@@ -99,10 +101,10 @@ void *read_tga(const char *filename, int *width, int *height)
     pixels_size = *width * *height * (header.bits_per_pixel/8);
     pixels = malloc(pixels_size);
 
-    read = fread(pixels, 1, pixels_size, f);
+    read = fread(pixels, pixels_size, 1, f);
     fclose(f);
 
-    if (read != pixels_size) {
+    if (read != 1) {
         fprintf(stderr, "%s has incomplete image\n", filename);
         free(pixels);
         return NULL;
@@ -110,4 +112,3 @@ void *read_tga(const char *filename, int *width, int *height)
 
     return pixels;
 }
-

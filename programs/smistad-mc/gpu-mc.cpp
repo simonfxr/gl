@@ -51,8 +51,8 @@ void mouseMovement(int x, int y) {
     glutWarpPointer(cx, cy); //Bring the cursor to the middle
 }
 
-void renderBitmapString(float x, float y, void *font, char *string) {  
-    char *c;
+void renderBitmapString(float x, float y, void *font, const char *string) {  
+    const char *c;
     glRasterPos2f(x, y);
     for(c = string; *c != '\0'; c++) {
         glutBitmapCharacter(font, *c);
@@ -68,7 +68,7 @@ void drawFPSCounter(int sum) {
 
     int time = glutGet(GLUT_ELAPSED_TIME);
 	if (time - timebase > 1000) { // 1 times per second
-		sprintf(s,"Triangles: %d FPS: %4.2f. Speed: %d ms. Isovalue: %4.3f", sum, frame*1000.0/(time-timebase), (int)round(time - previousTime), (float)isolevel / 255.0f);
+            sprintf(s,"Triangles: %d FPS: %4.2lf. Speed: %d ms. Isovalue: %4.3lf", sum, frame*1000.0/(time-timebase), (int)round(time - previousTime), isolevel / 255.0);
 		timebase = time;
 		frame = 0;
 	}
@@ -269,7 +269,7 @@ void setupOpenGL(int * argc, char ** argv, int size, int sizeX, int sizeY, int s
     extractSurfaceOnEveryFrame = false;
 }
 
-void keyboard(unsigned char key, int x, int y) {
+void keyboard(unsigned char key, int, int) {
 	switch(key) {
 		case '+':
 			isolevel ++;

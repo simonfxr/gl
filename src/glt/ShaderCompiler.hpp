@@ -29,7 +29,7 @@ typedef std::set<ShaderSourceKey> QueuedJobs;
 typedef std::map<ShaderSourceKey, WeakRef<ShaderObject> > ShaderCacheEntries;
 typedef std::map<ShaderSourceKey, Ref<ShaderObject> > ShaderObjects;
 typedef std::vector<std::string> IncludePath;
-typedef std::pair<std::string, sys::fs::ModificationTime> ShaderInclude;
+typedef std::pair<std::string, sys::fs::FileTime> ShaderInclude;
 typedef std::vector<ShaderInclude> ShaderIncludes;
 typedef std::string ShaderSourceFilePath; // absolute path
 typedef std::vector<Ref<ShaderSource> > ShaderDependencies;

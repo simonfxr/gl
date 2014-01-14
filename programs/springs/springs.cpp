@@ -10,7 +10,7 @@
 #include "glt/Uniforms.hpp"
 #include "glt/GLPerfCounter.hpp"
 
-#include "data/SharedArray.hpp"
+// #include "data/Array.hpp"
 
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
@@ -247,7 +247,7 @@ void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
 
     real dt = engine.gameLoop().tickDuration();
     real damp_coeff = real(0.99); // damping over the period of 1 sec;
-    real damping = pow(damp_coeff, dt);
+//    real damping = pow(damp_coeff, dt);
     glt::Uniforms(*physics_prog)
         .optional("dt", dt)
         .optional("D", 1.f)

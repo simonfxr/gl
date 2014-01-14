@@ -5,12 +5,12 @@
 
 #include <stdio.h>
 
-static void APIENTRY gl_arb_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char* message, void* userParam) {
+static void APIENTRY gl_arb_debug_callback(GLenum /* source */, GLenum /* type */, GLuint /* id */, GLenum /* severity */, GLsizei /* length */, const char* message, void *userParam) {
     FILE *log = reinterpret_cast<FILE *>(userParam);
     fprintf(log, "GL message: %s\n", message);
 }
 
-int main(int argc, const char *argv[]) {
+int main() {
 
     FILE *log = fopen("log.txt", "a");
     int ret = 0;

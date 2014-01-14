@@ -156,7 +156,7 @@ struct Key {
     }
 };
 
-typedef Array<Key> KeyBinding;
+typedef OwnedArray<Key> KeyBinding;
 
 GE_API const char *prettyKeyCode(KeyCode code);
 

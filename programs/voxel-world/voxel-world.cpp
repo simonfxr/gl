@@ -815,10 +815,10 @@ static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points)
     CubeMesh cubeModel;
     glt::primitives::unitCube(cubeModel);
 
-    std::auto_ptr<World> worldp(new World);
+    Ref<World> worldp(new World);
     World& world = *worldp;
 
-    std::auto_ptr<Densities> densitiesp(new Densities);
+    Ref<Densities> densitiesp(new Densities);
 
     world.zero();
 
@@ -845,14 +845,14 @@ static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points)
     
     time_op(createGeometry(world, *densitiesp));
     
-    std::auto_ptr<Rays> raysp(new Rays);
+    Ref<Rays> raysp(new Rays);
     Rays& rays = *raysp;
     time_op(initRays(rays, sphere_points));
     sys::io::stderr() << "rays crossing planes: " << rays.sumcos.f[0] << ", " << rays.sumcos.f[1] << sys::io::endl;
 
     World *visptmp;
     time_op(visptmp = filterOccluded(world));
-    std::auto_ptr<World> visp(visptmp);
+    Ref<World> visp(visptmp);
     World& vis = *visp;
 
     uint32 permut[N];
@@ -866,15 +866,15 @@ static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points)
         permut[i + j] = t;
     }
 
-    std::auto_ptr<World> worldAndVisp(new World);
+    Ref<World> worldAndVisp(new World);
     World& worldAndVis = *worldAndVisp;
     andWorld(worldAndVis, world, vis);
 
-    std::auto_ptr<World> worldOrVisp(new World);
+    Ref<World> worldOrVisp(new World);
     World& worldOrVis = *worldOrVisp;
     orWorldNot(worldOrVis, world, vis);
 
-    std::auto_ptr<World> hullp(new World);
+    Ref<World> hullp(new World);
     World& hull = *hullp;
 
     for (int32 i = 0; i < N; ++i)
@@ -895,7 +895,7 @@ static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points)
         
     Stats stats;
         
-    std::auto_ptr<Vertices> vertsp(new Vertices(cubeModel.size()));
+    Ref<Vertices> vertsp(new Vertices(cubeModel.size()));
     Vertices& verts = *vertsp;
     
     for (uint32 i = 0; i < verts.size; ++i)

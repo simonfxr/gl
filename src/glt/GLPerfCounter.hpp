@@ -17,7 +17,7 @@ struct GLT_API GLPerfCounter {
         GLQueryObject end;
     };
     
-    Array<Counter> _queries;
+    OwnedArray<Counter> _queries;
     defs::index _active_query;
     double _last_query;
 

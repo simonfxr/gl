@@ -4,8 +4,6 @@
 #include "ge/Tokenizer.hpp"
 #include "ge/Engine.hpp"
 
-#include "data/SharedArray.hpp"
-
 #include "err/err.hpp"
 
 #include "sys/fs.hpp"
@@ -15,7 +13,7 @@
 
 namespace ge {
 
-const Ref<Command> NULL_COMMAND_REF;
+#define NULL_COMMAND_REF Ref<Command>()
 
 typedef std::map<std::string, Ref<Command> > CommandMap;
     
@@ -101,7 +99,7 @@ bool CommandProcessor::exec(Array<CommandArg>& args) {
     } else if (args[0].type == CommandRef) {
         com_name = args[0].command.name;
         comm = *args[0].command.ref;
-        if (!comm && com_name->empty()) {
+        if (!comm && !com_name->empty()) {
             comm = command(*com_name);
         }
     } else {
@@ -117,7 +115,7 @@ bool CommandProcessor::exec(Array<CommandArg>& args) {
         }
     }
 
-    SharedArray<CommandArg> argsArr(args.size() - 1, &args[1]);
+    Array<CommandArg> argsArr = SHARE_ARRAY(args.size() - 1, &args[1]);
     bool ok = exec(comm, argsArr, *com_name);
     return ok;
 }
@@ -283,10 +281,10 @@ bool CommandProcessor::evalCommand(const std::string& cmd) {
 
 bool CommandProcessor::execCommand(std::vector<CommandArg>& args) {
     if (args.size() > 0) {
-        SharedArray<CommandArg> com_args(SIZE(args.size()), &args[0]);
+        Array<CommandArg> com_args = SHARE_ARRAY(SIZE(args.size()), &args[0]);
         return execCommand(com_args);
     } else {
-        SharedArray<CommandArg> com_args(0, 0);
+        Array<CommandArg> com_args = ARRAY_INITIALIZER(CommandArg);
         return execCommand(com_args);
     }
 }

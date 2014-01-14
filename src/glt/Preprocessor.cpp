@@ -6,12 +6,6 @@
 
 namespace glt {
 
-namespace {
-
-Preprocessor::DirectiveHandler nullHandler;
-
-} // namespace anon
-
 Preprocessor::DirectiveHandler::~DirectiveHandler() {}
 
 void Preprocessor::DirectiveHandler::beginProcessing(const Preprocessor::ContentContext& ctx) {
@@ -27,6 +21,7 @@ void Preprocessor::DirectiveHandler::directiveEncountered(const Preprocessor::Di
 }
 
 struct Preprocessor::Data {
+    Preprocessor::DirectiveHandler nullHandler;
     Preprocessor::DirectiveHandler *defaultHandler;
     bool errorState;
     sys::io::OutStream  *out;
@@ -34,7 +29,8 @@ struct Preprocessor::Data {
     std::string sourceName;
     
     Data() :
-        defaultHandler(&glt::nullHandler),
+        nullHandler(),
+        defaultHandler(&nullHandler),
         errorState(false),
         out(&sys::io::stdout())
         {}
@@ -183,8 +179,8 @@ void Preprocessor::name(const std::string& name) {
     self->sourceName = name;
 }
 
-Preprocessor::DirectiveHandler &Preprocessor::nullHandler() {
-    return glt::nullHandler;
-}
+// Preprocessor::DirectiveHandler &Preprocessor::nullHandler() {
+//     return nullHandler;
+// }
 
 } // namespace glt

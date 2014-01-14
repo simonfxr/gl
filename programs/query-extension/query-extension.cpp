@@ -25,7 +25,8 @@ struct State {
 void animate(State *state, const ge::Event<ge::AnimationEvent>& ev) {
     ge::Engine& e = ev.info.engine;
 
-    e.commandProcessor().exec("printContextInfo", ge::NULL_ARGS);
+    Array<ge::CommandArg> args = { 0, nullptr };
+    e.commandProcessor().exec("printContextInfo", args);
 
     for (int i = 1; i < state->argc; ++i) {
         if (strncmp(state->argv[i], "GL_", 3) == 0) {
