@@ -8,6 +8,8 @@
 #include "glt/ShaderCompiler.hpp"
 #include "sys/fs.hpp"
 
+#include "err/err.hpp"
+
 namespace glt {
 
 bool readFile(sys::io::OutStream& err, const std::string& fn, char *& file_contents, uint32& file_size) {

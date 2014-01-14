@@ -5,11 +5,16 @@
 
 namespace math {
 
-struct vec4_t {
-    real components[4];
+struct ATTRS(ATTR_PACKED) vec4_t {
+    static const defs::size size = 4;
+    static const defs::size padded_size = 4;
+    typedef real component_type;
+    typedef component_type buffer[size];
 
-MATH_FUNC     real& operator[](defs::index) MUT_FUNC;
-MATH_FUNC     real operator[](defs::index) const PURE_FUNC;
+    real components[padded_size];
+
+    MATH_FUNC real& operator[](defs::index) MUT_FUNC;
+    MATH_FUNC real operator[](defs::index) const PURE_FUNC;
 };
 
 typedef vec4_t point4_t;

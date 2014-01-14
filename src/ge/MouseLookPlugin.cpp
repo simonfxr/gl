@@ -50,7 +50,7 @@ void MouseLookPlugin::Data::stateChanged(State new_state) {
             _camera->mouseLook(true);
         size w, h;
         win.windowSize(w, h);
-        win.setMouse(w / 2, h / 2);
+        win.setMouse(index16(w) / 2, index16(h) / 2);
         win.showMouseCursor(false);
     } break;
     case Free: {

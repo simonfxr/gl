@@ -222,8 +222,10 @@ EngineOptions& EngineOptions::parse(int *argcp, char ***argvp) {
     int dest = 1;
 
     State state(*this);
-    if (argc > 0)
+    if (argc > 0) {
         binary = sys::fs::absolutePath(argv[0]);
+        window.title = sys::fs::basename(binary);
+    }
 
     bool done = false;
     int i;

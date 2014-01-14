@@ -15,15 +15,21 @@ namespace ge {
 
 struct Engine::Data : public GameLoop::Game {
 
-    struct ModuleInit {
-        ModuleInit() {
+    struct Modules {
+        Modules() {
             sys::moduleInit();
             glt::moduleInit();
             ge::moduleInit();
         }
+
+        ~Modules() {
+            ge::moduleExit();
+            glt::moduleExit();
+            sys::moduleExit();
+        }
     };
 
-    ModuleInit __module_init;
+    Modules __modules;
     
     Engine& theEngine; // owning engine
     GameWindow *window;
@@ -116,7 +122,7 @@ void Engine::out(sys::io::OutStream& s) {
     shaderManager().out(s);
 }
 
-float Engine::now() { return SELF->now(); }
+float Engine::now() { return float(SELF->now()); }
 
 const std::string Engine::programName() const {
     return self->programName;
@@ -335,12 +341,6 @@ void Engine::Data::registerHandlers() {
 void Engine::enablePlugin(Plugin& p) {
     p.registerWith(*this);
     p.registerCommands(commandProcessor());
-}
-
-void Engine::moduleExit() {
-    glt::moduleExit();
-    sys::moduleExit();
-    ge::moduleExit();
 }
 
 } // namespace ge

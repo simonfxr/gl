@@ -993,6 +993,7 @@ static bool writeModel(const std::string& file, const CubeMesh& mdl) {
 }
 
 int main(int argc, char *argv[]) {
+    ge::Engine engine;
     int32 ret = 0;
     {
         ge::EngineOptions opts;
@@ -1016,9 +1017,6 @@ int main(int argc, char *argv[]) {
         
         state.read_model = read_mdl;
         state.write_model = write_mdl;
-        
-        ge::Engine engine;
-        
         opts.inits.reg(ge::Init, makeEventHandler(initState, &state));
         
         ret = engine.run(opts);
@@ -1027,8 +1025,6 @@ int main(int argc, char *argv[]) {
         hs_voxel_destroy(state.voxel_state);
 #endif
     }
-    ge::Engine::moduleExit();
-    return ret;
 }
 
 namespace {

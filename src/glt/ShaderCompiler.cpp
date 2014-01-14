@@ -269,7 +269,7 @@ StringSource::StringSource(ShaderManager::ShaderType type, const std::string& na
     ShaderSource(hash(name), type), code(name) {}
 
 Ref<ShaderObject> StringSource::load(Ref<ShaderSource>& _self, CompileState& cstate) {
-    ASSERT(_self == this);
+    ASSERT(_self.ptr() == this);
     Ref<StringSource>& self = _self.cast<StringSource>();
     GLenum gltype;
 
@@ -300,7 +300,7 @@ FileSource::FileSource(ShaderManager::ShaderType ty, const std::string& path) :
 }
 
 Ref<ShaderObject> FileSource::load(Ref<ShaderSource>& _self, CompileState& cstate) {
-    ASSERT(_self == this);
+    ASSERT(_self.ptr() == this);
     Ref<FileSource>& self = _self.cast<FileSource>();
     GLenum gltype;
 
@@ -420,21 +420,20 @@ Ref<ShaderObject> CompileState::reload(Ref<ShaderObject>& so) {
 }
 
 ShaderObject::~ShaderObject() {
-    if (cache) {
-        Ref<ShaderCache> c(cache);
-        if (c)
-            ShaderCache::remove(c, this);
-    }
+    Ref<ShaderCache> c(cache);
+    if (c)
+        ShaderCache::remove(c, this);
 }
 
 void ShaderObject::linkCache(Ref<ShaderCache>& newcache) {
-    ASSERT(newcache && !cache);
+    ASSERT(newcache && !Ref<ShaderCache>(cache));
     cache = newcache.weak();
 }
 
 void ShaderObject::unlinkCache(Ref<ShaderCache>& newcache) {
-    ASSERT(newcache && cache);
-    if (cache.same(newcache))
+    Ref<ShaderCache> curr(cache);
+    ASSERT(newcache && curr);
+    if (curr.same(newcache))
         cache = NULL_SHADER_CACHE.weak();
 }
 
@@ -454,7 +453,8 @@ bool ShaderCache::lookup(Ref<ShaderObject> *ent, const ShaderSourceKey& key) {
 
 bool ShaderCache::put(Ref<ShaderCache>& cache, Ref<ShaderObject>& ent) {
     ASSERT(cache && ent);
-    if (ent->cache.same(cache))
+    Ref<ShaderCache> curr_cache(ent->cache);
+    if (curr_cache.same(cache))
         return false;
     ent->linkCache(cache);
     return cache->entries.insert(std::make_pair(ent->source->key, ent.weak())).second;
@@ -463,9 +463,12 @@ bool ShaderCache::put(Ref<ShaderCache>& cache, Ref<ShaderObject>& ent) {
 bool ShaderCache::remove(Ref<ShaderCache>& cache, ShaderObject *ent) {
     ASSERT(cache && ent);
     ShaderCacheEntries::iterator it = cache->entries.find(ent->source->key);
-    if (it != cache->entries.end() && it->second == ent) {
-        ent->unlinkCache(cache);
-        cache->entries.erase(it);
+    if (it != cache->entries.end()) {
+        Ref<ShaderObject> obj(it->second);
+        if (obj && obj.ptr() == ent) {
+            ent->unlinkCache(cache);
+            cache->entries.erase(it);
+        }
         return true;
     }
 

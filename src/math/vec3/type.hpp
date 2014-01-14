@@ -14,7 +14,6 @@ struct ATTRS(ATTR_PACKED) vec3_t {
     MATH_FUNC real& operator[](defs::index) MUT_FUNC;
     MATH_FUNC real operator[](defs::index) const PURE_FUNC;
     
-private:
     real components[padded_size];
 };
 

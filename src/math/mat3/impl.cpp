@@ -216,5 +216,9 @@ MATH_INLINE_SPEC real& mat3_t::operator()(defs::index i, defs::index j) {
     return components[i * vec3_t::padded_size + j];
 }
 
+MATH_INLINE_SPEC real mat3_t::operator()(defs::index i, defs::index j) const {
+    return components[i * vec3_t::padded_size + j];
+}
+
 } // namespace math
 

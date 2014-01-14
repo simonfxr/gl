@@ -121,7 +121,7 @@ bool EventSource<T>::raise(const Event<T>& e) {
 
 template <typename T>
 bool EventSource<T>::reg(const Ref<EventHandler<T> >& handler) {
-    if (handler.ptr() == 0)
+    if (!handler)
         return true;
     for (defs::index i = 0; i < SIZE(handlers.size()); ++i)
         if (handlers[size_t(i)].same(handler))
@@ -132,7 +132,7 @@ bool EventSource<T>::reg(const Ref<EventHandler<T> >& handler) {
 
 template <typename T>
 bool EventSource<T>::unreg(const Ref<EventHandler<T> >& handler) {
-    if (handler.ptr() == 0)
+    if (!handler)
         return true;
     for (defs::index i = 0; i < SIZE(handlers.size()); ++i)
         if (handlers[size_t(i)].same(handler)) {

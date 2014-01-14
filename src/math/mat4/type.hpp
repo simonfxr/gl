@@ -7,16 +7,22 @@
 namespace math {
 
 struct mat4_t {
+    static const defs::size column_size = 4;
+    typedef vec4_t column_type;
+    typedef column_type::component_type component_type;
+    static const defs::size size = column_size * column_type::size;
+    static const defs::size padded_size = column_size * column_type::padded_size;
+    typedef component_type buffer[size];
 
     union {
-        vec4_t columns[4];
-        real components[16];
+        column_type columns[column_size];
+        component_type components[padded_size];
     };
 
-MATH_FUNC     const vec4_t& operator[](defs::index) const PURE_FUNC;
-MATH_FUNC     vec4_t& operator[](defs::index) MUT_FUNC;
-MATH_FUNC     real operator()(defs::index, defs::index) const PURE_FUNC;
-MATH_FUNC     real& operator()(defs::index, defs::index) MUT_FUNC;
+    MATH_FUNC const column_type& operator[](defs::index) const PURE_FUNC;
+    MATH_FUNC column_type& operator[](defs::index) MUT_FUNC;
+    MATH_FUNC component_type operator()(defs::index, defs::index) const PURE_FUNC;
+    MATH_FUNC component_type& operator()(defs::index, defs::index) MUT_FUNC;
 };
 
 typedef mat4_t aligned_mat4_t ATTRS(ATTR_ALIGNED(16));

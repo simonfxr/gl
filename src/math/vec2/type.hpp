@@ -5,7 +5,7 @@
 
 namespace math {
 
-struct vec2_t {
+struct ATTRS(ATTR_PACKED) vec2_t {
     static const defs::size size = 2;
     static const defs::size padded_size = 2;
     typedef real component_type;
@@ -14,8 +14,7 @@ struct vec2_t {
     MATH_FUNC real& operator[](defs::index) MUT_FUNC;
     MATH_FUNC real operator[](defs::index) const PURE_FUNC;
 
-private:
-    real components[2];
+    real components[padded_size];
 };
 
 typedef vec2_t point2_t;

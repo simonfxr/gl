@@ -1,23 +1,15 @@
-#ifndef DATA_REF_HPP
-#define DATA_REF_HPP
+#ifndef DATA_REF_NEW_HPP
+#define DATA_REF_NEW_HPP
 
-#include "defs.hpp"
+#include "data/Atomic.hpp"
 #include "err/err.hpp"
 
-#ifdef REF_CONCURRENT
-#  include "data/Atomic.hpp"
-#  define REF_COUNTER_TYPE ::atomic::AtomicCounter
-#else
-#  define REF_COUNTER_TYPE ::atomic::SeqCounter
-#endif
-
-namespace atomic {
+namespace _priv {
 
 using namespace defs;
 
 DEBUG_DECL(static const int32 MARK = int32(0xAFAFAFAF);)
 
-#ifdef REF_CONCURRENT
 struct AtomicCounter {
     Atomic<int32> count;
     
@@ -34,9 +26,8 @@ struct AtomicCounter {
         return count.xchg(expected, val);
     }
 };
-#endif
 
-struct SeqCounter { // not thread safe
+struct SeqCounter {
     int32 count; 
     SeqCounter(int32 initial) : count(initial) {}
     ~SeqCounter() { ON_DEBUG(count = MARK); }
@@ -70,108 +61,22 @@ struct RefCount {
     RefCount(int32 s, int32 w) : strong(s), weak(w) {}
 };
 
-} // namespace atomic
+template <typename Counter>
+struct StrongCount {
+    typedef RefCount<Counter> ref_count;
 
-namespace priv {
-
-template <typename T, typename C, typename R>
-struct RefBase {
-    
-protected:
-    T *_ptr; // fat pointer, saves one indirection for pointer uses, but wastes space
-    typename C::ref_count_type *_cnt;
-
-protected:
-    void retain() const { if (_cnt != 0) C::retain(_cnt); }
-    void release() const { if (_cnt != 0 && C::release(_cnt)) delete _ptr; }
-
-    template <typename U, typename V, typename W>
-    RefBase(const RefBase<U, V, W>& ref) : _ptr(ref._ptr), _cnt(ref._cnt) { retain(); }
-
-    template <typename O>
-    void set(O *p) {
-        if (likely(p != _ptr)) {
-            release(); // could reuse old counter, but makes debugging harder
-            _ptr = p;
-            _cnt = (p != 0 ? C::newRefCount() : 0);
-        }
-    }
-
-public:
-    template <typename O>
-    explicit RefBase(O *p = 0) : _ptr(p), _cnt(p != 0 ? C::newRefCount() : 0) {}
-    
-    RefBase(const RefBase<T, C, R>& ref) : _ptr(ref._ptr), _cnt(ref._cnt)  { retain(); }
-    
-    template <typename O, typename S>
-    RefBase(const RefBase<O, C, S>& ref) : _ptr(ref._ptr), _cnt(ref._cnt) { retain(); }
-    
-    ~RefBase() { release(); }
-
-    RefBase<T, C, R>& operator =(const RefBase<T, C, R>& ref) {
-        ref.retain();
-        release();
-        _ptr = ref._ptr; _cnt = ref._cnt;
-        return *this;
-    }
-
-    template <typename O, typename S>
-    RefBase<T, C, R>& operator =(const RefBase<O, C, S>& ref) {
-        ref.retain();
-        release();
-        _ptr = ref._ptr; _cnt = ref._cnt;
-        return *this;
-    }
-
-    bool valid() const { return _cnt ? _cnt->strong.get() > 0 : true; }
-    const void *identity() const { return _cnt; }
-    
-    const T *ptr() const { ON_DEBUG(_cnt && _cnt->strong.get()); return _ptr; }
-    T *ptr() { ON_DEBUG(_cnt && _cnt->strong.get()); return _ptr; }
-
-    template <typename T2, typename C2, typename R2>
-    bool same(const RefBase<T2, C2, R2>& ref) const { return identity() == ref.identity(); }
-
-    template <typename O>
-    bool operator ==(const O *p) const { return _ptr == p; }
-    
-    template <typename O>
-    bool operator !=(const O *p) const { return _ptr != p; }
-
-    operator bool() const { return this->_ptr != 0; }
-
-    template <typename X, typename Y, typename Z>
-    friend struct RefBase;
-};
-
-template <typename T, typename O, typename C, typename R>
-inline bool operator ==(const O* lhs, const RefBase<T, C, R>& rhs) {
-    return rhs == lhs;
-}
-
-template <typename T, typename O, typename C, typename R>
-inline bool operator !=(const O* lhs, const RefBase<T, C, R>& rhs) {
-    return rhs != lhs;
-}
-
-struct RefCnt {
-
-    typedef REF_COUNTER_TYPE counter_type;
-    typedef atomic::RefCount<counter_type> ref_count_type;
-
-    static void retain(ref_count_type *cnt) {
+    static void retain(ref_count *cnt) {
         DEBUG_ASSERT(cnt->strong.get() > 0);
         cnt->strong.inc();
     }
 
-    static bool release(ref_count_type *cnt) {
+    static bool release(ref_count *cnt) {
         defs::int32 alive = cnt->strong.decAndGet();
         DEBUG_ASSERT(alive >= 0);
-        
+
         if (alive == 0) {
             // we are the last strong, only weak are remaining
-            defs::int32 val = 0;
-            if (cnt->weak.xchg(1, &val))
+            if (cnt->weak.decAndGet() == 0)
                 delete cnt;
             return true;
         }
@@ -179,7 +84,30 @@ struct RefCnt {
         return false;
     }
 
-    static bool strongFromWeak(ref_count_type *cnt) {
+    static ref_count *make() {
+        return new ref_count(1, 1);
+    }
+};
+
+template <typename Counter>
+struct WeakCount {
+    typedef RefCount<Counter> ref_count;
+
+    static void retain(ref_count *cnt) {
+        DEBUG_ASSERT(cnt->weak.get() > 0);
+        cnt->weak.inc();
+    }
+
+    static void release(ref_count *cnt) {
+        DEBUG_ASSERT(cnt->weak.get() > 0);
+        if (cnt->weak.decAndGet() == 0) {
+            // weak == 0 implies strong == 0
+            DEBUG_ASSERT(cnt->strong.get() == 0);
+            delete cnt;
+        }
+    }
+    
+    static bool strongFromWeak(ref_count *cnt) {
         DEBUG_ASSERT(cnt->weak.get() > 0);
         for (;;) {
             defs::int32 alive = cnt->strong.get();
@@ -190,143 +118,247 @@ struct RefCnt {
                 return true;
         }
     }
-
-    static ref_count_type *newRefCount() {
-        return new ref_count_type(1, 1);
-    }
 };
 
-struct WeakRefCnt {
+} // namespace _priv
 
-    typedef REF_COUNTER_TYPE counter_type;
-    typedef atomic::RefCount<counter_type> ref_count_type;
-    
-    static void retain(ref_count_type *cnt) {
-        DEBUG_ASSERT(cnt->weak.get() > 0);
-        cnt->weak.inc();
-    }
-    
-    static bool release(ref_count_type *cnt) {
-        DEBUG_ASSERT(cnt->weak.get() > 0);
-        if (cnt->weak.decAndGet() == 0) {
-            // weak == 0 implies strong == 0
-            DEBUG_ASSERT(cnt->strong.get() == 0);
-            return true;
-        }
-        return false;
-    }
+template <typename T, typename C>
+struct Ref;
 
-    static ref_count_type *newRefCount() {
-        return new ref_count_type(0, 1);
-    }
-};
+template <typename T, typename C>
+struct WeakRef;
 
-} // namespace priv
+template <typename T, typename C = _priv::SeqCounter>
+struct Ref {
+private:
 
-template <typename T> struct Ref;
-template <typename T> struct WeakRef;
+    typedef _priv::StrongCount<C> counter;
+    typedef typename counter::ref_count ref_count;
 
-template <typename T>
-struct Ref : public priv::RefBase<T, priv::RefCnt, Ref<T> > {
-
-    typedef T ptr_type;
-    typedef Ref<T> type;
-    typedef priv::RefBase<T, priv::RefCnt, Ref<T> > base_type;
-
-    Ref() : base_type(static_cast<T *>(0)) {}
+    ref_count *_ref_cnt;
+    T * _ptr;
 
     template <typename O>
-    explicit Ref(O *p) : base_type(p) {}
+    Ref(int /* for overloading */, O *ptr) :
+        _ref_cnt(ptr ? counter::make() : nullptr), _ptr(ptr)
+    {}
+
+    void retain() const {
+        if (_ref_cnt)
+            counter::retain(_ref_cnt);
+    }
+    
+    void release() const {
+        if (_ref_cnt && counter::release(_ref_cnt))
+            delete _ptr;
+    }
+
+    template <typename O, typename D>
+    friend struct WeakRef;
+    
+    template <typename O, typename D>
+    friend struct Ref;
+
+public:
+
+    Ref() : Ref(0, static_cast<T *>(nullptr)) {}
+
+    Ref(T *p) : Ref(0, p) {}
 
     template <typename O>
-    explicit Ref(WeakRef<O>& ref) :
-        base_type(static_cast<T *>(0))
-    {
+    Ref(O *p) : Ref(0, p) {}
+
+    Ref(const Ref<T, C>& ref) :
+        _ref_cnt(ref._ref_cnt), _ptr(ref._ptr)
+    { retain(); }
+
+    template <typename O>
+    Ref(const Ref<O, C>& ref) :
+        _ref_cnt(ref._ref_cnt), _ptr(ref._ptr)
+    { retain(); }
+
+    template <typename O>
+    Ref(WeakRef<O, C>& ref) : Ref() {
         ref.strong(this);
     }
 
-    Ref(const Ref<T>& ref) : base_type(ref) {}
+    ~Ref() { release(); }
 
-    template <typename O>
-    Ref(const Ref<O>& ref) : base_type(ref) {}
-    
-    Ref<T>& operator =(T *p) { this->set(p); return *this; }
+    T *ptr() { return _ptr; }
+    const T *ptr() const { return _ptr; }
 
-    template <typename O>
-    Ref<T>& operator =(O *p) { this->set(p); return *this; }
+    const T& operator *() const {
+        DEBUG_ASSERT(_ptr); return *_ptr;
+    }
 
-    WeakRef<T> weak() { return WeakRef<T>(*this); }
-    
-    const T& operator *() const { DEBUG_ASSERT(this->valid() && this->_ptr != 0); return *this->_ptr; }
-    
-    T& operator *() { DEBUG_ASSERT(this->valid() && this->_ptr != 0); return *this->_ptr; }
+    T& operator *() {
+        DEBUG_ASSERT(_ptr); return *_ptr;
+    }
 
-    const T *operator ->() const { DEBUG_ASSERT(this->valid() && this->_ptr != 0); return this->_ptr; }
+    const T *operator ->() const {
+        DEBUG_ASSERT(_ptr); return _ptr; }
     
-    T *operator ->() { DEBUG_ASSERT(this->valid() && this->_ptr != 0); return this->_ptr; }
-    
-    template <typename U>
-    Ref<U>& cast() { return reinterpret_cast<Ref<U>&>(*this); }
-    
-    template <typename U>
-    const Ref<U>& cast() const { return reinterpret_cast<const Ref<U>&>(*this); }
-    
-private:
-    friend struct WeakRef<T>;
-};
+    T *operator ->() {
+        DEBUG_ASSERT(_ptr); return _ptr;
+    }
 
-template <typename T>
-struct WeakRef : public priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> > {
-
-    typedef T ptr_type;
-    typedef WeakRef<T> type;
-    typedef priv::RefBase<T, priv::WeakRefCnt, WeakRef<T> > base_type;
-    
-    WeakRef() : base_type(static_cast<T *>(0)) {}
-    
-    WeakRef(const WeakRef<T>& ref) : base_type(ref) {}
-
-    template <typename O>
-    WeakRef(const WeakRef<O>& ref) : base_type(ref) {}
-
-    template <typename O>
-    explicit WeakRef(Ref<O>& ref) : base_type(ref) {}
-
-    template <typename O>
-    bool strong(Ref<O> *dest) {
-        if (dest->_cnt == this->_cnt)
-            return true;
-        
-        if (priv::RefCnt::strongFromWeak(this->_cnt)) {
-            dest->release();
-            dest->_ptr = this->_ptr;
-            dest->_cnt = this->_cnt;
-            return true;
-        } else {
-            return false;
-        }
+    operator bool() const {
+        return _ptr != nullptr;
     }
 
     template <typename O>
-    Ref<O> strong() {
-        Ref<O> ref;
+    bool same(const Ref<O, C>& ref) const {
+        return _ref_cnt == ref._ref_cnt;
+    }
+
+    template <typename O>
+    bool same(const WeakRef<O, C>& ref) const {
+        return _ref_cnt == ref._ref_cnt;
+    }
+
+    Ref<T, C>& operator =(const Ref<T, C>& ref) {
+        ref.retain();
+        release();
+        _ref_cnt = ref._ref_cnt; _ptr = ref._ptr;
+        return *this;
+    }
+
+    template <typename O>
+    Ref<T, C>& operator =(Ref<O, C>& ref) {
+        ref.retain();
+        release();
+        _ref_cnt = ref._ref_cnt; _ptr = ref._ptr;
+        return *this;
+    }
+
+    template <typename O>
+    Ref<T, C>& operator =(O *ptr) {
+        release();
+        _ref_cnt = (ptr ? counter::make() : nullptr);
+        _ptr = ptr;
+        return *this;
+    }
+
+    WeakRef<T, C> weak() {
+        return WeakRef<T, C>(*this);
+    }
+
+    template <typename U>
+    Ref<U, C>& cast() { return reinterpret_cast<Ref<U, C>&>(*this); }
+    
+    template <typename U>
+    const Ref<U, C>& cast() const { return reinterpret_cast<const Ref<U, C>&>(*this); }
+};
+
+template <typename T, typename C = _priv::SeqCounter>
+struct WeakRef {
+private:
+
+    typedef _priv::WeakCount<C> counter;
+    typedef typename counter::ref_count ref_count;
+
+    ref_count *_ref_cnt;
+    T *_ptr;
+
+    template <typename O>
+    WeakRef(ref_count *ref_cnt, O *ptr)
+        : _ref_cnt(ref_cnt), _ptr(ptr) {}
+
+    void retain() const {
+        if (_ref_cnt)
+            counter::retain(_ref_cnt);
+    }
+
+    void release() const {
+        if (_ref_cnt)
+            counter::release(_ref_cnt);
+    }
+
+public:
+
+    WeakRef() : WeakRef(nullptr, static_cast<T *>(nullptr)) {}
+
+    template <typename O>
+    WeakRef(Ref<O, C>& ref) : WeakRef(ref._ref_cnt, ref._ptr) {
+        retain();
+    }
+
+    WeakRef(const WeakRef<T, C>& ref) : WeakRef(ref._ref_cnt, ref._ptr) {
+        retain();
+    }
+
+    template <typename O>
+    WeakRef(const WeakRef<O, C>& ref) : WeakRef(ref._ref_cnt, ref._ptr) {
+        retain();
+    }
+
+    ~WeakRef() { release(); }
+
+    template <typename O>
+    bool same(const Ref<O, C>& ref) const {
+        return _ref_cnt == ref._ref_cnt;
+    }
+
+    template <typename O>
+    bool same(const WeakRef<O, C>& ref) const {
+        return _ref_cnt == ref._ref_cnt;
+    }
+
+    WeakRef<T, C>& operator =(const WeakRef<T, C>& ref) {
+        ref.retain();
+        release();
+        _ref_cnt = ref._ref_cnt; _ptr = ref._ptr;
+        return *this;
+    }
+
+    template <typename O>
+    WeakRef<T, C>& operator =(WeakRef<O, C>& ref) {
+        ref.retain();
+        release();
+        _ref_cnt = ref._ref_cnt; _ptr = ref._ptr;
+        return *this;
+    }
+
+    template <typename O>
+    bool strong(Ref<O, C> *dest) {
+        if (dest->_ref_cnt == _ref_cnt)
+            return true;
+
+        if (!_ptr) {
+            DEBUG_ASSERT(_ref_cnt == nullptr);
+            dest = nullptr;
+            return true;
+        }
+
+        DEBUG_ASSERT(_ref_cnt != nullptr);
+        if (counter::strongFromWeak(_ref_cnt)) {
+            dest->release();
+            dest->_ptr = _ptr; dest->_ref_cnt = _ref_cnt;
+            return true;
+        }
+
+        return false;
+    }
+
+    template <typename O>
+    Ref<O, C> strong() {
+        Ref<O, C> ref;
         strong(&ref);
         return ref;
     }
 
     template <typename U>
-    WeakRef<U>& cast() { return reinterpret_cast<WeakRef<U>&>(*this); }
+    WeakRef<U, C>& cast() {
+        return reinterpret_cast<WeakRef<U, C>&>(*this);
+    }
     
     template <typename U>
-    const WeakRef<U>& cast() const { return reinterpret_cast<const WeakRef<U>&>(*this); }
-    
-private:
-    friend struct Ref<T>;
+    const WeakRef<U, C>& cast() const {
+        return reinterpret_cast<const WeakRef<U, C>&>(*this); 
+    }
 };
 
-template <typename T>
-inline Ref<T> makeRef(T *p) { return Ref<T>(p); }
-
-#undef REF_COUNTER_TYPE
+template <typename T, typename C = _priv::SeqCounter>
+Ref<T> makeRef(T *p) { return Ref<T, C>(p); }
 
 #endif

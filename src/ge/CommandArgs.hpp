@@ -5,15 +5,12 @@
 #include "ge/KeyBinding.hpp"
 
 #include "data/Array.hpp"
+#include "data/Ref.hpp"
 
 #include "sys/io/Stream.hpp"
 
 #include <string>
 #include <vector>
-
-
-template <typename T>
-struct Ref;
 
 namespace ge {
 
