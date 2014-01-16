@@ -201,6 +201,8 @@ if(NOT DEFINED GLFW_LIBRARY)
   find_package(glfw REQUIRED)
 endif()
 
+add_definitions(-DSOURCE_DIR="${CMAKE_SOURCE_DIR}")
+
 include_directories(${GLEW_INCLUDE_PATH})
 include_directories(${GLFW_INCLUDE_PATH})
 include_directories(${PROJECT_SOURCE_DIR}/ext/include)

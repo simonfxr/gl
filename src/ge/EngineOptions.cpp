@@ -44,7 +44,7 @@ const Option OPTIONS[] = {
     { "--no-init-script", NULL, NoInitScript, "inhibit loading of default script file (<program-name>.script)" },
     { "--script-dir", "DIR", ScriptDir, "add DIR to the list of searched script directories" },
     { "--shader-dir", "DIR", ShaderDir, "add DIR to the list of searched shader directories" },
-    { "--cd", "BOOL", CD, "dchange into the base directory of the program binary: yes|no" },
+    { "--cd", "BOOL", CD, "change into the base directory of the program binary: yes|no" },
     { "--eval", "COMMAND", Eval, "execute COMMAND as a script command" },
     { "--script", "FILE", Script, "load FILE and execute it as a script" },
     { "--cwd", "DIR", CWD, "change into directory DIR" },
@@ -196,7 +196,7 @@ bool State::option(OptionCase opt, const char *arg) {
 
 EngineOptions::EngineOptions() :
     commands(),
-    workingDirectory(),
+    workingDirectory(SOURCE_DIR),
     inhibitInitScript(false),
     defaultCD(false),
     shaderDirs(),

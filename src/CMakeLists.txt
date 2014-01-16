@@ -2,7 +2,8 @@
 include(${PROJECT_SOURCE_DIR}/cmake/config.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/macros.cmake)
 
-set(FIBER_LIB ${PROJECT_SOURCE_DIR}/ext/lib/libfiber.so)
+#set(FIBER_LIB ${PROJECT_SOURCE_DIR}/ext/lib/libfiber.so)
+set(FIBER_LIB)
 
 set(MATH_SRC
   math/vec2/impl.cpp
