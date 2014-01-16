@@ -32,7 +32,7 @@ struct Module {
     Utils utils;
 };
 
-extern Module * GLT_MODULE_ACCESS module;
+extern Module *module;
 
 } // namespace glt
 

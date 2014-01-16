@@ -8,42 +8,19 @@ namespace sys {
 
 namespace fs {
 
-union ModTime {
-    ModificationTime::FILETIME mtime;
-    FILETIME ftime;
-};
-
 namespace {
 
-ModificationTime::FILETIME zeroFileTime() {
-    ModificationTime::FILETIME mtime;
-    memset(reinterpret_cast<void *>(&mtime), 0, sizeof mtime);
-    return mtime;
+#define WINDOWS_TICK 10000000
+#define SEC_TO_UNIX_EPOCH 11644473600LL
+
+uint32 filetimeToUnixTimestap(const FILETIME *ft) {
+	uint64 ticks = (uint64(ft->dwHighDateTime) << 32) | ft->dwLowDateTime;
+	ticks = ticks / WINDOWS_TICK;
+	if (ticks < SEC_TO_UNIX_EPOCH)
+		return 0u;
+	return uint32(ticks - SEC_TO_UNIX_EPOCH);
 }
 
-} // namespace anon
-
-SYS_API const ModificationTime MIN_MODIFICATION_TIME(zeroFileTime());
-
-bool operator ==(const ModificationTime& a, const ModificationTime& b) {
-    ModTime ta;
-    ta.mtime = a.mtime;
-    ModTime tb;
-    tb.mtime = b.mtime;
-    
-    return ta.ftime.dwHighDateTime == tb.ftime.dwHighDateTime &&
-        ta.ftime.dwLowDateTime == tb.ftime.dwLowDateTime;
-}
-
-bool operator <(const ModificationTime& a, const ModificationTime& b) {
-    ModTime ta;
-    ta.mtime = a.mtime;
-    ModTime tb;
-    tb.mtime = b.mtime;
-
-    return ta.ftime.dwHighDateTime < tb.ftime.dwHighDateTime ||
-            (ta.ftime.dwHighDateTime == tb.ftime.dwHighDateTime &&
-            ta.ftime.dwLowDateTime < tb.ftime.dwLowDateTime);
 }
 
 bool cwd(const std::string& dir) {
@@ -85,8 +62,8 @@ bool isAbsolute(const std::string& path) {
     return PathIsRelativeA(path.c_str()) != TRUE;
 }
 
-bool modificationTime(const std::string& path, sys::fs::ModificationTime *mtime) {
-    return def::modificationTime(path, mtime);
+bool modificationTime(const std::string& path, sys::fs::FileTime *mtime) {
+	return def::modificationTime(path, mtime);
 }
 
 bool stat(const std::string& path, sys::fs::Stat *stat) {
@@ -96,7 +73,7 @@ bool stat(const std::string& path, sys::fs::Stat *stat) {
     if (GetFileAttributesExA(path.c_str(), GetFileExInfoStandard, &attrs) == 0)
         return false;
 
-    memcpy(&stat->mtime.mtime, &attrs.ftLastWriteTime, sizeof stat->mtime.mtime);
+	stat->mtime.seconds = filetimeToUnixTimestap(&attrs.ftLastWriteTime);
     stat->type = (attrs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 ? Directory : File;
     stat->absolute = absolutePath(path);
 

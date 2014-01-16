@@ -66,8 +66,8 @@ struct GLObjectBase {
     GLuint& operator *() { return _name; }
 
 private:
-    GLObjectBase(const GLObjectBase<T>&);
-    GLObjectBase<T>& operator =(const GLObjectBase<T>&);
+	GLObjectBase(const GLObjectBase<T>&) = delete;
+	GLObjectBase<T>& operator =(const GLObjectBase<T>&) = delete;
 };
 
 template <ObjectType::Type T>
@@ -86,6 +86,10 @@ struct GLObject : public GLObjectBase<T> {
             generate();
         return *this;
     }
+
+private:
+	GLObject(const GLObject<T>&) = delete;
+	GLObject<T>& operator =(const GLObject<T>&) = delete;
 };
 
 template <>

@@ -8,18 +8,6 @@ namespace sys {
 namespace fs {
 
 const char SEPARATOR = '\\';
-#define SIZEOF_FILETIME 8
-
-// mimic FILETIME
-struct ModificationTime {
-    struct FILETIME {
-        char data[SIZEOF_FILETIME];
-    };
-    FILETIME mtime;
-    ModificationTime() {}
-    ModificationTime(const FILETIME& _mtime) :
-        mtime(_mtime) {}
-};
 
 } // namespace fs
 

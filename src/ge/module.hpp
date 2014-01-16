@@ -26,7 +26,7 @@ struct Module {
     KeyBindingState key_binding;
 };
 
-extern Module * GE_MODULE_ACCESS module;
+extern Module *module;
 
 } // namespace ge
 

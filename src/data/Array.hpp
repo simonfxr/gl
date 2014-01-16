@@ -4,6 +4,8 @@
 #include "defs.hpp"
 #include "err/err.hpp"
 
+#include <type_traits>
+
 #define ARRAY_INITIALIZER(T) { 0, static_cast<T *>(nullptr) }
 
 #define SHARE_ARRAY(s, ptr) make_shared_array(s, ptr)
@@ -41,7 +43,8 @@ struct OwnedArray : public Array<T> {
         Array<T>(s, s == 0 ? nullptr : new T[UNSIZE(s)])
     {}
 
-    OwnedArray(defs::size s, const T *elems) :
+	template <typename U>
+    OwnedArray(defs::size s, const U *elems) :
         OwnedArray<T>(s)
     {
         for (defs::index i = 0; i < s; ++i)
@@ -60,13 +63,14 @@ struct OwnedArray : public Array<T> {
         delete[] this->_elems;
     }
 
-    OwnedArray& operator =(const OwnedArray& arr) {
-        delete[] this->_elems;
-        this->_size = arr.size();
-        this->_elems = (arr.size() == 0 ? nullptr : new T[UNSIZE(arr.size())]);
-        for (defs::index i = 0; i < arr.size(); ++i)
-            this->at(i) = arr[i];
-    }
+	template<typename U>
+	OwnedArray<T>& operator =(const OwnedArray<U>& arr) {
+		delete[] this->_elems;
+		this->_size = arr.size();
+		this->_elems = (arr.size() == 0 ? nullptr : new T[UNSIZE(arr.size())]);
+		for (defs::index i = 0; i < arr.size(); ++i)
+			this->at(i) = arr[i];
+	}
 
     void unsafeResize(defs::size s) {
         if (this->_size != s) {
@@ -77,5 +81,6 @@ struct OwnedArray : public Array<T> {
         }
     }
 };
+
 
 #endif

@@ -44,7 +44,7 @@ struct Module {
     Fibers fibers;
 };
 
-extern Module * SYS_MODULE_ACCESS module;
+extern Module *module;
 
 #undef SYS_MODULE_ACCESS
 

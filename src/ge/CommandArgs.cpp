@@ -8,8 +8,6 @@
 
 namespace ge {
 
-CommandArg::CommandArg() { memset(this, 0, sizeof *this); }
-
 void CommandArg::free() {
     
     switch (type) {

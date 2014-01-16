@@ -286,7 +286,7 @@ void Anim::init(const Event<InitEvent>& ev) {
             const float SIG2 = SIG * SIG;
             const float SQRT_PI = 1.7724538509055;
             const float SQRT_2  = 1.4142135623730;
-            glow_kernel[i] = 1.f / (SQRT_PI * SQRT_2 * SIG) * exp(-1/(2 * SIG2) * (x * x));
+            glow_kernel[i] = 1.f / (SQRT_PI * SQRT_2 * SIG) * math::exp(-1/(2 * SIG2) * (x * x));
         }
     }
 
