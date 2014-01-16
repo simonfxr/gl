@@ -65,21 +65,17 @@ if(SYS_LINUX)
   set_option(USE_UNWIND_STACKTRACES TRUE BOOL "use libunwind and libdw to print a stacktrace on errors")
 endif()
 
-set(USE_CXX11_DEF TRUE)
-set(USE_CXX11_FINAL_OVERRIDE_DEF TRUE)
-if(COMP_CL)
-  set(USE_CXX11_DEF FALSE)
-  set(USE_CXX11_FINAL_OVERRIDE_DEF FALSE)
-endif()
+#c++11 was optional at one point not anymore ...
+set_state(USE_CXX11 TRUE)
+set_state(USE_CXX11_FINAL_OVERRIDE TRUE)
 
-set_option(USE_CXX11 ${USE_CXX11_DEF} BOOL "compile with support for the c++11 standard")
-set_option(USE_CXX11_FINAL_OVERRIDE ${USE_CXX11_FINAL_OVERRIDE_DEF} BOOL "use the new c++11 override and final keywords")
+set_option(USE_GLFW_IN_TREE ${SYS_WINDOWS} BOOL "use glfw under ext/glfw3")
+set_option(USE_GLEW_IN_TREE ${SYS_WINDOWS} BOOL "use glew under ext/glew")
 
 set_option(USE_NO_MATH_H TRUE BOOL "dont import math.h in math library")
 
 if(COMP_CLANG)
   set_option(USE_CLANG_ADDRESS_SANITIZER FALSE BOOL "enable -fsanitize=address")
-
   set_option(USE_CLANG_TRAP_UNDEFINED FALSE BOOL "enable -fsanitize=undefined-trap")
 endif()
 

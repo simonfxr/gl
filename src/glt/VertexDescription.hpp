@@ -3,9 +3,16 @@
 
 #include "err/err.hpp"
 
+namespace glt {
+
+template <typename T>
+struct VertexDesc;
+
+} // namespace glt
+
 template <typename T>
 struct VertexTraits {
-    // static const VertexDesc<T>& description();
+    static const glt::VertexDesc<T>& description();
 };
 
 namespace glt {

@@ -44,7 +44,6 @@ struct CommandArg;
 typedef std::vector<std::vector<CommandArg> > Quotation;
 
 struct GE_API CommandArg {
-    CommandArg();
 
     CommandType type;
     union {
@@ -62,6 +61,8 @@ struct GE_API CommandArg {
 
     void free();
 };
+
+static_assert(std::is_pod<CommandArg>::value, "Command Arg has to be POD");
 
 struct GE_API CommandPrettyPrinter {
     CommandPrettyPrinter();

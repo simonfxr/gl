@@ -350,6 +350,8 @@ GameWindow::Data::~Data() {
         glfwDestroyWindow(win);
         win = 0;
     }
+
+	INFO("XXXXX WINDOW DESTROYED XXXX");
 }
 
 GameWindow::GameWindow(const WindowOptions& opts) :

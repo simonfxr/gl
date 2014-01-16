@@ -15,14 +15,21 @@ struct GLT_API GLPerfCounter {
     struct Counter {
         GLQueryObject begin;
         GLQueryObject end;
+
+		Counter() : begin(), end() {}
+	private:
+		Counter(const Counter&) = delete;
+		Counter& operator =(const Counter&) = delete;
     };
     
-    OwnedArray<Counter> _queries;
+	defs::size _nqueries;
+    Counter *_queries;
     defs::index _active_query;
     double _last_query;
 
     GLPerfCounter();
     GLPerfCounter(defs::size);
+	~GLPerfCounter();
 
     void init(defs::size);
     void begin();

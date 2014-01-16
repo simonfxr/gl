@@ -1,6 +1,7 @@
 #ifndef SYS_FIBER_HPP
 #define SYS_FIBER_HPP
 
+#include <stdint.h>
 #include "sys/conf.hpp"
 
 #if 0

@@ -1,7 +1,9 @@
 #ifndef DATA_REF_NEW_HPP
 #define DATA_REF_NEW_HPP
 
-#include "data/Atomic.hpp"
+#ifdef GNU_EXTENSIONS
+#  include "data/Atomic.hpp"
+#endif
 #include "err/err.hpp"
 
 namespace _priv {
@@ -10,6 +12,7 @@ using namespace defs;
 
 DEBUG_DECL(static const int32 MARK = int32(0xAFAFAFAF);)
 
+#ifdef GNU_EXTENSIONS
 struct AtomicCounter {
     Atomic<int32> count;
     
@@ -26,6 +29,7 @@ struct AtomicCounter {
         return count.xchg(expected, val);
     }
 };
+#endif
 
 struct SeqCounter {
     int32 count; 
