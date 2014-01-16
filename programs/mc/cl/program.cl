@@ -133,7 +133,7 @@ int4 scanHistogramLevel(int index, __read_only image3d_t histo, int4 pos) {
 float sampleVolume4(__read_only image3d_t volumeData, int4 p) {
     /* int x = (int) read_imageui(volumeData, sampler, (int4) (p.x, p.y, p.z, 0)).s0; */
     /* return (float)(x - ISOLEVEL) * (1.f / (float) ISOLEVEL); */
-    return read_imagef(volumeData, sampler, p).s0;
+    return read_imagef(volumeData, sampler, p + (int4)(1, 1, 1, 0)).s0;
 }
 
 
@@ -217,11 +217,6 @@ __kernel void histogramTraversal(
 
     uint edge_code = read_imageui(hp0, sampler, cubePosition).s1;
 
-    float off;
-//    off = 1 - (float)(cubePosition.x == SIZE - 1 || cubePosition.y == SIZE - 1 || cubePosition.z == SIZE - 1);
-    off = 1;
-    
-    
     // max 5 triangles
     for(int i = (target-cubePosition.s3)*3; i < (target-cubePosition.s3+1)*3; i++) { // for each vertex in triangle
         const uchar edge = triangle_edge_table[edge_code*16 + i];
@@ -234,8 +229,8 @@ __kernel void histogramTraversal(
         float v0 = sampleVolume(volume, p0);
         float v1 = sampleVolume(volume, p1);
         const float diff = native_divide(v0, v0 - v1);
-        const float3 vertex = mix(convert_float3(p0), convert_float3(p1), diff) * off;
-        const float3 normal = normalize(mix(n0, n1, diff)) * off;
+        const float3 vertex = mix(convert_float3(p0), convert_float3(p1), diff);
+        const float3 normal = normalize(mix(n0, n1, diff));
         
         vstore3(vertex, target*6 + vertexNr*2, VBOBuffer);
         vstore3(normal, target*6 + vertexNr*2 + 1, VBOBuffer);
@@ -312,7 +307,7 @@ __kernel void generateSphereVolume(__write_only image3d_t data,
 {
     int4 pos = { get_global_id(0), get_global_id(1), get_global_id(2), 0 };
 
-    vec4 wc = multM4V4(transform, convert_float4((int4)(pos.xyz, 1)));
+    vec4 wc = multM4V4(transform, convert_float4((int4)(pos.xyz - (int3) 1, 1)));
     wc.w = 0.f;
     
 //    const float4 C = (float4)(-1, 0.2 , sin(time * 0.1), 0);
@@ -325,7 +320,6 @@ __kernel void generateSphereVolume(__write_only image3d_t data,
 
     /* vec3 dist = wc - center; */
     /* float value = dot3(dist, dist) / (radius * radius)  - 1; */
-
     
     storeVolume(data, pos, value);
 }

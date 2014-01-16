@@ -33,7 +33,7 @@
 
 #define CL_ERR(msg) do { if (cl_err != CL_SUCCESS) { ERR(msg); return; } } while (0)
 //#define INFO_PRINT(...) __VA_ARGS__
-//#define INFO_TIME(...) time_op(__VA_ARGS__)
+// #define INFO_TIME(...) time_op(__VA_ARGS__)
 #define INFO_PRINT(...)
 #define INFO_TIME(...) __VA_ARGS__
 
@@ -70,9 +70,9 @@ struct MCState {
     cl::Event writeVBOJob;
 };
 
-#define MC_SIZE_X 4
-#define MC_SIZE_Y 4
-#define MC_SIZE_Z 3
+#define MC_SIZE_X 2
+#define MC_SIZE_Y 2
+#define MC_SIZE_Z 2
 #define NUM_MC (MC_SIZE_X * MC_SIZE_Y * MC_SIZE_Z)
 
 struct Anim {
@@ -126,8 +126,9 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     link(ev.info.engine);
     time_print_fps = 0;
 
-    engine.gameLoop().ticks(30);
-    engine.gameLoop().syncDraw(true);
+    engine.gameLoop().ticks(100);
+//    engine.gameLoop().syncDraw(true);
+    engine.gameLoop().pause();
 
 //    GL_CALL(glDisable, GL_CULL_FACE);
     GL_CALL(glEnable, GL_CULL_FACE);
@@ -341,7 +342,7 @@ void Anim::initMC(MCState& mc, vec3_t orig, vec3_t dim, bool *success) {
     mc.cube_origin = orig;
     mc.cube_dim = dim;
 
-    mc.volume = cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_R, CL_HALF_FLOAT), N, N, N, 0, 0, 0, &cl_err);
+    mc.volume = cl::Image3D(cl_ctx, CL_MEM_READ_WRITE, cl::ImageFormat(CL_R, CL_HALF_FLOAT), N + 2, N + 2, N + 2, 0, 0, 0, &cl_err);
     CL_ERR("creating volume 3d image failed");
 
     mc.images.clear();
@@ -389,7 +390,7 @@ void Anim::computeVolumeData(MCState& mc, real time) {
 
     cl_q.enqueueNDRangeKernel(
         kernel_generateSphereVolume,
-        cl::NullRange, cl::NDRange(N, N, N), cl::NullRange);
+        cl::NullRange, cl::NDRange(N + 2, N + 2, N + 2), cl::NullRange);
 }
 
 void Anim::computeHistogram(MCState& mc) {
@@ -544,12 +545,13 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     point3_t wcLight = vec3(1, 1, 1);
     point3_t ecLight = vec3(transform(gt.viewMatrix(), vec4(wcLight, real(1))));
 
-    time_op(for (int i = 0; i < NUM_MC; ++i)
-                computeVolumeData(mc[i], time));
-    time_op(for (int i = 0; i < NUM_MC; ++i)
+#define TIME(...) __VA_ARGS__
+    TIME(for (int i = 0; i < NUM_MC; ++i)
+             computeVolumeData(mc[i], time));
+    TIME(for (int i = 0; i < NUM_MC; ++i)
                 computeHistogram(mc[i]));
-    time_op(for (int i = 0; i < NUM_MC; ++i)
-                constructVertices0(mc[i]));
+    TIME(for (int i = 0; i < NUM_MC; ++i)
+             constructVertices0(mc[i]));
 
     std::vector<cl::Memory> gl_objs;
     for (int i = 0; i < NUM_MC; ++i)
@@ -563,8 +565,8 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     cl_q.enqueueReleaseGLObjects(&gl_objs);
     cl_q.finish();
     
-    time_op(for (int i = 0; i < NUM_MC; ++i)
-                renderMC(mc[i], *program, ecLight));
+    TIME(for (int i = 0; i < NUM_MC; ++i)
+             renderMC(mc[i], *program, ecLight));
 
     double ntris = 0;
     for (int i = 0; i < NUM_MC; ++i)
