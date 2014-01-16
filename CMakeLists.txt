@@ -69,8 +69,14 @@ endif()
 set_state(USE_CXX11 TRUE)
 set_state(USE_CXX11_FINAL_OVERRIDE TRUE)
 
-set_option(USE_GLFW_IN_TREE ${SYS_WINDOWS} BOOL "use glfw under ext/glfw3")
-set_option(USE_GLEW_IN_TREE ${SYS_WINDOWS} BOOL "use glew under ext/glew")
+if(SYS_WINDOWS)
+  set(LIBS_IN_TREE TRUE)
+else()
+  set(LIBS_IN_TREE FALSE)
+endif()
+
+set_option(USE_GLFW_IN_TREE ${LIBS_IN_TREE} BOOL "use glfw under ext/glfw3")
+set_option(USE_GLEW_IN_TREE ${LIBS_IN_TREE} BOOL "use glew under ext/glew")
 
 set_option(USE_NO_MATH_H TRUE BOOL "dont import math.h in math library")
 

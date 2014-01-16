@@ -16,11 +16,9 @@ extern "C" void __clang_trap_function() {}
 
 namespace err {
 
-namespace {
-
-void print_stacktrace(sys::io::OutStream&, int skip = 0) ATTRS(ATTR_NOINLINE);
-
 #ifdef UNWIND_STACKTRACES
+
+namespace {
 
 void debugInfo(sys::io::OutStream& out, const void *ip) {
 
@@ -68,6 +66,8 @@ void debugInfo(sys::io::OutStream& out, const void *ip) {
     out << ']';
 }
 
+} // namespace anon
+
 void print_stacktrace(sys::io::OutStream& out, int skip) {
     unw_context_t uc;
     unw_getcontext(&uc);
@@ -104,8 +104,6 @@ void print_stacktrace(sys::io::OutStream& out, int) {
 }
 
 #endif
-
-} // namespace anon
 
 void error(const Location& loc, LogLevel lvl, const ErrorArgs& args) {
     printError(args.out, 0, loc, lvl, args.mesg);

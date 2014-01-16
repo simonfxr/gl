@@ -22,19 +22,21 @@ struct GLT_API GLPerfCounter {
 		Counter& operator =(const Counter&) = delete;
     };
     
-	defs::size _nqueries;
+    defs::size _nqueries;
     Counter *_queries;
     defs::index _active_query;
     double _last_query;
 
     GLPerfCounter();
     GLPerfCounter(defs::size);
-	~GLPerfCounter();
+    ~GLPerfCounter();
 
     void init(defs::size);
     void begin();
     void end();
     double query();
+
+    void shutdown();
 };
 
 } // namespace glt

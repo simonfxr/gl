@@ -82,6 +82,8 @@ void RenderManager::shutdown() {
         delete self->def_rt;
         self->def_rt = 0;
     }
+
+    self->perf_counter.shutdown();
 }
 
 const ViewFrustum& RenderManager::viewFrustum() const {

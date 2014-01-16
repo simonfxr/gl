@@ -40,6 +40,8 @@ extern "C" ERR_API void __clang_trap_function();
 
 namespace err {
 
+ERR_API void print_stacktrace(sys::io::OutStream&, int skip = 0);
+
 struct Location {
     const char *file;
     int line;

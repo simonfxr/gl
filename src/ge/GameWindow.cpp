@@ -345,13 +345,13 @@ void GameWindow::Data::setMouse(index16 x, index16 y) {
 
 GameWindow::Data::~Data() {
     delete renderTarget;
+
+    glfwMakeContextCurrent(nullptr);
     
     if (owning_win) {
         glfwDestroyWindow(win);
         win = 0;
     }
-
-	INFO("XXXXX WINDOW DESTROYED XXXX");
 }
 
 GameWindow::GameWindow(const WindowOptions& opts) :

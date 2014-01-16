@@ -1,6 +1,15 @@
 #include "glt/GLObject.hpp"
 #include "glt/utils.hpp"
 
+#include <map>
+#include <sstream>
+
+#if defined(DEBUG_GLOBJECT) || defined(DEBUG_ALL)
+#  define DBG(...) __VA_ARGS__
+#else
+#  define DBG(...)
+#endif
+
 namespace glt {
 
 using namespace defs;
@@ -39,9 +48,13 @@ struct ObjectKind {
 // has to initialized after glewInit()
 const ObjectKind *kind_table;
 
+DBG(std::map<GLuint, std::string> *stacktrace_map;)
+
 void init_table() {
     if (kind_table != 0)
         return;
+
+    DBG(stacktrace_map = new std::map<GLuint, std::string>());
     
     ObjectKind *table = new ObjectKind[ObjectType::Count];
     kind_table = table;
@@ -66,12 +79,23 @@ void init_table() {
 
 void generate(ObjectType::Type t, GLsizei n, GLuint *names) {
     init_table();
+
+    DBG(
+        {
+            std::ostringstream call_stack;
+            sys::io::StdOutStream out(call_stack);
+            err::print_stacktrace(out);
+            std::string call_stack_str = call_stack.str();
+        });
+    
     ASSERT(0 <= t && t < ObjectType::Count);
     ASSERT(kind_table[t].generator != 0);
     GL_CALL(kind_table[t].generator, n, names);
     for (GLsizei i = 0; i < n; ++i)
-        if (names[i] != 0)
+        if (names[i] != 0) {
             ++instance_count[t];
+            DBG((*stacktrace_map)[names[i]] = call_stack_str);
+        }
 }
 
 void generateShader(GLenum shader_type, GLuint *name) {
@@ -85,8 +109,10 @@ void release(ObjectType::Type t, GLsizei n, const GLuint *names) {
     ASSERT(0 <= t && t < ObjectType::Count);
     GL_CALL(kind_table[t].destructor, n, names);
     for (GLsizei i = 0; i < n; ++i)
-        if (names[i] != 0)
+        if (names[i] != 0) {
+            DBG(sys::io::stdout() << "releasing GLObject, stack: " << (*stacktrace_map)[names[i]] << sys::io::endl);
             --instance_count[t];
+        }
 }
 
 void printStats(sys::io::OutStream& out) {
