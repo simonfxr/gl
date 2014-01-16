@@ -29,10 +29,10 @@ typedef struct {
 
 typedef void (*FiberFunc)(void *);
 
-#define NYI ::abort()
+#define FIBER_NYI ::abort()
 
 inline Fiber *fiber_init(Fiber *, void *, size_t) {
-    NYI;
+    FIBER_NYI;
 }
 
 inline void fiber_init_toplevel(Fiber *fiber) {
@@ -40,27 +40,27 @@ inline void fiber_init_toplevel(Fiber *fiber) {
 }
 
 inline int fiber_alloc(Fiber *, size_t) {
-    NYI;
+    FIBER_NYI;
 }
 
 inline void fiber_destroy(Fiber *) {
-    NYI;
+    FIBER_NYI;
 }
 
 inline void fiber_switch(Fiber *, Fiber *) {
-    NYI;
+    FIBER_NYI;
 }
 
 inline void fiber_push_return(Fiber *, FiberFunc, const void *, size_t) {
-    NYI;
+    FIBER_NYI;
 }
 
 inline void fiber_reserve_return(Fiber *, FiberFunc, void **, size_t) {
-    NYI;
+    FIBER_NYI;
 }
 
 inline void fiber_exec_on(Fiber *, Fiber *, FiberFunc, void *, size_t) {
-    NYI;
+    FIBER_NYI;
 }
 
 static inline int fiber_is_toplevel(Fiber *fiber) {
