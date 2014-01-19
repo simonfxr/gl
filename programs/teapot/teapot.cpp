@@ -627,7 +627,7 @@ void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args)
         ERR("couldnt open data/wood.bmp");
         return;
     } else {
-        if (bmp_read(fileno(file), &w, &h, &wood_data) != BMP_OK) { 
+        if (bmp_read(file, &w, &h, &wood_data) != BMP_OK) { 
             ERR("couldnt load data/wood.bmp");
             fclose(file);
             return;

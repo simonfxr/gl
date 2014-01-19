@@ -182,7 +182,7 @@ if(GLDEBUG)
   add_definitions(-DGLDEBUG=1)
 endif()
 
-set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/cmake/Modules)
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/build/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/build/lib)
@@ -212,8 +212,17 @@ if(NOT DEFINED GLFW_LIBRARY)
   endif()
 endif()
 
+find_package(OpenCL REQUIRED)
+
+if(USE_OPENCL_HEADERS_IN_TREE)
+  set(OPENCL_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/ext/opencl-headers/include")
+else()
+  set(OPENCL_INCLUDE_PATH "${OPENCL_INCLUDE_DIR}")
+endif()
+
 add_definitions(-DSOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
 include_directories(${GLEW_INCLUDE_PATH})
 include_directories(${GLFW_INCLUDE_PATH})
+include_directories(${OPENCL_INCLUDE_PATH})
 include_directories(${PROJECT_SOURCE_DIR}/ext/include)

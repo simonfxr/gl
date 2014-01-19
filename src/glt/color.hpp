@@ -12,6 +12,8 @@ using namespace defs;
 
 struct color {
 
+    typedef uint8 byte;
+
     union {
         
         struct {

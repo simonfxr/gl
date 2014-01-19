@@ -18,6 +18,18 @@
 #  define STDERR_FILE ::stderr
 #endif
 
+#define BASIC_STREAM_READ_STATE_IMPL \
+    BasicStream& read_state() OVERRIDE { return *this; } \
+    const BasicStream& read_state() const OVERRIDE { return *this; }
+
+#define BASIC_STREAM_WRITE_STATE_IMPL \
+    BasicStream& write_state() OVERRIDE { return *this;  } \
+    const BasicStream& write_state() const OVERRIDE { return *this; }
+
+#define BASIC_STREAM_STATE_IMPL \
+    BASIC_STREAM_READ_STATE_IMPL \
+    BASIC_STREAM_WRITE_STATE_IMPL
+
 namespace sys {
 
 namespace io {
@@ -52,35 +64,24 @@ const StreamFlags SS_DONT_CLOSE = 8;
 
 } // namespace anon
 
-struct SYS_API BasicStreamState {
-public:
-    virtual ~BasicStreamState() {}
-protected:
-    virtual StreamFlags& basic_state() = 0;
-    virtual StreamFlags basic_state() const = 0;
-};
+struct SYS_API BasicStream {
+    StreamFlags _state = 0;
 
-struct SYS_API BasicStream : public virtual BasicStreamState {
-
-    virtual ~BasicStream() {}
-    
     void close() {
         close_flush();
-        StreamFlags& s = basic_state();
-        if ((s & SS_CLOSED) == 0) {
+        if ((_state & SS_CLOSED) == 0) {
             basic_close();
-            s |= SS_CLOSED;
+            _state |= SS_CLOSED;
         }
     }
 
     void dontClose(bool dont) {
-        StreamFlags& s = basic_state();
-        s = dont ? s | SS_DONT_CLOSE
-                 : s & ~SS_DONT_CLOSE;
+        _state = dont ? _state | SS_DONT_CLOSE
+                 : _state & ~SS_DONT_CLOSE;
     }
 
     bool flags(StreamFlags flags) const {
-        return (basic_state() & flags) == flags;
+        return (_state & flags) == flags;
     }
 
     bool closed() const { return flags(SS_CLOSED); }
@@ -90,57 +91,62 @@ struct SYS_API BasicStream : public virtual BasicStreamState {
     bool outEOF() const { return flags(SS_OUT_EOF); }
 
     bool writeable() const {
-        StreamFlags s = basic_state();
-        return (s & SS_CLOSED) == 0 && (s & SS_OUT_EOF) == 0;
+        return (_state & SS_CLOSED) == 0 && (_state & SS_OUT_EOF) == 0;
     }
     
 protected:
-    virtual void basic_close() {}
-    virtual void close_flush() {}
+    virtual void basic_close() = 0;
+    virtual void close_flush() = 0;
 
     void destructor() {
-        StreamFlags& st = basic_state();
-        if ((st & (SS_CLOSED | SS_DONT_CLOSE)) == 0) {
+        if ((_state & (SS_CLOSED | SS_DONT_CLOSE)) == 0) {
             basic_close();
-            st |= SS_CLOSED;
+            _state |= SS_CLOSED;
         }
     }
 };
 
-struct SYS_API BasicInStream : public virtual BasicStreamState {
+struct SYS_API InStream  {
 
-    virtual ~BasicInStream() {}
-    
+    virtual ~InStream() {}
+
+    virtual BasicStream& read_state() = 0;
+    virtual const BasicStream& read_state() const = 0;
+
     StreamResult read(size& s, char *b) {
-        StreamFlags& st = basic_state();
-        
+        StreamFlags& st = read_state()._state;
+
         if ((st & SS_CLOSED) != 0) {
             s = 0;
             return StreamClosed;
         }
-        
+
         if ((st & SS_IN_EOF) != 0) {
             s = 0;
             return StreamEOF;
         }
-        
+
         StreamResult r = basic_read(s, b);
         if (r == StreamEOF)
             st |= SS_IN_EOF;
-        
+
         return r;
     }
-    
+
 protected:
+
     virtual StreamResult basic_read(size&, char *) = 0;
 };
 
-struct SYS_API BasicOutStream : public virtual BasicStreamState {
+struct SYS_API OutStream  {
 
-    virtual ~BasicOutStream() {}
-    
+    virtual ~OutStream() {}
+
+    virtual BasicStream& write_state() = 0;
+    virtual const BasicStream& write_state() const = 0;
+
     StreamResult write(size& s, const char *b) {
-        StreamFlags& st = basic_state();
+        StreamFlags& st = write_state()._state;
         
         if ((st & SS_CLOSED) != 0) {
             s = 0;
@@ -160,7 +166,7 @@ struct SYS_API BasicOutStream : public virtual BasicStreamState {
     }
 
     StreamResult flush() {
-        StreamFlags& st = basic_state();
+        StreamFlags& st = write_state()._state;
 
         if ((st & SS_CLOSED) != 0)
             return StreamClosed;
@@ -176,55 +182,34 @@ struct SYS_API BasicOutStream : public virtual BasicStreamState {
     }
 
 protected:
+
     virtual StreamResult basic_write(size&, const char *) = 0;
     virtual StreamResult basic_flush() { return StreamOK; }
-};
-
-struct SYS_API StreamState {
-private:
-    StreamFlags _state;
-public:
-    virtual ~StreamState() {}
-    StreamState() : _state(0) {}
-    StreamFlags state() const { return _state; }
-    
-protected:
-    StreamFlags& state() { return _state; }
-};
-
-struct SYS_API InStream : public virtual BasicStream, public BasicInStream {
-    virtual ~InStream() {}
-};
-
-struct SYS_API OutStream : public virtual BasicStream, public BasicOutStream {
-    virtual ~OutStream() {}
-protected:
-    void close_flush() { flush(); }
 };
 
 struct SYS_API IOStream : public InStream, public OutStream {
     virtual ~IOStream() {}
 };
 
-struct SYS_API AbstractIOStream : public StreamState, public IOStream {
+struct SYS_API AbstractIOStream : public BasicStream, public IOStream {
     virtual ~AbstractIOStream() {}
-protected:
-    virtual StreamFlags basic_state() const FINAL OVERRIDE { return state(); }
-    virtual StreamFlags& basic_state() FINAL OVERRIDE { return state(); }  
+    BASIC_STREAM_STATE_IMPL;
+
+    void close_flush() OVERRIDE { basic_flush(); }
 };
 
-struct SYS_API AbstractOutStream : public StreamState, public OutStream {
+struct SYS_API AbstractOutStream : public BasicStream, public OutStream {
     virtual ~AbstractOutStream() {}
-protected:
-    virtual StreamFlags basic_state() const FINAL OVERRIDE { return state(); }
-    virtual StreamFlags& basic_state() FINAL OVERRIDE { return state(); }
+    BASIC_STREAM_WRITE_STATE_IMPL;
+
+    void close_flush() OVERRIDE { basic_flush(); }
 };
 
-struct SYS_API AbstractInStream : public StreamState, public InStream {
+struct SYS_API AbstractInStream : public BasicStream, public InStream {
     virtual ~AbstractInStream() {}
-protected:
-    virtual StreamFlags basic_state() const FINAL OVERRIDE { return state(); }
-    virtual StreamFlags& basic_state() FINAL OVERRIDE { return state(); }
+    BASIC_STREAM_READ_STATE_IMPL;
+
+    void close_flush() OVERRIDE {}
 };
 
 struct SYS_API StdOutStream : public AbstractOutStream {
@@ -235,9 +220,10 @@ struct SYS_API StdOutStream : public AbstractOutStream {
 protected:
     virtual StreamResult basic_write(size&, const char *) FINAL OVERRIDE;
     virtual StreamResult basic_flush() FINAL OVERRIDE;
+    virtual void basic_close() FINAL OVERRIDE;
 private:
     StdOutStream(const StdOutStream&);
-    StdOutStream operator =(const StdOutStream&);
+    StdOutStream& operator =(const StdOutStream&);
 };
 
 struct SYS_API StdInStream : public AbstractInStream {
@@ -246,6 +232,7 @@ struct SYS_API StdInStream : public AbstractInStream {
     ~StdInStream() { destructor(); }
 protected:
     virtual StreamResult basic_read(size&, char *) FINAL OVERRIDE;
+    virtual void basic_close() FINAL OVERRIDE;
 private:
     StdInStream(const StdInStream&);
     StdInStream& operator =(const StdInStream&);
@@ -256,7 +243,7 @@ struct SYS_API FileStream : public AbstractIOStream {
                  // windows stdin/stdout/stderr are macros, which
                  // clashes with our definitions
     FILE *_file;
-    FileStream(FILE *file = 0);
+    FileStream(FILE *file = nullptr);
     FileStream(const std::string& path, const std::string& mode);
     ~FileStream() { destructor(); }
     bool isOpen() const { return _file != 0; }
@@ -274,8 +261,9 @@ private:
 struct SYS_API NullStream : public AbstractIOStream {
     NullStream() { close(); }
 protected:
-    virtual StreamResult basic_read(size&, char *) FINAL OVERRIDE;
-    virtual StreamResult basic_write(size&, const char *) FINAL OVERRIDE;
+    void basic_close() FINAL OVERRIDE;
+    StreamResult basic_read(size&, char *) FINAL OVERRIDE;
+    StreamResult basic_write(size&, const char *) FINAL OVERRIDE;
 };
 
 struct SYS_API CooperativeInStream : public AbstractInStream {
@@ -301,7 +289,7 @@ SYS_API OutStream& operator <<(OutStream& out, std::stringstream&);
 
 template <typename T>
 OutStream& operator <<(OutStream& out, const T& x) {
-    if (out.writeable()) {
+    if (out.write_state().writeable()) {
         std::ostringstream s;
         s << x;
         out << s;

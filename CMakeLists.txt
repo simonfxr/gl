@@ -77,6 +77,7 @@ endif()
 
 set_option(USE_GLFW_IN_TREE ${LIBS_IN_TREE} BOOL "use glfw under ext/glfw3")
 set_option(USE_GLEW_IN_TREE ${LIBS_IN_TREE} BOOL "use glew under ext/glew")
+set_option(USE_OPENCL_HEADERS_IN_TREE ${LIBS_IN_TREE} BOOL "use OpenCL headerse under ext/opencl-headers")
 
 set_option(USE_NO_MATH_H TRUE BOOL "dont import math.h in math library")
 
