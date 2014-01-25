@@ -18,6 +18,8 @@
 
 namespace glt {
 
+typedef uint8 byte;
+
 using namespace defs;
 
 namespace {
@@ -73,7 +75,7 @@ private:
     size vertices_capacity;
     size vertices_size;
     size gpu_vertices_size;
-    byte * RESTRICT vertex_data;
+    uint8 * RESTRICT vertex_data;
 
     bool owning_elements;
     size elements_capacity;

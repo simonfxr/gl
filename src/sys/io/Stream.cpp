@@ -46,7 +46,7 @@ struct StreamEndl {};
 const StreamEndl endl = {};
 
 OutStream& operator <<(OutStream& out, const std::string& str) {
-    if (!out.outEOF()) {
+    if (!out.write_state().outEOF()) {
         size s = SIZE(str.size());
         out.write(s, str.data());
     }
@@ -92,7 +92,7 @@ StdOutStream::StdOutStream(std::ostream& o)
     : _out(&o)
 {
     if (o.eof())
-        basic_state() |= SS_OUT_EOF;
+        this->_state |= SS_OUT_EOF;
 }
 
 StreamResult StdOutStream::basic_write(size& s, const char *b) {
@@ -115,11 +115,13 @@ StreamResult StdOutStream::basic_flush() {
     return StreamError;
 }
 
+void StdOutStream::basic_close() {}
+
 StdInStream::StdInStream(std::istream& i) :
     _in(&i)
 {
     if (_in->eof())
-        basic_state() |= SS_IN_EOF;
+        this->_state |= SS_IN_EOF;
 }
 
 StreamResult StdInStream::basic_read(size& s, char *b) {
@@ -132,6 +134,8 @@ StreamResult StdInStream::basic_read(size& s, char *b) {
         return StreamEOF;
     return StreamError;
 }
+
+void StdInStream::basic_close() {}
 
 FileStream::FileStream(FileStream::FILE *file) :
     _file(file)
@@ -224,12 +228,14 @@ StreamResult NullStream::basic_write(size& s, const char *) {
     return StreamEOF;
 }
 
+void NullStream::basic_close() {}
+
 CooperativeInStream::CooperativeInStream(InStream *_in, Fiber *ioh, Fiber *su) :
     in(_in), io_handler(ioh), stream_user(su)
 {}
 
 void CooperativeInStream::basic_close() {
-    in->close();
+    in->read_state().close();
 }
 
 StreamResult CooperativeInStream::basic_read(size& s, char *buf) {

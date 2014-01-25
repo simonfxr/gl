@@ -3,7 +3,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+
+#include "begin_packed.h"
 
 typedef struct
 {
@@ -11,7 +12,7 @@ typedef struct
     uint32_t byte_size;
     uint32_t reserved;
     uint32_t payload_byte_offset;
-} __attribute__((packed)) BMPHeader;
+} ATTRS(ATTR_PACKED) BMPHeader;
 
 typedef struct
 {
@@ -26,20 +27,22 @@ typedef struct
     int32_t  pixelsY_per_meter;
     uint32_t color_table_size;
     uint32_t used_colors;
-} __attribute__((packed)) BMPInfo;
+} ATTRS(ATTR_PACKED) BMPInfo;
 
 typedef struct {
     BMPHeader header;
     BMPInfo info;
-} __attribute__((packed)) BMPPrefix;
+} ATTRS(ATTR_PACKED) BMPPrefix;
    
 typedef struct {
     unsigned char b, g, r;
-} __attribute__((packed)) Pixel24;
+} ATTRS(ATTR_PACKED) Pixel24;
+
+#include "end_packed.h"
 
 static const uint16_t MAGIC = 19778; // ascii "BM"
 
-static const unsigned BUF_SIZE = 1024;
+#define BUF_SIZE (1024u)
 
 // bmp uses little endian encoding as does x86,
 // so the encoding/decoding routines dont do anything
@@ -89,7 +92,7 @@ static void convert_pixels(const uint32_t *src, Pixel24 *dst, unsigned size)
     }
 }
 
-BMPError bmp_dump(int fd, int w, int h, const uint32_t *pixels)
+BMPError bmp_dump(FILE *fd, int w, int h, const uint32_t *pixels)
 {
     
     BMPHeader header = {
@@ -117,7 +120,7 @@ BMPError bmp_dump(int fd, int w, int h, const uint32_t *pixels)
     prefix.header = header;
     prefix.info = info;
 
-    if (write(fd, &prefix, sizeof prefix) < 0)
+    if (fwrite(&prefix, sizeof prefix, 1, fd) != 1)
         goto write_err;
 
     {
@@ -127,7 +130,7 @@ BMPError bmp_dump(int fd, int w, int h, const uint32_t *pixels)
         for (i = 0; i < w * h / BUF_SIZE; ++i)
         {
             convert_pixels(pixels + i * BUF_SIZE, pixel_buf, BUF_SIZE);
-            if (write(fd, pixel_buf, sizeof pixel_buf) < 0)
+            if (fwrite(pixel_buf, sizeof pixel_buf, 1, fd) != 1)
                 goto write_err;
         }
 
@@ -136,7 +139,7 @@ BMPError bmp_dump(int fd, int w, int h, const uint32_t *pixels)
         if (rem_size > 0)
         {
             convert_pixels(pixels + offset, pixel_buf, rem_size);
-            if (write(fd, pixel_buf, sizeof *pixel_buf * rem_size) < 0)
+            if (fwrite(pixel_buf, sizeof *pixel_buf * rem_size, 1, fd) != 1)
                 goto write_err;
         }
     }
@@ -149,9 +152,9 @@ write_err:
     return BMP_IO;
 }
 
-BMPError bmp_read(int fd, int *wp, int *hp, uint32_t **pixelsp) {
+BMPError bmp_read(FILE *fd, int *wp, int *hp, uint32_t **pixelsp) {
     uint32_t *pixels = NULL;
-    off_t offset;
+    size_t offset;
     int32_t w, h;
     unsigned char *bytes;
     Pixel24 *data;
@@ -162,7 +165,7 @@ BMPError bmp_read(int fd, int *wp, int *hp, uint32_t **pixelsp) {
     *pixelsp = NULL;
 
     BMPPrefix prefix;
-    if (read(fd, &prefix, sizeof prefix) != (ssize_t) sizeof prefix)
+    if (fread(&prefix, sizeof prefix, 1, fd) != 1)
         goto read_err;
 
     if (decodeU16(prefix.header.magic) != MAGIC)
@@ -180,7 +183,7 @@ BMPError bmp_read(int fd, int *wp, int *hp, uint32_t **pixelsp) {
 
     offset = decodeU32(prefix.header.payload_byte_offset) - sizeof (BMPPrefix);
     if (offset > 0) {
-        if (lseek(fd, offset, SEEK_CUR) == (off_t) -1)
+        if (fseek(fd, offset, SEEK_CUR))
             goto read_err;
     }
 
@@ -190,7 +193,7 @@ BMPError bmp_read(int fd, int *wp, int *hp, uint32_t **pixelsp) {
 
     bytes = (unsigned char *) pixels;
     
-    if (read(fd, bytes + w * h, w * h * 3) != w * h * 3)
+    if (fread(bytes + w * h, w * h * 3, 1, fd) != 1)
         goto read_err;
 
     data = (Pixel24 *)(bytes + w * h);

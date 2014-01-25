@@ -172,7 +172,13 @@ typedef intptr_t iptr;
 typedef iptr int_t;
 typedef uptr uint_t;
 
+#if 0
+/* some windows header defines small, use it as marker weather byte is typdef'ed */
+#ifndef small
 typedef uint8 byte;
+#endif  
+#endif // 0
+
 
 #ifdef SIGNED_SIZE
 typedef int32 size;

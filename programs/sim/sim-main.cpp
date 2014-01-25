@@ -297,7 +297,7 @@ static float rand1() {
 }
 
 static glt::color randomColor() {
-    return glt::color(byte(rand1() * 255), byte(rand1() * 255), byte(rand1() * 255));
+    return glt::color(uint8(rand1() * 255), uint8(rand1() * 255), uint8(rand1() * 255));
 }
 
 void Game::spawn_sphere() {

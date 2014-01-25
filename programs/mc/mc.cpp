@@ -70,9 +70,9 @@ struct MCState {
     cl::Event writeVBOJob;
 };
 
-#define MC_SIZE_X 2
-#define MC_SIZE_Y 2
-#define MC_SIZE_Z 2
+#define MC_SIZE_X 4
+#define MC_SIZE_Y 4
+#define MC_SIZE_Z 3
 #define NUM_MC (MC_SIZE_X * MC_SIZE_Y * MC_SIZE_Z)
 
 struct Anim {
@@ -101,7 +101,7 @@ struct Anim {
 
     double sum_tris;
     double max_tris;
-    uint num_renders;
+    uint32 num_renders;
 
     void init(const ge::Event<ge::InitEvent>&);
     void initCL(const ge::Event<ge::InitEvent>&);
@@ -381,8 +381,11 @@ void Anim::computeVolumeData(MCState& mc, real time) {
     M *= glt::scaleTransform(mc.cube_dim);
     M *= glt::scaleTransform(real(1) / real(N - 2));
 
-    time *= real(0.2);
-    const vec4_t C = vec4(-1, real(0.2) * cos(time * real(0.11)), sin(time * real(0.1)), 0);
+#define fract(x) (x - math::floor(x))
+#define tri(t) math::abs(2 * fract(t / (2 * math::PI)) - 1)
+
+    time *= real(0.5);
+    const vec4_t C = vec4(-1 * tri(math::cos(time) * 0.1), real(0.2) * math::cos(time * real(0.11)), math::sin(time * real(0.1)), 0);
     
     kernel_generateSphereVolume.setArg(0, mc.volume);
     kernel_generateSphereVolume.setArg(1, M);
@@ -577,6 +580,7 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     sum_tris += ntris;
     ++num_renders;
 
+    time = engine.gameLoop().realTime();
     if (time >= time_print_fps) {
         time_print_fps = time + 1.f;
 
