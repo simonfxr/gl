@@ -132,6 +132,15 @@ if(COMP_GCCLIKE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
 endif()
 
+if(COMP_CLANG)
+  add_definitions(-Wc++11-narrowing)
+  add_definitions(-Wc++11-compat)
+  add_definitions(-Wc++11-extensions)
+  add_definitions(-Weverything)
+  add_definitions(-Wno-c++98-compat)
+  add_definitions(-Wno-c++98-compat-pedantic)
+endif()
+
 if(COMP_GCC)
   add_definitions(
 #    -Wsuggest-attribute=const 

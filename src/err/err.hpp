@@ -44,12 +44,12 @@ ERR_API void print_stacktrace(sys::io::OutStream&, int skip = 0);
 
 struct Location {
     const char *file;
-    int line;
     const char *function;
     const char *operation; // may be null
+    defs::iptr line;
 
     static Location make(const char *_file, int _line, const char *_function, const char *_operation = 0) {
-        Location loc = { _file, _line, _function, _operation };
+        Location loc = { _file, _function, _operation, _line };
         return loc;
     }
 };

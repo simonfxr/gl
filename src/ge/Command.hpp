@@ -17,8 +17,7 @@ struct CommandProcessor;
 struct QuotationCommand;
 
 struct GE_API CommandEvent : public EngineEvent {
-    CommandEvent(Engine& e, CommandProcessor& proc) :
-        EngineEvent(e), processor(proc) {}
+    CommandEvent(Engine& e, CommandProcessor& proc);
     CommandProcessor& processor;
 };
 

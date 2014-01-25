@@ -8,7 +8,7 @@ namespace ge {
 struct Engine;
 
 struct GE_API EngineEvent {
-    virtual ~EngineEvent() {} // currently not used
+    virtual ~EngineEvent();
     Engine& engine;
     EngineEvent(Engine& _engine) : engine(_engine) {}
 };

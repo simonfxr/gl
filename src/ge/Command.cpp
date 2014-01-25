@@ -23,6 +23,10 @@ void Command::name(const std::string& new_name) {
     namestr = new_name;
 }
 
+CommandEvent::CommandEvent(ge::Engine& e, CommandProcessor& proc) :
+    EngineEvent(e), processor(proc)
+{}
+
 Command::Command(const Array<CommandParamType>& ps, const std::string name, const std::string& desc) :
     params(ps), namestr(name), descr(desc)
 {

@@ -105,6 +105,7 @@ set(GE_SRC
   ge/GameWindow.cpp
   ge/WindowRenderTarget.cpp
   ge/Engine.cpp
+  ge/EngineEvents.cpp
   ge/EngineOptions.cpp
   ge/Init.cpp
   ge/Command.cpp

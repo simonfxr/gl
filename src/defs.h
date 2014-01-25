@@ -151,7 +151,7 @@ typedef uint64 uptr;
 #  endif
 
 #else
-#  define IALIAS(t) typedef t##_t t;
+#  define IALIAS(t) typedef t##_t t
 
 IALIAS(uint8);
 IALIAS(uint16);
