@@ -7,52 +7,12 @@
 #include "glt/GLSLPreprocessor.hpp"
 #include "glt/ShaderCompiler.hpp"
 #include "sys/fs.hpp"
+#include "sys/io.hpp"
 
 #include "err/err.hpp"
 
 namespace glt {
 
-bool readFile(sys::io::OutStream& err, const std::string& fn, char *& file_contents, uint32& file_size) {
-
-    FILE *in = fopen(fn.c_str(), "r");
-    if (in == 0)
-        goto fail;
-    
-    file_contents = 0;
-    file_size = 0;
-    
-    if (fseek(in, 0, SEEK_END) == -1)
-        goto fail;
-
-    {
-        int64 ssize = ftell(in);
-        if (ssize < 0)
-            goto fail;
-        size_t size = size_t(ssize);
-        if (fseek(in, 0, SEEK_SET) == -1)
-            goto fail;
-
-        {
-            char *contents = new char[size + 1];
-            if (fread(contents, size, 1, in) != 1) {
-                delete[] contents;
-                goto fail;
-            }
-        
-            contents[size] = '\0';
-            file_contents = contents;
-            file_size = static_cast<uint32>(size);
-            fclose(in);
-        }
-    }
-    
-    return true;
-
-fail:
-    
-    err << "unable to read file: " << fn << sys::io::endl;
-    return false;
-}
 
 namespace {
 
@@ -156,9 +116,9 @@ void GLSLPreprocessor::processFileRecursively(const std::string& file) {
 
     ASSERT(sys::fs::isAbsolute(file));
     char *data;
-    uint32 size;
+    defs::size size;
     
-    if (!readFile(out(), file, data, size)) {
+    if (!sys::io::readFile(out(), file, &data, &size)) {
         setError();
         return;
     }
@@ -264,9 +224,9 @@ void IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext& 
         proc.name(filestat.absolute);
 
         char *contents;
-        uint32 size;
+        defs::size size;
 
-        if (!readFile(proc.out(), filestat.absolute, contents, size)) {
+        if (!readFile(proc.out(), filestat.absolute, &contents, &size)) {
             proc.setError();
             return;
         }

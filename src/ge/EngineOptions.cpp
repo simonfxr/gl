@@ -5,7 +5,6 @@
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
 
-#include <cstdio>
 #include <cstring>
 #include <cctype>
 

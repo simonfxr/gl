@@ -4,7 +4,6 @@
 #include "sys/io/Stream.hpp"
 
 #include <cstring>
-#include <sstream>
 
 namespace ge {
 
@@ -29,12 +28,10 @@ void CommandArg::free() {
 
 struct PrettyQuotation {
     std::vector<std::string> statements;
-    std::ostringstream out;
-    sys::io::StdOutStream out_stream;
+    sys::io::ByteStream out;
     size len;
 
     PrettyQuotation() :
-        out_stream(out),
         len(0)        
         {}
 };
@@ -157,7 +154,7 @@ void CommandPrettyPrinter::print(const Quotation& q) {
         print(q[i]);
         Ref<PrettyQuotation>& pq = self->quotations.back();
         pq->statements.push_back(pq->out.str());
-        pq->out.str("");
+        pq->out.truncate(0);
         pq->len += pq->statements.back().length();
     }
     
@@ -166,7 +163,7 @@ void CommandPrettyPrinter::print(const Quotation& q) {
 
 void CommandPrettyPrinter::openQuotation() {
     self->quotations.push_back(makeRef(new PrettyQuotation));
-    self->current_out = &self->quotations.back()->out_stream;
+    self->current_out = &self->quotations.back()->out;
 }
 
 void CommandPrettyPrinter::closeQuotation() {
@@ -178,7 +175,7 @@ void CommandPrettyPrinter::closeQuotation() {
     Ref<PrettyQuotation>& q = self->quotations.back();
     size nln = q->statements.size();
 
-    self->current_out = depth == 1 ? self->out : &self->quotations[depth - 2]->out_stream;
+    self->current_out = depth == 1 ? self->out : &self->quotations[depth - 2]->out;
     
     if (nln == 0) {
         printSpaces(indent);

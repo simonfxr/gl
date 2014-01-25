@@ -9,7 +9,6 @@
 #include "sys/fs.hpp"
 
 #include <vector>
-#include <sstream>
 
 namespace ge {
 
@@ -274,8 +273,7 @@ bool CommandProcessor::loadStream(sys::io::InStream& inp, const std::string& inp
 }
 
 bool CommandProcessor::evalCommand(const std::string& cmd) {
-    std::istringstream stream(cmd);
-    sys::io::StdInStream inp(stream);
+    sys::io::ByteStream inp(cmd);
     return loadStream(inp, "<eval string>");
 }
 
@@ -296,13 +294,12 @@ bool CommandProcessor::execCommand(Array<CommandArg>& args) {
     bool ok = exec(args);
 
     if (!ok) {
-        std::ostringstream err;
-        sys::io::StdOutStream errout(err);
+        sys::io::ByteStream err;
         err << "executing command failed: ";
 
         {
             CommandPrettyPrinter printer;
-            printer.out(errout);
+            printer.out(err);
             printer.print(args);
         }
         

@@ -182,6 +182,50 @@ StreamResult HandleStream::flush_buffer() {
     return convertErr(err);
 }
 
+bool readFile(sys::io::OutStream& err, const std::string& path, char **file_contents, size *file_size) {
+    FILE *in = fopen(path.c_str(), "r");
+    if (in == 0)
+        goto fail;
+    
+    *file_contents = nullptr;
+    *file_size = 0;
+    
+    if (fseek(in, 0, SEEK_END) == -1)
+        goto fail;
+
+    {
+        int64 ssize = ftell(in);
+        if (ssize < 0)
+            goto fail;
+        size_t size = size_t(ssize);
+        if (fseek(in, 0, SEEK_SET) == -1)
+            goto fail;
+
+        {
+            char *contents = new char[size + 1];
+            if (fread(contents, size, 1, in) != 1) {
+                delete[] contents;
+                goto fail;
+            }
+        
+            contents[size] = '\0';
+            *file_contents = contents;
+            *file_size = SIZE(size);
+        }
+    }
+
+    fclose(in);
+    return true;
+
+fail:
+    if (err.write_state().writeable())
+        err << "unable to read file: " << path << sys::io::endl;
+
+    if (in)
+        fclose(in);
+    return false;
+}
+
 } // namespace io
 
 } // namespace sys

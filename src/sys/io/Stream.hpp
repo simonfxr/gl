@@ -212,32 +212,6 @@ struct SYS_API AbstractInStream : public BasicStream, public InStream {
     void close_flush() OVERRIDE {}
 };
 
-struct SYS_API StdOutStream : public AbstractOutStream {
-    std::ostream *_out;
-    StdOutStream(std::ostream&);
-    ~StdOutStream() { destructor(); }
-    void out(std::ostream& o) { _out = &o; }
-protected:
-    virtual StreamResult basic_write(size&, const char *) FINAL OVERRIDE;
-    virtual StreamResult basic_flush() FINAL OVERRIDE;
-    virtual void basic_close() FINAL OVERRIDE;
-private:
-    StdOutStream(const StdOutStream&);
-    StdOutStream& operator =(const StdOutStream&);
-};
-
-struct SYS_API StdInStream : public AbstractInStream {
-    std::istream *_in;
-    StdInStream(std::istream&);
-    ~StdInStream() { destructor(); }
-protected:
-    virtual StreamResult basic_read(size&, char *) FINAL OVERRIDE;
-    virtual void basic_close() FINAL OVERRIDE;
-private:
-    StdInStream(const StdInStream&);
-    StdInStream& operator =(const StdInStream&);
-};
-
 struct SYS_API FileStream : public AbstractIOStream {
     struct FILE; // use as dummy type, avoid importing stdio.h, on
                  // windows stdin/stdout/stderr are macros, which
@@ -275,6 +249,31 @@ struct SYS_API CooperativeInStream : public AbstractInStream {
 protected:
     virtual void basic_close() FINAL OVERRIDE;
     virtual StreamResult basic_read(size&, char *) FINAL OVERRIDE;
+};
+
+struct SYS_API ByteStream : public AbstractIOStream {
+
+    std::vector<char> _buffer;
+    defs::index _read_cursor;
+
+    ByteStream(defs::size bufsize = 32);
+    ByteStream(const char *buf, defs::size sz);
+    ByteStream(const std::string&);
+    
+   ~ByteStream();
+
+   defs::size size() const { return SIZE(_buffer.size()); }
+   const char *data() const { return &_buffer.front(); }
+   char *data() { return &_buffer.front(); }
+   std::string str() const { return std::string(data(), size()); }
+
+   void truncate(defs::size);
+
+protected:
+
+    void basic_close() FINAL OVERRIDE;
+    StreamResult basic_read(defs::size&, char *) FINAL OVERRIDE;
+    StreamResult basic_write(defs::size&, const char *) FINAL OVERRIDE;
 };
 
 SYS_API OutStream& operator <<(OutStream& out, const std::string& str);

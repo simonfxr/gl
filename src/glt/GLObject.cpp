@@ -82,10 +82,9 @@ void generate(ObjectType::Type t, GLsizei n, GLuint *names) {
 
     DBG(
         {
-            std::ostringstream call_stack;
-            sys::io::StdOutStream out(call_stack);
+            ByteStream out;
             err::print_stacktrace(out);
-            std::string call_stack_str = call_stack.str();
+            std::string call_stack_str = out.str();
         });
     
     ASSERT(0 <= t && t < ObjectType::Count);

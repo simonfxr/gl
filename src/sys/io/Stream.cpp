@@ -4,7 +4,6 @@
 
 #include <cstring>
 #include <cstdio>
-#include <iostream>
 
 #ifdef SYSTEM_UNIX
 #  include <errno.h>
@@ -13,6 +12,8 @@
 namespace sys {
 
 namespace io {
+
+using defs::index;
 
 namespace {
 
@@ -86,56 +87,6 @@ OutStream& operator <<(OutStream& out, std::stringstream& s) {
 //     out.write(s, b.pbase());
 //     return out;
 // }
-
-
-StdOutStream::StdOutStream(std::ostream& o)
-    : _out(&o)
-{
-    if (o.eof())
-        this->_state |= SS_OUT_EOF;
-}
-
-StreamResult StdOutStream::basic_write(size& s, const char *b) {
-    std::streamsize n = UNSIZE(s);
-    _out->write(b, n);
-    if (_out->good())
-        return StreamOK;
-    s = 0; // FIXME: how many were written?
-    if (_out->eof())
-        return StreamEOF;
-    return StreamError;
-}
-
-StreamResult StdOutStream::basic_flush() {
-    _out->flush();
-    if (_out->good())
-        return StreamOK;
-    if (_out->eof())
-        return StreamEOF;
-    return StreamError;
-}
-
-void StdOutStream::basic_close() {}
-
-StdInStream::StdInStream(std::istream& i) :
-    _in(&i)
-{
-    if (_in->eof())
-        this->_state |= SS_IN_EOF;
-}
-
-StreamResult StdInStream::basic_read(size& s, char *b) {
-    std::streamsize n = UNSIZE(s);
-    _in->read(b, n);
-    if (_in->good())
-        return StreamOK;
-    s = 0;
-    if (_in->eof())
-        return StreamEOF;
-    return StreamError;
-}
-
-void StdInStream::basic_close() {}
 
 FileStream::FileStream(FileStream::FILE *file) :
     _file(file)
@@ -250,6 +201,54 @@ StreamResult CooperativeInStream::basic_read(size& s, char *buf) {
         else
             return res; // error
     }
+}
+
+ByteStream::ByteStream(defs::size bufsize) :
+    _buffer(),
+    _read_cursor(0)
+{
+    _buffer.reserve(bufsize);
+}
+
+ByteStream::ByteStream(const char *buf, defs::size sz) :
+    ByteStream(sz)
+{
+    write(sz, buf);
+}
+
+ByteStream::ByteStream(const std::string& str) :
+    ByteStream(str.data(), str.size())
+{}
+
+ByteStream::~ByteStream() {}
+
+void ByteStream::truncate(defs::size sz) {
+    _buffer.resize(UNSIZE(sz), 0);
+    if (_read_cursor > sz)
+        _read_cursor = sz;
+}
+
+void ByteStream::basic_close() {}
+
+StreamResult ByteStream::basic_read(defs::size& s, char *buf) {
+    index lim = _read_cursor + s;
+    if (lim > size())
+        lim = size();
+    if (_read_cursor >= lim) {
+        s = 0;
+        return StreamEOF;
+    }
+    s = lim - _read_cursor;
+    memcpy(buf, data() + _read_cursor, s);
+    _read_cursor += s;
+    return StreamOK;
+}
+
+StreamResult ByteStream::basic_write(defs::size& s, const char *buf) {
+    index end = size();
+    _buffer.resize(end + s, 0);
+    memcpy(data() + end, buf, s);
+    return StreamOK;
 }
 
 } // namespace io

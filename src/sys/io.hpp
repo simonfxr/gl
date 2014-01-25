@@ -122,6 +122,8 @@ protected:
     StreamResult flush_buffer();
 };
 
+SYS_API bool readFile(sys::io::OutStream& err, const std::string& path, char **contents, size *size);
+
 } // namespace io
 
 } // namespace sys

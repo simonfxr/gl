@@ -20,12 +20,9 @@
 
 #include <vector>
 #include <string>
-#include <sstream>
 
 #include <CL/cl.h>
 #include <CL/cl.hpp>
-
-#include <cstdio>
 
 #ifdef SYSTEM_LINUX
 #include <GL/glx.h>
@@ -292,9 +289,9 @@ void Anim::initCL(const ge::Event<ge::InitEvent>& ev) {
 void Anim::initCLKernels(bool *success) {
     cl_int cl_err;
     char *source_code;
-    uint32 code_size;
+    defs::size code_size;
 
-    if (!glt::readFile(engine.out(), "programs/mc/cl/program.cl", source_code, code_size)) {
+    if (!sys::io::readFile(engine.out(), "programs/mc/cl/program.cl", &source_code, &code_size)) {
         ERR("failed reading CL program");
         return;
     }
