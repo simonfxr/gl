@@ -1,5 +1,3 @@
-#include <fstream>
-
 #include "math/real.hpp"
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
@@ -129,14 +127,15 @@ void Camera::Data::runSaveFrame(const Event<CommandEvent>&, const Array<CommandA
         ERR("invalid parameters: expect 0 or 1 filepath");
         return;
     }
-    
-    std::ofstream out(path->c_str());
-    if (!out.is_open()) {
+
+    sys::io::FileStream out(*path, "wb");
+    if (!out.isOpen()) {
         ERR("couldnt open file: " + *path);
         return;
     }
-    
-    out.write(reinterpret_cast<const char *>(&_frame), sizeof _frame);
+
+    size s = sizeof _frame;
+    out.write(s, reinterpret_cast<const char *>(&_frame));
 }
 
 void Camera::Data::runLoadFrame(const Event<CommandEvent>&, const Array<CommandArg>& args) {
@@ -151,13 +150,14 @@ void Camera::Data::runLoadFrame(const Event<CommandEvent>&, const Array<CommandA
         return;
     }
 
-    std::ifstream in(path->c_str());
-    if (!in.is_open()) {
+    sys::io::FileStream in(*path, "r");
+    if (!in.isOpen()) {
         ERR("couldnt open file: " + *path);
         return;
     }
 
-    in.read(reinterpret_cast<char *>(&_frame), sizeof _frame);
+    size s = sizeof _frame;
+    in.read(s, reinterpret_cast<char *>(&_frame));
 }
 
 void Camera::Data::runSpeed(const Event<CommandEvent>&, const Array<CommandArg>& args) {

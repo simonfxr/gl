@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include <fstream>
+#include <cstring>
 #include <set>
 #include <stack>
 
@@ -91,8 +89,8 @@ void GLSLPreprocessor::appendString(const std::string& str) {
 void GLSLPreprocessor::addDefines(const PreprocessorDefinitions& defines) {
     for (PreprocessorDefinitions::const_iterator it = defines.begin();
          it != defines.end(); ++it) {
-        std::stringstream defn;
-        defn << "#define " << it->first << " " << it->second << std::endl;
+        sys::io::ByteStream defn;
+        defn << "#define " << it->first << " " << it->second << sys::io::endl;
         appendString(defn.str());
     }
 }

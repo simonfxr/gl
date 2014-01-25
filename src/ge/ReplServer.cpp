@@ -5,7 +5,6 @@
 #include "sys/fiber.hpp"
 
 #include <vector>
-#include <sstream>
 
 namespace ge {
 
@@ -83,7 +82,7 @@ Client::Client(int _id, Handle h) :
     ParserArgs args;
     args.client = this;
     fiber_push_return(&parser_fiber, run_parser_fiber, (void *) &args, sizeof args);
-    std::ostringstream name;
+    sys::io::ByteStream name;
     name << "<repl " << id << ">";
     parse_state.filename = name.str();
 }
@@ -120,7 +119,7 @@ bool Client::handleIO(Engine& e) {
     }
     
     sys::io::StreamResult res = parse_state.in_state;
-    return res == sys::io::StreamBlocked || res == sys::io::StreamOK;
+    return res == sys::io::StreamResult::Blocked || res == sys::io::StreamResult::OK;
 }
 
 } // namespace anon

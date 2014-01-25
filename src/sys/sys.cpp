@@ -3,8 +3,6 @@
 #include "sys/sys.hpp"
 #include "sys/module.hpp"
 
-#include <assert.h>
-
 namespace sys {
 
 Module *module;
@@ -15,7 +13,6 @@ void moduleInit() {
 }
 
 void moduleExit() {
-    assert(module != 0);
     delete module;
     module = 0;
 }

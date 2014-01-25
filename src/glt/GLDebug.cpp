@@ -106,12 +106,13 @@ void ARBDebug::printDebugMessages(const err::Location& loc) {
         
 #undef sym_case
 
-        std::stringstream mesg;
+        sys::io::ByteStream mesg;
         mesg << "source: " << ssrc << ", severity: " << ssev
              << ", type: " << stype << ", id: " << id
              << "  message: " << message_buffer;
 
-        err::printError(sys::io::stdout(), "OpenGL DEBUG", loc, err::Error, mesg.str().c_str());               }
+        err::printError(sys::io::stdout(), "OpenGL DEBUG", loc, err::Error, mesg.str().c_str());
+    }
 }
 
 AMDDebug::AMDDebug(GLsizei buf_len) :
@@ -175,7 +176,7 @@ void AMDDebug::printDebugMessages(const err::Location& loc) {
 
 #undef sym_case
 
-        std::stringstream mesg;
+        sys::io::ByteStream mesg;
         mesg << "category: " << scat << ", severity: " << ssev
              << ", id: " << id << "  message: " << message_buffer;
 

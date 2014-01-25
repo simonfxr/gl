@@ -1,4 +1,3 @@
-#include <sstream>
 #include <vector>
 
 #include "data/Array.hpp"
@@ -14,8 +13,9 @@ const Array<CommandArg> NULL_ARGS = ARRAY_INITIALIZER(CommandArg);
 std::string Command::name() const {
     if (!namestr.empty())
         return namestr;
-    std::ostringstream id;
-    id << "<anonymous " << this << ">";
+    sys::io::ByteStream id;
+    const void *self = this;
+    id << "<anonymous " << self << ">";
     return id.str();
 }
 
@@ -42,8 +42,8 @@ void Command::handle(const Event<CommandEvent>& ev) {
 }
 
 std::string Command::interactiveDescription() const {
-    std::ostringstream desc;
-    desc << "command " << name() << std::endl
+    sys::io::ByteStream desc;
+    desc << "command " << name() << sys::io::endl
          << "  params:";
 
     const char *delim = " ";
@@ -65,14 +65,14 @@ std::string Command::interactiveDescription() const {
     if (parameters().size() == 0)
         desc << " none";
 
-    desc << std::endl
-         << "  description: " << description() << std::endl;
+    desc << sys::io::endl
+         << "  description: " << description() << sys::io::endl;
         
     return desc.str();
 }
 
 static std::string describe(const std::string& source, int line, int column, const std::string& desc, Quotation *quot) {
-    std::ostringstream str;
+    sys::io::ByteStream str;
     str << "<quotation " << source << "@" << line << ":" << column;
     if (!desc.empty())
         str << " " << desc << ">";

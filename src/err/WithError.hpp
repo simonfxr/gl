@@ -4,15 +4,12 @@
 #include "defs.hpp"
 
 #include <string>
-#include <sstream>
 
 namespace err {
 
 template <typename E>
 std::string defaultStringError(E error) {
-    std::ostringstream rep;
-    rep << error;
-    return rep.str();
+    return std::to_string(int(error));
 }
 
 template <typename E, E NoError,  std::string(*StringErrorFun)(E) = defaultStringError<E> >

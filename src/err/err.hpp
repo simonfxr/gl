@@ -5,11 +5,6 @@
 #include "sys/io/Stream.hpp"
 
 #include <string>
-#include <sstream>
-
-#ifndef ATTR_NORETURN
-#include <stdlib.h>
-#endif
 
 #ifndef ERROR_DEFAULT_STREAM
 #define ERROR_DEFAULT_STREAM ::sys::io::stdout()

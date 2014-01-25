@@ -16,7 +16,6 @@
 #endif
 
 #include <stddef.h>
-#include <stdlib.h>
 
 typedef uint32_t FiberState;
 
@@ -30,10 +29,11 @@ typedef struct {
 
 typedef void (*FiberFunc)(void *);
 
-#define FIBER_NYI ::abort()
+#define FIBER_NYI (*(volatile int *) nullptr = 0)
+#define FIBER_NYI_RET(x) FIBER_NYI; return x
 
 inline Fiber *fiber_init(Fiber *, void *, size_t) {
-    FIBER_NYI;
+    FIBER_NYI_RET(nullptr);
 }
 
 inline void fiber_init_toplevel(Fiber *fiber) {
@@ -41,7 +41,7 @@ inline void fiber_init_toplevel(Fiber *fiber) {
 }
 
 inline int fiber_alloc(Fiber *, size_t) {
-    FIBER_NYI;
+    FIBER_NYI_RET(0);
 }
 
 inline void fiber_destroy(Fiber *) {

@@ -2,7 +2,6 @@
 #include "glt/utils.hpp"
 
 #include <map>
-#include <sstream>
 
 #if defined(DEBUG_GLOBJECT) || defined(DEBUG_ALL)
 #  define DBG(...) __VA_ARGS__

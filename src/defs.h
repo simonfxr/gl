@@ -80,6 +80,8 @@
 
 #ifdef GNU_EXTENSIONS
 #  define ATTRS(...) __attribute__((__VA_ARGS__))
+#elif defined(COMPILER_CL)
+#  define ATTRS(...) __declspec(__VA_ARGS)
 #else
 #  define ATTRS(...)
 #endif
@@ -93,6 +95,15 @@
 #  define ATTR_FORCE_INLINE always_inline
 #  define ATTR_NORETURN noreturn
 #  define ATTR_PACKED packed
+#elif defined(COMPILER_CL)
+#  define ATTR_WARN_UNUSED
+#  define ATTR_NO_WARN_UNUSED_DEF
+#  define ATTR_ALIGNED(n) align(n)
+#  define ATTR_NOINLINE noinline
+#  define ATTR_NOTHROW nothrow
+#  define ATTR_FORCE_INLINE
+#  define ATTR_NORETURN noreturn
+#  define ATTR_PACKED
 #endif
 
 #ifdef GNU_EXTENSIONS

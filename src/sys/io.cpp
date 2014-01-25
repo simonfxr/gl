@@ -12,13 +12,13 @@ namespace {
 
 StreamResult convertErr(HandleError err) {
     switch (err) {
-    case HE_OK: return StreamOK;
-    case HE_BLOCKED: return StreamBlocked;
-    case HE_EOF: return StreamEOF;
+    case HE_OK: return StreamResult::OK;
+    case HE_BLOCKED: return StreamResult::Blocked;
+    case HE_EOF: return StreamResult::EOF;
     case HE_BAD_HANDLE:
     case HE_INVALID_PARAM:
     case HE_UNKNOWN:
-        return StreamError;
+        return StreamResult::Error;
     default:
         ASSERT_FAIL();
     }
@@ -46,23 +46,25 @@ HandleStream::HandleStream(const Handle& h) :
 {}
 
 HandleStream::~HandleStream() {
-    destructor();
+    close();
 }
 
-void HandleStream::basic_close() {
+StreamResult HandleStream::basic_close() {
+    StreamResult ret = basic_flush();
     sys::io::close(handle);
+    return ret;
 }
 
 StreamResult HandleStream::basic_flush() {
     if (write_cursor > 0)
         return flush_buffer();
     else
-        return StreamOK;
+        return StreamResult::OK;
 }
 
 StreamResult HandleStream::basic_read(size& s, char *buf) {
     if (s == 0)
-        return StreamOK;
+        return StreamResult::OK;
     
     if (s <= read_cursor) {
         memcpy(buf, read_buffer, s);
@@ -71,7 +73,7 @@ StreamResult HandleStream::basic_read(size& s, char *buf) {
             memmove(read_buffer, read_buffer + s, read_cursor);
 
         ASSERT(s > 0);
-        return StreamOK;
+        return StreamResult::OK;
     }
 
     size n = read_cursor;
@@ -106,7 +108,7 @@ StreamResult HandleStream::basic_read(size& s, char *buf) {
 
     s = n;
     StreamResult res = convertErr(err);
-    ASSERT(res != StreamOK || s > 0);
+    ASSERT(res != StreamResult::OK || s > 0);
     return res;
 }
 
@@ -116,7 +118,7 @@ StreamResult HandleStream::basic_write(size& s, const char *buf) {
     if (s <= rem) {
         memcpy(write_buffer + write_cursor, buf, s);
         write_cursor += s;
-        return StreamOK;
+        return StreamResult::OK;
     }
 
     size n = 0;
@@ -218,7 +220,7 @@ bool readFile(sys::io::OutStream& err, const std::string& path, char **file_cont
     return true;
 
 fail:
-    if (err.write_state().writeable())
+    if (err.writeable())
         err << "unable to read file: " << path << sys::io::endl;
 
     if (in)

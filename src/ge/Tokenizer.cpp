@@ -1,7 +1,6 @@
 #include "ge/Tokenizer.hpp"
 #include "ge/Command.hpp"
 
-#include <sstream>
 #include <ctype.h>
 #include <cmath>
 
@@ -20,8 +19,8 @@ enum State {
 #define PARSE_ERROR(s, mesg) parse_err((s), _CURRENT_LOCATION, (mesg))
 
 void parse_err(const ParseState& s, const err::Location& loc, const std::string& mesg) {
-    if (s.in_state != sys::io::StreamBlocked) {
-        std::ostringstream buf;
+    if (s.in_state != sys::io::StreamResult::Blocked) {
+        sys::io::ByteStream buf;
         buf << "parsing " << s.filename << "@" << s.line << ":" << s.col;
         buf << " parse-error: " << mesg;
         err::error(loc, err::Error, err::ErrorArgs(buf.str()));
@@ -31,7 +30,7 @@ void parse_err(const ParseState& s, const err::Location& loc, const std::string&
 sys::io::StreamResult next(sys::io::InStream& in, char &c) {
     size s = 1;
     sys::io::StreamResult res = in.read(s, &c);
-    ASSERT(res != sys::io::StreamOK || s == 1);
+    ASSERT(res != sys::io::StreamResult::OK || s == 1);
     return res;
 }
 
@@ -40,7 +39,7 @@ bool getchAny(ParseState& s) {
 
     s.in_state = next(*s.in, s.c);
     s.rawC = s.c;
-    if (s.in_state != sys::io::StreamOK) {
+    if (s.in_state != sys::io::StreamResult::OK) {
         s.c = s.rawC = 0;
         return false;        
     }
@@ -103,7 +102,7 @@ bool symChar(char c) {
 }
 
 std::string parseSym(ParseState& s) {
-    std::ostringstream buf;
+    sys::io::ByteStream buf;
 
     if (!symFirst(s.c))
         return "";
@@ -182,7 +181,7 @@ State parseString(ParseState& s, CommandArg& tok) {
     char delim = s.c == '"'  ? '"' :
                  s.c == '\'' ? '\'' : ' ';
     
-    std::ostringstream buf;
+    sys::io::ByteStream buf;
     if (delim != ' ') {
         getchAny(s);
         while (s.c != 0 && s.c != delim) {
@@ -305,7 +304,7 @@ State parseQuot(ParseState& s, CommandArg& arg) {
     }
 
     arg.type = CommandRef;
-    std::ostringstream buf;
+    sys::io::ByteStream buf;
     buf << "<quotation: " << s.filename << "@" << line << ":" << col << ">";
     arg.command.name = new std::string(buf.str());
     arg.command.ref = new Ref<Command>(new QuotationCommand(s.filename, line, col, "", q));
@@ -451,7 +450,7 @@ State statement(ParseState& s, std::vector<CommandArg>& toks, bool quot) {
             break;
     }
 
-    if (s.c == 0 && s.in_state != sys::io::StreamEOF)
+    if (s.c == 0 && s.in_state != sys::io::StreamResult::EOF)
         return Fail;
 
     return EndStatement;
@@ -467,7 +466,7 @@ bool skipStatement(ParseState& s) {
 
 bool tokenize(ParseState& s, std::vector<CommandArg>& args) {
     getch(s);
-    if (s.in_state != sys::io::StreamOK)
+    if (s.in_state != sys::io::StreamResult::OK)
         return false;
     return statement(s, args, false) != Fail;
 }

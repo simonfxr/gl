@@ -65,9 +65,9 @@ int main(void) {
                     c.buf_pos = 0;
                 }
 
-                if (err == io::StreamEOF || err == io::StreamError) {
+                if (err == io::StreamResult::EOF || err == io::StreamResult::Error) {
                     close = true;
-                } else if (err == io::StreamBlocked && c.buf_pos > 0) {
+                } else if (err == io::StreamResult::Blocked && c.buf_pos > 0) {
                     c.reading = false;
                     c.buf_end = c.buf_pos;
                     c.buf_pos = 0;
@@ -86,7 +86,7 @@ int main(void) {
                     err = c.stream->flush();
                 }
 
-                if (err == io::StreamEOF || err == io::StreamError)
+                if (err == io::StreamResult::EOF || err == io::StreamResult::Error)
                     close = true;
             }
 

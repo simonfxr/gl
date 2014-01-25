@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <map>
 #include <set>
-#include <sstream>
 
 #include "defs.hpp"
 #include "opengl.hpp"
@@ -174,11 +173,13 @@ void ShaderProgram::Data::printProgramLog(GLuint program, sys::io::OutStream& ou
         while (logBegin < log + log_len - 1 && isspace(*logBegin))
             ++logBegin;
 
+        const char *log_msg = log;
+
         if (logBegin == log + log_len - 1) {
             out << "link log empty" << sys::io::endl;
         } else {
             out << "link log: " << sys::io::endl
-                << log << sys::io::endl
+                << log_msg << sys::io::endl
                 << "end link log" << sys::io::endl;
         }
             

@@ -1,5 +1,7 @@
 #include <cstdio>
 
+#define SYS_IO_STREAM_NOWARN 1
+
 #include "sys/fs.hpp"
 #include "err/err.hpp"
 

@@ -1,4 +1,3 @@
-#include <sstream>
 #include <cstring>
 #include <set>
 
@@ -43,7 +42,7 @@ std::string getGLErrorString(GLenum err) {
 
     default:
 
-        std::ostringstream rep;
+        sys::io::ByteStream rep;
         rep << "Unknown OpenGL error [code = " << err << "]";
         return rep.str();
     }

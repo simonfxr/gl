@@ -7,7 +7,6 @@
 
 #include <string>
 
-
 namespace sys {
 
 namespace io {
@@ -104,7 +103,7 @@ SYS_API SocketError accept(Socket&, Handle *);
 
 SYS_API SocketError close(Socket&);
 
-struct SYS_API HandleStream : public AbstractIOStream {
+struct SYS_API HandleStream : public IOStream {
     Handle handle;
     char read_buffer[HANDLE_READ_BUFFER_SIZE];
     char write_buffer[HANDLE_WRITE_BUFFER_SIZE];
@@ -115,10 +114,10 @@ struct SYS_API HandleStream : public AbstractIOStream {
     ~HandleStream();
 
 protected:
-    void basic_close();
-    StreamResult basic_flush();
-    StreamResult basic_read(size&, char *);
-    StreamResult basic_write(size&, const char *);
+    StreamResult basic_close() FINAL OVERRIDE;
+    StreamResult basic_flush() FINAL OVERRIDE;
+    StreamResult basic_read(size&, char *) FINAL OVERRIDE;
+    StreamResult basic_write(size&, const char *) FINAL OVERRIDE;
     StreamResult flush_buffer();
 };
 

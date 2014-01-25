@@ -1,5 +1,4 @@
 #include <stack>
-#include <sstream>
 #include <queue>
 
 #include "glt/ShaderCompiler.hpp"
@@ -118,11 +117,11 @@ void initPreprocessor(ShaderCompiler& compiler, GLSLPreprocessor& proc) {
     proc.out(m.out());
 
     if (m.shaderVersion() != 0) {
-        std::ostringstream glversdef;
+        sys::io::ByteStream glversdef;
         glversdef << "#version " << m.shaderVersion()
                   << (m.shaderProfile() == ShaderManager::CoreProfile
                       ? " core" : " compatibility")
-                  << std::endl;
+                  << sys::io::endl;
         proc.appendString(glversdef.str());
     }
 
@@ -214,12 +213,13 @@ void printShaderLog(GLShaderObject& shader, sys::io::OutStream& out) {
         while (end > logBegin && isspace(end[-1]))
             --end;
         *end = 0;
+        const char *log_msg = log;
 
         if (logBegin == end)  {
             out << "shader compile log empty" << sys::io::endl;
         } else {
             out << "shader compile log: " << sys::io::endl
-                << log << sys::io::endl
+                << log_msg << sys::io::endl
                 << "end compile log" << sys::io::endl;
         }
         

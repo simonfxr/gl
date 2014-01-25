@@ -131,7 +131,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
     defs::size nparams = rest_args ? params.size() - 1 : params.size();
 
     if (nparams != args.size() && !(rest_args && args.size() > nparams)) {
-        std::ostringstream err;
+        sys::io::ByteStream err;
         if (!comname.empty())
             err << "executing Command " << comname << ": ";
         else
@@ -168,7 +168,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
                 } else if (val_type == CommandRef && args[i].type == String) {
                     Ref<Command> comArg = command(*args[i].string);
                     if (!comArg) {
-                        std::ostringstream err;
+                        sys::io::ByteStream err;
                         if (!comname.empty())
                             err << "executing Command " << comname << ": ";
                         else
@@ -183,7 +183,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
                     args[i].command.ref = new Ref<Command>(comArg);
                 } else if (val_type == KeyCombo && args[i].type == String) {
                     if (!coerceKeyCombo(args[i])) {
-                        std::ostringstream err;
+                        sys::io::ByteStream err;
                         if (!comname.empty())
                             err << "executing Command " << comname << ": ";
                         else
@@ -193,7 +193,7 @@ bool CommandProcessor::exec(Ref<Command>& com, Array<CommandArg>& args, const st
                         return false;
                     }
                 } else {
-                    std::ostringstream err;
+                    sys::io::ByteStream err;
                     if (!comname.empty())
                         err << "executing Command " << comname << ": ";
                     else
@@ -248,7 +248,7 @@ bool CommandProcessor::loadStream(sys::io::InStream& inp, const std::string& inp
     while (!done) {
         ok = tokenize(state, args);
         if (!ok) {
-            if (state.in_state != sys::io::StreamEOF)
+            if (state.in_state != sys::io::StreamResult::EOF)
                 ERR(engine().out(), "parsing failed: " + state.filename);
             else
                 ok = true;
