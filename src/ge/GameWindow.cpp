@@ -12,12 +12,6 @@
 #include "opengl.hpp"
 #include <GLFW/glfw3.h>
 
-#ifdef SYSTEM_LINUX
-#  define GLFW_EXPOSE_NATIVE_X11 1
-#  define GLFW_EXPOSE_NATIVE_GLX 1
-#  include <GLFW/glfw3native.h>
-#endif
-
 namespace ge {
 
 struct GameWindow::Data {
