@@ -5,7 +5,6 @@
 
 #include <new>
 #include <assert.h>
-#include <cstdlib>
 #include <cstring>
 
 namespace ge {
@@ -14,7 +13,7 @@ Module *module;
 
 void moduleInit() {
     if (module == 0) {
-        void *mem = malloc(sizeof (Module));
+        void *mem = new char[sizeof (Module)];
         memset(mem, 0, sizeof (Module));
         module = new (mem) Module;
     }
@@ -23,8 +22,9 @@ void moduleInit() {
 void moduleExit() {
     assert(module != 0);
     module->~Module();
-    free(module);
-    module = 0;
+    delete[] reinterpret_cast<char *>(module);
+    module = nullptr;
+    
 }
 
 } // namespace ge

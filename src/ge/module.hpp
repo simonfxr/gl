@@ -18,7 +18,7 @@ struct KeyBindingState {
     KeyBindingState();
     ~KeyBindingState();
     struct Data;
-    Data * const self;
+    Data *self;
 };
 
 struct Module {

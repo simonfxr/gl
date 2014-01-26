@@ -20,6 +20,7 @@ KeyBindingState::KeyBindingState() :
 
 KeyBindingState::~KeyBindingState() {
     delete self;
+    self = nullptr;
 }
 
 #define global (*module->key_binding.self)

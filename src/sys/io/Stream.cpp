@@ -196,7 +196,7 @@ FileStream::FileStream(FileStream::FILE *file) :
 {}
 
 FileStream::FileStream(const std::string& path, const std::string& mode) :
-    _file(0)
+    _file(nullptr)
 {
     open(path, mode);
 }
@@ -243,11 +243,16 @@ StreamResult FileStream::basic_write(size& s, const char *buf) {
 
 StreamResult FileStream::basic_close() {
     StreamResult ret = basic_flush();
-    fclose(castFILE(_file));
+    if (_file)
+        fclose(castFILE(_file));
     return ret;
 }
 
 StreamResult FileStream::basic_flush() {
+
+    if (!_file)
+        return StreamResult::Error;
+    
 #ifdef SYSTEM_UNIX
     int ret;
     
