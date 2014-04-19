@@ -41,6 +41,8 @@ struct Anim {
     vec3_t light_dir;
     vec3_t ec_light_dir;
 
+    real next_fps_counter_draw;
+
     Simulation sim;
 
     Anim() :
@@ -61,13 +63,22 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     ev.info.engine.gameLoop().ticks(SIMULATION_FPS);
     sim.init();
 
+    next_fps_counter_draw = real(0);
+
     {
         Particle p;
         p.position = vec3(real(0), real(10), real(0));
         p.velocity = vec3(real(0));
         p.mass(real(1));
-        p.charge = real(0);
+        p.charge = real(1);
+        sim.particles.push_back(p);
 
+        p.position = vec3(real(5), real(5), real(-10));
+        sim.particles.push_back(p);
+
+        p.charge = 10;
+        p.position = vec3(real(0), real(15), real(0));
+        p.inv_mass = real(0);
         sim.particles.push_back(p);
     }
 
@@ -136,6 +147,19 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     }
 
     renderParticles(ev.info.interpolation);
+
+    if (engine.gameLoop().realTime() > next_fps_counter_draw) {
+        next_fps_counter_draw = engine.gameLoop().realTime() + 3.f;
+ 
+#define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
+        glt::FrameStatistics fs = engine.renderManager().frameStatistics();
+        double fps = INV(fs.avg);
+        double min = INV(fs.max);
+        double max = INV(fs.min);
+        double avg = INV(fs.avg);
+        sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): " << fps << "; " << avg << "; " << min << "; " << max << sys::io::endl;
+#undef INV
+    }
 }
 
 void Anim::renderParticles(real interpolation) {

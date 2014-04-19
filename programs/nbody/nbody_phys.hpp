@@ -17,6 +17,7 @@ struct Particle {
     vec3_t velocity;
     real inv_mass; // allow for m = infinity -> m^-1 = 0
     real charge;
+    vec3_t force;
 
     real mass() const { return real(1) / inv_mass; }
     Particle& mass(real m) { inv_mass = real(1) / m; return *this; }
@@ -30,6 +31,7 @@ struct ParticleArray {
     vec3_t *_velocity;
     real *_inv_mass;
     real *_charge;
+    vec3_t *_force;
 
     ParticleArray(defs::size);
     ~ParticleArray();
