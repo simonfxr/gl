@@ -1,0 +1,36 @@
+load "default.script"
+load "camera.script"
+
+prependShaderPath "programs/nbody/shaders"
+
+bindShader "ground" "ground.vert" "ground.frag" 0 "position" 1 "normal"
+bindShader "particle" "particle.vert" "particle.frag" 0 "position" 1 "normal"
+
+perspectiveProjection 35 0.5 200
+
+postInit { 
+    camera.speed 0.5
+
+    # bindKey [+MLeft] &spawnSphere
+
+    # bindKey [+I] &toggleUseInterpolation
+
+    # bindKey [O] { incGameSpeed -0.01 }
+    # bindKey [P] { incGameSpeed +0.01 }
+
+    # bindKey [+K] { incWorldSolveIterations +1 }
+    # bindKey [+L] { incWorldSolveIterations -1 }
+
+    # bindKey [+U] &toggleRenderByDistance
+    # bindKey [+Z] &toggleRenderSpheresInstanced
+    # bindKey [+T] &toggleIndirectRendering
+
+    # bindKey [MXButton1] { incSphereSpeed -0.1 }
+    # bindKey [MXButton2] { incSphereSpeed +0.1 }
+
+    # bindKey [N] { incSphereSpeed -0.1 }
+    # bindKey [M] { incSphereSpeed +0.1 }
+
+    # bindKey [+E] { incSphereRadius +0.1 }
+    # bindKey [+Q] { incSphereRadius -0.1 }
+}
