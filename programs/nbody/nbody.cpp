@@ -70,15 +70,15 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
         p.position = vec3(real(0), real(10), real(0));
         p.velocity = vec3(real(0));
         p.mass(real(1));
-        p.charge = real(1);
+        p.charge = real(-1);
         sim.particles.push_back(p);
 
         p.position = vec3(real(5), real(5), real(-10));
         sim.particles.push_back(p);
 
-        p.charge = 10;
+        p.charge = 1;
         p.position = vec3(real(0), real(15), real(0));
-        p.inv_mass = real(0);
+        p.mass(real(1));
         sim.particles.push_back(p);
     }
 
@@ -201,4 +201,5 @@ int main(int argc, char *argv[]) {
     opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));
     opts.parse(&argc, &argv);
     return anim.engine.run(opts);
+
 }

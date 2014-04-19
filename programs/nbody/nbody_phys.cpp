@@ -94,23 +94,28 @@ void Simulation::init() {}
 
 void Simulation::simulate_frame() {
 
-    const real K = real(1);
     const real dt = time_step;
+    const real epsi0 = real(8.85e-2);
+    const real mu0 = real(4 * math::PI * 1e2);
     
     for (defs::index i = 0; i < particles.size(); ++i) {
         Particle a = particles[i];
-        a.force = vec3(real(0));
+        vec3_t E = vec3(real(0));
+        vec3_t B = vec3(real(0));
         
         for (defs::index j = 0; j < particles.size(); ++j) {
             if (i == j) continue;
-            Particle b = particles[j];
-            // F = m1 * m2 * K * normalize(r - r') / (r - r')^2
-            vec3_t r = b.position - a.position;
-            float r2 = dot(r, r);
-            if (r2 < 0.01) r2 = 0.01;
-            a.force += K * a.charge * b.charge * inverse(r2) * normalize(r);
+            const Particle b = particles[j];
+
+            vec3_t r = a.position - b.position;
+            real r2 = dot(r, r);
+            vec3_t n = normalize(r);
+
+            E += inverse(4 * math::PI * epsi0 * r2) * b.charge * n;
+            B += mu0 * b.charge * inverse(4 * math::PI * r2) * cross(b.velocity, n);
         }
 
+        a.force = a.charge * (E + cross(a.velocity, B));
         particles[i] = a;
     }
 
