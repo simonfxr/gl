@@ -3,7 +3,6 @@
 
 #include "math/vec3.hpp"
 
-using namespace defs;
 using namespace math;
 
 struct Particle;
@@ -17,7 +16,6 @@ struct Particle {
     vec3_t velocity;
     real inv_mass; // allow for m = infinity -> m^-1 = 0
     real charge;
-    vec3_t force;
 
     real mass() const { return real(1) / inv_mass; }
     Particle& mass(real m) { inv_mass = real(1) / m; return *this; }
@@ -31,7 +29,6 @@ struct ParticleArray {
     vec3_t *_velocity;
     real *_inv_mass;
     real *_charge;
-    vec3_t *_force;
 
     ParticleArray(defs::size);
     ~ParticleArray();
@@ -41,8 +38,6 @@ struct ParticleArray {
 
     void push_back(const Particle&);
     void put(index i, const Particle&);
-
-    defs::size size() const { return _n; }
 };
 
 struct ParticleRef {
@@ -67,6 +62,8 @@ struct Simulation {
 
     void simulate_frame();
     void extrapolate_particle(Particle& p, real interpolation);
+
+    void compute_acceleration(vec3_t *acceleration, const vec3_t *position, const vec3_t *velocity);
 };
 
 #endif

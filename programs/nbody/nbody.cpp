@@ -172,7 +172,7 @@ void Anim::renderParticles(real interpolation) {
 
     program->use();
 
-    for (defs::index i = 0; i < sim.particles.size(); ++i) {
+    for (defs::index i = 0; i < sim.particles._n; ++i) {
         Particle p = sim.particles[i];
         sim.extrapolate_particle(p, interpolation);
         
