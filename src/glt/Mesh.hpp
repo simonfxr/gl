@@ -161,20 +161,8 @@ struct Mesh : public MeshBase {
         appendVertexElem(reinterpret_cast<const byte *>(&vert));
     }
 
-    T& operator[](defs::index i) {
-        return *reinterpret_cast<T *>(vertexRef(i));
-    }
-    
-    const T& operator[](defs::index i) const {
-        return *reinterpret_cast<const T *>(vertexRef(i));
-    }
-
-    T& at(defs::index i) {
-        return this->operator[](i);
-    }
-
-    const T& at(defs::index i) const {
-        return this->operator[](i);
+    const T at(defs::index i) const {
+        return T(*reinterpret_cast<const typename T::gl *>(vertexRef(i)));
     }
 };
 

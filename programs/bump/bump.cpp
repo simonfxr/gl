@@ -18,19 +18,14 @@
 using namespace defs;
 using namespace math;
 
-struct Vertex {
-    vec3_t position;
-    vec3_t tangent;
-    vec3_t binormal;
-    vec2_t uv;
-};
-
-DEFINE_VERTEX_DESC(Vertex,
-                   VERTEX_ATTR(Vertex, position),
-                   VERTEX_ATTR(Vertex, tangent),
-                   VERTEX_ATTR(Vertex, binormal),
-                   VERTEX_ATTR(Vertex, uv)
-);
+#define VERTEX(V, F, Z)                         \
+    V(Vertex,                                   \
+      F(vec3_t, position,                       \
+        F(vec3_t, tangent,                      \
+          F(vec3_t, binormal,                   \
+            Z(vec2_t, uv)))))
+DEFINE_VERTEX(VERTEX);
+#undef VERTEX
 
 template <typename Vertex>
 void sphere(glt::Mesh<Vertex>& mesh, real radius, int slices, int stacks);

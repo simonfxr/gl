@@ -16,6 +16,7 @@ namespace math {
     float buffer[T::size];                              \
     gl_T() = default;                                   \
     gl_T(const T& v);                                   \
+    operator T() const;                                 \
     };
 
 DEF_GLVEC(glvec2, vec2_t);

@@ -96,11 +96,17 @@ VD_DEF_GLVEC_ATTR_INFO(math::mat4_t);
     struct name {                                       \
         typedef VD_GL_NS(name)::gl gl;                  \
         __VA_ARGS__ /* fields */                        \
+        name() = default;                               \
+        explicit name(const gl&);                       \
     };                                                  \
     namespace VD_GL_NS(name) {
-
 #define VD_STRUCT_F(t, n, ...) t n; __VA_ARGS__
 #define VD_STRUCT_Z(t, n) t n;
+
+#define VD_STRUCT_CONSTR_V(name, ...)                   \
+    name::name(const name::gl& _gl_vertex) : __VA_ARGS__ {}
+#define VD_STRUCT_CONSTR_F(t, n, ...) VD_STRUCT_CONSTR_Z(t, n), __VA_ARGS__
+#define VD_STRUCT_CONSTR_Z(t, n) n(_gl_vertex.n)
 
 #define VD_GL_STRUCT_BEGIN_V(name, ...)                                 \
     struct gl {                                                   \
@@ -168,10 +174,12 @@ VD_DEF_GLVEC_ATTR_INFO(math::mat4_t);
     /* declare the vertex description structure */                      \
     V(VD_GL_DESC_DECL_V, VD_GL_DESC_DECL_F, VD_GL_DESC_DECL_Z)          \
     }; /* close struct gl */                                            \
-      /* declare the vertex attr array and the desc structure */        \
+    /* declare the vertex attr array and the desc structure */          \
       V(VD_GL_ATTRS_V, VD_GL_ATTRS_F, VD_GL_ATTRS_Z)                    \
       V(VD_GL_DESC_V, VD_GL_DESC_F, VD_GL_DESC_Z)                       \
-      } /* close namespace */
+      } /* close namespace */                                           \
+                                                                        \
+    V(VD_STRUCT_CONSTR_V, VD_STRUCT_CONSTR_F, VD_STRUCT_CONSTR_Z)
 
 #if 0          
 

@@ -40,8 +40,8 @@
 
 using namespace math;
 
-static const float FPS_UPDATE_INTERVAL = 3.f;
-static const vec3_t BLOCK_DIM = vec3(1.f);
+static const real FPS_UPDATE_INTERVAL = 3.;
+static const vec3_t BLOCK_DIM = vec3(1.);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
 static const int32 N = 196; // 196;
@@ -52,34 +52,29 @@ static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
 
 
 struct MaterialProperties {
-    float ambientContribution;
-    float diffuseContribution;
-    float specularContribution;
-    float shininess;
+    real ambientContribution;
+    real diffuseContribution;
+    real specularContribution;
+    real shininess;
 
     MaterialProperties() {}
-    MaterialProperties(float amb, float diff, float spec, float sh) :
+    MaterialProperties(real amb, real diff, real spec, real sh) :
         ambientContribution(amb), diffuseContribution(diff), specularContribution(spec),
         shininess(sh) {}
 };
 
-static const MaterialProperties BLOCK_MAT(0, 1.f, 0.f, 0.f);
+static const MaterialProperties BLOCK_MAT(0, 1., 0., 0.);
 
-static float noise3D(const vec3_t& p);
-static float sumNoise3D(const vec3_t& p, uint32 octaves, float fmin, float phi, bool abs = false);
+static real noise3D(const vec3_t& p);
+static real sumNoise3D(const vec3_t& p, uint32 octaves, real fmin, real phi, bool abs = false);
 static void pointsOnSphere(uint32 n, vec3_t *points);
 
-struct Vertex {
-    vec3_t position;
-    uint32 color;
-    vec4_t normal;  // last component is diffuse factor
-};
-
-DEFINE_VERTEX_DESC(Vertex,
-    VERTEX_ATTR(Vertex, position),
-                   VERTEX_ATTR_AS(Vertex, color, glt::color),
-    VERTEX_ATTR(Vertex, normal)
-);
+#define VERTEX(V, F, Z)                         \
+    V(Vertex, F(vec3_t, position,               \
+                F(glt::color, color,            \
+                  Z(vec4_t, normal))))
+DEFINE_VERTEX(VERTEX);
+#undef VERTEX
 
 typedef glt::CubeMesh<Vertex> CubeMesh;
 
@@ -93,7 +88,7 @@ struct State {
 
     vec3_t sphere_points[SPHERE_POINTS];
     
-    float gamma_correction;
+    real gamma_correction;
 
     vec3_t ecLightDir;
     
@@ -128,9 +123,9 @@ static bool writeModel(const std::string& file, const CubeMesh& mdl);
 
 static bool initWorld(State *state, CubeMesh& worldModel, vec3_t *sphere_points);
 
-static void incGamma(float *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
-    *gamma += float(args[0].number);
-    if (*gamma < 0) *gamma = 0.f;
+static void incGamma(real *gamma, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>& args) {
+    *gamma += real(args[0].number);
+    if (*gamma < 0) *gamma = 0.;
 }
 
 static void runRecreateWorld(State *state, const ge::Event<ge::CommandEvent>&, const Array<ge::CommandArg>&) {
@@ -210,12 +205,12 @@ static void initState(State *state, const InitEv& ev) {
     ev.info.success = true;
 }
 
-// static float rand1() {
-//     return rand() * (1.f / RAND_MAX);
+// static real rand1() {
+//     return rand() * (1. / RAND_MAX);
 // }
 
 // static vec4_t randColor() {
-//     return vec4(vec3(rand1(), rand1(), rand1()), 1.f);
+//     return vec4(vec3(rand1(), rand1(), rand1()), 1.);
 // }
 
 // struct World {
@@ -235,7 +230,7 @@ static void initState(State *state, const InitEv& ev) {
 // };
 
 struct Densities {
-    float ds[N][N][N];
+    real ds[N][N][N];
 };
 
 struct World {
@@ -346,13 +341,13 @@ static Faces cosfaces(const direction3_t& dir, Faces& sumcos) {
     int32 side = i / 3;
     
     sumcos.f[side][comp]++;
-    Faces f = { { vec3(0.f), vec3(0.f) } };
+    Faces f = { { vec3(0.), vec3(0.) } };
     f.f[side][comp] = as[comp];
     return f;
 }
 
 static void initRay(Ray& r, const direction3_t& d, const vec3_t& step, Faces& sumcos) {
-    vec3_t p = vec3(0.f);
+    vec3_t p = vec3(0.);
     ivec3_t lastidx = ivec3(p);
 
     uint32 i = 0;
@@ -403,15 +398,15 @@ static void initRays(Rays &rays, vec3_t dirs[]) {
     
     const vec3_t center = vec3(N * 0.5f);
 
-    float cos0 = 0.f, cos1 = 0.f, cos2 = 0.f;
-    float cos3 = 0.f, cos4 = 0.f, cos5 = 0.f;
+    real cos0 = 0., cos1 = 0., cos2 = 0.;
+    real cos3 = 0., cos4 = 0., cos5 = 0.;
 
 #pragma omp parallel for reduction(+:cos0, cos1, cos2, cos3, cos4, cos5)
     for (int32 i = 0; i < SPHERE_POINTS; ++i) {
         const direction3_t& d = dirs[i];
         vec3_t p = real(N) * (d * 0.5f + vec3(0.5f));
-        vec3_t step = (p - center) / (10.f * N);
-        Faces sum1 = { { vec3(0.f), vec3(0.f) } };
+        vec3_t step = (p - center) / (10. * N);
+        Faces sum1 = { { vec3(0.), vec3(0.) } };
         initRay(rays.rays[i], d, step, sum1);
         cos0 += sum1.f[0][0];
         cos1 += sum1.f[0][1];
@@ -431,7 +426,7 @@ static void initRays(Rays &rays, vec3_t dirs[]) {
     for (uint32 face = 0; face < 6; ++face) {
         uint32 off = rays.faceOffsets[face];
         uint32 len = rays.faceLengths[face];
-        Faces sum = { { vec3(0.f), vec3(0.f) } };
+        Faces sum = { { vec3(0.), vec3(0.) } };
         
         for (uint32 i = off; i < off + len; ++i) {
             sum.f[0] += rays.rays[i].lightContrib.f[0];
@@ -511,7 +506,7 @@ static World *filterOccluded(const World& w) {
 }
 
 static Faces trace(const World& w, const Rays& rs, const ivec3_t& p0) {
-    Faces diffContr = { { vec3(0.f), vec3(0.f) } };
+    Faces diffContr = { { vec3(0.), vec3(0.) } };
 
     // // front, up, right, bot, down, left
     // ivec3_t faceNorms[6] = {
@@ -532,8 +527,8 @@ static Faces trace(const World& w, const Rays& rs, const ivec3_t& p0) {
         //     0 > p1[2] || p1[2] >= N;
         
         // if (onCubeSurface) { // all rays pass
-        //     diffContr.f[0] += rs.lightContribFace[side].f[0];
-        //     diffContr.f[1] += rs.lightContribFace[side].f[1];
+        //     diffContr.[0] += rs.lightContribFace[side].[0];
+        //     diffContr.[1] += rs.lightContribFace[side].[1];
         //     continue;
         // }
 
@@ -573,7 +568,7 @@ static Faces trace(const World& w, const Rays& rs, const ivec3_t& p0) {
     return diffContr;
 }
 
-static float VIRTUAL_DIM = 100.f;
+static real VIRTUAL_DIM = 100.;
 
 static bool visibleFace(const World& w, const World& vis, int32 i, int32 j, int32 k, const vec3_t& normal) {
     i += (int32) normal[0];
@@ -582,58 +577,58 @@ static bool visibleFace(const World& w, const World& vis, int32 i, int32 j, int3
     return visible(w, vis, i, j, k);
 }
 
-// static float noise3D1(const vec3_t& p) {
-//     return saturate((noise3D(p) + 1.f) * 0.5f / 0.7f);
+// static real noise3D1(const vec3_t& p) {
+//     return saturate((noise3D(p) + 1.) * 0.5f / 0.7f);
 // }
 
-// static float heightAt(const vec3_t& p, const vec3_t& warp, float freq) {
-//     // float y0 = p[1] / VIRTUAL_DIM;
-// //    float w = 1 - y0;
-//     float noise = noise3D(((vec3(p[0], p[2], 0.f) + warp) * freq));
-//     return 1.f + noise;
+// static real heightAt(const vec3_t& p, const vec3_t& warp, real freq) {
+//     // real y0 = p[1] / VIRTUAL_DIM;
+// //    real w = 1 - y0;
+//     real noise = noise3D(((vec3(p[0], p[2], 0.) + warp) * freq));
+//     return 1. + noise;
 // }
 
 static vec3_t noise3D3(const vec3_t& p) {
-    return vec3(noise3D(p + vec3(89.f, -193.f, 521.f)),
-                noise3D(p + vec3(-239.f, -181.f, 619.f)),
-                noise3D(p + vec3(-107.f, 157.f, 487.f)));
+    return vec3(noise3D(p + vec3(89., -193., 521.)),
+                noise3D(p + vec3(-239., -181., 619.)),
+                noise3D(p + vec3(-107., 157., 487.)));
 }
 
-float density(const vec3_t& p) {
-    // float r = sumNoise3D(p, 4, 1.2, 0.5, true);
-    // float distC = length(p - vec3(0.5f)) / length(vec3(0.5f));
+real density(const vec3_t& p) {
+    // real r = sumNoise3D(p, 4, 1.2, 0.5, true);
+    // real distC = length(p - vec3(0.5f)) / length(vec3(0.5f));
     // return (2 * p[1] * p[1] + 0.3) * (1 - distC) * r > 0.2f;
 
-    // float height = p[1] / DIM;
+    // real height = p[1] / DIM;
 
-    // float heightF = 2 * height * height + 0.3;
+    // real heightF = 2 * height * height + 0.3;
 
-    // float distC = 1 - distance(vec2(p[0], p[2]), CENTER) / CENTER[0];
+    // real distC = 1 - distance(vec2(p[0], p[2]), CENTER) / CENTER[0];
 
-    // float detail = 0.3f * fabs(noise3D((p + vec3(0.2, 0.5, -0.3f)) * 11.f));
+    // real detail = 0.3f * fabs(noise3D((p + vec3(0.2, 0.5, -0.3f)) * 11.));
 
-    // float cave = fabs(noise3D(2.f * (p + vec3(-19.f, 23.f, +11.f))));
+    // real cave = fabs(noise3D(2. * (p + vec3(-19., 23., +11.))));
     // if (cave > 0.5f)
-    //     cave = 1.f;
+    //     cave = 1.;
     // else
     //     cave = 0.5f;
 
-    // float world = noise3D(2.3f * p);
+    // real world = noise3D(2.3f * p);
     // return heightF * distC * cave * (fabs(world) - detail) > 0.13f;
 
 //    vec3_t ws_orig = p;
     vec3_t ws = p;
-    float density = 0.f;
+    real density = 0.;
 
-    float prewarp_stride = 25.f;
-    float prewarp_freq = 0.0221f;
+    real prewarp_stride = 25.;
+    real prewarp_freq = 0.0221f;
     vec3_t warp = noise3D3(ws * prewarp_freq) * 0.64f + noise3D3(ws * prewarp_freq * 0.5f) * 0.32f;
     ws += warp * prewarp_stride;
 
     density += -ws[1];
-    // density += saturate((-4.f * ws_orig[1] * 0.3) * 3.0) * 40 * noise3D1(ws_orig * 0.00071f);
+    // density += saturate((-4. * ws_orig[1] * 0.3) * 3.0) * 40 * noise3D1(ws_orig * 0.00071f);
 
-    density += sumNoise3D(ws, 9, 0.0125f, 0.5f, false) * 20.f;
+    density += sumNoise3D(ws, 9, 0.0125f, 0.5f, false) * 20.;
 
     return density;    
 }
@@ -665,7 +660,7 @@ static void createWorld(Densities& ds) {
     for (int32 i = 0; i < N; ++i)
         for (int32 j = 0; j < N; ++j)
             for (int32 k = 0; k < N; ++k) {
-                vec3_t wc = (vec3(ivec3(i, j, k)) * (1.f / real(N)) - vec3(0.5f)) * VIRTUAL_DIM;
+                vec3_t wc = (vec3(ivec3(i, j, k)) * (1. / real(N)) - vec3(0.5f)) * VIRTUAL_DIM;
                 ds.ds[i][j][k] = density(wc);
 //                sys::io::stderr() << i << " " << j << " " << k << " -> wc:" << wc << " density: " << ds.ds[i][j][k] << " sign " << signAt(ds, ivec3(i, j, k)) << sys::io::endl;
             }
@@ -766,18 +761,18 @@ static void createModel(CubeMesh& worldModel, const World& world, const World& v
                     if (OCCLUSION)
                         diffContr = &occmap->lambertFactor[ii][jj][kk];
 
-                    float dens = ds.ds[ii][jj][kk];
+                    real dens = ds.ds[ii][jj][kk];
 
-                    vec3_t blue = vec3(0.f, 0.f, 1.f);
-                    vec3_t yellow = vec3(0.f, 1.f, 1.f);
-                    vec3_t red = vec3(1.f, 0.f, 0.f);
+                    vec3_t blue = vec3(0., 0., 1.);
+                    vec3_t yellow = vec3(0., 1., 1.);
+                    vec3_t red = vec3(1., 0., 0.);
 
                     vec3_t col3;
                     if (dens <= real(0.5)) {
-                        float w = dens * 2;
+                        real w = dens * 2;
                         col3 = (1 - w) * blue + w * yellow;
                     } else {
-                        float w = (dens - 0.5f) * 2;
+                        real w = (dens - 0.5) * 2;
                         col3 = (1 - w) * yellow + w * red;
                     }
                     
@@ -796,8 +791,8 @@ static void createModel(CubeMesh& worldModel, const World& world, const World& v
                             face = abs(face) - 1;
                             v.position *= BLOCK_DIM;
                             v.position += offset;
-                            v.normal[3] = OCCLUSION ? diffContr->f[side][face] : 1.f;
-                            v.color = col.rgba;
+                            v.normal[3] = OCCLUSION ? diffContr->f[side][face] : 1.;
+                            v.color = col;
                             worldModel.add(v);
                         }
                     }
@@ -920,7 +915,7 @@ static void renderBlocks(State *state, ge::Engine& e);
 static void renderScene(State *state, const RenderEv& ev) {
     ge::Engine& e = ev.info.engine;
 
-    GL_CALL(glClearColor, 1.f, 1.f, 1.f, 1.f);
+    GL_CALL(glClearColor, 1., 1., 1., 1.);
     GL_CALL(glEnable, GL_DEPTH_TEST);
     GL_CALL(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -943,14 +938,14 @@ static void renderBlocks(State *state, ge::Engine& e) {
     glt::RenderManager& rm = e.renderManager();
     glt::SavePoint sp(rm.geometryTransform().save());
 
-    // float phi = gameTime_Op() * 0.1f;
+    // real phi = gameTime_Op() * 0.1f;
 
     // vec3_t center = BLOCK_DIM * N * 0.5f;
 
     // rm.geometryTransform().translate(center);
-    // rm.geometryTransform().concat(mat3(vec3(cos(phi), sin(phi), 0.f),
-    //                                    vec3(-sin(phi), cos(phi), 0.f),
-    //                                    vec3(0.f, 0.f, 1.f)));
+    // rm.geometryTransform().concat(mat3(vec3(cos(phi), sin(phi), 0.),
+    //                                    vec3(-sin(phi), cos(phi), 0.),
+    //                                    vec3(0., 0., 1.)));
     // rm.geometryTransform().translate(-center);
 
     Ref<glt::ShaderProgram> voxelShader = e.shaderManager().program("voxel");
@@ -973,11 +968,11 @@ static void renderBlocks(State *state, ge::Engine& e) {
 }
 
 // void mouseMoved(int32 dx, int32 dy) {
-//     float rotX = dx * 0.001f;
-//     float rotY = dy * 0.001f;
+//     real rotX = dx * 0.001f;
+//     real rotY = dy * 0.001f;
     
-//     camera.rotateLocal(rotY, vec3(1.f, 0.f, 0.f));
-//     camera.rotateWorld(rotX, vec3(0.f, 1.f, 0.f));
+//     camera.rotateLocal(rotY, vec3(1., 0., 0.));
+//     camera.rotateWorld(rotX, vec3(0., 1., 0.));
 // }
 
 static bool readModel(const std::string& file, CubeMesh& mdl) {
@@ -1070,22 +1065,22 @@ const uint16 permutation[512] = {
 
 }
 
-static float fade(float t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+static real fade(real t) { return t * t * t * (t * (t * 6 - 15) + 10); }
 
-static float grad(int hash, float x, float y, float z) {
+static real grad(int hash, real x, real y, real z) {
     int h = hash & 15;                      
-    float u = h<8 ? x : y;                 
-    float v = h<4 ? y : h==12||h==14 ? x : z;
+    real u = h<8 ? x : y;                 
+    real v = h<4 ? y : h==12||h==14 ? x : z;
     return ((h&1) == 0 ? u : -u) + ((h&2) == 0 ? v : -v);
 }
 
-static float sumNoise3D(const vec3_t& p, uint32 octaves, float fmin, float phi, bool absval) {
-    float a = 1.f;
-    float r = 0.f;
-    float freq = fmin;
+static real sumNoise3D(const vec3_t& p, uint32 octaves, real fmin, real phi, bool absval) {
+    real a = 1.;
+    real r = 0.;
+    real freq = fmin;
     
     for (uint32 i = 0; i < octaves; ++i) {
-        float x = noise3D(p * freq);
+        real x = noise3D(p * freq);
         if (absval) x = math::abs(x);
         r += a * x;
         freq *= 2;
@@ -1095,17 +1090,17 @@ static float sumNoise3D(const vec3_t& p, uint32 octaves, float fmin, float phi, 
     return r;
 }
 
-static float lerp2(float t, float a, float b) {
+static real lerp2(real t, real a, real b) {
     return mix(a, b, t);
 }
 
-static float noise3D(const vec3_t& pnt) {
+static real noise3D(const vec3_t& pnt) {
 
     const uint16 *p = permutation;
 
-    float x = pnt[0];
-    float y = pnt[1];
-    float z = pnt[2];
+    real x = pnt[0];
+    real y = pnt[1];
+    real z = pnt[2];
     
     int X = (int) math::floor(x) & 255,                  
         Y = (int) math::floor(y) & 255,                  
@@ -1115,9 +1110,9 @@ static float noise3D(const vec3_t& pnt) {
     y -= math::floor(y);                                
     z -= math::floor(z);
     
-    float u = fade(x);                                
-    float v = fade(y);                                
-    float w = fade(z);
+    real u = fade(x);                                
+    real v = fade(y);                                
+    real w = fade(z);
     
     int A = p[X  ]+Y, AA = p[A]+Z, AB = p[A+1]+Z,      
         B = p[X+1]+Y, BA = p[B]+Z, BB = p[B+1]+Z;      
@@ -1133,13 +1128,13 @@ static float noise3D(const vec3_t& pnt) {
 }
 
 void pointsOnSphere(uint32 n, vec3_t *ps) {
-    float inc = PI * (3.f - math::sqrt(5.f));
-    float off = 2.f / n;
+    real inc = PI * (3. - math::sqrt(5.));
+    real off = 2. / n;
     for (uint32 k = 0; k < n; ++k) {
-        float y = k * off - 1 + (off / 2.f);
-        float r = math::sqrt(1.f - y * y);
-        float phi = k * inc;
-        float s, c;
+        real y = k * off - 1 + (off / 2.);
+        real r = math::sqrt(1. - y * y);
+        real phi = k * inc;
+        real s, c;
         sincos(phi, s, c);
         ps[k] = vec3(c * r, y, s * r);
     }

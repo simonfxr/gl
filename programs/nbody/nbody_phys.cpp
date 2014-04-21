@@ -222,6 +222,6 @@ void Simulation::simulate_frame() {
     delete[] vel;
 }
 
-void Simulation::extrapolate_particle(Particle& p, float interpolation) {
+void Simulation::extrapolate_particle(Particle& p, math::real interpolation) {
     p.position += interpolation * time_step * p.velocity;
 }

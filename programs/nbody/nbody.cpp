@@ -21,15 +21,12 @@ using namespace math;
 
 static const size SIMULATION_FPS = 50;
 
-struct Vertex {
-    vec3_t position;
-    vec3_t normal;
-};
-
-DEFINE_VERTEX_DESC(Vertex,
-                   VERTEX_ATTR(Vertex, position),
-                   VERTEX_ATTR(Vertex, normal)
-);
+#define VERTEX(V, F, Z)                         \
+    V(Vertex,                                   \
+        F(vec3_t, position,                     \
+          Z(vec3_t, normal)))
+DEFINE_VERTEX(VERTEX);
+#undef VERTEX
 
 struct Anim {
     ge::Engine engine;
@@ -136,7 +133,7 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     renderParticles(ev.info.interpolation);
 
     if (engine.gameLoop().realTime() > next_fps_counter_draw) {
-        next_fps_counter_draw = engine.gameLoop().realTime() + 3.f;
+        next_fps_counter_draw = engine.gameLoop().realTime() + real(3);
  
 #define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
         glt::FrameStatistics fs = engine.renderManager().frameStatistics();
