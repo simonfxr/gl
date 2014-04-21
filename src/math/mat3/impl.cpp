@@ -7,9 +7,9 @@
 MATH_BEGIN_NAMESPACE
 
 mat3_t mat3() {
-    return mat3(vec3(1.f, 0.f, 0.f),
-                vec3(0.f, 1.f, 0.f),
-                vec3(0.f, 0.f, 1.f));
+    return mat3(vec3(1, 0, 0),
+                vec3(0, 1, 0),
+                vec3(0, 0, 1));
 }
 
 mat3_t mat3(real x) {
@@ -136,7 +136,7 @@ mat3_t inverse(const mat3_t& A) {
                  t10*m.data[7] + t12*m.data[5] - t14*m.data[4]);
     
     // Make sure the determinant is non-zero.
-    if (t16 == 0.0f) return mat3(0.f);
+    if (t16 == real(0)) return mat3(real(0));
     real t17 = 1/t16;
     data[0] = (m.data[4]*m.data[8]-m.data[5]*m.data[7])*t17; 
     data[1] = -(m.data[1]*m.data[8]-m.data[2]*m.data[7])*t17;

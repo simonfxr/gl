@@ -2,6 +2,7 @@
 #define GE_ENGINE_EVENTS_HPP
 
 #include "ge/Event.hpp"
+#include "math/real.hpp"
 
 namespace ge {
 
@@ -14,8 +15,8 @@ struct GE_API EngineEvent {
 };
 
 struct GE_API RenderEvent : public EngineEvent {
-    float interpolation;
-    RenderEvent(Engine& e, float i) : EngineEvent(e), interpolation(i) {}
+    math::real interpolation;
+    RenderEvent(Engine& e, math::real i) : EngineEvent(e), interpolation(i) {}
 };
 
 struct GE_API InitEvent : public EngineEvent {

@@ -31,7 +31,7 @@ void load(vec3_t::buffer b, const vec3_t& v) {
 }
 
 vec3_t operator -(const vec3_t& a) {
-    return vec3(0.f) - a;
+    return vec3(real(0)) - a;
 }
 
 vec3_t operator +(const vec3_t& a, const vec3_t b) {
@@ -133,11 +133,11 @@ real distanceSq(const vec3_t& a, const vec3_t& b) {
 }
 
 vec3_t reflect(const vec3_t& a, const normal3_t& n) {
-    return reflect(a, n, 1.f);
+    return reflect(a, n, real(1));
 }
 
 vec3_t reflect(const vec3_t& a, const normal3_t& n, real amp) {
-    return a - n * (2.f * amp * dot(n, a));
+    return a - n * (real(2) * amp * dot(n, a));
 }
 
 vec3_t min(const vec3_t& a, const vec3_t& b) {

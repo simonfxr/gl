@@ -3,6 +3,7 @@
 
 #include "math/real.hpp"
 #include "math/vec2.hpp"
+#include "math/glvec.hpp"
 
 #include "glt/ShaderProgram.hpp"
 #include "glt/Mesh.hpp"
@@ -18,19 +19,18 @@ static const bool MULTISAMPLING = false; // via multisample texture
 
 using namespace math;
 
-struct Vertex {
-    vec2_t position;
-};
+#define VERTEX(V, F, Z) \
+    V(Vertex, Z(vec2_t, position))
 
-DEFINE_VERTEX_DESC(Vertex,
-                   VERTEX_ATTR(Vertex, position));
+DEFINE_VERTEX(VERTEX);
+#undef VERTEX
 
 struct Anim {
     ge::Engine engine;
     glt::CubeMesh<Vertex> quadBatch;
     Ref<glt::TextureRenderTarget> render_texture;
 
-    float time_print_fps;
+    real time_print_fps;
     
     void init(const ge::Event<ge::InitEvent>&);
     void link(ge::Engine& e);
@@ -118,7 +118,7 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
     }
 
     if (time >= time_print_fps) {
-        time_print_fps = time + 1.f;
+        time_print_fps = time + 1;
 
         #define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
         glt::FrameStatistics fs = engine.renderManager().frameStatistics();

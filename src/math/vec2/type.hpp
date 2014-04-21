@@ -5,11 +5,14 @@
 
 namespace math {
 
+struct glvec2;
+
 struct ATTRS(ATTR_PACKED) vec2_t {
     static const defs::size size = 2;
     static const defs::size padded_size = 2;
     typedef real component_type;
     typedef component_type buffer[size];
+    typedef glvec2 gl;
 
     MATH_FUNC real& operator[](defs::index) MUT_FUNC;
     MATH_FUNC real operator[](defs::index) const PURE_FUNC;

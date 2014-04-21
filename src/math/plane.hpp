@@ -15,7 +15,7 @@ struct plane3_t {
     union {
         struct {
             direction3_t normal;
-            float dist; // distance to origin
+            real dist; // distance to origin
         };
 
         vec4_t coeff;
@@ -30,7 +30,7 @@ MATH_FUNC plane3_t plane() PURE_FUNC;
 
 MATH_FUNC plane3_t plane(const vec4_t& coeff) PURE_FUNC;
 
-MATH_FUNC plane3_t plane(const direction3_t& normal, float dist) PURE_FUNC;
+MATH_FUNC plane3_t plane(const direction3_t& normal, real dist) PURE_FUNC;
 
 // plane through a triangle: if the triangle is viewed such that the points winding goes ccw,
 // the normal points in the direction of the viewer (same as OpenGL)
@@ -41,7 +41,7 @@ MATH_FUNC plane3_t planeParametric(const point3_t& a, const vec3_t& u, const vec
 MATH_FUNC plane3_t normalize(const plane3_t& P) PURE_FUNC;
 
 // signed distance, positive on the side where the normal points
-MATH_FUNC float distance(const plane3_t& P, const point3_t& a) PURE_FUNC;
+MATH_FUNC real distance(const plane3_t& P, const point3_t& a) PURE_FUNC;
 
 MATH_FUNC point3_t projectOnto(const plane3_t& P, const point3_t& a) PURE_FUNC;
 

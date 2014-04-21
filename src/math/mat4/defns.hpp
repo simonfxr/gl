@@ -17,6 +17,8 @@ MATH_FUNC mat4_t mat4(const mat3_t& m) PURE_FUNC;
 
 MATH_FUNC mat4_t mat4(const vec4_t& c1, const vec4_t& c2, const vec4_t& c3, const vec4_t& c4) PURE_FUNC;
 
+MATH_FUNC void load(mat4_t::buffer, const mat4_t&) MUT_FUNC;
+
 MATH_FUNC mat4_t operator +(const mat4_t& A, const mat4_t& B) PURE_FUNC;
 
 MATH_FUNC mat4_t operator -(const mat4_t& A, const mat4_t& B) PURE_FUNC;

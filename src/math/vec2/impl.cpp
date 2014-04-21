@@ -28,7 +28,7 @@ void load(vec2_t::buffer buf, const vec2_t& v) {
 }
 
 vec2_t operator -(const vec2_t& a) {
-    return vec2(0.f) - a;
+    return vec2(real(0)) - a;
 }
 
 vec2_t operator +(const vec2_t& a, const vec2_t b) {
@@ -121,11 +121,11 @@ real distanceSq(const vec2_t& a, const vec2_t& b) {
 }
 
 vec2_t reflect(const vec2_t& a, const normal2_t& n) {
-    return reflect(a, n, 1.f);
+    return reflect(a, n, 1);
 }
 
 vec2_t reflect(const vec2_t& a, const normal2_t& n, real amp) {
-    return a - n * (2.f * amp * dot(n, a));
+    return a - n * (2 * amp * dot(n, a));
 }
 
 vec2_t min(const vec2_t& a, const vec2_t& b) {

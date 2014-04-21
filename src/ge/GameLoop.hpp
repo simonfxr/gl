@@ -32,22 +32,22 @@ struct GE_API GameLoop {
     math::real tickDuration() const;
 
     defs::size ticks() const;
-    void ticks(defs::size ticks);
+    GameLoop& ticks(defs::size ticks);
 
     defs::size maxFramesSkipped() const;
-    void maxFramesSkipped(defs::size frames);
+    GameLoop&  maxFramesSkipped(defs::size frames);
 
     defs::size maxFPS() const;
-    void maxFPS(defs::size max_fps);
+    GameLoop& maxFPS(defs::size max_fps);
 
     bool syncDraw() const;
-    void syncDraw(bool sync);
+    GameLoop& syncDraw(bool sync);
 
     uint64 tickID() const;
     uint64 frameID() const;
 
     bool paused() const;
-    void pause(bool pause = true);
+    GameLoop& pause(bool pause = true);
 
     void exit(int32 exit_code = 0);
 

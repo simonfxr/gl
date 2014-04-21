@@ -60,6 +60,7 @@ struct GLT_API Uniforms {
 
 private:
     void set(bool mandatory, const std::string& name, float value);
+    void set(bool mandatory, const std::string& name, double value);
     void set(bool mandatory, const std::string& name, const Array<float>& value);
     void set(bool mandatory, const std::string& name, const vec4_t& value);
     void set(bool mandatory, const std::string& name, const vec3_t& value);

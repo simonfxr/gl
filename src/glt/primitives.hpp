@@ -7,6 +7,7 @@
 #include "math/vec3.hpp"
 #include "math/vec2.hpp"
 #include "math/ivec3.hpp"
+#include "math/glvec.hpp"
 
 #include "glt/CubeMesh.hpp"
 
@@ -14,19 +15,19 @@ namespace glt {
 
 namespace primitives {
 
-void setPoint(math::vec3_t& a, const math::vec3_t& b) {
+void setPoint(math::vec3_t::gl& a, const math::vec3_t& b) {
     a = b;
 }
 
-void setPoint(math::vec4_t& a, const math::vec3_t& b) {
+void setPoint(math::vec4_t::gl& a, const math::vec3_t& b) {
     a = math::vec4(b, 1.f);
 }
 
-void setVec(math::vec3_t& a, const math::vec3_t& b) {
+void setVec(math::vec3_t::gl& a, const math::vec3_t& b) {
     a = b;
 }
 
-void setVec(math::vec4_t& a, const math::vec3_t& b) {
+void setVec(math::vec4_t::gl& a, const math::vec3_t& b) {
     a = math::vec4(b, 0.f);
 }
 

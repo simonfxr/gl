@@ -18,6 +18,8 @@ MATH_FUNC vec4_t vec4(const vec3_t& a, real w) PURE_FUNC;
 
 MATH_FUNC vec4_t vec4(const real a[4]) PURE_FUNC;
 
+MATH_FUNC void load(vec4_t::buffer, const vec4_t&) MUT_FUNC;
+
 MATH_FUNC vec4_t operator -(const vec4_t& a) PURE_FUNC;
 
 MATH_FUNC vec4_t operator +(const vec4_t& a, const vec4_t b) PURE_FUNC;

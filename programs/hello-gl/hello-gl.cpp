@@ -9,6 +9,7 @@
 #include "ge/Engine.hpp"
 
 #include "math/vec2.hpp"
+#include "math/glvec.hpp"
 
 #include "glt/utils.hpp"
 #include "glt/Mesh.hpp"
@@ -17,7 +18,7 @@ using namespace defs;
 using namespace math;
 
 struct Vertex {
-    vec2_t position;
+    vec2_t::gl position;
 };
 
 DEFINE_VERTEX_DESC(Vertex,
@@ -100,8 +101,10 @@ int Anim::make_resources()
 
     for (int i = 0; i < 4; ++i) {
         Vertex v;
-        v.position[0] = g_vertex_buffer_data[i * 2];
-        v.position[1] = g_vertex_buffer_data[i * 2 + 1];
+        vec2_t pos;
+        pos[0] = g_vertex_buffer_data[i * 2];
+        pos[1] = g_vertex_buffer_data[i * 2 + 1];
+        v.position = pos;
         mesh.addVertex(v);
     }
 

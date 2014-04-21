@@ -8,10 +8,10 @@
 MATH_BEGIN_NAMESPACE
 
 mat4_t mat4() {
-    return mat4(vec4(1.f, 0.f, 0.f, 0.f),
-                vec4(0.f, 1.f, 0.f, 0.f),
-                vec4(0.f, 0.f, 1.f, 0.f),
-                vec4(0.f, 0.f, 0.f, 1.f));
+    return mat4(vec4(1, 0, 0, 0),
+                vec4(0, 1, 0, 0),
+                vec4(0, 0, 1, 0),
+                vec4(0, 0, 0, 1));
 }
 
 mat4_t mat4(real x) {
@@ -26,11 +26,18 @@ mat4_t mat4(const real mat[16]) {
 }
 
 mat4_t mat4(const mat3_t& m) {
-    return mat4(vec4(m[0], 0.f), vec4(m[1], 0.f), vec4(m[2], 0.f), vec4(0.f, 0.f, 0.f, 1.f));
+    return mat4(vec4(m[0], 0), vec4(m[1], 0), vec4(m[2], 0), vec4(0, 0, 0, 1));
 }
 
 mat4_t mat4(const vec4_t& c1, const vec4_t& c2, const vec4_t& c3, const vec4_t& c4) {
     mat4_t A; A[0] = c1; A[1] = c2; A[2] = c3; A[3] = c4; return A;
+}
+
+void load(mat4_t::buffer b, const mat4_t& m) {
+    load(&b[0], m[0]);
+    load(&b[4], m[1]);
+    load(&b[8], m[2]);
+    load(&b[12], m[3]);
 }
 
 mat4_t operator +(const mat4_t& A, const mat4_t& B) {
@@ -50,7 +57,7 @@ mat4_t operator *(const mat4_t& A, const mat4_t& B) {
     
     for (defs::index j = 0; j < 4; ++j) {
         for (defs::index i = 0; i < 4; ++i) {
-            real c_i_j = 0.f;
+            real c_i_j = real(0);
             for (defs::index k = 0; k < 4; ++k)
                 c_i_j += A(k, i) * B(j, k);
             C(j, i) = c_i_j;
@@ -102,11 +109,11 @@ vec4_t transform(const mat4_t& A, const vec4_t& v) {
 }
 
 vec3_t transformPoint(const mat4_t& A, const vec3_t& p) {
-    return vec3(A * vec4(p, 1.f));
+    return vec3(A * vec4(p, real(1)));
 }
 
 vec3_t transformVector(const mat4_t& A, const vec3_t& v) {
-    return vec3(A * vec4(v, 0.f));
+    return vec3(A * vec4(v, real(0)));
 }
 
 mat4_t transpose(const mat4_t& A) {
@@ -161,9 +168,9 @@ mat4_t inverse(const mat4_t& A) {
         + m[4]*m[2]*m[9] + m[8]*m[1]*m[6] - m[8]*m[2]*m[5];
 
     real det = m[0]*inv[0] + m[1]*inv[4] + m[2]*inv[8] + m[3]*inv[12];
-    if (det == 0.f) {
+    if (det == real(0)) {
         ERR(ERROR_DEFAULT_STREAM, "matrix has no inverse");
-        return mat4(0.f);
+        return mat4(real(0));
     }
 
     det = recip(det);

@@ -13,6 +13,7 @@ set(MATH_SRC
   math/mat3/impl.cpp
   math/mat4/impl.cpp
   math/real/impl.cpp
+  math/glvec/impl.cpp
   math/ivec3/impl.cpp
   math/quat/impl.cpp
   math/plane.cpp)

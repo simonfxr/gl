@@ -58,15 +58,15 @@ struct GLT_API ShaderProgram : public err::WithError<ShaderProgramError::Type,
 
     bool bindStreamOutVaryings(const Array<std::string>&);
 
-	template <typename T>
-	bool bindAttributes(const VertexDesc<T>& desc);
-
-	template <typename T>
-	bool bindAttributes() {
-		return bindAttributes(VertexTraits<T>::description());
-	}
+    template <typename T>
+    bool bindAttributes(const VertexDescription<T>& desc);
     
-    bool bindAttributesGeneric(const VertexDescBase& desc);
+    template <typename T>
+    bool bindAttributes() {
+        return bindAttributes(T::gl::desc);
+    }
+    
+    bool bindAttributesGeneric(const GenVertexDescription& desc);
 
     bool tryLink();
     
@@ -95,8 +95,8 @@ private:
 };
 
 template <typename T>
-bool ShaderProgram::bindAttributes(const VertexDesc<T>& desc) {
-    return bindAttributesGeneric(desc.generic());
+bool ShaderProgram::bindAttributes(const VertexDescription<T>& desc) {
+    return bindAttributesGeneric(desc.cast_gen());
 }
 
 } // namespace glt

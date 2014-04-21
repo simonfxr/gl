@@ -181,7 +181,7 @@ void Camera::Data::handleMouseMoved(Camera *cam, const Event<MouseMoved>& ev) {
 void Camera::Data::handleInput(Camera *cam, const Event<InputEvent>&) {
     Data *self = cam->self;
     real lenSq = lengthSq(self->_step_accum);
-    if (lenSq >= 1e-4f) {
+    if (lenSq >= math::real(1e-4)) {
         vec3_t local_step = self->_speed * normalize(self->_step_accum);
         Event<CameraMoved> ev = makeEvent(CameraMoved(*cam, transformVector(self->_frame, local_step)));
         if (self->_events.moved.raise(ev))

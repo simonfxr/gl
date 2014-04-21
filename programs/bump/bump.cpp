@@ -9,6 +9,7 @@
 
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
+#include "math/glvec.hpp"
 
 #include <vector>
 #include <map>
@@ -86,7 +87,7 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>&) {
 
     vec3_t ecLight = transformPoint(rm.geometryTransform().viewMatrix(), light_position);
 
-    real phi = real(engine.gameLoop().tickID()) * inverse(real(100)) * 1.3f;
+    real phi = real(engine.gameLoop().tickID()) * inverse(real(100)) * real(1.3);
 
     rm.geometryTransform().dup();
     rm.geometryTransform().scale(vec3(10.f)); // scale radius of sphere
@@ -164,10 +165,10 @@ void sphere(glt::Mesh<Vertex>& mesh, real rad, int slices, int stacks) {
             
 #define ADD_MESH  do {                                                  \
             int a[2], b[2];                                             \
-            a[0] = TEST(uv, 0, < 0.05f);                                \
-            a[1] = TEST(uv, 1, < 0.05f);                                \
-            b[0] = TEST(uv, 0, > 0.95f);                                \
-            b[1] = TEST(uv, 1, > 0.95f);                                \
+            a[0] = TEST(uv, 0, < real(0.05));                           \
+            a[1] = TEST(uv, 1, < real(0.05));                           \
+            b[0] = TEST(uv, 0, > real(0.95));                           \
+            b[1] = TEST(uv, 1, > real(0.95));                           \
                                                                         \
             for (int k = 0; k < 3; ++k) {                               \
                 Vertex v;                                               \
@@ -293,12 +294,12 @@ void icoSphere(glt::Mesh<V>& mesh, size subdivs) {
         vec3_t normal = vertices[i];
 
         real cos_theta = normal[2];
-        real sin_theta = sqrt(normal[0] * normal[0] + normal[1] + normal[1]);
+        real sin_theta = math::sqrt(normal[0] * normal[0] + normal[1] + normal[1]);
 
         real cos_phi, sin_phi;
-        if (sin_theta == 0.f) {
-            cos_phi = 1.f;
-            sin_phi = 0.f;
+        if (sin_theta == 0) {
+            cos_phi = 1;
+            sin_phi = 0;
         } else {
             cos_phi = normal[0] / sin_theta;
             sin_phi = normal[1] / sin_theta;

@@ -25,10 +25,10 @@ void ViewFrustum::update(const mat4_t& mvp) {
     planes[PLANE_FAR]    = normalize(plane(A[3] - A[2]));
 
     for (uint32 i = 0; i < VIEW_FRUSTUM_PLANES; ++i)
-        planes[i].dist *= -1.f;
+        planes[i].dist *= -1;
 }
 
-Outcode testSphere(const ViewFrustum& frust, const vec3_t& center, float rad) {
+Outcode testSphere(const ViewFrustum& frust, const vec3_t& center, real rad) {
 
     Outcode code = 0;
 
@@ -42,7 +42,7 @@ Outcode testSphere(const ViewFrustum& frust, const vec3_t& center, float rad) {
 }
 
 Outcode testPoint(const ViewFrustum& frust, const point3_t& p) {
-    return testSphere(frust, p, 0.f);
+    return testSphere(frust, p, 0);
 }
 
 } // namespace glt

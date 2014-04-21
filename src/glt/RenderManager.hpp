@@ -28,9 +28,9 @@ struct GLT_API Projection {
 
     union {
         struct {
-            float fieldOfViewRad;
-            float z_near;
-            float z_far;
+            math::real fieldOfViewRad;
+            math::real z_near;
+            math::real z_far;
         } perspective;
     };
 
@@ -40,16 +40,16 @@ struct GLT_API Projection {
         switch (type) {
         case Identity: break;
         case Perspective:
-            perspective.fieldOfViewRad = math::PI / 10.f;
-            perspective.z_near = 0.5f;
-            perspective.z_far = 100.f;
+            perspective.fieldOfViewRad = math::PI / math::real(10);
+            perspective.z_near = math::real(0.5);
+            perspective.z_far = 100;
             break;
         default:
             FATAL_ERR(ERROR_DEFAULT_STREAM, "invalid Projection::Type enum");
         }
     }
 
-    static Projection mkPerspective(float fov, float zn, float zf) {
+    static Projection mkPerspective(math::real fov, math::real zn, math::real zf) {
         Projection proj;
         proj.type = Perspective;
         proj.perspective.fieldOfViewRad = fov;
@@ -73,7 +73,7 @@ struct GLT_API RenderManager {
 
     void setDefaultProjection(const Projection& proj);
 
-    void updateProjection(float aspectRatio);
+    void updateProjection(math::real aspectRatio);
     
     void setDefaultRenderTarget(RenderTarget* rt, bool delete_after = false);
     
@@ -109,7 +109,7 @@ GLT_API math::vec4_t projectWorld(const RenderManager& rm, const math::point3_t&
 
 GLT_API math::vec4_t projectView(const RenderManager& rm, const math::point3_t& eyeCoord);
 
-GLT_API Outcode testSphere(const RenderManager& rm, const math::point3_t& center, float rad);
+GLT_API Outcode testSphere(const RenderManager& rm, const math::point3_t& center, math::real rad);
 
 GLT_API Outcode testPoint(const RenderManager& rm, const math::point3_t& p);
 

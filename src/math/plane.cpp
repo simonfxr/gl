@@ -11,14 +11,14 @@
 MATH_BEGIN_NAMESPACE
 
 plane3_t plane() {
-    return plane(vec3(0, 1.f, 0.f), 0.f); // xz-plane (y = 0)
+    return plane(vec3(0, 1, 0), 0); // xz-plane (y = 0)
 }
 
 plane3_t plane(const vec4_t& coeff) {
     plane3_t P; P.coeff = coeff; return P;
 }
 
-plane3_t plane(const direction3_t& normal, float dist) {
+plane3_t plane(const direction3_t& normal, real dist) {
     plane3_t P;
     P.normal = normal;
     P.dist = dist;
@@ -35,11 +35,11 @@ plane3_t planeParametric(const point3_t& a, const vec3_t& u, const vec3_t& v) {
 }
 
 plane3_t normalize(const plane3_t& P) {
-    float l = inverseLength(P.normal);
+    real l = inverseLength(P.normal);
     return plane(P.coeff * l);    
 }
 
-float distance(const plane3_t& P, const point3_t& a) {
+real distance(const plane3_t& P, const point3_t& a) {
     return dot(P.normal, a) - P.dist;
 }
 

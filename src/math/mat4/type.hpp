@@ -6,6 +6,8 @@
 
 namespace math {
 
+struct glmat4;
+
 struct mat4_t {
     static const defs::size column_size = 4;
     typedef vec4_t column_type;
@@ -13,6 +15,7 @@ struct mat4_t {
     static const defs::size size = column_size * column_type::size;
     static const defs::size padded_size = column_size * column_type::padded_size;
     typedef component_type buffer[size];
+    typedef glmat4 gl;
 
     union {
         column_type columns[column_size];

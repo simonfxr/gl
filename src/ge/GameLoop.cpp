@@ -79,32 +79,36 @@ defs::size GameLoop::ticks() const {
     return defs::size(time(1) / self->frame_duration);
 }
 
-void GameLoop::ticks(defs::size n) {
+GameLoop& GameLoop::ticks(defs::size n) {
     self->tick_duration = time(1) / time(n);
+    return *this;
 }
 
 defs::size GameLoop::maxFramesSkipped() const {
     return self->max_skip;
 }
 
-void GameLoop::maxFramesSkipped(defs::size max_skip) {
+GameLoop& GameLoop::maxFramesSkipped(defs::size max_skip) {
     self->max_skip = max_skip;
+    return *this;
 }
 
 defs::size GameLoop::maxFPS() const {
     return self->frame_duration == 0 ? 0 : size(1 / self->frame_duration);
 }
 
-void GameLoop::maxFPS(defs::size max_fps) {
+GameLoop& GameLoop::maxFPS(defs::size max_fps) {
     self->frame_duration = (max_fps == 0 ? time(0) : time(1) / time(max_fps));
+    return *this;
 }
 
 bool GameLoop::syncDraw() const {
     return self->sync_draw;
 }
 
-void GameLoop::syncDraw(bool yesno) {
+GameLoop& GameLoop::syncDraw(bool yesno) {
     self->sync_draw = yesno;
+    return *this;
 }
 
 uint64 GameLoop::tickID() const {
@@ -120,8 +124,9 @@ void GameLoop::exit(int32 exit_code) {
     self->stop = true;
 }
 
-void GameLoop::pause(bool paused) {
+GameLoop& GameLoop::pause(bool paused) {
     self->paused = paused;
+    return *this;
 }
 
 bool GameLoop::paused() const {
@@ -202,4 +207,3 @@ int32 GameLoop::run(Game& logic) {
 }
 
 } // namespace ge
-

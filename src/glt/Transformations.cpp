@@ -10,17 +10,17 @@ namespace glt {
 
 using namespace math;
 
-mat4_t perspectiveProjection(float radViewAngle, float aspectRatio, float z_near, float z_far) {
-    float f = cotan(radViewAngle * 0.5f);
+mat4_t perspectiveProjection(real radViewAngle, real aspectRatio, real z_near, real z_far) {
+    real f = cotan(radViewAngle * real(0.5));
 
-    return mat4(vec4(f / aspectRatio, 0.f, 0.f, 0.f),
-                vec4(0.f, f, 0.f, 0.f),
-                vec4(0.f, 0.f, (z_far + z_near) / (z_near - z_far), -1.f),
-                vec4(0.f, 0.f, 2.f * z_near * z_far / (z_near - z_far), 0.f));
+    return mat4(vec4(f / aspectRatio, 0, 0, 0),
+                vec4(0, f, 0, 0),
+                vec4(0, 0, (z_far + z_near) / (z_near - z_far), -1),
+                vec4(0, 0, 2 * z_near * z_far / (z_near - z_far), 0));
 }
 
-mat3_t rotationMatrix(float theta, const direction3_t& n) {
-    float s, c;
+mat3_t rotationMatrix(real theta, const direction3_t& n) {
+    real s, c;
     sincos(-theta, s, c);
 
     return mat3(vec3(n[0] * n[0] * (1 - c) + c,

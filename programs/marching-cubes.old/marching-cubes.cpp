@@ -30,16 +30,16 @@ static const vec3_t WORLD_BLOCK_SCALE = vec3(32);
 static const ivec3_t SAMPLER_SIZE = ivec3(32);
 
 struct WorldVertex {
-    vec3_t position;
+    vec3_t::gl position;
 };
 
 struct MCVertex {
-    vec3_t position;
+    vec3_t::gl position;
 };
 
 struct MCFeedbackVertex {
-    vec3_t position;
-    vec3_t normal;
+    vec3_t::gl position;
+    vec3_t::gl normal;
 };
 
 DEFINE_VERTEX_DESC(WorldVertex, VERTEX_ATTR(WorldVertex, position));

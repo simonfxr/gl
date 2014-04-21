@@ -6,24 +6,26 @@
 
 namespace math {
 
+struct glmat2;
+
 struct mat2_t {
+    static const defs::size column_size = 2;
+    typedef vec2_t column_type;
+    typedef column_type::component_type component_type;
+    static const defs::size size = column_size * column_type::size;
+    static const defs::size padded_size = column_size * column_type::padded_size;
+    typedef component_type buffer[size];
+    typedef glmat2 gl;
 
-    MATH_FUNC const vec2_t& operator[](defs::index) const PURE_FUNC;
-    MATH_FUNC vec2_t& operator[](defs::index) MUT_FUNC;
-    MATH_FUNC float& operator()(defs::index, defs::index) MUT_FUNC;
-
-    static const defs::size size = 2 * vec2_t::size;
-    static const defs::size padded_size = 2 * vec2_t::padded_size;
-
-    typedef vec2_t::component_type component_type;
-    typedef vec2_t::component_type buffer[size];
-
-private:
-    
     union {
-        vec2_t columns[2];
-        vec2_t::component_type components[padded_size];
+        column_type columns[column_size];
+        component_type components[padded_size];
     };
+
+    MATH_FUNC const column_type& operator[](defs::index) const PURE_FUNC;
+    MATH_FUNC column_type& operator[](defs::index) MUT_FUNC;
+    MATH_FUNC component_type operator()(defs::index, defs::index) const PURE_FUNC;
+    MATH_FUNC component_type& operator()(defs::index, defs::index) MUT_FUNC;
 };
 
 typedef mat2_t aligned_mat2_t ATTRS(ATTR_ALIGNED(16));

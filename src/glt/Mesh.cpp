@@ -33,7 +33,7 @@ void *alloc_aligned(defs::size size, defs::size alignment) {
     return mem;
 }
 
-byte *reallocVerts(const VertexDescBase& desc, byte *vertex_data, size old_size, size new_capa) {
+byte *reallocVerts(const GenVertexDescription& desc, byte *vertex_data, size old_size, size new_capa) {
     byte *verts = static_cast<byte *>(alloc_aligned(desc.sizeof_vertex * new_capa, desc.alignment));
     memcpy(verts, vertex_data, UNSIZE(desc.sizeof_vertex * old_size));
     free(vertex_data);
@@ -123,7 +123,7 @@ void MeshBase::initState() {
     enabled_attributes.resize(0);
 }
 
-void MeshBase::initBase(const VertexDescBase& layout, size initial_nverts, size initial_nelems) {
+void MeshBase::initBase(const GenVertexDescription& layout, size initial_nverts, size initial_nelems) {
     ASSERT_SIZE(initial_nverts);
     ASSERT_SIZE(initial_nelems);
     
@@ -140,7 +140,7 @@ void MeshBase::initBase(const VertexDescBase& layout, size initial_nverts, size 
 
     vertex_data = static_cast<byte *>(alloc_aligned(layout.sizeof_vertex * vertices_capacity, layout.alignment));
     element_data = new uint32[UNSIZE(elements_capacity)];
-    desc = layout;
+    desc = &layout;
     enabled_attributes.resize(layout.nattributes * 2);
     enabled_attributes.set(false);
     for (defs::index i = 0; i < layout.nattributes; ++i)
@@ -193,15 +193,15 @@ void MeshBase::initVertexAttribs() {
     ASSERT(vertex_buffer_name.valid());
     ASSERT(vertex_array_name.valid());
 
-    for (defs::index i = 0; i < desc.nattributes; ++i) {
-            const Attr<Any>& a = desc.attributes[i];
-            GL_CALL(glVertexArrayVertexAttribOffsetEXT,
-                         *vertex_array_name,
-                         *vertex_buffer_name,
-                         GLuint(i), a.ncomponents, a.component_type,
-                         gl_bool(a.normalized),
-                         desc.sizeof_vertex,
-                         GLintptr(a.offset));
+    for (defs::index i = 0; i < desc->nattributes; ++i) {
+        const VertexAttr& a = desc->attributes[i];
+        GL_CALL(glVertexArrayVertexAttribOffsetEXT,
+                *vertex_array_name,
+                *vertex_buffer_name,
+                GLuint(i), a.ncomponents, a.component_type,
+                gl_bool(a.normalized),
+                desc->sizeof_vertex,
+                GLintptr(a.offset));
     }
 }
 
@@ -228,7 +228,7 @@ void MeshBase::send(GLenum usageHint) {
     if (!vertex_buffer_name.valid())
         initVertexBuffer();
 
-    GL_CALL(glNamedBufferDataEXT, *vertex_buffer_name, vertices_size * desc.sizeof_vertex,
+    GL_CALL(glNamedBufferDataEXT, *vertex_buffer_name, vertices_size * desc->sizeof_vertex,
                                   vertex_data, usageHint);
     gpu_vertices_size = vertices_size;
     initVertexAttribs();
@@ -265,7 +265,7 @@ void MeshBase::enableAttributes() {
     ASSERT(vertex_buffer_name.valid());
     ASSERT(vertex_array_name.valid());
 
-    for (defs::index i = 0; i < desc.nattributes; ++i) {
+    for (defs::index i = 0; i < desc->nattributes; ++i) {
         if (enabled_attributes[2 * i] != enabled_attributes[2 * i + 1]) {
             enabled_attributes[2 * i + 1] = enabled_attributes[2 * i];
 
@@ -342,20 +342,20 @@ void MeshBase::drawInstanced(size num, GLenum primType) {
 }
     
 const byte *MeshBase::vertexRef(defs::index i) const {
-    return vertex_data + desc.sizeof_vertex * i;
+    return vertex_data + desc->sizeof_vertex * i;
 }
 
 byte *MeshBase::vertexRef(defs::index i) {
-    return vertex_data + desc.sizeof_vertex * i;
+    return vertex_data + desc->sizeof_vertex * i;
 }
 
 void MeshBase::appendVertex(const byte *vertex) {
     if (unlikely(vertices_size >= vertices_capacity)) {
-        vertex_data = reallocVerts(desc, vertex_data, vertices_capacity, vertices_capacity * 2);
+        vertex_data = reallocVerts(*desc, vertex_data, vertices_capacity, vertices_capacity * 2);
         vertices_capacity *= 2;
     }
 
-    memcpy(vertexRef(vertices_size), vertex, UNSIZE(desc.sizeof_vertex));
+    desc->store(vertexRef(vertices_size), vertex);
     ++vertices_size;
 }
 
@@ -378,11 +378,16 @@ void MeshBase::addElement(uint32 index) {
 }
 
 GLuint MeshBase::attributePosition(size offset) const {
-    return static_cast<GLuint>(desc.index(offset));
+
+    for (defs::index i = 0; i < desc->nattributes; ++i) {
+        if (desc->attributes[i].offset == offset)
+            return static_cast<GLuint>(i);            
+    }
+    FATAL_ERR(ERROR_DEFAULT_STREAM, "offset out of range");
 }
 
 void MeshBase::enableAttribute(defs::index i, bool enabled) {
-    if (i >= desc.nattributes) {
+    if (i >= desc->nattributes) {
         ERR("index out of range");
         return;
     }
@@ -390,7 +395,7 @@ void MeshBase::enableAttribute(defs::index i, bool enabled) {
 }
 
 bool MeshBase::attributeEnabled(defs::index i) {
-    if (i >= desc.nattributes) {
+    if (i >= desc->nattributes) {
         ERR("index out of range");
         return false;
     }
@@ -412,7 +417,7 @@ void MeshBase::setSize(size size) {
         vertices_size = size;
     
     if (capa != vertices_capacity) {
-        vertex_data = reallocVerts(desc, vertex_data, vertices_size, capa);
+        vertex_data = reallocVerts(*desc, vertex_data, vertices_size, capa);
         vertices_capacity = capa;
     }
 }

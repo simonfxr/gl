@@ -103,7 +103,7 @@ void RenderManager::setDefaultProjection(const Projection& proj) {
     self->projection_outdated = true;
 }
 
-void RenderManager::updateProjection(float aspectRatio) {
+void RenderManager::updateProjection(math::real aspectRatio) {
     switch (self->projection.type) {
     case Projection::Identity:
         geometryTransform().loadProjectionMatrix(
@@ -184,7 +184,7 @@ void RenderManager::beginScene() {
     if (self->projection_outdated) {
         size w = self->current_rt->width();
         size h = self->current_rt->height();
-        float aspect_ratio = float(w) / float(h);
+        math::real aspect_ratio = math::real(w) / math::real(h);
         updateProjection(aspect_ratio);
     }
 
@@ -253,7 +253,7 @@ vec4_t projectView(const RenderManager& rm, const point3_t& eyeCoord) {
     return transform(rm.geometryTransform().projectionMatrix(), vec4(eyeCoord, 1.f));
 }
 
-Outcode testSphere(const RenderManager& rm, const point3_t& center, float rad) {
+Outcode testSphere(const RenderManager& rm, const point3_t& center, math::real rad) {
     return testSphere(rm.viewFrustum(), center, rad);
 }
 

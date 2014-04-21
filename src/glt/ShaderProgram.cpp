@@ -415,7 +415,7 @@ ret:
     return ok;
 }
 
-bool ShaderProgram::bindAttributesGeneric(const VertexDescBase& desc) {
+bool ShaderProgram::bindAttributesGeneric(const GenVertexDescription& desc) {
     for (index i = 0; i < desc.nattributes; ++i)
         if (!bindAttribute(desc.attributes[i].name, GLuint(i)))
             return false;

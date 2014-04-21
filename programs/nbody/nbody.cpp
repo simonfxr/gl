@@ -60,27 +60,14 @@ struct Anim {
 
 void Anim::init(const ge::Event<ge::InitEvent>& ev) {
 
-    ev.info.engine.gameLoop().ticks(SIMULATION_FPS);
+    ev.info.engine.gameLoop()
+        .ticks(SIMULATION_FPS)
+//        .pause(true)
+        ;
+        
     sim.init();
 
     next_fps_counter_draw = real(0);
-
-    {
-        Particle p;
-        p.position = vec3(real(0), real(10), real(0));
-        p.velocity = vec3(real(0));
-        p.mass(real(1));
-        p.charge = real(-1);
-        sim.particles.push_back(p);
-
-        p.position = vec3(real(5), real(5), real(-10));
-        sim.particles.push_back(p);
-
-        p.charge = 1;
-        p.position = vec3(real(0), real(15), real(0));
-        p.mass(real(1));
-        sim.particles.push_back(p);
-    }
 
     glt::primitives::sphere(sphere_model, 1.f, 36, 24);
     sphere_model.send();
@@ -172,13 +159,15 @@ void Anim::renderParticles(real interpolation) {
 
     program->use();
 
-    for (defs::index i = 0; i < sim.particles._n; ++i) {
+    gt.dup();
+
+    for (defs::index i = 0; i < sim.particles.size(); ++i) {
         Particle p = sim.particles[i];
         sim.extrapolate_particle(p, interpolation);
         
         gt.dup();
         gt.translate(p.position);
-        gt.scale(vec3(real(1))); // radius = 1
+        gt.scale(vec3(real(p.radius)));
 
         glt::Uniforms(*program)
             .optional("mvpMatrix", gt.mvpMatrix())
@@ -190,7 +179,8 @@ void Anim::renderParticles(real interpolation) {
 
         sphere_model.draw();
     }
-    
+
+    gt.pop();
 }
 
 int main(int argc, char *argv[]) {

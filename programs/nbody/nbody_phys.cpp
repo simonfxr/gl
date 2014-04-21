@@ -1,6 +1,28 @@
 #include "nbody_phys.hpp"
 #include "err/err.hpp"
 
+namespace {
+
+const double m = double(1e15);
+const double sec = double(1e12);
+const double kg = double(1);
+const double As = double(1);
+
+const double epsi0 = double(8.854187817e-12) * (As * As * (sec / m) * (sec / m) / (kg * m));
+const double c = double(2.99792458e8) * m / sec;
+
+// const double mu0 = inverse(c * c * epsi0) * (kg * m / (As * As));
+const double mu0 = double(0) * (kg * m / (As * As));
+
+const double r_p = double(0.84e-15) * m;
+const double r_e = double(2.8e-15) * m;
+
+const double m_p = double(1.672e-27) * kg;
+const double m_e = double(9.109382e-31) * kg;
+
+const double e0 = double(1.6e-19) * As;
+} // namespace anon
+
 ParticleRef::ParticleRef(ParticleArray& a, defs::index _i) :
     array(a), i(_i) {}
 
@@ -9,7 +31,8 @@ ParticleArray::ParticleArray(defs::size s) :
     _position(new point3_t[UNSIZE(s)]),
     _velocity(new vec3_t[UNSIZE(s)]),
     _inv_mass(new real[UNSIZE(s)]),
-    _charge(new real[UNSIZE(s)])
+    _charge(new real[UNSIZE(s)]),
+    _radius(new real[UNSIZE(s)])
 {}
 
 ParticleArray::~ParticleArray() {
@@ -17,6 +40,7 @@ ParticleArray::~ParticleArray() {
     delete[] _velocity;
     delete[] _inv_mass;
     delete[] _charge;
+    delete[] _radius;
 }
 
 Particle ParticleArray::operator[](index i) const {
@@ -25,6 +49,7 @@ Particle ParticleArray::operator[](index i) const {
     p.velocity = _velocity[i];
     p.inv_mass = _inv_mass[i];
     p.charge = _charge[i];
+    p.radius = _radius[i];
     return p;
 }
 
@@ -55,6 +80,7 @@ void ParticleArray::push_back(const Particle& p) {
         _velocity = resize(_velocity, old_size, _size);
         _inv_mass = resize(_inv_mass, old_size, _size);
         _charge = resize(_charge, old_size, _size);
+        _radius = resize(_radius, old_size, _size);
     }
 
     _n++;
@@ -66,6 +92,7 @@ void ParticleArray::put(index i, const Particle& p) {
     _velocity[i] = p.velocity;
     _inv_mass[i] = p.inv_mass;
     _charge[i] = p.charge;
+    _radius[i] = p.radius;
 }
 
 ParticleRef::operator Particle() const {
@@ -79,25 +106,64 @@ ParticleRef& ParticleRef::operator =(const Particle& p) {
 }
 
 Simulation::Simulation(real _time_step) :
-    time_step(_time_step),
+    time_step(_time_step / sec),
     particles(8)
 {}
 
 Simulation::~Simulation() {}
 
-void Simulation::init() {}
+void Simulation::init() {
+
+
+    /*
+     * m_e v^2 = e^2 / (4 pi epsi0) 1/r
+     * v = sqrt(e^2 / (4 pi epsi0 m_red) 1/r)
+     */ 
+
+#define v(r) sqrt(e0 * e0 / (4 * math::PI * epsi0 * m_e) * r)
+
+    Particle e;
+    Particle p;
+
+    p.position = vec3(real(0), real(10e-15), real(0)) * m;
+    e.position = vec3(real(10e-15), real(10e-15), real(0)) * m;
+
+    vec3_t r = e.position - p.position;
+
+    real vv = v(length(r));
+//    INFO("c = " + std::to_string(c));
+//    INFO("epsi0 = " + std::to_string(epsi0 * 1e20));
+//    INFO("e0 = " + std::to_string(e0 * 1e20));
+
+    INFO("r = " + std::to_string(length(r)));
+    INFO("vv = " + std::to_string(vv));
+    INFO("time_step = " + std::to_string(time_step * 1e20));
+    
+    e.velocity = vv * normalize(cross(normalize(r), vec3(real(1))));
+
+#undef v    
+    
+    e.mass(m_e);
+    e.charge = -e0;
+    e.radius = r_e;
+    particles.push_back(e);
+
+    p.velocity = vec3(real(0));
+    p.mass(m_p);
+    p.charge = e0;
+    p.radius = r_p;
+    particles.push_back(p);
+}
 
 void Simulation::compute_acceleration(vec3_t *acceleration, const vec3_t *position, const vec3_t *velocity) {
 
-    const real epsi0 = real(8.85e-2);
-    const real mu0 = real(4 * math::PI * 1e2);
 
-    for (defs::index i = 0; i < particles._n; ++i) {
+    for (defs::index i = 0; i < particles.size(); ++i) {
         Particle a = particles[i];
         vec3_t E = vec3(real(0));
         vec3_t B = vec3(real(0));
         
-        for (defs::index j = 0; j < particles._n; ++j) {
+        for (defs::index j = 0; j < particles.size(); ++j) {
             if (i == j) continue;
             const Particle b = particles[j];
 
@@ -106,7 +172,7 @@ void Simulation::compute_acceleration(vec3_t *acceleration, const vec3_t *positi
             vec3_t n = normalize(r);
 
             E += inverse(4 * math::PI * epsi0 * r2) * b.charge * n;
-            B += mu0 * b.charge * inverse(4 * math::PI * r2) * cross(velocity[j], n);
+//            B += mu0 * b.charge * inverse(4 * math::PI * r2) * cross(velocity[j], n);
         }
 
         acceleration[i] = a.inv_mass * a.charge * (E + cross(velocity[i], B));
@@ -117,34 +183,34 @@ void Simulation::simulate_frame() {
     const real dt = time_step;
     const real dt2 = real(.5) * dt;
 
-    vec3_t *accel = new vec3_t[particles._n];
-    vec3_t *accel1 = new vec3_t[particles._n];
-    vec3_t *pos = new vec3_t[particles._n];
-    vec3_t *vel = new vec3_t[particles._n];
+    vec3_t *accel = new vec3_t[particles.size()];
+    vec3_t *accel1 = new vec3_t[particles.size()];
+    vec3_t *pos = new vec3_t[particles.size()];
+    vec3_t *vel = new vec3_t[particles.size()];
 
     compute_acceleration(accel, particles._position, particles._velocity);
-    for (defs::index i = 0; i < particles._n; ++i) {
+    for (defs::index i = 0; i < particles.size(); ++i) {
         pos[i] = particles._position[i] + dt2 * particles._velocity[i];
         vel[i] = particles._velocity[i] + dt2 * accel[i];
         accel[i] *= real(1) / real(6);
     }
 
     compute_acceleration(accel1, pos, vel);
-    for (defs::index i = 0; i < particles._n; ++i) {
+    for (defs::index i = 0; i < particles.size(); ++i) {
         pos[i] = particles._position[i] + dt2 * vel[i];
         vel[i] = particles._velocity[i] + dt2 * accel1[i];
         accel[i] += (real(2) / real(6)) * accel1[i];
     }
 
     compute_acceleration(accel1, pos, vel);
-    for (defs::index i = 0; i < particles._n; ++i) {
+    for (defs::index i = 0; i < particles.size(); ++i) {
         pos[i] = particles._position[i] + dt * vel[i];
         vel[i] = particles._velocity[i] + dt * accel1[i];
         accel[i] += (real(2) / real(6)) * accel1[i];
     }
     
     compute_acceleration(accel1, pos, vel);
-    for (defs::index i = 0; i < particles._n; ++i) {
+    for (defs::index i = 0; i < particles.size(); ++i) {
         vec3_t a = accel[i] + (real(1) / real(6)) * accel1[i];
         particles._position[i] += dt * particles._velocity[i] + real(.5) * dt * dt * a;
         particles._velocity[i] += dt * a;

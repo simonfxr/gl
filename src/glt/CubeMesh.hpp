@@ -10,7 +10,7 @@ using namespace defs;
 template <typename T>
 struct CubeMesh : public Mesh<T> {
 
-    CubeMesh(const VertexDesc<T>& layout = VertexTraits<T>::description(), size initial_nverts = MIN_NUM_VERTICES, size initial_nelems = MIN_NUM_ELEMENTS) :
+    CubeMesh(const VertexDescription<T>& layout = T::gl::desc, size initial_nverts = MIN_NUM_VERTICES, size initial_nelems = MIN_NUM_ELEMENTS) :
         Mesh<T>(layout, GL_TRIANGLES, initial_nverts, initial_nelems)
         {
             this->drawType(DrawElements);

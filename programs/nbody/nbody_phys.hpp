@@ -16,19 +16,21 @@ struct Particle {
     vec3_t velocity;
     real inv_mass; // allow for m = infinity -> m^-1 = 0
     real charge;
+    real radius;
 
     real mass() const { return real(1) / inv_mass; }
     Particle& mass(real m) { inv_mass = real(1) / m; return *this; }
 };
 
 struct ParticleArray {
-    size _n;
+    defs::size _n;
     defs::size _size;
 
     point3_t *_position;
     vec3_t *_velocity;
     real *_inv_mass;
     real *_charge;
+    real *_radius;
 
     ParticleArray(defs::size);
     ~ParticleArray();
@@ -38,6 +40,8 @@ struct ParticleArray {
 
     void push_back(const Particle&);
     void put(index i, const Particle&);
+
+    defs::size size() { return _n; }
 };
 
 struct ParticleRef {

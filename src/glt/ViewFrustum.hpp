@@ -51,7 +51,7 @@ struct GLT_API ViewFrustum {
     void update(const math::mat4_t& mvpMatrix);
 };
 
-GLT_API Outcode testSphere(const ViewFrustum& frust, const math::point3_t& center, float rad);
+GLT_API Outcode testSphere(const ViewFrustum& frust, const math::point3_t& center, math::real rad);
 
 GLT_API Outcode testPoint(const ViewFrustum& frust, const math::point3_t& p);
 

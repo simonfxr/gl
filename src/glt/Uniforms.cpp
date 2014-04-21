@@ -1,15 +1,12 @@
 #include "opengl.hpp"
 
-#ifdef min
-#error "FOOO"
-#endif
-
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "math/mat2.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
+#include "math/glvec.hpp"
 
 #include "glt/color.hpp"
 #include "glt/ShaderProgram.hpp"
@@ -108,6 +105,12 @@ std::string descGLType(GLenum ty) {
 #undef CASE
 }
 
+template <typename T>
+typename T::gl glvec(const T& x) {
+    typename T::gl gl(x);
+    return gl;
+}
+
 void programUniform(GLuint program, GLint loc, float value) {
     GL_CALL(glProgramUniform1fv, program, loc, 1, &value);
 }
@@ -117,35 +120,27 @@ void programUniform(GLuint program, GLint loc, const Array<float>& value) {
 }
 
 void programUniform(GLuint program, GLint loc, const vec4_t& value) {
-    GL_CALL(glProgramUniform4fv, program, loc, 1, value.components);
+    GL_CALL(glProgramUniform4fv, program, loc, 1, glvec(value).buffer);
 }
 
 void programUniform(GLuint program, GLint loc, const vec3_t& value) {
-    vec3_t::buffer data;
-    load(data, value);
-    GL_CALL(glProgramUniform3fv, program, loc, 1, data);
+    GL_CALL(glProgramUniform3fv, program, loc, 1, glvec(value).buffer);
 }
 
 void programUniform(GLuint program, GLint loc, const vec2_t& value) {
-    vec2_t::buffer data;
-    load(data, value);
-    GL_CALL(glProgramUniform2fv, program, loc, 1, data);
+    GL_CALL(glProgramUniform2fv, program, loc, 1, glvec(value).buffer);
 }
 
 void programUniform(GLuint program, GLint loc, const mat4_t& value) {
-    GL_CALL(glProgramUniformMatrix4fv, program, loc, 1, GL_FALSE, value.components);
+    GL_CALL(glProgramUniformMatrix4fv, program, loc, 1, GL_FALSE, glvec(value).buffer);
 }
 
 void programUniform(GLuint program, GLint loc, const mat3_t& value) {
-    mat3_t::buffer data;
-    load(data, value);
-    GL_CALL(glProgramUniformMatrix3fv, program, loc, 1, GL_FALSE, data);
+    GL_CALL(glProgramUniformMatrix3fv, program, loc, 1, GL_FALSE, glvec(value).buffer);
 }
 
 void programUniform(GLuint program, GLint loc, const mat2_t& value) {
-    mat2_t::buffer data;
-    load(data, value);
-    GL_CALL(glProgramUniformMatrix2fv, program, loc, 1, GL_FALSE, data);
+    GL_CALL(glProgramUniformMatrix2fv, program, loc, 1, GL_FALSE, glvec(value).buffer);
 }
 
 void programUniform(GLuint program, GLint loc, const BoundTexture& sampler) {
@@ -205,6 +200,10 @@ void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GL
 
 void Uniforms::set(bool mandatory, const std::string& name, float value) {
     setUniform(mandatory, prog, name, GL_FLOAT, value);
+}
+
+void Uniforms::set(bool mandatory, const std::string& name, double value) {
+    setUniform(mandatory, prog, name, GL_FLOAT, float(value));
 }
 
 void Uniforms::set(bool mandatory, const std::string& name, const Array<float>& value) {

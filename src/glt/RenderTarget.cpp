@@ -3,6 +3,8 @@
 #include "glt/utils.hpp"
 #include "opengl.hpp"
 
+#include "math/glvec.hpp"
+
 namespace glt {
 
 struct RenderTarget::Data {
@@ -115,8 +117,8 @@ void RenderTarget::doClear(uint32 buffers, color c) {
     GLbitfield bits = 0;
 
     if (buffers & RT_COLOR_BUFFER) {
-        const math::vec4_t col4 = c.vec4();
-        GL_CALL(glClearBufferfv, GL_COLOR, 0, math::begin(col4));
+        const math::vec4_t::gl col4 = c.vec4();
+        GL_CALL(glClearBufferfv, GL_COLOR, 0, col4.buffer);
     }
 
     if (buffers & RT_DEPTH_BUFFER)

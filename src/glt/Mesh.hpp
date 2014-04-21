@@ -30,33 +30,6 @@ size LOCAL_CONSTANT MIN_NUM_ELEMENTS = 8;
 
 } // namespace anon
 
-#define _TYPE_WITNESS(t) t()
-
-#define VERTEX_ATTR(type, field) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), _TYPE_WITNESS(type).field), AS_STRING(field))
-
-#define VERTEX_ATTR_AS(type, field, fieldtype) glt::meshTaggedAttr<type>(glt::meshAttr(offsetof(type, field), _TYPE_WITNESS(fieldtype)), AS_STRING(field))
-
-#define VERTEX_ATTRS(type, ...)                                         \
-    ({ static const glt::Attr<type> _vertex_attrs[] = { __VA_ARGS__ };  \
-        glt::meshAttrs(_vertex_attrs, ARRAY_LENGTH(_vertex_attrs)); })
-
-#define DEFINE_VERTEX_TRAITS(type, desc)                        \
-    template <>                                                 \
-    struct VertexTraits<type> {                                 \
-        static const glt::VertexDesc<type>& description() {     \
-            return desc;                                        \
-        }                                                       \
-    }                                                           \
-        
-#define DEFINE_VERTEX_ATTRS(name, type, ...)                            \
-    static const glt::Attr<type> CONCAT(_vertex_attrs_, __LINE__) [] = { __VA_ARGS__ }; \
-    const glt::VertexDesc<type> name = glt::meshAttrs(CONCAT(_vertex_attrs_, __LINE__), ARRAY_LENGTH(CONCAT(_vertex_attrs_, __LINE__)))
-
-#define DEFINE_VERTEX_DESC(type, ...) \
-    DEFINE_VERTEX_ATTRS(CONCAT3(type, _DESC_, __LINE__), type, __VA_ARGS__);  \
-    DEFINE_VERTEX_TRAITS(type, CONCAT3(type, _DESC_, __LINE__))
-
-
 enum DrawType {
     DrawArrays,
     DrawElements        
@@ -87,7 +60,7 @@ private:
 
     BitSet enabled_attributes;
 
-    VertexDescBase desc;
+    const GenVertexDescription *desc;
     
 protected:
     byte * vertexRef(defs::index i);
@@ -101,7 +74,7 @@ public:
     MeshBase();
     ~MeshBase();
 
-    void initBase(const VertexDescBase& layout, size initial_nverts = MIN_NUM_VERTICES, size initial_nelems = MIN_NUM_ELEMENTS);
+    void initBase(const GenVertexDescription& layout, size initial_nverts = MIN_NUM_VERTICES, size initial_nelems = MIN_NUM_ELEMENTS);
 
     GLenum primType() const { return prim_type; }
     void primType(GLenum primType);
@@ -175,8 +148,8 @@ private:
 template <typename T>
 struct Mesh : public MeshBase {
 
-    Mesh(const VertexDesc<T>& layout = VertexTraits<T>::description(), GLenum primTy = GL_TRIANGLES, size initial_nverts = MIN_NUM_VERTICES, size initial_nelems = MIN_NUM_ELEMENTS) {
-        initBase(layout.generic(), initial_nverts, initial_nelems);
+    Mesh(const VertexDescription<T>& layout = T::gl::desc, GLenum primTy = GL_TRIANGLES, size initial_nverts = MIN_NUM_VERTICES, size initial_nelems = MIN_NUM_ELEMENTS) {
+        initBase(layout.cast_gen(), initial_nverts, initial_nelems);
         primType(primTy);
     }
     
@@ -204,43 +177,6 @@ struct Mesh : public MeshBase {
         return this->operator[](i);
     }
 };
-
-template <typename T>
-VertexDesc<T> meshAttrs(const Attr<T> attrs[], defs::size len) {
-    VertexDesc<T> desc;
-    desc.sizeof_vertex = sizeof(T);
-    desc.alignment = ALIGNOF_TYPE(T);
-    desc.nattributes = len;
-    desc.attributes = attrs;
-    return desc;
-}
-
-inline AttrBase meshAttr(defs::size offset, const float&) {
-    return AttrBase(offset, SIZE(ALIGNOF_TYPE(float)), GL_FLOAT, 1);
-}
-
-inline AttrBase meshAttr(defs::size offset, const math::vec2_t&) {
-    return AttrBase(offset, SIZE(ALIGNOF_TYPE(math::vec2_t)), GL_FLOAT, 2);
-}
-
-inline AttrBase meshAttr(defs::size offset, const math::vec3_t&) {
-    return AttrBase(offset, SIZE(ALIGNOF_TYPE(math::vec3_t)), GL_FLOAT, 3);
-}
-
-inline AttrBase meshAttr(defs::size offset, const math::vec4_t&) {
-    return AttrBase(offset, SIZE(ALIGNOF_TYPE(math::vec4_t)), GL_FLOAT, 4);
-}
-
-inline AttrBase meshAttr(defs::size offset, const glt::color&) {
-    return AttrBase(offset, SIZE(ALIGNOF_TYPE(glt::color)), GL_UNSIGNED_BYTE, 4, true);
-}
-
-template <typename T>
-Attr<T> meshTaggedAttr(AttrBase a, const char *name) {
-    Attr<T> typed(a);
-    typed.name = name;
-    return typed;
-}
 
 } // namespace glt
 
