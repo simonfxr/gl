@@ -58,7 +58,6 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     GL_CALL(glEnable, GL_MULTISAMPLE);
     light_position = vec3(0.f, 0.f, -100.f);
 
-    
     ev.info.engine.enablePlugin(mouse_look);
     mouse_look.camera(&camera);
     ev.info.engine.enablePlugin(camera);

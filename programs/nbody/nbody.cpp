@@ -21,6 +21,14 @@ using namespace math;
 
 static const size SIMULATION_FPS = 50;
 
+#define USE_NO_SIM
+
+#ifdef USE_NO_SIM
+#  define SIM_CALL(...)
+#else
+#  define SIM_CALL(...) __VA_ARGS__
+#endif
+
 #define VERTEX(V, F, Z)                         \
     V(Vertex,                                   \
         F(vec3_t, position,                     \
@@ -62,9 +70,9 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
 //        .pause(true)
         ;
         
-    sim.init();
+    SIM_CALL(sim.init());
 
-    next_fps_counter_draw = real(0);
+    next_fps_counter_draw = real(0.3);
 
     glt::primitives::sphere(sphere_model, 1.f, 36, 24);
     sphere_model.send();
@@ -99,7 +107,7 @@ void Anim::link() {
 }
 
 void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
-    sim.simulate_frame();
+    SIM_CALL(sim.simulate_frame());
 }
 
 void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
@@ -147,7 +155,7 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
 }
 
 void Anim::renderParticles(real interpolation) {
-
+#ifndef USE_NO_SIM
     glt::RenderManager& rm = engine.renderManager();
     glt::GeometryTransform& gt = rm.geometryTransform();
     
@@ -178,6 +186,9 @@ void Anim::renderParticles(real interpolation) {
     }
 
     gt.pop();
+#else
+    UNUSED(interpolation);
+#endif    
 }
 
 int main(int argc, char *argv[]) {

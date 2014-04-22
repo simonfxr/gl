@@ -32,15 +32,6 @@ mat3_t mat3(const mat4_t& A) {
     return mat3(vec3(A[0]), vec3(A[1]), vec3(A[2]));
 }
 
-mat3_t mat3(const quat_t& q) {
-    real w = q.a, x = q.b, y = q.c, z = q.d;
-    real xx = x * x, yy = y * y, zz = z * z;
-    
-    return mat3(vec3(1 - 2 * yy - 2 * zz, 2 * x * y - 2 * w * z, 2 * x * z + 2 * w * y),
-                vec3(2 * x * y + 2 * w * z, 1 - 2 * xx - 2 * zz, 2 * y * z - 2 * w * x),
-                vec3(2 * x * z - 2 * w * y, 2 * y * z + 2 * w * x, 1 - 2 * xx - 2 * yy));
-}
-
 void load(mat3_t::buffer b, const mat3_t& m) {
     load(&b[0], m[0]);
     load(&b[3], m[1]);

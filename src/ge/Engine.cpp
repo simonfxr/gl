@@ -122,7 +122,7 @@ void Engine::out(sys::io::OutStream& s) {
     shaderManager().out(s);
 }
 
-float Engine::now() { return float(SELF->now()); }
+math::real Engine::now() { return math::real(SELF->now()); }
 
 const std::string Engine::programName() const {
     return self->programName;
@@ -251,7 +251,7 @@ void Engine::Data::handleInputEvents() {
 }
 
 GameLoop::time Engine::Data::now() {
-    return float(sys::queryTimer());
+    return GameLoop::time(sys::queryTimer());
 }
 
 void Engine::Data::sleep(GameLoop::time secs) {
@@ -321,7 +321,7 @@ void handleKeyBindings(KeyHandler *handler, const Event<InputEvent>&) {
 }
 
 void updateProjectionMatrix(Engine *eng, const Event<WindowResized>& e) {
-    eng->renderManager().updateProjection(float(e.info.width) / float(e.info.height));
+    eng->renderManager().updateProjection(math::real(e.info.width) / math::real(e.info.height));
 }
 
 } // namespace handlers

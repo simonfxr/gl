@@ -48,19 +48,19 @@ void initGLEW(RunLevel lvl, EngineInitializers& inits) {
     inits.reg(lvl, makeEventHandler(runInitGLEW));
 }
 
-static void runPreInitStats(Ref<float> t0, const Event<InitEvent>& e) {
+static void runPreInitStats(Ref<math::real> t0, const Event<InitEvent>& e) {
     e.info.success = true;
     *t0 = e.info.engine.now();
 }
 
-static void runPostInitStats(Ref<float> t0, const Event<InitEvent>& e) {
+static void runPostInitStats(Ref<math::real> t0, const Event<InitEvent>& e) {
     e.info.success = true;
     uint32 ms = uint32((e.info.engine.now() - *t0) * 1000);
     e.info.engine.out() << "initialized in " << ms << " ms" << sys::io::endl;
 }
 
 void initInitStats(EngineInitializers& inits) {
-    Ref<float> initT0(new float);
+    Ref<math::real> initT0(new math::real);
     inits.reg(PreInit0, makeEventHandler(runPreInitStats, initT0));
     inits.reg(PostInit, makeEventHandler(runPostInitStats, initT0));
 }

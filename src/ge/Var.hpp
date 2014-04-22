@@ -75,16 +75,16 @@ public:
 namespace impl {
 
 template <>
-struct Meta<float> {
+struct Meta<math::real> {
     static CommandParam type() {
         return NumberParam;
     }
-    static void get(float var, CommandArg *val) {
+    static void get(math::real var, CommandArg *val) {
         val->type = Number;
         val->number = var;
     }
-    static void set(float& var, const CommandArg& val) {
-        var = float(val.number);
+    static void set(math::real& var, const CommandArg& val) {
+        var = math::real(val.number);
     }
 };
 

@@ -1,5 +1,5 @@
-#ifndef MATH_GLVEC_HPP
-#define MATH_GLVEC_HPP
+#ifndef MATH_GLVEC_TYPE_HPP
+#define MATH_GLVEC_TYPE_HPP
 
 #include "math/vec2/type.hpp"
 #include "math/vec3/type.hpp"

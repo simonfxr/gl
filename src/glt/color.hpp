@@ -49,7 +49,7 @@ struct color {
 
     math::vec4_t vec4() const {
         using namespace math;
-        static const float Scale = 1.f / 255.f;
+        static const math::real Scale = real(1) / real(255);
         return math::vec4(r, g, b, a) * Scale;
     }
 };

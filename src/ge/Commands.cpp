@@ -39,9 +39,9 @@ void runPrintMemInfo(const Event<CommandEvent>& e) {
     glt::GLMemInfoATI info;
     if (glt::GLMemInfoATI::info(&info)) {
         success = true;
-        float fracVBO = float(info.current.freeVBO) / float(info.initial.freeVBO);
-        float fracTex = float(info.current.freeTexture) / float(info.initial.freeTexture);
-        float fracRBO = float(info.current.freeRenderbuffer) / float(info.initial.freeRenderbuffer);
+        math::real fracVBO = math::real(info.current.freeVBO) / math::real(info.initial.freeVBO);
+        math::real fracTex = math::real(info.current.freeTexture) / math::real(info.initial.freeTexture);
+        math::real fracRBO = math::real(info.current.freeRenderbuffer) / math::real(info.initial.freeRenderbuffer);
         e.info.engine.out()
             << "OpenGL Free Memory: " << sys::io::endl
             << "  VBO: " << info.current.freeVBO << " kbyte (" << (fracVBO * 100) << "%)" << sys::io::endl
@@ -273,7 +273,7 @@ struct PerspectiveProjection : public Command {
         rm.setDefaultProjection(glt::Projection::mkPerspective(math::degToRad(fovDeg), zn, zf));
         glt::RenderTarget *tgt = rm.activeRenderTarget();
         if (tgt != 0)
-            rm.updateProjection(float(tgt->width()) / float(tgt->height()));
+            rm.updateProjection(math::real(tgt->width()) / math::real(tgt->height()));
     }
 };
 

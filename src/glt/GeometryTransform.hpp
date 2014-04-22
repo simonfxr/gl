@@ -52,7 +52,7 @@ struct GLT_API GeometryTransform {
 
     void translate(const math::vec3_t& origin);
 
-    void rotate(float phi, const math::direction3_t& axis);
+    void rotate(math::real phi, const math::direction3_t& axis);
 
     void concat(const math::mat3_t& m);
 

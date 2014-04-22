@@ -16,13 +16,13 @@ struct Timer {
     };
     
     Engine& engine;
-    float alarm;
-    float countdown;
+    math::real alarm;
+    math::real countdown;
     State state;
     
     Timer(Engine& e) : engine(e), alarm(0.f), countdown(0.f), state(Inactive) {}
     
-    void start(float countdown_secs, bool repeat = false) {
+    void start(math::real countdown_secs, bool repeat = false) {
         countdown = countdown_secs;
         alarm = engine.now() + countdown;
         state = repeat ? ActiveRepeated : Active;
@@ -33,7 +33,7 @@ struct Timer {
     }
 
     bool fire() {
-        float now;
+        math::real now;
         if (!started() || (now = engine.now()) < alarm)
             return false;
         if (state == ActiveRepeated)

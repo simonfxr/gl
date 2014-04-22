@@ -11,9 +11,9 @@ namespace glt {
 using namespace math;
 
 Frame::Frame() :
-    origin(vec3(0.f, 0.f, 0.f)),
-    x_axis(vec3(1.f, 0.f, 0.f)),
-    z_axis(vec3(0.f, 0.f, 1.f))
+    origin(vec3(0., 0., 0.)),
+    x_axis(vec3(1., 0., 0.)),
+    z_axis(vec3(0., 0., 1.))
 {}
 
 direction3_t Frame::localX() const {
@@ -48,11 +48,11 @@ void Frame::lookingAt(const point3_t& p) {
     setXZ(math::normalize(cross(localY(), z)), z);
 }
 
-void Frame::rotateLocal(float angleRad, const vec3_t& localAxis) {
+void Frame::rotateLocal(real angleRad, const vec3_t& localAxis) {
     rotateWorld(angleRad, transformVector(*this, localAxis));
 }
 
-void Frame::rotateWorld(float angleRad, const vec3_t& worldAxis) {
+void Frame::rotateWorld(real angleRad, const vec3_t& worldAxis) {
     mat3_t rot = rotationMatrix(angleRad, worldAxis);
     x_axis = rot * x_axis;
     z_axis = rot * z_axis;

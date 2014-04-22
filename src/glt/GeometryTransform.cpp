@@ -174,7 +174,7 @@ void GeometryTransform::translate(const vec3_t& origin) {
     self->modelUpdated();
 }
 
-void GeometryTransform::rotate(float phi, const direction3_t& axis) {
+void GeometryTransform::rotate(real phi, const direction3_t& axis) {
     concat(rotationMatrix(phi, axis));
 }
 

@@ -46,7 +46,7 @@ struct GE_API Engine {
 
     const std::string programName() const;
 
-    float now();
+    math::real now();
 
     void addInit(RunLevel lvl, const Ref<EventHandler<InitEvent> >& comm);
 

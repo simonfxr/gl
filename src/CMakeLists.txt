@@ -15,7 +15,6 @@ set(MATH_SRC
   math/real/impl.cpp
   math/glvec/impl.cpp
   math/ivec3/impl.cpp
-  math/quat/impl.cpp
   math/plane.cpp)
 
 if(NOT MATH_INLINE)

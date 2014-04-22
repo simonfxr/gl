@@ -14,12 +14,12 @@
 
 using namespace math;
 
-struct Vertex {
-    vec2_t position;
-};
+#define VERTEX(V, F, Z)                         \
+    V(Vertex,                                   \
+      Z(vec2_t, position))
 
-DEFINE_VERTEX_DESC(Vertex,
-                   VERTEX_ATTR(Vertex, position));
+DEFINE_VERTEX(VERTEX);
+#undef VERTEX
 
 struct Anim {
     ge::Engine engine;

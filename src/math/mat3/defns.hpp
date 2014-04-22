@@ -3,7 +3,6 @@
 
 #include "math/mat3/type.hpp"
 #include "math/mat4/type.hpp"
-#include "math/quat/type.hpp"
 
 MATH_BEGIN_NAMESPACE
 
@@ -16,8 +15,6 @@ MATH_FUNC mat3_t mat3(const mat3_t::buffer) PURE_FUNC;
 MATH_FUNC mat3_t mat3(const vec3_t& c1, const vec3_t& c2, const vec3_t& c3) PURE_FUNC;
 
 MATH_FUNC mat3_t mat3(const mat4_t& A) PURE_FUNC;
-
-MATH_FUNC mat3_t mat3(const quat_t& q) PURE_FUNC;
 
 MATH_FUNC void load(mat3_t::buffer, const mat3_t&) MUT_FUNC;
 

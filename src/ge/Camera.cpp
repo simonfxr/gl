@@ -161,7 +161,7 @@ void Camera::Data::runLoadFrame(const Event<CommandEvent>&, const Array<CommandA
 }
 
 void Camera::Data::runSpeed(const Event<CommandEvent>&, const Array<CommandArg>& args) {
-    _speed = float(args[0].number);
+    _speed = math::real(args[0].number);
 }
 
 void Camera::Data::runSensitivity(const Event<CommandEvent>&, const Array<CommandArg>& args) {

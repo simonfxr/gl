@@ -32,9 +32,9 @@ struct GLT_API Frame {
 
     void lookingAt(const math::point3_t& p);
 
-    void rotateLocal(float angleRad, const math::direction3_t& localAxis);
+    void rotateLocal(math::real angleRad, const math::direction3_t& localAxis);
 
-    void rotateWorld(float angleRad, const math::direction3_t& worldAxis);
+    void rotateWorld(math::real angleRad, const math::direction3_t& worldAxis);
 
     void translateLocal(const math::vec3_t& v);
 

@@ -10,7 +10,7 @@ using namespace defs;
 
 struct GE_API GameLoop {
 
-    typedef double time;
+    typedef math::real time;
 
     struct Game {
         virtual ~Game() {};
@@ -25,11 +25,11 @@ struct GE_API GameLoop {
     explicit GameLoop(defs::size ticks, defs::size max_skip = 10, defs::size max_fps = 120);
     ~GameLoop();
     
-    math::real tickTime() const;
+    time tickTime() const;
     
-    math::real realTime() const;
+    time realTime() const;
 
-    math::real tickDuration() const;
+    time tickDuration() const;
 
     defs::size ticks() const;
     GameLoop& ticks(defs::size ticks);
