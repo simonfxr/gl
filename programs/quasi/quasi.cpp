@@ -1,6 +1,7 @@
 
 #include "math/real.hpp"
 #include "math/vec2.hpp"
+#include "math/glvec.hpp"
 
 #include "glt/ShaderProgram.hpp"
 #include "glt/Mesh.hpp"
