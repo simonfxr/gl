@@ -8,6 +8,7 @@
 #include "math/mat2.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
+#include "math/glvec.hpp"
 #include "math/io.hpp"
 
 #include "glt/utils.hpp"
@@ -44,29 +45,29 @@ using namespace defs;
 static const point3_t LIGHT_CENTER_OF_ROTATION = vec3(0.f, 15.f, 0.f);
 static const float  LIGHT_ROTATION_RAD = 15.f;
 
-struct Vertex2 {
-    vec3_t position;
-    vec3_t normal;
-    vec2_t texCoord;
-};
+#define VERTEX(V, F, Z)                         \
+    V(Vertex,                                   \
+      F(math::point3_t, position,               \
+        Z(math::direction3_t, normal)))
 
-struct ScreenVertex {
-    vec3_t position;
-    vec3_t normal;
-};
+#define VERTEX2(V, F, Z)                        \
+    V(Vertex2,                                  \
+      F(vec3_t, position,                       \
+        F(vec3_t, normal,                       \
+          Z(vec2_t, texCoord))))
 
-DEFINE_VERTEX_DESC(Vertex,
-                   VERTEX_ATTR(Vertex, position),
-                   VERTEX_ATTR(Vertex, normal));
+#define SCREEN_VERTEX(V, F, Z)                  \
+    V(ScreenVertex,                             \
+      F(vec3_t, position,                       \
+        Z(vec3_t, normal)))
 
-DEFINE_VERTEX_DESC(Vertex2,
-                   VERTEX_ATTR(Vertex2, position),
-                   VERTEX_ATTR(Vertex2, normal),
-                   VERTEX_ATTR(Vertex2, texCoord));
+DEFINE_VERTEX(VERTEX);
+DEFINE_VERTEX(VERTEX2);
+DEFINE_VERTEX(SCREEN_VERTEX);
 
-DEFINE_VERTEX_DESC(ScreenVertex,
-                   VERTEX_ATTR(ScreenVertex, position),
-                   VERTEX_ATTR(ScreenVertex, normal));
+#undef VERTEX
+#undef VERTEX2
+#undef SCREEN_VERTEX
 
 static const uint32 SHADE_MODE_AMBIENT = 1;
 static const uint32 SHADE_MODE_DIFFUSE = 2;

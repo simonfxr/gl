@@ -97,14 +97,14 @@ VD_DEF_GLVEC_ATTR_INFO(math::mat4_t);
         typedef VD_GL_NS(name)::gl gl;                  \
         __VA_ARGS__ /* fields */                        \
         name() = default;                               \
-        explicit name(const gl&);                       \
+        inline explicit name(const gl&);                \
     };                                                  \
     namespace VD_GL_NS(name) {
 #define VD_STRUCT_F(t, n, ...) t n; __VA_ARGS__
 #define VD_STRUCT_Z(t, n) t n;
 
 #define VD_STRUCT_CONSTR_V(name, ...)                   \
-    name::name(const name::gl& _gl_vertex) : __VA_ARGS__ {}
+    inline name::name(const name::gl& _gl_vertex) : __VA_ARGS__ {}
 #define VD_STRUCT_CONSTR_F(t, n, ...) VD_STRUCT_CONSTR_Z(t, n), __VA_ARGS__
 #define VD_STRUCT_CONSTR_Z(t, n) n(_gl_vertex.n)
 
@@ -149,14 +149,14 @@ VD_DEF_GLVEC_ATTR_INFO(math::mat4_t);
 
 #define VD_GL_ATTRS_V(name, ...) const ::glt::VertexAttr gl::vertex_attrs[] = { __VA_ARGS__ };
 #define VD_GL_ATTRS_F(t, n, ...) VD_GL_ATTRS_Z(t, n), __VA_ARGS__
-#define VD_GL_ATTRS_Z(t, n) {                                   \
-        __builtin_offsetof(gl, n),                              \
+#define VD_GL_ATTRS_Z(t, n) {                                           \
+        __builtin_offsetof(gl, n),                                      \
             ::glt::VertexAttrInfo<::glt::GLType<t>::type>::alignment,   \
             ::glt::VertexAttrInfo<::glt::GLType<t>::type>::component_type, \
             ::glt::VertexAttrInfo<::glt::GLType<t>::type>::ncomponents, \
             ::glt::VertexAttrInfo<::glt::GLType<t>::type>::normalized,  \
-        #n                                                  \
-}
+            #n                                                          \
+            }
 
 #define DEFINE_VERTEX(V)                                                \
     /* define the Vertex structure */                                   \
