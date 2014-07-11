@@ -11,6 +11,7 @@
 #include "opengl.hpp"
 #include "data/Ref.hpp"
 #include "sys/fs.hpp"
+#include "err/err.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/GLObject.hpp"
 #include "err/WithError.hpp"
@@ -26,7 +27,9 @@ struct CompileState;
 typedef std::string ShaderSourceKey;
 typedef std::queue<Ref<CompileJob> > CompileJobs;
 typedef std::set<ShaderSourceKey> QueuedJobs;
-typedef std::map<ShaderSourceKey, WeakRef<ShaderObject> > ShaderCacheEntries;
+typedef int Version;
+typedef std::pair<Version, WeakRef<ShaderObject> > ShaderCacheEntry;
+typedef std::multimap<ShaderSourceKey, ShaderCacheEntry> ShaderCacheEntries;
 typedef std::map<ShaderSourceKey, Ref<ShaderObject> > ShaderObjects;
 typedef std::vector<std::string> IncludePath;
 typedef std::pair<std::string, sys::fs::FileTime> ShaderInclude;
@@ -67,8 +70,9 @@ struct GLT_API ShaderObject {
     WeakRef<ShaderCache> cache;
     
     ShaderObject(const Ref<ShaderSource>& src, GLuint hndl) :
-        source(src), handle(hndl), includes(), dependencies(), cache() {}
-
+        source(src), handle(hndl), includes(), dependencies(), cache()
+    {}
+    
     virtual ~ShaderObject();
     
     virtual ReloadState needsReload() = 0;
@@ -92,6 +96,7 @@ struct GLT_API ShaderCache {
     static bool put(Ref<ShaderCache>&, Ref<ShaderObject>&);
     static bool remove(Ref<ShaderCache>&, ShaderObject *);
     void flush();
+    void checkValid();
 
 private:
     ShaderCache(const ShaderCache&);

@@ -359,23 +359,27 @@ void CompileState::compileAll() {
         const ShaderSourceKey& key = job->source()->key;
 
         ShaderObjects::const_iterator it = compiled.find(key);
-        if (it != compiled.end())
+        if (it != compiled.end()) {
             continue;
+        }
 
         Ref<ShaderObject> so;
         bool cache_hit = false;
         if (flags & SC_LOOKUP_CACHE) {
             if (compiler.cache->lookup(&so, key)) {
+                ASSERT(key == so->source->key);
                 cache_hit = true;
 
                 ASSERT(so);
-                if (flags & SC_CHECK_OUTDATED)
+                if (flags & SC_CHECK_OUTDATED) {
                     so = reload(so);
+                }
             }
         }
 
-        if (!cache_hit)
+        if (!cache_hit) {
             so = job->exec(*this);
+        }
 
         if (!so) {
             this->pushError(ShaderCompilerError::CompilationFailed);
@@ -410,18 +414,21 @@ Ref<ShaderObject> CompileState::load(Ref<ShaderSource>& src) {
 Ref<ShaderObject> CompileState::reload(Ref<ShaderObject>& so) {
     ASSERT(so);
     ReloadState state = so->needsReload();
+    Ref<ShaderObject> reloaded_so;
+
     switch (state) {
-    case ReloadUptodate: return so;
-    case ReloadOutdated: return load(so->source);
-    case ReloadFailed: return NULL_SHADER_OBJECT;
+    case ReloadUptodate: reloaded_so = so; break;
+    case ReloadOutdated: reloaded_so = load(so->source); break;
+    case ReloadFailed: break;
+    default: ASSERT_FAIL();
     }
 
-    ASSERT_FAIL();
+    return reloaded_so;
 }
 
 ShaderObject::~ShaderObject() {
     Ref<ShaderCache> c(cache);
-    if (c)
+    if (c) 
         ShaderCache::remove(c, this);
 }
 
@@ -441,42 +448,101 @@ ShaderCache::~ShaderCache() {
     flush();
 }
 
-bool ShaderCache::lookup(Ref<ShaderObject> *ent, const ShaderSourceKey& key) {
-    ShaderCacheEntries::iterator it = entries.find(key);
-    if (it != entries.end()) {
-        bool alive = it->second.strong(ent);
-        ASSERT(alive);
-        return true;
-    }
-    return false;
-}
+bool ShaderCache::lookup(Ref<ShaderObject> *so, const ShaderSourceKey& key) {
 
-bool ShaderCache::put(Ref<ShaderCache>& cache, Ref<ShaderObject>& ent) {
-    ASSERT(cache && ent);
-    Ref<ShaderCache> curr_cache(ent->cache);
-    if (curr_cache.same(cache))
-        return false;
-    ent->linkCache(cache);
-    return cache->entries.insert(std::make_pair(ent->source->key, ent.weak())).second;
-}
 
-bool ShaderCache::remove(Ref<ShaderCache>& cache, ShaderObject *ent) {
-    ASSERT(cache && ent);
-    ShaderCacheEntries::iterator it = cache->entries.find(ent->source->key);
-    if (it != cache->entries.end()) {
-        Ref<ShaderObject> obj(it->second);
-        if (obj && obj.ptr() == ent) {
-            ent->unlinkCache(cache);
-            cache->entries.erase(it);
+    int best_version = -1;
+    WeakRef<ShaderObject> best_ref;
+    
+    for (ShaderCacheEntries::iterator it = entries.find(key);
+         it != entries.end() && it->first == key; ++it)
+    {
+        ShaderCacheEntry& ent = it->second;
+        if (ent.first > best_version) {
+            best_version = ent.first;
+            best_ref = ent.second;
         }
-        return true;
     }
 
-    return false;
+    bool found = best_version >= 0;
+    if (found) {
+        bool alive = best_ref.strong(so);
+        ASSERT(alive);
+        ASSERT(key == (*so)->source->key);
+    }
+    
+    checkValid();
+    return found;
+}
+
+bool ShaderCache::put(Ref<ShaderCache>& cache, Ref<ShaderObject>& so) {
+    ASSERT(cache && so);
+
+    Ref<ShaderCache> curr_cache(so->cache);
+    ASSERT(!curr_cache || curr_cache == cache);
+
+    const ShaderSourceKey& key = so->source->key;
+    ShaderCacheEntries::iterator it = cache->entries.find(key);
+    int next_version = 1;
+    bool already_present = false;
+    
+    for (; it != cache->entries.end() && it->first == key; ++it) {
+        const ShaderCacheEntry& ent = it->second;
+
+        if (ent.second.same(so)) {
+            already_present = true;
+            break;
+        }
+        
+        if (ent.first >= next_version)
+            next_version = ent.first + 1;
+    }
+
+    if (!already_present) {
+        ASSERT(!curr_cache);
+        so->cache = cache.weak();
+        ShaderCacheEntry ent = std::make_pair(next_version, so.weak());
+        cache->entries.insert(std::make_pair(key, ent));
+    }
+    
+    cache->checkValid();
+    return !already_present;
+}
+
+bool ShaderCache::remove(Ref<ShaderCache>& cache, ShaderObject *so) {
+    ASSERT(cache && so);
+    ASSERT(so->cache.unsafePtr() == cache.ptr());
+
+    bool removed = false;
+    const ShaderSourceKey& key = so->source->key;
+    ShaderCacheEntries::iterator it = cache->entries.find(key);
+
+    for (; it != cache->entries.end() && key == it->first; ++it) {
+        const ShaderCacheEntry& ent = it->second;
+
+        if (ent.second.unsafePtr() == so) {
+            removed = true;
+            cache->entries.erase(it);
+            break;
+        }
+    }
+
+    cache->checkValid();
+    return removed;
 }
 
 void ShaderCache::flush() {
     entries.clear();
+    checkValid();
+}
+
+void ShaderCache::checkValid() {
+    ShaderCacheEntries::iterator it = entries.begin();
+    for (; it != entries.end(); ++it) {
+        Ref<ShaderObject> so(it->second.second);
+        ASSERT(so);
+        ASSERT(so->source->key == it->first);
+    }
 }
 
 ShaderCompiler::~ShaderCompiler() {

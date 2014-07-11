@@ -1,3 +1,16 @@
+#include "ge/Engine.hpp"
+
+
+#include "math/real.hpp"
+#include "math/vec2.hpp"
+#include "math/glvec.hpp"
+
+#include "glt/ShaderProgram.hpp"
+#include "glt/Mesh.hpp"
+#include "glt/CubeMesh.hpp"
+#include "glt/TextureRenderTarget.hpp"
+#include "glt/utils.hpp"
+
 
 #include "math/real.hpp"
 #include "math/vec2.hpp"

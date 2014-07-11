@@ -360,6 +360,10 @@ public:
     const WeakRef<U, C>& cast() const {
         return reinterpret_cast<const WeakRef<U, C>&>(*this); 
     }
+
+    T *unsafePtr() { return _ptr; }
+    
+    const T *unsafePtr() const { return _ptr; }
 };
 
 template <typename T, typename C = _priv::SeqCounter>
