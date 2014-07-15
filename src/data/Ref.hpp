@@ -330,8 +330,7 @@ public:
 
         if (!_ptr) {
             DEBUG_ASSERT(_ref_cnt == nullptr);
-            dest = nullptr;
-            return true;
+            return false;
         }
 
         DEBUG_ASSERT(_ref_cnt != nullptr);

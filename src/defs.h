@@ -12,6 +12,7 @@
 #  define WIN32_LEAND_AND_MEAN 1
 #  define VC_EXTRALEAN 1
 #  define NOMINMAX 1
+#  define NOGDI 1
 #endif
 
 #ifndef SYSTEM_WINDOWS

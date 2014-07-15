@@ -1,5 +1,6 @@
 #include <stack>
 #include <queue>
+#include <algorithm>
 
 #include "glt/ShaderCompiler.hpp"
 #include "glt/utils.hpp"
@@ -448,16 +449,35 @@ ShaderCache::~ShaderCache() {
     flush();
 }
 
-bool ShaderCache::lookup(Ref<ShaderObject> *so, const ShaderSourceKey& key) {
+template <typename I>
+struct PairRange {
+    I begin_range;
+    I end_range;
 
+    PairRange(const I& b, const I& e) :
+        begin_range(b), end_range(e) {}
+    PairRange(const std::pair<I, I>& pair) :
+        begin_range(pair.first), end_range(pair.second) {}
+
+    I& begin() { return begin_range; }
+    const I& begin() const { return begin_range; }
+    
+    I& end() { return end_range; }
+    const I& end() const { return end_range; }
+};
+
+template <typename I>
+PairRange<I> pair_range(const std::pair<I, I>& pair) {
+    return PairRange<I>(pair);
+}
+
+bool ShaderCache::lookup(Ref<ShaderObject> *so, const ShaderSourceKey& key) {
 
     int best_version = -1;
     WeakRef<ShaderObject> best_ref;
-    
-    for (ShaderCacheEntries::iterator it = entries.find(key);
-         it != entries.end() && it->first == key; ++it)
-    {
-        ShaderCacheEntry& ent = it->second;
+
+    for (auto& kv : pair_range(entries.equal_range(key))) {
+        ShaderCacheEntry& ent = kv.second;
         if (ent.first > best_version) {
             best_version = ent.first;
             best_ref = ent.second;
@@ -482,12 +502,11 @@ bool ShaderCache::put(Ref<ShaderCache>& cache, Ref<ShaderObject>& so) {
     ASSERT(!curr_cache || curr_cache == cache);
 
     const ShaderSourceKey& key = so->source->key;
-    ShaderCacheEntries::iterator it = cache->entries.find(key);
     int next_version = 1;
     bool already_present = false;
-    
-    for (; it != cache->entries.end() && it->first == key; ++it) {
-        const ShaderCacheEntry& ent = it->second;
+
+    for (auto& kv : pair_range(cache->entries.equal_range(key))) {
+        const ShaderCacheEntry& ent = kv.second;
 
         if (ent.second.same(so)) {
             already_present = true;
@@ -515,9 +534,8 @@ bool ShaderCache::remove(Ref<ShaderCache>& cache, ShaderObject *so) {
 
     bool removed = false;
     const ShaderSourceKey& key = so->source->key;
-    ShaderCacheEntries::iterator it = cache->entries.find(key);
-
-    for (; it != cache->entries.end() && key == it->first; ++it) {
+    auto range = pair_range(cache->entries.equal_range(key));
+    for (auto it = range.begin(); it != range.end(); ++it) {
         const ShaderCacheEntry& ent = it->second;
 
         if (ent.second.unsafePtr() == so) {
@@ -537,11 +555,10 @@ void ShaderCache::flush() {
 }
 
 void ShaderCache::checkValid() {
-    ShaderCacheEntries::iterator it = entries.begin();
-    for (; it != entries.end(); ++it) {
-        Ref<ShaderObject> so(it->second.second);
+    for (auto& kv : entries) {
+        Ref<ShaderObject> so(kv.second.second);
         ASSERT(so);
-        ASSERT(so->source->key == it->first);
+        ASSERT(so->source->key == kv.first);
     }
 }
 
