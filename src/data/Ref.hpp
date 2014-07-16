@@ -1,6 +1,9 @@
 #ifndef DATA_REF_NEW_HPP
 #define DATA_REF_NEW_HPP
 
+#include <cstddef>
+#include <type_traits>
+
 #ifdef GNU_EXTENSIONS
 #  include "data/Atomic.hpp"
 #endif
@@ -167,6 +170,8 @@ public:
 
     Ref() : Ref(0, static_cast<T *>(nullptr)) {}
 
+    Ref(std::nullptr_t) : Ref(0, nullptr) {}
+
     Ref(T *p) : Ref(0, p) {}
 
     template <typename O>
@@ -183,6 +188,7 @@ public:
 
     template <typename O>
     Ref(WeakRef<O, C>& ref) : Ref() {
+        //   *this = ref.strong();
         ref.strong(this);
     }
 
@@ -210,14 +216,14 @@ public:
         return _ptr != nullptr;
     }
 
-    template <typename O>
-    bool same(const Ref<O, C>& ref) const {
-        return _ref_cnt == ref._ref_cnt;
+    template <typename U>
+    bool operator ==(const Ref<U, C>& rhs) const {
+        return _ref_cnt == rhs._ref_cnt;
     }
 
-    template <typename O>
-    bool same(const WeakRef<O, C>& ref) const {
-        return _ref_cnt == ref._ref_cnt;
+    template <typename U>
+    bool operator ==(const WeakRef<U, C>& rhs) const {
+        return _ref_cnt == rhs._ref_cnt;
     }
 
     Ref<T, C>& operator =(const Ref<T, C>& ref) {
@@ -248,10 +254,14 @@ public:
     }
 
     template <typename U>
-    Ref<U, C>& cast() { return reinterpret_cast<Ref<U, C>&>(*this); }
-    
+    typename std::enable_if<std::is_base_of<T, U>::value,
+                            Ref<U, C>&>::type
+    cast() { return reinterpret_cast<Ref<U, C>&>(*this); }
+
     template <typename U>
-    const Ref<U, C>& cast() const { return reinterpret_cast<const Ref<U, C>&>(*this); }
+    typename std::enable_if<std::is_base_of<T, U>::value,
+                            const Ref<U, C>& >::type
+    cast() const { return reinterpret_cast<const Ref<U, C>&>(*this); }
 };
 
 template <typename T, typename C = _priv::SeqCounter>
@@ -278,9 +288,33 @@ private:
             counter::release(_ref_cnt);
     }
 
+    template <typename O, typename D>
+    friend struct Ref;
+
+    template <typename O>
+    bool strong(Ref<O, C> *dest) {
+
+        if (!_ref_cnt) {
+            DEBUG_ASSERT(_ptr == nullptr);
+            return false;
+        }
+
+        if (dest->_ref_cnt == _ref_cnt)
+            return true;
+
+        DEBUG_ASSERT(_ref_cnt != nullptr);
+        if (counter::strongFromWeak(_ref_cnt)) {
+            dest->release();
+            dest->_ptr = _ptr; dest->_ref_cnt = _ref_cnt;
+            return true;
+        }
+
+        return false;
+    }
+
 public:
 
-    WeakRef() : WeakRef(nullptr, static_cast<T *>(nullptr)) {}
+    WeakRef() : WeakRef<T>(nullptr, static_cast<T *>(nullptr)) {}
 
     template <typename O>
     WeakRef(Ref<O, C>& ref) : WeakRef(ref._ref_cnt, ref._ptr) {
@@ -298,16 +332,6 @@ public:
 
     ~WeakRef() { release(); }
 
-    template <typename O>
-    bool same(const Ref<O, C>& ref) const {
-        return _ref_cnt == ref._ref_cnt;
-    }
-
-    template <typename O>
-    bool same(const WeakRef<O, C>& ref) const {
-        return _ref_cnt == ref._ref_cnt;
-    }
-
     WeakRef<T, C>& operator =(const WeakRef<T, C>& ref) {
         ref.retain();
         release();
@@ -323,46 +347,40 @@ public:
         return *this;
     }
 
-    template <typename O>
-    bool strong(Ref<O, C> *dest) {
-        if (dest->_ref_cnt == _ref_cnt)
-            return true;
-
-        if (!_ptr) {
-            DEBUG_ASSERT(_ref_cnt == nullptr);
-            return false;
-        }
-
-        DEBUG_ASSERT(_ref_cnt != nullptr);
-        if (counter::strongFromWeak(_ref_cnt)) {
-            dest->release();
-            dest->_ptr = _ptr; dest->_ref_cnt = _ref_cnt;
-            return true;
-        }
-
-        return false;
-    }
-
-    template <typename O>
-    Ref<O, C> strong() {
-        Ref<O, C> ref;
+    Ref<T, C> strong() {
+        Ref<T, C> ref;
         strong(&ref);
         return ref;
     }
 
     template <typename U>
-    WeakRef<U, C>& cast() {
+    typename std::enable_if<std::is_base_of<T, U>::value,
+                            WeakRef<U, C>&>::type
+    cast() {
         return reinterpret_cast<WeakRef<U, C>&>(*this);
     }
     
     template <typename U>
-    const WeakRef<U, C>& cast() const {
+    typename std::enable_if<std::is_base_of<T, U>::value,
+                            const WeakRef<U, C>&>::type
+    cast() const {
         return reinterpret_cast<const WeakRef<U, C>&>(*this); 
     }
 
-    T *unsafePtr() { return _ptr; }
-    
-    const T *unsafePtr() const { return _ptr; }
+    template <typename O>
+    bool operator ==(const Ref<O, C>& rhs) const {
+        return rhs == *this;
+    }
+
+    template <typename O>
+    bool operator ==(const WeakRef<O, C>& rhs) const {
+        return _ref_cnt == rhs._ref_cnt;
+    }
+
+    template <typename O>
+    bool operator ==(const O *ptr) const {
+        return _ptr == ptr;
+    }
 };
 
 template <typename T, typename C = _priv::SeqCounter>

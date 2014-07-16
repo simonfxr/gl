@@ -13,6 +13,7 @@
 #include "math/mat3.hpp"
 #include "math/real.hpp"
 #include "math/io.hpp"
+#include "math/glvec.hpp"
 
 #include "glt/utils.hpp"
 #include "glt/primitives.hpp"
@@ -80,15 +81,13 @@ struct SphereInstance {
 #error "no SPHERE_INSTANCED_* specified"
 #endif
 
-struct Vertex {
-    point4_t position;
-    vec3_t normal;
-};
+#define VERTEX(V, F, Z)                         \
+    V(Vertex,                                   \
+      F(vec4_t, position,                       \
+        Z(vec3_t, normal)))
 
-DEFINE_VERTEX_DESC(Vertex,
-    VERTEX_ATTR(Vertex, position),
-    VERTEX_ATTR(Vertex, normal)
-);
+DEFINE_VERTEX(VERTEX);
+#undef VERTEX
 
 namespace {
 

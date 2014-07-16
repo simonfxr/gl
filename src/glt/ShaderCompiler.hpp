@@ -92,7 +92,7 @@ struct GLT_API ShaderCache {
     
     ~ShaderCache();
 
-    bool lookup(Ref<ShaderObject> *, const ShaderSourceKey&);
+    Ref<ShaderObject> lookup(const ShaderSourceKey&);
     static bool put(Ref<ShaderCache>&, Ref<ShaderObject>&);
     static bool remove(Ref<ShaderCache>&, ShaderObject *);
     void flush();

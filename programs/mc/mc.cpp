@@ -1,6 +1,8 @@
 #include "math/real.hpp"
 #include "math/vec4.hpp"
 #include "math/mat4.hpp"
+#include "math/glvec.hpp"
+
 
 #include "glt/ShaderProgram.hpp"
 #include "glt/Mesh.hpp"
@@ -35,18 +37,17 @@
 #define INFO_PRINT(...)
 #define INFO_TIME(...) __VA_ARGS__
 
-static const size DEFAULT_N = 128;
+static const size DEFAULT_N = 64;
 
 using namespace math;
 
-struct Vertex {
-    point3_t position;
-    direction3_t normal;
-};
-
-DEFINE_VERTEX_DESC(Vertex,
-                   VERTEX_ATTR(Vertex, position),
-                   VERTEX_ATTR(Vertex, normal));
+#define VERTEX(V, F, Z) \
+    V(Vertex,                                   \
+      F(vec3_t, position,                       \
+        Z(vec3_t, normal)))
+    
+DEFINE_VERTEX(VERTEX);
+#undef VERTEX
 
 struct MCState {
     vec3_t cube_origin; // lower left corner on backside
@@ -70,7 +71,7 @@ struct MCState {
 
 #define MC_SIZE_X 4
 #define MC_SIZE_Y 4
-#define MC_SIZE_Z 3
+#define MC_SIZE_Z 4
 #define NUM_MC (MC_SIZE_X * MC_SIZE_Y * MC_SIZE_Z)
 
 struct Anim {
@@ -498,10 +499,10 @@ void Anim::renderMC(MCState& mc, glt::ShaderProgram& program, vec3_t ecLight) {
 
     gt.pop();
 
-    const glt::VertexDesc<Vertex>& desc = VertexTraits<Vertex>::description();
+    const glt::VertexDescription<Vertex>& desc = Vertex::gl::desc;
     
     for (defs::index i = 0; i < desc.nattributes; ++i) {
-        const glt::Attr<Vertex>& a = desc.attributes[i];
+        const glt::VertexAttr& a = desc.attributes[i];
         GL_CALL(glVertexArrayVertexAttribOffsetEXT,
                 mc.vao,
                 mc.vbo,

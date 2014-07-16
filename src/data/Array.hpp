@@ -43,7 +43,7 @@ struct OwnedArray : public Array<T> {
         Array<T>(s, s == 0 ? nullptr : new T[UNSIZE(s)])
     {}
 
-	template <typename U>
+    template <typename U>
     OwnedArray(defs::size s, const U *elems) :
         OwnedArray<T>(s)
     {
@@ -61,24 +61,6 @@ struct OwnedArray : public Array<T> {
 
     ~OwnedArray() {
         delete[] this->_elems;
-    }
-
-	template<typename U>
-	OwnedArray<T>& operator =(const OwnedArray<U>& arr) {
-		delete[] this->_elems;
-		this->_size = arr.size();
-		this->_elems = (arr.size() == 0 ? nullptr : new T[UNSIZE(arr.size())]);
-		for (defs::index i = 0; i < arr.size(); ++i)
-			this->at(i) = arr[i];
-	}
-
-    void unsafeResize(defs::size s) {
-        if (this->_size != s) {
-            if (this->_elems)
-                delete[] this->_elems;
-            this->_size = s;
-            this->_elems = new T[UNSIZE(s)];
-        }
     }
 };
 

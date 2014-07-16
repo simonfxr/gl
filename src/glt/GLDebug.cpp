@@ -48,7 +48,7 @@ ARBDebug::~ARBDebug() {
 }
 
 GLDebug *ARBDebug::init() {
-    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
         printGLError(_CURRENT_LOCATION, err);
@@ -126,7 +126,8 @@ AMDDebug::~AMDDebug() {
 }
 
 GLDebug *AMDDebug::init() {
-    glDebugMessageEnableAMD(0, 0, 0, NULL, GL_TRUE);
+
+    glDebugMessageEnableAMD(0, 0, 0, nullptr, GL_TRUE);
 
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {

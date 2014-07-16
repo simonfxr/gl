@@ -124,7 +124,7 @@ bool EventSource<T>::reg(const Ref<EventHandler<T> >& handler) {
     if (!handler)
         return true;
     for (defs::index i = 0; i < SIZE(handlers.size()); ++i)
-        if (handlers[size_t(i)].same(handler))
+        if (handlers[size_t(i)] == handler)
             return false;
     handlers.push_back(handler);
     return true;
@@ -135,7 +135,7 @@ bool EventSource<T>::unreg(const Ref<EventHandler<T> >& handler) {
     if (!handler)
         return true;
     for (defs::index i = 0; i < SIZE(handlers.size()); ++i)
-        if (handlers[size_t(i)].same(handler)) {
+        if (handlers[size_t(i)] == handler) {
             handlers.erase(handlers.begin() + i);
             return true;
         }

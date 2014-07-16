@@ -103,16 +103,16 @@ bool initDebug() {
     GLDebug *dbg = 0;
     const char *debug_impl = 0;
 
-    if (dbg == 0 && GLEW_AMD_debug_output) {
-        debug_impl = "GL_AMD_debug_output";
-        sys::io::stdout() << "trying AMD debug" << sys::io::endl;
-        dbg = AMDDebug::init();
-    }
-
     if (dbg == 0 && GLEW_ARB_debug_output) {
         debug_impl = "GL_ARB_debug_output";
         sys::io::stdout() << "trying ARB debug" << sys::io::endl;
         dbg = ARBDebug::init();
+    }
+
+    if (dbg == 0 && GLEW_AMD_debug_output) {
+        debug_impl = "GL_AMD_debug_output";
+        sys::io::stdout() << "trying AMD debug" << sys::io::endl;
+        dbg = AMDDebug::init();
     }
     
     bool initialized;
