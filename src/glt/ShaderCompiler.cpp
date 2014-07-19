@@ -372,9 +372,8 @@ void CompileState::compileAll() {
                 cache_hit = true;
 
                 ASSERT(so);
-                if (flags & SC_CHECK_OUTDATED) {
+                if (flags & SC_CHECK_OUTDATED)
                     so = reload(so);
-                }
             }
         }
 

@@ -124,7 +124,7 @@ bool ShaderProgram::reload() {
              it1 != self->shaders.end() && it2 != newshaders.end();
              ++it1, ++it2)
         {
-            if (!it1->second == it2->second) {
+            if (it1->second != it2->second) {
                 unchanged = false;
                 break;
             }

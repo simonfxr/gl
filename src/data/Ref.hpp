@@ -226,6 +226,22 @@ public:
         return _ref_cnt == rhs._ref_cnt;
     }
 
+    template <typename O>
+    bool operator ==(const O *ptr) const {
+        return _ptr == ptr;
+    }
+
+    template <typename O>
+    bool operator !=(const O *ptr) const {
+        return !(*this == ptr);
+    }
+
+    template <typename R>
+    bool operator !=(const R& rhs) const {
+        return !(*this == rhs);
+    }
+
+
     Ref<T, C>& operator =(const Ref<T, C>& ref) {
         ref.retain();
         release();
@@ -369,7 +385,7 @@ public:
 
     template <typename O>
     bool operator ==(const Ref<O, C>& rhs) const {
-        return rhs == *this;
+        return _ref_cnt == rhs._ref_cnt;
     }
 
     template <typename O>
@@ -380,6 +396,16 @@ public:
     template <typename O>
     bool operator ==(const O *ptr) const {
         return _ptr == ptr;
+    }
+
+    template <typename O>
+    bool operator !=(const O *ptr) const {
+        return !(*this == ptr);
+    }
+
+    template <typename R>
+    bool operator !=(const R& rhs) const {
+        return !(*this == rhs);
     }
 };
 

@@ -153,6 +153,7 @@ int32 GameLoop::run(Game& logic) {
 
         for (defs::index i = 0; ; ++i) {
             self->clock = self->now();
+            auto cur_tick_duration = self->tick_duration;
 
             /*
              * if sync_draw, it may be that self->clock < next_tick,
@@ -169,11 +170,10 @@ int32 GameLoop::run(Game& logic) {
             if (!self->paused) {
                 self->game->tick();
                 ++self->tick_id;
-                self->tick_time += self->tick_duration;
+                self->tick_time += cur_tick_duration;
             }
 
-            next_tick += self->tick_duration;
-            
+            next_tick += cur_tick_duration;
         }
 
         if (self->stop)
@@ -183,7 +183,7 @@ int32 GameLoop::run(Game& logic) {
         if (self->sync_draw || self->paused || self->clock >= next_tick)
             interpolation = 0;
         else
-            interpolation = 1 - (next_tick - self->clock) / self->tick_duration;
+            interpolation = math::max(0, 1 - (next_tick - self->clock) / self->tick_duration);
         
         ASSERT(interpolation >= 0);
         ASSERT(interpolation <= 1);
