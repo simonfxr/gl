@@ -19,9 +19,9 @@ StreamResult convertErr(HandleError err) {
     case HE_INVALID_PARAM:
     case HE_UNKNOWN:
         return StreamResult::Error;
-    default:
-        ASSERT_FAIL();
     }
+
+    ASSERT_FAIL();
 }
 
 } // namespace anon
@@ -67,7 +67,7 @@ StreamResult HandleStream::basic_read(size& s, char *buf) {
         return StreamResult::OK;
     
     if (s <= read_cursor) {
-        memcpy(buf, read_buffer, s);
+        memcpy(buf, read_buffer, UNSIZE(s));
         read_cursor -= s;
         if (read_cursor > 0)
             memmove(read_buffer, read_buffer + s, read_cursor);

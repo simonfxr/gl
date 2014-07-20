@@ -204,7 +204,7 @@ struct SYS_API ByteStream : public IOStream {
     defs::size size() const { return SIZE(_buffer.size()); }
     const char *data() const { return &_buffer.front(); }
     char *data() { return &_buffer.front(); }
-    std::string str() const { return std::string(data(), size()); }
+    std::string str() const { return std::string(data(), UNSIZE(size())); }
     
     void truncate(defs::size);
     

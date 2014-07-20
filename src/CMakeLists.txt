@@ -39,7 +39,8 @@ set(SYS_SRC
   sys/io.cpp
   sys/io/Stream.cpp
   sys/sys.cpp
-  sys/fiber.cpp)
+  sys/fiber.cpp
+  sys/mem.cpp)
 
 if(SYS_UNIX)
   set(SYS_SRC
