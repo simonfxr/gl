@@ -4,10 +4,12 @@
 #include "ge/conf.hpp"
 #include "ge/EngineEvents.hpp"
 #include "ge/CommandArgs.hpp"
+#include "ge/CommandParams.hpp"
 
 #include "data/Array.hpp"
 
 #include <string>
+#include <functional>
 
 namespace ge {
 
@@ -112,6 +114,37 @@ public:
 template <typename T>
 Ref<Command> makeCommand(T *o, void (T::*m)(const Event<CommandEvent>&, const Array<CommandArg>&), const Array<CommandParamType>& params, const std::string& name, const std::string& desc = "") {
     return Ref<Command>(new MemberFunCommand<T, void (T::*)(const Event<CommandEvent>&, const Array<CommandArg>&)>(o, m, params, name, desc));
+}
+
+template <typename F>
+struct FunctionCommand : public Command {
+    F _f;
+
+    FunctionCommand(F&& f,
+                    const Array<CommandParamType>& ps,
+                    const std::string& nm, const std::string& desc) :
+        Command(ps, nm, desc),
+        _f(f)
+        {}
+
+    virtual ~FunctionCommand() {}
+
+    void interactive(const Event<CommandEvent>& e, const Array<CommandArg>& args) {
+        _f(e, args);
+    }
+};
+
+template <typename F>
+Ref<Command> makeCommand(F&& f, const Array<CommandParamType>& params,
+                         const std::string& nm, const std::string& desc)
+{
+    return Ref<Command>(new FunctionCommand<F>(std::move(f), params, nm, desc));
+}
+
+template <typename F>
+Ref<Command> makeNumCommand(F&& f, const std::string& nm, const std::string& desc) {
+    return makeCommand([f](const Event<CommandEvent>& ev, const Array<CommandArg>& args)
+                       { f(ev, args[0].number); }, NUM_PARAMS, nm, desc);
 }
 
 } // namespace ge

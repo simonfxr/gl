@@ -89,7 +89,7 @@ if(USE_CXX11)
     add_definitions(-DCXX11_FINAL_OVERRIDE=1)
   endif()
   if(COMP_GCCLIKE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
   endif()
 endif()
 

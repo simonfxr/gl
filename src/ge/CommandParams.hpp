@@ -1,7 +1,7 @@
 #ifndef COMMAND_PARAMS_HPP
 #define COMMAND_PARAMS_HPP
 
-#include "ge/Command.hpp"
+#include "ge/CommandArgs.hpp"
 #include "data/StaticArray.hpp"
 
 namespace ge {
