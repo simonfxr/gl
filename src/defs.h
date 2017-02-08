@@ -188,7 +188,7 @@ typedef uptr uint_t;
 /* some windows header defines small, use it as marker weather byte is typdef'ed */
 #ifndef small
 typedef uint8 byte;
-#endif  
+#endif
 #endif // 0
 
 

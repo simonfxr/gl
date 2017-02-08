@@ -1,30 +1,31 @@
-#include <vector>
 #include <limits>
+#include <vector>
 
 #include "defs.hpp"
-#include "math/real.hpp"
 #include "err/err.hpp"
-#include "glt/utils.hpp"
-#include "ge/GameWindow.hpp"
 #include "ge/Event.hpp"
+#include "ge/GameWindow.hpp"
 #include "ge/module.hpp"
+#include "glt/utils.hpp"
+#include "math/real.hpp"
 
 #include "opengl.hpp"
 #include <GLFW/glfw3.h>
 
 namespace ge {
 
-struct GameWindow::Data {
+struct GameWindow::Data
+{
     GameWindow &self;
 
     const bool owning_win;
     GLFWwindow *win;
-    
+
     bool have_focus;
     bool vsync;
 
     double mouse_x;
-    double  mouse_y;
+    double mouse_y;
 
     bool show_mouse_cursor;
     bool accum_mouse_moves;
@@ -35,8 +36,8 @@ struct GameWindow::Data {
 
     GLContextInfo context_info;
 
-    Data(GameWindow& _self, bool owns_win, GLFWwindow *rw) : 
-        self(_self),
+    Data(GameWindow &_self, bool owns_win, GLFWwindow *rw)
+      : self(_self),
         owning_win(owns_win),
         win(rw),
         have_focus(true),
@@ -45,17 +46,18 @@ struct GameWindow::Data {
         mouse_y(0),
         show_mouse_cursor(true),
         renderTarget(0),
-        events()        
-        {}
-        
+        events()
+    {
+    }
+
     ~Data();
 
-    void init(const WindowOptions& opts);
+    void init(const WindowOptions &opts);
     void handleInputEvents();
     void setMouse(index16 x, index16 y);
 
-    static GLFWwindow *makeWindow(const WindowOptions& opts);
-    static void runHandleInputEvents(Data *, const Event<InputEvent>&);
+    static GLFWwindow *makeWindow(const WindowOptions &opts);
+    static void runHandleInputEvents(Data *, const Event<InputEvent> &);
     static Data *getUserPointer(GLFWwindow *);
     static void glfw_window_size_callback(GLFWwindow *win, int w, int h);
     static void glfw_window_close_callback(GLFWwindow *win);
@@ -65,24 +67,32 @@ struct GameWindow::Data {
     static void glfw_window_iconify_callback(GLFWwindow *win, int iconified);
     static void glfw_framebuffer_size_callback(GLFWwindow *win, int w, int h);
     static void glfw_cursor_pos_callback(GLFWwindow *win, double x, double y);
-    static void glfw_key_callback(GLFWwindow *win, int key, int scancode, int action, int mods);
-    static void glfw_mouse_button_callback(GLFWwindow *win, int button, int action, int mods);
-    static void glfw_mouse_scroll_callback(GLFWwindow *win, double xoffset, double yoffset);
+    static void glfw_key_callback(GLFWwindow *win, int key, int scancode,
+                                  int action, int mods);
+    static void glfw_mouse_button_callback(GLFWwindow *win, int button,
+                                           int action, int mods);
+    static void glfw_mouse_scroll_callback(GLFWwindow *win, double xoffset,
+                                           double yoffset);
 };
-
 
 namespace {
 
-void glfw_error_callback(int error, const char *desc) {
+void
+glfw_error_callback(int error, const char *desc)
+{
     UNUSED(error);
     ERR("GLFW error: " + std::string(desc));
 }
 
-void resizeRenderTarget(const Event<WindowResized>& e) {
+void
+resizeRenderTarget(const Event<WindowResized> &e)
+{
     e.info.window.renderTarget().resized();
 }
 
-KeyCode convertGLFWKey(int key) {
+KeyCode
+convertGLFWKey(int key)
+{
 
     if (GLFW_KEY_A <= key && key <= GLFW_KEY_Z)
         return keycode::KeyCode(key - GLFW_KEY_A + int(keycode::A));
@@ -97,7 +107,10 @@ KeyCode convertGLFWKey(int key) {
         return keycode::Space;
     }
 
-#define K(a, b) case GLFW_KEY_##a: return keycode::b; break
+#define K(a, b)                                                                \
+    case GLFW_KEY_##a:                                                         \
+        return keycode::b;                                                     \
+        break
 
     switch (key) {
         K(SPACE, Space);
@@ -157,8 +170,14 @@ KeyCode convertGLFWKey(int key) {
 #undef K
 }
 
-static KeyCode convertGLFWMouseButton(int button) {
-#define B(a, b) case GLFW_MOUSE_BUTTON_##a: return keycode::b; break
+static KeyCode
+convertGLFWMouseButton(int button)
+{
+#define B(a, b)                                                                \
+    case GLFW_MOUSE_BUTTON_##a:                                                \
+        return keycode::b;                                                     \
+        break
+
     switch (button) {
         B(1, MLeft);
         B(2, MRight);
@@ -177,7 +196,9 @@ static KeyCode convertGLFWMouseButton(int button) {
 
 } // namespace anon
 
-GLFWwindow *GameWindow::Data::makeWindow(const WindowOptions& opts) {
+GLFWwindow *
+GameWindow::Data::makeWindow(const WindowOptions &opts)
+{
     glfwWindowHint(GLFW_SAMPLES, opts.settings.antialiasingLevel);
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, opts.settings.majorVersion);
@@ -186,37 +207,51 @@ GLFWwindow *GameWindow::Data::makeWindow(const WindowOptions& opts) {
     int profile;
     if (opts.settings.majorVersion > 3 ||
         (opts.settings.majorVersion == 3 && opts.settings.minorVersion >= 2))
-        profile = opts.settings.coreProfile ? GLFW_OPENGL_CORE_PROFILE : GLFW_OPENGL_COMPAT_PROFILE;
+        profile = opts.settings.coreProfile ? GLFW_OPENGL_CORE_PROFILE
+                                            : GLFW_OPENGL_COMPAT_PROFILE;
     else
         profile = GLFW_OPENGL_ANY_PROFILE;
     glfwWindowHint(GLFW_OPENGL_PROFILE, profile);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, opts.settings.debugContext ? GL_TRUE : GL_FALSE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT,
+                   opts.settings.debugContext ? GL_TRUE : GL_FALSE);
 
-    GLFWwindow *win = glfwCreateWindow(opts.width, opts.height, opts.title.c_str(), NULL, NULL);
+    GLFWwindow *win =
+      glfwCreateWindow(opts.width, opts.height, opts.title.c_str(), NULL, NULL);
     return win;
 }
 
-GameWindow::Data *GameWindow::Data::getUserPointer(GLFWwindow *w) {
+GameWindow::Data *
+GameWindow::Data::getUserPointer(GLFWwindow *w)
+{
     void *ptr = glfwGetWindowUserPointer(w);
     return reinterpret_cast<Data *>(ptr);
 }
 
-void GameWindow::Data::glfw_window_size_callback(GLFWwindow *win, int w, int h) {
+void
+GameWindow::Data::glfw_window_size_callback(GLFWwindow *win, int w, int h)
+{
     GameWindow::Data *me = getUserPointer(win);
-    me->events.windowResized.raise(makeEvent(WindowResized(me->self, SIZE(w), SIZE(h))));
+    me->events.windowResized.raise(
+      makeEvent(WindowResized(me->self, SIZE(w), SIZE(h))));
 }
 
-void GameWindow::Data::glfw_window_close_callback(GLFWwindow *win) {
+void
+GameWindow::Data::glfw_window_close_callback(GLFWwindow *win)
+{
     GameWindow::Data *me = getUserPointer(win);
     me->events.windowClosed.raise(makeEvent(WindowEvent(me->self)));
 }
 
-void GameWindow::Data::glfw_window_refresh_callback(GLFWwindow *win) {
+void
+GameWindow::Data::glfw_window_refresh_callback(GLFWwindow *win)
+{
     UNUSED(win);
     // NOOP
 }
 
-void GameWindow::Data::glfw_window_focus_callback(GLFWwindow *win, int focus_gained) {
+void
+GameWindow::Data::glfw_window_focus_callback(GLFWwindow *win, int focus_gained)
+{
     GameWindow::Data *me = getUserPointer(win);
 
     if (focus_gained == GL_TRUE && !me->have_focus) {
@@ -228,30 +263,44 @@ void GameWindow::Data::glfw_window_focus_callback(GLFWwindow *win, int focus_gai
     }
 }
 
-void GameWindow::Data::glfw_window_pos_callback(GLFWwindow *win, int x, int y) {
-    UNUSED(win); UNUSED(x); UNUSED(y);
+void
+GameWindow::Data::glfw_window_pos_callback(GLFWwindow *win, int x, int y)
+{
+    UNUSED(win);
+    UNUSED(x);
+    UNUSED(y);
     // NOOP
 }
 
-void GameWindow::Data::glfw_window_iconify_callback(GLFWwindow *win, int iconified) {
-    UNUSED(win); UNUSED(iconified);
+void
+GameWindow::Data::glfw_window_iconify_callback(GLFWwindow *win, int iconified)
+{
+    UNUSED(win);
+    UNUSED(iconified);
     // NOOP
 }
 
-void GameWindow::Data::glfw_framebuffer_size_callback(GLFWwindow *win, int w, int h) {
+void
+GameWindow::Data::glfw_framebuffer_size_callback(GLFWwindow *win, int w, int h)
+{
     GameWindow::Data *me = getUserPointer(win);
-    me->events.framebufferResized.raise(makeEvent(FramebufferResized(me->self, SIZE(w), SIZE(h))));
+    me->events.framebufferResized.raise(
+      makeEvent(FramebufferResized(me->self, SIZE(w), SIZE(h))));
 }
 
-// static void GameWindow::Data::glfw_char_callback(GLFWwindow *win, unsigned int codepoint) {
-    
-// }
-
-// static void GameWindow::Data::glfw_cursor_enter_callback(GLFWwindow *win, int entered) {
+// static void GameWindow::Data::glfw_char_callback(GLFWwindow *win, unsigned
+// int codepoint) {
 
 // }
 
-void GameWindow::Data::glfw_cursor_pos_callback(GLFWwindow *win, double x, double y) {
+// static void GameWindow::Data::glfw_cursor_enter_callback(GLFWwindow *win, int
+// entered) {
+
+// }
+
+void
+GameWindow::Data::glfw_cursor_pos_callback(GLFWwindow *win, double x, double y)
+{
     GameWindow::Data *me = getUserPointer(win);
 
     int16 dx = int16(-(x - me->mouse_x));
@@ -259,37 +308,55 @@ void GameWindow::Data::glfw_cursor_pos_callback(GLFWwindow *win, double x, doubl
 
     me->mouse_x = x;
     me->mouse_y = y;
-    
+
     if (dx != 0 || dy != 0)
-        me->events.mouseMoved.raise(makeEvent(MouseMoved(me->self, dx, dy, int16(x), int16(y))));
+        me->events.mouseMoved.raise(
+          makeEvent(MouseMoved(me->self, dx, dy, int16(x), int16(y))));
 }
 
-void GameWindow::Data::glfw_key_callback(GLFWwindow *win, int key, int scancode, int action, int mods) {
-    UNUSED(scancode); UNUSED(mods);
+void
+GameWindow::Data::glfw_key_callback(GLFWwindow *win, int key, int scancode,
+                                    int action, int mods)
+{
+    UNUSED(scancode);
+    UNUSED(mods);
 
     if (action == GLFW_REPEAT)
         return;
 
     GameWindow::Data *me = getUserPointer(win);
-    Key k = Key::make(action == GLFW_PRESS ? keystate::Pressed : keystate::Released,
-                      convertGLFWKey(key));
+    Key k =
+      Key::make(action == GLFW_PRESS ? keystate::Pressed : keystate::Released,
+                convertGLFWKey(key));
     me->events.keyChanged.raise(makeEvent(KeyChanged(me->self, k)));
 }
 
-void GameWindow::Data::glfw_mouse_button_callback(GLFWwindow *win, int button, int action, int mods) {
+void
+GameWindow::Data::glfw_mouse_button_callback(GLFWwindow *win, int button,
+                                             int action, int mods)
+{
     UNUSED(mods);
     GameWindow::Data *me = getUserPointer(win);
-    Key b = Key::make(action == GLFW_PRESS ? keystate::Pressed : keystate::Released,
-                      convertGLFWMouseButton(button));
-    me->events.mouseButton.raise(makeEvent(MouseButton(me->self, me->mouse_x, me->mouse_y, b)));
+    Key b =
+      Key::make(action == GLFW_PRESS ? keystate::Pressed : keystate::Released,
+                convertGLFWMouseButton(button));
+    me->events.mouseButton.raise(
+      makeEvent(MouseButton(me->self, me->mouse_x, me->mouse_y, b)));
 }
 
-void GameWindow::Data::glfw_mouse_scroll_callback(GLFWwindow *win, double xoffset, double yoffset) {
-    UNUSED(win); UNUSED(xoffset); UNUSED(yoffset);
+void
+GameWindow::Data::glfw_mouse_scroll_callback(GLFWwindow *win, double xoffset,
+                                             double yoffset)
+{
+    UNUSED(win);
+    UNUSED(xoffset);
+    UNUSED(yoffset);
     // NOOP
 }
 
-void GameWindow::Data::init(const WindowOptions& opts) {
+void
+GameWindow::Data::init(const WindowOptions &opts)
+{
 
     ASSERT(renderTarget == 0);
     renderTarget = new WindowRenderTarget(self);
@@ -307,20 +374,24 @@ void GameWindow::Data::init(const WindowOptions& opts) {
     glfwSetKeyCallback(win, glfw_key_callback);
     glfwSetMouseButtonCallback(win, glfw_mouse_button_callback);
     glfwSetScrollCallback(win, glfw_mouse_scroll_callback);
-    
+
     glfwMakeContextCurrent(win);
     GL_CHECK_ERRORS();
-    
+
     vsync = opts.vsync;
-//    win->setVerticalSyncEnabled(opts.vsync);
-    
+    //    win->setVerticalSyncEnabled(opts.vsync);
+
     events.windowResized.reg(makeEventHandler(resizeRenderTarget));
 
     context_info = opts.settings;
-    context_info.majorVersion = glfwGetWindowAttrib(win, GLFW_CONTEXT_VERSION_MAJOR);
-    context_info.minorVersion = glfwGetWindowAttrib(win, GLFW_CONTEXT_VERSION_MINOR);
-    context_info.debugContext = glfwGetWindowAttrib(win, GLFW_OPENGL_DEBUG_CONTEXT) == GL_TRUE;
-    context_info.coreProfile = glfwGetWindowAttrib(win, GLFW_OPENGL_PROFILE) == GLFW_OPENGL_CORE_PROFILE;
+    context_info.majorVersion =
+      glfwGetWindowAttrib(win, GLFW_CONTEXT_VERSION_MAJOR);
+    context_info.minorVersion =
+      glfwGetWindowAttrib(win, GLFW_CONTEXT_VERSION_MINOR);
+    context_info.debugContext =
+      glfwGetWindowAttrib(win, GLFW_OPENGL_DEBUG_CONTEXT) == GL_TRUE;
+    context_info.coreProfile =
+      glfwGetWindowAttrib(win, GLFW_OPENGL_PROFILE) == GLFW_OPENGL_CORE_PROFILE;
 
     if (!glfwExtensionSupported("GL_ARB_multisample")) {
         context_info.antialiasingLevel = 0;
@@ -331,115 +402,155 @@ void GameWindow::Data::init(const WindowOptions& opts) {
     }
 }
 
-void GameWindow::Data::setMouse(index16 x, index16 y) {
+void
+GameWindow::Data::setMouse(index16 x, index16 y)
+{
     glfwSetCursorPos(win, x, y);
     mouse_x = x;
     mouse_y = y;
 }
 
-GameWindow::Data::~Data() {
+GameWindow::Data::~Data()
+{
     delete renderTarget;
 
     glfwMakeContextCurrent(nullptr);
-    
+
     if (owning_win) {
         glfwDestroyWindow(win);
         win = 0;
     }
 }
 
-GameWindow::GameWindow(const WindowOptions& opts) :
-    self(new Data(*this, true, Data::makeWindow(opts)))
+GameWindow::GameWindow(const WindowOptions &opts)
+  : self(new Data(*this, true, Data::makeWindow(opts)))
 {
     self->init(opts);
 }
 
-GameWindow::~GameWindow() {
+GameWindow::~GameWindow()
+{
     delete self;
 }
 
-bool GameWindow::init() {
+bool
+GameWindow::init()
+{
     return true;
 }
 
-void GameWindow::Data::handleInputEvents() {
+void
+GameWindow::Data::handleInputEvents()
+{
     glfwPollEvents();
 }
 
-void GameWindow::showMouseCursor(bool show) {
+void
+GameWindow::showMouseCursor(bool show)
+{
     if (show != self->show_mouse_cursor) {
         self->show_mouse_cursor = show;
-        glfwSetInputMode(self->win, GLFW_CURSOR, show ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
+        glfwSetInputMode(self->win, GLFW_CURSOR,
+                         show ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
     }
 }
 
-bool GameWindow::showMouseCursor() const {
+bool
+GameWindow::showMouseCursor() const
+{
     return self->show_mouse_cursor;
 }
 
-void GameWindow::vsync(bool enable) {
+void
+GameWindow::vsync(bool enable)
+{
     if (self->vsync != enable) {
         self->vsync = enable;
         ERR("VSYNC not implemented");
     }
 }
 
-bool GameWindow::vsync() {
+bool
+GameWindow::vsync()
+{
     return self->vsync;
 }
 
-bool GameWindow::focused() const {
+bool
+GameWindow::focused() const
+{
     return self->have_focus;
 }
 
-WindowRenderTarget& GameWindow::renderTarget(){
+WindowRenderTarget &
+GameWindow::renderTarget()
+{
     return *self->renderTarget;
 }
 
-WindowEvents& GameWindow::events() {
+WindowEvents &
+GameWindow::events()
+{
     return self->events;
 }
 
-void GameWindow::Data::runHandleInputEvents(Data *win, const Event<InputEvent>&) {
+void
+GameWindow::Data::runHandleInputEvents(Data *win, const Event<InputEvent> &)
+{
     win->handleInputEvents();
 }
 
-void GameWindow::registerHandlers(EngineEvents& evnts) {
+void
+GameWindow::registerHandlers(EngineEvents &evnts)
+{
     evnts.handleInput.reg(makeEventHandler(Data::runHandleInputEvents, self));
 }
 
-size GameWindow::windowWidth() const {
+size
+GameWindow::windowWidth() const
+{
     size w, h;
     windowSize(w, h);
     return w;
 }
 
-size GameWindow::windowHeight() const {
+size
+GameWindow::windowHeight() const
+{
     size w, h;
     windowSize(w, h);
     return h;
 }
 
-void GameWindow::windowSize(size& width, size& height) const {
+void
+GameWindow::windowSize(size &width, size &height) const
+{
     int w, h;
     glfwGetWindowSize(self->win, &w, &h);
     width = SIZE(w);
     height = SIZE(h);
 }
 
-void GameWindow::setMouse(index16 x, index16 y) {
+void
+GameWindow::setMouse(index16 x, index16 y)
+{
     self->setMouse(x, y);
 }
 
-void GameWindow::swapBuffers() {
+void
+GameWindow::swapBuffers()
+{
     glfwSwapBuffers(self->win);
 }
 
-void GameWindow::contextInfo(GLContextInfo& info) const {
+void
+GameWindow::contextInfo(GLContextInfo &info) const
+{
     info = self->context_info;
 }
 
-GameWindowInit::GameWindowInit() {
+GameWindowInit::GameWindowInit()
+{
     if (!glfwInit()) {
         ERR("Couldnt initialize GLFW");
     } else {
@@ -447,7 +558,8 @@ GameWindowInit::GameWindowInit() {
     }
 }
 
-GameWindowInit::~GameWindowInit() {
+GameWindowInit::~GameWindowInit()
+{
     glfwTerminate();
 }
 

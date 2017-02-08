@@ -12,3 +12,4 @@ Makefile
 /lib/
 /build/
 voxel_create_world.cl
+compile_commands.json
