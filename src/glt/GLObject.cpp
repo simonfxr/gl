@@ -15,8 +15,8 @@ using namespace defs;
 
 namespace {
 
-typedef void (*Generator)(GLsizei, GLuint *);
-typedef void (*Destructor)(GLsizei, const GLuint *);
+using Generator = void (*)(GLsizei, GLuint *);
+using Destructor = void (*)(GLsizei, const GLuint *);
 
 void
 gen_programs(GLsizei n, GLuint *names)
@@ -43,10 +43,10 @@ size instance_count[ObjectType::Count] = { 0 };
 
 struct ObjectKind
 {
-    Generator generator;
-    Destructor destructor;
-    const char *kind;
-    ObjectKind() {}
+    Generator generator{};
+    Destructor destructor{};
+    const char *kind{};
+    ObjectKind() = default;
     ObjectKind(Generator g, Destructor d, const char *k)
       : generator(g), destructor(d), kind(k)
     {}
@@ -60,17 +60,17 @@ DBG(std::map<GLuint, std::string> *stacktrace_map;)
 void
 init_table()
 {
-    if (kind_table != 0)
+    if (kind_table != nullptr)
         return;
 
     DBG(stacktrace_map = new std::map<GLuint, std::string>());
 
-    ObjectKind *table = new ObjectKind[ObjectType::Count];
+    auto *table = new ObjectKind[ObjectType::Count];
     kind_table = table;
     int i = 0;
 #define KIND(g, d, k) table[ObjectType::k] = ObjectKind(g, d, #k), ++i
     KIND(gen_programs, del_programs, Program);
-    KIND(0, del_shaders, Shader);
+    KIND(nullptr, del_shaders, Shader);
     KIND(glGenBuffers, glDeleteBuffers, Buffer);
     KIND(glGenFramebuffers, glDeleteFramebuffers, Framebuffer);
     KIND(glGenRenderbuffers, glDeleteRenderbuffers, Renderbuffer);
@@ -99,7 +99,7 @@ generate(ObjectType::Type t, GLsizei n, GLuint *names)
     });
 
     ASSERT(0 <= t && t < ObjectType::Count);
-    ASSERT(kind_table[t].generator != 0);
+    ASSERT(kind_table[t].generator != nullptr);
     GL_CALL(kind_table[t].generator, n, names);
     for (GLsizei i = 0; i < n; ++i)
         if (names[i] != 0) {

@@ -8,24 +8,24 @@ using namespace defs;
 struct GameLoop::Data
 {
 
-    uint64 tick_id;
-    uint64 frame_id;
-    Game *game;
+    uint64 tick_id{ 0 };
+    uint64 frame_id{ 0 };
+    Game *game{ nullptr };
 
-    time clock;
-    time clock_offset;
-    time tick_time;
-    time tick_duration;
-    time frame_duration;
+    time clock{ 0 };
+    time clock_offset{ 0 };
+    time tick_time{ 0 };
+    time tick_duration{ 0 };
+    time frame_duration{ 0 };
 
-    size max_skip;
+    size max_skip{ 0 };
 
-    int32 exit_code;
+    int32 exit_code{ 0 };
 
-    bool paused;
-    bool sync_draw;
-    bool stop;
-    bool initialized;
+    bool paused{ false };
+    bool sync_draw{ false };
+    bool stop{ false };
+    bool initialized{ false };
 
     Data();
     time now();
@@ -37,22 +37,7 @@ GameLoop::Data::now()
     return game->now() - clock_offset;
 }
 
-GameLoop::Data::Data()
-  : tick_id(0)
-  , frame_id(0)
-  , game(nullptr)
-  , clock(0)
-  , clock_offset(0)
-  , tick_time(0)
-  , tick_duration(0)
-  , frame_duration(0)
-  , max_skip(0)
-  , exit_code(0)
-  , paused(false)
-  , sync_draw(false)
-  , stop(false)
-  , initialized(false)
-{}
+GameLoop::Data::Data() = default;
 
 GameLoop::GameLoop(defs::size _ticks, defs::size max_skip, defs::size max_fps)
   : self(new Data)

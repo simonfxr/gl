@@ -2,8 +2,8 @@
 
 namespace ge {
 
-Plugin::Plugin() {}
+Plugin::Plugin() = default;
 
-Plugin::~Plugin() {}
+Plugin::~Plugin() = default;
 
 } // namespace ge

@@ -4,12 +4,12 @@
 #include "err/err.hpp"
 #include "sys/fs.hpp"
 
-#include <errno.h>
+#include <cerrno>
+#include <ctime>
 #include <string.h>
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <time.h>
 #include <unistd.h>
 
 namespace sys {
@@ -33,10 +33,10 @@ cwd()
     char path[1024];
     char *wd = path;
 
-    if (!getcwd(path, sizeof path)) {
+    if (getcwd(path, sizeof path) == nullptr) {
 
         size_t size = sizeof path;
-        wd = 0;
+        wd = nullptr;
         bool success = false;
 
         while (errno == ERANGE) {
@@ -44,7 +44,7 @@ cwd()
             delete[] wd;
             wd = new char[size];
 
-            if (getcwd(wd, size)) {
+            if (getcwd(wd, size) != nullptr) {
                 success = true;
                 break;
             }
@@ -93,8 +93,8 @@ dirname(const std::string &path)
 
     if (pos == 0)
         return "/";
-    else
-        return path.substr(0, pos);
+
+    return path.substr(0, pos);
 }
 
 std::string
@@ -174,7 +174,8 @@ modificationTime(const std::string &path, sys::fs::FileTime *mtime)
 {
     ASSERT(mtime);
 
-    struct stat st;
+    struct stat st
+    {};
     if (stat(path.c_str(), &st) != 0) {
         ERR(strerror(errno));
         return false;
@@ -194,7 +195,8 @@ bool
 exists(const std::string &path, ObjectType *type)
 {
     ASSERT(type);
-    struct stat info;
+    struct stat info
+    {};
     if (stat(path.c_str(), &info) == -1)
         return false;
     int objtype = info.st_mode & S_IFMT;

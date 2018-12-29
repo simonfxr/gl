@@ -1,6 +1,6 @@
 #include "ge/GameLoop.hpp"
 #include "sys/clock.hpp"
-#include <stdio.h>
+#include <cstdio>
 
 using namespace defs;
 
@@ -12,17 +12,17 @@ struct Game : public ge::GameLoop::Game
     ge::GameLoop loop;
 
     Game();
-    virtual ~Game() override;
-    virtual void tick() override;
-    virtual void render(double interpolation) override;
-    virtual void handleInputEvents() override;
-    virtual ge::GameLoop::time now() override;
-    virtual void sleep(ge::GameLoop::time seconds) override;
+    ~Game() override;
+    void tick() override;
+    void render(double interpolation) override;
+    void handleInputEvents() override;
+    ge::GameLoop::time now() override;
+    void sleep(ge::GameLoop::time secs) override;
 };
 
 Game::Game() : loop(10000, 5, 20000) {}
 
-Game::~Game() {}
+Game::~Game() = default;
 
 void
 Game::tick()
@@ -32,7 +32,7 @@ Game::tick()
 }
 
 void
-Game::render(double)
+Game::render(double /*interpolation*/)
 {}
 
 void

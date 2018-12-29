@@ -9,7 +9,7 @@ using namespace defs;
 
 struct KeyBindingState::Data
 {
-    const char *table[keycode::Count];
+    const char *table[keycode::Count]{};
     std::map<std::string, KeyCode> revtable;
 
     Data();
@@ -145,7 +145,7 @@ keycodeStrings(KeyCode code)
 
         K(Count); ///< Keep last -- the total number of keyboard keys
     default:
-        return 0;
+        return nullptr;
     }
 #undef K
 }
@@ -156,15 +156,14 @@ KeyBindingState::Data::Data()
         table[i] = keycodeStrings(KeyCode(i));
 
     for (uint32 i = 0; i < keycode::Count; ++i)
-        if (table[i] != 0)
+        if (table[i] != nullptr)
             revtable[table[i]] = KeyCode(i);
 }
 
 bool
 parseKeyCode(const std::string &str, KeyCode *code)
 {
-    std::map<std::string, KeyCode>::const_iterator it =
-      global.revtable.find(str);
+    auto it = global.revtable.find(str);
     if (it != global.revtable.end()) {
         *code = it->second;
         return true;
@@ -177,14 +176,14 @@ prettyKeyCode(KeyCode code)
 {
     if (code >= 0 && code <= keycode::Count)
         return global.table[code];
-    else
-        return 0;
+
+    return nullptr;
 }
 
 int
 compareKeyBinding(const KeyBinding &x, const KeyBinding &y)
 {
-    for (defs::index i = 0; i < x.size() && y.size(); ++i) {
+    for (defs::index i = 0; i < x.size() && (y.size() != 0); ++i) {
         int32 diff = int32(y[i].code) - int32(x[i].code);
         if (diff != 0)
             return diff;

@@ -2,7 +2,7 @@
 #include "err/err.hpp"
 #include "sys/module.hpp"
 
-#include <string.h>
+#include <cstring>
 
 namespace sys {
 
@@ -67,8 +67,8 @@ HandleStream::basic_flush()
 {
     if (write_cursor > 0)
         return flush_buffer();
-    else
-        return StreamResult::OK;
+
+    return StreamResult::OK;
 }
 
 StreamResult
@@ -203,8 +203,8 @@ readFile(sys::io::OutStream &err,
          char **file_contents,
          size *file_size)
 {
-    FILE *in = fopen(path.c_str(), "r");
-    if (in == 0)
+    FILE *in = fopen(path.c_str(), "re");
+    if (in == nullptr)
         goto fail;
 
     *file_contents = nullptr;
@@ -217,7 +217,7 @@ readFile(sys::io::OutStream &err,
         int64 ssize = ftell(in);
         if (ssize < 0)
             goto fail;
-        size_t size = size_t(ssize);
+        auto size = size_t(ssize);
         if (fseek(in, 0, SEEK_SET) == -1)
             goto fail;
 
@@ -241,7 +241,7 @@ fail:
     if (err.writeable())
         err << "unable to read file: " << path << sys::io::endl;
 
-    if (in)
+    if (in != nullptr)
         fclose(in);
     return false;
 }

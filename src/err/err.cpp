@@ -1,10 +1,10 @@
 #include "err/err.hpp"
-#include <stdlib.h>
+#include <cstdlib>
 
 #ifdef UNWIND_STACKTRACES
 #define UNW_LOCAL_ONLY
 
-#include <assert.h>
+#include <cassert>
 #include <cxxabi.h>
 #include <elfutils/libdwfl.h>
 #include <libunwind.h>
@@ -26,7 +26,7 @@ void
 debugInfo(sys::io::OutStream &out, const void *ip)
 {
 
-    char *debuginfo_path = 0;
+    char *debuginfo_path = nullptr;
 
     Dwfl_Callbacks callbacks;
     callbacks.find_elf = dwfl_linux_proc_find_elf;
@@ -34,35 +34,37 @@ debugInfo(sys::io::OutStream &out, const void *ip)
     callbacks.debuginfo_path = &debuginfo_path;
 
     Dwfl *dwfl = dwfl_begin(&callbacks);
-    assert(dwfl != NULL);
+    assert(dwfl != nullptr);
 
     assert(dwfl_linux_proc_report(dwfl, getpid()) == 0);
-    assert(dwfl_report_end(dwfl, NULL, NULL) == 0);
+    assert(dwfl_report_end(dwfl, nullptr, nullptr) == 0);
 
-    Dwarf_Addr addr = Dwarf_Addr(ip);
+    auto addr = Dwarf_Addr(ip);
 
     Dwfl_Module *module = dwfl_addrmodule(dwfl, addr);
 
     const char *function_name = dwfl_module_addrname(module, addr);
     int status = 0;
-    char *demangled = abi::__cxa_demangle(function_name, 0, 0, &status);
+    char *demangled =
+      abi::__cxa_demangle(function_name, nullptr, nullptr, &status);
 
-    out << (demangled ? demangled : function_name) << "[";
-    if (demangled)
+    out << (demangled != nullptr ? demangled : function_name) << "[";
+    if (demangled != nullptr)
         free(demangled);
 
-    Dwfl_Line *line = 0;
+    Dwfl_Line *line = nullptr;
     for (int i = -0xF; i <= 0xF; ++i) {
 
         line = dwfl_getsrc(dwfl, Dwarf_Addr((const char *) addr + i));
-        if (line != 0)
+        if (line != nullptr)
             break;
     }
 
-    if (line != 0) {
+    if (line != nullptr) {
         int nline;
         Dwarf_Addr addr;
-        const char *filename = dwfl_lineinfo(line, &addr, &nline, 0, 0, 0);
+        const char *filename =
+          dwfl_lineinfo(line, &addr, &nline, nullptr, nullptr, nullptr);
         out << filename << ":" << nline;
     } else {
         out << "ip: " << ip;
@@ -117,7 +119,7 @@ print_stacktrace(sys::io::OutStream &out, int)
 void
 error(const Location &loc, LogLevel lvl, const ErrorArgs &args)
 {
-    printError(args.out, 0, loc, lvl, args.mesg);
+    printError(args.out, nullptr, loc, lvl, args.mesg);
 
     if (lvl == FatalError || lvl == Assertion || lvl == DebugAssertion)
         abort();
@@ -140,7 +142,7 @@ printError(sys::io::OutStream &out,
     const char *prefix = type;
     bool st = false;
 
-    if (prefix == 0) {
+    if (prefix == nullptr) {
         switch (lvl) {
         case DebugError:
             prefix = "ERROR (Debug)";
@@ -183,7 +185,7 @@ printError(sys::io::OutStream &out,
         << " in " << loc.function << sys::io::endl
         << "  at " << loc.file << ":" << loc.line << sys::io::endl;
 
-    if (loc.operation != 0)
+    if (loc.operation != nullptr)
         out << "  operation: " << loc.operation << sys::io::endl;
 
     if (lvl == DebugAssertion || lvl == Assertion)
@@ -199,24 +201,18 @@ namespace {
 
 struct LogState
 {
-    int in_log;
-    bool null;
+    int in_log{ 0 };
+    bool null{ true };
     Location loc;
-    LogLevel level;
+    LogLevel level{ Info };
     sys::io::NullStream null_stream;
     sys::io::OutStream *out;
 
-    LogState()
-      : in_log(0)
-      , null(true)
-      , loc(_CURRENT_LOCATION)
-      , level(Info)
-      , out(&null_stream)
-    {}
+    LogState() : loc(_CURRENT_LOCATION), out(&null_stream) {}
 
 private:
-    LogState(const LogState &);
-    LogState &operator=(const LogState &);
+    LogState(const LogState &) = delete;
+    LogState &operator=(const LogState &) = delete;
 };
 
 THREAD_LOCAL(LogState *, log_state);
@@ -224,7 +220,7 @@ THREAD_LOCAL(LogState *, log_state);
 void
 initLogState()
 {
-    if (log_state == 0)
+    if (log_state == nullptr)
         log_state = new LogState;
 }
 
@@ -233,16 +229,13 @@ checkLogState()
 {
     initLogState();
 
-    if (!log_state->in_log) {
+    if (log_state->in_log == 0) {
         ERR("no log begun");
         // FIXME: provide location info
         return false;
     }
 
-    if (log_state->null)
-        return false;
-
-    return true;
+    return !log_state->null;
 }
 
 } // namespace

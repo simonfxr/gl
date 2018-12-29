@@ -23,42 +23,30 @@ struct RenderManager::Data
 {
     ViewFrustum frustum;
     GeometryTransform transform;
-    bool inScene;
+    bool inScene{ false };
     SavePointArgs transformStateBOS; // transform state in begin of scene
 
-    bool owning_def_rt;
-    RenderTarget *def_rt;
+    bool owning_def_rt{ false };
+    RenderTarget *def_rt{ 0 };
 
     // always active
-    RenderTarget *current_rt;
+    RenderTarget *current_rt{ 0 };
 
     Projection projection;
-    bool projection_outdated;
+    bool projection_outdated{ true };
 
-    uint64 frame_id_current;
-    uint64 frame_id_last;
+    uint64 frame_id_current{ 0 };
+    uint64 frame_id_last{ 0 };
 
-    bool perf_initialized;
+    bool perf_initialized{ false };
     GLPerfCounter perf_counter;
 
-    double sum_elapsed;
-    double min_elapsed;
-    double max_elapsed;
+    double sum_elapsed{};
+    double min_elapsed{};
+    double max_elapsed{};
     FrameStatistics stats;
 
-    Data()
-      : inScene(false)
-      , transformStateBOS(transform, 0, 0)
-      , owning_def_rt(false)
-      , def_rt(0)
-      , current_rt(0)
-      , projection()
-      , projection_outdated(true)
-      , frame_id_current(0)
-      , frame_id_last(0)
-      , perf_initialized(false)
-      , stats()
-    {}
+    Data() : transformStateBOS(transform, 0, 0) {}
 
     void beginStats();
     void endStats();
@@ -75,14 +63,14 @@ RenderManager::~RenderManager()
 void
 RenderManager::shutdown()
 {
-    if (self->current_rt != 0) {
+    if (self->current_rt != nullptr) {
         self->current_rt->deactivate();
-        self->current_rt = 0;
+        self->current_rt = nullptr;
     }
 
     if (self->owning_def_rt) {
         delete self->def_rt;
-        self->def_rt = 0;
+        self->def_rt = nullptr;
     }
 
     self->perf_counter.shutdown();
@@ -143,12 +131,12 @@ RenderManager::setDefaultRenderTarget(RenderTarget *rt, bool delete_after)
 
     if (rt != self->def_rt) {
 
-        if (self->owning_def_rt && self->def_rt != 0) {
+        if (self->owning_def_rt && self->def_rt != nullptr) {
 
             if (self->current_rt == self->def_rt) {
                 WARN("destroying active render target");
                 self->current_rt->deactivate();
-                self->current_rt = 0;
+                self->current_rt = nullptr;
             }
 
             delete self->def_rt;
@@ -178,11 +166,11 @@ RenderManager::setActiveRenderTarget(RenderTarget *rt)
 {
     if (rt != self->current_rt) {
 
-        if (self->current_rt != 0)
+        if (self->current_rt != nullptr)
             self->current_rt->deactivate();
 
         self->current_rt = rt;
-        if (self->current_rt != 0)
+        if (self->current_rt != nullptr)
             self->current_rt->activate();
     }
 }
@@ -197,7 +185,7 @@ void
 RenderManager::beginScene()
 {
     ASSERT_MSG(!self->inScene, "nested beginScene()");
-    ASSERT_MSG(self->current_rt != 0 || self->def_rt != 0,
+    ASSERT_MSG(self->current_rt != nullptr || self->def_rt != nullptr,
                "no RenderTarget specified");
 
     self->beginStats();
@@ -224,7 +212,7 @@ RenderManager::endScene()
     self->inScene = false;
     self->transform.restore(self->transformStateBOS);
     self->endStats(); // dont count swap buffers
-    if (self->current_rt != 0)
+    if (self->current_rt != nullptr)
         self->current_rt->draw();
 }
 

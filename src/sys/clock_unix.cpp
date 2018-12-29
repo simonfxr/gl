@@ -2,18 +2,19 @@
 
 #include "err/err.hpp"
 
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <ctime>
 #include <string.h>
 #include <string>
-#include <time.h>
 
 namespace sys {
 
 static double
 getTime()
 {
-    struct timespec tv;
+    struct timespec tv
+    {};
 
     while (clock_gettime(CLOCK_MONOTONIC_RAW, &tv) == -1) {
         if (errno == EINTR) {
@@ -37,7 +38,9 @@ queryTimer()
 void
 sleep(double secs)
 {
-    struct timespec tv, rmtv;
+    struct timespec tv
+    {
+    }, rmtv{};
     tv.tv_sec = time_t(secs);
     tv.tv_nsec = long(secs * 1e9);
 

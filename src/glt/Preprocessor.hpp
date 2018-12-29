@@ -46,7 +46,7 @@ struct GLT_API Preprocessor
         virtual ~DirectiveHandler();
         virtual void beginProcessing(const ContentContext &ctx);
         virtual void endProcessing(const ContentContext &ctx);
-        virtual void directiveEncountered(const DirectiveContext &context);
+        virtual void directiveEncountered(const DirectiveContext &ctx);
     };
 
     typedef std::map<std::string, DirectiveHandler *> Handlers;
@@ -59,7 +59,7 @@ struct GLT_API Preprocessor
     void name(const std::string &name);
 
     void process(const std::string &);
-    void process(const char *contents, uint32 size);
+    void process(const char *begin, uint32 size);
     void process(const char *contents);
 
     DirectiveHandler &defaultHandler(DirectiveHandler &handler);

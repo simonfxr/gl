@@ -6,15 +6,15 @@
 
 namespace glt {
 
-GLDebug::GLDebug() {}
+GLDebug::GLDebug() = default;
 
-GLDebug::~GLDebug() {}
+GLDebug::~GLDebug() = default;
 
 void
 GLDebug::init()
 {
     const GLubyte *gl_vendor_str = glGetString(GL_VENDOR);
-    if (gl_vendor_str == 0) {
+    if (gl_vendor_str == nullptr) {
         vendor = glvendor::Unknown;
         return;
     }
@@ -62,7 +62,7 @@ ARBDebug::init()
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
         printGLError(_CURRENT_LOCATION, err);
-        return 0;
+        return nullptr;
     }
 
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
@@ -94,7 +94,7 @@ ARBDebug::printDebugMessages(const err::Location &loc)
 
 #define sym_case(v, c)                                                         \
     case c:                                                                    \
-        v = #c;                                                                \
+        (v) = #c;                                                              \
         break
 
         const char *ssrc = "unknown";
@@ -159,7 +159,7 @@ AMDDebug::init()
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
         printGLError(_CURRENT_LOCATION, err);
-        return 0;
+        return nullptr;
     }
 
     GLsizei max_len;
@@ -189,7 +189,7 @@ AMDDebug::printDebugMessages(const err::Location &loc)
 
 #define sym_case(v, c)                                                         \
     case c:                                                                    \
-        v = #c;                                                                \
+        (v) = #c;                                                              \
         break
 
         const char *scat = "unknown";

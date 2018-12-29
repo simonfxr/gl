@@ -7,7 +7,7 @@
 #include <cstring>
 
 #ifdef SYSTEM_UNIX
-#include <errno.h>
+#include <cerrno>
 #endif
 
 #include "sys/io/Stream.hpp"
@@ -34,7 +34,9 @@ castFILE(FILE *p)
 
 struct StreamState
 {
-    static StreamResult track(StreamFlags eof, StreamFlags *, StreamResult r);
+    static StreamResult track(StreamFlags eof,
+                              StreamFlags * /*flags*/,
+                              StreamResult r);
 };
 
 StreamResult
@@ -60,7 +62,7 @@ StreamState::track(StreamFlags eof, StreamFlags *flags, StreamResult res)
 
 InStream::InStream() : _flags(&_flags_store), _flags_store(SF_CLOSABLE) {}
 
-InStream::~InStream() {}
+InStream::~InStream() = default;
 
 void
 InStream::close()
@@ -84,7 +86,8 @@ InStream::read(size &s, char *buf)
     if (!readable()) {
         s = 0;
         return closed() ? StreamResult::Closed : StreamResult::EOF;
-    } else if (s <= 0) {
+    }
+    if (s <= 0) {
         s = 0;
         return StreamResult::OK;
     }
@@ -99,7 +102,7 @@ InStream::init(StreamFlags *flags)
 
 OutStream::OutStream() : _flags(SF_CLOSABLE) {}
 
-OutStream::~OutStream() {}
+OutStream::~OutStream() = default;
 
 void
 OutStream::close()
@@ -123,7 +126,8 @@ OutStream::write(size &s, const char *buf)
     if (!writeable()) {
         s = 0;
         return closed() ? StreamResult::Closed : StreamResult::EOF;
-    } else if (s <= 0) {
+    }
+    if (s <= 0) {
         s = 0;
         return StreamResult::OK;
     }
@@ -143,17 +147,16 @@ IOStream::IOStream()
     InStream::init(&this->_flags);
 }
 
-IOStream::~IOStream() {}
+IOStream::~IOStream() = default;
 
 StreamResult
 IOStream::basic_close_in(bool flush_only)
 {
     if (flush_only) {
         return basic_flush();
-    } else {
-        _flags |= SF_OUT_CLOSED;
-        return basic_close();
     }
+    _flags |= SF_OUT_CLOSED;
+    return basic_close();
 }
 
 StreamResult
@@ -201,7 +204,7 @@ operator<<(OutStream &out, const char *str)
 {
     if (!out.writeable())
         return out;
-    if (!str)
+    if (str == nullptr)
         return out;
     size s = SIZE(strlen(str));
     out.write(s, str);
@@ -227,7 +230,7 @@ operator<<(OutStream &out, const void *ptr)
 }
 
 OutStream &
-operator<<(OutStream &out, const StreamEndl &)
+operator<<(OutStream &out, const StreamEndl & /*unused*/)
 {
     out << "\n";
     out.flush();
@@ -253,7 +256,7 @@ FileStream::open(const std::string &path, const std::string &mode)
     if (isOpen())
         return false;
     _file = castFILE(fopen(path.c_str(), mode.c_str()));
-    return _file != 0;
+    return _file != nullptr;
 }
 
 StreamResult
@@ -264,9 +267,9 @@ FileStream::basic_read(size &s, char *buf)
     s = SIZE(k);
     if (n == k)
         return StreamResult::OK;
-    if (feof(castFILE(_file)))
+    if (feof(castFILE(_file)) != 0)
         return StreamResult::EOF;
-    if (ferror(castFILE(_file))) {
+    if (ferror(castFILE(_file)) != 0) {
         return StreamResult::Error;
     }
 
@@ -282,9 +285,9 @@ FileStream::basic_write(size &s, const char *buf)
     s = SIZE(k);
     if (n == k)
         return StreamResult::OK;
-    if (feof(castFILE(_file)))
+    if (feof(castFILE(_file)) != 0)
         return StreamResult::EOF;
-    if (ferror(castFILE(_file)))
+    if (ferror(castFILE(_file)) != 0)
         return StreamResult::Error;
 
     ASSERT_FAIL();
@@ -294,7 +297,7 @@ StreamResult
 FileStream::basic_close()
 {
     StreamResult ret = basic_flush();
-    if (_file)
+    if (_file != nullptr)
         fclose(castFILE(_file));
     return ret;
 }
@@ -303,7 +306,7 @@ StreamResult
 FileStream::basic_flush()
 {
 
-    if (!_file)
+    if (_file == nullptr)
         return StreamResult::Error;
 
 #ifdef SYSTEM_UNIX
@@ -321,7 +324,7 @@ FileStream::basic_flush()
     if (err == EAGAIN || err == EWOULDBLOCK)
         return StreamResult::Blocked;
 
-    if (feof(castFILE(_file)))
+    if (feof(castFILE(_file)) != 0)
         return StreamResult::EOF;
     return StreamResult::Error;
 
@@ -348,14 +351,14 @@ NullStream::basic_flush()
 }
 
 StreamResult
-NullStream::basic_read(size &s, char *)
+NullStream::basic_read(size &s, char * /*buf*/)
 {
     s = 0;
     return StreamResult::EOF;
 }
 
 StreamResult
-NullStream::basic_write(size &s, const char *)
+NullStream::basic_write(size &s, const char * /*buf*/)
 {
     s = 0;
     return StreamResult::EOF;
@@ -372,7 +375,7 @@ CooperativeInStream::CooperativeInStream(InStream *_in, Fiber *ioh, Fiber *su)
 {}
 
 StreamResult
-CooperativeInStream::basic_close_in(bool)
+CooperativeInStream::basic_close_in(bool /*flush_only*/)
 {
     in->close();
     // FIXME: return real value
@@ -388,14 +391,14 @@ CooperativeInStream::basic_read(size &s, char *buf)
         StreamResult res = in->read(s, buf);
         if (res == StreamResult::OK)
             return res;
-        else if (res == StreamResult::Blocked)
+        if (res == StreamResult::Blocked)
             fiber_switch(stream_user, io_handler);
         else
             return res; // error
     }
 }
 
-ByteStream::ByteStream(defs::size bufsize) : _buffer(), _read_cursor(0)
+ByteStream::ByteStream(defs::size bufsize) : _read_cursor(0)
 {
     _buffer.reserve(bufsize);
 }
@@ -409,7 +412,7 @@ ByteStream::ByteStream(const std::string &str)
   : ByteStream(str.data(), str.size())
 {}
 
-ByteStream::~ByteStream() {}
+ByteStream::~ByteStream() = default;
 
 void
 ByteStream::truncate(defs::size sz)

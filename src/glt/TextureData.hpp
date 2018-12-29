@@ -41,7 +41,7 @@ public:
     TextureType type() { return _type; }
     GLenum glType() const;
 
-    void type(TextureType new_type, size new_samples = 1);
+    void type(TextureType ty, size ss = 1);
 
 private:
     TextureData(const TextureData &);

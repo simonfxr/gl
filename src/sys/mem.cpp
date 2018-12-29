@@ -12,9 +12,8 @@ compare(const char *a, size_t n, const char *b, size_t m)
     int cmp = memcmp(a, b, n < m ? n : m);
     if (cmp == 0 && n != m) {
         return n < m ? Ordering::LT : Ordering::GT;
-    } else {
-        return Ordering::EQ;
     }
+    return Ordering::EQ;
 }
 
 std::unique_ptr<char[]>

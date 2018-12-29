@@ -53,7 +53,7 @@ struct World
 
     bool init();
 
-    bool render_by_distance; // try to render near object first
+    bool render_by_distance{}; // try to render near object first
     defs::size solve_iterations;
 
     bool canMoveCamera(const math::vec3_t &position, math::vec3_t &step);

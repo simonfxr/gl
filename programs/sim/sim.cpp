@@ -11,8 +11,8 @@
 #include <algorithm>
 #include <vector>
 
-#include <stdlib.h>
-#include <time.h>
+#include <cstdlib>
+#include <ctime>
 
 using namespace defs;
 
@@ -62,7 +62,7 @@ namespace {
 ParticleRef
 particleRef(index idx)
 {
-    ParticleRef r;
+    ParticleRef r{};
     r.index = index16(idx);
     return r;
 }
@@ -70,7 +70,7 @@ particleRef(index idx)
 SphereRef
 sphereRef(index idx)
 {
-    SphereRef r;
+    SphereRef r{};
     r.index = index16(idx);
     return r;
 }
@@ -125,10 +125,10 @@ struct World::Data
 
     glt::AABB room;
 
-    size solve_iterations;
+    size solve_iterations{};
 
-    plane3_t walls[6];
-    ParticleRef world; // stationary particle with infinite mass
+    plane3_t walls[6]{};
+    ParticleRef world{}; // stationary particle with infinite mass
 
     Particle &deref(ParticleRef ref);
     SphereData &deref(SphereRef ref);
@@ -188,7 +188,7 @@ World::init()
     self->walls[5] =
       plane(vec3(0.f, 0.f, -1.f), ROOM_DIMENSIONS[2] * -0.5f); // near
 
-    Particle world;
+    Particle world{};
     world.invMass = 0.f;
     world.pos = vec3(0.f);
     world.vel = vec3(0.f);
@@ -245,12 +245,12 @@ World::spawnSphere(const Sphere &s, const SphereModel &m)
     // spring.D = 100.f;
     // spring.l0 = 1.f;
 
-    Particle p;
+    Particle p{};
     p.invMass = recip(s.m);
     p.vel = s.v;
     p.pos = s.center;
 
-    SphereData sd;
+    SphereData sd{};
     sd.particle.index = index16(self->particles.size());
     sd.r = s.r;
 
@@ -303,7 +303,7 @@ World::render(Renderer &renderer, float dt)
                 continue;
             }
 
-            SphereDistance d;
+            SphereDistance d{};
             d.sphere = sphereRef(i);
             d.viewDist = max(0.f, distanceSq(pos, cam) - s.r * s.r);
             //   spheres_ordered[i] = d;
@@ -380,7 +380,7 @@ struct Box
 struct BSP;
 
 bool
-isLeaf(const BSP *bsp);
+isLeaf(const BSP *t);
 
 struct Node
 {
@@ -407,18 +407,18 @@ struct BSP
             delete down[1].tree;
         } else {
             Node *node = down[1].list;
-            while (node != 0) {
+            while (node != nullptr) {
                 Node *prev = node;
                 node = node->nxt;
-                prev->nxt = 0;
+                prev->nxt = nullptr;
                 delete prev;
             }
         }
     }
 };
 
-static const BSP marker_leaf = { plane(), { { 0 }, { 0 } } };
-static BSP *const leaf_marker = (BSP *) &marker_leaf;
+static const BSP marker_leaf = { plane(), { { nullptr }, { nullptr } } };
+static BSP *const leaf_marker = const_cast<BSP *>(&marker_leaf);
 
 bool
 isLeaf(const BSP *t)
@@ -440,7 +440,7 @@ makePlane(int ni, const Box &vol)
 Box
 split(const Box &enclosing, int ni, float sign)
 {
-    Box b;
+    Box b{};
     b.halfWidth = enclosing.halfWidth * (vec3(1.f) - vec3(0.5f) * NORMALS[ni]);
     b.center = enclosing.center + sign * (enclosing.halfWidth - b.halfWidth);
     return b;
@@ -473,7 +473,7 @@ World::Data::insertBSP(BSP *&p,
                        float r)
 {
 
-    if (p == 0) {
+    if (p == nullptr) {
         p = allocBSP();
         ++num_tree;
         //        ASSERT(node->nxt == 0);
@@ -494,7 +494,7 @@ World::Data::insertBSP(BSP *&p,
             SphereRef s2 = other->sphere;
             const SphereData &s2d = deref(s2);
             const Particle &p2 = deref(s2d.particle);
-            p->down[0].tree = p->down[1].tree = 0;
+            p->down[0].tree = p->down[1].tree = nullptr;
             insertBSP(p, ni, volume, depth, other, p2.pos, s2d.r);
             insertBSP(p, ni, volume, depth, node, center, r);
         }
@@ -503,7 +503,7 @@ World::Data::insertBSP(BSP *&p,
 
     float d = distance(p->plane, center);
     float d0 = math::abs(d);
-    float sign = float(signum(d));
+    auto sign = float(signum(d));
     index ni2 = (ni + 1) % 3;
     if (sign == 0.f)
         sign = 1.f;
@@ -531,9 +531,9 @@ World::Data::insertBSP(BSP *&p,
               r);
     Node *copy = allocNode();
     ++num_nodes;
-    copy->nxt = 0;
+    copy->nxt = nullptr;
     copy->sphere = node->sphere;
-    insertBSP(p->down[!face].tree,
+    insertBSP(p->down[face == 0].tree,
               ni2,
               split(volume, ni2, -sign),
               depth,
@@ -552,13 +552,13 @@ World::Data::findCollisions(std::vector<Contact> &contacts,
                             float r)
 {
 
-    if (t == 0)
+    if (t == nullptr)
         return;
 
     if (isLeaf(t)) {
 
         Node *list = t->down[1].list;
-        while (list != 0) {
+        while (list != nullptr) {
 
             if (s.index > list->sphere.index) {
                 const SphereData &s2 = deref(list->sphere);
@@ -568,7 +568,7 @@ World::Data::findCollisions(std::vector<Contact> &contacts,
                     real dist2 = distanceSq(center, p2.pos);
                     if (dist2 < squared(r + s2.r)) {
                         collided[UNSIZE(s2.particle.index)] = true;
-                        Contact con;
+                        Contact con{};
                         const SphereData &s1 = deref(s);
                         con.x = s1.particle;
                         con.y = s2.particle;
@@ -587,7 +587,7 @@ World::Data::findCollisions(std::vector<Contact> &contacts,
 
     float d = distance(t->plane, center);
     float d0 = math::abs(d);
-    float sign = float(signum(d));
+    auto sign = float(signum(d));
     index ni2 = (ni + 1) % 3;
     if (sign == 0.f)
         sign = 1.f;
@@ -600,7 +600,8 @@ World::Data::findCollisions(std::vector<Contact> &contacts,
     }
 
     findCollisions(contacts, t->down[face].tree, ni2, collided, s, center, r);
-    findCollisions(contacts, t->down[!face].tree, ni2, collided, s, center, r);
+    findCollisions(
+      contacts, t->down[face == 0].tree, ni2, collided, s, center, r);
 }
 
 void
@@ -618,7 +619,7 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
         point3_t coll_pos;
         int32 hit = collidesWall(pos1, s1.r, coll_pos);
         if (hit >= 0) {
-            Contact con;
+            Contact con{};
             con.x = s1.particle;
             con.y = world;
             con.normal = walls[hit].normal;
@@ -646,8 +647,8 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
         // }
     }
 
-    BSP *root = 0;
-    Box volume;
+    BSP *root = nullptr;
+    Box volume{};
     volume.center = room.center();
     volume.halfWidth = 0.5f * (room.corner_max - room.corner_min);
 
@@ -659,7 +660,7 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
         const Particle &p1 = deref(s1.particle);
         Node *node = allocNode();
         ++num_nodes;
-        node->nxt = 0;
+        node->nxt = nullptr;
         node->sphere = sphereRef(i);
         insertBSP(root, 0, volume, 0, node, p1.pos, s1.r);
     });
@@ -784,7 +785,7 @@ World::Data::makeSphere(SphereRef ref)
 {
     SphereData s = deref(ref);
     Particle p = deref(s.particle);
-    Sphere sp;
+    Sphere sp{};
     sp.center = p.pos;
     sp.v = p.vel;
     sp.m = recip(p.invMass);

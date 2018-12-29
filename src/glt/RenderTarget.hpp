@@ -39,7 +39,7 @@ struct GLT_API RenderTarget
 
     RenderTarget(size width,
                  size height,
-                 RenderTargetBuffers buffers = RT_COLOR_BUFFER,
+                 RenderTargetBuffers bs = RT_COLOR_BUFFER,
                  const Viewport &vp = Viewport());
     virtual ~RenderTarget();
 
@@ -48,7 +48,7 @@ struct GLT_API RenderTarget
     RenderTargetBuffers buffers() const;
     const Viewport &viewport() const;
     color clearColor() const;
-    void clearColor(color);
+    void clearColor(const color &);
 
     void activate();
     void deactivate();

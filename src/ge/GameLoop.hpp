@@ -36,16 +36,16 @@ struct GE_API GameLoop
     time tickDuration() const;
 
     defs::size ticks() const;
-    GameLoop &ticks(defs::size ticks);
+    GameLoop &ticks(defs::size n);
 
     defs::size maxFramesSkipped() const;
-    GameLoop &maxFramesSkipped(defs::size frames);
+    GameLoop &maxFramesSkipped(defs::size max_skip);
 
     defs::size maxFPS() const;
     GameLoop &maxFPS(defs::size max_fps);
 
     bool syncDraw() const;
-    GameLoop &syncDraw(bool sync);
+    GameLoop &syncDraw(bool yesno);
 
     uint64 tickID() const;
     uint64 frameID() const;

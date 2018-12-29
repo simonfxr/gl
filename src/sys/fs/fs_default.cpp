@@ -45,8 +45,8 @@ dirname(const std::string &path)
 
     if (pos == 0)
         return "/";
-    else
-        return path.substr(0, pos);
+
+    return path.substr(0, pos);
 }
 
 std::string
@@ -121,10 +121,10 @@ lookup(const std::vector<std::string> &dirs, const std::string &name)
 {
     std::string suffix = "/" + name;
 
-    for (uint32 i = 0; i < dirs.size(); ++i) {
-        std::string filename = dirs[i] + suffix;
-        FILE *file = fopen(filename.c_str(), "r");
-        if (file != 0) {
+    for (const auto &dir : dirs) {
+        std::string filename = dir + suffix;
+        FILE *file = fopen(filename.c_str(), "re");
+        if (file != nullptr) {
             fclose(file);
             return filename;
         }

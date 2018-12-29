@@ -6,7 +6,7 @@
 
 namespace glt {
 
-Preprocessor::DirectiveHandler::~DirectiveHandler() {}
+Preprocessor::DirectiveHandler::~DirectiveHandler() = default;
 
 void
 Preprocessor::DirectiveHandler::beginProcessing(
@@ -33,17 +33,12 @@ struct Preprocessor::Data
 {
     Preprocessor::DirectiveHandler nullHandler;
     Preprocessor::DirectiveHandler *defaultHandler;
-    bool errorState;
+    bool errorState{ false };
     sys::io::OutStream *out;
     Preprocessor::Handlers handlers;
     std::string sourceName;
 
-    Data()
-      : nullHandler()
-      , defaultHandler(&nullHandler)
-      , errorState(false)
-      , out(&sys::io::stdout())
-    {}
+    Data() : defaultHandler(&nullHandler), out(&sys::io::stdout()) {}
 };
 
 Preprocessor::Preprocessor() : self(new Data) {}
@@ -71,9 +66,7 @@ Preprocessor::process(const char *begin, uint32 size)
     ctx.content.data = begin;
     ctx.content.size = size;
 
-    for (Handlers::const_iterator it = self->handlers.begin();
-         it != self->handlers.end();
-         ++it) {
+    for (auto it = self->handlers.begin(); it != self->handlers.end(); ++it) {
         it->second->beginProcessing(ctx.content);
     }
 
@@ -83,15 +76,16 @@ Preprocessor::process(const char *begin, uint32 size)
     const char *str = begin;
     const char *match;
 
-    while (!wasError() && (match = strchr(str, '#')) < end && match != 0) {
+    while (!wasError() && (match = strchr(str, '#')) < end &&
+           match != nullptr) {
 
         const char *lineBegin = match;
         while (lineBegin > begin && lineBegin[-1] != '\n' &&
-               isspace(lineBegin[-1]))
+               (isspace(lineBegin[-1]) != 0))
             --lineBegin;
 
         const char *eol = strchr(match, '\n');
-        if (eol == 0)
+        if (eol == nullptr)
             eol = end;
 
         str = eol;
@@ -100,11 +94,11 @@ Preprocessor::process(const char *begin, uint32 size)
             continue;
 
         const char *directiveBegin = match + 1;
-        while (directiveBegin < eol && isspace(*directiveBegin))
+        while (directiveBegin < eol && (isspace(*directiveBegin) != 0))
             ++directiveBegin;
 
         const char *directiveEnd = directiveBegin;
-        while (directiveEnd < eol && !isspace(*directiveEnd))
+        while (directiveEnd < eol && (isspace(*directiveEnd) == 0))
             ++directiveEnd;
 
         ctx.lineLength = SIZE(eol - lineBegin);
@@ -114,16 +108,14 @@ Preprocessor::process(const char *begin, uint32 size)
 
         std::string key(directiveBegin, size_t(directiveEnd - directiveBegin));
 
-        Handlers::const_iterator it = self->handlers.find(key);
+        auto it = self->handlers.find(key);
         if (it != self->handlers.end())
             it->second->directiveEncountered(ctx);
         else
             self->defaultHandler->directiveEncountered(ctx);
     }
 
-    for (Handlers::const_iterator it = self->handlers.begin();
-         it != self->handlers.end();
-         ++it) {
+    for (auto it = self->handlers.begin(); it != self->handlers.end(); ++it) {
         it->second->endProcessing(ctx.content);
     }
 
@@ -160,8 +152,8 @@ Preprocessor::DirectiveHandler *
 Preprocessor::installHandler(const std::string &directive,
                              DirectiveHandler &handler)
 {
-    DirectiveHandler *old = 0;
-    Handlers::const_iterator it = self->handlers.find(directive);
+    DirectiveHandler *old = nullptr;
+    auto it = self->handlers.find(directive);
     if (it != self->handlers.end()) {
         old = it->second;
     }

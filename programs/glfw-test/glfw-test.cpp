@@ -3,7 +3,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include <stdio.h>
+#include <cstdio>
 
 static void APIENTRY
 gl_arb_debug_callback(GLenum /* source */,
@@ -22,7 +22,7 @@ int
 main()
 {
 
-    FILE *log = fopen("log.txt", "a");
+    FILE *log = fopen("log.txt", "ae");
     int ret = 0;
 
     fprintf(log, "Program started\n");
@@ -33,7 +33,7 @@ main()
     GLenum glew_err;
 
     /* Initialize the library */
-    if (!glfwInit()) {
+    if (glfwInit() == 0) {
         fprintf(log, "GLFW init failed");
         ret = -1;
         goto err_init;
@@ -45,8 +45,8 @@ main()
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
-    if (!window) {
+    window = glfwCreateWindow(640, 480, "Hello World", nullptr, nullptr);
+    if (window == nullptr) {
         ret = -1;
         goto err_win;
     }
@@ -68,13 +68,13 @@ main()
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
         glDebugMessageCallbackARB(gl_arb_debug_callback, log);
         glDebugMessageControlARB(
-          GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+          GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     }
 
     /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window)) {
+    while (glfwWindowShouldClose(window) == 0) {
         glfwGetFramebufferSize(window, &fb_width, &fb_height);
-        aspect_ratio = fb_width / (float) fb_height;
+        aspect_ratio = fb_width / static_cast<float>(fb_height);
         glViewport(0, 0, fb_width, fb_height);
         glClear(GL_COLOR_BUFFER_BIT);
         glMatrixMode(GL_PROJECTION);
@@ -82,7 +82,7 @@ main()
         glOrtho(-aspect_ratio, aspect_ratio, -1.f, 1.f, 1.f, -1.f);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-        glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
+        glRotatef(static_cast<float>(glfwGetTime()) * 50.f, 0.f, 0.f, 1.f);
         glBegin(GL_TRIANGLES);
         glColor3f(1.f, 0.f, 0.f);
         glVertex3f(-0.6f, -0.4f, 0.f);

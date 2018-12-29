@@ -122,8 +122,8 @@ close(Socket &);
 struct SYS_API HandleStream : public IOStream
 {
     Handle handle;
-    char read_buffer[HANDLE_READ_BUFFER_SIZE];
-    char write_buffer[HANDLE_WRITE_BUFFER_SIZE];
+    char read_buffer[HANDLE_READ_BUFFER_SIZE]{};
+    char write_buffer[HANDLE_WRITE_BUFFER_SIZE]{};
     defs::index read_cursor;
     defs::index write_cursor;
 

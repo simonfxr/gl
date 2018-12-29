@@ -12,7 +12,7 @@
 void *
 file_contents(const char *filename, GLint *length)
 {
-    FILE *f = fopen(filename, "r");
+    FILE *f = fopen(filename, "re");
     void *buffer;
 
     if (!f) {
@@ -33,7 +33,7 @@ file_contents(const char *filename, GLint *length)
 }
 
 static short
-le_short(unsigned char *bytes)
+le_short(const unsigned char *bytes)
 {
     return bytes[0] | ((char) bytes[1] << 8);
 }
@@ -61,7 +61,7 @@ read_tga(const char *filename, int *width, int *height)
     size_t read;
     void *pixels;
 
-    f = fopen(filename, "rb");
+    f = fopen(filename, "rbe");
 
     if (!f) {
         fprintf(stderr, "Unable to open %s for reading\n", filename);

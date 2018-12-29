@@ -20,12 +20,7 @@ struct RenderTarget::Data
     DEBUG_DECL(bool active;)
 
     Data(size w, size h, RenderTargetBuffers bs, const Viewport &vp)
-      : width(w)
-      , height(h)
-      , buffers(bs)
-      , viewport(vp)
-      , clearColor()
-      , viewport_changed(false)
+      : width(w), height(h), buffers(bs), viewport(vp), viewport_changed(false)
     {
         ON_DEBUG(active = false);
     }
@@ -74,7 +69,7 @@ RenderTarget::clearColor() const
 }
 
 void
-RenderTarget::clearColor(glt::color col)
+RenderTarget::clearColor(const glt::color &col)
 {
     self->clearColor = col;
 }
@@ -154,15 +149,15 @@ RenderTarget::doClear(uint32 buffers, color c)
 {
     GLbitfield bits = 0;
 
-    if (buffers & RT_COLOR_BUFFER) {
+    if ((buffers & RT_COLOR_BUFFER) != 0u) {
         const math::vec4_t::gl col4 = c.vec4();
         GL_CALL(glClearBufferfv, GL_COLOR, 0, col4.buffer);
     }
 
-    if (buffers & RT_DEPTH_BUFFER)
+    if ((buffers & RT_DEPTH_BUFFER) != 0u)
         bits |= GL_DEPTH_BUFFER_BIT;
 
-    if (buffers & RT_STENCIL_BUFFER)
+    if ((buffers & RT_STENCIL_BUFFER) != 0u)
         bits |= GL_STENCIL_BUFFER_BIT;
 
     if (bits != 0)

@@ -24,23 +24,22 @@ struct GeometryTransform::Data
     aligned_mat4_t viewMatrix;
     aligned_mat4_t projectionMatrix;
 
-    aligned_mat4_t mvMatrix;
-    aligned_mat4_t mvpMatrix;
-    aligned_mat4_t vpMatrix;
-    aligned_mat3_t normalMatrix;
+    aligned_mat4_t mvMatrix{};
+    aligned_mat4_t mvpMatrix{};
+    aligned_mat4_t vpMatrix{};
+    aligned_mat3_t normalMatrix{};
 
-    uint16 depth;
+    uint16 depth{ 0 };
     uint16 dirty_flags;
 
     aligned_mat4_t inverseProjectionMatrix;
 
-    aligned_mat4_t modelMatrices[GEOMETRY_TRANSFORM_MAX_DEPTH];
-    uint64 mods[GEOMETRY_TRANSFORM_MAX_DEPTH];
+    aligned_mat4_t modelMatrices[GEOMETRY_TRANSFORM_MAX_DEPTH]{};
+    uint64 mods[GEOMETRY_TRANSFORM_MAX_DEPTH]{};
 
     Data()
       : viewMatrix(mat4())
       , projectionMatrix(mat4())
-      , depth(0)
       , dirty_flags(FLAG_ALL)
       , inverseProjectionMatrix(mat4())
     {

@@ -2,7 +2,7 @@
 #include "glt/utils.hpp"
 
 #ifdef SYSTEM_UNIX
-#include <stdlib.h>
+#include <cstdlib>
 #endif
 
 #include <cstring>
@@ -23,7 +23,7 @@ alloc_aligned(defs::size size, defs::size alignment)
     if (UNSIZE(alignment) < sizeof(void *))
         alignment = sizeof(void *);
     if (posix_memalign(&mem, size_t(alignment), size_t(size)) != 0)
-        mem = 0;
+        mem = nullptr;
 #else
     mem = malloc(size);
     if ((uptr(mem) & (alignment - 1)) != 0) {
@@ -130,12 +130,12 @@ MeshBase::initState()
     vertices_capacity = 0;
     vertices_size = 0;
     gpu_vertices_size = 0;
-    vertex_data = 0;
+    vertex_data = nullptr;
     owning_elements = true;
     elements_capacity = 0;
     elements_size = 0;
     gpu_elements_size = 0;
-    element_data = 0;
+    element_data = nullptr;
     draw_type = DrawArrays;
     enabled_attributes.resize(0);
 }
@@ -184,8 +184,8 @@ MeshBase::free()
     vertex_array_name.release();
     freeGPU();
 
-    vertex_data = 0;
-    element_data = 0;
+    vertex_data = nullptr;
+    element_data = nullptr;
     vertices_capacity = 0;
     vertices_size = 0;
     gpu_vertices_size = 0;
@@ -349,7 +349,7 @@ MeshBase::drawElementsInstanced(size num, GLenum primType)
             primType,
             gpu_elements_size,
             GL_UNSIGNED_INT,
-            0,
+            nullptr,
             num);
     disableAttributes();
 }
@@ -361,8 +361,11 @@ MeshBase::drawElements(GLenum primType)
     if (gpu_elements_size == 0)
         return;
     enableAttributes();
-    GL_CALL(
-      glDrawElements, primType, GLsizei(gpu_elements_size), GL_UNSIGNED_INT, 0);
+    GL_CALL(glDrawElements,
+            primType,
+            GLsizei(gpu_elements_size),
+            GL_UNSIGNED_INT,
+            nullptr);
     disableAttributes();
 }
 
@@ -451,7 +454,7 @@ MeshBase::addElement(uint32 index)
 {
 
     if (unlikely(elements_size >= elements_capacity)) {
-        uint32 *elems = new uint32[UNSIZE(elements_capacity * 2)];
+        auto *elems = new uint32[UNSIZE(elements_capacity * 2)];
         memcpy(
           elems, element_data, sizeof elems[0] * UNSIZE(elements_capacity));
         delete[] element_data;
@@ -527,7 +530,7 @@ MeshBase::setElementsSize(size size)
         elements_size = size;
 
     if (capa != elements_capacity) {
-        uint32 *elems = new uint32[UNSIZE(capa)];
+        auto *elems = new uint32[UNSIZE(capa)];
         memcpy(elems, element_data, sizeof elems[0] * UNSIZE(elements_size));
         delete[] element_data;
         element_data = elems;

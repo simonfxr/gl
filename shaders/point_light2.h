@@ -1,5 +1,10 @@
 
 #need "point_light2.frag"
 
-vec4 PointLight(vec3 position, vec3 normal, vec3 lightPos,
-                vec4 intensity_diff, vec4 intensity_spec, float shininess);
+vec4
+PointLight(vec3 position,
+           vec3 normal,
+           vec3 lightPos,
+           vec4 intensity_diff,
+           vec4 intensity_spec,
+           float shininess);

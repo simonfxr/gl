@@ -10,7 +10,7 @@ Module *module;
 void
 moduleInit()
 {
-    if (module == 0)
+    if (module == nullptr)
         module = new Module;
 }
 
@@ -18,7 +18,7 @@ void
 moduleExit()
 {
     delete module;
-    module = 0;
+    module = nullptr;
 }
 
 } // namespace sys

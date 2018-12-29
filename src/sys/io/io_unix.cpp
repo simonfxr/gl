@@ -1,9 +1,9 @@
 #include "err/err.hpp"
 #include "sys/io.hpp"
 
-#include <errno.h>
+#include <cerrno>
+#include <cstring>
 #include <fcntl.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -113,7 +113,7 @@ HandleError
 open(const std::string &path, HandleMode mode, Handle *h)
 {
 
-    if (h == 0) {
+    if (h == nullptr) {
         DEBUG_ERR("handle == 0");
         return HE_INVALID_PARAM;
     }
@@ -127,11 +127,10 @@ open(const std::string &path, HandleMode mode, Handle *h)
 
     if (fd == -1) {
         return convertErrno();
-    } else {
-        h->mode = mode;
-        h->fd = fd;
-        return HE_OK;
     }
+    h->mode = mode;
+    h->fd = fd;
+    return HE_OK;
 }
 
 HandleMode
@@ -151,10 +150,9 @@ elevate(Handle &h, HandleMode mode)
     RETRY_INTR(ret = fcntl(h.fd, F_SETFL, flags));
     if (ret == -1) {
         return convertErrno();
-    } else {
-        h.mode = unconvertMode(flags);
-        return HE_OK;
     }
+    h.mode = unconvertMode(flags);
+    return HE_OK;
 }
 
 HandleError
@@ -167,7 +165,8 @@ read(Handle &h, size &s, char *buf)
     if (k > 0) {
         s = SIZE(k);
         return HE_OK;
-    } else if (k == 0) {
+    }
+    if (k == 0) {
         s = 0;
         return HE_EOF;
     } else {
@@ -187,10 +186,9 @@ write(Handle &h, size &s, const char *buf)
     if (k >= 0) {
         s = SIZE(k);
         return HE_OK;
-    } else {
-        s = 0;
-        return convertErrno();
     }
+    s = 0;
+    return convertErrno();
 }
 
 HandleError
@@ -200,8 +198,8 @@ close(Handle &h)
     RETRY_INTR(ret = ::close(h.fd));
     if (ret == -1)
         return convertErrno();
-    else
-        return HE_OK;
+
+    return HE_OK;
 }
 
 SocketError
@@ -214,7 +212,7 @@ listen(SocketProto proto,
 
     const int BACKLOG = 16;
 
-    if (s == 0) {
+    if (s == nullptr) {
         DEBUG_ERR("socket == 0");
         return SE_INVALID_PARAM;
     }
@@ -245,16 +243,19 @@ listen(SocketProto proto,
     if (ret == -1)
         goto socket_err;
 
-    struct sockaddr_in server;
+    {
+        struct sockaddr_in server
+        {};
+        memset(&server, 0, sizeof server);
+        server.sin_family = AF_INET;
+        server.sin_addr.s_addr = addr.addr4;
+        server.sin_port = hton(port);
 
-    memset(&server, 0, sizeof server);
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = addr.addr4;
-    server.sin_port = hton(port);
-
-    RETRY_INTR(ret = bind(sock, (struct sockaddr *) &server, sizeof server));
-    if (ret == -1)
-        goto socket_err;
+        RETRY_INTR(ret =
+                     bind(sock, (struct sockaddr *) &server, sizeof server));
+        if (ret == -1)
+            goto socket_err;
+    }
 
     if (OPTION(mode, SM_NONBLOCKING)) {
         int flags;
@@ -285,16 +286,18 @@ SocketError
 accept(Socket &s, Handle *h)
 {
 
-    if (h == 0) {
+    if (h == nullptr) {
         DEBUG_ERR("handle == 0");
         return SE_INVALID_PARAM;
     }
 
-    struct sockaddr_in client;
+    struct sockaddr_in client
+    {};
     socklen_t clen = sizeof client;
 
     int c;
-    RETRY_INTR(c = ::accept(s.socket, (struct sockaddr *) &client, &clen));
+    RETRY_INTR(
+      c = accept4(s.socket, (struct sockaddr *) &client, &clen, SOCK_CLOEXEC));
     if (c == -1)
         return convertErrnoSock();
 
@@ -319,8 +322,8 @@ close(Socket &s)
     RETRY_INTR(ret = ::close(s.socket));
     if (ret == -1)
         return convertErrnoSock();
-    else
-        return SE_OK;
+
+    return SE_OK;
 }
 
 } // namespace io

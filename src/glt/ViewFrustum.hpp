@@ -46,7 +46,7 @@ struct GLT_API ViewFrustum
 {
 
     // clip planes in world coordinates, normales point in the volume
-    math::plane3_t planes[VIEW_FRUSTUM_PLANES];
+    math::plane3_t planes[VIEW_FRUSTUM_PLANES]{};
 
     ViewFrustum();
 

@@ -3,7 +3,7 @@
 #include "ge/ge.hpp"
 #include "ge/module.hpp"
 
-#include <assert.h>
+#include <cassert>
 #include <cstring>
 #include <new>
 
@@ -14,7 +14,7 @@ Module *module;
 void
 moduleInit()
 {
-    if (module == 0) {
+    if (module == nullptr) {
         void *mem = new char[sizeof(Module)];
         memset(mem, 0, sizeof(Module));
         module = new (mem) Module;
@@ -24,7 +24,7 @@ moduleInit()
 void
 moduleExit()
 {
-    assert(module != 0);
+    assert(module != nullptr);
     module->~Module();
     delete[] reinterpret_cast<char *>(module);
     module = nullptr;

@@ -11,8 +11,8 @@ using namespace math;
 
 ViewFrustum::ViewFrustum()
 {
-    for (uint32 i = 0; i < 6; ++i)
-        planes[i] = plane();
+    for (auto &i : planes)
+        i = plane();
 }
 
 void
@@ -27,8 +27,8 @@ ViewFrustum::update(const mat4_t &mvp)
     planes[PLANE_NEAR] = normalize(plane(A[3] + A[2]));
     planes[PLANE_FAR] = normalize(plane(A[3] - A[2]));
 
-    for (uint32 i = 0; i < VIEW_FRUSTUM_PLANES; ++i)
-        planes[i].dist *= -1;
+    for (auto &plane : planes)
+        plane.dist *= -1;
 }
 
 Outcode

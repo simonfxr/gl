@@ -43,26 +43,26 @@ private:
     GLBufferObject element_buffer_name;
     GLBufferObject vertex_buffer_name;
 
-    GLenum usage_hint;
-    GLenum prim_type;
+    GLenum usage_hint{};
+    GLenum prim_type{};
 
-    bool owning_vertices;
-    size vertices_capacity;
-    size vertices_size;
-    size gpu_vertices_size;
-    uint8 *RESTRICT vertex_data;
+    bool owning_vertices{};
+    size vertices_capacity{};
+    size vertices_size{};
+    size gpu_vertices_size{};
+    uint8 *RESTRICT vertex_data{};
 
-    bool owning_elements;
-    size elements_capacity;
-    size elements_size;
-    size gpu_elements_size;
-    uint32 *RESTRICT element_data;
+    bool owning_elements{};
+    size elements_capacity{};
+    size elements_size{};
+    size gpu_elements_size{};
+    uint32 *RESTRICT element_data{};
 
     DrawType draw_type;
 
     BitSet enabled_attributes;
 
-    const GenVertexDescription *desc;
+    const GenVertexDescription *desc{};
 
 protected:
     byte *vertexRef(defs::index i);
@@ -115,7 +115,7 @@ public:
     {
         drawElementsInstanced(instances, prim_type);
     }
-    void drawElementsInstanced(size instances, GLenum type);
+    void drawElementsInstanced(size num, GLenum type);
 
     void drawArrays() { drawArrays(prim_type); }
     void drawArrays(GLenum primType);
@@ -127,7 +127,7 @@ public:
     void draw(GLenum primType);
 
     void drawInstanced(size num) { drawInstanced(num, prim_type); }
-    void drawInstanced(size num, GLenum prim_type);
+    void drawInstanced(size num, GLenum primType);
 
     void addElement(uint32 index);
     uint32 element(defs::index index) const { return element_data[index]; }

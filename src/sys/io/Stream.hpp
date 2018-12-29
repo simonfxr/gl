@@ -100,7 +100,7 @@ protected:
     union
     {
         StreamFlags _flags_store;
-        void *__pad;
+        void *__pad{};
     };
 };
 
@@ -140,7 +140,7 @@ protected:
     union
     {
         StreamFlags _flags;
-        void *__pad;
+        void *__pad{};
     };
 };
 
@@ -209,7 +209,7 @@ struct SYS_API CooperativeInStream : public InStream
     Fiber *io_handler; // switched to on blocking reads
     Fiber *stream_user;
 
-    CooperativeInStream(InStream *in, Fiber *io_handler, Fiber *stream_user);
+    CooperativeInStream(InStream *in, Fiber *ioh, Fiber *su);
 
 protected:
     virtual StreamResult basic_close_in(bool flush_only) final override;
