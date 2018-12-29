@@ -53,16 +53,16 @@ DEFINE_VERTEX(VERTEX);
 
 struct MCState
 {
-    vec3_t cube_origin; // lower left corner on backside
-    vec3_t cube_dim;
+    vec3_t cube_origin{}; // lower left corner on backside
+    vec3_t cube_dim{};
 
-    bool init;
+    bool init{};
 
-    int32 count[8];
-    int32 num_tris;
+    int32 count[8]{};
+    int32 num_tris{};
 
-    GLuint vao;
-    GLuint vbo;
+    GLuint vao{};
+    GLuint vbo{};
     cl::BufferGL vbo_buf;
 
     cl::Image3D volume;
@@ -79,12 +79,12 @@ struct MCState
 struct Anim
 {
     ge::Engine engine;
-    real time_print_fps;
+    real time_print_fps{};
 
     ge::Camera camera;
     ge::MouseLookPlugin mouse_look;
 
-    size N;
+    size N{};
     cl::Context cl_ctx;
     cl::CommandQueue cl_q;
     cl::Device cl_device;
@@ -95,31 +95,33 @@ struct Anim
     cl::Kernel kernel_computeHistogramLevel;
     cl::Kernel kernel_histogramTraversal;
 
-    size mdl_num_tris;
-    char *mdl_base;
-    char *mdl_data;
+    size mdl_num_tris{};
+    char *mdl_base{};
+    char *mdl_data{};
 
     MCState mc[NUM_MC];
 
-    double sum_tris;
-    double max_tris;
-    uint32 num_renders;
+    double sum_tris{};
+    double max_tris{};
+    uint32 num_renders{};
 
-    void init(const ge::Event<ge::InitEvent> &);
-    void initCL(const ge::Event<ge::InitEvent> &);
+    void init(const ge::Event<ge::InitEvent> & /*ev*/);
+    void initCL(const ge::Event<ge::InitEvent> & /*ev*/);
     void initCLKernels(bool *success);
-    void initMC(MCState &st, vec3_t orig, vec3_t dim, bool *success);
+    void initMC(MCState &mc, vec3_t orig, vec3_t dim, bool *success);
 
-    void computeVolumeData(MCState &st, real time);
-    void computeHistogram(MCState &st);
-    void constructVertices0(MCState &st);
-    void constructVertices1(MCState &st);
+    void computeVolumeData(MCState &mc, real time);
+    void computeHistogram(MCState &mc);
+    void constructVertices0(MCState &mc);
+    void constructVertices1(MCState &mc);
 
-    void renderMC(MCState &st, glt::ShaderProgram &, vec3_t ecLight);
+    void renderMC(MCState &mc,
+                  glt::ShaderProgram & /*program*/,
+                  vec3_t ecLight);
 
     void link(ge::Engine &e);
-    void animate(const ge::Event<ge::AnimationEvent> &);
-    void renderScene(const ge::Event<ge::RenderEvent> &);
+    void animate(const ge::Event<ge::AnimationEvent> & /*unused*/);
+    void renderScene(const ge::Event<ge::RenderEvent> & /*ev*/);
 
     void handleWindowResized(const ge::Event<ge::WindowResized> &ev);
 };
@@ -141,7 +143,10 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 }
 
 static void CL_CALLBACK
-print_cl_error(const char *msg, const void *, size_t, void *)
+print_cl_error(const char *msg,
+               const void * /*unused*/,
+               size_t /*unused*/,
+               void * /*unused*/)
 {
     sys::io::stdout() << msg << sys::io::endl;
 }
@@ -171,7 +176,7 @@ createCLGLContext(cl::Platform &platform, cl_int *err)
         0
     };
 
-    return cl::Context(CL_DEVICE_TYPE_GPU, props, print_cl_error, NULL, err);
+    return cl::Context(CL_DEVICE_TYPE_GPU, props, print_cl_error, nullptr, err);
 }
 
 template<typename T>
@@ -204,7 +209,7 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
 
     engine.out() << "found " << platforms.size() << " CL platforms"
                  << sys::io::endl;
-    if (platforms.size() < 1)
+    if (platforms.empty())
         return;
     platforms.resize(1);
 
@@ -241,7 +246,7 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     engine.out() << "created CL context" << sys::io::endl;
 
     std::vector<cl::Device> devices = cl_ctx.getInfo<CL_CONTEXT_DEVICES>();
-    if (devices.size() < 1)
+    if (devices.empty())
         return;
     devices.resize(1);
     engine.out() << "selecting CL device:" << sys::io::endl;
@@ -359,7 +364,7 @@ Anim::initCLKernels(bool *success)
 void
 Anim::initMC(MCState &mc, vec3_t orig, vec3_t dim, bool *success)
 {
-#define IS_POWER_OF_2(x) (((x - 1) & x) == 0)
+#define IS_POWER_OF_2(x) ((((x) -1) & (x)) == 0)
     int cl_err;
 
     ASSERT_MSG(IS_POWER_OF_2(N), "N has to be a power of 2!");
@@ -382,22 +387,22 @@ Anim::initMC(MCState &mc, vec3_t orig, vec3_t dim, bool *success)
                             N + 2,
                             0,
                             0,
-                            0,
+                            nullptr,
                             &cl_err);
     CL_ERR("creating volume 3d image failed");
 
     mc.images.clear();
 
-    mc.images.push_back(cl::Image3D(cl_ctx,
-                                    CL_MEM_READ_WRITE,
-                                    cl::ImageFormat(CL_RG, CL_UNSIGNED_INT8),
-                                    N,
-                                    N,
-                                    N,
-                                    0,
-                                    0,
-                                    0,
-                                    &cl_err));
+    mc.images.emplace_back(cl_ctx,
+                           CL_MEM_READ_WRITE,
+                           cl::ImageFormat(CL_RG, CL_UNSIGNED_INT8),
+                           N,
+                           N,
+                           N,
+                           0,
+                           0,
+                           nullptr,
+                           &cl_err);
     CL_ERR("creating histogram base level failed");
 
     size sz = N / 2;
@@ -415,16 +420,16 @@ Anim::initMC(MCState &mc, vec3_t orig, vec3_t dim, bool *success)
             type = CL_UNSIGNED_INT16;
         else
             type = CL_UNSIGNED_INT8;
-        mc.images.push_back(cl::Image3D(cl_ctx,
-                                        CL_MEM_READ_WRITE,
-                                        cl::ImageFormat(CL_R, type),
-                                        sz,
-                                        sz,
-                                        sz,
-                                        0,
-                                        0,
-                                        0,
-                                        &cl_err));
+        mc.images.emplace_back(cl_ctx,
+                               CL_MEM_READ_WRITE,
+                               cl::ImageFormat(CL_R, type),
+                               sz,
+                               sz,
+                               sz,
+                               0,
+                               0,
+                               nullptr,
+                               &cl_err);
         CL_ERR("creating histogram level failed");
         sz /= 2;
     }
@@ -442,8 +447,8 @@ Anim::computeVolumeData(MCState &mc, real time)
     M *= glt::scaleTransform(mc.cube_dim);
     M *= glt::scaleTransform(real(1) / real(N - 2));
 
-#define fract(x) (x - math::floor(x))
-#define tri(t) math::abs(2 * fract(t / (2 * math::PI)) - 1)
+#define fract(x) ((x) -math::floor(x))
+#define tri(t) math::abs(2 * fract((t) / (2 * math::PI)) - 1)
 
     time *= real(0.5);
     const vec4_t C = vec4(-1 * tri(math::cos(time) * 0.1),
@@ -504,7 +509,7 @@ Anim::computeHistogram(MCState &mc)
                           0,
                           0,
                           mc.count,
-                          0,
+                          nullptr,
                           &mc.readHistoJob);
 }
 
@@ -516,8 +521,8 @@ Anim::constructVertices0(MCState &mc)
     mc.readHistoJob.wait();
 
     mc.num_tris = 0;
-    for (defs::index i = 0; i < 8; ++i)
-        mc.num_tris += mc.count[i];
+    for (int i : mc.count)
+        mc.num_tris += i;
 
     if (mc.num_tris == 0)
         return;
@@ -529,7 +534,7 @@ Anim::constructVertices0(MCState &mc)
     GL_CALL(glBufferData,
             GL_ARRAY_BUFFER,
             mc.num_tris * 3 * 2 * sizeof(vec3_t),
-            0,
+            nullptr,
             GL_STREAM_DRAW);
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
@@ -557,7 +562,7 @@ Anim::constructVertices1(MCState &mc)
                               cl::NullRange,
                               cl::NDRange(global_work_size),
                               cl::NDRange(64),
-                              0);
+                              nullptr);
 }
 
 void
@@ -622,7 +627,7 @@ Anim::link(ge::Engine &e)
 }
 
 void
-Anim::animate(const ge::Event<ge::AnimationEvent> &)
+Anim::animate(const ge::Event<ge::AnimationEvent> & /*unused*/)
 {
     // empty
 }
@@ -637,7 +642,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
     rm.activeRenderTarget()->clear();
     glt::GeometryTransform &gt = rm.geometryTransform();
 
-    Ref<glt::ShaderProgram> program = engine.shaderManager().program("render");
+    auto program = engine.shaderManager().program("render");
     ASSERT(program);
 
     program->use();
@@ -646,27 +651,27 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
     point3_t ecLight = vec3(transform(gt.viewMatrix(), vec4(wcLight, real(1))));
 
 #define TIME(...) __VA_ARGS__
-    TIME(for (int i = 0; i < NUM_MC; ++i) computeVolumeData(mc[i], time));
-    TIME(for (int i = 0; i < NUM_MC; ++i) computeHistogram(mc[i]));
-    TIME(for (int i = 0; i < NUM_MC; ++i) constructVertices0(mc[i]));
+    TIME(for (auto &i : mc) computeVolumeData(i, time));
+    TIME(for (auto &i : mc) computeHistogram(i));
+    TIME(for (auto &i : mc) constructVertices0(i));
 
     std::vector<cl::Memory> gl_objs;
-    for (int i = 0; i < NUM_MC; ++i)
-        if (mc[i].num_tris > 0 && mc[i].init)
-            gl_objs.push_back(mc[i].vbo_buf);
+    for (auto &i : mc)
+        if (i.num_tris > 0 && i.init)
+            gl_objs.push_back(i.vbo_buf);
 
     cl_q.enqueueAcquireGLObjects(&gl_objs);
-    for (int i = 0; i < NUM_MC; ++i)
-        constructVertices1(mc[i]);
+    for (auto &i : mc)
+        constructVertices1(i);
 
     cl_q.enqueueReleaseGLObjects(&gl_objs);
     cl_q.finish();
 
-    TIME(for (int i = 0; i < NUM_MC; ++i) renderMC(mc[i], *program, ecLight));
+    TIME(for (auto &i : mc) renderMC(i, *program, ecLight));
 
     double ntris = 0;
-    for (int i = 0; i < NUM_MC; ++i)
-        ntris += mc[i].num_tris;
+    for (auto &i : mc)
+        ntris += i.num_tris;
 
     if (ntris > max_tris)
         max_tris = ntris;
@@ -699,7 +704,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 }
 
 void
-Anim::handleWindowResized(const ge::Event<ge::WindowResized> &)
+Anim::handleWindowResized(const ge::Event<ge::WindowResized> & /*unused*/)
 {
     // empty
 }

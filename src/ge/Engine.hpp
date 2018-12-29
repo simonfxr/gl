@@ -1,8 +1,6 @@
 #ifndef GE_ENGINE_HPP
 #define GE_ENGINE_HPP
 
-#include "data/Ref.hpp"
-
 #include "ge/conf.hpp"
 
 #include "ge/CommandProcessor.hpp"
@@ -15,13 +13,13 @@
 #include "ge/KeyHandler.hpp"
 #include "ge/Plugin.hpp"
 #include "ge/ReplServer.hpp"
-
 #include "glt/RenderManager.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/ShaderProgram.hpp"
 #include "glt/Uniforms.hpp"
-
 #include "sys/io/Stream.hpp"
+
+#include <memory>
 
 namespace ge {
 
@@ -49,7 +47,8 @@ struct GE_API Engine
 
     math::real now();
 
-    void addInit(RunLevel lvl, const Ref<EventHandler<InitEvent>> &comm);
+    void addInit(RunLevel lvl,
+                 const std::shared_ptr<EventHandler<InitEvent>> &comm);
 
     defs::int32 run(const EngineOptions &opts = EngineOptions());
 

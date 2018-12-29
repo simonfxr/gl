@@ -9,9 +9,12 @@
 #include "data/Array.hpp"
 
 #include <functional>
+#include <memory>
 #include <string>
 
 namespace ge {
+
+using CommandPtr = std::shared_ptr<Command>;
 
 extern GE_API const Array<CommandArg> NULL_ARGS;
 
@@ -33,8 +36,8 @@ private:
 
 public:
     Command(const Array<CommandParamType> &ps,
-            const std::string name,
-            const std::string &desc);
+            const std::string &name,
+            std::string desc);
     virtual ~Command() {}
     const Array<CommandParamType> &parameters() const { return params; }
     std::string name() const;
@@ -69,7 +72,7 @@ private:
 
 typedef void (*CommandHandler)(const Event<CommandEvent> &);
 
-GE_API Ref<Command>
+GE_API CommandPtr
 makeCommand(CommandHandler handler,
             const std::string &name,
             const std::string &desc);
@@ -77,12 +80,12 @@ makeCommand(CommandHandler handler,
 typedef void (*ListCommandHandler)(const Event<CommandEvent> &,
                                    const Array<CommandArg> &);
 
-GE_API Ref<Command>
+GE_API CommandPtr
 makeListCommand(ListCommandHandler handler,
                 const std::string &name,
                 const std::string &desc);
 
-GE_API Ref<Command>
+GE_API CommandPtr
 makeCommand(ListCommandHandler handler,
             const Array<CommandParamType> &params,
             const std::string &name,
@@ -97,14 +100,14 @@ struct StateCommandHandler
 };
 
 template<typename S>
-Ref<Command>
+CommandPtr
 makeCommand(typename StateCommandHandler<S>::type handler,
             S state,
             const Array<CommandParamType> &params,
             const std::string &name,
             const std::string &desc);
 
-GE_API Ref<Command>
+GE_API CommandPtr
 makeStringListCommand(ListCommandHandler handler,
                       const std::string &name,
                       const std::string &desc);
@@ -129,15 +132,14 @@ struct StateHandler : public Command
 };
 
 template<typename S>
-Ref<Command>
+CommandPtr
 makeCommand(typename StateCommandHandler<S>::type handler,
             S state,
             const Array<CommandParamType> &params,
             const std::string &name,
             const std::string &desc)
 {
-    return Ref<Command>(
-      new StateHandler<S>(handler, state, params, name, desc));
+    return CommandPtr(new StateHandler<S>(handler, state, params, name, desc));
 }
 
 template<typename T, typename M>
@@ -163,7 +165,7 @@ public:
 };
 
 template<typename T>
-Ref<Command>
+CommandPtr
 makeCommand(T *o,
             void (T::*m)(const Event<CommandEvent> &,
                          const Array<CommandArg> &),
@@ -171,7 +173,7 @@ makeCommand(T *o,
             const std::string &name,
             const std::string &desc = "")
 {
-    return Ref<Command>(
+    return CommandPtr(
       new MemberFunCommand<T,
                            void (T::*)(const Event<CommandEvent> &,
                                        const Array<CommandArg> &)>(
@@ -200,17 +202,17 @@ struct FunctionCommand : public Command
 };
 
 template<typename F>
-Ref<Command>
+CommandPtr
 makeCommand(F &&f,
             const Array<CommandParamType> &params,
             const std::string &nm,
             const std::string &desc)
 {
-    return Ref<Command>(new FunctionCommand<F>(std::move(f), params, nm, desc));
+    return CommandPtr(new FunctionCommand<F>(std::move(f), params, nm, desc));
 }
 
 template<typename F>
-Ref<Command>
+CommandPtr
 makeNumCommand(F &&f, const std::string &nm, const std::string &desc)
 {
     return makeCommand(

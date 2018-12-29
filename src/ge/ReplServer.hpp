@@ -28,7 +28,7 @@ struct GE_API ReplServer
 
     void shutdown();
 
-    Ref<EventHandler<InputEvent>> &ioHandler();
+    std::shared_ptr<EventHandler<InputEvent>> &ioHandler();
 
 private:
     struct Data;

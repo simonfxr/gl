@@ -4,8 +4,6 @@
 #include "ge/Command.hpp"
 #include "ge/CommandArgs.hpp"
 
-#include "data/Ref.hpp"
-
 #include "sys/io/Stream.hpp"
 
 #include <map>
@@ -17,7 +15,7 @@ using namespace defs;
 
 struct Engine;
 
-typedef std::map<std::string, Ref<Command>> CommandMap;
+typedef std::map<std::string, CommandPtr> CommandMap;
 
 struct GE_API CommandProcessor
 {
@@ -35,19 +33,19 @@ public:
 
     Engine &engine() { return _engine; }
 
-    Ref<Command> command(const std::string comname);
+    CommandPtr command(const std::string &comname);
 
-    bool define(const Ref<Command> &comm, bool unique = false);
+    bool define(const CommandPtr &comm, bool unique = false);
 
-    bool define(const std::string comname,
-                const Ref<Command> &comm,
+    bool define(const std::string &comname,
+                const CommandPtr &comm,
                 bool unique = false);
 
     bool exec(const std::string &comname, Array<CommandArg> &args);
 
-    bool exec(Ref<Command> &com,
+    bool exec(CommandPtr &com,
               Array<CommandArg> &args,
-              const std::string &com_name = "");
+              const std::string &comname = "");
 
     bool exec(Array<CommandArg> &args);
 
@@ -55,9 +53,9 @@ public:
 
     bool execCommand(Array<CommandArg> &args);
 
-    bool loadStream(sys::io::InStream &inp, const std::string &input_name);
+    bool loadStream(sys::io::InStream &inp, const std::string &inp_name);
 
-    bool loadScript(const std::string &file, bool quiet = false);
+    bool loadScript(const std::string &name, bool quiet = false);
 
     bool evalCommand(const std::string &cmd);
 

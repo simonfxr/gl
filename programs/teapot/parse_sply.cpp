@@ -30,7 +30,7 @@ parse_sply(const char *filename, CubeMesh &model)
     if (fscanf(data, "%u\n%u\n", &nverts, &nfaces) != 2)
         return -1;
 
-    while (fgets(line, sizeof line, data) != 0 && verts.size() < nverts) {
+    while (fgets(line, sizeof line, data) != nullptr && verts.size() < nverts) {
         point3_t p;
         direction3_t n;
         int nparsed = sscanf(line,
@@ -48,7 +48,7 @@ parse_sply(const char *filename, CubeMesh &model)
             return -1;
         }
 
-        Vertex v;
+        Vertex v{};
         v.position = p;
         v.normal = normalize(n);
         verts.push_back(v);
@@ -61,10 +61,10 @@ parse_sply(const char *filename, CubeMesh &model)
 
     uint32 faces = 0;
 
-    for (uint32 i = 0; i < verts.size(); ++i)
-        model.addVertex(verts[i]);
+    for (const auto &vert : verts)
+        model.addVertex(vert);
 
-    while (fgets(line, sizeof line, data) != 0 && faces < nfaces) {
+    while (fgets(line, sizeof line, data) != nullptr && faces < nfaces) {
         uint32 n, i, j, k, l;
         int nparsed = sscanf(line, "%u %u %u %u %u", &n, &i, &j, &k, &l);
 

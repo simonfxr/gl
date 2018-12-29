@@ -17,7 +17,7 @@ struct GLT_API TextureRenderTarget : public RenderTarget
     GLFramebufferObject _frame_buffer;
     GLRenderbufferObject _depth_buffer;
     size _samples;
-    GLenum _color_format;
+    GLenum _color_format{};
     TextureSampler::FilterMode _filter_mode;
     TextureSampler::ClampMode _clamp_mode;
 

@@ -36,12 +36,12 @@ struct Engine::Data : public GameLoop::Game
     Modules __modules;
 
     Engine &theEngine; // owning engine
-    GameWindow *window;
+    GameWindow *window{};
     GameLoop gameLoop;
     CommandProcessor commandProcessor;
     KeyHandler keyHandler;
     ReplServer replServer;
-    bool skipRender;
+    bool skipRender{};
     std::string programName;
 
     sys::io::OutStream *out;
@@ -54,7 +54,7 @@ struct Engine::Data : public GameLoop::Game
 
     EngineEvents events;
 
-    Data(Engine &engine)
+    explicit Data(Engine &engine)
       : theEngine(engine)
       , gameLoop(60, 5, 120)
       , commandProcessor(engine)
@@ -62,19 +62,19 @@ struct Engine::Data : public GameLoop::Game
       , replServer(engine)
       , out(&sys::io::stdout())
       , initialized(false)
-      , opts(0)
+      , opts(nullptr)
     {}
 
-    ~Data() {}
+    ~Data() override = default;
 
     bool init(const EngineOptions &opts);
 
-    virtual void tick() final override;
-    virtual void render(double interpolation) final override;
-    virtual void handleInputEvents() final override;
-    virtual GameLoop::time now() final override;
-    virtual void sleep(GameLoop::time secs) final override;
-    virtual void atExit(int32 exit_code) final override;
+    void tick() final;
+    void render(double interpolation) final;
+    void handleInputEvents() final;
+    GameLoop::time now() final;
+    void sleep(GameLoop::time secs) final;
+    void atExit(int32 exit_code) final;
 
     void registerHandlers();
     bool execCommand(std::vector<CommandArg> &args);
@@ -103,7 +103,8 @@ Engine::~Engine()
 GameWindow &
 Engine::window()
 {
-    ASSERT_MSG(SELF->window != 0, "window not available, too early init phase");
+    ASSERT_MSG(SELF->window != nullptr,
+               "window not available, too early init phase");
     return *SELF->window;
 }
 
@@ -210,16 +211,16 @@ Engine::run(const EngineOptions &opts)
         }
     }
 
-    for (uint32 i = 0; i < opts.scriptDirs.size(); ++i) {
-        if (!commandProcessor().addScriptDirectory(opts.scriptDirs[i])) {
-            ERR("script directory not found: " + opts.scriptDirs[i]);
+    for (const auto &scriptDir : opts.scriptDirs) {
+        if (!commandProcessor().addScriptDirectory(scriptDir)) {
+            ERR("script directory not found: " + scriptDir);
             //            return 1;
         }
     }
 
-    for (uint32 i = 0; i < opts.shaderDirs.size(); ++i) {
-        if (!shaderManager().addShaderDirectory(opts.shaderDirs[i])) {
-            ERR("shader directory not found: " + opts.shaderDirs[i]);
+    for (const auto &shaderDir : opts.shaderDirs) {
+        if (!shaderManager().addShaderDirectory(shaderDir)) {
+            ERR("shader directory not found: " + shaderDir);
             //            return 1;
         }
     }
@@ -244,21 +245,21 @@ Engine::run(const EngineOptions &opts)
             return 1;
     }
 
-    for (uint32 i = 0; i < opts.commands.size(); ++i) {
+    for (const auto &i : opts.commands) {
         bool ok;
         std::string command;
-        if (opts.commands[i].first == EngineOptions::Script) {
-            ok = commandProcessor().loadScript(opts.commands[i].second);
+        if (i.first == EngineOptions::Script) {
+            ok = commandProcessor().loadScript(i.second);
             if (!ok)
                 command = "script";
         } else {
-            ok = commandProcessor().evalCommand(opts.commands[i].second);
+            ok = commandProcessor().evalCommand(i.second);
             if (!ok)
                 command = "command";
         }
 
         if (!ok) {
-            ERR(command + " failed: " + opts.commands[i].second);
+            ERR(command + " failed: " + i.second);
             return 1;
         }
     }
@@ -274,7 +275,7 @@ Engine::run(const EngineOptions &opts)
     opts.inits.init.clear();
     opts.inits.postInit.clear();
 
-    self->opts = 0;
+    self->opts = nullptr;
 
     return self->gameLoop.run(*self);
 }
@@ -335,10 +336,11 @@ Engine::Data::init(const EngineOptions &opts)
 }
 
 void
-Engine::addInit(RunLevel lvl, const Ref<EventHandler<InitEvent>> &comm)
+Engine::addInit(RunLevel lvl,
+                const std::shared_ptr<EventHandler<InitEvent>> &comm)
 {
 
-    if (SELF->opts == 0) {
+    if (SELF->opts == nullptr) {
         ERR("cannot register init handler, already initialized");
         return;
     }
@@ -351,9 +353,9 @@ namespace {
 bool
 runInit(EventSource<InitEvent> &source, const Event<InitEvent> &e)
 {
-    for (uint32 i = 0; i < source.handlers.size(); ++i) {
+    for (auto &handler : source.handlers) {
         e.info.success = false;
-        source.handlers[i]->handle(e);
+        handler->handle(e);
         if (!e.info.success) {
             ERR("initialization failed: an initializer failed");
             return false;
@@ -365,7 +367,7 @@ runInit(EventSource<InitEvent> &source, const Event<InitEvent> &e)
 namespace handlers {
 
 void
-sigExit(Engine *engine, const Event<WindowEvent> &)
+sigExit(Engine *engine, const Event<WindowEvent> & /*unused*/)
 {
     engine->gameLoop().exit(0);
 }
@@ -390,7 +392,7 @@ mouseButtonChanged(KeyHandler *handler, const Event<MouseButton> &ev)
 }
 
 void
-handleKeyBindings(KeyHandler *handler, const Event<InputEvent> &)
+handleKeyBindings(KeyHandler *handler, const Event<InputEvent> & /*unused*/)
 {
     handler->handleCommands();
 }

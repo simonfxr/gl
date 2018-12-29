@@ -40,7 +40,7 @@ struct GLT_API GLSLPreprocessor : public Preprocessor
     std::vector<const char *> segments;
     std::vector<char *> contents;
 
-    ProcessingState *state;
+    ProcessingState *state{};
 
     IncludeHandler includeHandler;
     DependencyHandler dependencyHandler;

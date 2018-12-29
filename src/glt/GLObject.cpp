@@ -39,7 +39,7 @@ del_shaders(GLsizei n, const GLuint *names)
         glDeleteShader(names[i]);
 }
 
-size instance_count[ObjectType::Count] = { 0 };
+size instance_count[ObjectType::Count] = {};
 
 struct ObjectKind
 {

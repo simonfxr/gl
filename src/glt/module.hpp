@@ -1,9 +1,10 @@
 #ifndef GLT_MODULE_HPP
 #define GLT_MODULE_HPP
 
-#include "data/Ref.hpp"
 #include "glt/GLDebug.hpp"
 #include "glt/utils.hpp"
+
+#include <memory>
 
 #ifdef DEFINE_GLT_MODULE
 #define GLT_MODULE_ACCESS
@@ -15,7 +16,7 @@ namespace glt {
 
 struct Utils
 {
-    Ref<GLDebug> gl_debug;
+    std::shared_ptr<GLDebug> gl_debug;
 
     bool print_opengl_calls = false;
 
@@ -24,7 +25,7 @@ struct Utils
 
     bool ati_mem_info_initialized = false;
     bool ati_mem_info_available = false;
-    GLMemInfoATI::GLMemFree initial_free;
+    GLMemInfoATI::GLMemFree initial_free{};
 
     Utils();
 };

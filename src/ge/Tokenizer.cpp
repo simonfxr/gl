@@ -1,8 +1,8 @@
 #include "ge/Tokenizer.hpp"
 #include "ge/Command.hpp"
 
+#include <cctype>
 #include <cmath>
-#include <ctype.h>
 
 #include "math/real.hpp"
 
@@ -58,11 +58,10 @@ getchAny(ParseState &s)
     if (s.c == '\n' || s.c == '\r') {
         if (lastC == '\r' && s.c == '\n') {
             return getchAny(s);
-        } else {
-            ++s.line;
-            s.col = 0;
-            s.c = s.rawC = '\n';
         }
+        ++s.line;
+        s.col = 0;
+        s.c = s.rawC = '\n';
     }
 
     ++s.col;
@@ -145,7 +144,7 @@ parseKeycombo(ParseState &s, CommandArg &tok)
     getch(s);
     while (s.c != 0 && s.c != ']') {
         skipSpace(s);
-        Key k;
+        Key k{};
         if (s.c == '!')
             k.state = keystate::Up;
         else if (s.c == '+')
@@ -190,7 +189,7 @@ parseKeycombo(ParseState &s, CommandArg &tok)
         return Fail;
     }
 
-    KeyBinding *bind = new KeyBinding(SIZE(keys.size()));
+    auto *bind = new KeyBinding(SIZE(keys.size()));
     tok.keyBinding = bind;
     tok.type = KeyCombo;
 
@@ -271,15 +270,15 @@ parseCommandRef(ParseState &s, CommandArg &arg)
         std::string sym = parseSym(s);
         if (sym.empty())
             goto fail;
-        //         Ref<Command> comref = s.proc.command(sym);
+        //         CommandPtr comref = s.proc.command(sym);
         //         if (!comref) {
         // //            WARN(("unknown command name: " + sym));
         //         }
 
         arg.type = CommandRef;
-        arg.command.ref = new Ref<Command>();
+        arg.command.ref = new CommandPtr();
         arg.command.name = new std::string(sym);
-        arg.command.quotation = 0;
+        arg.command.quotation = nullptr;
 
         return EndToken;
     }
@@ -315,7 +314,7 @@ statement(ParseState &s, std::vector<CommandArg> &toks, bool quot);
 State
 parseQuot(ParseState &s, CommandArg &arg)
 {
-    Quotation *q = new Quotation;
+    auto *q = new Quotation;
 
     int line = s.line;
     int col = s.col;
@@ -326,7 +325,7 @@ parseQuot(ParseState &s, CommandArg &arg)
         std::vector<CommandArg> &toks = (*q)[q->size() - 1];
         State st = statement(s, toks, true);
 
-        if (st == Fail || toks.size() == 0)
+        if (st == Fail || toks.empty())
             q->pop_back();
 
         if (st == Fail)
@@ -349,7 +348,7 @@ parseQuot(ParseState &s, CommandArg &arg)
     buf << "<quotation: " << s.filename << "@" << line << ":" << col << ">";
     arg.command.name = new std::string(buf.str());
     arg.command.ref =
-      new Ref<Command>(new QuotationCommand(s.filename, line, col, "", q));
+      new CommandPtr(new QuotationCommand(s.filename, line, col, "", q));
     arg.command.quotation = q;
 
     return EndToken;
@@ -499,7 +498,7 @@ statement(ParseState &s, std::vector<CommandArg> &toks, bool quot)
 
         if (s.c == ';' || s.c == 0)
             break;
-        CommandArg tok;
+        CommandArg tok{};
         st = token(s, tok, first);
         if (st != Fail)
             toks.push_back(tok);

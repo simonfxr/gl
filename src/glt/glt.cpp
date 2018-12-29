@@ -3,7 +3,7 @@
 #include "glt/glt.hpp"
 #include "glt/module.hpp"
 
-#include <assert.h>
+#include <cassert>
 
 namespace glt {
 
@@ -12,16 +12,16 @@ Module *module;
 void
 moduleInit()
 {
-    if (module == 0)
+    if (module == nullptr)
         module = new Module;
 }
 
 void
 moduleExit()
 {
-    assert(module != 0);
+    assert(module != nullptr);
     delete module;
-    module = 0;
+    module = nullptr;
 }
 
 } // namespace glt

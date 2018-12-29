@@ -3,16 +3,16 @@
 
 #include <cstring>
 #include <map>
+#include <utility>
 
 namespace ge {
 
 struct State
 {
-    bool down;
-    uint32 timestamp;
+    bool down{ false };
+    uint32 timestamp{ 0xFFFFFFFFul };
 
-    State() : down(false), timestamp(0xFFFFFFFFul) {}
-
+    State() = default;
     State(bool dn, uint32 t) : down(dn), timestamp(t) {}
 
     bool operator==(const State &ks) const { return timestamp == ks.timestamp; }
@@ -22,9 +22,11 @@ struct State
 
 struct Binding
 {
-    Ref<KeyBinding> binding;
+    std::shared_ptr<KeyBinding> binding;
 
-    Binding(const Ref<KeyBinding> &bind) : binding(bind) {}
+    explicit Binding(std::shared_ptr<KeyBinding> bind)
+      : binding(std::move(bind))
+    {}
 
     bool operator<(const Binding &other) const
     {
@@ -39,25 +41,25 @@ struct Binding
     bool operator!=(const Binding &other) const { return !(*this == other); }
 };
 
-typedef std::map<Binding, Ref<Command>> CommandBindings;
+typedef std::map<Binding, CommandPtr> CommandBindings;
 
 struct KeyHandler::Data
 {
     CommandProcessor &processor;
-    uint32 frame_id;
+    uint32 frame_id{ 1 };
     CommandBindings bindings;
     State states[keycode::Count];
     EventSource<KeyPressed> keyPressedEvent;
 
-    Data(CommandProcessor &proc);
+    explicit Data(CommandProcessor &proc);
 };
 
-#define NULL_COMMAND Ref<Command>()
+#define NULL_COMMAND CommandPtr()
 
-KeyHandler::Data::Data(CommandProcessor &proc) : processor(proc), frame_id(1)
+KeyHandler::Data::Data(CommandProcessor &proc) : processor(proc)
 {
-    for (uint32 i = 0; i < ARRAY_LENGTH(states); ++i)
-        states[i] = State();
+    for (auto &state : states)
+        state = State();
 }
 
 #define CHECK_KEYCODE(kc)                                                      \
@@ -75,7 +77,7 @@ KeyHandler::keyPressed(KeyCode code)
 {
     // std::cerr << "key pressed: " << self->frame_id << " " <<
     // prettyKeyCode(code) << std::endl;
-    int32 idx = int32(code);
+    auto idx = int32(code);
     CHECK_KEYCODE(idx);
     self->states[idx] = State(true, self->frame_id);
     self->keyPressedEvent.raise(makeEvent(KeyPressed(*this, code)));
@@ -86,7 +88,7 @@ KeyHandler::keyReleased(KeyCode code)
 {
     // std::cerr << "key released: " << self->frame_id << " " <<
     // prettyKeyCode(code) << std::endl;
-    int32 idx = int32(code);
+    auto idx = int32(code);
     CHECK_KEYCODE(idx);
     if (self->states[idx].down)
         self->states[idx] = State(false, self->frame_id);
@@ -111,31 +113,31 @@ KeyHandler::clearStates()
 KeyState
 KeyHandler::keyState(KeyCode code)
 {
-    int32 idx = int32(code);
+    auto idx = int32(code);
     CHECK_KEYCODE(idx);
     State state = self->states[idx];
 
     if (state.timestamp == self->frame_id)
         return state.down ? keystate::Pressed : keystate::Released;
-    else
-        return state.down ? keystate::Down : keystate::Up;
+
+    return state.down ? keystate::Down : keystate::Up;
 }
 
 void
-KeyHandler::registerBinding(const Ref<KeyBinding> &binding,
-                            const Ref<Command> &comm)
+KeyHandler::registerBinding(const std::shared_ptr<KeyBinding> &binding,
+                            const CommandPtr &comm)
 {
     self->bindings[Binding(binding)] = comm;
 }
 
-Ref<Command>
-KeyHandler::unregisterBinding(const Ref<KeyBinding> &binding)
+CommandPtr
+KeyHandler::unregisterBinding(const std::shared_ptr<KeyBinding> &binding)
 {
-    CommandBindings::iterator it = self->bindings.find(Binding(binding));
+    auto it = self->bindings.find(Binding(binding));
     if (it == self->bindings.end())
         return NULL_COMMAND;
-    else
-        return it->second;
+
+    return it->second;
 }
 
 EventSource<KeyPressed> &
@@ -158,9 +160,9 @@ void
 KeyHandler::handleCommands()
 {
 
-    CommandBindings::iterator it = self->bindings.begin();
+    auto it = self->bindings.begin();
     for (; it != self->bindings.end(); ++it) {
-        const Ref<KeyBinding> &bind = it->first.binding;
+        auto &bind = it->first.binding;
 
         for (defs::index i = 0; i < bind->size(); ++i) {
 
@@ -194,9 +196,9 @@ void
 KeyHandler::handleListBindings(const Event<CommandEvent> &e)
 {
     sys::io::OutStream &out = e.info.engine.out();
-    CommandBindings::iterator it = self->bindings.begin();
+    auto it = self->bindings.begin();
     for (; it != self->bindings.end(); ++it) {
-        const Ref<KeyBinding> &bind = it->first.binding;
+        auto &bind = it->first.binding;
         out << "  ";
         {
             CommandPrettyPrinter printer;
@@ -205,7 +207,7 @@ KeyHandler::handleListBindings(const Event<CommandEvent> &e)
         }
         out << " -> ";
         QuotationCommand *quot = it->second->castToQuotation();
-        if (quot == 0) {
+        if (quot == nullptr) {
             out << it->second->name();
             out << sys::io::endl;
         } else {

@@ -1,9 +1,9 @@
 #include <algorithm>
 #include <bitset>
-#include <limits.h>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
 #include <memory>
-#include <stdlib.h>
-#include <string.h>
 
 #include "defs.hpp"
 
@@ -52,12 +52,12 @@ static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
 
 struct MaterialProperties
 {
-    real ambientContribution;
-    real diffuseContribution;
-    real specularContribution;
-    real shininess;
+    real ambientContribution{};
+    real diffuseContribution{};
+    real specularContribution{};
+    real shininess{};
 
-    MaterialProperties() {}
+    MaterialProperties() = default;
     MaterialProperties(real amb, real diff, real spec, real sh)
       : ambientContribution(amb)
       , diffuseContribution(diff)
@@ -77,16 +77,16 @@ sumNoise3D(const vec3_t &p,
            real phi,
            bool abs = false);
 static void
-pointsOnSphere(uint32 n, vec3_t *points);
+pointsOnSphere(uint32 n, vec3_t *ps);
 
 #define VERTEX(V, F, Z)                                                        \
     V(Vertex, F(vec3_t, position, F(glt::color, color, Z(vec4_t, normal))))
 DEFINE_VERTEX(VERTEX);
 #undef VERTEX
 
-typedef glt::CubeMesh<Vertex> CubeMesh;
+using CubeMesh = glt::CubeMesh<Vertex>;
 
-typedef ge::Event<ge::InitEvent> InitEv;
+using InitEv = ge::Event<ge::InitEvent>;
 
 struct State
 {
@@ -95,33 +95,23 @@ struct State
 
     CubeMesh worldModel;
 
-    vec3_t sphere_points[SPHERE_POINTS];
+    vec3_t sphere_points[SPHERE_POINTS]{};
 
-    real gamma_correction;
+    real gamma_correction{};
 
-    vec3_t ecLightDir;
+    vec3_t ecLightDir{};
 
-    ge::Timer *fpsTimer;
+    std::unique_ptr<ge::Timer> fpsTimer;
 
-    bool write_model;
-    bool read_model;
-
-#ifdef HS_WORLD_GEN
-    VoxelState *voxel_state;
-#endif
-
-    State()
-      : fpsTimer(0)
+    bool write_model{};
+    bool read_model{};
 
 #ifdef HS_WORLD_GEN
-      , voxel_state(0)
+    VoxelState *voxel_state{};
 #endif
-    {}
-
-    ~State() { delete fpsTimer; }
 };
 
-typedef ge::Event<ge::RenderEvent> RenderEv;
+using RenderEv = ge::Event<ge::RenderEvent>;
 
 static void
 renderScene(State *state, const RenderEv &ev);
@@ -136,7 +126,7 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points);
 
 static void
 incGamma(real *gamma,
-         const ge::Event<ge::CommandEvent> &,
+         const ge::Event<ge::CommandEvent> & /*unused*/,
          const Array<ge::CommandArg> &args)
 {
     *gamma += real(args[0].number);
@@ -146,8 +136,8 @@ incGamma(real *gamma,
 
 static void
 runRecreateWorld(State *state,
-                 const ge::Event<ge::CommandEvent> &,
-                 const Array<ge::CommandArg> &)
+                 const ge::Event<ge::CommandEvent> & /*unused*/,
+                 const Array<ge::CommandArg> & /*unused*/)
 {
     state->worldModel.freeGPU();
     time_op(initWorld(state, state->worldModel, state->sphere_points));
@@ -188,7 +178,7 @@ initState(State *state, const InitEv &ev)
 
     state->gamma_correction = 1.8f;
 
-    state->fpsTimer = new ge::Timer(e);
+    state->fpsTimer.reset(new ge::Timer(e));
     state->fpsTimer->start(FPS_UPDATE_INTERVAL, true);
 
     srand(0xDEADBEEF);
@@ -220,7 +210,7 @@ initState(State *state, const InitEv &ev)
             ERR("couldnt write model file");
     }
 
-    // Ref<glt::ShaderProgram> voxel =
+    // std::shared_ptr<glt::ShaderProgram> voxel =
     // e.shaderManager().declareProgram("voxel"); glt::ShaderProgram& vs =
     // *voxel;
 
@@ -264,7 +254,7 @@ struct Densities
 
 struct World
 {
-    typedef unsigned long Word;
+    using Word = unsigned long;
 
     static const uint32 WORD_BITS = sizeof(Word) * 8;
     static const uint32 NBYTES = (N * N * N + WORD_BITS - 1) / WORD_BITS;
@@ -296,10 +286,10 @@ struct World
             return *this;
         }
 
-        operator bool() { return (*w & (Word(1) << bit)) != 0; }
+        explicit operator bool() { return (*w & (Word(1) << bit)) != 0; }
     };
 
-    typedef Ref reference;
+    using reference = Ref;
 
     reference operator()(uint32 i, uint32 j, uint32 k)
     {
@@ -330,7 +320,7 @@ static const uint32 RAY_SAMPLES =
 
 struct Ray
 {
-    Faces lightContrib;
+    Faces lightContrib{};
     ivec3_t *offset;
     Ray() { offset = new ivec3_t[RAY_SAMPLES]; }
     ~Ray() { delete[] offset; }
@@ -338,11 +328,11 @@ struct Ray
 
 struct Rays
 {
-    Faces sumcos;
+    Faces sumcos{};
     Ray *rays;
-    uint32 faceOffsets[6];
-    uint32 faceLengths[6];
-    Faces lightContribFace[6];
+    uint32 faceOffsets[6]{};
+    uint32 faceLengths[6]{};
+    Faces lightContribFace[6]{};
     Rays() { rays = new Ray[SPHERE_POINTS]; }
     ~Rays() { delete[] rays; }
 };
@@ -533,7 +523,7 @@ static World *
 filterOccluded(const World &w)
 {
 
-    World *ret = new World;
+    auto *ret = new World;
     World &vis = *ret;
 
     memset(&vis, 0, sizeof vis);
@@ -637,9 +627,9 @@ visibleFace(const World &w,
             int32 k,
             const vec3_t &normal)
 {
-    i += (int32) normal[0];
-    j += (int32) normal[1];
-    k += (int32) normal[2];
+    i += static_cast<int32>(normal[0]);
+    j += static_cast<int32>(normal[1]);
+    k += static_cast<int32>(normal[2]);
     return visible(w, vis, i, j, k);
 }
 
@@ -796,7 +786,7 @@ struct Vertices
 {
     uint32 size;
     Vertex *verts;
-    Vertices(uint32 s) : size(s), verts(new Vertex[s]) {}
+    explicit Vertices(uint32 s) : size(s), verts(new Vertex[s]) {}
     ~Vertices() { delete[] verts; }
 };
 
@@ -809,8 +799,8 @@ hasNeighbours(const World &w, const World &vis, const ivec3_t &p)
 {
     if (!w(p[0], p[1], p[2]))
         return false;
-    for (uint32 i = 0; i < 6; ++i) {
-        const ivec3_t p1 = p + neighOffs[i];
+    for (auto neighOff : neighOffs) {
+        const ivec3_t p1 = p + neighOff;
         bool onCubeSurf = 0 > p1[0] || p1[0] >= N || 0 > p1[1] || p1[1] >= N ||
                           0 > p1[2] || p1[2] >= N;
         if (onCubeSurf)
@@ -875,7 +865,7 @@ createModel(CubeMesh &worldModel,
                     vec3_t yellow = vec3(0., 1., 1.);
                     vec3_t red = vec3(1., 0., 0.);
 
-                    vec3_t col3;
+                    vec3_t col3{};
                     if (dens <= real(0.5)) {
                         real w = dens * 2;
                         col3 = (1 - w) * blue + w * yellow;
@@ -884,7 +874,7 @@ createModel(CubeMesh &worldModel,
                         col3 = (1 - w) * yellow + w * red;
                     }
 
-                    glt::color col = glt::color(col3);
+                    auto col = glt::color(col3);
                     //                    uint32 col =
                     //                    glt::color(randColor()).rgba();
                     vec3_t offset = BLOCK_DIM * vec3(ivec3(ii, jj, kk));
@@ -925,10 +915,10 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
     CubeMesh cubeModel;
     glt::primitives::unitCube(cubeModel);
 
-    Ref<World> worldp(new World);
+    auto worldp = std::make_shared<World>();
     World &world = *worldp;
 
-    Ref<Densities> densitiesp(new Densities);
+    auto densitiesp = std::make_shared<Densities>();
 
     world.zero();
 
@@ -954,7 +944,7 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
 
     time_op(createGeometry(world, *densitiesp));
 
-    Ref<Rays> raysp(new Rays);
+    auto raysp = std::make_shared<Rays>();
     Rays &rays = *raysp;
     time_op(initRays(rays, sphere_points));
     sys::io::stderr() << "rays crossing planes: " << rays.sumcos.f[0] << ", "
@@ -962,7 +952,7 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
 
     World *visptmp;
     time_op(visptmp = filterOccluded(world));
-    Ref<World> visp(visptmp);
+    std::shared_ptr<World> visp(visptmp);
     World &vis = *visp;
 
     uint32 permut[N];
@@ -976,15 +966,15 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
         permut[i + j] = t;
     }
 
-    Ref<World> worldAndVisp(new World);
+    auto worldAndVisp = std::make_shared<World>();
     World &worldAndVis = *worldAndVisp;
     andWorld(worldAndVis, world, vis);
 
-    Ref<World> worldOrVisp(new World);
+    auto worldOrVisp = std::make_shared<World>();
     World &worldOrVis = *worldOrVisp;
     orWorldNot(worldOrVis, world, vis);
 
-    Ref<World> hullp(new World);
+    auto hullp = std::make_shared<World>();
     World &hull = *hullp;
 
     for (int32 i = 0; i < N; ++i)
@@ -992,7 +982,7 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
             for (int32 k = 0; k < N; ++k)
                 hull(i, j, k) = hasNeighbours(world, vis, ivec3(i, j, k));
 
-    GlobalOcc *occmap = 0;
+    GlobalOcc *occmap = nullptr;
     if (OCCLUSION) {
         occmap = new GlobalOcc;
         time_op(createOcclusionMap(occmap, hull, worldOrVis, rays));
@@ -1003,9 +993,9 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
     //             andWorld(worldAndVis, world, vis);
     //         });
 
-    Stats stats;
+    Stats stats{};
 
-    Ref<Vertices> vertsp(new Vertices(cubeModel.size()));
+    auto vertsp = std::make_shared<Vertices>(cubeModel.size());
     Vertices &verts = *vertsp;
 
     for (uint32 i = 0; i < verts.size; ++i)
@@ -1016,7 +1006,7 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
     time_op(createModel(
       worldModel, world, vis, occmap, verts, permut, stats, *densitiesp));
     delete occmap;
-    occmap = 0;
+    occmap = nullptr;
 
     sys::io::stderr() << "blocks: " << stats.blocks
                       << ", visible blocks: " << stats.visBlocks
@@ -1076,7 +1066,7 @@ renderBlocks(State *state, ge::Engine &e)
     //                                    vec3(0., 0., 1.)));
     // rm.geometryTransform().translate(-center);
 
-    Ref<glt::ShaderProgram> voxelShader = e.shaderManager().program("voxel");
+    auto voxelShader = e.shaderManager().program("voxel");
     ASSERT(voxelShader);
 
     voxelShader->use();
@@ -1254,8 +1244,9 @@ noise3D(const vec3_t &pnt)
     real y = pnt[1];
     real z = pnt[2];
 
-    int X = (int) math::floor(x) & 255, Y = (int) math::floor(y) & 255,
-        Z = (int) math::floor(z) & 255;
+    int X = static_cast<int>(math::floor(x)) & 255,
+        Y = static_cast<int>(math::floor(y)) & 255,
+        Z = static_cast<int>(math::floor(z)) & 255;
 
     x -= math::floor(x);
     y -= math::floor(y);

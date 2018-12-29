@@ -9,7 +9,7 @@ TextureRenderTarget::TextureRenderTarget(size w,
                                          size h,
                                          const TextureRenderTarget::Params &ps)
   : RenderTarget(0, 0, ps.buffers)
-  , _sampler(makeRef(new TextureData(Texture2D, ps.samples)))
+  , _sampler(std::make_shared<TextureData>(Texture2D, ps.samples))
   , _frame_buffer(0)
   , _depth_buffer(0)
   , _samples(ps.samples)
@@ -19,7 +19,7 @@ TextureRenderTarget::TextureRenderTarget(size w,
     resize(w, h);
 }
 
-TextureRenderTarget::~TextureRenderTarget() {}
+TextureRenderTarget::~TextureRenderTarget() = default;
 
 void
 TextureRenderTarget::resize(size w, size h)
@@ -91,7 +91,7 @@ TextureRenderTarget::createTexture(bool delete_old)
                 0,
                 GL_RGBA,
                 GL_UNSIGNED_BYTE,
-                0);
+                nullptr);
     } else if (ttype == GL_TEXTURE_2D_MULTISAMPLE) {
         GL_CALL(glTexImage2DMultisample,
                 GL_TEXTURE_2D_MULTISAMPLE,

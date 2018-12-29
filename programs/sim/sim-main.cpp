@@ -91,8 +91,8 @@ DEFINE_VERTEX(VERTEX);
 
 namespace {
 
-typedef glt::Mesh<Vertex> Mesh;
-typedef glt::CubeMesh<Vertex> CubeMesh;
+using Mesh = glt::Mesh<Vertex>;
+using CubeMesh = glt::CubeMesh<Vertex>;
 
 } // namespace
 
@@ -108,8 +108,8 @@ struct Game
     CubeMesh rectBatch;
 
     World world;
-    float sphere_speed;
-    Sphere sphere_proto;
+    float sphere_speed{};
+    Sphere sphere_proto{};
     Renderer renderer;
 
     struct
@@ -117,23 +117,23 @@ struct Game
         vec3_t ecLightPos;
         vec3_t ecSpotDir;
         float spotAngle;
-    } wallUniforms;
+    } wallUniforms{};
 
     struct
     {
         vec3_t ecLightPos;
         vec3_t ecSpotDir;
         float spotAngle;
-    } sphereUniforms;
+    } sphereUniforms{};
 
-    glt::TextureRenderTarget *textureRenderTarget;
-    ge::Engine *engine;
+    glt::TextureRenderTarget *textureRenderTarget{};
+    ge::Engine *engine{};
 
-    float game_speed;
+    float game_speed{};
 
-    bool use_interpolation;
-    bool render_spheres_instanced;
-    bool indirect_rendering;
+    bool use_interpolation{};
+    bool render_spheres_instanced{};
+    bool indirect_rendering{};
 
     std::vector<SphereInstance> sphere_instances[SPHERE_LOD_MAX];
 
@@ -141,7 +141,7 @@ struct Game
 
     ~Game()
     {
-        if (engine != 0)
+        if (engine != nullptr)
             engine->renderManager().shutdown();
         delete textureRenderTarget;
     }
@@ -149,15 +149,15 @@ struct Game
     void updateIndirectRendering(bool indirect);
     void resizeRenderTargets();
 
-    void init(const ge::Event<ge::InitEvent> &);
+    void init(const ge::Event<ge::InitEvent> & /*ev*/);
     void link(ge::Engine &e);
 
-    void constrainCameraMovement(const ge::Event<ge::CameraMoved> &);
-    void animate(const ge::Event<ge::AnimationEvent> &);
-    void renderScene(const ge::Event<ge::RenderEvent> &);
+    void constrainCameraMovement(const ge::Event<ge::CameraMoved> & /*ev*/);
+    void animate(const ge::Event<ge::AnimationEvent> & /*ev*/);
+    void renderScene(const ge::Event<ge::RenderEvent> & /*ev*/);
     void renderWorld(float dt);
 
-    void windowResized(const ge::Event<ge::WindowResized> &);
+    void windowResized(const ge::Event<ge::WindowResized> & /*ev*/);
     void handleInternalEvents();
     void spawn_sphere();
 
@@ -171,27 +171,32 @@ struct Game
     void update_sphere_mass();
 
     // commands
-    void cmdToggleUseInterpolation(const ge::Event<ge::CommandEvent> &,
-                                   const Array<ge::CommandArg> &);
-    void cmdIncWorldSolveIterations(const ge::Event<ge::CommandEvent> &,
-                                    const Array<ge::CommandArg> &);
-    void cmdToggleRenderByDistance(const ge::Event<ge::CommandEvent> &,
-                                   const Array<ge::CommandArg> &);
-    void cmdToggleRenderSpheresInstanced(const ge::Event<ge::CommandEvent> &,
-                                         const Array<ge::CommandArg> &);
-    void cmdToggleIndirectRendering(const ge::Event<ge::CommandEvent> &,
-                                    const Array<ge::CommandArg> &);
-    void cmdSpawnSphere(const ge::Event<ge::CommandEvent> &,
-                        const Array<ge::CommandArg> &);
-    void cmdIncSphereRadius(const ge::Event<ge::CommandEvent> &,
-                            const Array<ge::CommandArg> &);
-    void cmdIncSphereSpeed(const ge::Event<ge::CommandEvent> &,
-                           const Array<ge::CommandArg> &);
-    void cmdIncGameSpeed(const ge::Event<ge::CommandEvent> &,
-                         const Array<ge::CommandArg> &);
+    void cmdToggleUseInterpolation(
+      const ge::Event<ge::CommandEvent> & /*unused*/,
+      const Array<ge::CommandArg> & /*unused*/);
+    void cmdIncWorldSolveIterations(
+      const ge::Event<ge::CommandEvent> & /*unused*/,
+      const Array<ge::CommandArg> & /*args*/);
+    void cmdToggleRenderByDistance(
+      const ge::Event<ge::CommandEvent> & /*unused*/,
+      const Array<ge::CommandArg> & /*unused*/);
+    void cmdToggleRenderSpheresInstanced(
+      const ge::Event<ge::CommandEvent> & /*unused*/,
+      const Array<ge::CommandArg> & /*unused*/);
+    void cmdToggleIndirectRendering(
+      const ge::Event<ge::CommandEvent> & /*unused*/,
+      const Array<ge::CommandArg> & /*unused*/);
+    void cmdSpawnSphere(const ge::Event<ge::CommandEvent> & /*unused*/,
+                        const Array<ge::CommandArg> & /*unused*/);
+    void cmdIncSphereRadius(const ge::Event<ge::CommandEvent> & /*unused*/,
+                            const Array<ge::CommandArg> & /*args*/);
+    void cmdIncSphereSpeed(const ge::Event<ge::CommandEvent> & /*unused*/,
+                           const Array<ge::CommandArg> & /*args*/);
+    void cmdIncGameSpeed(const ge::Event<ge::CommandEvent> & /*unused*/,
+                         const Array<ge::CommandArg> & /*args*/);
 };
 
-Game::Game() : renderer(*this), textureRenderTarget(0) {}
+Game::Game() : renderer(*this) {}
 
 void
 Game::init(const ge::Event<ge::InitEvent> &ev)
@@ -201,13 +206,13 @@ Game::init(const ge::Event<ge::InitEvent> &ev)
 
     link(e);
 
-    textureRenderTarget = 0;
+    textureRenderTarget = nullptr;
     indirect_rendering = true;
     updateIndirectRendering(indirect_rendering);
     render_spheres_instanced = true;
 
     {
-        Vertex v;
+        Vertex v{};
         v.normal = vec3(0.f, 0.f, 1.f);
         v.position = vec4(-1.f, -1.f, 0.f, 1.f);
         rectBatch.add(v);
@@ -258,7 +263,7 @@ Game::init(const ge::Event<ge::InitEvent> &ev)
 
     update_sphere_mass();
 
-    Vertex vert;
+    Vertex vert{};
     vert.normal = vec3(1.f, 0.f, 0.f);
     vert.position = vec4(vec3(0.f), 1.f);
     lineBatch.addVertex(vert);
@@ -372,8 +377,7 @@ Game::renderScene(const ge::Event<ge::RenderEvent> &ev)
         GL_CALL(glDisable, GL_DEPTH_TEST);
 
         renderManager.setActiveRenderTarget(&e.window().renderTarget());
-        Ref<glt::ShaderProgram> postprocShader =
-          e.shaderManager().program("postproc");
+        auto postprocShader = e.shaderManager().program("postproc");
         ASSERT(postprocShader);
         postprocShader->use();
 
@@ -427,7 +431,7 @@ Game::updateIndirectRendering(bool indirect)
 
     if (indirect) {
 
-        if (textureRenderTarget == 0) {
+        if (textureRenderTarget == nullptr) {
             size w = engine->window().windowWidth();
             size h = engine->window().windowHeight();
             glt::TextureRenderTarget::Params ps;
@@ -442,7 +446,7 @@ Game::updateIndirectRendering(bool indirect)
 
     indirect_rendering = indirect;
 
-    engine->renderManager().setActiveRenderTarget(0);
+    engine->renderManager().setActiveRenderTarget(nullptr);
     resizeRenderTargets();
     engine->renderManager().setDefaultRenderTarget(rt);
 }
@@ -488,7 +492,7 @@ Game::end_render_spheres()
 
 #ifdef SPHERE_INSTANCED_TEXTURED
             glt::TextureSampler sphereMap(
-              makeRef(new glt::TextureData(glt::Texture1D)));
+              std::make_shared<glt::TextureData>(glt::Texture1D));
 
             sphereMap.filterMode(glt::TextureSampler::FilterNearest);
             sphereMap.clampMode(glt::TextureSampler::ClampRepeat);
@@ -505,7 +509,7 @@ Game::end_render_spheres()
 
             sphere_instances[lod].clear();
 
-            Ref<glt::ShaderProgram> sphereInstancedShader =
+            auto sphereInstancedShader =
               engine->shaderManager().program("sphereInstanced");
             ASSERT(sphereInstancedShader);
             sphereInstancedShader->use();
@@ -526,7 +530,7 @@ Game::end_render_spheres()
 
 #elif defined(SPHERE_INSTANCED_ARRAY)
 
-            Ref<glt::ShaderProgram> sphereInstanced2Shader =
+            auto sphereInstanced2Shader =
               engine->shaderManager().program("sphereInstanced2");
             ASSERT(sphereInstanced2Shader);
             sphereInstanced2Shader->use();
@@ -624,7 +628,7 @@ Game::calc_sphere_lod(const Sphere &s)
 
     screen_rad *= 2;
 
-    SphereLOD lod;
+    SphereLOD lod{};
     lod.level = index(screen_rad * SPHERE_LOD_MAX);
     if (lod.level >= SPHERE_LOD_MAX)
         lod.level = SPHERE_LOD_MAX - 1;
@@ -647,7 +651,7 @@ Game::render_sphere(const Sphere &s, const SphereModel &m)
 
 #ifdef SPHERE_INSTANCED_TEXTURED
 
-        SphereInstance inst;
+        SphereInstance inst{};
         inst.pos = s.center;
         inst.rad = s.r;
         inst.col_rgb = vec3(m.color.vec4());
@@ -671,15 +675,14 @@ Game::render_sphere(const Sphere &s, const SphereModel &m)
         gt.translate(pos);
         gt.scale(vec3(s.r));
 
-        Ref<glt::ShaderProgram> sphereShader =
-          engine->shaderManager().program("sphere");
+        auto sphereShader = engine->shaderManager().program("sphere");
         ASSERT(sphereShader);
 
         sphereShader->use();
 
         vec3_t col3 = vec3(1.f);
         col3 /= real(lod.level + 1);
-        glt::color col = glt::color(col3);
+        auto col = glt::color(col3);
 
         glt::Uniforms us(*sphereShader);
         us.optional("mvpMatrix", gt.mvpMatrix());
@@ -723,8 +726,7 @@ Game::render_box(const glt::AABB &box)
     gt.translate(center);
     gt.scale(dim);
 
-    Ref<glt::ShaderProgram> wallShader =
-      engine->shaderManager().program("wall");
+    auto wallShader = engine->shaderManager().program("wall");
     ASSERT(wallShader);
 
     wallShader->use();
@@ -757,7 +759,7 @@ void
 Game::render_con(const point3_t &a, const point3_t &b)
 {
 
-    Sphere s;
+    Sphere s{};
     s.center = (a + b) * 0.5f;
     s.r = 0.1f;
     SphereModel m;
@@ -775,8 +777,7 @@ Game::render_con(const point3_t &a, const point3_t &b)
     mat3_t trans = mat3(b - a, vec3(0.f, 1.f, 0.f), vec3(0.f, 0.f, 1.f));
     gt.concat(trans);
 
-    Ref<glt::ShaderProgram> identityShader =
-      engine->shaderManager().program("identity");
+    auto identityShader = engine->shaderManager().program("identity");
 
     identityShader->use();
     glt::Uniforms us(*identityShader);
@@ -921,8 +922,8 @@ Game::link(ge::Engine &e)
 }
 
 void
-Game::cmdToggleUseInterpolation(const ge::Event<ge::CommandEvent> &,
-                                const Array<ge::CommandArg> &)
+Game::cmdToggleUseInterpolation(const ge::Event<ge::CommandEvent> & /*unused*/,
+                                const Array<ge::CommandArg> & /*unused*/)
 {
     use_interpolation = !use_interpolation;
     sys::io::stderr() << "use interpolation: "
@@ -930,7 +931,7 @@ Game::cmdToggleUseInterpolation(const ge::Event<ge::CommandEvent> &,
 }
 
 void
-Game::cmdIncWorldSolveIterations(const ge::Event<ge::CommandEvent> &,
+Game::cmdIncWorldSolveIterations(const ge::Event<ge::CommandEvent> & /*unused*/,
                                  const Array<ge::CommandArg> &args)
 {
     if (args[0].integer < 0 && world.solve_iterations < -args[0].integer)
@@ -942,8 +943,8 @@ Game::cmdIncWorldSolveIterations(const ge::Event<ge::CommandEvent> &,
 }
 
 void
-Game::cmdToggleRenderByDistance(const ge::Event<ge::CommandEvent> &,
-                                const Array<ge::CommandArg> &)
+Game::cmdToggleRenderByDistance(const ge::Event<ge::CommandEvent> & /*unused*/,
+                                const Array<ge::CommandArg> & /*unused*/)
 {
     world.render_by_distance = !world.render_by_distance;
     sys::io::stderr() << "render by distance: "
@@ -952,8 +953,9 @@ Game::cmdToggleRenderByDistance(const ge::Event<ge::CommandEvent> &,
 }
 
 void
-Game::cmdToggleRenderSpheresInstanced(const ge::Event<ge::CommandEvent> &,
-                                      const Array<ge::CommandArg> &)
+Game::cmdToggleRenderSpheresInstanced(
+  const ge::Event<ge::CommandEvent> & /*unused*/,
+  const Array<ge::CommandArg> & /*unused*/)
 {
     render_spheres_instanced = !render_spheres_instanced;
     sys::io::stderr() << "instanced rendering: "
@@ -962,8 +964,8 @@ Game::cmdToggleRenderSpheresInstanced(const ge::Event<ge::CommandEvent> &,
 }
 
 void
-Game::cmdToggleIndirectRendering(const ge::Event<ge::CommandEvent> &,
-                                 const Array<ge::CommandArg> &)
+Game::cmdToggleIndirectRendering(const ge::Event<ge::CommandEvent> & /*unused*/,
+                                 const Array<ge::CommandArg> & /*unused*/)
 {
     updateIndirectRendering(!indirect_rendering);
     sys::io::stderr() << "indirect rendering: "
@@ -971,32 +973,34 @@ Game::cmdToggleIndirectRendering(const ge::Event<ge::CommandEvent> &,
 }
 
 void
-Game::cmdSpawnSphere(const ge::Event<ge::CommandEvent> &,
-                     const Array<ge::CommandArg> &)
+Game::cmdSpawnSphere(const ge::Event<ge::CommandEvent> & /*unused*/,
+                     const Array<ge::CommandArg> & /*unused*/)
 {
     spawn_sphere();
 }
 
 void
-Game::cmdIncSphereRadius(const ge::Event<ge::CommandEvent> &,
+Game::cmdIncSphereRadius(const ge::Event<ge::CommandEvent> & /*unused*/,
                          const Array<ge::CommandArg> &args)
 {
-    sphere_proto.r = std::max(0.05f, sphere_proto.r + (float) args[0].number);
+    sphere_proto.r =
+      std::max(0.05f, sphere_proto.r + static_cast<float>(args[0].number));
     update_sphere_mass();
 }
 
 void
-Game::cmdIncSphereSpeed(const ge::Event<ge::CommandEvent> &,
+Game::cmdIncSphereSpeed(const ge::Event<ge::CommandEvent> & /*unused*/,
                         const Array<ge::CommandArg> &args)
 {
-    sphere_speed = std::max(0.25f, sphere_speed + (float) args[0].number);
+    sphere_speed =
+      std::max(0.25f, sphere_speed + static_cast<float>(args[0].number));
 }
 
 void
-Game::cmdIncGameSpeed(const ge::Event<ge::CommandEvent> &,
+Game::cmdIncGameSpeed(const ge::Event<ge::CommandEvent> & /*unused*/,
                       const Array<ge::CommandArg> &args)
 {
-    game_speed = std::max(0.f, game_speed + (float) args[0].number);
+    game_speed = std::max(0.f, game_speed + static_cast<float>(args[0].number));
 }
 
 int

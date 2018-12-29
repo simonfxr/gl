@@ -11,40 +11,47 @@ namespace ge {
 
 struct Handlers
 {
-    Ref<EventHandler<MouseMoved>> mouseMoved;
-    Ref<EventHandler<InputEvent>> handleInput;
-    Ref<EventHandler<RenderEvent>> beforeRender;
+    std::shared_ptr<EventHandler<MouseMoved>> mouseMoved;
+    std::shared_ptr<EventHandler<InputEvent>> handleInput;
+    std::shared_ptr<EventHandler<RenderEvent>> beforeRender;
 };
 
 struct Camera::Data
 {
 
-    real _speed;
-    vec2_t _mouse_sensitivity;
+    real _speed{ real(0.1) };
+    vec2_t _mouse_sensitivity = vec2(real(0.00075));
     glt::Frame _frame;
     Commands _commands;
     Events _events;
-    vec3_t _step_accum;
+    vec3_t _step_accum = vec3(real(0));
     Handlers _handlers;
-    bool _mouse_look;
-    Engine *_engine;
+    bool _mouse_look{ false };
+    Engine *_engine{};
     std::string _frame_path;
 
-    Data(Camera *);
+    explicit Data(Camera * /*me*/);
 
     void mouseMoved(Camera *cam, index16 dx, index16 dy);
 
     // commands
-    void runMove(const Event<CommandEvent> &, const Array<CommandArg> &);
-    void runSaveFrame(const Event<CommandEvent> &, const Array<CommandArg> &);
-    void runLoadFrame(const Event<CommandEvent> &, const Array<CommandArg> &);
-    void runSpeed(const Event<CommandEvent> &, const Array<CommandArg> &);
-    void runSensitivity(const Event<CommandEvent> &, const Array<CommandArg> &);
+    void runMove(const Event<CommandEvent> & /*unused*/,
+                 const Array<CommandArg> & /*args*/);
+    void runSaveFrame(const Event<CommandEvent> & /*unused*/,
+                      const Array<CommandArg> & /*args*/);
+    void runLoadFrame(const Event<CommandEvent> & /*unused*/,
+                      const Array<CommandArg> & /*args*/);
+    void runSpeed(const Event<CommandEvent> & /*unused*/,
+                  const Array<CommandArg> & /*args*/);
+    void runSensitivity(const Event<CommandEvent> & /*unused*/,
+                        const Array<CommandArg> & /*args*/);
 
     // event handlers
-    static void handleMouseMoved(Camera *, const Event<MouseMoved> &);
-    static void handleInput(Camera *, const Event<InputEvent> &);
-    void handleBeforeRender(const Event<RenderEvent> &);
+    static void handleMouseMoved(Camera * /*cam*/,
+                                 const Event<MouseMoved> & /*ev*/);
+    static void handleInput(Camera * /*cam*/,
+                            const Event<InputEvent> & /*unused*/);
+    void handleBeforeRender(const Event<RenderEvent> & /*e*/);
 };
 
 namespace {
@@ -89,16 +96,6 @@ const math::real the_dir_table[3 * 12] = { 0.5f,
 } // namespace
 
 Camera::Data::Data(Camera *me)
-  : _speed(real(0.1))
-  , _mouse_sensitivity(vec2(real(0.00075)))
-  , _frame()
-  , _commands()
-  , _events()
-  , _step_accum(vec3(real(0)))
-  , _handlers()
-  , _mouse_look(false)
-  , _engine(0)
-  , _frame_path()
 {
     _commands.move = makeCommand(
       this, &Data::runMove, INT_PARAMS, "camera.move", "move the camera frame");
@@ -139,7 +136,7 @@ Camera::Data::Data(Camera *me)
 }
 
 void
-Camera::Data::runMove(const Event<CommandEvent> &,
+Camera::Data::runMove(const Event<CommandEvent> & /*unused*/,
                       const Array<CommandArg> &args)
 {
     int64 dir = args[0].integer;
@@ -151,7 +148,7 @@ Camera::Data::runMove(const Event<CommandEvent> &,
 }
 
 void
-Camera::Data::runSaveFrame(const Event<CommandEvent> &,
+Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
                            const Array<CommandArg> &args)
 {
 
@@ -176,7 +173,7 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> &,
 }
 
 void
-Camera::Data::runLoadFrame(const Event<CommandEvent> &,
+Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
                            const Array<CommandArg> &args)
 {
 
@@ -201,14 +198,14 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> &,
 }
 
 void
-Camera::Data::runSpeed(const Event<CommandEvent> &,
+Camera::Data::runSpeed(const Event<CommandEvent> & /*unused*/,
                        const Array<CommandArg> &args)
 {
     _speed = math::real(args[0].number);
 }
 
 void
-Camera::Data::runSensitivity(const Event<CommandEvent> &,
+Camera::Data::runSensitivity(const Event<CommandEvent> & /*unused*/,
                              const Array<CommandArg> &args)
 {
     if (args.size() == 1 && args[0].type == Number) {
@@ -228,7 +225,7 @@ Camera::Data::handleMouseMoved(Camera *cam, const Event<MouseMoved> &ev)
 }
 
 void
-Camera::Data::handleInput(Camera *cam, const Event<InputEvent> &)
+Camera::Data::handleInput(Camera *cam, const Event<InputEvent> & /*unused*/)
 {
     Data *self = cam->self;
     real lenSq = lengthSq(self->_step_accum);

@@ -27,16 +27,16 @@ struct RenderManager::Data
     SavePointArgs transformStateBOS; // transform state in begin of scene
 
     bool owning_def_rt{ false };
-    RenderTarget *def_rt{ 0 };
+    RenderTarget *def_rt{ nullptr };
 
     // always active
-    RenderTarget *current_rt{ 0 };
+    RenderTarget *current_rt{ nullptr };
 
     Projection projection;
     bool projection_outdated{ true };
 
-    uint64 frame_id_current{ 0 };
-    uint64 frame_id_last{ 0 };
+    uint64 frame_id_current{};
+    uint64 frame_id_last{};
 
     bool perf_initialized{ false };
     GLPerfCounter perf_counter;

@@ -1,8 +1,10 @@
 #define ERROR_NO_IMPLICIT_OUT
 
 #include "ge/Commands.hpp"
+
 #include "ge/CommandParams.hpp"
 #include "ge/Engine.hpp"
+#include <utility>
 
 #include "glt/GLObject.hpp"
 #include "glt/ShaderCompiler.hpp"
@@ -47,7 +49,7 @@ void
 runPrintMemInfo(const Event<CommandEvent> &e)
 {
     bool success = false;
-    glt::GLMemInfoATI info;
+    glt::GLMemInfoATI info{};
     if (glt::GLMemInfoATI::info(&info)) {
         success = true;
         math::real fracVBO =
@@ -66,7 +68,7 @@ runPrintMemInfo(const Event<CommandEvent> &e)
           << (fracRBO * 100) << "%)" << sys::io::endl;
     }
 
-    glt::GLMemInfoNV info_nv;
+    glt::GLMemInfoNV info_nv{};
     if (!success && glt::GLMemInfoNV::info(&info_nv)) {
         success = true;
 
@@ -95,7 +97,7 @@ runReloadShaders(const Event<CommandEvent> &e, const Array<CommandArg> &args)
     } else {
         glt::ShaderManager &sm = e.info.engine.shaderManager();
         for (index i = 0; i < args.size(); ++i) {
-            Ref<glt::ShaderProgram> prog = sm.program(*args[i].string);
+            auto prog = sm.program(*args[i].string);
             if (!prog) {
                 WARN(e.info.engine.out(),
                      "reloadShaders: " + *args[i].string + " not defined");
@@ -112,8 +114,7 @@ runReloadShaders(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 void
 runListCachedShaders(const Event<CommandEvent> &e)
 {
-    Ref<glt::ShaderCache> cache =
-      e.info.engine.shaderManager().globalShaderCache();
+    auto cache = e.info.engine.shaderManager().globalShaderCache();
 
     if (!cache) {
         e.info.engine.out() << "no shader cache available" << sys::io::endl;
@@ -121,10 +122,9 @@ runListCachedShaders(const Event<CommandEvent> &e)
     }
 
     uint32 n = 0;
-    for (glt::ShaderCacheEntries::iterator it = cache->entries.begin();
-         it != cache->entries.end();
-         ++it) {
-        e.info.engine.out() << "cached shader: " << it->first << sys::io::endl;
+    for (auto &entrie : cache->entries) {
+        e.info.engine.out()
+          << "cached shader: " << entrie.first << sys::io::endl;
         ++n;
     }
 
@@ -145,14 +145,14 @@ struct BindKey : public Command
                 "bind a command to a key combination")
     {}
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args)
+                     const Array<CommandArg> &args) override
     {
-        Ref<Command> &comm = *args[1].command.ref;
+        CommandPtr &comm = *args[1].command.ref;
         if (!comm) {
             ERR(e.info.engine.out(), "cannot bind key: null command");
             return;
         }
-        Ref<KeyBinding> binding(new KeyBinding(*args[0].keyBinding));
+        auto binding = std::make_shared<KeyBinding>(*args[0].keyBinding);
         e.info.engine.keyHandler().registerBinding(binding, comm);
     }
 };
@@ -163,9 +163,7 @@ runHelp(const Event<CommandEvent> &ev)
     ge::CommandProcessor &cp = ev.info.engine.commandProcessor();
     ev.info.engine.out() << "list of Commands: " << sys::io::endl;
 
-    for (CommandMap::const_iterator it = cp.commands.begin();
-         it != cp.commands.end();
-         ++it) {
+    for (auto it = cp.commands.begin(); it != cp.commands.end(); ++it) {
         ev.info.engine.out() << "    " << it->first << sys::io::endl;
     }
 
@@ -188,8 +186,8 @@ runBindShader(const Event<CommandEvent> &e, const Array<CommandArg> &args)
         return;
     }
 
-    Ref<glt::ShaderProgram> prog(
-      new glt::ShaderProgram(e.info.engine.shaderManager()));
+    auto prog =
+      std::make_shared<glt::ShaderProgram>(e.info.engine.shaderManager());
 
     index i;
     for (i = 1; i < args.size() && args[i].type == String; ++i) {
@@ -248,7 +246,7 @@ runIgnoreGLDebugMessage(const Event<CommandEvent> &e,
                         const Array<CommandArg> &args)
 {
     const std::string &vendor_str = *args[0].string;
-    GLint id = static_cast<GLint>(args[1].integer);
+    auto id = static_cast<GLint>(args[1].integer);
     glt::OpenGLVendor vendor;
 
     if (vendor_str == "Nvidia")
@@ -274,7 +272,7 @@ runDescribe(const Event<CommandEvent> &e, const Array<CommandArg> &args)
     CommandProcessor &proc = e.info.engine.commandProcessor();
 
     for (index i = 0; i < args.size(); ++i) {
-        Ref<Command> com = proc.command(*args[i].string);
+        CommandPtr com = proc.command(*args[i].string);
         if (!com) {
             e.info.engine.out()
               << "unknown command: " << *args[i].string << sys::io::endl;
@@ -286,7 +284,7 @@ runDescribe(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 }
 
 void
-runEval(const Event<CommandEvent> &e, const Array<CommandArg> &)
+runEval(const Event<CommandEvent> &e, const Array<CommandArg> & /*unused*/)
 {
     ERR(e.info.engine.out(), "not yet implemented");
 }
@@ -342,7 +340,7 @@ struct PerspectiveProjection : public Command
     {}
 
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args)
+                     const Array<CommandArg> &args) override
     {
         real fovDeg = real(args[0].number);
         real zn = real(args[1].number);
@@ -353,7 +351,7 @@ struct PerspectiveProjection : public Command
         rm.setDefaultProjection(
           glt::Projection::mkPerspective(math::degToRad(fovDeg), zn, zf));
         glt::RenderTarget *tgt = rm.activeRenderTarget();
-        if (tgt != 0)
+        if (tgt != nullptr)
             rm.updateProjection(math::real(tgt->width()) /
                                 math::real(tgt->height()));
     }
@@ -361,9 +359,9 @@ struct PerspectiveProjection : public Command
 
 struct InitCommandHandler : public EventHandler<InitEvent>
 {
-    Ref<Command> handler;
-    InitCommandHandler(const Ref<Command> &hndlr) : handler(hndlr) {}
-    void handle(const Event<InitEvent> &e)
+    CommandPtr handler;
+    explicit InitCommandHandler(CommandPtr hndlr) : handler(std::move(hndlr)) {}
+    void handle(const Event<InitEvent> &e) override
     {
         e.info.success = true;
         handler->handle(makeEvent(
@@ -374,9 +372,8 @@ struct InitCommandHandler : public EventHandler<InitEvent>
 void
 runPostInit(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 {
-    e.info.engine.addInit(PostInit,
-                          Ref<EventHandler<InitEvent>>(
-                            new InitCommandHandler(*args[0].command.ref)));
+    e.info.engine.addInit(
+      PostInit, std::make_shared<InitCommandHandler>(*args[0].command.ref));
 }
 
 void
@@ -391,7 +388,7 @@ runStartReplServer(const Event<CommandEvent> &ev, const Array<CommandArg> &args)
     }
 
     int64 port = args[0].integer;
-    uint16 p16 = uint16(port);
+    auto p16 = uint16(port);
 
     if (port < 0 || p16 != port) {
         ERR(ev.info.engine.out(), "invalid port");

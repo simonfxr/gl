@@ -5,10 +5,10 @@
 #include "ge/conf.hpp"
 
 #include "data/Array.hpp"
-#include "data/Ref.hpp"
 
 #include "sys/io/Stream.hpp"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -58,7 +58,7 @@ struct GE_API CommandArg
         struct
         {
             const std::string *name;
-            Ref<Command> *ref;
+            std::shared_ptr<Command> *ref;
             Quotation *quotation;
         } command;
         const std::string *var;

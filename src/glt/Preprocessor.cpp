@@ -66,8 +66,8 @@ Preprocessor::process(const char *begin, uint32 size)
     ctx.content.data = begin;
     ctx.content.size = size;
 
-    for (auto it = self->handlers.begin(); it != self->handlers.end(); ++it) {
-        it->second->beginProcessing(ctx.content);
+    for (auto &handler : self->handlers) {
+        handler.second->beginProcessing(ctx.content);
     }
 
     self->defaultHandler->beginProcessing(ctx.content);
@@ -115,8 +115,8 @@ Preprocessor::process(const char *begin, uint32 size)
             self->defaultHandler->directiveEncountered(ctx);
     }
 
-    for (auto it = self->handlers.begin(); it != self->handlers.end(); ++it) {
-        it->second->endProcessing(ctx.content);
+    for (auto &handler : self->handlers) {
+        handler.second->endProcessing(ctx.content);
     }
 
     self->defaultHandler->endProcessing(ctx.content);

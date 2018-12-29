@@ -37,9 +37,7 @@ struct PrettyQuotation
 {
     std::vector<std::string> statements;
     sys::io::ByteStream out;
-    size len;
-
-    PrettyQuotation() : len(0) {}
+    size len{};
 };
 
 struct CommandPrettyPrinter::State
@@ -47,19 +45,13 @@ struct CommandPrettyPrinter::State
     sys::io::OutStream *out;
     sys::io::OutStream *current_out;
 
-    size line_len;
-    size block_indent;
-    bool ignore_empty_statements;
+    size line_len{ 80 };
+    size block_indent{ 4 };
+    bool ignore_empty_statements{ true };
 
-    std::vector<Ref<PrettyQuotation>> quotations;
+    std::vector<std::shared_ptr<PrettyQuotation>> quotations;
 
-    State()
-      : out(&sys::io::stdout())
-      , current_out(out)
-      , line_len(80)
-      , block_indent(4)
-      , ignore_empty_statements(true)
-    {}
+    State() : out(&sys::io::stdout()), current_out(out) {}
 };
 
 CommandPrettyPrinter::CommandPrettyPrinter() : self(new State) {}
@@ -125,7 +117,7 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
             *self->current_out << pre;
 
         const char *sym = prettyKeyCode(k.code);
-        if (sym == 0)
+        if (sym == nullptr)
             *self->current_out << "<unknown key code: " << k.code << ">";
         else
             *self->current_out << sym;
@@ -154,7 +146,7 @@ CommandPrettyPrinter::print(const CommandArg &arg, bool first)
         if (!first)
             *self->current_out << '&';
         *self->current_out << *arg.command.name;
-        if (arg.command.quotation != 0)
+        if (arg.command.quotation != nullptr)
             print(*arg.command.quotation);
         break;
     case VarRef:
@@ -195,7 +187,7 @@ CommandPrettyPrinter::print(const Quotation &q)
 
     for (defs::index i = 0; i < SIZE(q.size()); ++i) {
         print(q[i]);
-        Ref<PrettyQuotation> &pq = self->quotations.back();
+        auto &pq = self->quotations.back();
         pq->statements.push_back(pq->out.str());
         pq->out.truncate(0);
         pq->len += pq->statements.back().length();
@@ -207,7 +199,7 @@ CommandPrettyPrinter::print(const Quotation &q)
 void
 CommandPrettyPrinter::openQuotation()
 {
-    self->quotations.push_back(makeRef(new PrettyQuotation));
+    self->quotations.push_back(std::make_shared<PrettyQuotation>());
     self->current_out = &self->quotations.back()->out;
 }
 
@@ -219,7 +211,7 @@ CommandPrettyPrinter::closeQuotation()
 
     size depth = SIZE(self->quotations.size());
     size indent = self->block_indent * depth;
-    Ref<PrettyQuotation> &q = self->quotations.back();
+    auto &q = self->quotations.back();
     size nln = q->statements.size();
 
     self->current_out =

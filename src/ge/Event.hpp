@@ -1,9 +1,9 @@
 #ifndef GE_EVENT_HPP
 #define GE_EVENT_HPP
 
-#include "data/Ref.hpp"
 #include "ge/conf.hpp"
 
+#include <memory>
 #include <vector>
 
 namespace ge {
@@ -47,17 +47,17 @@ public:
 };
 
 template<typename F, typename E>
-Ref<EventHandler<E>>
+std::shared_ptr<EventHandler<E>>
 makeEventHandler(F f)
 {
     return makeRef(new FunctorHandler<F, E>(f));
 }
 
 template<typename E>
-Ref<EventHandler<E>>
+std::shared_ptr<EventHandler<E>>
 makeEventHandler(void (*fun)(const Event<E> &))
 {
-    return Ref<EventHandler<E>>(
+    return std::shared_ptr<EventHandler<E>>(
       new FunctorHandler<void (*)(const Event<E> &), E>(fun));
 }
 
@@ -74,10 +74,10 @@ public:
 };
 
 template<typename S, typename E>
-Ref<EventHandler<E>>
+std::shared_ptr<EventHandler<E>>
 makeEventHandler(void (*fun)(S s, const Event<E> &), S s)
 {
-    return Ref<EventHandler<E>>(
+    return std::shared_ptr<EventHandler<E>>(
       new FunctorStateHandler<S, void (*)(S s, const Event<E> &), E>(s, fun));
 }
 
@@ -94,10 +94,10 @@ public:
 };
 
 template<typename T, typename E>
-Ref<EventHandler<E>>
+std::shared_ptr<EventHandler<E>>
 makeEventHandler(T *o, void (T::*m)(const Event<E> &))
 {
-    return Ref<EventHandler<E>>(
+    return std::shared_ptr<EventHandler<E>>(
       new MemberFunHandler<T, void (T::*)(const Event<E> &), E>(o, m));
 }
 
@@ -117,7 +117,7 @@ public:
 };
 
 template<typename F, typename E>
-Ref<EventHandler<E>>
+std::shared_ptr<EventHandler<E>>
 makeVoidEventHandler(F f)
 {
     return makeRef(new VoidFunctorHandler<F, E>(f));
@@ -127,11 +127,11 @@ template<typename T>
 struct EventSource
 {
     bool raise(const Event<T> &evnt);
-    bool reg(const Ref<EventHandler<T>> &handler);
-    bool unreg(const Ref<EventHandler<T>> &handler);
+    bool reg(const std::shared_ptr<EventHandler<T>> &handler);
+    bool unreg(const std::shared_ptr<EventHandler<T>> &handler);
     void clear();
 
-    std::vector<Ref<EventHandler<T>>> handlers;
+    std::vector<std::shared_ptr<EventHandler<T>>> handlers;
     EventSource() {}
 
 private:
@@ -154,7 +154,7 @@ EventSource<T>::raise(const Event<T> &e)
 
 template<typename T>
 bool
-EventSource<T>::reg(const Ref<EventHandler<T>> &handler)
+EventSource<T>::reg(const std::shared_ptr<EventHandler<T>> &handler)
 {
     if (!handler)
         return true;
@@ -167,7 +167,7 @@ EventSource<T>::reg(const Ref<EventHandler<T>> &handler)
 
 template<typename T>
 bool
-EventSource<T>::unreg(const Ref<EventHandler<T>> &handler)
+EventSource<T>::unreg(const std::shared_ptr<EventHandler<T>> &handler)
 {
     if (!handler)
         return true;

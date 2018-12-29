@@ -28,7 +28,7 @@ struct FileTime
 
 namespace {
 
-const ATTRS(ATTR_NO_WARN_UNUSED_DEF) FileTime MIN_FILE_TIME = { 0 };
+const ATTRS(ATTR_NO_WARN_UNUSED_DEF) FileTime MIN_FILE_TIME = {};
 
 } // namespace
 

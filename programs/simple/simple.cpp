@@ -7,10 +7,10 @@ struct Anim
 {
     ge::Engine engine;
 
-    void init(const ge::Event<ge::InitEvent> &);
+    void init(const ge::Event<ge::InitEvent> & /*ev*/);
     void link();
 
-    void renderScene(const ge::Event<ge::RenderEvent> &);
+    void renderScene(const ge::Event<ge::RenderEvent> & /*unused*/);
 };
 
 void
@@ -27,7 +27,7 @@ Anim::link()
 }
 
 void
-Anim::renderScene(const ge::Event<ge::RenderEvent> &)
+Anim::renderScene(const ge::Event<ge::RenderEvent> & /*unused*/)
 {
     glt::RenderTarget *rt = engine.renderManager().activeRenderTarget();
     rt->clearColor(glt::color(vec4(real(1))));

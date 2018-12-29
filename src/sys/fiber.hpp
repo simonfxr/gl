@@ -2,7 +2,8 @@
 #define SYS_FIBER_HPP
 
 #include "sys/conf.hpp"
-#include <stdint.h>
+
+#include <cstdint>
 
 #if 0
 #define FIBER_SHARED SHARED_IMPORT
@@ -15,7 +16,7 @@
 #include <fiber.h>
 #endif
 
-#include <stddef.h>
+#include <cstddef>
 
 typedef uint32_t FiberState;
 

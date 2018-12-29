@@ -1,8 +1,9 @@
 #ifndef GE_INIT_HPP
 #define GE_INIT_HPP
 
-#include "data/Ref.hpp"
 #include "ge/EngineEvents.hpp"
+
+#include <memory>
 
 namespace ge {
 
@@ -24,7 +25,8 @@ struct GE_API EngineInitializers
 
     EngineInitializers(bool default_init = true);
 
-    void reg(RunLevel lvl, const Ref<EventHandler<InitEvent>> &handler);
+    void reg(RunLevel lvl,
+             const std::shared_ptr<EventHandler<InitEvent>> &handler);
 };
 
 GE_API void

@@ -4,8 +4,8 @@
 
 #include <cerrno>
 #include <cmath>
+#include <cstring>
 #include <ctime>
-#include <string.h>
 #include <string>
 
 namespace sys {

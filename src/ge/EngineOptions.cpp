@@ -41,9 +41,9 @@ struct Option
 };
 
 const Option OPTIONS[] = {
-    { "--help", NULL, Help, "print a description of all options and exit" },
+    { "--help", nullptr, Help, "print a description of all options and exit" },
     { "--no-init-script",
-      NULL,
+      nullptr,
       NoInitScript,
       "inhibit loading of default script file (<program-name>.script)" },
     { "--script-dir",
@@ -87,7 +87,7 @@ struct State
 {
     EngineOptions &options;
 
-    State(EngineOptions &opts) : options(opts) {}
+    explicit State(EngineOptions &opts) : options(opts) {}
 
     bool option(OptionCase opt, const char *arg);
 };
@@ -105,7 +105,7 @@ str_eqi(const char *a, const char *b)
 {
     if (a == b)
         return true;
-    if (a == 0 || b == 0)
+    if (a == nullptr || b == nullptr)
         return false;
 
     while (tolower(*a) == tolower(*b++))
@@ -138,10 +138,10 @@ State::option(OptionCase opt, const char *arg)
         options.inhibitInitScript = true;
         return true;
     case ScriptDir:
-        options.scriptDirs.push_back(arg);
+        options.scriptDirs.emplace_back(arg);
         return true;
     case ShaderDir:
-        options.shaderDirs.push_back(arg);
+        options.shaderDirs.emplace_back(arg);
         return true;
     case CD:
         if (!parse_bool(arg, options.defaultCD)) {
@@ -150,12 +150,10 @@ State::option(OptionCase opt, const char *arg)
         }
         return true;
     case Eval:
-        options.commands.push_back(
-          std::make_pair(EngineOptions::Command, std::string(arg)));
+        options.commands.emplace_back(EngineOptions::Command, std::string(arg));
         return true;
     case Script:
-        options.commands.push_back(
-          std::make_pair(EngineOptions::Script, std::string(arg)));
+        options.commands.emplace_back(EngineOptions::Script, std::string(arg));
         return true;
     case CWD:
         options.workingDirectory = arg;
@@ -166,11 +164,11 @@ State::option(OptionCase opt, const char *arg)
             maj > 9 || min > 9) {
             CMDWARN("invalid OpenGL Version: " + std::string(arg));
             return false;
-        } else {
-            options.window.settings.majorVersion = unsigned(maj);
-            options.window.settings.minorVersion = unsigned(min);
-            return true;
         }
+        options.window.settings.majorVersion = unsigned(maj);
+        options.window.settings.minorVersion = unsigned(min);
+        return true;
+
     case GLProfile:
         if (str_eq(arg, "core")) {
             options.window.settings.coreProfile = true;
@@ -233,13 +231,9 @@ State::option(OptionCase opt, const char *arg)
 } // namespace
 
 EngineOptions::EngineOptions()
-  : commands()
-  , workingDirectory(SOURCE_DIR)
+  : workingDirectory(SOURCE_DIR)
   , inhibitInitScript(false)
   , defaultCD(false)
-  , shaderDirs()
-  , scriptDirs()
-  , window()
   , mode(Animate)
   , traceOpenGL(false)
   , disableRender(false)
@@ -249,7 +243,7 @@ EngineOptions::EngineOptions()
 #ifdef GLDEBUG
     window.settings.debugContext = true;
 #endif
-    scriptDirs.push_back("scripts");
+    scriptDirs.emplace_back("scripts");
 }
 
 EngineOptions &
@@ -273,7 +267,7 @@ EngineOptions::parse(int *argcp, char ***argvp)
         bool err = false;
         int skip = 0;
 
-        if (argv[i] != 0 && argv[i][0] == '-') {
+        if (argv[i] != nullptr && argv[i][0] == '-') {
 
             if (str_eq(argv[i], "--")) {
                 skip = 1;
@@ -281,21 +275,19 @@ EngineOptions::parse(int *argcp, char ***argvp)
                 goto skip_args;
             }
 
-            for (defs::index opt = 0; opt < ARRAY_LENGTH(OPTIONS); ++opt) {
-                if (str_eq(argv[i], OPTIONS[opt].option)) {
-                    bool has_arg = OPTIONS[opt].option_arg != 0;
+            for (const auto &opt : OPTIONS) {
+                if (str_eq(argv[i], opt.option)) {
+                    bool has_arg = opt.option_arg != nullptr;
 
                     if (!has_arg) {
                         skip = 1;
-                        err = !state.option(OPTIONS[opt].option_case, NULL);
+                        err = !state.option(opt.option_case, nullptr);
                     } else if (i + 1 >= argc) {
                         skip = 1;
-                        CMDWARN(std::string(OPTIONS[opt].option) +
-                                " missing argument");
+                        CMDWARN(std::string(opt.option) + " missing argument");
                     } else {
                         skip = 2;
-                        err =
-                          !state.option(OPTIONS[opt].option_case, argv[i + 1]);
+                        err = !state.option(opt.option_case, argv[i + 1]);
                     }
                 }
             }
@@ -316,7 +308,7 @@ EngineOptions::parse(int *argcp, char ***argvp)
     while (i < argc)
         argv[dest++] = argv[i++];
 
-    argv[dest] = 0;
+    argv[dest] = nullptr;
     *argcp = dest;
     return *this;
 }
@@ -330,28 +322,28 @@ EngineOptions::printHelp()
 
     int max_col = 0;
 
-    for (defs::index i = 0; i < ARRAY_LENGTH(OPTIONS); ++i) {
+    for (const auto &i : OPTIONS) {
         defs::index w = 2;
-        w += SIZE(strlen(OPTIONS[i].option));
-        if (OPTIONS[i].option_arg != 0)
-            w += 1 + SIZE(strlen(OPTIONS[i].option_arg));
+        w += SIZE(strlen(i.option));
+        if (i.option_arg != nullptr)
+            w += 1 + SIZE(strlen(i.option_arg));
         if (w > max_col)
             max_col = w;
     }
 
-    for (defs::index i = 0; i < ARRAY_LENGTH(OPTIONS); ++i) {
+    for (const auto &i : OPTIONS) {
         defs::index w = 2;
-        out << "  " << OPTIONS[i].option;
-        w += SIZE(strlen(OPTIONS[i].option));
-        if (OPTIONS[i].option_arg != 0) {
-            out << " " << OPTIONS[i].option_arg;
-            w += 1 + SIZE(strlen(OPTIONS[i].option_arg));
+        out << "  " << i.option;
+        w += SIZE(strlen(i.option));
+        if (i.option_arg != nullptr) {
+            out << " " << i.option_arg;
+            w += 1 + SIZE(strlen(i.option_arg));
         }
 
         while (w++ < max_col + 3)
             out << ' ';
 
-        out << OPTIONS[i].description << sys::io::endl;
+        out << i.description << sys::io::endl;
     }
 
     out << sys::io::endl;

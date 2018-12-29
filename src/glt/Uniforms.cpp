@@ -231,7 +231,7 @@ setUniform(bool mandatory,
     GLint num_active;
     GL_CALL(glGetProgramiv, *prog.program(), GL_ACTIVE_UNIFORMS, &num_active);
     if (locationi < num_active) {
-        GLuint location = GLuint(locationi);
+        auto location = GLuint(locationi);
         GLint actual_typei = -1;
         GL_CALL(glGetActiveUniformsiv,
                 *prog.program(),
@@ -240,7 +240,7 @@ setUniform(bool mandatory,
                 GL_UNIFORM_TYPE,
                 &actual_typei);
         if (actual_typei != -1) {
-            GLenum actual_type = GLenum(actual_typei);
+            auto actual_type = GLenum(actual_typei);
             if (actual_type != type) {
                 std::string err =
                   "uniform \"" + name +

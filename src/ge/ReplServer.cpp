@@ -4,6 +4,7 @@
 
 #include "sys/fiber.hpp"
 
+#include <utility>
 #include <vector>
 
 namespace ge {
@@ -41,8 +42,8 @@ struct Client
     Client(int _id, Handle h);
     ~Client();
 
-    bool handle(Engine &);
-    bool handleIO(Engine &);
+    bool handle(Engine & /*e*/);
+    bool handleIO(Engine & /*e*/);
 };
 
 struct ParserArgs
@@ -50,10 +51,10 @@ struct ParserArgs
     Client *client;
 };
 
-static void
+void
 run_parser_fiber(void *args0)
 {
-    ParserArgs *args = reinterpret_cast<ParserArgs *>(args0);
+    auto *args = reinterpret_cast<ParserArgs *>(args0);
     Client *c = args->client;
     while (c->state != ParsingStop) {
         bool ok = tokenize(c->parse_state, c->statement);
@@ -85,7 +86,7 @@ Client::Client(int _id, Handle h)
   , parse_state(in_stream, "")
 {
     fiber_alloc(&parser_fiber, 65536);
-    ParserArgs args;
+    ParserArgs args{};
     args.client = this;
     fiber_push_return(
       &parser_fiber, run_parser_fiber, (void *) &args, sizeof args);
@@ -139,14 +140,14 @@ Client::handleIO(Engine &e)
 struct ReplServer::Data
 {
     Socket server;
-    std::vector<Ref<Client>> clients;
-    bool running;
-    int next_id;
+    std::vector<std::shared_ptr<Client>> clients;
+    bool running{ false };
+    int next_id{};
     Engine &engine;
-    Ref<EventHandler<InputEvent>> io_handler;
+    std::shared_ptr<EventHandler<InputEvent>> io_handler;
 
-    Data(Engine &e, const Ref<EventHandler<InputEvent>> &_handler)
-      : running(false), next_id(0), engine(e), io_handler(_handler)
+    Data(Engine &e, std::shared_ptr<EventHandler<InputEvent>> _handler)
+      : engine(e), io_handler(std::move(_handler))
     {}
 };
 
@@ -183,7 +184,7 @@ ReplServer::running()
     return self->running;
 }
 
-Ref<EventHandler<InputEvent>> &
+std::shared_ptr<EventHandler<InputEvent>> &
 ReplServer::ioHandler()
 {
     return self->io_handler;
@@ -202,7 +203,7 @@ ReplServer::acceptClients()
             sys::io::close(handle);
         } else {
             self->clients.push_back(
-              makeRef(new Client(self->next_id++, handle)));
+              std::make_shared<Client>(self->next_id++, handle));
         }
     }
 }
@@ -228,7 +229,7 @@ ReplServer::handleIO()
 }
 
 void
-ReplServer::handleInputEvent(const Event<InputEvent> &)
+ReplServer::handleInputEvent(const Event<InputEvent> & /*unused*/)
 {
     handleIO();
 }

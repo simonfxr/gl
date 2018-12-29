@@ -32,48 +32,48 @@ struct World
     vec2_t julia_constant = vec2(0.3, 0.5);
 
     void zoom(real t);
-    void shift(const vec2_t &);
+    void shift(const vec2_t & /*a*/);
 
     void julia_constant_rotate(real phi);
-    void julia_constant_scale(real s);
-    void julia_constant_add(const vec2_t &);
+    void julia_constant_scale(real t);
+    void julia_constant_add(const vec2_t & /*z*/);
     void julia_constant_reset();
 };
 
 struct Commands : public ge::Plugin
 {
 
-    Ref<ge::Command> zoom;
-    Ref<ge::Command> shift_x;
-    Ref<ge::Command> shift_y;
+    ge::CommandPtr zoom;
+    ge::CommandPtr shift_x;
+    ge::CommandPtr shift_y;
 
-    Ref<ge::Command> julia_constant_rotate;
-    Ref<ge::Command> julia_constant_scale;
-    Ref<ge::Command> julia_constant_add_re;
-    Ref<ge::Command> julia_constant_add_im;
-    Ref<ge::Command> julia_constant_reset;
+    ge::CommandPtr julia_constant_rotate;
+    ge::CommandPtr julia_constant_scale;
+    ge::CommandPtr julia_constant_add_re;
+    ge::CommandPtr julia_constant_add_im;
+    ge::CommandPtr julia_constant_reset;
 
-    Commands(World &);
+    explicit Commands(World & /*w*/);
 
-    void registerWith(ge::Engine &) final override;
-    void registerCommands(ge::CommandProcessor &) final override;
+    void registerWith(ge::Engine & /*unused*/) final;
+    void registerCommands(ge::CommandProcessor & /*coms*/) final;
 };
 
 struct Anim
 {
     ge::Engine engine;
     glt::CubeMesh<Vertex> quadBatch;
-    Ref<glt::TextureRenderTarget> render_texture;
+    std::shared_ptr<glt::TextureRenderTarget> render_texture;
 
     World world;
-    Ref<Commands> commands;
+    std::shared_ptr<Commands> commands;
 
-    real time_print_fps;
+    real time_print_fps{};
 
-    void init(const ge::Event<ge::InitEvent> &);
+    void init(const ge::Event<ge::InitEvent> & /*ev*/);
     void link(ge::Engine &e);
-    void animate(const ge::Event<ge::AnimationEvent> &);
-    void renderScene(const ge::Event<ge::RenderEvent> &);
+    void animate(const ge::Event<ge::AnimationEvent> & /*unused*/);
+    void renderScene(const ge::Event<ge::RenderEvent> & /*ev*/);
 
     void handleWindowResized(const ge::Event<ge::WindowResized> &ev);
 };
@@ -83,13 +83,13 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
     link(ev.info.engine);
 
-    commands = makeRef(new Commands(world));
+    commands = std::make_shared<Commands>(world);
     engine.enablePlugin(*commands);
 
     time_print_fps = 0;
 
     {
-        Vertex v;
+        Vertex v{};
         v.position = vec2(-1.f, -1.f);
         quadBatch.add(v);
         v.position = vec2(1.f, -1.f);
@@ -108,8 +108,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
         glt::TextureRenderTarget::Params ps;
         ps.samples = NUM_SAMPLES;
         ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
-        render_texture = makeRef(new glt::TextureRenderTarget(w, h, ps));
-        engine.renderManager().setDefaultRenderTarget(render_texture.ptr());
+        render_texture = std::make_shared<glt::TextureRenderTarget>(w, h, ps);
+        engine.renderManager().setDefaultRenderTarget(render_texture.get());
 
         GL_CALL(glEnable, GL_MULTISAMPLE);
     }
@@ -129,7 +129,7 @@ Anim::link(ge::Engine &e)
 }
 
 void
-Anim::animate(const ge::Event<ge::AnimationEvent> &)
+Anim::animate(const ge::Event<ge::AnimationEvent> & /*unused*/)
 {
     // empty
 }
@@ -144,11 +144,11 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
     glt::RenderManager &rm = engine.renderManager();
 
     if (MULTISAMPLING) {
-        rm.setActiveRenderTarget(render_texture.ptr());
+        rm.setActiveRenderTarget(render_texture.get());
         render_texture->clear();
     }
 
-    Ref<glt::ShaderProgram> renderShader = e.shaderManager().program("render");
+    auto renderShader = e.shaderManager().program("render");
     ASSERT(renderShader);
 
     renderShader->use();
@@ -164,8 +164,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 
     if (MULTISAMPLING) {
         rm.setActiveRenderTarget(&engine.window().renderTarget());
-        Ref<glt::ShaderProgram> postproc =
-          e.shaderManager().program("postproc");
+        auto postproc = e.shaderManager().program("postproc");
         ASSERT(postproc);
 
         postproc->use();
@@ -197,14 +196,14 @@ Anim::handleWindowResized(const ge::Event<ge::WindowResized> &ev)
     if (MULTISAMPLING) {
         size w = ev.info.window.windowWidth();
         size h = ev.info.window.windowHeight();
-        engine.renderManager().setActiveRenderTarget(0);
+        engine.renderManager().setActiveRenderTarget(nullptr);
         render_texture->resize(w, h);
-        engine.renderManager().setDefaultRenderTarget(render_texture.ptr());
+        engine.renderManager().setDefaultRenderTarget(render_texture.get());
     }
 }
 
-typedef ge::Event<ge::CommandEvent> ComEv;
-typedef Array<ge::CommandArg> ComArgs;
+using ComEv = ge::Event<ge::CommandEvent>;
+using ComArgs = Array<ge::CommandArg>;
 
 #define DEF_NUM_COMMAND(nm, code)                                              \
     nm(ge::makeNumCommand([&w](const ComEv &, double x) { code; }, #nm, ""))
@@ -229,7 +228,7 @@ Commands::Commands(World &w)
 {}
 
 void
-Commands::registerWith(ge::Engine &)
+Commands::registerWith(ge::Engine & /*unused*/)
 {
     // NOOP
 }

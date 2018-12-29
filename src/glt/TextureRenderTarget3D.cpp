@@ -55,7 +55,7 @@ TextureRenderTarget3D::createTexture(bool delete_old)
             0,
             GL_RGB,
             GL_UNSIGNED_BYTE,
-            0);
+            nullptr);
     _sampler.data()->unbind(0, false);
 
     _sampler.filterMode(this->filterMode());

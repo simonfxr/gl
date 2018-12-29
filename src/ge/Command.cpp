@@ -1,3 +1,4 @@
+#include <utility>
 #include <vector>
 
 #include "data/Array.hpp"
@@ -32,9 +33,9 @@ CommandEvent::CommandEvent(ge::Engine &e, CommandProcessor &proc)
 {}
 
 Command::Command(const Array<CommandParamType> &ps,
-                 const std::string name,
-                 const std::string &desc)
-  : params(ps), namestr(name), descr(desc)
+                 const std::string &name,
+                 std::string desc)
+  : params(ps), namestr(name), descr(std::move(desc))
 {
     // std::cerr << "creating command: params: " << &ps << " name = " << name <<
     // " nparams = " << params.size() << std::endl;
@@ -127,15 +128,15 @@ QuotationCommand::QuotationCommand(const std::string &source,
 QuotationCommand::~QuotationCommand()
 {
     Quotation &q = *quotation;
-    for (uint32 i = 0; i < q.size(); ++i)
-        for (uint32 j = 0; j < q[i].size(); ++j)
-            q[i][j].free();
+    for (auto &i : q)
+        for (uint32 j = 0; j < i.size(); ++j)
+            i[j].free();
     delete quotation;
 }
 
 void
 QuotationCommand::interactive(const Event<CommandEvent> &ev,
-                              const Array<CommandArg> &)
+                              const Array<CommandArg> & /*unused*/)
 {
     for (uint32 ip = 0; ip < quotation->size(); ++ip) {
         const std::vector<CommandArg> &arg_vec = quotation->operator[](ip);
@@ -155,18 +156,19 @@ public:
                   const std::string &desc)
       : Command(NULL_PARAMS, name, desc), handler(hndlr)
     {}
-    void interactive(const Event<CommandEvent> &e, const Array<CommandArg> &)
+    void interactive(const Event<CommandEvent> &e,
+                     const Array<CommandArg> & /*unused*/) override
     {
         handler(e);
     }
 };
 
-Ref<Command>
+CommandPtr
 makeCommand(CommandHandler handler,
             const std::string &name,
             const std::string &desc)
 {
-    return Ref<Command>(new SimpleCommand(handler, name, desc));
+    return CommandPtr(new SimpleCommand(handler, name, desc));
 }
 
 struct TypedCommand : public Command
@@ -179,19 +181,19 @@ struct TypedCommand : public Command
       : Command(params, name, desc), handler(hndlr)
     {}
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args)
+                     const Array<CommandArg> &args) override
     {
         handler(e, args);
     }
 };
 
-Ref<Command>
+CommandPtr
 makeCommand(ListCommandHandler handler,
             const Array<CommandParamType> &params,
             const std::string &name,
             const std::string &desc)
 {
-    return Ref<Command>(new TypedCommand(handler, params, name, desc));
+    return CommandPtr(new TypedCommand(handler, params, name, desc));
 }
 
 struct StringListCommand : public Command
@@ -208,7 +210,7 @@ public:
         // std::cerr << "list command: " << parameters().size() << std::endl;
     }
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args)
+                     const Array<CommandArg> &args) override
     {
         for (index i = 0; i < args.size(); ++i) {
             if (args[i].type != String) {
@@ -221,12 +223,12 @@ public:
     }
 };
 
-Ref<Command>
+CommandPtr
 makeStringListCommand(ListCommandHandler handler,
                       const std::string &name,
                       const std::string &desc)
 {
-    return Ref<Command>(new StringListCommand(handler, name, desc));
+    return CommandPtr(new StringListCommand(handler, name, desc));
 }
 
 struct ListCommand : public Command
@@ -241,18 +243,18 @@ public:
       : Command(LIST_PARAMS, name, desc), handler(hndlr)
     {}
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args)
+                     const Array<CommandArg> &args) override
     {
         handler(e, args);
     }
 };
 
-Ref<Command>
+CommandPtr
 makeListCommand(ListCommandHandler handler,
                 const std::string &name,
                 const std::string &desc)
 {
-    return Ref<Command>(new ListCommand(handler, name, desc));
+    return CommandPtr(new ListCommand(handler, name, desc));
 }
 
 } // namespace ge

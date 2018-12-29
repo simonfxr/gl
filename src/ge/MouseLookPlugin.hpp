@@ -17,8 +17,8 @@ struct GE_API MouseLookPlugin : public Plugin
 
     struct Commands
     {
-        Ref<Command> grab;
-        Ref<Command> ungrab;
+        CommandPtr grab;
+        CommandPtr ungrab;
     };
 
     MouseLookPlugin();

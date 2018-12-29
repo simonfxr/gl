@@ -169,10 +169,9 @@ read(Handle &h, size &s, char *buf)
     if (k == 0) {
         s = 0;
         return HE_EOF;
-    } else {
-        s = 0;
-        return convertErrno();
     }
+    s = 0;
+    return convertErrno();
 }
 
 HandleError

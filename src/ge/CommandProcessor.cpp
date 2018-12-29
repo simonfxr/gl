@@ -11,9 +11,9 @@
 
 namespace ge {
 
-#define NULL_COMMAND_REF Ref<Command>()
+#define NULL_COMMAND_REF CommandPtr()
 
-typedef std::map<std::string, Ref<Command>> CommandMap;
+typedef std::map<std::string, CommandPtr> CommandMap;
 
 size
 CommandProcessor::size() const
@@ -24,8 +24,8 @@ CommandProcessor::size() const
 bool
 CommandProcessor::addScriptDirectory(const std::string &dir, bool check_exists)
 {
-    for (uint32 i = 0; i < scriptDirs.size(); ++i)
-        if (dir == scriptDirs[i])
+    for (const auto &scriptDir : scriptDirs)
+        if (dir == scriptDir)
             return true;
 
     sys::fs::ObjectType type = sys::fs::Directory;
@@ -45,24 +45,24 @@ CommandProcessor::scriptDirectories()
     return scriptDirs;
 }
 
-Ref<Command>
-CommandProcessor::command(const std::string comname)
+CommandPtr
+CommandProcessor::command(const std::string &comname)
 {
-    CommandMap::iterator it = commands.find(comname);
+    auto it = commands.find(comname);
     if (it != commands.end())
         return it->second;
     return NULL_COMMAND_REF;
 }
 
 bool
-CommandProcessor::define(const Ref<Command> &comm, bool unique)
+CommandProcessor::define(const CommandPtr &comm, bool unique)
 {
     return define(comm->name(), comm, unique);
 }
 
 bool
-CommandProcessor::define(const std::string comname,
-                         const Ref<Command> &comm,
+CommandProcessor::define(const std::string &comname,
+                         const CommandPtr &comm,
                          bool unique)
 {
     if (!comm) {
@@ -75,7 +75,7 @@ CommandProcessor::define(const std::string comname,
         return false;
     }
 
-    bool dup = command(comname);
+    bool dup = command(comname) != nullptr;
     if (dup && unique) {
         ERR(engine().out(), ("duplicate command name: " + comname).c_str());
         return false;
@@ -88,7 +88,7 @@ CommandProcessor::define(const std::string comname,
 bool
 CommandProcessor::exec(const std::string &comname, Array<CommandArg> &args)
 {
-    Ref<Command> com = command(comname);
+    CommandPtr com = command(comname);
     if (!com) {
         ERR(engine().out(), ("command not found: " + comname).c_str());
         return false;
@@ -110,8 +110,8 @@ CommandProcessor::exec(Array<CommandArg> &args)
 {
     if (args.size() == 0)
         return true;
-    const std::string *com_name = 0;
-    Ref<Command> comm;
+    const std::string *com_name = nullptr;
+    CommandPtr comm;
     if (args[0].type == String) {
         com_name = args[0].string;
     } else if (args[0].type == CommandRef) {
@@ -139,7 +139,7 @@ CommandProcessor::exec(Array<CommandArg> &args)
 }
 
 bool
-CommandProcessor::exec(Ref<Command> &com,
+CommandProcessor::exec(CommandPtr &com,
                        Array<CommandArg> &args,
                        const std::string &comname)
 {
@@ -168,7 +168,7 @@ CommandProcessor::exec(Ref<Command> &com,
         ERR(engine().out(), err.str());
     }
 
-    std::vector<Ref<Command>> keepAlive;
+    std::vector<CommandPtr> keepAlive;
 
     for (index i = 0; i < nparams; ++i) {
         if (params[i] != AnyParam) {
@@ -206,7 +206,7 @@ CommandProcessor::exec(Ref<Command> &com,
                     args[i].type = Integer;
                     args[i].number = double(args[i].integer);
                 } else if (val_type == CommandRef && args[i].type == String) {
-                    Ref<Command> comArg = command(*args[i].string);
+                    CommandPtr comArg = command(*args[i].string);
                     if (!comArg) {
                         sys::io::ByteStream err;
                         if (!comname.empty())
@@ -220,7 +220,7 @@ CommandProcessor::exec(Ref<Command> &com,
                     keepAlive.push_back(comArg);
                     args[i].type = CommandRef;
                     args[i].command.name = args[i].string;
-                    args[i].command.ref = new Ref<Command>(comArg);
+                    args[i].command.ref = new CommandPtr(comArg);
                 } else if (val_type == KeyCombo && args[i].type == String) {
                     if (!coerceKeyCombo(args[i])) {
                         sys::io::ByteStream err;
@@ -310,8 +310,8 @@ CommandProcessor::loadStream(sys::io::InStream &inp,
         }
 
     next:;
-        for (uint32 i = 0; i < args.size(); ++i)
-            args[i].free();
+        for (auto &arg : args)
+            arg.free();
         args.clear();
     }
 
@@ -328,13 +328,12 @@ CommandProcessor::evalCommand(const std::string &cmd)
 bool
 CommandProcessor::execCommand(std::vector<CommandArg> &args)
 {
-    if (args.size() > 0) {
+    if (!args.empty()) {
         Array<CommandArg> com_args = SHARE_ARRAY(SIZE(args.size()), &args[0]);
         return execCommand(com_args);
-    } else {
-        Array<CommandArg> com_args = ARRAY_INITIALIZER(CommandArg);
-        return execCommand(com_args);
     }
+    Array<CommandArg> com_args = ARRAY_INITIALIZER(CommandArg);
+    return execCommand(com_args);
 }
 
 bool

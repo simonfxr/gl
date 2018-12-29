@@ -73,7 +73,7 @@ isExtensionSupported(const char *extension)
 {
     GLint ni;
     glGetIntegerv(GL_NUM_EXTENSIONS, &ni);
-    GLuint n = GLuint(ni);
+    auto n = GLuint(ni);
 
     for (GLuint i = 0; i < n; i++)
         if (strcmp(extension, gl_unstr(glGetStringi(GL_EXTENSIONS, i))) == 0)
@@ -110,7 +110,7 @@ bool
 checkForGLError(const err::Location &loc)
 {
 
-    if (G.print_opengl_calls && loc.operation != 0) {
+    if (G.print_opengl_calls && loc.operation != nullptr) {
         printGLTrace(loc);
     }
 
@@ -128,16 +128,16 @@ bool
 initDebug()
 {
 
-    GLDebug *dbg = 0;
-    const char *debug_impl = 0;
+    GLDebug *dbg = nullptr;
+    const char *debug_impl = nullptr;
 
-    if (dbg == 0 && GLEW_ARB_debug_output) {
+    if (dbg == nullptr && GLEW_ARB_debug_output) {
         debug_impl = "GL_ARB_debug_output";
         sys::io::stdout() << "trying ARB debug" << sys::io::endl;
         dbg = ARBDebug::init();
     }
 
-    if (dbg == 0 && GLEW_AMD_debug_output) {
+    if (dbg == nullptr && GLEW_AMD_debug_output) {
         debug_impl = "GL_AMD_debug_output";
         sys::io::stdout() << "trying AMD debug" << sys::io::endl;
         dbg = AMDDebug::init();
@@ -145,7 +145,7 @@ initDebug()
 
     bool initialized;
 
-    if (dbg == 0) {
+    if (dbg == nullptr) {
         sys::io::stdout()
           << "couldnt initialize Debug Output, no debug implementaion available"
           << sys::io::endl;
@@ -157,7 +157,7 @@ initDebug()
         initialized = true;
     }
 
-    G.gl_debug = dbg;
+    G.gl_debug.reset(dbg);
     return initialized;
 }
 
@@ -255,13 +255,6 @@ GLMemInfoNV::info(GLMemInfoNV *mi)
     return true;
 }
 
-Utils::Utils()
-  : gl_debug(makeRef<GLDebug>(new NoDebug))
-  , print_opengl_calls(false)
-  , nv_mem_info_initialized(false)
-  , nv_mem_info_available(false)
-  , ati_mem_info_initialized(false)
-  , ati_mem_info_available(false)
-{}
+Utils::Utils() : gl_debug(std::make_shared<NoDebug>()) {}
 
 } // namespace glt

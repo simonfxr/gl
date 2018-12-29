@@ -1,11 +1,12 @@
 #ifndef GLT_TEXTURE_SAMPLER_HPP
 #define GLT_TEXTURE_SAMPLER_HPP
 
-#include "data/Ref.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/TextureData.hpp"
 #include "glt/conf.hpp"
 #include "opengl.hpp"
+
+#include <memory>
 
 namespace glt {
 
@@ -14,7 +15,7 @@ using namespace defs;
 struct GLT_API TextureSampler
 {
 private:
-    Ref<TextureData> _data;
+    std::shared_ptr<TextureData> _data;
     GLSamplerObject _sampler;
 
 public:
@@ -44,7 +45,7 @@ public:
     };
 
     TextureSampler() : _data(new TextureData), _sampler(0) {}
-    explicit TextureSampler(const Ref<TextureData> &data)
+    explicit TextureSampler(const std::shared_ptr<TextureData> &data)
       : _data(data), _sampler(0)
     {}
     ~TextureSampler();
@@ -52,8 +53,8 @@ public:
     void free();
 
     const GLSamplerObject &sampler() const { return _sampler; }
-    const Ref<TextureData> &data() const { return _data; }
-    Ref<TextureData> &data() { return _data; }
+    const std::shared_ptr<TextureData> &data() const { return _data; }
+    std::shared_ptr<TextureData> &data() { return _data; }
     GLSamplerObject &ensureSampler();
 
     void filterMode(FilterMode, Filter filter = Filter(FilterMin | FilterMag));

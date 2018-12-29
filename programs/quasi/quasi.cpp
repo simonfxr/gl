@@ -36,12 +36,12 @@ struct Anim
     ge::Engine engine;
     glt::CubeMesh<Vertex> quadBatch;
 
-    float time_print_fps;
+    float time_print_fps{};
 
-    void init(const ge::Event<ge::InitEvent> &);
+    void init(const ge::Event<ge::InitEvent> & /*ev*/);
     void link(ge::Engine &e);
-    void animate(const ge::Event<ge::AnimationEvent> &);
-    void renderScene(const ge::Event<ge::RenderEvent> &);
+    void animate(const ge::Event<ge::AnimationEvent> & /*unused*/);
+    void renderScene(const ge::Event<ge::RenderEvent> & /*ev*/);
 };
 
 void
@@ -52,7 +52,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     time_print_fps = 0;
 
     {
-        Vertex v;
+        Vertex v{};
         v.position = vec2(-1.f, -1.f);
         quadBatch.add(v);
         v.position = vec2(1.f, -1.f);
@@ -85,7 +85,7 @@ Anim::link(ge::Engine &e)
 }
 
 void
-Anim::animate(const ge::Event<ge::AnimationEvent> &)
+Anim::animate(const ge::Event<ge::AnimationEvent> & /*unused*/)
 {
     // empty
 }
@@ -97,7 +97,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
     real time = e.gameLoop().tickTime() +
                 ev.info.interpolation * e.gameLoop().tickDuration();
 
-    Ref<glt::ShaderProgram> renderShader = e.shaderManager().program("render");
+    auto renderShader = e.shaderManager().program("render");
     ASSERT(renderShader);
 
     renderShader->use();

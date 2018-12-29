@@ -47,11 +47,11 @@ struct GE_API Camera : public Plugin
 
     struct Commands
     {
-        Ref<Command> move;
-        Ref<Command> saveFrame;
-        Ref<Command> loadFrame;
-        Ref<Command> speed;
-        Ref<Command> sensitivity;
+        CommandPtr move;
+        CommandPtr saveFrame;
+        CommandPtr loadFrame;
+        CommandPtr speed;
+        CommandPtr sensitivity;
     };
 
     Camera();

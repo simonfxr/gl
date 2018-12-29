@@ -1,9 +1,9 @@
-#include "data/Ref.hpp"
 #include "err/err.hpp"
 #include "sys/io.hpp"
 #include "sys/io/Stream.hpp"
 #include "sys/sys.hpp"
 
+#include <memory>
 #include <vector>
 
 using namespace defs;
@@ -13,29 +13,23 @@ static const size BUF_SIZE = 4096;
 
 struct Client
 {
-    Ref<io::HandleStream> stream;
-    int id;
-    bool reading;
-    char buffer[BUF_SIZE];
-    index buf_pos;
+    std::shared_ptr<io::HandleStream> stream;
+    int id{};
+    bool reading{ true };
+    char buffer[BUF_SIZE]{};
+    index buf_pos{};
     index buf_end;
 
-    Client()
-      : stream(new io::HandleStream)
-      , id(0)
-      , reading(true)
-      , buf_pos(0)
-      , buf_end(BUF_SIZE)
-    {}
+    Client() : stream(new io::HandleStream), buf_end(BUF_SIZE) {}
 };
 
 int
-main(void)
+main()
 {
 
     io::Socket server;
     std::vector<Client> clients;
-    clients.push_back(Client());
+    clients.emplace_back();
     int id = 0;
 
     sys::moduleInit();
@@ -59,7 +53,7 @@ main(void)
             sys::io::stdout() << "accepted client " << c.id << sys::io::endl;
             io::elevate(c.stream->handle,
                         io::mode(c.stream->handle) | io::HM_NONBLOCKING);
-            clients.push_back(Client());
+            clients.emplace_back();
         }
 
         for (index i = 0; i < SIZE(clients.size()) - 1; ++i) {

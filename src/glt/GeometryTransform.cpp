@@ -29,7 +29,7 @@ struct GeometryTransform::Data
     aligned_mat4_t vpMatrix{};
     aligned_mat3_t normalMatrix{};
 
-    uint16 depth{ 0 };
+    uint16 depth{};
     uint16 dirty_flags;
 
     aligned_mat4_t inverseProjectionMatrix;

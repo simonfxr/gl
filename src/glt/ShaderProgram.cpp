@@ -1,17 +1,16 @@
+#include "glt/ShaderProgram.hpp"
+
+#include <cstdio>
 #include <map>
 #include <set>
-#include <stdio.h>
 
 #include "defs.hpp"
 #include "opengl.hpp"
 
+#include "err/err.hpp"
 #include "glt/ShaderCompiler.hpp"
 #include "glt/ShaderManager.hpp"
-#include "glt/ShaderProgram.hpp"
 #include "glt/utils.hpp"
-
-#include "err/err.hpp"
-
 #include "sys/fs.hpp"
 #include "sys/measure.hpp"
 
@@ -81,7 +80,7 @@ struct ShaderProgram::Data
     bool linked;
 
     Data(ShaderProgram &owner, ShaderManager &_sm)
-      : self(owner), program(0), sm(_sm), shaders(), attrs(), linked(false)
+      : self(owner), program(0), sm(_sm), linked(false)
     {}
 
     Data(ShaderProgram &owner, const Data &rhs)
@@ -98,7 +97,7 @@ struct ShaderProgram::Data
 
     void printProgramLog(GLuint program, sys::io::OutStream &out);
 
-    void handleCompileError(ShaderCompilerError::Type);
+    void handleCompileError(ShaderCompilerError::Type /*unused*/);
 };
 
 ShaderProgram::ShaderProgram(ShaderManager &sm) : self(new Data(*this, sm)) {}
@@ -129,11 +128,9 @@ ShaderProgram::reload()
     ShaderObjects newshaders;
     CompileState cstate(self->sm.shaderCompiler(), newshaders);
 
-    for (ShaderRootDependencies::const_iterator it = self->rootdeps.begin();
-         it != self->rootdeps.end();
-         ++it) {
+    for (auto it = self->rootdeps.begin(); it != self->rootdeps.end(); ++it) {
 
-        Ref<CompileJob> job = CompileJob::reload(self->shaders[it->first]);
+        auto job = CompileJob::reload(self->shaders[it->first]);
         cstate.enqueue(job);
     }
 
@@ -160,9 +157,8 @@ ShaderProgram::reload()
     new_prog.self->shaders = newshaders;
     if (new_prog.tryLink()) {
         return replaceWith(new_prog);
-    } else {
-        return false;
     }
+    return false;
 }
 
 ShaderManager &
@@ -198,8 +194,8 @@ ShaderProgram::Data::printProgramLog(GLuint program, sys::io::OutStream &out)
 
     if (log_len > 0) {
 
-        GLchar *log = new GLchar[size_t(log_len)];
-        GL_CALL(glGetProgramInfoLog, program, log_len, NULL, log);
+        auto *log = new GLchar[size_t(log_len)];
+        GL_CALL(glGetProgramInfoLog, program, log_len, nullptr, log);
 
         GLchar *logBegin = log;
         while (logBegin < log + log_len - 1 && isspace(*logBegin))
@@ -219,7 +215,8 @@ ShaderProgram::Data::printProgramLog(GLuint program, sys::io::OutStream &out)
     }
 }
 
-void ShaderProgram::Data::handleCompileError(ShaderCompilerError::Type)
+void ShaderProgram::Data::handleCompileError(
+  ShaderCompilerError::Type /*unused*/)
 {
     ERR("compile error occurred"); // FIXME
     self.pushError(ShaderProgramError::CompilationFailed);
@@ -230,11 +227,11 @@ ShaderProgram::addShaderSrc(const std::string &src,
                             ShaderManager::ShaderType type)
 {
     CompileState cstate(self->sm.shaderCompiler(), self->shaders);
-    Ref<ShaderSource> source(new StringSource(type, src));
+    auto source = std::make_shared<StringSource>(type, src);
 
     {
         self->rootdeps.insert(std::make_pair(source->key, source));
-        Ref<CompileJob> job = CompileJob::load(source);
+        auto job = CompileJob::load(source);
         cstate.enqueue(job);
     }
 
@@ -270,11 +267,11 @@ ShaderProgram::addShaderFile(const std::string &file0,
     ASSERT(!file.empty());
 
     CompileState cstate(self->sm.shaderCompiler(), self->shaders);
-    Ref<ShaderSource> source(new FileSource(type, file));
+    auto source = std::make_shared<FileSource>(type, file);
 
     {
         self->rootdeps.insert(std::make_pair(source->key, source));
-        Ref<CompileJob> job = CompileJob::load(source);
+        auto job = CompileJob::load(source);
         cstate.enqueue(job);
     }
 
@@ -327,18 +324,14 @@ ShaderProgram::link()
     if (self->linked)
         return true;
 
-    for (Attributes::const_iterator it = self->attrs.begin();
-         it != self->attrs.end();
-         ++it) {
+    for (auto it = self->attrs.begin(); it != self->attrs.end(); ++it) {
         GL_CALL(
           glBindAttribLocation, *self->program, it->second, it->first.c_str());
         // FIXME: check wether attrib was added correctly
     }
 
     std::vector<GLuint> added;
-    for (ShaderObjects::const_iterator it = self->shaders.begin();
-         it != self->shaders.end();
-         ++it) {
+    for (auto it = self->shaders.begin(); it != self->shaders.end(); ++it) {
         GL_CALL(glAttachShader, *self->program, *it->second->handle);
         added.push_back(*it->second->handle);
     }
@@ -435,12 +428,11 @@ ShaderProgram::replaceWith(ShaderProgram &new_prog)
             new_prog.self->program._name = 0;
             new_prog.reset();
             return true;
-        } else {
-            LOG_BEGIN(*this, err::Info);
-            LOG_PUT_ERR(*this, new_prog.getError(), "replaceWith failed");
-            LOG_END(*this);
-            return false;
         }
+        LOG_BEGIN(*this, err::Info);
+        LOG_PUT_ERR(*this, new_prog.getError(), "replaceWith failed");
+        LOG_END(*this);
+        return false;
     }
 
     return true;
@@ -506,7 +498,7 @@ ShaderProgram::bindStreamOutVaryings(const Array<std::string> &vars)
     std::vector<const char *> cvars(UNSIZE(vars.size()));
     for (index i = 0; i < vars.size(); ++i)
         cvars[i] = vars[i].c_str();
-    GLsizei len = GLsizei(vars.size());
+    auto len = GLsizei(vars.size());
     GL_CALL(glTransformFeedbackVaryings,
             *program(),
             len,

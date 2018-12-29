@@ -1,6 +1,6 @@
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "opengl.hpp"
 
@@ -26,10 +26,10 @@ DEFINE_VERTEX(VERTEX);
 struct Anim
 {
     ge::Engine engine;
-    Ref<glt::ShaderProgram> program;
+    glt::ShaderProgramRef program;
 
-    Ref<glt::TextureSampler> texture0;
-    Ref<glt::TextureSampler> texture1;
+    std::shared_ptr<glt::TextureSampler> texture0;
+    std::shared_ptr<glt::TextureSampler> texture1;
     glt::Mesh<Vertex> mesh;
 
     struct GlobalResources
@@ -37,27 +37,27 @@ struct Anim
         GLfloat fade_factor;
     };
 
-    GlobalResources g_resources;
+    GlobalResources g_resources{};
 
-    void init(const ge::Event<ge::InitEvent> &);
+    void init(const ge::Event<ge::InitEvent> & /*ev*/);
     void link();
 
-    void renderScene(const ge::Event<ge::RenderEvent> &);
-    Ref<glt::TextureSampler> make_texture(const char *filename);
+    void renderScene(const ge::Event<ge::RenderEvent> & /*ev*/);
+    std::shared_ptr<glt::TextureSampler> make_texture(const char *filename);
     int make_resources();
 };
 
-Ref<glt::TextureSampler>
+std::shared_ptr<glt::TextureSampler>
 Anim::make_texture(const char *filename)
 {
-    Ref<glt::TextureSampler> tex = makeRef<glt::TextureSampler>(0);
+    std::shared_ptr<glt::TextureSampler> tex;
     int width, height;
     void *pixels = read_tga(filename, &width, &height);
 
     if (!pixels)
         return tex;
 
-    tex = makeRef(new glt::TextureSampler);
+    tex.reset(new glt::TextureSampler);
     GL_CALL(glBindTexture, GL_TEXTURE_2D, *tex->data()->ensureHandle());
 
     GL_CALL(glTexImage2D,
@@ -103,16 +103,16 @@ Anim::make_resources()
         return 0;
 
     for (int i = 0; i < 4; ++i) {
-        Vertex v;
-        vec2_t pos;
+        Vertex v{};
+        vec2_t pos{};
         pos[0] = g_vertex_buffer_data[i * 2];
         pos[1] = g_vertex_buffer_data[i * 2 + 1];
         v.position = pos;
         mesh.addVertex(v);
     }
 
-    for (int i = 0; i < 4; ++i) {
-        mesh.addElement(g_element_buffer_data[i]);
+    for (unsigned short i : g_element_buffer_data) {
+        mesh.addElement(i);
     }
 
     mesh.primType(GL_TRIANGLE_STRIP);
@@ -146,7 +146,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
     rt->clearColor(glt::color(vec4(real(1))));
     rt->clear();
 
-    float secs = (float) sys::queryTimer();
+    auto secs = static_cast<float>(sys::queryTimer());
     g_resources.fade_factor = sinf(secs * 0.5f + 0.5f);
 
     texture0->bind(0);

@@ -201,7 +201,7 @@ namespace {
 
 struct LogState
 {
-    int in_log{ 0 };
+    int in_log{};
     bool null{ true };
     Location loc;
     LogLevel level{ Info };

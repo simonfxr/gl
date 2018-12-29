@@ -4,7 +4,6 @@
 #include <string>
 
 #include "data/Array.hpp"
-#include "data/Ref.hpp"
 #include "err/WithError.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/ShaderManager.hpp"
@@ -62,7 +61,7 @@ struct GLT_API ShaderProgram
 
     bool addShaderFilePair(const std::string &basename, bool absolute = false);
 
-    bool bindAttribute(const std::string &name, GLuint position);
+    bool bindAttribute(const std::string &s, GLuint position);
 
     bool bindStreamOutVaryings(const Array<std::string> &);
 
@@ -102,6 +101,8 @@ private:
     ShaderProgram(const ShaderProgram &);
     ShaderProgram &operator=(const ShaderProgram &);
 };
+
+using ShaderProgramRef = std::shared_ptr<ShaderProgram>;
 
 template<typename T>
 bool

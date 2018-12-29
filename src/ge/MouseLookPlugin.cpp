@@ -10,27 +10,28 @@ struct MouseLookPlugin::Data
 {
     Data();
 
-    Engine *_engine;
-    bool _should_grab;
-    State _state;
-    Camera *_camera;
+    Engine *_engine{};
+    bool _should_grab{ true };
+    State _state{ Free };
+    Camera *_camera{};
     Commands _commands;
 
     void stateChanged(State new_state);
     void setState(State new_state);
 
     // commands
-    void runGrabMouse(const Event<CommandEvent> &, const Array<CommandArg> &);
-    void runUngrabMouse(const Event<CommandEvent> &, const Array<CommandArg> &);
+    void runGrabMouse(const Event<CommandEvent> & /*unused*/,
+                      const Array<CommandArg> & /*unused*/);
+    void runUngrabMouse(const Event<CommandEvent> & /*unused*/,
+                        const Array<CommandArg> & /*unused*/);
 
     // handlers
-    void handleMouseClick(const Event<MouseButton> &);
-    void handleMouseMove(const Event<MouseMoved> &);
-    void handleFocusChanged(const Event<FocusChanged> &);
+    void handleMouseClick(const Event<MouseButton> & /*ev*/);
+    void handleMouseMove(const Event<MouseMoved> & /*ev*/);
+    void handleFocusChanged(const Event<FocusChanged> & /*unused*/);
 };
 
 MouseLookPlugin::Data::Data()
-  : _engine(0), _should_grab(true), _state(Free), _camera(0), _commands()
 {
     _commands.grab = makeCommand(this,
                                  &MouseLookPlugin::Data::runGrabMouse,
@@ -47,7 +48,7 @@ MouseLookPlugin::Data::Data()
 void
 MouseLookPlugin::Data::stateChanged(State new_state)
 {
-    if (_engine == 0)
+    if (_engine == nullptr)
         return;
 
     GameWindow &win = _engine->window();
@@ -78,16 +79,16 @@ MouseLookPlugin::Data::setState(State new_state)
 }
 
 void
-MouseLookPlugin::Data::runGrabMouse(const Event<CommandEvent> &,
-                                    const Array<CommandArg> &)
+MouseLookPlugin::Data::runGrabMouse(const Event<CommandEvent> & /*unused*/,
+                                    const Array<CommandArg> & /*unused*/)
 {
     if (_should_grab)
         setState(Grabbing);
 }
 
 void
-MouseLookPlugin::Data::runUngrabMouse(const Event<CommandEvent> &,
-                                      const Array<CommandArg> &)
+MouseLookPlugin::Data::runUngrabMouse(const Event<CommandEvent> & /*unused*/,
+                                      const Array<CommandArg> & /*unused*/)
 {
     setState(Free);
 }
@@ -113,7 +114,8 @@ MouseLookPlugin::Data::handleMouseMove(const Event<MouseMoved> &ev)
 }
 
 void
-MouseLookPlugin::Data::handleFocusChanged(const Event<FocusChanged> &)
+MouseLookPlugin::Data::handleFocusChanged(
+  const Event<FocusChanged> & /*unused*/)
 {
     setState(Free);
 }

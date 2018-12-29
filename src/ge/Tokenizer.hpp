@@ -1,8 +1,6 @@
 #ifndef GE_TOKENIZER_HPP
 #define GE_TOKENIZER_HPP
 
-#include "data/Ref.hpp"
-
 #include "ge/CommandArgs.hpp"
 
 #include "sys/io/Stream.hpp"

@@ -80,7 +80,7 @@ struct MaterialProperties
 struct Teapot
 {
     glt::Frame frame;
-    MaterialProperties material;
+    MaterialProperties material{};
     glt::color color;
 };
 
@@ -102,38 +102,38 @@ struct Anim
     Teapot teapot1;
     Teapot teapot2;
 
-    bool wireframe_mode;
+    bool wireframe_mode{};
 
-    real light_angular_position;
-    real light_rotation_speed;
+    real light_angular_position{};
+    real light_rotation_speed{};
 
-    real gamma_correction;
+    real gamma_correction{};
 
-    vec3_t light;
-    vec3_t ecLight;
+    vec3_t light{};
+    vec3_t ecLight{};
 
-    uint32 shade_mode;
+    uint32 shade_mode{};
 
-    bool use_spotlight;
-    bool spotlight_smooth;
-    direction3_t ec_spotlight_dir;
+    bool use_spotlight{};
+    bool spotlight_smooth{};
+    direction3_t ec_spotlight_dir{};
 
-    Ref<glt::TextureRenderTarget> tex_render_target;
-    Ref<glt::TextureRenderTarget> glow_render_target_src;
-    Ref<glt::TextureRenderTarget> glow_render_target_dst;
+    std::shared_ptr<glt::TextureRenderTarget> tex_render_target;
+    std::shared_ptr<glt::TextureRenderTarget> glow_render_target_src;
+    std::shared_ptr<glt::TextureRenderTarget> glow_render_target_dst;
 
-    Ref<Timer> fpsTimer;
+    std::shared_ptr<Timer> fpsTimer;
 
     std::string data_dir;
 
-    Ref<Command> setDataDirCommand;
+    CommandPtr setDataDirCommand;
 
-    Anim(ge::Engine &e) : engine(e), glow_kernel(KERNEL_SIZE) {}
+    explicit Anim(ge::Engine &e) : engine(e), glow_kernel(KERNEL_SIZE) {}
 
-    void init(const Event<InitEvent> &);
-    void link(const Event<InitEvent> &);
-    void animate(const Event<AnimationEvent> &);
-    void renderScene(const Event<RenderEvent> &);
+    void init(const Event<InitEvent> & /*ev*/);
+    void link(const Event<InitEvent> & /*e*/);
+    void animate(const Event<AnimationEvent> & /*unused*/);
+    void renderScene(const Event<RenderEvent> & /*e*/);
     vec3_t lightPosition(real interpolation);
     void setupTeapotShader(const std::string &prog,
                            const vec4_t &surfaceColor,
@@ -143,12 +143,13 @@ struct Anim
     void renderLight();
     void renderTable(const std::string &shader);
 
-    void mouseMoved(const Event<MouseMoved> &);
-    void keyPressed(const Event<KeyPressed> &);
+    void mouseMoved(const Event<MouseMoved> & /*e*/);
+    void keyPressed(const Event<KeyPressed> & /*e*/);
 
-    void setDataDir(const Event<CommandEvent> &, const Array<CommandArg> &args);
+    void setDataDir(const Event<CommandEvent> & /*unused*/,
+                    const Array<CommandArg> &args);
 
-    void onWindowResized(const Event<WindowResized> &);
+    void onWindowResized(const Event<WindowResized> & /*ev*/);
 };
 
 void
@@ -175,7 +176,7 @@ Anim::init(const Event<InitEvent> &ev)
     engine.enablePlugin(camera);
     engine.enablePlugin(mouse_look);
 
-    fpsTimer = makeRef(new Timer(engine));
+    fpsTimer = std::make_shared<Timer>(engine);
     fpsTimer->start(1.f, true);
 
     setDataDirCommand = makeCommand(this,
@@ -216,7 +217,7 @@ Anim::init(const Event<InitEvent> &ev)
         groundModel.primType(GL_QUADS);
 #endif
 
-        Vertex v;
+        Vertex v{};
         v.normal = vec3(0.f, 1.f, 0.f);
         v.position = vec3(0.f, 0.f, 0.f);
         groundModel.addVertex(v);
@@ -231,7 +232,7 @@ Anim::init(const Event<InitEvent> &ev)
     }
 
     {
-        ScreenVertex v;
+        ScreenVertex v{};
         v.normal = vec3(0.f, 0.f, 1.f);
         v.position = vec3(0, 0, 0);
         screenQuad.add(v);
@@ -275,8 +276,9 @@ Anim::init(const Event<InitEvent> &ev)
         glt::TextureRenderTarget::Params ps;
         ps.samples = 4;
         ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
-        tex_render_target = makeRef(new glt::TextureRenderTarget(w, h, ps));
-        engine.renderManager().setDefaultRenderTarget(tex_render_target.ptr());
+        tex_render_target =
+          std::make_shared<glt::TextureRenderTarget>(w, h, ps);
+        engine.renderManager().setDefaultRenderTarget(tex_render_target.get());
     }
 
     {
@@ -286,9 +288,9 @@ Anim::init(const Event<InitEvent> &ev)
         ps.buffers = glt::RT_COLOR_BUFFER;
         ps.filter_mode = glt::TextureSampler::FilterLinear;
         glow_render_target_src =
-          makeRef(new glt::TextureRenderTarget(w, h, ps));
+          std::make_shared<glt::TextureRenderTarget>(w, h, ps);
         glow_render_target_dst =
-          makeRef(new glt::TextureRenderTarget(w, h, ps));
+          std::make_shared<glt::TextureRenderTarget>(w, h, ps);
     }
 
     {
@@ -310,7 +312,7 @@ Anim::init(const Event<InitEvent> &ev)
 }
 
 void
-Anim::animate(const Event<AnimationEvent> &)
+Anim::animate(const Event<AnimationEvent> & /*unused*/)
 {
     light_angular_position =
       wrapPi(light_angular_position + light_rotation_speed);
@@ -337,7 +339,7 @@ Anim::renderScene(const Event<RenderEvent> &e)
     render_target = &engine.window().renderTarget();
     bg_alpha = 1.f;
 #else
-    render_target = tex_render_target.ptr();
+    render_target = tex_render_target.get();
     bg_alpha = 0.f;
 #endif
 
@@ -391,9 +393,8 @@ Anim::renderScene(const Event<RenderEvent> &e)
 
     { // create the glow texture
         engine.renderManager().setActiveRenderTarget(
-          glow_render_target_src.ptr());
-        Ref<glt::ShaderProgram> glow_pass0 =
-          engine.shaderManager().program("glow_pass0");
+          glow_render_target_src.get());
+        auto glow_pass0 = engine.shaderManager().program("glow_pass0");
         ASSERT(glow_pass0);
         glow_pass0->use();
         tex_render_target->sampler().bind(0);
@@ -404,10 +405,9 @@ Anim::renderScene(const Event<RenderEvent> &e)
     }
 
     // blur the glow texture
-    Ref<glt::TextureRenderTarget> from = glow_render_target_src;
-    Ref<glt::TextureRenderTarget> to = glow_render_target_dst;
-    Ref<glt::ShaderProgram> glow_pass1 =
-      engine.shaderManager().program("glow_pass1");
+    auto from = glow_render_target_src;
+    auto to = glow_render_target_dst;
+    auto glow_pass1 = engine.shaderManager().program("glow_pass1");
 
     mat2_t texMat0 = mat2();
     mat2_t texMat1 = mat2(vec2(0, 1), vec2(1, 0));
@@ -417,7 +417,7 @@ Anim::renderScene(const Event<RenderEvent> &e)
 
     Array<float> kernel = { SIZE(glow_kernel.size()), &glow_kernel[0] };
     for (int pass = 0; pass < 3; ++pass) {
-        engine.renderManager().setActiveRenderTarget(to.ptr());
+        engine.renderManager().setActiveRenderTarget(to.get());
         from->sampler().bind(0);
         glt::Uniforms(*glow_pass1)
           .mandatory("texture0", glt::Sampler(from->sampler(), 0))
@@ -426,7 +426,7 @@ Anim::renderScene(const Event<RenderEvent> &e)
         screenQuad.draw();
         from->sampler().unbind(0);
 
-        engine.renderManager().setActiveRenderTarget(from.ptr());
+        engine.renderManager().setActiveRenderTarget(from.get());
         to->sampler().bind(0);
         glt::Uniforms(*glow_pass1)
           .mandatory("texture0", glt::Sampler(to->sampler(), 0))
@@ -440,8 +440,7 @@ Anim::renderScene(const Event<RenderEvent> &e)
         engine.renderManager().setActiveRenderTarget(
           &engine.window().renderTarget());
 
-        Ref<glt::ShaderProgram> postprocShader =
-          engine.shaderManager().program("postproc");
+        auto postprocShader = engine.shaderManager().program("postproc");
         ASSERT(postprocShader);
         postprocShader->use();
 
@@ -474,9 +473,9 @@ Anim::onWindowResized(const Event<WindowResized> &ev)
 {
     size w = ev.info.window.windowWidth();
     size h = ev.info.window.windowHeight();
-    engine.renderManager().setActiveRenderTarget(0);
+    engine.renderManager().setActiveRenderTarget(nullptr);
     tex_render_target->resize(w, h);
-    engine.renderManager().setDefaultRenderTarget(tex_render_target.ptr());
+    engine.renderManager().setDefaultRenderTarget(tex_render_target.get());
 }
 
 void
@@ -485,7 +484,7 @@ Anim::setupTeapotShader(const std::string &progname,
                         const MaterialProperties &mat)
 {
     glt::RenderManager &rm = engine.renderManager();
-    Ref<glt::ShaderProgram> prog = engine.shaderManager().program(progname);
+    auto prog = engine.shaderManager().program(progname);
     if (!prog) {
         ASSERT_MSG(prog, "undefined program: " + progname);
         return;
@@ -585,7 +584,7 @@ Anim::renderTable(const std::string &shader)
     woodTexture.bind(0);
 
     vec4_t color = glt::color(0xcd, 0x85, 0x3f).vec4();
-    MaterialProperties mat;
+    MaterialProperties mat{};
     mat.ambientContribution = 0.55;
     mat.diffuseContribution = 0.6;
     mat.specularContribution = 0.075f;
@@ -683,24 +682,24 @@ Anim::keyPressed(const Event<KeyPressed> &e)
 }
 
 void
-Anim::setDataDir(const Event<CommandEvent> &, const Array<CommandArg> &args)
+Anim::setDataDir(const Event<CommandEvent> & /*unused*/,
+                 const Array<CommandArg> &args)
 {
     data_dir = *args[0].string;
 
     int w, h;
     uint32_t *wood_data;
     FILE *file = fopen((data_dir + "/wood.bmp").c_str(), "rb");
-    if (file == NULL) {
+    if (file == nullptr) {
         ERR("couldnt open data/wood.bmp");
         return;
-    } else {
-        if (bmp_read(file, &w, &h, &wood_data) != BMP_OK) {
-            ERR("couldnt load data/wood.bmp");
-            fclose(file);
-            return;
-        }
-        fclose(file);
     }
+    if (bmp_read(file, &w, &h, &wood_data) != BMP_OK) {
+        ERR("couldnt load data/wood.bmp");
+        fclose(file);
+        return;
+    }
+    fclose(file);
 
     GL_CALL(glTextureImage2DEXT,
             *woodTexture.data()->ensureHandle(),
@@ -720,10 +719,9 @@ Anim::setDataDir(const Event<CommandEvent> &, const Array<CommandArg> &args)
     if (nfaces < 0) {
         ERR("couldnt parse teapot model");
         return;
-    } else {
-        sys::io::stdout() << "parsed teapot model: " << nfaces << " vertices"
-                          << sys::io::endl;
     }
+    sys::io::stdout() << "parsed teapot model: " << nfaces << " vertices"
+                      << sys::io::endl;
 
 #ifdef MESH_MESH
     teapotModel.primType(GL_QUADS);

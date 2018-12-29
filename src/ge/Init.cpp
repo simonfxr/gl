@@ -24,7 +24,7 @@ EngineInitializers::EngineInitializers(bool default_init)
 
 void
 EngineInitializers::reg(RunLevel lvl,
-                        const Ref<EventHandler<InitEvent>> &handler)
+                        const std::shared_ptr<EventHandler<InitEvent>> &handler)
 {
     switch (lvl) {
     case PreInit0:
@@ -68,24 +68,24 @@ initGLEW(RunLevel lvl, EngineInitializers &inits)
 }
 
 static void
-runPreInitStats(Ref<math::real> t0, const Event<InitEvent> &e)
+runPreInitStats(std::shared_ptr<math::real> t0, const Event<InitEvent> &e)
 {
     e.info.success = true;
     *t0 = e.info.engine.now();
 }
 
 static void
-runPostInitStats(Ref<math::real> t0, const Event<InitEvent> &e)
+runPostInitStats(std::shared_ptr<math::real> t0, const Event<InitEvent> &e)
 {
     e.info.success = true;
-    uint32 ms = uint32((e.info.engine.now() - *t0) * 1000);
+    auto ms = uint32((e.info.engine.now() - *t0) * 1000);
     e.info.engine.out() << "initialized in " << ms << " ms" << sys::io::endl;
 }
 
 void
 initInitStats(EngineInitializers &inits)
 {
-    Ref<math::real> initT0(new math::real);
+    auto initT0 = std::make_shared<math::real>();
     inits.reg(PreInit0, makeEventHandler(runPreInitStats, initT0));
     inits.reg(PostInit, makeEventHandler(runPostInitStats, initT0));
 }

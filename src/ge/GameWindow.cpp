@@ -21,32 +21,23 @@ struct GameWindow::Data
     const bool owning_win;
     GLFWwindow *win;
 
-    bool have_focus;
-    bool vsync;
+    bool have_focus{ true };
+    bool vsync{ false };
 
-    double mouse_x;
-    double mouse_y;
+    double mouse_x{};
+    double mouse_y{};
 
-    bool show_mouse_cursor;
-    bool accum_mouse_moves;
+    bool show_mouse_cursor{ true };
+    bool accum_mouse_moves{ false };
 
-    WindowRenderTarget *renderTarget;
+    WindowRenderTarget *renderTarget{};
 
     WindowEvents events;
 
     GLContextInfo context_info;
 
     Data(GameWindow &_self, bool owns_win, GLFWwindow *rw)
-      : self(_self)
-      , owning_win(owns_win)
-      , win(rw)
-      , have_focus(true)
-      , vsync(false)
-      , mouse_x(0)
-      , mouse_y(0)
-      , show_mouse_cursor(true)
-      , renderTarget(0)
-      , events()
+      : self(_self), owning_win(owns_win), win(rw)
     {}
 
     ~Data();
@@ -56,8 +47,9 @@ struct GameWindow::Data
     void setMouse(index16 x, index16 y);
 
     static GLFWwindow *makeWindow(const WindowOptions &opts);
-    static void runHandleInputEvents(Data *, const Event<InputEvent> &);
-    static Data *getUserPointer(GLFWwindow *);
+    static void runHandleInputEvents(Data * /*win*/,
+                                     const Event<InputEvent> & /*unused*/);
+    static Data *getUserPointer(GLFWwindow * /*w*/);
     static void glfw_window_size_callback(GLFWwindow *win, int w, int h);
     static void glfw_window_close_callback(GLFWwindow *win);
     static void glfw_window_refresh_callback(GLFWwindow *win);
@@ -175,7 +167,7 @@ convertGLFWKey(int key)
 #undef K
 }
 
-static KeyCode
+KeyCode
 convertGLFWMouseButton(int button)
 {
 #define B(a, b)                                                                \
@@ -220,8 +212,8 @@ GameWindow::Data::makeWindow(const WindowOptions &opts)
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT,
                    opts.settings.debugContext ? GL_TRUE : GL_FALSE);
 
-    GLFWwindow *win =
-      glfwCreateWindow(opts.width, opts.height, opts.title.c_str(), NULL, NULL);
+    GLFWwindow *win = glfwCreateWindow(
+      opts.width, opts.height, opts.title.c_str(), nullptr, nullptr);
     return win;
 }
 
@@ -308,8 +300,8 @@ GameWindow::Data::glfw_cursor_pos_callback(GLFWwindow *win, double x, double y)
 {
     GameWindow::Data *me = getUserPointer(win);
 
-    int16 dx = int16(-(x - me->mouse_x));
-    int16 dy = int16(y - me->mouse_y);
+    auto dx = int16(-(x - me->mouse_x));
+    auto dy = int16(y - me->mouse_y);
 
     me->mouse_x = x;
     me->mouse_y = y;
@@ -369,7 +361,7 @@ void
 GameWindow::Data::init(const WindowOptions &opts)
 {
 
-    ASSERT(renderTarget == 0);
+    ASSERT(renderTarget == nullptr);
     renderTarget = new WindowRenderTarget(self);
 
     glfwSetWindowUserPointer(win, this);
@@ -429,7 +421,7 @@ GameWindow::Data::~Data()
 
     if (owning_win) {
         glfwDestroyWindow(win);
-        win = 0;
+        win = nullptr;
     }
 }
 
@@ -507,7 +499,8 @@ GameWindow::events()
 }
 
 void
-GameWindow::Data::runHandleInputEvents(Data *win, const Event<InputEvent> &)
+GameWindow::Data::runHandleInputEvents(Data *win,
+                                       const Event<InputEvent> & /*unused*/)
 {
     win->handleInputEvents();
 }

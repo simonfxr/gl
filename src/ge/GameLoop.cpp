@@ -8,19 +8,19 @@ using namespace defs;
 struct GameLoop::Data
 {
 
-    uint64 tick_id{ 0 };
-    uint64 frame_id{ 0 };
+    uint64 tick_id{};
+    uint64 frame_id{};
     Game *game{ nullptr };
 
-    time clock{ 0 };
-    time clock_offset{ 0 };
-    time tick_time{ 0 };
-    time tick_duration{ 0 };
-    time frame_duration{ 0 };
+    time clock{};
+    time clock_offset{};
+    time tick_time{};
+    time tick_duration{};
+    time frame_duration{};
 
-    size max_skip{ 0 };
+    size max_skip{};
 
-    int32 exit_code{ 0 };
+    int32 exit_code{};
 
     bool paused{ false };
     bool sync_draw{ false };

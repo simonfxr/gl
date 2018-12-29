@@ -8,9 +8,9 @@
 
 namespace glt {
 
-#define NULL_PROGRAM_REF Ref<ShaderProgram>()
+#define NULL_PROGRAM_REF std::shared_ptr<ShaderProgram>()
 
-typedef std::map<std::string, Ref<ShaderProgram>> ProgramMap;
+typedef std::map<std::string, std::shared_ptr<ShaderProgram>> ProgramMap;
 
 struct ShaderManager::Data
 {
@@ -21,26 +21,23 @@ struct ShaderManager::Data
     uint32 shader_version;
     ShaderProfile shader_profile;
     bool cache_so;
-    Ref<ShaderCache> globalShaderCache;
+    std::shared_ptr<ShaderCache> globalShaderCache;
     PreprocessorDefinitions globalDefines;
     ShaderCompiler shaderCompiler;
 
-    Data(ShaderManager &self)
+    explicit Data(ShaderManager &self)
       : verbosity(Info)
       , out(&sys::io::stdout())
-      , shaderDirs()
-      , programs()
       , shader_version(0)
       , shader_profile(CoreProfile)
       , cache_so(true)
       , globalShaderCache(new ShaderCache)
-      , globalDefines()
       , shaderCompiler(self)
     {}
 
 private:
-    Data(const Data &);
-    Data &operator=(const Data &);
+    Data(const Data &) = delete;
+    Data &operator=(const Data &) = delete;
 };
 
 ShaderManager::ShaderManager() : self(new Data(*this))
@@ -95,10 +92,10 @@ ShaderManager::verbosity(ShaderManager::Verbosity v)
     self->verbosity = v;
 }
 
-Ref<ShaderProgram>
+std::shared_ptr<ShaderProgram>
 ShaderManager::program(const std::string &name) const
 {
-    ProgramMap::const_iterator it = self->programs.find(name);
+    auto it = self->programs.find(name);
     if (it != self->programs.end())
         return it->second;
     ERR(("program not found: " + name).c_str());
@@ -106,16 +103,17 @@ ShaderManager::program(const std::string &name) const
 }
 
 void
-ShaderManager::addProgram(const std::string &name, Ref<ShaderProgram> &program)
+ShaderManager::addProgram(const std::string &name,
+                          std::shared_ptr<ShaderProgram> &program)
 {
     ASSERT(program);
     self->programs[name] = program;
 }
 
-Ref<ShaderProgram>
+std::shared_ptr<ShaderProgram>
 ShaderManager::declareProgram(const std::string &name)
 {
-    Ref<ShaderProgram> prog(new ShaderProgram(*this));
+    std::shared_ptr<ShaderProgram> prog(new ShaderProgram(*this));
     self->programs[name] = prog;
     return prog;
 }
@@ -123,7 +121,7 @@ ShaderManager::declareProgram(const std::string &name)
 void
 ShaderManager::reloadShaders()
 {
-    ProgramMap::iterator it = self->programs.begin();
+    auto it = self->programs.begin();
     uint32 n = 0;
     uint32 failed = 0;
     for (; it != self->programs.end(); ++it) {
@@ -180,7 +178,7 @@ bool
 ShaderManager::removeShaderDirectory(const std::string &dir)
 {
     ShaderDirectories &dirs = self->shaderDirs;
-    ShaderDirectories::iterator it = find(dirs.begin(), dirs.end(), dir);
+    auto it = find(dirs.begin(), dirs.end(), dir);
     if (it == dirs.end())
         return false;
     dirs.erase(it);
@@ -209,7 +207,7 @@ ShaderManager::cacheShaderObjects(bool docache)
     }
 }
 
-const Ref<ShaderCache> &
+const std::shared_ptr<ShaderCache> &
 ShaderManager::globalShaderCache()
 {
     return self->globalShaderCache;
