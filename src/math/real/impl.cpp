@@ -1,57 +1,13 @@
 #include "math/real/defns.hpp"
 
-#ifdef MATH_REAL_FLOAT
-#  define MSUF f
-#else
-#  define MSUF
-#endif
-
-#ifndef NO_MATH_H
-#  include <cmath>
-#  define MATH_CIMPORT(ret, fun, ...)
-#  define MATH_CFUNC(f) CONCAT(::f, MSUF)
-#else
-#  ifdef SYSTEM_WINDOWS
-#    define MATH_CIMPORT(ret, fun, ...) extern "C" ret fun(__VA_ARGS__) ATTRS(ATTR_NOTHROW)
-#  else
-#    define MATH_CIMPORT(ret, fun, ...) extern "C" ret fun(__VA_ARGS__) ATTRS(ATTR_NOTHROW)
-#  endif
-#  define MATH_CFUNC(f) CONCAT(::math::cmath::f, MSUF)
-#endif
-
-#define MATH_CIMPORT1(fun) MATH_CIMPORT(real, CONCAT(fun, MSUF), real)
-#define MATH_CIMPORT2(fun) MATH_CIMPORT(real, CONCAT(fun, MSUF), real, real)
+#include <cmath>
 
 MATH_BEGIN_NAMESPACE
-
-#ifdef NO_MATH_H
-
-namespace cmath {
-
-MATH_CIMPORT1(sqrt);
-MATH_CIMPORT1(sin);
-MATH_CIMPORT1(cos);
-MATH_CIMPORT1(tan);
-MATH_CIMPORT1(asin);
-MATH_CIMPORT1(acos);
-MATH_CIMPORT1(atan);
-MATH_CIMPORT2(atan2);
-MATH_CIMPORT2(fmod);
-MATH_CIMPORT2(pow);
-MATH_CIMPORT1(floor);
-MATH_CIMPORT1(exp);
-#ifndef SYSTEM_WINDOWS
-MATH_CIMPORT1(fabs);
-#endif
-
-} // namespace cmath
-
-#endif
 
 using namespace defs;
 
 real sqrt(real x) {
-    return MATH_CFUNC(sqrt)(x);
+    return std::sqrt(x);
 }
 
 real recip(real x) {
@@ -67,31 +23,31 @@ real rsqrt(real x) {
 }
 
 real sin(real rad) {
-    return MATH_CFUNC(sin)(rad);
+    return std::sin(rad);
 }
 
 real cos(real rad) {
-    return MATH_CFUNC(cos)(rad);
+    return std::cos(rad);
 }
 
 real tan(real rad) {
-    return MATH_CFUNC(tan)(rad);
+    return std::tan(rad);
 }
 
 real asin(real x) {
-    return MATH_CFUNC(asin)(x);
+    return std::asin(x);
 }
 
 real acos(real x) {
-    return MATH_CFUNC(acos)(x);
+    return std::acos(x);
 }
 
 real atan(real x) {
-    return MATH_CFUNC(atan)(x);
+    return std::atan(x);
 }
 
 real atan2(real x, real y) {
-    return MATH_CFUNC(atan2)(x, y);
+    return std::atan2(x, y);
 }
 
 void sincos(real rad, real& out_sin, real& out_cos) {
@@ -104,15 +60,11 @@ real cotan(real rad) {
 }
 
 real exp(real x) {
-    return MATH_CFUNC(exp)(x);
+    return std::exp(x);
 }
 
 real abs(real x) {
-#ifdef SYSTEM_WINDOWS
-    return x < real(0) ? - x : x;
-#else
-    return MATH_CFUNC(fabs)(x);
-#endif
+    return std::fabs(x);
 }
 
 real length(real x) {
@@ -150,11 +102,11 @@ real pow(real x, int32 n) {
 }
 
 real pow(real x, real y) {
-    return MATH_CFUNC(pow)(x, y);
+    return std::pow(x, y);
 }
 
 real floor(real x) {
-    return MATH_CFUNC(floor)(x);
+    return std::floor(x);
 }
 
 int32 signum(real x) {
@@ -169,20 +121,13 @@ int32 signum(real x) {
 
 real wrapPi(real x) {
     x += PI;
-    x -= MATH_CFUNC(floor)(x * (1 / (2 * PI))) * (2 * PI);
+    x -= std::floor(x * (1 / (2 * PI))) * (2 * PI);
     x -= PI;
     return x;
 }
 
 real wrap(real x, real period) {
-#ifdef MATH_MATH_INLINE
-    if (unlikely(x < -period || x > period))
-        return MATH_CFUNC(fmod)(x, period);
-    else
-        return x;
-#else
-    return MATH_CFUNC(fmod)(x, period);
-#endif
+    return std::fmod(x, period);
 }
 
 real degToRad(real deg) {
@@ -210,7 +155,7 @@ real clamp(real x, real lo, real hi) {
 }
 
 real smoothstep(real lo_edge, real hi_edge, real x) {
-    x = saturate((x - lo_edge)/(hi_edge - lo_edge)); 
+    x = saturate((x - lo_edge)/(hi_edge - lo_edge));
     return x*x*(real(3) - 2*x);
 }
 

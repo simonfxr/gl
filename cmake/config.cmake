@@ -83,10 +83,6 @@ if(BUILD_OPT)
   endif()
 endif()
 
-if(USE_NO_MATH_H)
-  add_definitions(-DNO_MATH_H=1)
-endif()
-
 if(COMP_CLANG)
 #  add_definitions(-Wglobal-constructors)
 endif()
