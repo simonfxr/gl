@@ -1,0 +1,7 @@
+
+build-configs:
+  - debug-clang-ninja
+  - debug-gcc-ninja
+  - debug-clangsa-ninja
+  - release-clangsa-ninja
+  - release-gcc-ninja

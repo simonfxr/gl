@@ -97,7 +97,7 @@ struct State
 bool
 str_eq(const char *a, const char *b)
 {
-    return strcmp(a, b) == 0;
+    return strcmp(a ? a : "", b ? b : "") == 0;
 }
 
 bool

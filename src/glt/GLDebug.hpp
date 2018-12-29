@@ -3,8 +3,8 @@
 
 #include "opengl.hpp"
 
-#include "glt/GLDebug.hpp"
 #include "glt/conf.hpp"
+#include "glt/utils.hpp"
 
 #include "err/err.hpp"
 

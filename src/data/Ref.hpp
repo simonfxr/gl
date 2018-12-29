@@ -105,15 +105,17 @@ struct StrongCount
         cnt->strong.inc();
     }
 
-    static bool release(ref_count *cnt)
+    static bool release(ref_count *&cnt)
     {
         defs::int32 alive = cnt->strong.decAndGet();
         DEBUG_ASSERT(alive >= 0);
 
         if (alive == 0) {
             // we are the last strong, only weak are remaining
-            if (cnt->weak.decAndGet() == 0)
+            if (cnt->weak.decAndGet() == 0) {
                 delete cnt;
+                cnt = nullptr;
+            }
             return true;
         }
 
@@ -134,13 +136,14 @@ struct WeakCount
         cnt->weak.inc();
     }
 
-    static void release(ref_count *cnt)
+    static void release(ref_count *&cnt)
     {
         DEBUG_ASSERT(cnt->weak.get() > 0);
         if (cnt->weak.decAndGet() == 0) {
             // weak == 0 implies strong == 0
             DEBUG_ASSERT(cnt->strong.get() == 0);
             delete cnt;
+            cnt = nullptr;
         }
     }
 
@@ -173,8 +176,8 @@ private:
     typedef _priv::StrongCount<C> counter;
     typedef typename counter::ref_count ref_count;
 
-    ref_count *_ref_cnt;
-    T *_ptr;
+    mutable ref_count *_ref_cnt;
+    mutable T *_ptr;
 
     template<typename O>
     Ref(int /* for overloading */, O *ptr)
@@ -189,8 +192,10 @@ private:
 
     void release() const
     {
-        if (_ref_cnt && counter::release(_ref_cnt))
+        if (_ref_cnt && counter::release(_ref_cnt)) {
             delete _ptr;
+            _ptr = nullptr;
+        }
     }
 
     template<typename O, typename D>
@@ -210,16 +215,24 @@ public:
     Ref(O *p) : Ref(0, p)
     {}
 
-    Ref(const Ref<T, C> &ref) : _ref_cnt(ref._ref_cnt), _ptr(ref._ptr)
-    {
-        retain();
-    }
+    Ref(const Ref &ref) : _ref_cnt(ref._ref_cnt), _ptr(ref._ptr) { retain(); }
 
     template<typename O>
     Ref(const Ref<O, C> &ref) : _ref_cnt(ref._ref_cnt), _ptr(ref._ptr)
     {
         retain();
     }
+
+    Ref(Ref &&ref)
+      : _ref_cnt(std::exchange(ref._ref_cnt, nullptr))
+      , _ptr(std::exchange(ref._ptr, nullptr))
+    {}
+
+    template<typename O>
+    Ref(Ref<O, C> &&ref)
+      : _ref_cnt(std::exchange(ref._ref_cnt, nullptr))
+      , _ptr(std::exchange(ref._ptr, nullptr))
+    {}
 
     template<typename O>
     Ref(WeakRef<O, C> &ref) : Ref()
@@ -289,12 +302,20 @@ public:
         return !(*this == rhs);
     }
 
-    Ref<T, C> &operator=(const Ref<T, C> &ref)
+    Ref &operator=(const Ref &ref)
     {
         ref.retain();
         release();
         _ref_cnt = ref._ref_cnt;
         _ptr = ref._ptr;
+        return *this;
+    }
+
+    Ref &operator=(Ref &&ref)
+    {
+        release();
+        _ref_cnt = std::exchange(ref._ref_cnt, nullptr);
+        _ptr = std::exchange(ref._ptr, nullptr);
         return *this;
     }
 
@@ -305,6 +326,15 @@ public:
         release();
         _ref_cnt = ref._ref_cnt;
         _ptr = ref._ptr;
+        return *this;
+    }
+
+    template<typename O>
+    Ref<T, C> &operator=(Ref<O, C> &&ref)
+    {
+        release();
+        _ref_cnt = std::exchange(ref._ref_cnt, nullptr);
+        _ptr = std::exchange(ref._ptr, nullptr);
         return *this;
     }
 
@@ -342,8 +372,8 @@ private:
     typedef _priv::WeakCount<C> counter;
     typedef typename counter::ref_count ref_count;
 
-    ref_count *_ref_cnt;
-    T *_ptr;
+    mutable ref_count *_ref_cnt;
+    mutable T *_ptr;
 
     template<typename O>
     WeakRef(ref_count *ref_cnt, O *ptr) : _ref_cnt(ref_cnt), _ptr(ptr)
