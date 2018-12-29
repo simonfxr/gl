@@ -7,16 +7,20 @@ namespace glt {
 
 using namespace defs;
 
-template <typename T>
-struct CubeMesh : public Mesh<T> {
+template<typename T>
+struct CubeMesh : public Mesh<T>
+{
 
-    CubeMesh(const VertexDescription<T>& layout = T::gl::desc, size initial_nverts = MIN_NUM_VERTICES, size initial_nelems = MIN_NUM_ELEMENTS) :
-        Mesh<T>(layout, GL_TRIANGLES, initial_nverts, initial_nelems)
-        {
-            this->drawType(DrawElements);
-        }
+    CubeMesh(const VertexDescription<T> &layout = T::gl::desc,
+             size initial_nverts = MIN_NUM_VERTICES,
+             size initial_nelems = MIN_NUM_ELEMENTS)
+      : Mesh<T>(layout, GL_TRIANGLES, initial_nverts, initial_nelems)
+    {
+        this->drawType(DrawElements);
+    }
 
-    void add(const T& vert) {
+    void add(const T &vert)
+    {
         this->addVertex(vert);
         uint32 s = uint32(this->verticesSize());
         if (s % 4 == 0) {
@@ -32,7 +36,6 @@ struct CubeMesh : public Mesh<T> {
     uint32 size() { return this->verticesSize(); }
 
     void primType(GLenum) { ERR("cannot change primType"); }
-    
 };
 
 } // namespace glt

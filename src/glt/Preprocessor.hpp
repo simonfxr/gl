@@ -6,78 +6,85 @@
 
 #include <map>
 
-
 namespace glt {
 
 using namespace defs;
 
-struct GLT_API Preprocessor {
+struct GLT_API Preprocessor
+{
 
-    struct ContentContext {
-        Preprocessor& processor;
+    struct ContentContext
+    {
+        Preprocessor &processor;
         const std::string name;
         const char *data;
         size_t size;
 
-        ContentContext(Preprocessor& proc, const std::string& nam) :
-            processor(proc), name(nam) {}
+        ContentContext(Preprocessor &proc, const std::string &nam)
+          : processor(proc), name(nam)
+        {}
     };
 
-    struct DirectiveContext {
+    struct DirectiveContext
+    {
         ContentContext content;
-        
+
         defs::size lineLength;
         defs::index lineOffset;
         defs::index beginDirective; // index of first char in directive
-        defs::index endDirective;   // index of first char behind directive, so length of directive = endDirective - beginDirective
+        defs::index
+          endDirective; // index of first char behind directive, so length of
+                        // directive = endDirective - beginDirective
 
-        DirectiveContext(Preprocessor &proc, const std::string& name) :
-            content(proc, name) {}
+        DirectiveContext(Preprocessor &proc, const std::string &name)
+          : content(proc, name)
+        {}
     };
 
-    struct DirectiveHandler {
+    struct DirectiveHandler
+    {
         virtual ~DirectiveHandler();
-        virtual void beginProcessing(const ContentContext& ctx);
-        virtual void endProcessing(const ContentContext& ctx);
-        virtual void directiveEncountered(const DirectiveContext& context);
+        virtual void beginProcessing(const ContentContext &ctx);
+        virtual void endProcessing(const ContentContext &ctx);
+        virtual void directiveEncountered(const DirectiveContext &context);
     };
 
-    typedef std::map<std::string, DirectiveHandler*> Handlers;
-    typedef std::pair<std::string, DirectiveHandler*> HandlerEntry;
+    typedef std::map<std::string, DirectiveHandler *> Handlers;
+    typedef std::pair<std::string, DirectiveHandler *> HandlerEntry;
 
     Preprocessor();
     ~Preprocessor();
 
-    const std::string& name() const;
-    void name(const std::string& name);
+    const std::string &name() const;
+    void name(const std::string &name);
 
-    void process(const std::string&);
+    void process(const std::string &);
     void process(const char *contents, uint32 size);
     void process(const char *contents);
 
-    DirectiveHandler &defaultHandler(DirectiveHandler& handler);
+    DirectiveHandler &defaultHandler(DirectiveHandler &handler);
     DirectiveHandler &defaultHandler() const;
 
     Handlers &handlers() const;
-    
-    DirectiveHandler *installHandler(const std::string& directive, DirectiveHandler& handler);
 
-    sys::io::OutStream& out();
-    void out(sys::io::OutStream& out);
-    
+    DirectiveHandler *installHandler(const std::string &directive,
+                                     DirectiveHandler &handler);
+
+    sys::io::OutStream &out();
+    void out(sys::io::OutStream &out);
+
     bool setError();
     bool wasError() const;
     bool clearError();
 
-//    static DirectiveHandler& nullHandler();
+    //    static DirectiveHandler& nullHandler();
 
 private:
-
     struct Data;
-    Data * const self;
+    Data *const self;
 
-    Preprocessor(const Preprocessor& _);
-    Preprocessor& operator =(const Preprocessor& _);
+    Preprocessor(const Preprocessor &_);
+    Preprocessor &operator=(const Preprocessor &_);
 };
 
 } // namespace glt

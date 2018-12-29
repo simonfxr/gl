@@ -4,4 +4,3 @@
 #define KERNEL_SIZE 19
 
 #endif
-

@@ -1,26 +1,29 @@
 #ifndef GE_ENGINE_OPTIONS
 #define GE_ENGINE_OPTIONS
 
-#include "ge/Init.hpp"
 #include "ge/GameWindow.hpp"
+#include "ge/Init.hpp"
 
 #include <vector>
 
 namespace ge {
 
-struct GE_API EngineOptions {
+struct GE_API EngineOptions
+{
 
-    enum CommandType {
+    enum CommandType
+    {
         Script,
         Command
     };
 
-    enum Mode {
+    enum Mode
+    {
         Help,
         Animate
     };
-    
-    std::vector<std::pair<CommandType, std::string> > commands;
+
+    std::vector<std::pair<CommandType, std::string>> commands;
     std::string workingDirectory;
     bool inhibitInitScript;
     std::string binary;
@@ -36,7 +39,7 @@ struct GE_API EngineOptions {
 
     EngineOptions();
 
-    EngineOptions& parse(int *argc, char ***argv);
+    EngineOptions &parse(int *argc, char ***argv);
     static void printHelp();
 };
 

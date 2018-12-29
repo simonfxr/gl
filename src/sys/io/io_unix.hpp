@@ -9,24 +9,21 @@ using namespace defs;
 
 typedef int FileDescriptor;
 
-struct Handle {
+struct Handle
+{
     HandleMode mode;
     FileDescriptor fd;
-    Handle() :
-        mode(0),
-        fd(-1)
-        {}
+    Handle() : mode(0), fd(-1) {}
 };
 
-struct Socket {
+struct Socket
+{
     FileDescriptor socket;
-    Socket() :
-        socket() {}
+    Socket() : socket() {}
 };
 
 } // namespace io
 
 } // namespace sys
-
 
 #endif

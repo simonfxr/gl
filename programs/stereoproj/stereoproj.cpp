@@ -2,18 +2,19 @@
 #include "math/real.hpp"
 #include "math/vec3.hpp"
 
-#include "glt/utils.hpp"
 #include "glt/Mesh.hpp"
-#include "glt/primitives.hpp"
 #include "glt/color.hpp"
+#include "glt/primitives.hpp"
+#include "glt/utils.hpp"
 
-#include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
+#include "ge/Engine.hpp"
 
 using namespace defs;
 using namespace math;
 
-struct Vertex {
+struct Vertex
+{
     point3_t position;
     direction3_t normal;
     glt::color color;
@@ -28,7 +29,8 @@ static const real PLANE_DIM = 30.f;
 
 static const real SPHERE_RAD = 10.f;
 
-struct Anim {
+struct Anim
+{
     ge::Engine engine;
     ge::Camera camera;
 
@@ -36,20 +38,24 @@ struct Anim {
     glt::Mesh<Vertex> plane;
     glt::CubeMesh<Vertex> cube;
     glt::Mesh<Vertex> tetrahedron;
-    
-    void link(ge::EngineOptions&);
-    void init(const ge::Event<ge::InitEvent>&);
-    void render(const ge::Event<ge::RenderEvent>&);
+
+    void link(ge::EngineOptions &);
+    void init(const ge::Event<ge::InitEvent> &);
+    void render(const ge::Event<ge::RenderEvent> &);
 
     void renderPlane();
 };
 
-void Anim::link(ge::EngineOptions& opts) {
+void
+Anim::link(ge::EngineOptions &opts)
+{
     opts.inits.reg(ge::Init, ge::makeEventHandler(this, &Anim::init));
     engine.events().render.reg(ge::makeEventHandler(this, &Anim::render));
 }
 
-void Anim::init(const ge::Event<ge::InitEvent>& ev) {
+void
+Anim::init(const ge::Event<ge::InitEvent> &ev)
+{
 
     camera.registerWith(engine);
     camera.registerCommands(engine.commandProcessor());
@@ -61,21 +67,26 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
 
     engine.gameLoop().ticksPerSecond(100);
     engine.gameLoop().sync(false);
-    
+
     engine.window().grabMouse(true);
     engine.window().showMouseCursor(false);
-    
+
     plane_orientation = vec3(0, 1.f, 0);
-    
+
     {
         Vertex v;
         v.normal = plane_orientation;
-        v.position = vec3(1.f, 0.f, 1.f); plane.addVertex(v);
-        v.position = vec3(1.f, 0.f, 0.f); plane.addVertex(v);
-        v.position = vec3(0.f, 0.f, 0.f); plane.addVertex(v);
+        v.position = vec3(1.f, 0.f, 1.f);
         plane.addVertex(v);
-        v.position = vec3(0.f, 0.f, 1.f); plane.addVertex(v);
-        v.position = vec3(1.f, 0.f, 1.f); plane.addVertex(v);
+        v.position = vec3(1.f, 0.f, 0.f);
+        plane.addVertex(v);
+        v.position = vec3(0.f, 0.f, 0.f);
+        plane.addVertex(v);
+        plane.addVertex(v);
+        v.position = vec3(0.f, 0.f, 1.f);
+        plane.addVertex(v);
+        v.position = vec3(1.f, 0.f, 1.f);
+        plane.addVertex(v);
     }
 
     plane.drawType(glt::DrawArrays);
@@ -88,21 +99,23 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
         real h1 = math::sqrt(3) / 2.f * s;
         real h2 = math::sqrt(6) / 3.f * s;
         point3_t A, B, C, D;
-        A = vec3(- h1 * (2/3.f), 0, 0);
-        B = vec3(h1 * (1/3.f), 0, s/2);
-        C = vec3(h1 * (1/3.f), 0, -s/2);
+        A = vec3(-h1 * (2 / 3.f), 0, 0);
+        B = vec3(h1 * (1 / 3.f), 0, s / 2);
+        C = vec3(h1 * (1 / 3.f), 0, -s / 2);
         D = vec3(0, h2, 0);
 
 #define TRI(a, b, c, col) TRI0(a, b, c, col)
-#define TRI0(a, b, c, col)                       \
-        v.normal = cross(b - a, c - a);          \
-        v.color = (col);                         \
-        v.position = a; t.addVertex(v);          \
-        v.position = b; t.addVertex(v);          \
-        v.position = c; t.addVertex(v);
+#define TRI0(a, b, c, col)                                                     \
+    v.normal = cross(b - a, c - a);                                            \
+    v.color = (col);                                                           \
+    v.position = a;                                                            \
+    t.addVertex(v);                                                            \
+    v.position = b;                                                            \
+    t.addVertex(v);                                                            \
+    v.position = c;                                                            \
+    t.addVertex(v);
 
-        
-        glt::Mesh<Vertex>& t = tetrahedron;
+        glt::Mesh<Vertex> &t = tetrahedron;
         Vertex v;
         TRI(A, C, B, glt::color(0xFF, 0, 0));
         TRI(A, B, D, glt::color(0, 0xFF, 0));
@@ -119,24 +132,28 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
 
     glt::primitives::unitCube(cube);
     cube.send();
-    
+
     ev.info.success = true;
 }
 
-void Anim::render(const ge::Event<ge::RenderEvent>&) {
-    engine.renderManager().activeRenderTarget()->clearColor(glt::color(0xFF, 0xFF, 0xFF));
+void
+Anim::render(const ge::Event<ge::RenderEvent> &)
+{
+    engine.renderManager().activeRenderTarget()->clearColor(
+      glt::color(0xFF, 0xFF, 0xFF));
     engine.renderManager().activeRenderTarget()->clear();
 
     renderPlane();
 
     // {
-    //     Ref<glt::ShaderProgram> shader = engine.shaderManager().program("plane");
-    //     glt::GeometryTransform& gt = engine.renderManager().geometryTransform();
-        
+    //     Ref<glt::ShaderProgram> shader =
+    //     engine.shaderManager().program("plane"); glt::GeometryTransform& gt =
+    //     engine.renderManager().geometryTransform();
+
     //     glt::SavePoint sp(gt.save());
 
     //     gt.scale(vec3(10.f));
-        
+
     //     ASSERT(shader);
     //     shader->use();
 
@@ -149,26 +166,30 @@ void Anim::render(const ge::Event<ge::RenderEvent>&) {
     // }
 }
 
-void Anim::renderPlane() {
-    glt::GeometryTransform& gt = engine.renderManager().geometryTransform();
+void
+Anim::renderPlane()
+{
+    glt::GeometryTransform &gt = engine.renderManager().geometryTransform();
     glt::SavePoint sp(gt.save());
 
     gt.scale(vec3(PLANE_DIM));
-    gt.translate(- vec3(0.5f, 0.f, 0.5f));
+    gt.translate(-vec3(0.5f, 0.f, 0.5f));
 
     Ref<glt::ShaderProgram> shader = engine.shaderManager().program("plane");
     ASSERT(shader);
     shader->use();
 
     glt::Uniforms(*shader)
-        .mandatory("mvpMatrix", gt.mvpMatrix())
-//        .mandatory("mvMatrix", gt.mvMatrix())
-        .mandatory("normalMatrix", gt.normalMatrix());
-//    plane.draw();
+      .mandatory("mvpMatrix", gt.mvpMatrix())
+      //        .mandatory("mvMatrix", gt.mvMatrix())
+      .mandatory("normalMatrix", gt.normalMatrix());
+    //    plane.draw();
     tetrahedron.draw();
 }
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char *argv[])
+{
     Anim anim;
     ge::EngineOptions opts;
     anim.link(opts);

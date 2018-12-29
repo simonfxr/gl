@@ -5,9 +5,11 @@
 
 namespace sys {
 
-SYS_API void moduleInit();
+SYS_API void
+moduleInit();
 
-SYS_API void moduleExit();
+SYS_API void
+moduleExit();
 
 } // namespace sys
 

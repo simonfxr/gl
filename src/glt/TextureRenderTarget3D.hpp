@@ -1,55 +1,53 @@
 #ifndef GLT_TEXTURE_RENDER_TARGET_3D_HPP
 #define GLT_TEXTURE_RENDER_TARGET_3D_HPP
 
-#include "glt/conf.hpp"
-#include "opengl.hpp"
 #include "glt/TextureRenderTarget.hpp"
+#include "glt/conf.hpp"
 #include "math/ivec3/type.hpp"
+#include "opengl.hpp"
 
 namespace glt {
 
-struct GLT_API TextureRenderTarget3D : public TextureRenderTarget {
+struct GLT_API TextureRenderTarget3D : public TextureRenderTarget
+{
 public:
-
-    enum AttachmentType {
+    enum AttachmentType
+    {
         AttachmentLayered,
         AttachmentLayer
     };
 
-    struct Attachment {
+    struct Attachment
+    {
         AttachmentType type;
         defs::index index;
-        Attachment(AttachmentType _type, defs::index _index = 0) :
-            type(_type), index(_index) {}
+        Attachment(AttachmentType _type, defs::index _index = 0)
+          : type(_type), index(_index)
+        {}
     };
-    
-protected:
 
+protected:
     size _depth;
     GLenum _color_format;
     Attachment _target_attachment;
 
 public:
-
-    struct Params : public TextureRenderTarget::Params {
+    struct Params : public TextureRenderTarget::Params
+    {
         GLenum color_format;
-        Params() :
-            TextureRenderTarget::Params(),
-            color_format(GL_RGB8)
-            {}
+        Params() : TextureRenderTarget::Params(), color_format(GL_RGB8) {}
     };
 
-    TextureRenderTarget3D(const math::ivec3_t&, const Params&);
-    void resize(const math::ivec3_t&);
+    TextureRenderTarget3D(const math::ivec3_t &, const Params &);
+    void resize(const math::ivec3_t &);
 
     size depth() const { return _depth; }
     Attachment targetAttachment() const { return _target_attachment; }
-    void targetAttachment(const Attachment&);
-    
+    void targetAttachment(const Attachment &);
+
     virtual void createTexture(bool delete_old = true) override;
 };
 
 } // namespace glt
 
 #endif
-

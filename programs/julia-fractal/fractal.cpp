@@ -1,65 +1,66 @@
 #include "ge/Engine.hpp"
 
-
+#include "math/glvec.hpp"
 #include "math/real.hpp"
 #include "math/vec2.hpp"
-#include "math/glvec.hpp"
 
-#include "glt/ShaderProgram.hpp"
-#include "glt/Mesh.hpp"
 #include "glt/CubeMesh.hpp"
+#include "glt/Mesh.hpp"
+#include "glt/ShaderProgram.hpp"
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/utils.hpp"
 
 #include "shaders/quasi_constants.h"
 
-#include "ge/Engine.hpp"
 #include "ge/Command.hpp"
+#include "ge/Engine.hpp"
 #include "ge/Event.hpp"
 
 static const bool MULTISAMPLING = false; // via multisample texture
 
 using namespace math;
 
-#define VERTEX(V, F, Z) \
-    V(Vertex, Z(vec2_t, position))
+#define VERTEX(V, F, Z) V(Vertex, Z(vec2_t, position))
 
 DEFINE_VERTEX(VERTEX);
 #undef VERTEX
 
-struct World {
+struct World
+{
     real scale = 1;
     vec2_t trans = vec2(0, 0);
     vec2_t julia_constant = vec2(0.3, 0.5);
 
     void zoom(real t);
-    void shift(const vec2_t&);
+    void shift(const vec2_t &);
 
     void julia_constant_rotate(real phi);
     void julia_constant_scale(real s);
-    void julia_constant_add(const vec2_t&);
+    void julia_constant_add(const vec2_t &);
     void julia_constant_reset();
 };
 
-struct Commands : public ge::Plugin {
+struct Commands : public ge::Plugin
+{
 
     Ref<ge::Command> zoom;
     Ref<ge::Command> shift_x;
     Ref<ge::Command> shift_y;
-    
+
     Ref<ge::Command> julia_constant_rotate;
     Ref<ge::Command> julia_constant_scale;
     Ref<ge::Command> julia_constant_add_re;
     Ref<ge::Command> julia_constant_add_im;
     Ref<ge::Command> julia_constant_reset;
 
-    Commands(World&);
+    Commands(World &);
 
-    void registerWith(ge::Engine&) final override;
-    void registerCommands(ge::CommandProcessor&) final override;
+    void registerWith(ge::Engine &) final override;
+    void registerCommands(ge::CommandProcessor &) final override;
 };
 
-struct Anim {
+struct Anim
+{
     ge::Engine engine;
     glt::CubeMesh<Vertex> quadBatch;
     Ref<glt::TextureRenderTarget> render_texture;
@@ -68,29 +69,35 @@ struct Anim {
     Ref<Commands> commands;
 
     real time_print_fps;
-    
-    void init(const ge::Event<ge::InitEvent>&);
-    void link(ge::Engine& e);
-    void animate(const ge::Event<ge::AnimationEvent>&);
-    void renderScene(const ge::Event<ge::RenderEvent>&);
-    
-    void handleWindowResized(const ge::Event<ge::WindowResized>& ev);
+
+    void init(const ge::Event<ge::InitEvent> &);
+    void link(ge::Engine &e);
+    void animate(const ge::Event<ge::AnimationEvent> &);
+    void renderScene(const ge::Event<ge::RenderEvent> &);
+
+    void handleWindowResized(const ge::Event<ge::WindowResized> &ev);
 };
 
-void Anim::init(const ge::Event<ge::InitEvent>& ev) {
+void
+Anim::init(const ge::Event<ge::InitEvent> &ev)
+{
     link(ev.info.engine);
 
     commands = makeRef(new Commands(world));
     engine.enablePlugin(*commands);
 
     time_print_fps = 0;
-    
+
     {
         Vertex v;
-        v.position = vec2(-1.f, -1.f); quadBatch.add(v);
-        v.position = vec2( 1.f, -1.f); quadBatch.add(v);
-        v.position = vec2( 1.f,  1.f); quadBatch.add(v);
-        v.position = vec2(-1.f,  1.f); quadBatch.add(v);
+        v.position = vec2(-1.f, -1.f);
+        quadBatch.add(v);
+        v.position = vec2(1.f, -1.f);
+        quadBatch.add(v);
+        v.position = vec2(1.f, 1.f);
+        quadBatch.add(v);
+        v.position = vec2(-1.f, 1.f);
+        quadBatch.add(v);
 
         quadBatch.send();
     }
@@ -110,25 +117,31 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     GL_CALL(glDisable, GL_DEPTH_TEST);
 
     ev.info.success = true;
-
-    
 }
 
-void Anim::link(ge::Engine& e) {
+void
+Anim::link(ge::Engine &e)
+{
     e.events().animate.reg(ge::makeEventHandler(this, &Anim::animate));
     e.events().render.reg(ge::makeEventHandler(this, &Anim::renderScene));
-    e.window().events().windowResized.reg(ge::makeEventHandler(this, &Anim::handleWindowResized));
+    e.window().events().windowResized.reg(
+      ge::makeEventHandler(this, &Anim::handleWindowResized));
 }
 
-void Anim::animate(const ge::Event<ge::AnimationEvent>&) {
+void
+Anim::animate(const ge::Event<ge::AnimationEvent> &)
+{
     // empty
 }
 
-void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
-    ge::Engine& e = ev.info.engine;
-    real time = e.gameLoop().tickTime() + ev.info.interpolation * e.gameLoop().tickDuration();
+void
+Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
+{
+    ge::Engine &e = ev.info.engine;
+    real time = e.gameLoop().tickTime() +
+                ev.info.interpolation * e.gameLoop().tickDuration();
 
-    glt::RenderManager& rm = engine.renderManager();
+    glt::RenderManager &rm = engine.renderManager();
 
     if (MULTISAMPLING) {
         rm.setActiveRenderTarget(render_texture.ptr());
@@ -140,42 +153,47 @@ void Anim::renderScene(const ge::Event<ge::RenderEvent>& ev) {
 
     renderShader->use();
     glt::Uniforms(*renderShader)
-        .optional("gammaCorrection", real(2.2))
-        .optional("time", time)
-        .optional("transform", mat3())
-        .optional("julia_constant", world.julia_constant)
-        .optional("world_shift", world.trans)
-        .optional("world_zoom", world.scale);
+      .optional("gammaCorrection", real(2.2))
+      .optional("time", time)
+      .optional("transform", mat3())
+      .optional("julia_constant", world.julia_constant)
+      .optional("world_shift", world.trans)
+      .optional("world_zoom", world.scale);
 
     quadBatch.draw();
 
     if (MULTISAMPLING) {
         rm.setActiveRenderTarget(&engine.window().renderTarget());
-        Ref<glt::ShaderProgram> postproc = e.shaderManager().program("postproc");
+        Ref<glt::ShaderProgram> postproc =
+          e.shaderManager().program("postproc");
         ASSERT(postproc);
 
         postproc->use();
 
         render_texture->sampler().bind(0);
-        glt::Uniforms(*postproc)
-            .optional("texture0", glt::Sampler(render_texture->sampler(), 0));
+        glt::Uniforms(*postproc).optional(
+          "texture0", glt::Sampler(render_texture->sampler(), 0));
         quadBatch.draw();
     }
 
     if (time >= time_print_fps) {
         time_print_fps = time + 1;
 
-        #define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
+#define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
         glt::FrameStatistics fs = engine.renderManager().frameStatistics();
         double fps = INV(fs.avg);
         double min = INV(fs.max);
         double max = INV(fs.min);
         double avg = INV(fs.avg);
-        engine.out() << "Timings (FPS/Render Avg/Render Min/Render Max): " << fps << "; " << avg << "; " << min << "; " << max << sys::io::endl;
+        engine.out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
+                     << fps << "; " << avg << "; " << min << "; " << max
+                     << sys::io::endl;
     }
 }
 
-void Anim::handleWindowResized(const ge::Event<ge::WindowResized>& ev) {
+void
+Anim::handleWindowResized(const ge::Event<ge::WindowResized> &ev)
+{
     if (MULTISAMPLING) {
         size w = ev.info.window.windowWidth();
         size h = ev.info.window.windowHeight();
@@ -188,32 +206,41 @@ void Anim::handleWindowResized(const ge::Event<ge::WindowResized>& ev) {
 typedef ge::Event<ge::CommandEvent> ComEv;
 typedef Array<ge::CommandArg> ComArgs;
 
-#define DEF_NUM_COMMAND(nm, code) \
-    nm(ge::makeNumCommand([&w](const ComEv&, double x) { code; }, #nm, ""))
+#define DEF_NUM_COMMAND(nm, code)                                              \
+    nm(ge::makeNumCommand([&w](const ComEv &, double x) { code; }, #nm, ""))
 
-Commands::Commands(World& w) :
-    DEF_NUM_COMMAND(zoom, w.zoom(real(x))),
-    DEF_NUM_COMMAND(shift_x, w.shift(vec2(real(x), 0))),
-    DEF_NUM_COMMAND(shift_y, w.shift(vec2(0, real(x)))),
-    
-    DEF_NUM_COMMAND(julia_constant_rotate, w.julia_constant_rotate(real(x))),
-    DEF_NUM_COMMAND(julia_constant_scale, w.julia_constant_scale(real(x))),
-    DEF_NUM_COMMAND(julia_constant_add_re, w.julia_constant_add(vec2(real(x), 0))),
-    DEF_NUM_COMMAND(julia_constant_add_im, w.julia_constant_add(vec2(0, real(x)))),
-    julia_constant_reset(makeCommand([&w](const ComEv&, const ComArgs&) { w.julia_constant_reset(); },
-                                     ge::NULL_PARAMS,
-                                     "julia_constant_reset", ""))
+Commands::Commands(World &w)
+  : DEF_NUM_COMMAND(zoom, w.zoom(real(x)))
+  , DEF_NUM_COMMAND(shift_x, w.shift(vec2(real(x), 0)))
+  , DEF_NUM_COMMAND(shift_y, w.shift(vec2(0, real(x))))
+  ,
+
+  DEF_NUM_COMMAND(julia_constant_rotate, w.julia_constant_rotate(real(x)))
+  , DEF_NUM_COMMAND(julia_constant_scale, w.julia_constant_scale(real(x)))
+  , DEF_NUM_COMMAND(julia_constant_add_re,
+                    w.julia_constant_add(vec2(real(x), 0)))
+  , DEF_NUM_COMMAND(julia_constant_add_im,
+                    w.julia_constant_add(vec2(0, real(x))))
+  , julia_constant_reset(makeCommand(
+      [&w](const ComEv &, const ComArgs &) { w.julia_constant_reset(); },
+      ge::NULL_PARAMS,
+      "julia_constant_reset",
+      ""))
 {}
 
-void Commands::registerWith(ge::Engine&) {
+void
+Commands::registerWith(ge::Engine &)
+{
     // NOOP
 }
 
-void Commands::registerCommands(ge::CommandProcessor& coms) {
+void
+Commands::registerCommands(ge::CommandProcessor &coms)
+{
     coms.define(zoom);
     coms.define(shift_x);
     coms.define(shift_y);
-    
+
     coms.define(julia_constant_rotate);
     coms.define(julia_constant_scale);
     coms.define(julia_constant_add_re);
@@ -221,19 +248,27 @@ void Commands::registerCommands(ge::CommandProcessor& coms) {
     coms.define(julia_constant_reset);
 }
 
-real sigmoid(real t) {
-    return 1/(1 + exp(t));
+real
+sigmoid(real t)
+{
+    return 1 / (1 + exp(t));
 }
 
-void World::zoom(real t) {
+void
+World::zoom(real t)
+{
     scale *= 1 + 0.005 * t;
 }
 
-void World::shift(const vec2_t& a) {
+void
+World::shift(const vec2_t &a)
+{
     trans += 0.005 * a / scale;
 }
 
-void World::julia_constant_rotate(real phi) {
+void
+World::julia_constant_rotate(real phi)
+{
     real s, c;
     math::sincos(phi, s, c);
     real x = julia_constant[0];
@@ -242,19 +277,27 @@ void World::julia_constant_rotate(real phi) {
     julia_constant[0] = -s * x + c * y;
 }
 
-void World::julia_constant_scale(real t) {
+void
+World::julia_constant_scale(real t)
+{
     julia_constant *= t;
 }
 
-void World::julia_constant_add(const vec2_t& z) {
+void
+World::julia_constant_add(const vec2_t &z)
+{
     julia_constant += z;
 }
 
-void World::julia_constant_reset() {
+void
+World::julia_constant_reset()
+{
     julia_constant = vec2(0, 0);
 }
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char *argv[])
+{
     Anim anim;
     ge::EngineOptions opts;
 

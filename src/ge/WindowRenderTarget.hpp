@@ -8,14 +8,15 @@ namespace ge {
 
 struct GameWindow;
 
-struct GE_API WindowRenderTarget : public glt::RenderTarget {
+struct GE_API WindowRenderTarget : public glt::RenderTarget
+{
 private:
-    GameWindow& window;
+    GameWindow &window;
 
 public:
-    WindowRenderTarget(GameWindow& win);
+    WindowRenderTarget(GameWindow &win);
     void resized();
-    
+
 protected:
     virtual void doActivate() final override;
     virtual void doDraw() final override;

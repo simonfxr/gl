@@ -2,18 +2,21 @@
 #include <cstring>
 #include <vector>
 
-#include "parse_sply.hpp"
 #include "math/vec3.hpp"
+#include "parse_sply.hpp"
 
 using namespace math;
 using namespace defs;
 
-struct Vertex {
+struct Vertex
+{
     math::point3_t position;
     math::direction3_t normal;
 };
 
-int32 parse_sply(const char *filename, CubeMesh& model) {
+int32
+parse_sply(const char *filename, CubeMesh &model)
+{
     FILE *data = fopen(filename, "rb");
     if (!data)
         return -1;
@@ -30,14 +33,24 @@ int32 parse_sply(const char *filename, CubeMesh& model) {
     while (fgets(line, sizeof line, data) != 0 && verts.size() < nverts) {
         point3_t p;
         direction3_t n;
-        int nparsed = sscanf(line, "%" R_FMT " %" R_FMT " %" R_FMT " %" R_FMT " %" R_FMT " %" R_FMT, &p[0], &p[1], &p[2], &n[0], &n[1], &n[2]);
+        int nparsed = sscanf(line,
+                             "%" R_FMT " %" R_FMT " %" R_FMT " %" R_FMT
+                             " %" R_FMT " %" R_FMT,
+                             &p[0],
+                             &p[1],
+                             &p[2],
+                             &n[0],
+                             &n[1],
+                             &n[2]);
 
         if (nparsed != 6) {
             fclose(data);
             return -1;
         }
 
-        Vertex v; v.position = p; v.normal = normalize(n);
+        Vertex v;
+        v.position = p;
+        v.normal = normalize(n);
         verts.push_back(v);
     }
 
@@ -60,7 +73,7 @@ int32 parse_sply(const char *filename, CubeMesh& model) {
             return -1;
         }
 
-        #ifdef MESH_CUBEMESH
+#ifdef MESH_CUBEMESH
 
         model.addElement(i);
         model.addElement(j);
@@ -69,14 +82,14 @@ int32 parse_sply(const char *filename, CubeMesh& model) {
         model.addElement(k);
         model.addElement(l);
 
-        #else
+#else
 
         model.addElement(i);
         model.addElement(j);
         model.addElement(k);
         model.addElement(l);
 
-        #endif
+#endif
 
         ++faces;
     }
@@ -85,5 +98,5 @@ int32 parse_sply(const char *filename, CubeMesh& model) {
 
     return int32(nfaces) * 4;
 
-//    return faces == nfaces ? int32(nfaces) * 4: -1;
+    //    return faces == nfaces ? int32(nfaces) * 4: -1;
 }

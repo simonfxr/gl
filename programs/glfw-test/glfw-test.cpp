@@ -6,9 +6,13 @@
 #include <stdio.h>
 
 static void APIENTRY
-gl_arb_debug_callback(GLenum /* source */, GLenum /* type */, GLuint /* id */,
-                      GLenum /* severity */, GLsizei /* length */,
-                      const char *message, const void *userParam)
+gl_arb_debug_callback(GLenum /* source */,
+                      GLenum /* type */,
+                      GLuint /* id */,
+                      GLenum /* severity */,
+                      GLsizei /* length */,
+                      const char *message,
+                      const void *userParam)
 {
     FILE *log = reinterpret_cast<FILE *>(const_cast<void *>(userParam));
     fprintf(log, "GL message: %s\n", message);
@@ -63,8 +67,8 @@ main()
 
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
         glDebugMessageCallbackARB(gl_arb_debug_callback, log);
-        glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
-                                 NULL, GL_TRUE);
+        glDebugMessageControlARB(
+          GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
     }
 
     /* Loop until the user closes the window */

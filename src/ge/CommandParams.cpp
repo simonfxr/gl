@@ -7,7 +7,8 @@
 #error "CONST_ARRAY not defined"
 #endif
 
-#define DEFINE_PARAM_ARRAY(name, ...) DEFINE_CONST_ARRAY(name, ge::CommandParamType, __VA_ARGS__)
+#define DEFINE_PARAM_ARRAY(name, ...)                                          \
+    DEFINE_CONST_ARRAY(name, ge::CommandParamType, __VA_ARGS__)
 
 namespace ge {
 
@@ -30,4 +31,3 @@ DEFINE_PARAM_ARRAY(STR_PARAMS, StringParam);
 DEFINE_PARAM_ARRAY(STR_INT_PARAMS, StringParam, IntegerParam);
 
 } // namespace ge
-

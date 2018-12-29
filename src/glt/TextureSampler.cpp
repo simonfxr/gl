@@ -3,26 +3,38 @@
 
 namespace glt {
 
-TextureSampler::~TextureSampler() {
+TextureSampler::~TextureSampler()
+{
     free();
 }
 
-GLSamplerObject& TextureSampler::ensureSampler() {
+GLSamplerObject &
+TextureSampler::ensureSampler()
+{
     return _sampler.ensure();
 }
 
-void TextureSampler::free() {
+void
+TextureSampler::free()
+{
     _sampler.release();
 }
 
-void TextureSampler::filterMode(FilterMode mode, Filter filter) {
+void
+TextureSampler::filterMode(FilterMode mode, Filter filter)
+{
     ensureSampler();
 
     GLint glmode;
     switch (mode) {
-    case FilterNearest: glmode = GL_NEAREST; break;
-    case FilterLinear: glmode = GL_LINEAR; break;
-    default: ASSERT_FAIL_MSG("invalid FilterMode");
+    case FilterNearest:
+        glmode = GL_NEAREST;
+        break;
+    case FilterLinear:
+        glmode = GL_LINEAR;
+        break;
+    default:
+        ASSERT_FAIL_MSG("invalid FilterMode");
     }
 
     if ((int(filter) & FilterMin) != 0)
@@ -31,14 +43,21 @@ void TextureSampler::filterMode(FilterMode mode, Filter filter) {
         GL_CALL(glSamplerParameteri, *_sampler, GL_TEXTURE_MAG_FILTER, glmode);
 }
 
-void TextureSampler::clampMode(ClampMode mode, Axis axis) {
+void
+TextureSampler::clampMode(ClampMode mode, Axis axis)
+{
     ensureSampler();
 
     GLint glmode;
     switch (mode) {
-    case ClampToEdge: glmode = GL_CLAMP_TO_EDGE; break;
-    case ClampRepeat: glmode = GL_REPEAT; break;
-    default: ASSERT_FAIL_MSG("invalid ClampMode");
+    case ClampToEdge:
+        glmode = GL_CLAMP_TO_EDGE;
+        break;
+    case ClampRepeat:
+        glmode = GL_REPEAT;
+        break;
+    default:
+        ASSERT_FAIL_MSG("invalid ClampMode");
     }
 
     axis = Axis(int(axis) & availableAxes(_data->type()));
@@ -51,23 +70,33 @@ void TextureSampler::clampMode(ClampMode mode, Axis axis) {
         GL_CALL(glSamplerParameteri, *_sampler, GL_TEXTURE_WRAP_R, glmode);
 }
 
-void TextureSampler::bind(uint32 idx, bool set_active_idx) {
+void
+TextureSampler::bind(uint32 idx, bool set_active_idx)
+{
     ensureSampler();
     GL_CALL(glBindSampler, idx, *_sampler);
     _data->bind(idx, set_active_idx);
 }
 
-void TextureSampler::unbind(uint32 idx, bool set_active_idx) {
+void
+TextureSampler::unbind(uint32 idx, bool set_active_idx)
+{
     GL_CALL(glBindSampler, idx, 0);
     _data->unbind(idx, set_active_idx);
 }
 
-TextureSampler::Axis TextureSampler::availableAxes(TextureType t) {
+TextureSampler::Axis
+TextureSampler::availableAxes(TextureType t)
+{
     switch (t) {
-    case Texture1D: return S;
-    case Texture2D: return S | T;
-    case Texture3D: return S | T | R;
-    default: ASSERT_FAIL_MSG("invalid texture type");
+    case Texture1D:
+        return S;
+    case Texture2D:
+        return S | T;
+    case Texture3D:
+        return S | T | R;
+    default:
+        ASSERT_FAIL_MSG("invalid texture type");
     }
 }
 

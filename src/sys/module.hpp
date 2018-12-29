@@ -2,28 +2,30 @@
 #define SYS_MODULE_HPP
 
 #include "sys/conf.hpp"
-#include "sys/io/Stream.hpp"
-#include "sys/io.hpp"
 #include "sys/fiber.hpp"
+#include "sys/io.hpp"
+#include "sys/io/Stream.hpp"
 
 #ifdef DEFINE_SYS_MODULE
-#  define SYS_MODULE_ACCESS
+#define SYS_MODULE_ACCESS
 #else
-#  define SYS_MODULE_ACCESS const
+#define SYS_MODULE_ACCESS const
 #endif
 
 namespace sys {
 
 namespace io {
 
-struct Streams {
+struct Streams
+{
     FileStream stdout;
     FileStream stderr;
 
     Streams();
 };
 
-struct IO {
+struct IO
+{
     const IPAddr4 ipa_any;
     const IPAddr4 ipa_local;
 
@@ -32,13 +34,15 @@ struct IO {
 
 } // namespace io
 
-struct Fibers {
+struct Fibers
+{
     Fiber toplevel;
-    
+
     Fibers();
 };
 
-struct Module {
+struct Module
+{
     io::Streams io_streams;
     io::IO io;
     Fibers fibers;

@@ -7,7 +7,8 @@
 
 namespace glt {
 
-struct RenderTarget::Data {
+struct RenderTarget::Data
+{
     size width;
     size height;
     RenderTargetBuffers buffers;
@@ -18,54 +19,75 @@ struct RenderTarget::Data {
 
     DEBUG_DECL(bool active;)
 
-    Data(size w, size h, RenderTargetBuffers bs, const Viewport& vp) :
-        width(w), height(h), buffers(bs),
-        viewport(vp),
-        clearColor(),
-        viewport_changed(false)
-        {
-            ON_DEBUG(active = false);
-        }
+    Data(size w, size h, RenderTargetBuffers bs, const Viewport &vp)
+      : width(w)
+      , height(h)
+      , buffers(bs)
+      , viewport(vp)
+      , clearColor()
+      , viewport_changed(false)
+    {
+        ON_DEBUG(active = false);
+    }
 
-    Viewport effectiveViewport() const {
+    Viewport effectiveViewport() const
+    {
         return viewport == Viewport() ? Viewport(width, height) : viewport;
     }
 };
 
-RenderTarget::RenderTarget(size w, size h, RenderTargetBuffers bs, const Viewport& vp) :
-    self(new Data(w, h, bs, vp))
+RenderTarget::RenderTarget(size w,
+                           size h,
+                           RenderTargetBuffers bs,
+                           const Viewport &vp)
+  : self(new Data(w, h, bs, vp))
 {}
 
-RenderTarget::~RenderTarget() {
+RenderTarget::~RenderTarget()
+{
     DEBUG_ASSERT(!self->active);
     delete self;
 }
 
-size RenderTarget::width() const {
+size
+RenderTarget::width() const
+{
     return self->width;
 }
 
-size RenderTarget::height() const {
+size
+RenderTarget::height() const
+{
     return self->height;
 }
 
-RenderTargetBuffers RenderTarget::buffers() const {
+RenderTargetBuffers
+RenderTarget::buffers() const
+{
     return self->buffers;
 }
 
-color RenderTarget::clearColor() const {
+color
+RenderTarget::clearColor() const
+{
     return self->clearColor;
 }
 
-void RenderTarget::clearColor(glt::color col) {
+void
+RenderTarget::clearColor(glt::color col)
+{
     self->clearColor = col;
 }
 
-const Viewport& RenderTarget::viewport() const {
+const Viewport &
+RenderTarget::viewport() const
+{
     return self->viewport;
 }
 
-void RenderTarget::activate() {
+void
+RenderTarget::activate()
+{
     DEBUG_ASSERT(!self->active);
     ON_DEBUG(self->active = true);
     self->viewport_changed = false;
@@ -73,13 +95,17 @@ void RenderTarget::activate() {
     doViewport(self->effectiveViewport());
 }
 
-void RenderTarget::deactivate() {
+void
+RenderTarget::deactivate()
+{
     DEBUG_ASSERT(self->active);
     ON_DEBUG(self->active = false);
     doDeactivate();
 }
 
-void RenderTarget::beginScene() {
+void
+RenderTarget::beginScene()
+{
     DEBUG_ASSERT(self->active);
     if (self->viewport_changed) {
         self->viewport_changed = false;
@@ -87,33 +113,45 @@ void RenderTarget::beginScene() {
     }
 }
 
-void RenderTarget::clear(uint32 buffers) {
+void
+RenderTarget::clear(uint32 buffers)
+{
     DEBUG_ASSERT_MSG(self->active, "RenderTarget not active");
     buffers &= self->buffers;
     doClear(buffers, self->clearColor);
 }
 
-void RenderTarget::draw() {
+void
+RenderTarget::draw()
+{
     DEBUG_ASSERT(self->active);
     doDraw();
 }
 
-void RenderTarget::viewport(const Viewport& vp) {
+void
+RenderTarget::viewport(const Viewport &vp)
+{
     self->viewport_changed = vp != self->viewport;
     self->viewport = vp;
 }
 
-void RenderTarget::updateSize(size w, size h) {
+void
+RenderTarget::updateSize(size w, size h)
+{
     self->width = w;
     self->height = h;
     self->viewport_changed = self->viewport == Viewport();
 }
 
-void RenderTarget::doDeactivate() {
+void
+RenderTarget::doDeactivate()
+{
     // noop
 }
 
-void RenderTarget::doClear(uint32 buffers, color c) {
+void
+RenderTarget::doClear(uint32 buffers, color c)
+{
     GLbitfield bits = 0;
 
     if (buffers & RT_COLOR_BUFFER) {
@@ -131,12 +169,20 @@ void RenderTarget::doClear(uint32 buffers, color c) {
         GL_CALL(glClear, bits);
 }
 
-void RenderTarget::doDraw() {
+void
+RenderTarget::doDraw()
+{
     // noop
 }
 
-void RenderTarget::doViewport(const Viewport& vp) {
-    GL_CALL(glViewport, vp.offsetX, vp.offsetY, GLsizei(vp.width), GLsizei(vp.height));
+void
+RenderTarget::doViewport(const Viewport &vp)
+{
+    GL_CALL(glViewport,
+            vp.offsetX,
+            vp.offsetY,
+            GLsizei(vp.width),
+            GLsizei(vp.height));
 }
 
 } // namespace glt

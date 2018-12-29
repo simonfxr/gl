@@ -1,3 +1,3 @@
 #ifdef COMPILER_CL
-#  pragma pack(push, 1)
+#pragma pack(push, 1)
 #endif

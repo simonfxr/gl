@@ -10,11 +10,16 @@ namespace io {
 
 namespace {
 
-StreamResult convertErr(HandleError err) {
+StreamResult
+convertErr(HandleError err)
+{
     switch (err) {
-    case HE_OK: return StreamResult::OK;
-    case HE_BLOCKED: return StreamResult::Blocked;
-    case HE_EOF: return StreamResult::EOF;
+    case HE_OK:
+        return StreamResult::OK;
+    case HE_BLOCKED:
+        return StreamResult::Blocked;
+    case HE_EOF:
+        return StreamResult::EOF;
     case HE_BAD_HANDLE:
     case HE_INVALID_PARAM:
     case HE_UNKNOWN:
@@ -24,48 +29,54 @@ StreamResult convertErr(HandleError err) {
     ASSERT_FAIL();
 }
 
-} // namespace anon
+} // namespace
 
-IO::IO() :
-    ipa_any(0),
-    ipa_local(127, 0, 0, 1)
-{}
+IO::IO() : ipa_any(0), ipa_local(127, 0, 0, 1) {}
 
-const IPAddr4 IPA_ANY() {
+const IPAddr4
+IPA_ANY()
+{
     return module->io.ipa_any;
 }
 
-const IPAddr4 IPA_LOCAL() {
+const IPAddr4
+IPA_LOCAL()
+{
     return module->io.ipa_local;
 }
 
-HandleStream::HandleStream(const Handle& h) :
-    handle(h),
-    read_cursor(0),
-    write_cursor(0)
+HandleStream::HandleStream(const Handle &h)
+  : handle(h), read_cursor(0), write_cursor(0)
 {}
 
-HandleStream::~HandleStream() {
+HandleStream::~HandleStream()
+{
     close();
 }
 
-StreamResult HandleStream::basic_close() {
+StreamResult
+HandleStream::basic_close()
+{
     StreamResult ret = basic_flush();
     sys::io::close(handle);
     return ret;
 }
 
-StreamResult HandleStream::basic_flush() {
+StreamResult
+HandleStream::basic_flush()
+{
     if (write_cursor > 0)
         return flush_buffer();
     else
         return StreamResult::OK;
 }
 
-StreamResult HandleStream::basic_read(size& s, char *buf) {
+StreamResult
+HandleStream::basic_read(size &s, char *buf)
+{
     if (s == 0)
         return StreamResult::OK;
-    
+
     if (s <= read_cursor) {
         memcpy(buf, read_buffer, UNSIZE(s));
         read_cursor -= s;
@@ -86,7 +97,7 @@ StreamResult HandleStream::basic_read(size& s, char *buf) {
         size k = s;
         err = sys::io::read(handle, k, buf);
         read_cursor = 0;
-        n += k;        
+        n += k;
     } else {
         size k = HANDLE_READ_BUFFER_SIZE;
         err = sys::io::read(handle, k, read_buffer);
@@ -95,9 +106,8 @@ StreamResult HandleStream::basic_read(size& s, char *buf) {
             read_cursor = k - s;
             memcpy(buf, read_buffer, s);
             memmove(read_buffer, read_buffer + s, k - s);
-            
-            if (err == HE_BLOCKED ||
-                err == HE_EOF)
+
+            if (err == HE_BLOCKED || err == HE_EOF)
                 err = HE_OK;
         } else {
             read_cursor = 0;
@@ -112,9 +122,11 @@ StreamResult HandleStream::basic_read(size& s, char *buf) {
     return res;
 }
 
-StreamResult HandleStream::basic_write(size& s, const char *buf) {
+StreamResult
+HandleStream::basic_write(size &s, const char *buf)
+{
     size rem = HANDLE_WRITE_BUFFER_SIZE - write_cursor;
-    
+
     if (s <= rem) {
         memcpy(write_buffer + write_cursor, buf, s);
         write_cursor += s;
@@ -130,9 +142,8 @@ StreamResult HandleStream::basic_write(size& s, const char *buf) {
         k = HANDLE_WRITE_BUFFER_SIZE;
         err = sys::io::write(handle, k, write_buffer);
     }
-        
-    if (write_cursor == 0 ||
-        (k == HANDLE_WRITE_BUFFER_SIZE && err == HE_OK)) {
+
+    if (write_cursor == 0 || (k == HANDLE_WRITE_BUFFER_SIZE && err == HE_OK)) {
 
         n += rem;
         k = s - rem;
@@ -141,7 +152,9 @@ StreamResult HandleStream::basic_write(size& s, const char *buf) {
         const char *unwritten = buf + n;
         size rest = s - n;
         if (rest > 0) {
-            size into = rest <= HANDLE_WRITE_BUFFER_SIZE ? rest : HANDLE_WRITE_BUFFER_SIZE;
+            size into = rest <= HANDLE_WRITE_BUFFER_SIZE
+                          ? rest
+                          : HANDLE_WRITE_BUFFER_SIZE;
             memcpy(write_buffer, unwritten, into);
             n += into;
             write_cursor = into;
@@ -153,7 +166,7 @@ StreamResult HandleStream::basic_write(size& s, const char *buf) {
             size end = HANDLE_WRITE_BUFFER_SIZE - k;
             size rest = k <= write_cursor ? s : s - (k - write_cursor);
             size into = rest <= k ? rest : k;
-                
+
             memmove(write_buffer, write_buffer + k, end);
             memcpy(write_buffer + end, buf + rem, into);
             n += rem + into;
@@ -163,19 +176,19 @@ StreamResult HandleStream::basic_write(size& s, const char *buf) {
         }
     }
 
-    if (n == s &&
-        (err == HE_BLOCKED ||
-         err == HE_EOF))
+    if (n == s && (err == HE_BLOCKED || err == HE_EOF))
         err = HE_OK;
 
     s = n;
     return convertErr(err);
 }
 
-StreamResult HandleStream::flush_buffer() {
+StreamResult
+HandleStream::flush_buffer()
+{
     size k = write_cursor;
     HandleError err = sys::io::write(handle, k, write_buffer);
-    
+
     if (k > 0) {
         memmove(write_buffer, write_buffer + k, write_cursor - k);
         write_cursor -= k;
@@ -184,14 +197,19 @@ StreamResult HandleStream::flush_buffer() {
     return convertErr(err);
 }
 
-bool readFile(sys::io::OutStream& err, const std::string& path, char **file_contents, size *file_size) {
+bool
+readFile(sys::io::OutStream &err,
+         const std::string &path,
+         char **file_contents,
+         size *file_size)
+{
     FILE *in = fopen(path.c_str(), "r");
     if (in == 0)
         goto fail;
-    
+
     *file_contents = nullptr;
     *file_size = 0;
-    
+
     if (fseek(in, 0, SEEK_END) == -1)
         goto fail;
 
@@ -209,7 +227,7 @@ bool readFile(sys::io::OutStream& err, const std::string& path, char **file_cont
                 delete[] contents;
                 goto fail;
             }
-        
+
             contents[size] = '\0';
             *file_contents = contents;
             *file_size = SIZE(size);

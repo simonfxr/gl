@@ -1,5 +1,5 @@
-#include "glt/utils.hpp"
 #include "glt/glt.hpp"
+#include "glt/utils.hpp"
 
 #include "ge/Engine.hpp"
 #include "ge/Tokenizer.hpp"
@@ -13,16 +13,20 @@
 
 namespace ge {
 
-struct Engine::Data : public GameLoop::Game {
+struct Engine::Data : public GameLoop::Game
+{
 
-    struct Modules {
-        Modules() {
+    struct Modules
+    {
+        Modules()
+        {
             sys::moduleInit();
             glt::moduleInit();
             ge::moduleInit();
         }
 
-        ~Modules() {
+        ~Modules()
+        {
             ge::moduleExit();
             glt::moduleExit();
             sys::moduleExit();
@@ -30,8 +34,8 @@ struct Engine::Data : public GameLoop::Game {
     };
 
     Modules __modules;
-    
-    Engine& theEngine; // owning engine
+
+    Engine &theEngine; // owning engine
     GameWindow *window;
     GameLoop gameLoop;
     CommandProcessor commandProcessor;
@@ -44,27 +48,27 @@ struct Engine::Data : public GameLoop::Game {
 
     bool initialized;
     const EngineOptions *opts; // only during init
-    
+
     glt::ShaderManager shaderManager;
     glt::RenderManager renderManager;
-    
+
     EngineEvents events;
 
-    Data(Engine& engine) :
-        theEngine(engine),
-        gameLoop(60, 5, 120),
-        commandProcessor(engine),
-        keyHandler(commandProcessor),
-        replServer(engine),
-        out(&sys::io::stdout()),
-        initialized(false),
-        opts(0)
+    Data(Engine &engine)
+      : theEngine(engine)
+      , gameLoop(60, 5, 120)
+      , commandProcessor(engine)
+      , keyHandler(commandProcessor)
+      , replServer(engine)
+      , out(&sys::io::stdout())
+      , initialized(false)
+      , opts(0)
     {}
 
     ~Data() {}
 
-    bool init(const EngineOptions& opts);
-                             
+    bool init(const EngineOptions &opts);
+
     virtual void tick() final override;
     virtual void render(double interpolation) final override;
     virtual void handleInputEvents() final override;
@@ -73,67 +77,111 @@ struct Engine::Data : public GameLoop::Game {
     virtual void atExit(int32 exit_code) final override;
 
     void registerHandlers();
-    bool execCommand(std::vector<CommandArg>& args);
+    bool execCommand(std::vector<CommandArg> &args);
 };
 
 namespace {
 
-bool runInit(EventSource<InitEvent>& source, const Event<InitEvent>& e);
+bool
+runInit(EventSource<InitEvent> &source, const Event<InitEvent> &e);
 
-} // namespace anon
+} // namespace
 
 // #define SELF ASSERT_EXPR(self != 0, self)
 #define SELF self
 
 Engine::Engine() : self(new Data(*this)) {}
 
-Engine::~Engine() {
+Engine::~Engine()
+{
     self->renderManager.shutdown();
     self->shaderManager.shutdown();
     delete self->window;
     delete self;
 }
 
-GameWindow& Engine::window() {
+GameWindow &
+Engine::window()
+{
     ASSERT_MSG(SELF->window != 0, "window not available, too early init phase");
     return *SELF->window;
 }
 
-GameLoop& Engine::gameLoop() { return SELF->gameLoop; }
+GameLoop &
+Engine::gameLoop()
+{
+    return SELF->gameLoop;
+}
 
-CommandProcessor& Engine::commandProcessor() { return SELF->commandProcessor; }
+CommandProcessor &
+Engine::commandProcessor()
+{
+    return SELF->commandProcessor;
+}
 
-KeyHandler& Engine::keyHandler() { return SELF->keyHandler; }
+KeyHandler &
+Engine::keyHandler()
+{
+    return SELF->keyHandler;
+}
 
-ReplServer& Engine::replServer() { return SELF->replServer; }
+ReplServer &
+Engine::replServer()
+{
+    return SELF->replServer;
+}
 
-glt::ShaderManager& Engine::shaderManager() { return SELF->shaderManager; }
+glt::ShaderManager &
+Engine::shaderManager()
+{
+    return SELF->shaderManager;
+}
 
-glt::RenderManager& Engine::renderManager() { return SELF->renderManager; }
+glt::RenderManager &
+Engine::renderManager()
+{
+    return SELF->renderManager;
+}
 
-EngineEvents& Engine::events() { return SELF->events; }
+EngineEvents &
+Engine::events()
+{
+    return SELF->events;
+}
 
-sys::io::OutStream& Engine::out() {
+sys::io::OutStream &
+Engine::out()
+{
     return *self->out;
 }
 
-void Engine::out(sys::io::OutStream& s) {
+void
+Engine::out(sys::io::OutStream &s)
+{
     self->out = &s;
     shaderManager().out(s);
 }
 
-math::real Engine::now() { return math::real(SELF->now()); }
+math::real
+Engine::now()
+{
+    return math::real(SELF->now());
+}
 
-const std::string Engine::programName() const {
+const std::string
+Engine::programName() const
+{
     return self->programName;
 }
 
-int32 Engine::run(const EngineOptions& opts) {
+int32
+Engine::run(const EngineOptions &opts)
+{
     if (self->initialized) {
         ERR("Engine already initialized: called run multiply times?");
         return 1;
     }
-    
+
     if (opts.mode == EngineOptions::Help) {
         EngineOptions::printHelp();
         return 0;
@@ -165,14 +213,14 @@ int32 Engine::run(const EngineOptions& opts) {
     for (uint32 i = 0; i < opts.scriptDirs.size(); ++i) {
         if (!commandProcessor().addScriptDirectory(opts.scriptDirs[i])) {
             ERR("script directory not found: " + opts.scriptDirs[i]);
-//            return 1;
+            //            return 1;
         }
     }
 
     for (uint32 i = 0; i < opts.shaderDirs.size(); ++i) {
         if (!shaderManager().addShaderDirectory(opts.shaderDirs[i])) {
             ERR("shader directory not found: " + opts.shaderDirs[i]);
-//            return 1;
+            //            return 1;
         }
     }
 
@@ -191,7 +239,8 @@ int32 Engine::run(const EngineOptions& opts) {
         if (!script.empty())
             script = sys::fs::dropExtension(script);
 
-        if (script.empty() || !commandProcessor().loadScript(script + ".script"))
+        if (script.empty() ||
+            !commandProcessor().loadScript(script + ".script"))
             return 1;
     }
 
@@ -230,11 +279,15 @@ int32 Engine::run(const EngineOptions& opts) {
     return self->gameLoop.run(*self);
 }
 
-void Engine::Data::tick() {
+void
+Engine::Data::tick()
+{
     events.animate.raise(makeEvent(AnimationEvent(theEngine)));
 }
 
-void Engine::Data::render(double interpolation) {
+void
+Engine::Data::render(double interpolation)
+{
     events.beforeRender.raise(makeEvent(RenderEvent(theEngine, interpolation)));
     if (!skipRender) {
         GL_TRACE("BEGIN_SCENE");
@@ -246,23 +299,33 @@ void Engine::Data::render(double interpolation) {
     events.afterRender.raise(makeEvent(RenderEvent(theEngine, interpolation)));
 }
 
-void Engine::Data::handleInputEvents() {
+void
+Engine::Data::handleInputEvents()
+{
     events.handleInput.raise(makeEvent(InputEvent(theEngine)));
 }
 
-GameLoop::time Engine::Data::now() {
+GameLoop::time
+Engine::Data::now()
+{
     return GameLoop::time(sys::queryTimer());
 }
 
-void Engine::Data::sleep(GameLoop::time secs) {
+void
+Engine::Data::sleep(GameLoop::time secs)
+{
     sys::sleep(secs);
 }
 
-void Engine::Data::atExit(int32 exit_code) {
+void
+Engine::Data::atExit(int32 exit_code)
+{
     events.exit.raise(makeEvent(ExitEvent(theEngine, exit_code)));
 }
 
-bool Engine::Data::init(const EngineOptions& opts) {
+bool
+Engine::Data::init(const EngineOptions &opts)
+{
     this->opts = &opts;
     window = new GameWindow(opts.window);
     renderManager.setDefaultRenderTarget(&window->renderTarget());
@@ -271,8 +334,10 @@ bool Engine::Data::init(const EngineOptions& opts) {
     return true;
 }
 
-void Engine::addInit(RunLevel lvl, const Ref<EventHandler<InitEvent> >& comm) {
-    
+void
+Engine::addInit(RunLevel lvl, const Ref<EventHandler<InitEvent>> &comm)
+{
+
     if (SELF->opts == 0) {
         ERR("cannot register init handler, already initialized");
         return;
@@ -281,11 +346,11 @@ void Engine::addInit(RunLevel lvl, const Ref<EventHandler<InitEvent> >& comm) {
     SELF->opts->inits.reg(lvl, comm);
 }
 
-
-
 namespace {
 
-bool runInit(EventSource<InitEvent>& source, const Event<InitEvent>& e) {
+bool
+runInit(EventSource<InitEvent> &source, const Event<InitEvent> &e)
+{
     for (uint32 i = 0; i < source.handlers.size(); ++i) {
         e.info.success = false;
         source.handlers[i]->handle(e);
@@ -299,46 +364,69 @@ bool runInit(EventSource<InitEvent>& source, const Event<InitEvent>& e) {
 
 namespace handlers {
 
-void sigExit(Engine *engine, const Event<WindowEvent>&) {
+void
+sigExit(Engine *engine, const Event<WindowEvent> &)
+{
     engine->gameLoop().exit(0);
 }
 
-void keyChanged(KeyHandler *handler, const Event<KeyChanged>& ev) {
+void
+keyChanged(KeyHandler *handler, const Event<KeyChanged> &ev)
+{
     handler->keyEvent(ev.info.key);
 }
 
-void focusChanged(KeyHandler *handler, const Event<FocusChanged>& ev) {
+void
+focusChanged(KeyHandler *handler, const Event<FocusChanged> &ev)
+{
     if (!ev.info.focused) // lost focus, reset key states
         handler->clearStates();
 }
 
-void mouseButtonChanged(KeyHandler *handler, const Event<MouseButton>& ev) {
+void
+mouseButtonChanged(KeyHandler *handler, const Event<MouseButton> &ev)
+{
     handler->keyEvent(ev.info.button);
 }
 
-void handleKeyBindings(KeyHandler *handler, const Event<InputEvent>&) {
+void
+handleKeyBindings(KeyHandler *handler, const Event<InputEvent> &)
+{
     handler->handleCommands();
 }
 
-void updateProjectionMatrix(Engine *eng, const Event<WindowResized>& e) {
-    eng->renderManager().updateProjection(math::real(e.info.width) / math::real(e.info.height));
+void
+updateProjectionMatrix(Engine *eng, const Event<WindowResized> &e)
+{
+    eng->renderManager().updateProjection(math::real(e.info.width) /
+                                          math::real(e.info.height));
 }
 
 } // namespace handlers
 
-} // namespace anon
+} // namespace
 
-void Engine::Data::registerHandlers() {
+void
+Engine::Data::registerHandlers()
+{
     window->registerHandlers(events);
-    window->events().windowClosed.reg(makeEventHandler(handlers::sigExit, &theEngine));
-    window->events().keyChanged.reg(makeEventHandler(handlers::keyChanged, &keyHandler));
-    window->events().focusChanged.reg(makeEventHandler(handlers::focusChanged, &keyHandler));
-    window->events().mouseButton.reg(makeEventHandler(handlers::mouseButtonChanged, &keyHandler));
-    window->events().windowResized.reg(makeEventHandler(handlers::updateProjectionMatrix, &theEngine));
-    theEngine.events().handleInput.reg(makeEventHandler(handlers::handleKeyBindings, &keyHandler));
+    window->events().windowClosed.reg(
+      makeEventHandler(handlers::sigExit, &theEngine));
+    window->events().keyChanged.reg(
+      makeEventHandler(handlers::keyChanged, &keyHandler));
+    window->events().focusChanged.reg(
+      makeEventHandler(handlers::focusChanged, &keyHandler));
+    window->events().mouseButton.reg(
+      makeEventHandler(handlers::mouseButtonChanged, &keyHandler));
+    window->events().windowResized.reg(
+      makeEventHandler(handlers::updateProjectionMatrix, &theEngine));
+    theEngine.events().handleInput.reg(
+      makeEventHandler(handlers::handleKeyBindings, &keyHandler));
 }
 
-void Engine::enablePlugin(Plugin& p) {
+void
+Engine::enablePlugin(Plugin &p)
+{
     p.registerWith(*this);
     p.registerCommands(commandProcessor());
 }

@@ -1,16 +1,16 @@
 #include "opengl.hpp"
 
-#include "math/vec2.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
+#include "math/glvec.hpp"
 #include "math/mat2.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-#include "math/glvec.hpp"
+#include "math/vec2.hpp"
+#include "math/vec3.hpp"
+#include "math/vec4.hpp"
 
-#include "glt/color.hpp"
 #include "glt/ShaderProgram.hpp"
 #include "glt/Uniforms.hpp"
+#include "glt/color.hpp"
 
 #include "err/err.hpp"
 #include "glt/utils.hpp"
@@ -19,10 +19,14 @@ namespace glt {
 
 namespace {
 
-std::string descGLType(GLenum ty) {
+std::string
+descGLType(GLenum ty)
+{
 
-#define CASE(ty) case ty: return #ty;
-    
+#define CASE(ty)                                                               \
+    case ty:                                                                   \
+        return #ty;
+
     switch (ty) {
         CASE(GL_FLOAT);
         CASE(GL_FLOAT_VEC2);
@@ -98,81 +102,130 @@ std::string descGLType(GLenum ty) {
         CASE(GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY);
         CASE(GL_UNSIGNED_INT_SAMPLER_BUFFER);
         CASE(GL_UNSIGNED_INT_SAMPLER_2D_RECT);
-        
-    default: return "unknown OpenGL type";
+
+    default:
+        return "unknown OpenGL type";
     }
 
 #undef CASE
 }
 
-template <typename T>
-typename T::gl glvec(const T& x) {
+template<typename T>
+typename T::gl
+glvec(const T &x)
+{
     typename T::gl gl(x);
     return gl;
 }
 
-void programUniform(GLuint program, GLint loc, float value) {
+void
+programUniform(GLuint program, GLint loc, float value)
+{
     GL_CALL(glProgramUniform1fv, program, loc, 1, &value);
 }
 
-void programUniform(GLuint program, GLint loc, const Array<float>& value) {
+void
+programUniform(GLuint program, GLint loc, const Array<float> &value)
+{
     GL_CALL(glProgramUniform1fv, program, loc, value.size(), &value[0]);
 }
 
-void programUniform(GLuint program, GLint loc, const vec4_t& value) {
+void
+programUniform(GLuint program, GLint loc, const vec4_t &value)
+{
     GL_CALL(glProgramUniform4fv, program, loc, 1, glvec(value).buffer);
 }
 
-void programUniform(GLuint program, GLint loc, const vec3_t& value) {
+void
+programUniform(GLuint program, GLint loc, const vec3_t &value)
+{
     GL_CALL(glProgramUniform3fv, program, loc, 1, glvec(value).buffer);
 }
 
-void programUniform(GLuint program, GLint loc, const vec2_t& value) {
+void
+programUniform(GLuint program, GLint loc, const vec2_t &value)
+{
     GL_CALL(glProgramUniform2fv, program, loc, 1, glvec(value).buffer);
 }
 
-void programUniform(GLuint program, GLint loc, const mat4_t& value) {
-    GL_CALL(glProgramUniformMatrix4fv, program, loc, 1, GL_FALSE, glvec(value).buffer);
+void
+programUniform(GLuint program, GLint loc, const mat4_t &value)
+{
+    GL_CALL(glProgramUniformMatrix4fv,
+            program,
+            loc,
+            1,
+            GL_FALSE,
+            glvec(value).buffer);
 }
 
-void programUniform(GLuint program, GLint loc, const mat3_t& value) {
-    GL_CALL(glProgramUniformMatrix3fv, program, loc, 1, GL_FALSE, glvec(value).buffer);
+void
+programUniform(GLuint program, GLint loc, const mat3_t &value)
+{
+    GL_CALL(glProgramUniformMatrix3fv,
+            program,
+            loc,
+            1,
+            GL_FALSE,
+            glvec(value).buffer);
 }
 
-void programUniform(GLuint program, GLint loc, const mat2_t& value) {
-    GL_CALL(glProgramUniformMatrix2fv, program, loc, 1, GL_FALSE, glvec(value).buffer);
+void
+programUniform(GLuint program, GLint loc, const mat2_t &value)
+{
+    GL_CALL(glProgramUniformMatrix2fv,
+            program,
+            loc,
+            1,
+            GL_FALSE,
+            glvec(value).buffer);
 }
 
-void programUniform(GLuint program, GLint loc, const BoundTexture& sampler) {
+void
+programUniform(GLuint program, GLint loc, const BoundTexture &sampler)
+{
     GL_CALL(glProgramUniform1i, program, loc, GLint(sampler.index));
 }
 
-void programUniform(GLuint program, GLint loc, const Sampler& sampler) {
+void
+programUniform(GLuint program, GLint loc, const Sampler &sampler)
+{
     GL_CALL(glProgramUniform1i, program, loc, GLint(sampler.index));
 }
 
-void programUniform(GLuint program, GLint loc, GLint val) {
+void
+programUniform(GLuint program, GLint loc, GLint val)
+{
     GL_CALL(glProgramUniform1i, program, loc, val);
 }
 
-void programUniform(GLuint program, GLint loc, GLuint val) {
+void
+programUniform(GLuint program, GLint loc, GLuint val)
+{
     GL_CALL(glProgramUniform1ui, program, loc, val);
 }
 
-template <typename T>
-void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GLenum type, const T& value) {
+template<typename T>
+void
+setUniform(bool mandatory,
+           ShaderProgram &prog,
+           const std::string &name,
+           GLenum type,
+           const T &value)
+{
 
     UNUSED(type);
-    
+
     GLint locationi;
-    GL_ASSIGN_CALL(locationi, glGetUniformLocation, *prog.program(), name.c_str());
-    
+    GL_ASSIGN_CALL(
+      locationi, glGetUniformLocation, *prog.program(), name.c_str());
+
     if (locationi == -1) {
         if (mandatory)
             ERR("unknown uniform: " + name);
         return;
     }
-    
+
 #ifdef GLDEBUG
 
     GLint num_active;
@@ -180,11 +233,19 @@ void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GL
     if (locationi < num_active) {
         GLuint location = GLuint(locationi);
         GLint actual_typei = -1;
-        GL_CALL(glGetActiveUniformsiv, *prog.program(), 1, &location, GL_UNIFORM_TYPE, &actual_typei);
+        GL_CALL(glGetActiveUniformsiv,
+                *prog.program(),
+                1,
+                &location,
+                GL_UNIFORM_TYPE,
+                &actual_typei);
         if (actual_typei != -1) {
             GLenum actual_type = GLenum(actual_typei);
             if (actual_type != type) {
-                std::string err = "uniform \"" + name + "\": types dont match, got: " + descGLType(type) + ", expected: " + descGLType(actual_type);
+                std::string err =
+                  "uniform \"" + name +
+                  "\": types dont match, got: " + descGLType(type) +
+                  ", expected: " + descGLType(actual_type);
                 ERR(err.c_str());
                 return;
             }
@@ -196,65 +257,99 @@ void setUniform(bool mandatory, ShaderProgram& prog, const std::string& name, GL
     programUniform(*prog.program(), locationi, value);
 }
 
-} // namespace anon
+} // namespace
 
-void Uniforms::set(bool mandatory, const std::string& name, float value) {
+void
+Uniforms::set(bool mandatory, const std::string &name, float value)
+{
     setUniform(mandatory, prog, name, GL_FLOAT, value);
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, double value) {
+void
+Uniforms::set(bool mandatory, const std::string &name, double value)
+{
     setUniform(mandatory, prog, name, GL_FLOAT, float(value));
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, const Array<float>& value) {
+void
+Uniforms::set(bool mandatory,
+              const std::string &name,
+              const Array<float> &value)
+{
     setUniform(mandatory, prog, name, GL_FLOAT, value);
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, const vec4_t& value) {
+void
+Uniforms::set(bool mandatory, const std::string &name, const vec4_t &value)
+{
     setUniform(mandatory, prog, name, GL_FLOAT_VEC4, value);
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, const vec3_t& value) {
+void
+Uniforms::set(bool mandatory, const std::string &name, const vec3_t &value)
+{
     setUniform(mandatory, prog, name, GL_FLOAT_VEC3, value);
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, const vec2_t& value) {
+void
+Uniforms::set(bool mandatory, const std::string &name, const vec2_t &value)
+{
     setUniform(mandatory, prog, name, GL_FLOAT_VEC2, value);
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, const mat4_t& value) {
+void
+Uniforms::set(bool mandatory, const std::string &name, const mat4_t &value)
+{
     setUniform(mandatory, prog, name, GL_FLOAT_MAT4, value);
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, const mat3_t& value) {
+void
+Uniforms::set(bool mandatory, const std::string &name, const mat3_t &value)
+{
     setUniform(mandatory, prog, name, GL_FLOAT_MAT3, value);
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, const mat2_t& value) {
+void
+Uniforms::set(bool mandatory, const std::string &name, const mat2_t &value)
+{
     setUniform(mandatory, prog, name, GL_FLOAT_MAT2, value);
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, color value) {
+void
+Uniforms::set(bool mandatory, const std::string &name, color value)
+{
     setUniform(mandatory, prog, name, GL_FLOAT_VEC4, value.vec4());
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, GLint value) {
+void
+Uniforms::set(bool mandatory, const std::string &name, GLint value)
+{
     setUniform(mandatory, prog, name, GL_INT, value);
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, GLuint value) {
+void
+Uniforms::set(bool mandatory, const std::string &name, GLuint value)
+{
     setUniform(mandatory, prog, name, GL_UNSIGNED_INT, value);
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, const BoundTexture& sampler) {
+void
+Uniforms::set(bool mandatory,
+              const std::string &name,
+              const BoundTexture &sampler)
+{
     setUniform(mandatory, prog, name, sampler.type, sampler);
 }
 
-void Uniforms::set(bool mandatory, const std::string& name, const Sampler& sampler) {
+void
+Uniforms::set(bool mandatory, const std::string &name, const Sampler &sampler)
+{
     setUniform(mandatory, prog, name, sampler.type, sampler);
 }
 
-GLenum mapGLTextureType(GLenum texture_target) {
+GLenum
+mapGLTextureType(GLenum texture_target)
+{
     switch (texture_target) {
     case GL_TEXTURE_1D:
         return GL_SAMPLER_1D;

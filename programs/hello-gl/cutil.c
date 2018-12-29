@@ -9,7 +9,8 @@
  * Boring, non-OpenGL-related utility functions
  */
 
-void *file_contents(const char *filename, GLint *length)
+void *
+file_contents(const char *filename, GLint *length)
 {
     FILE *f = fopen(filename, "r");
     void *buffer;
@@ -23,34 +24,37 @@ void *file_contents(const char *filename, GLint *length)
     *length = ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    buffer = malloc(*length+1);
+    buffer = malloc(*length + 1);
     *length = fread(buffer, 1, *length, f);
     fclose(f);
-    ((char*)buffer)[*length] = '\0';
+    ((char *) buffer)[*length] = '\0';
 
     return buffer;
 }
 
-static short le_short(unsigned char *bytes)
+static short
+le_short(unsigned char *bytes)
 {
-    return bytes[0] | ((char)bytes[1] << 8);
+    return bytes[0] | ((char) bytes[1] << 8);
 }
 
-void *read_tga(const char *filename, int *width, int *height)
+void *
+read_tga(const char *filename, int *width, int *height)
 {
-    struct ATTRS(ATTR_PACKED) tga_header {
-       char  id_length;
-       char  color_map_type;
-       char  data_type_code;
-       unsigned char  color_map_origin[2];
-       unsigned char  color_map_length[2];
-       char  color_map_depth;
-       unsigned char  x_origin[2];
-       unsigned char  y_origin[2];
-       unsigned char  width[2];
-       unsigned char  height[2];
-       char  bits_per_pixel;
-       char  image_descriptor;
+    struct ATTRS(ATTR_PACKED) tga_header
+    {
+        char id_length;
+        char color_map_type;
+        char data_type_code;
+        unsigned char color_map_origin[2];
+        unsigned char color_map_length[2];
+        char color_map_depth;
+        unsigned char x_origin[2];
+        unsigned char y_origin[2];
+        unsigned char width[2];
+        unsigned char height[2];
+        char bits_per_pixel;
+        char image_descriptor;
     } header;
     int i, color_map_size, pixels_size;
     FILE *f;
@@ -77,7 +81,8 @@ void *read_tga(const char *filename, int *width, int *height)
         return NULL;
     }
     if (header.bits_per_pixel != 24) {
-        fprintf(stderr, "%s is not a 24-bit uncompressed RGB tga file\n", filename);
+        fprintf(
+          stderr, "%s is not a 24-bit uncompressed RGB tga file\n", filename);
         fclose(f);
         return NULL;
     }
@@ -89,7 +94,8 @@ void *read_tga(const char *filename, int *width, int *height)
             return NULL;
         }
 
-    color_map_size = le_short(header.color_map_length) * (header.color_map_depth/8);
+    color_map_size =
+      le_short(header.color_map_length) * (header.color_map_depth / 8);
     for (i = 0; i < color_map_size; ++i)
         if (getc(f) == EOF) {
             fprintf(stderr, "%s has incomplete color map\n", filename);
@@ -97,8 +103,9 @@ void *read_tga(const char *filename, int *width, int *height)
             return NULL;
         }
 
-    *width = le_short(header.width); *height = le_short(header.height);
-    pixels_size = *width * *height * (header.bits_per_pixel/8);
+    *width = le_short(header.width);
+    *height = le_short(header.height);
+    pixels_size = *width * *height * (header.bits_per_pixel / 8);
     pixels = malloc(pixels_size);
 
     read = fread(pixels, pixels_size, 1, f);

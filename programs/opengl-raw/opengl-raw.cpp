@@ -5,23 +5,24 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "math/mat3.hpp"
+#include "math/mat4.hpp"
+#include "math/real.hpp"
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
-#include "math/real.hpp"
-#include "math/mat3.hpp"
-#include "math/mat4.hpp"
 
 #include "glt/Transformations.hpp"
 
-#include <iostream>
 #include <cstdlib>
+#include <iostream>
 
 using namespace math;
 
-struct State {
+struct State
+{
     GLuint program;
-    
+
     GLuint vertex_array;
     GLuint vertex_buffer;
 
@@ -29,42 +30,55 @@ struct State {
     GLint uniform_mv;
     GLint attrib_position;
     GLint attrib_color;
-    
 };
 
-struct Vertex {
+struct Vertex
+{
     vec3_t position;
     vec3_t color;
 };
 
-
-#define X .525731112119133606 
+#define X .525731112119133606
 #define Z .850650808352039932
 
-const GLfloat VERTEX_DATA[12][3] = {    
-    {-X, 0.0, Z}, {X, 0.0, Z}, {-X, 0.0, -Z}, {X, 0.0, -Z},    
-    {0.0, Z, X}, {0.0, Z, -X}, {0.0, -Z, X}, {0.0, -Z, -X},    
-    {Z, X, 0.0}, {-Z, X, 0.0}, {Z, -X, 0.0}, {-Z, -X, 0.0} 
+const GLfloat VERTEX_DATA[12][3] = {
+    { -X, 0.0, Z }, { X, 0.0, Z },  { -X, 0.0, -Z }, { X, 0.0, -Z },
+    { 0.0, Z, X },  { 0.0, Z, -X }, { 0.0, -Z, X },  { 0.0, -Z, -X },
+    { Z, X, 0.0 },  { -Z, X, 0.0 }, { Z, -X, 0.0 },  { -Z, -X, 0.0 }
 };
 
-const GLushort ELEMENT_DATA[20][3] = { 
-    {0,4,1}, {0,9,4}, {9,5,4}, {4,5,8}, {4,8,1},    
-    {8,10,1}, {8,3,10}, {5,3,8}, {5,2,3}, {2,7,3},    
-    {7,10,3}, {7,6,10}, {7,11,6}, {11,0,6}, {0,1,6}, 
-    {6,1,10}, {9,0,11}, {9,11,2}, {9,2,5}, {7,2,11}
+const GLushort ELEMENT_DATA[20][3] = {
+    { 0, 4, 1 },  { 0, 9, 4 },  { 9, 5, 4 },  { 4, 5, 8 },  { 4, 8, 1 },
+    { 8, 10, 1 }, { 8, 3, 10 }, { 5, 3, 8 },  { 5, 2, 3 },  { 2, 7, 3 },
+    { 7, 10, 3 }, { 7, 6, 10 }, { 7, 11, 6 }, { 11, 0, 6 }, { 0, 1, 6 },
+    { 6, 1, 10 }, { 9, 0, 11 }, { 9, 11, 2 }, { 9, 2, 5 },  { 7, 2, 11 }
 };
 
-void glfw_error_callback(int, const char* description) {
+void
+glfw_error_callback(int, const char *description)
+{
     std::cerr << description << std::endl;
 }
 
-void APIENTRY opengl_error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char *message, void *userParam) {
-    UNUSED(source); UNUSED(type); UNUSED(id);
-    UNUSED(severity); UNUSED(length); UNUSED(userParam);
+void APIENTRY
+opengl_error_callback(GLenum source,
+                      GLenum type,
+                      GLuint id,
+                      GLenum severity,
+                      GLsizei length,
+                      const char *message,
+                      void *userParam)
+{
+    UNUSED(source);
+    UNUSED(type);
+    UNUSED(id);
+    UNUSED(severity);
+    UNUSED(length);
+    UNUSED(userParam);
     std::cerr << message << std::endl;
 }
 
-#define DEF_GL_SHADER(name, src) const char * const name = "#version 330\n" #src
+#define DEF_GL_SHADER(name, src) const char *const name = "#version 330\n" #src
 
 DEF_GL_SHADER(VERTEX_SHADER,
 
@@ -75,7 +89,7 @@ DEF_GL_SHADER(VERTEX_SHADER,
               in vec3 color;
 
               out vec3 fragColor;
-              
+
               void main() {
                   gl_Position = mvpMatrix * vec4(position, 1);
                   fragColor = color;
@@ -84,7 +98,7 @@ DEF_GL_SHADER(VERTEX_SHADER,
 DEF_GL_SHADER(FRAGMENT_SHADER,
 
               in vec3 fragColor;
-              
+
               out vec4 color;
 
               void main() {
@@ -92,15 +106,17 @@ DEF_GL_SHADER(FRAGMENT_SHADER,
                   color.a = 1;
               });
 
-bool initProgram(State& s) {
-    GLuint& program = s.program;
+bool
+initProgram(State &s)
+{
+    GLuint &program = s.program;
     GLuint vert_shader = glCreateShader(GL_VERTEX_SHADER);
     GLuint frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
 
     const GLchar *vert_source = (const GLchar *) VERTEX_SHADER;
     glShaderSource(vert_shader, 1, &vert_source, NULL);
     glCompileShader(vert_shader);
-    
+
     const GLchar *frag_source = (const GLchar *) FRAGMENT_SHADER;
     glShaderSource(frag_shader, 1, &frag_source, NULL);
     glCompileShader(frag_shader);
@@ -118,7 +134,7 @@ bool initProgram(State& s) {
 
     s.uniform_mvp = glGetUniformLocation(s.program, "mvpMatrix");
     s.uniform_mv = glGetUniformLocation(s.program, "mvMatrix");
-    
+
     s.attrib_position = glGetAttribLocation(s.program, "position");
     s.attrib_color = glGetAttribLocation(s.program, "color");
 
@@ -128,8 +144,9 @@ bool initProgram(State& s) {
     return true;
 }
 
-bool initVertexArray(State& s) {
-
+bool
+initVertexArray(State &s)
+{
 
     std::vector<Vertex> vertices;
 
@@ -144,9 +161,12 @@ bool initVertexArray(State& s) {
     }
 
     glGenBuffers(1, &s.vertex_buffer);
-    
+
     glBindBuffer(GL_ARRAY_BUFFER, s.vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof (Vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER,
+                 sizeof(Vertex) * vertices.size(),
+                 &vertices[0],
+                 GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     if (glGetError() != GL_NO_ERROR)
@@ -156,25 +176,39 @@ bool initVertexArray(State& s) {
 
     glBindVertexArray(s.vertex_array);
     glBindBuffer(GL_ARRAY_BUFFER, s.vertex_buffer);
-    glVertexAttribPointer(s.attrib_position, 3, GL_FLOAT, GL_FALSE, sizeof (Vertex), (GLvoid *) offsetof(Vertex, position));
-    glVertexAttribPointer(s.attrib_color, 3, GL_FLOAT, GL_FALSE, sizeof (Vertex), (GLvoid *) offsetof(Vertex, color));
+    glVertexAttribPointer(s.attrib_position,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(Vertex),
+                          (GLvoid *) offsetof(Vertex, position));
+    glVertexAttribPointer(s.attrib_color,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(Vertex),
+                          (GLvoid *) offsetof(Vertex, color));
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glEnableVertexAttribArray(s.attrib_position);
     glEnableVertexAttribArray(s.attrib_color);
     glBindVertexArray(0);
-    
+
     if (glGetError() != GL_NO_ERROR)
         return false;
-    
+
     return true;
 }
 
-bool init(State& s) {
+bool
+init(State &s)
+{
     return initProgram(s) && initVertexArray(s);
 }
 
-int main() {
-    GLFWwindow* window = 0;
+int
+main()
+{
+    GLFWwindow *window = 0;
     int ret = EXIT_FAILURE;
     GLenum glew_err = GLEW_OK;
     GLenum gl_err = GL_NO_ERROR;
@@ -200,11 +234,12 @@ int main() {
     glew_err = glewInit();
     if (glew_err != GLEW_OK)
         goto err2;
-    
+
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+    glDebugMessageControlARB(
+      GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
     glDebugMessageCallbackARB(opengl_error_callback, NULL);
-    
+
     gl_err = glGetError();
     if (gl_err != GL_NO_ERROR)
         goto err2;
@@ -228,8 +263,10 @@ int main() {
 
         real time = real(glfwGetTime());
 
-        mat4_t rotationMatrix = mat4(glt::rotationMatrix(time * 0.2f, normalize(vec3(1.f, 1.f, 1.f))));
-        mat4_t projectionMatrix = glt::perspectiveProjection(45.f, real(width) / real(height), 0.5f, 600.f);
+        mat4_t rotationMatrix = mat4(
+          glt::rotationMatrix(time * 0.2f, normalize(vec3(1.f, 1.f, 1.f))));
+        mat4_t projectionMatrix = glt::perspectiveProjection(
+          45.f, real(width) / real(height), 0.5f, 600.f);
         mat4_t mvMatrix = mat4();
         mvMatrix[3] = vec4(0.f, 0.f, -3.f, 1.f);
         mvMatrix = mvMatrix * rotationMatrix;
@@ -245,7 +282,7 @@ int main() {
 
         glfwSwapBuffers(window);
     }
-    
+
     ret = EXIT_SUCCESS;
 
 err2:
@@ -253,6 +290,6 @@ err2:
 err1:
     glfwTerminate();
 err0:
-    
+
     return ret;
 }

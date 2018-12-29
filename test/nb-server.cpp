@@ -21,13 +21,12 @@ struct Client
     index buf_end;
 
     Client()
-      : stream(new io::HandleStream),
-        id(0),
-        reading(true),
-        buf_pos(0),
-        buf_end(BUF_SIZE)
-    {
-    }
+      : stream(new io::HandleStream)
+      , id(0)
+      , reading(true)
+      , buf_pos(0)
+      , buf_end(BUF_SIZE)
+    {}
 };
 
 int
@@ -41,8 +40,9 @@ main(void)
 
     sys::moduleInit();
 
-    if (io::listen(io::SP_TCP, io::IPA_LOCAL(), 1337, io::SM_NONBLOCKING,
-                   &server) != io::SE_OK) {
+    if (io::listen(
+          io::SP_TCP, io::IPA_LOCAL(), 1337, io::SM_NONBLOCKING, &server) !=
+        io::SE_OK) {
         ERR("failed to start server");
         return 1;
     }
@@ -104,8 +104,8 @@ main(void)
             }
 
             if (close) {
-                sys::io::stdout() << "closing connection to client " << c.id
-                                  << sys::io::endl;
+                sys::io::stdout()
+                  << "closing connection to client " << c.id << sys::io::endl;
                 c.stream->close();
                 clients.erase(clients.begin() + i);
             }

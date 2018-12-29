@@ -7,7 +7,8 @@ namespace math {
 
 struct glvec4;
 
-struct ATTRS(ATTR_PACKED) vec4_t {
+struct ATTRS(ATTR_PACKED) vec4_t
+{
     static const defs::size size = 4;
     static const defs::size padded_size = 4;
     typedef real component_type;
@@ -16,7 +17,7 @@ struct ATTRS(ATTR_PACKED) vec4_t {
 
     real components[padded_size];
 
-    MATH_FUNC real& operator[](defs::index) MUT_FUNC;
+    MATH_FUNC real &operator[](defs::index) MUT_FUNC;
     MATH_FUNC real operator[](defs::index) const PURE_FUNC;
 };
 

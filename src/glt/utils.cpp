@@ -4,9 +4,9 @@
 #include "defs.hpp"
 #include "opengl.hpp"
 
-#include "glt/utils.hpp"
 #include "glt/GLDebug.hpp"
 #include "glt/module.hpp"
+#include "glt/utils.hpp"
 
 #include "err/err.hpp"
 
@@ -14,20 +14,28 @@
 
 namespace glt {
 
-bool printOpenGLCalls() {
+bool
+printOpenGLCalls()
+{
     return G.print_opengl_calls;
 }
 
-void printOpenGLCalls(bool yesno) {
+void
+printOpenGLCalls(bool yesno)
+{
     G.print_opengl_calls = yesno;
 }
 
-std::string getGLErrorString(GLenum err) {
+std::string
+getGLErrorString(GLenum err)
+{
 
     switch (err) {
-            
-#define err_case(e) case e: return #e
-        
+
+#define err_case(e)                                                            \
+    case e:                                                                    \
+        return #e
+
         err_case(GL_NO_ERROR);
         err_case(GL_INVALID_ENUM);
         err_case(GL_INVALID_VALUE);
@@ -48,57 +56,77 @@ std::string getGLErrorString(GLenum err) {
     }
 }
 
-bool printGLErrors(sys::io::OutStream& out) {
+bool
+printGLErrors(sys::io::OutStream &out)
+{
     bool was_error = false;
-    
+
     for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
-        out << "OpenGL error occurred: " << getGLErrorString(err) << sys::io::endl;
-    
+        out << "OpenGL error occurred: " << getGLErrorString(err)
+            << sys::io::endl;
+
     return was_error;
 }
 
-bool isExtensionSupported(const char *extension) {
+bool
+isExtensionSupported(const char *extension)
+{
     GLint ni;
     glGetIntegerv(GL_NUM_EXTENSIONS, &ni);
     GLuint n = GLuint(ni);
-    
-    for(GLuint i = 0; i < n; i++)
-        if(strcmp(extension, gl_unstr(glGetStringi(GL_EXTENSIONS, i))) == 0)
+
+    for (GLuint i = 0; i < n; i++)
+        if (strcmp(extension, gl_unstr(glGetStringi(GL_EXTENSIONS, i))) == 0)
             return true;
 
     return false;
 }
 
-void ignoreDebugMessage(OpenGLVendor vendor, GLuint id) {
+void
+ignoreDebugMessage(OpenGLVendor vendor, GLuint id)
+{
     G.gl_debug->ignoreMessage(vendor, id);
 }
 
-void printGLError(const err::Location& loc, GLenum err) {
-    err::printError(sys::io::stdout(), "OpenGL Error", loc, err::Error, getGLErrorString(err).c_str());
+void
+printGLError(const err::Location &loc, GLenum err)
+{
+    err::printError(sys::io::stdout(),
+                    "OpenGL Error",
+                    loc,
+                    err::Error,
+                    getGLErrorString(err).c_str());
 }
 
-void printGLTrace(const err::Location& loc) {
+void
+printGLTrace(const err::Location &loc)
+{
     if (G.print_opengl_calls)
-        sys::io::stdout() << "OPENGL " << loc.operation << " " << loc.file << ":" << loc.line << sys::io::endl;
+        sys::io::stdout() << "OPENGL " << loc.operation << " " << loc.file
+                          << ":" << loc.line << sys::io::endl;
 }
 
-bool checkForGLError(const err::Location& loc) {
+bool
+checkForGLError(const err::Location &loc)
+{
 
     if (G.print_opengl_calls && loc.operation != 0) {
         printGLTrace(loc);
     }
-    
+
     bool was_error = false;
 
     for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
         printGLError(loc, err);
 
     G.gl_debug->printDebugMessages(loc);
-    
+
     return was_error;
 }
 
-bool initDebug() {
+bool
+initDebug()
+{
 
     GLDebug *dbg = 0;
     const char *debug_impl = 0;
@@ -114,15 +142,18 @@ bool initDebug() {
         sys::io::stdout() << "trying AMD debug" << sys::io::endl;
         dbg = AMDDebug::init();
     }
-    
+
     bool initialized;
 
     if (dbg == 0) {
-        sys::io::stdout() << "couldnt initialize Debug Output, no debug implementaion available" << sys::io::endl;
+        sys::io::stdout()
+          << "couldnt initialize Debug Output, no debug implementaion available"
+          << sys::io::endl;
         dbg = new NoDebug();
         initialized = false;
     } else {
-        sys::io::stdout() << "initialized Debug Output using " << debug_impl << sys::io::endl;
+        sys::io::stdout() << "initialized Debug Output using " << debug_impl
+                          << sys::io::endl;
         initialized = true;
     }
 
@@ -132,7 +163,8 @@ bool initDebug() {
 
 namespace {
 
-enum MemInfoField {
+enum MemInfoField
+{
     FREE_TOTAL,
     FREE_MAX_BLOCK,
     FREE_AUX_TOTAL,
@@ -140,19 +172,23 @@ enum MemInfoField {
     FREE_COUNT
 };
 
-void queryMemFreeATI(GLMemInfoATI::GLMemFree *free) {
+void
+queryMemFreeATI(GLMemInfoATI::GLMemFree *free)
+{
     GLint info[FREE_COUNT];
     GL_CALL(glGetIntegerv, GL_VBO_FREE_MEMORY_ATI, info);
     free->freeVBO = info[FREE_TOTAL];
     GL_CALL(glGetIntegerv, GL_TEXTURE_FREE_MEMORY_ATI, info);
     free->freeTexture = info[FREE_TOTAL];
     GL_CALL(glGetIntegerv, GL_RENDERBUFFER_FREE_MEMORY_ATI, info);
-    free->freeRenderbuffer = info[FREE_TOTAL];    
+    free->freeRenderbuffer = info[FREE_TOTAL];
 }
 
-} // namespace anon
+} // namespace
 
-bool GLMemInfoATI::init() {
+bool
+GLMemInfoATI::init()
+{
     if (G.ati_mem_info_initialized)
         return G.ati_mem_info_available;
     G.ati_mem_info_initialized = true;
@@ -162,8 +198,10 @@ bool GLMemInfoATI::init() {
     return G.ati_mem_info_available;
 }
 
-bool GLMemInfoATI::info(GLMemInfoATI *mi) {
-    
+bool
+GLMemInfoATI::info(GLMemInfoATI *mi)
+{
+
     if (!G.ati_mem_info_initialized) {
         ERR("GLMemInfoATI not initialized");
         return false;
@@ -177,7 +215,9 @@ bool GLMemInfoATI::info(GLMemInfoATI *mi) {
     return true;
 }
 
-bool GLMemInfoNV::init() {
+bool
+GLMemInfoNV::init()
+{
     if (G.nv_mem_info_initialized)
         return G.nv_mem_info_available;
     G.nv_mem_info_initialized = true;
@@ -185,7 +225,9 @@ bool GLMemInfoNV::init() {
     return G.nv_mem_info_available;
 }
 
-bool GLMemInfoNV::info(GLMemInfoNV *mi) {
+bool
+GLMemInfoNV::info(GLMemInfoNV *mi)
+{
     if (!G.nv_mem_info_initialized) {
         ERR("GLMemInfoNV not initialized");
         return false;
@@ -195,10 +237,14 @@ bool GLMemInfoNV::info(GLMemInfoNV *mi) {
         return false;
 
     GLint total, total_dedicated, current, evicted, num_evictions;
-    GL_CALL(glGetIntegerv, GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &total_dedicated);
-    GL_CALL(glGetIntegerv, GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &total);
-    GL_CALL(glGetIntegerv, GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &current);
-    GL_CALL(glGetIntegerv, GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX, &num_evictions);
+    GL_CALL(
+      glGetIntegerv, GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &total_dedicated);
+    GL_CALL(
+      glGetIntegerv, GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &total);
+    GL_CALL(
+      glGetIntegerv, GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &current);
+    GL_CALL(
+      glGetIntegerv, GL_GPU_MEMORY_INFO_EVICTION_COUNT_NVX, &num_evictions);
     GL_CALL(glGetIntegerv, GL_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX, &evicted);
 
     mi->total = total;
@@ -209,13 +255,13 @@ bool GLMemInfoNV::info(GLMemInfoNV *mi) {
     return true;
 }
 
-Utils::Utils() :
-    gl_debug(makeRef<GLDebug>(new NoDebug)),
-    print_opengl_calls(false),
-    nv_mem_info_initialized(false),
-    nv_mem_info_available(false),
-    ati_mem_info_initialized(false),
-    ati_mem_info_available(false)
+Utils::Utils()
+  : gl_debug(makeRef<GLDebug>(new NoDebug))
+  , print_opengl_calls(false)
+  , nv_mem_info_initialized(false)
+  , nv_mem_info_available(false)
+  , ati_mem_info_initialized(false)
+  , ati_mem_info_available(false)
 {}
 
 } // namespace glt

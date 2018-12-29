@@ -1,5 +1,5 @@
-#include "opengl.hpp"
 #include "glt/utils.hpp"
+#include "opengl.hpp"
 
 #include "ge/Engine.hpp"
 
@@ -17,13 +17,16 @@
 
 namespace {
 
-struct State {
+struct State
+{
     int argc;
     char **argv;
 };
 
-void animate(State *state, const ge::Event<ge::AnimationEvent>& ev) {
-    ge::Engine& e = ev.info.engine;
+void
+animate(State *state, const ge::Event<ge::AnimationEvent> &ev)
+{
+    ge::Engine &e = ev.info.engine;
 
     Array<ge::CommandArg> args = { 0, nullptr };
     e.commandProcessor().exec("printContextInfo", args);
@@ -32,22 +35,26 @@ void animate(State *state, const ge::Event<ge::AnimationEvent>& ev) {
         if (strncmp(state->argv[i], "GL_", 3) == 0) {
             bool ok = glt::isExtensionSupported(state->argv[i]);
             ok = ok || GLEW_IS_SUPPORTED(state->argv[i]);
-            sys::io::stderr() << "extension " << state->argv[i] << ": " << (ok ? "yes" : "no") << sys::io::endl;
+            sys::io::stderr() << "extension " << state->argv[i] << ": "
+                              << (ok ? "yes" : "no") << sys::io::endl;
         } else {
             bool ok = GLEW_IS_SUPPORTED(state->argv[i]) != 0;
-            sys::io::stderr() << "function " << state->argv[i] << ": " << (ok ? "yes" : "no") << sys::io::endl;
-        }        
+            sys::io::stderr() << "function " << state->argv[i] << ": "
+                              << (ok ? "yes" : "no") << sys::io::endl;
+        }
     }
-    
+
     e.gameLoop().exit(0);
 }
 
-} // namespace anon
+} // namespace
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char *argv[])
+{
     ge::EngineOptions opts;
     ge::Engine engine;
-    
+
     opts.parse(&argc, &argv);
     for (int i = 1; i < argc; ++i)
         if (argv[i] != 0 && argv[i][0] == '-')

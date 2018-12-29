@@ -2,8 +2,8 @@
 
 #define SYS_IO_STREAM_NOWARN 1
 
-#include "sys/fs.hpp"
 #include "err/err.hpp"
+#include "sys/fs.hpp"
 
 namespace sys {
 
@@ -13,25 +13,29 @@ namespace def {
 
 namespace {
 
-size_t dropTrailingSeps(const std::string& path) {
+size_t
+dropTrailingSeps(const std::string &path)
+{
     if (path.empty())
         return std::string::npos;
     size_t pos = path.length() - 1;
 
     while (pos > 0 && path[pos] == '/')
         --pos;
-    
-    return pos;   
+
+    return pos;
 }
 
-}
+} // namespace
 
-std::string dirname(const std::string& path) {
+std::string
+dirname(const std::string &path)
+{
     if (path.empty())
         return ".";
-    
+
     size_t pos = path.rfind(SEPARATOR, dropTrailingSeps(path));
-    
+
     if (pos != std::string::npos) {
         while (pos > 1 && path[pos - 1] == SEPARATOR)
             --pos;
@@ -45,11 +49,13 @@ std::string dirname(const std::string& path) {
         return path.substr(0, pos);
 }
 
-std::string basename(const std::string& path) {
+std::string
+basename(const std::string &path)
+{
 
     if (path.empty())
         return "";
-    
+
     size_t pos = path.rfind(SEPARATOR, dropTrailingSeps(path));
     size_t end = std::string::npos;
 
@@ -62,11 +68,13 @@ std::string basename(const std::string& path) {
 
     if (end == std::string::npos)
         end = path.length();
-        
+
     return path.substr(pos, end - pos);
 }
 
-std::string extension(const std::string& path) {
+std::string
+extension(const std::string &path)
+{
     size_t pos = path.rfind(SEPARATOR);
     if (pos == std::string::npos)
         pos = 0;
@@ -76,7 +84,9 @@ std::string extension(const std::string& path) {
     return path.substr(pos + 1);
 }
 
-std::string dropExtension(const std::string& path) {
+std::string
+dropExtension(const std::string &path)
+{
     size_t pos = path.rfind(SEPARATOR);
     if (pos == std::string::npos)
         pos = 0;
@@ -86,14 +96,18 @@ std::string dropExtension(const std::string& path) {
     return path.substr(0, pos);
 }
 
-std::string dropTrailingSeparators(const std::string& path) {
+std::string
+dropTrailingSeparators(const std::string &path)
+{
     size_t pos = dropTrailingSeps(path);
     if (pos == std::string::npos)
         return path;
     return path.substr(0, pos);
 }
 
-bool exists(const std::string& path, ObjectType *type) {
+bool
+exists(const std::string &path, ObjectType *type)
+{
     ASSERT(type);
     Stat st;
     if (!stat(path, &st))
@@ -102,7 +116,9 @@ bool exists(const std::string& path, ObjectType *type) {
     return true;
 }
 
-std::string lookup(const std::vector<std::string>& dirs, const std::string& name) {
+std::string
+lookup(const std::vector<std::string> &dirs, const std::string &name)
+{
     std::string suffix = "/" + name;
 
     for (uint32 i = 0; i < dirs.size(); ++i) {
@@ -117,14 +133,18 @@ std::string lookup(const std::vector<std::string>& dirs, const std::string& name
     return "";
 }
 
-std::string absolutePath(const std::string& path) {
+std::string
+absolutePath(const std::string &path)
+{
     Stat st;
     if (!stat(path, &st))
         return "";
     return st.absolute;
 }
 
-bool modificationTime(const std::string& path, sys::fs::FileTime *mtime) {
+bool
+modificationTime(const std::string &path, sys::fs::FileTime *mtime)
+{
     ASSERT(mtime);
     Stat st;
     if (!stat(path, &st))

@@ -9,12 +9,16 @@ namespace glt {
 
 Module *module;
 
-void moduleInit() {
+void
+moduleInit()
+{
     if (module == 0)
         module = new Module;
 }
 
-void moduleExit() {
+void
+moduleExit()
+{
     assert(module != 0);
     delete module;
     module = 0;

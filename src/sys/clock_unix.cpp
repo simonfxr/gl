@@ -2,17 +2,19 @@
 
 #include "err/err.hpp"
 
-#include <time.h>
-#include <string>
-#include <string.h>
 #include <errno.h>
 #include <math.h>
+#include <string.h>
+#include <string>
+#include <time.h>
 
 namespace sys {
 
-static double getTime() {
+static double
+getTime()
+{
     struct timespec tv;
-    
+
     while (clock_gettime(CLOCK_MONOTONIC_RAW, &tv) == -1) {
         if (errno == EINTR) {
             errno = 0;
@@ -21,16 +23,20 @@ static double getTime() {
             return NAN;
         }
     }
-    
+
     return double(tv.tv_sec) + double(tv.tv_nsec) * (1 / 1e9);
 }
 
-double queryTimer() {
+double
+queryTimer()
+{
     static double T0 = getTime();
     return getTime() - T0;
 }
 
-void sleep(double secs) {
+void
+sleep(double secs)
+{
     struct timespec tv, rmtv;
     tv.tv_sec = time_t(secs);
     tv.tv_nsec = long(secs * 1e9);
@@ -45,4 +51,4 @@ void sleep(double secs) {
     }
 }
 
-}
+} // namespace sys

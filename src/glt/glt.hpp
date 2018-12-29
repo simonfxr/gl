@@ -5,9 +5,11 @@
 
 namespace glt {
 
-GLT_API void moduleInit();
+GLT_API void
+moduleInit();
 
-GLT_API void moduleExit();
+GLT_API void
+moduleExit();
 
 } // namespace glt
 

@@ -37,18 +37,17 @@ struct GameWindow::Data
     GLContextInfo context_info;
 
     Data(GameWindow &_self, bool owns_win, GLFWwindow *rw)
-      : self(_self),
-        owning_win(owns_win),
-        win(rw),
-        have_focus(true),
-        vsync(false),
-        mouse_x(0),
-        mouse_y(0),
-        show_mouse_cursor(true),
-        renderTarget(0),
-        events()
-    {
-    }
+      : self(_self)
+      , owning_win(owns_win)
+      , win(rw)
+      , have_focus(true)
+      , vsync(false)
+      , mouse_x(0)
+      , mouse_y(0)
+      , show_mouse_cursor(true)
+      , renderTarget(0)
+      , events()
+    {}
 
     ~Data();
 
@@ -67,11 +66,17 @@ struct GameWindow::Data
     static void glfw_window_iconify_callback(GLFWwindow *win, int iconified);
     static void glfw_framebuffer_size_callback(GLFWwindow *win, int w, int h);
     static void glfw_cursor_pos_callback(GLFWwindow *win, double x, double y);
-    static void glfw_key_callback(GLFWwindow *win, int key, int scancode,
-                                  int action, int mods);
-    static void glfw_mouse_button_callback(GLFWwindow *win, int button,
-                                           int action, int mods);
-    static void glfw_mouse_scroll_callback(GLFWwindow *win, double xoffset,
+    static void glfw_key_callback(GLFWwindow *win,
+                                  int key,
+                                  int scancode,
+                                  int action,
+                                  int mods);
+    static void glfw_mouse_button_callback(GLFWwindow *win,
+                                           int button,
+                                           int action,
+                                           int mods);
+    static void glfw_mouse_scroll_callback(GLFWwindow *win,
+                                           double xoffset,
                                            double yoffset);
 };
 
@@ -194,7 +199,7 @@ convertGLFWMouseButton(int button)
 #undef B
 }
 
-} // namespace anon
+} // namespace
 
 GLFWwindow *
 GameWindow::Data::makeWindow(const WindowOptions &opts)
@@ -315,8 +320,11 @@ GameWindow::Data::glfw_cursor_pos_callback(GLFWwindow *win, double x, double y)
 }
 
 void
-GameWindow::Data::glfw_key_callback(GLFWwindow *win, int key, int scancode,
-                                    int action, int mods)
+GameWindow::Data::glfw_key_callback(GLFWwindow *win,
+                                    int key,
+                                    int scancode,
+                                    int action,
+                                    int mods)
 {
     UNUSED(scancode);
     UNUSED(mods);
@@ -332,8 +340,10 @@ GameWindow::Data::glfw_key_callback(GLFWwindow *win, int key, int scancode,
 }
 
 void
-GameWindow::Data::glfw_mouse_button_callback(GLFWwindow *win, int button,
-                                             int action, int mods)
+GameWindow::Data::glfw_mouse_button_callback(GLFWwindow *win,
+                                             int button,
+                                             int action,
+                                             int mods)
 {
     UNUSED(mods);
     GameWindow::Data *me = getUserPointer(win);
@@ -345,7 +355,8 @@ GameWindow::Data::glfw_mouse_button_callback(GLFWwindow *win, int button,
 }
 
 void
-GameWindow::Data::glfw_mouse_scroll_callback(GLFWwindow *win, double xoffset,
+GameWindow::Data::glfw_mouse_scroll_callback(GLFWwindow *win,
+                                             double xoffset,
                                              double yoffset)
 {
     UNUSED(win);
@@ -450,7 +461,8 @@ GameWindow::showMouseCursor(bool show)
 {
     if (show != self->show_mouse_cursor) {
         self->show_mouse_cursor = show;
-        glfwSetInputMode(self->win, GLFW_CURSOR,
+        glfwSetInputMode(self->win,
+                         GLFW_CURSOR,
                          show ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
     }
 }

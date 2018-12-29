@@ -3,17 +3,19 @@
 
 namespace sys {
 
-Fibers::Fibers() {
+Fibers::Fibers()
+{
     fiber_init_toplevel(&toplevel);
 }
 
 namespace fiber {
 
-Fiber *toplevel() {
+Fiber *
+toplevel()
+{
     return &module->fibers.toplevel;
 }
 
 } // namespace fiber
 
 } // namespace sys
-
