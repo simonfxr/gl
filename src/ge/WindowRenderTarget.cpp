@@ -8,7 +8,9 @@ namespace ge {
 
 namespace {
 
-uint32 buffersOf(GameWindow& win) {
+uint32
+buffersOf(GameWindow &win)
+{
     GLContextInfo cs;
     win.contextInfo(cs);
     uint32 bs = glt::RT_COLOR_BUFFER;
@@ -19,23 +21,28 @@ uint32 buffersOf(GameWindow& win) {
     return bs;
 }
 
-} // namespace anon
+} // namespace
 
-WindowRenderTarget::WindowRenderTarget(GameWindow& w) :
-    RenderTarget(SIZE(w.windowWidth()), SIZE(w.windowHeight()),
-                 buffersOf(w)),
-    window(w)
+WindowRenderTarget::WindowRenderTarget(GameWindow &w)
+  : RenderTarget(SIZE(w.windowWidth()), SIZE(w.windowHeight()), buffersOf(w))
+  , window(w)
 {}
 
-void WindowRenderTarget::resized() {
+void
+WindowRenderTarget::resized()
+{
     updateSize(SIZE(window.windowWidth()), SIZE(window.windowHeight()));
 }
 
-void WindowRenderTarget::doActivate() {
+void
+WindowRenderTarget::doActivate()
+{
     GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, 0);
 }
 
-void WindowRenderTarget::doDraw() {
+void
+WindowRenderTarget::doDraw()
+{
     window.swapBuffers();
     if (window.vsync())
         GL_CALL(glFinish);

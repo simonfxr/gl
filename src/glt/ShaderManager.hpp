@@ -1,12 +1,12 @@
 #ifndef SHADER_MANAGER_HPP
 #define SHADER_MANAGER_HPP
 
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
-#include "glt/conf.hpp"
 #include "data/Ref.hpp"
+#include "glt/conf.hpp"
 #include "sys/io/Stream.hpp"
 
 namespace glt {
@@ -21,20 +21,24 @@ typedef std::map<std::string, std::string> PreprocessorDefinitions;
 
 typedef std::vector<std::string> ShaderDirectories;
 
-struct GLT_API ShaderManager {
-    
-    enum Verbosity {
+struct GLT_API ShaderManager
+{
+
+    enum Verbosity
+    {
         Quiet,
         OnlyErrors,
         Info
     };
 
-    enum ShaderProfile {
+    enum ShaderProfile
+    {
         CoreProfile,
         CompatibilityProfile
     };
 
-    enum ShaderType {
+    enum ShaderType
+    {
         GuessShaderType,
         VertexShader,
         FragmentShader,
@@ -46,47 +50,50 @@ struct GLT_API ShaderManager {
     ShaderManager();
     ~ShaderManager();
 
-    Ref<ShaderProgram> program(const std::string& name) const;
-    void addProgram(const std::string& name, Ref<ShaderProgram>& program);
-    Ref<ShaderProgram> declareProgram(const std::string& name);
+    Ref<ShaderProgram> program(const std::string &name) const;
+    void addProgram(const std::string &name, Ref<ShaderProgram> &program);
+    Ref<ShaderProgram> declareProgram(const std::string &name);
 
     void reloadShaders();
 
     Verbosity verbosity() const;
     void verbosity(Verbosity v);
 
-    sys::io::OutStream& out() const;
-    void out(sys::io::OutStream& out);
+    sys::io::OutStream &out() const;
+    void out(sys::io::OutStream &out);
 
-    bool prependShaderDirectory(const std::string& directory, bool check_exists = true);
-    bool addShaderDirectory(const std::string& directory, bool check_exists = true);
-    bool removeShaderDirectory(const std::string& dir);
-    const ShaderDirectories& shaderDirectories() const;
+    bool prependShaderDirectory(const std::string &directory,
+                                bool check_exists = true);
+    bool addShaderDirectory(const std::string &directory,
+                            bool check_exists = true);
+    bool removeShaderDirectory(const std::string &dir);
+    const ShaderDirectories &shaderDirectories() const;
 
-    void setShaderVersion(uint32 vers /* e.g. 330 */, ShaderProfile profile = CompatibilityProfile);
+    void setShaderVersion(uint32 vers /* e.g. 330 */,
+                          ShaderProfile profile = CompatibilityProfile);
     uint32 shaderVersion() const;
     ShaderProfile shaderProfile() const;
-    
+
     bool cacheShaderObjects() const;
     void cacheShaderObjects(bool);
 
-    const Ref<ShaderCache>& globalShaderCache();
+    const Ref<ShaderCache> &globalShaderCache();
 
-    ShaderCompiler& shaderCompiler();
+    ShaderCompiler &shaderCompiler();
 
-    PreprocessorDefinitions& globalDefines();
+    PreprocessorDefinitions &globalDefines();
 
-    const PreprocessorDefinitions& globalDefines() const;
+    const PreprocessorDefinitions &globalDefines() const;
 
     void shutdown();
-    
+
 private:
     struct Data;
     friend struct Data;
-    Data * const self;
+    Data *const self;
 
-    ShaderManager(const ShaderManager& _);
-    ShaderManager& operator =(const ShaderManager& _);
+    ShaderManager(const ShaderManager &_);
+    ShaderManager &operator=(const ShaderManager &_);
 };
 
 } // namespace glt

@@ -5,9 +5,11 @@
 
 namespace ge {
 
-GE_API void moduleInit();
+GE_API void
+moduleInit();
 
-GE_API void moduleExit();
+GE_API void
+moduleExit();
 
 } // namespace ge
 

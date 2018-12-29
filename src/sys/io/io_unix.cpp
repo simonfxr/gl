@@ -1,11 +1,11 @@
-#include "sys/io.hpp"
 #include "err/err.hpp"
+#include "sys/io.hpp"
 
-#include <unistd.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 namespace sys {
 
@@ -17,7 +17,9 @@ namespace {
 
 #define OPTION(a, o) (((a) & (o)) == (o))
 
-int convertMode(HandleMode m) {
+int
+convertMode(HandleMode m)
+{
     int flags = 0;
     bool w = OPTION(m, HM_WRITE);
     bool r = OPTION(m, HM_READ);
@@ -40,7 +42,9 @@ int convertMode(HandleMode m) {
     return flags;
 }
 
-HandleMode unconvertMode(int flags) {
+HandleMode
+unconvertMode(int flags)
+{
     HandleMode mode = 0;
     if (OPTION(flags, O_RDWR))
         mode |= HM_READ | HM_WRITE;
@@ -55,20 +59,23 @@ HandleMode unconvertMode(int flags) {
     return mode;
 }
 
-#define RETRY_INTR(op) do {                                     \
-        while ((op) == -1 && errno == EINTR) {                  \
-            errno = 0;                                          \
-            INFO("retrying after interrupt" #op);               \
-        }                                                       \
+#define RETRY_INTR(op)                                                         \
+    do {                                                                       \
+        while ((op) == -1 && errno == EINTR) {                                 \
+            errno = 0;                                                         \
+            INFO("retrying after interrupt" #op);                              \
+        }                                                                      \
     } while (0)
 
-HandleError convertErrno() {
+HandleError
+convertErrno()
+{
     int errid = errno;
     errno = 0;
 
     if (errid == EAGAIN || errid == EWOULDBLOCK)
         return HE_BLOCKED;
-    
+
     switch (errid) {
     case ECONNRESET:
         return HE_EOF;
@@ -81,7 +88,9 @@ HandleError convertErrno() {
     }
 }
 
-SocketError convertErrnoSock() {
+SocketError
+convertErrnoSock()
+{
     int errid = errno;
     errno = 0;
 
@@ -98,19 +107,21 @@ SocketError convertErrnoSock() {
     }
 }
 
-} // namespace anon
+} // namespace
 
-HandleError open(const std::string& path, HandleMode mode, Handle *h) {
-    
+HandleError
+open(const std::string &path, HandleMode mode, Handle *h)
+{
+
     if (h == 0) {
         DEBUG_ERR("handle == 0");
         return HE_INVALID_PARAM;
     }
-    
+
     int flags = convertMode(mode);
     if (flags == -1)
         return HE_INVALID_PARAM;
-    
+
     int fd;
     RETRY_INTR(fd = ::open(path.c_str(), flags));
 
@@ -123,11 +134,15 @@ HandleError open(const std::string& path, HandleMode mode, Handle *h) {
     }
 }
 
-HandleMode mode(Handle& h) {
+HandleMode
+mode(Handle &h)
+{
     return h.mode;
 }
 
-HandleError elevate(Handle& h, HandleMode mode) {
+HandleError
+elevate(Handle &h, HandleMode mode)
+{
     int flags = convertMode(mode);
     if (flags == -1)
         return HE_INVALID_PARAM;
@@ -142,11 +157,13 @@ HandleError elevate(Handle& h, HandleMode mode) {
     }
 }
 
-HandleError read(Handle& h, size& s, char *buf) {
+HandleError
+read(Handle &h, size &s, char *buf)
+{
     size_t n = UNSIZE(s);
     ssize_t k;
     RETRY_INTR(k = ::read(h.fd, static_cast<void *>(buf), n));
-    
+
     if (k > 0) {
         s = SIZE(k);
         return HE_OK;
@@ -159,12 +176,14 @@ HandleError read(Handle& h, size& s, char *buf) {
     }
 }
 
-HandleError write(Handle& h, size& s, const char *buf) {
+HandleError
+write(Handle &h, size &s, const char *buf)
+{
     size_t n = UNSIZE(s);
     ssize_t k;
-    
+
     RETRY_INTR(k = ::write(h.fd, buf, n));
-    
+
     if (k >= 0) {
         s = SIZE(k);
         return HE_OK;
@@ -174,7 +193,9 @@ HandleError write(Handle& h, size& s, const char *buf) {
     }
 }
 
-HandleError close(Handle& h) {
+HandleError
+close(Handle &h)
+{
     int ret;
     RETRY_INTR(ret = ::close(h.fd));
     if (ret == -1)
@@ -183,7 +204,13 @@ HandleError close(Handle& h) {
         return HE_OK;
 }
 
-SocketError listen(SocketProto proto, const IPAddr4& addr, uint16 port, SocketMode mode, Socket *s) {
+SocketError
+listen(SocketProto proto,
+       const IPAddr4 &addr,
+       uint16 port,
+       SocketMode mode,
+       Socket *s)
+{
 
     const int BACKLOG = 16;
 
@@ -191,7 +218,7 @@ SocketError listen(SocketProto proto, const IPAddr4& addr, uint16 port, SocketMo
         DEBUG_ERR("socket == 0");
         return SE_INVALID_PARAM;
     }
-    
+
     int type;
     int protocol;
     int ret;
@@ -199,32 +226,33 @@ SocketError listen(SocketProto proto, const IPAddr4& addr, uint16 port, SocketMo
     switch (proto) {
     case SP_TCP:
         type = SOCK_STREAM;
-//        protocol = IPPROTO_TCP;
+        //        protocol = IPPROTO_TCP;
         protocol = 0;
         break;
     default:
         DEBUG_ERR("invalid protocol");
         return SE_INVALID_PARAM;
     }
-    
+
     int sock;
     RETRY_INTR(sock = socket(PF_INET, type, protocol));
     if (sock == -1)
         return convertErrnoSock();
 
     int enable = 1;
-    RETRY_INTR(ret = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof enable));
+    RETRY_INTR(
+      ret = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof enable));
     if (ret == -1)
         goto socket_err;
 
     struct sockaddr_in server;
-    
+
     memset(&server, 0, sizeof server);
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = addr.addr4;
     server.sin_port = hton(port);
 
-    RETRY_INTR(ret = bind(sock, (struct sockaddr *)&server, sizeof server));
+    RETRY_INTR(ret = bind(sock, (struct sockaddr *) &server, sizeof server));
     if (ret == -1)
         goto socket_err;
 
@@ -250,11 +278,13 @@ SocketError listen(SocketProto proto, const IPAddr4& addr, uint16 port, SocketMo
 
 socket_err:
     ::close(sock);
-    return convertErrnoSock();    
+    return convertErrnoSock();
 }
 
-SocketError accept(Socket& s, Handle *h) {
-    
+SocketError
+accept(Socket &s, Handle *h)
+{
+
     if (h == 0) {
         DEBUG_ERR("handle == 0");
         return SE_INVALID_PARAM;
@@ -282,7 +312,9 @@ client_err:
     return convertErrnoSock();
 }
 
-SocketError close(Socket& s) {
+SocketError
+close(Socket &s)
+{
     int ret;
     RETRY_INTR(ret = ::close(s.socket));
     if (ret == -1)

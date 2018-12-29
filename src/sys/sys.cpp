@@ -7,12 +7,16 @@ namespace sys {
 
 Module *module;
 
-void moduleInit() {
+void
+moduleInit()
+{
     if (module == 0)
         module = new Module;
 }
 
-void moduleExit() {
+void
+moduleExit()
+{
     delete module;
     module = 0;
 }

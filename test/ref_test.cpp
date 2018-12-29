@@ -4,17 +4,17 @@
 #define REF_CONCURRENT
 #endif
 
+#include "data/Atomic.hpp"
 #include "data/Ref.hpp"
 #include "data/SpinLock.hpp"
-#include "data/Atomic.hpp"
+#include <SFML/System/Mutex.hpp>
 #include <SFML/System/Thread.hpp>
 #include <SFML/System/ThreadLocalPtr.hpp>
-#include <SFML/System/Mutex.hpp>
 
 #include <iostream>
-#include <vector>
 #include <sstream>
 #include <stdlib.h>
+#include <vector>
 
 using namespace defs;
 
@@ -29,39 +29,45 @@ static sf::Mutex printLock;
 
 sf::ThreadLocalPtr<ThreadID> thread_id;
 
-static void acq(sf::Mutex& mtx) {
+static void
+acq(sf::Mutex &mtx)
+{
     mtx.lock();
 }
 
-static void rel(sf::Mutex& mtx) {
+static void
+rel(sf::Mutex &mtx)
+{
     mtx.unlock();
 }
 
-struct Data {
+struct Data
+{
     int id;
     Atomic<int32> alive;
     int value;
 
     Atomic<int32> num_alive;
 
-    Data(int _id, int _value) :
-        id(_id), alive(_id), value(_value)
+    Data(int _id, int _value) : id(_id), alive(_id), value(_value)
     {
         num_alive.inc();
     }
 
-    ~Data() {
+    ~Data()
+    {
         int32 dead = 0xDEADBEEF;
         bool ok = alive.xchg(id, &dead);
         ASSERT(ok);
         num_alive.dec();
 
         // acq(printLock);
-        // std::cerr << "[Thread " << *thread_id << "] deleting data " << id << std::endl;
-        // rel(printLock);
+        // std::cerr << "[Thread " << *thread_id << "] deleting data " << id <<
+        // std::endl; rel(printLock);
     }
 
-    int compute() {
+    int compute()
+    {
         ASSERT(alive.get() == id);
         return value;
     }
@@ -69,11 +75,12 @@ struct Data {
 
 static Ref<Data> NULL_DATA;
 
-//static SpinLock data_lock;
+// static SpinLock data_lock;
 static sf::Mutex data_lock;
 static Ref<Data> *data = 0;
 
-static struct {
+static struct
+{
     sf::Mutex init_lock;
     sf::Mutex start_lock;
     unsigned int rand_state;
@@ -83,12 +90,16 @@ static struct {
 
 #define THREAD (thread_data[*thread_id])
 
-static void gen_data(Ref<Data> *data, index_t num) {
+static void
+gen_data(Ref<Data> *data, index_t num)
+{
     for (index_t i = 0; i < num; ++i)
         data[i] = new Data(i, i * 3 + 11);
 }
 
-static void fill_data(Ref<Data> *localData) {
+static void
+fill_data(Ref<Data> *localData)
+{
     for (index_t i = 0; i < DATA_SIZE; ++i)
         localData[i] = data[i];
 
@@ -100,8 +111,9 @@ static void fill_data(Ref<Data> *localData) {
     }
 }
 
-
-static void worker(ThreadID id) {
+static void
+worker(ThreadID id)
+{
     thread_id = &id;
 
     acq(THREAD.start_lock);
@@ -134,7 +146,9 @@ static void worker(ThreadID id) {
     THREAD.computed_sum = sum;
 }
 
-int main(void) {
+int
+main(void)
+{
 
     sf::Thread *threads[NUM_THREADS];
     data = new Ref<Data>[DATA_SIZE];
@@ -184,9 +198,9 @@ int main(void) {
         acq(printLock);
         std::cerr << "Waiting for thread: " << i << std::endl;
         rel(printLock);
-        
+
         threads[i]->wait();
-        
+
         acq(printLock);
         std::cerr << "Thread finished: " << i << std::endl;
         rel(printLock);

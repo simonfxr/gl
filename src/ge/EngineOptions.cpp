@@ -1,18 +1,19 @@
-#include "opengl.hpp"
 #include "ge/EngineOptions.hpp"
 #include "glt/utils.hpp"
+#include "opengl.hpp"
 
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
 
-#include <cstring>
 #include <cctype>
+#include <cstring>
 
 namespace ge {
 
 namespace {
 
-enum OptionCase {
+enum OptionCase
+{
     Help,
     NoInitScript,
     ScriptDir,
@@ -31,7 +32,8 @@ enum OptionCase {
     DisableRender
 };
 
-struct Option {
+struct Option
+{
     const char *option;
     const char *option_arg;
     OptionCase option_case;
@@ -40,43 +42,72 @@ struct Option {
 
 const Option OPTIONS[] = {
     { "--help", NULL, Help, "print a description of all options and exit" },
-    { "--no-init-script", NULL, NoInitScript, "inhibit loading of default script file (<program-name>.script)" },
-    { "--script-dir", "DIR", ScriptDir, "add DIR to the list of searched script directories" },
-    { "--shader-dir", "DIR", ShaderDir, "add DIR to the list of searched shader directories" },
-    { "--cd", "BOOL", CD, "change into the base directory of the program binary: yes|no" },
+    { "--no-init-script",
+      NULL,
+      NoInitScript,
+      "inhibit loading of default script file (<program-name>.script)" },
+    { "--script-dir",
+      "DIR",
+      ScriptDir,
+      "add DIR to the list of searched script directories" },
+    { "--shader-dir",
+      "DIR",
+      ShaderDir,
+      "add DIR to the list of searched shader directories" },
+    { "--cd",
+      "BOOL",
+      CD,
+      "change into the base directory of the program binary: yes|no" },
     { "--eval", "COMMAND", Eval, "execute COMMAND as a script command" },
     { "--script", "FILE", Script, "load FILE and execute it as a script" },
     { "--cwd", "DIR", CWD, "change into directory DIR" },
-    { "--gl-version", "VERSION", GLVersion, "set the OpenGL context version: MAJOR.MINOR" },
-    { "--gl-profile", "TYPE", GLProfile, "set the OpenGL profile type: core|compatibility" },
+    { "--gl-version",
+      "VERSION",
+      GLVersion,
+      "set the OpenGL context version: MAJOR.MINOR" },
+    { "--gl-profile",
+      "TYPE",
+      GLProfile,
+      "set the OpenGL profile type: core|compatibility" },
     { "--gl-debug", "BOOL", GLDebug, "create a OpenGL debug context: yes|no" },
     { "--gl-trace", "BOOL", GLTrace, "print every OpenGL call: yes|no" },
     { "--aa-samples", "NUM", AASamples, "set the number of FSAA Samples" },
     { "--vsync", "BOOL", VSync, "enable vertical sync: yes|no" },
-    { "--glew-experimental", "BOOL", GlewExp, "set the glewExperimental flag: yes|no" },
-    { "--disable-render", "BOOL", DisableRender, "disable calling the renderfunction" }
+    { "--glew-experimental",
+      "BOOL",
+      GlewExp,
+      "set the glewExperimental flag: yes|no" },
+    { "--disable-render",
+      "BOOL",
+      DisableRender,
+      "disable calling the renderfunction" }
 };
 
-struct State {
-    EngineOptions& options;
-    
-    State(EngineOptions& opts) :
-        options(opts)
-        {}
+struct State
+{
+    EngineOptions &options;
+
+    State(EngineOptions &opts) : options(opts) {}
 
     bool option(OptionCase opt, const char *arg);
 };
 
 #define CMDWARN(msg) WARN(std::string("parsing options: ") + (msg))
 
-bool str_eq(const char *a, const char *b) {
+bool
+str_eq(const char *a, const char *b)
+{
     return strcmp(a, b) == 0;
 }
 
-bool str_eqi(const char *a, const char *b) {
-    if (a == b) return true;
-    if (a == 0 || b == 0) return false;
-    
+bool
+str_eqi(const char *a, const char *b)
+{
+    if (a == b)
+        return true;
+    if (a == 0 || b == 0)
+        return false;
+
     while (tolower(*a) == tolower(*b++))
         if (*a++ == '\0')
             return false;
@@ -84,7 +115,9 @@ bool str_eqi(const char *a, const char *b) {
     return true;
 }
 
-bool parse_bool(const char *arg, bool& dest) {
+bool
+parse_bool(const char *arg, bool &dest)
+{
     if (str_eqi(arg, "yes") || str_eqi(arg, "true"))
         dest = true;
     else if (str_eqi(arg, "no") || str_eqi(arg, "false"))
@@ -94,7 +127,9 @@ bool parse_bool(const char *arg, bool& dest) {
     return true;
 }
 
-bool State::option(OptionCase opt, const char *arg) {
+bool
+State::option(OptionCase opt, const char *arg)
+{
     switch (OPTIONS[opt].option_case) {
     case Help:
         options.mode = EngineOptions::Help;
@@ -115,17 +150,20 @@ bool State::option(OptionCase opt, const char *arg) {
         }
         return true;
     case Eval:
-        options.commands.push_back(std::make_pair(EngineOptions::Command, std::string(arg)));
+        options.commands.push_back(
+          std::make_pair(EngineOptions::Command, std::string(arg)));
         return true;
     case Script:
-        options.commands.push_back(std::make_pair(EngineOptions::Script, std::string(arg)));
+        options.commands.push_back(
+          std::make_pair(EngineOptions::Script, std::string(arg)));
         return true;
     case CWD:
         options.workingDirectory = arg;
         return true;
     case GLVersion:
         int maj, min;
-        if (sscanf(arg, "%d.%d", &maj, &min) != 2 || maj < 0 || min < 0 || maj > 9 || min > 9) {
+        if (sscanf(arg, "%d.%d", &maj, &min) != 2 || maj < 0 || min < 0 ||
+            maj > 9 || min > 9) {
             CMDWARN("invalid OpenGL Version: " + std::string(arg));
             return false;
         } else {
@@ -139,7 +177,8 @@ bool State::option(OptionCase opt, const char *arg) {
         } else if (str_eq(arg, "compat") || str_eq(arg, "compatibility")) {
             options.window.settings.coreProfile = false;
         } else {
-            CMDWARN("--gl-profile: invalid OpenGL Profile type: " + std::string(arg));
+            CMDWARN("--gl-profile: invalid OpenGL Profile type: " +
+                    std::string(arg));
             return false;
         }
         return true;
@@ -161,7 +200,7 @@ bool State::option(OptionCase opt, const char *arg) {
             CMDWARN("--aa-samples: not an integer");
             return false;
         }
-        
+
         options.window.settings.antialiasingLevel = samples;
         return true;
     case VSync: {
@@ -191,19 +230,19 @@ bool State::option(OptionCase opt, const char *arg) {
     }
 }
 
-} // namespace anon
+} // namespace
 
-EngineOptions::EngineOptions() :
-    commands(),
-    workingDirectory(SOURCE_DIR),
-    inhibitInitScript(false),
-    defaultCD(false),
-    shaderDirs(),
-    scriptDirs(),
-    window(),
-    mode(Animate),
-    traceOpenGL(false),
-    disableRender(false)
+EngineOptions::EngineOptions()
+  : commands()
+  , workingDirectory(SOURCE_DIR)
+  , inhibitInitScript(false)
+  , defaultCD(false)
+  , shaderDirs()
+  , scriptDirs()
+  , window()
+  , mode(Animate)
+  , traceOpenGL(false)
+  , disableRender(false)
 {
     window.settings.majorVersion = 3;
     window.settings.minorVersion = 3;
@@ -213,7 +252,9 @@ EngineOptions::EngineOptions() :
     scriptDirs.push_back("scripts");
 }
 
-EngineOptions& EngineOptions::parse(int *argcp, char ***argvp) {
+EngineOptions &
+EngineOptions::parse(int *argcp, char ***argvp)
+{
 
     char **argv = *argvp;
     int argc = *argcp;
@@ -228,10 +269,9 @@ EngineOptions& EngineOptions::parse(int *argcp, char ***argvp) {
 
     bool done = false;
     int i;
-    for (i = 1; i < argc && !done; ) {
+    for (i = 1; i < argc && !done;) {
         bool err = false;
         int skip = 0;
-        
 
         if (argv[i] != 0 && argv[i][0] == '-') {
 
@@ -250,10 +290,12 @@ EngineOptions& EngineOptions::parse(int *argcp, char ***argvp) {
                         err = !state.option(OPTIONS[opt].option_case, NULL);
                     } else if (i + 1 >= argc) {
                         skip = 1;
-                        CMDWARN(std::string(OPTIONS[opt].option) + " missing argument");
+                        CMDWARN(std::string(OPTIONS[opt].option) +
+                                " missing argument");
                     } else {
                         skip = 2;
-                        err = !state.option(OPTIONS[opt].option_case, argv[i + 1]);
+                        err =
+                          !state.option(OPTIONS[opt].option_case, argv[i + 1]);
                     }
                 }
             }
@@ -279,8 +321,10 @@ EngineOptions& EngineOptions::parse(int *argcp, char ***argvp) {
     return *this;
 }
 
-void EngineOptions::printHelp() {
-    sys::io::OutStream& out = sys::io::stderr();
+void
+EngineOptions::printHelp()
+{
+    sys::io::OutStream &out = sys::io::stderr();
 
     out << "Engine options: " << sys::io::endl;
 
@@ -304,9 +348,9 @@ void EngineOptions::printHelp() {
             w += 1 + SIZE(strlen(OPTIONS[i].option_arg));
         }
 
-        while (w++ <  max_col + 3)
+        while (w++ < max_col + 3)
             out << ' ';
-        
+
         out << OPTIONS[i].description << sys::io::endl;
     }
 

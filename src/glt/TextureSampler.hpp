@@ -1,54 +1,60 @@
 #ifndef GLT_TEXTURE_SAMPLER_HPP
 #define GLT_TEXTURE_SAMPLER_HPP
 
+#include "data/Ref.hpp"
+#include "glt/GLObject.hpp"
+#include "glt/TextureData.hpp"
 #include "glt/conf.hpp"
 #include "opengl.hpp"
-#include "data/Ref.hpp"
-#include "glt/TextureData.hpp"
-#include "glt/GLObject.hpp"
 
 namespace glt {
 
 using namespace defs;
 
-struct GLT_API TextureSampler {
+struct GLT_API TextureSampler
+{
 private:
     Ref<TextureData> _data;
     GLSamplerObject _sampler;
 
 public:
-
-    enum FilterMode {
+    enum FilterMode
+    {
         FilterNearest,
         FilterLinear
     };
 
-    enum Filter {
+    enum Filter
+    {
         FilterMin = 1,
         FilterMag = 2
     };
 
-    enum ClampMode {
+    enum ClampMode
+    {
         ClampToEdge,
         ClampRepeat
     };
 
-    enum Axis {
+    enum Axis
+    {
         S = 1,
         T = 2,
         R = 4
     };
 
     TextureSampler() : _data(new TextureData), _sampler(0) {}
-    explicit TextureSampler(const Ref<TextureData>& data) : _data(data), _sampler(0) {}
+    explicit TextureSampler(const Ref<TextureData> &data)
+      : _data(data), _sampler(0)
+    {}
     ~TextureSampler();
 
     void free();
 
-    const GLSamplerObject& sampler() const { return _sampler; }
-    const Ref<TextureData>& data() const { return _data; }
-    Ref<TextureData>& data() { return _data; }
-    GLSamplerObject& ensureSampler();
+    const GLSamplerObject &sampler() const { return _sampler; }
+    const Ref<TextureData> &data() const { return _data; }
+    Ref<TextureData> &data() { return _data; }
+    GLSamplerObject &ensureSampler();
 
     void filterMode(FilterMode, Filter filter = Filter(FilterMin | FilterMag));
     void clampMode(ClampMode, Axis axis = Axis(S | T | R));
@@ -59,8 +65,8 @@ public:
     static Axis availableAxes(TextureType);
 
 private:
-    TextureSampler(const TextureSampler&);
-    TextureSampler& operator =(const TextureSampler&);
+    TextureSampler(const TextureSampler &);
+    TextureSampler &operator=(const TextureSampler &);
 };
 
 DEF_ENUM_BITOR(TextureSampler::FilterMode);

@@ -1,19 +1,22 @@
 #ifndef GE_MOUSE_LOOK_PLUGIN_HPP
 #define GE_MOUSE_LOOK_PLUGIN_HPP
 
-#include "ge/Plugin.hpp"
 #include "ge/Camera.hpp"
+#include "ge/Plugin.hpp"
 
 namespace ge {
 
-struct GE_API MouseLookPlugin : public Plugin {
+struct GE_API MouseLookPlugin : public Plugin
+{
 
-    enum State {
+    enum State
+    {
         Grabbing,
         Free
     };
 
-    struct Commands {
+    struct Commands
+    {
         Ref<Command> grab;
         Ref<Command> ungrab;
     };
@@ -30,17 +33,17 @@ struct GE_API MouseLookPlugin : public Plugin {
     void camera(Camera *);
     Camera *camera();
 
-    Commands& commands();
+    Commands &commands();
 
-    void registerWith(Engine&) final override;
-    void registerCommands(CommandProcessor&) final override;
+    void registerWith(Engine &) final override;
+    void registerCommands(CommandProcessor &) final override;
 
 private:
     struct Data;
-    Data * const self;
+    Data *const self;
 
-    MouseLookPlugin(const MouseLookPlugin&);
-    MouseLookPlugin& operator =(const MouseLookPlugin&);
+    MouseLookPlugin(const MouseLookPlugin &);
+    MouseLookPlugin &operator=(const MouseLookPlugin &);
 };
 
 } // namespace ge

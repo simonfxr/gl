@@ -1,12 +1,13 @@
 #include "ge/MouseLookPlugin.hpp"
 #include "ge/CommandParams.hpp"
+#include "ge/Engine.hpp"
 #include "ge/GameWindow.hpp"
 #include "ge/KeyHandler.hpp"
-#include "ge/Engine.hpp"
 
 namespace ge {
 
-struct MouseLookPlugin::Data {
+struct MouseLookPlugin::Data
+{
     Data();
 
     Engine *_engine;
@@ -19,31 +20,37 @@ struct MouseLookPlugin::Data {
     void setState(State new_state);
 
     // commands
-    void runGrabMouse(const Event<CommandEvent>&, const Array<CommandArg>&);
-    void runUngrabMouse(const Event<CommandEvent>&, const Array<CommandArg>&);
+    void runGrabMouse(const Event<CommandEvent> &, const Array<CommandArg> &);
+    void runUngrabMouse(const Event<CommandEvent> &, const Array<CommandArg> &);
 
     // handlers
-    void handleMouseClick(const Event<MouseButton>&);
-    void handleMouseMove(const Event<MouseMoved>&);
-    void handleFocusChanged(const Event<FocusChanged>&);
+    void handleMouseClick(const Event<MouseButton> &);
+    void handleMouseMove(const Event<MouseMoved> &);
+    void handleFocusChanged(const Event<FocusChanged> &);
 };
 
-MouseLookPlugin::Data::Data() :
-    _engine(0),
-    _should_grab(true),
-    _state(Free),
-    _camera(0),
-    _commands()
+MouseLookPlugin::Data::Data()
+  : _engine(0), _should_grab(true), _state(Free), _camera(0), _commands()
 {
-    _commands.grab = makeCommand(this, &MouseLookPlugin::Data::runGrabMouse, NULL_PARAMS, "mouseLook.grab", "");
-    _commands.ungrab = makeCommand(this, &MouseLookPlugin::Data::runUngrabMouse, NULL_PARAMS, "mouseLook.ungrab", "");
+    _commands.grab = makeCommand(this,
+                                 &MouseLookPlugin::Data::runGrabMouse,
+                                 NULL_PARAMS,
+                                 "mouseLook.grab",
+                                 "");
+    _commands.ungrab = makeCommand(this,
+                                   &MouseLookPlugin::Data::runUngrabMouse,
+                                   NULL_PARAMS,
+                                   "mouseLook.ungrab",
+                                   "");
 }
 
-void MouseLookPlugin::Data::stateChanged(State new_state) {
+void
+MouseLookPlugin::Data::stateChanged(State new_state)
+{
     if (_engine == 0)
         return;
-    
-    GameWindow& win = _engine->window();
+
+    GameWindow &win = _engine->window();
     switch (new_state) {
     case Grabbing: {
         if (_camera)
@@ -61,31 +68,43 @@ void MouseLookPlugin::Data::stateChanged(State new_state) {
     }
 }
 
-void MouseLookPlugin::Data::setState(State new_state) {
+void
+MouseLookPlugin::Data::setState(State new_state)
+{
     if (_state != new_state) {
         _state = new_state;
         stateChanged(new_state);
     }
 }
 
-void MouseLookPlugin::Data::runGrabMouse(const Event<CommandEvent>&, const Array<CommandArg>&) {
+void
+MouseLookPlugin::Data::runGrabMouse(const Event<CommandEvent> &,
+                                    const Array<CommandArg> &)
+{
     if (_should_grab)
         setState(Grabbing);
 }
 
-void MouseLookPlugin::Data::runUngrabMouse(const Event<CommandEvent>&, const Array<CommandArg>&) {
+void
+MouseLookPlugin::Data::runUngrabMouse(const Event<CommandEvent> &,
+                                      const Array<CommandArg> &)
+{
     setState(Free);
 }
 
-void MouseLookPlugin::Data::handleMouseClick(const Event<MouseButton>& ev) {
+void
+MouseLookPlugin::Data::handleMouseClick(const Event<MouseButton> &ev)
+{
     if (_should_grab && _state == Free) {
         setState(Grabbing);
         ev.abort = true;
     }
 }
 
-void MouseLookPlugin::Data::handleMouseMove(const Event<MouseMoved>& ev) {
-    GameWindow& win = ev.info.window;
+void
+MouseLookPlugin::Data::handleMouseMove(const Event<MouseMoved> &ev)
+{
+    GameWindow &win = ev.info.window;
     if (_state == Grabbing) {
         size w, h;
         win.windowSize(w, h);
@@ -93,56 +112,78 @@ void MouseLookPlugin::Data::handleMouseMove(const Event<MouseMoved>& ev) {
     }
 }
 
-void MouseLookPlugin::Data::handleFocusChanged(const Event<FocusChanged>&) {
+void
+MouseLookPlugin::Data::handleFocusChanged(const Event<FocusChanged> &)
+{
     setState(Free);
 }
 
-MouseLookPlugin::MouseLookPlugin() :
-    self(new Data)
-{}
+MouseLookPlugin::MouseLookPlugin() : self(new Data) {}
 
-MouseLookPlugin::~MouseLookPlugin() {
+MouseLookPlugin::~MouseLookPlugin()
+{
     delete self;
 }
 
-void MouseLookPlugin::shouldGrabMouse(bool grab) {
+void
+MouseLookPlugin::shouldGrabMouse(bool grab)
+{
     self->_should_grab = grab;
     self->setState(grab ? Grabbing : Free);
 }
 
-bool MouseLookPlugin::shouldGrabMouse() const {
+bool
+MouseLookPlugin::shouldGrabMouse() const
+{
     return self->_should_grab;
 }
 
-void MouseLookPlugin::state(MouseLookPlugin::State state) {
+void
+MouseLookPlugin::state(MouseLookPlugin::State state)
+{
     self->setState(state);
 }
 
-MouseLookPlugin::State MouseLookPlugin::state() const {
+MouseLookPlugin::State
+MouseLookPlugin::state() const
+{
     return self->_state;
 }
 
-void MouseLookPlugin::camera(Camera *cam) {
+void
+MouseLookPlugin::camera(Camera *cam)
+{
     self->_camera = cam;
 }
 
-Camera *MouseLookPlugin::camera() {
+Camera *
+MouseLookPlugin::camera()
+{
     return self->_camera;
 }
 
-MouseLookPlugin::Commands& MouseLookPlugin::commands() {
+MouseLookPlugin::Commands &
+MouseLookPlugin::commands()
+{
     return self->_commands;
 }
 
-void MouseLookPlugin::registerWith(Engine& e) {
+void
+MouseLookPlugin::registerWith(Engine &e)
+{
     self->_engine = &e;
-    GameWindow& win = e.window();
-    win.events().mouseButton.reg(makeEventHandler(self, &MouseLookPlugin::Data::handleMouseClick));
-    win.events().mouseMoved.reg(makeEventHandler(self, &MouseLookPlugin::Data::handleMouseMove));
-    win.events().focusChanged.reg(makeEventHandler(self, &MouseLookPlugin::Data::handleFocusChanged));
+    GameWindow &win = e.window();
+    win.events().mouseButton.reg(
+      makeEventHandler(self, &MouseLookPlugin::Data::handleMouseClick));
+    win.events().mouseMoved.reg(
+      makeEventHandler(self, &MouseLookPlugin::Data::handleMouseMove));
+    win.events().focusChanged.reg(
+      makeEventHandler(self, &MouseLookPlugin::Data::handleFocusChanged));
 }
 
-void MouseLookPlugin::registerCommands(CommandProcessor& proc) {
+void
+MouseLookPlugin::registerCommands(CommandProcessor &proc)
+{
     proc.define(self->_commands.grab);
     proc.define(self->_commands.ungrab);
 }

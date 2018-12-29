@@ -2,7 +2,8 @@
 
 namespace ge {
 
-EngineEvent::~EngineEvent() {
+EngineEvent::~EngineEvent()
+{
     // noop
 }
 

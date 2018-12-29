@@ -8,8 +8,10 @@
 
 namespace defs {
 
-template <typename IntT>
-inline size ___check_size(IntT x) {
+template<typename IntT>
+inline size
+___check_size(IntT x)
+{
     size s = size(x);
 #ifdef SIGNED_SIZE
     /* DEBUG_ASSERT(s >= 0); */
@@ -17,16 +19,20 @@ inline size ___check_size(IntT x) {
     return s;
 }
 
-template <typename SizeT>
-inline uptr ___check_unsize(SizeT s) {
+template<typename SizeT>
+inline uptr
+___check_unsize(SizeT s)
+{
 #ifdef SIGNED_SIZE
 
 #endif
     return uptr(s);
 }
 
-template <typename SizeT>
-inline SizeT ___assert_size(SizeT s) {
+template<typename SizeT>
+inline SizeT
+___assert_size(SizeT s)
+{
 #ifdef SIGNED_SIZE
 //    ASSERT(s >= 0);
 #endif
@@ -37,7 +43,8 @@ inline SizeT ___assert_size(SizeT s) {
 #define UNSIZE(x) ::defs::___check_unsize(x)
 #define ASSERT_SIZE(x) ::defs::___assert_size(x)
 
-#define DEF_ENUM_BITOR(ty) inline ty operator |(ty a, ty b) { return ty(int(a) | int(b)); }
+#define DEF_ENUM_BITOR(ty)                                                     \
+    inline ty operator|(ty a, ty b) { return ty(int(a) | int(b)); }
 
 } // namespace defs
 

@@ -1,6 +1,6 @@
 #include "ge/ReplServer.hpp"
-#include "ge/Tokenizer.hpp"
 #include "ge/Engine.hpp"
+#include "ge/Tokenizer.hpp"
 
 #include "sys/fiber.hpp"
 
@@ -12,19 +12,22 @@ using namespace sys::io;
 
 namespace {
 
-enum TokenizeResult {
+enum TokenizeResult
+{
     TokenizeOk,
     TokenizeFailed,
     TokenizeIncomplete
 };
 
-enum ParsingState {
+enum ParsingState
+{
     ParsingGotStatement,
     ParsingYield,
     ParsingStop
 };
 
-struct Client {
+struct Client
+{
     int id;
     Fiber parser_fiber;
     Fiber *client_fiber;
@@ -34,19 +37,22 @@ struct Client {
     ParseState parse_state;
 
     std::vector<CommandArg> statement;
-    
+
     Client(int _id, Handle h);
     ~Client();
-    
-    bool handle(Engine&);
-    bool handleIO(Engine&);
+
+    bool handle(Engine &);
+    bool handleIO(Engine &);
 };
 
-struct ParserArgs {
+struct ParserArgs
+{
     Client *client;
 };
 
-static void run_parser_fiber(void *args0) {
+static void
+run_parser_fiber(void *args0)
+{
     ParserArgs *args = reinterpret_cast<ParserArgs *>(args0);
     Client *c = args->client;
     while (c->state != ParsingStop) {
@@ -63,31 +69,33 @@ static void run_parser_fiber(void *args0) {
         }
         fiber_switch(&c->parser_fiber, c->client_fiber);
     }
-    
+
     fiber_set_alive(&c->parser_fiber, 0);
     INFO("run_parser_fiber returns");
     fiber_switch(&c->parser_fiber, c->client_fiber);
 }
 
-Client::Client(int _id, Handle h) :
-    id(_id),
-    parser_fiber(),
-    client_fiber(sys::fiber::toplevel()),
-    state(ParsingYield),
-    hstream(h),
-    in_stream(&hstream, client_fiber, &parser_fiber),
-    parse_state(in_stream, "")
+Client::Client(int _id, Handle h)
+  : id(_id)
+  , parser_fiber()
+  , client_fiber(sys::fiber::toplevel())
+  , state(ParsingYield)
+  , hstream(h)
+  , in_stream(&hstream, client_fiber, &parser_fiber)
+  , parse_state(in_stream, "")
 {
     fiber_alloc(&parser_fiber, 65536);
     ParserArgs args;
     args.client = this;
-    fiber_push_return(&parser_fiber, run_parser_fiber, (void *) &args, sizeof args);
+    fiber_push_return(
+      &parser_fiber, run_parser_fiber, (void *) &args, sizeof args);
     sys::io::ByteStream name;
     name << "<repl " << id << ">";
     parse_state.filename = name.str();
 }
 
-Client::~Client() {
+Client::~Client()
+{
     INFO("invoking ~Client()");
     if (fiber_is_alive(&parser_fiber)) {
         state = ParsingStop;
@@ -97,15 +105,19 @@ Client::~Client() {
     fiber_destroy(&parser_fiber);
 }
 
-bool Client::handle(Engine& e) {
-    sys::io::OutStream& out = e.out();
+bool
+Client::handle(Engine &e)
+{
+    sys::io::OutStream &out = e.out();
     e.out(hstream);
     bool ok = handleIO(e);
     e.out(out);
     return ok;
 }
 
-bool Client::handleIO(Engine& e) {
+bool
+Client::handleIO(Engine &e)
+{
     fiber_switch(client_fiber, &parser_fiber);
     switch (state) {
     case ParsingGotStatement:
@@ -114,64 +126,72 @@ bool Client::handleIO(Engine& e) {
             statement[i].free();
         statement.clear();
     case ParsingYield:
-    case ParsingStop:
-        ; // do nothing
+    case ParsingStop:; // do nothing
     }
-    
+
     sys::io::StreamResult res = parse_state.in_state;
-    return res == sys::io::StreamResult::Blocked || res == sys::io::StreamResult::OK;
+    return res == sys::io::StreamResult::Blocked ||
+           res == sys::io::StreamResult::OK;
 }
 
-} // namespace anon
+} // namespace
 
-struct ReplServer::Data {
+struct ReplServer::Data
+{
     Socket server;
     std::vector<Ref<Client>> clients;
     bool running;
     int next_id;
-    Engine& engine;
-    Ref<EventHandler<InputEvent> > io_handler;
+    Engine &engine;
+    Ref<EventHandler<InputEvent>> io_handler;
 
-    Data(Engine& e, const Ref<EventHandler<InputEvent> >& _handler) :
-        running(false),
-        next_id(0),
-        engine(e),
-        io_handler(_handler)
-        {}
+    Data(Engine &e, const Ref<EventHandler<InputEvent>> &_handler)
+      : running(false), next_id(0), engine(e), io_handler(_handler)
+    {}
 };
 
-ReplServer::ReplServer(Engine& e) :
-    self(new Data(e, makeEventHandler(this, &ReplServer::handleInputEvent)))
+ReplServer::ReplServer(Engine &e)
+  : self(new Data(e, makeEventHandler(this, &ReplServer::handleInputEvent)))
 {}
 
-ReplServer::~ReplServer() {
+ReplServer::~ReplServer()
+{
     if (self->running)
         shutdown();
     delete self;
 }
 
-bool ReplServer::start(const IPAddr4& listen_addr, uint16 port) {
-    
+bool
+ReplServer::start(const IPAddr4 &listen_addr, uint16 port)
+{
+
     if (self->running) {
         ERR("already running");
         return false;
     }
-    
-    if (listen(SP_TCP, listen_addr, port, SM_NONBLOCKING, &self->server) != SE_OK)
+
+    if (listen(SP_TCP, listen_addr, port, SM_NONBLOCKING, &self->server) !=
+        SE_OK)
         return false;
     self->running = true;
     return true;
 }
 
-bool ReplServer::running() {
+bool
+ReplServer::running()
+{
     return self->running;
 }
 
-Ref<EventHandler<InputEvent> >& ReplServer::ioHandler() {
+Ref<EventHandler<InputEvent>> &
+ReplServer::ioHandler()
+{
     return self->io_handler;
 }
 
-void ReplServer::acceptClients() {
+void
+ReplServer::acceptClients()
+{
     ASSERT(self->running);
 
     Handle handle;
@@ -181,14 +201,17 @@ void ReplServer::acceptClients() {
             ERR("couldnt set nonblocking handle mode, closing connection");
             sys::io::close(handle);
         } else {
-            self->clients.push_back(makeRef(new Client(self->next_id++, handle)));
+            self->clients.push_back(
+              makeRef(new Client(self->next_id++, handle)));
         }
     }
 }
 
-void ReplServer::handleClients() {
+void
+ReplServer::handleClients()
+{
     ASSERT(self->running);
-    
+
     for (index i = 0; i < SIZE(self->clients.size()); ++i) {
         if (!self->clients[i]->handle(self->engine)) {
             INFO("closing connection to client");
@@ -197,16 +220,22 @@ void ReplServer::handleClients() {
     }
 }
 
-void ReplServer::handleIO() {
+void
+ReplServer::handleIO()
+{
     acceptClients();
     handleClients();
 }
 
-void ReplServer::handleInputEvent(const Event<InputEvent>&) {
+void
+ReplServer::handleInputEvent(const Event<InputEvent> &)
+{
     handleIO();
 }
 
-void ReplServer::shutdown() {
+void
+ReplServer::shutdown()
+{
     ASSERT(self->running);
 
     self->clients.clear();

@@ -21,7 +21,8 @@ namespace fs {
 using namespace defs;
 
 // unix time stamp
-struct FileTime {
+struct FileTime
+{
     uint32 seconds;
 };
 
@@ -31,81 +32,124 @@ const ATTRS(ATTR_NO_WARN_UNUSED_DEF) FileTime MIN_FILE_TIME = { 0 };
 
 } // namespace
 
-enum ObjectType {
+enum ObjectType
+{
     File,
     Directory
 };
 
-struct Stat {
+struct Stat
+{
     ObjectType type;
     std::string absolute;
     FileTime mtime;
 
-    Stat() :
-        type(), absolute(), mtime() {}
+    Stat() : type(), absolute(), mtime() {}
 };
 
-SYS_API bool cwd(const std::string& dir);
+SYS_API bool
+cwd(const std::string &dir);
 
-SYS_API std::string cwd();
+SYS_API std::string
+cwd();
 
-SYS_API std::string dirname(const std::string& path);
+SYS_API std::string
+dirname(const std::string &path);
 
-SYS_API std::string basename(const std::string& path);
+SYS_API std::string
+basename(const std::string &path);
 
-SYS_API std::string extension(const std::string& path);
+SYS_API std::string
+extension(const std::string &path);
 
-SYS_API std::string dropExtension(const std::string& path);
+SYS_API std::string
+dropExtension(const std::string &path);
 
-SYS_API std::string dropTrailingSeparators(const std::string& path);
+SYS_API std::string
+dropTrailingSeparators(const std::string &path);
 
-SYS_API bool isAbsolute(const std::string& path);
+SYS_API bool
+isAbsolute(const std::string &path);
 
-SYS_API bool modificationTime(const std::string& path, sys::fs::FileTime *mtime);
+SYS_API bool
+modificationTime(const std::string &path, sys::fs::FileTime *mtime);
 
-SYS_API bool stat(const std::string& path, sys::fs::Stat *stat);
+SYS_API bool
+stat(const std::string &path, sys::fs::Stat *stat);
 
-SYS_API std::string absolutePath(const std::string&);
+SYS_API std::string
+absolutePath(const std::string &);
 
-SYS_API std::string lookup(const std::vector<std::string>&, const std::string&);
+SYS_API std::string
+lookup(const std::vector<std::string> &, const std::string &);
 
-SYS_API bool exists(const std::string& path, ObjectType *type);
+SYS_API bool
+exists(const std::string &path, ObjectType *type);
 
-inline bool operator ==(const FileTime& a, const FileTime& b) {
+inline bool
+operator==(const FileTime &a, const FileTime &b)
+{
     return a.seconds == b.seconds;
 }
 
-inline bool operator <(const FileTime& a, const FileTime& b) {
+inline bool
+operator<(const FileTime &a, const FileTime &b)
+{
     return a.seconds < b.seconds;
 }
 
-inline bool operator !=(const FileTime& a, const FileTime& b) {  return !(a == b); }
-inline bool operator <=(const FileTime& a, const FileTime& b) { return a < b || a == b; }
-inline bool operator >=(const FileTime& a, const FileTime& b) { return !(a < b); }
-inline bool operator >(const FileTime& a, const FileTime& b) { return !(a <= b); }
+inline bool
+operator!=(const FileTime &a, const FileTime &b)
+{
+    return !(a == b);
+}
+inline bool
+operator<=(const FileTime &a, const FileTime &b)
+{
+    return a < b || a == b;
+}
+inline bool
+operator>=(const FileTime &a, const FileTime &b)
+{
+    return !(a < b);
+}
+inline bool
+operator>(const FileTime &a, const FileTime &b)
+{
+    return !(a <= b);
+}
 
 // default implementations
 namespace def {
 
-SYS_API std::string dirname(const std::string& path);
+SYS_API std::string
+dirname(const std::string &path);
 
-SYS_API std::string basename(const std::string& path);
+SYS_API std::string
+basename(const std::string &path);
 
-SYS_API std::string extension(const std::string& path);
+SYS_API std::string
+extension(const std::string &path);
 
-SYS_API std::string dropExtension(const std::string& path);
+SYS_API std::string
+dropExtension(const std::string &path);
 
-SYS_API std::string dropTrailingSeparators(const std::string& path);
+SYS_API std::string
+dropTrailingSeparators(const std::string &path);
 
-SYS_API bool exists(const std::string& path, ObjectType *type);
+SYS_API bool
+exists(const std::string &path, ObjectType *type);
 
-SYS_API std::string lookup(const std::vector<std::string>& dirs, const std::string& name);
+SYS_API std::string
+lookup(const std::vector<std::string> &dirs, const std::string &name);
 
-SYS_API std::string absolutePath(const std::string&);
+SYS_API std::string
+absolutePath(const std::string &);
 
-SYS_API bool modificationTime(const std::string& path, sys::fs::FileTime *);
+SYS_API bool
+modificationTime(const std::string &path, sys::fs::FileTime *);
 
-}
+} // namespace def
 
 } // namespace fs
 

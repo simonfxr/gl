@@ -1,20 +1,20 @@
 #ifndef GLT_SHADER_COMPILER_HPP
 #define GLT_SHADER_COMPILER_HPP
 
-#include <string>
 #include <map>
-#include <vector>
-#include <set>
 #include <queue>
+#include <set>
+#include <string>
+#include <vector>
 
+#include "data/Ref.hpp"
+#include "err/WithError.hpp"
+#include "err/err.hpp"
+#include "glt/GLObject.hpp"
+#include "glt/ShaderManager.hpp"
 #include "glt/conf.hpp"
 #include "opengl.hpp"
-#include "data/Ref.hpp"
 #include "sys/fs.hpp"
-#include "err/err.hpp"
-#include "glt/ShaderManager.hpp"
-#include "glt/GLObject.hpp"
-#include "err/WithError.hpp"
 
 namespace glt {
 
@@ -25,94 +25,100 @@ struct CompileJob;
 struct CompileState;
 
 typedef std::string ShaderSourceKey;
-typedef std::queue<Ref<CompileJob> > CompileJobs;
+typedef std::queue<Ref<CompileJob>> CompileJobs;
 typedef std::set<ShaderSourceKey> QueuedJobs;
 typedef int Version;
-typedef std::pair<Version, WeakRef<ShaderObject> > ShaderCacheEntry;
+typedef std::pair<Version, WeakRef<ShaderObject>> ShaderCacheEntry;
 typedef std::multimap<ShaderSourceKey, ShaderCacheEntry> ShaderCacheEntries;
-typedef std::map<ShaderSourceKey, Ref<ShaderObject> > ShaderObjects;
+typedef std::map<ShaderSourceKey, Ref<ShaderObject>> ShaderObjects;
 typedef std::vector<std::string> IncludePath;
 typedef std::pair<std::string, sys::fs::FileTime> ShaderInclude;
 typedef std::vector<ShaderInclude> ShaderIncludes;
 typedef std::string ShaderSourceFilePath; // absolute path
-typedef std::vector<Ref<ShaderSource> > ShaderDependencies;
-typedef std::map<ShaderSourceKey, Ref<ShaderSource> > ShaderRootDependencies;
+typedef std::vector<Ref<ShaderSource>> ShaderDependencies;
+typedef std::map<ShaderSourceKey, Ref<ShaderSource>> ShaderRootDependencies;
 
 typedef uint32 ShaderCompileFlags;
 
-struct GLT_API ShaderSource {
+struct GLT_API ShaderSource
+{
     ShaderSourceKey key;
     ShaderManager::ShaderType type;
 
-    ShaderSource(const ShaderSourceKey& _key, ShaderManager::ShaderType ty) :
-        key(_key), type(ty) {}
-    
+    ShaderSource(const ShaderSourceKey &_key, ShaderManager::ShaderType ty)
+      : key(_key), type(ty)
+    {}
+
     virtual ~ShaderSource() {}
-    
-    virtual Ref<ShaderObject> load(Ref<ShaderSource>&, CompileState&) = 0;
+
+    virtual Ref<ShaderObject> load(Ref<ShaderSource> &, CompileState &) = 0;
 
 private:
-    ShaderSource(const ShaderSource&);
-    ShaderSource& operator =(const ShaderSource&);
+    ShaderSource(const ShaderSource &);
+    ShaderSource &operator=(const ShaderSource &);
 };
 
-enum ReloadState {
+enum ReloadState
+{
     ReloadUptodate,
     ReloadOutdated,
     ReloadFailed
 };
 
-struct GLT_API ShaderObject {
+struct GLT_API ShaderObject
+{
     Ref<ShaderSource> source;
     GLShaderObject handle;
     ShaderIncludes includes;
     ShaderDependencies dependencies;
     WeakRef<ShaderCache> cache;
-    
-    ShaderObject(const Ref<ShaderSource>& src, GLuint hndl) :
-        source(src), handle(hndl), includes(), dependencies(), cache()
+
+    ShaderObject(const Ref<ShaderSource> &src, GLuint hndl)
+      : source(src), handle(hndl), includes(), dependencies(), cache()
     {}
-    
+
     virtual ~ShaderObject();
-    
+
     virtual ReloadState needsReload() = 0;
-    void linkCache(Ref<ShaderCache>&);
-    void unlinkCache(Ref<ShaderCache>&);
-    
+    void linkCache(Ref<ShaderCache> &);
+    void unlinkCache(Ref<ShaderCache> &);
+
 private:
-    ShaderObject(const ShaderObject&);
-    ShaderObject& operator =(const ShaderObject&);
+    ShaderObject(const ShaderObject &);
+    ShaderObject &operator=(const ShaderObject &);
 };
 
-struct GLT_API ShaderCache {
+struct GLT_API ShaderCache
+{
     ShaderCacheEntries entries;
 
-    ShaderCache() :
-        entries() {}
-    
+    ShaderCache() : entries() {}
+
     ~ShaderCache();
 
-    Ref<ShaderObject> lookup(const ShaderSourceKey&);
-    static bool put(Ref<ShaderCache>&, Ref<ShaderObject>&);
-    static bool remove(Ref<ShaderCache>&, ShaderObject *);
+    Ref<ShaderObject> lookup(const ShaderSourceKey &);
+    static bool put(Ref<ShaderCache> &, Ref<ShaderObject> &);
+    static bool remove(Ref<ShaderCache> &, ShaderObject *);
     void flush();
     void checkValid();
 
 private:
-    ShaderCache(const ShaderCache&);
-    ShaderCache& operator =(const ShaderCache&);
+    ShaderCache(const ShaderCache &);
+    ShaderCache &operator=(const ShaderCache &);
 };
 
 static const ShaderCompileFlags SC_LOOKUP_CACHE = 1 << 0;
 static const ShaderCompileFlags SC_PUT_CACHE = 1 << 1;
-static const ShaderCompileFlags SC_CHECK_OUTDATED = 1 << 2; // only use cache if file didnt get changed
+static const ShaderCompileFlags SC_CHECK_OUTDATED =
+  1 << 2; // only use cache if file didnt get changed
 
-static const ShaderCompileFlags SC_DEFAULT_FLAGS
-  = SC_LOOKUP_CACHE | SC_PUT_CACHE | SC_CHECK_OUTDATED;
+static const ShaderCompileFlags SC_DEFAULT_FLAGS =
+  SC_LOOKUP_CACHE | SC_PUT_CACHE | SC_CHECK_OUTDATED;
 
 namespace ShaderCompilerError {
 
-enum Type {
+enum Type
+{
     NoError,
     CouldntGuessShaderType,
     InvalidShaderType,
@@ -126,65 +132,76 @@ std::string GLT_API stringError(Type);
 
 } // namespace ShaderCompilerError
 
-struct GLT_API ShaderCompiler {
-    glt::ShaderManager& shaderManager;
+struct GLT_API ShaderCompiler
+{
+    glt::ShaderManager &shaderManager;
     PreprocessorDefinitions defines;
     Ref<ShaderCache> cache;
 
-    ShaderCompiler(glt::ShaderManager& mng) :
-        shaderManager(mng),
-        defines(),
-        cache() {}
+    ShaderCompiler(glt::ShaderManager &mng)
+      : shaderManager(mng), defines(), cache()
+    {}
 
     ~ShaderCompiler();
 
     void init();
 
-    static bool guessShaderType(const std::string& path, ShaderManager::ShaderType *res);
-    
+    static bool guessShaderType(const std::string &path,
+                                ShaderManager::ShaderType *res);
+
 private:
-    ShaderCompiler(const ShaderCompiler&);
-    ShaderCompiler& operator =(const ShaderCompiler&);
+    ShaderCompiler(const ShaderCompiler &);
+    ShaderCompiler &operator=(const ShaderCompiler &);
 };
 
-struct GLT_API CompileJob {
+struct GLT_API CompileJob
+{
     virtual ~CompileJob() {}
-    virtual Ref<ShaderSource>& source() = 0;
-    virtual Ref<ShaderObject> exec(CompileState&) = 0;
+    virtual Ref<ShaderSource> &source() = 0;
+    virtual Ref<ShaderObject> exec(CompileState &) = 0;
 
-    static Ref<CompileJob> load(const Ref<ShaderSource>&);
-    static Ref<CompileJob> reload(const Ref<ShaderObject>&);
+    static Ref<CompileJob> load(const Ref<ShaderSource> &);
+    static Ref<CompileJob> reload(const Ref<ShaderObject> &);
 };
 
-struct GLT_API CompileState : public err::WithError<ShaderCompilerError::Type,
-                                                    ShaderCompilerError::NoError,
-                                                    ShaderCompilerError::stringError> {
-    ShaderCompiler& compiler;
+struct GLT_API CompileState
+  : public err::WithError<ShaderCompilerError::Type,
+                          ShaderCompilerError::NoError,
+                          ShaderCompilerError::stringError>
+{
+    ShaderCompiler &compiler;
     const ShaderCompileFlags flags;
     ShaderObjects &compiled;
     QueuedJobs inQueue;
     CompileJobs toCompile;
-    
-    CompileState(ShaderCompiler& comp, ShaderObjects& _compiled, ShaderCompileFlags flgs = SC_DEFAULT_FLAGS) :
-        compiler(comp), flags(flgs), compiled(_compiled), inQueue(), toCompile() {}
 
-    void enqueue(Ref<CompileJob>&);
+    CompileState(ShaderCompiler &comp,
+                 ShaderObjects &_compiled,
+                 ShaderCompileFlags flgs = SC_DEFAULT_FLAGS)
+      : compiler(comp), flags(flgs), compiled(_compiled), inQueue(), toCompile()
+    {}
+
+    void enqueue(Ref<CompileJob> &);
     void compileAll();
-    void put(const Ref<ShaderObject>&);
-    Ref<ShaderObject> load(Ref<ShaderSource>&);
-    Ref<ShaderObject> reload(Ref<ShaderObject>&);
+    void put(const Ref<ShaderObject> &);
+    Ref<ShaderObject> load(Ref<ShaderSource> &);
+    Ref<ShaderObject> reload(Ref<ShaderObject> &);
 };
 
-struct GLT_API StringSource : public ShaderSource {
+struct GLT_API StringSource : public ShaderSource
+{
     std::string code;
-    StringSource(ShaderManager::ShaderType ty, const std::string& _code);
-    virtual Ref<ShaderObject> load(Ref<ShaderSource>&, CompileState&) final override;
+    StringSource(ShaderManager::ShaderType ty, const std::string &_code);
+    virtual Ref<ShaderObject> load(Ref<ShaderSource> &,
+                                   CompileState &) final override;
 };
 
-struct GLT_API FileSource : public ShaderSource {
-    FileSource(ShaderManager::ShaderType ty, const std::string& path);
-    const std::string& filePath() const { return this->key; }
-    virtual Ref<ShaderObject> load(Ref<ShaderSource>&, CompileState&) final override;
+struct GLT_API FileSource : public ShaderSource
+{
+    FileSource(ShaderManager::ShaderType ty, const std::string &path);
+    const std::string &filePath() const { return this->key; }
+    virtual Ref<ShaderObject> load(Ref<ShaderSource> &,
+                                   CompileState &) final override;
 };
 
 } // namespace glt

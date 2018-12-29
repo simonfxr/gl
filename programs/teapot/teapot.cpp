@@ -1,31 +1,31 @@
 #include "defs.hpp"
 #include "mesh.h"
 
+#include "math/glvec.hpp"
+#include "math/io.hpp"
+#include "math/mat2.hpp"
+#include "math/mat3.hpp"
+#include "math/mat4.hpp"
 #include "math/real.hpp"
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
-#include "math/mat2.hpp"
-#include "math/mat3.hpp"
-#include "math/mat4.hpp"
-#include "math/glvec.hpp"
-#include "math/io.hpp"
 
-#include "glt/utils.hpp"
-#include "glt/Uniforms.hpp"
 #include "glt/Frame.hpp"
+#include "glt/TextureRenderTarget.hpp"
+#include "glt/Uniforms.hpp"
 #include "glt/color.hpp"
 #include "glt/primitives.hpp"
-#include "glt/TextureRenderTarget.hpp"
+#include "glt/utils.hpp"
 
-#include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
-#include "ge/MouseLookPlugin.hpp"
 #include "ge/CommandParams.hpp"
+#include "ge/Engine.hpp"
+#include "ge/MouseLookPlugin.hpp"
 #include "ge/Timer.hpp"
 
-#include "parse_sply.hpp"
 #include "dump_bmp.h"
+#include "parse_sply.hpp"
 
 #include <vector>
 
@@ -43,23 +43,16 @@ using namespace ge;
 using namespace defs;
 
 static const point3_t LIGHT_CENTER_OF_ROTATION = vec3(0.f, 15.f, 0.f);
-static const float  LIGHT_ROTATION_RAD = 15.f;
+static const float LIGHT_ROTATION_RAD = 15.f;
 
-#define VERTEX(V, F, Z)                         \
-    V(Vertex,                                   \
-      F(math::point3_t, position,               \
-        Z(math::direction3_t, normal)))
+#define VERTEX(V, F, Z)                                                        \
+    V(Vertex, F(math::point3_t, position, Z(math::direction3_t, normal)))
 
-#define VERTEX2(V, F, Z)                        \
-    V(Vertex2,                                  \
-      F(vec3_t, position,                       \
-        F(vec3_t, normal,                       \
-          Z(vec2_t, texCoord))))
+#define VERTEX2(V, F, Z)                                                       \
+    V(Vertex2, F(vec3_t, position, F(vec3_t, normal, Z(vec2_t, texCoord))))
 
-#define SCREEN_VERTEX(V, F, Z)                  \
-    V(ScreenVertex,                             \
-      F(vec3_t, position,                       \
-        Z(vec3_t, normal)))
+#define SCREEN_VERTEX(V, F, Z)                                                 \
+    V(ScreenVertex, F(vec3_t, position, Z(vec3_t, normal)))
 
 DEFINE_VERTEX(VERTEX);
 DEFINE_VERTEX(VERTEX2);
@@ -73,9 +66,10 @@ static const uint32 SHADE_MODE_AMBIENT = 1;
 static const uint32 SHADE_MODE_DIFFUSE = 2;
 static const uint32 SHADE_MODE_SPECULAR = 4;
 static const uint32 SHADE_MODE_DEFAULT =
-    SHADE_MODE_AMBIENT | SHADE_MODE_DIFFUSE | SHADE_MODE_SPECULAR;
+  SHADE_MODE_AMBIENT | SHADE_MODE_DIFFUSE | SHADE_MODE_SPECULAR;
 
-struct MaterialProperties {
+struct MaterialProperties
+{
     float ambientContribution;
     float diffuseContribution;
     float specularContribution;
@@ -83,18 +77,20 @@ struct MaterialProperties {
     float glow;
 };
 
-struct Teapot {
+struct Teapot
+{
     glt::Frame frame;
     MaterialProperties material;
     glt::color color;
 };
 
-struct Anim {
-    ge::Engine& engine;
+struct Anim
+{
+    ge::Engine &engine;
     ge::Camera camera;
     ge::MouseLookPlugin mouse_look;
     std::vector<float> glow_kernel;
-    
+
     CubeMesh groundModel;
     CubeMesh teapotModel;
     Mesh sphereModel;
@@ -115,7 +111,7 @@ struct Anim {
 
     vec3_t light;
     vec3_t ecLight;
-    
+
     uint32 shade_mode;
 
     bool use_spotlight;
@@ -132,41 +128,46 @@ struct Anim {
 
     Ref<Command> setDataDirCommand;
 
-    Anim(ge::Engine& e) :
-        engine(e),
-        glow_kernel(KERNEL_SIZE)
-        {}
+    Anim(ge::Engine &e) : engine(e), glow_kernel(KERNEL_SIZE) {}
 
-    void init(const Event<InitEvent>&);
-    void link(const Event<InitEvent>&);
-    void animate(const Event<AnimationEvent>&);
-    void renderScene(const Event<RenderEvent>&);
+    void init(const Event<InitEvent> &);
+    void link(const Event<InitEvent> &);
+    void animate(const Event<AnimationEvent> &);
+    void renderScene(const Event<RenderEvent> &);
     vec3_t lightPosition(real interpolation);
-    void setupTeapotShader(const std::string& prog, const vec4_t& surfaceColor, const MaterialProperties& mat);
-    void renderTeapot(const Teapot& teapot);
+    void setupTeapotShader(const std::string &prog,
+                           const vec4_t &surfaceColor,
+                           const MaterialProperties &mat);
+    void renderTeapot(const Teapot &teapot);
     void renderGround();
     void renderLight();
-    void renderTable(const std::string& shader);
+    void renderTable(const std::string &shader);
 
-    void mouseMoved(const Event<MouseMoved>&);
-    void keyPressed(const Event<KeyPressed>&);
+    void mouseMoved(const Event<MouseMoved> &);
+    void keyPressed(const Event<KeyPressed> &);
 
-    void setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args);
-    
-    void onWindowResized(const Event<WindowResized>&);
+    void setDataDir(const Event<CommandEvent> &, const Array<CommandArg> &args);
+
+    void onWindowResized(const Event<WindowResized> &);
 };
 
-void Anim::link(const Event<InitEvent>& e) {
+void
+Anim::link(const Event<InitEvent> &e)
+{
     engine.events().animate.reg(makeEventHandler(this, &Anim::animate));
     engine.events().render.reg(makeEventHandler(this, &Anim::renderScene));
-    GameWindow& win = engine.window();
+    GameWindow &win = engine.window();
     win.events().mouseMoved.reg(makeEventHandler(this, &Anim::mouseMoved));
-    win.events().windowResized.reg(makeEventHandler(this, &Anim::onWindowResized));
-    engine.keyHandler().keyPressedEvent().reg(makeEventHandler(this, &Anim::keyPressed));
+    win.events().windowResized.reg(
+      makeEventHandler(this, &Anim::onWindowResized));
+    engine.keyHandler().keyPressedEvent().reg(
+      makeEventHandler(this, &Anim::keyPressed));
     e.info.success = true;
 }
 
-void Anim::init(const Event<InitEvent>& ev) {
+void
+Anim::init(const Event<InitEvent> &ev)
+{
 
     engine.out() << "in init()" << sys::io::endl;
 
@@ -177,9 +178,12 @@ void Anim::init(const Event<InitEvent>& ev) {
     fpsTimer = makeRef(new Timer(engine));
     fpsTimer->start(1.f, true);
 
-    setDataDirCommand = makeCommand(this, &Anim::setDataDir, ge::STR_PARAMS,
-                                    "setDataDir", "set the texture directory");
-    engine.commandProcessor().define(setDataDirCommand);    
+    setDataDirCommand = makeCommand(this,
+                                    &Anim::setDataDir,
+                                    ge::STR_PARAMS,
+                                    "setDataDir",
+                                    "set the texture directory");
+    engine.commandProcessor().define(setDataDirCommand);
 
     engine.gameLoop().ticks(100);
     engine.gameLoop().syncDraw(true);
@@ -214,10 +218,14 @@ void Anim::init(const Event<InitEvent>& ev) {
 
         Vertex v;
         v.normal = vec3(0.f, 1.f, 0.f);
-        v.position = vec3(0.f, 0.f, 0.f); groundModel.addVertex(v);
-        v.position = vec3(1.f, 0.f, 0.f); groundModel.addVertex(v);
-        v.position = vec3(1.f, 0.f, 1.f); groundModel.addVertex(v);
-        v.position = vec3(0.f, 0.f, 1.f); groundModel.addVertex(v);
+        v.position = vec3(0.f, 0.f, 0.f);
+        groundModel.addVertex(v);
+        v.position = vec3(1.f, 0.f, 0.f);
+        groundModel.addVertex(v);
+        v.position = vec3(1.f, 0.f, 1.f);
+        groundModel.addVertex(v);
+        v.position = vec3(0.f, 0.f, 1.f);
+        groundModel.addVertex(v);
 
         groundModel.send();
     }
@@ -225,18 +233,22 @@ void Anim::init(const Event<InitEvent>& ev) {
     {
         ScreenVertex v;
         v.normal = vec3(0.f, 0.f, 1.f);
-        v.position = vec3(0, 0, 0); screenQuad.add(v);
-        v.position = vec3(1, 0, 0); screenQuad.add(v);
-        v.position = vec3(1, 1, 0); screenQuad.add(v);
-        v.position = vec3(0, 1, 0); screenQuad.add(v);
-        
+        v.position = vec3(0, 0, 0);
+        screenQuad.add(v);
+        v.position = vec3(1, 0, 0);
+        screenQuad.add(v);
+        v.position = vec3(1, 1, 0);
+        screenQuad.add(v);
+        v.position = vec3(0, 1, 0);
+        screenQuad.add(v);
+
         screenQuad.send();
     }
 
     camera.frame().origin = vec3(6.36, 5.87, 1.97);
     camera.frame().setXZ(normalize(vec3(-0.29, 0.f, 0.95f)),
                          normalize(vec3(-0.8f, -0.54f, -0.25f)));
-    
+
     teapot1.frame.setXZ(vec3(1.f, 0.f, 0.f), vec3(0.f, 1.f, 0.f));
     teapot1.frame.origin = vec3(5.f, 4.f, 4.f);
 
@@ -273,8 +285,10 @@ void Anim::init(const Event<InitEvent>& ev) {
         glt::TextureRenderTarget::Params ps;
         ps.buffers = glt::RT_COLOR_BUFFER;
         ps.filter_mode = glt::TextureSampler::FilterLinear;
-        glow_render_target_src = makeRef(new glt::TextureRenderTarget(w, h, ps));
-        glow_render_target_dst = makeRef(new glt::TextureRenderTarget(w, h, ps));
+        glow_render_target_src =
+          makeRef(new glt::TextureRenderTarget(w, h, ps));
+        glow_render_target_dst =
+          makeRef(new glt::TextureRenderTarget(w, h, ps));
     }
 
     {
@@ -286,27 +300,36 @@ void Anim::init(const Event<InitEvent>& ev) {
             const float SIG = 0.84089642;
             const float SIG2 = SIG * SIG;
             const float SQRT_PI = 1.7724538509055;
-            const float SQRT_2  = 1.4142135623730;
-            glow_kernel[i] = 1.f / (SQRT_PI * SQRT_2 * SIG) * math::exp(-1/(2 * SIG2) * (x * x));
+            const float SQRT_2 = 1.4142135623730;
+            glow_kernel[i] = 1.f / (SQRT_PI * SQRT_2 * SIG) *
+                             math::exp(-1 / (2 * SIG2) * (x * x));
         }
     }
 
     ev.info.success = true;
 }
 
-void Anim::animate(const Event<AnimationEvent>&) {
-    light_angular_position = wrapPi(light_angular_position + light_rotation_speed);
+void
+Anim::animate(const Event<AnimationEvent> &)
+{
+    light_angular_position =
+      wrapPi(light_angular_position + light_rotation_speed);
 }
 
-vec3_t Anim::lightPosition(real interpolation) {
-    real theta = wrapPi(light_angular_position + interpolation * light_rotation_speed);
+vec3_t
+Anim::lightPosition(real interpolation)
+{
+    real theta =
+      wrapPi(light_angular_position + interpolation * light_rotation_speed);
     vec3_t d = vec3(math::cos(theta), 0.f, math::sin(theta));
     return d * LIGHT_ROTATION_RAD + LIGHT_CENTER_OF_ROTATION;
 }
 
-void Anim::renderScene(const Event<RenderEvent>& e) {
+void
+Anim::renderScene(const Event<RenderEvent> &e)
+{
     real interpolation = e.info.interpolation;
-    glt::RenderManager& rm = engine.renderManager();
+    glt::RenderManager &rm = engine.renderManager();
 
     glt::RenderTarget *render_target;
     real bg_alpha;
@@ -319,7 +342,8 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
 #endif
 
     rm.setActiveRenderTarget(render_target);
-    rm.activeRenderTarget()->clearColor(glt::color(vec4(vec3(0.65f), bg_alpha)));
+    rm.activeRenderTarget()->clearColor(
+      glt::color(vec4(vec3(0.65f), bg_alpha)));
     rm.activeRenderTarget()->clear();
 
     GL_CALL(glDisable, GL_BLEND);
@@ -327,7 +351,7 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     GL_CALL(glDisable, GL_ALPHA_TEST);
 
     light = lightPosition(interpolation);
-    
+
     ecLight = rm.geometryTransform().transformPoint(light);
 
     {
@@ -341,13 +365,13 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     renderLight();
 
     renderTable("teapotTextured");
-    
+
     // { // render a shadow of the table
     //     glt::GeometryTransform& gt = rm.geometryTransform();
     //     glt::SavePoint sp(rm.geometryTransform().save());
 
     //     const point3_t& s = light;
-        
+
     //     mat4_t shadowProjection = mat4(vec4(-s.y, 0.f,  0.f,  0.f),
     //                                vec4( s.x, 0.f,  s.z,  1.f),
     //                                vec4( 0.f, 0.f, -s.y,  0.f),
@@ -357,8 +381,8 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
 
     //     renderTable(teapotShader);
     // }
-    
-//    renderGround();
+
+    //    renderGround();
     renderTeapot(teapot1);
     renderTeapot(teapot2);
 
@@ -366,13 +390,15 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     GL_CALL(glDisable, GL_DEPTH_TEST);
 
     { // create the glow texture
-        engine.renderManager().setActiveRenderTarget(glow_render_target_src.ptr());
-        Ref<glt::ShaderProgram> glow_pass0 = engine.shaderManager().program("glow_pass0");
+        engine.renderManager().setActiveRenderTarget(
+          glow_render_target_src.ptr());
+        Ref<glt::ShaderProgram> glow_pass0 =
+          engine.shaderManager().program("glow_pass0");
         ASSERT(glow_pass0);
         glow_pass0->use();
         tex_render_target->sampler().bind(0);
         glt::Uniforms(*glow_pass0)
-            .optional("texture0", glt::Sampler(tex_render_target->sampler(), 0));
+          .optional("texture0", glt::Sampler(tex_render_target->sampler(), 0));
         screenQuad.draw();
         tex_render_target->sampler().unbind(0);
     }
@@ -380,7 +406,8 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
     // blur the glow texture
     Ref<glt::TextureRenderTarget> from = glow_render_target_src;
     Ref<glt::TextureRenderTarget> to = glow_render_target_dst;
-    Ref<glt::ShaderProgram> glow_pass1 = engine.shaderManager().program("glow_pass1");
+    Ref<glt::ShaderProgram> glow_pass1 =
+      engine.shaderManager().program("glow_pass1");
 
     mat2_t texMat0 = mat2();
     mat2_t texMat1 = mat2(vec2(0, 1), vec2(1, 0));
@@ -393,34 +420,36 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
         engine.renderManager().setActiveRenderTarget(to.ptr());
         from->sampler().bind(0);
         glt::Uniforms(*glow_pass1)
-            .mandatory("texture0", glt::Sampler(from->sampler(), 0))
-            .optional("kernel", kernel)
-            .optional("texMat", texMat0);
+          .mandatory("texture0", glt::Sampler(from->sampler(), 0))
+          .optional("kernel", kernel)
+          .optional("texMat", texMat0);
         screenQuad.draw();
         from->sampler().unbind(0);
 
         engine.renderManager().setActiveRenderTarget(from.ptr());
         to->sampler().bind(0);
         glt::Uniforms(*glow_pass1)
-            .mandatory("texture0", glt::Sampler(to->sampler(), 0))
-            .optional("kernel", kernel)
-            .optional("texMat", texMat1);
+          .mandatory("texture0", glt::Sampler(to->sampler(), 0))
+          .optional("kernel", kernel)
+          .optional("texMat", texMat1);
         screenQuad.draw();
         to->sampler().unbind(0);
     }
 
     { // render texture to window framebuffer
-        engine.renderManager().setActiveRenderTarget(&engine.window().renderTarget());
+        engine.renderManager().setActiveRenderTarget(
+          &engine.window().renderTarget());
 
-        Ref<glt::ShaderProgram> postprocShader = engine.shaderManager().program("postproc");
+        Ref<glt::ShaderProgram> postprocShader =
+          engine.shaderManager().program("postproc");
         ASSERT(postprocShader);
         postprocShader->use();
 
         tex_render_target->sampler().bind(0);
         glow_render_target_dst->sampler().bind(1);
         glt::Uniforms(*postprocShader)
-            .optional("texture0", glt::Sampler(tex_render_target->sampler(), 0))
-            .optional("texture1", glt::Sampler(from->sampler(), 1));
+          .optional("texture0", glt::Sampler(tex_render_target->sampler(), 0))
+          .optional("texture1", glt::Sampler(from->sampler(), 1));
         screenQuad.draw();
         tex_render_target->sampler().unbind(0);
         glow_render_target_dst->sampler().unbind(1);
@@ -434,11 +463,15 @@ void Anim::renderScene(const Event<RenderEvent>& e) {
         double min = INV(fs.max);
         double max = INV(fs.min);
         double avg = INV(fs.avg);
-        sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): " << fps << "; " << avg << "; " << min << "; " << max << sys::io::endl;
+        sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): "
+                          << fps << "; " << avg << "; " << min << "; " << max
+                          << sys::io::endl;
     }
 }
 
-void Anim::onWindowResized(const Event<WindowResized>& ev) {
+void
+Anim::onWindowResized(const Event<WindowResized> &ev)
+{
     size w = ev.info.window.windowWidth();
     size h = ev.info.window.windowHeight();
     engine.renderManager().setActiveRenderTarget(0);
@@ -446,11 +479,15 @@ void Anim::onWindowResized(const Event<WindowResized>& ev) {
     engine.renderManager().setDefaultRenderTarget(tex_render_target.ptr());
 }
 
-void Anim::setupTeapotShader(const std::string& progname, const vec4_t& surfaceColor, const MaterialProperties& mat) {
-    glt::RenderManager& rm = engine.renderManager();
+void
+Anim::setupTeapotShader(const std::string &progname,
+                        const vec4_t &surfaceColor,
+                        const MaterialProperties &mat)
+{
+    glt::RenderManager &rm = engine.renderManager();
     Ref<glt::ShaderProgram> prog = engine.shaderManager().program(progname);
     if (!prog) {
-        ASSERT_MSG(prog, "undefined program: "  + progname);
+        ASSERT_MSG(prog, "undefined program: " + progname);
         return;
     }
 
@@ -465,10 +502,13 @@ void Anim::setupTeapotShader(const std::string& progname, const vec4_t& surfaceC
                                    1.f);
 
     real scale = 1 / (2.f * math::PI);
-    real specular_factor = mat.specularContribution * (mat.shininess + 2) * scale;
-    vec4_t vm = vec4(mat.ambientContribution, mat.diffuseContribution,
-                     specular_factor, mat.shininess);
-    
+    real specular_factor =
+      mat.specularContribution * (mat.shininess + 2) * scale;
+    vec4_t vm = vec4(mat.ambientContribution,
+                     mat.diffuseContribution,
+                     specular_factor,
+                     mat.shininess);
+
     glt::Uniforms us(*prog);
     us.optional("projectionMatrix", rm.geometryTransform().projectionMatrix());
     us.optional("mvMatrix", rm.geometryTransform().mvMatrix());
@@ -484,12 +524,14 @@ void Anim::setupTeapotShader(const std::string& progname, const vec4_t& surfaceC
 #if RENDER_NOGLOW
     us.optional("glow", real(1));
 #else
-    us.optional("glow", mat.glow  /* real(0.8) */);
+    us.optional("glow", mat.glow /* real(0.8) */);
 #endif
 }
 
-void Anim::renderLight() {
-    glt::RenderManager& rm = engine.renderManager();
+void
+Anim::renderLight()
+{
+    glt::RenderManager &rm = engine.renderManager();
     glt::SavePoint sp(rm.geometryTransform().save());
 
     rm.geometryTransform().translate(light);
@@ -501,8 +543,10 @@ void Anim::renderLight() {
     sphereModel.draw();
 }
 
-void Anim::renderTeapot(const Teapot& teapot) {
-    glt::RenderManager& rm = engine.renderManager();
+void
+Anim::renderTeapot(const Teapot &teapot)
+{
+    glt::RenderManager &rm = engine.renderManager();
     glt::SavePoint sp(rm.geometryTransform().save());
 
     rm.geometryTransform().concat(transformationLocalToWorld(teapot.frame));
@@ -512,8 +556,10 @@ void Anim::renderTeapot(const Teapot& teapot) {
     teapotModel.draw();
 }
 
-void Anim::renderGround() {
-    glt::RenderManager& rm = engine.renderManager();
+void
+Anim::renderGround()
+{
+    glt::RenderManager &rm = engine.renderManager();
     glt::SavePoint sp(rm.geometryTransform().save());
 
     rm.geometryTransform().scale(vec3(50.f));
@@ -525,9 +571,11 @@ void Anim::renderGround() {
     groundModel.draw();
 }
 
-void Anim::renderTable(const std::string& shader) {
-    glt::RenderManager& rm = engine.renderManager();
-    glt::GeometryTransform& gt = rm.geometryTransform();
+void
+Anim::renderTable(const std::string &shader)
+{
+    glt::RenderManager &rm = engine.renderManager();
+    glt::GeometryTransform &gt = rm.geometryTransform();
     glt::SavePoint sp(gt.save());
 
     gt.scale(vec3(10.f, 4.f, 16.f));
@@ -547,7 +595,7 @@ void Anim::renderTable(const std::string& shader) {
     real table_thickness = 1 / 33.f;
     real foot_height = table_height - table_thickness;
     real foot_width = 0.03f;
-    real foot_depth = 10.f/16.f * foot_width;
+    real foot_depth = 10.f / 16.f * foot_width;
     real foot_x_dist = 1.f - foot_width;
     real foot_z_dist = 1.f - foot_depth;
 
@@ -560,7 +608,8 @@ void Anim::renderTable(const std::string& shader) {
 
     for (uint32 x = 0; x < 2; ++x) {
         for (uint32 z = 0; z < 2; ++z) {
-            gt.pop(); gt.dup();
+            gt.pop();
+            gt.dup();
             gt.translate(vec3(x * foot_x_dist, 0.f, z * foot_z_dist));
             gt.scale(foot_dim);
             setupTeapotShader(shader, color, mat);
@@ -571,39 +620,54 @@ void Anim::renderTable(const std::string& shader) {
     woodTexture.unbind(0);
 }
 
-void Anim::mouseMoved(const Event<MouseMoved>& e) {
+void
+Anim::mouseMoved(const Event<MouseMoved> &e)
+{
     int32 dx = e.info.dx;
     int32 dy = e.info.dy;
 
-    dx = - dx;
+    dx = -dx;
 
     if (engine.keyHandler().keyState(ge::keycode::M) <= keystate::Pressed) {
         teapot1.frame.rotateWorld(-dx * 0.001f, camera.frame().localY());
         teapot1.frame.rotateWorld(dy * 0.001f, camera.frame().localX());
-        e.abort = true;        
+        e.abort = true;
     }
 }
 
-void Anim::keyPressed(const Event<KeyPressed>& e) {
+void
+Anim::keyPressed(const Event<KeyPressed> &e)
+{
     using namespace ge::keycode;
 
     switch (e.info.key) {
     case F:
         wireframe_mode = !wireframe_mode;
-        GL_CALL(glPolygonMode, GL_FRONT_AND_BACK, wireframe_mode ? GL_LINE : GL_FILL);
+        GL_CALL(
+          glPolygonMode, GL_FRONT_AND_BACK, wireframe_mode ? GL_LINE : GL_FILL);
         break;
     case H:
-        
+
         if (shade_mode == SHADE_MODE_DEFAULT)
             shade_mode = 0;
         else
             shade_mode = SHADE_MODE_DEFAULT;
         break;
-    case J: shade_mode ^= SHADE_MODE_AMBIENT; break;
-    case K: shade_mode ^= SHADE_MODE_DIFFUSE; break;
-    case L: shade_mode ^= SHADE_MODE_SPECULAR; break;
-    case O: gamma_correction += 0.05f; break;
-    case P: gamma_correction -= 0.05f; break;
+    case J:
+        shade_mode ^= SHADE_MODE_AMBIENT;
+        break;
+    case K:
+        shade_mode ^= SHADE_MODE_DIFFUSE;
+        break;
+    case L:
+        shade_mode ^= SHADE_MODE_SPECULAR;
+        break;
+    case O:
+        gamma_correction += 0.05f;
+        break;
+    case P:
+        gamma_correction -= 0.05f;
+        break;
     case G:
         if (use_spotlight && spotlight_smooth) {
             use_spotlight = false;
@@ -618,7 +682,9 @@ void Anim::keyPressed(const Event<KeyPressed>& e) {
     }
 }
 
-void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args) {
+void
+Anim::setDataDir(const Event<CommandEvent> &, const Array<CommandArg> &args)
+{
     data_dir = *args[0].string;
 
     int w, h;
@@ -628,7 +694,7 @@ void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args)
         ERR("couldnt open data/wood.bmp");
         return;
     } else {
-        if (bmp_read(file, &w, &h, &wood_data) != BMP_OK) { 
+        if (bmp_read(file, &w, &h, &wood_data) != BMP_OK) {
             ERR("couldnt load data/wood.bmp");
             fclose(file);
             return;
@@ -636,8 +702,17 @@ void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args)
         fclose(file);
     }
 
-    GL_CALL(glTextureImage2DEXT, *woodTexture.data()->ensureHandle(), GL_TEXTURE_2D,
-            0, GL_RGB8, GLint(w), GLint(h), 0, GL_RGBA, GL_UNSIGNED_BYTE, wood_data);
+    GL_CALL(glTextureImage2DEXT,
+            *woodTexture.data()->ensureHandle(),
+            GL_TEXTURE_2D,
+            0,
+            GL_RGB8,
+            GLint(w),
+            GLint(h),
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            wood_data);
     free(wood_data);
     woodTexture.filterMode(glt::TextureSampler::FilterLinear);
 
@@ -646,7 +721,8 @@ void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args)
         ERR("couldnt parse teapot model");
         return;
     } else {
-        sys::io::stdout() << "parsed teapot model: " << nfaces << " vertices" << sys::io::endl;
+        sys::io::stdout() << "parsed teapot model: " << nfaces << " vertices"
+                          << sys::io::endl;
     }
 
 #ifdef MESH_MESH
@@ -656,7 +732,9 @@ void Anim::setDataDir(const Event<CommandEvent>&, const Array<CommandArg>& args)
     teapotModel.send();
 }
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char *argv[])
+{
     EngineOptions opts;
     Engine engine;
     Anim anim(engine);
@@ -664,6 +742,6 @@ int main(int argc, char *argv[]) {
     opts.parse(&argc, &argv);
     opts.inits.init.reg(makeEventHandler(&anim, &Anim::init));
     opts.inits.init.reg(makeEventHandler(&anim, &Anim::link));
-    
+
     return engine.run(opts);
 }

@@ -5,13 +5,13 @@ namespace sys {
 
 namespace io {
 
-struct Handle {
+struct Handle
+{
     HandleMode mode;
 };
 
-struct Socket {
-    
-};
+struct Socket
+{};
 
 } // namespace io
 

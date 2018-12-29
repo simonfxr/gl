@@ -10,18 +10,20 @@
 
 namespace math {
 
-#define DEF_GLVEC_CONSTR(gl_T, T, constr)               \
-    MATH_INLINE_SPEC gl_T::gl_T(const T& v) {           \
-        T::buffer buf;                                  \
-        load(buf, v);                                   \
-        for (defs::index i = 0; i < T::size; ++i)       \
-            buffer[i] = float(buf[i]);                  \
-    }                                                   \
-    MATH_INLINE_SPEC gl_T::operator T() const {         \
-        T::buffer buf;                                  \
-        for (defs::index i = 0; i < T::size; ++i)       \
-            buf[i] = T::component_type(buffer[i]);      \
-        return constr(buf);                             \
+#define DEF_GLVEC_CONSTR(gl_T, T, constr)                                      \
+    MATH_INLINE_SPEC gl_T::gl_T(const T &v)                                    \
+    {                                                                          \
+        T::buffer buf;                                                         \
+        load(buf, v);                                                          \
+        for (defs::index i = 0; i < T::size; ++i)                              \
+            buffer[i] = float(buf[i]);                                         \
+    }                                                                          \
+    MATH_INLINE_SPEC gl_T::operator T() const                                  \
+    {                                                                          \
+        T::buffer buf;                                                         \
+        for (defs::index i = 0; i < T::size; ++i)                              \
+            buf[i] = T::component_type(buffer[i]);                             \
+        return constr(buf);                                                    \
     }
 
 DEF_GLVEC_CONSTR(glvec2, vec2_t, vec2);

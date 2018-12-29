@@ -8,7 +8,12 @@
 extern "C" {
 #endif
 
-enum BMPError { BMP_OK, BMP_IO, BMP_FORMAT };
+enum BMPError
+{
+    BMP_OK,
+    BMP_IO,
+    BMP_FORMAT
+};
 typedef enum BMPError BMPError;
 
 /*
@@ -17,12 +22,14 @@ typedef enum BMPError BMPError;
  * the first row is the uppermost row in the image
  */
 
-BMPError bmp_dump(FILE *fd, int w, int h, const uint32 *pixels);
+BMPError
+bmp_dump(FILE *fd, int w, int h, const uint32 *pixels);
 
-BMPError bmp_read(FILE *fd, int *w, int *h, uint32 **pixels);
+BMPError
+bmp_read(FILE *fd, int *w, int *h, uint32 **pixels);
 
 #ifdef __cplusplus
 }
 #endif
-    
+
 #endif

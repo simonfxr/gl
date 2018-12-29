@@ -4,9 +4,9 @@
 #include "defs.hpp"
 
 #ifdef SYS_EXPORTS
-#  define ERR_API SHARED_EXPORT
+#define ERR_API SHARED_EXPORT
 #else
-#  define ERR_API SHARED_IMPORT
+#define ERR_API SHARED_IMPORT
 #endif
 
 #endif

@@ -5,9 +5,11 @@
 
 namespace sys {
 
-SYS_API double queryTimer();
+SYS_API double
+queryTimer();
 
-SYS_API void sleep(double secs);
+SYS_API void
+sleep(double secs);
 
 } // namespace sys
 

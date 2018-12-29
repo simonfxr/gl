@@ -11,12 +11,13 @@
 
 namespace math {
 
-#define DEF_GLVEC(gl_T, T)                                              \
-    struct gl_T {                                                       \
-        float buffer[T::size];                                          \
-        gl_T() = default;                                               \
-        MATH_FUNC gl_T(const T& v) PURE_FUNC;                           \
-        MATH_FUNC operator T() const PURE_FUNC;                         \
+#define DEF_GLVEC(gl_T, T)                                                     \
+    struct gl_T                                                                \
+    {                                                                          \
+        float buffer[T::size];                                                 \
+        gl_T() = default;                                                      \
+        MATH_FUNC gl_T(const T &v) PURE_FUNC;                                  \
+        MATH_FUNC operator T() const PURE_FUNC;                                \
     };
 
 DEF_GLVEC(glvec2, vec2_t);

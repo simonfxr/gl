@@ -8,75 +8,91 @@ namespace glt {
 
 Preprocessor::DirectiveHandler::~DirectiveHandler() {}
 
-void Preprocessor::DirectiveHandler::beginProcessing(const Preprocessor::ContentContext& ctx) {
+void
+Preprocessor::DirectiveHandler::beginProcessing(
+  const Preprocessor::ContentContext &ctx)
+{
     UNUSED(ctx);
 }
 
-void Preprocessor::DirectiveHandler::endProcessing(const Preprocessor::ContentContext& ctx) {
+void
+Preprocessor::DirectiveHandler::endProcessing(
+  const Preprocessor::ContentContext &ctx)
+{
     UNUSED(ctx);
 }
 
-void Preprocessor::DirectiveHandler::directiveEncountered(const Preprocessor::DirectiveContext& ctx) {
+void
+Preprocessor::DirectiveHandler::directiveEncountered(
+  const Preprocessor::DirectiveContext &ctx)
+{
     UNUSED(ctx);
 }
 
-struct Preprocessor::Data {
+struct Preprocessor::Data
+{
     Preprocessor::DirectiveHandler nullHandler;
     Preprocessor::DirectiveHandler *defaultHandler;
     bool errorState;
-    sys::io::OutStream  *out;
+    sys::io::OutStream *out;
     Preprocessor::Handlers handlers;
     std::string sourceName;
-    
-    Data() :
-        nullHandler(),
-        defaultHandler(&nullHandler),
-        errorState(false),
-        out(&sys::io::stdout())
-        {}
+
+    Data()
+      : nullHandler()
+      , defaultHandler(&nullHandler)
+      , errorState(false)
+      , out(&sys::io::stdout())
+    {}
 };
 
-Preprocessor::Preprocessor() :
-    self(new Data)
-{}
+Preprocessor::Preprocessor() : self(new Data) {}
 
-Preprocessor::~Preprocessor() {
+Preprocessor::~Preprocessor()
+{
     delete self;
 }
 
-void Preprocessor::process(const std::string& str) {
+void
+Preprocessor::process(const std::string &str)
+{
     process(str.data(), uint32(str.length()));
 }
 
-void Preprocessor::process(const char *begin, uint32 size) {
-    
+void
+Preprocessor::process(const char *begin, uint32 size)
+{
+
     if (wasError())
         return;
-    
+
     DirectiveContext ctx(*this, self->sourceName);
-    
+
     ctx.content.data = begin;
     ctx.content.size = size;
 
     for (Handlers::const_iterator it = self->handlers.begin();
-         it != self->handlers.end(); ++it) {
+         it != self->handlers.end();
+         ++it) {
         it->second->beginProcessing(ctx.content);
     }
 
     self->defaultHandler->beginProcessing(ctx.content);
 
-    const char * const end = begin + size;
+    const char *const end = begin + size;
     const char *str = begin;
     const char *match;
-    
+
     while (!wasError() && (match = strchr(str, '#')) < end && match != 0) {
 
         const char *lineBegin = match;
-        while (lineBegin > begin && lineBegin[-1] != '\n' && isspace(lineBegin[-1]))
+        while (lineBegin > begin && lineBegin[-1] != '\n' &&
+               isspace(lineBegin[-1]))
             --lineBegin;
 
         const char *eol = strchr(match, '\n');
-        if (eol == 0) eol = end;
+        if (eol == 0)
+            eol = end;
 
         str = eol;
 
@@ -106,33 +122,45 @@ void Preprocessor::process(const char *begin, uint32 size) {
     }
 
     for (Handlers::const_iterator it = self->handlers.begin();
-         it != self->handlers.end(); ++it) {
+         it != self->handlers.end();
+         ++it) {
         it->second->endProcessing(ctx.content);
     }
 
     self->defaultHandler->endProcessing(ctx.content);
 }
 
-void Preprocessor::process(const char *contents) {
+void
+Preprocessor::process(const char *contents)
+{
     process(contents, uint32(strlen(contents)));
 }
 
-Preprocessor::DirectiveHandler& Preprocessor::defaultHandler(Preprocessor::DirectiveHandler& handler) {
-    DirectiveHandler& old = *self->defaultHandler;
+Preprocessor::DirectiveHandler &
+Preprocessor::defaultHandler(Preprocessor::DirectiveHandler &handler)
+{
+    DirectiveHandler &old = *self->defaultHandler;
     self->defaultHandler = &handler;
     return old;
 }
 
-Preprocessor::DirectiveHandler &Preprocessor::defaultHandler() const {
+Preprocessor::DirectiveHandler &
+Preprocessor::defaultHandler() const
+{
     return *self->defaultHandler;
 }
 
-Preprocessor::Handlers &Preprocessor::handlers() const {
+Preprocessor::Handlers &
+Preprocessor::handlers() const
+{
     return self->handlers;
 }
 
-Preprocessor::DirectiveHandler* Preprocessor::installHandler(const std::string& directive, DirectiveHandler& handler) {
-    DirectiveHandler* old = 0;
+Preprocessor::DirectiveHandler *
+Preprocessor::installHandler(const std::string &directive,
+                             DirectiveHandler &handler)
+{
+    DirectiveHandler *old = 0;
     Handlers::const_iterator it = self->handlers.find(directive);
     if (it != self->handlers.end()) {
         old = it->second;
@@ -142,40 +170,54 @@ Preprocessor::DirectiveHandler* Preprocessor::installHandler(const std::string& 
     return old;
 }
 
-sys::io::OutStream& Preprocessor::out() {
+sys::io::OutStream &
+Preprocessor::out()
+{
     return *self->out;
 }
 
-void Preprocessor::out(sys::io::OutStream& out) {
+void
+Preprocessor::out(sys::io::OutStream &out)
+{
     self->out = &out;
 }
 
-bool Preprocessor::setError() {
+bool
+Preprocessor::setError()
+{
     WARN("setting error");
     bool isError = self->errorState;
     self->errorState = true;
     return isError;
 }
 
-bool Preprocessor::wasError() const {
+bool
+Preprocessor::wasError() const
+{
     if (self->errorState) {
         WARN("in Error state");
     }
-        
+
     return self->errorState;
 }
 
-bool Preprocessor::clearError() {
+bool
+Preprocessor::clearError()
+{
     bool s = self->errorState;
     self->errorState = false;
     return s;
 }
 
-const std::string& Preprocessor::name() const {
+const std::string &
+Preprocessor::name() const
+{
     return self->sourceName;
 }
 
-void Preprocessor::name(const std::string& name) {
+void
+Preprocessor::name(const std::string &name)
+{
     self->sourceName = name;
 }
 

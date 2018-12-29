@@ -1,60 +1,73 @@
-#include "defs.hpp"
 #include "data/Atomic.hpp"
+#include "defs.hpp"
 #include "sys/measure.hpp"
 
-#include <SFML/System/Thread.hpp>
 #include <SFML/System.hpp>
+#include <SFML/System/Thread.hpp>
 
 #include <iostream>
-#include <unistd.h>
-#include <time.h>
 #include <sched.h>
+#include <time.h>
+#include <unistd.h>
 
 using namespace defs;
 
 namespace {
 
-inline void compiler_rw_barrier() {
+inline void
+compiler_rw_barrier()
+{
     __asm__ __volatile__("" ::: "memory");
 }
 
-template <typename T>
-T load_acquire(const T *addr) {
+template<typename T>
+T
+load_acquire(const T *addr)
+{
     T x = *const_cast<const volatile T *>(addr);
     compiler_rw_barrier();
     return x;
 }
 
-template <typename T>
-void store_release(T *addr, const T& val) {
+template<typename T>
+void
+store_release(T *addr, const T &val)
+{
     compiler_rw_barrier();
     *static_cast<volatile T *>(addr) = val;
 }
 
-struct CacheLine {
+struct CacheLine
+{
 private:
     char pad[64];
 };
 
-struct BusyWait {
+struct BusyWait
+{
     int waits;
-    BusyWait () :
-        waits(0) {}
+    BusyWait() : waits(0) {}
     void wait() __attribute__((noinline));
 };
 
-inline void cpu_pause() {
-    __asm__ __volatile__ ("rep; nop" : : );
+inline void
+cpu_pause()
+{
+    __asm__ __volatile__("rep; nop" : :);
 }
 
-static void sleep(unsigned usecs) {
+static void
+sleep(unsigned usecs)
+{
     struct timespec tp;
-    tp.tv_sec  =  usecs / 1000000u;
+    tp.tv_sec = usecs / 1000000u;
     tp.tv_nsec = (usecs % 1000000u) * 1000u;
     nanosleep(&tp, 0);
 }
 
-void BusyWait::wait() {
+void
+BusyWait::wait()
+{
     if (waits < 50)
         cpu_pause();
     else if (waits < 100)
@@ -75,38 +88,41 @@ typedef CacheLine CacheLineA __attribute__((aligned(64)));
 
 static const size_t MAX_CACHE = 128;
 
-template <typename T>
-struct Chan {
+template<typename T>
+struct Chan
+{
     typedef T type;
 
-    struct Node {
+    struct Node
+    {
         type value;
         Node *next;
     };
 
-    Node *head;          // read end
+    Node *head; // read end
     size_t head_pos;
     CacheLine _pad1;
-    
-    Node *tail;          // write end
-    Node *head_cache;    // points to nodes already consumed
+
+    Node *tail;       // write end
+    Node *head_cache; // points to nodes already consumed
     size_t head_cache_pos;
-    Node *head_copy;     // lazily updated snapshot of head
+    Node *head_copy; // lazily updated snapshot of head
     size_t head_pos_copy;
     size_t num_allocs;
 
-    Chan() :
-        head(new Node),
-        head_pos(0),
-        tail(head),
-        head_cache(head),
-        head_cache_pos(0),
-        head_copy(head),
-        head_pos_copy(0),
-        num_allocs(0)
-        {}
-    
-    ~Chan() {
+    Chan()
+      : head(new Node)
+      , head_pos(0)
+      , tail(head)
+      , head_cache(head)
+      , head_cache_pos(0)
+      , head_copy(head)
+      , head_pos_copy(0)
+      , num_allocs(0)
+    {}
+
+    ~Chan()
+    {
         Node *first = load_acquire(&head_cache);
         while (first != 0) {
             Node *node = first;
@@ -115,7 +131,8 @@ struct Chan {
         }
     }
 
-    Node *allocNode() {
+    Node *allocNode()
+    {
 
         if (head_cache != head_copy) {
             Node *n = head_cache;
@@ -131,16 +148,14 @@ struct Chan {
             head_cache = head_cache->next;
             ++head_cache_pos;
 
-            while (head_cache != head_copy &&
-                   head_cache_pos < head_pos_copy &&
-                   (head_pos_copy - head_cache_pos) > MAX_CACHE)
-            {
+            while (head_cache != head_copy && head_cache_pos < head_pos_copy &&
+                   (head_pos_copy - head_cache_pos) > MAX_CACHE) {
                 Node *node = head_cache;
                 head_cache = head_cache->next;
                 ++head_cache_pos;
                 delete node;
             }
-            
+
             return n;
         } else {
             ++num_allocs;
@@ -148,7 +163,8 @@ struct Chan {
         }
     }
 
-    void put(const T& val) {
+    void put(const T &val)
+    {
         Node *n = allocNode();
         n->value = val;
         n->next = 0;
@@ -156,7 +172,8 @@ struct Chan {
         tail = n;
     }
 
-    bool get(T *value) {
+    bool get(T *value)
+    {
         Node *head_next = load_acquire(&head->next);
         if (head_next == 0)
             return false;
@@ -175,10 +192,11 @@ Atomic<int64> sum_consumer;
 sf::Mutex start_producer;
 sf::Mutex start_consumer;
 
+} // namespace
 
-}
-
-static void producer(void) {
+static void
+producer(void)
+{
     start_producer.lock();
 
     int64 sum = 0;
@@ -190,7 +208,9 @@ static void producer(void) {
     sum_producer.set(sum);
 }
 
-static void consumer(void) {
+static void
+consumer(void)
+{
     start_consumer.lock();
 
     int64 sum = 0;
@@ -206,7 +226,9 @@ static void consumer(void) {
     sum_consumer.set(sum);
 }
 
-int main(void) {
+int
+main(void)
+{
 
     sf::Thread producer_thread(producer);
     sf::Thread consumer_thread(consumer);
@@ -218,8 +240,7 @@ int main(void) {
     start_producer.unlock();
     start_consumer.unlock();
 
-    time_op(producer_thread.wait(),
-            consumer_thread.wait());
+    time_op(producer_thread.wait(), consumer_thread.wait());
 
     __sync_synchronize();
 

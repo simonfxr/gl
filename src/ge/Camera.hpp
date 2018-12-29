@@ -3,10 +3,10 @@
 
 #include "glt/Frame.hpp"
 
-#include "ge/conf.hpp"
-#include "ge/Engine.hpp"
 #include "ge/Command.hpp"
+#include "ge/Engine.hpp"
 #include "ge/Event.hpp"
+#include "ge/conf.hpp"
 
 #include "math/vec2.hpp"
 
@@ -14,32 +14,39 @@ namespace ge {
 
 struct Camera;
 
-struct GE_API CameraMoved {
-    Camera& camera;
+struct GE_API CameraMoved
+{
+    Camera &camera;
     math::vec3_t step;
     mutable math::vec3_t allowed_step;
 
-    CameraMoved(Camera& cam, const math::vec3_t& s) :
-        camera(cam), step(s), allowed_step(s) {}
+    CameraMoved(Camera &cam, const math::vec3_t &s)
+      : camera(cam), step(s), allowed_step(s)
+    {}
 };
 
-struct GE_API CameraRotated {
-    Camera& camera;
+struct GE_API CameraRotated
+{
+    Camera &camera;
     math::vec2_t angle;
     mutable math::vec2_t allowed_angle;
-    
-    CameraRotated(Camera& cam, const math::vec2_t& a) :
-        camera(cam), angle(a), allowed_angle(a) {}
+
+    CameraRotated(Camera &cam, const math::vec2_t &a)
+      : camera(cam), angle(a), allowed_angle(a)
+    {}
 };
 
-struct GE_API Camera : public Plugin {
+struct GE_API Camera : public Plugin
+{
 
-    struct Events {
+    struct Events
+    {
         EventSource<CameraMoved> moved;
         EventSource<CameraRotated> rotated;
     };
 
-    struct Commands {
+    struct Commands
+    {
         Ref<Command> move;
         Ref<Command> saveFrame;
         Ref<Command> loadFrame;
@@ -50,35 +57,35 @@ struct GE_API Camera : public Plugin {
     Camera();
     ~Camera();
 
-    Commands& commands();
+    Commands &commands();
 
-    Events& events();
+    Events &events();
 
     math::vec2_t mouseSensitivity() const;
-    void mouseSensitivity(const math::vec2_t&);
+    void mouseSensitivity(const math::vec2_t &);
 
     real speed() const;
     void speed(real);
 
-    glt::Frame& frame();
-    void frame(const glt::Frame&);
+    glt::Frame &frame();
+    void frame(const glt::Frame &);
 
-    const std::string& framePath() const;
-    void framePath(const std::string&);
+    const std::string &framePath() const;
+    void framePath(const std::string &);
 
     void mouseMoved(index16 dx, index16 dy);
-    
+
     void mouseLook(bool enable);
-    
-    void registerWith(Engine& e) final override;
-    void registerCommands(CommandProcessor& proc) final override;
+
+    void registerWith(Engine &e) final override;
+    void registerCommands(CommandProcessor &proc) final override;
 
 private:
     struct Data;
-    Data * const self;
+    Data *const self;
 
-    Camera(const Camera&);
-    Camera& operator =(const Camera&);
+    Camera(const Camera &);
+    Camera &operator=(const Camera &);
 };
 
 } // namespace ge

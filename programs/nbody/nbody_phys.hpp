@@ -10,8 +10,8 @@ struct ParticleRef;
 struct ParticleArray;
 struct Simulation;
 
-
-struct Particle {
+struct Particle
+{
     point3_t position;
     vec3_t velocity;
     real inv_mass; // allow for m = infinity -> m^-1 = 0
@@ -19,10 +19,15 @@ struct Particle {
     real radius;
 
     real mass() const { return real(1) / inv_mass; }
-    Particle& mass(real m) { inv_mass = real(1) / m; return *this; }
+    Particle &mass(real m)
+    {
+        inv_mass = real(1) / m;
+        return *this;
+    }
 };
 
-struct ParticleArray {
+struct ParticleArray
+{
     defs::size _n;
     defs::size _size;
 
@@ -38,24 +43,26 @@ struct ParticleArray {
     Particle operator[](index) const;
     ParticleRef operator[](index);
 
-    void push_back(const Particle&);
-    void put(index i, const Particle&);
+    void push_back(const Particle &);
+    void put(index i, const Particle &);
 
     defs::size size() { return _n; }
 };
 
-struct ParticleRef {
-    ParticleArray& array;
+struct ParticleRef
+{
+    ParticleArray &array;
     index i;
 
-    ParticleRef(ParticleArray&, defs::index);
+    ParticleRef(ParticleArray &, defs::index);
 
     operator Particle() const;
-    ParticleRef& operator =(const Particle&);
+    ParticleRef &operator=(const Particle &);
 };
 
-struct Simulation {
-    
+struct Simulation
+{
+
     real time_step;
     ParticleArray particles;
 
@@ -65,9 +72,11 @@ struct Simulation {
     void init();
 
     void simulate_frame();
-    void extrapolate_particle(Particle& p, real interpolation);
+    void extrapolate_particle(Particle &p, real interpolation);
 
-    void compute_acceleration(vec3_t *acceleration, const vec3_t *position, const vec3_t *velocity);
+    void compute_acceleration(vec3_t *acceleration,
+                              const vec3_t *position,
+                              const vec3_t *velocity);
 };
 
 #endif

@@ -5,5 +5,5 @@ namespace ge {
 Plugin::Plugin() {}
 
 Plugin::~Plugin() {}
-    
+
 } // namespace ge

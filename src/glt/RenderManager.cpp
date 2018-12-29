@@ -1,15 +1,15 @@
 #include "glt/RenderManager.hpp"
 
-#include "opengl.hpp"
-#include "glt/utils.hpp"
-#include "glt/Transformations.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/GLPerfCounter.hpp"
+#include "glt/Transformations.hpp"
+#include "glt/utils.hpp"
+#include "opengl.hpp"
 
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
+#include "math/vec3.hpp"
+#include "math/vec4.hpp"
 
 #include "sys/clock.hpp"
 
@@ -19,12 +19,13 @@ namespace glt {
 
 using namespace math;
 
-struct RenderManager::Data {
+struct RenderManager::Data
+{
     ViewFrustum frustum;
     GeometryTransform transform;
     bool inScene;
     SavePointArgs transformStateBOS; // transform state in begin of scene
-    
+
     bool owning_def_rt;
     RenderTarget *def_rt;
 
@@ -39,45 +40,46 @@ struct RenderManager::Data {
 
     bool perf_initialized;
     GLPerfCounter perf_counter;
-    
+
     double sum_elapsed;
     double min_elapsed;
     double max_elapsed;
     FrameStatistics stats;
 
-    Data() :
-        inScene(false),
-        transformStateBOS(transform, 0, 0),
-        owning_def_rt(false),
-        def_rt(0),
-        current_rt(0),
-        projection(),
-        projection_outdated(true),
-        frame_id_current(0),
-        frame_id_last(0),
-        perf_initialized(false),
-        stats()
-        {}
+    Data()
+      : inScene(false)
+      , transformStateBOS(transform, 0, 0)
+      , owning_def_rt(false)
+      , def_rt(0)
+      , current_rt(0)
+      , projection()
+      , projection_outdated(true)
+      , frame_id_current(0)
+      , frame_id_last(0)
+      , perf_initialized(false)
+      , stats()
+    {}
 
     void beginStats();
     void endStats();
 };
 
-RenderManager::RenderManager() :
-    self(new Data)
-{}
+RenderManager::RenderManager() : self(new Data) {}
 
-RenderManager::~RenderManager() {
+RenderManager::~RenderManager()
+{
     shutdown();
     delete self;
 }
 
-void RenderManager::shutdown() {
-    if (self->current_rt != 0)  {
+void
+RenderManager::shutdown()
+{
+    if (self->current_rt != 0) {
         self->current_rt->deactivate();
         self->current_rt = 0;
     }
-    
+
     if (self->owning_def_rt) {
         delete self->def_rt;
         self->def_rt = 0;
@@ -86,38 +88,48 @@ void RenderManager::shutdown() {
     self->perf_counter.shutdown();
 }
 
-const ViewFrustum& RenderManager::viewFrustum() const {
+const ViewFrustum &
+RenderManager::viewFrustum() const
+{
     return self->frustum;
 }
 
-const GeometryTransform& RenderManager::geometryTransform() const {
+const GeometryTransform &
+RenderManager::geometryTransform() const
+{
     return self->transform;
 }
 
-GeometryTransform& RenderManager::geometryTransform() {
+GeometryTransform &
+RenderManager::geometryTransform()
+{
     return self->transform;
 }
 
-void RenderManager::setDefaultProjection(const Projection& proj) {
+void
+RenderManager::setDefaultProjection(const Projection &proj)
+{
     self->projection = proj;
     self->projection_outdated = true;
 }
 
-void RenderManager::updateProjection(math::real aspectRatio) {
+void
+RenderManager::updateProjection(math::real aspectRatio)
+{
     switch (self->projection.type) {
     case Projection::Identity:
         geometryTransform().loadProjectionMatrix(
-            mat4(vec4(1.f, 0.f, 0.f, 0.f),
-                 vec4(0.f, 1.f, 0.f, 0.f),
-                 vec4(0.f, 0.f, 1.f, 0.f),
-                 vec4(0.f, 0.f, 0.f, 1.f)));
+          mat4(vec4(1.f, 0.f, 0.f, 0.f),
+               vec4(0.f, 1.f, 0.f, 0.f),
+               vec4(0.f, 0.f, 1.f, 0.f),
+               vec4(0.f, 0.f, 0.f, 1.f)));
         break;
     case Projection::Perspective:
         geometryTransform().loadProjectionMatrix(
-            perspectiveProjection(self->projection.perspective.fieldOfViewRad,
-                                  aspectRatio,
-                                  self->projection.perspective.z_near,
-                                  self->projection.perspective.z_far));
+          perspectiveProjection(self->projection.perspective.fieldOfViewRad,
+                                aspectRatio,
+                                self->projection.perspective.z_near,
+                                self->projection.perspective.z_far));
         break;
     default:
         ERR("invalid projection type");
@@ -125,7 +137,9 @@ void RenderManager::updateProjection(math::real aspectRatio) {
     self->projection_outdated = false;
 }
 
-void RenderManager::setDefaultRenderTarget(RenderTarget *rt, bool delete_after) {
+void
+RenderManager::setDefaultRenderTarget(RenderTarget *rt, bool delete_after)
+{
 
     if (rt != self->def_rt) {
 
@@ -136,7 +150,7 @@ void RenderManager::setDefaultRenderTarget(RenderTarget *rt, bool delete_after) 
                 self->current_rt->deactivate();
                 self->current_rt = 0;
             }
-            
+
             delete self->def_rt;
         }
 
@@ -146,18 +160,24 @@ void RenderManager::setDefaultRenderTarget(RenderTarget *rt, bool delete_after) 
     self->owning_def_rt = delete_after;
 }
 
-RenderTarget *RenderManager::defaultRenderTarget() const {
+RenderTarget *
+RenderManager::defaultRenderTarget() const
+{
     return self->def_rt;
 }
 
-void RenderManager::setDefaultRenderTarget() {
+void
+RenderManager::setDefaultRenderTarget()
+{
     ASSERT(self->def_rt);
     setActiveRenderTarget(self->def_rt);
 }
 
-void RenderManager::setActiveRenderTarget(RenderTarget* rt) {
+void
+RenderManager::setActiveRenderTarget(RenderTarget *rt)
+{
     if (rt != self->current_rt) {
-        
+
         if (self->current_rt != 0)
             self->current_rt->deactivate();
 
@@ -167,16 +187,21 @@ void RenderManager::setActiveRenderTarget(RenderTarget* rt) {
     }
 }
 
-RenderTarget *RenderManager::activeRenderTarget() const {
+RenderTarget *
+RenderManager::activeRenderTarget() const
+{
     return self->current_rt;
 }
 
-void RenderManager::beginScene() {
+void
+RenderManager::beginScene()
+{
     ASSERT_MSG(!self->inScene, "nested beginScene()");
-    ASSERT_MSG(self->current_rt != 0 || self->def_rt != 0, "no RenderTarget specified");
+    ASSERT_MSG(self->current_rt != 0 || self->def_rt != 0,
+               "no RenderTarget specified");
 
     self->beginStats();
-    
+
     self->inScene = true;
 
     setActiveRenderTarget(self->def_rt);
@@ -192,7 +217,9 @@ void RenderManager::beginScene() {
     self->frustum.update(self->transform.vpMatrix());
 }
 
-void RenderManager::endScene() {
+void
+RenderManager::endScene()
+{
     ASSERT_MSG(self->inScene, "cannot endScene() without beginScene()");
     self->inScene = false;
     self->transform.restore(self->transformStateBOS);
@@ -201,20 +228,25 @@ void RenderManager::endScene() {
         self->current_rt->draw();
 }
 
-FrameStatistics RenderManager::frameStatistics() {
+FrameStatistics
+RenderManager::frameStatistics()
+{
     self->stats.min = self->min_elapsed;
     self->stats.max = self->max_elapsed;
-    self->stats.avg = self->sum_elapsed / double(self->frame_id_current - self->frame_id_last);
-    
+    self->stats.avg =
+      self->sum_elapsed / double(self->frame_id_current - self->frame_id_last);
+
     self->frame_id_last = self->frame_id_current;
     self->sum_elapsed = 0.0;
     self->min_elapsed = std::numeric_limits<double>::infinity();
     self->max_elapsed = 0.0;
-    
+
     return self->stats;
 }
 
-void RenderManager::Data::beginStats() {
+void
+RenderManager::Data::beginStats()
+{
     if (!perf_initialized) {
         perf_initialized = true;
         perf_counter.init(2);
@@ -232,32 +264,45 @@ void RenderManager::Data::beginStats() {
         if (stats.last > max_elapsed)
             max_elapsed = stats.last;
         if (stats.last < min_elapsed)
-        min_elapsed = stats.last;
+            min_elapsed = stats.last;
     }
 }
 
-void RenderManager::Data::endStats() {
+void
+RenderManager::Data::endStats()
+{
     perf_counter.end();
     ++frame_id_current;
 }
 
-vec4_t project(const RenderManager& rm, const point3_t& localCoord) {
+vec4_t
+project(const RenderManager &rm, const point3_t &localCoord)
+{
     return transform(rm.geometryTransform().mvpMatrix(), vec4(localCoord, 1.f));
 }
 
-vec4_t projectWorld(const RenderManager& rm, const point3_t& worldCoord) {
+vec4_t
+projectWorld(const RenderManager &rm, const point3_t &worldCoord)
+{
     return transform(rm.geometryTransform().vpMatrix(), vec4(worldCoord, 1.f));
 }
 
-vec4_t projectView(const RenderManager& rm, const point3_t& eyeCoord) {
-    return transform(rm.geometryTransform().projectionMatrix(), vec4(eyeCoord, 1.f));
+vec4_t
+projectView(const RenderManager &rm, const point3_t &eyeCoord)
+{
+    return transform(rm.geometryTransform().projectionMatrix(),
+                     vec4(eyeCoord, 1.f));
 }
 
-Outcode testSphere(const RenderManager& rm, const point3_t& center, math::real rad) {
+Outcode
+testSphere(const RenderManager &rm, const point3_t &center, math::real rad)
+{
     return testSphere(rm.viewFrustum(), center, rad);
 }
 
-Outcode testPoint(const RenderManager& rm, const point3_t& p) {
+Outcode
+testPoint(const RenderManager &rm, const point3_t &p)
+{
     return testPoint(rm.viewFrustum(), p);
 }
 

@@ -1,56 +1,59 @@
-#include "ge/Engine.hpp"
 #include "ge/Camera.hpp"
+#include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
 
-#include "glt/primitives.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/Transformations.hpp"
+#include "glt/primitives.hpp"
 #include "glt/utils.hpp"
 
+#include "math/glvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-#include "math/glvec.hpp"
 
-#include <vector>
-#include <map>
 #include <algorithm>
+#include <map>
+#include <vector>
 
 using namespace defs;
 using namespace math;
 
-#define VERTEX(V, F, Z)                         \
-    V(Vertex,                                   \
-      F(vec3_t, position,                       \
-        F(vec3_t, tangent,                      \
-          F(vec3_t, binormal,                   \
-            Z(vec2_t, uv)))))
+#define VERTEX(V, F, Z)                                                        \
+    V(Vertex,                                                                  \
+      F(vec3_t,                                                                \
+        position,                                                              \
+        F(vec3_t, tangent, F(vec3_t, binormal, Z(vec2_t, uv)))))
 DEFINE_VERTEX(VERTEX);
 #undef VERTEX
 
-template <typename Vertex>
-void sphere(glt::Mesh<Vertex>& mesh, real radius, int slices, int stacks);
+template<typename Vertex>
+void
+sphere(glt::Mesh<Vertex> &mesh, real radius, int slices, int stacks);
 
-template <typename V>
-void icoSphere(glt::Mesh<V>& mesh, size subdivs);
+template<typename V>
+void
+icoSphere(glt::Mesh<V> &mesh, size subdivs);
 
-struct Anim {
+struct Anim
+{
     ge::Engine engine;
     glt::Mesh<Vertex> sphere_model;
     ge::Camera camera;
     ge::MouseLookPlugin mouse_look;
-    
+
     vec3_t light_position;
-        
-    void init(const ge::Event<ge::InitEvent>&);
+
+    void init(const ge::Event<ge::InitEvent> &);
     void link();
 
-    void renderScene(const ge::Event<ge::RenderEvent>&);
+    void renderScene(const ge::Event<ge::RenderEvent> &);
 };
 
-void Anim::init(const ge::Event<ge::InitEvent>& ev) {
+void
+Anim::init(const ge::Event<ge::InitEvent> &ev)
+{
 
-
-//    icoSphere(sphere_model, 3);
+    //    icoSphere(sphere_model, 3);
     sphere(sphere_model, 1.f, 200, 100);
     sphere_model.send();
 
@@ -62,43 +65,50 @@ void Anim::init(const ge::Event<ge::InitEvent>& ev) {
     mouse_look.camera(&camera);
     ev.info.engine.enablePlugin(camera);
     camera.frame().origin = vec3(0.f);
-    
+
     ev.info.success = true;
 }
 
-void Anim::link() {
+void
+Anim::link()
+{
     engine.events().render.reg(ge::makeEventHandler(this, &Anim::renderScene));
 }
 
-void Anim::renderScene(const ge::Event<ge::RenderEvent>&) {
+void
+Anim::renderScene(const ge::Event<ge::RenderEvent> &)
+{
     glt::RenderTarget *rt = engine.renderManager().activeRenderTarget();
     rt->clearColor(glt::color(vec4(real(1))));
     rt->clear();
 
     Ref<glt::ShaderProgram> program = engine.shaderManager().program("sphere");
     ASSERT_MSG(program, "sphere program not found");
-    glt::RenderManager& rm = engine.renderManager();
+    glt::RenderManager &rm = engine.renderManager();
 
-    vec3_t ecLight = transformPoint(rm.geometryTransform().viewMatrix(), light_position);
+    vec3_t ecLight =
+      transformPoint(rm.geometryTransform().viewMatrix(), light_position);
 
-    real phi = real(engine.gameLoop().tickID()) * inverse(real(100)) * real(1.3);
+    real phi =
+      real(engine.gameLoop().tickID()) * inverse(real(100)) * real(1.3);
 
     rm.geometryTransform().dup();
     rm.geometryTransform().scale(vec3(10.f)); // scale radius of sphere
     rm.geometryTransform().concat(glt::rotationMatrix(phi, vec3(0, 1, 0)));
     program->use();
     glt::Uniforms(*program)
-        .optional("mvpMatrix", rm.geometryTransform().mvpMatrix())
-        .optional("mvMatrix", rm.geometryTransform().mvMatrix())
-        .optional("normalMatrix", rm.geometryTransform().normalMatrix())
-        .optional("ecLight", ecLight);
+      .optional("mvpMatrix", rm.geometryTransform().mvpMatrix())
+      .optional("mvMatrix", rm.geometryTransform().mvMatrix())
+      .optional("normalMatrix", rm.geometryTransform().normalMatrix())
+      .optional("ecLight", ecLight);
     sphere_model.draw();
     rm.geometryTransform().pop();
 }
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char *argv[])
+{
 
-    
     ge::EngineOptions opts;
     Anim anim;
     anim.link();
@@ -107,10 +117,11 @@ int main(int argc, char *argv[]) {
     return anim.engine.run(opts);
 }
 
-
 // based on the GLTools library (OpenGL Superbible gltMakeSphere())
-template <typename Vertex>
-void sphere(glt::Mesh<Vertex>& mesh, real rad, int slices, int stacks) {
+template<typename Vertex>
+void
+sphere(glt::Mesh<Vertex> &mesh, real rad, int slices, int stacks)
+{
 
     real dtheta = PI / stacks;
     real dphi = real(2) * PI / slices;
@@ -132,22 +143,24 @@ void sphere(glt::Mesh<Vertex>& mesh, real rad, int slices, int stacks) {
             real phi = real(j) * dphi;
             real sphi, cphi;
             sincos(phi, sphi, cphi);
-            sphi = - sphi;
+            sphi = -sphi;
 
             real sphi2, cphi2;
             sincos(phi + dphi, sphi2, cphi2);
-            sphi2 = - sphi2;
+            sphi2 = -sphi2;
 
-#define CALC(II, sa, ca, sb, cb)                                        \
-            normal[II] = vec3(sa * cb, sa * sb, ca);                    \
-            position[II] = rad * normal[II];                            \
-            tangent[II] = vec3(ca * cb, ca * sb, - sa);                 \
-            binormal[II] = cross(tangent[II], normal[II]);              \
-            binormal[II] = normalize(binormal[II] - dot(binormal[II], tangent[II]) * tangent[II]); \
-            uv[II][0] = real(.5) + ::math::atan2(normal[II][2], normal[II][0]) * inverse(real(2) * PI); \
-            uv[II][1] = real(.5) - ::math::asin(normal[II][1]) * inverse(PI);   \
-            uv[II][0] *= signum(dot(cross(binormal[II], tangent[II]), normal[II]))
-            
+#define CALC(II, sa, ca, sb, cb)                                               \
+    normal[II] = vec3(sa * cb, sa * sb, ca);                                   \
+    position[II] = rad * normal[II];                                           \
+    tangent[II] = vec3(ca * cb, ca * sb, -sa);                                 \
+    binormal[II] = cross(tangent[II], normal[II]);                             \
+    binormal[II] =                                                             \
+      normalize(binormal[II] - dot(binormal[II], tangent[II]) * tangent[II]);  \
+    uv[II][0] = real(.5) + ::math::atan2(normal[II][2], normal[II][0]) *       \
+                             inverse(real(2) * PI);                            \
+    uv[II][1] = real(.5) - ::math::asin(normal[II][1]) * inverse(PI);          \
+    uv[II][0] *= signum(dot(cross(binormal[II], tangent[II]), normal[II]))
+
             CALC(0, stheta, ctheta, sphi, cphi);
             CALC(1, stheta2, ctheta2, sphi, cphi);
             CALC(2, stheta, ctheta, sphi2, cphi2);
@@ -155,33 +168,38 @@ void sphere(glt::Mesh<Vertex>& mesh, real rad, int slices, int stacks) {
 
 #undef CALC
 
-#define TEST(uv, JJ, v) ((::math::abs(uv[0][JJ]) v) + (::math::abs(uv[1][JJ]) v) + (::math::abs(uv[2][JJ]) v))
-            
-#define ADD_MESH  do {                                                  \
-            int a[2], b[2];                                             \
-            a[0] = TEST(uv, 0, < real(0.05));                           \
-            a[1] = TEST(uv, 1, < real(0.05));                           \
-            b[0] = TEST(uv, 0, > real(0.95));                           \
-            b[1] = TEST(uv, 1, > real(0.95));                           \
-                                                                        \
-            for (int k = 0; k < 3; ++k) {                               \
-                Vertex v;                                               \
-                glt::primitives::setPoint(v.position, position[k]);     \
-                glt::primitives::setVec(v.tangent, tangent[k]);         \
-                glt::primitives::setVec(v.binormal, binormal[k]);       \
-                v.uv = uv[k];                                           \
-                                                                        \
-                for (int j = 0; j < 2; ++j)                             \
-                    if (a[j] > 0 && b[j] > 0 && ::math::abs(v.uv[j]) < 0.5f)   \
-                        v.uv[j] = signum(v.uv[j]) * (1.0f - ::math::abs(v.uv[j])); \
-                                                                        \
-                mesh.addVertex(v);                                      \
-            }                                                           \
-        } while (0)
+#define TEST(uv, JJ, v)                                                        \
+    ((::math::abs(uv[0][JJ]) v) + (::math::abs(uv[1][JJ]) v) +                 \
+     (::math::abs(uv[2][JJ]) v))
+
+#define ADD_MESH                                                               \
+    do {                                                                       \
+        int a[2], b[2];                                                        \
+        a[0] = TEST(uv, 0, < real(0.05));                                      \
+        a[1] = TEST(uv, 1, < real(0.05));                                      \
+        b[0] = TEST(uv, 0, > real(0.95));                                      \
+        b[1] = TEST(uv, 1, > real(0.95));                                      \
+                                                                               \
+        for (int k = 0; k < 3; ++k) {                                          \
+            Vertex v;                                                          \
+            glt::primitives::setPoint(v.position, position[k]);                \
+            glt::primitives::setVec(v.tangent, tangent[k]);                    \
+            glt::primitives::setVec(v.binormal, binormal[k]);                  \
+            v.uv = uv[k];                                                      \
+                                                                               \
+            for (int j = 0; j < 2; ++j)                                        \
+                if (a[j] > 0 && b[j] > 0 && ::math::abs(v.uv[j]) < 0.5f)       \
+                    v.uv[j] = signum(v.uv[j]) * (1.0f - ::math::abs(v.uv[j])); \
+                                                                               \
+            mesh.addVertex(v);                                                 \
+        }                                                                      \
+    } while (0)
 
             ADD_MESH;
 
-#define MOV(i, j) position[i] = position[j], normal[i] = normal[j], tangent[i] = tangent[j], binormal[i] = binormal[j], uv[i] = uv[j]
+#define MOV(i, j)                                                              \
+    position[i] = position[j], normal[i] = normal[j], tangent[i] = tangent[j], \
+    binormal[i] = binormal[j], uv[i] = uv[j]
             MOV(0, 1);
             MOV(1, 3);
 #undef MOV
@@ -189,7 +207,6 @@ void sphere(glt::Mesh<Vertex>& mesh, real rad, int slices, int stacks) {
             ADD_MESH;
 #undef ADD_MESH
 #undef TEST
-
         }
     }
 
@@ -197,35 +214,37 @@ void sphere(glt::Mesh<Vertex>& mesh, real rad, int slices, int stacks) {
     mesh.primType(GL_TRIANGLES);
 }
 
-template <typename V>
-void icoSphere(glt::Mesh<V>& mesh, size subdivs) {
+template<typename V>
+void
+icoSphere(glt::Mesh<V> &mesh, size subdivs)
+{
 
-    struct Tri {
+    struct Tri
+    {
         index32 a, b, c;
-        Tri(index32 _a, index32 _b, index32 _c) :
-            a(_a), b(_b), c(_c) {}
+        Tri(index32 _a, index32 _b, index32 _c) : a(_a), b(_b), c(_c) {}
     };
-    
+
     std::vector<vec3_t> vertices;
     std::vector<Tri> tris;
 
     typedef std::map<index64, index32> VertexCache;
     VertexCache vertex_cache;
 
-#define X .525731112119133606 
+#define X .525731112119133606
 #define Z .850650808352039932
 
-    const real vertex_data[12][3] = {    
-        {-X, 0.0, Z}, {X, 0.0, Z}, {-X, 0.0, -Z}, {X, 0.0, -Z},    
-        {0.0, Z, X}, {0.0, Z, -X}, {0.0, -Z, X}, {0.0, -Z, -X},    
-        {Z, X, 0.0}, {-Z, X, 0.0}, {Z, -X, 0.0}, {-Z, -X, 0.0} 
+    const real vertex_data[12][3] = {
+        { -X, 0.0, Z }, { X, 0.0, Z },  { -X, 0.0, -Z }, { X, 0.0, -Z },
+        { 0.0, Z, X },  { 0.0, Z, -X }, { 0.0, -Z, X },  { 0.0, -Z, -X },
+        { Z, X, 0.0 },  { -Z, X, 0.0 }, { Z, -X, 0.0 },  { -Z, -X, 0.0 }
     };
 
-    const GLushort elements[20][3] = { 
-        {0,4,1}, {0,9,4}, {9,5,4}, {4,5,8}, {4,8,1},    
-        {8,10,1}, {8,3,10}, {5,3,8}, {5,2,3}, {2,7,3},    
-        {7,10,3}, {7,6,10}, {7,11,6}, {11,0,6}, {0,1,6}, 
-        {6,1,10}, {9,0,11}, {9,11,2}, {9,2,5}, {7,2,11}
+    const GLushort elements[20][3] = {
+        { 0, 4, 1 },  { 0, 9, 4 },  { 9, 5, 4 },  { 4, 5, 8 },  { 4, 8, 1 },
+        { 8, 10, 1 }, { 8, 3, 10 }, { 5, 3, 8 },  { 5, 2, 3 },  { 2, 7, 3 },
+        { 7, 10, 3 }, { 7, 6, 10 }, { 7, 11, 6 }, { 11, 0, 6 }, { 0, 1, 6 },
+        { 6, 1, 10 }, { 9, 0, 11 }, { 9, 11, 2 }, { 9, 2, 5 },  { 7, 2, 11 }
     };
 
     for (index i = 0; i < 12; ++i)
@@ -246,21 +265,22 @@ void icoSphere(glt::Mesh<V>& mesh, size subdivs) {
         for (index i = 0; i < SIZE(from->size()); ++i) {
             Tri tri = (*from)[i];
             index ab, bc, ca;
-            
-#define SUBDIV(ab, a, b) do {                                           \
-                index64 key = a < b ? (index64(a) << 32 | b) : (index64(b) << 32 | a); \
-                VertexCache::const_iterator it = vertex_cache.find(key); \
-                if (it != vertex_cache.end()) {                         \
-                    ab = it->second;                                    \
-                } else {                                                \
-                    vec3_t pa = vertices[a];                            \
-                    vec3_t pb = vertices[b];                            \
-                    vec3_t pab = normalize(real(.5) * (pa + pb));       \
-                    vertices.push_back(pab);                            \
-                    ab = next_vert++;                                   \
-                    vertex_cache[key] = ab;                             \
-                }                                                       \
-        } while (0)
+
+#define SUBDIV(ab, a, b)                                                       \
+    do {                                                                       \
+        index64 key = a < b ? (index64(a) << 32 | b) : (index64(b) << 32 | a); \
+        VertexCache::const_iterator it = vertex_cache.find(key);               \
+        if (it != vertex_cache.end()) {                                        \
+            ab = it->second;                                                   \
+        } else {                                                               \
+            vec3_t pa = vertices[a];                                           \
+            vec3_t pb = vertices[b];                                           \
+            vec3_t pab = normalize(real(.5) * (pa + pb));                      \
+            vertices.push_back(pab);                                           \
+            ab = next_vert++;                                                  \
+            vertex_cache[key] = ab;                                            \
+        }                                                                      \
+    } while (0)
 
             SUBDIV(ab, tri.a, tri.b);
             SUBDIV(bc, tri.b, tri.c);
@@ -288,7 +308,8 @@ void icoSphere(glt::Mesh<V>& mesh, size subdivs) {
         vec3_t normal = vertices[i];
 
         real cos_theta = normal[2];
-        real sin_theta = math::sqrt(normal[0] * normal[0] + normal[1] + normal[1]);
+        real sin_theta =
+          math::sqrt(normal[0] * normal[0] + normal[1] + normal[1]);
 
         real cos_phi, sin_phi;
         if (sin_theta == 0) {
@@ -299,14 +320,16 @@ void icoSphere(glt::Mesh<V>& mesh, size subdivs) {
             sin_phi = normal[1] / sin_theta;
         }
 
-        vec3_t tangent = vec3(cos_theta * cos_phi, cos_theta * sin_phi, - sin_theta);
+        vec3_t tangent =
+          vec3(cos_theta * cos_phi, cos_theta * sin_phi, -sin_theta);
         vec3_t binormal = cross(tangent, normal);
         binormal = normalize(binormal - dot(binormal, tangent) * tangent);
         vec2_t uv;
-        uv[0] = real(.5) + ::math::atan2(normal[2], normal[0]) * inverse(real(2) * PI);
+        uv[0] = real(.5) +
+                ::math::atan2(normal[2], normal[0]) * inverse(real(2) * PI);
         uv[1] = real(.5) - ::math::asin(normal[1]) * inverse(PI);
         uv[0] *= signum(dot(cross(tangent, binormal), normal));
-        
+
         glt::primitives::setPoint(v.position, normal);
         glt::primitives::setVec(v.tangent, tangent);
         glt::primitives::setVec(v.binormal, binormal);
@@ -318,7 +341,7 @@ void icoSphere(glt::Mesh<V>& mesh, size subdivs) {
 
     for (index i = 0; i < SIZE(from->size()); ++i) {
         Tri tri = (*from)[i];
-        
+
         mesh.addElement(tri.a);
         mesh.addElement(tri.b);
         mesh.addElement(tri.c);

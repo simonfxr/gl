@@ -1,8 +1,8 @@
 #ifndef COMMAND_PARAMS_HPP
 #define COMMAND_PARAMS_HPP
 
-#include "ge/CommandArgs.hpp"
 #include "data/StaticArray.hpp"
+#include "ge/CommandArgs.hpp"
 
 namespace ge {
 
@@ -27,4 +27,3 @@ extern GE_API const Array<CommandParamType> STR_INT_PARAMS;
 } // namespace ge
 
 #endif
-

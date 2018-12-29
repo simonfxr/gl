@@ -3,13 +3,14 @@
 
 #include "ph/defs.hpp"
 
+#include "math/mat3.hpp"
 #include "math/real.hpp"
 #include "math/vec3.hpp"
-#include "math/mat3.hpp"
 
 namespace ph {
 
-struct RigidBody {
+struct RigidBody
+{
     math::vec3_t position;
     math::vec3_t velocity;
     math::real invMass;

@@ -5,7 +5,8 @@
 
 namespace ge {
 
-struct GE_API Commands {
+struct GE_API Commands
+{
     Ref<Command> printContextInfo;
     Ref<Command> printMemInfo;
     Ref<Command> reloadShaders;
@@ -31,7 +32,8 @@ struct GE_API Commands {
     Commands();
 };
 
-GE_API const Commands& commands();
+GE_API const Commands &
+commands();
 
 } // namespace ge
 

@@ -1,22 +1,28 @@
 #ifndef SIM_HPP
 #define SIM_HPP
 
-#include "math/vec3/type.hpp"
-#include "glt/color.hpp"
-#include "glt/Frame.hpp"
 #include "glt/AABB.hpp"
+#include "glt/Frame.hpp"
 #include "glt/ViewFrustum.hpp"
+#include "glt/color.hpp"
+#include "math/vec3/type.hpp"
 
 static const float CAMERA_SPHERE_RAD = 1.f;
 
-enum SphereState { Bouncing, Rolling };
+enum SphereState
+{
+    Bouncing,
+    Rolling
+};
 
-struct SphereModel {
+struct SphereModel
+{
     glt::color color;
     float shininess;
 };
 
-struct Sphere {
+struct Sphere
+{
     SphereState state;
     math::vec3_t v;
     float r;
@@ -27,21 +33,22 @@ struct Sphere {
 struct Game;
 
 // implemented in sim-sfml.cpp
-struct Renderer {
-    Renderer(Game& _g) : game(_g) {}
-    Game& game;
+struct Renderer
+{
+    Renderer(Game &_g) : game(_g) {}
+    Game &game;
 
-    const glt::ViewFrustum& frustum();
-    const glt::Frame& camera();
+    const glt::ViewFrustum &frustum();
+    const glt::Frame &camera();
 
-    void renderSphere(const Sphere& sphere, const SphereModel& model);
+    void renderSphere(const Sphere &sphere, const SphereModel &model);
     void endRenderSpheres();
-    void renderBox(const glt::AABB& box);
-    void renderConnection(const math::point3_t& a, const math::point3_t& b);
-
+    void renderBox(const glt::AABB &box);
+    void renderConnection(const math::point3_t &a, const math::point3_t &b);
 };
 
-struct World {
+struct World
+{
     defs::size numSpheres();
 
     bool init();
@@ -49,22 +56,22 @@ struct World {
     bool render_by_distance; // try to render near object first
     defs::size solve_iterations;
 
-    bool canMoveCamera(const math::vec3_t& position, math::vec3_t& step);
+    bool canMoveCamera(const math::vec3_t &position, math::vec3_t &step);
 
-    void spawnSphere(const Sphere& sphere, const SphereModel& model);
+    void spawnSphere(const Sphere &sphere, const SphereModel &model);
     void simulate(math::real dt);
-    
-    void render(Renderer& renderer, float dt);
+
+    void render(Renderer &renderer, float dt);
 
     World();
     ~World();
 
 private:
     struct Data;
-    Data * const self;
+    Data *const self;
 
-    World(const World& _);
-    World& operator =(const World& _);
+    World(const World &_);
+    World &operator=(const World &_);
 };
 
 #endif

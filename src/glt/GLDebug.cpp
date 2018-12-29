@@ -1,6 +1,6 @@
+#include "glt/GLDebug.hpp"
 #include "glt/conf.hpp"
 #include "glt/utils.hpp"
-#include "glt/GLDebug.hpp"
 
 #include <cstring>
 
@@ -8,10 +8,11 @@ namespace glt {
 
 GLDebug::GLDebug() {}
 
-GLDebug::~GLDebug()
-{}
+GLDebug::~GLDebug() {}
 
-void GLDebug::init() {
+void
+GLDebug::init()
+{
     const GLubyte *gl_vendor_str = glGetString(GL_VENDOR);
     if (gl_vendor_str == 0) {
         vendor = glvendor::Unknown;
@@ -29,26 +30,35 @@ void GLDebug::init() {
         vendor = glvendor::Unknown;
 }
 
-bool GLDebug::shouldIgnore(GLint id) {
+bool
+GLDebug::shouldIgnore(GLint id)
+{
     return ignored.find(id) != ignored.end();
 }
 
-void GLDebug::ignoreMessage(OpenGLVendor id_vendor, GLuint id) {
+void
+GLDebug::ignoreMessage(OpenGLVendor id_vendor, GLuint id)
+{
     if (vendor != glvendor::Unknown && vendor == id_vendor)
         ignored.insert(id);
 }
 
-ARBDebug::ARBDebug(GLsizei buf_len) :
-    message_buffer_length(buf_len),
-    message_buffer(new char[size_t(buf_len)])
-{ GLDebug::init(); }
+ARBDebug::ARBDebug(GLsizei buf_len)
+  : message_buffer_length(buf_len), message_buffer(new char[size_t(buf_len)])
+{
+    GLDebug::init();
+}
 
-ARBDebug::~ARBDebug() {
+ARBDebug::~ARBDebug()
+{
     delete[] message_buffer;
 }
 
-GLDebug *ARBDebug::init() {
-    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+GLDebug *
+ARBDebug::init()
+{
+    glDebugMessageControlARB(
+      GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
         printGLError(_CURRENT_LOCATION, err);
@@ -59,23 +69,33 @@ GLDebug *ARBDebug::init() {
 
     GLsizei max_len;
     glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH_ARB, &max_len);
-    
+
     return new ARBDebug(max_len);
 }
 
-void ARBDebug::printDebugMessages(const err::Location& loc) {
+void
+ARBDebug::printDebugMessages(const err::Location &loc)
+{
 
     GLenum source, type, id, severity;
     GLsizei length;
 
-    while (glGetDebugMessageLogARB(1, message_buffer_length,
-                                   &source, &type, &id, &severity,
-                                   &length, message_buffer) > 0) {
+    while (glGetDebugMessageLogARB(1,
+                                   message_buffer_length,
+                                   &source,
+                                   &type,
+                                   &id,
+                                   &severity,
+                                   &length,
+                                   message_buffer) > 0) {
 
         if (shouldIgnore(id))
             continue;
 
-#define sym_case(v, c) case c: v = #c; break
+#define sym_case(v, c)                                                         \
+    case c:                                                                    \
+        v = #c;                                                                \
+        break
 
         const char *ssrc = "unknown";
         switch (source) {
@@ -103,7 +123,7 @@ void ARBDebug::printDebugMessages(const err::Location& loc) {
             sym_case(ssev, GL_DEBUG_SEVERITY_MEDIUM_ARB);
             sym_case(ssev, GL_DEBUG_SEVERITY_LOW_ARB);
         }
-        
+
 #undef sym_case
 
         sys::io::ByteStream mesg;
@@ -111,21 +131,28 @@ void ARBDebug::printDebugMessages(const err::Location& loc) {
              << ", type: " << stype << ", id: " << id
              << "  message: " << message_buffer;
 
-        err::printError(sys::io::stdout(), "OpenGL DEBUG", loc, err::Error, mesg.str().c_str());
+        err::printError(sys::io::stdout(),
+                        "OpenGL DEBUG",
+                        loc,
+                        err::Error,
+                        mesg.str().c_str());
     }
 }
 
-AMDDebug::AMDDebug(GLsizei buf_len) :
-    message_buffer_length(buf_len),
-    message_buffer(new char[size_t(buf_len)])
-{ GLDebug::init(); }
+AMDDebug::AMDDebug(GLsizei buf_len)
+  : message_buffer_length(buf_len), message_buffer(new char[size_t(buf_len)])
+{
+    GLDebug::init();
+}
 
-
-AMDDebug::~AMDDebug() {
+AMDDebug::~AMDDebug()
+{
     delete[] message_buffer;
 }
 
-GLDebug *AMDDebug::init() {
+GLDebug *
+AMDDebug::init()
+{
 
     glDebugMessageEnableAMD(0, 0, 0, nullptr, GL_TRUE);
 
@@ -137,25 +164,34 @@ GLDebug *AMDDebug::init() {
 
     GLsizei max_len;
     glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH_AMD, &max_len);
-    
+
     return new AMDDebug(max_len);
 }
 
-void AMDDebug::printDebugMessages(const err::Location& loc) {
+void
+AMDDebug::printDebugMessages(const err::Location &loc)
+{
 
     GLenum category;
     GLuint severity, id;
     GLsizei length;
-        
-    while (glGetDebugMessageLogAMD(1, message_buffer_length,
-                                   &category, &severity, &id, &length,
+
+    while (glGetDebugMessageLogAMD(1,
+                                   message_buffer_length,
+                                   &category,
+                                   &severity,
+                                   &id,
+                                   &length,
                                    message_buffer) > 0) {
-        
+
         if (shouldIgnore(id))
             continue;
-        
-#define sym_case(v, c) case c: v = #c; break
-        
+
+#define sym_case(v, c)                                                         \
+    case c:                                                                    \
+        v = #c;                                                                \
+        break
+
         const char *scat = "unknown";
         switch (category) {
             sym_case(scat, GL_DEBUG_CATEGORY_API_ERROR_AMD);
@@ -178,10 +214,14 @@ void AMDDebug::printDebugMessages(const err::Location& loc) {
 #undef sym_case
 
         sys::io::ByteStream mesg;
-        mesg << "category: " << scat << ", severity: " << ssev
-             << ", id: " << id << "  message: " << message_buffer;
+        mesg << "category: " << scat << ", severity: " << ssev << ", id: " << id
+             << "  message: " << message_buffer;
 
-        err::printError(sys::io::stdout(), "OpenGL DEBUG", loc, err::Error, mesg.str().c_str());
+        err::printError(sys::io::stdout(),
+                        "OpenGL DEBUG",
+                        loc,
+                        err::Error,
+                        mesg.str().c_str());
     }
 }
 
