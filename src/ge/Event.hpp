@@ -37,7 +37,7 @@ private:
     F f;
 public:
     explicit FunctorHandler(const F& _f) : f(_f) {}
-    virtual void handle(const Event<E>& ev) FINAL OVERRIDE { f(ev); }
+    virtual void handle(const Event<E>& ev) final override { f(ev); }
 };
 
 template <typename F, typename E>
@@ -57,7 +57,7 @@ private:
     F f;    
 public:
     FunctorStateHandler(S _s, const F& _f) : s(_s), f(_f) {}
-    virtual void handle(const Event<E>& ev) FINAL OVERRIDE { f(s, ev); }
+    virtual void handle(const Event<E>& ev) final override { f(s, ev); }
 };
 
 template <typename S, typename E>
@@ -72,7 +72,7 @@ private:
     M m;
 public:
     MemberFunHandler(T *_o, M _m) : o(_o), m(_m) {}
-    virtual void handle(const Event<E>& ev) FINAL OVERRIDE { (o->*m)(ev); }
+    virtual void handle(const Event<E>& ev) final override { (o->*m)(ev); }
 };
 
 template <typename T, typename E>
@@ -86,7 +86,7 @@ private:
     F f;
 public:
     explicit VoidFunctorHandler(const F& _f) : f(_f) {}
-    virtual void handle(const Event<E>& ev) FINAL OVERRIDE { UNUSED(ev); f(); }
+    virtual void handle(const Event<E>& ev) final override { UNUSED(ev); f(); }
 };
 
 template <typename F, typename E>

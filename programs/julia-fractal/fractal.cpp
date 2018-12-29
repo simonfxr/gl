@@ -55,8 +55,8 @@ struct Commands : public ge::Plugin {
 
     Commands(World&);
 
-    void registerWith(ge::Engine&) FINAL OVERRIDE;
-    void registerCommands(ge::CommandProcessor&) FINAL OVERRIDE;
+    void registerWith(ge::Engine&) final override;
+    void registerCommands(ge::CommandProcessor&) final override;
 };
 
 struct Anim {

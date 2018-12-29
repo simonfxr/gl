@@ -178,13 +178,13 @@ struct GLT_API CompileState : public err::WithError<ShaderCompilerError::Type,
 struct GLT_API StringSource : public ShaderSource {
     std::string code;
     StringSource(ShaderManager::ShaderType ty, const std::string& _code);
-    virtual Ref<ShaderObject> load(Ref<ShaderSource>&, CompileState&) FINAL OVERRIDE;
+    virtual Ref<ShaderObject> load(Ref<ShaderSource>&, CompileState&) final override;
 };
 
 struct GLT_API FileSource : public ShaderSource {
     FileSource(ShaderManager::ShaderType ty, const std::string& path);
     const std::string& filePath() const { return this->key; }
-    virtual Ref<ShaderObject> load(Ref<ShaderSource>&, CompileState&) FINAL OVERRIDE;
+    virtual Ref<ShaderObject> load(Ref<ShaderSource>&, CompileState&) final override;
 };
 
 } // namespace glt

@@ -43,12 +43,12 @@ public:
 
 struct GE_API QuotationCommand : public Command {
     Quotation * const quotation;
-    
+
     QuotationCommand(const std::string& source, int line, int column, const std::string& desc, Quotation *quot);
     ~QuotationCommand();
 
-    virtual void interactive(const Event<CommandEvent>& ev, const Array<CommandArg>&) OVERRIDE;
-    QuotationCommand *castToQuotation() { return this; }
+    virtual void interactive(const Event<CommandEvent>& ev, const Array<CommandArg>&) override;
+    QuotationCommand *castToQuotation() override { return this; }
 
 private:
 

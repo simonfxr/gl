@@ -93,7 +93,7 @@ set(GLT_SRC
   glt/GLDebug.cpp
   glt/glt.cpp)
 
-set(GLT_LIBS ${GLEW_LIBRARY} ${OPENGL_gl_LIBRARY})
+set(GLT_LIBS ${GLEW_LIBRARY} OpenGL::GL)
 
 if(SYS_LINUX)
   set(GLT_LIBS ${GLT_LIBS} X11)

@@ -46,7 +46,7 @@ public:
     Attachment targetAttachment() const { return _target_attachment; }
     void targetAttachment(const Attachment&);
     
-    virtual void createTexture(bool delete_old = true) OVERRIDE;
+    virtual void createTexture(bool delete_old = true) override;
 };
 
 } // namespace glt

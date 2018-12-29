@@ -11,12 +11,12 @@ struct Game : public ge::GameLoop::Game {
     ge::GameLoop loop;
 
     Game();
-    virtual ~Game() OVERRIDE;
-    virtual void tick() OVERRIDE;
-    virtual void render(double interpolation) OVERRIDE;
-    virtual void handleInputEvents() OVERRIDE;
-    virtual ge::GameLoop::time now() OVERRIDE;
-    virtual void sleep(ge::GameLoop::time seconds) OVERRIDE;
+    virtual ~Game() override;
+    virtual void tick() override;
+    virtual void render(double interpolation) override;
+    virtual void handleInputEvents() override;
+    virtual ge::GameLoop::time now() override;
+    virtual void sleep(ge::GameLoop::time seconds) override;
 };
 
 Game::Game() :

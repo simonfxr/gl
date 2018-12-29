@@ -70,8 +70,8 @@ struct GE_API Camera : public Plugin {
     
     void mouseLook(bool enable);
     
-    void registerWith(Engine& e) FINAL OVERRIDE;
-    void registerCommands(CommandProcessor& proc) FINAL OVERRIDE;
+    void registerWith(Engine& e) final override;
+    void registerCommands(CommandProcessor& proc) final override;
 
 private:
     struct Data;

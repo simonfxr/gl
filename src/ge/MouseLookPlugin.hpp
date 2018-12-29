@@ -32,8 +32,8 @@ struct GE_API MouseLookPlugin : public Plugin {
 
     Commands& commands();
 
-    void registerWith(Engine&) FINAL OVERRIDE;
-    void registerCommands(CommandProcessor&) FINAL OVERRIDE;
+    void registerWith(Engine&) final override;
+    void registerCommands(CommandProcessor&) final override;
 
 private:
     struct Data;

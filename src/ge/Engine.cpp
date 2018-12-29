@@ -65,12 +65,12 @@ struct Engine::Data : public GameLoop::Game {
 
     bool init(const EngineOptions& opts);
                              
-    virtual void tick() FINAL OVERRIDE;
-    virtual void render(double interpolation) FINAL OVERRIDE;
-    virtual void handleInputEvents() FINAL OVERRIDE;
-    virtual GameLoop::time now() FINAL OVERRIDE;
-    virtual void sleep(GameLoop::time secs) FINAL OVERRIDE;
-    virtual void atExit(int32 exit_code) FINAL OVERRIDE;
+    virtual void tick() final override;
+    virtual void render(double interpolation) final override;
+    virtual void handleInputEvents() final override;
+    virtual GameLoop::time now() final override;
+    virtual void sleep(GameLoop::time secs) final override;
+    virtual void atExit(int32 exit_code) final override;
 
     void registerHandlers();
     bool execCommand(std::vector<CommandArg>& args);

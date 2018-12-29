@@ -68,7 +68,7 @@ struct StringShaderObject : public ShaderObject {
     StringShaderObject(const Ref<StringSource>& src, GLuint hndl) :
         ShaderObject(src, hndl) {}
 
-    virtual ReloadState needsReload() FINAL OVERRIDE;
+    virtual ReloadState needsReload() final override;
 };
 
 struct FileShaderObject : public ShaderObject {
@@ -76,7 +76,7 @@ struct FileShaderObject : public ShaderObject {
     FileShaderObject(const Ref<FileSource>& src, sys::fs::FileTime _mtime, GLuint hndl) :
         ShaderObject(src, hndl), mtime(_mtime) {}
 
-    virtual ReloadState needsReload() FINAL OVERRIDE;
+    virtual ReloadState needsReload() final override;
 };
 
 struct CompileJobSource : public CompileJob {
@@ -84,8 +84,8 @@ struct CompileJobSource : public CompileJob {
     CompileJobSource(const Ref<ShaderSource>& src) :
         _source(src) {}
 
-    virtual Ref<ShaderSource>& source() FINAL OVERRIDE;
-    virtual Ref<ShaderObject> exec(CompileState&) FINAL OVERRIDE;
+    virtual Ref<ShaderSource>& source() final override;
+    virtual Ref<ShaderObject> exec(CompileState&) final override;
 };
 
 struct CompileJobObject : public CompileJob {
@@ -93,8 +93,8 @@ struct CompileJobObject : public CompileJob {
     CompileJobObject(const Ref<ShaderObject>& so) :
         shaderObject(so) {}
 
-    virtual Ref<ShaderSource>& source() FINAL OVERRIDE;
-    virtual Ref<ShaderObject> exec(CompileState&) FINAL OVERRIDE;
+    virtual Ref<ShaderSource>& source() final override;
+    virtual Ref<ShaderObject> exec(CompileState&) final override;
 };
 
 Ref<ShaderSource>& CompileJobSource::source() {

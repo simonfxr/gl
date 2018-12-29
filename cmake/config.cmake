@@ -83,16 +83,6 @@ if(BUILD_OPT)
   endif()
 endif()
 
-if(USE_CXX11)
-  add_definitions(-DCXX11=1)
-  if(USE_CXX11_FINAL_OVERRIDE AND NOT COMP_ICC)
-    add_definitions(-DCXX11_FINAL_OVERRIDE=1)
-  endif()
-  if(COMP_GCCLIKE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-  endif()
-endif()
-
 if(USE_NO_MATH_H)
   add_definitions(-DNO_MATH_H=1)
 endif()
@@ -193,11 +183,11 @@ endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/build/bin)
-set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/build/lib)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 
 if(SYS_WINDOWS)
-  set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/build/bin)
+  set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 endif()
 
 find_package(OpenGL REQUIRED)

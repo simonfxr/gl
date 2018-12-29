@@ -1,8 +1,12 @@
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+set(OpenGL_GL_PREFERENCE GLVND)
 
 if(NOT DEFINED BUILD_TYPE)
-  set(BUILD_TYPE DebugOpt)
+  set(BUILD_TYPE Debug)
 endif()
 set(BUILD_TYPE ${BUILD_TYPE} CACHE STRING "build type Debug|DebugOpt|Release" FORCE)
 
@@ -22,7 +26,7 @@ macro(set_option var default type docstring)
   endif()
   set(${var} ${${var}} CACHE ${type} ${docstring} FORCE)
 endmacro()
-  
+
 set_option(BUILD_SHARED_LIBS TRUE BOOL "TRUE to build shared libs, FALSE to build static libs")
 
 if(BUILD_TYPE STREQUAL "Release")
@@ -65,10 +69,6 @@ if(SYS_LINUX)
   set_option(USE_UNWIND_STACKTRACES TRUE BOOL "use libunwind and libdw to print a stacktrace on errors")
 endif()
 
-#c++11 was optional at one point not anymore ...
-set_state(USE_CXX11 TRUE)
-set_state(USE_CXX11_FINAL_OVERRIDE TRUE)
-
 if(SYS_WINDOWS)
   set(LIBS_IN_TREE TRUE)
 else()
@@ -79,7 +79,7 @@ set_option(USE_GLFW_IN_TREE ${LIBS_IN_TREE} BOOL "use glfw under ext/glfw3")
 set_option(USE_GLEW_IN_TREE ${LIBS_IN_TREE} BOOL "use glew under ext/glew")
 set_option(USE_OPENCL_HEADERS_IN_TREE ${LIBS_IN_TREE} BOOL "use OpenCL headerse under ext/opencl-headers")
 
-set_option(USE_NO_MATH_H TRUE BOOL "dont import math.h in math library")
+set_option(USE_NO_MATH_H FALSE BOOL "dont import math.h in math library")
 
 if(COMP_CLANG)
   set_option(USE_CLANG_ADDRESS_SANITIZER FALSE BOOL "enable -fsanitize=address")

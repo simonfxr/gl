@@ -17,8 +17,8 @@ public:
     void resized();
     
 protected:
-    virtual void doActivate() FINAL OVERRIDE;
-    virtual void doDraw() FINAL OVERRIDE;
+    virtual void doActivate() final override;
+    virtual void doDraw() final override;
 };
 
 } // namespace ge

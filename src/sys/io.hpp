@@ -114,10 +114,10 @@ struct SYS_API HandleStream : public IOStream {
     ~HandleStream();
 
 protected:
-    StreamResult basic_close() FINAL OVERRIDE;
-    StreamResult basic_flush() FINAL OVERRIDE;
-    StreamResult basic_read(size&, char *) FINAL OVERRIDE;
-    StreamResult basic_write(size&, const char *) FINAL OVERRIDE;
+    StreamResult basic_close() final override;
+    StreamResult basic_flush() final override;
+    StreamResult basic_read(size&, char *) final override;
+    StreamResult basic_write(size&, const char *) final override;
     StreamResult flush_buffer();
 };
 

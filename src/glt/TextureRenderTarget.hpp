@@ -52,8 +52,8 @@ struct GLT_API TextureRenderTarget : public RenderTarget {
     static bool checkFramebufferStatus(GLFramebufferObject &buffer, GLenum target);
 
 protected:
-    virtual void doDeactivate() OVERRIDE;
-    virtual void doActivate() OVERRIDE;
+    virtual void doDeactivate() override;
+    virtual void doActivate() override;
 };
 
 } // namespace glt

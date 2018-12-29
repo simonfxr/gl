@@ -142,8 +142,8 @@ struct SYS_API IOStream : public InStream, public OutStream {
     }
 
 protected:
-    StreamResult basic_close_out() FINAL OVERRIDE;
-    StreamResult basic_close_in(bool flush_only) FINAL OVERRIDE;
+    StreamResult basic_close_out() final override;
+    StreamResult basic_close_in(bool flush_only) final override;
 
     virtual StreamResult basic_close() = 0;
 
@@ -161,10 +161,10 @@ struct SYS_API FileStream : public IOStream {
     bool isOpen() const { return _file != 0; }
     bool open(const std::string& path, const std::string& mode);
 protected:
-    virtual StreamResult basic_read(size&, char *) FINAL OVERRIDE;
-    virtual StreamResult basic_write(size&, const char *) FINAL OVERRIDE;
-    virtual StreamResult basic_close() FINAL OVERRIDE;
-    virtual StreamResult basic_flush() FINAL OVERRIDE;
+    virtual StreamResult basic_read(size&, char *) final override;
+    virtual StreamResult basic_write(size&, const char *) final override;
+    virtual StreamResult basic_close() final override;
+    virtual StreamResult basic_flush() final override;
 private:
     FileStream(const FileStream&);
     FileStream& operator =(const FileStream&);
@@ -173,10 +173,10 @@ private:
 struct SYS_API NullStream : public IOStream {
     NullStream();
 protected:
-    StreamResult basic_flush() FINAL OVERRIDE;
-    StreamResult basic_close() FINAL OVERRIDE;
-    StreamResult basic_read(size&, char *) FINAL OVERRIDE;
-    StreamResult basic_write(size&, const char *) FINAL OVERRIDE;
+    StreamResult basic_flush() final override;
+    StreamResult basic_close() final override;
+    StreamResult basic_read(size&, char *) final override;
+    StreamResult basic_write(size&, const char *) final override;
 };
 
 struct SYS_API CooperativeInStream : public InStream {
@@ -186,8 +186,8 @@ struct SYS_API CooperativeInStream : public InStream {
 
     CooperativeInStream(InStream *in, Fiber *io_handler, Fiber *stream_user);
 protected:
-    virtual StreamResult basic_close_in(bool flush_only) FINAL OVERRIDE;
-    virtual StreamResult basic_read(size&, char *) FINAL OVERRIDE;
+    virtual StreamResult basic_close_in(bool flush_only) final override;
+    virtual StreamResult basic_read(size&, char *) final override;
 };
 
 struct SYS_API ByteStream : public IOStream {
@@ -210,10 +210,10 @@ struct SYS_API ByteStream : public IOStream {
     
 protected:
     
-    StreamResult basic_flush() FINAL OVERRIDE;
-    StreamResult basic_close() FINAL OVERRIDE;
-    StreamResult basic_read(defs::size&, char *) FINAL OVERRIDE;
-    StreamResult basic_write(defs::size&, const char *) FINAL OVERRIDE;
+    StreamResult basic_flush() final override;
+    StreamResult basic_close() final override;
+    StreamResult basic_read(defs::size&, char *) final override;
+    StreamResult basic_write(defs::size&, const char *) final override;
 };
 
 SYS_API OutStream& operator <<(OutStream& out, const std::string& str);

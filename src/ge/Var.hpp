@@ -26,7 +26,7 @@ struct Var EXPLICIT : public Command {
     virtual bool set(const CommandParam& val);
     virtual void get(CommandParam* val);
 
-    void interactive(const Event<CommandEvent>&, const Array<CommandArg>&) OVERRIDE;
+    void interactive(const Event<CommandEvent>&, const Array<CommandArg>&) override;
 
 private:
     const VarKind _kind;
@@ -48,10 +48,10 @@ public:
         {}
     const T& value() const { return *var; }
     T& value() { return *var; }
-    void get(CommandArg *val) OVERRIDE {
+    void get(CommandArg *val) override {
         Meta<T>::get(value(), val);
     }
-    bool set(const CommandArg& val) OVERRIDE {
+    bool set(const CommandArg& val) override {
         Meta<T>::set(value(), val);
         return true;
     }
@@ -67,7 +67,7 @@ public:
         var(v)
         {}
     const T& value() const { return *var; }
-    void get(CommandArg *val) OVERRIDE {
+    void get(CommandArg *val) override {
         Meta<T>::get(value(), val);
     }
 }
