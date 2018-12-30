@@ -20,7 +20,6 @@ static const uint16 FLAG_ALL = 0x1F;
 
 struct GeometryTransform::Data
 {
-
     aligned_mat4_t viewMatrix;
     aligned_mat4_t projectionMatrix;
 
@@ -63,12 +62,13 @@ struct GeometryTransform::Data
     }
 };
 
-GeometryTransform::GeometryTransform() : self(new Data) {}
-
-GeometryTransform::~GeometryTransform()
+void
+GeometryTransform::DataDeleter::operator()(Data *p) noexcept
 {
-    delete self;
+    delete p;
 }
+
+GeometryTransform::GeometryTransform() : self(new Data) {}
 
 const aligned_mat4_t &
 GeometryTransform::modelMatrix() const

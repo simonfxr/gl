@@ -55,16 +55,17 @@ debugInfo(sys::io::OutStream &out, const void *ip)
     Dwfl_Line *line = nullptr;
     for (int i = -0xF; i <= 0xF; ++i) {
 
-        line = dwfl_getsrc(dwfl, Dwarf_Addr((const char *) addr + i));
+        line = dwfl_getsrc(
+          dwfl, Dwarf_Addr(reinterpret_cast<const char *>(addr) + i));
         if (line != nullptr)
             break;
     }
 
     if (line != nullptr) {
         int nline;
-        Dwarf_Addr addr;
+        Dwarf_Addr faddr;
         const char *filename =
-          dwfl_lineinfo(line, &addr, &nline, nullptr, nullptr, nullptr);
+          dwfl_lineinfo(line, &faddr, &nline, nullptr, nullptr, nullptr);
         out << filename << ":" << nline;
     } else {
         out << "ip: " << ip;
@@ -96,7 +97,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
 
         if (skip <= 0) {
             out << "    ";
-            debugInfo(out, (void *) ((void **) ip - 1));
+            debugInfo(out, (reinterpret_cast<void **>(ip) - 1));
             out << sys::io::endl;
         } else {
             skip--;
@@ -174,10 +175,10 @@ printError(sys::io::OutStream &out,
         case Info:
             prefix = "INFO";
             break;
-        default:
-            prefix = "UNKNOWN";
-            st = true;
-            break;
+            // default:
+            //     prefix = "UNKNOWN";
+            //     st = true;
+            //     break;
         }
     }
 
@@ -208,7 +209,7 @@ struct LogState
     sys::io::NullStream null_stream;
     sys::io::OutStream *out;
 
-    LogState() : loc(_CURRENT_LOCATION), out(&null_stream) {}
+    LogState() : loc(DETAIL_CURRENT_LOCATION), out(&null_stream) {}
 
 private:
     LogState(const LogState &) = delete;

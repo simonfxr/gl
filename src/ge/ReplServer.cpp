@@ -89,7 +89,7 @@ Client::Client(int _id, Handle h)
     ParserArgs args{};
     args.client = this;
     fiber_push_return(
-      &parser_fiber, run_parser_fiber, (void *) &args, sizeof args);
+      &parser_fiber, run_parser_fiber, static_cast<void *>(&args), sizeof args);
     sys::io::ByteStream name;
     name << "<repl " << id << ">";
     parse_state.filename = name.str();
@@ -127,6 +127,7 @@ Client::handleIO(Engine &e)
             statement[i].free();
         statement.clear();
     case ParsingYield:
+        [[fallthrough]];
     case ParsingStop:; // do nothing
     }
 

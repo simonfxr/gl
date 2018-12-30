@@ -5,6 +5,8 @@ namespace ge {
 
 using namespace defs;
 
+GameLoop::Game::~Game() = default;
+
 struct GameLoop::Data
 {
 

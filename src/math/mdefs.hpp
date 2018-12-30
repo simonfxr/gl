@@ -16,7 +16,6 @@
     }                                                                          \
     }
 #define MATH_INLINE_SPEC inline
-#define MATH_CONSTANT ATTRS(ATTR_NO_WARN_UNUSED_DEF)
 
 #else
 

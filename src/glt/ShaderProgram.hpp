@@ -42,8 +42,6 @@ struct GLT_API ShaderProgram
 
     ShaderProgram(ShaderManager &sm);
 
-    ~ShaderProgram();
-
     ShaderManager &shaderManager();
 
     GLProgramObject &program();
@@ -96,7 +94,12 @@ private:
     struct Data;
     friend struct Data;
 
-    Data *const self;
+    struct DataDeleter
+    {
+        void operator()(Data *p) noexcept;
+    };
+
+    const std::unique_ptr<Data, DataDeleter> self;
 
     ShaderProgram(const ShaderProgram &);
     ShaderProgram &operator=(const ShaderProgram &);

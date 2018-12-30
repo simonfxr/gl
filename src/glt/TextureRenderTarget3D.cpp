@@ -71,8 +71,6 @@ TextureRenderTarget3D::createTexture(bool delete_old)
     case AttachmentLayer:
         other = AttachmentLayered;
         break;
-    default:
-        ASSERT_FAIL();
     }
 
     _target_attachment.type = other; // force update
@@ -112,8 +110,6 @@ TextureRenderTarget3D::targetAttachment(
             // GL_COLOR_ATTACHMENT0, _sampler.data()->handle(), ta.index, 0);
             _sampler.data()->unbind(0, false);
             break;
-        default:
-            ASSERT_FAIL();
         }
         GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, 0);
     }

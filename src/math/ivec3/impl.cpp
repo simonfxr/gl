@@ -3,134 +3,130 @@
 
 MATH_BEGIN_NAMESPACE
 
-ivec3_t
+constexpr ivec3_t
 ivec3(defs::int32 x, defs::int32 y, defs::int32 z)
 {
-    ivec3_t v;
-    v[0] = x;
-    v[1] = y;
-    v[2] = z;
-    return v;
+    return { x, y, z };
 }
 
-ivec3_t
+constexpr ivec3_t
 ivec3(defs::int32 a)
 {
     return ivec3(a, a, a);
 }
 
-ivec3_t
+constexpr ivec3_t
 ivec3(const vec3_t &a)
 {
     return ivec3(defs::int32(a[0]), defs::int32(a[1]), defs::int32(a[2]));
 }
 
-ivec3_t
+constexpr ivec3_t
 ivec3(const defs::int32 a[3])
 {
     return ivec3(a[0], a[1], a[2]);
 }
 
-ivec3_t
+constexpr ivec3_t
 operator-(const ivec3_t &a)
 {
     return ivec3(defs::int32(0)) - a;
 }
 
-ivec3_t
+constexpr ivec3_t
 operator+(const ivec3_t &a, const ivec3_t b)
 {
     return ivec3(a[0] + b[0], a[1] + b[1], a[2] + b[2]);
 }
 
-ivec3_t
+constexpr ivec3_t
 operator-(const ivec3_t &a, const ivec3_t b)
 {
     return ivec3(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 }
 
-ivec3_t operator*(const ivec3_t &v, defs::int32 a)
+constexpr ivec3_t operator*(const ivec3_t &v, defs::int32 a)
 {
     return v * ivec3(a);
 }
 
-ivec3_t operator*(defs::int32 a, const ivec3_t &v)
+constexpr ivec3_t operator*(defs::int32 a, const ivec3_t &v)
 {
     return v * a;
 }
 
-ivec3_t operator*(const ivec3_t &a, const ivec3_t &b)
+constexpr ivec3_t operator*(const ivec3_t &a, const ivec3_t &b)
 {
     return ivec3(a[0] * b[0], a[1] * b[1], a[2] * b[2]);
 }
 
-ivec3_t
+constexpr ivec3_t
 operator/(const ivec3_t &v, defs::int32 a)
 {
     return v / ivec3(a);
 }
 
-ivec3_t
+constexpr ivec3_t
 operator/(const ivec3_t &a, const ivec3_t &b)
 {
     return ivec3(a[0] / b[0], a[1] / b[1], a[2] / b[2]);
 }
 
-ivec3_t &
+constexpr ivec3_t &
 operator+=(ivec3_t &v, const ivec3_t &a)
 {
     return v = v + a;
 }
 
-ivec3_t &
+constexpr ivec3_t &
 operator-=(ivec3_t &v, const ivec3_t &a)
 {
     return v = v - a;
 }
 
-ivec3_t &
+constexpr ivec3_t &
 operator*=(ivec3_t &v, defs::int32 a)
 {
     return v = v * a;
 }
 
-ivec3_t &
+constexpr ivec3_t &
 operator*=(ivec3_t &v, const ivec3_t &b)
 {
     return v = v * b;
 }
 
-ivec3_t &
+constexpr ivec3_t &
 operator/=(ivec3_t &v, defs::int32 a)
 {
     return v = v / a;
 }
 
-ivec3_t &
+constexpr ivec3_t &
 operator/=(ivec3_t &v, const ivec3_t &b)
 {
     return v = v / b;
 }
 
-bool
+constexpr bool
 operator==(const ivec3_t &a, const ivec3_t &b)
 {
     return a[0] == b[0] && a[1] == b[1] && a[2] == b[2];
 }
 
-bool
+constexpr bool
 operator!=(const ivec3_t &a, const ivec3_t &b)
 {
     return !(a == b);
 }
 
-defs::int32
+constexpr defs::int32
 dot(const ivec3_t &a, const ivec3_t &b)
 {
     return sum(a * b);
 }
 
-ivec3_t
+constexpr ivec3_t
 cross(const ivec3_t &a, const ivec3_t &b)
 {
     return ivec3(a[1] * b[2] - a[2] * b[1],
@@ -150,7 +146,7 @@ inverseLength(const ivec3_t &a)
     return math::rsqrt(real(lengthSq(a)));
 }
 
-defs::int32
+constexpr defs::int32
 lengthSq(const ivec3_t &a)
 {
     return dot(a, a);
@@ -168,13 +164,13 @@ inverseDistance(const ivec3_t &a, const ivec3_t &b)
     return inverseLength(a - b);
 }
 
-defs::int32
+constexpr defs::int32
 distanceSq(const ivec3_t &a, const ivec3_t &b)
 {
     return lengthSq(a - b);
 }
 
-ivec3_t
+constexpr ivec3_t
 min(const ivec3_t &a, const ivec3_t &b)
 {
     return ivec3(b[0] < a[0] ? b[0] : a[0],
@@ -182,7 +178,7 @@ min(const ivec3_t &a, const ivec3_t &b)
                  b[2] < a[2] ? b[2] : a[2]);
 }
 
-ivec3_t
+constexpr ivec3_t
 max(const ivec3_t &a, const ivec3_t &b)
 {
     return ivec3(b[0] > a[0] ? b[0] : a[0],
@@ -190,13 +186,13 @@ max(const ivec3_t &a, const ivec3_t &b)
                  b[2] > a[2] ? b[2] : a[2]);
 }
 
-defs::int32
+constexpr defs::int32
 sum(const ivec3_t &a)
 {
     return a[0] + a[1] + a[2];
 }
 
-bool
+constexpr bool
 equal(const ivec3_t &a, const ivec3_t &b)
 {
     return a == b;
@@ -206,12 +202,12 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC defs::int32 &ivec3_t::operator[](defs::index i)
+constexpr MATH_INLINE_SPEC defs::int32 &ivec3_t::operator[](defs::index i)
 {
     return components[i];
 }
 
-MATH_INLINE_SPEC defs::int32 ivec3_t::operator[](defs::index i) const
+constexpr MATH_INLINE_SPEC defs::int32 ivec3_t::operator[](defs::index i) const
 {
     return components[i];
 }

@@ -222,14 +222,12 @@ readFile(sys::io::OutStream &err,
             goto fail;
 
         {
-            char *contents = new char[size + 1];
-            if (fread(contents, size, 1, in) != 1) {
-                delete[] contents;
+            auto contents = std::make_unique<char[]>(size + 1);
+            if (fread(contents.get(), size, 1, in) != 1)
                 goto fail;
-            }
 
             contents[size] = '\0';
-            *file_contents = contents;
+            *file_contents = contents.release();
             *file_size = SIZE(size);
         }
     }

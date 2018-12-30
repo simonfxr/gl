@@ -47,7 +47,7 @@ public:
     virtual void interactive(const Event<CommandEvent> &ev,
                              const Array<CommandArg> &) = 0;
     virtual void handle(const Event<CommandEvent> &ev);
-    virtual QuotationCommand *castToQuotation() { return 0; }
+    virtual QuotationCommand *castToQuotation() { return nullptr; }
 };
 
 struct GE_API QuotationCommand : public Command
@@ -59,7 +59,7 @@ struct GE_API QuotationCommand : public Command
                      int column,
                      const std::string &desc,
                      Quotation *quot);
-    ~QuotationCommand();
+    ~QuotationCommand() override;
 
     virtual void interactive(const Event<CommandEvent> &ev,
                              const Array<CommandArg> &) override;

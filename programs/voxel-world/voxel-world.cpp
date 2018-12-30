@@ -48,7 +48,7 @@ static const int32 N = 196;                // 196;
 static const int32 SPHERE_POINTS_FACE = 8; // 32;
 static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const bool OCCLUSION = false;
-static const std::string WORLD_MODEL_FILE = "voxel-world.mdl";
+static const char *WORLD_MODEL_FILE = "voxel-world.mdl";
 
 struct MaterialProperties
 {
@@ -57,8 +57,8 @@ struct MaterialProperties
     real specularContribution{};
     real shininess{};
 
-    MaterialProperties() = default;
-    MaterialProperties(real amb, real diff, real spec, real sh)
+    constexpr MaterialProperties() = default;
+    constexpr MaterialProperties(real amb, real diff, real spec, real sh)
       : ambientContribution(amb)
       , diffuseContribution(diff)
       , specularContribution(spec)
@@ -381,8 +381,10 @@ initRay(Ray &r, const direction3_t &d, const vec3_t &step, Faces &sumcos)
     uint32 i = 0;
     while (i < RAY_SAMPLES) {
         ivec3_t idx = ivec3(p);
-        if (idx != lastidx)
-            lastidx = idx, r.offset[i++] = idx;
+        if (idx != lastidx) {
+            lastidx = idx;
+            r.offset[i++] = idx;
+        }
         p += step;
     }
 

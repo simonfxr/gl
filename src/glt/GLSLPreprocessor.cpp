@@ -65,6 +65,12 @@ struct ProcessingState
     std::stack<FileContext> stack;
 };
 
+void
+ProcessingStateDeleter::operator()(ProcessingState *p) noexcept
+{
+    delete p;
+}
+
 GLSLPreprocessor::GLSLPreprocessor(const IncludePath &incPath,
                                    ShaderIncludes &incs,
                                    ShaderDependencies &deps)
@@ -74,20 +80,16 @@ GLSLPreprocessor::GLSLPreprocessor(const IncludePath &incPath,
     this->installHandler("need", dependencyHandler);
 }
 
-GLSLPreprocessor::~GLSLPreprocessor()
-{
-    for (defs::index i = 0; i < SIZE(contents.size()); ++i)
-        delete[] contents[size_t(i)];
-}
+GLSLPreprocessor::~GLSLPreprocessor() = default;
 
 void
 GLSLPreprocessor::appendString(const std::string &str)
 {
     if (!str.empty()) {
-        char *data = new char[str.length()];
-        memcpy(data, str.data(), str.length());
-        contents.push_back(data);
-        segments.push_back(data);
+        auto data = std::make_unique<char[]>(str.length());
+        memcpy(data.get(), str.data(), str.length());
+        segments.push_back(data.get());
+        contents.push_back(std::move(data));
         segLengths.push_back(uint32(str.length()));
     }
 }
@@ -133,7 +135,7 @@ GLSLPreprocessor::processFileRecursively(const std::string &file)
         return;
     }
 
-    contents.push_back(data);
+    contents.emplace_back(data);
 
     this->name(file);
     process(data, size);
@@ -191,7 +193,7 @@ IncludeHandler::beginProcessing(const Preprocessor::ContentContext &ctx)
     auto &proc = static_cast<GLSLPreprocessor &>(ctx.processor);
 
     if (proc.state == nullptr)
-        proc.state = new ProcessingState;
+        proc.state.reset(new ProcessingState);
 
     if (!ctx.name.empty())
         proc.state->visitingFiles.insert(ctx.name);
@@ -252,7 +254,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
             return;
         }
 
-        proc.contents.push_back(contents);
+        proc.contents.emplace_back(contents);
         proc.name(filestat.absolute);
         proc.process(contents, size);
     }
@@ -277,8 +279,7 @@ IncludeHandler::endProcessing(const Preprocessor::ContentContext &ctx)
         proc.state->visitingFiles.erase(ctx.name);
 
     if (proc.state->stack.empty()) {
-        delete proc.state;
-        proc.state = nullptr;
+        proc.state.reset();
     }
 }
 

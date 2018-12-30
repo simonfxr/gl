@@ -50,7 +50,7 @@ endif()
 if(BUILD_OPT)
   if(COMP_GCC)
     if(BUILD_DEBUG)
-      add_definitions(-march=native -O1)
+      add_definitions(-march=native -Og)
     else()
       add_definitions(-march=native -Ofast)
       add_definitions(#enable graphite
@@ -97,7 +97,7 @@ if(COMP_CLANG AND USE_CLANG_ADDRESS_SANITIZER)
 endif()
 
 if(COMP_GCCLIKE)
-  add_definitions(-Wall)
+  add_definitions(-Wall -Wdate-time -Werror=date-time)
   # add_definitions(-Werror)
   # add_definitions(-Weffc++)
   if (NOT COMP_ICC)
@@ -114,17 +114,31 @@ if(COMP_GCCLIKE)
     # -Werror 
     # -Wold-style-cast
     )
-
+  
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
 endif()
 
 if(COMP_CLANG)
-#  add_definitions(-Wc++11-narrowing)
-#  add_definitions(-Wc++11-compat)
-#  add_definitions(-Wc++11-extensions)
-#  add_definitions(-Weverything)
-#  add_definitions(-Wno-c++98-compat)
-#  add_definitions(-Wno-c++98-compat-pedantic)
+  add_definitions(
+    -Weverything
+    -Wno-c++98-compat
+    -Wno-c++98-compat-pedantic
+    -Wno-missing-prototypes
+    -Wno-padded
+    -Wno-gnu-anonymous-struct
+    -Wno-nested-anon-types
+    -Wno-gnu-statement-expression
+    -Wno-return-std-move-in-c++11
+
+    -Wno-used-but-marked-unused
+    -Wno-missing-noreturn
+    -Wno-float-equal
+    -Wno-sign-conversion
+    -Wno-conversion
+    -Wno-double-promotion
+    -Wno-shadow
+    -Wno-gnu-zero-variadic-macro-arguments
+    )
 endif()
 
 if(COMP_GCC)

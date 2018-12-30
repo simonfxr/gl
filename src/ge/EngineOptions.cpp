@@ -222,9 +222,9 @@ State::option(OptionCase opt, const char *arg)
             return false;
         }
         return true;
-    default:
-        FATAL_ERR("unhandled option_case");
-        return false;
+        // default:
+        //     FATAL_ERR("unhandled option_case");
+        //     return false;
     }
 }
 

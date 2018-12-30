@@ -15,30 +15,24 @@ begin(vec4_t &v)
     return v.components;
 }
 
-vec4_t
-vec4(real x, real y, real z, real w)
+vec4_t constexpr vec4(real x, real y, real z, real w)
 {
-    vec4_t v;
-    v[0] = x;
-    v[1] = y;
-    v[2] = z;
-    v[3] = w;
-    return v;
+    return { x, y, z, w };
 }
 
-vec4_t
+constexpr vec4_t
 vec4(real a)
 {
     return vec4(a, a, a, a);
 }
 
-vec4_t
+constexpr vec4_t
 vec4(const vec3_t &a, real w)
 {
     return vec4(a[0], a[1], a[2], w);
 }
 
-vec4_t
+constexpr vec4_t
 vec4(const real a[4])
 {
     return vec4(a[0], a[1], a[2], a[3]);
@@ -217,12 +211,12 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC real &vec4_t::operator[](defs::index i)
+constexpr MATH_INLINE_SPEC real &vec4_t::operator[](defs::index i)
 {
     return components[i];
 }
 
-MATH_INLINE_SPEC real vec4_t::operator[](defs::index i) const
+constexpr MATH_INLINE_SPEC real vec4_t::operator[](defs::index i) const
 {
     return components[i];
 }

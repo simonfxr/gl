@@ -8,20 +8,20 @@
 
 #include "err/err.hpp"
 
-#include <set>
+#include <unordered_set>
 
 namespace glt {
 
 struct GLDebug
 {
-    std::set<GLint> ignored;
+    std::unordered_set<GLuint> ignored;
     OpenGLVendor vendor;
 
     GLDebug();
     virtual ~GLDebug();
     void init();
     virtual void printDebugMessages(const err::Location &) = 0;
-    bool shouldIgnore(GLint);
+    bool shouldIgnore(GLuint);
     void ignoreMessage(OpenGLVendor vendor, GLuint id);
 
 private:
@@ -31,7 +31,8 @@ private:
 
 struct NoDebug : public GLDebug
 {
-    NoDebug() {}
+    NoDebug() = default;
+    ~NoDebug() override;
     virtual void printDebugMessages(const err::Location &) final override {}
 
 private:
@@ -45,7 +46,7 @@ struct ARBDebug : public GLDebug
     char *message_buffer;
 
     explicit ARBDebug(GLsizei buf_len);
-    ~ARBDebug();
+    ~ARBDebug() override;
 
     static GLDebug *init();
     virtual void printDebugMessages(const err::Location &loc) final override;
@@ -57,12 +58,11 @@ private:
 
 struct AMDDebug : public GLDebug
 {
-
     GLsizei message_buffer_length;
     char *message_buffer;
 
     explicit AMDDebug(GLsizei buf_len);
-    ~AMDDebug();
+    ~AMDDebug() override;
 
     static GLDebug *init();
     virtual void printDebugMessages(const err::Location &loc) final override;

@@ -152,8 +152,9 @@ CommandPrettyPrinter::print(const CommandArg &arg, bool first)
     case VarRef:
         *self->current_out << '$' << *arg.var;
         break;
-    default:
-        *self->current_out << "invalid type: " << arg.type;
+    case Nil:
+        *self->current_out << "nil type not allowed: " << arg.type;
+        break;
     }
 }
 

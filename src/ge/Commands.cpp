@@ -521,8 +521,9 @@ commands()
     // }
 
     // return *comms;
-
+    PRAGMA_PUSH_IGNORE_EXIT_TIME_DESTRUCTOR
     static Commands commands;
+    PRAGMA_POP
     return commands;
 }
 

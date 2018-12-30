@@ -15,13 +15,13 @@ struct KeyBindingState::Data
     Data();
 };
 
-KeyBindingState::KeyBindingState() : self(new Data) {}
-
-KeyBindingState::~KeyBindingState()
+void
+KeyBindingState::DataDeleter::operator()(Data *p) noexcept
 {
-    delete self;
-    self = nullptr;
+    delete p;
 }
+
+KeyBindingState::KeyBindingState() : self(new Data) {}
 
 #define global (*module->key_binding.self)
 
@@ -144,8 +144,6 @@ keycodeStrings(KeyCode code)
         K(MXButton2); ///< The second extra mouse button
 
         K(Count); ///< Keep last -- the total number of keyboard keys
-    default:
-        return nullptr;
     }
 #undef K
 }
@@ -174,10 +172,7 @@ parseKeyCode(const std::string &str, KeyCode *code)
 const char *
 prettyKeyCode(KeyCode code)
 {
-    if (code >= 0 && code <= keycode::Count)
-        return global.table[code];
-
-    return nullptr;
+    return global.table[code];
 }
 
 int

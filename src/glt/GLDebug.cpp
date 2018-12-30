@@ -31,7 +31,7 @@ GLDebug::init()
 }
 
 bool
-GLDebug::shouldIgnore(GLint id)
+GLDebug::shouldIgnore(GLuint id)
 {
     return ignored.find(id) != ignored.end();
 }
@@ -42,6 +42,8 @@ GLDebug::ignoreMessage(OpenGLVendor id_vendor, GLuint id)
     if (vendor != glvendor::Unknown && vendor == id_vendor)
         ignored.insert(id);
 }
+
+NoDebug::~NoDebug() = default;
 
 ARBDebug::ARBDebug(GLsizei buf_len)
   : message_buffer_length(buf_len), message_buffer(new char[size_t(buf_len)])
@@ -61,7 +63,7 @@ ARBDebug::init()
       GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
-        printGLError(_CURRENT_LOCATION, err);
+        printGLError(DETAIL_CURRENT_LOCATION, err);
         return nullptr;
     }
 
@@ -158,7 +160,7 @@ AMDDebug::init()
 
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
-        printGLError(_CURRENT_LOCATION, err);
+        printGLError(DETAIL_CURRENT_LOCATION, err);
         return nullptr;
     }
 

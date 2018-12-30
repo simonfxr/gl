@@ -195,10 +195,8 @@ CommandProcessor::exec(CommandPtr &com,
                 break;
             case AnyParam:
                 ASSERT_FAIL();
-                break;
             case ListParam:
                 ASSERT_FAIL();
-                break;
             }
 
             if (val_type != args[i].type) {
@@ -378,9 +376,9 @@ CommandProcessor::commandParamType(CommandType type)
         return VarRefParam;
     case Nil:
         FATAL_ERR(ERROR_DEFAULT_STREAM, "Nil has no declarable type");
-    default:
-        ERR(ERROR_DEFAULT_STREAM, "invalid type: returning IntegerParam");
-        return IntegerParam;
+        // default:
+        //     ERR(ERROR_DEFAULT_STREAM, "invalid type: returning
+        //     IntegerParam"); return IntegerParam;
     }
 }
 

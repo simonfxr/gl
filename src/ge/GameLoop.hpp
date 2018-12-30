@@ -15,7 +15,7 @@ struct GE_API GameLoop
 
     struct Game
     {
-        virtual ~Game(){};
+        virtual ~Game();
         virtual void tick() = 0;
         virtual void render(double interpolation) = 0;
         virtual void handleInputEvents() = 0;

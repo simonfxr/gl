@@ -48,7 +48,6 @@ struct GLT_API ShaderManager
     };
 
     ShaderManager();
-    ~ShaderManager();
 
     std::shared_ptr<ShaderProgram> program(const std::string &name) const;
     void addProgram(const std::string &name,
@@ -91,7 +90,13 @@ struct GLT_API ShaderManager
 private:
     struct Data;
     friend struct Data;
-    Data *const self;
+
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+
+    std::unique_ptr<Data, DataDeleter> self;
 
     ShaderManager(const ShaderManager &_);
     ShaderManager &operator=(const ShaderManager &_);

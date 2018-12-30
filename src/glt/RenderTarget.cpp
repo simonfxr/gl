@@ -25,11 +25,19 @@ struct RenderTarget::Data
         ON_DEBUG(active = false);
     }
 
+    ~Data() { DEBUG_ASSERT(active); }
+
     Viewport effectiveViewport() const
     {
         return viewport == Viewport() ? Viewport(width, height) : viewport;
     }
 };
+
+void
+RenderTarget::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
 
 RenderTarget::RenderTarget(size w,
                            size h,
@@ -38,11 +46,7 @@ RenderTarget::RenderTarget(size w,
   : self(new Data(w, h, bs, vp))
 {}
 
-RenderTarget::~RenderTarget()
-{
-    DEBUG_ASSERT(!self->active);
-    delete self;
-}
+RenderTarget::~RenderTarget() = default;
 
 size
 RenderTarget::width() const

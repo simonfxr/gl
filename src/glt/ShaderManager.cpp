@@ -24,31 +24,35 @@ struct ShaderManager::Data
     std::shared_ptr<ShaderCache> globalShaderCache;
     PreprocessorDefinitions globalDefines;
     ShaderCompiler shaderCompiler;
+    ShaderManager &self;
 
-    explicit Data(ShaderManager &self)
+    explicit Data(ShaderManager &me)
       : verbosity(Info)
       , out(&sys::io::stdout())
       , shader_version(0)
       , shader_profile(CoreProfile)
       , cache_so(true)
       , globalShaderCache(new ShaderCache)
-      , shaderCompiler(self)
+      , shaderCompiler(me)
+      , self(me)
     {}
+
+    ~Data() { self.shutdown(); }
 
 private:
     Data(const Data &) = delete;
     Data &operator=(const Data &) = delete;
 };
 
+void
+ShaderManager::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
+
 ShaderManager::ShaderManager() : self(new Data(*this))
 {
     self->shaderCompiler.init();
-}
-
-ShaderManager::~ShaderManager()
-{
-    shutdown();
-    delete self;
 }
 
 void

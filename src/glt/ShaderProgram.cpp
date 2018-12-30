@@ -57,8 +57,11 @@ stringError(Type e)
     case APIError:
         err = "error in api usage";
         break;
-    default:
-        err = "unknown error";
+    case FileNotInPath:
+        err = "file not found in search path";
+        break;
+    case OpenGLError:
+        err = "OpenGL error";
         break;
     }
 
@@ -93,6 +96,8 @@ struct ShaderProgram::Data
       , linked(false)
     {}
 
+    ~Data() { self.reset(); }
+
     bool createProgram();
 
     void printProgramLog(GLuint program, sys::io::OutStream &out);
@@ -100,17 +105,17 @@ struct ShaderProgram::Data
     void handleCompileError(ShaderCompilerError::Type /*unused*/);
 };
 
+void
+ShaderProgram::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
+
 ShaderProgram::ShaderProgram(ShaderManager &sm) : self(new Data(*this, sm)) {}
 
 ShaderProgram::ShaderProgram(const ShaderProgram &prog)
   : self(new Data(*this, *prog.self))
 {}
-
-ShaderProgram::~ShaderProgram()
-{
-    reset();
-    delete self;
-}
 
 void
 ShaderProgram::reset()
@@ -187,31 +192,29 @@ ShaderProgram::Data::createProgram()
 }
 
 void
-ShaderProgram::Data::printProgramLog(GLuint program, sys::io::OutStream &out)
+ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
 {
     GLint log_len;
-    GL_CALL(glGetProgramiv, program, GL_INFO_LOG_LENGTH, &log_len);
+    GL_CALL(glGetProgramiv, progh, GL_INFO_LOG_LENGTH, &log_len);
 
     if (log_len > 0) {
 
-        auto *log = new GLchar[size_t(log_len)];
-        GL_CALL(glGetProgramInfoLog, program, log_len, nullptr, log);
+        auto log = std::make_unique<GLchar>(size_t(log_len));
+        GL_CALL(glGetProgramInfoLog, progh, log_len, nullptr, log.get());
 
-        GLchar *logBegin = log;
-        while (logBegin < log + log_len - 1 && isspace(*logBegin))
+        auto logBegin = log.get();
+        while (logBegin < log.get() + log_len - 1 && isspace(*logBegin))
             ++logBegin;
 
-        const char *log_msg = log;
+        const char *log_msg = log.get();
 
-        if (logBegin == log + log_len - 1) {
+        if (logBegin == log.get() + log_len - 1) {
             out << "link log empty" << sys::io::endl;
         } else {
             out << "link log: " << sys::io::endl
                 << log_msg << sys::io::endl
                 << "end link log" << sys::io::endl;
         }
-
-        delete[] log;
     }
 }
 
@@ -358,7 +361,7 @@ ShaderProgram::link()
     }
 
     bool write_llog = true;
-    err::LogLevel lvl;
+    err::LogLevel lvl{};
 
     if (!ok && LOG_LEVEL(*this, err::Error))
         lvl = err::Error;

@@ -22,7 +22,7 @@ struct GE_API MouseLookPlugin : public Plugin
     };
 
     MouseLookPlugin();
-    ~MouseLookPlugin();
+    ~MouseLookPlugin() override;
 
     void shouldGrabMouse(bool grab);
     bool shouldGrabMouse() const;

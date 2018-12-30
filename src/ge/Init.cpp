@@ -39,8 +39,6 @@ EngineInitializers::reg(RunLevel lvl,
     case PostInit:
         postInit.reg(handler);
         break;
-    default:
-        ERR("invalid runlevel");
     }
 }
 

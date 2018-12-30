@@ -43,6 +43,8 @@ std::string stringError(Type /*unused*/)
 #define NULL_SHADER_OBJECT std::shared_ptr<ShaderObject>()
 #define NULL_SHADER_CACHE std::shared_ptr<ShaderCache>()
 
+CompileJob::~CompileJob() = default;
+
 namespace {
 
 std::string
@@ -260,18 +262,18 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
 
     if (log_len > 0) {
 
-        auto *log = new GLchar[size_t(log_len)];
-        GL_CALL(glGetShaderInfoLog, *shader, log_len, nullptr, log);
+        auto log = std::make_unique<GLchar[]>(size_t(log_len));
+        GL_CALL(glGetShaderInfoLog, *shader, log_len, nullptr, log.get());
 
-        GLchar *logBegin = log;
-        while (logBegin < log + log_len - 1 && isspace(*logBegin))
+        GLchar *logBegin = log.get();
+        while (logBegin < log.get() + log_len - 1 && isspace(*logBegin))
             ++logBegin;
 
-        GLchar *end = log + log_len - 1;
+        GLchar *end = log.get() + log_len - 1;
         while (end > logBegin && isspace(end[-1]))
             --end;
         *end = 0;
-        const char *log_msg = log;
+        const char *log_msg = log.get();
 
         if (logBegin == end) {
             out << "shader compile log empty" << sys::io::endl;
@@ -280,8 +282,6 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
                 << log_msg << sys::io::endl
                 << "end compile log" << sys::io::endl;
         }
-
-        delete[] log;
     }
 }
 
@@ -338,6 +338,8 @@ StringSource::StringSource(ShaderManager::ShaderType type,
                            const std::string &name)
   : ShaderSource(hash(name), type), code(name)
 {}
+
+ShaderSource::~ShaderSource() = default;
 
 std::shared_ptr<ShaderObject>
 StringSource::load(std::shared_ptr<ShaderSource> &_self, CompileState &cstate)
@@ -477,9 +479,9 @@ CompileState::compileAll()
             put(so);
 
             for (index i = 0; i < SIZE(so->dependencies.size()); ++i) {
-                std::shared_ptr<CompileJob> job =
+                std::shared_ptr<CompileJob> new_job =
                   CompileJob::load(so->dependencies[size_t(i)]);
-                enqueue(job);
+                enqueue(new_job);
             }
         }
     }
@@ -522,8 +524,8 @@ CompileState::reload(std::shared_ptr<ShaderObject> &so)
         break;
     case ReloadFailed:
         break;
-    default:
-        ASSERT_FAIL();
+        // default:
+        //     ASSERT_FAIL();
     }
 
     return reloaded_so;

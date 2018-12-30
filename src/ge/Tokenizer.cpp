@@ -17,7 +17,7 @@ enum State
     Fail
 };
 
-#define PARSE_ERROR(s, mesg) parse_err((s), _CURRENT_LOCATION, (mesg))
+#define PARSE_ERROR(s, mesg) parse_err((s), DETAIL_CURRENT_LOCATION, (mesg))
 
 void
 parse_err(const ParseState &s,

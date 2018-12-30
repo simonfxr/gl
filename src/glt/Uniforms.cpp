@@ -17,6 +17,8 @@
 
 namespace glt {
 
+using namespace math;
+
 namespace {
 
 std::string

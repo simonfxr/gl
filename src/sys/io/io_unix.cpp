@@ -250,8 +250,9 @@ listen(SocketProto proto,
         server.sin_addr.s_addr = addr.addr4;
         server.sin_port = hton(port);
 
-        RETRY_INTR(ret =
-                     bind(sock, (struct sockaddr *) &server, sizeof server));
+        RETRY_INTR(ret = bind(sock,
+                              reinterpret_cast<struct sockaddr *>(&server),
+                              sizeof server));
         if (ret == -1)
             goto socket_err;
     }
@@ -295,8 +296,10 @@ accept(Socket &s, Handle *h)
     socklen_t clen = sizeof client;
 
     int c;
-    RETRY_INTR(
-      c = accept4(s.socket, (struct sockaddr *) &client, &clen, SOCK_CLOEXEC));
+    RETRY_INTR(c = accept4(s.socket,
+                           reinterpret_cast<struct sockaddr *>(&client),
+                           &clen,
+                           SOCK_CLOEXEC));
     if (c == -1)
         return convertErrnoSock();
 

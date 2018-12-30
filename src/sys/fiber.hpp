@@ -4,6 +4,7 @@
 #include "sys/conf.hpp"
 
 #include <cstdint>
+#include <exception>
 
 #if 0
 #define FIBER_SHARED SHARED_IMPORT
@@ -20,9 +21,9 @@
 
 typedef uint32_t FiberState;
 
-#define FS_EXECUTING ((FiberState) 1)
-#define FS_TOPLEVEL ((FiberState) 2)
-#define FS_ALIVE ((FiberState) 4)
+#define FS_EXECUTING (FiberState(1))
+#define FS_TOPLEVEL (FiberState(2))
+#define FS_ALIVE (FiberState(4))
 
 typedef struct
 {
@@ -31,7 +32,7 @@ typedef struct
 
 typedef void (*FiberFunc)(void *);
 
-#define FIBER_NYI (*(volatile int *) nullptr = 0)
+#define FIBER_NYI std::terminate()
 #define FIBER_NYI_RET(x)                                                       \
     FIBER_NYI;                                                                 \
     return x

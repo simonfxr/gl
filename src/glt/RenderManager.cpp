@@ -46,19 +46,24 @@ struct RenderManager::Data
     double max_elapsed{};
     FrameStatistics stats;
 
-    Data() : transformStateBOS(transform, 0, 0) {}
+    RenderManager &self;
+
+    Data(RenderManager &self_) : transformStateBOS(transform, 0, 0), self(self_)
+    {}
+
+    ~Data() { self.shutdown(); }
 
     void beginStats();
     void endStats();
 };
 
-RenderManager::RenderManager() : self(new Data) {}
-
-RenderManager::~RenderManager()
+void
+RenderManager::DataDeleter::operator()(Data *p) noexcept
 {
-    shutdown();
-    delete self;
+    delete p;
 }
+
+RenderManager::RenderManager() : self(new Data(*this)) {}
 
 void
 RenderManager::shutdown()
@@ -119,8 +124,6 @@ RenderManager::updateProjection(math::real aspectRatio)
                                 self->projection.perspective.z_near,
                                 self->projection.perspective.z_far));
         break;
-    default:
-        ERR("invalid projection type");
     }
     self->projection_outdated = false;
 }
@@ -128,7 +131,6 @@ RenderManager::updateProjection(math::real aspectRatio)
 void
 RenderManager::setDefaultRenderTarget(RenderTarget *rt, bool delete_after)
 {
-
     if (rt != self->def_rt) {
 
         if (self->owning_def_rt && self->def_rt != nullptr) {

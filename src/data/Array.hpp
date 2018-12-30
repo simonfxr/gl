@@ -14,27 +14,40 @@
 #define SHARE_ARRAY(s, ptr) make_shared_array(s, ptr)
 
 template<typename T>
+struct OwnedArray;
+
+template<typename T>
 struct Array
 {
-
     defs::size _size;
     T *_elems;
 
-    Array(defs::size s, T *es) : _size(s), _elems(es) {}
+    constexpr Array(defs::size s, T *es) : _size(s), _elems(es) {}
 
-    defs::size size() const { return _size; }
+    Array(const OwnedArray<T> &) = delete;
 
-    T &operator[](defs::index i) { return _elems[i]; }
+    Array(OwnedArray<T> &&) = delete;
 
-    const T &operator[](defs::index i) const { return _elems[i]; }
+    constexpr Array(const Array &) = default;
 
-    T &at(defs::index i) { return this->operator[](i); }
+    constexpr Array(Array &&) = default;
 
-    const T &at(defs::index i) const { return this->operator[](i); }
+    constexpr defs::size size() const { return _size; }
+
+    constexpr T &operator[](defs::index i) { return _elems[i]; }
+
+    constexpr const T &operator[](defs::index i) const { return _elems[i]; }
+
+    constexpr T &at(defs::index i) { return this->operator[](i); }
+
+    constexpr const T &at(defs::index i) const { return this->operator[](i); }
+
+    Array &operator=(const Array &) = delete;
+    Array &operator=(Array &&) = delete;
 };
 
 template<typename T>
-Array<T>
+constexpr Array<T>
 make_shared_array(defs::size s, T *elems)
 {
     Array<T> arr(s, elems);
@@ -56,9 +69,14 @@ struct OwnedArray : public Array<T>
             this->at(i) = elems[i];
     }
 
-    OwnedArray(const OwnedArray<T> &arr) : OwnedArray(arr.size(), arr._elems) {}
+    OwnedArray(const OwnedArray &arr) : OwnedArray(arr.size(), arr._elems) {}
 
     OwnedArray(const Array<T> &arr) : OwnedArray(arr.size(), arr._elems) {}
+
+    OwnedArray(OwnedArray &&rhs)
+      : Array<T>(std::exchange(rhs._size, 0),
+                 std::exchange(rhs._elems, nullptr))
+    {}
 
     ~OwnedArray() { delete[] this->_elems; }
 };

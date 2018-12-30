@@ -325,10 +325,10 @@ Engine::Data::atExit(int32 exit_code)
 }
 
 bool
-Engine::Data::init(const EngineOptions &opts)
+Engine::Data::init(const EngineOptions &eopts)
 {
-    this->opts = &opts;
-    window = new GameWindow(opts.window);
+    opts = &eopts;
+    window = new GameWindow(eopts.window);
     renderManager.setDefaultRenderTarget(&window->renderTarget());
     registerHandlers();
     initialized = true;

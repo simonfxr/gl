@@ -1,4 +1,7 @@
 #include "defs.hpp"
+
+using namespace defs;
+
 #include "mesh.h"
 
 #include "math/glvec.hpp"

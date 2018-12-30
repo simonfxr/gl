@@ -149,7 +149,7 @@ struct SYS_API IOStream
   , public OutStream
 {
     IOStream();
-    virtual ~IOStream();
+    virtual ~IOStream() override;
 
     using OutStream::close;
     using OutStream::closed;
@@ -177,8 +177,8 @@ struct SYS_API FileStream : public IOStream
     FILE *_file;
     FileStream(FILE *file = nullptr);
     FileStream(const std::string &path, const std::string &mode);
-    ~FileStream();
-    bool isOpen() const { return _file != 0; }
+    ~FileStream() override;
+    bool isOpen() const { return _file != nullptr; }
     bool open(const std::string &path, const std::string &mode);
 
 protected:
@@ -226,7 +226,7 @@ struct SYS_API ByteStream : public IOStream
     ByteStream(const char *buf, defs::size sz);
     ByteStream(const std::string &);
 
-    ~ByteStream();
+    ~ByteStream() override;
 
     defs::size size() const { return SIZE(_buffer.size()); }
     const char *data() const { return &_buffer.front(); }
@@ -275,9 +275,8 @@ template<typename T>
 OutStream &
 operator<<(OutStream &out, const T &x)
 {
-    if (out.writeable()) {
+    if (out.writeable())
         out << std::to_string(x);
-    }
     return out;
 }
 

@@ -35,7 +35,7 @@ struct Module
     Utils utils;
 };
 
-extern Module *module;
+extern std::unique_ptr<Module> module;
 
 } // namespace glt
 

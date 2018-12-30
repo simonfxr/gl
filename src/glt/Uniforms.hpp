@@ -18,8 +18,6 @@ struct mat2_t;
 
 } // namespace math
 
-using namespace math;
-
 namespace glt {
 
 struct ShaderProgram;
@@ -65,12 +63,24 @@ private:
     void set(bool mandatory,
              const std::string &name,
              const Array<float> &value);
-    void set(bool mandatory, const std::string &name, const vec4_t &value);
-    void set(bool mandatory, const std::string &name, const vec3_t &value);
-    void set(bool mandatory, const std::string &name, const vec2_t &value);
-    void set(bool mandatory, const std::string &name, const mat4_t &value);
-    void set(bool mandatory, const std::string &name, const mat3_t &value);
-    void set(bool mandatory, const std::string &name, const mat2_t &value);
+    void set(bool mandatory,
+             const std::string &name,
+             const math::vec4_t &value);
+    void set(bool mandatory,
+             const std::string &name,
+             const math::vec3_t &value);
+    void set(bool mandatory,
+             const std::string &name,
+             const math::vec2_t &value);
+    void set(bool mandatory,
+             const std::string &name,
+             const math::mat4_t &value);
+    void set(bool mandatory,
+             const std::string &name,
+             const math::mat3_t &value);
+    void set(bool mandatory,
+             const std::string &name,
+             const math::mat2_t &value);
     void set(bool mandatory, const std::string &name, color value);
     void set(bool mandatory, const std::string &name, GLint value);
     void set(bool mandatory, const std::string &name, GLuint value);

@@ -4,6 +4,8 @@
 #include "glt/color.hpp"
 #include "glt/conf.hpp"
 
+#include <memory>
+
 namespace glt {
 
 using namespace defs;
@@ -68,7 +70,12 @@ protected:
 
 private:
     struct Data;
-    Data *const self;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+
+    const std::unique_ptr<Data, DataDeleter> self;
 
     RenderTarget(const RenderTarget &_);
     RenderTarget &operator=(const RenderTarget &_);

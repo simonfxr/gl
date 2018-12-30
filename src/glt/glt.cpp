@@ -4,24 +4,25 @@
 #include "glt/module.hpp"
 
 #include <cassert>
+#include <memory>
 
 namespace glt {
 
-Module *module;
+PRAGMA_PUSH_IGNORE_EXIT_TIME_DESTRUCTOR
+std::unique_ptr<Module> module;
+PRAGMA_POP
 
 void
 moduleInit()
 {
-    if (module == nullptr)
-        module = new Module;
+    if (!module)
+        module.reset(new Module);
 }
 
 void
 moduleExit()
 {
-    assert(module != nullptr);
-    delete module;
-    module = nullptr;
+    module.reset();
 }
 
 } // namespace glt

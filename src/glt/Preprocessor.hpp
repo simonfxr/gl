@@ -5,6 +5,7 @@
 #include "sys/io/Stream.hpp"
 
 #include <map>
+#include <memory>
 
 namespace glt {
 
@@ -53,7 +54,6 @@ struct GLT_API Preprocessor
     typedef std::pair<std::string, DirectiveHandler *> HandlerEntry;
 
     Preprocessor();
-    ~Preprocessor();
 
     const std::string &name() const;
     void name(const std::string &name);
@@ -81,7 +81,11 @@ struct GLT_API Preprocessor
 
 private:
     struct Data;
-    Data *const self;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
 
     Preprocessor(const Preprocessor &_);
     Preprocessor &operator=(const Preprocessor &_);

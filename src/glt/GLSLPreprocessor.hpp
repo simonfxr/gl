@@ -13,6 +13,11 @@ namespace glt {
 
 struct ProcessingState;
 
+struct ProcessingStateDeleter
+{
+    void operator()(ProcessingState *) noexcept;
+};
+
 struct GLT_API IncludeHandler : public Preprocessor::DirectiveHandler
 {
     virtual void beginProcessing(
@@ -38,9 +43,9 @@ struct GLT_API GLSLPreprocessor : public Preprocessor
 
     std::vector<uint32> segLengths;
     std::vector<const char *> segments;
-    std::vector<char *> contents;
+    std::vector<std::unique_ptr<char[]>> contents;
 
-    ProcessingState *state{};
+    std::unique_ptr<ProcessingState, ProcessingStateDeleter> state;
 
     IncludeHandler includeHandler;
     DependencyHandler dependencyHandler;

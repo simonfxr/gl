@@ -10,7 +10,6 @@ struct Engine;
 
 struct GE_API EngineEvent
 {
-    virtual ~EngineEvent();
     Engine &engine;
     EngineEvent(Engine &_engine) : engine(_engine) {}
 };

@@ -47,8 +47,9 @@ struct GLT_API Projection
             perspective.z_near = math::real(0.5);
             perspective.z_far = 100;
             break;
-        default:
-            FATAL_ERR(ERROR_DEFAULT_STREAM, "invalid Projection::Type enum");
+            // default:
+            //     FATAL_ERR(ERROR_DEFAULT_STREAM, "invalid Projection::Type
+            //     enum");
         }
     }
 
@@ -70,7 +71,6 @@ struct GLT_API Projection
 struct GLT_API RenderManager
 {
     RenderManager();
-    ~RenderManager();
 
     const ViewFrustum &viewFrustum() const;
 
@@ -103,7 +103,13 @@ struct GLT_API RenderManager
 private:
     struct Data;
     friend struct Data;
-    Data *const self;
+
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+
+    const std::unique_ptr<Data, DataDeleter> self;
 
     RenderManager(const RenderManager &_);
     RenderManager &operator=(const RenderManager &_);

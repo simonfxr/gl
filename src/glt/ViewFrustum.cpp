@@ -34,16 +34,11 @@ ViewFrustum::update(const mat4_t &mvp)
 Outcode
 testSphere(const ViewFrustum &frust, const vec3_t &center, real rad)
 {
-
     Outcode code = 0;
-
     for (uint32 i = 0; i < 1; ++i)
         if (distance(frust.planes[i], center) + rad < 0)
             code |= Outcode(1) << i;
-
     return code;
-
-    return 0;
 }
 
 Outcode

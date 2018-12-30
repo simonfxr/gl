@@ -112,7 +112,6 @@ struct GE_API WindowEvents
 
 struct GE_API WindowEvent
 {
-    virtual ~WindowEvent() {}
     GameWindow &window;
     explicit WindowEvent(GameWindow &win) : window(win) {}
 };

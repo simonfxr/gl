@@ -397,20 +397,20 @@ template<typename Vertex>
 void
 sphere(Mesh<Vertex> &sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
 {
-    GLfloat drho = (GLfloat)(3.141592653589) / (GLfloat) iStacks;
-    GLfloat dtheta = 2.0f * (GLfloat)(3.141592653589) / (GLfloat) iSlices;
-    GLfloat ds = 1.0f / (GLfloat) iSlices;
-    GLfloat dt = 1.0f / (GLfloat) iStacks;
+    GLfloat drho = GLfloat(3.141592653589) / GLfloat(iStacks);
+    GLfloat dtheta = 2.0f * GLfloat(3.141592653589) / GLfloat(iSlices);
+    GLfloat ds = 1.0f / GLfloat(iSlices);
+    GLfloat dt = 1.0f / GLfloat(iStacks);
     GLfloat t = 1.0f;
     GLfloat s = 0.0f;
     GLint i, j; // Looping variables
 
     for (i = 0; i < iStacks; i++) {
-        GLfloat rho = (GLfloat) i * drho;
-        GLfloat srho = (GLfloat)(math::sin(rho));
-        GLfloat crho = (GLfloat)(math::cos(rho));
-        GLfloat srhodrho = (GLfloat)(math::sin(rho + drho));
-        GLfloat crhodrho = (GLfloat)(math::cos(rho + drho));
+        GLfloat rho = GLfloat(i) * drho;
+        GLfloat srho = GLfloat(math::sin(rho));
+        GLfloat crho = GLfloat(math::cos(rho));
+        GLfloat srhodrho = GLfloat(math::sin(rho + drho));
+        GLfloat crhodrho = GLfloat(math::cos(rho + drho));
 
         // Many sources of OpenGL sphere drawing code uses a triangle fan
         // for the caps of the sphere. This however introduces texturing
@@ -422,8 +422,8 @@ sphere(Mesh<Vertex> &sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
 
         for (j = 0; j < iSlices; j++) {
             GLfloat theta = (j == iSlices) ? 0.0f : j * dtheta;
-            GLfloat stheta = (GLfloat)(-math::sin(theta));
-            GLfloat ctheta = (GLfloat)(math::cos(theta));
+            GLfloat stheta = GLfloat(-math::sin(theta));
+            GLfloat ctheta = GLfloat(math::cos(theta));
 
             GLfloat x = stheta * srho;
             GLfloat y = ctheta * srho;
@@ -452,8 +452,8 @@ sphere(Mesh<Vertex> &sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
             vVertex[1][2] = z * fRadius;
 
             theta = ((j + 1) == iSlices) ? 0.0f : (j + 1) * dtheta;
-            stheta = (GLfloat)(-math::sin(theta));
-            ctheta = (GLfloat)(math::cos(theta));
+            stheta = GLfloat(-math::sin(theta));
+            ctheta = GLfloat(math::cos(theta));
 
             x = stheta * srho;
             y = ctheta * srho;
@@ -482,10 +482,10 @@ sphere(Mesh<Vertex> &sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
             vVertex[3][1] = y * fRadius;
             vVertex[3][2] = z * fRadius;
 
-            for (uint32 i = 0; i < 3; ++i) {
+            for (uint32 k = 0; k < 3; ++k) {
                 Vertex v;
-                setPoint(v.position, vVertex[i]);
-                setVec(v.normal, vNormal[i]);
+                setPoint(v.position, vVertex[k]);
+                setVec(v.normal, vNormal[k]);
                 sphereBatch.addVertex(v);
             }
 
@@ -498,10 +498,10 @@ sphere(Mesh<Vertex> &sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
             vNormal[1] = vNormal[3];
             // vTexture[1] = vTexture[3];
 
-            for (uint32 i = 0; i < 3; ++i) {
+            for (uint32 k = 0; k < 3; ++k) {
                 Vertex v;
-                setPoint(v.position, vVertex[i]);
-                setVec(v.normal, vNormal[i]);
+                setPoint(v.position, vVertex[k]);
+                setVec(v.normal, vNormal[k]);
                 sphereBatch.addVertex(v);
             }
         }

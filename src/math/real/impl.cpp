@@ -12,13 +12,13 @@ sqrt(real x)
     return std::sqrt(x);
 }
 
-real
+constexpr real
 recip(real x)
 {
     return real(1) / x;
 }
 
-real
+constexpr real
 inverse(real x)
 {
     return recip(x);
@@ -91,31 +91,31 @@ exp(real x)
     return std::exp(x);
 }
 
-real
+constexpr real
 abs(real x)
 {
     return std::fabs(x);
 }
 
-real
+constexpr real
 length(real x)
 {
     return abs(x);
 }
 
-real
+constexpr real
 distance(real x, real y)
 {
     return length(x - y);
 }
 
-real
+constexpr real
 squared(real x)
 {
     return x * x;
 }
 
-real
+constexpr real
 cubed(real x)
 {
     return x * x * x;
@@ -154,7 +154,7 @@ floor(real x)
     return std::floor(x);
 }
 
-int32
+constexpr int32
 signum(real x)
 {
     return x < real(0) ? -1 : x > real(0) ? +1 : 0;
@@ -191,38 +191,38 @@ radToDeg(real rad)
     return rad * (real(180) / PI);
 }
 
-real
+constexpr real
 max(real x, real y)
 {
     return x < y ? y : x;
 }
 
-real
+constexpr real
 min(real x, real y)
 {
     return x > y ? y : x;
 }
 
-real
+constexpr real
 saturate(real x)
 {
     return clamp(x, 0.f, 1.f);
 }
 
-real
+constexpr real
 clamp(real x, real lo, real hi)
 {
     return x < lo ? lo : (x > hi ? hi : x);
 }
 
-real
+constexpr real
 smoothstep(real lo_edge, real hi_edge, real x)
 {
     x = saturate((x - lo_edge) / (hi_edge - lo_edge));
     return x * x * (real(3) - 2 * x);
 }
 
-real
+constexpr real
 mix(real a, real b, real t)
 {
     return a + t * (b - a);

@@ -41,12 +41,13 @@ struct Preprocessor::Data
     Data() : defaultHandler(&nullHandler), out(&sys::io::stdout()) {}
 };
 
-Preprocessor::Preprocessor() : self(new Data) {}
-
-Preprocessor::~Preprocessor()
+void
+Preprocessor::DataDeleter::operator()(Data *p) noexcept
 {
-    delete self;
+    delete p;
 }
+
+Preprocessor::Preprocessor() : self(new Data) {}
 
 void
 Preprocessor::process(const std::string &str)

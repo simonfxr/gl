@@ -21,9 +21,6 @@ getGLType(TextureType ty, size ss)
 
     case Texture3D:
         return GL_TEXTURE_3D;
-    default:
-        ERR("invalid TextureType");
-        return GL_FALSE;
     }
 }
 

@@ -55,7 +55,7 @@ struct GE_API Camera : public Plugin
     };
 
     Camera();
-    ~Camera();
+    ~Camera() override;
 
     Commands &commands();
 
@@ -64,8 +64,8 @@ struct GE_API Camera : public Plugin
     math::vec2_t mouseSensitivity() const;
     void mouseSensitivity(const math::vec2_t &);
 
-    real speed() const;
-    void speed(real);
+    math::real speed() const;
+    void speed(math::real);
 
     glt::Frame &frame();
     void frame(const glt::Frame &);

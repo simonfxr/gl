@@ -1,5 +1,5 @@
-#ifndef _DEFS_H_INCLUDED_
-#define _DEFS_H_INCLUDED_
+#ifndef DEFS_H_INCLUDED
+#define DEFS_H_INCLUDED
 
 #define SIGNED_SIZE
 
@@ -93,6 +93,12 @@
 #define ATTR_FORCE_INLINE always_inline
 #define ATTR_NORETURN noreturn
 #define ATTR_PACKED packed
+#define PRAGMA_PUSH_IGNORE_EXIT_TIME_DESTRUCTOR                                \
+    _Pragma("GCC diagnostic push")                                             \
+      _Pragma("GCC diagnostic ignored \"-Wexit-time-destructors\"")            \
+        _Pragma("GCC diagnostic ignored \"-Wglobal-constructors\"")
+
+#define PRAGMA_POP _Pragma("GCC diagnostic pop")
 #elif defined(COMPILER_CL)
 #define ATTR_WARN_UNUSED
 #define ATTR_NO_WARN_UNUSED_DEF
@@ -102,6 +108,8 @@
 #define ATTR_FORCE_INLINE
 #define ATTR_NORETURN noreturn
 #define ATTR_PACKED
+#define PRAGMA_PUSH_IGNORE_EXIT_TIME_DESTRUCTOR
+#define PRAGMA_POP
 #endif
 
 #ifdef GNU_EXTENSIONS

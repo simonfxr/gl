@@ -156,12 +156,17 @@ public:
                   const std::string &desc)
       : Command(NULL_PARAMS, name, desc), handler(hndlr)
     {}
+
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> & /*unused*/) override
-    {
-        handler(e);
-    }
+                     const Array<CommandArg> & /*unused*/) override;
 };
+
+void
+SimpleCommand::interactive(const Event<CommandEvent> &e,
+                           const Array<CommandArg> & /*unused*/)
+{
+    handler(e);
+}
 
 CommandPtr
 makeCommand(CommandHandler handler,
@@ -180,12 +185,17 @@ struct TypedCommand : public Command
                  const std::string &desc)
       : Command(params, name, desc), handler(hndlr)
     {}
+
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args) override
-    {
-        handler(e, args);
-    }
+                     const Array<CommandArg> &args) override;
 };
+
+void
+TypedCommand::interactive(const Event<CommandEvent> &e,
+                          const Array<CommandArg> &args)
+{
+    handler(e, args);
+}
 
 CommandPtr
 makeCommand(ListCommandHandler handler,
@@ -210,19 +220,22 @@ public:
         // std::cerr << "list command: " << parameters().size() << std::endl;
     }
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args) override
-    {
-        for (index i = 0; i < args.size(); ++i) {
-            if (args[i].type != String) {
-                ERR("expected String argument");
-                return;
-            }
-        }
-
-        handler(e, args);
-    }
+                     const Array<CommandArg> &args) override;
 };
 
+void
+StringListCommand::interactive(const Event<CommandEvent> &e,
+                               const Array<CommandArg> &args)
+{
+    for (index i = 0; i < args.size(); ++i) {
+        if (args[i].type != String) {
+            ERR("expected String argument");
+            return;
+        }
+    }
+
+    handler(e, args);
+}
 CommandPtr
 makeStringListCommand(ListCommandHandler handler,
                       const std::string &name,
@@ -243,11 +256,15 @@ public:
       : Command(LIST_PARAMS, name, desc), handler(hndlr)
     {}
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args) override
-    {
-        handler(e, args);
-    }
+                     const Array<CommandArg> &args) override;
 };
+
+void
+ListCommand::interactive(const Event<CommandEvent> &e,
+                         const Array<CommandArg> &args)
+{
+    handler(e, args);
+}
 
 CommandPtr
 makeListCommand(ListCommandHandler handler,

@@ -55,7 +55,7 @@ struct Location
     static Location make(const char *_file,
                          int _line,
                          const char *_function,
-                         const char *_operation = 0)
+                         const char *_operation = nullptr)
     {
         Location loc = { _file, _function, _operation, _line };
         return loc;
@@ -192,45 +192,48 @@ logPutError(const T &v, E err, const std::string &msg)
 }
 
 #ifdef GNU_EXTENSIONS
-#define _INIT_CURRENT_LOCATION_OP(op)                                          \
+#define DETAIL_INIT_CURRENT_LOCATION_OP(op)                                    \
     ::err::Location::make(__FILE__, __LINE__, __PRETTY_FUNCTION__, op)
 
-#define _CURRENT_LOCATION_OP_DYNAMIC(op) _INIT_CURRENT_LOCATION_OP(op)
+#define DETAIL_CURRENT_LOCATION_OP_DYNAMIC(op)                                 \
+    DETAIL_INIT_CURRENT_LOCATION_OP(op)
 #if 0
-#define _CURRENT_LOCATION_OP_STATIC(op)                                        \
+#define DETAIL_CURRENT_LOCATION_OP_STATIC(op)                                  \
     (*({                                                                       \
         static const ::err::Location CONCAT(__loc__, __LINE__) =               \
-          _INIT_CURRENT_LOCATION_OP(op);                                       \
+          DETAIL_INIT_CURRENT_LOCATION_OP(op);                                 \
         &CONCAT(__loc__, __LINE__);                                            \
     }))
 #endif
-#define _CURRENT_LOCATION_OP_STATIC(op) _CURRENT_LOCATION_OP_DYNAMIC(op)
+#define DETAIL_CURRENT_LOCATION_OP_STATIC(op)                                  \
+    DETAIL_CURRENT_LOCATION_OP_DYNAMIC(op)
 
-#define _CURRENT_LOCATION_OP(op)                                               \
-    (__builtin_constant_p((op)) ? _CURRENT_LOCATION_OP_STATIC(op)              \
-                                : _CURRENT_LOCATION_OP_DYNAMIC(op))
+#define DETAIL_CURRENT_LOCATION_OP(op)                                         \
+    (__builtin_constant_p((op)) ? DETAIL_CURRENT_LOCATION_OP_STATIC(op)        \
+                                : DETAIL_CURRENT_LOCATION_OP_DYNAMIC(op))
 #else
 
-#define _CURRENT_LOCATION_OP(op)                                               \
+#define DETAIL_CURRENT_LOCATION_OP(op)                                         \
     ::err::Location::make(__FILE__, __LINE__, __FUNCTION__, op)
 
 #endif
 
-#define _CURRENT_LOCATION _CURRENT_LOCATION_OP(0)
+#define DETAIL_CURRENT_LOCATION DETAIL_CURRENT_LOCATION_OP(nullptr)
 
-#define _ERROR(lvl, ...)                                                       \
-    ::err::error(_CURRENT_LOCATION, lvl, ::err::ErrorArgs(__VA_ARGS__))
-#define ___ASSERT(x, lvl, msg)                                                 \
+#define DETAIL_ERROR(lvl, ...)                                                 \
+    ::err::error(DETAIL_CURRENT_LOCATION, lvl, ::err::ErrorArgs(__VA_ARGS__))
+#define DETAIL_ASSERT(x, lvl, msg)                                             \
     do {                                                                       \
         if (unlikely(!(x)))                                                    \
-            _ERROR(lvl, ERROR_DEFAULT_STREAM, msg);                            \
+            DETAIL_ERROR(lvl, ERROR_DEFAULT_STREAM, msg);                      \
     } while (0)
-#define ___ASSERT_EXPR(x, lvl, msg, expr)                                      \
-    ((unlikely(!(x)) ? (_ERROR(lvl, ERROR_DEFAULT_STREAM, msg), 0) : 0), (expr))
+#define DETAIL_ASSERT_EXPR(x, lvl, msg, expr)                                  \
+    ((unlikely(!(x)) ? (DETAIL_ERROR(lvl, ERROR_DEFAULT_STREAM, msg), 0) : 0), \
+     (expr))
 
 #ifdef DEBUG
-#define DEBUG_ASSERT_MSG(x, msg) ___ASSERT(x, ::err::DebugAssertion, msg)
-#define DEBUG_ERR(...) _ERROR(::err::DebugError, __VA_ARGS__)
+#define DEBUG_ASSERT_MSG(x, msg) DETAIL_ASSERT(x, ::err::DebugAssertion, msg)
+#define DEBUG_ERR(...) DETAIL_ERROR(::err::DebugError, __VA_ARGS__)
 #else
 #define DEBUG_ASSERT_MSG(x, msg) UNUSED(0)
 #define DEBUG_ERR(msg) UNUSED(0)
@@ -238,29 +241,31 @@ logPutError(const T &v, E err, const std::string &msg)
 
 #define DEBUG_ASSERT(x) DEBUG_ASSERT_MSG(x, AS_STR(x))
 
-#define ASSERT_MSG(x, msg) ___ASSERT(x, ::err::Assertion, msg)
+#define ASSERT_MSG(x, msg) DETAIL_ASSERT(x, ::err::Assertion, msg)
 #define ASSERT(x) ASSERT_MSG(x, AS_STR(x))
 #define ASSERT_MSG_EXPR(x, msg, expr)                                          \
-    ___ASSERT_EXPR(x, ::err::Assertion, msg, expr)
+    DETAIL_ASSERT_EXPR(x, ::err::Assertion, msg, expr)
 #define ASSERT_EXPR(x, expr) ASSERT_MSG_EXPR(x, AS_STR(x), expr)
 
-#define ERR(...) _ERROR(::err::Error, __VA_ARGS__)
-#define WARN(...) _ERROR(::err::Warn, __VA_ARGS__)
-#define INFO(...) _ERROR(::err::Info, __VA_ARGS__)
+#define ERR(...) DETAIL_ERROR(::err::Error, __VA_ARGS__)
+#define WARN(...) DETAIL_ERROR(::err::Warn, __VA_ARGS__)
+#define INFO(...) DETAIL_ERROR(::err::Info, __VA_ARGS__)
 
 #ifdef ATTR_NORETURN
-#define _FATAL_ERR(lvl, ...)                                                   \
-    ::err::fatalError(_CURRENT_LOCATION, lvl, ::err::ErrorArgs(__VA_ARGS__))
+#define DETAIL_FATAL_ERR(lvl, ...)                                             \
+    ::err::fatalError(                                                         \
+      DETAIL_CURRENT_LOCATION, lvl, ::err::ErrorArgs(__VA_ARGS__))
 #else
-#define _FATAL_ERR(lvl, ...)                                                   \
-    (::err::fatalError(_CURRENT_LOCATION, lvl, ::err::ErrorArgs(__VA_ARGS__)), \
+#define DETAIL_FATAL_ERR(lvl, ...)                                             \
+    (::err::fatalError(                                                        \
+       DETAIL_CURRENT_LOCATION, lvl, ::err::ErrorArgs(__VA_ARGS__)),           \
      ::exit(1) /* exit never reached */)
 #endif
 
-#define FATAL_ERR(...) _FATAL_ERR(::err::FatalError, __VA_ARGS__)
+#define FATAL_ERR(...) DETAIL_FATAL_ERR(::err::FatalError, __VA_ARGS__)
 
 #define ASSERT_FAIL_MSG(msg)                                                   \
-    _FATAL_ERR(::err::Assertion, ERROR_DEFAULT_STREAM, msg)
+    DETAIL_FATAL_ERR(::err::Assertion, ERROR_DEFAULT_STREAM, msg)
 
 #define ASSERT_FAIL() ASSERT_FAIL_MSG("unreachable")
 
@@ -269,15 +274,16 @@ logPutError(const T &v, E err, const std::string &msg)
         static bool _reported = false;                                         \
         if (unlikely(!_reported)) {                                            \
             _reported = true;                                                  \
-            _ERROR(::err::ErrorOnce, __VA_ARGS__);                             \
+            DETAIL_ERROR(::err::ErrorOnce, __VA_ARGS__);                       \
         }                                                                      \
     } while (0)
 
 #define LOG_BEGIN(val, lvl)                                                    \
-    ::err::logBegin(_CURRENT_LOCATION, ::err::getLogDestination((val)), (lvl));
+    ::err::logBegin(                                                           \
+      DETAIL_CURRENT_LOCATION, ::err::getLogDestination((val)), (lvl));
 #define LOG_END(val) (UNUSED(val), ::err::logEnd())
 #define LOG_RAISE(val, ec, lvl, msg)                                           \
-    ::err::logRaiseError(_CURRENT_LOCATION, (val), (ec), (lvl), msg)
+    ::err::logRaiseError(DETAIL_CURRENT_LOCATION, (val), (ec), (lvl), msg)
 #define LOG_PUT(val, msg) (UNUSED(val), ::err::logWrite((msg)))
 #define LOG_PUT_ERR(val, ec, msg) ::err::logPutError(val, ec, msg)
 #define LOG_LEVEL(val, lvl) ::err::logLevel(val, lvl)

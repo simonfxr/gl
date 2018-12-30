@@ -1,3 +1,7 @@
+#include "defs.hpp"
+
+using namespace defs;
+
 #include "math/glvec.hpp"
 #include "math/mat4.hpp"
 #include "math/real.hpp"
@@ -362,7 +366,7 @@ Anim::initCLKernels(bool *success)
 }
 
 void
-Anim::initMC(MCState &mc, vec3_t orig, vec3_t dim, bool *success)
+Anim::initMC(MCState &cur_mc, vec3_t orig, vec3_t dim, bool *success)
 {
 #define IS_POWER_OF_2(x) ((((x) -1) & (x)) == 0)
     int cl_err;
@@ -372,37 +376,37 @@ Anim::initMC(MCState &mc, vec3_t orig, vec3_t dim, bool *success)
 
 #undef IS_POWER_OF_2
 
-    mc.init = false;
-    mc.vbo = 0;
-    mc.vao = 0;
+    cur_mc.init = false;
+    cur_mc.vbo = 0;
+    cur_mc.vao = 0;
 
-    mc.cube_origin = orig;
-    mc.cube_dim = dim;
+    cur_mc.cube_origin = orig;
+    cur_mc.cube_dim = dim;
 
-    mc.volume = cl::Image3D(cl_ctx,
-                            CL_MEM_READ_WRITE,
-                            cl::ImageFormat(CL_R, CL_HALF_FLOAT),
-                            N + 2,
-                            N + 2,
-                            N + 2,
-                            0,
-                            0,
-                            nullptr,
-                            &cl_err);
+    cur_mc.volume = cl::Image3D(cl_ctx,
+                                CL_MEM_READ_WRITE,
+                                cl::ImageFormat(CL_R, CL_HALF_FLOAT),
+                                N + 2,
+                                N + 2,
+                                N + 2,
+                                0,
+                                0,
+                                nullptr,
+                                &cl_err);
     CL_ERR("creating volume 3d image failed");
 
-    mc.images.clear();
+    cur_mc.images.clear();
 
-    mc.images.emplace_back(cl_ctx,
-                           CL_MEM_READ_WRITE,
-                           cl::ImageFormat(CL_RG, CL_UNSIGNED_INT8),
-                           N,
-                           N,
-                           N,
-                           0,
-                           0,
-                           nullptr,
-                           &cl_err);
+    cur_mc.images.emplace_back(cl_ctx,
+                               CL_MEM_READ_WRITE,
+                               cl::ImageFormat(CL_RG, CL_UNSIGNED_INT8),
+                               N,
+                               N,
+                               N,
+                               0,
+                               0,
+                               nullptr,
+                               &cl_err);
     CL_ERR("creating histogram base level failed");
 
     size sz = N / 2;
@@ -420,16 +424,16 @@ Anim::initMC(MCState &mc, vec3_t orig, vec3_t dim, bool *success)
             type = CL_UNSIGNED_INT16;
         else
             type = CL_UNSIGNED_INT8;
-        mc.images.emplace_back(cl_ctx,
-                               CL_MEM_READ_WRITE,
-                               cl::ImageFormat(CL_R, type),
-                               sz,
-                               sz,
-                               sz,
-                               0,
-                               0,
-                               nullptr,
-                               &cl_err);
+        cur_mc.images.emplace_back(cl_ctx,
+                                   CL_MEM_READ_WRITE,
+                                   cl::ImageFormat(CL_R, type),
+                                   sz,
+                                   sz,
+                                   sz,
+                                   0,
+                                   0,
+                                   nullptr,
+                                   &cl_err);
         CL_ERR("creating histogram level failed");
         sz /= 2;
     }
@@ -438,13 +442,13 @@ Anim::initMC(MCState &mc, vec3_t orig, vec3_t dim, bool *success)
 }
 
 void
-Anim::computeVolumeData(MCState &mc, real time)
+Anim::computeVolumeData(MCState &cur_mc, real time)
 {
     mat4_t M = mat4();
-    mc.init = true;
+    cur_mc.init = true;
 
-    M *= glt::translateTransform(mc.cube_origin);
-    M *= glt::scaleTransform(mc.cube_dim);
+    M *= glt::translateTransform(cur_mc.cube_origin);
+    M *= glt::scaleTransform(cur_mc.cube_dim);
     M *= glt::scaleTransform(real(1) / real(N - 2));
 
 #define fract(x) ((x) -math::floor(x))
@@ -456,7 +460,7 @@ Anim::computeVolumeData(MCState &mc, real time)
                           math::sin(time * real(0.1)),
                           0);
 
-    kernel_generateSphereVolume.setArg(0, mc.volume);
+    kernel_generateSphereVolume.setArg(0, cur_mc.volume);
     kernel_generateSphereVolume.setArg(1, M);
     kernel_generateSphereVolume.setArg(2, C);
 
@@ -467,13 +471,13 @@ Anim::computeVolumeData(MCState &mc, real time)
 }
 
 void
-Anim::computeHistogram(MCState &mc)
+Anim::computeHistogram(MCState &cur_mc)
 {
-    if (!mc.init)
+    if (!cur_mc.init)
         return;
 
-    kernel_computeHistogramBaseLevel.setArg(0, mc.images[0]);
-    kernel_computeHistogramBaseLevel.setArg(1, mc.volume);
+    kernel_computeHistogramBaseLevel.setArg(0, cur_mc.images[0]);
+    kernel_computeHistogramBaseLevel.setArg(1, cur_mc.volume);
 
     cl_q.enqueueNDRangeKernel(kernel_computeHistogramBaseLevel,
                               cl::NullRange,
@@ -485,8 +489,8 @@ Anim::computeHistogram(MCState &mc)
     while (sz > 2) {
         sz /= 2;
 
-        kernel_computeHistogramLevel.setArg(0, mc.images[i]);
-        kernel_computeHistogramLevel.setArg(1, mc.images[i + 1]);
+        kernel_computeHistogramLevel.setArg(0, cur_mc.images[i]);
+        kernel_computeHistogramLevel.setArg(1, cur_mc.images[i + 1]);
 
         cl_q.enqueueNDRangeKernel(kernel_computeHistogramLevel,
                                   cl::NullRange,
@@ -496,68 +500,68 @@ Anim::computeHistogram(MCState &mc)
         ++i;
     }
 
-    ASSERT(i + 1 == SIZE(mc.images.size()));
+    ASSERT(i + 1 == SIZE(cur_mc.images.size()));
 
     cl::size_t<3> origin;
     cl::size_t<3> cube;
     origin[0] = origin[1] = origin[2] = 0;
     cube[0] = cube[1] = cube[2] = 2;
-    cl_q.enqueueReadImage(mc.images[mc.images.size() - 1],
+    cl_q.enqueueReadImage(cur_mc.images[cur_mc.images.size() - 1],
                           CL_FALSE,
                           origin,
                           cube,
                           0,
                           0,
-                          mc.count,
+                          cur_mc.count,
                           nullptr,
-                          &mc.readHistoJob);
+                          &cur_mc.readHistoJob);
 }
 
 void
-Anim::constructVertices0(MCState &mc)
+Anim::constructVertices0(MCState &cur_mc)
 {
-    if (!mc.init)
+    if (!cur_mc.init)
         return;
-    mc.readHistoJob.wait();
+    cur_mc.readHistoJob.wait();
 
-    mc.num_tris = 0;
-    for (int i : mc.count)
-        mc.num_tris += i;
+    cur_mc.num_tris = 0;
+    for (int i : cur_mc.count)
+        cur_mc.num_tris += i;
 
-    if (mc.num_tris == 0)
+    if (cur_mc.num_tris == 0)
         return;
 
-    GL_CALL(glGenBuffers, 1, &mc.vbo);
-    GL_CALL(glGenVertexArrays, 1, &mc.vao);
+    GL_CALL(glGenBuffers, 1, &cur_mc.vbo);
+    GL_CALL(glGenVertexArrays, 1, &cur_mc.vao);
 
-    GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, mc.vbo);
+    GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, cur_mc.vbo);
     GL_CALL(glBufferData,
             GL_ARRAY_BUFFER,
-            mc.num_tris * 3 * 2 * sizeof(vec3_t),
+            cur_mc.num_tris * 3 * 2 * sizeof(vec3_t),
             nullptr,
             GL_STREAM_DRAW);
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
-    mc.vbo_buf = cl::BufferGL(cl_ctx, CL_MEM_WRITE_ONLY, mc.vbo);
+    cur_mc.vbo_buf = cl::BufferGL(cl_ctx, CL_MEM_WRITE_ONLY, cur_mc.vbo);
 }
 
 void
-Anim::constructVertices1(MCState &mc)
+Anim::constructVertices1(MCState &cur_mc)
 {
-    if (mc.num_tris == 0 || !mc.init)
+    if (cur_mc.num_tris == 0 || !cur_mc.init)
         return;
 
     defs::index i;
-    for (i = 0; i < SIZE(mc.images.size()); ++i)
-        kernel_histogramTraversal.setArg(i, mc.images[i]);
+    for (i = 0; i < SIZE(cur_mc.images.size()); ++i)
+        kernel_histogramTraversal.setArg(i, cur_mc.images[i]);
 
-    kernel_histogramTraversal.setArg(i, mc.volume);
+    kernel_histogramTraversal.setArg(i, cur_mc.volume);
     ++i;
-    kernel_histogramTraversal.setArg(i, mc.vbo_buf);
+    kernel_histogramTraversal.setArg(i, cur_mc.vbo_buf);
     ++i;
-    kernel_histogramTraversal.setArg(i, mc.num_tris);
+    kernel_histogramTraversal.setArg(i, cur_mc.num_tris);
 
-    int global_work_size = (mc.num_tris / 64 + 1) * 64;
+    int global_work_size = (cur_mc.num_tris / 64 + 1) * 64;
     cl_q.enqueueNDRangeKernel(kernel_histogramTraversal,
                               cl::NullRange,
                               cl::NDRange(global_work_size),
@@ -566,10 +570,10 @@ Anim::constructVertices1(MCState &mc)
 }
 
 void
-Anim::renderMC(MCState &mc, glt::ShaderProgram &program, vec3_t ecLight)
+Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3_t ecLight)
 {
 
-    if (mc.num_tris == 0 || !mc.init)
+    if (cur_mc.num_tris == 0 || !cur_mc.init)
         return;
 
     glt::RenderManager &rm = engine.renderManager();
@@ -577,8 +581,8 @@ Anim::renderMC(MCState &mc, glt::ShaderProgram &program, vec3_t ecLight)
 
     mat4_t M = mat4();
 
-    M *= glt::translateTransform(mc.cube_origin);
-    M *= glt::scaleTransform(mc.cube_dim);
+    M *= glt::translateTransform(cur_mc.cube_origin);
+    M *= glt::scaleTransform(cur_mc.cube_dim);
     M *= glt::scaleTransform(real(1) / real(N - 2));
 
     gt.dup();
@@ -598,23 +602,23 @@ Anim::renderMC(MCState &mc, glt::ShaderProgram &program, vec3_t ecLight)
     for (defs::index i = 0; i < desc.nattributes; ++i) {
         const glt::VertexAttr &a = desc.attributes[i];
         GL_CALL(glVertexArrayVertexAttribOffsetEXT,
-                mc.vao,
-                mc.vbo,
+                cur_mc.vao,
+                cur_mc.vbo,
                 GLuint(i),
                 a.ncomponents,
                 a.component_type,
                 a.normalized ? GL_TRUE : GL_FALSE,
                 desc.sizeof_vertex,
                 GLintptr(a.offset));
-        GL_CALL(glEnableVertexArrayAttribEXT, mc.vao, GLuint(i));
+        GL_CALL(glEnableVertexArrayAttribEXT, cur_mc.vao, GLuint(i));
     }
 
-    GL_CALL(glBindVertexArray, mc.vao);
-    GL_CALL(glDrawArrays, GL_TRIANGLES, 0, mc.num_tris * 3);
+    GL_CALL(glBindVertexArray, cur_mc.vao);
+    GL_CALL(glDrawArrays, GL_TRIANGLES, 0, cur_mc.num_tris * 3);
     GL_CALL(glBindVertexArray, 0);
 
-    GL_CALL(glDeleteBuffers, 1, &mc.vbo);
-    GL_CALL(glDeleteVertexArrays, 1, &mc.vao);
+    GL_CALL(glDeleteBuffers, 1, &cur_mc.vbo);
+    GL_CALL(glDeleteVertexArrays, 1, &cur_mc.vao);
 }
 
 void

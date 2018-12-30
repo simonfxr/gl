@@ -3,12 +3,13 @@
 
 #include "glt/conf.hpp"
 
+#include "err/err.hpp"
 #include "math/mat3/type.hpp"
 #include "math/mat4/type.hpp"
 #include "math/vec3/type.hpp"
 #include "math/vec4/type.hpp"
 
-#include "err/err.hpp"
+#include <memory>
 
 namespace glt {
 
@@ -21,9 +22,7 @@ struct SavePointArgs;
 
 struct GLT_API GeometryTransform
 {
-
     GeometryTransform();
-    ~GeometryTransform();
 
     const math::aligned_mat4_t &modelMatrix() const;
     const math::aligned_mat4_t &viewMatrix() const;
@@ -72,7 +71,11 @@ private:
     GeometryTransform &operator=(const GeometryTransform &_);
 
     struct Data;
-    Data *const self;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
 };
 
 struct GLT_API SavePointArgs

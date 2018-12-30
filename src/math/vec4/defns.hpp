@@ -12,17 +12,13 @@ begin(const vec4_t &) PURE_FUNC;
 MATH_FUNC real *
 begin(vec4_t &) MUT_FUNC;
 
-MATH_FUNC vec4_t
-vec4(real x, real y, real z, real w) PURE_FUNC;
+MATH_FUNC vec4_t constexpr vec4(real x, real y, real z, real w) PURE_FUNC;
 
-MATH_FUNC vec4_t
-vec4(real a) PURE_FUNC;
+MATH_FUNC vec4_t constexpr vec4(real a) PURE_FUNC;
 
-MATH_FUNC vec4_t
-vec4(const vec3_t &a, real w) PURE_FUNC;
+MATH_FUNC vec4_t constexpr vec4(const vec3_t &a, real w) PURE_FUNC;
 
-MATH_FUNC vec4_t
-vec4(const real a[4]) PURE_FUNC;
+MATH_FUNC vec4_t constexpr vec4(const real a[4]) PURE_FUNC;
 
 MATH_FUNC void
 load(vec4_t::buffer, const vec4_t &) MUT_FUNC;

@@ -6,6 +6,8 @@
 #include "sys/io.hpp"
 #include "sys/io/Stream.hpp"
 
+#include <memory>
+
 #ifdef DEFINE_SYS_MODULE
 #define SYS_MODULE_ACCESS
 #else
@@ -48,7 +50,7 @@ struct Module
     Fibers fibers;
 };
 
-extern Module *module;
+extern std::unique_ptr<Module> module;
 
 #undef SYS_MODULE_ACCESS
 

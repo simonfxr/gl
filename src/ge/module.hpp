@@ -1,6 +1,8 @@
 #ifndef GE_MODULE_HPP
 #define GE_MODULE_HPP
 
+#include <memory>
+
 #ifdef DEFINE_GE_MODULE
 #define GE_MODULE_ACCESS
 #else
@@ -18,9 +20,13 @@ struct GameWindowInit
 struct KeyBindingState
 {
     KeyBindingState();
-    ~KeyBindingState();
     struct Data;
-    Data *self;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+
+    const std::unique_ptr<Data, DataDeleter> self;
 };
 
 struct Module
@@ -29,7 +35,7 @@ struct Module
     KeyBindingState key_binding;
 };
 
-extern Module *module;
+extern std::unique_ptr<Module> module;
 
 } // namespace ge
 

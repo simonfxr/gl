@@ -33,8 +33,6 @@ TextureSampler::filterMode(FilterMode mode, Filter filter)
     case FilterLinear:
         glmode = GL_LINEAR;
         break;
-    default:
-        ASSERT_FAIL_MSG("invalid FilterMode");
     }
 
     if ((int(filter) & FilterMin) != 0)
@@ -56,8 +54,6 @@ TextureSampler::clampMode(ClampMode mode, Axis axis)
     case ClampRepeat:
         glmode = GL_REPEAT;
         break;
-    default:
-        ASSERT_FAIL_MSG("invalid ClampMode");
     }
 
     axis = Axis(int(axis) & availableAxes(_data->type()));
@@ -95,8 +91,6 @@ TextureSampler::availableAxes(TextureType t)
         return S | T;
     case Texture3D:
         return S | T | R;
-    default:
-        ASSERT_FAIL_MSG("invalid texture type");
     }
 }
 

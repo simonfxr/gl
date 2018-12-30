@@ -105,7 +105,7 @@ struct Contact
 
 static const vec3_t GRAVITY = vec3(0.f, -9.81f, 0.f);
 
-static const float DAMPING = 0.97f;
+// static const float DAMPING = 0.97f;
 
 static const vec3_t ROOM_DIMENSIONS = vec3(40.f, 30.f, 40.f) * 2.f;
 
@@ -417,7 +417,9 @@ struct BSP
     }
 };
 
+PRAGMA_PUSH_IGNORE_EXIT_TIME_DESTRUCTOR
 static const BSP marker_leaf = { plane(), { { nullptr }, { nullptr } } };
+PRAGMA_POP
 static BSP *const leaf_marker = const_cast<BSP *>(&marker_leaf);
 
 bool
@@ -426,9 +428,9 @@ isLeaf(const BSP *t)
     return t->down[0].tree == leaf_marker;
 }
 
-direction3_t NORMALS[3] = { vec3(1.f, 0.f, 0.f),
-                            vec3(0.f, 1.f, 0.f),
-                            vec3(0.f, 0.f, 1.f) };
+static direction3_t NORMALS[3] = { vec3(1.f, 0.f, 0.f),
+                                   vec3(0.f, 1.f, 0.f),
+                                   vec3(0.f, 0.f, 1.f) };
 
 plane3_t
 makePlane(int ni, const Box &vol)
@@ -711,33 +713,33 @@ World::Data::solveContacts(std::vector<Contact> &contacts, float dt)
 
             Contact &con = contacts[UNSIZE(i)];
 
-            const vec3_t &n = con.normal;
+            const vec3_t &norm = con.normal;
 
             Particle &p1 = deref(con.x);
             Particle &p2 = deref(con.y);
 
             // get all of relative normal velocity
-            float relNv = dot(p2.vel - p1.vel, n);
+            auto relNv = dot(p2.vel - p1.vel, norm);
 
             // we want to remove only the amount which leaves them touching next
             // frame
-            float remove = relNv - con.distance / dt;
+            auto remove = relNv - con.distance / dt;
 
             // compute impulse
-            float imp = remove / (p1.invMass + p2.invMass);
+            auto imp = remove / (p1.invMass + p2.invMass);
 
             // accumulate
-            float newImpulse = max(imp + con.impulse, 0.f);
+            auto newImpulse = max(imp + con.impulse, 0.f);
 
             // compute change
-            float change = newImpulse - con.impulse;
+            auto change = newImpulse - con.impulse;
 
             // store accumulated impulse
             con.impulse = newImpulse;
 
             // apply impulse
-            p1.vel += change * n * p1.invMass;
-            p2.vel -= change * n * p2.invMass;
+            p1.vel += change * norm * p1.invMass;
+            p2.vel -= change * norm * p2.invMass;
         }
     }
 }

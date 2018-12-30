@@ -9,25 +9,21 @@
 
 namespace ge {
 
-Module *module;
+PRAGMA_PUSH_IGNORE_EXIT_TIME_DESTRUCTOR
+std::unique_ptr<Module> module;
+PRAGMA_POP
 
 void
 moduleInit()
 {
-    if (module == nullptr) {
-        void *mem = new char[sizeof(Module)];
-        memset(mem, 0, sizeof(Module));
-        module = new (mem) Module;
-    }
+    if (!module)
+        module.reset(new Module);
 }
 
 void
 moduleExit()
 {
-    assert(module != nullptr);
-    module->~Module();
-    delete[] reinterpret_cast<char *>(module);
-    module = nullptr;
+    module.reset();
 }
 
 } // namespace ge

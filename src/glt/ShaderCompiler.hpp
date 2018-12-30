@@ -50,7 +50,7 @@ struct GLT_API ShaderSource
       : key(_key), type(ty)
     {}
 
-    virtual ~ShaderSource() {}
+    virtual ~ShaderSource();
 
     virtual std::shared_ptr<ShaderObject> load(std::shared_ptr<ShaderSource> &,
                                                CompileState &) = 0;
@@ -159,7 +159,7 @@ private:
 
 struct GLT_API CompileJob
 {
-    virtual ~CompileJob() {}
+    virtual ~CompileJob();
     virtual std::shared_ptr<ShaderSource> &source() = 0;
     virtual std::shared_ptr<ShaderObject> exec(CompileState &) = 0;
 

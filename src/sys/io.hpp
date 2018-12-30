@@ -128,7 +128,7 @@ struct SYS_API HandleStream : public IOStream
     defs::index write_cursor;
 
     HandleStream(const Handle & = Handle());
-    ~HandleStream();
+    ~HandleStream() override;
 
 protected:
     StreamResult basic_close() final override;

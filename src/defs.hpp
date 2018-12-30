@@ -1,5 +1,5 @@
-#ifndef _DEFS_HPP_INCLUDED_
-#define _DEFS_HPP_INCLUDED_
+#ifndef DEFS_HPP_INCLUDED
+#define DEFS_HPP_INCLUDED
 
 #define DEFS_BEGIN_NAMESPACE namespace defs {
 #define DEFS_END_NAMESPACE }
