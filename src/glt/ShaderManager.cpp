@@ -58,8 +58,8 @@ ShaderManager::ShaderManager() : self(new Data(*this))
 void
 ShaderManager::shutdown()
 {
-    self->globalShaderCache->flush();
     self->programs.clear();
+    self->globalShaderCache->flush();
 }
 
 void

@@ -127,18 +127,17 @@ GLSLPreprocessor::processFileRecursively(const std::string &file)
         return;
 
     ASSERT(sys::fs::isAbsolute(file));
-    char *data;
-    defs::size size;
-
-    if (!sys::io::readFile(out(), file, &data, &size)) {
+    auto [data, size] = sys::io::readFile(out(), file);
+    if (!data) {
         setError();
         return;
     }
 
-    contents.emplace_back(data);
+    auto data_ptr = data.get();
+    contents.emplace_back(std::move(data));
 
     this->name(file);
-    process(data, size);
+    process(data_ptr, size);
 }
 
 void
@@ -246,17 +245,16 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
           ShaderInclude(filestat.absolute, filestat.mtime));
         proc.name(filestat.absolute);
 
-        char *contents;
-        defs::size size;
-
-        if (!readFile(proc.out(), filestat.absolute, &contents, &size)) {
+        auto [contents, size] = readFile(proc.out(), filestat.absolute);
+        if (!contents) {
             proc.setError();
             return;
         }
 
-        proc.contents.emplace_back(contents);
+        auto content_ptr = contents.get();
+        proc.contents.emplace_back(std::move(contents));
         proc.name(filestat.absolute);
-        proc.process(contents, size);
+        proc.process(content_ptr, size);
     }
 }
 

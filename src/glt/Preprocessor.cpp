@@ -58,7 +58,6 @@ Preprocessor::process(const std::string &str)
 void
 Preprocessor::process(const char *begin, uint32 size)
 {
-
     if (wasError())
         return;
 

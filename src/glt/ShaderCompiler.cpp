@@ -657,13 +657,18 @@ ShaderCache::remove(ShaderObject *so)
     auto removed = false;
     const auto &key = so->source->key;
     auto range = pair_range(entries.equal_range(key));
-    for (auto it = range.begin(); it != range.end(); ++it) {
+    for (auto it = range.begin(); it != range.end();) {
         const ShaderCacheEntry &ent = it->second;
 
-        if (ent.second.lock().get() == so) {
+        auto ref = ent.second.lock();
+        if (!ref) {
+            it = entries.erase(it);
+        } else if (ref.get() == so) {
+            it = entries.erase(it);
             removed = true;
-            entries.erase(it);
             break;
+        } else {
+            ++it;
         }
     }
 
