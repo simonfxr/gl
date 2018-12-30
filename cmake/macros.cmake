@@ -168,4 +168,6 @@ macro(def_program target)
     endif()
   endif()
 
+  target_compile_definitions(${target} PRIVATE -DCMAKE_CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+
 endmacro()

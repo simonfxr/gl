@@ -62,6 +62,10 @@ basename(const std::string &path);
 SYS_API std::string
 extension(const std::string &path);
 
+template<typename... Args>
+inline std::string
+join(const std::string &path, Args &&... args);
+
 SYS_API std::string
 dropExtension(const std::string &path);
 
@@ -123,6 +127,9 @@ operator>(const FileTime &a, const FileTime &b)
 namespace def {
 
 SYS_API std::string
+join(const std::string &path, const char **, size_t n);
+
+SYS_API std::string
 dirname(const std::string &path);
 
 SYS_API std::string
@@ -150,6 +157,14 @@ SYS_API bool
 modificationTime(const std::string &path, sys::fs::FileTime *);
 
 } // namespace def
+
+template<typename... Args>
+inline std::string
+join(const std::string &path, Args &&... args)
+{
+    const char *parts[] = { std::forward<Args>(args)... };
+    return def::join(path, parts, sizeof...(args));
+}
 
 } // namespace fs
 

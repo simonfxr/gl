@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <sstream>
 
 #define SYS_IO_STREAM_NOWARN 1
 
@@ -27,6 +28,17 @@ dropTrailingSeps(const std::string &path)
 }
 
 } // namespace
+
+std::string
+join(const std::string &path, const char **parts, size_t n)
+{
+    std::stringstream out;
+    out << path;
+    for (auto i = size_t{ 0 }; i < n; ++i) {
+        out << SEPARATOR << parts[i];
+    }
+    return std::move(out).str();
+}
 
 std::string
 dirname(const std::string &path)

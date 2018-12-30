@@ -541,14 +541,14 @@ ShaderObject::~ShaderObject()
 void
 ShaderObject::linkCache(std::shared_ptr<ShaderCache> &newcache)
 {
-    ASSERT(newcache && !cache.lock());
+    ASSERT(newcache && cache.expired());
     cache = newcache;
 }
 
 void
 ShaderObject::unlinkCache(std::shared_ptr<ShaderCache> &newcache)
 {
-    std::shared_ptr<ShaderCache> curr(cache);
+    auto curr = cache.lock();
     ASSERT(newcache && curr);
     if (curr == newcache)
         cache = NULL_SHADER_CACHE;
@@ -617,7 +617,7 @@ ShaderCache::put(std::shared_ptr<ShaderCache> &cache,
 {
     ASSERT(cache && so);
 
-    std::shared_ptr<ShaderCache> curr_cache(so->cache);
+    auto curr_cache = so->cache.lock();
     ASSERT(!curr_cache || curr_cache == cache);
 
     const ShaderSourceKey &key = so->source->key;
@@ -648,33 +648,44 @@ ShaderCache::put(std::shared_ptr<ShaderCache> &cache,
 }
 
 bool
-ShaderCache::remove(std::shared_ptr<ShaderCache> &cache, ShaderObject *so)
+ShaderCache::remove(ShaderObject *so)
 {
-    ASSERT(cache && so);
-    ASSERT(cache == so->cache.lock());
+    ASSERT(so);
+    auto self = so->cache.lock();
+    ASSERT(self.get() == this);
 
-    bool removed = false;
-    const ShaderSourceKey &key = so->source->key;
-    auto range = pair_range(cache->entries.equal_range(key));
+    auto removed = false;
+    const auto &key = so->source->key;
+    auto range = pair_range(entries.equal_range(key));
     for (auto it = range.begin(); it != range.end(); ++it) {
         const ShaderCacheEntry &ent = it->second;
 
         if (ent.second.lock().get() == so) {
             removed = true;
-            cache->entries.erase(it);
+            entries.erase(it);
             break;
         }
     }
 
-    cache->checkValid();
+    checkValid();
     return removed;
+}
+
+bool
+ShaderCache::remove(std::shared_ptr<ShaderCache> &cache, ShaderObject *so)
+{
+    return cache->remove(so);
 }
 
 void
 ShaderCache::flush()
 {
-    entries.clear();
-    checkValid();
+    // be careful not to invalidate iterators
+    while (!entries.empty()) {
+        auto so = entries.begin()->second.second.lock();
+        ASSERT(so);
+        remove(so.get());
+    }
 }
 
 void

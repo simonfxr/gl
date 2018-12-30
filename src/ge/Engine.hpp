@@ -54,6 +54,8 @@ struct GE_API Engine
 
     void enablePlugin(Plugin &);
 
+    void setDevelDataDir(const std::string &);
+
 private:
     Engine(const Engine &);
     Engine &operator=(const Engine &);

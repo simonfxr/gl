@@ -43,6 +43,7 @@ struct Engine::Data : public GameLoop::Game
     ReplServer replServer;
     bool skipRender{};
     std::string programName;
+    std::string develDataDir;
 
     sys::io::OutStream *out;
 
@@ -209,6 +210,15 @@ Engine::run(const EngineOptions &opts)
             ERR("couldnt change into directory: " + wd);
             return 1;
         }
+    }
+
+    if (!self->develDataDir.empty()) {
+        commandProcessor().addScriptDirectory(
+          sys::fs::join(self->develDataDir, "..", "..", "scripts"), false);
+        shaderManager().addShaderDirectory(
+          sys::fs::join(self->develDataDir, "shaders"), false);
+        shaderManager().addShaderDirectory(
+          sys::fs::join(self->develDataDir, "..", "..", "shaders"), false);
     }
 
     for (const auto &scriptDir : opts.scriptDirs) {
@@ -431,6 +441,17 @@ Engine::enablePlugin(Plugin &p)
 {
     p.registerWith(*this);
     p.registerCommands(commandProcessor());
+}
+
+void
+Engine::setDevelDataDir(const std::string &dir)
+{
+    sys::fs::ObjectType type;
+    if (!sys::fs::exists(dir, &type) || type != sys::fs::Directory) {
+        WARN("not a directory");
+        return;
+    }
+    self->develDataDir = dir;
 }
 
 } // namespace ge

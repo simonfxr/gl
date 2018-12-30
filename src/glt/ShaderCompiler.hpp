@@ -106,6 +106,7 @@ struct GLT_API ShaderCache
     void checkValid();
 
 private:
+    bool remove(ShaderObject *);
     ShaderCache(const ShaderCache &);
     ShaderCache &operator=(const ShaderCache &);
 };

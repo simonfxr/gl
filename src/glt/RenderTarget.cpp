@@ -25,7 +25,7 @@ struct RenderTarget::Data
         ON_DEBUG(active = false);
     }
 
-    ~Data() { DEBUG_ASSERT(active); }
+    ~Data() { DEBUG_ASSERT(!active); }
 
     Viewport effectiveViewport() const
     {
