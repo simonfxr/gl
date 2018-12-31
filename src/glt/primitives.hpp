@@ -15,25 +15,25 @@ namespace glt {
 
 namespace primitives {
 
-void
+constexpr void
 setPoint(math::vec3_t &a, const math::vec3_t &b)
 {
     a = b;
 }
 
-void
+constexpr void
 setPoint(math::vec4_t &a, const math::vec3_t &b)
 {
     a = math::vec4(b, 1.f);
 }
 
-void
+constexpr void
 setVec(math::vec3_t &a, const math::vec3_t &b)
 {
     a = b;
 }
 
-void
+constexpr void
 setVec(math::vec4_t &a, const math::vec3_t &b)
 {
     a = math::vec4(b, 0.f);

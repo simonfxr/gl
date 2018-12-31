@@ -10,21 +10,19 @@
 
 MATH_BEGIN_NAMESPACE
 
-plane3_t
+constexpr plane3_t
 plane()
 {
     return plane(vec3(0, 1, 0), 0); // xz-plane (y = 0)
 }
 
-plane3_t
+constexpr plane3_t
 plane(const vec4_t &coeff)
 {
-    plane3_t P;
-    P.coeff = coeff;
-    return P;
+    return plane(vec3(coeff), coeff[3]);
 }
 
-plane3_t
+constexpr plane3_t
 plane(const direction3_t &normal, real dist)
 {
     plane3_t P;
@@ -53,13 +51,13 @@ normalize(const plane3_t &P)
     return plane(P.coeff * l);
 }
 
-real
+constexpr real
 distance(const plane3_t &P, const point3_t &a)
 {
     return dot(P.normal, a) - P.dist;
 }
 
-point3_t
+constexpr point3_t
 projectOnto(const plane3_t &P, const point3_t &a)
 {
     return (P.dist - dot(P.normal, a)) * P.normal + a;

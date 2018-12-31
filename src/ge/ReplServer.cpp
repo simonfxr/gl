@@ -194,7 +194,7 @@ ReplServer::running()
     return self->running;
 }
 
-std::shared_ptr<EventHandler<InputEvent>> &
+const std::shared_ptr<EventHandler<InputEvent>> &
 ReplServer::ioHandler()
 {
     return self->io_handler;

@@ -12,12 +12,10 @@ using namespace defs;
 
 struct color
 {
-
     typedef uint8 byte;
 
     union
     {
-
         struct
         {
             byte r, g, b, a;
@@ -26,26 +24,28 @@ struct color
         uint32 rgba;
     };
 
-    color() {}
+    color() = default;
 
-    color(byte _r, byte _g, byte _b, byte _a) : r(_r), g(_g), b(_b), a(_a) {}
+    constexpr color(byte _r, byte _g, byte _b, byte _a)
+      : r(_r), g(_g), b(_b), a(_a)
+    {}
 
-    color(byte _r, byte _g, byte _b) : r(_r), g(_g), b(_b), a(255) {}
+    constexpr color(byte _r, byte _g, byte _b) : r(_r), g(_g), b(_b), a(255) {}
 
-    color(const color &c) : r(c.r), g(c.g), b(c.b), a(c.a) {}
+    constexpr color(const color &c) : r(c.r), g(c.g), b(c.b), a(c.a) {}
 
-    explicit color(const math::vec4_t &v)
+    constexpr explicit color(const math::vec4_t &v)
       : r(byte(255 * v[0]))
       , g(byte(255 * v[1]))
       , b(byte(255 * v[2]))
       , a(byte(255 * v[3]))
     {}
 
-    explicit color(const math::vec3_t &v)
+    explicit constexpr color(const math::vec3_t &v)
       : r(byte(255 * v[0])), g(byte(255 * v[1])), b(byte(255 * v[2])), a(255)
     {}
 
-    color &operator=(const color &c)
+    constexpr color &operator=(const color &c)
     {
         r = c.r;
         g = c.g;
@@ -54,10 +54,10 @@ struct color
         return *this;
     }
 
-    math::vec4_t vec4() const
+    constexpr math::vec4_t vec4() const
     {
         using namespace math;
-        static const math::real Scale = real(1) / real(255);
+        constexpr math::real Scale = real(1) / real(255);
         return math::vec4(r, g, b, a) * Scale;
     }
 };

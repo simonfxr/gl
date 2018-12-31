@@ -12,7 +12,6 @@ namespace math {
 // every point x on the plane solves dot(normal, x - dist * normal) = 0
 struct plane3_t
 {
-
     union
     {
         struct
@@ -23,19 +22,21 @@ struct plane3_t
 
         vec4_t coeff;
     };
+
+    constexpr plane3_t() : normal{}, dist{} {}
 };
 
 } // namespace math
 
 MATH_BEGIN_NAMESPACE
 
-MATH_FUNC plane3_t
+constexpr MATH_FUNC plane3_t
 plane() PURE_FUNC;
 
-MATH_FUNC plane3_t
+constexpr MATH_FUNC plane3_t
 plane(const vec4_t &coeff) PURE_FUNC;
 
-MATH_FUNC plane3_t
+constexpr MATH_FUNC plane3_t
 plane(const direction3_t &normal, real dist) PURE_FUNC;
 
 // plane through a triangle: if the triangle is viewed such that the points
@@ -51,10 +52,10 @@ MATH_FUNC plane3_t
 normalize(const plane3_t &P) PURE_FUNC;
 
 // signed distance, positive on the side where the normal points
-MATH_FUNC real
+constexpr MATH_FUNC real
 distance(const plane3_t &P, const point3_t &a) PURE_FUNC;
 
-MATH_FUNC point3_t
+constexpr MATH_FUNC point3_t
 projectOnto(const plane3_t &P, const point3_t &a) PURE_FUNC;
 
 MATH_FUNC direction3_t

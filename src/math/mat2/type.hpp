@@ -25,11 +25,15 @@ struct mat2_t
         component_type components[padded_size];
     };
 
-    MATH_FUNC const column_type &operator[](defs::index) const PURE_FUNC;
-    MATH_FUNC column_type &operator[](defs::index) MUT_FUNC;
-    MATH_FUNC component_type operator()(defs::index,
-                                        defs::index) const PURE_FUNC;
-    MATH_FUNC component_type &operator()(defs::index, defs::index) MUT_FUNC;
+    constexpr mat2_t() : columns{} {}
+
+    constexpr MATH_FUNC const column_type &operator[](
+      defs::index) const PURE_FUNC;
+    constexpr MATH_FUNC column_type &operator[](defs::index) MUT_FUNC;
+    constexpr MATH_FUNC component_type operator()(defs::index,
+                                                  defs::index) const PURE_FUNC;
+    constexpr MATH_FUNC component_type &operator()(defs::index,
+                                                   defs::index) MUT_FUNC;
 };
 
 typedef mat2_t aligned_mat2_t ATTRS(ATTR_ALIGNED(16));

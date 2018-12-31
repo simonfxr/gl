@@ -14,7 +14,6 @@ namespace glt {
  */
 struct GLT_API Frame
 {
-
     math::point3_t origin;
     math::direction3_t x_axis;
     math::direction3_t z_axis;

@@ -44,7 +44,6 @@ const Outcode CLIP_ALL_MASK = (1ul << 6) - 1;
 // a four sided pyramid frustum, used to represent a viewing volume
 struct GLT_API ViewFrustum
 {
-
     // clip planes in world coordinates, normales point in the volume
     math::plane3_t planes[VIEW_FRUSTUM_PLANES]{};
 

@@ -12,7 +12,7 @@ namespace glt {
 
 using namespace math;
 
-mat4_t
+constexpr mat4_t
 translateTransform(vec3_t point)
 {
     mat4_t M = mat4();
@@ -20,7 +20,7 @@ translateTransform(vec3_t point)
     return M;
 }
 
-mat4_t
+constexpr mat4_t
 scaleTransform(vec3_t dim)
 {
     return mat4(mat3(vec3(dim[0], real(0), real(0)),
@@ -28,7 +28,7 @@ scaleTransform(vec3_t dim)
                      vec3(real(0), real(0), dim[2])));
 }
 
-mat4_t
+constexpr mat4_t
 scaleTransform(real dim)
 {
     return scaleTransform(vec3(dim));

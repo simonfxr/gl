@@ -6,19 +6,19 @@
 
 MATH_BEGIN_NAMESPACE
 
-mat2_t
+constexpr mat2_t
 mat2()
 {
     return mat2(vec2(1, 0), vec2(0, 1));
 }
 
-mat2_t
+constexpr mat2_t
 mat2(real x)
 {
     return mat2(vec2(x), vec2(x));
 }
 
-mat2_t
+constexpr mat2_t
 mat2(const mat2_t::buffer mat)
 {
     mat2_t A;
@@ -27,7 +27,7 @@ mat2(const mat2_t::buffer mat)
     return A;
 }
 
-mat2_t
+constexpr mat2_t
 mat2(const vec2_t &c1, const vec2_t &c2)
 {
     mat2_t A;
@@ -47,17 +47,23 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC const vec2_t &mat2_t::operator[](defs::index i) const
+constexpr MATH_INLINE_SPEC const vec2_t &mat2_t::operator[](defs::index i) const
 {
     return columns[i];
 }
 
-MATH_INLINE_SPEC vec2_t &mat2_t::operator[](defs::index i)
+constexpr MATH_INLINE_SPEC vec2_t &mat2_t::operator[](defs::index i)
 {
     return columns[i];
 }
 
-MATH_INLINE_SPEC real &
+constexpr MATH_INLINE_SPEC real
+mat2_t::operator()(defs::index i, defs::index j) const
+{
+    return components[i * vec2_t::padded_size + j];
+}
+
+constexpr MATH_INLINE_SPEC real &
 mat2_t::operator()(defs::index i, defs::index j)
 {
     return components[i * vec2_t::padded_size + j];

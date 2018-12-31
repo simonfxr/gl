@@ -6,19 +6,19 @@
 
 MATH_BEGIN_NAMESPACE
 
-mat3_t
+constexpr mat3_t
 mat3()
 {
     return mat3(vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1));
 }
 
-mat3_t
+constexpr mat3_t
 mat3(real x)
 {
     return mat3(vec3(x), vec3(x), vec3(x));
 }
 
-mat3_t
+constexpr mat3_t
 mat3(const mat3_t::buffer mat)
 {
     mat3_t A;
@@ -28,7 +28,7 @@ mat3(const mat3_t::buffer mat)
     return A;
 }
 
-mat3_t
+constexpr mat3_t
 mat3(const vec3_t &c1, const vec3_t &c2, const vec3_t &c3)
 {
     mat3_t A;
@@ -38,13 +38,13 @@ mat3(const vec3_t &c1, const vec3_t &c2, const vec3_t &c3)
     return A;
 }
 
-mat3_t
+constexpr mat3_t
 mat3(const mat4_t &A)
 {
     return mat3(vec3(A[0]), vec3(A[1]), vec3(A[2]));
 }
 
-void
+constexpr void
 load(mat3_t::buffer b, const mat3_t &m)
 {
     load(&b[0], m[0]);
@@ -52,19 +52,19 @@ load(mat3_t::buffer b, const mat3_t &m)
     load(&b[6], m[2]);
 }
 
-mat3_t
+constexpr mat3_t
 operator+(const mat3_t &A, const mat3_t &B)
 {
     return mat3(A[0] + B[0], A[1] + B[1], A[2] + B[2]);
 }
 
-mat3_t
+constexpr mat3_t
 operator-(const mat3_t &A, const mat3_t &B)
 {
     return mat3(A[0] - B[0], A[1] - B[1], A[2] - B[2]);
 }
 
-mat3_t operator*(const mat3_t &A, const mat3_t &B)
+constexpr mat3_t operator*(const mat3_t &A, const mat3_t &B)
 {
     mat3_t AT = transpose(A);
     mat3_t C;
@@ -74,67 +74,67 @@ mat3_t operator*(const mat3_t &A, const mat3_t &B)
     return C;
 }
 
-vec3_t operator*(const mat3_t &A, const vec3_t &v)
+constexpr vec3_t operator*(const mat3_t &A, const vec3_t &v)
 {
     return v[0] * A[0] + v[1] * A[1] + v[2] * A[2];
     // mat3_t AT = transpose(A);
     // return vec3(dot(v, AT[0]), dot(v, AT[1]), dot(v, AT[2]));
 }
 
-mat3_t operator*(const mat3_t &A, real x)
+constexpr mat3_t operator*(const mat3_t &A, real x)
 {
     return mat3(A[0] * x, A[1] * x, A[2] * x);
 }
 
-mat3_t operator*(real x, const mat3_t &A)
+constexpr mat3_t operator*(real x, const mat3_t &A)
 {
     return A * x;
 }
 
-mat3_t
+constexpr mat3_t
 operator/(const mat3_t &A, real x)
 {
     return A * math::recip(x);
 }
 
-mat3_t &
+constexpr mat3_t &
 operator+=(mat3_t &A, const mat3_t &B)
 {
     return A = A + B;
 }
 
-mat3_t &
+constexpr mat3_t &
 operator-=(mat3_t &A, const mat3_t &B)
 {
     return A = A - B;
 }
 
-mat3_t &
+constexpr mat3_t &
 operator*=(mat3_t &A, real x)
 {
     return A = A * x;
 }
 
-mat3_t &
+constexpr mat3_t &
 operator*=(mat3_t &A, const mat3_t &B)
 {
     return A = A * B;
 }
 
-mat3_t &
+constexpr mat3_t &
 operator/=(mat3_t &A, real x)
 {
     return A = A / x;
 }
 
-real
+constexpr real
 determinant(const mat3_t &A)
 {
     const mat3_t AT = transpose(A);
     struct
     {
         mat3_t::buffer data;
-    } m;
+    } m{};
     load(m.data, AT);
 
     real t4 = m.data[0] * m.data[4];
@@ -158,7 +158,7 @@ inverse(const mat3_t &A)
         mat3_t::buffer data;
     } m;
     load(m.data, AT);
-    mat3_t::buffer data;
+    mat3_t::buffer data{};
 
     real t4 = m.data[0] * m.data[4];
     real t6 = m.data[0] * m.data[5];
@@ -200,25 +200,25 @@ orthonormalBasis(const mat3_t &A)
     return mat3(u, v, cross(u, v));
 }
 
-vec3_t
+constexpr vec3_t
 transform(const mat3_t &A, const vec3_t &v)
 {
     return A * v;
 }
 
-point3_t
+constexpr point3_t
 transformPoint(const mat3_t &A, const point3_t &v)
 {
     return transform(A, v);
 }
 
-vec3_t
+constexpr vec3_t
 transformVector(const mat3_t &A, const vec3_t &v)
 {
     return transform(A, v);
 }
 
-mat3_t
+constexpr mat3_t
 transpose(const mat3_t &A)
 {
     mat3_t B;
@@ -228,18 +228,18 @@ transpose(const mat3_t &A)
     return B;
 }
 
-bool
+constexpr bool
 equal(const mat3_t &A, const mat3_t &B, real epsi)
 {
     return equal(A[0], B[0], epsi) && equal(A[1], B[1], epsi) &&
            equal(A[2], B[2], epsi);
 }
 
-mat3_t
+constexpr mat3_t
 coordinateSystem(const vec3_t &a)
 {
     vec3_t aa = abs(a);
-    vec3_t b;
+    vec3_t b{};
 
     if (aa[0] > aa[1] && aa[0] > aa[2])
         b = vec3(-a[2], 0, a[0]);
@@ -255,23 +255,23 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC const vec3_t &mat3_t::operator[](defs::index i) const
+constexpr MATH_INLINE_SPEC const vec3_t &mat3_t::operator[](defs::index i) const
 {
     return columns[i];
 }
 
-MATH_INLINE_SPEC vec3_t &mat3_t::operator[](defs::index i)
+constexpr MATH_INLINE_SPEC vec3_t &mat3_t::operator[](defs::index i)
 {
     return columns[i];
 }
 
-MATH_INLINE_SPEC real &
+constexpr MATH_INLINE_SPEC real &
 mat3_t::operator()(defs::index i, defs::index j)
 {
     return components[i * vec3_t::padded_size + j];
 }
 
-MATH_INLINE_SPEC real
+constexpr MATH_INLINE_SPEC real
 mat3_t::operator()(defs::index i, defs::index j) const
 {
     return components[i * vec3_t::padded_size + j];

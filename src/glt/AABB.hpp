@@ -8,31 +8,30 @@ namespace glt {
 
 struct AABB
 {
+    math::point3_t corner_min{};
+    math::point3_t corner_max{};
 
-    math::point3_t corner_min;
-    math::point3_t corner_max;
+    constexpr AABB() { clear(); }
 
-    AABB() { clear(); }
-
-    void extend(const math::point3_t &p)
+    constexpr void extend(const math::point3_t &p)
     {
         corner_min = math::min(p, corner_min);
         corner_max = math::max(p, corner_max);
     }
 
-    void clear()
+    constexpr void clear()
     {
         corner_min = math::vec3(math::POS_INF);
         corner_max = math::vec3(math::NEG_INF);
     }
 
-    math::point3_t center() const
+    constexpr math::point3_t center() const
     {
         using namespace math;
         return 0.5f * (corner_min + corner_max);
     }
 
-    math::vec3_t dimensions() const
+    constexpr math::vec3_t dimensions() const
     {
         using namespace math;
         return corner_max - corner_min;

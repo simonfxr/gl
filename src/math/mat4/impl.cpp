@@ -7,20 +7,20 @@
 
 MATH_BEGIN_NAMESPACE
 
-mat4_t
+constexpr mat4_t
 mat4()
 {
     return mat4(
       vec4(1, 0, 0, 0), vec4(0, 1, 0, 0), vec4(0, 0, 1, 0), vec4(0, 0, 0, 1));
 }
 
-mat4_t
+constexpr mat4_t
 mat4(real x)
 {
     return mat4(vec4(x), vec4(x), vec4(x), vec4(x));
 }
 
-mat4_t
+constexpr mat4_t
 mat4(const real mat[16])
 {
     mat4_t A;
@@ -29,13 +29,13 @@ mat4(const real mat[16])
     return A;
 }
 
-mat4_t
+constexpr mat4_t
 mat4(const mat3_t &m)
 {
     return mat4(vec4(m[0], 0), vec4(m[1], 0), vec4(m[2], 0), vec4(0, 0, 0, 1));
 }
 
-mat4_t
+constexpr mat4_t
 mat4(const vec4_t &c1, const vec4_t &c2, const vec4_t &c3, const vec4_t &c4)
 {
     mat4_t A;
@@ -55,19 +55,19 @@ load(mat4_t::buffer b, const mat4_t &m)
     load(&b[12], m[3]);
 }
 
-mat4_t
+constexpr mat4_t
 operator+(const mat4_t &A, const mat4_t &B)
 {
     return mat4(A[0] + B[0], A[1] + B[1], A[2] + B[2], A[3] + B[3]);
 }
 
-mat4_t
+constexpr mat4_t
 operator-(const mat4_t &A, const mat4_t &B)
 {
     return mat4(A[0] - B[0], A[1] - B[1], A[2] - B[2], A[3] - B[3]);
 }
 
-mat4_t operator*(const mat4_t &A, const mat4_t &B)
+constexpr mat4_t operator*(const mat4_t &A, const mat4_t &B)
 {
     mat4_t C;
     // mat4_t AT = transpose(A);
@@ -87,76 +87,76 @@ mat4_t operator*(const mat4_t &A, const mat4_t &B)
     return C;
 }
 
-vec4_t operator*(const mat4_t &A, const vec4_t &v)
+constexpr vec4_t operator*(const mat4_t &A, const vec4_t &v)
 {
     return v[0] * A[0] + v[1] * A[1] + v[2] * A[2] + v[3] * A[3];
 }
 
-mat4_t operator*(const mat4_t &A, real x)
+constexpr mat4_t operator*(const mat4_t &A, real x)
 {
     return mat4(A[0] * x, A[1] * x, A[2] * x, A[3] * x);
 }
 
-mat4_t operator*(real x, const mat4_t &A)
+constexpr mat4_t operator*(real x, const mat4_t &A)
 {
     return A * x;
 }
 
-mat4_t
+constexpr mat4_t
 operator/(const mat4_t &A, real x)
 {
     return A * math::recip(x);
 }
 
-mat4_t &
+constexpr mat4_t &
 operator+=(mat4_t &A, const mat4_t &B)
 {
     return A = A + B;
 }
 
-mat4_t &
+constexpr mat4_t &
 operator-=(mat4_t &A, const mat4_t &B)
 {
     return A = A - B;
 }
 
-mat4_t &
+constexpr mat4_t &
 operator*=(mat4_t &A, real x)
 {
     return A = A * x;
 }
 
-mat4_t &
+constexpr mat4_t &
 operator*=(mat4_t &A, const mat4_t &B)
 {
     return A = A * B;
 }
 
-mat4_t &
+constexpr mat4_t &
 operator/=(mat4_t &A, real x)
 {
     return A = A / x;
 }
 
-vec4_t
+constexpr vec4_t
 transform(const mat4_t &A, const vec4_t &v)
 {
     return A * v;
 }
 
-vec3_t
+constexpr vec3_t
 transformPoint(const mat4_t &A, const vec3_t &p)
 {
     return vec3(A * vec4(p, real(1)));
 }
 
-vec3_t
+constexpr vec3_t
 transformVector(const mat4_t &A, const vec3_t &v)
 {
     return vec3(A * vec4(v, real(0)));
 }
 
-mat4_t
+constexpr mat4_t
 transpose(const mat4_t &A)
 {
     mat4_t B;
@@ -230,13 +230,13 @@ inverse(const mat4_t &A)
     return Ainv;
 }
 
-vec4_t
+constexpr vec4_t
 transposedMult(const mat4_t &AT, const vec4_t &v)
 {
     return vec4(dot(v, AT[0]), dot(v, AT[1]), dot(v, AT[2]), dot(v, AT[3]));
 }
 
-bool
+constexpr bool
 equal(const mat4_t &A, const mat4_t &B, real epsi)
 {
     return equal(A[0], B[0], epsi) && equal(A[1], B[1], epsi) &&
@@ -247,23 +247,23 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-MATH_INLINE_SPEC const vec4_t &mat4_t::operator[](defs::index i) const
+constexpr MATH_INLINE_SPEC const vec4_t &mat4_t::operator[](defs::index i) const
 {
     return columns[i];
 }
 
-MATH_INLINE_SPEC vec4_t &mat4_t::operator[](defs::index i)
+constexpr MATH_INLINE_SPEC vec4_t &mat4_t::operator[](defs::index i)
 {
     return columns[i];
 }
 
-MATH_INLINE_SPEC real
+constexpr MATH_INLINE_SPEC real
 mat4_t::operator()(defs::index i, defs::index j) const
 {
     return components[i * 4 + j];
 }
 
-MATH_INLINE_SPEC real &
+constexpr MATH_INLINE_SPEC real &
 mat4_t::operator()(defs::index i, defs::index j)
 {
     return components[i * 4 + j];
