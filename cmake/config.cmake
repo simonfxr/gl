@@ -165,7 +165,6 @@ if(BUILD_DEBUG)
 endif()
 
 if(USE_OPENMP)
-
   if(NOT DEFINED OPENMP_FOUND)
     find_package(OpenMP)
     if(OPENMP_FOUND)

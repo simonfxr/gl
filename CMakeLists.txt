@@ -50,12 +50,7 @@ if(SYS_WINDOWS)
   set_option(GLFW_LIBRARY "${GLFW_LIB_DEF}" PATH "path to GLEW library")
 endif()
 
-if(COMP_GCC OR COMP_ICC)
-  set(USE_OPENMP_DEF TRUE)
-else()
-  set(USE_OPENMP_DEF FALSE)
-endif()
-set_option(USE_OPENMP ${USE_OPENMP_DEF} BOOL "enable openmp support")
+set_option(USE_OPENMP True BOOL "enable openmp support")
 
 set_option(USE_LTO FALSE BOOL "enable link time optimisations")
 
