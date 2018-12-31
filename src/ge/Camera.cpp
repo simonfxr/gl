@@ -18,7 +18,6 @@ struct Handlers
 
 struct Camera::Data
 {
-
     real _speed{ real(0.1) };
     vec2_t _mouse_sensitivity = vec2(real(0.00075));
     glt::Frame _frame;
@@ -53,6 +52,12 @@ struct Camera::Data
                             const Event<InputEvent> & /*unused*/);
     void handleBeforeRender(const Event<RenderEvent> & /*e*/);
 };
+
+void
+Camera::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
 
 namespace {
 
@@ -227,17 +232,17 @@ Camera::Data::handleMouseMoved(Camera *cam, const Event<MouseMoved> &ev)
 void
 Camera::Data::handleInput(Camera *cam, const Event<InputEvent> & /*unused*/)
 {
-    Data *self = cam->self;
-    real lenSq = lengthSq(self->_step_accum);
+    auto &self = *cam->self;
+    real lenSq = lengthSq(self._step_accum);
     if (lenSq >= math::real(1e-4)) {
-        vec3_t local_step = self->_speed * normalize(self->_step_accum);
+        vec3_t local_step = self._speed * normalize(self._step_accum);
         Event<CameraMoved> ev = makeEvent(
-          CameraMoved(*cam, transformVector(self->_frame, local_step)));
-        if (self->_events.moved.raise(ev))
-            self->_frame.translateWorld(ev.info.allowed_step);
+          CameraMoved(*cam, transformVector(self._frame, local_step)));
+        if (self._events.moved.raise(ev))
+            self._frame.translateWorld(ev.info.allowed_step);
     }
 
-    self->_step_accum = vec3(0.f);
+    self._step_accum = vec3(0.f);
 }
 
 void
@@ -251,22 +256,19 @@ Camera::Data::handleBeforeRender(const Event<RenderEvent> &e)
 void
 Camera::Data::mouseMoved(Camera *cam, index16 dx, index16 dy)
 {
-    Data *self = cam->self;
+    auto &self = *cam->self;
     vec2_t rot = vec2(dx, dy) * _mouse_sensitivity;
     Event<CameraRotated> re =
       makeEvent(CameraRotated(*cam, vec2(-rot[1], rot[0])));
-    if (self->_events.rotated.raise(re)) {
-        self->_frame.rotateLocal(re.info.allowed_angle[0], vec3(1.f, 0.f, 0.f));
-        self->_frame.rotateWorld(re.info.allowed_angle[1], vec3(0.f, 1.f, 0.f));
+    if (self._events.rotated.raise(re)) {
+        self._frame.rotateLocal(re.info.allowed_angle[0], vec3(1.f, 0.f, 0.f));
+        self._frame.rotateWorld(re.info.allowed_angle[1], vec3(0.f, 1.f, 0.f));
     }
 }
 
 Camera::Camera() : self(new Data(this)) {}
 
-Camera::~Camera()
-{
-    delete self;
-}
+Camera::~Camera() = default;
 
 Camera::Commands &
 Camera::commands()

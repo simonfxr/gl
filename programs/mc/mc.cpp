@@ -319,18 +319,17 @@ void
 Anim::initCLKernels(bool *success)
 {
     cl_int cl_err;
-    char *source_code;
-    defs::size code_size;
 
-    if (!sys::io::readFile(engine.out(),
-                           "programs/mc/cl/program.cl",
-                           &source_code,
-                           &code_size)) {
+    auto [source_code, code_size] =
+      sys::io::readFile(engine.out(), "programs/mc/cl/program.cl");
+
+    if (!source_code) {
         ERR("failed reading CL program");
         return;
     }
 
-    cl::Program::Sources source(1, std::make_pair(source_code, code_size));
+    cl::Program::Sources source(1,
+                                std::make_pair(source_code.get(), code_size));
     cl_program = cl::Program(cl_ctx, source, &cl_err);
     CL_ERR("creating program failed");
 
@@ -719,6 +718,7 @@ main(int argc, char *argv[])
     Anim anim;
     ge::EngineOptions opts;
 
+    anim.engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
     opts.parse(&argc, &argv);
     opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));
     opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::initCL));

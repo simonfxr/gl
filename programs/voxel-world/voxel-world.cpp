@@ -1119,6 +1119,7 @@ int
 main(int argc, char *argv[])
 {
     ge::Engine engine;
+    engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
     int32 ret = 0;
     {
         ge::EngineOptions opts;

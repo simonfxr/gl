@@ -1,14 +1,15 @@
 #ifndef GE_CAMERA_HPP
 #define GE_CAMERA_HPP
 
-#include "glt/Frame.hpp"
+#include "ge/conf.hpp"
 
 #include "ge/Command.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Event.hpp"
-#include "ge/conf.hpp"
-
+#include "glt/Frame.hpp"
 #include "math/vec2.hpp"
+
+#include <memory>
 
 namespace ge {
 
@@ -82,7 +83,11 @@ struct GE_API Camera : public Plugin
 
 private:
     struct Data;
-    Data *const self;
+    struct DataDeleter
+    {
+        void operator()(Data *p) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
 
     Camera(const Camera &);
     Camera &operator=(const Camera &);

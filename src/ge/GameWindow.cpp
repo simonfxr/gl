@@ -72,6 +72,12 @@ struct GameWindow::Data
                                            double yoffset);
 };
 
+void
+GameWindow::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
+
 namespace {
 
 void
@@ -431,11 +437,6 @@ GameWindow::GameWindow(const WindowOptions &opts)
     self->init(opts);
 }
 
-GameWindow::~GameWindow()
-{
-    delete self;
-}
-
 bool
 GameWindow::init()
 {
@@ -508,7 +509,8 @@ GameWindow::Data::runHandleInputEvents(Data *win,
 void
 GameWindow::registerHandlers(EngineEvents &evnts)
 {
-    evnts.handleInput.reg(makeEventHandler(Data::runHandleInputEvents, self));
+    evnts.handleInput.reg(
+      makeEventHandler(Data::runHandleInputEvents, self.get()));
 }
 
 size

@@ -140,6 +140,7 @@ Client::handleIO(Engine &e)
 
 struct ReplServer::Data
 {
+    ReplServer *const self;
     Socket server;
     std::vector<std::shared_ptr<Client>> clients;
     bool running{ false };
@@ -147,21 +148,29 @@ struct ReplServer::Data
     Engine &engine;
     std::shared_ptr<EventHandler<InputEvent>> io_handler;
 
-    Data(Engine &e, std::shared_ptr<EventHandler<InputEvent>> _handler)
-      : engine(e), io_handler(std::move(_handler))
+    Data(ReplServer *self_,
+         Engine &e,
+         std::shared_ptr<EventHandler<InputEvent>> _handler)
+      : self(self_), engine(e), io_handler(std::move(_handler))
     {}
+
+    ~Data()
+    {
+        if (running)
+            self->shutdown();
+    }
 };
 
-ReplServer::ReplServer(Engine &e)
-  : self(new Data(e, makeEventHandler(this, &ReplServer::handleInputEvent)))
-{}
-
-ReplServer::~ReplServer()
+void
+ReplServer::DataDeleter::operator()(Data *p) noexcept
 {
-    if (self->running)
-        shutdown();
-    delete self;
+    delete p;
 }
+
+ReplServer::ReplServer(Engine &e)
+  : self(
+      new Data(this, e, makeEventHandler(this, &ReplServer::handleInputEvent)))
+{}
 
 bool
 ReplServer::start(const IPAddr4 &listen_addr, uint16 port)

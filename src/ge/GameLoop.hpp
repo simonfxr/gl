@@ -4,6 +4,8 @@
 #include "ge/conf.hpp"
 #include "math/real.hpp"
 
+#include <memory>
+
 namespace ge {
 
 using namespace defs;
@@ -27,7 +29,6 @@ struct GE_API GameLoop
     explicit GameLoop(defs::size ticks,
                       defs::size max_skip = 10,
                       defs::size max_fps = 120);
-    ~GameLoop();
 
     time tickTime() const;
 
@@ -63,7 +64,11 @@ private:
     GameLoop &operator=(const GameLoop &);
 
     struct Data;
-    Data *const self;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
 };
 
 } // namespace ge

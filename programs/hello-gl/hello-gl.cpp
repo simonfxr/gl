@@ -166,6 +166,7 @@ main(int argc, char *argv[])
 {
     ge::EngineOptions opts;
     Anim anim;
+    anim.engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
     anim.link();
     opts.parse(&argc, &argv);
     opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));

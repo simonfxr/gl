@@ -16,7 +16,6 @@ struct GE_API ReplServer
 {
 
     ReplServer(Engine &);
-    ~ReplServer();
 
     bool start(const sys::io::IPAddr4 &, uint16);
     bool running();
@@ -32,7 +31,11 @@ struct GE_API ReplServer
 
 private:
     struct Data;
-    Data *const self;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
 
     ReplServer(const ReplServer &);
     ReplServer &operator=(const ReplServer &);

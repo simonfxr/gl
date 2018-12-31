@@ -21,10 +21,7 @@ struct GE_API KeyPressed
 
 struct GE_API KeyHandler
 {
-
-    KeyHandler(CommandProcessor &proc);
-
-    ~KeyHandler();
+    explicit KeyHandler(CommandProcessor &proc);
 
     void keyPressed(KeyCode code);
 
@@ -49,7 +46,11 @@ struct GE_API KeyHandler
 
 private:
     struct Data;
-    Data *const self;
+    struct DataDeleter
+    {
+        void operator()(Data *p) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
 };
 
 } // namespace ge

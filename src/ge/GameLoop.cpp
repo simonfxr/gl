@@ -33,6 +33,12 @@ struct GameLoop::Data
     time now();
 };
 
+void
+GameLoop::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
+
 GameLoop::time
 GameLoop::Data::now()
 {
@@ -47,11 +53,6 @@ GameLoop::GameLoop(defs::size _ticks, defs::size max_skip, defs::size max_fps)
     ticks(_ticks);
     maxFramesSkipped(max_skip);
     maxFPS(max_fps);
-}
-
-GameLoop::~GameLoop()
-{
-    delete self;
 }
 
 math::real

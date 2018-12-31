@@ -15,7 +15,6 @@ namespace ge {
 
 struct Engine::Data : public GameLoop::Game
 {
-
     struct Modules
     {
         Modules()
@@ -36,19 +35,19 @@ struct Engine::Data : public GameLoop::Game
     Modules __modules;
 
     Engine &theEngine; // owning engine
-    GameWindow *window{};
+    std::unique_ptr<GameWindow> window;
     GameLoop gameLoop;
     CommandProcessor commandProcessor;
     KeyHandler keyHandler;
     ReplServer replServer;
-    bool skipRender{};
+    bool skipRender{ false };
     std::string programName;
     std::string develDataDir;
 
     sys::io::OutStream *out;
 
-    bool initialized;
-    const EngineOptions *opts; // only during init
+    bool initialized{ false };
+    const EngineOptions *opts{}; // only during init
 
     glt::ShaderManager shaderManager;
     glt::RenderManager renderManager;
@@ -62,11 +61,13 @@ struct Engine::Data : public GameLoop::Game
       , keyHandler(commandProcessor)
       , replServer(engine)
       , out(&sys::io::stdout())
-      , initialized(false)
-      , opts(nullptr)
     {}
 
-    ~Data() override = default;
+    ~Data()
+    {
+        renderManager.shutdown();
+        shaderManager.shutdown();
+    }
 
     bool init(const EngineOptions &opts);
 
@@ -81,6 +82,12 @@ struct Engine::Data : public GameLoop::Game
     bool execCommand(std::vector<CommandArg> &args);
 };
 
+void
+Engine::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
+
 namespace {
 
 bool
@@ -92,14 +99,6 @@ runInit(EventSource<InitEvent> &source, const Event<InitEvent> &e);
 #define SELF self
 
 Engine::Engine() : self(new Data(*this)) {}
-
-Engine::~Engine()
-{
-    self->renderManager.shutdown();
-    self->shaderManager.shutdown();
-    delete self->window;
-    delete self;
-}
 
 GameWindow &
 Engine::window()
@@ -214,11 +213,13 @@ Engine::run(const EngineOptions &opts)
 
     if (!self->develDataDir.empty()) {
         commandProcessor().addScriptDirectory(
-          sys::fs::join(self->develDataDir, "..", "..", "scripts"), false);
+          sys::fs::join(self->develDataDir, "scripts"));
+        commandProcessor().addScriptDirectory(
+          sys::fs::join(self->develDataDir, "..", "..", "scripts"));
         shaderManager().addShaderDirectory(
-          sys::fs::join(self->develDataDir, "shaders"), false);
+          sys::fs::join(self->develDataDir, "shaders"));
         shaderManager().addShaderDirectory(
-          sys::fs::join(self->develDataDir, "..", "..", "shaders"), false);
+          sys::fs::join(self->develDataDir, "..", "..", "shaders"));
     }
 
     for (const auto &scriptDir : opts.scriptDirs) {
@@ -338,7 +339,7 @@ bool
 Engine::Data::init(const EngineOptions &eopts)
 {
     opts = &eopts;
-    window = new GameWindow(eopts.window);
+    window.reset(new GameWindow(eopts.window));
     renderManager.setDefaultRenderTarget(&window->renderTarget());
     registerHandlers();
     initialized = true;

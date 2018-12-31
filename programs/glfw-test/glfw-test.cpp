@@ -21,7 +21,6 @@ gl_arb_debug_callback(GLenum /* source */,
 int
 main()
 {
-
     FILE *log = fopen("log.txt", "ae");
     int ret = 0;
 

@@ -3,6 +3,7 @@
 #include "sys/module.hpp"
 
 #include <cstring>
+#include <optional>
 
 namespace sys {
 
@@ -197,18 +198,54 @@ HandleStream::flush_buffer()
     return convertErr(err);
 }
 
-bool
-readFile(sys::io::OutStream &err,
-         const std::string &path,
-         char **file_contents,
-         size *file_size)
+namespace {
+template<typename F>
+struct Finally
+{
+    std::optional<F> _cleanup;
+
+    Finally(F f) : _cleanup(std::move(f)) {}
+
+    Finally(const Finally &) = delete;
+    Finally(Finally &&) = default;
+
+    ~Finally() { fire(); }
+
+    Finally &operator=(const Finally &) = delete;
+    Finally &operator=(Finally &&) = default;
+
+    void fire()
+    {
+        if (_cleanup) {
+            _cleanup->operator()();
+            _cleanup = std::nullopt;
+        }
+    }
+
+    void disarm() { _cleanup = std::nullopt; }
+};
+} // namespace
+
+namespace {
+template<typename F>
+auto
+make_finally(F &&f)
+{
+    return Finally<std::remove_cv_t<F>>(std::forward<F>(f));
+}
+} // namespace
+
+std::pair<std::unique_ptr<char[]>, size_t>
+readFile(sys::io::OutStream &err, const std::string &path) noexcept
 {
     FILE *in = fopen(path.c_str(), "re");
+    auto close_in = make_finally([in]() {
+        if (in)
+            fclose(in);
+    });
+
     if (in == nullptr)
         goto fail;
-
-    *file_contents = nullptr;
-    *file_size = 0;
 
     if (fseek(in, 0, SEEK_END) == -1)
         goto fail;
@@ -227,21 +264,15 @@ readFile(sys::io::OutStream &err,
                 goto fail;
 
             contents[size] = '\0';
-            *file_contents = contents.release();
-            *file_size = SIZE(size);
+            return std::make_pair(std::move(contents), size_t(size));
         }
     }
-
-    fclose(in);
-    return true;
 
 fail:
     if (err.writeable())
         err << "unable to read file: " << path << sys::io::endl;
 
-    if (in != nullptr)
-        fclose(in);
-    return false;
+    return std::make_pair(nullptr, 0);
 }
 
 } // namespace io

@@ -243,7 +243,6 @@ EngineOptions::EngineOptions()
 #ifdef GLDEBUG
     window.settings.debugContext = true;
 #endif
-    scriptDirs.emplace_back("scripts");
 }
 
 EngineOptions &

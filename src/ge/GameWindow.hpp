@@ -1,14 +1,16 @@
 #ifndef GE_GAMEWINDOW_HPP
 #define GE_GAMEWINDOW_HPP
 
-#include <string>
+#include "ge/conf.hpp"
 
 #include "ge/Command.hpp"
 #include "ge/EngineEvents.hpp"
 #include "ge/Event.hpp"
 #include "ge/KeyBinding.hpp"
 #include "ge/WindowRenderTarget.hpp"
-#include "ge/conf.hpp"
+
+#include <memory>
+#include <string>
 
 namespace ge {
 
@@ -53,7 +55,6 @@ struct GE_API WindowOptions
 struct GE_API GameWindow
 {
     GameWindow(const WindowOptions &opts = WindowOptions());
-    ~GameWindow();
 
     void showMouseCursor(bool show);
     bool showMouseCursor() const;
@@ -88,7 +89,11 @@ private:
     GameWindow &operator=(const GameWindow &_);
 
     struct Data;
-    Data *const self;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
 };
 
 struct WindowEvent;

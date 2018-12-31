@@ -739,7 +739,7 @@ main(int argc, char *argv[])
     EngineOptions opts;
     Engine engine;
     Anim anim(engine);
-
+    engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
     opts.parse(&argc, &argv);
     opts.inits.init.reg(makeEventHandler(&anim, &Anim::init));
     opts.inits.init.reg(makeEventHandler(&anim, &Anim::link));

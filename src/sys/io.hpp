@@ -5,6 +5,7 @@
 #include "sys/endian.hpp"
 #include "sys/io/Stream.hpp"
 
+#include <memory>
 #include <string>
 
 namespace sys {
@@ -138,11 +139,8 @@ protected:
     StreamResult flush_buffer();
 };
 
-SYS_API bool
-readFile(sys::io::OutStream &err,
-         const std::string &path,
-         char **contents,
-         size *size);
+SYS_API std::pair<std::unique_ptr<char[]>, size_t>
+readFile(sys::io::OutStream &err, const std::string &path) noexcept;
 
 } // namespace io
 

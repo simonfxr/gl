@@ -54,6 +54,12 @@ struct KeyHandler::Data
     explicit Data(CommandProcessor &proc);
 };
 
+void
+KeyHandler::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
+
 #define NULL_COMMAND CommandPtr()
 
 KeyHandler::Data::Data(CommandProcessor &proc) : processor(proc)
@@ -66,11 +72,6 @@ KeyHandler::Data::Data(CommandProcessor &proc) : processor(proc)
     ASSERT_MSG((kc) >= 0 && (kc) < int32(keycode::Count), "invalid keycode")
 
 KeyHandler::KeyHandler(CommandProcessor &proc) : self(new Data(proc)) {}
-
-KeyHandler::~KeyHandler()
-{
-    delete self;
-}
 
 void
 KeyHandler::keyPressed(KeyCode code)

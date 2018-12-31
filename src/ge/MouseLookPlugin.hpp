@@ -8,7 +8,6 @@ namespace ge {
 
 struct GE_API MouseLookPlugin : public Plugin
 {
-
     enum State
     {
         Grabbing,
@@ -40,7 +39,12 @@ struct GE_API MouseLookPlugin : public Plugin
 
 private:
     struct Data;
-    Data *const self;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+
+    const std::unique_ptr<Data, DataDeleter> self;
 
     MouseLookPlugin(const MouseLookPlugin &);
     MouseLookPlugin &operator=(const MouseLookPlugin &);

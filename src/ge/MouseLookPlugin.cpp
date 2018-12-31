@@ -31,6 +31,12 @@ struct MouseLookPlugin::Data
     void handleFocusChanged(const Event<FocusChanged> & /*unused*/);
 };
 
+void
+MouseLookPlugin::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
+
 MouseLookPlugin::Data::Data()
 {
     _commands.grab = makeCommand(this,
@@ -122,10 +128,7 @@ MouseLookPlugin::Data::handleFocusChanged(
 
 MouseLookPlugin::MouseLookPlugin() : self(new Data) {}
 
-MouseLookPlugin::~MouseLookPlugin()
-{
-    delete self;
-}
+MouseLookPlugin::~MouseLookPlugin() = default;
 
 void
 MouseLookPlugin::shouldGrabMouse(bool grab)
@@ -176,11 +179,11 @@ MouseLookPlugin::registerWith(Engine &e)
     self->_engine = &e;
     GameWindow &win = e.window();
     win.events().mouseButton.reg(
-      makeEventHandler(self, &MouseLookPlugin::Data::handleMouseClick));
+      makeEventHandler(self.get(), &MouseLookPlugin::Data::handleMouseClick));
     win.events().mouseMoved.reg(
-      makeEventHandler(self, &MouseLookPlugin::Data::handleMouseMove));
+      makeEventHandler(self.get(), &MouseLookPlugin::Data::handleMouseMove));
     win.events().focusChanged.reg(
-      makeEventHandler(self, &MouseLookPlugin::Data::handleFocusChanged));
+      makeEventHandler(self.get(), &MouseLookPlugin::Data::handleFocusChanged));
 }
 
 void

@@ -25,9 +25,7 @@ namespace ge {
 
 struct GE_API Engine
 {
-
     Engine();
-    ~Engine();
 
     GameWindow &window();
     GameLoop &gameLoop();
@@ -61,7 +59,11 @@ private:
     Engine &operator=(const Engine &);
 
     struct Data;
-    Data *const self;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
 };
 
 } // namespace ge
