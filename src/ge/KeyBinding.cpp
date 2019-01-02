@@ -15,11 +15,7 @@ struct KeyBindingState::Data
     Data();
 };
 
-void
-KeyBindingState::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(KeyBindingState)
 
 KeyBindingState::KeyBindingState() : self(new Data) {}
 

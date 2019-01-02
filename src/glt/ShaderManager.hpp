@@ -88,15 +88,7 @@ struct GLT_API ShaderManager
     void shutdown();
 
 private:
-    struct Data;
-    friend struct Data;
-
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
-
-    std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 };
 
 } // namespace glt

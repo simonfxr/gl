@@ -44,11 +44,7 @@ private:
     Data &operator=(const Data &) = delete;
 };
 
-void
-ShaderManager::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(ShaderManager)
 
 ShaderManager::ShaderManager() : self(new Data(*this))
 {

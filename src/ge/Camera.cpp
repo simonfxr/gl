@@ -53,11 +53,7 @@ struct Camera::Data
     void handleBeforeRender(const Event<RenderEvent> & /*e*/);
 };
 
-void
-Camera::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(Camera)
 
 namespace {
 

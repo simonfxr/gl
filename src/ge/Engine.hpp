@@ -55,12 +55,7 @@ struct GE_API Engine
     void setDevelDataDir(const std::string &);
 
 private:
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 };
 
 } // namespace ge

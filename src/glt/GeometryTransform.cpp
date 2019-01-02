@@ -62,11 +62,7 @@ struct GeometryTransform::Data
     }
 };
 
-void
-GeometryTransform::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(GeometryTransform)
 
 GeometryTransform::GeometryTransform() : self(new Data) {}
 

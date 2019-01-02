@@ -82,12 +82,7 @@ struct GE_API Camera : public Plugin
     void registerCommands(CommandProcessor &proc) final override;
 
 private:
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *p) noexcept;
-    };
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 };
 
 } // namespace ge

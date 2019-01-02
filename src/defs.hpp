@@ -10,7 +10,7 @@ namespace defs {
 
 template<typename IntT>
 inline size
-___check_size(IntT x)
+_check_size_(IntT x)
 {
     size s = size(x);
 #ifdef SIGNED_SIZE
@@ -21,7 +21,7 @@ ___check_size(IntT x)
 
 template<typename SizeT>
 inline uptr
-___check_unsize(SizeT s)
+_check_unsize_(SizeT s)
 {
 #ifdef SIGNED_SIZE
 
@@ -31,7 +31,7 @@ ___check_unsize(SizeT s)
 
 template<typename SizeT>
 inline SizeT
-___assert_size(SizeT s)
+_assert_size_(SizeT s)
 {
 #ifdef SIGNED_SIZE
 //    ASSERT(s >= 0);
@@ -39,12 +39,23 @@ ___assert_size(SizeT s)
     return s;
 }
 
-#define SIZE(x) ::defs::___check_size(x)
-#define UNSIZE(x) ::defs::___check_unsize(x)
-#define ASSERT_SIZE(x) ::defs::___assert_size(x)
+#define SIZE(x) ::defs::_check_size_(x)
+#define UNSIZE(x) ::defs::_check_unsize_(x)
+#define ASSERT_SIZE(x) ::defs::_assert_size_(x)
 
 #define DEF_ENUM_BITOR(ty)                                                     \
     inline ty operator|(ty a, ty b) { return ty(int(a) | int(b)); }
+
+#define DECLARE_PIMPL(nm)                                                      \
+    struct Data;                                                               \
+    struct DataDeleter                                                         \
+    {                                                                          \
+        void operator()(Data *) noexcept;                                      \
+    };                                                                         \
+    const std::unique_ptr<Data, DataDeleter> nm
+
+#define DECLARE_PIMPL_DEL(cl)                                                  \
+    void cl::DataDeleter::operator()(Data *p) noexcept { delete p; }
 
 } // namespace defs
 

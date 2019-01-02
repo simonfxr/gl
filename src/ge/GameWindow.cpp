@@ -72,11 +72,7 @@ struct GameWindow::Data
                                            double yoffset);
 };
 
-void
-GameWindow::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(GameWindow)
 
 namespace {
 

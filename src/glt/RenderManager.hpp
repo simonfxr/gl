@@ -104,15 +104,7 @@ struct GLT_API RenderManager
     FrameStatistics frameStatistics();
 
 private:
-    struct Data;
-    friend struct Data;
-
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
-
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 };
 
 inline math::vec4_t

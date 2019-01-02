@@ -83,12 +83,7 @@ private:
     friend struct ShaderCache;
     friend struct ShaderObject;
 
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 
 public:
     explicit ShaderSource(Data &&);
@@ -105,12 +100,7 @@ private:
     friend struct ShaderCompilerQueue;
     friend struct ShaderCache;
 
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 
 public:
     ShaderObject(Data *);
@@ -132,12 +122,7 @@ struct GLT_API ShaderCache
     const ShaderCacheEntries &cacheEntries() const;
 
 private:
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 };
 
 namespace ShaderCompilerError {
@@ -171,12 +156,7 @@ struct GLT_API ShaderCompiler
 
 private:
     friend struct ShaderSource;
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 };
 
 struct GLT_API ShaderCompilerQueue
@@ -195,12 +175,7 @@ struct GLT_API ShaderCompilerQueue
     void compileAll();
 
 private:
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 };
 
 } // namespace glt

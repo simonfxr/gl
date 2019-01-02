@@ -98,11 +98,7 @@ struct ShaderSource::Data
       ShaderCompilerQueue &);
 };
 
-void
-ShaderSource::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(ShaderSource)
 
 struct ShaderObject::Data
 {
@@ -144,11 +140,7 @@ struct ShaderObject::Data
       sys::fs::FileTime mtime);
 };
 
-void
-ShaderObject::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(ShaderObject)
 
 struct ShaderCache::Data
 {
@@ -160,11 +152,7 @@ struct ShaderCache::Data
     ~Data() { self.flush(); }
 };
 
-void
-ShaderCache::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(ShaderCache)
 
 struct ShaderCompiler::Data
 {
@@ -176,11 +164,7 @@ struct ShaderCompiler::Data
     void initPreprocessor(GLSLPreprocessor & /*proc*/);
 };
 
-void
-ShaderCompiler::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(ShaderCompiler)
 
 struct ShaderCompilerQueue::Data
 {
@@ -202,11 +186,7 @@ struct ShaderCompilerQueue::Data
     std::shared_ptr<ShaderObject> reload(const std::shared_ptr<ShaderObject> &);
 };
 
-void
-ShaderCompilerQueue::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(ShaderCompilerQueue)
 
 namespace {
 

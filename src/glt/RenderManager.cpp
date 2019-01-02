@@ -57,11 +57,7 @@ struct RenderManager::Data
     void endStats();
 };
 
-void
-RenderManager::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(RenderManager)
 
 RenderManager::RenderManager() : self(new Data(*this)) {}
 

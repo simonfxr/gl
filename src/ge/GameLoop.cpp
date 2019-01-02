@@ -33,11 +33,7 @@ struct GameLoop::Data
     time now();
 };
 
-void
-GameLoop::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(GameLoop)
 
 GameLoop::time
 GameLoop::Data::now()

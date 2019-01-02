@@ -82,11 +82,7 @@ struct Engine::Data : public GameLoop::Game
     bool execCommand(std::vector<CommandArg> &args);
 };
 
-void
-Engine::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(Engine)
 
 namespace {
 

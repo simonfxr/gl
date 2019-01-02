@@ -45,12 +45,7 @@ struct GE_API KeyHandler
     void handleListBindings(const Event<CommandEvent> &);
 
 private:
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *p) noexcept;
-    };
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 };
 
 } // namespace ge

@@ -67,12 +67,7 @@ struct GLT_API GeometryTransform
     size depth() const;
 
 private:
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 };
 
 struct GLT_API SavePointArgs

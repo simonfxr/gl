@@ -31,11 +31,7 @@ struct MouseLookPlugin::Data
     void handleFocusChanged(const Event<FocusChanged> & /*unused*/);
 };
 
-void
-MouseLookPlugin::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(MouseLookPlugin)
 
 MouseLookPlugin::Data::Data()
 {

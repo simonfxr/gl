@@ -91,15 +91,7 @@ struct GLT_API ShaderProgram
     bool validate(bool printLogOnError = true);
 
 private:
-    struct Data;
-    friend struct Data;
-
-    struct DataDeleter
-    {
-        void operator()(Data *p) noexcept;
-    };
-
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
     ShaderProgram(const ShaderProgram &);
 };
 

@@ -69,16 +69,7 @@ protected:
     virtual void doViewport(const Viewport &vp);
 
 private:
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
-
-    const std::unique_ptr<Data, DataDeleter> self;
-
-    RenderTarget(const RenderTarget &_);
-    RenderTarget &operator=(const RenderTarget &_);
+    DECLARE_PIMPL(self);
 };
 
 inline bool

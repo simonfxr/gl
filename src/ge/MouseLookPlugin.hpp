@@ -38,13 +38,7 @@ struct GE_API MouseLookPlugin : public Plugin
     void registerCommands(CommandProcessor &) final override;
 
 private:
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
-
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 };
 
 } // namespace ge

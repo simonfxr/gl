@@ -33,11 +33,7 @@ struct RenderTarget::Data
     }
 };
 
-void
-RenderTarget::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(RenderTarget)
 
 RenderTarget::RenderTarget(size w,
                            size h,

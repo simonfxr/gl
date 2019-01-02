@@ -41,11 +41,7 @@ struct Preprocessor::Data
     Data() : defaultHandler(&nullHandler), out(&sys::io::stdout()) {}
 };
 
-void
-Preprocessor::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(Preprocessor)
 
 Preprocessor::Preprocessor() : self(new Data) {}
 

@@ -1,6 +1,8 @@
 #ifndef GE_MODULE_HPP
 #define GE_MODULE_HPP
 
+#include "defs.hpp"
+
 #include <memory>
 
 #ifdef DEFINE_GE_MODULE
@@ -20,13 +22,8 @@ struct GameWindowInit
 struct KeyBindingState
 {
     KeyBindingState();
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
 
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 };
 
 struct Module

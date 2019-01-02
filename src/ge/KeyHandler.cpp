@@ -54,13 +54,7 @@ struct KeyHandler::Data
     explicit Data(CommandProcessor &proc);
 };
 
-void
-KeyHandler::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
-
-#define NULL_COMMAND CommandPtr()
+DECLARE_PIMPL_DEL(KeyHandler);
 
 KeyHandler::Data::Data(CommandProcessor &proc) : processor(proc)
 {
@@ -136,7 +130,7 @@ KeyHandler::unregisterBinding(const std::shared_ptr<KeyBinding> &binding)
 {
     auto it = self->bindings.find(Binding(binding));
     if (it == self->bindings.end())
-        return NULL_COMMAND;
+        return nullptr;
 
     return it->second;
 }

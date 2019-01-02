@@ -30,12 +30,7 @@ struct GE_API ReplServer
     const std::shared_ptr<EventHandler<InputEvent>> &ioHandler();
 
 private:
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 };
 
 } // namespace ge

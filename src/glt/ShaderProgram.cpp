@@ -105,11 +105,7 @@ struct ShaderProgram::Data
     void handleCompileError(ShaderCompilerError::Type /*unused*/);
 };
 
-void
-ShaderProgram::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(ShaderProgram)
 
 ShaderProgram::ShaderProgram(ShaderManager &sm) : self(new Data(*this, sm)) {}
 

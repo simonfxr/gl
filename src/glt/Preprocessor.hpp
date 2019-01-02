@@ -80,12 +80,7 @@ struct GLT_API Preprocessor
     //    static DirectiveHandler& nullHandler();
 
 private:
-    struct Data;
-    struct DataDeleter
-    {
-        void operator()(Data *) noexcept;
-    };
-    const std::unique_ptr<Data, DataDeleter> self;
+    DECLARE_PIMPL(self);
 };
 
 } // namespace glt

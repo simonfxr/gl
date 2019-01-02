@@ -161,11 +161,7 @@ struct ReplServer::Data
     }
 };
 
-void
-ReplServer::DataDeleter::operator()(Data *p) noexcept
-{
-    delete p;
-}
+DECLARE_PIMPL_DEL(ReplServer)
 
 ReplServer::ReplServer(Engine &e)
   : self(
