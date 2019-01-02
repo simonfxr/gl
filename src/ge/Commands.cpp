@@ -14,6 +14,8 @@
 namespace ge {
 
 using namespace math;
+using namespace defs;
+using defs::size_t;
 
 namespace {
 
@@ -90,13 +92,13 @@ void
 runReloadShaders(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 {
 
-    if (args.size() == 0) {
+    if (args.size_t() == 0) {
         e.info.engine.out() << "reloading shaders" << sys::io::endl;
         e.info.engine.shaderManager().reloadShaders();
         // std::cerr << "all shaders reloaded" << sys::io::endl;
     } else {
         glt::ShaderManager &sm = e.info.engine.shaderManager();
-        for (index i = 0; i < args.size(); ++i) {
+        for (index_t i = 0; i < args.size_t(); ++i) {
             auto prog = sm.program(*args[i].string);
             if (!prog) {
                 WARN(e.info.engine.out(),
@@ -121,7 +123,7 @@ runListCachedShaders(const Event<CommandEvent> &e)
         return;
     }
 
-    uint32 n = 0;
+    uint32_t n = 0;
     for (auto &entrie : cache->cacheEntries()) {
         e.info.engine.out()
           << "cached shader: " << entrie.first << sys::io::endl;
@@ -163,9 +165,8 @@ runHelp(const Event<CommandEvent> &ev)
     ge::CommandProcessor &cp = ev.info.engine.commandProcessor();
     ev.info.engine.out() << "list of Commands: " << sys::io::endl;
 
-    for (auto it = cp.commands.begin(); it != cp.commands.end(); ++it) {
-        ev.info.engine.out() << "    " << it->first << sys::io::endl;
-    }
+    for (const auto &com : cp.commands)
+        ev.info.engine.out() << "    " << com.first << sys::io::endl;
 
     ev.info.engine.out() << sys::io::endl
                          << "use describe <command name> to get more "
@@ -176,7 +177,7 @@ runHelp(const Event<CommandEvent> &ev)
 void
 runBindShader(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 {
-    if (args.size() == 0) {
+    if (args.size_t() == 0) {
         ERR(e.info.engine.out(), "bindShader: need at least one argument");
         return;
     }
@@ -189,19 +190,19 @@ runBindShader(const Event<CommandEvent> &e, const Array<CommandArg> &args)
     auto prog =
       std::make_shared<glt::ShaderProgram>(e.info.engine.shaderManager());
 
-    index i;
-    for (i = 1; i < args.size() && args[i].type == String; ++i) {
+    index_t i;
+    for (i = 1; i < args.size_t() && args[i].type == String; ++i) {
         if (!prog->addShaderFile(*args[i].string)) {
             ERR(e.info.engine.out(), "bindShader: compilation failed");
             return;
         }
     }
 
-    for (; i + 1 < args.size() && args[i].type == Integer &&
+    for (; i + 1 < args.size_t() && args[i].type == Integer &&
            args[i + 1].type == String;
          i += 2) {
         if (args[i].integer < 0) {
-            ERR(e.info.engine.out(), "bindShader: negative index");
+            ERR(e.info.engine.out(), "bindShader: negative index_t");
             return;
         }
         if (!prog->bindAttribute(*args[i + 1].string,
@@ -211,7 +212,7 @@ runBindShader(const Event<CommandEvent> &e, const Array<CommandArg> &args)
         }
     }
 
-    if (i != args.size()) {
+    if (i != args.size_t()) {
         ERR(e.info.engine.out(), "bindShader: invalid argument");
         return;
     }
@@ -271,11 +272,11 @@ runDescribe(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 
     CommandProcessor &proc = e.info.engine.commandProcessor();
 
-    for (index i = 0; i < args.size(); ++i) {
-        CommandPtr com = proc.command(*args[i].string);
+    for (const auto &arg : args) {
+        CommandPtr com = proc.command(*arg.string);
         if (!com) {
             e.info.engine.out()
-              << "unknown command: " << *args[i].string << sys::io::endl;
+              << "unknown command: " << *arg.string << sys::io::endl;
         } else {
             e.info.engine.out()
               << com->interactiveDescription() << sys::io::endl;
@@ -292,25 +293,24 @@ runEval(const Event<CommandEvent> &e, const Array<CommandArg> & /*unused*/)
 void
 runLoad(const Event<CommandEvent> &ev, const Array<CommandArg> &args)
 {
-    for (defs::index i = 0; i < SIZE(args.size()); ++i) {
-        ev.info.engine.commandProcessor().loadScript(*args[i].string);
-    }
+    for (const auto &arg : args)
+        ev.info.engine.commandProcessor().loadScript(*arg.string);
 }
 
 void
 runAddShaderPath(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 {
-    for (defs::index i = 0; i < args.size(); ++i)
-        if (!e.info.engine.shaderManager().addShaderDirectory(*args[i].string,
+    for (const auto &arg : args)
+        if (!e.info.engine.shaderManager().addShaderDirectory(*arg.string,
                                                               true))
-            ERR(e.info.engine.out(), "not a directory: " + *args[i].string);
+            ERR(e.info.engine.out(), "not a directory: " + *arg.string);
 }
 
 void
 runPrependShaderPath(const Event<CommandEvent> &e,
                      const Array<CommandArg> &args)
 {
-    for (defs::index i = args.size(); i > 0; --i) {
+    for (defs::index_t i = args.size_t(); i > 0; --i) {
         if (!e.info.engine.shaderManager().prependShaderDirectory(
               *args[i - 1].string, true))
             ERR(e.info.engine.out(), "not a directory: " + *args[i - 1].string);
@@ -320,8 +320,8 @@ runPrependShaderPath(const Event<CommandEvent> &e,
 void
 runRemoveShaderPath(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 {
-    for (defs::index i = 0; i < args.size(); ++i)
-        e.info.engine.shaderManager().removeShaderDirectory(*args[i].string);
+    for (const auto &arg : args)
+        e.info.engine.shaderManager().removeShaderDirectory(*arg.string);
 }
 
 void
@@ -387,8 +387,8 @@ runStartReplServer(const Event<CommandEvent> &ev, const Array<CommandArg> &args)
         return;
     }
 
-    int64 port = args[0].integer;
-    auto p16 = uint16(port);
+    auto port = args[0].integer;
+    auto p16 = uint16_t(port);
 
     if (port < 0 || p16 != port) {
         ERR(ev.info.engine.out(), "invalid port");

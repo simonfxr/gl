@@ -1,9 +1,11 @@
 #include "err/err.hpp"
 #include "sys/io.hpp"
 
+#include <arpa/inet.h>
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -12,6 +14,7 @@ namespace sys {
 namespace io {
 
 using namespace defs;
+using defs::size_t;
 
 namespace {
 
@@ -156,7 +159,7 @@ elevate(Handle &h, HandleMode mode)
 }
 
 HandleError
-read(Handle &h, size &s, char *buf)
+read(Handle &h, size_t &s, char *buf)
 {
     size_t n = UNSIZE(s);
     ssize_t k;
@@ -175,7 +178,7 @@ read(Handle &h, size &s, char *buf)
 }
 
 HandleError
-write(Handle &h, size &s, const char *buf)
+write(Handle &h, size_t &s, const char *buf)
 {
     size_t n = UNSIZE(s);
     ssize_t k;
@@ -204,7 +207,7 @@ close(Handle &h)
 SocketError
 listen(SocketProto proto,
        const IPAddr4 &addr,
-       uint16 port,
+       uint16_t port,
        SocketMode mode,
        Socket *s)
 {

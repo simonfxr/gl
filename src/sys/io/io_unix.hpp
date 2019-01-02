@@ -2,10 +2,7 @@
 #define SYS_IO_UNIX_HPP
 
 namespace sys {
-
 namespace io {
-
-using namespace defs;
 
 typedef int FileDescriptor;
 
@@ -23,7 +20,6 @@ struct Socket
 };
 
 } // namespace io
-
 } // namespace sys
 
 #endif

@@ -9,8 +9,6 @@
 
 namespace glt {
 
-using namespace defs;
-
 struct GLT_API Preprocessor
 {
 
@@ -19,7 +17,7 @@ struct GLT_API Preprocessor
         Preprocessor &processor;
         const std::string name;
         const char *data;
-        size_t size;
+        defs::size_t size_t;
 
         ContentContext(Preprocessor &proc, const std::string &nam)
           : processor(proc), name(nam)
@@ -30,11 +28,11 @@ struct GLT_API Preprocessor
     {
         ContentContext content;
 
-        defs::size lineLength;
-        defs::index lineOffset;
-        defs::index beginDirective; // index of first char in directive
-        defs::index
-          endDirective; // index of first char behind directive, so length of
+        defs::size_t lineLength;
+        defs::index_t lineOffset;
+        defs::index_t beginDirective; // index_t of first char in directive
+        defs::index_t
+          endDirective; // index_t of first char behind directive, so length of
                         // directive = endDirective - beginDirective
 
         DirectiveContext(Preprocessor &proc, const std::string &name)
@@ -59,7 +57,7 @@ struct GLT_API Preprocessor
     void name(const std::string &name);
 
     void process(const std::string &);
-    void process(const char *begin, uint32 size);
+    void process(const char *begin, defs::size_t size);
     void process(const char *contents);
 
     DirectiveHandler &defaultHandler(DirectiveHandler &handler);

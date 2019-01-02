@@ -10,10 +10,10 @@ namespace ge {
 struct State
 {
     bool down{ false };
-    uint32 timestamp{ 0xFFFFFFFFul };
+    uint32_t timestamp{ 0xFFFFFFFFul };
 
     State() = default;
-    State(bool dn, uint32 t) : down(dn), timestamp(t) {}
+    State(bool dn, uint32_t t) : down(dn), timestamp(t) {}
 
     bool operator==(const State &ks) const { return timestamp == ks.timestamp; }
 
@@ -41,12 +41,12 @@ struct Binding
     bool operator!=(const Binding &other) const { return !(*this == other); }
 };
 
-typedef std::map<Binding, CommandPtr> CommandBindings;
+using CommandBindings = std::map<Binding, CommandPtr>;
 
 struct KeyHandler::Data
 {
     CommandProcessor &processor;
-    uint32 frame_id{ 1 };
+    uint32_t frame_id{ 1 };
     CommandBindings bindings;
     State states[keycode::Count];
     EventSource<KeyPressed> keyPressedEvent;
@@ -63,7 +63,7 @@ KeyHandler::Data::Data(CommandProcessor &proc) : processor(proc)
 }
 
 #define CHECK_KEYCODE(kc)                                                      \
-    ASSERT_MSG((kc) >= 0 && (kc) < int32(keycode::Count), "invalid keycode")
+    ASSERT_MSG((kc) >= 0 && (kc) < int32_t(keycode::Count), "invalid keycode")
 
 KeyHandler::KeyHandler(CommandProcessor &proc) : self(new Data(proc)) {}
 
@@ -72,7 +72,7 @@ KeyHandler::keyPressed(KeyCode code)
 {
     // std::cerr << "key pressed: " << self->frame_id << " " <<
     // prettyKeyCode(code) << std::endl;
-    auto idx = int32(code);
+    auto idx = int32_t(code);
     CHECK_KEYCODE(idx);
     self->states[idx] = State(true, self->frame_id);
     self->keyPressedEvent.raise(makeEvent(KeyPressed(*this, code)));
@@ -83,7 +83,7 @@ KeyHandler::keyReleased(KeyCode code)
 {
     // std::cerr << "key released: " << self->frame_id << " " <<
     // prettyKeyCode(code) << std::endl;
-    auto idx = int32(code);
+    auto idx = int32_t(code);
     CHECK_KEYCODE(idx);
     if (self->states[idx].down)
         self->states[idx] = State(false, self->frame_id);
@@ -108,7 +108,7 @@ KeyHandler::clearStates()
 KeyState
 KeyHandler::keyState(KeyCode code)
 {
-    auto idx = int32(code);
+    auto idx = int32_t(code);
     CHECK_KEYCODE(idx);
     State state = self->states[idx];
 
@@ -159,7 +159,7 @@ KeyHandler::handleCommands()
     for (; it != self->bindings.end(); ++it) {
         auto &bind = it->first.binding;
 
-        for (defs::index i = 0; i < bind->size(); ++i) {
+        for (defs::index_t i = 0; i < bind->size_t(); ++i) {
 
             KeyCode code = bind->at(i).code;
             KeyState reqState = bind->at(i).state;

@@ -8,12 +8,12 @@ namespace ge {
 
 namespace {
 
-uint32
+uint32_t
 buffersOf(GameWindow &win)
 {
     GLContextInfo cs;
     win.contextInfo(cs);
-    uint32 bs = glt::RT_COLOR_BUFFER;
+    uint32_t bs = glt::RT_COLOR_BUFFER;
     if (cs.depthBits > 0)
         bs |= glt::RT_DEPTH_BUFFER;
     if (cs.stencilBits > 0)

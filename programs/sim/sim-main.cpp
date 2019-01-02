@@ -1,10 +1,15 @@
-#include <algorithm>
-#include <sstream>
-#include <string>
-#include <vector>
+#include "sim.hpp"
 
-#include "defs.hpp"
-
+#include "ge/Camera.hpp"
+#include "ge/CommandParams.hpp"
+#include "ge/Engine.hpp"
+#include "ge/GameWindow.hpp"
+#include "ge/MouseLookPlugin.hpp"
+#include "glt/CubeMesh.hpp"
+#include "glt/Mesh.hpp"
+#include "glt/TextureRenderTarget.hpp"
+#include "glt/primitives.hpp"
+#include "glt/utils.hpp"
 #include "math/glvec.hpp"
 #include "math/io.hpp"
 #include "math/ivec3.hpp"
@@ -15,19 +20,10 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 
-#include "glt/CubeMesh.hpp"
-#include "glt/Mesh.hpp"
-#include "glt/TextureRenderTarget.hpp"
-#include "glt/primitives.hpp"
-#include "glt/utils.hpp"
-
-#include "ge/Camera.hpp"
-#include "ge/CommandParams.hpp"
-#include "ge/Engine.hpp"
-#include "ge/GameWindow.hpp"
-#include "ge/MouseLookPlugin.hpp"
-
-#include "sim.hpp"
+#include <algorithm>
+#include <sstream>
+#include <string>
+#include <vector>
 
 using namespace math;
 using namespace defs;
@@ -40,7 +36,7 @@ static const vec3_t LIGHT_POS = vec3(11.f, 18.f, 11.f);
 
 static const float FPS_RENDER_CYCLE = 1.f;
 
-static const uint32 NUM_BLUR_TEXTURES = 1;
+static const uint32_t NUM_BLUR_TEXTURES = 1;
 
 static const float BLUR_TEXTURES_UPDATE_CYCLE = 0.04f / NUM_BLUR_TEXTURES;
 
@@ -54,7 +50,7 @@ static const size SPHERE_LOD_MAX = 6;
 
 struct SphereLOD
 {
-    index level;
+    index_t level;
 };
 
 #define SPHERE_INSTANCED_TEXTURED
@@ -249,11 +245,11 @@ Game::init(const ge::Event<ge::InitEvent> &ev)
 
     struct
     {
-        int32 a, b;
+        int32_t a, b;
     } sphere_params[SPHERE_LOD_MAX] = { { 12, 6 },  { 16, 8 },  { 20, 10 },
                                         { 24, 12 }, { 26, 13 }, { 36, 18 } };
 
-    for (index i = 0; i < SPHERE_LOD_MAX; ++i) {
+    for (index_t i = 0; i < SPHERE_LOD_MAX; ++i) {
         glt::primitives::sphere(
           sphereBatches[i], 1.f, sphere_params[i].a, sphere_params[i].b);
         sphereBatches[i].send();
@@ -333,7 +329,7 @@ static glt::color
 randomColor()
 {
     return glt::color(
-      uint8(rand1() * 255), uint8(rand1() * 255), uint8(rand1() * 255));
+      uint8_t(rand1() * 255), uint8_t(rand1() * 255), uint8_t(rand1() * 255));
 }
 
 void
@@ -484,7 +480,7 @@ Game::end_render_spheres()
 {
     if (render_spheres_instanced) {
 
-        for (index lod = 0; lod < SPHERE_LOD_MAX; ++lod) {
+        for (index_t lod = 0; lod < SPHERE_LOD_MAX; ++lod) {
             size num = SIZE(sphere_instances[lod].size());
 
             if (num == 0)
@@ -629,7 +625,7 @@ Game::calc_sphere_lod(const Sphere &s)
     screen_rad *= 2;
 
     SphereLOD lod{};
-    lod.level = index(screen_rad * SPHERE_LOD_MAX);
+    lod.level = index_t(screen_rad * SPHERE_LOD_MAX);
     if (lod.level >= SPHERE_LOD_MAX)
         lod.level = SPHERE_LOD_MAX - 1;
     if (lod.level < 0)
@@ -937,7 +933,7 @@ Game::cmdIncWorldSolveIterations(const ge::Event<ge::CommandEvent> & /*unused*/,
     if (args[0].integer < 0 && world.solve_iterations < -args[0].integer)
         world.solve_iterations = 0;
     else
-        world.solve_iterations += int32(args[0].integer);
+        world.solve_iterations += int32_t(args[0].integer);
     sys::io::stderr() << "number of contact-solver iterations: "
                       << world.solve_iterations << sys::io::endl;
 }
@@ -1013,6 +1009,6 @@ main(int argc, char *argv[])
 
     opts.parse(&argc, &argv);
     opts.inits.reg(ge::Init, ge::makeEventHandler(&game, &Game::init));
-    int32 ec = engine.run(opts);
+    int32_t ec = engine.run(opts);
     return ec;
 }

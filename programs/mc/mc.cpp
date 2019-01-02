@@ -1,12 +1,6 @@
-#include "defs.hpp"
-
-using namespace defs;
-
-#include "math/glvec.hpp"
-#include "math/mat4.hpp"
-#include "math/real.hpp"
-#include "math/vec4.hpp"
-
+#include "ge/Camera.hpp"
+#include "ge/Engine.hpp"
+#include "ge/MouseLookPlugin.hpp"
 #include "glt/CubeMesh.hpp"
 #include "glt/GLSLPreprocessor.hpp"
 #include "glt/Mesh.hpp"
@@ -14,14 +8,13 @@ using namespace defs;
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/geometric.hpp"
 #include "glt/utils.hpp"
-
+#include "math/glvec.hpp"
+#include "math/mat4.hpp"
+#include "math/real.hpp"
+#include "math/vec4.hpp"
 #include "sys/measure.hpp"
 
 #include "shaders/shader_constants.h"
-
-#include "ge/Camera.hpp"
-#include "ge/Engine.hpp"
-#include "ge/MouseLookPlugin.hpp"
 
 #include <sstream>
 #include <string>
@@ -30,7 +23,7 @@ using namespace defs;
 #include <CL/cl.h>
 #include <CL/cl.hpp>
 
-#ifdef SYSTEM_LINUX
+#ifdef HU_OS_POSIX
 #include <GL/glx.h>
 #endif
 
@@ -45,6 +38,8 @@ using namespace defs;
 // #define INFO_TIME(...) time_op(__VA_ARGS__)
 #define INFO_PRINT(...)
 #define INFO_TIME(...) __VA_ARGS__
+
+using size = defs::size_t;
 
 static const size DEFAULT_N = 64;
 
@@ -62,8 +57,8 @@ struct MCState
 
     bool init{};
 
-    int32 count[8]{};
-    int32 num_tris{};
+    int32_t count[8]{};
+    int32_t num_tris{};
 
     GLuint vao{};
     GLuint vbo{};
@@ -107,7 +102,7 @@ struct Anim
 
     double sum_tris{};
     double max_tris{};
-    uint32 num_renders{};
+    uint32_t num_renders{};
 
     void init(const ge::Event<ge::InitEvent> & /*ev*/);
     void initCL(const ge::Event<ge::InitEvent> & /*ev*/);
@@ -149,7 +144,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 static void CL_CALLBACK
 print_cl_error(const char *msg,
                const void * /*unused*/,
-               size_t /*unused*/,
+               ::size_t /*unused*/,
                void * /*unused*/)
 {
     sys::io::stdout() << msg << sys::io::endl;
@@ -160,14 +155,14 @@ createCLGLContext(cl::Platform &platform, cl_int *err)
 {
 
     cl_context_properties props[] = {
-#ifdef SYSTEM_WINDOWS
+#ifdef HU_OS_WINDOWS
         CL_GL_CONTEXT_KHR,
         (cl_context_properties) wglGetCurrentContext(),
         CL_WGL_HDC_KHR,
         (cl_context_properties) wglGetCurrentDC(),
         CL_CONTEXT_PLATFORM,
         (cl_context_properties)(platform)(),
-#elif defined(SYSTEM_LINUX)
+#elif defined(HU_OS_POSIX)
         CL_GL_CONTEXT_KHR,
         (cl_context_properties) glXGetCurrentContext(),
         CL_GLX_DISPLAY_KHR,
@@ -484,7 +479,7 @@ Anim::computeHistogram(MCState &cur_mc)
                               cl::NullRange);
 
     size sz = N;
-    defs::index i = 0;
+    index_t i = 0;
     while (sz > 2) {
         sz /= 2;
 
@@ -550,7 +545,7 @@ Anim::constructVertices1(MCState &cur_mc)
     if (cur_mc.num_tris == 0 || !cur_mc.init)
         return;
 
-    defs::index i;
+    index_t i;
     for (i = 0; i < SIZE(cur_mc.images.size()); ++i)
         kernel_histogramTraversal.setArg(i, cur_mc.images[i]);
 
@@ -598,7 +593,7 @@ Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3_t ecLight)
 
     const glt::VertexDescription<Vertex> &desc = Vertex::gl::desc;
 
-    for (defs::index i = 0; i < desc.nattributes; ++i) {
+    for (index_t i = 0; i < desc.nattributes; ++i) {
         const glt::VertexAttr &a = desc.attributes[i];
         GL_CALL(glVertexArrayVertexAttribOffsetEXT,
                 cur_mc.vao,

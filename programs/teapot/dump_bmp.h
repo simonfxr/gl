@@ -2,6 +2,7 @@
 #define DUMP_BMP_H
 
 #include "defs.h"
+
 #include <stdio.h>
 
 #ifdef __cplusplus
@@ -23,10 +24,10 @@ typedef enum BMPError BMPError;
  */
 
 BMPError
-bmp_dump(FILE *fd, int w, int h, const uint32 *pixels);
+bmp_dump(FILE *fd, int w, int h, const uint32_t *pixels);
 
 BMPError
-bmp_read(FILE *fd, int *w, int *h, uint32 **pixels);
+bmp_read(FILE *fd, int *w, int *h, uint32_t **pixels);
 
 #ifdef __cplusplus
 }

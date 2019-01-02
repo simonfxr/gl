@@ -10,13 +10,14 @@
 namespace glt {
 
 using namespace math;
+using namespace defs;
 
-static const uint16 FLAG_MV = 1;
-static const uint16 FLAG_MVP = 2;
-static const uint16 FLAG_VP = 4;
-static const uint16 FLAG_NORMAL = 8;
-static const uint16 FLAG_INVPROJ = 16;
-static const uint16 FLAG_ALL = 0x1F;
+inline constexpr uint16_t FLAG_MV = 1;
+inline constexpr uint16_t FLAG_MVP = 2;
+inline constexpr uint16_t FLAG_VP = 4;
+inline constexpr uint16_t FLAG_NORMAL = 8;
+inline constexpr uint16_t FLAG_INVPROJ = 16;
+inline constexpr uint16_t FLAG_ALL = 0x1F;
 
 struct GeometryTransform::Data
 {
@@ -28,13 +29,13 @@ struct GeometryTransform::Data
     aligned_mat4_t vpMatrix{};
     aligned_mat3_t normalMatrix{};
 
-    uint16 depth{};
-    uint16 dirty_flags;
+    uint16_t depth{};
+    uint16_t dirty_flags;
 
     aligned_mat4_t inverseProjectionMatrix;
 
     aligned_mat4_t modelMatrices[GEOMETRY_TRANSFORM_MAX_DEPTH]{};
-    uint64 mods[GEOMETRY_TRANSFORM_MAX_DEPTH]{};
+    uint64_t mods[GEOMETRY_TRANSFORM_MAX_DEPTH]{};
 
     Data()
       : viewMatrix(mat4())
@@ -46,10 +47,10 @@ struct GeometryTransform::Data
         mods[0] = 0;
     }
 
-    bool flag(uint16 flg)
+    bool flag(uint16_t flg)
     {
         if (unlikely((dirty_flags & flg) != 0)) {
-            dirty_flags = uint16(dirty_flags & ~flg);
+            dirty_flags = uint16_t(dirty_flags & ~flg);
             return true;
         }
         return false;
@@ -172,8 +173,8 @@ GeometryTransform::pop()
 SavePointArgs
 GeometryTransform::save()
 {
-    uint64 cookie = self->mods[self->depth];
-    uint16 depth = self->depth;
+    uint64_t cookie = self->mods[self->depth];
+    uint16_t depth = self->depth;
     dup();
     return SavePointArgs(*this, cookie, depth);
 }
@@ -242,7 +243,7 @@ GeometryTransform::transformVector(const vec3_t &v) const
     return vec3(transform(vec4(v, 0.f)));
 }
 
-size
+defs::size_t
 GeometryTransform::depth() const
 {
     return self->depth + 1;

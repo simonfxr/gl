@@ -2,6 +2,7 @@
 #define SYS_IO_HPP
 
 #include "sys/conf.hpp"
+
 #include "sys/endian.hpp"
 #include "sys/io/Stream.hpp"
 
@@ -12,8 +13,6 @@ namespace sys {
 
 namespace io {
 
-using namespace defs;
-
 struct Handle;
 struct Socket;
 struct IPAddr4;
@@ -21,23 +20,23 @@ struct HandleStream;
 
 namespace {
 
-const size HANDLE_READ_BUFFER_SIZE = 1024;
-const size HANDLE_WRITE_BUFFER_SIZE = 1024;
+inline constexpr defs::size_t HANDLE_READ_BUFFER_SIZE = 1024;
+inline constexpr defs::size_t HANDLE_WRITE_BUFFER_SIZE = 1024;
 
-typedef uint32 HandleMode;
+using HandleMode = uint32_t;
 
-const HandleMode HM_READ = 1;
-const HandleMode HM_WRITE = 2;
-const HandleMode HM_APPEND = 4;
-const HandleMode HM_NONBLOCKING = 8;
+inline constexpr HandleMode HM_READ = 1;
+inline constexpr HandleMode HM_WRITE = 2;
+inline constexpr HandleMode HM_APPEND = 4;
+inline constexpr HandleMode HM_NONBLOCKING = 8;
 
-typedef uint32 SocketProto;
+using SocketProto = uint32_t;
 
-const SocketProto SP_TCP = 1;
+inline constexpr SocketProto SP_TCP = 1;
 
-typedef uint32 SocketMode;
+using SocketMode = uint32_t;
 
-const SocketMode SM_NONBLOCKING = 1;
+inline constexpr SocketMode SM_NONBLOCKING = 1;
 
 } // namespace
 
@@ -58,23 +57,23 @@ enum HandleError
 
 struct SYS_API IPAddr4
 {
-    uint32 addr4; // bigendian/network byte order
+    uint32_t addr4; // bigendian/network byte order
     IPAddr4() : addr4(0) {}
-    IPAddr4(uint8 a, uint8 b, uint8 c, uint8 d)
-      : addr4(hton((uint32(a) << 24) | (uint32(b) << 16) | (uint32(c) << 8) |
-                   uint32(d)))
+    IPAddr4(defs::uint8_t a, defs::uint8_t b, defs::uint8_t c, defs::uint8_t d)
+      : addr4(hton((uint32_t(a) << 24) | (uint32_t(b) << 16) |
+                   (uint32_t(c) << 8) | uint32_t(d)))
     {}
 
-    IPAddr4(uint32 addr) : addr4(addr) {}
+    IPAddr4(uint32_t addr) : addr4(addr) {}
 };
 
 } // namespace io
 
 } // namespace sys
 
-#ifdef SYSTEM_UNIX
+#ifdef HU_OS_POSIX_P
 #include "sys/io/io_unix.hpp"
-#elif defined(SYSTEM_WINDOWS)
+#elif defined(HU_OS_WINDOWS_P)
 #include "sys/io/io_windows.hpp"
 #else
 #error "no IO implementation available"
@@ -94,10 +93,10 @@ SYS_API HandleError
 elevate(Handle &, HandleMode);
 
 SYS_API HandleError
-read(Handle &, size &, char *);
+read(Handle &, defs::size_t &, char *);
 
 SYS_API HandleError
-write(Handle &, size &, const char *);
+write(Handle &, defs::size_t &, const char *);
 
 SYS_API HandleError
 close(Handle &);
@@ -112,7 +111,7 @@ enum SocketError
 };
 
 SYS_API SocketError
-listen(SocketProto, const IPAddr4 &, uint16, SocketMode, Socket *);
+listen(SocketProto, const IPAddr4 &, defs::uint16_t, SocketMode, Socket *);
 
 SYS_API SocketError
 accept(Socket &, Handle *);
@@ -125,8 +124,8 @@ struct SYS_API HandleStream : public IOStream
     Handle handle;
     char read_buffer[HANDLE_READ_BUFFER_SIZE]{};
     char write_buffer[HANDLE_WRITE_BUFFER_SIZE]{};
-    defs::index read_cursor;
-    defs::index write_cursor;
+    defs::index_t read_cursor;
+    defs::index_t write_cursor;
 
     HandleStream(const Handle & = Handle());
     ~HandleStream() override;
@@ -134,12 +133,12 @@ struct SYS_API HandleStream : public IOStream
 protected:
     StreamResult basic_close() final override;
     StreamResult basic_flush() final override;
-    StreamResult basic_read(size &, char *) final override;
-    StreamResult basic_write(size &, const char *) final override;
+    StreamResult basic_read(defs::size_t &, char *) final override;
+    StreamResult basic_write(defs::size_t &, const char *) final override;
     StreamResult flush_buffer();
 };
 
-SYS_API std::pair<std::unique_ptr<char[]>, size_t>
+SYS_API std::pair<std::unique_ptr<char[]>, defs::size_t>
 readFile(sys::io::OutStream &err, const std::string &path) noexcept;
 
 } // namespace io

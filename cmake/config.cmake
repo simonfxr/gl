@@ -7,13 +7,6 @@ macro(cache_var var)
   cache_var_type(${var} STRING)
 endmacro()
 
-if(SYS_WINDOWS)
-  add_definitions(-DSYSTEM_WINDOWS=1)
-elseif(SYS_LINUX)
-  add_definitions(-DSYSTEM_LINUX=1)
-  add_definitions(-DSYSTEM_UNIX=1)
-endif()
-
 if(BUILD_ARCH32)
   add_definitions(-m32)
   link_libraries(-m32)
@@ -21,12 +14,6 @@ endif()
 
 if(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_SHARED=1)
-endif()
-
-if(BITS32)
-  add_definitions(-DPTR_BITS=32)
-elseif(BITS64)
-  add_definitions(-DPTR_BITS=64)
 endif()
 
 if(SYS_UNIX)
@@ -37,14 +24,6 @@ if(SYS_UNIX)
       /usr/lib32
       ${CMAKE_LIBRARY_PATH})
   endif()
-endif()
-
-if(COMP_GCCLIKE)
-  add_definitions(-DGNU_EXTENSIONS=1)
-endif()
-
-if(COMP_CL)
-  add_definitions(-DCOMPILER_CL=1)
 endif()
 
 if(BUILD_OPT)

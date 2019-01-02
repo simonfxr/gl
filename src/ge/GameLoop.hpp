@@ -8,8 +8,6 @@
 
 namespace ge {
 
-using namespace defs;
-
 struct GE_API GameLoop
 {
 
@@ -23,12 +21,12 @@ struct GE_API GameLoop
         virtual void handleInputEvents() = 0;
         virtual time now() = 0;
         virtual void sleep(time seconds) = 0;
-        virtual void atExit(int32 exit_code) { UNUSED(exit_code); }
+        virtual void atExit(int32_t exit_code) { UNUSED(exit_code); }
     };
 
-    explicit GameLoop(defs::size ticks,
-                      defs::size max_skip = 10,
-                      defs::size max_fps = 120);
+    explicit GameLoop(defs::size_t ticks,
+                      defs::size_t max_skip = 10,
+                      defs::size_t max_fps = 120);
 
     time tickTime() const;
 
@@ -36,27 +34,27 @@ struct GE_API GameLoop
 
     time tickDuration() const;
 
-    defs::size ticks() const;
-    GameLoop &ticks(defs::size n);
+    defs::size_t ticks() const;
+    GameLoop &ticks(defs::size_t n);
 
-    defs::size maxFramesSkipped() const;
-    GameLoop &maxFramesSkipped(defs::size max_skip);
+    defs::size_t maxFramesSkipped() const;
+    GameLoop &maxFramesSkipped(defs::size_t max_skip);
 
-    defs::size maxFPS() const;
-    GameLoop &maxFPS(defs::size max_fps);
+    defs::size_t maxFPS() const;
+    GameLoop &maxFPS(defs::size_t max_fps);
 
     bool syncDraw() const;
     GameLoop &syncDraw(bool yesno);
 
-    uint64 tickID() const;
-    uint64 frameID() const;
+    uint64_t tickID() const;
+    uint64_t frameID() const;
 
     bool paused() const;
     GameLoop &pause(bool pause = true);
 
-    void exit(int32 exit_code = 0);
+    void exit(int32_t exit_code = 0);
 
-    int32 run(Game &logic);
+    int32_t run(Game &logic);
 
 private:
     DECLARE_PIMPL(self);

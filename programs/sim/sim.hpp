@@ -11,6 +11,8 @@
 
 static const float CAMERA_SPHERE_RAD = 1.f;
 
+using size = defs::size_t;
+
 enum SphereState
 {
     Bouncing,
@@ -51,12 +53,12 @@ struct Renderer
 
 struct World
 {
-    defs::size numSpheres();
+    defs::size_t numSpheres();
 
     bool init();
 
     bool render_by_distance{}; // try to render near object first
-    defs::size solve_iterations;
+    defs::size_t solve_iterations;
 
     bool canMoveCamera(const math::vec3_t &position, math::vec3_t &step);
 

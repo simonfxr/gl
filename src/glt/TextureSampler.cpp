@@ -67,7 +67,7 @@ TextureSampler::clampMode(ClampMode mode, Axis axis)
 }
 
 void
-TextureSampler::bind(uint32 idx, bool set_active_idx)
+TextureSampler::bind(uint32_t idx, bool set_active_idx)
 {
     ensureSampler();
     GL_CALL(glBindSampler, idx, *_sampler);
@@ -75,7 +75,7 @@ TextureSampler::bind(uint32 idx, bool set_active_idx)
 }
 
 void
-TextureSampler::unbind(uint32 idx, bool set_active_idx)
+TextureSampler::unbind(uint32_t idx, bool set_active_idx)
 {
     GL_CALL(glBindSampler, idx, 0);
     _data->unbind(idx, set_active_idx);

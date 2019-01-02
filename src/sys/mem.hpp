@@ -2,7 +2,6 @@
 #define SYS_MEM_HPP
 
 #include "data/Ordering.hpp"
-#include "defs.hpp"
 
 #include <memory>
 
@@ -11,10 +10,10 @@ namespace sys {
 namespace mem {
 
 Ordering
-compare(const char *, size_t, const char *, size_t);
+compare(const char *, defs::size_t, const char *, defs::size_t);
 
 std::unique_ptr<char[]>
-dup(const char *, size_t);
+dup(const char *, defs::size_t);
 
 } // namespace mem
 

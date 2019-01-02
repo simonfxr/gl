@@ -12,6 +12,7 @@
 namespace glt {
 
 using namespace defs;
+using defs::size_t;
 
 namespace {
 
@@ -39,7 +40,7 @@ del_shaders(GLsizei n, const GLuint *names)
         glDeleteShader(names[i]);
 }
 
-size instance_count[ObjectType::Count] = {};
+size_t instance_count[ObjectType::Count] = {};
 
 struct ObjectKind
 {
@@ -136,7 +137,7 @@ printStats(sys::io::OutStream &out)
 {
     init_table();
     out << "Active OpenGL Objects:" << sys::io::endl;
-    for (index i = 0; i < ObjectType::Count; ++i)
+    for (index_t i = 0; i < ObjectType::Count; ++i)
         if (instance_count[i] > 0)
             out << "  " << kind_table[i].kind << "s: " << instance_count[i]
                 << sys::io::endl;

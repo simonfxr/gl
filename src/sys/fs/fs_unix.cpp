@@ -31,14 +31,14 @@ cwd(const std::string &dir)
 std::string
 cwd()
 {
-    size_t size = 128;
+    size_t size_t = 128;
     std::string path;
 
 retry:
     for (;;) {
-        size *= 2;
-        path.resize(size, '\0');
-        while (!getcwd(path.data(), size)) {
+        size_t *= 2;
+        path.resize(size_t, '\0');
+        while (!getcwd(path.data(), size_t)) {
             if (errno == ERANGE)
                 goto retry;
             if (errno != EINTR) {

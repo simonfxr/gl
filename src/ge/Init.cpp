@@ -76,7 +76,7 @@ static void
 runPostInitStats(std::shared_ptr<math::real> t0, const Event<InitEvent> &e)
 {
     e.info.success = true;
-    auto ms = uint32((e.info.engine.now() - *t0) * 1000);
+    auto ms = uint32_t((e.info.engine.now() - *t0) * 1000);
     e.info.engine.out() << "initialized in " << ms << " ms" << sys::io::endl;
 }
 

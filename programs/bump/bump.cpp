@@ -18,6 +18,8 @@
 using namespace defs;
 using namespace math;
 
+using size = defs::size_t;
+
 #define VERTEX(V, F, Z)                                                        \
     V(Vertex,                                                                  \
       F(vec3_t,                                                                \
@@ -221,14 +223,14 @@ icoSphere(glt::Mesh<V> &mesh, size subdivs)
 
     struct Tri
     {
-        index32 a, b, c;
-        Tri(index32 _a, index32 _b, index32 _c) : a(_a), b(_b), c(_c) {}
+        uint32_t a, b, c;
+        Tri(uint32_t _a, uint32_t _b, uint32_t _c) : a(_a), b(_b), c(_c) {}
     };
 
     std::vector<vec3_t> vertices;
     std::vector<Tri> tris;
 
-    typedef std::map<index64, index32> VertexCache;
+    typedef std::map<uint64_t, uint32_t> VertexCache;
     VertexCache vertex_cache;
 
 #define X .525731112119133606
@@ -258,19 +260,19 @@ icoSphere(glt::Mesh<V> &mesh, size subdivs)
     from = &tris;
     to = &tris2;
 
-    index next_vert = vertices.size();
+    index_t next_vert = vertices.size();
 
-    for (index k = 0; k < subdivs; ++k) {
+    for (index_t k = 0; k < subdivs; ++k) {
         to->clear();
 
-        for (index i = 0; i < SIZE(from->size()); ++i) {
+        for (index_t i = 0; i < SIZE(from->size()); ++i) {
             Tri tri = (*from)[i];
-            index ab, bc, ca;
+            index_t ab, bc, ca;
 
 #define SUBDIV(ab, a, b)                                                       \
     do {                                                                       \
-        index64 key =                                                          \
-          (a) < (b) ? (index64(a) << 32 | (b)) : (index64(b) << 32 | (a));     \
+        uint64_t key =                                                         \
+          (a) < (b) ? (uint64_t(a) << 32 | (b)) : (uint64_t(b) << 32 | (a));   \
         VertexCache::const_iterator it = vertex_cache.find(key);               \
         if (it != vertex_cache.end()) {                                        \
             (ab) = it->second;                                                 \
@@ -306,7 +308,7 @@ icoSphere(glt::Mesh<V> &mesh, size subdivs)
     mesh.drawType(glt::DrawElements);
 
     V v;
-    for (index i = 0; i < SIZE(vertices.size()); ++i) {
+    for (index_t i = 0; i < SIZE(vertices.size()); ++i) {
         vec3_t normal = vertices[i];
 
         real cos_theta = normal[2];
@@ -341,7 +343,7 @@ icoSphere(glt::Mesh<V> &mesh, size subdivs)
 
     vertices.clear();
 
-    for (index i = 0; i < SIZE(from->size()); ++i) {
+    for (index_t i = 0; i < SIZE(from->size()); ++i) {
         Tri tri = (*from)[i];
 
         mesh.addElement(tri.a);

@@ -19,6 +19,7 @@
 static const bool MULTISAMPLING = false; // via multisample texture
 
 using namespace math;
+using size = defs::size_t;
 
 #define VERTEX(V, F, Z) V(Vertex, Z(vec2_t, position))
 

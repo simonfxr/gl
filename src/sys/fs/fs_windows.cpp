@@ -13,14 +13,14 @@ namespace {
 #define WINDOWS_TICK 10000000
 #define SEC_TO_UNIX_EPOCH 11644473600LL
 
-uint32
+uint32_t
 filetimeToUnixTimestap(const FILETIME *ft)
 {
-    uint64 ticks = (uint64(ft->dwHighDateTime) << 32) | ft->dwLowDateTime;
+    uint64_t ticks = (uint64_t(ft->dwHighDateTime) << 32) | ft->dwLowDateTime;
     ticks = ticks / WINDOWS_TICK;
     if (ticks < SEC_TO_UNIX_EPOCH)
         return 0u;
-    return uint32(ticks - SEC_TO_UNIX_EPOCH);
+    return uint32_t(ticks - SEC_TO_UNIX_EPOCH);
 }
 
 } // namespace

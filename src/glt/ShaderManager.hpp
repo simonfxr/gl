@@ -11,8 +11,6 @@
 
 namespace glt {
 
-using namespace defs;
-
 struct ShaderCompiler;
 struct ShaderProgram;
 struct ShaderCache;
@@ -69,9 +67,9 @@ struct GLT_API ShaderManager
     bool removeShaderDirectory(const std::string &dir);
     const ShaderDirectories &shaderDirectories() const;
 
-    void setShaderVersion(uint32 vers /* e.g. 330 */,
+    void setShaderVersion(uint32_t vers /* e.g. 330 */,
                           ShaderProfile profile = CompatibilityProfile);
-    uint32 shaderVersion() const;
+    uint32_t shaderVersion() const;
     ShaderProfile shaderProfile() const;
 
     bool cacheShaderObjects() const;

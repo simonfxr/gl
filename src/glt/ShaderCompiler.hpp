@@ -41,7 +41,7 @@ using ShaderIncludes = std::vector<ShaderInclude>;
 
 using ShaderDependencies = std::vector<std::shared_ptr<ShaderSource>>;
 
-using ShaderCompileFlags = uint32;
+using ShaderCompileFlags = uint32_t;
 
 using Version = int;
 
@@ -58,7 +58,7 @@ static const ShaderCompileFlags SC_CHECK_OUTDATED =
 static const ShaderCompileFlags SC_DEFAULT_FLAGS =
   SC_LOOKUP_CACHE | SC_PUT_CACHE | SC_CHECK_OUTDATED;
 
-enum ReloadState : uint8
+enum ReloadState : defs::uint8_t
 {
     Failed,
     Uptodate,

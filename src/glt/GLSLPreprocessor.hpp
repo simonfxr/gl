@@ -41,7 +41,7 @@ struct GLT_API GLSLPreprocessor : public Preprocessor
     ShaderIncludes &includes;
     ShaderDependencies &dependencies;
 
-    std::vector<uint32> segLengths;
+    std::vector<uint32_t> segLengths;
     std::vector<const char *> segments;
     std::vector<std::unique_ptr<char[]>> contents;
 

@@ -4,10 +4,13 @@
 
 namespace glt {
 
+using namespace defs;
+using defs::size_t;
+
 namespace {
 
 GLenum
-getGLType(TextureType ty, size ss)
+getGLType(TextureType ty, size_t ss)
 {
     switch (ty) {
     case Texture1D:
@@ -26,7 +29,7 @@ getGLType(TextureType ty, size ss)
 
 } // namespace
 
-TextureData::TextureData(TextureType ty, size samples)
+TextureData::TextureData(TextureType ty, size_t samples)
   : _samples(samples), _handle(0), _type(ty)
 {}
 
@@ -48,7 +51,7 @@ TextureData::ensureHandle()
 }
 
 void
-TextureData::bind(uint32 idx, bool set_active_idx)
+TextureData::bind(uint32_t idx, bool set_active_idx)
 {
     if (set_active_idx)
         GL_CALL(glActiveTexture, GL_TEXTURE0 + idx);
@@ -57,7 +60,7 @@ TextureData::bind(uint32 idx, bool set_active_idx)
 }
 
 void
-TextureData::unbind(uint32 idx, bool set_active_idx)
+TextureData::unbind(uint32_t idx, bool set_active_idx)
 {
     if (set_active_idx)
         GL_CALL(glActiveTexture, GL_TEXTURE0 + idx);
@@ -71,7 +74,7 @@ TextureData::glType() const
 }
 
 void
-TextureData::type(TextureType ty, size ss)
+TextureData::type(TextureType ty, size_t ss)
 {
     ASSERT_MSG((ty == _type && ss == _samples) || *_handle == 0,
                "cannot change type, texture already created");

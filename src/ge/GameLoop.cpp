@@ -1,17 +1,20 @@
 #include "ge/GameLoop.hpp"
+
+#include "data/range.hpp"
 #include "err/err.hpp"
 
 namespace ge {
 
 using namespace defs;
+using defs::size_t;
 
 GameLoop::Game::~Game() = default;
 
 struct GameLoop::Data
 {
 
-    uint64 tick_id{};
-    uint64 frame_id{};
+    uint64_t tick_id{};
+    uint64_t frame_id{};
     Game *game{ nullptr };
 
     time clock{};
@@ -20,9 +23,9 @@ struct GameLoop::Data
     time tick_duration{};
     time frame_duration{};
 
-    size max_skip{};
+    size_t max_skip{};
 
-    int32 exit_code{};
+    int32_t exit_code{};
 
     bool paused{ false };
     bool sync_draw{ false };
@@ -43,7 +46,9 @@ GameLoop::Data::now()
 
 GameLoop::Data::Data() = default;
 
-GameLoop::GameLoop(defs::size _ticks, defs::size max_skip, defs::size max_fps)
+GameLoop::GameLoop(defs::size_t _ticks,
+                   defs::size_t max_skip,
+                   defs::size_t max_fps)
   : self(new Data)
 {
     ticks(_ticks);
@@ -69,40 +74,40 @@ GameLoop::tickDuration() const
     return math::real(self->frame_duration);
 }
 
-defs::size
+defs::size_t
 GameLoop::ticks() const
 {
-    return defs::size(time(1) / self->frame_duration);
+    return defs::size_t(time(1) / self->frame_duration);
 }
 
 GameLoop &
-GameLoop::ticks(defs::size n)
+GameLoop::ticks(defs::size_t n)
 {
     self->tick_duration = time(1) / time(n);
     return *this;
 }
 
-defs::size
+defs::size_t
 GameLoop::maxFramesSkipped() const
 {
     return self->max_skip;
 }
 
 GameLoop &
-GameLoop::maxFramesSkipped(defs::size max_skip)
+GameLoop::maxFramesSkipped(defs::size_t max_skip)
 {
     self->max_skip = max_skip;
     return *this;
 }
 
-defs::size
+defs::size_t
 GameLoop::maxFPS() const
 {
-    return self->frame_duration == 0 ? 0 : size(1 / self->frame_duration);
+    return self->frame_duration == 0 ? 0 : size_t(1 / self->frame_duration);
 }
 
 GameLoop &
-GameLoop::maxFPS(defs::size max_fps)
+GameLoop::maxFPS(defs::size_t max_fps)
 {
     self->frame_duration = (max_fps == 0 ? time(0) : time(1) / time(max_fps));
     return *this;
@@ -121,20 +126,20 @@ GameLoop::syncDraw(bool yesno)
     return *this;
 }
 
-uint64
+uint64_t
 GameLoop::tickID() const
 {
     return self->tick_id;
 }
 
-uint64
+uint64_t
 GameLoop::frameID() const
 {
     return self->frame_id;
 }
 
 void
-GameLoop::exit(int32 exit_code)
+GameLoop::exit(int32_t exit_code)
 {
     self->exit_code = exit_code;
     self->stop = true;
@@ -153,7 +158,7 @@ GameLoop::paused() const
     return self->paused;
 }
 
-int32
+int32_t
 GameLoop::run(Game &logic)
 {
     self->game = &logic;
@@ -171,9 +176,10 @@ GameLoop::run(Game &logic)
 
     while (!self->stop) {
 
-        size lim = self->sync_draw || self->max_skip == 0 ? 1 : self->max_skip;
+        size_t lim =
+          self->sync_draw || self->max_skip == 0 ? 1 : self->max_skip;
 
-        for (defs::index i = 0;; ++i) {
+        for (const auto i : irange()) {
             self->clock = self->now();
             auto cur_tick_duration = self->tick_duration;
 

@@ -26,7 +26,7 @@ const double e0 = double(1.6e-19) * As;
 
 ParticleRef::ParticleRef(ParticleArray &a, defs::index _i) : array(a), i(_i) {}
 
-ParticleArray::ParticleArray(defs::size s)
+ParticleArray::ParticleArray(defs::size_t s)
   : _n(0)
   , _size(s)
   , _position(new point3_t[UNSIZE(s)])
@@ -81,7 +81,7 @@ void
 ParticleArray::push_back(const Particle &p)
 {
     if (_n >= _size) {
-        defs::size old_size = _size;
+        defs::size_t old_size = _size;
         _size = old_size < 4 ? 8 : old_size * 2;
 
         _position = resize(_position, old_size, _size);

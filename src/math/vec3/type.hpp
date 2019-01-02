@@ -9,14 +9,14 @@ struct glvec3;
 
 struct ATTRS(ATTR_PACKED) vec3_t
 {
-    static const defs::size size = 3;
-    static const defs::size padded_size = 3;
+    static const defs::size_t size_t = 3;
+    static const defs::size_t padded_size = 3;
     typedef real component_type;
-    typedef component_type buffer[size];
+    typedef component_type buffer[size_t];
     typedef glvec3 gl;
 
-    constexpr MATH_FUNC real &operator[](defs::index) MUT_FUNC;
-    constexpr MATH_FUNC real operator[](defs::index) const PURE_FUNC;
+    constexpr MATH_FUNC real &operator[](defs::index_t) MUT_FUNC;
+    constexpr MATH_FUNC real operator[](defs::index_t) const PURE_FUNC;
 
     real components[padded_size];
 };

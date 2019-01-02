@@ -5,8 +5,11 @@
 
 namespace glt {
 
-TextureRenderTarget::TextureRenderTarget(size w,
-                                         size h,
+using namespace defs;
+using defs::size_t;
+
+TextureRenderTarget::TextureRenderTarget(size_t w,
+                                         size_t h,
                                          const TextureRenderTarget::Params &ps)
   : RenderTarget(0, 0, ps.buffers)
   , _sampler(std::make_shared<TextureData>(Texture2D, ps.samples))
@@ -22,7 +25,7 @@ TextureRenderTarget::TextureRenderTarget(size w,
 TextureRenderTarget::~TextureRenderTarget() = default;
 
 void
-TextureRenderTarget::resize(size w, size h)
+TextureRenderTarget::resize(size_t w, size_t h)
 {
 
     if (width() == w && height() == h)

@@ -8,11 +8,9 @@
 
 namespace glt {
 
-using namespace defs;
-
 struct color
 {
-    typedef uint8 byte;
+    using byte = defs::uint8_t;
 
     union
     {
@@ -21,7 +19,7 @@ struct color
             byte r, g, b, a;
         };
 
-        uint32 rgba;
+        defs::uint32_t rgba;
     };
 
     color() = default;

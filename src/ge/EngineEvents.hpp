@@ -28,8 +28,8 @@ struct GE_API InitEvent : public EngineEvent
 
 struct GE_API ExitEvent : public EngineEvent
 {
-    int32 exitCode;
-    ExitEvent(Engine &e, int32 ec) : EngineEvent(e), exitCode(ec) {}
+    int32_t exitCode;
+    ExitEvent(Engine &e, int32_t ec) : EngineEvent(e), exitCode(ec) {}
 };
 
 struct GE_API AnimationEvent : public EngineEvent

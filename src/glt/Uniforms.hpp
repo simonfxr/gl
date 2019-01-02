@@ -29,26 +29,26 @@ mapGLTextureType(GLenum texture_target);
 struct GLT_API BoundTexture
 {
     GLenum type;
-    uint32 index;
+    uint32_t index_t;
 
     BoundTexture() {}
 
-    BoundTexture(GLenum ty, uint32 i) : type(ty), index(i) {}
+    BoundTexture(GLenum ty, uint32_t i) : type(ty), index_t(i) {}
 };
 
 struct GLT_API Sampler
 {
     GLenum type;
     TextureSampler &sampler;
-    uint32 index;
+    uint32_t index_t;
 
-    Sampler(TextureSampler &_sampler, uint32 _index)
+    Sampler(TextureSampler &_sampler, uint32_t _index)
       : type(mapGLTextureType(_sampler.data()->glType()))
       , sampler(_sampler)
-      , index(_index)
+      , index_t(_index)
     {}
-    Sampler(TextureSampler &_sampler, uint32 _index, GLenum _type)
-      : type(_type), sampler(_sampler), index(_index)
+    Sampler(TextureSampler &_sampler, uint32_t _index, GLenum _type)
+      : type(_type), sampler(_sampler), index_t(_index)
     {}
 };
 

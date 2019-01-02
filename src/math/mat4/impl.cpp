@@ -24,7 +24,7 @@ constexpr mat4_t
 mat4(const real mat[16])
 {
     mat4_t A;
-    for (uint32 i = 0; i < 16; ++i)
+    for (uint32_t i = 0; i < 16; ++i)
         A.components[i] = mat[i];
     return A;
 }
@@ -71,14 +71,14 @@ constexpr mat4_t operator*(const mat4_t &A, const mat4_t &B)
 {
     mat4_t C;
     // mat4_t AT = transpose(A);
-    // for (uint32 i = 0; i < 4; ++i)
-    //     for (uint32 j = 0; j < 4; ++j)
+    // for (uint32_t i = 0; i < 4; ++i)
+    //     for (uint32_t j = 0; j < 4; ++j)
     //         C(i, j) = dot(AT[j], B[i]);
 
-    for (defs::index j = 0; j < 4; ++j) {
-        for (defs::index i = 0; i < 4; ++i) {
+    for (defs::index_t j = 0; j < 4; ++j) {
+        for (defs::index_t i = 0; i < 4; ++i) {
             real c_i_j = real(0);
-            for (defs::index k = 0; k < 4; ++k)
+            for (defs::index_t k = 0; k < 4; ++k)
                 c_i_j += A(k, i) * B(j, k);
             C(j, i) = c_i_j;
         }
@@ -160,8 +160,8 @@ constexpr mat4_t
 transpose(const mat4_t &A)
 {
     mat4_t B;
-    for (defs::index i = 0; i < 4; ++i)
-        for (defs::index j = 0; j < 4; ++j)
+    for (defs::index_t i = 0; i < 4; ++i)
+        for (defs::index_t j = 0; j < 4; ++j)
             B(i, j) = A(j, i);
     return B;
 }
@@ -247,24 +247,24 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-constexpr MATH_INLINE_SPEC const vec4_t &mat4_t::operator[](defs::index i) const
+constexpr MATH_INLINE_SPEC const vec4_t &mat4_t::operator[](defs::index_t i) const
 {
     return columns[i];
 }
 
-constexpr MATH_INLINE_SPEC vec4_t &mat4_t::operator[](defs::index i)
+constexpr MATH_INLINE_SPEC vec4_t &mat4_t::operator[](defs::index_t i)
 {
     return columns[i];
 }
 
 constexpr MATH_INLINE_SPEC real
-mat4_t::operator()(defs::index i, defs::index j) const
+mat4_t::operator()(defs::index_t i, defs::index_t j) const
 {
     return components[i * 4 + j];
 }
 
 constexpr MATH_INLINE_SPEC real &
-mat4_t::operator()(defs::index i, defs::index j)
+mat4_t::operator()(defs::index_t i, defs::index_t j)
 {
     return components[i * 4 + j];
 }

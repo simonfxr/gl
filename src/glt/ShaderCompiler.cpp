@@ -34,6 +34,9 @@ struct LogTraits<glt::ShaderCompilerQueue>
 
 namespace glt {
 
+using namespace defs;
+using defs::size_t;
+
 namespace {
 struct CompileJob
 {
@@ -279,7 +282,7 @@ compilePreprocessed(ShaderCompilerQueue &scq,
         out << sys::io::endl;
         out << "BEGIN SHADER SOURCE" << sys::io::endl;
 
-        for (uint32 i = 0; i < nsegments; ++i)
+        for (uint32_t i = 0; i < nsegments; ++i)
             out << std::string(segments[i], segLengths[i]);
 
         out << "END SHADER SOURCE" << sys::io::endl;
@@ -721,7 +724,7 @@ ShaderCompiler::guessShaderType(const std::string &path,
 
     std::string ext = sys::fs::extension(path);
 
-    for (uint32 i = 0; i < ARRAY_LENGTH(shaderTypeMappings); ++i) {
+    for (uint32_t i = 0; i < ARRAY_LENGTH(shaderTypeMappings); ++i) {
         if (ext == shaderTypeMappings[i].fileExtension) {
             *res = shaderTypeMappings[i].type;
             return true;

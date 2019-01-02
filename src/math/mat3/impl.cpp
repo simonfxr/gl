@@ -68,8 +68,8 @@ constexpr mat3_t operator*(const mat3_t &A, const mat3_t &B)
 {
     mat3_t AT = transpose(A);
     mat3_t C;
-    for (defs::index i = 0; i < 3; ++i)
-        for (defs::index j = 0; j < 3; ++j)
+    for (defs::index_t i = 0; i < 3; ++i)
+        for (defs::index_t j = 0; j < 3; ++j)
             C(i, j) = dot(AT[j], B[i]);
     return C;
 }
@@ -222,8 +222,8 @@ constexpr mat3_t
 transpose(const mat3_t &A)
 {
     mat3_t B;
-    for (defs::index i = 0; i < 3; ++i)
-        for (defs::index j = 0; j < 3; ++j)
+    for (defs::index_t i = 0; i < 3; ++i)
+        for (defs::index_t j = 0; j < 3; ++j)
             B(i, j) = A[j][i];
     return B;
 }
@@ -255,24 +255,24 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-constexpr MATH_INLINE_SPEC const vec3_t &mat3_t::operator[](defs::index i) const
+constexpr MATH_INLINE_SPEC const vec3_t &mat3_t::operator[](defs::index_t i) const
 {
     return columns[i];
 }
 
-constexpr MATH_INLINE_SPEC vec3_t &mat3_t::operator[](defs::index i)
+constexpr MATH_INLINE_SPEC vec3_t &mat3_t::operator[](defs::index_t i)
 {
     return columns[i];
 }
 
 constexpr MATH_INLINE_SPEC real &
-mat3_t::operator()(defs::index i, defs::index j)
+mat3_t::operator()(defs::index_t i, defs::index_t j)
 {
     return components[i * vec3_t::padded_size + j];
 }
 
 constexpr MATH_INLINE_SPEC real
-mat3_t::operator()(defs::index i, defs::index j) const
+mat3_t::operator()(defs::index_t i, defs::index_t j) const
 {
     return components[i * vec3_t::padded_size + j];
 }

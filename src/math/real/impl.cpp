@@ -122,12 +122,12 @@ cubed(real x)
 }
 
 real
-pow(real x, int32 n)
+pow(real x, int32_t n)
 {
     if (n == 0)
         return 1.f;
 
-    uint32 k = n < 0 ? uint32(-n) : uint32(n);
+    uint32_t k = n < 0 ? uint32_t(-n) : uint32_t(n);
     real a = 1.f;
     real p = x;
 
@@ -154,7 +154,7 @@ floor(real x)
     return std::floor(x);
 }
 
-constexpr int32
+constexpr int32_t
 signum(real x)
 {
     return x < real(0) ? -1 : x > real(0) ? +1 : 0;

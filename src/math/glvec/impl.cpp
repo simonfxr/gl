@@ -15,13 +15,13 @@ namespace math {
     {                                                                          \
         T::buffer buf;                                                         \
         load(buf, v);                                                          \
-        for (defs::index i = 0; i < T::size; ++i)                              \
+        for (defs::index_t i = 0; i < T::size_t; ++i)                              \
             buffer[i] = float(buf[i]);                                         \
     }                                                                          \
     MATH_INLINE_SPEC gl_T::operator T() const                                  \
     {                                                                          \
         T::buffer buf;                                                         \
-        for (defs::index i = 0; i < T::size; ++i)                              \
+        for (defs::index_t i = 0; i < T::size_t; ++i)                              \
             buf[i] = T::component_type(buffer[i]);                             \
         return constr(buf);                                                    \
     }

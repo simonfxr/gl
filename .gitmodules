@@ -1,0 +1,3 @@
+[submodule "deps/cxx-header-utils"]
+	path = deps/cxx-header-utils
+	url = lambdamachine:/tank/users/simon/repo/cxx-header-utils.git

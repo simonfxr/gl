@@ -9,6 +9,9 @@ using namespace math;
 
 namespace ge {
 
+using namespace defs;
+using defs::size_t;
+
 struct Handlers
 {
     std::shared_ptr<EventHandler<MouseMoved>> mouseMoved;
@@ -31,7 +34,7 @@ struct Camera::Data
 
     explicit Data(Camera * /*me*/);
 
-    void mouseMoved(Camera *cam, index16 dx, index16 dy);
+    void mouseMoved(Camera *cam, int16_t dx, int16_t dy);
 
     // commands
     void runMove(const Event<CommandEvent> & /*unused*/,
@@ -140,7 +143,7 @@ void
 Camera::Data::runMove(const Event<CommandEvent> & /*unused*/,
                       const Array<CommandArg> &args)
 {
-    int64 dir = args[0].integer;
+    auto dir = args[0].integer;
     if (dir < 1 || dir > 12) {
         ERR("argument not >= 1 and <= 12");
         return;
@@ -154,9 +157,9 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
 {
 
     const std::string *path;
-    if (args.size() == 0)
+    if (args.size_t() == 0)
         path = &_frame_path;
-    else if (args.size() == 1 && args[0].type == String)
+    else if (args.size_t() == 1 && args[0].type == String)
         path = args[0].string;
     else {
         ERR("invalid parameters: expect 0 or 1 filepath");
@@ -169,7 +172,7 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
         return;
     }
 
-    size s = sizeof _frame;
+    size_t s = sizeof _frame;
     out.write(s, reinterpret_cast<const char *>(&_frame));
 }
 
@@ -179,9 +182,9 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
 {
 
     const std::string *path;
-    if (args.size() == 0)
+    if (args.size_t() == 0)
         path = &_frame_path;
-    else if (args.size() == 1 && args[0].type == String)
+    else if (args.size_t() == 1 && args[0].type == String)
         path = args[0].string;
     else {
         ERR("invalid parameters: expect 0 or 1 filepath");
@@ -194,7 +197,7 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
         return;
     }
 
-    size s = sizeof _frame;
+    size_t s = sizeof _frame;
     in.read(s, reinterpret_cast<char *>(&_frame));
 }
 
@@ -209,9 +212,9 @@ void
 Camera::Data::runSensitivity(const Event<CommandEvent> & /*unused*/,
                              const Array<CommandArg> &args)
 {
-    if (args.size() == 1 && args[0].type == Number) {
+    if (args.size_t() == 1 && args[0].type == Number) {
         _mouse_sensitivity = vec2(real(args[0].number));
-    } else if (args.size() == 2 && args[0].type == Number &&
+    } else if (args.size_t() == 2 && args[0].type == Number &&
                args[1].type == Number) {
         _mouse_sensitivity = vec2(real(args[0].number), real(args[1].number));
     } else {
@@ -250,7 +253,7 @@ Camera::Data::handleBeforeRender(const Event<RenderEvent> &e)
 }
 
 void
-Camera::Data::mouseMoved(Camera *cam, index16 dx, index16 dy)
+Camera::Data::mouseMoved(Camera *cam, int16_t dx, int16_t dy)
 {
     auto &self = *cam->self;
     vec2_t rot = vec2(dx, dy) * _mouse_sensitivity;
@@ -327,7 +330,7 @@ Camera::framePath(const std::string &path)
 }
 
 void
-Camera::mouseMoved(index16 dx, index16 dy)
+Camera::mouseMoved(int16_t dx, int16_t dy)
 {
     self->mouseMoved(this, dx, dy);
 }

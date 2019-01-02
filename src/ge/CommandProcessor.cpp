@@ -1,22 +1,23 @@
 #include "ge/CommandProcessor.hpp"
+
+#include "data/range.hpp"
+#include "err/err.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Event.hpp"
 #include "ge/Tokenizer.hpp"
-
-#include "err/err.hpp"
-
 #include "sys/fs.hpp"
 
 #include <vector>
 
 namespace ge {
 
-#define NULL_COMMAND_REF CommandPtr()
+using namespace defs;
+using defs::size_t;
 
 typedef std::map<std::string, CommandPtr> CommandMap;
 
-size
-CommandProcessor::size() const
+size_t
+CommandProcessor::size_t() const
 {
     return SIZE(commands.size());
 }
@@ -51,7 +52,7 @@ CommandProcessor::command(const std::string &comname)
     auto it = commands.find(comname);
     if (it != commands.end())
         return it->second;
-    return NULL_COMMAND_REF;
+    return nullptr;
 }
 
 bool
@@ -108,7 +109,7 @@ coerceKeyCombo(CommandArg &arg)
 bool
 CommandProcessor::exec(Array<CommandArg> &args)
 {
-    if (args.size() == 0)
+    if (args.size_t() == 0)
         return true;
     const std::string *com_name = nullptr;
     CommandPtr comm;
@@ -133,7 +134,7 @@ CommandProcessor::exec(Array<CommandArg> &args)
         }
     }
 
-    Array<CommandArg> argsArr = SHARE_ARRAY(args.size() - 1, &args[1]);
+    auto argsArr = SHARE_ARRAY(&args[1], args.size_t() - 1);
     bool ok = exec(comm, argsArr, *com_name);
     return ok;
 }
@@ -151,10 +152,10 @@ CommandProcessor::exec(CommandPtr &com,
 
     const Array<CommandParamType> &params = com->parameters();
     bool rest_args =
-      params.size() > 0 && params[params.size() - 1] == ListParam;
-    defs::size nparams = rest_args ? params.size() - 1 : params.size();
+      params.size_t() > 0 && params[params.size_t() - 1] == ListParam;
+    defs::size_t nparams = rest_args ? params.size_t() - 1 : params.size_t();
 
-    if (nparams != args.size() && !(rest_args && args.size() > nparams)) {
+    if (nparams != args.size_t() && !(rest_args && args.size_t() > nparams)) {
         sys::io::ByteStream err;
         if (!comname.empty())
             err << "executing Command " << comname << ": ";
@@ -163,18 +164,19 @@ CommandProcessor::exec(CommandPtr &com,
         err << "expected " << nparams;
         if (rest_args)
             err << " or more";
-        err << " got " << args.size();
+        err << " got " << args.size_t();
         err << " (rest_args=" << rest_args << ", nparams=" << nparams << ")";
         ERR(engine().out(), err.str());
     }
 
     std::vector<CommandPtr> keepAlive;
 
-    for (index i = 0; i < nparams; ++i) {
-        if (params[i] != AnyParam) {
+    for (const auto i : irange(params.size_t())) {
+        const auto &param = params[i];
+        if (param != AnyParam) {
 
             CommandType val_type = String;
-            switch (params[i]) {
+            switch (param) {
             case StringParam:
                 val_type = String;
                 break;
@@ -327,7 +329,7 @@ bool
 CommandProcessor::execCommand(std::vector<CommandArg> &args)
 {
     if (!args.empty()) {
-        Array<CommandArg> com_args = SHARE_ARRAY(SIZE(args.size()), &args[0]);
+        auto com_args = SHARE_ARRAY(&args[0], SIZE(args.size()));
         return execCommand(com_args);
     }
     Array<CommandArg> com_args = ARRAY_INITIALIZER(CommandArg);
@@ -337,7 +339,7 @@ CommandProcessor::execCommand(std::vector<CommandArg> &args)
 bool
 CommandProcessor::execCommand(Array<CommandArg> &args)
 {
-    if (args.size() == 0)
+    if (args.size_t() == 0)
         return true;
 
     bool ok = exec(args);

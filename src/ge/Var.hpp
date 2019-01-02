@@ -5,7 +5,7 @@
 
 namespace ge {
 
-typedef uint32 VarKind;
+typedef uint32_t VarKind;
 
 namespace {
 

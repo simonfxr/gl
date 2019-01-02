@@ -6,6 +6,8 @@ namespace sys {
 
 namespace mem {
 
+using defs::size_t;
+
 Ordering
 compare(const char *a, size_t n, const char *b, size_t m)
 {

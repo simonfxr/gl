@@ -18,7 +18,7 @@
 #endif
 #endif
 
-#ifdef SYSTEM_WINDOWS
+#ifdef HU_OS_WINDOWS
 #define STDOUT_FILE (&__iob_func()[1])
 #define STDERR_FILE (&__iob_func()[2])
 #else
@@ -29,8 +29,6 @@
 namespace sys {
 
 namespace io {
-
-using namespace defs;
 
 struct OutStream;
 struct InStream;
@@ -44,7 +42,7 @@ stderr();
 
 extern SYS_API const StreamEndl endl;
 
-enum class StreamResult : uint16
+enum class StreamResult : defs::uint16_t
 {
     OK,
     Blocked,
@@ -53,15 +51,15 @@ enum class StreamResult : uint16
     Error
 };
 
-typedef uint16 StreamFlags;
+using StreamFlags = defs::uint16_t;
 
 namespace {
 
-const StreamFlags SF_IN_EOF = 1;
-const StreamFlags SF_OUT_EOF = 2;
-const StreamFlags SF_IN_CLOSED = 4;
-const StreamFlags SF_OUT_CLOSED = 8;
-const StreamFlags SF_CLOSABLE = 16;
+inline constexpr StreamFlags SF_IN_EOF = 1;
+inline constexpr StreamFlags SF_OUT_EOF = 2;
+inline constexpr StreamFlags SF_IN_CLOSED = 4;
+inline constexpr StreamFlags SF_OUT_CLOSED = 8;
+inline constexpr StreamFlags SF_CLOSABLE = 16;
 
 } // namespace
 
@@ -88,10 +86,10 @@ struct SYS_API InStream
         return *this;
     }
 
-    StreamResult read(size &s, char *buf);
+    StreamResult read(defs::size_t &s, char *buf);
 
 protected:
-    virtual StreamResult basic_read(size &s, char *buf) = 0;
+    virtual StreamResult basic_read(defs::size_t &s, char *buf) = 0;
     virtual StreamResult basic_close_in(bool flush_only) = 0;
 
     void init(StreamFlags *);
@@ -127,11 +125,11 @@ struct SYS_API OutStream
         return *this;
     }
 
-    StreamResult write(size &s, const char *buf);
+    StreamResult write(defs::size_t &s, const char *buf);
     StreamResult flush();
 
 protected:
-    virtual StreamResult basic_write(size &s, const char *buf) = 0;
+    virtual StreamResult basic_write(defs::size_t &s, const char *buf) = 0;
     virtual StreamResult basic_flush() = 0;
     virtual StreamResult basic_close_out() = 0;
 
@@ -182,8 +180,9 @@ struct SYS_API FileStream : public IOStream
     bool open(const std::string &path, const std::string &mode);
 
 protected:
-    virtual StreamResult basic_read(size &, char *) final override;
-    virtual StreamResult basic_write(size &, const char *) final override;
+    virtual StreamResult basic_read(defs::size_t &, char *) final override;
+    virtual StreamResult basic_write(defs::size_t &,
+                                     const char *) final override;
     virtual StreamResult basic_close() final override;
     virtual StreamResult basic_flush() final override;
 
@@ -198,8 +197,8 @@ struct SYS_API NullStream : public IOStream
 protected:
     StreamResult basic_flush() final override;
     StreamResult basic_close() final override;
-    StreamResult basic_read(size &, char *) final override;
-    StreamResult basic_write(size &, const char *) final override;
+    StreamResult basic_read(defs::size_t &, char *) final override;
+    StreamResult basic_write(defs::size_t &, const char *) final override;
 };
 
 struct SYS_API CooperativeInStream : public InStream
@@ -212,33 +211,33 @@ struct SYS_API CooperativeInStream : public InStream
 
 protected:
     virtual StreamResult basic_close_in(bool flush_only) final override;
-    virtual StreamResult basic_read(size &, char *) final override;
+    virtual StreamResult basic_read(defs::size_t &, char *) final override;
 };
 
 struct SYS_API ByteStream : public IOStream
 {
 
     std::vector<char> _buffer;
-    defs::index _read_cursor;
+    defs::index_t _read_cursor;
 
-    ByteStream(defs::size bufsize = 32);
-    ByteStream(const char *buf, defs::size sz);
+    ByteStream(defs::size_t bufsize = 32);
+    ByteStream(const char *buf, defs::size_t sz);
     ByteStream(const std::string &);
 
     ~ByteStream() override;
 
-    defs::size size() const { return SIZE(_buffer.size()); }
+    defs::size_t size() const { return SIZE(_buffer.size()); }
     const char *data() const { return &_buffer.front(); }
     char *data() { return &_buffer.front(); }
-    std::string str() const { return std::string(data(), UNSIZE(size())); }
+    std::string str() const { return std::string(data(), UNSIZE(size_t())); }
 
-    void truncate(defs::size);
+    void truncate(defs::size_t);
 
 protected:
     StreamResult basic_flush() final override;
     StreamResult basic_close() final override;
-    StreamResult basic_read(defs::size &, char *) final override;
-    StreamResult basic_write(defs::size &, const char *) final override;
+    StreamResult basic_read(defs::size_t &, char *) final override;
+    StreamResult basic_write(defs::size_t &, const char *) final override;
 };
 
 SYS_API OutStream &

@@ -10,13 +10,13 @@ struct glmat3;
 
 struct mat3_t
 {
-    static const defs::size column_size = 3;
+    static const defs::size_t column_size = 3;
     typedef vec3_t column_type;
     typedef column_type::component_type component_type;
-    static const defs::size size = column_size * column_type::size;
-    static const defs::size padded_size =
+    static const defs::size_t size_t = column_size * column_type::size_t;
+    static const defs::size_t padded_size =
       column_size * column_type::padded_size;
-    typedef component_type buffer[size];
+    typedef component_type buffer[size_t];
     typedef glmat3 gl;
 
     union
@@ -28,12 +28,12 @@ struct mat3_t
     constexpr mat3_t() : columns{} {}
 
     constexpr MATH_FUNC const column_type &operator[](
-      defs::index) const PURE_FUNC;
-    constexpr MATH_FUNC column_type &operator[](defs::index) MUT_FUNC;
-    constexpr MATH_FUNC component_type operator()(defs::index,
-                                                  defs::index) const PURE_FUNC;
-    constexpr MATH_FUNC component_type &operator()(defs::index,
-                                                   defs::index) MUT_FUNC;
+      defs::index_t) const PURE_FUNC;
+    constexpr MATH_FUNC column_type &operator[](defs::index_t) MUT_FUNC;
+    constexpr MATH_FUNC component_type operator()(defs::index_t,
+                                                  defs::index_t) const PURE_FUNC;
+    constexpr MATH_FUNC component_type &operator()(defs::index_t,
+                                                   defs::index_t) MUT_FUNC;
 };
 
 typedef mat3_t aligned_mat3_t ATTRS(ATTR_ALIGNED(16));

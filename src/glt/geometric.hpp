@@ -10,28 +10,27 @@
 
 namespace glt {
 
-using namespace math;
-
-constexpr mat4_t
-translateTransform(vec3_t point)
+constexpr math::mat4_t
+translateTransform(math::vec3_t point)
 {
-    mat4_t M = mat4();
-    M[3] = vec4(point, real(1));
+    auto M = math::mat4();
+    M[3] = math::vec4(point, math::real(1));
     return M;
 }
 
-constexpr mat4_t
-scaleTransform(vec3_t dim)
+constexpr math::mat4_t
+scaleTransform(math::vec3_t dim)
 {
+    using namespace math;
     return mat4(mat3(vec3(dim[0], real(0), real(0)),
                      vec3(real(0), dim[1], real(0)),
                      vec3(real(0), real(0), dim[2])));
 }
 
-constexpr mat4_t
-scaleTransform(real dim)
+constexpr math::mat4_t
+scaleTransform(math::real dim)
 {
-    return scaleTransform(vec3(dim));
+    return scaleTransform(math::vec3(dim));
 }
 
 } // namespace glt

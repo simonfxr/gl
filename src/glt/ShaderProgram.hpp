@@ -13,8 +13,6 @@
 
 namespace glt {
 
-using namespace defs;
-
 namespace ShaderProgramError {
 
 enum Type

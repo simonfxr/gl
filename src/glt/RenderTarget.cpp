@@ -7,10 +7,13 @@
 
 namespace glt {
 
+using namespace defs;
+using defs::size_t;
+
 struct RenderTarget::Data
 {
-    size width;
-    size height;
+    size_t width;
+    size_t height;
     RenderTargetBuffers buffers;
     Viewport viewport;
     color clearColor;
@@ -19,7 +22,7 @@ struct RenderTarget::Data
 
     DEBUG_DECL(bool active;)
 
-    Data(size w, size h, RenderTargetBuffers bs, const Viewport &vp)
+    Data(size_t w, size_t h, RenderTargetBuffers bs, const Viewport &vp)
       : width(w), height(h), buffers(bs), viewport(vp), viewport_changed(false)
     {
         ON_DEBUG(active = false);
@@ -35,8 +38,8 @@ struct RenderTarget::Data
 
 DECLARE_PIMPL_DEL(RenderTarget)
 
-RenderTarget::RenderTarget(size w,
-                           size h,
+RenderTarget::RenderTarget(size_t w,
+                           size_t h,
                            RenderTargetBuffers bs,
                            const Viewport &vp)
   : self(new Data(w, h, bs, vp))
@@ -44,13 +47,13 @@ RenderTarget::RenderTarget(size w,
 
 RenderTarget::~RenderTarget() = default;
 
-size
+size_t
 RenderTarget::width() const
 {
     return self->width;
 }
 
-size
+size_t
 RenderTarget::height() const
 {
     return self->height;
@@ -109,7 +112,7 @@ RenderTarget::beginScene()
 }
 
 void
-RenderTarget::clear(uint32 buffers)
+RenderTarget::clear(uint32_t buffers)
 {
     DEBUG_ASSERT_MSG(self->active, "RenderTarget not active");
     buffers &= self->buffers;
@@ -131,7 +134,7 @@ RenderTarget::viewport(const Viewport &vp)
 }
 
 void
-RenderTarget::updateSize(size w, size h)
+RenderTarget::updateSize(size_t w, size_t h)
 {
     self->width = w;
     self->height = h;
@@ -145,7 +148,7 @@ RenderTarget::doDeactivate()
 }
 
 void
-RenderTarget::doClear(uint32 buffers, color c)
+RenderTarget::doClear(uint32_t buffers, color c)
 {
     GLbitfield bits = 0;
 

@@ -33,7 +33,7 @@ struct ParticleRenderer
 
     bool init(ge::Engine *, const Opts &);
     void renderParticles(const ge::Event<ge::RenderEvent> &,
-                         defs::size,
+                         defs::size_t,
                          const Particle *);
 
 private:
@@ -94,7 +94,7 @@ ParticleRenderer::init(ge::Engine *e, const ParticleRenderer::Opts &opts)
     vertex.position = math::vec2(0.f);
     this->circle_mesh->addVertex(vertex);
 
-    const defs::size N = 100;
+    const defs::size_t N = 100;
     for (defs::index i = 0; i < N; ++i) {
         math::real phi = math::real(i) / (N - 1) * 2 * math::PI;
         real x, y;
@@ -109,7 +109,7 @@ ParticleRenderer::init(ge::Engine *e, const ParticleRenderer::Opts &opts)
 
 void
 ParticleRenderer::renderParticles(const ge::Event<ge::RenderEvent> &ev,
-                                  defs::size n,
+                                  defs::size_t n,
                                   const ParticleRenderer::Particle *ps)
 {
 

@@ -8,45 +8,45 @@
 
 namespace glt {
 
-using namespace defs;
-
 struct GLT_API Viewport
 {
-    int32 offsetX, offsetY;
-    size width, height;
+    int32_t offsetX, offsetY;
+    defs::size_t width, height;
 
     Viewport() : offsetX(0), offsetY(0), width(0), height(0) {}
 
-    Viewport(int32 x, int32 y, size w, size h)
+    Viewport(defs::int32_t x, defs::int32_t y, defs::size_t w, defs::size_t h)
       : offsetX(x), offsetY(y), width(w), height(h)
     {}
 
-    Viewport(size w, size h) : offsetX(0), offsetY(0), width(w), height(h) {}
+    Viewport(defs::size_t w, defs::size_t h)
+      : offsetX(0), offsetY(0), width(w), height(h)
+    {}
 
     bool operator==(const Viewport &vp) const;
     bool operator!=(const Viewport &vp) const;
 };
 
-typedef uint32 RenderTargetBuffers;
+typedef uint32_t RenderTargetBuffers;
 
 static const RenderTargetBuffers RT_COLOR_BUFFER = 1u;
 static const RenderTargetBuffers RT_DEPTH_BUFFER = 2u;
 static const RenderTargetBuffers RT_STENCIL_BUFFER = 4u;
 
-static const uint32 RT_ALL_BUFFERS =
+static const uint32_t RT_ALL_BUFFERS =
   RT_COLOR_BUFFER | RT_DEPTH_BUFFER | RT_STENCIL_BUFFER;
 
 struct GLT_API RenderTarget
 {
 
-    RenderTarget(size width,
-                 size height,
+    RenderTarget(defs::size_t width,
+                 defs::size_t height,
                  RenderTargetBuffers bs = RT_COLOR_BUFFER,
                  const Viewport &vp = Viewport());
     virtual ~RenderTarget();
 
-    size width() const;
-    size height() const;
+    defs::size_t width() const;
+    defs::size_t height() const;
     RenderTargetBuffers buffers() const;
     const Viewport &viewport() const;
     color clearColor() const;
@@ -60,7 +60,7 @@ struct GLT_API RenderTarget
     void viewport(const Viewport &vp);
 
 protected:
-    void updateSize(size width, size height);
+    void updateSize(defs::size_t width, defs::size_t height);
 
     virtual void doActivate() = 0;
     virtual void doDeactivate();

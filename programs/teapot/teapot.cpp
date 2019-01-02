@@ -1,9 +1,18 @@
 #include "defs.hpp"
 
-using namespace defs;
-
 #include "mesh.h"
 
+#include "ge/Camera.hpp"
+#include "ge/CommandParams.hpp"
+#include "ge/Engine.hpp"
+#include "ge/MouseLookPlugin.hpp"
+#include "ge/Timer.hpp"
+#include "glt/Frame.hpp"
+#include "glt/TextureRenderTarget.hpp"
+#include "glt/Uniforms.hpp"
+#include "glt/color.hpp"
+#include "glt/primitives.hpp"
+#include "glt/utils.hpp"
 #include "math/glvec.hpp"
 #include "math/io.hpp"
 #include "math/mat2.hpp"
@@ -13,19 +22,6 @@ using namespace defs;
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
-
-#include "glt/Frame.hpp"
-#include "glt/TextureRenderTarget.hpp"
-#include "glt/Uniforms.hpp"
-#include "glt/color.hpp"
-#include "glt/primitives.hpp"
-#include "glt/utils.hpp"
-
-#include "ge/Camera.hpp"
-#include "ge/CommandParams.hpp"
-#include "ge/Engine.hpp"
-#include "ge/MouseLookPlugin.hpp"
-#include "ge/Timer.hpp"
 
 #include "dump_bmp.h"
 #include "parse_sply.hpp"
@@ -44,6 +40,7 @@ using namespace defs;
 using namespace math;
 using namespace ge;
 using namespace defs;
+using size = defs::size_t;
 
 static const point3_t LIGHT_CENTER_OF_ROTATION = vec3(0.f, 15.f, 0.f);
 static const float LIGHT_ROTATION_RAD = 15.f;
@@ -65,10 +62,10 @@ DEFINE_VERTEX(SCREEN_VERTEX);
 #undef VERTEX2
 #undef SCREEN_VERTEX
 
-static const uint32 SHADE_MODE_AMBIENT = 1;
-static const uint32 SHADE_MODE_DIFFUSE = 2;
-static const uint32 SHADE_MODE_SPECULAR = 4;
-static const uint32 SHADE_MODE_DEFAULT =
+static const uint32_t SHADE_MODE_AMBIENT = 1;
+static const uint32_t SHADE_MODE_DIFFUSE = 2;
+static const uint32_t SHADE_MODE_SPECULAR = 4;
+static const uint32_t SHADE_MODE_DEFAULT =
   SHADE_MODE_AMBIENT | SHADE_MODE_DIFFUSE | SHADE_MODE_SPECULAR;
 
 struct MaterialProperties
@@ -115,7 +112,7 @@ struct Anim
     vec3_t light{};
     vec3_t ecLight{};
 
-    uint32 shade_mode{};
+    uint32_t shade_mode{};
 
     bool use_spotlight{};
     bool spotlight_smooth{};
@@ -299,7 +296,7 @@ Anim::init(const Event<InitEvent> &ev)
     {
         const size N = KERNEL_SIZE;
         const float N2 = float(N - 1) * 0.5f;
-        for (index i = 0; i < SIZE(glow_kernel.size()); ++i) {
+        for (index_t i = 0; i < SIZE(glow_kernel.size()); ++i) {
             float x = float(i) - N2;
 
             const float SIG = 0.84089642;
@@ -608,8 +605,8 @@ Anim::renderTable(const std::string &shader)
     setupTeapotShader(shader, color, mat);
     cubeModel.draw();
 
-    for (uint32 x = 0; x < 2; ++x) {
-        for (uint32 z = 0; z < 2; ++z) {
+    for (uint32_t x = 0; x < 2; ++x) {
+        for (uint32_t z = 0; z < 2; ++z) {
             gt.pop();
             gt.dup();
             gt.translate(vec3(x * foot_x_dist, 0.f, z * foot_z_dist));
@@ -625,8 +622,8 @@ Anim::renderTable(const std::string &shader)
 void
 Anim::mouseMoved(const Event<MouseMoved> &e)
 {
-    int32 dx = e.info.dx;
-    int32 dy = e.info.dy;
+    auto dx = e.info.dx;
+    auto dy = e.info.dy;
 
     dx = -dx;
 
@@ -718,7 +715,7 @@ Anim::setDataDir(const Event<CommandEvent> & /*unused*/,
     free(wood_data);
     woodTexture.filterMode(glt::TextureSampler::FilterLinear);
 
-    int32 nfaces = parse_sply((data_dir + "/teapot.sply").c_str(), teapotModel);
+    auto nfaces = parse_sply((data_dir + "/teapot.sply").c_str(), teapotModel);
     if (nfaces < 0) {
         ERR("couldnt parse teapot model");
         return;

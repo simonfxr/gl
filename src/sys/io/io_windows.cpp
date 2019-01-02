@@ -31,13 +31,13 @@ elevate(Handle &, HandleMode)
 }
 
 HandleError
-read(Handle &, size &, char *)
+read(Handle &, size_t &, char *)
 {
     UNDEFINED;
 }
 
 HandleError
-write(Handle &, size &, const char *)
+write(Handle &, size_t &, const char *)
 {
     UNDEFINED;
 }

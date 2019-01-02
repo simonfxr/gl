@@ -50,15 +50,14 @@ struct Location
     const char *file;
     const char *function;
     const char *operation; // may be null
-    defs::iptr line;
+    int line;
 
     static Location make(const char *_file,
                          int _line,
                          const char *_function,
                          const char *_operation = nullptr)
     {
-        Location loc = { _file, _function, _operation, _line };
-        return loc;
+        return { _file, _function, _operation, _line };
     }
 };
 

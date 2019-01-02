@@ -1,11 +1,15 @@
 #include "ge/CommandArgs.hpp"
-#include "ge/Command.hpp"
 
+#include "data/range.hpp"
+#include "ge/Command.hpp"
 #include "sys/io/Stream.hpp"
 
 #include <cstring>
 
 namespace ge {
+
+using namespace defs;
+using defs::size_t;
 
 void
 CommandArg::free()
@@ -37,7 +41,7 @@ struct PrettyQuotation
 {
     std::vector<std::string> statements;
     sys::io::ByteStream out;
-    size len{};
+    size_t len{};
 };
 
 struct CommandPrettyPrinter::State
@@ -45,8 +49,8 @@ struct CommandPrettyPrinter::State
     sys::io::OutStream *out;
     sys::io::OutStream *current_out;
 
-    size line_len{ 80 };
-    size block_indent{ 4 };
+    size_t line_len{ 80 };
+    size_t block_indent{ 4 };
     bool ignore_empty_statements{ true };
 
     std::vector<std::shared_ptr<PrettyQuotation>> quotations;
@@ -71,13 +75,13 @@ CommandPrettyPrinter::out(sys::io::OutStream &_out)
 }
 
 void
-CommandPrettyPrinter::lineLength(size len)
+CommandPrettyPrinter::lineLength(size_t len)
 {
     self->line_len = len;
 }
 
 void
-CommandPrettyPrinter::blockIndent(size indent)
+CommandPrettyPrinter::blockIndent(size_t indent)
 {
     self->block_indent = indent;
 }
@@ -93,10 +97,9 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
 {
     const char *sep = "[";
 
-    for (defs::index i = 0; i < bind.size(); ++i) {
+    for (const auto &k : bind) {
         *self->current_out << sep;
         sep = ", ";
-        const Key &k = bind[i];
         char pre = 0;
         switch (k.state) {
         case keystate::Up:
@@ -162,22 +165,21 @@ void
 CommandPrettyPrinter::print(const Array<CommandArg> &statement)
 {
 
-    if (self->ignore_empty_statements && statement.size() == 0)
+    if (self->ignore_empty_statements && statement.size_t() == 0)
         return;
 
-    const char *sep = "";
-    for (defs::index i = 0; i < statement.size(); ++i) {
-        *self->current_out << sep;
-        print(statement[i], i == 0);
-        sep = " ";
+    auto first = true;
+    for (auto &stmt : statement) {
+        *self->current_out << (first ? "" : " ");
+        print(stmt, first);
     }
 }
 
 void
 CommandPrettyPrinter::print(const std::vector<CommandArg> &statement)
 {
-    const Array<CommandArg> arr = SHARE_ARRAY(
-      SIZE(statement.size()), const_cast<CommandArg *>(&statement.front()));
+    auto arr = SHARE_ARRAY(const_cast<CommandArg *>(&statement.front()),
+                           SIZE(statement.size()));
     print(arr);
 }
 
@@ -186,8 +188,8 @@ CommandPrettyPrinter::print(const Quotation &q)
 {
     openQuotation();
 
-    for (defs::index i = 0; i < SIZE(q.size()); ++i) {
-        print(q[i]);
+    for (const auto &qi : q) {
+        print(qi);
         auto &pq = self->quotations.back();
         pq->statements.push_back(pq->out.str());
         pq->out.truncate(0);
@@ -210,10 +212,10 @@ CommandPrettyPrinter::closeQuotation()
 
     // FIXME: output is ugly
 
-    size depth = SIZE(self->quotations.size());
-    size indent = self->block_indent * depth;
+    size_t depth = SIZE(self->quotations.size());
+    size_t indent = self->block_indent * depth;
     auto &q = self->quotations.back();
-    size nln = q->statements.size();
+    size_t nln = q->statements.size();
 
     self->current_out =
       depth == 1 ? self->out : &self->quotations[depth - 2]->out;
@@ -223,9 +225,9 @@ CommandPrettyPrinter::closeQuotation()
         *self->current_out << "{}";
     } else {
         *self->current_out << "{";
-        for (defs::index i = 0; i < nln; ++i) {
+        for (const auto &qi : q->statements) {
             printSpaces(indent);
-            *self->current_out << q->statements[i] << sys::io::endl;
+            *self->current_out << qi << sys::io::endl;
         }
         *self->current_out << "}";
     }
@@ -234,10 +236,12 @@ CommandPrettyPrinter::closeQuotation()
 }
 
 void
-CommandPrettyPrinter::printSpaces(size n)
+CommandPrettyPrinter::printSpaces(size_t n)
 {
-    for (size i = 0; i < n; ++i)
+    for (auto i : irange(n)) {
+        UNUSED(i);
         *self->current_out << " ";
+    }
 }
 
 void

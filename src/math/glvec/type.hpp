@@ -14,7 +14,7 @@ namespace math {
 #define DEF_GLVEC(gl_T, T)                                                     \
     struct gl_T                                                                \
     {                                                                          \
-        float buffer[T::size];                                                 \
+        float buffer[T::size_t];                                                 \
         gl_T() = default;                                                      \
         MATH_FUNC gl_T(const T &v) PURE_FUNC;                                  \
         MATH_FUNC operator T() const PURE_FUNC;                                \

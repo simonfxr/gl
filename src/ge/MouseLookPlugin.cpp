@@ -6,6 +6,9 @@
 
 namespace ge {
 
+using namespace defs;
+using defs::size_t;
+
 struct MouseLookPlugin::Data
 {
     Data();
@@ -58,9 +61,9 @@ MouseLookPlugin::Data::stateChanged(State new_state)
     case Grabbing: {
         if (_camera)
             _camera->mouseLook(true);
-        size w, h;
+        size_t w, h;
         win.windowSize(w, h);
-        win.setMouse(index16(w) / 2, index16(h) / 2);
+        win.setMouse(int16_t(w) / 2, int16_t(h) / 2);
         win.showMouseCursor(false);
     } break;
     case Free: {
@@ -109,7 +112,7 @@ MouseLookPlugin::Data::handleMouseMove(const Event<MouseMoved> &ev)
 {
     GameWindow &win = ev.info.window;
     if (_state == Grabbing) {
-        size w, h;
+        size_t w, h;
         win.windowSize(w, h);
         win.setMouse(w / 2, h / 2);
     }

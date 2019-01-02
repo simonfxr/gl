@@ -123,8 +123,8 @@ Client::handleIO(Engine &e)
     switch (state) {
     case ParsingGotStatement:
         e.commandProcessor().execCommand(statement);
-        for (index i = 0; i < SIZE(statement.size()); ++i)
-            statement[i].free();
+        for (auto &s : statement)
+            s.free();
         statement.clear();
     case ParsingYield:
         [[fallthrough]];
@@ -169,7 +169,7 @@ ReplServer::ReplServer(Engine &e)
 {}
 
 bool
-ReplServer::start(const IPAddr4 &listen_addr, uint16 port)
+ReplServer::start(const IPAddr4 &listen_addr, uint16_t port)
 {
 
     if (self->running) {
@@ -219,10 +219,12 @@ ReplServer::handleClients()
 {
     ASSERT(self->running);
 
-    for (index i = 0; i < SIZE(self->clients.size()); ++i) {
+    for (defs::size_t i = 0; i < SIZE(self->clients.size());) {
         if (!self->clients[i]->handle(self->engine)) {
             INFO("closing connection to client");
             self->clients.erase(self->clients.begin() + i);
+        } else {
+            ++i;
         }
     }
 }

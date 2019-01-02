@@ -5,12 +5,13 @@
 namespace glt {
 
 using namespace defs;
+using defs::size_t;
 
 GLPerfCounter::GLPerfCounter()
   : _nqueries(0), _queries(nullptr), _active_query(0), _last_query(-1.0)
 {}
 
-GLPerfCounter::GLPerfCounter(size s) : GLPerfCounter()
+GLPerfCounter::GLPerfCounter(size_t s) : GLPerfCounter()
 {
     init(s);
 }
@@ -21,7 +22,7 @@ GLPerfCounter::~GLPerfCounter()
 }
 
 void
-GLPerfCounter::init(size s)
+GLPerfCounter::init(size_t s)
 {
     ASSERT(s > 0);
     _last_query = -1.0;

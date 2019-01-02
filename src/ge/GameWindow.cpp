@@ -14,6 +14,9 @@
 
 namespace ge {
 
+using namespace defs;
+using defs::size_t;
+
 struct GameWindow::Data
 {
     GameWindow &self;
@@ -44,7 +47,7 @@ struct GameWindow::Data
 
     void init(const WindowOptions &opts);
     void handleInputEvents();
-    void setMouse(index16 x, index16 y);
+    void setMouse(int16_t x, int16_t y);
 
     static GLFWwindow *makeWindow(const WindowOptions &opts);
     static void runHandleInputEvents(Data * /*win*/,
@@ -302,15 +305,15 @@ GameWindow::Data::glfw_cursor_pos_callback(GLFWwindow *win, double x, double y)
 {
     GameWindow::Data *me = getUserPointer(win);
 
-    auto dx = int16(-(x - me->mouse_x));
-    auto dy = int16(y - me->mouse_y);
+    auto dx = int16_t(-(x - me->mouse_x));
+    auto dy = int16_t(y - me->mouse_y);
 
     me->mouse_x = x;
     me->mouse_y = y;
 
     if (dx != 0 || dy != 0)
         me->events.mouseMoved.raise(
-          makeEvent(MouseMoved(me->self, dx, dy, int16(x), int16(y))));
+          makeEvent(MouseMoved(me->self, dx, dy, int16_t(x), int16_t(y))));
 }
 
 void
@@ -408,7 +411,7 @@ GameWindow::Data::init(const WindowOptions &opts)
 }
 
 void
-GameWindow::Data::setMouse(index16 x, index16 y)
+GameWindow::Data::setMouse(int16_t x, int16_t y)
 {
     glfwSetCursorPos(win, x, y);
     mouse_x = x;
@@ -509,24 +512,24 @@ GameWindow::registerHandlers(EngineEvents &evnts)
       makeEventHandler(Data::runHandleInputEvents, self.get()));
 }
 
-size
+size_t
 GameWindow::windowWidth() const
 {
-    size w, h;
+    size_t w, h;
     windowSize(w, h);
     return w;
 }
 
-size
+size_t
 GameWindow::windowHeight() const
 {
-    size w, h;
+    size_t w, h;
     windowSize(w, h);
     return h;
 }
 
 void
-GameWindow::windowSize(size &width, size &height) const
+GameWindow::windowSize(size_t &width, size_t &height) const
 {
     int w, h;
     glfwGetWindowSize(self->win, &w, &h);
@@ -535,7 +538,7 @@ GameWindow::windowSize(size &width, size &height) const
 }
 
 void
-GameWindow::setMouse(index16 x, index16 y)
+GameWindow::setMouse(int16_t x, int16_t y)
 {
     self->setMouse(x, y);
 }

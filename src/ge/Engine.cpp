@@ -76,7 +76,7 @@ struct Engine::Data : public GameLoop::Game
     void handleInputEvents() final;
     GameLoop::time now() final;
     void sleep(GameLoop::time secs) final;
-    void atExit(int32 exit_code) final;
+    void atExit(int32_t exit_code) final;
 
     void registerHandlers();
     bool execCommand(std::vector<CommandArg> &args);
@@ -171,7 +171,7 @@ Engine::programName() const
     return self->programName;
 }
 
-int32
+int32_t
 Engine::run(const EngineOptions &opts)
 {
     if (self->initialized) {
@@ -326,7 +326,7 @@ Engine::Data::sleep(GameLoop::time secs)
 }
 
 void
-Engine::Data::atExit(int32 exit_code)
+Engine::Data::atExit(int32_t exit_code)
 {
     events.exit.raise(makeEvent(ExitEvent(theEngine, exit_code)));
 }

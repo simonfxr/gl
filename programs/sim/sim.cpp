@@ -1,18 +1,15 @@
 #include "sim.hpp"
 
-#include "defs.hpp"
-
+#include "data/range.hpp"
 #include "math/plane.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
-
 #include "sys/clock.hpp"
 
 #include <algorithm>
-#include <vector>
-
 #include <cstdlib>
 #include <ctime>
+#include <vector>
 
 using namespace defs;
 
@@ -49,29 +46,29 @@ struct Particle
 
 struct ParticleRef
 {
-    index16 index;
+    uint16_t index;
 };
 
 struct SphereRef
 {
-    index16 index;
+    uint16_t index;
 };
 
 namespace {
 
 ParticleRef
-particleRef(index idx)
+particleRef(index_t idx)
 {
     ParticleRef r{};
-    r.index = index16(idx);
+    r.index = uint16_t(idx);
     return r;
 }
 
 SphereRef
-sphereRef(index idx)
+sphereRef(index_t idx)
 {
     SphereRef r{};
-    r.index = index16(idx);
+    r.index = uint16_t(idx);
     return r;
 }
 
@@ -134,9 +131,9 @@ struct World::Data
     SphereData &deref(SphereRef ref);
     Sphere makeSphere(SphereRef ref);
 
-    int32 collidesWall(const point3_t &center,
-                       float r,
-                       point3_t &out_collision);
+    int32_t collidesWall(const point3_t &center,
+                         float r,
+                         point3_t &out_collision);
 
     void generateContacts(std::vector<Contact> &contacts, float dt);
     void solveContacts(std::vector<Contact> &contacts, float dt);
@@ -145,7 +142,7 @@ struct World::Data
     void insertBSP(BSP *&p,
                    int ni,
                    Box volume,
-                   uint32 d,
+                   uint32_t d,
                    Node *node,
                    const point3_t &center,
                    float r);
@@ -227,7 +224,7 @@ World::canMoveCamera(const math::vec3_t &position, math::vec3_t &step)
 {
     vec3_t out_coll = vec3(real(0));
     vec3_t new_pos = position + step;
-    int32 hit = self->collidesWall(new_pos, CAMERA_SPHERE_RAD, out_coll);
+    auto hit = self->collidesWall(new_pos, CAMERA_SPHERE_RAD, out_coll);
 
     if (hit >= 0) {
         vec3_t valid_pos =
@@ -252,7 +249,7 @@ World::spawnSphere(const Sphere &s, const SphereModel &m)
     p.pos = s.center;
 
     SphereData sd{};
-    sd.particle.index = index16(self->particles.size());
+    sd.particle.index = uint16_t(self->particles.size());
     sd.r = s.r;
 
     self->particles.push_back(p);
@@ -295,8 +292,7 @@ World::render(Renderer &renderer, float dt)
         const point3_t &cam = renderer.camera().origin;
         std::vector<SphereDistance> spheres_ordered;
 
-        for (index i = 0; i < n; ++i) {
-            const SphereData &s = self->spheres[size_t(i)];
+        for (const auto [i, s] : enumerate(self->spheres)) {
             const Particle &p = self->deref(s.particle);
             const point3_t pos = p.pos + p.vel * dt;
 
@@ -311,8 +307,7 @@ World::render(Renderer &renderer, float dt)
             spheres_ordered.push_back(d);
         }
 
-        for (index i = 0; i < SIZE(spheres_ordered.size()); ++i) {
-            const SphereDistance &d = spheres_ordered[UNSIZE(i)];
+        for (const auto &d : spheres_ordered) {
             Sphere s = self->makeSphere(d.sphere);
             s.center += s.v * dt;
             renderer.renderSphere(s,
@@ -320,7 +315,7 @@ World::render(Renderer &renderer, float dt)
         }
 
     } else {
-        for (index i = 0; i < n; ++i) {
+        for (const auto i : irange(n)) {
             Sphere s = self->makeSphere(sphereRef(i));
             s.center += s.v * dt;
             renderer.renderSphere(s, self->sphereModels[UNSIZE(i)]);
@@ -340,15 +335,15 @@ World::render(Renderer &renderer, float dt)
     renderer.renderBox(self->room);
 }
 
-int32
+int32_t
 World::Data::collidesWall(const point3_t &center,
                           real r,
                           point3_t &out_collision)
 {
     real dist_min = r;
-    int32 hit = -1;
+    int32_t hit = -1;
 
-    for (index i = 0; i < 6; ++i) {
+    for (auto i : irange(6)) {
         real dist = distance(walls[i], center);
         if (dist < r && dist < dist_min) {
             dist_min = dist;
@@ -449,10 +444,10 @@ split(const Box &enclosing, int ni, float sign)
     return b;
 }
 
-static const uint32 MAX_DEPTH = 10;
+static const uint32_t MAX_DEPTH = 10;
 
-static uint32 num_tree;
-static uint32 num_nodes;
+static uint32_t num_tree;
+static uint32_t num_nodes;
 
 static BSP *
 allocBSP()
@@ -470,7 +465,7 @@ void
 World::Data::insertBSP(BSP *&p,
                        int ni,
                        Box volume,
-                       uint32 depth,
+                       uint32_t depth,
                        Node *node,
                        const point3_t &center,
                        float r)
@@ -507,10 +502,10 @@ World::Data::insertBSP(BSP *&p,
     float d = distance(p->plane, center);
     float d0 = math::abs(d);
     auto sign = float(signum(d));
-    index ni2 = (ni + 1) % 3;
+    auto ni2 = (ni + 1) % 3;
     if (sign == 0.f)
         sign = 1.f;
-    index face = sign > 0 ? 0 : 1;
+    auto face = sign > 0 ? 0 : 1;
 
     ++depth;
 
@@ -591,10 +586,10 @@ World::Data::findCollisions(std::vector<Contact> &contacts,
     float d = distance(t->plane, center);
     float d0 = math::abs(d);
     auto sign = float(signum(d));
-    index ni2 = (ni + 1) % 3;
+    auto ni2 = (ni + 1) % 3;
     if (sign == 0.f)
         sign = 1.f;
-    index face = sign > 0 ? 0 : 1;
+    auto face = sign > 0 ? 0 : 1;
 
     if (d0 > r) {
         findCollisions(
@@ -614,13 +609,12 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
     UNUSED(dt);
 
     size n = SIZE(spheres.size());
-    for (index i = 0; i < n; ++i) {
-        const SphereData &s1 = spheres[UNSIZE(i)];
+    for (const auto &s1 : spheres) {
         const Particle &p1 = deref(s1.particle);
         const point3_t pos1 = p1.pos;
 
         point3_t coll_pos;
-        int32 hit = collidesWall(pos1, s1.r, coll_pos);
+        auto hit = collidesWall(pos1, s1.r, coll_pos);
         if (hit >= 0) {
             Contact con{};
             con.x = s1.particle;
@@ -658,27 +652,30 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
     num_tree = 0;
     num_nodes = 0;
 
-    time_msg("tree building", for (index i = 0; i < n; ++i) {
-        const SphereData &s1 = spheres[UNSIZE(i)];
-        const Particle &p1 = deref(s1.particle);
-        Node *node = allocNode();
-        ++num_nodes;
-        node->nxt = nullptr;
-        node->sphere = sphereRef(i);
-        insertBSP(root, 0, volume, 0, node, p1.pos, s1.r);
-    });
+    time_msg("tree building",
+             for (const auto i
+                  : irange(n)) {
+                 const SphereData &s1 = spheres[UNSIZE(i)];
+                 const Particle &p1 = deref(s1.particle);
+                 Node *node = allocNode();
+                 ++num_nodes;
+                 node->nxt = nullptr;
+                 node->sphere = sphereRef(i);
+                 insertBSP(root, 0, volume, 0, node, p1.pos, s1.r);
+             });
 
     time_msg("testing collisions",
              std::vector<bool> collided(particles.size(), false);
 
-             for (index i = 0; i < n; ++i) {
+             for (const auto i
+                  : irange(n)) {
                  const SphereData &s1 = spheres[UNSIZE(i)];
                  const Particle &p1 = deref(s1.particle);
                  size num_coll = SIZE(contacts.size());
                  findCollisions(
                    contacts, root, 0, collided, sphereRef(i), p1.pos, s1.r);
                  size k = SIZE(contacts.size());
-                 for (index j = num_coll; j < k; ++j) {
+                 for (index_t j = num_coll; j < k; ++j) {
                      collided[UNSIZE(contacts[UNSIZE(j)].y.index)] = false;
                  }
              });
@@ -692,11 +689,9 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
 void
 World::Data::solveContacts(std::vector<Contact> &contacts, float dt)
 {
-    const size n = SIZE(contacts.size());
+    for (const auto k : irange(solve_iterations)) {
 
-    for (index k = 0; k < solve_iterations; ++k) {
-
-        for (index i = 0; i < n; ++i) {
+        for (auto &con : contacts) {
             // const Contact& con = contacts[i];
             // Particle& p1 = deref(con.x);
             // Particle& p2 = deref(con.y);
@@ -711,8 +706,6 @@ World::Data::solveContacts(std::vector<Contact> &contacts, float dt)
             //     p1.vel += p * p1.invMass * n;
             //     p2.vel -= p * p2.invMass * n;
             // }
-
-            Contact &con = contacts[UNSIZE(i)];
 
             const vec3_t &norm = con.normal;
 

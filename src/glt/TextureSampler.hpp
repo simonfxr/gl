@@ -10,8 +10,6 @@
 
 namespace glt {
 
-using namespace defs;
-
 struct GLT_API TextureSampler
 {
 private:
@@ -60,8 +58,8 @@ public:
     void filterMode(FilterMode, Filter filter = Filter(FilterMin | FilterMag));
     void clampMode(ClampMode, Axis axis = Axis(S | T | R));
 
-    void bind(uint32 idx, bool set_active_idx = true);
-    void unbind(uint32 idx, bool set_active_idx = true);
+    void bind(uint32_t idx, bool set_active_idx = true);
+    void unbind(uint32_t idx, bool set_active_idx = true);
 
     static Axis availableAxes(TextureType);
 

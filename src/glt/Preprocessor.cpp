@@ -6,6 +6,9 @@
 
 namespace glt {
 
+using namespace defs;
+using defs::size_t;
+
 Preprocessor::DirectiveHandler::~DirectiveHandler() = default;
 
 void
@@ -48,11 +51,11 @@ Preprocessor::Preprocessor() : self(new Data) {}
 void
 Preprocessor::process(const std::string &str)
 {
-    process(str.data(), uint32(str.length()));
+    process(str.data(), uint32_t(str.length()));
 }
 
 void
-Preprocessor::process(const char *begin, uint32 size)
+Preprocessor::process(const char *begin, size_t size)
 {
     if (wasError())
         return;
@@ -60,7 +63,7 @@ Preprocessor::process(const char *begin, uint32 size)
     DirectiveContext ctx(*this, self->sourceName);
 
     ctx.content.data = begin;
-    ctx.content.size = size;
+    ctx.content.size_t = size;
 
     for (auto &handler : self->handlers) {
         handler.second->beginProcessing(ctx.content);
@@ -121,7 +124,7 @@ Preprocessor::process(const char *begin, uint32 size)
 void
 Preprocessor::process(const char *contents)
 {
-    process(contents, uint32(strlen(contents)));
+    process(contents, uint32_t(strlen(contents)));
 }
 
 Preprocessor::DirectiveHandler &

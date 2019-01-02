@@ -79,6 +79,8 @@ if(COMP_CLANG)
   set_option(USE_CLANG_TRAP_UNDEFINED FALSE BOOL "enable -fsanitize=undefined-trap")
 endif()
 
+add_subdirectory(deps/cxx-header-utils)
+
 include_directories(src)
 
 add_subdirectory(src)

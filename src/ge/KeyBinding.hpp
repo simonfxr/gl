@@ -8,8 +8,6 @@
 
 namespace ge {
 
-using namespace defs;
-
 namespace keystate {
 
 enum KeyState

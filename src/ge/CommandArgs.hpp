@@ -14,8 +14,6 @@
 
 namespace ge {
 
-using namespace defs;
-
 struct Command;
 
 enum CommandParamType
@@ -53,7 +51,7 @@ struct GE_API CommandArg
     union
     {
         const std::string *string;
-        int64 integer;
+        defs::int64_t integer;
         double number;
         struct
         {
@@ -76,8 +74,8 @@ struct GE_API CommandPrettyPrinter
     ~CommandPrettyPrinter();
 
     void out(sys::io::OutStream &_out);
-    void lineLength(size len);
-    void blockIndent(size indent);
+    void lineLength(defs::size_t len);
+    void blockIndent(defs::size_t indent);
     void ignoreEmptyStatements(bool);
 
     void print(const KeyBinding &bind);
@@ -85,7 +83,7 @@ struct GE_API CommandPrettyPrinter
     void print(const Array<CommandArg> &);
     void print(const std::vector<CommandArg> &);
     void print(const Quotation &);
-    void printSpaces(size);
+    void printSpaces(defs::size_t);
 
     void openQuotation();
     void closeQuotation();

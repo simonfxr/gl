@@ -1,7 +1,9 @@
 #include "ge/KeyBinding.hpp"
+
+#include "data/range.hpp"
 #include "ge/module.hpp"
 
-#include <map>
+#include <unordered_map>
 
 namespace ge {
 
@@ -10,7 +12,7 @@ using namespace defs;
 struct KeyBindingState::Data
 {
     const char *table[keycode::Count]{};
-    std::map<std::string, KeyCode> revtable;
+    std::unordered_map<std::string, KeyCode> revtable;
 
     Data();
 };
@@ -146,10 +148,10 @@ keycodeStrings(KeyCode code)
 
 KeyBindingState::Data::Data()
 {
-    for (uint32 i = 0; i < keycode::Count; ++i)
+    for (const auto i : irange(int(keycode::Count)))
         table[i] = keycodeStrings(KeyCode(i));
 
-    for (uint32 i = 0; i < keycode::Count; ++i)
+    for (const auto i : irange(int(keycode::Count)))
         if (table[i] != nullptr)
             revtable[table[i]] = KeyCode(i);
 }
@@ -174,13 +176,17 @@ prettyKeyCode(KeyCode code)
 int
 compareKeyBinding(const KeyBinding &x, const KeyBinding &y)
 {
-    for (defs::index i = 0; i < x.size() && (y.size() != 0); ++i) {
-        int32 diff = int32(y[i].code) - int32(x[i].code);
-        if (diff != 0)
-            return diff;
+    for (const auto i : irange(std::min(x.size_t(), y.size_t()))) {
+        auto a = int32_t(y[i].code);
+        auto b = int32_t(x[i].code);
+        if (a != b) {
+            if (a < b)
+                return -1;
+            return 1;
+        }
     }
 
-    return y.size() - x.size();
+    return x.size_t() < y.size_t() ? -1 : x.size_t() > y.size_t() ? 1 : 0;
 }
 
 } // namespace ge

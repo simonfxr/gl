@@ -8,6 +8,9 @@
 
 namespace ge {
 
+using namespace defs;
+using defs::size_t;
+
 namespace {
 
 enum State
@@ -35,7 +38,7 @@ parse_err(const ParseState &s,
 sys::io::StreamResult
 next(sys::io::InStream &in, char &c)
 {
-    size s = 1;
+    size_t s = 1;
     sys::io::StreamResult res = in.read(s, &c);
     ASSERT(res != sys::io::StreamResult::OK || s == 1);
     return res;
@@ -193,7 +196,7 @@ parseKeycombo(ParseState &s, CommandArg &tok)
     tok.keyBinding = bind;
     tok.type = KeyCombo;
 
-    for (index i = 0; i < SIZE(keys.size()); ++i)
+    for (index_t i = 0; i < SIZE(keys.size()); ++i)
         (*bind)[i] = keys[size_t(i)];
 
     return EndToken;
@@ -392,7 +395,7 @@ parseNum(ParseState &s, CommandArg &tok)
     }
 
     bool oneDigit = false;
-    int64 k = 0;
+    int64_t k = 0;
     while (s.c >= '0' && s.c <= '9') {
         k = (k * 10) + s.c - '0';
         getch(s);
@@ -408,7 +411,7 @@ parseNum(ParseState &s, CommandArg &tok)
         isNum = true;
     } else if (s.c == '.') {
         getch(s);
-        int64 fract = 0;
+        int64_t fract = 0;
         double div = 1;
         while (s.c >= '0' && s.c <= '9') {
             fract = fract * 10 + s.c - '0';

@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 
-#ifdef SYSTEM_UNIX
+#ifdef HU_OS_POSIX_P
 #include "sys/fs/fs_unix.hpp"
-#elif defined(SYSTEM_WINDOWS)
+#elif defined(HU_OS_WINDOWS_P)
 #include "sys/fs/fs_windows.hpp"
 #else
 #error "no Filesystem implementation available"
@@ -18,12 +18,10 @@ namespace sys {
 
 namespace fs {
 
-using namespace defs;
-
 // unix time stamp
 struct FileTime
 {
-    uint32 seconds;
+    defs::uint32_t seconds;
 };
 
 namespace {
@@ -127,7 +125,7 @@ operator>(const FileTime &a, const FileTime &b)
 namespace def {
 
 SYS_API std::string
-join(const std::string &path, const char **, size_t n);
+join(const std::string &path, const char **, defs::size_t n);
 
 SYS_API std::string
 dirname(const std::string &path);

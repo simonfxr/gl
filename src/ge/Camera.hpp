@@ -74,7 +74,7 @@ struct GE_API Camera : public Plugin
     const std::string &framePath() const;
     void framePath(const std::string &);
 
-    void mouseMoved(index16 dx, index16 dy);
+    void mouseMoved(defs::int16_t dx, defs::int16_t dy);
 
     void mouseLook(bool enable);
 

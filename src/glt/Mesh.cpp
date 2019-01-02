@@ -1,7 +1,10 @@
 #include "glt/Mesh.hpp"
+
+#include "data/Array.hpp"
+#include "data/range.hpp"
 #include "glt/utils.hpp"
 
-#ifdef SYSTEM_UNIX
+#ifdef HU_OS_POSIX
 #include <cstdlib>
 #endif
 
@@ -10,38 +13,39 @@
 namespace glt {
 
 using namespace defs;
+using defs::size_t;
 
 namespace {
 
 void *
-alloc_aligned(defs::size size, defs::size alignment)
+alloc_aligned(size_t size, size_t alignment)
 {
     ASSERT_SIZE(size);
     ASSERT_SIZE(alignment);
     void *mem;
-#ifdef SYSTEM_UNIX
+#ifdef HU_OS_POSIX
     if (UNSIZE(alignment) < sizeof(void *))
         alignment = sizeof(void *);
     if (posix_memalign(&mem, size_t(alignment), size_t(size)) != 0)
         mem = nullptr;
 #else
-    mem = malloc(size);
+    mem = malloc(size_t);
     if ((uptr(mem) & (alignment - 1)) != 0) {
         ERR("cannot alloc aligned memory");
         free(mem);
-        mem = 0;
+        mem = nullptr;
     }
 #endif
     return mem;
 }
 
-byte *
+uint8_t *
 reallocVerts(const GenVertexDescription &desc,
-             byte *vertex_data,
-             size old_size,
-             size new_capa)
+             uint8_t *vertex_data,
+             size_t old_size,
+             size_t new_capa)
 {
-    byte *verts = static_cast<byte *>(
+    uint8_t *verts = static_cast<uint8_t *>(
       alloc_aligned(desc.sizeof_vertex * new_capa, desc.alignment));
     memcpy(verts, vertex_data, UNSIZE(desc.sizeof_vertex * old_size));
     free(vertex_data);
@@ -89,14 +93,14 @@ validateUsageHint(GLenum usageHint)
 
 } // namespace
 
-// VertexDesc *allocVertexDesc(uint32 sizeof_vertex, uint32 nattrs, const Attr
-// *attrs, uint32 alignment) {
+// VertexDesc *allocVertexDesc(uint32_t sizeof_vertex, uint32_t nattrs, const
+// Attr *attrs, uint32_t alignment) {
 //     VertexDesc *desc = malloc(sizeof *desc + sizeof attrs[0] * nattrs);
 //     desc->sizeof_vertex = sizeof_vertex;
 
-//     uint32 required_alignement = 0;
+//     uint32_t required_alignement = 0;
 
-//     for (uint32 i = 0; i < nattrs; ++i) {
+//     for (uint32_t i = 0; i < nattrs; ++i) {
 //         desc->attrs[i] = attrs[i];
 //         if (attrs[i].alignment > required_alignment) // FIXME: not really
 //         correct
@@ -142,8 +146,8 @@ MeshBase::initState()
 
 void
 MeshBase::initBase(const GenVertexDescription &layout,
-                   size initial_nverts,
-                   size initial_nelems)
+                   size_t initial_nverts,
+                   size_t initial_nelems)
 {
     ASSERT_SIZE(initial_nverts);
     ASSERT_SIZE(initial_nelems);
@@ -159,13 +163,13 @@ MeshBase::initBase(const GenVertexDescription &layout,
     while (elements_capacity < initial_nelems)
         elements_capacity *= 2;
 
-    vertex_data = static_cast<byte *>(alloc_aligned(
+    vertex_data = static_cast<uint8_t *>(alloc_aligned(
       layout.sizeof_vertex * vertices_capacity, layout.alignment));
-    element_data = new uint32[UNSIZE(elements_capacity)];
+    element_data = new uint32_t[UNSIZE(elements_capacity)];
     desc = &layout;
     enabled_attributes.resize(layout.nattributes * 2);
     enabled_attributes.set(false);
-    for (defs::index i = 0; i < layout.nattributes; ++i)
+    for (auto i : irange(layout.nattributes))
         enableAttribute(i, true);
 }
 
@@ -225,8 +229,8 @@ MeshBase::initVertexAttribs()
     ASSERT(vertex_buffer_name.valid());
     ASSERT(vertex_array_name.valid());
 
-    for (defs::index i = 0; i < desc->nattributes; ++i) {
-        const VertexAttr &a = desc->attributes[i];
+    for (const auto i : irange(desc->nattributes)) {
+        const auto &a = desc->attributes[i];
         GL_CALL(glVertexArrayVertexAttribOffsetEXT,
                 *vertex_array_name,
                 *vertex_buffer_name,
@@ -302,9 +306,6 @@ MeshBase::drawType(DrawType type)
     case DrawArrays:
     case DrawElements:
         break;
-    default:
-        ERR("invalid draw type");
-        return;
     }
 
     draw_type = type;
@@ -316,7 +317,7 @@ MeshBase::enableAttributes()
     ASSERT(vertex_buffer_name.valid());
     ASSERT(vertex_array_name.valid());
 
-    for (defs::index i = 0; i < desc->nattributes; ++i) {
+    for (const auto i : irange(desc->nattributes)) {
         if (enabled_attributes[2 * i] != enabled_attributes[2 * i + 1]) {
             enabled_attributes[2 * i + 1] = enabled_attributes[2 * i];
 
@@ -339,7 +340,7 @@ MeshBase::disableAttributes()
 }
 
 void
-MeshBase::drawElementsInstanced(size num, GLenum primType)
+MeshBase::drawElementsInstanced(size_t num, GLenum primType)
 {
     validatePrimType(primType);
     if (gpu_elements_size == 0)
@@ -381,7 +382,7 @@ MeshBase::drawArrays(GLenum primType)
 }
 
 void
-MeshBase::drawArraysInstanced(size num, GLenum primType)
+MeshBase::drawArraysInstanced(size_t num, GLenum primType)
 {
     if (gpu_vertices_size == 0)
         return;
@@ -405,7 +406,7 @@ MeshBase::draw(GLenum primType)
 }
 
 void
-MeshBase::drawInstanced(size num, GLenum primType)
+MeshBase::drawInstanced(size_t num, GLenum primType)
 {
     switch (draw_type) {
     case DrawArrays:
@@ -417,20 +418,20 @@ MeshBase::drawInstanced(size num, GLenum primType)
     }
 }
 
-const byte *
-MeshBase::vertexRef(defs::index i) const
+const uint8_t *
+MeshBase::vertexRef(defs::index_t i) const
 {
     return vertex_data + desc->sizeof_vertex * i;
 }
 
-byte *
-MeshBase::vertexRef(defs::index i)
+uint8_t *
+MeshBase::vertexRef(defs::index_t i)
 {
     return vertex_data + desc->sizeof_vertex * i;
 }
 
 void
-MeshBase::appendVertex(const byte *vertex)
+MeshBase::appendVertex(const uint8_t *vertex)
 {
     if (unlikely(vertices_size >= vertices_capacity)) {
         vertex_data = reallocVerts(
@@ -443,18 +444,18 @@ MeshBase::appendVertex(const byte *vertex)
 }
 
 void
-MeshBase::appendVertexElem(const byte *vertex)
+MeshBase::appendVertexElem(const uint8_t *vertex)
 {
     appendVertex(vertex);
-    addElement(defs::uint32(vertices_size - 1));
+    addElement(defs::uint32_t(vertices_size - 1));
 }
 
 void
-MeshBase::addElement(uint32 index)
+MeshBase::addElement(uint32_t index_t)
 {
 
     if (unlikely(elements_size >= elements_capacity)) {
-        auto *elems = new uint32[UNSIZE(elements_capacity * 2)];
+        auto *elems = new uint32_t[UNSIZE(elements_capacity * 2)];
         memcpy(
           elems, element_data, sizeof elems[0] * UNSIZE(elements_capacity));
         delete[] element_data;
@@ -462,14 +463,14 @@ MeshBase::addElement(uint32 index)
         element_data = elems;
     }
 
-    element_data[elements_size++] = index;
+    element_data[elements_size++] = index_t;
 }
 
 GLuint
-MeshBase::attributePosition(size offset) const
+MeshBase::attributePosition(size_t offset) const
 {
 
-    for (defs::index i = 0; i < desc->nattributes; ++i) {
+    for (const auto i : irange(desc->nattributes)) {
         if (desc->attributes[i].offset == offset)
             return static_cast<GLuint>(i);
     }
@@ -477,20 +478,20 @@ MeshBase::attributePosition(size offset) const
 }
 
 void
-MeshBase::enableAttribute(defs::index i, bool enabled)
+MeshBase::enableAttribute(defs::index_t i, bool enabled)
 {
     if (i >= desc->nattributes) {
-        ERR("index out of range");
+        ERR("index_t out of range");
         return;
     }
     enabled_attributes[i * 2] = enabled;
 }
 
 bool
-MeshBase::attributeEnabled(defs::index i)
+MeshBase::attributeEnabled(defs::index_t i)
 {
     if (i >= desc->nattributes) {
-        ERR("index out of range");
+        ERR("index_t out of range");
         return false;
     }
 
@@ -504,14 +505,14 @@ MeshBase::attributeEnabled(defs::index i)
 }
 
 void
-MeshBase::setSize(size size)
+MeshBase::setSize(size_t size_t)
 {
-    defs::size capa = MIN_NUM_VERTICES;
-    while (capa < size)
+    defs::size_t capa = MIN_NUM_VERTICES;
+    while (capa < size_t)
         capa *= 2;
 
-    if (size < vertices_size)
-        vertices_size = size;
+    if (size_t < vertices_size)
+        vertices_size = size_t;
 
     if (capa != vertices_capacity) {
         vertex_data = reallocVerts(*desc, vertex_data, vertices_size, capa);
@@ -520,17 +521,17 @@ MeshBase::setSize(size size)
 }
 
 void
-MeshBase::setElementsSize(size size)
+MeshBase::setElementsSize(size_t size_t)
 {
-    defs::size capa = MIN_NUM_ELEMENTS;
-    while (capa < size)
+    defs::size_t capa = MIN_NUM_ELEMENTS;
+    while (capa < size_t)
         capa *= 2;
 
-    if (size < elements_size)
-        elements_size = size;
+    if (size_t < elements_size)
+        elements_size = size_t;
 
     if (capa != elements_capacity) {
-        auto *elems = new uint32[UNSIZE(capa)];
+        auto *elems = new uint32_t[UNSIZE(capa)];
         memcpy(elems, element_data, sizeof elems[0] * UNSIZE(elements_size));
         delete[] element_data;
         element_data = elems;

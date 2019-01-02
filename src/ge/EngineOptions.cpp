@@ -322,7 +322,7 @@ EngineOptions::printHelp()
     int max_col = 0;
 
     for (const auto &i : OPTIONS) {
-        defs::index w = 2;
+        defs::index_t w = 2;
         w += SIZE(strlen(i.option));
         if (i.option_arg != nullptr)
             w += 1 + SIZE(strlen(i.option_arg));
@@ -331,7 +331,7 @@ EngineOptions::printHelp()
     }
 
     for (const auto &i : OPTIONS) {
-        defs::index w = 2;
+        defs::index_t w = 2;
         out << "  " << i.option;
         w += SIZE(strlen(i.option));
         if (i.option_arg != nullptr) {

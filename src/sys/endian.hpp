@@ -3,80 +3,69 @@
 
 #include "defs.hpp"
 
-#ifdef SYSTEM_UNIX
-#include <arpa/inet.h>
-#else
-#include "err/err.hpp"
-#endif
+#include <type_traits>
 
 namespace sys {
 
-using namespace defs;
-
-#ifdef SYSTEM_UNIX
-inline uint32
-hton(uint32 a)
+inline constexpr defs::uint8_t
+bswap(defs::uint8_t x)
 {
-    return htonl(a);
+    return x;
 }
 
-inline uint16
-hton(uint16 a)
+inline constexpr defs::uint16_t
+bswap(defs::uint16_t x)
 {
-    return htons(a);
+    return (x << 8) | (x >> 8);
 }
 
-inline uint32
-ntoh(uint32 a)
+inline constexpr defs::uint32_t
+bswap(defs::uint32_t x)
 {
-    return ntohl(a);
+    x = (x >> 16) | (x << 16);
+    x = ((x >> 8) & 0x00FF00FFu) | ((x << 8) & 0xFF00FF00u);
+    return x;
 }
 
-inline uint16
-ntoh(uint16 a)
+inline constexpr defs::uint64_t
+bswap(defs::uint64_t x)
 {
-    return ntohs(a);
+    x = (x >> 32) | (x << 32);
+    x =
+      ((x >> 16) & 0x0000FFFF0000FFFFull) | ((x << 16) & 0xFFFF0000FFFF0000ull);
+    x = ((x >> 8) & 0x00FF00FF00FF00FFull) | ((x << 8) & 0xFF00FF00FF00FF00ull);
+    return x;
 }
+
+template<typename T, typename = std::enable_if_t<std::is_signed_v<T>>>
+inline constexpr T
+bswap(T x)
+{
+    using U = std::make_unsigned_t<std::decay_t<T>>;
+    return T(bswap(U(x)));
+}
+
+template<typename T>
+inline constexpr T
+hton(T x)
+{
+#if HU_LITTLE_ENDIAN_P
+    return bswap(x);
 #else
-
-#define UNDEFINED                                                              \
-    ::err::fatalError(                                                         \
-      _CURRENT_LOCATION,                                                       \
-      ::err::FatalError,                                                       \
-      ::err::ErrorArgs(sys::io::stdout(), "not yet implemented"))
-
-inline uint32
-hton(uint32 x)
-{
-//    UNDEFINED;
-// assume little endian
-#define BYTE(x, i, j) (((x >> (8 * i)) & 0xFF) << (8 * j))
-    return BYTE(x, 0, 3) | BYTE(x, 1, 2) | BYTE(x, 2, 1) | BYTE(x, 3, 0);
-#undef BYTE
-}
-
-inline uint16 hton(uint16)
-{
-    UNDEFINED;
-    return 0;
-}
-
-inline uint32
-ntoh(uint32 a)
-{
-    UNDEFINED;
-    return 0;
-}
-
-inline uint16
-ntoh(uint16 a)
-{
-    UNDEFINED;
-    return 0;
-}
-#undef UNDEFINED
-
+    return x;
 #endif
+}
+
+template<typename T>
+inline constexpr T
+ntoh(T x)
+{
+#if HU_LITTLE_ENDIAN_P
+    return bswap(x);
+#else
+    return x;
+#endif
+}
 
 } // namespace sys
 

@@ -28,8 +28,8 @@ struct Particle
 
 struct ParticleArray
 {
-    defs::size _n;
-    defs::size _size;
+    defs::size_t _n;
+    defs::size_t _size;
 
     point3_t *_position;
     vec3_t *_velocity;
@@ -37,7 +37,7 @@ struct ParticleArray
     real *_charge;
     real *_radius;
 
-    ParticleArray(defs::size);
+    ParticleArray(defs::size_t);
     ~ParticleArray();
 
     Particle operator[](index) const;
@@ -46,7 +46,7 @@ struct ParticleArray
     void push_back(const Particle &);
     void put(index i, const Particle &);
 
-    defs::size size() { return _n; }
+    defs::size_t size() { return _n; }
 };
 
 struct ParticleRef

@@ -25,16 +25,16 @@ struct GLT_API GLPerfCounter
         Counter &operator=(const Counter &) = delete;
     };
 
-    defs::size _nqueries;
+    defs::size_t _nqueries;
     Counter *_queries;
-    defs::index _active_query;
+    defs::index_t _active_query;
     double _last_query;
 
     GLPerfCounter();
-    GLPerfCounter(defs::size);
+    GLPerfCounter(defs::size_t);
     ~GLPerfCounter();
 
-    void init(defs::size);
+    void init(defs::size_t);
     void begin();
     void end();
     double query();

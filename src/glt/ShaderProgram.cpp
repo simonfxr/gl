@@ -28,6 +28,9 @@ struct LogTraits<glt::ShaderProgram>
 
 namespace glt {
 
+using namespace defs;
+using defs::size_t;
+
 namespace ShaderProgramError {
 
 std::string
@@ -347,7 +350,7 @@ ShaderProgram::link()
     if (!ok) {
         pushError(ShaderProgramError::LinkageFailed);
 
-        for (index i = 0; i < SIZE(added.size()); ++i)
+        for (index_t i = 0; i < SIZE(added.size()); ++i)
             GL_CALL(glDetachShader, *self->program, added[size_t(i)]);
     }
 
@@ -472,7 +475,7 @@ ret:
 bool
 ShaderProgram::bindAttributesGeneric(const GenVertexDescription &desc)
 {
-    for (index i = 0; i < desc.nattributes; ++i)
+    for (index_t i = 0; i < desc.nattributes; ++i)
         if (!bindAttribute(desc.attributes[i].name, GLuint(i)))
             return false;
     return true;
@@ -489,10 +492,10 @@ ShaderProgram::bindStreamOutVaryings(const Array<std::string> &vars)
         return false;
     }
 
-    std::vector<const char *> cvars(UNSIZE(vars.size()));
-    for (index i = 0; i < vars.size(); ++i)
+    std::vector<const char *> cvars(UNSIZE(vars.size_t()));
+    for (index_t i = 0; i < vars.size_t(); ++i)
         cvars[i] = vars[i].c_str();
-    auto len = GLsizei(vars.size());
+    auto len = GLsizei(vars.size_t());
     GL_CALL(glTransformFeedbackVaryings,
             *program(),
             len,

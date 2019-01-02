@@ -39,14 +39,13 @@ setVec(math::vec4_t &a, const math::vec3_t &b)
     a = math::vec4(b, 0.f);
 }
 
-using namespace math;
-
 template<typename V>
 void
 rectangle(CubeMesh<V> &model,
           const math::point3_t &origin,
           const math::vec2_t &dim)
 {
+    using namespace math;
     V vertex;
     vertex.position = origin;
     model.add(vertex);
@@ -83,7 +82,7 @@ cubeoid(CubeMesh<V> &model,
 
     // const vec3_t dim2 = dim * 0.5f;
 
-    // for (uint32 face = 0; face < 6; ++face) {
+    // for (uint32_t face = 0; face < 6; ++face) {
     //     vec3_t n = faces[face].normal;
     //     if (evert) n = -n;
 
@@ -110,6 +109,7 @@ template<typename Vertex>
 void
 unitCubeWONormals(CubeMesh<Vertex> &cube)
 {
+    using namespace math;
     Vertex v;
 
     v.position = vec3(0.f, 0.f, 1.0f);
@@ -171,6 +171,7 @@ template<typename Vertex>
 void
 unitCube(CubeMesh<Vertex> &cube)
 {
+    using namespace math;
     Vertex v;
 
     setVec(v.normal, vec3(0.0f, 0.0f, 1.0f));
@@ -238,6 +239,7 @@ template<typename Vertex>
 void
 unitCube3(CubeMesh<Vertex> &cube)
 {
+    using namespace math;
     Vertex v;
 
     setVec(v.normal, vec3(0.0f, 0.0f, 1.0f));
@@ -329,6 +331,7 @@ template<typename Vertex>
 void
 unitCubeEverted(CubeMesh<Vertex> &cube)
 {
+    using namespace math;
     Vertex v;
 
     v.normal = vec3(0.f, 0.f, -1.f);
@@ -397,6 +400,7 @@ template<typename Vertex>
 void
 sphere(Mesh<Vertex> &sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
 {
+    using namespace math;
     GLfloat drho = GLfloat(3.141592653589) / GLfloat(iStacks);
     GLfloat dtheta = 2.0f * GLfloat(3.141592653589) / GLfloat(iSlices);
     GLfloat ds = 1.0f / GLfloat(iSlices);
@@ -482,7 +486,7 @@ sphere(Mesh<Vertex> &sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
             vVertex[3][1] = y * fRadius;
             vVertex[3][2] = z * fRadius;
 
-            for (uint32 k = 0; k < 3; ++k) {
+            for (uint32_t k = 0; k < 3; ++k) {
                 Vertex v;
                 setPoint(v.position, vVertex[k]);
                 setVec(v.normal, vNormal[k]);
@@ -498,7 +502,7 @@ sphere(Mesh<Vertex> &sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
             vNormal[1] = vNormal[3];
             // vTexture[1] = vTexture[3];
 
-            for (uint32 k = 0; k < 3; ++k) {
+            for (uint32_t k = 0; k < 3; ++k) {
                 Vertex v;
                 setPoint(v.position, vVertex[k]);
                 setVec(v.normal, vNormal[k]);

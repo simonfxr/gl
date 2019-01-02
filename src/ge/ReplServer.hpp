@@ -10,14 +10,12 @@ namespace ge {
 
 struct Engine;
 
-using namespace defs;
-
 struct GE_API ReplServer
 {
 
     ReplServer(Engine &);
 
-    bool start(const sys::io::IPAddr4 &, uint16);
+    bool start(const sys::io::IPAddr4 &, defs::uint16_t);
     bool running();
 
     void acceptClients();

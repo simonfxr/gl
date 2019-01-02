@@ -18,6 +18,8 @@
 namespace glt {
 
 using namespace math;
+using namespace defs;
+using defs::size_t;
 
 struct RenderManager::Data
 {
@@ -35,8 +37,8 @@ struct RenderManager::Data
     Projection projection;
     bool projection_outdated{ true };
 
-    uint64 frame_id_current{};
-    uint64 frame_id_last{};
+    uint64_t frame_id_current{};
+    uint64_t frame_id_last{};
 
     bool perf_initialized{ false };
     GLPerfCounter perf_counter;
@@ -193,8 +195,8 @@ RenderManager::beginScene()
     setActiveRenderTarget(self->def_rt);
     self->current_rt->beginScene();
     if (self->projection_outdated) {
-        size w = self->current_rt->width();
-        size h = self->current_rt->height();
+        size_t w = self->current_rt->width();
+        size_t h = self->current_rt->height();
         math::real aspect_ratio = math::real(w) / math::real(h);
         updateProjection(aspect_ratio);
     }

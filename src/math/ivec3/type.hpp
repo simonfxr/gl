@@ -7,9 +7,9 @@ namespace math {
 
 struct ivec3_t
 {
-    defs::int32 components[3];
-    constexpr MATH_FUNC defs::int32 &operator[](defs::index) MUT_FUNC;
-    constexpr MATH_FUNC defs::int32 operator[](defs::index) const PURE_FUNC;
+    defs::int32_t components[3];
+    constexpr MATH_FUNC defs::int32_t &operator[](defs::index_t) MUT_FUNC;
+    constexpr MATH_FUNC defs::int32_t operator[](defs::index_t) const PURE_FUNC;
 };
 
 } // namespace math

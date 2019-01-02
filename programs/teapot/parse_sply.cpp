@@ -14,7 +14,7 @@ struct Vertex
     math::direction3_t normal;
 };
 
-int32
+int32_t
 parse_sply(const char *filename, CubeMesh &model)
 {
     FILE *data = fopen(filename, "rb");
@@ -24,8 +24,8 @@ parse_sply(const char *filename, CubeMesh &model)
     char line[512];
 
     std::vector<Vertex> verts;
-    uint32 nverts = 0;
-    uint32 nfaces = 0;
+    uint32_t nverts = 0;
+    uint32_t nfaces = 0;
 
     if (fscanf(data, "%u\n%u\n", &nverts, &nfaces) != 2)
         return -1;
@@ -59,13 +59,13 @@ parse_sply(const char *filename, CubeMesh &model)
         return -1;
     }
 
-    uint32 faces = 0;
+    uint32_t faces = 0;
 
     for (const auto &vert : verts)
         model.addVertex(vert);
 
     while (fgets(line, sizeof line, data) != nullptr && faces < nfaces) {
-        uint32 n, i, j, k, l;
+        uint32_t n, i, j, k, l;
         int nparsed = sscanf(line, "%u %u %u %u %u", &n, &i, &j, &k, &l);
 
         if (nparsed != 5 || n != 4) {
@@ -96,7 +96,7 @@ parse_sply(const char *filename, CubeMesh &model)
 
     fclose(data);
 
-    return int32(nfaces) * 4;
+    return int32_t(nfaces) * 4;
 
     //    return faces == nfaces ? int32(nfaces) * 4: -1;
 }

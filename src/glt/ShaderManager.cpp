@@ -8,6 +8,8 @@
 
 namespace glt {
 
+using namespace defs;
+
 #define NULL_PROGRAM_REF std::shared_ptr<ShaderProgram>()
 
 typedef std::map<std::string, std::shared_ptr<ShaderProgram>> ProgramMap;
@@ -18,7 +20,7 @@ struct ShaderManager::Data
     sys::io::OutStream *out;
     std::vector<std::string> shaderDirs;
     ProgramMap programs;
-    uint32 shader_version;
+    defs::uint32_t shader_version;
     ShaderProfile shader_profile;
     bool cache_so;
     std::shared_ptr<ShaderCache> globalShaderCache;
@@ -59,7 +61,7 @@ ShaderManager::shutdown()
 }
 
 void
-ShaderManager::setShaderVersion(uint32 vers, ShaderProfile prof)
+ShaderManager::setShaderVersion(uint32_t vers, ShaderProfile prof)
 {
     ShaderProfile newprof = CoreProfile;
     if (prof == CompatibilityProfile)
@@ -68,7 +70,7 @@ ShaderManager::setShaderVersion(uint32 vers, ShaderProfile prof)
     self->shader_profile = newprof;
 }
 
-uint32
+uint32_t
 ShaderManager::shaderVersion() const
 {
     return self->shader_version;
@@ -121,14 +123,11 @@ ShaderManager::declareProgram(const std::string &name)
 void
 ShaderManager::reloadShaders()
 {
-    auto it = self->programs.begin();
-    uint32 n = 0;
-    uint32 failed = 0;
-    for (; it != self->programs.end(); ++it) {
-        if (!it->second->reload())
+    const auto n = self->programs.size();
+    auto failed = defs::size_t{ 0 };
+    for (auto &ent : self->programs)
+        if (!ent.second->reload())
             ++failed;
-        ++n;
-    }
 
     out() << "all shaders reloaded (" << (n - failed) << " successful, "
           << failed << " failed)" << sys::io::endl;

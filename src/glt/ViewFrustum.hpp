@@ -8,9 +8,7 @@
 
 namespace glt {
 
-using namespace defs;
-
-typedef uint32 Outcode;
+using Outcode = defs::uint32_t;
 
 enum PlaneIndex
 {
@@ -24,20 +22,20 @@ enum PlaneIndex
 
 namespace {
 
-const uint32 VIEW_FRUSTUM_PLANES = 6;
+inline constexpr uint32_t VIEW_FRUSTUM_PLANES = 6;
 
-#define BIT(k) (1ul << uint32(k))
+#define BIT(k) (1ul << uint32_t(k))
 
-const Outcode CLIP_LEFT = BIT(PLANE_LEFT);
-const Outcode CLIP_RIGHT = BIT(PLANE_RIGHT);
-const Outcode CLIP_TOP = BIT(PLANE_TOP);
-const Outcode CLIP_BOTTOM = BIT(PLANE_BOTTOM);
-const Outcode CLIP_NEAR = BIT(PLANE_NEAR);
-const Outcode CLIP_FAR = BIT(PLANE_FAR);
+inline constexpr Outcode CLIP_LEFT = BIT(PLANE_LEFT);
+inline constexpr Outcode CLIP_RIGHT = BIT(PLANE_RIGHT);
+inline constexpr Outcode CLIP_TOP = BIT(PLANE_TOP);
+inline constexpr Outcode CLIP_BOTTOM = BIT(PLANE_BOTTOM);
+inline constexpr Outcode CLIP_NEAR = BIT(PLANE_NEAR);
+inline constexpr Outcode CLIP_FAR = BIT(PLANE_FAR);
 
 #undef BIT
 
-const Outcode CLIP_ALL_MASK = (1ul << 6) - 1;
+inline constexpr Outcode CLIP_ALL_MASK = (1ul << 6) - 1;
 
 } // namespace
 

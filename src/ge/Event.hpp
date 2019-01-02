@@ -8,8 +8,6 @@
 
 namespace ge {
 
-using namespace defs;
-
 template<typename T>
 struct Event
 {
@@ -142,8 +140,8 @@ template<typename T>
 bool
 EventSource<T>::raise(const Event<T> &e)
 {
-    for (defs::index i = 0; i < SIZE(handlers.size()); ++i) {
-        handlers[size_t(i)]->handle(e);
+    for (auto &h : handlers) {
+        h->handle(e);
         if (e.canAbort && e.abort)
             return false;
     }
@@ -157,8 +155,8 @@ EventSource<T>::reg(const std::shared_ptr<EventHandler<T>> &handler)
 {
     if (!handler)
         return true;
-    for (defs::index i = 0; i < SIZE(handlers.size()); ++i)
-        if (handlers[size_t(i)] == handler)
+    for (auto &h : handlers)
+        if (h == handler)
             return false;
     handlers.push_back(handler);
     return true;
@@ -170,11 +168,12 @@ EventSource<T>::unreg(const std::shared_ptr<EventHandler<T>> &handler)
 {
     if (!handler)
         return true;
-    for (defs::index i = 0; i < SIZE(handlers.size()); ++i)
-        if (handlers[size_t(i)] == handler) {
+    for (defs::index_t i = 0; i < handlers.size(); ++i) {
+        if (handlers[i] == handler) {
             handlers.erase(handlers.begin() + i);
             return true;
         }
+    }
     return false;
 }
 

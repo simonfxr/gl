@@ -6,8 +6,9 @@
 #include <optional>
 
 namespace sys {
-
 namespace io {
+
+using defs::size_t;
 
 namespace {
 
@@ -73,7 +74,7 @@ HandleStream::basic_flush()
 }
 
 StreamResult
-HandleStream::basic_read(size &s, char *buf)
+HandleStream::basic_read(size_t &s, char *buf)
 {
     if (s == 0)
         return StreamResult::OK;
@@ -88,19 +89,19 @@ HandleStream::basic_read(size &s, char *buf)
         return StreamResult::OK;
     }
 
-    size n = read_cursor;
+    size_t n = read_cursor;
     memcpy(buf, read_buffer, read_cursor);
     s -= read_cursor;
     buf += read_cursor;
     HandleError err;
 
     if (s > HANDLE_READ_BUFFER_SIZE) {
-        size k = s;
+        size_t k = s;
         err = sys::io::read(handle, k, buf);
         read_cursor = 0;
         n += k;
     } else {
-        size k = HANDLE_READ_BUFFER_SIZE;
+        size_t k = HANDLE_READ_BUFFER_SIZE;
         err = sys::io::read(handle, k, read_buffer);
         if (k > s) {
             n += s;
@@ -124,9 +125,9 @@ HandleStream::basic_read(size &s, char *buf)
 }
 
 StreamResult
-HandleStream::basic_write(size &s, const char *buf)
+HandleStream::basic_write(size_t &s, const char *buf)
 {
-    size rem = HANDLE_WRITE_BUFFER_SIZE - write_cursor;
+    size_t rem = HANDLE_WRITE_BUFFER_SIZE - write_cursor;
 
     if (s <= rem) {
         memcpy(write_buffer + write_cursor, buf, s);
@@ -134,8 +135,8 @@ HandleStream::basic_write(size &s, const char *buf)
         return StreamResult::OK;
     }
 
-    size n = 0;
-    size k = 0;
+    size_t n = 0;
+    size_t k = 0;
     HandleError err = HE_OK;
 
     if (write_cursor > 0) {
@@ -151,11 +152,11 @@ HandleStream::basic_write(size &s, const char *buf)
         err = sys::io::write(handle, k, buf + rem);
         n += k;
         const char *unwritten = buf + n;
-        size rest = s - n;
+        size_t rest = s - n;
         if (rest > 0) {
-            size into = rest <= HANDLE_WRITE_BUFFER_SIZE
-                          ? rest
-                          : HANDLE_WRITE_BUFFER_SIZE;
+            size_t into = rest <= HANDLE_WRITE_BUFFER_SIZE
+                            ? rest
+                            : HANDLE_WRITE_BUFFER_SIZE;
             memcpy(write_buffer, unwritten, into);
             n += into;
             write_cursor = into;
@@ -164,9 +165,9 @@ HandleStream::basic_write(size &s, const char *buf)
         }
     } else {
         if (k > 0) {
-            size end = HANDLE_WRITE_BUFFER_SIZE - k;
-            size rest = k <= write_cursor ? s : s - (k - write_cursor);
-            size into = rest <= k ? rest : k;
+            size_t end = HANDLE_WRITE_BUFFER_SIZE - k;
+            size_t rest = k <= write_cursor ? s : s - (k - write_cursor);
+            size_t into = rest <= k ? rest : k;
 
             memmove(write_buffer, write_buffer + k, end);
             memcpy(write_buffer + end, buf + rem, into);
@@ -187,7 +188,7 @@ HandleStream::basic_write(size &s, const char *buf)
 StreamResult
 HandleStream::flush_buffer()
 {
-    size k = write_cursor;
+    size_t k = write_cursor;
     HandleError err = sys::io::write(handle, k, write_buffer);
 
     if (k > 0) {
@@ -251,7 +252,7 @@ readFile(sys::io::OutStream &err, const std::string &path) noexcept
         goto fail;
 
     {
-        int64 ssize = ftell(in);
+        auto ssize = ftell(in);
         if (ssize < 0)
             goto fail;
         auto size = size_t(ssize);
@@ -276,5 +277,4 @@ fail:
 }
 
 } // namespace io
-
 } // namespace sys

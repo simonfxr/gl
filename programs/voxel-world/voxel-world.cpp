@@ -44,9 +44,9 @@ static const real FPS_UPDATE_INTERVAL = 3.;
 static const vec3_t BLOCK_DIM = vec3(1.);
 static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
-static const int32 N = 196;                // 196;
-static const int32 SPHERE_POINTS_FACE = 8; // 32;
-static const int32 SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
+static const int32_t N = 196;                // 196;
+static const int32_t SPHERE_POINTS_FACE = 8; // 32;
+static const int32_t SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const bool OCCLUSION = false;
 static const char *WORLD_MODEL_FILE = "voxel-world.mdl";
 
@@ -72,12 +72,12 @@ static real
 noise3D(const vec3_t &p);
 static real
 sumNoise3D(const vec3_t &p,
-           uint32 octaves,
+           uint32_t octaves,
            real fmin,
            real phi,
            bool abs = false);
 static void
-pointsOnSphere(uint32 n, vec3_t *ps);
+pointsOnSphere(uint32_t n, vec3_t *ps);
 
 #define VERTEX(V, F, Z)                                                        \
     V(Vertex, F(vec3_t, position, F(glt::color, color, Z(vec4_t, normal))))
@@ -236,11 +236,11 @@ initState(State *state, const InitEv &ev)
 //     typedef std::bitset<N * N * N> Bitmap;
 //     Bitmap bits;
 
-//     bool operator()(uint32 i, uint32 j, uint32 k) const {
+//     bool operator()(uint32_t i, uint32_t j, uint32_t k) const {
 //         return bits[i * N * N + j * N + k];
 //     }
 
-//     Bitmap::reference operator()(uint32 i, uint32 j, uint32 k) {
+//     Bitmap::reference operator()(uint32_t i, uint32_t j, uint32_t k) {
 //         return bits[i * N * N + j * N + k];
 //     }
 
@@ -256,16 +256,16 @@ struct World
 {
     using Word = unsigned long;
 
-    static const uint32 WORD_BITS = sizeof(Word) * 8;
-    static const uint32 NBYTES = (N * N * N + WORD_BITS - 1) / WORD_BITS;
+    static const uint32_t WORD_BITS = sizeof(Word) * 8;
+    static const uint32_t NBYTES = (N * N * N + WORD_BITS - 1) / WORD_BITS;
 
     Word bits[NBYTES];
 
-    bool operator()(uint32 i, uint32 j, uint32 k) const
+    bool operator()(uint32_t i, uint32_t j, uint32_t k) const
     {
-        uint32 bitidx = i * N * N + j * N + k;
-        uint32 idx = bitidx / WORD_BITS;
-        uint32 bit = bitidx % WORD_BITS;
+        uint32_t bitidx = i * N * N + j * N + k;
+        uint32_t idx = bitidx / WORD_BITS;
+        uint32_t bit = bitidx % WORD_BITS;
         return (bits[idx] & (Word(1) << bit)) != 0;
     }
 
@@ -291,11 +291,11 @@ struct World
 
     using reference = Ref;
 
-    reference operator()(uint32 i, uint32 j, uint32 k)
+    reference operator()(uint32_t i, uint32_t j, uint32_t k)
     {
-        uint32 bitidx = i * N * N + j * N + k;
-        uint32 idx = bitidx / WORD_BITS;
-        uint32 bit = bitidx % WORD_BITS;
+        uint32_t bitidx = i * N * N + j * N + k;
+        uint32_t idx = bitidx / WORD_BITS;
+        uint32_t bit = bitidx % WORD_BITS;
         return Ref(&bits[idx], bit);
     }
 
@@ -303,9 +303,9 @@ struct World
 
     static void bitwiseAnd(World &r, const World &a, const World &b)
     {
-        for (int32 i = 0; i < N; ++i)
-            for (int32 j = 0; j < N; ++j)
-                for (int32 k = 0; k < N; ++k)
+        for (int32_t i = 0; i < N; ++i)
+            for (int32_t j = 0; j < N; ++j)
+                for (int32_t k = 0; k < N; ++k)
                     r(i, j, k) = a(i, j, k) && b(i, j, k);
     }
 };
@@ -315,8 +315,8 @@ struct Faces
     vec3_t f[2]; // front, up, right, bot, down, left
 };
 
-static const uint32 RAY_SAMPLES =
-  uint32(real(1.9) * (real(N) + 1)); // about sqrt(3) * N, maximum ray length
+static const uint32_t RAY_SAMPLES =
+  uint32_t(real(1.9) * (real(N) + 1)); // about sqrt(3) * N, maximum ray length
 
 struct Ray
 {
@@ -330,8 +330,8 @@ struct Rays
 {
     Faces sumcos{};
     Ray *rays;
-    uint32 faceOffsets[6]{};
-    uint32 faceLengths[6]{};
+    uint32_t faceOffsets[6]{};
+    uint32_t faceLengths[6]{};
     Faces lightContribFace[6]{};
     Rays() { rays = new Ray[SPHERE_POINTS]; }
     ~Rays() { delete[] rays; }
@@ -342,11 +342,11 @@ struct GlobalOcc
     Faces lambertFactor[N][N][N];
 };
 
-static int32
+static int32_t
 faceIdx(const vec3_t &dir)
 {
     direction3_t as = abs(dir);
-    int32 maxi;
+    int32_t maxi;
     if (as[0] >= as[1] && as[0] >= as[2])
         maxi = 0;
     else if (as[1] >= as[0] && as[1] >= as[2])
@@ -354,7 +354,7 @@ faceIdx(const vec3_t &dir)
     else
         maxi = 2;
 
-    int32 side = dir[maxi] < 0 ? 1 : 0;
+    int32_t side = dir[maxi] < 0 ? 1 : 0;
     return side * 3 + maxi;
 }
 
@@ -362,9 +362,9 @@ static Faces
 cosfaces(const direction3_t &dir, Faces &sumcos)
 {
     direction3_t as = abs(dir);
-    int32 i = faceIdx(dir);
-    int32 comp = i % 3;
-    int32 side = i / 3;
+    int32_t i = faceIdx(dir);
+    int32_t comp = i % 3;
+    int32_t side = i / 3;
 
     sumcos.f[side][comp]++;
     Faces f = { { vec3(0.), vec3(0.) } };
@@ -378,7 +378,7 @@ initRay(Ray &r, const direction3_t &d, const vec3_t &step, Faces &sumcos)
     vec3_t p = vec3(0.);
     ivec3_t lastidx = ivec3(p);
 
-    uint32 i = 0;
+    uint32_t i = 0;
     while (i < RAY_SAMPLES) {
         ivec3_t idx = ivec3(p);
         if (idx != lastidx) {
@@ -401,15 +401,15 @@ static void
 initRays(Rays &rays, vec3_t dirs[])
 {
 
-    for (int32 i = 0; i < SPHERE_POINTS; ++i)
+    for (int32_t i = 0; i < SPHERE_POINTS; ++i)
         dirs[i] = normalize(dirs[i]);
 
     std::sort(dirs, dirs + SPHERE_POINTS, faceIdxLessThan);
 
-    uint32 off = 0;
+    uint32_t off = 0;
     int face = -1;
-    for (int32 i = 0; i < SPHERE_POINTS; ++i) {
-        int32 face1 = faceIdx(dirs[i]);
+    for (int32_t i = 0; i < SPHERE_POINTS; ++i) {
+        int32_t face1 = faceIdx(dirs[i]);
         if (face1 != face) {
 
             if (face >= 0) {
@@ -425,7 +425,7 @@ initRays(Rays &rays, vec3_t dirs[])
     rays.faceOffsets[5] = off;
     rays.faceLengths[5] = SPHERE_POINTS - off;
 
-    for (uint32 i = 0; i < 6; ++i) {
+    for (uint32_t i = 0; i < 6; ++i) {
         sys::io::stderr() << "side " << i << ": "
                           << "number of rays: " << rays.faceLengths[i]
                           << " beginning at " << rays.faceOffsets[i]
@@ -438,7 +438,7 @@ initRays(Rays &rays, vec3_t dirs[])
     real cos3 = 0., cos4 = 0., cos5 = 0.;
 
 #pragma omp parallel for reduction(+ : cos0, cos1, cos2, cos3, cos4, cos5)
-    for (int32 i = 0; i < SPHERE_POINTS; ++i) {
+    for (int32_t i = 0; i < SPHERE_POINTS; ++i) {
         const direction3_t &d = dirs[i];
         vec3_t p = real(N) * (d * 0.5f + vec3(0.5f));
         vec3_t step = (p - center) / (10. * N);
@@ -459,12 +459,12 @@ initRays(Rays &rays, vec3_t dirs[])
     rays.sumcos.f[1][1] = cos4;
     rays.sumcos.f[1][2] = cos5;
 
-    for (uint32 face = 0; face < 6; ++face) {
-        uint32 off = rays.faceOffsets[face];
-        uint32 len = rays.faceLengths[face];
+    for (uint32_t face = 0; face < 6; ++face) {
+        uint32_t off = rays.faceOffsets[face];
+        uint32_t len = rays.faceLengths[face];
         Faces sum = { { vec3(0.), vec3(0.) } };
 
-        for (uint32 i = off; i < off + len; ++i) {
+        for (uint32_t i = off; i < off + len; ++i) {
             sum.f[0] += rays.rays[i].lightContrib.f[0];
             sum.f[1] += rays.rays[i].lightContrib.f[1];
         }
@@ -476,12 +476,12 @@ initRays(Rays &rays, vec3_t dirs[])
 static void
 testray(const World &w,
         World &vis,
-        int32 i,
-        int32 j,
-        int32 k,
-        int32 di,
-        int32 dj,
-        int32 dk)
+        int32_t i,
+        int32_t j,
+        int32_t k,
+        int32_t di,
+        int32_t dj,
+        int32_t dk)
 {
     for (;;) {
 
@@ -504,7 +504,7 @@ testray(const World &w,
 }
 
 static void
-sendRays(const World &w, World &vis, int32 i, int32 j, int32 k)
+sendRays(const World &w, World &vis, int32_t i, int32_t j, int32_t k)
 {
     testray(w, vis, i, j, k, +1, 0, 0);
     testray(w, vis, i, j, k, -1, 0, 0);
@@ -515,7 +515,7 @@ sendRays(const World &w, World &vis, int32 i, int32 j, int32 k)
 }
 
 static bool
-visible(const World &w, const World &vis, int32 i, int32 j, int32 k)
+visible(const World &w, const World &vis, int32_t i, int32_t j, int32_t k)
 {
     return i < 0 || i >= N || j < 0 || j >= N || k < 0 || k >= N ||
            (!w(i, j, k) && vis(i, j, k));
@@ -534,9 +534,9 @@ filterOccluded(const World &w)
     while (!fixpoint) {
         fixpoint = true;
 #pragma omp parallel for
-        for (int32 i = 0; i < N; ++i) {
-            for (int32 j = 0; j < N; ++j) {
-                for (int32 k = 0; k < N; ++k) {
+        for (int32_t i = 0; i < N; ++i) {
+            for (int32_t j = 0; j < N; ++j) {
+                for (int32_t k = 0; k < N; ++k) {
                     if (!vis(i, j, k) && (visible(w, vis, i + 1, j, k) ||
                                           visible(w, vis, i - 1, j, k) ||
                                           visible(w, vis, i, j + 1, k) ||
@@ -567,10 +567,10 @@ trace(const World &w, const Rays &rs, const ivec3_t &p0)
     //     ivec3(0, 0, -1), ivec3(0, -1, 0), ivec3(-1, 0, 0)
     // };
 
-    for (int32 side = 0; side < 6; ++side) {
+    for (int32_t side = 0; side < 6; ++side) {
 
-        uint32 off = rs.faceOffsets[side];
-        uint32 len = rs.faceLengths[side];
+        uint32_t off = rs.faceOffsets[side];
+        uint32_t len = rs.faceLengths[side];
 
         // const ivec3_t& norm = faceNorms[side];
         // const ivec3_t p1 = p0 + norm;
@@ -589,10 +589,10 @@ trace(const World &w, const Rays &rs, const ivec3_t &p0)
         //     continue;
         // }
 
-        for (uint32 i = off; i < off + len; ++i) {
+        for (uint32_t i = off; i < off + len; ++i) {
             const Ray &ray = rs.rays[i];
             ivec3_t p = p0 + ray.offset[0];
-            uint32 j = 0;
+            uint32_t j = 0;
             bool escaped = true;
             while (j + 1 < RAY_SAMPLES && p[0] >= 0 && p[0] < N && p[1] >= 0 &&
                    p[1] < N && p[2] >= 0 && p[2] < N) {
@@ -624,14 +624,14 @@ static real VIRTUAL_DIM = 100.;
 static bool
 visibleFace(const World &w,
             const World &vis,
-            int32 i,
-            int32 j,
-            int32 k,
+            int32_t i,
+            int32_t j,
+            int32_t k,
             const vec3_t &normal)
 {
-    i += static_cast<int32>(normal[0]);
-    j += static_cast<int32>(normal[1]);
-    k += static_cast<int32>(normal[2]);
+    i += static_cast<int32_t>(normal[0]);
+    j += static_cast<int32_t>(normal[1]);
+    k += static_cast<int32_t>(normal[2]);
     return visible(w, vis, i, j, k);
 }
 
@@ -697,7 +697,7 @@ density(const vec3_t &p)
     return density;
 }
 
-static int32
+static int32_t
 signAt(const Densities &ds, const ivec3_t &i)
 {
     return ds.ds[i[0]][i[1]][i[2]] >= 0 ? +1 : -1;
@@ -725,9 +725,9 @@ static void
 createWorld(Densities &ds)
 {
 #pragma omp parallel for
-    for (int32 i = 0; i < N; ++i)
-        for (int32 j = 0; j < N; ++j)
-            for (int32 k = 0; k < N; ++k) {
+    for (int32_t i = 0; i < N; ++i)
+        for (int32_t j = 0; j < N; ++j)
+            for (int32_t k = 0; k < N; ++k) {
                 vec3_t wc =
                   (vec3(ivec3(i, j, k)) * (1. / real(N)) - vec3(0.5f)) *
                   VIRTUAL_DIM;
@@ -744,9 +744,9 @@ createGeometry(World &world, const Densities &ds)
 {
 
 #pragma omp parallel for
-    for (int32 i = 0; i < N; ++i)
-        for (int32 j = 0; j < N; ++j)
-            for (int32 k = 0; k < N; ++k) {
+    for (int32_t i = 0; i < N; ++i)
+        for (int32_t j = 0; j < N; ++j)
+            for (int32_t k = 0; k < N; ++k) {
                 world(i, j, k) = blockAt(ds, ivec3(i, j, k));
                 //                sys::io::stderr() << "block At " << i << " "
                 //                << j << " " << k << " -> " << world(i,j,k) <<
@@ -761,9 +761,9 @@ createOcclusionMap(GlobalOcc *occ,
                    const Rays &rays)
 {
 #pragma omp parallel for
-    for (int32 i = 0; i < N; ++i)
-        for (int32 j = 0; j < N; ++j)
-            for (int32 k = 0; k < N; ++k)
+    for (int32_t i = 0; i < N; ++i)
+        for (int32_t j = 0; j < N; ++j)
+            for (int32_t k = 0; k < N; ++k)
                 if (hull(i, j, k))
                     occ->lambertFactor[i][j][k] =
                       trace(world, rays, ivec3(i, j, k));
@@ -778,17 +778,17 @@ andWorld(World &r, const World &a, const World &b)
 static void
 orWorldNot(World &r, const World &a, const World &b)
 {
-    for (int32 i = 0; i < N; ++i)
-        for (int32 j = 0; j < N; ++j)
-            for (int32 k = 0; k < N; ++k)
+    for (int32_t i = 0; i < N; ++i)
+        for (int32_t j = 0; j < N; ++j)
+            for (int32_t k = 0; k < N; ++k)
                 r(i, j, k) = a(i, j, k) || !b(i, j, k);
 }
 
 struct Vertices
 {
-    uint32 size;
+    uint32_t size;
     Vertex *verts;
-    explicit Vertices(uint32 s) : size(s), verts(new Vertex[s]) {}
+    explicit Vertices(uint32_t s) : size(s), verts(new Vertex[s]) {}
     ~Vertices() { delete[] verts; }
 };
 
@@ -815,10 +815,10 @@ hasNeighbours(const World &w, const World &vis, const ivec3_t &p)
 
 struct Stats
 {
-    uint32 faces;
-    uint32 visFaces;
-    uint32 blocks;
-    uint32 visBlocks;
+    uint32_t faces;
+    uint32_t visFaces;
+    uint32_t blocks;
+    uint32_t visBlocks;
 };
 
 static void
@@ -827,7 +827,7 @@ createModel(CubeMesh &worldModel,
             const World &vis,
             const GlobalOcc *occmap,
             const Vertices &verts,
-            const uint32 *permut,
+            const uint32_t *permut,
             Stats &stats,
             const Densities &ds)
 {
@@ -837,18 +837,18 @@ createModel(CubeMesh &worldModel,
     stats.faces = 0;
     stats.visFaces = 0;
 
-    for (int32 i = 0; i < N; ++i) {
-        for (int32 j = 0; j < N; ++j) {
-            for (int32 k = 0; k < N; ++k) {
+    for (int32_t i = 0; i < N; ++i) {
+        for (int32_t j = 0; j < N; ++j) {
+            for (int32_t k = 0; k < N; ++k) {
 #ifdef USE_PERMUT
-                uint32 ii = permut[i];
-                uint32 jj = permut[permut[j]];
-                uint32 kk = permut[permut[permut[k]]];
+                uint32_t ii = permut[i];
+                uint32_t jj = permut[permut[j]];
+                uint32_t kk = permut[permut[permut[k]]];
 #else
                 UNUSED(permut);
-                uint32 ii = i;
-                uint32 jj = j;
-                uint32 kk = k;
+                uint32_t ii = i;
+                uint32_t jj = j;
+                uint32_t kk = k;
 #endif
 
                 if (world(ii, jj, kk))
@@ -877,10 +877,10 @@ createModel(CubeMesh &worldModel,
                     }
 
                     auto col = glt::color(col3);
-                    //                    uint32 col =
+                    //                    uint32_t col =
                     //                    glt::color(randColor()).rgba();
                     vec3_t offset = BLOCK_DIM * vec3(ivec3(ii, jj, kk));
-                    for (uint32 r = 0; r < verts.size; ++r) {
+                    for (uint32_t r = 0; r < verts.size; ++r) {
                         Vertex v = verts.verts[r];
                         ++stats.faces;
                         if (visibleFace(
@@ -890,8 +890,8 @@ createModel(CubeMesh &worldModel,
                             //                            sys::io::stderr() <<
                             //                            "n: " << vec3(n) <<
                             //                            sys::io::endl;
-                            int32 face = n[0] + n[1] * 2 + n[2] * 3;
-                            int32 side = face < 0 ? 1 : 0;
+                            int32_t face = n[0] + n[1] * 2 + n[2] * 3;
+                            int32_t side = face < 0 ? 1 : 0;
                             face = abs(face) - 1;
                             v.position *= BLOCK_DIM;
                             v.position += offset;
@@ -917,10 +917,10 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
     CubeMesh cubeModel;
     glt::primitives::unitCube(cubeModel);
 
-    auto worldp = std::make_shared<World>();
+    auto worldp = std::make_unique<World>();
     World &world = *worldp;
 
-    auto densitiesp = std::make_shared<Densities>();
+    auto densitiesp = std::make_unique<Densities>();
 
     world.zero();
 
@@ -946,42 +946,41 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
 
     time_op(createGeometry(world, *densitiesp));
 
-    auto raysp = std::make_shared<Rays>();
+    auto raysp = std::make_unique<Rays>();
     Rays &rays = *raysp;
     time_op(initRays(rays, sphere_points));
     sys::io::stderr() << "rays crossing planes: " << rays.sumcos.f[0] << ", "
                       << rays.sumcos.f[1] << sys::io::endl;
 
-    World *visptmp;
-    time_op(visptmp = filterOccluded(world));
-    std::shared_ptr<World> visp(visptmp);
+    std::unique_ptr<World> visp;
+    time_op(visp.reset(filterOccluded(world)));
     World &vis = *visp;
 
-    uint32 permut[N];
-    for (int32 i = 0; i < N; ++i)
+    uint32_t permut[N];
+    for (int32_t i = 0; i < N; ++i)
         permut[i] = i;
 
-    for (int32 i = 0; i < N - 1; ++i) {
-        uint32 j = rand() % (N - i);
-        uint32 t = permut[i];
+    for (int32_t i = 0; i < N - 1; ++i) {
+        uint32_t j = rand() % (N - i);
+        uint32_t t = permut[i];
         permut[i] = permut[i + j];
         permut[i + j] = t;
     }
 
-    auto worldAndVisp = std::make_shared<World>();
+    auto worldAndVisp = std::make_unique<World>();
     World &worldAndVis = *worldAndVisp;
     andWorld(worldAndVis, world, vis);
 
-    auto worldOrVisp = std::make_shared<World>();
+    auto worldOrVisp = std::make_unique<World>();
     World &worldOrVis = *worldOrVisp;
     orWorldNot(worldOrVis, world, vis);
 
-    auto hullp = std::make_shared<World>();
+    auto hullp = std::make_unique<World>();
     World &hull = *hullp;
 
-    for (int32 i = 0; i < N; ++i)
-        for (int32 j = 0; j < N; ++j)
-            for (int32 k = 0; k < N; ++k)
+    for (int32_t i = 0; i < N; ++i)
+        for (int32_t j = 0; j < N; ++j)
+            for (int32_t k = 0; k < N; ++k)
                 hull(i, j, k) = hasNeighbours(world, vis, ivec3(i, j, k));
 
     GlobalOcc *occmap = nullptr;
@@ -991,16 +990,16 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
     }
 
     // time_op({
-    //         for (uint32 i = 0; i < 15; ++i)
+    //         for (uint32_t i = 0; i < 15; ++i)
     //             andWorld(worldAndVis, world, vis);
     //         });
 
     Stats stats{};
 
-    auto vertsp = std::make_shared<Vertices>(cubeModel.size());
+    auto vertsp = std::make_unique<Vertices>(cubeModel.size());
     Vertices &verts = *vertsp;
 
-    for (uint32 i = 0; i < verts.size; ++i)
+    for (uint32_t i = 0; i < verts.size; ++i)
         verts.verts[i] = cubeModel.at(i);
 
     INFO("created verts");
@@ -1089,7 +1088,7 @@ renderBlocks(State *state, ge::Engine &e)
     state->worldModel.drawElements();
 }
 
-// void mouseMoved(int32 dx, int32 dy) {
+// void mouseMoved(int32_t dx, int32_t dy) {
 //     real rotX = dx * 0.001f;
 //     real rotY = dy * 0.001f;
 
@@ -1120,7 +1119,7 @@ main(int argc, char *argv[])
 {
     ge::Engine engine;
     engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
-    int32 ret = 0;
+    int32_t ret = 0;
     {
         ge::EngineOptions opts;
         opts.parse(&argc, &argv);
@@ -1128,7 +1127,7 @@ main(int argc, char *argv[])
         bool read_mdl = false;
         bool write_mdl = false;
 
-        for (int32 i = 1; i < argc; ++i) {
+        for (int32_t i = 1; i < argc; ++i) {
             if (strcmp(argv[i], "--read") == 0)
                 read_mdl = true;
             else if (strcmp(argv[i], "--no-read") == 0)
@@ -1157,7 +1156,7 @@ namespace {
 
 // Perlin Noise
 
-const uint16 permutation[512] = {
+const uint16_t permutation[512] = {
     151, 160, 137, 91,  90,  15,  131, 13,  201, 95,  96,  53,  194, 233, 7,
     225, 140, 36,  103, 30,  69,  142, 8,   99,  37,  240, 21,  10,  23,  190,
     6,   148, 247, 120, 234, 75,  0,   26,  197, 62,  94,  252, 219, 203, 117,
@@ -1213,13 +1212,13 @@ grad(int hash, real x, real y, real z)
 }
 
 static real
-sumNoise3D(const vec3_t &p, uint32 octaves, real fmin, real phi, bool absval)
+sumNoise3D(const vec3_t &p, uint32_t octaves, real fmin, real phi, bool absval)
 {
     real a = 1.;
     real r = 0.;
     real freq = fmin;
 
-    for (uint32 i = 0; i < octaves; ++i) {
+    for (uint32_t i = 0; i < octaves; ++i) {
         real x = noise3D(p * freq);
         if (absval)
             x = math::abs(x);
@@ -1241,7 +1240,7 @@ static real
 noise3D(const vec3_t &pnt)
 {
 
-    const uint16 *p = permutation;
+    const uint16_t *p = permutation;
 
     real x = pnt[0];
     real y = pnt[1];
@@ -1277,11 +1276,11 @@ noise3D(const vec3_t &pnt)
 }
 
 void
-pointsOnSphere(uint32 n, vec3_t *ps)
+pointsOnSphere(uint32_t n, vec3_t *ps)
 {
     real inc = PI * (3. - math::sqrt(5.));
     real off = 2. / n;
-    for (uint32 k = 0; k < n; ++k) {
+    for (uint32_t k = 0; k < n; ++k) {
         real y = k * off - 1 + (off / 2.);
         real r = math::sqrt(1. - y * y);
         real phi = k * inc;

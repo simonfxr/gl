@@ -20,14 +20,14 @@ public:
     struct Attachment
     {
         AttachmentType type;
-        defs::index index;
-        Attachment(AttachmentType _type, defs::index _index = 0)
-          : type(_type), index(_index)
+        defs::index_t index_t;
+        Attachment(AttachmentType _type, defs::index_t _index = 0)
+          : type(_type), index_t(_index)
         {}
     };
 
 protected:
-    size _depth;
+    size_t _depth;
     GLenum _color_format;
     Attachment _target_attachment;
 
@@ -41,7 +41,7 @@ public:
     TextureRenderTarget3D(const math::ivec3_t &, const Params &);
     void resize(const math::ivec3_t &);
 
-    size depth() const { return _depth; }
+    size_t depth() const { return _depth; }
     Attachment targetAttachment() const { return _target_attachment; }
     void targetAttachment(const Attachment &);
 
