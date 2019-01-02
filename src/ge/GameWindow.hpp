@@ -85,9 +85,6 @@ struct GE_API GameWindow
     void registerHandlers(EngineEvents &evnts);
 
 private:
-    GameWindow(const GameWindow &_);
-    GameWindow &operator=(const GameWindow &_);
-
     struct Data;
     struct DataDeleter
     {

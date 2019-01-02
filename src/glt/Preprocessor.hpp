@@ -86,9 +86,6 @@ private:
         void operator()(Data *) noexcept;
     };
     const std::unique_ptr<Data, DataDeleter> self;
-
-    Preprocessor(const Preprocessor &_);
-    Preprocessor &operator=(const Preprocessor &_);
 };
 
 } // namespace glt

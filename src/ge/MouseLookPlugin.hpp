@@ -45,9 +45,6 @@ private:
     };
 
     const std::unique_ptr<Data, DataDeleter> self;
-
-    MouseLookPlugin(const MouseLookPlugin &);
-    MouseLookPlugin &operator=(const MouseLookPlugin &);
 };
 
 } // namespace ge

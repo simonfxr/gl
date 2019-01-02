@@ -144,9 +144,6 @@ private:
     void initVertexBuffer();
     void initVertexArray();
     void initVertexAttribs();
-
-    MeshBase(const MeshBase &_);
-    MeshBase &operator=(const MeshBase &_);
     void free();
 };
 

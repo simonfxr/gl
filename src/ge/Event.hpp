@@ -134,9 +134,8 @@ struct EventSource
     std::vector<std::shared_ptr<EventHandler<T>>> handlers;
     EventSource() {}
 
-private:
-    EventSource(const EventSource<T> &);
-    EventSource<T> &operator=(const EventSource<T> &);
+    EventSource(const EventSource<T> &) = delete;
+    EventSource<T> &operator=(const EventSource<T> &) = delete;
 };
 
 template<typename T>

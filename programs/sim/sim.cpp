@@ -158,17 +158,18 @@ struct World::Data
                         float r);
 };
 
+void
+World::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
+
 World::World()
   : solve_iterations(1)
   ,
 
   self(new Data)
 {}
-
-World::~World()
-{
-    delete self;
-}
 
 bool
 World::init()

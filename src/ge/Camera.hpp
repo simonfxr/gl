@@ -88,9 +88,6 @@ private:
         void operator()(Data *p) noexcept;
     };
     const std::unique_ptr<Data, DataDeleter> self;
-
-    Camera(const Camera &);
-    Camera &operator=(const Camera &);
 };
 
 } // namespace ge

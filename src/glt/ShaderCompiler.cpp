@@ -1,25 +1,30 @@
-#include <algorithm>
-#include <queue>
-#include <stack>
-#include <utility>
+#include "glt/ShaderCompiler.hpp"
 
 #include "glt/GLObject.hpp"
 #include "glt/GLSLPreprocessor.hpp"
-#include "glt/ShaderCompiler.hpp"
 #include "glt/utils.hpp"
-
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
 #include "sys/measure.hpp"
 
+#include <algorithm>
+#include <functional>
+#include <queue>
+#include <stack>
+#include <utility>
+#include <variant>
+
 template<>
-struct LogTraits<glt::CompileState>
+struct LogTraits<glt::ShaderCompilerQueue>
 {
-    static err::LogDestination getDestination(const glt::CompileState &cstate)
+    static err::LogDestination getDestination(
+      const glt::ShaderCompilerQueue &scq)
     {
-        return err::LogDestination(
-          err::Info,
-          const_cast<glt::CompileState &>(cstate).compiler.shaderManager.out());
+        return err::LogDestination(err::Info,
+                                   const_cast<glt::ShaderCompilerQueue &>(scq)
+                                     .shaderCompiler()
+                                     .shaderManager()
+                                     .out());
     }
 };
 
@@ -29,26 +34,191 @@ struct LogTraits<glt::CompileState>
 
 namespace glt {
 
-namespace ShaderCompilerError {
-
-std::string stringError(Type /*unused*/)
+namespace {
+struct CompileJob
 {
-    // FIXME: implement
-    return "{shader compiler error}";
+    std::shared_ptr<ShaderSource> source;
+    std::function<std::shared_ptr<ShaderObject>()> exec;
+};
+} // namespace
+
+using QueuedJobs = std::unordered_set<ShaderSourceKey>;
+
+using ShaderSourceFilePath = std::string; // absolute path
+
+using CompileJobs = std::queue<CompileJob>;
+
+namespace {
+struct StringSource
+{
+    const std::string source;
+};
+} // namespace
+
+namespace {
+struct FileSource
+{
+    const std::string path;
+};
+} // namespace
+
+namespace {
+struct StringShaderObject
+{
+    const StringSource &source;
+};
+} // namespace
+
+namespace {
+struct FileShaderObject
+{
+    const FileSource &source;
+    sys::fs::FileTime mtime;
+};
+} // namespace
+
+struct ShaderSource::Data
+{
+    const ShaderSourceKey key;
+    const ShaderManager::ShaderType type;
+    const std::variant<StringSource, FileSource> source;
+
+    static std::unique_ptr<ShaderObject> load(
+      const std::shared_ptr<ShaderSource> &,
+      const StringSource &,
+      ShaderCompilerQueue &);
+
+    static std::unique_ptr<ShaderObject> load(
+      const std::shared_ptr<ShaderSource> &,
+      const FileSource &,
+      ShaderCompilerQueue &);
+
+    static std::unique_ptr<ShaderObject> load(
+      const std::shared_ptr<ShaderSource> &,
+      ShaderCompilerQueue &);
+};
+
+void
+ShaderSource::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
 }
 
-} // namespace ShaderCompilerError
+struct ShaderObject::Data
+{
+    ShaderObject *self{};
+    GLShaderObject handle{};
+    ShaderIncludes includes;
+    ShaderDependencies dependencies;
+    std::weak_ptr<ShaderCache> cache;
+    std::shared_ptr<ShaderSource> source;
+    std::variant<StringShaderObject, FileShaderObject> object;
 
-#define NULL_SHADER_SOURCE std::shared_ptr<ShaderSource>()
-#define NULL_SHADER_OBJECT std::shared_ptr<ShaderObject>()
-#define NULL_SHADER_CACHE std::shared_ptr<ShaderCache>()
+    Data(std::shared_ptr<ShaderSource> source_,
+         std::variant<StringShaderObject, FileShaderObject> obj)
+      : source(std::move(source_)), object(std::move(obj))
+    {}
 
-CompileJob::~CompileJob() = default;
+    Data(Data &&) = default;
+
+    ~Data()
+    {
+        auto c = cache.lock();
+        if (c)
+            ShaderCache::remove(c, self);
+    }
+
+    std::pair<std::unique_ptr<ShaderObject>, ReloadState> reloadIfOutdated(
+      ShaderCompilerQueue &);
+
+    void linkCache(const std::shared_ptr<ShaderCache> &);
+    void unlinkCache(const std::shared_ptr<ShaderCache> &);
+
+    static std::unique_ptr<ShaderObject> makeStringShaderObject(
+      std::shared_ptr<ShaderSource>,
+      const StringSource &);
+
+    static std::unique_ptr<ShaderObject> makeFileShaderObject(
+      std::shared_ptr<ShaderSource>,
+      const FileSource &,
+      sys::fs::FileTime mtime);
+};
+
+void
+ShaderObject::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
+
+struct ShaderCache::Data
+{
+    ShaderCacheEntries entries;
+    ShaderCache &self;
+    void checkValid();
+    bool remove(ShaderObject *);
+
+    ~Data() { self.flush(); }
+};
+
+void
+ShaderCache::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
+
+struct ShaderCompiler::Data
+{
+    ShaderManager &shaderManager;
+    PreprocessorDefinitions defines;
+    std::shared_ptr<ShaderCache> cache;
+
+    Data(ShaderManager &sm) : shaderManager(sm) {}
+    void initPreprocessor(GLSLPreprocessor & /*proc*/);
+};
+
+void
+ShaderCompiler::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
+
+struct ShaderCompilerQueue::Data
+{
+    ShaderCompilerQueue &self;
+    ShaderCompiler &compiler;
+    const ShaderCompileFlags flags;
+    ShaderObjects &compiled;
+    QueuedJobs inQueue;
+    CompileJobs toCompile;
+
+    Data(ShaderCompilerQueue &self_,
+         ShaderCompiler &comp,
+         ShaderObjects &_compiled,
+         ShaderCompileFlags flgs)
+      : self(self_), compiler(comp), flags(flgs), compiled(_compiled)
+    {}
+
+    void put(const std::shared_ptr<ShaderObject> &);
+    std::shared_ptr<ShaderObject> reload(const std::shared_ptr<ShaderObject> &);
+};
+
+void
+ShaderCompilerQueue::DataDeleter::operator()(Data *p) noexcept
+{
+    delete p;
+}
 
 namespace {
 
+template<class T>
+struct always_false : std::false_type
+{};
+
 std::string
-hash(const std::string & /*source*/);
+hash(const std::string &source)
+{
+    return "h" + std::to_string(std::hash<std::string>{}(source));
+}
 
 struct ShaderTypeMapping
 {
@@ -66,7 +236,7 @@ const ShaderTypeMapping shaderTypeMappings[] = {
 };
 
 bool
-compilePreprocessed(CompileState & /*cstate*/,
+compilePreprocessed(ShaderCompilerQueue & /*scq*/,
                     GLenum /*shader_type*/,
                     const std::string & /*name*/,
                     GLSLPreprocessor & /*proc*/,
@@ -80,115 +250,25 @@ translateShaderType(ShaderManager::ShaderType type,
                     GLenum *gltype,
                     const std::string &basename = "");
 
-void
-initPreprocessor(ShaderCompiler & /*compiler*/, GLSLPreprocessor & /*proc*/);
-
 ReloadState
 includesNeedReload(const ShaderIncludes & /*incs*/);
-
-struct StringShaderObject : public ShaderObject
-{
-    StringShaderObject(const std::shared_ptr<StringSource> &src, GLuint hndl)
-      : ShaderObject(src, hndl)
-    {}
-
-    ReloadState needsReload() final;
-};
-
-struct FileShaderObject : public ShaderObject
-{
-    sys::fs::FileTime mtime;
-    FileShaderObject(const std::shared_ptr<FileSource> &src,
-                     sys::fs::FileTime _mtime,
-                     GLuint hndl)
-      : ShaderObject(src, hndl), mtime(_mtime)
-    {}
-
-    ReloadState needsReload() final;
-};
-
-struct CompileJobSource : public CompileJob
-{
-    std::shared_ptr<ShaderSource> _source;
-    explicit CompileJobSource(std::shared_ptr<ShaderSource> src)
-      : _source(std::move(src))
-    {}
-
-    std::shared_ptr<ShaderSource> &source() final;
-    std::shared_ptr<ShaderObject> exec(CompileState & /*cstate*/) final;
-};
-
-struct CompileJobObject : public CompileJob
-{
-    std::shared_ptr<ShaderObject> shaderObject;
-    explicit CompileJobObject(std::shared_ptr<ShaderObject> so)
-      : shaderObject(std::move(so))
-    {}
-
-    std::shared_ptr<ShaderSource> &source() final;
-    std::shared_ptr<ShaderObject> exec(CompileState & /*cstate*/) final;
-};
-
-std::shared_ptr<ShaderSource> &
-CompileJobSource::source()
-{
-    return _source;
-}
-
-std::shared_ptr<ShaderObject>
-CompileJobSource::exec(CompileState &cstate)
-{
-    return cstate.load(_source);
-}
-
-std::shared_ptr<ShaderSource> &
-CompileJobObject::source()
-{
-    return shaderObject->source;
-}
-
-std::shared_ptr<ShaderObject>
-CompileJobObject::exec(CompileState &cstate)
-{
-    return cstate.reload(shaderObject);
-}
-
-void
-initPreprocessor(ShaderCompiler &compiler, GLSLPreprocessor &proc)
-{
-    ShaderManager &m = compiler.shaderManager;
-    proc.out(m.out());
-
-    if (m.shaderVersion() != 0) {
-        sys::io::ByteStream glversdef;
-        glversdef << "#version " << m.shaderVersion()
-                  << (m.shaderProfile() == ShaderManager::CoreProfile
-                        ? " core"
-                        : " compatibility")
-                  << sys::io::endl;
-        proc.appendString(glversdef.str());
-    }
-
-    proc.addDefines(compiler.shaderManager.globalDefines());
-    proc.addDefines(compiler.defines);
-}
 
 ReloadState
 includesNeedReload(const ShaderIncludes &incs)
 {
-    for (index i = 0; i < SIZE(incs.size()); ++i) {
+    for (const auto &inc : incs) {
         sys::fs::FileTime mtime{};
-        if (!sys::fs::modificationTime(incs[size_t(i)].first, &mtime))
-            return ReloadFailed;
-        if (mtime != incs[size_t(i)].second)
-            return ReloadOutdated;
+        if (!sys::fs::modificationTime(inc.first, &mtime))
+            return ReloadState::Failed;
+        if (mtime != inc.second)
+            return ReloadState::Outdated;
     }
 
-    return ReloadUptodate;
+    return ReloadState::Uptodate;
 }
 
 bool
-compilePreprocessed(CompileState &cstate,
+compilePreprocessed(ShaderCompilerQueue &scq,
                     GLenum shader_type,
                     const std::string &name,
                     GLSLPreprocessor &proc,
@@ -203,22 +283,22 @@ compilePreprocessed(CompileState &cstate,
     shader.ensure(shader_type);
     if (!shader.valid()) {
         COMPILER_ERR_MSG(
-          cstate, ShaderCompilerError::OpenGLError, "couldnt create shader");
+          scq, ShaderCompilerError::OpenGLError, "couldnt create shader");
         return false;
     }
 
-    LOG_BEGIN(cstate, err::Info);
-    LOG_PUT(cstate,
+    LOG_BEGIN(scq, err::Info);
+    LOG_PUT(scq,
             std::string("compiling ") +
               (name.empty() ? " <embedded code> " : name) + " ... ");
 
 #if 0
 
     {
-        sys::io::OutStream& out = cstate.compiler.shaderManager.out();
+        sys::io::OutStream& out = scq.compiler.shaderManager.out();
         out << sys::io::endl;
         out << "BEGIN SHADER SOURCE" << sys::io::endl;
-        
+
         for (uint32 i = 0; i < nsegments; ++i)
             out << std::string(segments[i], segLengths[i]);
 
@@ -235,19 +315,18 @@ compilePreprocessed(CompileState &cstate,
     GLint success;
     GL_CALL(glGetShaderiv, *shader, GL_COMPILE_STATUS, &success);
     bool ok = success == GL_TRUE;
-    LOG_PUT(cstate, (ok ? "success" : "failed"))
+    LOG_PUT(scq, (ok ? "success" : "failed"))
       << " (" << (wct * 1000) << " ms)" << sys::io::endl;
-    LOG_END(cstate);
+    LOG_END(scq);
 
-    if ((!ok && LOG_LEVEL(cstate, err::Error)) ||
-        LOG_LEVEL(cstate, err::Info)) {
-        LOG_BEGIN(cstate, ok ? err::Info : err::Error);
-        printShaderLog(shader, LOG_DESTINATION(cstate));
-        LOG_END(cstate);
+    if ((!ok && LOG_LEVEL(scq, err::Error)) || LOG_LEVEL(scq, err::Info)) {
+        LOG_BEGIN(scq, ok ? err::Info : err::Error);
+        printShaderLog(shader, LOG_DESTINATION(scq));
+        LOG_END(scq);
     }
 
     if (!ok) {
-        cstate.pushError(ShaderCompilerError::CompilationFailed);
+        scq.pushError(ShaderCompilerError::CompilationFailed);
         shader.release();
     }
 
@@ -304,295 +383,214 @@ translateShaderType(ShaderManager::ShaderType type,
 
     return false;
 }
-
-std::string
-hash(const std::string &source)
-{
-    return source; // FIXME: implement proper hash
-}
-
-ReloadState
-StringShaderObject::needsReload()
-{
-    return includesNeedReload(includes);
-}
-
-ReloadState
-FileShaderObject::needsReload()
-{
-    auto filesource = std::static_pointer_cast<FileSource>(source);
-
-    sys::fs::FileTime current_mtime{};
-    if (!sys::fs::modificationTime(filesource->filePath(), &current_mtime))
-        return ReloadFailed;
-
-    if (current_mtime != mtime)
-        return ReloadOutdated;
-
-    return includesNeedReload(includes);
-}
-
 } // namespace
 
-StringSource::StringSource(ShaderManager::ShaderType type,
-                           const std::string &name)
-  : ShaderSource(hash(name), type), code(name)
-{}
+ShaderSource::ShaderSource(Data &&data) : self(new Data(std::move(data))) {}
 
-ShaderSource::~ShaderSource() = default;
-
-std::shared_ptr<ShaderObject>
-StringSource::load(std::shared_ptr<ShaderSource> &_self, CompileState &cstate)
+const ShaderSourceKey &
+ShaderSource::key() const
 {
-    ASSERT(_self.get() == this);
-    auto self = std::static_pointer_cast<StringSource>(_self);
+    return self->key;
+}
+
+std::shared_ptr<ShaderSource>
+ShaderSource::makeFileSource(ShaderManager::ShaderType ty,
+                             const std::string &path)
+{
+    return std::make_shared<ShaderSource>(
+      Data{ path, ty, { FileSource{ path } } });
+}
+
+std::shared_ptr<ShaderSource>
+ShaderSource::makeStringSource(ShaderManager::ShaderType ty,
+                               const std::string &source)
+{
+    return std::make_shared<ShaderSource>(
+      Data{ hash(source), ty, { StringSource{ source } } });
+}
+
+std::unique_ptr<ShaderObject>
+ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
+                         const StringSource &strsrc,
+                         ShaderCompilerQueue &scq)
+{
     GLenum gltype;
 
-    if (!translateShaderType(type, &gltype)) {
+    if (!translateShaderType(src->self->type, &gltype)) {
         COMPILER_ERR_MSG(
-          cstate, ShaderCompilerError::InvalidShaderType, "unknown ShaderType");
-        return NULL_SHADER_OBJECT;
+          scq, ShaderCompilerError::InvalidShaderType, "unknown ShaderType");
+        return nullptr;
     }
 
-    std::shared_ptr<ShaderObject> so(new StringShaderObject(self, 0));
-    GLSLPreprocessor preproc(cstate.compiler.shaderManager.shaderDirectories(),
-                             so->includes,
-                             so->dependencies);
+    auto so = ShaderObject::Data::makeStringShaderObject(src, strsrc);
+    GLSLPreprocessor preproc(
+      scq.shaderCompiler().shaderManager().shaderDirectories(),
+      so->self->includes,
+      so->self->dependencies);
     preproc.name("");
-    initPreprocessor(cstate.compiler, preproc);
+    scq.shaderCompiler().self->initPreprocessor(preproc);
 
-    preproc.process(code);
+    preproc.process(strsrc.source);
 
     if (preproc.wasError())
-        return NULL_SHADER_OBJECT;
+        return nullptr;
 
-    if (!compilePreprocessed(cstate, gltype, "", preproc, so->handle))
-        return NULL_SHADER_OBJECT;
+    if (!compilePreprocessed(scq, gltype, "", preproc, so->self->handle))
+        return nullptr;
     return so;
 }
 
-FileSource::FileSource(ShaderManager::ShaderType ty, const std::string &path)
-  : ShaderSource(path, ty)
+std::unique_ptr<ShaderObject>
+ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
+                         const FileSource &filesrc,
+                         ShaderCompilerQueue &scq)
 {
-    ASSERT_MSG(sys::fs::isAbsolute(path), "path not absolute: " + path);
-}
-
-std::shared_ptr<ShaderObject>
-FileSource::load(std::shared_ptr<ShaderSource> &_self, CompileState &cstate)
-{
-    ASSERT(_self.get() == this);
-    auto self = std::static_pointer_cast<FileSource>(_self);
     GLenum gltype;
 
-    const std::string &path = filePath();
-    if (!translateShaderType(type, &gltype, path)) {
+    const auto &path = filesrc.path;
+    if (!translateShaderType(src->self->type, &gltype, path)) {
         COMPILER_ERR_MSG(
-          cstate, ShaderCompilerError::InvalidShaderType, "unknown ShaderType");
-        return NULL_SHADER_OBJECT;
+          scq, ShaderCompilerError::InvalidShaderType, "unknown ShaderType");
+        return nullptr;
     }
 
     sys::fs::FileTime mtime{};
-    if (!sys::fs::modificationTime(filePath(), &mtime)) {
+    if (!sys::fs::modificationTime(filesrc.path, &mtime)) {
         COMPILER_ERR_MSG(
-          cstate, ShaderCompilerError::FileNotFound, "couldnt query mtime");
-        return NULL_SHADER_OBJECT;
+          scq, ShaderCompilerError::FileNotFound, "couldnt query mtime");
+        return nullptr;
     }
 
-    std::shared_ptr<ShaderObject> so(new FileShaderObject(self, mtime, 0));
+    auto so = ShaderObject::Data::makeFileShaderObject(src, filesrc, mtime);
 
-    GLSLPreprocessor preproc(cstate.compiler.shaderManager.shaderDirectories(),
-                             so->includes,
-                             so->dependencies);
-    initPreprocessor(cstate.compiler, preproc);
+    GLSLPreprocessor preproc(
+      scq.shaderCompiler().shaderManager().shaderDirectories(),
+      so->self->includes,
+      so->self->dependencies);
+    scq.shaderCompiler().self->initPreprocessor(preproc);
 
     preproc.processFileRecursively(path);
     if (preproc.wasError())
-        return NULL_SHADER_OBJECT;
+        return nullptr;
 
     if (!compilePreprocessed(
-          cstate, gltype, so->source->key, preproc, so->handle))
-        return NULL_SHADER_OBJECT;
+          scq, gltype, so->self->source->key(), preproc, so->self->handle))
+        return nullptr;
     return so;
 }
 
-std::shared_ptr<CompileJob>
-CompileJob::load(const std::shared_ptr<ShaderSource> &src)
+std::unique_ptr<ShaderObject>
+ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
+                         ShaderCompilerQueue &scq)
 {
     ASSERT(src);
-    return std::shared_ptr<CompileJob>(new CompileJobSource(src));
+    return std::visit([&](auto &&arg) { return load(src, arg, scq); },
+                      src->self->source);
 }
 
-std::shared_ptr<CompileJob>
-CompileJob::reload(const std::shared_ptr<ShaderObject> &so)
+ShaderObject::ShaderObject(Data *d) : self(d) {}
+
+const GLShaderObject &
+ShaderObject::handle() const
 {
-    ASSERT(so);
-    return std::shared_ptr<CompileJob>(new CompileJobObject(so));
+    return self->handle;
 }
 
-void
-CompileState::enqueue(std::shared_ptr<CompileJob> &job)
+const std::shared_ptr<ShaderSource> &
+ShaderObject::shaderSource()
 {
-    ASSERT(job);
-
-    std::shared_ptr<ShaderSource> &source = job->source();
-    ASSERT(source);
-    if (inQueue.count(source->key) > 0)
-        return;
-
-    toCompile.push(job);
+    return self->source;
 }
 
 void
-CompileState::compileAll()
+ShaderObject::Data::unlinkCache(const std::shared_ptr<ShaderCache> &newcache)
 {
-
-    for (; !wasError() && !toCompile.empty(); toCompile.pop()) {
-
-        std::shared_ptr<CompileJob> &job = toCompile.front();
-        const ShaderSourceKey &key = job->source()->key;
-
-        auto it = compiled.find(key);
-        if (it != compiled.end()) {
-            continue;
-        }
-
-        std::shared_ptr<ShaderObject> so;
-        bool cache_hit = false;
-        if (flags & SC_LOOKUP_CACHE) {
-            if ((so = compiler.cache->lookup(key))) {
-                ASSERT(key == so->source->key);
-                cache_hit = true;
-
-                ASSERT(so);
-                if (flags & SC_CHECK_OUTDATED)
-                    so = reload(so);
-            }
-        }
-
-        if (!cache_hit) {
-            so = job->exec(*this);
-        }
-
-        if (!so) {
-            this->pushError(ShaderCompilerError::CompilationFailed);
-        } else {
-            put(so);
-
-            for (index i = 0; i < SIZE(so->dependencies.size()); ++i) {
-                std::shared_ptr<CompileJob> new_job =
-                  CompileJob::load(so->dependencies[size_t(i)]);
-                enqueue(new_job);
-            }
-        }
-    }
+    auto curr = cache.lock();
+    ASSERT(newcache && curr);
+    if (curr == newcache)
+        cache.reset();
 }
 
-void
-CompileState::put(const std::shared_ptr<ShaderObject> &so)
+std::pair<std::unique_ptr<ShaderObject>, ReloadState>
+ShaderObject::Data::reloadIfOutdated(ShaderCompilerQueue &scq)
 {
-    ASSERT(so);
-    ASSERT(compiled.count(so->source->key) == 0);
+    auto state = std::visit(
+      [this](auto &&arg) {
+          using T = std::decay_t<decltype(arg)>;
+          if constexpr (std::is_same_v<T, StringShaderObject>) {
+              return includesNeedReload(includes);
+          } else if constexpr (std::is_same_v<T, FileShaderObject>) {
+              sys::fs::FileTime current_mtime{};
+              if (!sys::fs::modificationTime(arg.source.path, &current_mtime))
+                  return ReloadState::Failed;
+              if (current_mtime != arg.mtime || includesNeedReload(includes))
+                  return ReloadState::Outdated;
+              return ReloadState::Uptodate;
 
-    compiled.insert(std::make_pair(so->source->key, so));
-
-    if (flags & SC_PUT_CACHE) {
-        std::shared_ptr<ShaderObject> so_mut(so);
-        ShaderCache::put(compiler.cache, so_mut);
-    }
-}
-
-std::shared_ptr<ShaderObject>
-CompileState::load(std::shared_ptr<ShaderSource> &src)
-{
-    ASSERT(src);
-    return src->load(src, *this);
-}
-
-std::shared_ptr<ShaderObject>
-CompileState::reload(std::shared_ptr<ShaderObject> &so)
-{
-    ASSERT(so);
-    ReloadState state = so->needsReload();
-    std::shared_ptr<ShaderObject> reloaded_so;
+          } else {
+              static_assert(always_false<T>::value, "non-exhaustive visitor!");
+          }
+      },
+      object);
 
     switch (state) {
-    case ReloadUptodate:
-        reloaded_so = so;
-        break;
-    case ReloadOutdated:
-        reloaded_so = load(so->source);
-        break;
-    case ReloadFailed:
-        break;
-        // default:
-        //     ASSERT_FAIL();
+    case ReloadState::Failed:
+    case ReloadState::Uptodate:
+        return { nullptr, state };
+    case ReloadState::Outdated:
+        auto new_so = ShaderSource::Data::load(source, scq);
+        if (!new_so) {
+            return { nullptr, ReloadState::Failed };
+        } else {
+            return { std::move(new_so), ReloadState::Outdated };
+        }
     }
-
-    return reloaded_so;
-}
-
-ShaderObject::~ShaderObject()
-{
-    std::shared_ptr<ShaderCache> c(cache);
-    if (c)
-        ShaderCache::remove(c, this);
 }
 
 void
-ShaderObject::linkCache(std::shared_ptr<ShaderCache> &newcache)
+ShaderObject::Data::linkCache(const std::shared_ptr<ShaderCache> &newcache)
 {
     ASSERT(newcache && cache.expired());
     cache = newcache;
 }
 
-void
-ShaderObject::unlinkCache(std::shared_ptr<ShaderCache> &newcache)
+std::unique_ptr<ShaderObject>
+ShaderObject::Data::makeStringShaderObject(std::shared_ptr<ShaderSource> src,
+                                           const StringSource &ssrc)
 {
-    auto curr = cache.lock();
-    ASSERT(newcache && curr);
-    if (curr == newcache)
-        cache = NULL_SHADER_CACHE;
+    auto so = std::make_unique<ShaderObject>(
+      new Data(std::move(src), { StringShaderObject{ ssrc } }));
+    so->self->self = so.get();
+    return so;
 }
 
-ShaderCache::~ShaderCache()
+std::unique_ptr<ShaderObject>
+ShaderObject::Data::makeFileShaderObject(std::shared_ptr<ShaderSource> src,
+                                         const FileSource &fsrc,
+                                         sys::fs::FileTime mtime)
 {
-    flush();
+    auto so = std::make_unique<ShaderObject>(
+      new Data(std::move(src), { FileShaderObject{ fsrc, mtime } }));
+    so->self->self = so.get();
+    return so;
 }
 
-template<typename I>
-struct PairRange
+const ShaderCacheEntries &
+ShaderCache::cacheEntries() const
 {
-    I begin_range;
-    I end_range;
-
-    PairRange(const I &b, const I &e) : begin_range(b), end_range(e) {}
-    explicit PairRange(const std::pair<I, I> &pair)
-      : begin_range(pair.first), end_range(pair.second)
-    {}
-
-    I &begin() { return begin_range; }
-    const I &begin() const { return begin_range; }
-
-    I &end() { return end_range; }
-    const I &end() const { return end_range; }
-};
-
-template<typename I>
-PairRange<I>
-pair_range(const std::pair<I, I> &pair)
-{
-    return PairRange<I>(pair);
+    return self->entries;
 }
 
 std::shared_ptr<ShaderObject>
 ShaderCache::lookup(const ShaderSourceKey &key)
 {
-
     int best_version = -1;
     std::weak_ptr<ShaderObject> best_ref;
 
-    for (auto &kv : pair_range(entries.equal_range(key))) {
-        ShaderCacheEntry &ent = kv.second;
+    for (auto itpair = self->entries.equal_range(key);
+         itpair.first != itpair.second;
+         ++itpair.first) {
+        auto &ent = itpair.first->second;
         if (ent.first > best_version) {
             best_version = ent.first;
             best_ref = ent.second;
@@ -604,28 +602,30 @@ ShaderCache::lookup(const ShaderSourceKey &key)
     if (found) {
         so = best_ref.lock();
         ASSERT(so);
-        ASSERT(key == so->source->key);
+        ASSERT(key == so->shaderSource()->key());
     }
 
-    checkValid();
+    self->checkValid();
     return so;
 }
 
 bool
-ShaderCache::put(std::shared_ptr<ShaderCache> &cache,
-                 std::shared_ptr<ShaderObject> &so)
+ShaderCache::put(const std::shared_ptr<ShaderCache> &cache,
+                 const std::shared_ptr<ShaderObject> &so)
 {
     ASSERT(cache && so);
 
-    auto curr_cache = so->cache.lock();
+    auto curr_cache = so->self->cache.lock();
     ASSERT(!curr_cache || curr_cache == cache);
 
-    const ShaderSourceKey &key = so->source->key;
+    const ShaderSourceKey &key = so->shaderSource()->key();
     int next_version = 1;
     bool already_present = false;
 
-    for (auto &kv : pair_range(cache->entries.equal_range(key))) {
-        const ShaderCacheEntry &ent = kv.second;
+    for (auto itpair = cache->self->entries.equal_range(key);
+         itpair.first != itpair.second;
+         ++itpair.first) {
+        const auto &ent = itpair.first->second;
 
         if (so == ent.second.lock()) {
             already_present = true;
@@ -638,37 +638,54 @@ ShaderCache::put(std::shared_ptr<ShaderCache> &cache,
 
     if (!already_present) {
         ASSERT(!curr_cache);
-        so->cache = cache;
+        so->self->cache = cache;
         ShaderCacheEntry ent = std::make_pair(next_version, so);
-        cache->entries.insert(std::make_pair(key, ent));
+        cache->self->entries.insert(std::make_pair(key, ent));
     }
 
-    cache->checkValid();
+    cache->self->checkValid();
     return !already_present;
 }
 
 bool
-ShaderCache::remove(ShaderObject *so)
+ShaderCache::remove(const std::shared_ptr<ShaderCache> &cache, ShaderObject *so)
+{
+    return cache->self->remove(so);
+}
+
+void
+ShaderCache::flush()
+{
+    // be careful not to invalidate iterators
+    while (!self->entries.empty()) {
+        auto so = self->entries.begin()->second.second.lock();
+        ASSERT(so);
+        self->remove(so.get());
+    }
+}
+
+bool
+ShaderCache::Data::remove(ShaderObject *so)
 {
     ASSERT(so);
-    auto self = so->cache.lock();
-    ASSERT(self.get() == this);
+    auto cache = so->self->cache.lock();
+    ASSERT(cache.get() == &self);
 
     auto removed = false;
-    const auto &key = so->source->key;
-    auto range = pair_range(entries.equal_range(key));
-    for (auto it = range.begin(); it != range.end();) {
-        const ShaderCacheEntry &ent = it->second;
+    const auto &key = so->shaderSource()->key();
+    for (auto itpair = entries.equal_range(key);
+         itpair.first != itpair.second;) {
+        const auto &ent = itpair.first->second;
 
         auto ref = ent.second.lock();
         if (!ref) {
-            it = entries.erase(it);
+            itpair.first = entries.erase(itpair.first);
         } else if (ref.get() == so) {
-            it = entries.erase(it);
+            itpair.first = entries.erase(itpair.first);
             removed = true;
             break;
         } else {
-            ++it;
+            ++itpair.first;
         }
     }
 
@@ -676,39 +693,44 @@ ShaderCache::remove(ShaderObject *so)
     return removed;
 }
 
-bool
-ShaderCache::remove(std::shared_ptr<ShaderCache> &cache, ShaderObject *so)
-{
-    return cache->remove(so);
-}
-
 void
-ShaderCache::flush()
-{
-    // be careful not to invalidate iterators
-    while (!entries.empty()) {
-        auto so = entries.begin()->second.second.lock();
-        ASSERT(so);
-        remove(so.get());
-    }
-}
-
-void
-ShaderCache::checkValid()
+ShaderCache::Data::checkValid()
 {
     for (auto &kv : entries) {
-        std::shared_ptr<ShaderObject> so(kv.second.second);
+        auto so = kv.second.second.lock();
         ASSERT(so);
-        ASSERT(so->source->key == kv.first);
+        ASSERT(so->shaderSource()->key() == kv.first);
     }
 }
 
-ShaderCompiler::~ShaderCompiler() = default;
+namespace ShaderCompilerError {
+
+std::string stringError(Type /*unused*/)
+{
+    // FIXME: implement
+    return "{shader compiler error}";
+}
+
+} // namespace ShaderCompilerError
+
+ShaderCompiler::ShaderCompiler(ShaderManager &sm) : self(new Data(sm)) {}
+
+ShaderManager &
+ShaderCompiler::shaderManager()
+{
+    return self->shaderManager;
+}
+
+const std::shared_ptr<ShaderCache> &
+ShaderCompiler::shaderCache()
+{
+    return self->cache;
+}
 
 void
 ShaderCompiler::init()
 {
-    cache = shaderManager.globalShaderCache();
+    self->cache = self->shaderManager.globalShaderCache();
 }
 
 bool
@@ -727,6 +749,138 @@ ShaderCompiler::guessShaderType(const std::string &path,
     }
 
     return false;
+}
+
+void
+ShaderCompiler::Data::initPreprocessor(GLSLPreprocessor &proc)
+{
+    auto &m = shaderManager;
+    proc.out(m.out());
+
+    if (m.shaderVersion() != 0) {
+        sys::io::ByteStream glversdef;
+        glversdef << "#version " << m.shaderVersion()
+                  << (m.shaderProfile() == ShaderManager::CoreProfile
+                        ? " core"
+                        : " compatibility")
+                  << sys::io::endl;
+        proc.appendString(glversdef.str());
+    }
+
+    proc.addDefines(m.globalDefines());
+    proc.addDefines(defines);
+}
+
+ShaderCompilerQueue::ShaderCompilerQueue(ShaderCompiler &comp,
+                                         ShaderObjects &compiled,
+                                         ShaderCompileFlags flgs)
+  : self(new Data(*this, comp, compiled, flgs))
+{}
+
+ShaderCompiler &
+ShaderCompilerQueue::shaderCompiler()
+{
+    return self->compiler;
+}
+
+void
+ShaderCompilerQueue::enqueueReload(const std::shared_ptr<ShaderObject> &so)
+{
+    ASSERT(so);
+    if (self->inQueue.count(so->shaderSource()->key()) > 0)
+        return;
+    auto exec = [so, this]() -> std::shared_ptr<ShaderObject> {
+        auto [new_so, state] = so->self->reloadIfOutdated(*this);
+        switch (state) {
+        case ReloadState::Uptodate:
+            ASSERT(!new_so);
+            return so;
+        case ReloadState::Outdated:
+            ASSERT(new_so);
+            return { std::move(new_so) };
+        case ReloadState::Failed:
+            ASSERT(!new_so);
+            return so;
+        }
+    };
+    self->toCompile.push({ so->shaderSource(), std::move(exec) });
+}
+
+void
+ShaderCompilerQueue::enqueueLoad(const std::shared_ptr<ShaderSource> &src)
+{
+    ASSERT(src);
+    if (self->inQueue.count(src->key()) > 0)
+        return;
+    auto exec = [src, this]() -> std::shared_ptr<ShaderObject> {
+        return ShaderSource::Data::load(src, *this);
+    };
+    self->toCompile.push({ src, std::move(exec) });
+}
+
+void
+ShaderCompilerQueue::compileAll()
+{
+    for (; !wasError() && !self->toCompile.empty();) {
+
+        auto job = std::move(self->toCompile.front());
+        self->toCompile.pop();
+        const ShaderSourceKey &key = job.source->key();
+
+        auto it = self->compiled.find(key);
+        if (it != self->compiled.end()) {
+            continue;
+        }
+
+        std::shared_ptr<ShaderObject> so;
+        bool cache_hit = false;
+        if (self->flags & SC_LOOKUP_CACHE) {
+            if ((so = self->compiler.shaderCache()->lookup(key))) {
+                ASSERT(key == so->shaderSource()->key());
+                cache_hit = true;
+
+                ASSERT(so);
+                if (self->flags & SC_CHECK_OUTDATED)
+                    so = self->reload(so);
+            }
+        }
+
+        if (!cache_hit)
+            so = job.exec();
+
+        if (!so) {
+            this->pushError(ShaderCompilerError::CompilationFailed);
+        } else {
+            self->put(so);
+
+            for (auto &dep : so->self->dependencies)
+                enqueueLoad(dep);
+        }
+    }
+}
+
+void
+ShaderCompilerQueue::Data::put(const std::shared_ptr<ShaderObject> &so)
+{
+    ASSERT(so);
+    ASSERT(compiled.count(so->shaderSource()->key()) == 0);
+
+    compiled.insert(std::make_pair(so->shaderSource()->key(), so));
+
+    if (flags & SC_PUT_CACHE) {
+        std::shared_ptr<ShaderObject> so_mut(so);
+        ShaderCache::put(compiler.shaderCache(), so_mut);
+    }
+}
+
+std::shared_ptr<ShaderObject>
+ShaderCompilerQueue::Data::reload(const std::shared_ptr<ShaderObject> &so)
+{
+    ASSERT(so);
+    auto new_so = so->self->reloadIfOutdated(self).first;
+    if (!new_so)
+        return so;
+    return new_so;
 }
 
 } // namespace glt

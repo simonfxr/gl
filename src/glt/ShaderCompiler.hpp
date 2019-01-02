@@ -1,115 +1,54 @@
 #ifndef GLT_SHADER_COMPILER_HPP
 #define GLT_SHADER_COMPILER_HPP
 
-#include <map>
-#include <memory>
-#include <queue>
-#include <set>
-#include <string>
-#include <vector>
+#include "glt/conf.hpp"
 
 #include "err/WithError.hpp"
 #include "err/err.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/ShaderManager.hpp"
-#include "glt/conf.hpp"
 #include "opengl.hpp"
 #include "sys/fs.hpp"
+
+#include <memory>
+#include <queue>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 namespace glt {
 
 struct ShaderSource;
 struct ShaderObject;
 struct ShaderCache;
-struct CompileJob;
-struct CompileState;
+struct ShaderCompiler;
+struct ShaderCompilerQueue;
 
-typedef std::string ShaderSourceKey;
-typedef std::queue<std::shared_ptr<CompileJob>> CompileJobs;
-typedef std::set<ShaderSourceKey> QueuedJobs;
-typedef int Version;
-typedef std::pair<Version, std::weak_ptr<ShaderObject>> ShaderCacheEntry;
-typedef std::multimap<ShaderSourceKey, ShaderCacheEntry> ShaderCacheEntries;
-typedef std::map<ShaderSourceKey, std::shared_ptr<ShaderObject>> ShaderObjects;
-typedef std::vector<std::string> IncludePath;
-typedef std::pair<std::string, sys::fs::FileTime> ShaderInclude;
-typedef std::vector<ShaderInclude> ShaderIncludes;
-typedef std::string ShaderSourceFilePath; // absolute path
-typedef std::vector<std::shared_ptr<ShaderSource>> ShaderDependencies;
-typedef std::map<ShaderSourceKey, std::shared_ptr<ShaderSource>>
-  ShaderRootDependencies;
+using ShaderSourceKey = std::string;
 
-typedef uint32 ShaderCompileFlags;
+using ShaderObjects =
+  std::unordered_map<ShaderSourceKey, std::shared_ptr<ShaderObject>>;
 
-struct GLT_API ShaderSource
-{
-    ShaderSourceKey key;
-    ShaderManager::ShaderType type;
+using ShaderRootDependencies =
+  std::unordered_map<ShaderSourceKey, std::shared_ptr<ShaderSource>>;
 
-    ShaderSource(const ShaderSourceKey &_key, ShaderManager::ShaderType ty)
-      : key(_key), type(ty)
-    {}
+using IncludePath = std::vector<std::string>;
 
-    virtual ~ShaderSource();
+using ShaderInclude = std::pair<std::string, sys::fs::FileTime>;
 
-    virtual std::shared_ptr<ShaderObject> load(std::shared_ptr<ShaderSource> &,
-                                               CompileState &) = 0;
+using ShaderIncludes = std::vector<ShaderInclude>;
 
-private:
-    ShaderSource(const ShaderSource &);
-    ShaderSource &operator=(const ShaderSource &);
-};
+using ShaderDependencies = std::vector<std::shared_ptr<ShaderSource>>;
 
-enum ReloadState
-{
-    ReloadUptodate,
-    ReloadOutdated,
-    ReloadFailed
-};
+using ShaderCompileFlags = uint32;
 
-struct GLT_API ShaderObject
-{
-    std::shared_ptr<ShaderSource> source;
-    GLShaderObject handle;
-    ShaderIncludes includes;
-    ShaderDependencies dependencies;
-    std::weak_ptr<ShaderCache> cache;
+using Version = int;
 
-    ShaderObject(const std::shared_ptr<ShaderSource> &src, GLuint hndl)
-      : source(src), handle(hndl), includes(), dependencies(), cache()
-    {}
+using ShaderCacheEntry = std::pair<Version, std::weak_ptr<ShaderObject>>;
 
-    virtual ~ShaderObject();
-
-    virtual ReloadState needsReload() = 0;
-    void linkCache(std::shared_ptr<ShaderCache> &);
-    void unlinkCache(std::shared_ptr<ShaderCache> &);
-
-private:
-    ShaderObject(const ShaderObject &);
-    ShaderObject &operator=(const ShaderObject &);
-};
-
-struct GLT_API ShaderCache
-{
-    ShaderCacheEntries entries;
-
-    ShaderCache() : entries() {}
-
-    ~ShaderCache();
-
-    std::shared_ptr<ShaderObject> lookup(const ShaderSourceKey &);
-    static bool put(std::shared_ptr<ShaderCache> &,
-                    std::shared_ptr<ShaderObject> &);
-    static bool remove(std::shared_ptr<ShaderCache> &, ShaderObject *);
-    void flush();
-    void checkValid();
-
-private:
-    bool remove(ShaderObject *);
-    ShaderCache(const ShaderCache &);
-    ShaderCache &operator=(const ShaderCache &);
-};
+using ShaderCacheEntries =
+  std::unordered_multimap<ShaderSourceKey, ShaderCacheEntry>;
 
 static const ShaderCompileFlags SC_LOOKUP_CACHE = 1 << 0;
 static const ShaderCompileFlags SC_PUT_CACHE = 1 << 1;
@@ -118,6 +57,88 @@ static const ShaderCompileFlags SC_CHECK_OUTDATED =
 
 static const ShaderCompileFlags SC_DEFAULT_FLAGS =
   SC_LOOKUP_CACHE | SC_PUT_CACHE | SC_CHECK_OUTDATED;
+
+enum ReloadState : uint8
+{
+    Failed,
+    Uptodate,
+    Outdated
+};
+
+struct GLT_API ShaderSource
+{
+    static std::shared_ptr<ShaderSource> makeStringSource(
+      ShaderManager::ShaderType ty,
+      const std::string &source);
+
+    static std::shared_ptr<ShaderSource> makeFileSource(
+      ShaderManager::ShaderType ty,
+      const std::string &path);
+
+    const ShaderSourceKey &key() const;
+
+private:
+    friend struct ShaderCompiler;
+    friend struct ShaderCompilerQueue;
+    friend struct ShaderCache;
+    friend struct ShaderObject;
+
+    struct Data;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
+
+public:
+    explicit ShaderSource(Data &&);
+};
+
+struct GLT_API ShaderObject
+{
+    const GLShaderObject &handle() const;
+    const std::shared_ptr<ShaderSource> &shaderSource();
+
+private:
+    friend struct ShaderCompiler;
+    friend struct ShaderSource;
+    friend struct ShaderCompilerQueue;
+    friend struct ShaderCache;
+
+    struct Data;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
+
+public:
+    ShaderObject(Data *);
+};
+
+struct GLT_API ShaderCache
+{
+    void flush();
+
+    static bool remove(
+      const std::shared_ptr<ShaderCache> & /* pointer to this */,
+      ShaderObject *);
+
+    static bool put(const std::shared_ptr<ShaderCache> & /* pointer to this */,
+                    const std::shared_ptr<ShaderObject> &);
+
+    std::shared_ptr<ShaderObject> lookup(const ShaderSourceKey &);
+
+    const ShaderCacheEntries &cacheEntries() const;
+
+private:
+    struct Data;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
+};
 
 namespace ShaderCompilerError {
 
@@ -138,15 +159,10 @@ std::string GLT_API stringError(Type);
 
 struct GLT_API ShaderCompiler
 {
-    glt::ShaderManager &shaderManager;
-    PreprocessorDefinitions defines;
-    std::shared_ptr<ShaderCache> cache;
+    ShaderCompiler(ShaderManager &);
 
-    ShaderCompiler(glt::ShaderManager &mng)
-      : shaderManager(mng), defines(), cache()
-    {}
-
-    ~ShaderCompiler();
+    ShaderManager &shaderManager();
+    const std::shared_ptr<ShaderCache> &shaderCache();
 
     void init();
 
@@ -154,60 +170,37 @@ struct GLT_API ShaderCompiler
                                 ShaderManager::ShaderType *res);
 
 private:
-    ShaderCompiler(const ShaderCompiler &);
-    ShaderCompiler &operator=(const ShaderCompiler &);
+    friend struct ShaderSource;
+    struct Data;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
 };
 
-struct GLT_API CompileJob
-{
-    virtual ~CompileJob();
-    virtual std::shared_ptr<ShaderSource> &source() = 0;
-    virtual std::shared_ptr<ShaderObject> exec(CompileState &) = 0;
-
-    static std::shared_ptr<CompileJob> load(
-      const std::shared_ptr<ShaderSource> &);
-    static std::shared_ptr<CompileJob> reload(
-      const std::shared_ptr<ShaderObject> &);
-};
-
-struct GLT_API CompileState
+struct GLT_API ShaderCompilerQueue
   : public err::WithError<ShaderCompilerError::Type,
                           ShaderCompilerError::NoError,
                           ShaderCompilerError::stringError>
 {
-    ShaderCompiler &compiler;
-    const ShaderCompileFlags flags;
-    ShaderObjects &compiled;
-    QueuedJobs inQueue;
-    CompileJobs toCompile;
+    ShaderCompilerQueue(ShaderCompiler &comp,
+                        ShaderObjects &_compiled,
+                        ShaderCompileFlags flgs = SC_DEFAULT_FLAGS);
 
-    CompileState(ShaderCompiler &comp,
-                 ShaderObjects &_compiled,
-                 ShaderCompileFlags flgs = SC_DEFAULT_FLAGS)
-      : compiler(comp), flags(flgs), compiled(_compiled), inQueue(), toCompile()
-    {}
+    ShaderCompiler &shaderCompiler();
 
-    void enqueue(std::shared_ptr<CompileJob> &);
+    void enqueueLoad(const std::shared_ptr<ShaderSource> &);
+    void enqueueReload(const std::shared_ptr<ShaderObject> &);
     void compileAll();
-    void put(const std::shared_ptr<ShaderObject> &);
-    std::shared_ptr<ShaderObject> load(std::shared_ptr<ShaderSource> &);
-    std::shared_ptr<ShaderObject> reload(std::shared_ptr<ShaderObject> &);
-};
 
-struct GLT_API StringSource : public ShaderSource
-{
-    std::string code;
-    StringSource(ShaderManager::ShaderType ty, const std::string &name);
-    virtual std::shared_ptr<ShaderObject> load(std::shared_ptr<ShaderSource> &,
-                                               CompileState &) final override;
-};
-
-struct GLT_API FileSource : public ShaderSource
-{
-    FileSource(ShaderManager::ShaderType ty, const std::string &path);
-    const std::string &filePath() const { return this->key; }
-    virtual std::shared_ptr<ShaderObject> load(std::shared_ptr<ShaderSource> &,
-                                               CompileState &) final override;
+private:
+    struct Data;
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
 };
 
 } // namespace glt

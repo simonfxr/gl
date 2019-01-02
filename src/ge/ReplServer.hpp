@@ -36,9 +36,6 @@ private:
         void operator()(Data *) noexcept;
     };
     const std::unique_ptr<Data, DataDeleter> self;
-
-    ReplServer(const ReplServer &);
-    ReplServer &operator=(const ReplServer &);
 };
 
 } // namespace ge

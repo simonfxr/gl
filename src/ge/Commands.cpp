@@ -122,7 +122,7 @@ runListCachedShaders(const Event<CommandEvent> &e)
     }
 
     uint32 n = 0;
-    for (auto &entrie : cache->entries) {
+    for (auto &entrie : cache->cacheEntries()) {
         e.info.engine.out()
           << "cached shader: " << entrie.first << sys::io::endl;
         ++n;

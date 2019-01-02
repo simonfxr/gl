@@ -43,9 +43,8 @@ public:
 
     void type(TextureType ty, size ss = 1);
 
-private:
-    TextureData(const TextureData &);
-    TextureData &operator=(const TextureData &);
+    TextureData(const TextureData &) = delete;
+    TextureData &operator=(const TextureData &) = delete;
 };
 
 inline bool

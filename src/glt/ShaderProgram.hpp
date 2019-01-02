@@ -100,9 +100,7 @@ private:
     };
 
     const std::unique_ptr<Data, DataDeleter> self;
-
     ShaderProgram(const ShaderProgram &);
-    ShaderProgram &operator=(const ShaderProgram &);
 };
 
 using ShaderProgramRef = std::shared_ptr<ShaderProgram>;

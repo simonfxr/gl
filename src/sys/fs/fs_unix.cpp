@@ -31,37 +31,26 @@ cwd(const std::string &dir)
 std::string
 cwd()
 {
-    char path[1024];
-    char *wd = path;
+    size_t size = 128;
+    std::string path;
 
-    if (getcwd(path, sizeof path) == nullptr) {
-
-        size_t size = sizeof path;
-        wd = nullptr;
-        bool success = false;
-
-        while (errno == ERANGE) {
-            size *= 2;
-            delete[] wd;
-            wd = new char[size];
-
-            if (getcwd(wd, size) != nullptr) {
-                success = true;
-                break;
+retry:
+    for (;;) {
+        size *= 2;
+        path.resize(size, '\0');
+        while (!getcwd(path.data(), size)) {
+            if (errno == ERANGE)
+                goto retry;
+            if (errno != EINTR) {
+                ERR("cwd() failed");
+                return "";
             }
         }
 
-        if (!success) {
-            delete[] wd;
-            return "";
-        }
+        auto len = strlen(path.c_str());
+        path.resize(len);
+        return path;
     }
-
-    std::string dir(wd);
-    if (wd != path)
-        delete[] wd;
-
-    return dir;
 }
 
 static size_t
@@ -196,8 +185,7 @@ bool
 exists(const std::string &path, ObjectType *type)
 {
     ASSERT(type);
-    struct stat info
-    {};
+    struct stat info = {};
     if (stat(path.c_str(), &info) == -1)
         return false;
     int objtype = info.st_mode & S_IFMT;

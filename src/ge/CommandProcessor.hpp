@@ -65,9 +65,8 @@ public:
 
     static CommandParamType commandParamType(CommandType type);
 
-private:
-    CommandProcessor(const CommandProcessor &);
-    CommandProcessor &operator=(const CommandProcessor &);
+    CommandProcessor(const CommandProcessor &) = delete;
+    CommandProcessor &operator=(const CommandProcessor &) = delete;
 };
 
 GE_API const char *

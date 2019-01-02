@@ -7,6 +7,8 @@
 #include "glt/color.hpp"
 #include "math/vec3/type.hpp"
 
+#include <memory>
+
 static const float CAMERA_SPHERE_RAD = 1.f;
 
 enum SphereState
@@ -64,14 +66,14 @@ struct World
     void render(Renderer &renderer, float dt);
 
     World();
-    ~World();
 
 private:
     struct Data;
-    Data *const self;
-
-    World(const World &_);
-    World &operator=(const World &_);
+    struct DataDeleter
+    {
+        void operator()(Data *) noexcept;
+    };
+    const std::unique_ptr<Data, DataDeleter> self;
 };
 
 #endif

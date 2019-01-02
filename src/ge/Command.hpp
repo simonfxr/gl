@@ -65,9 +65,8 @@ struct GE_API QuotationCommand : public Command
                              const Array<CommandArg> &) override;
     QuotationCommand *castToQuotation() override { return this; }
 
-private:
-    QuotationCommand &operator=(const QuotationCommand &);
-    QuotationCommand(const QuotationCommand &);
+    QuotationCommand &operator=(const QuotationCommand &) = delete;
+    QuotationCommand(const QuotationCommand &) = delete;
 };
 
 typedef void (*CommandHandler)(const Event<CommandEvent> &);

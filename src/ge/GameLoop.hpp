@@ -59,10 +59,6 @@ struct GE_API GameLoop
     int32 run(Game &logic);
 
 private:
-private:
-    GameLoop(const GameLoop &);
-    GameLoop &operator=(const GameLoop &);
-
     struct Data;
     struct DataDeleter
     {

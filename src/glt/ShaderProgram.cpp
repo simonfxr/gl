@@ -131,19 +131,16 @@ bool
 ShaderProgram::reload()
 {
     ShaderObjects newshaders;
-    CompileState cstate(self->sm.shaderCompiler(), newshaders);
+    auto scq = ShaderCompilerQueue(self->sm.shaderCompiler(), newshaders);
 
-    for (auto it = self->rootdeps.begin(); it != self->rootdeps.end(); ++it) {
+    for (const auto &ent : self->rootdeps)
+        scq.enqueueReload(self->shaders[ent.first]);
 
-        auto job = CompileJob::reload(self->shaders[it->first]);
-        cstate.enqueue(job);
-    }
-
-    cstate.compileAll();
-    if (cstate.wasError())
+    scq.compileAll();
+    if (scq.wasError())
         return false;
 
-    bool unchanged = newshaders.size() == self->shaders.size();
+    auto unchanged = newshaders.size() == self->shaders.size();
     if (unchanged) {
         for (auto it1 = self->shaders.begin(), it2 = newshaders.begin();
              it1 != self->shaders.end() && it2 != newshaders.end();
@@ -229,20 +226,19 @@ bool
 ShaderProgram::addShaderSrc(const std::string &src,
                             ShaderManager::ShaderType type)
 {
-    CompileState cstate(self->sm.shaderCompiler(), self->shaders);
-    auto source = std::make_shared<StringSource>(type, src);
+    auto scq = ShaderCompilerQueue(self->sm.shaderCompiler(), self->shaders);
+    auto source = ShaderSource::makeStringSource(type, src);
 
     {
-        self->rootdeps.insert(std::make_pair(source->key, source));
-        auto job = CompileJob::load(source);
-        cstate.enqueue(job);
+        self->rootdeps.insert(std::make_pair(source->key(), source));
+        scq.enqueueLoad(source);
     }
 
-    cstate.compileAll();
+    scq.compileAll();
 
-    if (cstate.wasError()) {
-        self->handleCompileError(cstate.getError());
-        self->rootdeps.erase(source->key);
+    if (scq.wasError()) {
+        self->handleCompileError(scq.getError());
+        self->rootdeps.erase(source->key());
         return false;
     }
 
@@ -269,20 +265,19 @@ ShaderProgram::addShaderFile(const std::string &file0,
     file = sys::fs::absolutePath(file);
     ASSERT(!file.empty());
 
-    CompileState cstate(self->sm.shaderCompiler(), self->shaders);
-    auto source = std::make_shared<FileSource>(type, file);
+    auto scq = ShaderCompilerQueue(self->sm.shaderCompiler(), self->shaders);
+    auto source = ShaderSource::makeFileSource(type, file);
 
     {
-        self->rootdeps.insert(std::make_pair(source->key, source));
-        auto job = CompileJob::load(source);
-        cstate.enqueue(job);
+        self->rootdeps.insert(std::make_pair(source->key(), source));
+        scq.enqueueLoad(source);
     }
 
-    cstate.compileAll();
+    scq.compileAll();
 
-    if (cstate.wasError()) {
-        self->handleCompileError(cstate.getError());
-        self->rootdeps.erase(source->key);
+    if (scq.wasError()) {
+        self->handleCompileError(scq.getError());
+        self->rootdeps.erase(source->key());
         return false;
     }
 
@@ -335,8 +330,8 @@ ShaderProgram::link()
 
     std::vector<GLuint> added;
     for (auto it = self->shaders.begin(); it != self->shaders.end(); ++it) {
-        GL_CALL(glAttachShader, *self->program, *it->second->handle);
-        added.push_back(*it->second->handle);
+        GL_CALL(glAttachShader, *self->program, *it->second->handle());
+        added.push_back(*it->second->handle());
     }
 
     LOG_BEGIN(*this, err::Info);

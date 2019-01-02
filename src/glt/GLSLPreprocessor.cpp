@@ -183,7 +183,7 @@ DependencyHandler::directiveEncountered(
     std::string absPath = sys::fs::absolutePath(realPath);
     if (proc.state->deps.insert(absPath).second)
         proc.dependencies.push_back(
-          std::make_shared<FileSource>(stype, absPath));
+          ShaderSource::makeFileSource(stype, absPath));
 }
 
 void

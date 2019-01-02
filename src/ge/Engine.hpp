@@ -55,9 +55,6 @@ struct GE_API Engine
     void setDevelDataDir(const std::string &);
 
 private:
-    Engine(const Engine &);
-    Engine &operator=(const Engine &);
-
     struct Data;
     struct DataDeleter
     {

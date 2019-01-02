@@ -65,9 +65,8 @@ public:
 
     static Axis availableAxes(TextureType);
 
-private:
-    TextureSampler(const TextureSampler &);
-    TextureSampler &operator=(const TextureSampler &);
+    TextureSampler(const TextureSampler &) = delete;
+    TextureSampler &operator=(const TextureSampler &) = delete;
 };
 
 DEF_ENUM_BITOR(TextureSampler::FilterMode);

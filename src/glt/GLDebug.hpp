@@ -24,9 +24,8 @@ struct GLDebug
     bool shouldIgnore(GLuint);
     void ignoreMessage(OpenGLVendor vendor, GLuint id);
 
-private:
-    GLDebug(const GLDebug &);
-    GLDebug &operator=(const GLDebug &);
+    GLDebug(const GLDebug &) = delete;
+    GLDebug &operator=(const GLDebug &) = delete;
 };
 
 struct NoDebug : public GLDebug
@@ -34,10 +33,6 @@ struct NoDebug : public GLDebug
     NoDebug() = default;
     ~NoDebug() override;
     virtual void printDebugMessages(const err::Location &) final override {}
-
-private:
-    NoDebug(const NoDebug &);
-    NoDebug &operator=(const NoDebug &);
 };
 
 struct ARBDebug : public GLDebug
@@ -50,10 +45,6 @@ struct ARBDebug : public GLDebug
 
     static GLDebug *init();
     virtual void printDebugMessages(const err::Location &loc) final override;
-
-private:
-    ARBDebug(const ARBDebug &);
-    ARBDebug &operator=(const ARBDebug &);
 };
 
 struct AMDDebug : public GLDebug
@@ -66,10 +57,6 @@ struct AMDDebug : public GLDebug
 
     static GLDebug *init();
     virtual void printDebugMessages(const err::Location &loc) final override;
-
-private:
-    AMDDebug(const AMDDebug &);
-    AMDDebug &operator=(const AMDDebug &);
 };
 
 } // namespace glt

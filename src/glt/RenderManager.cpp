@@ -265,35 +265,4 @@ RenderManager::Data::endStats()
     ++frame_id_current;
 }
 
-vec4_t
-project(const RenderManager &rm, const point3_t &localCoord)
-{
-    return transform(rm.geometryTransform().mvpMatrix(), vec4(localCoord, 1.f));
-}
-
-vec4_t
-projectWorld(const RenderManager &rm, const point3_t &worldCoord)
-{
-    return transform(rm.geometryTransform().vpMatrix(), vec4(worldCoord, 1.f));
-}
-
-vec4_t
-projectView(const RenderManager &rm, const point3_t &eyeCoord)
-{
-    return transform(rm.geometryTransform().projectionMatrix(),
-                     vec4(eyeCoord, 1.f));
-}
-
-Outcode
-testSphere(const RenderManager &rm, const point3_t &center, math::real rad)
-{
-    return testSphere(rm.viewFrustum(), center, rad);
-}
-
-Outcode
-testPoint(const RenderManager &rm, const point3_t &p)
-{
-    return testPoint(rm.viewFrustum(), p);
-}
-
 } // namespace glt

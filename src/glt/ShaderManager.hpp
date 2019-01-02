@@ -97,9 +97,6 @@ private:
     };
 
     std::unique_ptr<Data, DataDeleter> self;
-
-    ShaderManager(const ShaderManager &_);
-    ShaderManager &operator=(const ShaderManager &_);
 };
 
 } // namespace glt

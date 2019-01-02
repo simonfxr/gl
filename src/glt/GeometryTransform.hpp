@@ -67,9 +67,6 @@ struct GLT_API GeometryTransform
     size depth() const;
 
 private:
-    GeometryTransform(const GeometryTransform &_);
-    GeometryTransform &operator=(const GeometryTransform &_);
-
     struct Data;
     struct DataDeleter
     {
@@ -92,6 +89,9 @@ public:
     SavePointArgs(GeometryTransform &_g, uint64 _cookie, uint16 _depth)
       : g(&_g), cookie(_cookie), depth(_depth)
     {}
+
+    SavePointArgs(const SavePoint &) = delete;
+    SavePointArgs &operator=(const SavePoint &) = delete;
 };
 
 struct GLT_API SavePoint
@@ -101,9 +101,10 @@ struct GLT_API SavePoint
 
     ~SavePoint() { args.g->restore(args); }
 
-private:
-    SavePoint(const SavePoint &_);
-    SavePoint &operator=(const SavePoint &_);
+    SavePoint(const SavePoint &) = delete;
+    SavePoint(SavePoint &&) = delete;
+    SavePoint &operator=(const SavePoint &) = delete;
+    SavePoint &operator=(SavePoint &&) = delete;
 };
 
 } // namespace glt

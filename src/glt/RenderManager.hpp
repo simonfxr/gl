@@ -5,8 +5,11 @@
 #include "glt/RenderTarget.hpp"
 #include "glt/ViewFrustum.hpp"
 
-#include "math/mat4/type.hpp"
+#include "math/mat3.hpp"
+#include "math/mat4.hpp"
 #include "math/real.hpp"
+#include "math/vec3.hpp"
+#include "math/vec4.hpp"
 
 namespace glt {
 
@@ -110,27 +113,45 @@ private:
     };
 
     const std::unique_ptr<Data, DataDeleter> self;
-
-    RenderManager(const RenderManager &_);
-    RenderManager &operator=(const RenderManager &_);
 };
 
-GLT_API math::vec4_t
-project(const RenderManager &rm, const math::point3_t &localCoord);
+inline math::vec4_t
+project(const RenderManager &rm, const math::point3_t &localCoord)
+{
+    using math::transform;
+    return transform(rm.geometryTransform().mvpMatrix(),
+                     math::vec4(localCoord, 1.f));
+}
 
-GLT_API math::vec4_t
-projectWorld(const RenderManager &rm, const math::point3_t &worldCoord);
+inline math::vec4_t
+projectWorld(const RenderManager &rm, const math::point3_t &worldCoord)
+{
+    using math::transform;
+    return transform(rm.geometryTransform().vpMatrix(),
+                     math::vec4(worldCoord, 1.f));
+}
 
-GLT_API math::vec4_t
-projectView(const RenderManager &rm, const math::point3_t &eyeCoord);
+inline math::vec4_t
+projectView(const RenderManager &rm, const math::point3_t &eyeCoord)
+{
+    using math::transform;
+    return transform(rm.geometryTransform().projectionMatrix(),
+                     math::vec4(eyeCoord, 1.f));
+}
 
-GLT_API Outcode
+inline Outcode
 testSphere(const RenderManager &rm,
            const math::point3_t &center,
-           math::real rad);
+           math::real rad)
+{
+    return testSphere(rm.viewFrustum(), center, rad);
+}
 
-GLT_API Outcode
-testPoint(const RenderManager &rm, const math::point3_t &p);
+inline Outcode
+testPoint(const RenderManager &rm, const math::point3_t &p)
+{
+    return testPoint(rm.viewFrustum(), p);
+}
 
 } // namespace glt
 

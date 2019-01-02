@@ -187,9 +187,8 @@ protected:
     virtual StreamResult basic_close() final override;
     virtual StreamResult basic_flush() final override;
 
-private:
-    FileStream(const FileStream &);
-    FileStream &operator=(const FileStream &);
+    FileStream(const FileStream &) = delete;
+    FileStream &operator=(const FileStream &) = delete;
 };
 
 struct SYS_API NullStream : public IOStream
