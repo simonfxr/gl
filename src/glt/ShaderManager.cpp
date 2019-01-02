@@ -8,8 +8,6 @@
 
 namespace glt {
 
-using namespace defs;
-
 #define NULL_PROGRAM_REF std::shared_ptr<ShaderProgram>()
 
 typedef std::map<std::string, std::shared_ptr<ShaderProgram>> ProgramMap;
@@ -20,7 +18,7 @@ struct ShaderManager::Data
     sys::io::OutStream *out;
     std::vector<std::string> shaderDirs;
     ProgramMap programs;
-    defs::uint32_t shader_version;
+    uint32_t shader_version;
     ShaderProfile shader_profile;
     bool cache_so;
     std::shared_ptr<ShaderCache> globalShaderCache;
@@ -124,7 +122,7 @@ void
 ShaderManager::reloadShaders()
 {
     const auto n = self->programs.size();
-    auto failed = defs::size_t{ 0 };
+    auto failed = size_t{ 0 };
     for (auto &ent : self->programs)
         if (!ent.second->reload())
             ++failed;

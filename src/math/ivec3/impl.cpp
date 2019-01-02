@@ -4,13 +4,13 @@
 MATH_BEGIN_NAMESPACE
 
 constexpr ivec3_t
-ivec3(defs::int32_t x, defs::int32_t y, defs::int32_t z)
+ivec3(int32_t x, int32_t y, int32_t z)
 {
     return { x, y, z };
 }
 
 constexpr ivec3_t
-ivec3(defs::int32_t a)
+ivec3(int32_t a)
 {
     return ivec3(a, a, a);
 }
@@ -18,11 +18,11 @@ ivec3(defs::int32_t a)
 constexpr ivec3_t
 ivec3(const vec3_t &a)
 {
-    return ivec3(defs::int32_t(a[0]), defs::int32_t(a[1]), defs::int32_t(a[2]));
+    return ivec3(int32_t(a[0]), int32_t(a[1]), int32_t(a[2]));
 }
 
 constexpr ivec3_t
-ivec3(const defs::int32_t a[3])
+ivec3(const int32_t a[3])
 {
     return ivec3(a[0], a[1], a[2]);
 }
@@ -30,7 +30,7 @@ ivec3(const defs::int32_t a[3])
 constexpr ivec3_t
 operator-(const ivec3_t &a)
 {
-    return ivec3(defs::int32_t(0)) - a;
+    return ivec3(int32_t(0)) - a;
 }
 
 constexpr ivec3_t
@@ -45,12 +45,12 @@ operator-(const ivec3_t &a, const ivec3_t b)
     return ivec3(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 }
 
-constexpr ivec3_t operator*(const ivec3_t &v, defs::int32_t a)
+constexpr ivec3_t operator*(const ivec3_t &v, int32_t a)
 {
     return v * ivec3(a);
 }
 
-constexpr ivec3_t operator*(defs::int32_t a, const ivec3_t &v)
+constexpr ivec3_t operator*(int32_t a, const ivec3_t &v)
 {
     return v * a;
 }
@@ -61,7 +61,7 @@ constexpr ivec3_t operator*(const ivec3_t &a, const ivec3_t &b)
 }
 
 constexpr ivec3_t
-operator/(const ivec3_t &v, defs::int32_t a)
+operator/(const ivec3_t &v, int32_t a)
 {
     return v / ivec3(a);
 }
@@ -85,7 +85,7 @@ operator-=(ivec3_t &v, const ivec3_t &a)
 }
 
 constexpr ivec3_t &
-operator*=(ivec3_t &v, defs::int32_t a)
+operator*=(ivec3_t &v, int32_t a)
 {
     return v = v * a;
 }
@@ -97,7 +97,7 @@ operator*=(ivec3_t &v, const ivec3_t &b)
 }
 
 constexpr ivec3_t &
-operator/=(ivec3_t &v, defs::int32_t a)
+operator/=(ivec3_t &v, int32_t a)
 {
     return v = v / a;
 }
@@ -120,7 +120,7 @@ operator!=(const ivec3_t &a, const ivec3_t &b)
     return !(a == b);
 }
 
-constexpr defs::int32_t
+constexpr int32_t
 dot(const ivec3_t &a, const ivec3_t &b)
 {
     return sum(a * b);
@@ -146,7 +146,7 @@ inverseLength(const ivec3_t &a)
     return math::rsqrt(real(lengthSq(a)));
 }
 
-constexpr defs::int32_t
+constexpr int32_t
 lengthSq(const ivec3_t &a)
 {
     return dot(a, a);
@@ -164,7 +164,7 @@ inverseDistance(const ivec3_t &a, const ivec3_t &b)
     return inverseLength(a - b);
 }
 
-constexpr defs::int32_t
+constexpr int32_t
 distanceSq(const ivec3_t &a, const ivec3_t &b)
 {
     return lengthSq(a - b);
@@ -186,7 +186,7 @@ max(const ivec3_t &a, const ivec3_t &b)
                  b[2] > a[2] ? b[2] : a[2]);
 }
 
-constexpr defs::int32_t
+constexpr int32_t
 sum(const ivec3_t &a)
 {
     return a[0] + a[1] + a[2];
@@ -202,12 +202,12 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-constexpr MATH_INLINE_SPEC defs::int32_t &ivec3_t::operator[](defs::index_t i)
+constexpr MATH_INLINE_SPEC int32_t &ivec3_t::operator[](size_t i)
 {
     return components[i];
 }
 
-constexpr MATH_INLINE_SPEC defs::int32_t ivec3_t::operator[](defs::index_t i) const
+constexpr MATH_INLINE_SPEC int32_t ivec3_t::operator[](size_t i) const
 {
     return components[i];
 }

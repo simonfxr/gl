@@ -8,9 +8,6 @@
 
 namespace ge {
 
-using namespace defs;
-using defs::size_t;
-
 void
 CommandArg::free()
 {
@@ -165,7 +162,7 @@ void
 CommandPrettyPrinter::print(const Array<CommandArg> &statement)
 {
 
-    if (self->ignore_empty_statements && statement.size_t() == 0)
+    if (self->ignore_empty_statements && statement.size() == 0)
         return;
 
     auto first = true;
@@ -179,7 +176,7 @@ void
 CommandPrettyPrinter::print(const std::vector<CommandArg> &statement)
 {
     auto arr = SHARE_ARRAY(const_cast<CommandArg *>(&statement.front()),
-                           SIZE(statement.size()));
+                           statement.size());
     print(arr);
 }
 
@@ -212,7 +209,7 @@ CommandPrettyPrinter::closeQuotation()
 
     // FIXME: output is ugly
 
-    size_t depth = SIZE(self->quotations.size());
+    size_t depth = self->quotations.size();
     size_t indent = self->block_indent * depth;
     auto &q = self->quotations.back();
     size_t nln = q->statements.size();

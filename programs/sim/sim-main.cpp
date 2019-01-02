@@ -26,7 +26,6 @@
 #include <vector>
 
 using namespace math;
-using namespace defs;
 
 static const float SPHERE_DENSITY = 999.f;
 
@@ -44,13 +43,13 @@ static const float GAMMA = 1.8f;
 
 static const glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
 
-static const size AA_SAMPLES = 4;
+static const size_t AA_SAMPLES = 4;
 
-static const size SPHERE_LOD_MAX = 6;
+static const size_t SPHERE_LOD_MAX = 6;
 
 struct SphereLOD
 {
-    index_t level;
+    size_t level;
 };
 
 #define SPHERE_INSTANCED_TEXTURED
@@ -249,7 +248,7 @@ Game::init(const ge::Event<ge::InitEvent> &ev)
     } sphere_params[SPHERE_LOD_MAX] = { { 12, 6 },  { 16, 8 },  { 20, 10 },
                                         { 24, 12 }, { 26, 13 }, { 36, 18 } };
 
-    for (index_t i = 0; i < SPHERE_LOD_MAX; ++i) {
+    for (size_t i = 0; i < SPHERE_LOD_MAX; ++i) {
         glt::primitives::sphere(
           sphereBatches[i], 1.f, sphere_params[i].a, sphere_params[i].b);
         sphereBatches[i].send();
@@ -297,8 +296,8 @@ to_string(T x)
 void
 Game::windowResized(const ge::Event<ge::WindowResized> &ev)
 {
-    size width = ev.info.width;
-    size height = ev.info.height;
+    auto width = ev.info.width;
+    auto height = ev.info.height;
 
     // ge::Engine& e = ev.info.engine;
 
@@ -428,8 +427,8 @@ Game::updateIndirectRendering(bool indirect)
     if (indirect) {
 
         if (textureRenderTarget == nullptr) {
-            size w = engine->window().windowWidth();
-            size h = engine->window().windowHeight();
+            auto w = engine->window().windowWidth();
+            auto h = engine->window().windowHeight();
             glt::TextureRenderTarget::Params ps;
             ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
             textureRenderTarget = new glt::TextureRenderTarget(w, h, ps);
@@ -450,12 +449,12 @@ Game::updateIndirectRendering(bool indirect)
 void
 Game::resizeRenderTargets()
 {
-    size width = engine->window().windowWidth();
-    size height = engine->window().windowHeight();
+    auto width = engine->window().windowWidth();
+    auto height = engine->window().windowHeight();
 
     if (indirect_rendering) {
 
-        size stride = 1;
+        auto stride = 1;
         while (stride * stride < AA_SAMPLES)
             ++stride;
 
@@ -480,8 +479,8 @@ Game::end_render_spheres()
 {
     if (render_spheres_instanced) {
 
-        for (index_t lod = 0; lod < SPHERE_LOD_MAX; ++lod) {
-            size num = SIZE(sphere_instances[lod].size());
+        for (size_t lod = 0; lod < SPHERE_LOD_MAX; ++lod) {
+            auto num = sphere_instances[lod].size();
 
             if (num == 0)
                 continue;
@@ -625,7 +624,7 @@ Game::calc_sphere_lod(const Sphere &s)
     screen_rad *= 2;
 
     SphereLOD lod{};
-    lod.level = index_t(screen_rad * SPHERE_LOD_MAX);
+    lod.level = size_t(screen_rad * SPHERE_LOD_MAX);
     if (lod.level >= SPHERE_LOD_MAX)
         lod.level = SPHERE_LOD_MAX - 1;
     if (lod.level < 0)

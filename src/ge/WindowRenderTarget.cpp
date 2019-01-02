@@ -24,14 +24,13 @@ buffersOf(GameWindow &win)
 } // namespace
 
 WindowRenderTarget::WindowRenderTarget(GameWindow &w)
-  : RenderTarget(SIZE(w.windowWidth()), SIZE(w.windowHeight()), buffersOf(w))
-  , window(w)
+  : RenderTarget(w.windowWidth(), w.windowHeight(), buffersOf(w)), window(w)
 {}
 
 void
 WindowRenderTarget::resized()
 {
-    updateSize(SIZE(window.windowWidth()), SIZE(window.windowHeight()));
+    updateSize(window.windowWidth(), window.windowHeight());
 }
 
 void

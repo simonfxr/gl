@@ -4,9 +4,6 @@
 
 namespace glt {
 
-using namespace defs;
-using defs::size_t;
-
 namespace {
 
 GLenum

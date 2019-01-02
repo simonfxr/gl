@@ -7,28 +7,28 @@
 
 namespace sys {
 
-inline constexpr defs::uint8_t
-bswap(defs::uint8_t x)
+inline constexpr uint8_t
+bswap(uint8_t x)
 {
     return x;
 }
 
-inline constexpr defs::uint16_t
-bswap(defs::uint16_t x)
+inline constexpr uint16_t
+bswap(uint16_t x)
 {
     return (x << 8) | (x >> 8);
 }
 
-inline constexpr defs::uint32_t
-bswap(defs::uint32_t x)
+inline constexpr uint32_t
+bswap(uint32_t x)
 {
     x = (x >> 16) | (x << 16);
     x = ((x >> 8) & 0x00FF00FFu) | ((x << 8) & 0xFF00FF00u);
     return x;
 }
 
-inline constexpr defs::uint64_t
-bswap(defs::uint64_t x)
+inline constexpr uint64_t
+bswap(uint64_t x)
 {
     x = (x >> 32) | (x << 32);
     x =

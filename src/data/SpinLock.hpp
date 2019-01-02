@@ -7,7 +7,7 @@
 // realy dumb (just for fun)
 struct SpinLock
 {
-    defs::int32_t lock;
+    int32_t lock;
 
     SpinLock() : lock(0) {}
 

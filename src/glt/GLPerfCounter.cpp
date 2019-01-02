@@ -4,9 +4,6 @@
 
 namespace glt {
 
-using namespace defs;
-using defs::size_t;
-
 GLPerfCounter::GLPerfCounter()
   : _nqueries(0), _queries(nullptr), _active_query(0), _last_query(-1.0)
 {}
@@ -27,8 +24,8 @@ GLPerfCounter::init(size_t s)
     ASSERT(s > 0);
     _last_query = -1.0;
     delete[] _queries;
-    _nqueries = SIZE(s);
-    _queries = new Counter[UNSIZE(s)];
+    _nqueries = s;
+    _queries = new Counter[s];
     _active_query = 0;
 }
 
@@ -59,7 +56,7 @@ void
 GLPerfCounter::end()
 {
     GL_CALL(glQueryCounter, *_queries[_active_query].end, GL_TIMESTAMP);
-    _active_query = (_active_query + 1) % UNSIZE(_nqueries);
+    _active_query = (_active_query + 1) % _nqueries;
 }
 
 double

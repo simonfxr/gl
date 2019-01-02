@@ -4,8 +4,6 @@
 
 MATH_BEGIN_NAMESPACE
 
-using namespace defs;
-
 real
 sqrt(real x)
 {

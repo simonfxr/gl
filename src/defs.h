@@ -18,8 +18,18 @@
 #define NOGDI 1
 #endif
 
-#ifndef HU_OS_WINDOWS
+#ifndef HU_COMP_MSVC
+#ifdef __cplusplus
+#include <cstdint>
+#else
 #include <stdint.h>
+#endif
+#endif
+
+#ifdef __cplusplus
+#include <cstddef>
+#else
+#include <stddef.h>
 #endif
 
 #ifdef BUILD_SHARED
@@ -51,7 +61,7 @@
 #define ALIGNOF_EXPR(e) alignof_expr_not_defined
 #endif
 
-#define ARRAY_LENGTH(x) ::defs::size_t(sizeof(x) / sizeof *(x))
+#define ARRAY_LENGTH(x) ::size_t(sizeof(x) / sizeof *(x))
 
 #define UNUSED(x) ((void) (x))
 
@@ -138,7 +148,7 @@
 
 DEFS_BEGIN_NAMESPACE
 
-#ifdef HU_OS_WINDOWS
+#ifdef HU_COMP_MSVC
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned uint32_t;
@@ -149,27 +159,6 @@ typedef short int16_t;
 typedef int int32_t;
 typedef long long int64_t;
 #else
-#ifdef __cplusplus
-using int8_t = ::int8_t;
-using int16_t = ::int16_t;
-using int32_t = ::int32_t;
-using int64_t = ::int64_t;
-
-using uint8_t = ::uint8_t;
-using uint16_t = ::uint16_t;
-using uint32_t = ::uint32_t;
-using uint64_t = ::uint64_t;
-
-#ifdef SIGNED_SIZE
-using size_t = int32_t;
-#else
-using size_t = uint32_t;
-#endif
-using usize_t = uint32_t;
-
-using index_t = size_t;
-
-#endif
 #endif
 
 DEFS_END_NAMESPACE

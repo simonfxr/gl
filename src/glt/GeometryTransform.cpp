@@ -10,7 +10,6 @@
 namespace glt {
 
 using namespace math;
-using namespace defs;
 
 inline constexpr uint16_t FLAG_MV = 1;
 inline constexpr uint16_t FLAG_MVP = 2;
@@ -243,7 +242,7 @@ GeometryTransform::transformVector(const vec3_t &v) const
     return vec3(transform(vec4(v, 0.f)));
 }
 
-defs::size_t
+size_t
 GeometryTransform::depth() const
 {
     return self->depth + 1;

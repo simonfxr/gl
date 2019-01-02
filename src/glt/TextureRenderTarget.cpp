@@ -5,9 +5,6 @@
 
 namespace glt {
 
-using namespace defs;
-using defs::size_t;
-
 TextureRenderTarget::TextureRenderTarget(size_t w,
                                          size_t h,
                                          const TextureRenderTarget::Params &ps)

@@ -108,7 +108,7 @@ irange(T start, U lim)
     return IntRange<V>{ static_cast<V>(start), 1, static_cast<V>(lim) };
 }
 
-template<typename T = defs::size_t>
+template<typename T = size_t>
 IntRange<T>
 irange()
 {
@@ -155,7 +155,7 @@ struct EnumeratedRange
     constexpr Enumerated<Idx, It> end() const { return { Idx{}, _end }; }
 };
 
-template<typename Idx = defs::size_t, typename T>
+template<typename Idx = size_t, typename T>
 constexpr auto
 enumerate(T &&coll)
 {

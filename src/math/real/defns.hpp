@@ -71,7 +71,7 @@ constexpr MATH_FUNC real
 cubed(real x) PURE_FUNC;
 
 MATH_FUNC real
-pow(real x, defs::int32_t n) PURE_FUNC;
+pow(real x, int32_t n) PURE_FUNC;
 
 MATH_FUNC real
 pow(real x, real y) PURE_FUNC;
@@ -79,7 +79,7 @@ pow(real x, real y) PURE_FUNC;
 MATH_FUNC real
 floor(real x) PURE_FUNC;
 
-constexpr MATH_FUNC defs::int32_t
+constexpr MATH_FUNC int32_t
 signum(real x) PURE_FUNC;
 
 // MATH_FUNC bool signbit(real x) PURE_FUNC;

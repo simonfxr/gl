@@ -20,9 +20,9 @@ public:
     struct Attachment
     {
         AttachmentType type;
-        defs::index_t index_t;
-        Attachment(AttachmentType _type, defs::index_t _index = 0)
-          : type(_type), index_t(_index)
+        size_t size;
+        Attachment(AttachmentType _type, size_t _index = 0)
+          : type(_type), size(_index)
         {}
     };
 

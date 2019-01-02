@@ -39,8 +39,8 @@ struct GE_API GLContextInfo
 
 struct GE_API WindowOptions
 {
-    defs::size_t width;
-    defs::size_t height;
+    size_t width;
+    size_t height;
     std::string title;
     GLContextInfo settings;
     bool vsync;
@@ -70,13 +70,13 @@ struct GE_API GameWindow
 
     void contextInfo(GLContextInfo &info) const;
 
-    defs::size_t windowHeight() const;
+    size_t windowHeight() const;
 
-    defs::size_t windowWidth() const;
+    size_t windowWidth() const;
 
-    void windowSize(defs::size_t &width, defs::size_t &height) const;
+    void windowSize(size_t &width, size_t &height) const;
 
-    void setMouse(defs::int16_t, defs::int16_t);
+    void setMouse(int16_t, int16_t);
 
     WindowEvents &events();
 
@@ -113,16 +113,16 @@ struct GE_API WindowEvent
 
 struct GE_API WindowResized : public WindowEvent
 {
-    defs::size_t width, height;
-    WindowResized(GameWindow &win, defs::size_t w, defs::size_t h)
+    size_t width, height;
+    WindowResized(GameWindow &win, size_t w, size_t h)
       : WindowEvent(win), width(w), height(h)
     {}
 };
 
 struct GE_API FramebufferResized : public WindowEvent
 {
-    defs::size_t width, height;
-    FramebufferResized(GameWindow &win, defs::size_t w, defs::size_t h)
+    size_t width, height;
+    FramebufferResized(GameWindow &win, size_t w, size_t h)
       : WindowEvent(win), width(w), height(h)
     {}
 };
@@ -135,26 +135,23 @@ struct GE_API KeyChanged : public WindowEvent
 
 struct GE_API MouseMoved : public WindowEvent
 {
-    defs::int16_t dx, dy;
-    defs::int16_t x, y;
+    int16_t dx, dy;
+    int16_t x, y;
     MouseMoved(GameWindow &win,
-               defs::int16_t _dx,
-               defs::int16_t _dy,
-               defs::int16_t _x,
-               defs::int16_t _y)
+               int16_t _dx,
+               int16_t _dy,
+               int16_t _x,
+               int16_t _y)
       : WindowEvent(win), dx(_dx), dy(_dy), x(_x), y(_y)
     {}
 };
 
 struct GE_API MouseButton : public WindowEvent
 {
-    defs::int16_t x, y;
+    int16_t x, y;
     Key button;
 
-    MouseButton(GameWindow &win,
-                defs::int16_t _x,
-                defs::int16_t _y,
-                const Key &butn)
+    MouseButton(GameWindow &win, int16_t _x, int16_t _y, const Key &butn)
       : WindowEvent(win), x(_x), y(_y), button(butn)
     {}
 };

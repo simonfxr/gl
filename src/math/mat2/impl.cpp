@@ -47,24 +47,24 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-constexpr MATH_INLINE_SPEC const vec2_t &mat2_t::operator[](defs::index_t i) const
+constexpr MATH_INLINE_SPEC const vec2_t &mat2_t::operator[](size_t i) const
 {
     return columns[i];
 }
 
-constexpr MATH_INLINE_SPEC vec2_t &mat2_t::operator[](defs::index_t i)
+constexpr MATH_INLINE_SPEC vec2_t &mat2_t::operator[](size_t i)
 {
     return columns[i];
 }
 
 constexpr MATH_INLINE_SPEC real
-mat2_t::operator()(defs::index_t i, defs::index_t j) const
+mat2_t::operator()(size_t i, size_t j) const
 {
     return components[i * vec2_t::padded_size + j];
 }
 
 constexpr MATH_INLINE_SPEC real &
-mat2_t::operator()(defs::index_t i, defs::index_t j)
+mat2_t::operator()(size_t i, size_t j)
 {
     return components[i * vec2_t::padded_size + j];
 }

@@ -13,9 +13,6 @@ namespace sys {
 
 namespace io {
 
-using namespace defs;
-using defs::size_t;
-
 namespace {
 
 FILE *
@@ -191,7 +188,7 @@ OutStream &
 operator<<(OutStream &out, const std::string &str)
 {
     if (out.writeable()) {
-        size_t s = SIZE(str.size());
+        size_t s = str.size();
         out.write(s, str.data());
     }
     return out;
@@ -204,7 +201,7 @@ operator<<(OutStream &out, const char *str)
         return out;
     if (str == nullptr)
         return out;
-    size_t s = SIZE(strlen(str));
+    size_t s = strlen(str);
     out.write(s, str);
     return out;
 }
@@ -260,9 +257,9 @@ FileStream::open(const std::string &path, const std::string &mode)
 StreamResult
 FileStream::basic_read(size_t &s, char *buf)
 {
-    size_t n = UNSIZE(s);
+    size_t n = s;
     size_t k = fread(reinterpret_cast<void *>(buf), 1, n, castFILE(_file));
-    s = SIZE(k);
+    s = k;
     if (n == k)
         return StreamResult::OK;
     if (feof(castFILE(_file)) != 0)
@@ -277,10 +274,10 @@ FileStream::basic_read(size_t &s, char *buf)
 StreamResult
 FileStream::basic_write(size_t &s, const char *buf)
 {
-    size_t n = UNSIZE(s);
+    size_t n = s;
     size_t k =
       fwrite(reinterpret_cast<const void *>(buf), 1, n, castFILE(_file));
-    s = SIZE(k);
+    s = k;
     if (n == k)
         return StreamResult::OK;
     if (feof(castFILE(_file)) != 0)
@@ -396,12 +393,12 @@ CooperativeInStream::basic_read(size_t &s, char *buf)
     }
 }
 
-ByteStream::ByteStream(defs::size_t bufsize) : _read_cursor(0)
+ByteStream::ByteStream(size_t bufsize) : _read_cursor(0)
 {
     _buffer.reserve(bufsize);
 }
 
-ByteStream::ByteStream(const char *buf, defs::size_t sz) : ByteStream(sz)
+ByteStream::ByteStream(const char *buf, size_t sz) : ByteStream(sz)
 {
     write(sz, buf);
 }
@@ -413,9 +410,9 @@ ByteStream::ByteStream(const std::string &str)
 ByteStream::~ByteStream() = default;
 
 void
-ByteStream::truncate(defs::size_t sz)
+ByteStream::truncate(size_t sz)
 {
-    _buffer.resize(UNSIZE(sz), 0);
+    _buffer.resize(sz, 0);
     if (_read_cursor > sz)
         _read_cursor = sz;
 }
@@ -433,9 +430,9 @@ ByteStream::basic_close()
 }
 
 StreamResult
-ByteStream::basic_read(defs::size_t &s, char *buf)
+ByteStream::basic_read(size_t &s, char *buf)
 {
-    index_t lim = _read_cursor + s;
+    size_t lim = _read_cursor + s;
     if (lim > size())
         lim = size_t();
     if (_read_cursor >= lim) {
@@ -449,9 +446,9 @@ ByteStream::basic_read(defs::size_t &s, char *buf)
 }
 
 StreamResult
-ByteStream::basic_write(defs::size_t &s, const char *buf)
+ByteStream::basic_write(size_t &s, const char *buf)
 {
-    index_t end = size();
+    size_t end = size();
     _buffer.resize(end + s, 0);
     memcpy(data() + end, buf, s);
     return StreamResult::OK;

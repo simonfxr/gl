@@ -14,8 +14,6 @@
 namespace ge {
 
 using namespace math;
-using namespace defs;
-using defs::size_t;
 
 namespace {
 
@@ -92,13 +90,13 @@ void
 runReloadShaders(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 {
 
-    if (args.size_t() == 0) {
+    if (args.size() == 0) {
         e.info.engine.out() << "reloading shaders" << sys::io::endl;
         e.info.engine.shaderManager().reloadShaders();
         // std::cerr << "all shaders reloaded" << sys::io::endl;
     } else {
         glt::ShaderManager &sm = e.info.engine.shaderManager();
-        for (index_t i = 0; i < args.size_t(); ++i) {
+        for (size_t i = 0; i < args.size(); ++i) {
             auto prog = sm.program(*args[i].string);
             if (!prog) {
                 WARN(e.info.engine.out(),
@@ -177,7 +175,7 @@ runHelp(const Event<CommandEvent> &ev)
 void
 runBindShader(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 {
-    if (args.size_t() == 0) {
+    if (args.size() == 0) {
         ERR(e.info.engine.out(), "bindShader: need at least one argument");
         return;
     }
@@ -190,19 +188,19 @@ runBindShader(const Event<CommandEvent> &e, const Array<CommandArg> &args)
     auto prog =
       std::make_shared<glt::ShaderProgram>(e.info.engine.shaderManager());
 
-    index_t i;
-    for (i = 1; i < args.size_t() && args[i].type == String; ++i) {
+    size_t i;
+    for (i = 1; i < args.size() && args[i].type == String; ++i) {
         if (!prog->addShaderFile(*args[i].string)) {
             ERR(e.info.engine.out(), "bindShader: compilation failed");
             return;
         }
     }
 
-    for (; i + 1 < args.size_t() && args[i].type == Integer &&
+    for (; i + 1 < args.size() && args[i].type == Integer &&
            args[i + 1].type == String;
          i += 2) {
         if (args[i].integer < 0) {
-            ERR(e.info.engine.out(), "bindShader: negative index_t");
+            ERR(e.info.engine.out(), "bindShader: negative size_t");
             return;
         }
         if (!prog->bindAttribute(*args[i + 1].string,
@@ -212,7 +210,7 @@ runBindShader(const Event<CommandEvent> &e, const Array<CommandArg> &args)
         }
     }
 
-    if (i != args.size_t()) {
+    if (i != args.size()) {
         ERR(e.info.engine.out(), "bindShader: invalid argument");
         return;
     }
@@ -310,7 +308,7 @@ void
 runPrependShaderPath(const Event<CommandEvent> &e,
                      const Array<CommandArg> &args)
 {
-    for (defs::index_t i = args.size_t(); i > 0; --i) {
+    for (size_t i = args.size(); i > 0; --i) {
         if (!e.info.engine.shaderManager().prependShaderDirectory(
               *args[i - 1].string, true))
             ERR(e.info.engine.out(), "not a directory: " + *args[i - 1].string);

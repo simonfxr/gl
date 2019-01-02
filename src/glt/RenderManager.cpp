@@ -18,8 +18,6 @@
 namespace glt {
 
 using namespace math;
-using namespace defs;
-using defs::size_t;
 
 struct RenderManager::Data
 {

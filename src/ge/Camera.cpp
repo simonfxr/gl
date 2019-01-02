@@ -9,9 +9,6 @@ using namespace math;
 
 namespace ge {
 
-using namespace defs;
-using defs::size_t;
-
 struct Handlers
 {
     std::shared_ptr<EventHandler<MouseMoved>> mouseMoved;
@@ -157,9 +154,9 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
 {
 
     const std::string *path;
-    if (args.size_t() == 0)
+    if (args.size() == 0)
         path = &_frame_path;
-    else if (args.size_t() == 1 && args[0].type == String)
+    else if (args.size() == 1 && args[0].type == String)
         path = args[0].string;
     else {
         ERR("invalid parameters: expect 0 or 1 filepath");
@@ -182,9 +179,9 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
 {
 
     const std::string *path;
-    if (args.size_t() == 0)
+    if (args.size() == 0)
         path = &_frame_path;
-    else if (args.size_t() == 1 && args[0].type == String)
+    else if (args.size() == 1 && args[0].type == String)
         path = args[0].string;
     else {
         ERR("invalid parameters: expect 0 or 1 filepath");
@@ -212,9 +209,9 @@ void
 Camera::Data::runSensitivity(const Event<CommandEvent> & /*unused*/,
                              const Array<CommandArg> &args)
 {
-    if (args.size_t() == 1 && args[0].type == Number) {
+    if (args.size() == 1 && args[0].type == Number) {
         _mouse_sensitivity = vec2(real(args[0].number));
-    } else if (args.size_t() == 2 && args[0].type == Number &&
+    } else if (args.size() == 2 && args[0].type == Number &&
                args[1].type == Number) {
         _mouse_sensitivity = vec2(real(args[0].number), real(args[1].number));
     } else {

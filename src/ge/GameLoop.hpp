@@ -24,9 +24,7 @@ struct GE_API GameLoop
         virtual void atExit(int32_t exit_code) { UNUSED(exit_code); }
     };
 
-    explicit GameLoop(defs::size_t ticks,
-                      defs::size_t max_skip = 10,
-                      defs::size_t max_fps = 120);
+    explicit GameLoop(size_t ticks, size_t max_skip = 10, size_t max_fps = 120);
 
     time tickTime() const;
 
@@ -34,14 +32,14 @@ struct GE_API GameLoop
 
     time tickDuration() const;
 
-    defs::size_t ticks() const;
-    GameLoop &ticks(defs::size_t n);
+    size_t ticks() const;
+    GameLoop &ticks(size_t n);
 
-    defs::size_t maxFramesSkipped() const;
-    GameLoop &maxFramesSkipped(defs::size_t max_skip);
+    size_t maxFramesSkipped() const;
+    GameLoop &maxFramesSkipped(size_t max_skip);
 
-    defs::size_t maxFPS() const;
-    GameLoop &maxFPS(defs::size_t max_fps);
+    size_t maxFPS() const;
+    GameLoop &maxFPS(size_t max_fps);
 
     bool syncDraw() const;
     GameLoop &syncDraw(bool yesno);

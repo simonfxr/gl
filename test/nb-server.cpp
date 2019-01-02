@@ -6,12 +6,9 @@
 #include <memory>
 #include <vector>
 
-using namespace defs;
 using namespace sys;
 
-using size = defs::size_t;
-
-static const size BUF_SIZE = 4096;
+static const size_t BUF_SIZE = 4096;
 
 struct Client
 {
@@ -19,8 +16,8 @@ struct Client
     int id{};
     bool reading{ true };
     char buffer[BUF_SIZE]{};
-    index_t buf_pos{};
-    index_t buf_end;
+    size_t buf_pos{};
+    size_t buf_end;
 
     Client() : stream(new io::HandleStream), buf_end(BUF_SIZE) {}
 };
@@ -58,12 +55,12 @@ main()
             clients.emplace_back();
         }
 
-        for (index_t i = 0; i < SIZE(clients.size()) - 1; ++i) {
+        for (size_t i = 0; i < clients.size() - 1; ++i) {
             Client &c = clients[i];
             bool close = false;
 
             if (c.reading) {
-                index_t size = c.buf_end - c.buf_pos;
+                size_t size = c.buf_end - c.buf_pos;
                 io::StreamResult err;
                 err = c.stream->read(size, c.buffer + c.buf_pos);
                 c.buf_pos += size;
@@ -82,7 +79,7 @@ main()
                 }
 
             } else {
-                index_t size = c.buf_end - c.buf_pos;
+                size_t size = c.buf_end - c.buf_pos;
                 io::StreamResult err;
                 err = c.stream->write(size, c.buffer + c.buf_pos);
                 c.buf_pos += size;

@@ -7,9 +7,6 @@
 
 namespace glt {
 
-using namespace defs;
-using defs::size_t;
-
 struct RenderTarget::Data
 {
     size_t width;

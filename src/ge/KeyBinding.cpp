@@ -7,8 +7,6 @@
 
 namespace ge {
 
-using namespace defs;
-
 struct KeyBindingState::Data
 {
     const char *table[keycode::Count]{};
@@ -176,7 +174,7 @@ prettyKeyCode(KeyCode code)
 int
 compareKeyBinding(const KeyBinding &x, const KeyBinding &y)
 {
-    for (const auto i : irange(std::min(x.size_t(), y.size_t()))) {
+    for (const auto i : irange(std::min(x.size(), y.size()))) {
         auto a = int32_t(y[i].code);
         auto b = int32_t(x[i].code);
         if (a != b) {
@@ -186,7 +184,7 @@ compareKeyBinding(const KeyBinding &x, const KeyBinding &y)
         }
     }
 
-    return x.size_t() < y.size_t() ? -1 : x.size_t() > y.size_t() ? 1 : 0;
+    return x.size() < y.size() ? -1 : x.size() > y.size() ? 1 : 0;
 }
 
 } // namespace ge

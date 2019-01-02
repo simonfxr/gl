@@ -20,8 +20,8 @@ struct HandleStream;
 
 namespace {
 
-inline constexpr defs::size_t HANDLE_READ_BUFFER_SIZE = 1024;
-inline constexpr defs::size_t HANDLE_WRITE_BUFFER_SIZE = 1024;
+inline constexpr size_t HANDLE_READ_BUFFER_SIZE = 1024;
+inline constexpr size_t HANDLE_WRITE_BUFFER_SIZE = 1024;
 
 using HandleMode = uint32_t;
 
@@ -59,7 +59,7 @@ struct SYS_API IPAddr4
 {
     uint32_t addr4; // bigendian/network byte order
     IPAddr4() : addr4(0) {}
-    IPAddr4(defs::uint8_t a, defs::uint8_t b, defs::uint8_t c, defs::uint8_t d)
+    IPAddr4(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
       : addr4(hton((uint32_t(a) << 24) | (uint32_t(b) << 16) |
                    (uint32_t(c) << 8) | uint32_t(d)))
     {}
@@ -93,10 +93,10 @@ SYS_API HandleError
 elevate(Handle &, HandleMode);
 
 SYS_API HandleError
-read(Handle &, defs::size_t &, char *);
+read(Handle &, size_t &, char *);
 
 SYS_API HandleError
-write(Handle &, defs::size_t &, const char *);
+write(Handle &, size_t &, const char *);
 
 SYS_API HandleError
 close(Handle &);
@@ -111,7 +111,7 @@ enum SocketError
 };
 
 SYS_API SocketError
-listen(SocketProto, const IPAddr4 &, defs::uint16_t, SocketMode, Socket *);
+listen(SocketProto, const IPAddr4 &, uint16_t, SocketMode, Socket *);
 
 SYS_API SocketError
 accept(Socket &, Handle *);
@@ -124,8 +124,8 @@ struct SYS_API HandleStream : public IOStream
     Handle handle;
     char read_buffer[HANDLE_READ_BUFFER_SIZE]{};
     char write_buffer[HANDLE_WRITE_BUFFER_SIZE]{};
-    defs::index_t read_cursor;
-    defs::index_t write_cursor;
+    size_t read_cursor;
+    size_t write_cursor;
 
     HandleStream(const Handle & = Handle());
     ~HandleStream() override;
@@ -133,12 +133,12 @@ struct SYS_API HandleStream : public IOStream
 protected:
     StreamResult basic_close() final override;
     StreamResult basic_flush() final override;
-    StreamResult basic_read(defs::size_t &, char *) final override;
-    StreamResult basic_write(defs::size_t &, const char *) final override;
+    StreamResult basic_read(size_t &, char *) final override;
+    StreamResult basic_write(size_t &, const char *) final override;
     StreamResult flush_buffer();
 };
 
-SYS_API std::pair<std::unique_ptr<char[]>, defs::size_t>
+SYS_API std::pair<std::unique_ptr<char[]>, size_t>
 readFile(sys::io::OutStream &err, const std::string &path) noexcept;
 
 } // namespace io

@@ -39,8 +39,6 @@
 
 using namespace math;
 using namespace ge;
-using namespace defs;
-using size = defs::size_t;
 
 static const point3_t LIGHT_CENTER_OF_ROTATION = vec3(0.f, 15.f, 0.f);
 static const float LIGHT_ROTATION_RAD = 15.f;
@@ -271,8 +269,8 @@ Anim::init(const Event<InitEvent> &ev)
     teapot2.color = glt::color(0xFF, 0x8C, 0x00);
 
     {
-        size w = engine.window().windowWidth();
-        size h = engine.window().windowHeight();
+        auto w = engine.window().windowWidth();
+        auto h = engine.window().windowHeight();
         glt::TextureRenderTarget::Params ps;
         ps.samples = 4;
         ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
@@ -282,8 +280,8 @@ Anim::init(const Event<InitEvent> &ev)
     }
 
     {
-        size w = 512;
-        size h = 512;
+        size_t w = 512;
+        size_t h = 512;
         glt::TextureRenderTarget::Params ps;
         ps.buffers = glt::RT_COLOR_BUFFER;
         ps.filter_mode = glt::TextureSampler::FilterLinear;
@@ -294,9 +292,9 @@ Anim::init(const Event<InitEvent> &ev)
     }
 
     {
-        const size N = KERNEL_SIZE;
-        const float N2 = float(N - 1) * 0.5f;
-        for (index_t i = 0; i < SIZE(glow_kernel.size()); ++i) {
+        const auto N = KERNEL_SIZE;
+        const auto N2 = float(N - 1) * 0.5f;
+        for (size_t i = 0; i < glow_kernel.size(); ++i) {
             float x = float(i) - N2;
 
             const float SIG = 0.84089642;
@@ -415,7 +413,7 @@ Anim::renderScene(const Event<RenderEvent> &e)
     ASSERT(glow_pass1);
     glow_pass1->use();
 
-    Array<float> kernel = { SIZE(glow_kernel.size()), &glow_kernel[0] };
+    Array<float> kernel = { glow_kernel.size(), &glow_kernel[0] };
     for (int pass = 0; pass < 3; ++pass) {
         engine.renderManager().setActiveRenderTarget(to.get());
         from->sampler().bind(0);
@@ -471,8 +469,8 @@ Anim::renderScene(const Event<RenderEvent> &e)
 void
 Anim::onWindowResized(const Event<WindowResized> &ev)
 {
-    size w = ev.info.window.windowWidth();
-    size h = ev.info.window.windowHeight();
+    auto w = ev.info.window.windowWidth();
+    auto h = ev.info.window.windowHeight();
     engine.renderManager().setActiveRenderTarget(nullptr);
     tex_render_target->resize(w, h);
     engine.renderManager().setDefaultRenderTarget(tex_render_target.get());

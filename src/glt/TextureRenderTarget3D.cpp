@@ -10,7 +10,7 @@ TextureRenderTarget3D::TextureRenderTarget3D(
   const math::ivec3_t &s,
   const TextureRenderTarget3D::Params &ps)
   : TextureRenderTarget(0, 0, ps)
-  , _depth(SIZE(s[2]))
+  , _depth(s[2])
   , _color_format(ps.color_format)
   , _target_attachment(Attachment(AttachmentLayer, 0))
 {
@@ -20,7 +20,7 @@ TextureRenderTarget3D::TextureRenderTarget3D(
 void
 TextureRenderTarget3D::resize(const math::ivec3_t &s)
 {
-    size_t w = SIZE(s[0]), h = SIZE(s[1]), d = SIZE(s[2]);
+    size_t w = s[0], h = s[1], d = s[2];
     if (width() == w && height() == h) {
 
         if (depth() == d)
@@ -74,7 +74,7 @@ TextureRenderTarget3D::createTexture(bool delete_old)
     }
 
     _target_attachment.type = other; // force update
-    _target_attachment.index_t = 0;
+    _target_attachment.size = 0;
     targetAttachment(current);
 }
 
@@ -83,7 +83,7 @@ TextureRenderTarget3D::targetAttachment(
   const TextureRenderTarget3D::Attachment &ta)
 {
     if (ta.type != _target_attachment.type ||
-        (ta.type == AttachmentLayer && ta.index_t != _target_attachment.index_t)) {
+        (ta.type == AttachmentLayer && ta.size != _target_attachment.size)) {
 
         _target_attachment = ta;
         GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, *_frame_buffer);
@@ -104,10 +104,10 @@ TextureRenderTarget3D::targetAttachment(
                     GL_TEXTURE_3D,
                     *_sampler.data()->handle(),
                     0,
-                    ta.index_t);
+                    ta.size);
             // _sampler.data()->bind();
             // GL_CALL(glFramebufferTextureLayer, GL_FRAMEBUFFER,
-            // GL_COLOR_ATTACHMENT0, _sampler.data()->handle(), ta.index_t, 0);
+            // GL_COLOR_ATTACHMENT0, _sampler.data()->handle(), ta.size_t, 0);
             _sampler.data()->unbind(0, false);
             break;
         }

@@ -10,9 +10,6 @@ namespace sys {
 
 namespace fs {
 
-using namespace defs;
-using defs::size_t;
-
 namespace def {
 
 namespace {

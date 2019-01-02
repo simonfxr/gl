@@ -48,7 +48,7 @@ struct GE_API Engine
     void addInit(RunLevel lvl,
                  const std::shared_ptr<EventHandler<InitEvent>> &comm);
 
-    defs::int32_t run(const EngineOptions &opts = EngineOptions());
+    int32_t run(const EngineOptions &opts = EngineOptions());
 
     void enablePlugin(Plugin &);
 

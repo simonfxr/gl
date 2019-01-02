@@ -15,7 +15,6 @@
 #include <unistd.h>
 
 using namespace ge;
-using namespace defs;
 
 static void
 printArgs(const std::vector<CommandArg> &args);

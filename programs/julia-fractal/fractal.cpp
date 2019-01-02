@@ -19,7 +19,6 @@
 static const bool MULTISAMPLING = false; // via multisample texture
 
 using namespace math;
-using size = defs::size_t;
 
 #define VERTEX(V, F, Z) V(Vertex, Z(vec2_t, position))
 
@@ -104,8 +103,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     }
 
     if (MULTISAMPLING) {
-        size w = engine.window().windowWidth();
-        size h = engine.window().windowHeight();
+        size_t w = engine.window().windowWidth();
+        size_t h = engine.window().windowHeight();
         glt::TextureRenderTarget::Params ps;
         ps.samples = NUM_SAMPLES;
         ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
@@ -195,8 +194,8 @@ void
 Anim::handleWindowResized(const ge::Event<ge::WindowResized> &ev)
 {
     if (MULTISAMPLING) {
-        size w = ev.info.window.windowWidth();
-        size h = ev.info.window.windowHeight();
+        auto w = ev.info.window.windowWidth();
+        auto h = ev.info.window.windowHeight();
         engine.renderManager().setActiveRenderTarget(nullptr);
         render_texture->resize(w, h);
         engine.renderManager().setDefaultRenderTarget(render_texture.get());

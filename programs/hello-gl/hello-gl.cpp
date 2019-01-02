@@ -15,7 +15,6 @@
 #include "glt/Mesh.hpp"
 #include "glt/utils.hpp"
 
-using namespace defs;
 using namespace math;
 
 #define VERTEX(V, F, Z) V(Vertex, Z(vec2_t, position))

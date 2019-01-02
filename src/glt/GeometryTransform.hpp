@@ -13,7 +13,7 @@
 
 namespace glt {
 
-inline constexpr defs::uint32_t GEOMETRY_TRANSFORM_MAX_DEPTH = 16;
+inline constexpr uint32_t GEOMETRY_TRANSFORM_MAX_DEPTH = 16;
 
 struct SavePoint;
 struct SavePointArgs;
@@ -62,7 +62,7 @@ struct GLT_API GeometryTransform
 
     math::vec3_t transformVector(const math::vec3_t &v) const;
 
-    defs::size_t depth() const;
+    size_t depth() const;
 
 private:
     DECLARE_PIMPL(self);
@@ -72,16 +72,14 @@ struct GLT_API SavePointArgs
 {
 protected:
     GeometryTransform *g;
-    defs::uint64_t cookie;
-    defs::uint16_t depth;
+    uint64_t cookie;
+    uint16_t depth;
 
     friend struct GeometryTransform;
     friend struct SavePoint;
 
 public:
-    SavePointArgs(GeometryTransform &_g,
-                  uint64_t _cookie,
-                  defs::uint16_t _depth)
+    SavePointArgs(GeometryTransform &_g, uint64_t _cookie, uint16_t _depth)
       : g(&_g), cookie(_cookie), depth(_depth)
     {}
 

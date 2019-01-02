@@ -110,7 +110,7 @@ GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext &ctx)
 {
     FileContext &frame = state->stack.top();
 
-    defs::index_t seglen = SIZE(ctx.content.data + ctx.lineOffset - frame.pos);
+    size_t seglen = ctx.content.data + ctx.lineOffset - frame.pos;
 
     if (seglen > 0) {
         segments.push_back(frame.pos);
@@ -264,7 +264,7 @@ IncludeHandler::endProcessing(const Preprocessor::ContentContext &ctx)
     auto &proc = static_cast<GLSLPreprocessor &>(ctx.processor);
 
     FileContext &frame = proc.state->stack.top();
-    defs::index_t seglen = SIZE(ctx.data + ctx.size_t - frame.pos);
+    size_t seglen = ctx.data + ctx.size_t - frame.pos;
 
     if (seglen > 0) {
         proc.segments.push_back(frame.pos);

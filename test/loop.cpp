@@ -2,8 +2,6 @@
 #include "sys/clock.hpp"
 #include <cstdio>
 
-using namespace defs;
-
 #define T 10 /* 10 secs */
 
 struct Game : public ge::GameLoop::Game

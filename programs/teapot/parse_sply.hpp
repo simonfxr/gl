@@ -4,7 +4,7 @@
 #include "defs.hpp"
 #include "teapot/mesh.h"
 
-defs::int32_t
+int32_t
 parse_sply(const char *filename, CubeMesh &model);
 
 #endif

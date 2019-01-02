@@ -10,7 +10,6 @@
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"
 
-using namespace defs;
 using namespace math;
 
 struct Vertex

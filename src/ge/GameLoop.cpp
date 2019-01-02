@@ -5,9 +5,6 @@
 
 namespace ge {
 
-using namespace defs;
-using defs::size_t;
-
 GameLoop::Game::~Game() = default;
 
 struct GameLoop::Data
@@ -46,9 +43,7 @@ GameLoop::Data::now()
 
 GameLoop::Data::Data() = default;
 
-GameLoop::GameLoop(defs::size_t _ticks,
-                   defs::size_t max_skip,
-                   defs::size_t max_fps)
+GameLoop::GameLoop(size_t _ticks, size_t max_skip, size_t max_fps)
   : self(new Data)
 {
     ticks(_ticks);
@@ -74,40 +69,40 @@ GameLoop::tickDuration() const
     return math::real(self->frame_duration);
 }
 
-defs::size_t
+size_t
 GameLoop::ticks() const
 {
-    return defs::size_t(time(1) / self->frame_duration);
+    return size_t(time(1) / self->frame_duration);
 }
 
 GameLoop &
-GameLoop::ticks(defs::size_t n)
+GameLoop::ticks(size_t n)
 {
     self->tick_duration = time(1) / time(n);
     return *this;
 }
 
-defs::size_t
+size_t
 GameLoop::maxFramesSkipped() const
 {
     return self->max_skip;
 }
 
 GameLoop &
-GameLoop::maxFramesSkipped(defs::size_t max_skip)
+GameLoop::maxFramesSkipped(size_t max_skip)
 {
     self->max_skip = max_skip;
     return *this;
 }
 
-defs::size_t
+size_t
 GameLoop::maxFPS() const
 {
     return self->frame_duration == 0 ? 0 : size_t(1 / self->frame_duration);
 }
 
 GameLoop &
-GameLoop::maxFPS(defs::size_t max_fps)
+GameLoop::maxFPS(size_t max_fps)
 {
     self->frame_duration = (max_fps == 0 ? time(0) : time(1) / time(max_fps));
     return *this;

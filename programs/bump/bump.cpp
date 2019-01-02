@@ -15,10 +15,7 @@
 #include <map>
 #include <vector>
 
-using namespace defs;
 using namespace math;
-
-using size = defs::size_t;
 
 #define VERTEX(V, F, Z)                                                        \
     V(Vertex,                                                                  \
@@ -34,7 +31,7 @@ sphere(glt::Mesh<Vertex> &mesh, real radius, int slices, int stacks);
 
 template<typename V>
 void
-icoSphere(glt::Mesh<V> &mesh, size subdivs);
+icoSphere(glt::Mesh<V> &mesh, size_t subdivs);
 
 struct Anim
 {
@@ -218,7 +215,7 @@ sphere(glt::Mesh<Vertex> &mesh, real rad, int slices, int stacks)
 
 template<typename V>
 void
-icoSphere(glt::Mesh<V> &mesh, size subdivs)
+icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
 {
 
     struct Tri
@@ -260,14 +257,14 @@ icoSphere(glt::Mesh<V> &mesh, size subdivs)
     from = &tris;
     to = &tris2;
 
-    index_t next_vert = vertices.size();
+    size_t next_vert = vertices.size();
 
-    for (index_t k = 0; k < subdivs; ++k) {
+    for (size_t k = 0; k < subdivs; ++k) {
         to->clear();
 
-        for (index_t i = 0; i < SIZE(from->size()); ++i) {
+        for (size_t i = 0; i < SIZE(from->size()); ++i) {
             Tri tri = (*from)[i];
-            index_t ab, bc, ca;
+            size_t ab, bc, ca;
 
 #define SUBDIV(ab, a, b)                                                       \
     do {                                                                       \
@@ -308,7 +305,7 @@ icoSphere(glt::Mesh<V> &mesh, size subdivs)
     mesh.drawType(glt::DrawElements);
 
     V v;
-    for (index_t i = 0; i < SIZE(vertices.size()); ++i) {
+    for (size_t i = 0; i < vertices.size(); ++i) {
         vec3_t normal = vertices[i];
 
         real cos_theta = normal[2];
@@ -343,7 +340,7 @@ icoSphere(glt::Mesh<V> &mesh, size subdivs)
 
     vertices.clear();
 
-    for (index_t i = 0; i < SIZE(from->size()); ++i) {
+    for (size_t i = 0; i < from->size(); ++i) {
         Tri tri = (*from)[i];
 
         mesh.addElement(tri.a);

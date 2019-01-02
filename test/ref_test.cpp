@@ -16,8 +16,6 @@
 #include <stdlib.h>
 #include <vector>
 
-using namespace defs;
-
 typedef defs::index index_t;
 
 typedef index_t ThreadID;

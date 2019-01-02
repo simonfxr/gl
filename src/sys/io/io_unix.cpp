@@ -13,9 +13,6 @@ namespace sys {
 
 namespace io {
 
-using namespace defs;
-using defs::size_t;
-
 namespace {
 
 #define OPTION(a, o) (((a) & (o)) == (o))
@@ -161,12 +158,12 @@ elevate(Handle &h, HandleMode mode)
 HandleError
 read(Handle &h, size_t &s, char *buf)
 {
-    size_t n = UNSIZE(s);
+    auto n = s;
     ssize_t k;
     RETRY_INTR(k = ::read(h.fd, static_cast<void *>(buf), n));
 
     if (k > 0) {
-        s = SIZE(k);
+        s = k;
         return HE_OK;
     }
     if (k == 0) {
@@ -180,13 +177,13 @@ read(Handle &h, size_t &s, char *buf)
 HandleError
 write(Handle &h, size_t &s, const char *buf)
 {
-    size_t n = UNSIZE(s);
+    auto n = s;
     ssize_t k;
 
     RETRY_INTR(k = ::write(h.fd, buf, n));
 
     if (k >= 0) {
-        s = SIZE(k);
+        s = k;
         return HE_OK;
     }
     s = 0;

@@ -11,9 +11,6 @@
 
 namespace glt {
 
-using namespace defs;
-using defs::size_t;
-
 namespace {
 
 using Generator = void (*)(GLsizei, GLuint *);
@@ -137,7 +134,7 @@ printStats(sys::io::OutStream &out)
 {
     init_table();
     out << "Active OpenGL Objects:" << sys::io::endl;
-    for (index_t i = 0; i < ObjectType::Count; ++i)
+    for (size_t i = 0; i < ObjectType::Count; ++i)
         if (instance_count[i] > 0)
             out << "  " << kind_table[i].kind << "s: " << instance_count[i]
                 << sys::io::endl;

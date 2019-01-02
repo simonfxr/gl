@@ -159,7 +159,7 @@ KeyHandler::handleCommands()
     for (; it != self->bindings.end(); ++it) {
         auto &bind = it->first.binding;
 
-        for (defs::index_t i = 0; i < bind->size_t(); ++i) {
+        for (size_t i = 0; i < bind->size(); ++i) {
 
             KeyCode code = bind->at(i).code;
             KeyState reqState = bind->at(i).state;

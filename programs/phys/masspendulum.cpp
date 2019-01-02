@@ -3,7 +3,6 @@
 #include "math/vec4.hpp"
 #include "utils.hpp"
 
-using namespace defs;
 using namespace math;
 
 struct Sim

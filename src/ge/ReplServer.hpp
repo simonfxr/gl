@@ -15,7 +15,7 @@ struct GE_API ReplServer
 
     ReplServer(Engine &);
 
-    bool start(const sys::io::IPAddr4 &, defs::uint16_t);
+    bool start(const sys::io::IPAddr4 &, uint16_t);
     bool running();
 
     void acceptClients();

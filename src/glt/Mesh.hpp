@@ -18,8 +18,8 @@ namespace glt {
 namespace {
 
 uint32_t LOCAL_CONSTANT ALIGNMENT_DEFAULT = 0;
-defs::size_t LOCAL_CONSTANT MIN_NUM_VERTICES = 8;
-defs::size_t LOCAL_CONSTANT MIN_NUM_ELEMENTS = 8;
+size_t LOCAL_CONSTANT MIN_NUM_VERTICES = 8;
+size_t LOCAL_CONSTANT MIN_NUM_ELEMENTS = 8;
 
 } // namespace
 
@@ -40,16 +40,16 @@ private:
     GLenum prim_type{};
 
     bool owning_vertices{};
-    defs::size_t vertices_capacity{};
-    defs::size_t vertices_size{};
-    defs::size_t gpu_vertices_size{};
-    defs::uint8_t *RESTRICT vertex_data{};
+    size_t vertices_capacity{};
+    size_t vertices_size{};
+    size_t gpu_vertices_size{};
+    uint8_t *RESTRICT vertex_data{};
 
     bool owning_elements{};
-    defs::size_t elements_capacity{};
-    defs::size_t elements_size{};
-    defs::size_t gpu_elements_size{};
-    defs::uint32_t *RESTRICT element_data{};
+    size_t elements_capacity{};
+    size_t elements_size{};
+    size_t gpu_elements_size{};
+    uint32_t *RESTRICT element_data{};
 
     DrawType draw_type;
 
@@ -58,19 +58,19 @@ private:
     const GenVertexDescription *desc{};
 
 protected:
-    defs::uint8_t *vertexRef(defs::index_t i);
-    const defs::uint8_t *vertexRef(defs::index_t i) const;
+    uint8_t *vertexRef(size_t i);
+    const uint8_t *vertexRef(size_t i) const;
 
-    void appendVertex(const defs::uint8_t *vert);
-    void appendVertexElem(const defs::uint8_t *vert);
+    void appendVertex(const uint8_t *vert);
+    void appendVertexElem(const uint8_t *vert);
 
 public:
     MeshBase();
     ~MeshBase();
 
     void initBase(const GenVertexDescription &layout,
-                  defs::size_t initial_nverts = MIN_NUM_VERTICES,
-                  defs::size_t initial_nelems = MIN_NUM_ELEMENTS);
+                  size_t initial_nverts = MIN_NUM_VERTICES,
+                  size_t initial_nelems = MIN_NUM_ELEMENTS);
 
     GLenum primType() const { return prim_type; }
     void primType(GLenum primType);
@@ -78,21 +78,21 @@ public:
     GLenum usageHint() const { return usage_hint; }
     void usageHint(GLenum usageHint);
 
-    defs::size_t verticesSize() const { return vertices_size; }
-    defs::size_t elementsSize() const { return elements_size; }
+    size_t verticesSize() const { return vertices_size; }
+    size_t elementsSize() const { return elements_size; }
 
-    defs::size_t gpuVerticesSize() const { return gpu_vertices_size; }
-    defs::size_t gpuElementsSize() const { return gpu_elements_size; }
+    size_t gpuVerticesSize() const { return gpu_vertices_size; }
+    size_t gpuElementsSize() const { return gpu_elements_size; }
 
     DrawType drawType() const { return draw_type; }
     void drawType(DrawType type);
 
-    void enableAttribute(defs::index_t i, bool enabled = true);
-    bool attributeEnabled(defs::index_t i);
+    void enableAttribute(size_t i, bool enabled = true);
+    bool attributeEnabled(size_t i);
 
-    void setSize(defs::size_t);
+    void setSize(size_t);
 
-    void setElementsSize(defs::size_t);
+    void setElementsSize(size_t);
 
     void freeHost();
 
@@ -104,35 +104,32 @@ public:
     void drawElements() { drawElements(prim_type); }
     void drawElements(GLenum primType);
 
-    void drawElementsInstanced(defs::size_t instances)
+    void drawElementsInstanced(size_t instances)
     {
         drawElementsInstanced(instances, prim_type);
     }
-    void drawElementsInstanced(defs::size_t num, GLenum type);
+    void drawElementsInstanced(size_t num, GLenum type);
 
     void drawArrays() { drawArrays(prim_type); }
     void drawArrays(GLenum primType);
 
-    void drawArraysInstanced(defs::size_t num)
+    void drawArraysInstanced(size_t num)
     {
         drawArraysInstanced(num, prim_type);
     }
-    void drawArraysInstanced(defs::size_t num, GLenum primType);
+    void drawArraysInstanced(size_t num, GLenum primType);
 
     void draw() { draw(prim_type); }
     void draw(GLenum primType);
 
-    void drawInstanced(defs::size_t num) { drawInstanced(num, prim_type); }
-    void drawInstanced(defs::size_t num, GLenum primType);
+    void drawInstanced(size_t num) { drawInstanced(num, prim_type); }
+    void drawInstanced(size_t num, GLenum primType);
 
-    void addElement(uint32_t index_t);
-    uint32_t element(defs::index_t index_t) const
-    {
-        return element_data[index_t];
-    }
-    uint32_t &element(defs::index_t index_t) { return element_data[index_t]; }
+    void addElement(uint32_t size_t);
+    uint32_t element(size_t size_t) const { return element_data[size_t]; }
+    uint32_t &element(size_t size_t) { return element_data[size_t]; }
 
-    GLuint attributePosition(defs::size_t offset) const;
+    GLuint attributePosition(size_t offset) const;
 
     void bind();
 
@@ -152,8 +149,8 @@ struct Mesh : public MeshBase
 
     Mesh(const VertexDescription<T> &layout = T::gl::desc,
          GLenum primTy = GL_TRIANGLES,
-         defs::size_t initial_nverts = MIN_NUM_VERTICES,
-         defs::size_t initial_nelems = MIN_NUM_ELEMENTS)
+         size_t initial_nverts = MIN_NUM_VERTICES,
+         size_t initial_nelems = MIN_NUM_ELEMENTS)
     {
         initBase(layout.cast_gen(), initial_nverts, initial_nelems);
         primType(primTy);
@@ -161,15 +158,15 @@ struct Mesh : public MeshBase
 
     void addVertex(const T &vert)
     {
-        appendVertex(reinterpret_cast<const defs::uint8_t *>(&vert));
+        appendVertex(reinterpret_cast<const uint8_t *>(&vert));
     }
 
     void addVertexElem(const T &vert)
     {
-        appendVertexElem(reinterpret_cast<const defs::uint8_t *>(&vert));
+        appendVertexElem(reinterpret_cast<const uint8_t *>(&vert));
     }
 
-    const T at(defs::index_t i) const
+    const T at(size_t i) const
     {
         return T(*reinterpret_cast<const typename T::gl *>(vertexRef(i)));
     }

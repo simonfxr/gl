@@ -21,7 +21,6 @@
 #include "marching-cubes/tables2.hpp"
 
 using namespace math;
-using namespace defs;
 
 static const vec3_t WORLD_BLOCK_SCALE = vec3(32);
 

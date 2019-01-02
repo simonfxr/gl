@@ -34,9 +34,6 @@ struct LogTraits<glt::ShaderCompilerQueue>
 
 namespace glt {
 
-using namespace defs;
-using defs::size_t;
-
 namespace {
 struct CompileJob
 {

@@ -18,20 +18,20 @@ struct GLT_API TextureData
 {
 public:
 private:
-    defs::size_t _samples;
+    size_t _samples;
     GLTextureObject _handle;
     TextureType _type;
 
 public:
     TextureData() : _samples(1), _handle(0), _type(Texture2D) {}
-    TextureData(TextureType type, defs::size_t samples = 1);
+    TextureData(TextureType type, size_t samples = 1);
 
     ~TextureData();
 
     void free();
 
-    void bind(defs::uint32_t idx, bool set_active_idx = true);
-    void unbind(defs::uint32_t idx, bool set_active_idx = true);
+    void bind(uint32_t idx, bool set_active_idx = true);
+    void unbind(uint32_t idx, bool set_active_idx = true);
 
     GLTextureObject &ensureHandle();
     const GLTextureObject &handle() const { return _handle; }
@@ -39,7 +39,7 @@ public:
     TextureType type() { return _type; }
     GLenum glType() const;
 
-    void type(TextureType ty, defs::size_t ss = 1);
+    void type(TextureType ty, size_t ss = 1);
 
     TextureData(const TextureData &) = delete;
     TextureData &operator=(const TextureData &) = delete;

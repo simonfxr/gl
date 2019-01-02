@@ -15,13 +15,12 @@
 #endif
 
 namespace sys {
-
 namespace fs {
 
 // unix time stamp
 struct FileTime
 {
-    defs::uint32_t seconds;
+    uint32_t seconds;
 };
 
 namespace {
@@ -125,7 +124,7 @@ operator>(const FileTime &a, const FileTime &b)
 namespace def {
 
 SYS_API std::string
-join(const std::string &path, const char **, defs::size_t n);
+join(const std::string &path, const char **, size_t n);
 
 SYS_API std::string
 dirname(const std::string &path);
@@ -165,7 +164,6 @@ join(const std::string &path, Args &&... args)
 }
 
 } // namespace fs
-
 } // namespace sys
 
 #endif

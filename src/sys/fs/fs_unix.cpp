@@ -20,7 +20,6 @@ namespace fs {
 bool
 cwd(const std::string &dir)
 {
-
     if (chdir(dir.c_str()) < 0) {
         ERR(strerror(errno));
         return false;

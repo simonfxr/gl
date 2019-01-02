@@ -79,9 +79,9 @@ struct GLT_API GLMemInfoATI
     struct GLMemFree
     {
         // in kb
-        defs::size_t freeVBO;
-        defs::size_t freeTexture;
-        defs::size_t freeRenderbuffer;
+        size_t freeVBO;
+        size_t freeTexture;
+        size_t freeRenderbuffer;
     };
 
     GLMemFree current;
@@ -94,11 +94,11 @@ struct GLT_API GLMemInfoATI
 struct GLT_API GLMemInfoNV
 {
     // in kb
-    defs::size_t total;
-    defs::size_t total_dedicated;
-    defs::size_t current;
-    defs::size_t evicted;
-    defs::size_t num_evictions;
+    size_t total;
+    size_t total_dedicated;
+    size_t current;
+    size_t evicted;
+    size_t num_evictions;
 
     static bool init();
     static bool info(GLMemInfoNV *);

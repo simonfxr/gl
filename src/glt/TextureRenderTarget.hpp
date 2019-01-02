@@ -14,7 +14,7 @@ struct GLT_API TextureRenderTarget : public RenderTarget
     TextureSampler _sampler;
     GLFramebufferObject _frame_buffer;
     GLRenderbufferObject _depth_buffer;
-    defs::size_t _samples;
+    size_t _samples;
     TextureSampler::FilterMode _filter_mode;
     TextureSampler::ClampMode _clamp_mode;
 
@@ -23,7 +23,7 @@ struct GLT_API TextureRenderTarget : public RenderTarget
     struct Params
     {
         RenderTargetBuffers buffers;
-        defs::size_t samples;
+        size_t samples;
         TextureSampler::FilterMode filter_mode;
         TextureSampler::ClampMode clamp_mode;
 
@@ -35,10 +35,10 @@ struct GLT_API TextureRenderTarget : public RenderTarget
         {}
     };
 
-    TextureRenderTarget(defs::size_t w, defs::size_t h, const Params &);
+    TextureRenderTarget(size_t w, size_t h, const Params &);
     virtual ~TextureRenderTarget() override;
 
-    void resize(defs::size_t width, defs::size_t height);
+    void resize(size_t width, size_t height);
 
     TextureSampler::FilterMode filterMode() { return _filter_mode; }
     void filterMode(TextureSampler::FilterMode m) { _filter_mode = m; }

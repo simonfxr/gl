@@ -30,10 +30,10 @@ struct GLType<color>
 
 struct VertexAttr
 {
-    defs::index_t offset;
-    defs::size_t alignment;
+    size_t offset;
+    size_t alignment;
     GLenum component_type;
-    defs::size_t ncomponents;
+    size_t ncomponents;
     bool normalized;
     const char *name;
 };
@@ -46,9 +46,9 @@ struct VertexDescription
     typedef void (*store_function)(unsigned char *dest,
                                    const unsigned char *src);
 
-    defs::size_t sizeof_vertex;
-    defs::size_t alignment;
-    defs::size_t nattributes;
+    size_t sizeof_vertex;
+    size_t alignment;
+    size_t nattributes;
     const char *name;
     const VertexAttr *const attributes;
     store_function store;
@@ -64,27 +64,27 @@ typedef VertexDescription<Any> GenVertexDescription;
 template<typename T>
 struct VertexAttrInfo
 {
-    //    static const defs::size_t alignment;
+    //    static const size_t alignment;
     //    static const GLenum component_type;
-    //    static const defs::size_t ncomponents;
+    //    static const size_t ncomponents;
     //    static const bool normalized;
 };
 
 template<>
 struct VertexAttrInfo<float>
 {
-    static const defs::index_t alignment = alignof(float);
+    static const size_t alignment = alignof(float);
     static const GLenum component_type = GL_FLOAT;
-    static const defs::size_t ncomponents = 1;
+    static const size_t ncomponents = 1;
     static const bool normalized = false;
 };
 
 template<>
 struct VertexAttrInfo<color>
 {
-    static const defs::index_t alignment = alignof(color);
+    static const size_t alignment = alignof(color);
     static const GLenum component_type = GL_UNSIGNED_BYTE;
-    static const defs::size_t ncomponents = 4;
+    static const size_t ncomponents = 4;
     static const bool normalized = true;
 };
 
@@ -92,9 +92,9 @@ struct VertexAttrInfo<color>
     template<>                                                                 \
     struct VertexAttrInfo<t::gl>                                               \
     {                                                                          \
-        static const defs::index_t alignment = alignof(t::gl);                   \
+        static const size_t alignment = alignof(t::gl);                        \
         static const GLenum component_type = GL_FLOAT;                         \
-        static const defs::size_t ncomponents = t::size_t;                         \
+        static const size_t ncomponents = t::size;                             \
         static const bool normalized = false;                                  \
     }
 
@@ -153,12 +153,12 @@ VD_DEF_GLVEC_ATTR_INFO(math::mat4_t);
 #define VD_GL_STORE_F(t, n, ...) VD_GL_STORE_Z(t, n) __VA_ARGS__
 #define VD_GL_STORE_Z(t, n) dest->n = src->n;
 
-#define VD_GL_ATTRS_DECL_V(name, size_t)                                         \
-    static const ::glt::VertexAttr vertex_attrs[size_t];
-#define VD_GL_ATTRS_DECL_F(t, n, size_t) 1 + size_t
+#define VD_GL_ATTRS_DECL_V(name, size)                                         \
+    static const ::glt::VertexAttr vertex_attrs[size];
+#define VD_GL_ATTRS_DECL_F(t, n, size) 1 + size
 #define VD_GL_ATTRS_DECL_Z(t, n) 1
 
-#define VD_GL_DESC_DECL_V(name, size_t)                                          \
+#define VD_GL_DESC_DECL_V(name, size)                                          \
     static const ::glt::VertexDescription<name> desc;
 #define VD_GL_DESC_DECL_F(t, n, ...)
 #define VD_GL_DESC_DECL_Z(t, n)

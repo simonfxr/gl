@@ -6,9 +6,6 @@
 
 namespace ge {
 
-using namespace defs;
-using defs::size_t;
-
 struct MouseLookPlugin::Data
 {
     Data();

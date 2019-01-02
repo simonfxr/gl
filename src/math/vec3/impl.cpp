@@ -42,7 +42,7 @@ vec3(const vec3_t::buffer a)
 constexpr void
 load(vec3_t::buffer b, const vec3_t &v)
 {
-    for (defs::index_t i = 0; i < vec3_t::size_t; ++i)
+    for (size_t i = 0; i < vec3_t::size; ++i)
         b[i] = v[i];
 }
 
@@ -276,12 +276,12 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-constexpr MATH_INLINE_SPEC real &vec3_t::operator[](defs::index_t i)
+constexpr MATH_INLINE_SPEC real &vec3_t::operator[](size_t i)
 {
     return components[i];
 }
 
-constexpr MATH_INLINE_SPEC real vec3_t::operator[](defs::index_t i) const
+constexpr MATH_INLINE_SPEC real vec3_t::operator[](size_t i) const
 {
     return components[i];
 }

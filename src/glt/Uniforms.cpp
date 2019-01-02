@@ -129,7 +129,7 @@ programUniform(GLuint program, GLint loc, float value)
 void
 programUniform(GLuint program, GLint loc, const Array<float> &value)
 {
-    GL_CALL(glProgramUniform1fv, program, loc, value.size_t(), &value[0]);
+    GL_CALL(glProgramUniform1fv, program, loc, value.size(), &value[0]);
 }
 
 void
@@ -186,13 +186,13 @@ programUniform(GLuint program, GLint loc, const mat2_t &value)
 void
 programUniform(GLuint program, GLint loc, const BoundTexture &sampler)
 {
-    GL_CALL(glProgramUniform1i, program, loc, GLint(sampler.index_t));
+    GL_CALL(glProgramUniform1i, program, loc, GLint(sampler.size_t));
 }
 
 void
 programUniform(GLuint program, GLint loc, const Sampler &sampler)
 {
-    GL_CALL(glProgramUniform1i, program, loc, GLint(sampler.index_t));
+    GL_CALL(glProgramUniform1i, program, loc, GLint(sampler.size_t));
 }
 
 void

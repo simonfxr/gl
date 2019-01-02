@@ -6,9 +6,6 @@
 
 namespace glt {
 
-using namespace defs;
-using defs::size_t;
-
 Preprocessor::DirectiveHandler::~DirectiveHandler() = default;
 
 void
@@ -100,10 +97,10 @@ Preprocessor::process(const char *begin, size_t size)
         while (directiveEnd < eol && (isspace(*directiveEnd) == 0))
             ++directiveEnd;
 
-        ctx.lineLength = SIZE(eol - lineBegin);
-        ctx.lineOffset = SIZE(lineBegin - begin);
-        ctx.beginDirective = SIZE(directiveBegin - begin);
-        ctx.endDirective = SIZE(directiveEnd - begin);
+        ctx.lineLength = eol - lineBegin;
+        ctx.lineOffset = lineBegin - begin;
+        ctx.beginDirective = directiveBegin - begin;
+        ctx.endDirective = directiveEnd - begin;
 
         std::string key(directiveBegin, size_t(directiveEnd - directiveBegin));
 

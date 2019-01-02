@@ -9,8 +9,6 @@
 
 namespace ge {
 
-using namespace defs;
-
 const Array<CommandArg> NULL_ARGS = ARRAY_INITIALIZER(CommandArg);
 
 std::string
@@ -46,7 +44,7 @@ Command::Command(const Array<CommandParamType> &ps,
 void
 Command::handle(const Event<CommandEvent> &ev)
 {
-    if (params.size_t() == 0 || params[params.size_t() - 1] == ListParam) {
+    if (params.size() == 0 || params[params.size() - 1] == ListParam) {
         interactive(ev, NULL_ARGS);
     } else {
         ERR("cannot execute command without arguments: " + name());
@@ -91,7 +89,7 @@ Command::interactiveDescription() const
         }
     }
 
-    if (parameters().size_t() == 0)
+    if (parameters().size() == 0)
         desc << " none";
 
     desc << sys::io::endl
@@ -141,7 +139,7 @@ QuotationCommand::interactive(const Event<CommandEvent> &ev,
                               const Array<CommandArg> & /*unused*/)
 {
     for (const auto &arg_vec : *quotation) {
-        OwnedArray<CommandArg> args(SIZE(arg_vec.size()), &arg_vec[0]);
+        OwnedArray<CommandArg> args(arg_vec.size(), &arg_vec[0]);
         ev.info.engine.commandProcessor().exec(args);
     }
 }

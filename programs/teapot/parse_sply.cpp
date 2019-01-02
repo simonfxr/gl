@@ -6,7 +6,6 @@
 #include "parse_sply.hpp"
 
 using namespace math;
-using namespace defs;
 
 struct Vertex
 {

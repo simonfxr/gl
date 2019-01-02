@@ -21,7 +21,6 @@
 
 const size N_SPRINGS = 20;
 
-using namespace defs;
 using namespace math;
 
 struct Vertex

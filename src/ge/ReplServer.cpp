@@ -219,7 +219,7 @@ ReplServer::handleClients()
 {
     ASSERT(self->running);
 
-    for (defs::size_t i = 0; i < SIZE(self->clients.size());) {
+    for (size_t i = 0; i < self->clients.size();) {
         if (!self->clients[i]->handle(self->engine)) {
             INFO("closing connection to client");
             self->clients.erase(self->clients.begin() + i);

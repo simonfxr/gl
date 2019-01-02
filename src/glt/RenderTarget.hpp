@@ -11,16 +11,15 @@ namespace glt {
 struct GLT_API Viewport
 {
     int32_t offsetX, offsetY;
-    defs::size_t width, height;
+    size_t width, height;
 
     Viewport() : offsetX(0), offsetY(0), width(0), height(0) {}
 
-    Viewport(defs::int32_t x, defs::int32_t y, defs::size_t w, defs::size_t h)
+    Viewport(int32_t x, int32_t y, size_t w, size_t h)
       : offsetX(x), offsetY(y), width(w), height(h)
     {}
 
-    Viewport(defs::size_t w, defs::size_t h)
-      : offsetX(0), offsetY(0), width(w), height(h)
+    Viewport(size_t w, size_t h) : offsetX(0), offsetY(0), width(w), height(h)
     {}
 
     bool operator==(const Viewport &vp) const;
@@ -39,14 +38,14 @@ static const uint32_t RT_ALL_BUFFERS =
 struct GLT_API RenderTarget
 {
 
-    RenderTarget(defs::size_t width,
-                 defs::size_t height,
+    RenderTarget(size_t width,
+                 size_t height,
                  RenderTargetBuffers bs = RT_COLOR_BUFFER,
                  const Viewport &vp = Viewport());
     virtual ~RenderTarget();
 
-    defs::size_t width() const;
-    defs::size_t height() const;
+    size_t width() const;
+    size_t height() const;
     RenderTargetBuffers buffers() const;
     const Viewport &viewport() const;
     color clearColor() const;
@@ -60,7 +59,7 @@ struct GLT_API RenderTarget
     void viewport(const Viewport &vp);
 
 protected:
-    void updateSize(defs::size_t width, defs::size_t height);
+    void updateSize(size_t width, size_t height);
 
     virtual void doActivate() = 0;
     virtual void doDeactivate();

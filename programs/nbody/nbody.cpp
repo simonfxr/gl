@@ -16,7 +16,6 @@
 
 #include "nbody_phys.hpp"
 
-using namespace defs;
 using namespace math;
 
 static const size SIMULATION_FPS = 50;

@@ -168,7 +168,7 @@ EventSource<T>::unreg(const std::shared_ptr<EventHandler<T>> &handler)
 {
     if (!handler)
         return true;
-    for (defs::index_t i = 0; i < handlers.size(); ++i) {
+    for (size_t i = 0; i < handlers.size(); ++i) {
         if (handlers[i] == handler) {
             handlers.erase(handlers.begin() + i);
             return true;

@@ -24,7 +24,7 @@ public:
 
 public:
     CommandProcessor(Engine &e) : _engine(e) {}
-    defs::size_t size_t() const;
+    size_t size() const;
 
     bool addScriptDirectory(const std::string &dir, bool check_exists = true);
     const std::vector<std::string> &scriptDirectories();

@@ -14,9 +14,6 @@
 
 namespace ge {
 
-using namespace defs;
-using defs::size_t;
-
 struct GameWindow::Data
 {
     GameWindow &self;
@@ -233,8 +230,7 @@ void
 GameWindow::Data::glfw_window_size_callback(GLFWwindow *win, int w, int h)
 {
     GameWindow::Data *me = getUserPointer(win);
-    me->events.windowResized.raise(
-      makeEvent(WindowResized(me->self, SIZE(w), SIZE(h))));
+    me->events.windowResized.raise(makeEvent(WindowResized(me->self, w, h)));
 }
 
 void
@@ -287,7 +283,7 @@ GameWindow::Data::glfw_framebuffer_size_callback(GLFWwindow *win, int w, int h)
 {
     GameWindow::Data *me = getUserPointer(win);
     me->events.framebufferResized.raise(
-      makeEvent(FramebufferResized(me->self, SIZE(w), SIZE(h))));
+      makeEvent(FramebufferResized(me->self, w, h)));
 }
 
 // static void GameWindow::Data::glfw_char_callback(GLFWwindow *win, unsigned
@@ -533,8 +529,8 @@ GameWindow::windowSize(size_t &width, size_t &height) const
 {
     int w, h;
     glfwGetWindowSize(self->win, &w, &h);
-    width = SIZE(w);
-    height = SIZE(h);
+    width = w;
+    height = h;
 }
 
 void

@@ -75,10 +75,10 @@ constexpr mat4_t operator*(const mat4_t &A, const mat4_t &B)
     //     for (uint32_t j = 0; j < 4; ++j)
     //         C(i, j) = dot(AT[j], B[i]);
 
-    for (defs::index_t j = 0; j < 4; ++j) {
-        for (defs::index_t i = 0; i < 4; ++i) {
+    for (size_t j = 0; j < 4; ++j) {
+        for (size_t i = 0; i < 4; ++i) {
             real c_i_j = real(0);
-            for (defs::index_t k = 0; k < 4; ++k)
+            for (size_t k = 0; k < 4; ++k)
                 c_i_j += A(k, i) * B(j, k);
             C(j, i) = c_i_j;
         }
@@ -160,8 +160,8 @@ constexpr mat4_t
 transpose(const mat4_t &A)
 {
     mat4_t B;
-    for (defs::index_t i = 0; i < 4; ++i)
-        for (defs::index_t j = 0; j < 4; ++j)
+    for (size_t i = 0; i < 4; ++i)
+        for (size_t j = 0; j < 4; ++j)
             B(i, j) = A(j, i);
     return B;
 }
@@ -247,24 +247,24 @@ MATH_END_NAMESPACE
 
 namespace math {
 
-constexpr MATH_INLINE_SPEC const vec4_t &mat4_t::operator[](defs::index_t i) const
+constexpr MATH_INLINE_SPEC const vec4_t &mat4_t::operator[](size_t i) const
 {
     return columns[i];
 }
 
-constexpr MATH_INLINE_SPEC vec4_t &mat4_t::operator[](defs::index_t i)
+constexpr MATH_INLINE_SPEC vec4_t &mat4_t::operator[](size_t i)
 {
     return columns[i];
 }
 
 constexpr MATH_INLINE_SPEC real
-mat4_t::operator()(defs::index_t i, defs::index_t j) const
+mat4_t::operator()(size_t i, size_t j) const
 {
     return components[i * 4 + j];
 }
 
 constexpr MATH_INLINE_SPEC real &
-mat4_t::operator()(defs::index_t i, defs::index_t j)
+mat4_t::operator()(size_t i, size_t j)
 {
     return components[i * 4 + j];
 }

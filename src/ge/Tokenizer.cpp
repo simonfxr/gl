@@ -8,9 +8,6 @@
 
 namespace ge {
 
-using namespace defs;
-using defs::size_t;
-
 namespace {
 
 enum State
@@ -192,11 +189,11 @@ parseKeycombo(ParseState &s, CommandArg &tok)
         return Fail;
     }
 
-    auto *bind = new KeyBinding(SIZE(keys.size()));
+    auto *bind = new KeyBinding(keys.size());
     tok.keyBinding = bind;
     tok.type = KeyCombo;
 
-    for (index_t i = 0; i < SIZE(keys.size()); ++i)
+    for (size_t i = 0; i < keys.size(); ++i)
         (*bind)[i] = keys[size_t(i)];
 
     return EndToken;

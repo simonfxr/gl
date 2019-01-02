@@ -8,7 +8,7 @@
 
 namespace glt {
 
-using Outcode = defs::uint32_t;
+using Outcode = uint32_t;
 
 enum PlaneIndex
 {

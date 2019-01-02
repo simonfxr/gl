@@ -10,8 +10,6 @@
 #include <time.h>
 #include <unistd.h>
 
-using namespace defs;
-
 namespace {
 
 inline void

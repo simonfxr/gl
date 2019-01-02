@@ -8,8 +8,6 @@
 namespace sys {
 namespace io {
 
-using defs::size_t;
-
 namespace {
 
 StreamResult
@@ -80,7 +78,7 @@ HandleStream::basic_read(size_t &s, char *buf)
         return StreamResult::OK;
 
     if (s <= read_cursor) {
-        memcpy(buf, read_buffer, UNSIZE(s));
+        memcpy(buf, read_buffer, s);
         read_cursor -= s;
         if (read_cursor > 0)
             memmove(read_buffer, read_buffer + s, read_cursor);

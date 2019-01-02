@@ -322,21 +322,21 @@ EngineOptions::printHelp()
     int max_col = 0;
 
     for (const auto &i : OPTIONS) {
-        defs::index_t w = 2;
-        w += SIZE(strlen(i.option));
+        size_t w = 2;
+        w += strlen(i.option);
         if (i.option_arg != nullptr)
-            w += 1 + SIZE(strlen(i.option_arg));
+            w += 1 + strlen(i.option_arg);
         if (w > max_col)
             max_col = w;
     }
 
     for (const auto &i : OPTIONS) {
-        defs::index_t w = 2;
+        size_t w = 2;
         out << "  " << i.option;
-        w += SIZE(strlen(i.option));
+        w += strlen(i.option);
         if (i.option_arg != nullptr) {
             out << " " << i.option_arg;
-            w += 1 + SIZE(strlen(i.option_arg));
+            w += 1 + strlen(i.option_arg);
         }
 
         while (w++ < max_col + 3)

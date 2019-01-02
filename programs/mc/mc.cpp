@@ -39,9 +39,7 @@
 #define INFO_PRINT(...)
 #define INFO_TIME(...) __VA_ARGS__
 
-using size = defs::size_t;
-
-static const size DEFAULT_N = 64;
+static const size_t DEFAULT_N = 64;
 
 using namespace math;
 
@@ -83,7 +81,7 @@ struct Anim
     ge::Camera camera;
     ge::MouseLookPlugin mouse_look;
 
-    size N{};
+    size_t N{};
     cl::Context cl_ctx;
     cl::CommandQueue cl_q;
     cl::Device cl_device;
@@ -94,7 +92,7 @@ struct Anim
     cl::Kernel kernel_computeHistogramLevel;
     cl::Kernel kernel_histogramTraversal;
 
-    size mdl_num_tris{};
+    size_t mdl_num_tris{};
     char *mdl_base{};
     char *mdl_data{};
 
@@ -403,7 +401,7 @@ Anim::initMC(MCState &cur_mc, vec3_t orig, vec3_t dim, bool *success)
                                &cl_err);
     CL_ERR("creating histogram base level failed");
 
-    size sz = N / 2;
+    auto sz = N / 2;
     int max_size = 5;
 
     // apparently creating a 3d texture of size 1x1x1 fails
@@ -478,8 +476,8 @@ Anim::computeHistogram(MCState &cur_mc)
                               cl::NDRange(N, N, N),
                               cl::NullRange);
 
-    size sz = N;
-    index_t i = 0;
+    auto sz = N;
+    size_t i = 0;
     while (sz > 2) {
         sz /= 2;
 
@@ -494,7 +492,7 @@ Anim::computeHistogram(MCState &cur_mc)
         ++i;
     }
 
-    ASSERT(i + 1 == SIZE(cur_mc.images.size()));
+    ASSERT(i + 1 == cur_mc.images.size());
 
     cl::size_t<3> origin;
     cl::size_t<3> cube;
@@ -545,8 +543,8 @@ Anim::constructVertices1(MCState &cur_mc)
     if (cur_mc.num_tris == 0 || !cur_mc.init)
         return;
 
-    index_t i;
-    for (i = 0; i < SIZE(cur_mc.images.size()); ++i)
+    size_t i;
+    for (i = 0; i < cur_mc.images.size(); ++i)
         kernel_histogramTraversal.setArg(i, cur_mc.images[i]);
 
     kernel_histogramTraversal.setArg(i, cur_mc.volume);
@@ -593,7 +591,7 @@ Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3_t ecLight)
 
     const glt::VertexDescription<Vertex> &desc = Vertex::gl::desc;
 
-    for (index_t i = 0; i < desc.nattributes; ++i) {
+    for (size_t i = 0; i < desc.nattributes; ++i) {
         const glt::VertexAttr &a = desc.attributes[i];
         GL_CALL(glVertexArrayVertexAttribOffsetEXT,
                 cur_mc.vao,
