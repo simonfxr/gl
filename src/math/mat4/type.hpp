@@ -44,7 +44,7 @@ struct mat4_t
     }
 };
 
-typedef mat4_t ATTRS(ATTR_ALIGNED(16)) aligned_mat4_t;
+typedef mat4_t HU_ALIGN(16) aligned_mat4_t;
 
 } // namespace math
 

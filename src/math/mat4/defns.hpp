@@ -22,7 +22,7 @@ mat4(const mat3_t &m);
 constexpr inline mat4_t
 mat4(const vec4_t &c1, const vec4_t &c2, const vec4_t &c3, const vec4_t &c4);
 
-inline void
+constexpr inline void
 load(mat4_t::buffer, const mat4_t &);
 
 constexpr inline mat4_t

@@ -46,7 +46,7 @@ mat4(const vec4_t &c1, const vec4_t &c2, const vec4_t &c3, const vec4_t &c4)
     return A;
 }
 
-void
+constexpr void
 load(mat4_t::buffer b, const mat4_t &m)
 {
     load(&b[0], m[0]);

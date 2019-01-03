@@ -36,7 +36,7 @@ mat2(const vec2_t &c1, const vec2_t &c2)
     return A;
 }
 
-void
+constexpr void
 load(mat2_t::buffer buf, const mat2_t &A)
 {
     load(&buf[0], A[0]);

@@ -17,7 +17,7 @@ mat2(const mat2_t::buffer);
 constexpr inline mat2_t
 mat2(const vec2_t &c1, const vec2_t &c2);
 
-inline void
+constexpr inline void
 load(mat2_t::buffer, const mat2_t &);
 
 } // namespace math

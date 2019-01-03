@@ -41,7 +41,7 @@ le_short(const unsigned char *bytes)
 void *
 read_tga(const char *filename, int *width, int *height)
 {
-    struct ATTRS(ATTR_PACKED) tga_header
+    struct tga_header
     {
         char id_length;
         char color_map_type;

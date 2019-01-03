@@ -216,7 +216,9 @@ private:
     LogState &operator=(const LogState &) = delete;
 };
 
-THREAD_LOCAL(LogState *, log_state);
+using LogState_ptr = LogState *;
+
+thread_local LogState_ptr log_state;
 
 void
 initLogState()

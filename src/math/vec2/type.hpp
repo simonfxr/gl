@@ -7,7 +7,7 @@ namespace math {
 
 struct glvec2;
 
-struct ATTRS(ATTR_PACKED) vec2_t
+struct  vec2_t
 {
     static const size_t size = 2;
     static const size_t padded_size = 2;

@@ -7,7 +7,7 @@ namespace math {
 
 struct glvec4;
 
-struct ATTRS(ATTR_PACKED) vec4_t
+struct vec4_t
 {
     static const size_t size = 4;
     static const size_t padded_size = 4;
@@ -24,7 +24,7 @@ struct ATTRS(ATTR_PACKED) vec4_t
 
 typedef vec4_t point4_t;
 
-typedef vec4_t ATTRS(ATTR_ALIGNED(16)) aligned_vec4_t;
+typedef vec4_t HU_ALIGN(16) aligned_vec4_t;
 
 typedef aligned_vec4_t aligned_point4_t;
 

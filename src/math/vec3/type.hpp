@@ -7,7 +7,7 @@ namespace math {
 
 struct glvec3;
 
-struct ATTRS(ATTR_PACKED) vec3_t
+struct  vec3_t
 {
     static const size_t size = 3;
     static const size_t padded_size = 3;

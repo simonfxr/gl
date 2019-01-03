@@ -4,15 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "begin_packed.h"
-
+HU_BEGIN_PACKED
 typedef struct
 {
     uint16_t magic;
     uint32_t byte_size;
     uint32_t reserved;
     uint32_t payload_byte_offset;
-} ATTRS(ATTR_PACKED) BMPHeader;
+} HU_PACKED BMPHeader;
 
 typedef struct
 {
@@ -27,20 +26,20 @@ typedef struct
     int32_t pixelsY_per_meter;
     uint32_t color_table_size;
     uint32_t used_colors;
-} ATTRS(ATTR_PACKED) BMPInfo;
+} HU_PACKED BMPInfo;
 
 typedef struct
 {
     BMPHeader header;
     BMPInfo info;
-} ATTRS(ATTR_PACKED) BMPPrefix;
+} HU_PACKED BMPPrefix;
 
 typedef struct
 {
     unsigned char b, g, r;
-} ATTRS(ATTR_PACKED) Pixel24;
+} HU_PACKED Pixel24;
 
-#include "end_packed.h"
+HU_END_PACKED
 
 static const uint16_t MAGIC = 19778; // ascii "BM"
 

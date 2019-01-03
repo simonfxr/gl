@@ -278,8 +278,7 @@ struct SphereDistance
     {
         return d1.viewDist < d2.viewDist;
     }
-
-} ATTRS(ATTR_ALIGNED(8));
+} HU_ALIGN(8);
 
 void
 World::render(Renderer &renderer, float dt)

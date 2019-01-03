@@ -59,22 +59,23 @@ struct SphereLOD
 #ifdef SPHERE_INSTANCED_TEXTURED
 
 // dont change layout (directly mapped to texture)
+HU_BEGIN_PACKED
 struct SphereInstance
 {
     vec3_t pos;
     float rad;
     vec3_t col_rgb;
     float shininess;
-} ATTRS(ATTR_PACKED);
-
+} HU_PACKED;
+HU_END_PACKED
 #elif defined(SPHERE_INSTANCED_ARRAY)
-
+HU_BEGIN_PACKED
 struct SphereInstance
 {
     mat4_t mvMatrix;
     vec4_t colorShininess;
-} ATTRS(ATTR_PACKED);
-
+} HU_PACKED;
+HU_END_PACKED
 #else
 #error "no SPHERE_INSTANCED_* specified"
 #endif
