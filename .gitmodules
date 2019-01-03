@@ -1,9 +1,9 @@
-[submodule "deps/cxx-header-utils"]
-	path = deps/cxx-header-utils
-	url = lambdamachine:/tank/users/simon/repo/cxx-header-utils.git
 [submodule "deps/glfw"]
 	path = deps/glfw
 	url = https://github.com/glfw/glfw
 [submodule "deps/glad"]
 	path = deps/glad
 	url = https://github.com/Dav1dde/glad
+[submodule "deps/cxx-header-utils"]
+	path = deps/cxx-header-utils
+	url = https://github.com/simonfxr/cxx-header-utils
