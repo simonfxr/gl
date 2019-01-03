@@ -15,13 +15,9 @@
 
 namespace glt {
 
-namespace {
-
-uint32_t LOCAL_CONSTANT ALIGNMENT_DEFAULT = 0;
-size_t LOCAL_CONSTANT MIN_NUM_VERTICES = 8;
-size_t LOCAL_CONSTANT MIN_NUM_ELEMENTS = 8;
-
-} // namespace
+inline constexpr uint32_t ALIGNMENT_DEFAULT = 0;
+inline constexpr size_t MIN_NUM_VERTICES = 8;
+inline constexpr size_t MIN_NUM_ELEMENTS = 8;
 
 enum DrawType
 {
@@ -146,8 +142,8 @@ private:
 template<typename T>
 struct Mesh : public MeshBase
 {
-
-    Mesh(const VertexDescription<T> &layout = T::gl::desc,
+    using gl_t = typename T::gl;
+    Mesh(const VertexDescription<T> &layout = gl_t::descr,
          GLenum primTy = GL_TRIANGLES,
          size_t initial_nverts = MIN_NUM_VERTICES,
          size_t initial_nelems = MIN_NUM_ELEMENTS)

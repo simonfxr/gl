@@ -24,8 +24,8 @@ alloc_aligned(size_t size, size_t alignment)
     if (posix_memalign(&mem, size_t(alignment), size_t(size)) != 0)
         mem = nullptr;
 #else
-    mem = malloc(size_t);
-    if ((uptr(mem) & (alignment - 1)) != 0) {
+    mem = malloc(size);
+    if ((uintptr_t(mem) & (alignment - 1)) != 0) {
         ERR("cannot alloc aligned memory");
         free(mem);
         mem = nullptr;

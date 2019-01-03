@@ -4,6 +4,7 @@
 #include "ge/module.hpp"
 
 #include <unordered_map>
+#include <algorithm>
 
 namespace ge {
 

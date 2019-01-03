@@ -15,8 +15,8 @@ struct ATTRS(ATTR_PACKED) vec2_t
     typedef component_type buffer[size];
     typedef glvec2 gl;
 
-    constexpr MATH_FUNC real &operator[](size_t) MUT_FUNC;
-    constexpr MATH_FUNC real operator[](size_t) const PURE_FUNC;
+    MATH_FUNC constexpr real &operator[](size_t) MUT_FUNC;
+    MATH_FUNC constexpr real operator[](size_t) const PURE_FUNC;
 
     real components[padded_size];
 };

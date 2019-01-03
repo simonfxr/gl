@@ -7,21 +7,16 @@
 #include <string>
 #include <vector>
 
-#ifdef _STDIO_H
+#ifdef HU_OS_WINDOWS
+#define STDIN_FILE  __acrt_iob_func(0)
+#define STDOUT_FILE __acrt_iob_func(1)
+#define STDERR_FILE __acrt_iob_func(2)
 #undef stdin
 #undef stdout
 #undef stderr
 #undef EOF
-// #  ifndef SYS_IO_STREAM_NOWARN
-#if 0
-#warning "<stdio.h> and sys/io/Stream.hpp included at the same time"
-#endif
-#endif
-
-#ifdef HU_OS_WINDOWS
-#define STDOUT_FILE (&__iob_func()[1])
-#define STDERR_FILE (&__iob_func()[2])
 #else
+#define STDIN_FILE ::stdin
 #define STDOUT_FILE ::stdout
 #define STDERR_FILE ::stderr
 #endif

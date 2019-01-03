@@ -123,7 +123,7 @@ cos(const vec2_t &a, const vec2_t &b) PURE_FUNC;
 constexpr MATH_FUNC vec2_t
 projectAlong(const vec2_t &a, const vec2_t &x) PURE_FUNC;
 
-constexpr MATH_FUNC bool
+MATH_FUNC bool
 equal(const vec2_t &a, const vec2_t &b, real epsi = 1e-4f) PURE_FUNC;
 
 MATH_END_NAMESPACE

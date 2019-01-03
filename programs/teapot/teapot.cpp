@@ -1,6 +1,10 @@
-#include "defs.hpp"
+#define MESH_CUBEMESH
+// #define MESH_MESH
 
-#include "mesh.h"
+#define RENDER_GLOW 1
+// #define RENDER_NOGLOW 1
+
+#include "defs.hpp"
 
 #include "ge/Camera.hpp"
 #include "ge/CommandParams.hpp"
@@ -22,14 +26,46 @@
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
+#include "glt/Mesh.hpp"
+#ifdef MESH_CUBEMESH
+#include "glt/CubeMesh.hpp"
+#endif
 
 #include "dump_bmp.h"
-#include "parse_sply.hpp"
 
 #include <vector>
 
-#define RENDER_GLOW 1
-// #define RENDER_NOGLOW 1
+#define VERTEX(V, F, Z)                                                        \
+    V(Vertex, F(math::point3_t, position, Z(math::direction3_t, normal)))
+
+#define VERTEX2(V, F, Z)                                                       \
+    V(Vertex2, F(math::vec3_t, position, F(math::vec3_t, normal, Z(math::vec2_t, texCoord))))
+
+#define SCREEN_VERTEX(V, F, Z)                                                 \
+    V(ScreenVertex, F(math::vec3_t, position, Z(math::vec3_t, normal)))
+
+DEFINE_VERTEX(VERTEX);
+DEFINE_VERTEX(VERTEX2);
+DEFINE_VERTEX(SCREEN_VERTEX);
+
+#undef VERTEX
+#undef VERTEX2
+#undef SCREEN_VERTEX
+
+#ifdef MESH_CUBEMESH
+template <typename T>
+using MeshOf = glt::Mesh<T>;
+
+template <typename T>
+using CubeMeshOf = glt::CubeMesh<T>;
+#else
+template <typename T>
+using MeshOf = glt::Mesh<T>;
+
+template <typename T>
+using CubeMeshOf = glt::Mesh<T>;
+#endif
+
 
 #include "shaders/glow_pass_constants.h"
 
@@ -40,25 +76,11 @@
 using namespace math;
 using namespace ge;
 
+int32_t
+parse_sply(const char *filename, CubeMeshOf<Vertex> &model);
+
 static const point3_t LIGHT_CENTER_OF_ROTATION = vec3(0.f, 15.f, 0.f);
 static const float LIGHT_ROTATION_RAD = 15.f;
-
-#define VERTEX(V, F, Z)                                                        \
-    V(Vertex, F(math::point3_t, position, Z(math::direction3_t, normal)))
-
-#define VERTEX2(V, F, Z)                                                       \
-    V(Vertex2, F(vec3_t, position, F(vec3_t, normal, Z(vec2_t, texCoord))))
-
-#define SCREEN_VERTEX(V, F, Z)                                                 \
-    V(ScreenVertex, F(vec3_t, position, Z(vec3_t, normal)))
-
-DEFINE_VERTEX(VERTEX);
-DEFINE_VERTEX(VERTEX2);
-DEFINE_VERTEX(SCREEN_VERTEX);
-
-#undef VERTEX
-#undef VERTEX2
-#undef SCREEN_VERTEX
 
 static const uint32_t SHADE_MODE_AMBIENT = 1;
 static const uint32_t SHADE_MODE_DIFFUSE = 2;
@@ -89,10 +111,10 @@ struct Anim
     ge::MouseLookPlugin mouse_look;
     std::vector<float> glow_kernel;
 
-    CubeMesh groundModel;
-    CubeMesh teapotModel;
-    Mesh sphereModel;
-    CubeMesh2 cubeModel;
+    CubeMeshOf<Vertex> groundModel;
+    CubeMeshOf<Vertex> teapotModel;
+    MeshOf<Vertex> sphereModel;
+    CubeMeshOf<Vertex2> cubeModel;
     glt::CubeMesh<ScreenVertex> screenQuad;
 
     glt::TextureSampler woodTexture;
@@ -740,4 +762,91 @@ main(int argc, char *argv[])
     opts.inits.init.reg(makeEventHandler(&anim, &Anim::link));
 
     return engine.run(opts);
+}
+
+int32_t
+parse_sply(const char *filename, CubeMeshOf<Vertex> &model)
+{
+    FILE *data = fopen(filename, "rb");
+    if (!data)
+        return -1;
+
+    char line[512];
+
+    std::vector<Vertex> verts;
+    uint32_t nverts = 0;
+    uint32_t nfaces = 0;
+
+    if (fscanf(data, "%u\n%u\n", &nverts, &nfaces) != 2)
+        return -1;
+
+    while (fgets(line, sizeof line, data) != nullptr && verts.size() < nverts) {
+        point3_t p;
+        direction3_t n;
+        int nparsed = sscanf(line,
+                             "%" R_FMT " %" R_FMT " %" R_FMT " %" R_FMT
+                             " %" R_FMT " %" R_FMT,
+                             &p[0],
+                             &p[1],
+                             &p[2],
+                             &n[0],
+                             &n[1],
+                             &n[2]);
+
+        if (nparsed != 6) {
+            fclose(data);
+            return -1;
+        }
+
+        Vertex v{};
+        v.position = p;
+        v.normal = normalize(n);
+        verts.push_back(v);
+    }
+
+    if (verts.size() != nverts) {
+        fclose(data);
+        return -1;
+    }
+
+    uint32_t faces = 0;
+
+    for (const auto &vert : verts)
+        model.addVertex(vert);
+
+    while (fgets(line, sizeof line, data) != nullptr && faces < nfaces) {
+        uint32_t n, i, j, k, l;
+        int nparsed = sscanf(line, "%u %u %u %u %u", &n, &i, &j, &k, &l);
+
+        if (nparsed != 5 || n != 4) {
+            fclose(data);
+            return -1;
+        }
+
+#ifdef MESH_CUBEMESH
+
+        model.addElement(i);
+        model.addElement(j);
+        model.addElement(k);
+        model.addElement(i);
+        model.addElement(k);
+        model.addElement(l);
+
+#else
+
+        model.addElement(i);
+        model.addElement(j);
+        model.addElement(k);
+        model.addElement(l);
+
+#endif
+
+        ++faces;
+    }
+
+    fclose(data);
+
+    return int32_t(nfaces) * 4;
+
+    //    return faces == nfaces ? int32(nfaces) * 4: -1;
 }

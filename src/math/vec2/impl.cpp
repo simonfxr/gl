@@ -234,7 +234,7 @@ projectAlong(const vec2_t &a, const vec2_t &x)
     return (dot(a, x) / lengthSq(x)) * x;
 }
 
-constexpr bool
+bool
 equal(const vec2_t &a, const vec2_t &b, real epsi)
 {
     return distance(a[0], b[0]) < epsi && distance(a[1], b[1]) < epsi;

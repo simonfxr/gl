@@ -13,7 +13,7 @@ struct GE_API GameLoop
 
     typedef math::real time;
 
-    struct Game
+    struct GE_API Game
     {
         virtual ~Game();
         virtual void tick() = 0;

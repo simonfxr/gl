@@ -83,7 +83,7 @@ transpose(const mat4_t &A) PURE_FUNC;
 constexpr MATH_FUNC vec4_t
 transposedMult(const mat4_t &AT, const vec4_t &v) PURE_FUNC;
 
-constexpr MATH_FUNC bool
+MATH_FUNC bool
 equal(const mat4_t &A, const mat4_t &B, real epsi = real(1e-4)) PURE_FUNC;
 
 MATH_END_NAMESPACE

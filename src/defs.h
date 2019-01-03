@@ -18,12 +18,10 @@
 #define NOGDI 1
 #endif
 
-#ifndef HU_COMP_MSVC
 #ifdef __cplusplus
 #include <cstdint>
 #else
 #include <stdint.h>
-#endif
 #endif
 
 #ifdef __cplusplus
@@ -79,7 +77,7 @@
 #ifdef HU_COMP_GNULIKE
 #define ATTRS(...) __attribute__((__VA_ARGS__))
 #elif defined(HU_COMP_MSVC)
-#define ATTRS(...) __declspec(__VA_ARGS)
+#define ATTRS(...) __declspec(__VA_ARGS__)
 #else
 #define ATTRS(...)
 #endif
@@ -148,7 +146,7 @@
 
 DEFS_BEGIN_NAMESPACE
 
-#ifdef HU_COMP_MSVC
+#if 0
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned uint32_t;
@@ -158,7 +156,6 @@ typedef signed char int8_t;
 typedef short int16_t;
 typedef int int32_t;
 typedef long long int64_t;
-#else
 #endif
 
 DEFS_END_NAMESPACE

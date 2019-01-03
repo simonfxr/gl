@@ -33,7 +33,7 @@ struct mat3_t
     constexpr MATH_FUNC component_type &operator()(size_t, size_t) MUT_FUNC;
 };
 
-typedef mat3_t aligned_mat3_t ATTRS(ATTR_ALIGNED(16));
+typedef mat3_t ATTRS(ATTR_ALIGNED(16)) aligned_mat3_t;
 
 } // namespace math
 

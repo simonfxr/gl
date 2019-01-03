@@ -8,8 +8,8 @@ namespace glt {
 template<typename T>
 struct CubeMesh : public Mesh<T>
 {
-
-    CubeMesh(const VertexDescription<T> &layout = T::gl::desc,
+    using gl_t = typename T::gl;
+    CubeMesh(const VertexDescription<T> &layout = gl_t::descr,
              size_t initial_nverts = MIN_NUM_VERTICES,
              size_t initial_nelems = MIN_NUM_ELEMENTS)
       : Mesh<T>(layout, GL_TRIANGLES, initial_nverts, initial_nelems)

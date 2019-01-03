@@ -26,14 +26,14 @@ struct mat4_t
 
     constexpr mat4_t() : columns{} {}
 
-    constexpr MATH_FUNC const column_type &operator[](size_t) const PURE_FUNC;
-    constexpr MATH_FUNC column_type &operator[](size_t) MUT_FUNC;
-    constexpr MATH_FUNC component_type operator()(size_t,
-                                                  size_t) const PURE_FUNC;
-    constexpr MATH_FUNC component_type &operator()(size_t, size_t) MUT_FUNC;
+    constexpr inline const column_type &operator[](size_t) const;
+    constexpr inline column_type &operator[](size_t);
+    constexpr inline component_type operator()(size_t,
+                                                  size_t) const;
+    constexpr inline component_type &operator()(size_t, size_t);
 };
 
-typedef mat4_t aligned_mat4_t ATTRS(ATTR_ALIGNED(16));
+typedef mat4_t ATTRS(ATTR_ALIGNED(16)) aligned_mat4_t;
 
 } // namespace math
 

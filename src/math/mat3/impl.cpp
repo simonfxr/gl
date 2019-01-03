@@ -228,7 +228,7 @@ transpose(const mat3_t &A)
     return B;
 }
 
-constexpr bool
+bool
 equal(const mat3_t &A, const mat3_t &B, real epsi)
 {
     return equal(A[0], B[0], epsi) && equal(A[1], B[1], epsi) &&

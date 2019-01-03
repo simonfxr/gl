@@ -236,7 +236,7 @@ transposedMult(const mat4_t &AT, const vec4_t &v)
     return vec4(dot(v, AT[0]), dot(v, AT[1]), dot(v, AT[2]), dot(v, AT[3]));
 }
 
-constexpr bool
+bool
 equal(const mat4_t &A, const mat4_t &B, real epsi)
 {
     return equal(A[0], B[0], epsi) && equal(A[1], B[1], epsi) &&

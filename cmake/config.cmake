@@ -168,7 +168,7 @@ find_package(OpenGL REQUIRED)
 #   endif()
 # endif()
 
-find_package(OpenCL REQUIRED)
+find_package(OpenCL)
 
 if(USE_OPENCL_HEADERS_IN_TREE)
   set(OPENCL_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/ext/opencl-headers/include")

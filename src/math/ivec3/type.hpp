@@ -8,8 +8,8 @@ namespace math {
 struct ivec3_t
 {
     int32_t components[3];
-    constexpr MATH_FUNC int32_t &operator[](size_t) MUT_FUNC;
-    constexpr MATH_FUNC int32_t operator[](size_t) const PURE_FUNC;
+    inline constexpr int32_t &operator[](size_t);
+    inline constexpr int32_t operator[](size_t) const;
 };
 
 } // namespace math

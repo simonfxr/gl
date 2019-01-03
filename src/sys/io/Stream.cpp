@@ -4,7 +4,9 @@
 #include "sys/module.hpp"
 
 #include <cerrno>
+#ifndef HU_OS_WINDOWS
 #include <cstdio>
+#endif
 #include <cstring>
 
 #include "sys/io/Stream.hpp"

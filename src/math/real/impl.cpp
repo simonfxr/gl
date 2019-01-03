@@ -89,19 +89,19 @@ exp(real x)
     return std::exp(x);
 }
 
-constexpr real
+real
 abs(real x)
 {
     return std::fabs(x);
 }
 
-constexpr real
+real
 length(real x)
 {
     return abs(x);
 }
 
-constexpr real
+real
 distance(real x, real y)
 {
     return length(x - y);

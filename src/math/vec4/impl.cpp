@@ -201,7 +201,7 @@ sum(const vec4_t &a)
     return a[0] + a[1] + a[2] + a[3];
 }
 
-constexpr bool
+bool
 equal(const vec4_t &a, const vec4_t &b, real epsi)
 {
     return distance(a[0], b[0]) < epsi && distance(a[1], b[1]) < epsi &&

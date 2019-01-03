@@ -48,7 +48,7 @@ close(Handle &)
 }
 
 SocketError
-listen(SocketProto, const IPAddr4 &, uint16, SocketMode, Socket *)
+listen(SocketProto, const IPAddr4 &, uint16_t, SocketMode, Socket *)
 {
     UNDEFINED_S;
 }

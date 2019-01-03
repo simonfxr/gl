@@ -250,7 +250,7 @@ Commands::registerCommands(ge::CommandProcessor &coms)
 real
 sigmoid(real t)
 {
-    return 1 / (1 + exp(t));
+    return 1 / (1 + math::exp(t));
 }
 
 void

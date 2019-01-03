@@ -78,31 +78,30 @@ isAbsolute(const std::string &path)
     return PathIsRelativeA(path.c_str()) != TRUE;
 }
 
-bool
-modificationTime(const std::string &path, sys::fs::FileTime *mtime)
+std::optional<FileTime>
+modificationTime(const std::string &path)
 {
-    return def::modificationTime(path, mtime);
+    return def::modificationTime(path);
 }
 
-bool
-stat(const std::string &path, sys::fs::Stat *stat)
+std::optional<Stat>
+stat(const std::string &path)
 {
-    ASSERT(stat);
-
     WIN32_FILE_ATTRIBUTE_DATA attrs;
     if (GetFileAttributesExA(path.c_str(), GetFileExInfoStandard, &attrs) == 0)
-        return false;
+        return std::nullopt;
 
-    stat->mtime.seconds = filetimeToUnixTimestap(&attrs.ftLastWriteTime);
-    stat->type = (attrs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
+    Stat stat;
+    stat.mtime.seconds = filetimeToUnixTimestap(&attrs.ftLastWriteTime);
+    stat.type = (attrs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
                    ? Directory
                    : File;
-    stat->absolute = absolutePath(path);
+    stat.absolute = absolutePath(path);
 
-    if (stat->absolute.empty())
-        return false;
+    if (stat.absolute.empty())
+        return std::nullopt;
 
-    return true;
+    return stat;
 }
 
 std::string
@@ -129,10 +128,10 @@ lookup(const std::vector<std::string> &dirs, const std::string &path)
     return def::lookup(dirs, path);
 }
 
-bool
-exists(const std::string &path, ObjectType *type)
+std::optional<ObjectType>
+exists(const std::string &path)
 {
-    return def::exists(path, type);
+    return def::exists(path);
 }
 
 } // namespace fs

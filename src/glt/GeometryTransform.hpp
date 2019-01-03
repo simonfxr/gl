@@ -42,7 +42,7 @@ struct GLT_API GeometryTransform
 
     void pop();
 
-    SavePointArgs save() ATTRS(ATTR_WARN_UNUSED);
+    HU_NODISCARD SavePointArgs save();
 
     void restore(const SavePointArgs &sp);
 

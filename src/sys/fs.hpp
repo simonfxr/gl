@@ -140,8 +140,8 @@ dropExtension(const std::string &path);
 SYS_API std::string
 dropTrailingSeparators(const std::string &path);
 
-SYS_API bool
-exists(const std::string &path, ObjectType *type);
+SYS_API std::optional<ObjectType>
+exists(const std::string &path);
 
 SYS_API std::string
 lookup(const std::vector<std::string> &dirs, const std::string &name);

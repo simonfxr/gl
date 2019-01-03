@@ -159,12 +159,12 @@ VD_DEF_GLVEC_ATTR_INFO(math::mat4_t);
 #define VD_GL_ATTRS_DECL_Z(t, n) 1
 
 #define VD_GL_DESC_DECL_V(name, size)                                          \
-    static const ::glt::VertexDescription<name> desc;
+    static const ::glt::VertexDescription<name> descr;
 #define VD_GL_DESC_DECL_F(t, n, ...)
 #define VD_GL_DESC_DECL_Z(t, n)
 
 #define VD_GL_DESC_V(name, nattrs)                                             \
-    const ::glt::VertexDescription<name> gl::desc = {                          \
+    const ::glt::VertexDescription<name> gl::descr = {                          \
         sizeof(gl),   alignof(gl),      nattrs,                                \
         #name "::gl", gl::vertex_attrs, gl::store                              \
     };

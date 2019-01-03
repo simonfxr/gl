@@ -55,13 +55,13 @@ cotan(real rad) PURE_FUNC; // 1/tan
 MATH_FUNC real
 exp(real x) PURE_FUNC;
 
-constexpr MATH_FUNC real
+MATH_FUNC real
 abs(real x) PURE_FUNC;
 
-constexpr MATH_FUNC real
+MATH_FUNC real
 length(real x) PURE_FUNC;
 
-constexpr MATH_FUNC real
+MATH_FUNC real
 distance(real x, real y) PURE_FUNC;
 
 constexpr MATH_FUNC real

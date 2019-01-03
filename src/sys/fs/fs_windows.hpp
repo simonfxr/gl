@@ -4,13 +4,11 @@
 #include "sys/conf.hpp"
 
 namespace sys {
-
 namespace fs {
 
 const char SEPARATOR = '\\';
 
 } // namespace fs
-
 } // namespace sys
 
 #endif

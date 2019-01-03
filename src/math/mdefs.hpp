@@ -6,9 +6,11 @@
 #ifdef MATH_INLINE
 
 #define MATH_FUNC inline
-#define PURE_FUNC                                                              \
-    ATTRS(ATTR_FORCE_INLINE, ATTR_NO_WARN_UNUSED_DEF, ATTR_NOTHROW)
-#define MUT_FUNC ATTRS(ATTR_FORCE_INLINE, ATTR_NO_WARN_UNUSED_DEF, ATTR_NOTHROW)
+//#define PURE_FUNC                                                              \
+//    ATTRS(ATTR_FORCE_INLINE, ATTR_NO_WARN_UNUSED_DEF, ATTR_NOTHROW)
+//#define MUT_FUNC ATTRS(ATTR_FORCE_INLINE, ATTR_NO_WARN_UNUSED_DEF, ATTR_NOTHROW)
+#define PURE_FUNC
+#define MUT_FUNC
 #define MATH_BEGIN_NAMESPACE                                                   \
     namespace math {                                                           \
     namespace {
@@ -20,8 +22,8 @@
 #else
 
 #define MATH_FUNC
-#define PURE_FUNC ATTRS(ATTR_NOTHROW)
-#define MUT_FUNC ATTRS(ATTR_NOTHROW)
+#define PURE_FUNC
+#define MUT_FUNC
 #define MATH_BEGIN_NAMESPACE namespace math {
 #define MATH_END_NAMESPACE }
 #define MATH_INLINE_SPEC
