@@ -131,13 +131,13 @@ initDebug()
     GLDebug *dbg = nullptr;
     const char *debug_impl = nullptr;
 
-    if (dbg == nullptr && GLEW_ARB_debug_output) {
+    if (dbg == nullptr && GLAD_GL_ARB_debug_output) {
         debug_impl = "GL_ARB_debug_output";
         sys::io::stdout() << "trying ARB debug" << sys::io::endl;
         dbg = ARBDebug::init();
     }
 
-    if (dbg == nullptr && GLEW_AMD_debug_output) {
+    if (dbg == nullptr && GLAD_GL_AMD_debug_output) {
         debug_impl = "GL_AMD_debug_output";
         sys::io::stdout() << "trying AMD debug" << sys::io::endl;
         dbg = AMDDebug::init();
@@ -192,7 +192,7 @@ GLMemInfoATI::init()
     if (G.ati_mem_info_initialized)
         return G.ati_mem_info_available;
     G.ati_mem_info_initialized = true;
-    G.ati_mem_info_available = bool(GLEW_ATI_meminfo);
+    G.ati_mem_info_available = bool(GLAD_GL_ATI_meminfo);
     if (G.ati_mem_info_available)
         queryMemFreeATI(&G.initial_free);
     return G.ati_mem_info_available;
@@ -221,7 +221,7 @@ GLMemInfoNV::init()
     if (G.nv_mem_info_initialized)
         return G.nv_mem_info_available;
     G.nv_mem_info_initialized = true;
-    G.nv_mem_info_available = bool(GLEW_NVX_gpu_memory_info);
+    G.nv_mem_info_available = bool(GLAD_GL_NVX_gpu_memory_info);
     return G.nv_mem_info_available;
 }
 

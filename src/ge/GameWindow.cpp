@@ -1,16 +1,17 @@
-#include <limits>
-#include <vector>
+#include "ge/GameWindow.hpp"
 
-#include "defs.hpp"
+#define GLFW_INCLUDE_NONE 1
+
 #include "err/err.hpp"
 #include "ge/Event.hpp"
-#include "ge/GameWindow.hpp"
 #include "ge/module.hpp"
 #include "glt/utils.hpp"
 #include "math/real.hpp"
-
 #include "opengl.hpp"
+
 #include <GLFW/glfw3.h>
+#include <limits>
+#include <vector>
 
 namespace ge {
 

@@ -28,7 +28,6 @@ enum OptionCase
     GLTrace,
     AASamples,
     VSync,
-    GlewExp,
     DisableRender
 };
 
@@ -73,10 +72,6 @@ const Option OPTIONS[] = {
     { "--gl-trace", "BOOL", GLTrace, "print every OpenGL call: yes|no" },
     { "--aa-samples", "NUM", AASamples, "set the number of FSAA Samples" },
     { "--vsync", "BOOL", VSync, "enable vertical sync: yes|no" },
-    { "--glew-experimental",
-      "BOOL",
-      GlewExp,
-      "set the glewExperimental flag: yes|no" },
     { "--disable-render",
       "BOOL",
       DisableRender,
@@ -208,14 +203,6 @@ State::option(OptionCase opt, const char *arg)
         }
         return true;
     }
-    case GlewExp:
-        bool yesno;
-        if (!parse_bool(arg, yesno)) {
-            CMDWARN("--gl-debug: not a boolean option");
-            return false;
-        }
-        glewExperimental = glt::gl_bool(yesno);
-        return true;
     case DisableRender:
         if (!parse_bool(arg, options.disableRender)) {
             CMDWARN("--disable-render: not a boolean option");

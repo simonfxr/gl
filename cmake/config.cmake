@@ -7,23 +7,8 @@ macro(cache_var var)
   cache_var_type(${var} STRING)
 endmacro()
 
-if(BUILD_ARCH32)
-  add_definitions(-m32)
-  link_libraries(-m32)
-endif()
-
 if(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_SHARED=1)
-endif()
-
-if(SYS_UNIX)
-  if(BUILD_ARCH32)
-    set(CMAKE_PREFIX_PATH)
-    set(CMAKE_LIBRARY_PATH
-      /usr/local/lib32
-      /usr/lib32
-      ${CMAKE_LIBRARY_PATH})
-  endif()
 endif()
 
 if(BUILD_OPT)
@@ -32,10 +17,6 @@ if(BUILD_OPT)
       add_definitions(-march=native -Og)
     else()
       add_definitions(-march=native -Ofast)
-      add_definitions(#enable graphite
-        -floop-interchange
-        -floop-strip-mine
-        -floop-block)
     endif()
   elseif(COMP_CLANG)
     if(BUILD_DEBUG)
@@ -45,20 +26,6 @@ if(BUILD_OPT)
     endif()
   elseif(COMP_ICC)
     add_definitions(-xHOST -O3 -ipo -no-prec-div)
-  endif()
-
-  if(USE_LTO)
-    if(COMP_GCC)
-      set(LTO_FLAGS -flto -flto-partition=none -fwhole-program)
-      # set(LTO_FLAGS -flto)
-      add_definitions(${LTO_FLAGS})
-      link_libraries(${LTO_FLAGS})
-    elseif(COMP_CLANG)
-      add_definitions(-O4)
-      link_libraries(-O4)
-    else()
-      message(WARNING "LTO not supported for compiler: \"${CMAKE_CXX_COMPILER}\"")
-    endif()
   endif()
 endif()
 
@@ -93,7 +60,6 @@ if(COMP_GCCLIKE)
     # -Werror 
     # -Wold-style-cast
     )
-  
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
 endif()
 
@@ -121,11 +87,11 @@ if(COMP_CLANG)
 endif()
 
 if(COMP_GCC)
-  add_definitions(
-#    -Wsuggest-attribute=const 
-#    -Wsuggest-attribute=pure 
+#  add_definitions(
+#    -Wsuggest-attribute=const
+#    -Wsuggest-attribute=pure
 #    -Wsuggest-attribute=noreturn
-    )
+#  )
 endif()
 
 if(COMP_ICC)
@@ -180,27 +146,27 @@ endif()
 
 find_package(OpenGL REQUIRED)
 
-if(NOT DEFINED GLEW_LIBRARY)
-  if(USE_GLEW_IN_TREE)
-    set(GLEW_ROOT_DIR "${PROJECT_SOURCE_DIR}/ext/glew")
-  endif()
-  find_package(GLEW REQUIRED)
-endif()
+# if(NOT DEFINED GLEW_LIBRARY)
+#   if(USE_GLEW_IN_TREE)
+#     set(GLEW_ROOT_DIR "${PROJECT_SOURCE_DIR}/ext/glew")
+#   endif()
+#   find_package(GLEW REQUIRED)
+# endif()
 
-if(NOT DEFINED GLFW_LIBRARY)
-  if(USE_GLFW_IN_TREE)
-    set(GLFW_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/ext/glfw3/include")
-    if(CL_VS_VERSION)
-      set(GLFW_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/ext/glfw3/lib-msvc-${CL_VS_VERSION}")
-    endif()
-    find_library(GLFW_LIBRARY "glfw" HINTS "${GLFW_LIBRARY_DIR}")
-  else()
-    find_package(PkgConfig REQUIRED)
-    pkg_search_module(GLFW REQUIRED glfw3)
-    set(GLFW_LIBRARY "${GLFW_LIBRARIES}")
-    cache_var(GLFW_LIBRARY)
-  endif()
-endif()
+# if(NOT DEFINED GLFW_LIBRARY)
+#   if(USE_GLFW_IN_TREE)
+#     set(GLFW_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/ext/glfw3/include")
+#     if(CL_VS_VERSION)
+#       set(GLFW_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/ext/glfw3/lib-msvc-${CL_VS_VERSION}")
+#     endif()
+#     find_library(GLFW_LIBRARY "glfw" HINTS "${GLFW_LIBRARY_DIR}")
+#   else()
+#     find_package(PkgConfig REQUIRED)
+#     pkg_search_module(GLFW REQUIRED glfw3)
+#     set(GLFW_LIBRARY "${GLFW_LIBRARIES}")
+#     cache_var(GLFW_LIBRARY)
+#   endif()
+# endif()
 
 find_package(OpenCL REQUIRED)
 
@@ -211,8 +177,3 @@ else()
 endif()
 
 add_definitions(-DSOURCE_DIR="${CMAKE_SOURCE_DIR}")
-
-include_directories(${GLEW_INCLUDE_PATH})
-include_directories(${GLFW_INCLUDE_PATH})
-include_directories(${OPENCL_INCLUDE_PATH})
-include_directories(${PROJECT_SOURCE_DIR}/ext/include)

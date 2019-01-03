@@ -1,13 +1,14 @@
-#include "opengl.hpp"
-
-#include "glt/utils.hpp"
+#include "ge/Init.hpp"
 
 #include "ge/Commands.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Event.hpp"
-#include "ge/Init.hpp"
-
 #include "glt/ShaderManager.hpp"
+#include "glt/utils.hpp"
+#include "opengl.hpp"
+
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 
 namespace ge {
 
@@ -45,14 +46,9 @@ EngineInitializers::reg(RunLevel lvl,
 static void
 runInitGLEW(const Event<InitEvent> &e)
 {
-    e.info.engine.out() << "initializing GLEW - experimental option: "
-                        << (glt::gl_unbool(glewExperimental) ? "yes" : "no")
-                        << sys::io::endl;
-    GLenum err = glewInit();
-
-    if (GLEW_OK != err) {
-        ERR(std::string("GLEW Error: ") +
-            glt::gl_unstr(glewGetErrorString(err)));
+    e.info.engine.out() << "initializing GLAD " << sys::io::endl;
+    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
+        ERR("GLAD initialization failed");
         return;
     }
 

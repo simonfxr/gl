@@ -138,8 +138,6 @@ macro(def_lib target)
 endmacro()
 
 macro(def_program target)
-
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
   # parse the arguments
   sfml_parse_arguments(THIS "SOURCES;DEPEND;LIB_DEPEND" "NO_GUI_APP" ${ARGN})
 

@@ -38,25 +38,7 @@ set_option(GLDEBUG ${GLDEBUG_DEFAULT} BOOL "TRUE to enable error checking after 
 
 set_option(MATH_INLINE TRUE BOOL "TRUE to inline all custom math functions")
 
-if(SYS_WINDOWS)
-  set(GLEW_INC_DEF ${CMAKE_CURRENT_LIST_DIR}/ext/glew/include)
-  set(GLEW_LIB_DEF ${CMAKE_CURRENT_LIST_DIR}/ext/glew/lib/glew32.lib)
-  set(GLFW_INC_DEF ${CMAKE_CURRENT_LIST_DIR}/ext/glfw3/include)
-  set(GLFW_LIB_DEF ${CMAKE_CURRENT_LIST_DIR}/ext/glfw3/lib-msvc110/glfw3dll.lib)
-
-  set_option(GLEW_INCLUDE_PATH "${GLEW_INC_DEF}" PATH "path to GLEW headers")
-  set_option(GLEW_LIBRARY "${GLEW_LIB_DEF}" PATH "path to GLEW library")
-  set_option(GLFW_INCLUDE_PATH "${GLFW_INC_DEF}" PATH "path to GLFW headers")
-  set_option(GLFW_LIBRARY "${GLFW_LIB_DEF}" PATH "path to GLEW library")
-endif()
-
 set_option(USE_OPENMP True BOOL "enable openmp support")
-
-set_option(USE_LTO FALSE BOOL "enable link time optimisations")
-
-if(BITS64)
-  set_option(BUILD_ARCH32 FALSE BOOL "TRUE to force 32-bit build on 64bit platform")
-endif()
 
 set_option(USE_VOXEL_OPENCL FALSE BOOL "use opencl for the voxel-world program")
 
@@ -80,6 +62,35 @@ if(COMP_CLANG)
 endif()
 
 add_subdirectory(deps/cxx-header-utils)
+
+if(NOT TARGET glfw)
+  set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+  set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+  set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+  set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+  add_subdirectory(deps/glfw)
+endif()
+
+if(NOT TARGET glad)
+  find_package(PythonInterp 3 REQUIRED)
+  set(GLAD_DIR "${CMAKE_CURRENT_LIST_DIR}/deps/glad")
+  get_filename_component(GLAD_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/glad-generated" ABSOLUTE)
+
+  if(NOT EXISTS "${GLAD_GEN_DIR}/src/glad.c")
+    message(STATUS "invokding glad generator: ${GLAD_GEN_DIR}")
+    file(MAKE_DIRECTORY "${GLAD_GEN_DIR}")
+    execute_process(
+      COMMAND "${PYTHON_EXECUTABLE}" -m glad --out-path "${GLAD_GEN_DIR}" --generator c
+      WORKING_DIRECTORY "${GLAD_DIR}"
+      RESULT_VARIABLE glad_ec)
+    if(NOT glad_ec EQUAL "0")
+      message(FATAL_ERROR "glad generator failed with exit code: ${glad_ec}")
+    endif()
+  endif()
+
+  add_library(glad "${GLAD_GEN_DIR}/src/glad.c")
+  target_include_directories(glad SYSTEM PUBLIC "${GLAD_GEN_DIR}/include")
+endif()
 
 include_directories(src)
 

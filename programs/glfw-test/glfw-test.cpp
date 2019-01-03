@@ -1,5 +1,5 @@
-#define GLEW_NO_GLU
-#include <GL/glew.h>
+#define GLFW_INCLUDE_NONE 1
+#include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
 
@@ -53,15 +53,14 @@ main()
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
-    glew_err = glewInit();
-    if (glew_err != GLEW_OK) {
-        fprintf(log, "GLEW Error: %s\n", glewGetErrorString(glew_err));
+    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
+        fprintf(log, "GLAD init failed\n");
         ret = -1;
         goto err_win;
     }
     fprintf(log, "GLEW initialized\n");
 
-    if (GLEW_ARB_debug_output) {
+    if (GLAD_GL_ARB_debug_output) {
         fprintf(log, "GLEW_ARB_debug_output available\n");
 
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);

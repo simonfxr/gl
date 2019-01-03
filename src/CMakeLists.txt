@@ -95,13 +95,14 @@ set(GLT_SRC
   glt/GLDebug.cpp
   glt/glt.cpp)
 
-set(GLT_LIBS ${GLEW_LIBRARY} OpenGL::GL)
+set(GLT_LIBS OpenGL::GL glfw glad)
 
 if(SYS_LINUX)
   set(GLT_LIBS ${GLT_LIBS} X11)
 endif()
 
-def_lib(glt SOURCES ${GLT_SRC} DEPEND ${VEC_LIB} sys LIB_DEPEND ${GLT_LIBS})
+def_lib(glt SOURCES ${GLT_SRC} DEPEND ${VEC_LIB} sys)
+target_link_libraries(glt ${GLT_LIBS})
 
 set(GE_SRC
   ge/GameLoop.cpp
@@ -125,7 +126,8 @@ set(GE_SRC
   ge/Camera.cpp
   ge/ge.cpp)
 
-set(GE_LIBS 
+set(GE_LIBS
   ${GLFW_LIBRARY})
 
-def_lib(ge SOURCES ${GE_SRC} DEPEND ${VEC_LIB} sys glt LIB_DEPEND ${GE_LIBS})
+def_lib(ge SOURCES ${GE_SRC} DEPEND ${VEC_LIB} sys glt)
+target_link_libraries(ge ${GE_LIBS})
