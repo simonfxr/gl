@@ -5,7 +5,6 @@
 #include <windows.h>
 
 namespace sys {
-
 namespace fs {
 
 namespace {
@@ -13,14 +12,12 @@ namespace {
 #define WINDOWS_TICK 10000000
 #define SEC_TO_UNIX_EPOCH 11644473600LL
 
-uint32_t
+int64_t
 filetimeToUnixTimestap(const FILETIME *ft)
 {
-    uint64_t ticks = (uint64_t(ft->dwHighDateTime) << 32) | ft->dwLowDateTime;
+    auto ticks = (int64_t(ft->dwHighDateTime) << 32) | ft->dwLowDateTime;
     ticks = ticks / WINDOWS_TICK;
-    if (ticks < SEC_TO_UNIX_EPOCH)
-        return 0u;
-    return uint32_t(ticks - SEC_TO_UNIX_EPOCH);
+    return ticks - SEC_TO_UNIX_EPOCH;
 }
 
 } // namespace

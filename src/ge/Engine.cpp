@@ -443,8 +443,8 @@ Engine::enablePlugin(Plugin &p)
 void
 Engine::setDevelDataDir(const std::string &dir)
 {
-    sys::fs::ObjectType type;
-    if (!sys::fs::exists(dir, &type) || type != sys::fs::Directory) {
+    auto type = sys::fs::exists(dir);
+    if (!type || *type != sys::fs::Directory) {
         WARN("not a directory");
         return;
     }

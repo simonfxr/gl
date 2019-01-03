@@ -7,13 +7,10 @@
 #include "sys/fs.hpp"
 
 namespace sys {
-
 namespace fs {
-
 namespace def {
 
 namespace {
-
 size_t
 dropTrailingSeps(const std::string &path)
 {
@@ -26,7 +23,6 @@ dropTrailingSeps(const std::string &path)
 
     return pos;
 }
-
 } // namespace
 
 std::string
@@ -117,15 +113,12 @@ dropTrailingSeparators(const std::string &path)
     return path.substr(0, pos);
 }
 
-bool
-exists(const std::string &path, ObjectType *type)
+std::optional<ObjectType>
+exists(const std::string &path)
 {
-    ASSERT(type);
-    Stat st;
-    if (!stat(path, &st))
-        return false;
-    *type = st.type;
-    return true;
+    if (auto st = stat(path))
+        return st->type;
+    return std::nullopt;
 }
 
 std::string
@@ -148,25 +141,19 @@ lookup(const std::vector<std::string> &dirs, const std::string &name)
 std::string
 absolutePath(const std::string &path)
 {
-    Stat st;
-    if (!stat(path, &st))
-        return "";
-    return st.absolute;
+    if (auto st = stat(path))
+        return st->absolute;
+    return "";
 }
 
-bool
-modificationTime(const std::string &path, sys::fs::FileTime *mtime)
+std::optional<FileTime>
+modificationTime(const std::string &path)
 {
-    ASSERT(mtime);
-    Stat st;
-    if (!stat(path, &st))
-        return false;
-    *mtime = st.mtime;
-    return true;
+    if (auto st = stat(path))
+        return st->mtime;
+    return std::nullopt;
 }
 
 } // namespace def
-
 } // namespace fs
-
 } // namespace sys

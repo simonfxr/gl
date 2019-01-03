@@ -3,6 +3,7 @@
 
 #include "sys/conf.hpp"
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -20,12 +21,12 @@ namespace fs {
 // unix time stamp
 struct FileTime
 {
-    uint32_t seconds;
+    int64_t seconds;
 };
 
 namespace {
 
-const ATTRS(ATTR_NO_WARN_UNUSED_DEF) FileTime MIN_FILE_TIME = {};
+inline constexpr FileTime MIN_FILE_TIME = {};
 
 } // namespace
 
@@ -40,8 +41,6 @@ struct Stat
     ObjectType type;
     std::string absolute;
     FileTime mtime;
-
-    Stat() : type(), absolute(), mtime() {}
 };
 
 SYS_API bool
@@ -72,11 +71,11 @@ dropTrailingSeparators(const std::string &path);
 SYS_API bool
 isAbsolute(const std::string &path);
 
-SYS_API bool
-modificationTime(const std::string &path, sys::fs::FileTime *mtime);
+SYS_API std::optional<FileTime>
+modificationTime(const std::string &path);
 
-SYS_API bool
-stat(const std::string &path, sys::fs::Stat *stat);
+SYS_API std::optional<Stat>
+stat(const std::string &path);
 
 SYS_API std::string
 absolutePath(const std::string &);
@@ -84,37 +83,37 @@ absolutePath(const std::string &);
 SYS_API std::string
 lookup(const std::vector<std::string> &, const std::string &);
 
-SYS_API bool
-exists(const std::string &path, ObjectType *type);
+SYS_API std::optional<ObjectType>
+exists(const std::string &path);
 
-inline bool
+inline constexpr bool
 operator==(const FileTime &a, const FileTime &b)
 {
     return a.seconds == b.seconds;
 }
 
-inline bool
+inline constexpr bool
 operator<(const FileTime &a, const FileTime &b)
 {
     return a.seconds < b.seconds;
 }
 
-inline bool
+inline constexpr bool
 operator!=(const FileTime &a, const FileTime &b)
 {
     return !(a == b);
 }
-inline bool
+inline constexpr bool
 operator<=(const FileTime &a, const FileTime &b)
 {
     return a < b || a == b;
 }
-inline bool
+inline constexpr bool
 operator>=(const FileTime &a, const FileTime &b)
 {
     return !(a < b);
 }
-inline bool
+inline constexpr bool
 operator>(const FileTime &a, const FileTime &b)
 {
     return !(a <= b);
@@ -150,8 +149,8 @@ lookup(const std::vector<std::string> &dirs, const std::string &name);
 SYS_API std::string
 absolutePath(const std::string &);
 
-SYS_API bool
-modificationTime(const std::string &path, sys::fs::FileTime *);
+SYS_API std::optional<FileTime>
+modificationTime(const std::string &path);
 
 } // namespace def
 

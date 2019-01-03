@@ -1,13 +1,13 @@
-#include <cstring>
-#include <set>
-#include <stack>
-
 #include "glt/GLSLPreprocessor.hpp"
+
+#include "err/err.hpp"
 #include "glt/ShaderCompiler.hpp"
 #include "sys/fs.hpp"
 #include "sys/io.hpp"
 
-#include "err/err.hpp"
+#include <cstring>
+#include <set>
+#include <stack>
 
 namespace glt {
 
@@ -230,22 +230,22 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
 
     proc.advanceSegments(ctx);
 
-    sys::fs::Stat filestat;
-    if (!sys::fs::stat(realPath, &filestat)) {
+    auto filestat = sys::fs::stat(realPath);
+    if (!filestat) {
         proc.out() << ctx.content.name
                    << ": #include-directive: cannot open file: " << realPath
                    << sys::io::endl;
         proc.setError();
         return;
     }
-    proc.state->incs.insert(filestat.absolute);
+    proc.state->incs.insert(filestat->absolute);
 
-    if (proc.state->visitingFiles.count(filestat.absolute) == 0) {
+    if (proc.state->visitingFiles.count(filestat->absolute) == 0) {
         proc.includes.push_back(
-          ShaderInclude(filestat.absolute, filestat.mtime));
-        proc.name(filestat.absolute);
+          ShaderInclude(filestat->absolute, filestat->mtime));
+        proc.name(filestat->absolute);
 
-        auto [contents, size_t] = readFile(proc.out(), filestat.absolute);
+        auto [contents, size_t] = readFile(proc.out(), filestat->absolute);
         if (!contents) {
             proc.setError();
             return;
@@ -253,7 +253,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
 
         auto content_ptr = contents.get();
         proc.contents.emplace_back(std::move(contents));
-        proc.name(filestat.absolute);
+        proc.name(filestat->absolute);
         proc.process(content_ptr, size_t);
     }
 }

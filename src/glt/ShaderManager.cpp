@@ -1,5 +1,5 @@
 #include "glt/ShaderManager.hpp"
-#include "defs.hpp"
+
 #include "glt/ShaderCompiler.hpp"
 #include "glt/ShaderProgram.hpp"
 
@@ -148,10 +148,11 @@ ShaderManager::prependShaderDirectory(const std::string &dir, bool check_exists)
 {
     removeShaderDirectory(dir);
 
-    sys::fs::ObjectType type;
-    if (check_exists &&
-        (!sys::fs::exists(dir, &type) || type != sys::fs::Directory))
-        return false;
+    if (check_exists) {
+        auto type = sys::fs::exists(dir);
+        if (!type || *type != sys::fs::Directory)
+            return false;
+    }
 
     self->shaderDirs.insert(self->shaderDirs.begin(), dir);
     return true;
@@ -162,10 +163,11 @@ ShaderManager::addShaderDirectory(const std::string &dir, bool check_exists)
 {
     removeShaderDirectory(dir);
 
-    sys::fs::ObjectType type;
-    if (check_exists &&
-        (!sys::fs::exists(dir, &type) || type != sys::fs::Directory))
-        return false;
+    if (check_exists) {
+        auto type = sys::fs::exists(dir);
+        if (!type || *type != sys::fs::Directory)
+            return false;
+    }
 
     self->shaderDirs.push_back(dir);
     return true;

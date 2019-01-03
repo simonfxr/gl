@@ -9,7 +9,6 @@ namespace sys {
 namespace io {
 
 namespace {
-
 StreamResult
 convertErr(HandleError err)
 {
@@ -28,7 +27,6 @@ convertErr(HandleError err)
 
     ASSERT_FAIL();
 }
-
 } // namespace
 
 IO::IO() : ipa_any(0), ipa_local(127, 0, 0, 1) {}

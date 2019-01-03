@@ -14,7 +14,6 @@
 #include <unistd.h>
 
 namespace sys {
-
 namespace fs {
 
 bool
@@ -146,32 +145,29 @@ absolutePath(const std::string &path)
     return dir + "/" + path;
 }
 
-bool
-stat(const std::string &path, sys::fs::Stat *stat)
+std::optional<Stat>
+stat(const std::string &path)
 {
-    ASSERT(stat);
-
-    stat->absolute = absolutePath(path);
-    if (stat->absolute.empty())
-        return false;
-
-    return modificationTime(path, &stat->mtime);
+    Stat stat;
+    stat.absolute = absolutePath(path);
+    if (stat.absolute.empty())
+        return std::nullopt;
+    if (auto mtime = modificationTime(stat.absolute)) {
+        stat.mtime = *mtime;
+        return stat;
+    }
+    return std::nullopt;
 }
 
-bool
-modificationTime(const std::string &path, sys::fs::FileTime *mtime)
+std::optional<FileTime>
+modificationTime(const std::string &path)
 {
-    ASSERT(mtime);
-
-    struct stat st
-    {};
+    struct stat st;
     if (stat(path.c_str(), &st) != 0) {
         ERR(strerror(errno));
-        return false;
+        return std::nullopt;
     }
-
-    mtime->seconds = st.st_mtime;
-    return true;
+    return FileTime{ st.st_mtime };
 }
 
 std::string
@@ -180,18 +176,15 @@ lookup(const std::vector<std::string> &dirs, const std::string &name)
     return def::lookup(dirs, name);
 }
 
-bool
-exists(const std::string &path, ObjectType *type)
+std::optional<ObjectType>
+exists(const std::string &path)
 {
-    ASSERT(type);
-    struct stat info = {};
+    struct stat info;
     if (stat(path.c_str(), &info) == -1)
-        return false;
-    int objtype = info.st_mode & S_IFMT;
-    *type = objtype == S_IFDIR ? Directory : File;
-    return true;
+        return std::nullopt;
+    auto objtype = info.st_mode & S_IFMT;
+    return { objtype == S_IFDIR ? Directory : File };
 }
 
 } // namespace fs
-
 } // namespace sys

@@ -2,7 +2,6 @@
 #include "sys/io.hpp"
 
 namespace sys {
-
 namespace io {
 
 #define UNDEFINED                                                              \
@@ -67,5 +66,4 @@ close(Socket &)
 }
 
 } // namespace io
-
 } // namespace sys

@@ -10,15 +10,12 @@
 #include <string>
 
 namespace sys {
-
 namespace io {
 
 struct Handle;
 struct Socket;
 struct IPAddr4;
 struct HandleStream;
-
-namespace {
 
 inline constexpr size_t HANDLE_READ_BUFFER_SIZE = 1024;
 inline constexpr size_t HANDLE_WRITE_BUFFER_SIZE = 1024;
@@ -38,10 +35,9 @@ using SocketMode = uint32_t;
 
 inline constexpr SocketMode SM_NONBLOCKING = 1;
 
-} // namespace
-
 SYS_API const IPAddr4
 IPA_ANY();
+
 SYS_API const IPAddr4
 IPA_LOCAL();
 
@@ -58,17 +54,16 @@ enum HandleError
 struct SYS_API IPAddr4
 {
     uint32_t addr4; // bigendian/network byte order
-    IPAddr4() : addr4(0) {}
-    IPAddr4(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
+    constexpr IPAddr4() : addr4(0) {}
+    constexpr IPAddr4(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
       : addr4(hton((uint32_t(a) << 24) | (uint32_t(b) << 16) |
                    (uint32_t(c) << 8) | uint32_t(d)))
     {}
 
-    IPAddr4(uint32_t addr) : addr4(addr) {}
+    explicit constexpr IPAddr4(uint32_t addr) : addr4(addr) {}
 };
 
 } // namespace io
-
 } // namespace sys
 
 #ifdef HU_OS_POSIX_P
@@ -80,7 +75,6 @@ struct SYS_API IPAddr4
 #endif
 
 namespace sys {
-
 namespace io {
 
 SYS_API HandleError
@@ -142,7 +136,6 @@ SYS_API std::pair<std::unique_ptr<char[]>, size_t>
 readFile(sys::io::OutStream &err, const std::string &path) noexcept;
 
 } // namespace io
-
 } // namespace sys
 
 #endif

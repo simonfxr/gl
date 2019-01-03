@@ -2,7 +2,6 @@
 #define SYS_IO_WINDOWS_HPP
 
 namespace sys {
-
 namespace io {
 
 struct Handle
@@ -14,7 +13,6 @@ struct Socket
 {};
 
 } // namespace io
-
 } // namespace sys
 
 #endif

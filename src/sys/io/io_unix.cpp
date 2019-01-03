@@ -10,7 +10,6 @@
 #include <unistd.h>
 
 namespace sys {
-
 namespace io {
 
 namespace {
@@ -161,14 +160,9 @@ read(Handle &h, size_t &s, char *buf)
     auto n = s;
     ssize_t k;
     RETRY_INTR(k = ::read(h.fd, static_cast<void *>(buf), n));
-
-    if (k > 0) {
+    if (k >= 0) {
         s = k;
-        return HE_OK;
-    }
-    if (k == 0) {
-        s = 0;
-        return HE_EOF;
+        return k == 0 ? HE_EOF : HE_OK;
     }
     s = 0;
     return convertErrno();
@@ -179,9 +173,7 @@ write(Handle &h, size_t &s, const char *buf)
 {
     auto n = s;
     ssize_t k;
-
     RETRY_INTR(k = ::write(h.fd, buf, n));
-
     if (k >= 0) {
         s = k;
         return HE_OK;
@@ -197,7 +189,6 @@ close(Handle &h)
     RETRY_INTR(ret = ::close(h.fd));
     if (ret == -1)
         return convertErrno();
-
     return HE_OK;
 }
 

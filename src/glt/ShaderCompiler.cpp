@@ -237,10 +237,10 @@ ReloadState
 includesNeedReload(const ShaderIncludes &incs)
 {
     for (const auto &inc : incs) {
-        sys::fs::FileTime mtime{};
-        if (!sys::fs::modificationTime(inc.first, &mtime))
+        auto mtime = sys::fs::modificationTime(inc.first);
+        if (!mtime)
             return ReloadState::Failed;
-        if (mtime != inc.second)
+        if (*mtime != inc.second)
             return ReloadState::Outdated;
     }
 
@@ -434,14 +434,14 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
         return nullptr;
     }
 
-    sys::fs::FileTime mtime{};
-    if (!sys::fs::modificationTime(filesrc.path, &mtime)) {
+    auto mtime = sys::fs::modificationTime(filesrc.path);
+    if (!mtime) {
         COMPILER_ERR_MSG(
           scq, ShaderCompilerError::FileNotFound, "couldnt query mtime");
         return nullptr;
     }
 
-    auto so = ShaderObject::Data::makeFileShaderObject(src, filesrc, mtime);
+    auto so = ShaderObject::Data::makeFileShaderObject(src, filesrc, *mtime);
 
     GLSLPreprocessor preproc(
       scq.shaderCompiler().shaderManager().shaderDirectories(),
@@ -500,13 +500,12 @@ ShaderObject::Data::reloadIfOutdated(ShaderCompilerQueue &scq)
           if constexpr (std::is_same_v<T, StringShaderObject>) {
               return includesNeedReload(includes);
           } else if constexpr (std::is_same_v<T, FileShaderObject>) {
-              sys::fs::FileTime current_mtime{};
-              if (!sys::fs::modificationTime(arg.source.path, &current_mtime))
+              auto current_mtime = sys::fs::modificationTime(arg.source.path);
+              if (!current_mtime)
                   return ReloadState::Failed;
-              if (current_mtime != arg.mtime || includesNeedReload(includes))
+              if (*current_mtime != arg.mtime || includesNeedReload(includes))
                   return ReloadState::Outdated;
               return ReloadState::Uptodate;
-
           } else {
               static_assert(always_false<T>::value, "non-exhaustive visitor!");
           }
