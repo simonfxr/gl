@@ -5,7 +5,7 @@
 #include "glt/Frame.hpp"
 #include "glt/ViewFrustum.hpp"
 #include "glt/color.hpp"
-#include "math/vec3/type.hpp"
+#include "math/vec3.hpp"
 
 #include <memory>
 

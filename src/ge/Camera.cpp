@@ -229,7 +229,7 @@ void
 Camera::Data::handleInput(Camera *cam, const Event<InputEvent> & /*unused*/)
 {
     auto &self = *cam->self;
-    real lenSq = lengthSq(self._step_accum);
+    real lenSq = quadrance(self._step_accum);
     if (lenSq >= math::real(1e-4)) {
         vec3_t local_step = self._speed * normalize(self._step_accum);
         Event<CameraMoved> ev = makeEvent(

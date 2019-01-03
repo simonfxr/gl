@@ -6,8 +6,8 @@
 #include "err/err.hpp"
 #include "math/mat3/type.hpp"
 #include "math/mat4/type.hpp"
-#include "math/vec3/type.hpp"
-#include "math/vec4/type.hpp"
+#include "math/vec3.hpp"
+#include "math/vec4.hpp"
 
 #include <memory>
 

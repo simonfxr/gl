@@ -3,7 +3,7 @@
 
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/conf.hpp"
-#include "math/ivec3/type.hpp"
+#include "math/ivec3.hpp"
 #include "opengl.hpp"
 
 namespace glt {

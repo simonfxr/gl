@@ -1,6 +1,6 @@
 #include "glt/ViewFrustum.hpp"
-#include "err/err.hpp"
 
+#include "err/err.hpp"
 #include "math/mat4.hpp"
 #include "math/plane.hpp"
 #include "math/vec4.hpp"

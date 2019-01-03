@@ -2,7 +2,7 @@
 #define MAT4_TYPE_HPP
 
 #include "math/real/type.hpp"
-#include "math/vec4/type.hpp"
+#include "math/vec4.hpp"
 
 namespace math {
 

@@ -441,7 +441,7 @@ initRays(Rays &rays, vec3_t dirs[])
     for (int32_t i = 0; i < SPHERE_POINTS; ++i) {
         const direction3_t &d = dirs[i];
         vec3_t p = real(N) * (d * 0.5f + vec3(0.5f));
-        vec3_t step = (p - center) / (10. * N);
+        vec3_t step = (p - center) / real(10. * N);
         Faces sum1 = { { vec3(0.), vec3(0.) } };
         initRay(rays.rays[i], d, step, sum1);
         cos0 += sum1.f[0][0];
@@ -729,7 +729,7 @@ createWorld(Densities &ds)
         for (int32_t j = 0; j < N; ++j)
             for (int32_t k = 0; k < N; ++k) {
                 vec3_t wc =
-                  (vec3(ivec3(i, j, k)) * (1. / real(N)) - vec3(0.5f)) *
+                  (vec3(ivec3(i, j, k)) * real(1. / real(N)) - vec3(0.5f)) *
                   VIRTUAL_DIM;
                 ds.ds[i][j][k] = density(wc);
                 //                sys::io::stderr() << i << " " << j << " " << k

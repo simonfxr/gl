@@ -262,7 +262,7 @@ World::zoom(real t)
 void
 World::shift(const vec2_t &a)
 {
-    trans += 0.005 * a / scale;
+    trans += real(0.005) * a / scale;
 }
 
 void

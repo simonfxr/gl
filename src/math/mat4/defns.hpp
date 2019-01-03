@@ -3,7 +3,7 @@
 
 #include "math/mat3/type.hpp"
 #include "math/mat4/type.hpp"
-#include "math/vec3/type.hpp"
+#include "math/vec3.hpp"
 
 namespace math {
 

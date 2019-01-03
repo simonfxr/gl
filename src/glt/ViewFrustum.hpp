@@ -2,9 +2,10 @@
 #define GLT_VIEWING_FRUSTUM_HPP
 
 #include "glt/conf.hpp"
+
 #include "math/mat4/type.hpp"
 #include "math/plane.hpp"
-#include "math/vec3/type.hpp"
+#include "math/vec3.hpp"
 
 namespace glt {
 
