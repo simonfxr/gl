@@ -30,9 +30,6 @@ struct GE_API EngineInitializers
 };
 
 GE_API void
-initGLEW(RunLevel lvl, EngineInitializers &);
-
-GE_API void
 initShaderVersion(RunLevel lvl, EngineInitializers &);
 
 GE_API void

@@ -60,7 +60,7 @@ Preprocessor::process(const char *begin, size_t size)
     DirectiveContext ctx(*this, self->sourceName);
 
     ctx.content.data = begin;
-    ctx.content.size_t = size;
+    ctx.content.size = size;
 
     for (auto &handler : self->handlers) {
         handler.second->beginProcessing(ctx.content);

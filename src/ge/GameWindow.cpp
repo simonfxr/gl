@@ -381,6 +381,9 @@ GameWindow::Data::init(const WindowOptions &opts)
     glfwSetScrollCallback(win, glfw_mouse_scroll_callback);
 
     glfwMakeContextCurrent(win);
+
+    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
+        FATAL_ERR("GLAD initialization failed");
     GL_CHECK_ERRORS();
 
     vsync = opts.vsync;

@@ -149,6 +149,8 @@ struct ShaderCache::Data
     void checkValid();
     bool remove(ShaderObject *);
 
+    Data(ShaderCache &self_) : self(self_) {}
+
     ~Data() { self.flush(); }
 };
 
@@ -553,6 +555,8 @@ ShaderObject::Data::makeFileShaderObject(std::shared_ptr<ShaderSource> src,
     so->self->self = so.get();
     return so;
 }
+
+ShaderCache::ShaderCache() : self(new Data(*this)) {}
 
 const ShaderCacheEntries &
 ShaderCache::cacheEntries() const

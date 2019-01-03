@@ -17,7 +17,7 @@ struct GLT_API Preprocessor
         Preprocessor &processor;
         const std::string name;
         const char *data;
-        size_t size_t;
+        size_t size;
 
         ContentContext(Preprocessor &proc, const std::string &nam)
           : processor(proc), name(nam)

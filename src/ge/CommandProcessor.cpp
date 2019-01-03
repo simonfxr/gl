@@ -166,8 +166,7 @@ CommandProcessor::exec(CommandPtr &com,
     }
 
     std::vector<CommandPtr> keepAlive;
-
-    for (const auto i : irange(params.size())) {
+    for (const auto i : irange(params.size() - (rest_args ? 1 : 0))) {
         const auto &param = params[i];
         if (param != AnyParam) {
 

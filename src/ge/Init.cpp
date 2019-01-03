@@ -5,10 +5,8 @@
 #include "ge/Event.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/utils.hpp"
-#include "opengl.hpp"
 
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
+#include <cstdio>
 
 namespace ge {
 
@@ -17,7 +15,6 @@ EngineInitializers::EngineInitializers(bool default_init)
     if (default_init) {
         initInitStats(*this);
         initCommands(PreInit0, *this);
-        initGLEW(PreInit1, *this);
         initMemInfo(PreInit1, *this);
         initShaderVersion(PreInit1, *this);
     }
@@ -41,24 +38,6 @@ EngineInitializers::reg(RunLevel lvl,
         postInit.reg(handler);
         break;
     }
-}
-
-static void
-runInitGLEW(const Event<InitEvent> &e)
-{
-    e.info.engine.out() << "initializing GLAD " << sys::io::endl;
-    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
-        ERR("GLAD initialization failed");
-        return;
-    }
-
-    e.info.success = true;
-}
-
-void
-initGLEW(RunLevel lvl, EngineInitializers &inits)
-{
-    inits.reg(lvl, makeEventHandler(runInitGLEW));
 }
 
 static void

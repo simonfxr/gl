@@ -97,7 +97,7 @@ template<typename T>
 constexpr IntRange<T>
 irange(T lim)
 {
-    return { 0, 1, lim };
+    return { T{}, T{ 1 }, lim };
 }
 
 template<typename T, typename U>
@@ -105,7 +105,7 @@ constexpr auto
 irange(T start, U lim)
 {
     using V = std::decay_t<decltype(start + lim)>;
-    return IntRange<V>{ static_cast<V>(start), 1, static_cast<V>(lim) };
+    return IntRange<V>{ static_cast<V>(start), V{ 1 }, static_cast<V>(lim) };
 }
 
 template<typename T = size_t>

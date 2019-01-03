@@ -109,6 +109,7 @@ public:
 struct GLT_API ShaderCache
 {
     void flush();
+    ShaderCache();
 
     static bool remove(
       const std::shared_ptr<ShaderCache> & /* pointer to this */,

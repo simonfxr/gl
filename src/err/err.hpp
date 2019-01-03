@@ -113,9 +113,8 @@ struct ErrorArgs
 ERR_API void
 error(const Location &loc, LogLevel lvl, const ErrorArgs &);
 
-ERR_API void
-fatalError(const Location &loc, LogLevel lvl, const ErrorArgs &)
-  ATTRS(ATTR_NORETURN);
+ERR_API HU_NORETURN void
+fatalError(const Location &loc, LogLevel lvl, const ErrorArgs &);
 
 ERR_API void
 printError(sys::io::OutStream &out,
@@ -250,7 +249,7 @@ logPutError(const T &v, E err, const std::string &msg)
 #define WARN(...) DETAIL_ERROR(::err::Warn, __VA_ARGS__)
 #define INFO(...) DETAIL_ERROR(::err::Info, __VA_ARGS__)
 
-#ifdef ATTR_NORETURN
+#if 1
 #define DETAIL_FATAL_ERR(lvl, ...)                                             \
     ::err::fatalError(                                                         \
       DETAIL_CURRENT_LOCATION, lvl, ::err::ErrorArgs(__VA_ARGS__))
@@ -258,7 +257,7 @@ logPutError(const T &v, E err, const std::string &msg)
 #define DETAIL_FATAL_ERR(lvl, ...)                                             \
     (::err::fatalError(                                                        \
        DETAIL_CURRENT_LOCATION, lvl, ::err::ErrorArgs(__VA_ARGS__)),           \
-     ::exit(1) /* exit never reached */)
+     ::abort())
 #endif
 
 #define FATAL_ERR(...) DETAIL_FATAL_ERR(::err::FatalError, __VA_ARGS__)

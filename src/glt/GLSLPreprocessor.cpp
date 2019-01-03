@@ -127,7 +127,7 @@ GLSLPreprocessor::processFileRecursively(const std::string &file)
         return;
 
     ASSERT(sys::fs::isAbsolute(file));
-    auto [data, size_t] = sys::io::readFile(out(), file);
+    auto [data, size] = sys::io::readFile(out(), file);
     if (!data) {
         setError();
         return;
@@ -137,7 +137,7 @@ GLSLPreprocessor::processFileRecursively(const std::string &file)
     contents.emplace_back(std::move(data));
 
     this->name(file);
-    process(data_ptr, size_t);
+    process(data_ptr, size);
 }
 
 void
@@ -245,7 +245,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
           ShaderInclude(filestat->absolute, filestat->mtime));
         proc.name(filestat->absolute);
 
-        auto [contents, size_t] = readFile(proc.out(), filestat->absolute);
+        auto [contents, size] = readFile(proc.out(), filestat->absolute);
         if (!contents) {
             proc.setError();
             return;
@@ -254,7 +254,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
         auto content_ptr = contents.get();
         proc.contents.emplace_back(std::move(contents));
         proc.name(filestat->absolute);
-        proc.process(content_ptr, size_t);
+        proc.process(content_ptr, size);
     }
 }
 
@@ -264,7 +264,7 @@ IncludeHandler::endProcessing(const Preprocessor::ContentContext &ctx)
     auto &proc = static_cast<GLSLPreprocessor &>(ctx.processor);
 
     FileContext &frame = proc.state->stack.top();
-    size_t seglen = ctx.data + ctx.size_t - frame.pos;
+    size_t seglen = ctx.data + ctx.size - frame.pos;
 
     if (seglen > 0) {
         proc.segments.push_back(frame.pos);
