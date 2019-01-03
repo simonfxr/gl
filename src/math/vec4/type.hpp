@@ -17,8 +17,9 @@ struct ATTRS(ATTR_PACKED) vec4_t
 
     real components[padded_size];
 
-    constexpr MATH_FUNC real &operator[](size_t) MUT_FUNC;
-    constexpr MATH_FUNC real operator[](size_t) const PURE_FUNC;
+    constexpr inline real &operator[](size_t i) { return components[i]; }
+
+    constexpr inline real operator[](size_t i) const { return components[i]; }
 };
 
 typedef vec4_t point4_t;

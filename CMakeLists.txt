@@ -88,7 +88,11 @@ if(NOT TARGET glad)
     endif()
   endif()
 
-  add_library(glad STATIC "${GLAD_GEN_DIR}/src/glad.c")
+  set(glad_link_mode)
+  if(SYS_WINDOWS AND COMP_CL)
+    set(glad_link_mode STATIC)
+  endif()
+  add_library(glad ${glad_link_mode} "${GLAD_GEN_DIR}/src/glad.c")
   target_include_directories(glad SYSTEM PUBLIC "${GLAD_GEN_DIR}/include")
 endif()
 

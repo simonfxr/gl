@@ -28,46 +28,46 @@ struct plane3_t
 
 } // namespace math
 
-MATH_BEGIN_NAMESPACE
+namespace math {
 
-constexpr MATH_FUNC plane3_t
-plane() PURE_FUNC;
+constexpr inline plane3_t
+plane();
 
-constexpr MATH_FUNC plane3_t
-plane(const vec4_t &coeff) PURE_FUNC;
+constexpr inline plane3_t
+plane(const vec4_t &coeff);
 
-constexpr MATH_FUNC plane3_t
-plane(const direction3_t &normal, real dist) PURE_FUNC;
+constexpr inline plane3_t
+plane(const direction3_t &normal, real dist);
 
 // plane through a triangle: if the triangle is viewed such that the points
 // winding goes ccw, the normal points in the direction of the viewer (same as
 // OpenGL)
-MATH_FUNC plane3_t
-plane(const point3_t &a, const point3_t &b, const point3_t &c) PURE_FUNC;
+inline plane3_t
+plane(const point3_t &a, const point3_t &b, const point3_t &c);
 
-MATH_FUNC plane3_t
-planeParametric(const point3_t &a, const vec3_t &u, const vec3_t &v) PURE_FUNC;
+inline plane3_t
+planeParametric(const point3_t &a, const vec3_t &u, const vec3_t &v);
 
-MATH_FUNC plane3_t
-normalize(const plane3_t &P) PURE_FUNC;
+inline plane3_t
+normalize(const plane3_t &P);
 
 // signed distance, positive on the side where the normal points
-constexpr MATH_FUNC real
-distance(const plane3_t &P, const point3_t &a) PURE_FUNC;
+constexpr inline real
+distance(const plane3_t &P, const point3_t &a);
 
-constexpr MATH_FUNC point3_t
-projectOnto(const plane3_t &P, const point3_t &a) PURE_FUNC;
+constexpr inline point3_t
+projectOnto(const plane3_t &P, const point3_t &a);
 
-MATH_FUNC direction3_t
-transformNormal(const mat3_t &A, const direction3_t &n) PURE_FUNC;
+inline direction3_t
+transformNormal(const mat3_t &A, const direction3_t &n);
 
-MATH_FUNC plane3_t
-transform(const mat3_t &A, const plane3_t &P) PURE_FUNC;
+inline plane3_t
+transform(const mat3_t &A, const plane3_t &P);
 
-MATH_FUNC plane3_t
-transform(const mat4_t &A, const plane3_t &P) PURE_FUNC;
+inline plane3_t
+transform(const mat4_t &A, const plane3_t &P);
 
-MATH_END_NAMESPACE
+} // namespace math
 
 #if defined(MATH_INLINE)
 #define MATH_PLANE_INLINE

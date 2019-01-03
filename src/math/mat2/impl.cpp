@@ -4,7 +4,7 @@
 
 #include "err/err.hpp"
 
-MATH_BEGIN_NAMESPACE
+namespace math {
 
 constexpr mat2_t
 mat2()
@@ -42,31 +42,4 @@ load(mat2_t::buffer buf, const mat2_t &A)
     load(&buf[0], A[0]);
     load(&buf[2], A[1]);
 }
-
-MATH_END_NAMESPACE
-
-namespace math {
-
-constexpr MATH_INLINE_SPEC const vec2_t &mat2_t::operator[](size_t i) const
-{
-    return columns[i];
-}
-
-constexpr MATH_INLINE_SPEC vec2_t &mat2_t::operator[](size_t i)
-{
-    return columns[i];
-}
-
-constexpr MATH_INLINE_SPEC real
-mat2_t::operator()(size_t i, size_t j) const
-{
-    return components[i * vec2_t::padded_size + j];
-}
-
-constexpr MATH_INLINE_SPEC real &
-mat2_t::operator()(size_t i, size_t j)
-{
-    return components[i * vec2_t::padded_size + j];
-}
-
 } // namespace math

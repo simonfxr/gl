@@ -4,7 +4,7 @@
 
 #include "err/err.hpp"
 
-MATH_BEGIN_NAMESPACE
+namespace math {
 
 constexpr mat3_t
 mat3()
@@ -235,7 +235,7 @@ equal(const mat3_t &A, const mat3_t &B, real epsi)
            equal(A[2], B[2], epsi);
 }
 
-constexpr mat3_t
+mat3_t
 coordinateSystem(const vec3_t &a)
 {
     vec3_t aa = abs(a);
@@ -250,31 +250,4 @@ coordinateSystem(const vec3_t &a)
 
     return mat3(a, b, cross(a, b));
 }
-
-MATH_END_NAMESPACE
-
-namespace math {
-
-constexpr MATH_INLINE_SPEC const vec3_t &mat3_t::operator[](size_t i) const
-{
-    return columns[i];
-}
-
-constexpr MATH_INLINE_SPEC vec3_t &mat3_t::operator[](size_t i)
-{
-    return columns[i];
-}
-
-constexpr MATH_INLINE_SPEC real &
-mat3_t::operator()(size_t i, size_t j)
-{
-    return components[i * vec3_t::padded_size + j];
-}
-
-constexpr MATH_INLINE_SPEC real
-mat3_t::operator()(size_t i, size_t j) const
-{
-    return components[i * vec3_t::padded_size + j];
-}
-
 } // namespace math

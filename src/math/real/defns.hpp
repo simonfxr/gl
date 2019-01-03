@@ -5,7 +5,7 @@
 
 #include <limits>
 
-MATH_BEGIN_NAMESPACE
+namespace math {
 
 inline constexpr real PI = 3.1415926f;
 
@@ -13,107 +13,107 @@ inline constexpr real POS_INF = std::numeric_limits<real>::infinity();
 
 inline constexpr real NEG_INF = -POS_INF;
 
-MATH_FUNC real
-sqrt(real x) PURE_FUNC;
+inline real
+sqrt(real x);
 
-constexpr MATH_FUNC real
-recip(real x) PURE_FUNC;
+constexpr inline real
+recip(real x);
 
-constexpr MATH_FUNC real
-inverse(real x) PURE_FUNC;
+constexpr inline real
+inverse(real x);
 
-MATH_FUNC real
-rsqrt(real x) PURE_FUNC;
+inline real
+rsqrt(real x);
 
-MATH_FUNC real
-sin(real rad) PURE_FUNC;
+inline real
+sin(real rad);
 
-MATH_FUNC real
-cos(real rad) PURE_FUNC;
+inline real
+cos(real rad);
 
-MATH_FUNC real
-tan(real rad) PURE_FUNC;
+inline real
+tan(real rad);
 
-MATH_FUNC real
-asin(real x) PURE_FUNC;
+inline real
+asin(real x);
 
-MATH_FUNC real
-acos(real x) PURE_FUNC;
+inline real
+acos(real x);
 
-MATH_FUNC real
-atan(real x) PURE_FUNC;
+inline real
+atan(real x);
 
-MATH_FUNC real
-atan2(real x, real y) PURE_FUNC;
+inline real
+atan2(real x, real y);
 
-MATH_FUNC void
-sincos(real rad, real &out_sin, real &out_cos) PURE_FUNC;
+inline void
+sincos(real rad, real &out_sin, real &out_cos);
 
-MATH_FUNC real
-cotan(real rad) PURE_FUNC; // 1/tan
+inline real
+cotan(real rad); // 1/tan
 
-MATH_FUNC real
-exp(real x) PURE_FUNC;
+inline real
+exp(real x);
 
-MATH_FUNC real
-abs(real x) PURE_FUNC;
+inline real
+abs(real x);
 
-MATH_FUNC real
-length(real x) PURE_FUNC;
+inline real
+length(real x);
 
-MATH_FUNC real
-distance(real x, real y) PURE_FUNC;
+inline real
+distance(real x, real y);
 
-constexpr MATH_FUNC real
-squared(real x) PURE_FUNC;
+constexpr inline real
+squared(real x);
 
-constexpr MATH_FUNC real
-cubed(real x) PURE_FUNC;
+constexpr inline real
+cubed(real x);
 
-MATH_FUNC real
-pow(real x, int32_t n) PURE_FUNC;
+inline real
+pow(real x, int32_t n);
 
-MATH_FUNC real
-pow(real x, real y) PURE_FUNC;
+inline real
+pow(real x, real y);
 
-MATH_FUNC real
-floor(real x) PURE_FUNC;
+inline real
+floor(real x);
 
-constexpr MATH_FUNC int32_t
-signum(real x) PURE_FUNC;
+constexpr inline int32_t
+signum(real x);
 
-// MATH_FUNC bool signbit(real x) PURE_FUNC;
+// inline bool signbit(real x) ;
 
-MATH_FUNC real
-wrapPi(real x) PURE_FUNC;
+inline real
+wrapPi(real x);
 
-MATH_FUNC real
-wrap(real x, real period) PURE_FUNC;
+inline real
+wrap(real x, real period);
 
-MATH_FUNC real
-degToRad(real deg) PURE_FUNC;
+inline real
+degToRad(real deg);
 
-MATH_FUNC real
-radToDeg(real rad) PURE_FUNC;
+inline real
+radToDeg(real rad);
 
-constexpr MATH_FUNC real
-max(real x, real y) PURE_FUNC;
+constexpr inline real
+max(real x, real y);
 
-constexpr MATH_FUNC real
-min(real x, real y) PURE_FUNC;
+constexpr inline real
+min(real x, real y);
 
-constexpr MATH_FUNC real
-saturate(real x) PURE_FUNC;
+constexpr inline real
+saturate(real x);
 
-constexpr MATH_FUNC real
-clamp(real x, real lo, real hi) PURE_FUNC;
+constexpr inline real
+clamp(real x, real lo, real hi);
 
-constexpr MATH_FUNC real
-smoothstep(real lo_edge, real hi_edge, real x) PURE_FUNC;
+constexpr inline real
+smoothstep(real lo_edge, real hi_edge, real x);
 
-constexpr MATH_FUNC real
-mix(real a, real b, real t) PURE_FUNC;
+constexpr inline real
+mix(real a, real b, real t);
 
-MATH_END_NAMESPACE
+} // namespace math
 
 #endif

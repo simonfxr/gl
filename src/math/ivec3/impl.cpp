@@ -1,7 +1,7 @@
 #include "math/ivec3.hpp"
 #include "math/real.hpp"
 
-MATH_BEGIN_NAMESPACE
+namespace math {
 
 constexpr ivec3_t
 ivec3(int32_t x, int32_t y, int32_t z)
@@ -197,19 +197,4 @@ equal(const ivec3_t &a, const ivec3_t &b)
 {
     return a == b;
 }
-
-MATH_END_NAMESPACE
-
-namespace math {
-
-constexpr MATH_INLINE_SPEC int32_t &ivec3_t::operator[](size_t i)
-{
-    return components[i];
-}
-
-constexpr MATH_INLINE_SPEC int32_t ivec3_t::operator[](size_t i) const
-{
-    return components[i];
-}
-
 } // namespace math

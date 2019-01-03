@@ -3,7 +3,7 @@
 #include "math/vec3/defns.hpp"
 #include "math/vec4.hpp"
 
-MATH_BEGIN_NAMESPACE
+namespace math {
 
 constexpr vec3_t
 vec3(real x, real y, real z)
@@ -235,7 +235,7 @@ recip(const vec3_t &a)
     return vec3(recip(a[0]), recip(a[1]), recip(a[2]));
 }
 
-constexpr vec3_t
+vec3_t
 abs(const vec3_t &a)
 {
     return vec3(abs(a[0]), abs(a[1]), abs(a[2]));
@@ -271,19 +271,4 @@ equal(const vec3_t &a, const vec3_t &b, real epsi)
     return distance(a[0], b[0]) < epsi && distance(a[1], b[1]) < epsi &&
            distance(a[2], b[2]) < epsi;
 }
-
-MATH_END_NAMESPACE
-
-namespace math {
-
-constexpr MATH_INLINE_SPEC real &vec3_t::operator[](size_t i)
-{
-    return components[i];
-}
-
-constexpr MATH_INLINE_SPEC real vec3_t::operator[](size_t i) const
-{
-    return components[i];
-}
-
 } // namespace math

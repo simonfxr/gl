@@ -1,7 +1,7 @@
 #include "math/real.hpp"
 #include "math/vec2/defns.hpp"
 
-MATH_BEGIN_NAMESPACE
+namespace math {
 
 constexpr vec2_t
 vec2(real x, real y)
@@ -238,20 +238,6 @@ bool
 equal(const vec2_t &a, const vec2_t &b, real epsi)
 {
     return distance(a[0], b[0]) < epsi && distance(a[1], b[1]) < epsi;
-}
-
-MATH_END_NAMESPACE
-
-namespace math {
-
-constexpr MATH_INLINE_SPEC real &vec2_t::operator[](size_t i)
-{
-    return components[i];
-}
-
-constexpr MATH_INLINE_SPEC real vec2_t::operator[](size_t i) const
-{
-    return components[i];
 }
 
 } // namespace math

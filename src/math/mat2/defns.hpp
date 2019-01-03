@@ -3,23 +3,23 @@
 
 #include "math/mat2/type.hpp"
 
-MATH_BEGIN_NAMESPACE
+namespace math {
 
-constexpr MATH_FUNC mat2_t
-mat2() PURE_FUNC;
+constexpr inline mat2_t
+mat2();
 
-constexpr MATH_FUNC mat2_t
-mat2(real x) PURE_FUNC;
+constexpr inline mat2_t
+mat2(real x);
 
-constexpr MATH_FUNC mat2_t
-mat2(const mat2_t::buffer) PURE_FUNC;
+constexpr inline mat2_t
+mat2(const mat2_t::buffer);
 
-constexpr MATH_FUNC mat2_t
-mat2(const vec2_t &c1, const vec2_t &c2) PURE_FUNC;
+constexpr inline mat2_t
+mat2(const vec2_t &c1, const vec2_t &c2);
 
-MATH_FUNC void
-load(mat2_t::buffer, const mat2_t &) MUT_FUNC;
+inline void
+load(mat2_t::buffer, const mat2_t &);
 
-MATH_END_NAMESPACE
+} // namespace math
 
 #endif

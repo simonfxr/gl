@@ -8,7 +8,7 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 
-MATH_BEGIN_NAMESPACE
+namespace math {
 
 constexpr plane3_t
 plane()
@@ -95,6 +95,6 @@ transform(const mat4_t &A, const plane3_t &P)
     return plane(n, dot(a, n));
 }
 
-MATH_END_NAMESPACE
+} // namespace math
 
 #endif

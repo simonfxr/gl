@@ -1,7 +1,7 @@
 #include "math/real.hpp"
 #include "math/vec4/defns.hpp"
 
-MATH_BEGIN_NAMESPACE
+namespace math {
 
 constexpr const real *
 begin(const vec4_t &v)
@@ -207,19 +207,4 @@ equal(const vec4_t &a, const vec4_t &b, real epsi)
     return distance(a[0], b[0]) < epsi && distance(a[1], b[1]) < epsi &&
            distance(a[2], b[2]) < epsi && distance(a[3], b[3]) < epsi;
 }
-
-MATH_END_NAMESPACE
-
-namespace math {
-
-constexpr MATH_INLINE_SPEC real &vec4_t::operator[](size_t i)
-{
-    return components[i];
-}
-
-constexpr MATH_INLINE_SPEC real vec4_t::operator[](size_t i) const
-{
-    return components[i];
-}
-
 } // namespace math

@@ -26,11 +26,22 @@ struct mat3_t
 
     constexpr mat3_t() : columns{} {}
 
-    constexpr MATH_FUNC const column_type &operator[](size_t) const PURE_FUNC;
-    constexpr MATH_FUNC column_type &operator[](size_t) MUT_FUNC;
-    constexpr MATH_FUNC component_type operator()(size_t,
-                                                  size_t) const PURE_FUNC;
-    constexpr MATH_FUNC component_type &operator()(size_t, size_t) MUT_FUNC;
+    constexpr inline const column_type &operator[](size_t i) const
+    {
+        return columns[i];
+    }
+
+    constexpr inline column_type &operator[](size_t i) { return columns[i]; }
+
+    constexpr inline component_type operator()(size_t i, size_t j) const
+    {
+        return columns[i][j];
+    }
+
+    constexpr inline component_type &operator()(size_t i, size_t j)
+    {
+        return columns[i][j];
+    }
 };
 
 typedef mat3_t ATTRS(ATTR_ALIGNED(16)) aligned_mat3_t;

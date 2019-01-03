@@ -26,11 +26,22 @@ struct mat4_t
 
     constexpr mat4_t() : columns{} {}
 
-    constexpr inline const column_type &operator[](size_t) const;
-    constexpr inline column_type &operator[](size_t);
-    constexpr inline component_type operator()(size_t,
-                                                  size_t) const;
-    constexpr inline component_type &operator()(size_t, size_t);
+    constexpr inline const column_type &operator[](size_t i) const
+    {
+        return columns[i];
+    }
+
+    constexpr inline column_type &operator[](size_t i) { return columns[i]; }
+
+    constexpr inline component_type operator()(size_t i, size_t j) const
+    {
+        return columns[i][j];
+    }
+
+    constexpr inline component_type &operator()(size_t i, size_t j)
+    {
+        return columns[i][j];
+    }
 };
 
 typedef mat4_t ATTRS(ATTR_ALIGNED(16)) aligned_mat4_t;

@@ -5,7 +5,7 @@
 
 #include "err/err.hpp"
 
-MATH_BEGIN_NAMESPACE
+namespace math {
 
 constexpr mat4_t
 mat4()
@@ -242,31 +242,4 @@ equal(const mat4_t &A, const mat4_t &B, real epsi)
     return equal(A[0], B[0], epsi) && equal(A[1], B[1], epsi) &&
            equal(A[2], B[2], epsi) && equal(A[3], B[3], epsi);
 }
-
-MATH_END_NAMESPACE
-
-namespace math {
-
-constexpr MATH_INLINE_SPEC const vec4_t &mat4_t::operator[](size_t i) const
-{
-    return columns[i];
-}
-
-constexpr MATH_INLINE_SPEC vec4_t &mat4_t::operator[](size_t i)
-{
-    return columns[i];
-}
-
-constexpr MATH_INLINE_SPEC real
-mat4_t::operator()(size_t i, size_t j) const
-{
-    return components[i * 4 + j];
-}
-
-constexpr MATH_INLINE_SPEC real &
-mat4_t::operator()(size_t i, size_t j)
-{
-    return components[i * 4 + j];
-}
-
 } // namespace math

@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-MATH_BEGIN_NAMESPACE
+namespace math {
 
 real
 sqrt(real x)
@@ -226,7 +226,7 @@ mix(real a, real b, real t)
     return a + t * (b - a);
 }
 
-MATH_END_NAMESPACE
+} // namespace math
 
 #undef MATH_CIMPORT
 #undef MATH_CFUNC

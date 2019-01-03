@@ -8,18 +8,19 @@
 #include <vector>
 
 #ifdef HU_OS_WINDOWS
-#define STDIN_FILE  __acrt_iob_func(0)
+#define STDIN_FILE __acrt_iob_func(0)
 #define STDOUT_FILE __acrt_iob_func(1)
 #define STDERR_FILE __acrt_iob_func(2)
+#endif
+
 #undef stdin
 #undef stdout
 #undef stderr
 #undef EOF
-#else
+
 #define STDIN_FILE ::stdin
 #define STDOUT_FILE ::stdout
 #define STDERR_FILE ::stderr
-#endif
 
 namespace sys {
 
