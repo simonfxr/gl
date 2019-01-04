@@ -1,12 +1,10 @@
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
-
 #include "glt/Mesh.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/primitives.hpp"
 #include "glt/utils.hpp"
-
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 
@@ -126,8 +124,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
       transformVector(rm.geometryTransform().viewMatrix(), light_dir));
 
     {
-        auto program =
-          engine.shaderManager().program("ground");
+        auto program = engine.shaderManager().program("ground");
         ASSERT_MSG(program, "ground program not found");
 
         rm.geometryTransform().dup();

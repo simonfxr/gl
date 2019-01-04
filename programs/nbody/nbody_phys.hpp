@@ -1,5 +1,5 @@
-#ifndef _NBODY_PHYS_HPP
-#define _NBODY_PHYS_HPP
+#ifndef NBODY_PHYS_HPP
+#define NBODY_PHYS_HPP
 
 #include "math/vec3.hpp"
 

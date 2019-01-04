@@ -1,10 +1,6 @@
-
 #include "defs.hpp"
 
-#define GLEW_NO_GLU
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
+#include "glt/Transformations.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/real.hpp"
@@ -12,10 +8,13 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 
-#include "glt/Transformations.hpp"
+#include <glad/glad.h>
+
+#include <GLFW/glfw3.h>
 
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 
 using namespace math;
 
@@ -66,8 +65,8 @@ opengl_error_callback(GLenum source,
                       GLuint id,
                       GLenum severity,
                       GLsizei length,
-                      const char *message,
-                      void *userParam)
+                      const GLchar *message,
+                      const void *userParam)
 {
     UNUSED(source);
     UNUSED(type);
@@ -109,16 +108,16 @@ DEF_GL_SHADER(FRAGMENT_SHADER,
 bool
 initProgram(State &s)
 {
-    GLuint &program = s.program;
-    GLuint vert_shader = glCreateShader(GL_VERTEX_SHADER);
-    GLuint frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    auto &program = s.program;
+    auto vert_shader = glCreateShader(GL_VERTEX_SHADER);
+    auto frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
 
-    const GLchar *vert_source = (const GLchar *) VERTEX_SHADER;
-    glShaderSource(vert_shader, 1, &vert_source, NULL);
+    auto vert_source = reinterpret_cast<const GLchar *>(VERTEX_SHADER);
+    glShaderSource(vert_shader, 1, &vert_source, nullptr);
     glCompileShader(vert_shader);
 
-    const GLchar *frag_source = (const GLchar *) FRAGMENT_SHADER;
-    glShaderSource(frag_shader, 1, &frag_source, NULL);
+    auto frag_source = reinterpret_cast<const GLchar *>(FRAGMENT_SHADER);
+    glShaderSource(frag_shader, 1, &frag_source, nullptr);
     glCompileShader(frag_shader);
 
     program = glCreateProgram();
@@ -208,9 +207,8 @@ init(State &s)
 int
 main()
 {
-    GLFWwindow *window = 0;
+    GLFWwindow *window = nullptr;
     int ret = EXIT_FAILURE;
-    GLenum glew_err = GLEW_OK;
     GLenum gl_err = GL_NO_ERROR;
     State state;
 
@@ -224,21 +222,19 @@ main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
-    window = glfwCreateWindow(640, 480, "opengl-raw", NULL, NULL);
+    window = glfwCreateWindow(640, 480, "opengl-raw", nullptr, nullptr);
     if (!window)
         goto err1;
 
     glfwMakeContextCurrent(window);
 
-    glewExperimental = GL_TRUE;
-    glew_err = glewInit();
-    if (glew_err != GLEW_OK)
+    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
         goto err2;
 
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
     glDebugMessageControlARB(
-      GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-    glDebugMessageCallbackARB(opengl_error_callback, NULL);
+      GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+    glDebugMessageCallbackARB(opengl_error_callback, nullptr);
 
     gl_err = glGetError();
     if (gl_err != GL_NO_ERROR)

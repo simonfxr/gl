@@ -1,37 +1,30 @@
+#include "data/range.hpp"
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
 #include "ge/Timer.hpp"
-
 #include "glt/GLPerfCounter.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/Uniforms.hpp"
+#include "glt/VertexDescription.hpp"
 #include "glt/primitives.hpp"
 #include "glt/utils.hpp"
-
-// #include "data/Array.hpp"
-
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
+#include "math/vec3.hpp"
 
 #include <algorithm>
 #include <map>
 #include <vector>
 
-const size N_SPRINGS = 20;
+const size_t N_SPRINGS = 20;
 
 using namespace math;
 
-struct Vertex
-{
-    vec3_t position;
-    vec3_t normal;
-};
+#define VERTEX(V, F, Z) V(Vertex, F(vec3_t, position, Z(vec3_t, normal)))
 
-DEFINE_VERTEX_DESC(Vertex,
-                   VERTEX_ATTR(Vertex, position),
-                   VERTEX_ATTR(Vertex, normal));
+DEFINE_VERTEX(VERTEX)
 
 template<typename Vertex>
 void
@@ -39,7 +32,7 @@ sphere(glt::Mesh<Vertex> &mesh, real radius, int slices, int stacks);
 
 template<typename V>
 void
-icoSphere(glt::Mesh<V> &mesh, size subdivs);
+icoSphere(glt::Mesh<V> &mesh, size_t subdivs);
 
 struct Anim
 {
@@ -52,7 +45,7 @@ struct Anim
 
     GLuint particle_vertex_array[2];
 
-    index particle_source; // 0 or 1
+    size_t particle_source; // 0 or 1
 
     // vec4 of (x, y, z, 1/m)
     GLuint particle_pos_mass_handle[2];
@@ -71,7 +64,7 @@ struct Anim
     double pc_sum;
     int pc_count;
 
-    Ref<glt::ShaderProgram> physics_prog;
+    std::shared_ptr<glt::ShaderProgram> physics_prog;
 
     Anim() : fpsTimer(engine) {}
 
@@ -106,8 +99,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     std::vector<vec3_t> particle_vel;
     std::vector<GLint> particle_conn;
 
-    for (index i = 0; i < N_SPRINGS; ++i) {
-        for (index j = 0; j < N_SPRINGS; ++j) {
+    for (const auto i : irange(N_SPRINGS)) {
+        for (const auto j : irange(N_SPRINGS)) {
             // arrange in grid of N_SPRINGS by N_SPRINGS
             vec3_t x = vec3(real(i * N_SPRINGS), 0, real(j * N_SPRINGS));
             real inv_mass = real(N_SPRINGS * N_SPRINGS); // accumulated
@@ -158,14 +151,14 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     GL_CALL(glBufferData,
             GL_ARRAY_BUFFER,
             sizeof(vec4_t) * particle_pos_mass.size(),
-            0,
+            nullptr,
             GL_STREAM_DRAW);
 
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, particle_vel_handle[1]);
     GL_CALL(glBufferData,
             GL_ARRAY_BUFFER,
             sizeof(vec3_t) * particle_vel.size(),
-            0,
+            nullptr,
             GL_STREAM_DRAW);
 
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, particle_conn_handle);
@@ -175,19 +168,19 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
             &particle_conn[0],
             GL_STREAM_DRAW);
 
-    for (index i = 0; i < 2; ++i) {
+    for (const auto i : irange(2)) {
         GL_CALL(glBindVertexArray, particle_vertex_array[i]);
 
         GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, particle_pos_mass_handle[i]);
-        GL_CALL(glVertexAttribPointer, 0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+        GL_CALL(glVertexAttribPointer, 0, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
         GL_CALL(glEnableVertexAttribArray, 0);
 
         GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, particle_vel_handle[i]);
-        GL_CALL(glVertexAttribPointer, 1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        GL_CALL(glVertexAttribPointer, 1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
         GL_CALL(glEnableVertexAttribArray, 1);
 
         GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, particle_conn_handle);
-        GL_CALL(glVertexAttribIPointer, 2, 4, GL_INT, 0, 0);
+        GL_CALL(glVertexAttribIPointer, 2, 4, GL_INT, 0, nullptr);
         GL_CALL(glEnableVertexAttribArray, 2);
 
         GL_CALL(glBindVertexArray, 0);
@@ -197,7 +190,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     GL_CALL(glGenTextures, 2, particle_vel_tex);
     GL_CALL(glGenTextures, 1, &particle_conn_tex);
 
-    for (index i = 0; i < 2; ++i) {
+    for (const auto i : irange(2)) {
         GL_CALL(glBindTexture, GL_TEXTURE_BUFFER, particle_pos_mass_tex[i]);
         GL_CALL(glTexBuffer,
                 GL_TEXTURE_BUFFER,
@@ -212,7 +205,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     GL_CALL(glBindTexture, GL_TEXTURE_BUFFER, particle_conn_tex);
     GL_CALL(glTexBuffer, GL_TEXTURE_BUFFER, GL_RGBA32I, particle_conn_handle);
 
-    physics_prog = makeRef(new glt::ShaderProgram(engine.shaderManager()));
+    physics_prog = std::make_shared<glt::ShaderProgram>(engine.shaderManager());
     physics_prog->addShaderFile("physics.vert");
     physics_prog->bindAttribute("position_mass", 0);
     physics_prog->bindAttribute("velocity", 1);
@@ -244,7 +237,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &)
     rt->clearColor(glt::color(vec4(real(1))));
     rt->clear();
 
-    Ref<glt::ShaderProgram> prog = engine.shaderManager().program("sphere");
+    auto prog = engine.shaderManager().program("sphere");
     ASSERT(prog);
 
     GL_CALL(glActiveTexture, GL_TEXTURE0);
@@ -282,7 +275,7 @@ Anim::animate(const ge::Event<ge::AnimationEvent> &)
 
     GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
 
-    index particle_dest = (1 + particle_source) % 2;
+    auto particle_dest = (1 + particle_source) % 2;
 
     physics_prog->use();
 
@@ -328,6 +321,7 @@ main(int argc, char *argv[])
     ge::EngineOptions opts;
     Anim anim;
     anim.link();
+    anim.engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
     opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));
     opts.parse(&argc, &argv);
     return anim.engine.run(opts);

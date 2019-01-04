@@ -1,4 +1,5 @@
 #include "nbody_phys.hpp"
+
 #include "err/err.hpp"
 
 namespace {
@@ -26,7 +27,7 @@ const double m_e = double(9.109382e-31) * kg;
 const double e0 = double(1.6e-19) * As;
 } // namespace
 
-ParticleRef::ParticleRef(ParticleArray &a, size_t _i) : array(a), i(_i) {}
+ParticleRef::ParticleRef(ParticleArray &a, uint32_t _i) : array(a), i(_i) {}
 
 ParticleArray::ParticleArray(size_t s)
   : _n(0)

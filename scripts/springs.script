@@ -12,5 +12,5 @@ bindKey [+P] { incGamma +0.1 }
 
 postInit {
     camera.speed 0.5
-    camera.sensitivity 0.00015
+    camera.sensitivity 0.00005
 }
