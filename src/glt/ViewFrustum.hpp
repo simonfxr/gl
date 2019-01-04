@@ -3,7 +3,7 @@
 
 #include "glt/conf.hpp"
 
-#include "math/mat4/type.hpp"
+#include "math/mat4.hpp"
 #include "math/plane.hpp"
 #include "math/vec3.hpp"
 

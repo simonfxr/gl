@@ -170,13 +170,9 @@ stat(const std::string &path)
 std::string
 absolutePath(const std::string &path)
 {
-    wchar_t abs[MAX_PATH];
+    char abs[4096];
 
-    auto wpath = utf8ToUtf16(path);
-    if (!wpath)
-        return "";
-
-    DWORD ret = GetFullPathNameW(wpath->c_str(), sizeof abs, abs, NULL);
+    DWORD ret = GetFullPathNameA(path.c_str(), sizeof abs, abs, NULL);
     if (ret == 0)
         return "";
 
@@ -186,11 +182,7 @@ absolutePath(const std::string &path)
         return "";
     }
 
-    auto res = utf16ToUtf8(abs, ret);
-    if (!res) {
-        return "";
-    }
-    return std::move(*res);
+    return abs;
 }
 
 std::string

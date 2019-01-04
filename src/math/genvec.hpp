@@ -130,7 +130,7 @@ struct genvec
     template<typename U>
     static constexpr genvec convert(const genvec<U, N> &v)
     {
-        genvec ret;
+        genvec ret{};
         for (size_t i = 0; i < N; ++i)
             ret[i] = T(v[i]);
         return ret;

@@ -28,7 +28,8 @@ enum OptionCase
     GLTrace,
     AASamples,
     VSync,
-    DisableRender
+    DisableRender,
+    DumpShaders
 };
 
 struct Option
@@ -75,7 +76,11 @@ const Option OPTIONS[] = {
     { "--disable-render",
       "BOOL",
       DisableRender,
-      "disable calling the renderfunction" }
+      "disable calling the renderfunction" },
+    { "--dump-shaders",
+      "BOOL",
+      DumpShaders,
+      "dump shader source after preprocessing" },
 };
 
 struct State
@@ -209,6 +214,12 @@ State::option(OptionCase opt, const char *arg)
             return false;
         }
         return true;
+    case DumpShaders:
+        if (!parse_bool(arg, options.dumpShaders)) {
+            CMDWARN("--dump-shaders: not a boolean option");
+            return false;
+        }
+        return true;
         // default:
         //     FATAL_ERR("unhandled option_case");
         //     return false;
@@ -224,6 +235,7 @@ EngineOptions::EngineOptions()
   , mode(Animate)
   , traceOpenGL(false)
   , disableRender(false)
+  , dumpShaders(false)
 {
     window.settings.majorVersion = 3;
     window.settings.minorVersion = 3;

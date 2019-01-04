@@ -192,6 +192,8 @@ Engine::run(const EngineOptions &opts)
 #endif
     }
 
+    self->shaderManager.dumpShadersEnable(opts.dumpShaders);
+
     self->skipRender = opts.disableRender;
 
     std::string wd = opts.workingDirectory;
