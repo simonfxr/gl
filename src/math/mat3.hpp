@@ -1,170 +1,54 @@
 #ifndef MATH_MAT3_HPP
 #define MATH_MAT3_HPP
 
-#include "math/real.hpp"
-#include "math/vec3.hpp"
+#include "math/genmat.hpp"
 
 namespace math {
+using mat3_t = genmat<real, 3>;
 
-struct glmat3;
+using aligned_mat3_t = HU_ALIGN(16) mat3_t;
 
-struct mat3_t
-{
-    static const size_t column_size = 3;
-    typedef vec3_t column_type;
-    typedef column_type::component_type component_type;
-    static const size_t size = column_size * column_type::size;
-    static const size_t padded_size = column_size * column_type::padded_size;
-    typedef component_type buffer[size];
-    typedef glmat3 gl;
-
-    column_type columns[column_size];
-
-    constexpr mat3_t() : columns{} {}
-
-    constexpr inline const column_type &operator[](size_t i) const
-    {
-        return columns[i];
-    }
-
-    constexpr inline column_type &operator[](size_t i) { return columns[i]; }
-
-    constexpr inline component_type operator()(size_t i, size_t j) const
-    {
-        return columns[i][j];
-    }
-
-    constexpr inline component_type &operator()(size_t i, size_t j)
-    {
-        return columns[i][j];
-    }
-};
-
-typedef mat3_t HU_ALIGN(16) aligned_mat3_t;
-
-inline constexpr mat3_t
-mat3(const vec3_t &c1, const vec3_t &c2, const vec3_t &c3)
-{
-    mat3_t A;
-    A[0] = c1;
-    A[1] = c2;
-    A[2] = c3;
-    return A;
-}
-
-inline constexpr mat3_t
+constexpr mat3_t
 mat3()
 {
-    return mat3(vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1));
+    return mat3_t::identity();
 }
 
-inline constexpr mat3_t
+constexpr mat3_t
 mat3(real x)
 {
-    return mat3(vec3(x), vec3(x), vec3(x));
+    return mat3_t::fill(x);
 }
 
-inline constexpr mat3_t
-mat3(const mat3_t::buffer mat)
+template<typename T>
+constexpr mat3_t
+mat3(const genmat<T, 3> &A)
 {
-    mat3_t A;
-    A[0] = vec3(&mat[0]);
-    A[1] = vec3(&mat[3]);
-    A[2] = vec3(&mat[6]);
-    return A;
+    return mat3_t::convert(A);
 }
 
-inline constexpr void
-load(mat3_t::buffer b, const mat3_t &m)
+constexpr mat3_t
+mat3(mat3_t::buffer b)
 {
-    load(&b[0], m[0]);
-    load(&b[3], m[1]);
-    load(&b[6], m[2]);
+    return mat3_t::load(b);
 }
 
-inline constexpr mat3_t
-operator+(const mat3_t &A, const mat3_t &B)
+constexpr mat3_t
+mat3(const genvec<real, 3> &c1,
+     const genvec<real, 3> &c2,
+     const genvec<real, 3> &c3)
 {
-    return mat3(A[0] + B[0], A[1] + B[1], A[2] + B[2]);
+    return { c1, c2, c3 };
 }
 
-inline constexpr mat3_t
-operator-(const mat3_t &A, const mat3_t &B)
+constexpr mat3_t
+mat3(const genmat<real, 4> &A)
 {
-    return mat3(A[0] - B[0], A[1] - B[1], A[2] - B[2]);
-}
-
-inline constexpr mat3_t
-transpose(const mat3_t &A)
-{
-    mat3_t B;
+    mat3_t B{};
     for (size_t i = 0; i < 3; ++i)
         for (size_t j = 0; j < 3; ++j)
-            B(i, j) = A[j][i];
+            B[i][j] = A[i][j];
     return B;
-}
-
-inline constexpr mat3_t operator*(const mat3_t &A, const mat3_t &B)
-{
-    mat3_t AT = transpose(A);
-    mat3_t C;
-    for (size_t i = 0; i < 3; ++i)
-        for (size_t j = 0; j < 3; ++j)
-            C(i, j) = dot(AT[j], B[i]);
-    return C;
-}
-
-inline constexpr vec3_t operator*(const mat3_t &A, const vec3_t &v)
-{
-    return v[0] * A[0] + v[1] * A[1] + v[2] * A[2];
-    // mat3_t AT = transpose(A);
-    // return vec3(dot(v, AT[0]), dot(v, AT[1]), dot(v, AT[2]));
-}
-
-inline constexpr mat3_t operator*(const mat3_t &A, real x)
-{
-    return mat3(A[0] * x, A[1] * x, A[2] * x);
-}
-
-inline constexpr mat3_t operator*(real x, const mat3_t &A)
-{
-    return A * x;
-}
-
-inline constexpr mat3_t
-operator/(const mat3_t &A, real x)
-{
-    return A * math::recip(x);
-}
-
-inline constexpr mat3_t &
-operator+=(mat3_t &A, const mat3_t &B)
-{
-    return A = A + B;
-}
-
-inline constexpr mat3_t &
-operator-=(mat3_t &A, const mat3_t &B)
-{
-    return A = A - B;
-}
-
-inline constexpr mat3_t &
-operator*=(mat3_t &A, real x)
-{
-    return A = A * x;
-}
-
-inline constexpr mat3_t &
-operator*=(mat3_t &A, const mat3_t &B)
-{
-    return A = A * B;
-}
-
-inline constexpr mat3_t &
-operator/=(mat3_t &A, real x)
-{
-    return A = A / x;
 }
 
 inline constexpr real
@@ -233,48 +117,24 @@ inverse(const mat3_t &A)
 inline mat3_t
 orthonormalBasis(const mat3_t &A)
 {
-    direction3_t u = normalize(A[0]);
-    direction3_t v = normalize(A[1] - projectAlong(A[1], u));
+    auto u = normalize(A[0]);
+    auto v = normalize(A[1] - projectAlong(A[1], u));
     return mat3(u, v, cross(u, v));
 }
 
-inline constexpr vec3_t
-transform(const mat3_t &A, const vec3_t &v)
+inline constexpr mat3_t
+coordinateSystem(const genvec<real, 3> &a)
 {
-    return A * v;
-}
-
-inline constexpr point3_t
-transformPoint(const mat3_t &A, const point3_t &v)
-{
-    return transform(A, v);
-}
-
-inline constexpr vec3_t
-transformVector(const mat3_t &A, const vec3_t &v)
-{
-    return transform(A, v);
-}
-
-inline bool
-equal(const mat3_t &A, const mat3_t &B, real epsi)
-{
-    return equal(A[0], B[0], epsi) && equal(A[1], B[1], epsi) &&
-           equal(A[2], B[2], epsi);
-}
-
-inline mat3_t
-coordinateSystem(const vec3_t &a)
-{
-    vec3_t aa = abs(a);
-    vec3_t b{};
+    using V3 = genvec<real, 3>;
+    auto aa = abs(a);
+    V3 b{};
 
     if (aa[0] > aa[1] && aa[0] > aa[2])
-        b = vec3(-a[2], 0, a[0]);
+        b = V3{ -a[2], 0, a[0] };
     else if (aa[1] > aa[2])
-        b = vec3(a[1], -a[0], 0);
+        b = V3{ a[1], -a[0], 0 };
     else
-        b = vec3(0, a[2], -a[1]);
+        b = V3{ 0, a[2], -a[1] };
 
     return mat3(a, b, cross(a, b));
 }
