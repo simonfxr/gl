@@ -2,8 +2,9 @@
 #define GLT_TRANSFORMATIONS_HPP
 
 #include "glt/conf.hpp"
-#include "math/mat3/type.hpp"
-#include "math/mat4/type.hpp"
+#include "math/mat3.hpp"
+#include "math/mat4.hpp"
+#include "math/vec3.hpp"
 
 namespace glt {
 

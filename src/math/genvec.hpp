@@ -18,7 +18,7 @@
     }
 
 #define DEF_GENVEC_SCALAR_OP(op)                                               \
-    template<typename U>                                                       \
+    template<typename U, typename = std::enable_if_t<!is_genvec_v<U>>>         \
     constexpr auto operator op(const U &rhs) const                             \
     {                                                                          \
         using V = std::decay_t<decltype(components[0] op rhs)>;                \
@@ -36,7 +36,7 @@
     }
 
 #define DEF_GENVEC_SCALAR_MUT_OP(op)                                           \
-    template<typename U>                                                       \
+    template<typename U, typename = std::enable_if_t<!is_genvec_v<U>>>         \
     constexpr genvec &operator CONCAT(op, =)(const U &rhs)                     \
     {                                                                          \
         return *this = *this op rhs;                                           \
@@ -54,6 +54,20 @@ namespace math {
 
 template<typename T, size_t N>
 struct gltype_mapping;
+
+template<typename T, size_t N>
+struct genvec;
+
+template<typename T>
+struct is_genvec : public std::false_type
+{};
+
+template<typename T, size_t N>
+struct is_genvec<genvec<T, N>> : public std::true_type
+{};
+
+template<typename T>
+inline constexpr bool is_genvec_v = is_genvec<T>::value;
 
 template<typename T, size_t N>
 struct genvec
@@ -116,7 +130,7 @@ struct genvec
     {
         static_assert(sizeof...(args) == N,
                       "can only initialize using exactly N elements");
-        return { std::forward<Args>(args)... };
+        return { T{ std::forward<Args>(args) }... };
     }
 
     static constexpr genvec load(const buffer b)
@@ -400,7 +414,7 @@ const T &
 get(const math::genvec<T, N> &v)
 {
     static_assert(I < N);
-    return v.components[I];
+    return v[I];
 }
 
 template<size_t I, typename T, size_t N>
@@ -408,7 +422,7 @@ T &
 get(math::genvec<T, N> &v)
 {
     static_assert(I < N);
-    return v.components[I];
+    return v[I];
 }
 } // namespace std
 
