@@ -1,5 +1,6 @@
-#include "err/err.hpp"
 #include "sys/io.hpp"
+
+#include "err/err.hpp"
 
 namespace sys {
 namespace io {
@@ -12,7 +13,7 @@ namespace io {
     return SE_UNKNOWN
 
 HandleError
-open(const std::string &, HandleMode, Handle *)
+open(const std::string &path, HandleMode mode, Handle *handle)
 {
     UNDEFINED;
 }

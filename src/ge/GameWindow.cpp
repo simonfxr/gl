@@ -216,7 +216,7 @@ GameWindow::Data::makeWindow(const WindowOptions &opts)
                    opts.settings.debugContext ? GL_TRUE : GL_FALSE);
 
     GLFWwindow *win = glfwCreateWindow(
-      opts.width, opts.height, opts.title.c_str(), nullptr, nullptr);
+      int(opts.width), int(opts.height), opts.title.c_str(), nullptr, nullptr);
     return win;
 }
 
@@ -345,7 +345,7 @@ GameWindow::Data::glfw_mouse_button_callback(GLFWwindow *win,
       Key::make(action == GLFW_PRESS ? keystate::Pressed : keystate::Released,
                 convertGLFWMouseButton(button));
     me->events.mouseButton.raise(
-      makeEvent(MouseButton(me->self, me->mouse_x, me->mouse_y, b)));
+      makeEvent(MouseButton(me->self, int16_t(me->mouse_x), int16_t(me->mouse_y), b)));
 }
 
 void

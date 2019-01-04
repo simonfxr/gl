@@ -28,11 +28,11 @@ struct GLT_API Viewport
 
 typedef uint32_t RenderTargetBuffers;
 
-static const RenderTargetBuffers RT_COLOR_BUFFER = 1u;
-static const RenderTargetBuffers RT_DEPTH_BUFFER = 2u;
-static const RenderTargetBuffers RT_STENCIL_BUFFER = 4u;
+inline constexpr RenderTargetBuffers RT_COLOR_BUFFER = 1u;
+inline constexpr RenderTargetBuffers RT_DEPTH_BUFFER = 2u;
+inline constexpr RenderTargetBuffers RT_STENCIL_BUFFER = 4u;
 
-static const uint32_t RT_ALL_BUFFERS =
+inline constexpr RenderTargetBuffers RT_ALL_BUFFERS =
   RT_COLOR_BUFFER | RT_DEPTH_BUFFER | RT_STENCIL_BUFFER;
 
 struct GLT_API RenderTarget

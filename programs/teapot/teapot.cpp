@@ -1,8 +1,12 @@
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
+
 #define MESH_CUBEMESH
 // #define MESH_MESH
 
-#define RENDER_GLOW 1
-// #define RENDER_NOGLOW 1
+// #define RENDER_GLOW 1
+#define RENDER_NOGLOW 1
 
 #include "defs.hpp"
 
@@ -268,9 +272,9 @@ Anim::init(const Event<InitEvent> &ev)
         screenQuad.send();
     }
 
-    camera.frame().origin = vec3(6.36, 5.87, 1.97);
-    camera.frame().setXZ(normalize(vec3(-0.29, 0.f, 0.95f)),
-                         normalize(vec3(-0.8f, -0.54f, -0.25f)));
+    camera.frame().origin = vec3(6.36_r, 5.87_r, 1.97_r);
+    camera.frame().setXZ(normalize(vec3(-0.29_r, 0_r, 0.95_r)),
+                         normalize(vec3(-0.8_r, -0.54_r, -0.25_r)));
 
     teapot1.frame.setXZ(vec3(1.f, 0.f, 0.f), vec3(0.f, 1.f, 0.f));
     teapot1.frame.origin = vec3(5.f, 4.f, 4.f);
@@ -289,7 +293,7 @@ Anim::init(const Event<InitEvent> &ev)
     teapot2.material.diffuseContribution = 0.6f;
     teapot2.material.specularContribution = 0.15f;
     teapot2.material.shininess = 35;
-    teapot2.material.glow = 0.2;
+    teapot2.material.glow = 0.2_r;
     teapot2.color = glt::color(0xFF, 0x8C, 0x00);
 
     {
@@ -321,10 +325,10 @@ Anim::init(const Event<InitEvent> &ev)
         for (size_t i = 0; i < glow_kernel.size(); ++i) {
             float x = float(i) - N2;
 
-            const float SIG = 0.84089642;
+            const float SIG = 0.84089642_r;
             const float SIG2 = SIG * SIG;
-            const float SQRT_PI = 1.7724538509055;
-            const float SQRT_2 = 1.4142135623730;
+            const float SQRT_PI = 1.7724538509055_r;
+            const float SQRT_2 = 1.4142135623730_r;
             glow_kernel[i] = 1.f / (SQRT_PI * SQRT_2 * SIG) *
                              math::exp(-1 / (2 * SIG2) * (x * x));
         }
@@ -558,7 +562,7 @@ Anim::renderLight()
     rm.geometryTransform().translate(light);
     rm.geometryTransform().scale(vec3(0.66f));
 
-    MaterialProperties mat = { 0.8f, 0.2f, 1.f, 120.f, 0.8 };
+    MaterialProperties mat = { 0.8f, 0.2f, 1.f, 120.f, 0.8f };
 
     setupTeapotShader("teapot", vec4(1.f, 1.f, 0.f, 1.f), mat);
     sphereModel.draw();
@@ -607,8 +611,8 @@ Anim::renderTable(const std::string &shader)
 
     vec4_t color = glt::color(0xcd, 0x85, 0x3f).vec4();
     MaterialProperties mat{};
-    mat.ambientContribution = 0.55;
-    mat.diffuseContribution = 0.6;
+    mat.ambientContribution = 0.55f;
+    mat.diffuseContribution = 0.6f;
     mat.specularContribution = 0.075f;
     mat.shininess = 30;
 

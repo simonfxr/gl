@@ -10,6 +10,11 @@
 #include <libunwind.h>
 #include <unistd.h>
 
+#elif defined(HU_OS_WINDOWS)
+
+#include <Windows.h>
+
+#include <DbgHelp.h>
 #endif
 
 extern "C" void
@@ -107,6 +112,106 @@ print_stacktrace(sys::io::OutStream &out, int skip)
     out << "  end of stacktrace" << sys::io::endl;
 }
 
+#elif defined(HU_OS_WINDOWS)
+
+struct ProcessContext
+{
+    HANDLE process;
+    ProcessContext()
+    {
+        process = GetCurrentProcess();
+        SymInitialize(process, NULL, TRUE);
+        SymSetOptions(SYMOPT_LOAD_LINES);
+    }
+};
+
+void
+print_stacktrace(sys::io::OutStream &out, int skip)
+{
+    static ProcessContext proc_context;
+    auto process = proc_context.process;
+
+    HANDLE thread = GetCurrentThread();
+    CONTEXT context = {};
+    context.ContextFlags = CONTEXT_FULL;
+    RtlCaptureContext(&context);
+
+    STACKFRAME frame = {};
+#ifdef HU_BITS_32
+    DWORD machine = IMAGE_FILE_MACHINE_I386;
+    frame.AddrPC.Offset = context.Eip;
+    frame.AddrFrame.Offset = context.Ebp;
+    frame.AddrStack.Offset = context.Esp;
+    const auto tableAccess = SymFunctionTableAccess;
+    const auto getModuleBase = SymGetModuleBase;
+    const auto walk = StackWalk;
+#else
+    DWORD machine = IMAGE_FILE_MACHINE_AMD64;
+    frame.AddrPC.Offset = context.Rip;
+    frame.AddrFrame.Offset = context.Rbp;
+    frame.AddrStack.Offset = context.Rsp;
+    const auto tableAccess = SymFunctionTableAccess64;
+    const auto getModuleBase = SymGetModuleBase64;
+    const auto walk = StackWalk64;
+#endif
+    frame.AddrPC.Mode = AddrModeFlat;
+    frame.AddrFrame.Mode = AddrModeFlat;
+    frame.AddrStack.Mode = AddrModeFlat;
+
+    while (walk(machine,
+                process,
+                thread,
+                &frame,
+                &context,
+                nullptr,
+                tableAccess,
+                getModuleBase,
+                nullptr)) {
+
+        if (skip > 0)
+            --skip;
+
+        auto functionAddress = frame.AddrPC.Offset;
+
+        auto moduleBase = SymGetModuleBase(process, frame.AddrPC.Offset);
+        char moduleBuff[MAX_PATH];
+        // bool have_module = false;
+        // if (moduleBase &&
+        //    GetModuleFileNameA((HINSTANCE) moduleBase, moduleBuff, MAX_PATH))
+        //    { have_module = true;
+        // }
+
+        char symbolBuffer[sizeof(IMAGEHLP_SYMBOL) + 255];
+        PIMAGEHLP_SYMBOL symbol = (PIMAGEHLP_SYMBOL) symbolBuffer;
+        symbol->SizeOfStruct = (sizeof IMAGEHLP_SYMBOL) + 255;
+        symbol->MaxNameLength = 254;
+
+        out << " ";
+        if (SymGetSymFromAddr(process, frame.AddrPC.Offset, NULL, symbol)) {
+            DWORD offset = 0;
+            IMAGEHLP_LINE line;
+            line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
+
+            out << symbol->Name << "()";
+
+            if (SymGetLineFromAddr(
+                  process, frame.AddrPC.Offset, &offset, &line)) {
+                out << "[" << line.FileName << ":" << line.LineNumber << "]"
+                    << sys::io::endl;
+            }
+        } else {
+            char buf[20];
+            snprintf(buf,
+                     sizeof buf,
+                     "%p",
+                     reinterpret_cast<void *>(frame.AddrPC.Offset));
+            out << "ip:" << buf;
+        }
+        // if (have_module)
+        //    out << " in " << moduleBuff;
+        out << sys::io::endl;
+    }
+}
 #else
 
 void

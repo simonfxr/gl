@@ -13,24 +13,24 @@ namespace glt {
 
 namespace {
 
-using Generator = void (*)(GLsizei, GLuint *);
-using Destructor = void (*)(GLsizei, const GLuint *);
+using Generator = PFNGLGENBUFFERSPROC;
+using Destructor = PFNGLDELETEBUFFERSPROC;
 
-void
+void APIENTRY
 gen_programs(GLsizei n, GLuint *names)
 {
     for (GLsizei i = 0; i < n; ++i)
         names[i] = glCreateProgram();
 }
 
-void
+void APIENTRY
 del_programs(GLsizei n, const GLuint *names)
 {
     for (GLsizei i = 0; i < n; ++i)
         glDeleteProgram(names[i]);
 }
 
-void
+void APIENTRY
 del_shaders(GLsizei n, const GLuint *names)
 {
     for (GLsizei i = 0; i < n; ++i)
@@ -66,7 +66,7 @@ init_table()
     auto *table = new ObjectKind[ObjectType::Count];
     kind_table = table;
     int i = 0;
-#define KIND(g, d, k) table[ObjectType::k] = ObjectKind(g, d, #k), ++i
+#define KIND(g, d, k) (table[ObjectType::k] = ObjectKind(g, d, #k)), ++i
     KIND(gen_programs, del_programs, Program);
     KIND(nullptr, del_shaders, Shader);
     KIND(glGenBuffers, glDeleteBuffers, Buffer);

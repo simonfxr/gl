@@ -1,3 +1,7 @@
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
+
 #define SYS_IO_STREAM_CPP 1
 
 #include "err/err.hpp"

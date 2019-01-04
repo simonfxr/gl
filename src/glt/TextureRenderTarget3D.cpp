@@ -49,8 +49,8 @@ TextureRenderTarget3D::createTexture(bool delete_old)
             GL_TEXTURE_3D,
             0,
             GLint(_color_format),
-            width(),
-            height(),
+            GLsizei(width()),
+            GLsizei(height()),
             _depth,
             0,
             GL_RGB,
@@ -104,7 +104,7 @@ TextureRenderTarget3D::targetAttachment(
                     GL_TEXTURE_3D,
                     *_sampler.data()->handle(),
                     0,
-                    ta.size);
+                    GLsizei(ta.size));
             // _sampler.data()->bind();
             // GL_CALL(glFramebufferTextureLayer, GL_FRAMEBUFFER,
             // GL_COLOR_ATTACHMENT0, _sampler.data()->handle(), ta.size_t, 0);

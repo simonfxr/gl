@@ -31,7 +31,7 @@ struct CubeMesh : public Mesh<T>
         }
     }
 
-    uint32_t size() { return this->verticesSize(); }
+    size_t size() { return this->verticesSize(); }
 
     void primType(GLenum) { ERR("cannot change primType"); }
 };

@@ -227,10 +227,10 @@ MeshBase::initVertexAttribs()
                 *vertex_array_name,
                 *vertex_buffer_name,
                 GLuint(i),
-                a.ncomponents,
+                GLint(a.ncomponents),
                 a.component_type,
                 gl_bool(a.normalized),
-                desc->sizeof_vertex,
+                GLsizei(desc->sizeof_vertex),
                 GLintptr(a.offset));
     }
 }
@@ -340,10 +340,10 @@ MeshBase::drawElementsInstanced(size_t num, GLenum primType)
     enableAttributes();
     GL_CALL(glDrawElementsInstanced,
             primType,
-            gpu_elements_size,
+            GLsizei(gpu_elements_size),
             GL_UNSIGNED_INT,
             nullptr,
-            num);
+            GLsizei(num));
     disableAttributes();
 }
 
@@ -380,7 +380,7 @@ MeshBase::drawArraysInstanced(size_t num, GLenum primType)
         return;
     validatePrimType(primType);
     enableAttributes();
-    GL_CALL(glDrawArraysInstanced, primType, 0, gpu_vertices_size, num);
+    GL_CALL(glDrawArraysInstanced, primType, 0, GLsizei(gpu_vertices_size), GLsizei(num));
     disableAttributes();
 }
 

@@ -17,6 +17,10 @@ if(USE_UNWIND_STACKTRACES)
   set(ERR_LIBS unwind dw)
 endif()
 
+if(SYS_WINDOWS)
+	list(APPEND ERR_LIBS Dbghelp)
+endif()
+
 set(SYS_SRC
   sys/fs/fs_default.cpp
   sys/io.cpp

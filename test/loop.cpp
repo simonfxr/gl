@@ -40,7 +40,7 @@ Game::handleInputEvents()
 ge::GameLoop::time
 Game::now()
 {
-    return sys::queryTimer();
+    return ge::GameLoop::time(sys::queryTimer());
 }
 
 void

@@ -1,4 +1,5 @@
 #include "glt/TextureRenderTarget.hpp"
+
 #include "err/err.hpp"
 #include "glt/utils.hpp"
 #include "opengl.hpp"
@@ -48,15 +49,15 @@ TextureRenderTarget::resize(size_t w, size_t h)
             GL_CALL(glNamedRenderbufferStorageEXT,
                     *_depth_buffer,
                     GL_DEPTH_COMPONENT,
-                    w,
-                    h);
+                    GLsizei(w),
+                    GLsizei(h));
         else
             GL_CALL(glNamedRenderbufferStorageMultisampleEXT,
                     *_depth_buffer,
-                    _samples,
+                    GLsizei(_samples),
                     GL_DEPTH_COMPONENT,
-                    w,
-                    h);
+                    GLsizei(w),
+                    GLsizei(h));
 
         GL_CALL(glNamedFramebufferRenderbufferEXT,
                 *_frame_buffer,
@@ -95,10 +96,10 @@ TextureRenderTarget::createTexture(bool delete_old)
     } else if (ttype == GL_TEXTURE_2D_MULTISAMPLE) {
         GL_CALL(glTexImage2DMultisample,
                 GL_TEXTURE_2D_MULTISAMPLE,
-                _samples,
+                GLsizei(_samples),
                 GL_RGBA,
-                width(),
-                height(),
+                GLsizei(width()),
+                GLsizei(height()),
                 GL_FALSE);
     } else {
         ERR("unexpected Texture type");
@@ -125,11 +126,10 @@ TextureRenderTarget::doDeactivate()
 }
 
 bool
-TextureRenderTarget::checkFramebufferStatus(GLFramebufferObject &buffer,
-                                            GLenum target)
+TextureRenderTarget::checkFramebufferStatus(GLFramebufferObject& fb, GLenum target)
 {
     GLenum status;
-    GL_ASSIGN_CALL(status, glCheckNamedFramebufferStatusEXT, *buffer, target);
+    GL_ASSIGN_CALL(status, glCheckNamedFramebufferStatusEXT, *fb, target);
     if (status == GL_FRAMEBUFFER_COMPLETE)
         return true;
 

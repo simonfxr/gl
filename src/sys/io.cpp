@@ -1,4 +1,9 @@
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
+
 #include "sys/io.hpp"
+
 #include "err/err.hpp"
 #include "sys/module.hpp"
 

@@ -18,7 +18,7 @@
 
 using namespace math;
 
-static const size SIMULATION_FPS = 50;
+static const size_t SIMULATION_FPS = 50;
 
 #define USE_NO_SIM
 
@@ -126,7 +126,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
       transformVector(rm.geometryTransform().viewMatrix(), light_dir));
 
     {
-        Ref<glt::ShaderProgram> program =
+        auto program =
           engine.shaderManager().program("ground");
         ASSERT_MSG(program, "ground program not found");
 

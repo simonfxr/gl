@@ -1,7 +1,11 @@
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
+
 #include "ge/EngineOptions.hpp"
+
 #include "glt/utils.hpp"
 #include "opengl.hpp"
-
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
 

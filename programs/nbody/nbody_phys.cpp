@@ -2,6 +2,8 @@
 #include "err/err.hpp"
 
 namespace {
+using namespace math;
+using math::sqrt;
 
 const double m = double(1e15);
 const double sec = double(1e12);
@@ -24,16 +26,16 @@ const double m_e = double(9.109382e-31) * kg;
 const double e0 = double(1.6e-19) * As;
 } // namespace
 
-ParticleRef::ParticleRef(ParticleArray &a, defs::index _i) : array(a), i(_i) {}
+ParticleRef::ParticleRef(ParticleArray &a, size_t _i) : array(a), i(_i) {}
 
-ParticleArray::ParticleArray(defs::size_t s)
+ParticleArray::ParticleArray(size_t s)
   : _n(0)
   , _size(s)
-  , _position(new point3_t[UNSIZE(s)])
-  , _velocity(new vec3_t[UNSIZE(s)])
-  , _inv_mass(new real[UNSIZE(s)])
-  , _charge(new real[UNSIZE(s)])
-  , _radius(new real[UNSIZE(s)])
+  , _position(new point3_t[s])
+  , _velocity(new vec3_t[s])
+  , _inv_mass(new real[s])
+  , _charge(new real[s])
+  , _radius(new real[s])
 {}
 
 ParticleArray::~ParticleArray()
@@ -45,7 +47,7 @@ ParticleArray::~ParticleArray()
     delete[] _radius;
 }
 
-Particle ParticleArray::operator[](index i) const
+Particle ParticleArray::operator[](size_t i) const
 {
     Particle p;
     p.position = _position[i];
@@ -56,7 +58,7 @@ Particle ParticleArray::operator[](index i) const
     return p;
 }
 
-ParticleRef ParticleArray::operator[](index i)
+ParticleRef ParticleArray::operator[](size_t i)
 {
     return ParticleRef(*this, i);
 }
@@ -65,11 +67,11 @@ namespace {
 
 template<typename T>
 T *
-resize(T *arr, size old_size, size new_size)
+resize(T *arr, size_t old_size, size_t new_size)
 {
-    T *brr = new T[UNSIZE(new_size)];
-    size k = old_size < new_size ? old_size : new_size;
-    for (index i = 0; i < k; ++i)
+    auto brr = new T[new_size];
+    auto k = old_size < new_size ? old_size : new_size;
+    for (size_t i = 0; i < k; ++i)
         brr[i] = arr[i];
     delete[] arr;
     return brr;
@@ -81,7 +83,7 @@ void
 ParticleArray::push_back(const Particle &p)
 {
     if (_n >= _size) {
-        defs::size_t old_size = _size;
+        size_t old_size = _size;
         _size = old_size < 4 ? 8 : old_size * 2;
 
         _position = resize(_position, old_size, _size);
@@ -96,7 +98,7 @@ ParticleArray::push_back(const Particle &p)
 }
 
 void
-ParticleArray::put(index i, const Particle &p)
+ParticleArray::put(size_t i, const Particle &p)
 {
     _position[i] = p.position;
     _velocity[i] = p.velocity;
@@ -133,13 +135,13 @@ Simulation::init()
      * v = sqrt(e^2 / (4 pi epsi0 m_red) 1/r)
      */
 
-#define v(r) sqrt(e0 *e0 / (4 * math::PI * epsi0 * m_e) * r)
+#define v(r) math::sqrt(e0 *e0 / (4 * math::PI * epsi0 * m_e) * r)
 
     Particle e;
     Particle p;
 
-    p.position = vec3(real(0), real(10e-15), real(0)) * m;
-    e.position = vec3(real(10e-15), real(10e-15), real(0)) * m;
+    p.position = vec3(real(0), real(10e-15), real(0)) * real(m);
+    e.position = vec3(real(10e-15), real(10e-15), real(0)) * real(m);
 
     vec3_t r = e.position - p.position;
 
@@ -174,12 +176,12 @@ Simulation::compute_acceleration(vec3_t *acceleration,
                                  const vec3_t *velocity)
 {
 
-    for (defs::index i = 0; i < particles.size(); ++i) {
+    for (size_t i = 0; i < particles.size(); ++i) {
         Particle a = particles[i];
         vec3_t E = vec3(real(0));
         vec3_t B = vec3(real(0));
 
-        for (defs::index j = 0; j < particles.size(); ++j) {
+        for (size_t j = 0; j < particles.size(); ++j) {
             if (i == j)
                 continue;
             const Particle b = particles[j];
@@ -209,28 +211,28 @@ Simulation::simulate_frame()
     vec3_t *vel = new vec3_t[particles.size()];
 
     compute_acceleration(accel, particles._position, particles._velocity);
-    for (defs::index i = 0; i < particles.size(); ++i) {
+    for (size_t i = 0; i < particles.size(); ++i) {
         pos[i] = particles._position[i] + dt2 * particles._velocity[i];
         vel[i] = particles._velocity[i] + dt2 * accel[i];
         accel[i] *= real(1) / real(6);
     }
 
     compute_acceleration(accel1, pos, vel);
-    for (defs::index i = 0; i < particles.size(); ++i) {
+    for (size_t i = 0; i < particles.size(); ++i) {
         pos[i] = particles._position[i] + dt2 * vel[i];
         vel[i] = particles._velocity[i] + dt2 * accel1[i];
         accel[i] += (real(2) / real(6)) * accel1[i];
     }
 
     compute_acceleration(accel1, pos, vel);
-    for (defs::index i = 0; i < particles.size(); ++i) {
+    for (size_t i = 0; i < particles.size(); ++i) {
         pos[i] = particles._position[i] + dt * vel[i];
         vel[i] = particles._velocity[i] + dt * accel1[i];
         accel[i] += (real(2) / real(6)) * accel1[i];
     }
 
     compute_acceleration(accel1, pos, vel);
-    for (defs::index i = 0; i < particles.size(); ++i) {
+    for (size_t i = 0; i < particles.size(); ++i) {
         vec3_t a = accel[i] + (real(1) / real(6)) * accel1[i];
         particles._position[i] +=
           dt * particles._velocity[i] + real(.5) * dt * dt * a;

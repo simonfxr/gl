@@ -67,7 +67,7 @@ std::string
 cwd()
 {
     std::wstring dir(MAX_PATH, '\0');
-    auto len = GetCurrentDirectoryW(dir.size(), dir.data());
+    auto len = GetCurrentDirectoryW(DWORD(dir.size()), dir.data());
     if (!len) {
         WARN("GetCurrentDirectory() failed");
         return "";
@@ -133,7 +133,7 @@ stat(const std::string &path)
                   : File;
     std::wstring wabs(MAX_PATH, 0);
     auto len =
-      GetFullPathNameW(wpath.c_str(), wabs.size(), wabs.data(), nullptr);
+      GetFullPathNameW(wpath.c_str(), DWORD(wabs.size()), wabs.data(), nullptr);
     if (!len)
         return std::nullopt;
     stat.absolute = utf16ToUtf8(wabs.data(), len);
@@ -145,7 +145,7 @@ absolutePath(const std::string &path)
 {
     auto wpath = utf8ToUtf16(path);
     std::wstring abs(MAX_PATH, '\0');
-    auto len = GetFullPathNameW(wpath.c_str(), abs.size(), abs.data(), NULL);
+    auto len = GetFullPathNameW(wpath.c_str(), DWORD(abs.size()), abs.data(), NULL);
     if (!len)
         return "";
 

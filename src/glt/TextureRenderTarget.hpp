@@ -48,8 +48,7 @@ struct GLT_API TextureRenderTarget : public RenderTarget
 
     virtual void createTexture(bool delete_old = true);
 
-    static bool checkFramebufferStatus(GLFramebufferObject &buffer,
-                                       GLenum target);
+    static bool checkFramebufferStatus(GLFramebufferObject& fb, GLenum target);
 
 protected:
     virtual void doDeactivate() override;
