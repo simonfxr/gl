@@ -2,6 +2,7 @@
 #define MATH_MAT4_HPP
 
 #include "math/genmat.hpp"
+#include "math/mat3.hpp"
 
 namespace math {
 
@@ -40,7 +41,7 @@ mat4(const genvec<real, 4> &c1,
      const genvec<real, 4> &c3,
      const genvec<real, 4> &c4)
 {
-    return mat4_t::make(c1, c2, c3, c4);
+    return { c1, c2, c3, c4 };
 }
 
 constexpr mat4_t

@@ -5,7 +5,6 @@
 
 #include "data/Array.hpp"
 #include "glt/TextureSampler.hpp"
-#include "math/mat2.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/vec2.hpp"
@@ -13,6 +12,12 @@
 #include "math/vec4.hpp"
 
 #include <string>
+
+namespace math {
+
+struct mat2_t;
+
+} // namespace math
 
 namespace glt {
 

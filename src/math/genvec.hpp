@@ -82,7 +82,7 @@ struct genvec
 
     constexpr T &operator[](size_t i) { return components[i]; }
 
-    constexpr T operator[](size_t i) const { return components[i]; }
+    constexpr const T &operator[](size_t i) const { return components[i]; }
 
     template<typename F>
     constexpr auto map(F &&f) const
@@ -144,7 +144,7 @@ struct genvec
     template<typename U>
     static constexpr genvec convert(const genvec<U, N> &v)
     {
-        genvec ret;
+        genvec ret{};
         for (size_t i = 0; i < N; ++i)
             ret[i] = T(v[i]);
         return ret;
@@ -171,7 +171,7 @@ struct genvec
 template<typename T, size_t N>
 struct gltype_mapping
 {
-    using type = genvec<T, N>;
+    using type = void;
 };
 
 template<typename T, size_t N>
