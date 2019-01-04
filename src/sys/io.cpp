@@ -235,7 +235,7 @@ make_finally(F &&f)
 std::pair<std::unique_ptr<char[]>, size_t>
 readFile(sys::io::OutStream &err, const std::string &path) noexcept
 {
-    FILE *in = fopen(path.c_str(), "re");
+    FILE *in = fopen(path.c_str(), "r");
     auto close_in = make_finally([in]() {
         if (in)
             fclose(in);
@@ -257,11 +257,12 @@ readFile(sys::io::OutStream &err, const std::string &path) noexcept
 
         {
             auto contents = std::make_unique<char[]>(size + 1);
-            if (fread(contents.get(), size, 1, in) != 1)
+            if (size == 0)
+                return std::make_pair(std::move(contents), size);
+            if (fread(contents.get(), 1, size, in) == 0)
                 goto fail;
-
             contents[size] = '\0';
-            return std::make_pair(std::move(contents), size_t(size));
+            return std::make_pair(std::move(contents), size);
         }
     }
 

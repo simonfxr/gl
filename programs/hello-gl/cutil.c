@@ -1,5 +1,9 @@
 #include "defs.h"
 
+#if HU_COMP_MSVC_P
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
+
 #include <glad/glad.h>
 #include <math.h>
 #include <stdio.h>
@@ -12,7 +16,7 @@
 void *
 file_contents(const char *filename, GLint *length)
 {
-    FILE *f = fopen(filename, "re");
+    FILE *f = fopen(filename, "r");
     void *buffer;
 
     if (!f) {
@@ -61,7 +65,7 @@ read_tga(const char *filename, int *width, int *height)
     size_t read;
     void *pixels;
 
-    f = fopen(filename, "rbe");
+    f = fopen(filename, "rb");
 
     if (!f) {
         fprintf(stderr, "Unable to open %s for reading\n", filename);

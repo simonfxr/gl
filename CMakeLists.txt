@@ -27,7 +27,7 @@ macro(set_option var default type docstring)
   set(${var} ${${var}} CACHE ${type} ${docstring} FORCE)
 endmacro()
 
-set_option(BUILD_SHARED_LIBS TRUE BOOL "TRUE to build shared libs, FALSE to build static libs")
+set_option(BUILD_SHARED_LIBS FALSE BOOL "TRUE to build shared libs, FALSE to build static libs")
 
 if(BUILD_TYPE STREQUAL "Release")
   set(GLDEBUG_DEFAULT FALSE)

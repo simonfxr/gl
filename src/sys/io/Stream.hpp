@@ -11,6 +11,10 @@
 #define STDIN_FILE __acrt_iob_func(0)
 #define STDOUT_FILE __acrt_iob_func(1)
 #define STDERR_FILE __acrt_iob_func(2)
+#else
+#define STDIN_FILE ::stdin
+#define STDOUT_FILE ::stdout
+#define STDERR_FILE ::stderr
 #endif
 
 #undef stdin
@@ -18,9 +22,7 @@
 #undef stderr
 #undef EOF
 
-#define STDIN_FILE ::stdin
-#define STDOUT_FILE ::stdout
-#define STDERR_FILE ::stderr
+
 
 namespace sys {
 

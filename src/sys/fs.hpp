@@ -7,9 +7,9 @@
 #include <string>
 #include <vector>
 
-#ifdef HU_OS_POSIX_P
+#ifdef HU_OS_POSIX
 #include "sys/fs/fs_unix.hpp"
-#elif defined(HU_OS_WINDOWS_P)
+#elif defined(HU_OS_WINDOWS)
 #include "sys/fs/fs_windows.hpp"
 #else
 #error "no Filesystem implementation available"
