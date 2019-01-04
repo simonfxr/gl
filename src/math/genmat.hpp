@@ -384,57 +384,57 @@ determinant(const genmat<T, 4> &A)
     return d;
 }
 
-// template<typename T>
-// constexpr genmat<T, 2>
-// inverse(const genmat<T, 2> &A)
-// {
-//     genmat<T, 2> B{};
-//     B[0][0] = A[1][1];
-//     B[0][1] = -A[1][0];
-//     B[1][0] = -A[0][1];
-//     B[1][1] = A[0][0];
-//     return B / determinant(A);
-// }
+template<typename T>
+constexpr genmat<T, 2>
+inverse(const genmat<T, 2> &A)
+{
+    genmat<T, 2> B{};
+    B[0][0] = A[1][1];
+    B[0][1] = -A[1][0];
+    B[1][0] = -A[0][1];
+    B[1][1] = A[0][0];
+    return B / determinant(A);
+}
 
-// template<typename T>
-// constexpr genmat<T, 3>
-// inverse(const genmat<T, 3> &A)
-// {
-//     const auto AT = transpose(A);
-//     struct
-//     {
-//         typename genmat<T, 3>::buffer a;
-//     } m;
-//     load(m.a, AT);
+template<typename T>
+constexpr genmat<T, 3>
+inverse(const genmat<T, 3> &A)
+{
+    const auto AT = transpose(A);
+    struct
+    {
+        typename genmat<T, 3>::buffer a;
+    } m;
+    load(m.a, AT);
 
-//     auto t4 = m.a[0] * m.a[4];
-//     auto t6 = m.a[0] * m.a[5];
-//     auto t8 = m.a[1] * m.a[3];
-//     auto t10 = m.a[2] * m.a[3];
-//     auto t12 = m.a[1] * m.a[6];
-//     auto t14 = m.a[2] * m.a[6];
-//     // determinant
-//     auto t16 = (t4 * m.a[8] - t6 * m.a[7] - t8 * m.a[8] + t10 * m.a[7] +
-//                 t12 * m.a[5] - t14 * m.a[4]);
+    auto t4 = m.a[0] * m.a[4];
+    auto t6 = m.a[0] * m.a[5];
+    auto t8 = m.a[1] * m.a[3];
+    auto t10 = m.a[2] * m.a[3];
+    auto t12 = m.a[1] * m.a[6];
+    auto t14 = m.a[2] * m.a[6];
+    // determinant
+    auto t16 = (t4 * m.a[8] - t6 * m.a[7] - t8 * m.a[8] + t10 * m.a[7] +
+                t12 * m.a[5] - t14 * m.a[4]);
 
-//     if (t16 == 0)
-//         return {};
-//     auto t17 = 1 / t16;
+    if (t16 == 0)
+        return {};
+    auto t17 = 1 / t16;
 
-//     typename genmat<T, 3>::buffer a{};
+    typename genmat<T, 3>::buffer a{};
 
-//     a[0] = (m.a[4] * m.a[8] - m.a[5] * m.a[7]) * t17;
-//     a[1] = -(m.a[1] * m.a[8] - m.a[2] * m.a[7]) * t17;
-//     a[2] = (m.a[1] * m.a[5] - m.a[2] * m.a[4]) * t17;
-//     a[3] = -(m.a[3] * m.a[8] - m.a[5] * m.a[6]) * t17;
-//     a[4] = (m.a[0] * m.a[8] - t14) * t17;
-//     a[5] = -(t6 - t10) * t17;
-//     a[6] = (m.a[3] * m.a[7] - m.a[4] * m.a[6]) * t17;
-//     a[7] = -(m.a[0] * m.a[7] - t12) * t17;
-//     a[8] = (t4 - t8) * t17;
+    a[0] = (m.a[4] * m.a[8] - m.a[5] * m.a[7]) * t17;
+    a[1] = -(m.a[1] * m.a[8] - m.a[2] * m.a[7]) * t17;
+    a[2] = (m.a[1] * m.a[5] - m.a[2] * m.a[4]) * t17;
+    a[3] = -(m.a[3] * m.a[8] - m.a[5] * m.a[6]) * t17;
+    a[4] = (m.a[0] * m.a[8] - t14) * t17;
+    a[5] = -(t6 - t10) * t17;
+    a[6] = (m.a[3] * m.a[7] - m.a[4] * m.a[6]) * t17;
+    a[7] = -(m.a[0] * m.a[7] - t12) * t17;
+    a[8] = (t4 - t8) * t17;
 
-//     return transpose(genmat<T, 3>::load(a));
-// }
+    return transpose(genmat<T, 3>::load(a));
+}
 
 template<typename T>
 constexpr genmat<T, 4>
@@ -487,31 +487,31 @@ inverse(const genmat<T, 4> &A)
     return Ainv * recip(det);
 }
 
-// template<typename T>
-// genmat<T, 3>
-// orthonormalBasis(const genmat<T, 3> &A)
-// {
-//     auto u = normalize(A[0]);
-//     auto v = normalize(A[1] - projectAlong(A[1], u));
-//     return { u, v, cross(u, v) };
-// }
+template<typename T>
+genmat<T, 3>
+orthonormalBasis(const genmat<T, 3> &A)
+{
+    auto u = normalize(A[0]);
+    auto v = normalize(A[1] - projectAlong(A[1], u));
+    return { u, v, cross(u, v) };
+}
 
-// template<typename T>
-// constexpr genmat<T, 3>
-// coordinateSystem(const genvec<T, 3> &a)
-// {
-//     auto aa = abs(a);
-//     using V = genvec<T, 3>;
-//     V b{};
+template<typename T>
+constexpr genmat<T, 3>
+coordinateSystem(const genvec<T, 3> &a)
+{
+    auto aa = abs(a);
+    using V = genvec<T, 3>;
+    V b{};
 
-//     if (aa[0] > aa[1] && aa[0] > aa[2])
-//         b = V::make(-a[2], T{}, a[0]);
-//     else if (aa[1] > aa[2])
-//         b = V::make(a[1], -a[0], T{});
-//     else
-//         b = V::make(T{}, a[2], -a[1]);
-//     return mat3(a, b, cross(a, b));
-// }
+    if (aa[0] > aa[1] && aa[0] > aa[2])
+        b = V::make(-a[2], T{}, a[0]);
+    else if (aa[1] > aa[2])
+        b = V::make(a[1], -a[0], T{});
+    else
+        b = V::make(T{}, a[2], -a[1]);
+    return mat3(a, b, cross(a, b));
+}
 
 struct glmat2;
 
