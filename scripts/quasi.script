@@ -1,6 +1,4 @@
 load "default.script"
 
-addShaderPath "programs/quasi/shaders"
-
 bindShader "render" "render.vert" "render.frag" 0 "position"
 bindShader "postproc" "postproc.vert" "postproc.frag" 0 "position"

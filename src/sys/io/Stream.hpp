@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <string_view>
 
 #ifdef HU_OS_WINDOWS
 #define STDIN_FILE __acrt_iob_func(0)
@@ -239,6 +240,9 @@ protected:
 
 SYS_API OutStream &
 operator<<(OutStream &out, const std::string &str);
+
+SYS_API OutStream &
+operator<<(OutStream &out, std::string_view str);
 
 SYS_API OutStream &
 operator<<(OutStream &out, const char *str);

@@ -1,7 +1,7 @@
 #include "glt/GLObject.hpp"
 #include "glt/utils.hpp"
 
-#include <map>
+#include <unordered_map>
 
 #if defined(DEBUG_GLOBJECT) || defined(DEBUG_ALL)
 #define DBG(...) __VA_ARGS__
@@ -53,7 +53,7 @@ struct ObjectKind
 // has to initialized after glewInit()
 const ObjectKind *kind_table;
 
-DBG(std::map<GLuint, std::string> *stacktrace_map;)
+DBG(std::unordered_map<GLuint, std::string> *stacktrace_map;)
 
 void
 init_table()

@@ -51,6 +51,12 @@ Preprocessor::process(const std::string &str)
     process(str.data(), uint32_t(str.length()));
 }
 
+namespace {
+bool is_newline(char c) {
+	return c == '\n' || c == '\r';
+}
+}
+
 void
 Preprocessor::process(const char *begin, size_t size)
 {
@@ -76,17 +82,17 @@ Preprocessor::process(const char *begin, size_t size)
            match != nullptr) {
 
         const char *lineBegin = match;
-        while (lineBegin > begin && lineBegin[-1] != '\n' &&
+        while (lineBegin > begin && !is_newline(lineBegin[-1]) &&
                (isspace(lineBegin[-1]) != 0))
             --lineBegin;
 
-        const char *eol = strchr(match, '\n');
-        if (eol == nullptr)
-            eol = end;
+		auto eol = match;
+		while (*eol && !is_newline(*eol))
+			++eol;
 
         str = eol;
 
-        if (lineBegin > begin && lineBegin[-1] != '\n')
+        if (lineBegin > begin && !is_newline(lineBegin[-1]))
             continue;
 
         const char *directiveBegin = match + 1;

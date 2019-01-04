@@ -30,9 +30,9 @@ struct GE_API GLContextInfo
       : depthBits(8)
       , stencilBits(0)
       , antialiasingLevel(0)
-      , majorVersion(0)
-      , minorVersion(0)
-      , debugContext(false)
+      , majorVersion(3)
+      , minorVersion(3)
+      , debugContext(true)
       , coreProfile(false)
     {}
 };
@@ -68,7 +68,7 @@ struct GE_API GameWindow
 
     void swapBuffers();
 
-    void contextInfo(GLContextInfo &info) const;
+	GLContextInfo contextInfo() const;
 
     size_t windowHeight() const;
 

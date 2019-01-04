@@ -192,7 +192,7 @@ ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
 
     if (log_len > 0) {
 
-        auto log = std::make_unique<GLchar>(size_t(log_len));
+        auto log = std::make_unique<GLchar[]>(size_t(log_len));
         GL_CALL(glGetProgramInfoLog, progh, log_len, nullptr, log.get());
 
         auto logBegin = log.get();

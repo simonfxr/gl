@@ -235,7 +235,7 @@ make_finally(F &&f)
 std::pair<std::unique_ptr<char[]>, size_t>
 readFile(sys::io::OutStream &err, const std::string &path) noexcept
 {
-    FILE *in = fopen(path.c_str(), "r");
+    FILE *in = fopen(path.c_str(), "rb");
     auto close_in = make_finally([in]() {
         if (in)
             fclose(in);

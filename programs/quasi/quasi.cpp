@@ -65,9 +65,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
         quadBatch.send();
     }
 
-    ge::GLContextInfo context_info;
-    engine.window().contextInfo(context_info);
-    if (context_info.antialiasingLevel > 0) {
+    if (engine.window().contextInfo().antialiasingLevel > 0) {
         GL_CALL(glEnable, GL_MULTISAMPLE);
         engine.out() << "enableing multisampling" << sys::io::endl;
     }

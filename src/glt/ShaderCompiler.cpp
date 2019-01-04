@@ -6,6 +6,7 @@
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
 #include "sys/measure.hpp"
+#include "data/range.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -13,6 +14,8 @@
 #include <stack>
 #include <utility>
 #include <variant>
+#include <sstream>
+#include <string_view>
 
 template<>
 struct LogTraits<glt::ShaderCompilerQueue>
@@ -251,38 +254,36 @@ includesNeedReload(const ShaderIncludes &incs)
 
 bool
 compilePreprocessed(ShaderCompilerQueue &scq,
-                    GLenum shader_type,
-                    const std::string &name,
-                    GLSLPreprocessor &proc,
-                    GLShaderObject &shader)
+	GLenum shader_type,
+	const std::string &name,
+	GLSLPreprocessor &proc,
+	GLShaderObject &shader)
 {
 
-    auto nsegments = GLsizei(proc.segments.size());
-    const char **segments = &proc.segments[0];
-    const auto *segLengths =
-      reinterpret_cast<const GLint *>(&proc.segLengths[0]);
+	auto nsegments = GLsizei(proc.segments.size());
+	const char **segments = &proc.segments[0];
+	const auto *segLengths =
+		reinterpret_cast<const GLint *>(&proc.segLengths[0]);
 
-    shader.ensure(shader_type);
-    if (!shader.valid()) {
-        COMPILER_ERR_MSG(
-          scq, ShaderCompilerError::OpenGLError, "couldnt create shader");
-        return false;
-    }
+	shader.ensure(shader_type);
+	if (!shader.valid()) {
+		COMPILER_ERR_MSG(
+			scq, ShaderCompilerError::OpenGLError, "couldnt create shader");
+		return false;
+	}
 
-    LOG_BEGIN(scq, err::Info);
-    LOG_PUT(scq,
-            std::string("compiling ") +
-              (name.empty() ? " <embedded code> " : name) + " ... ");
-
+	LOG_BEGIN(scq, err::Info);
+	LOG_PUT(scq,
+		std::string("compiling ") +
+		(name.empty() ? " <embedded code> " : name) + " ... ");
 
     if (scq.shaderCompiler().shaderManager().dumpShadersEnabled())    {
         sys::io::OutStream& out = scq.shaderCompiler().shaderManager().out();
         out << sys::io::endl;
-        out << "BEGIN SHADER SOURCE" << sys::io::endl;
-
-        for (int i = 0; i < nsegments; ++i)
-            out << std::string(segments[i], segLengths[i]);
-
+        out << "BEGIN SHADER SOURCE[" << *shader << "]" << sys::io::endl;
+		for (const auto i : irange(nsegments))
+			out << std::string_view{ segments[i], size_t(segLengths[i]) };
+		out << sys::io::endl;
         out << "END SHADER SOURCE" << sys::io::endl;
     }
 

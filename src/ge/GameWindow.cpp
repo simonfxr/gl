@@ -549,10 +549,10 @@ GameWindow::swapBuffers()
     glfwSwapBuffers(self->win);
 }
 
-void
-GameWindow::contextInfo(GLContextInfo &info) const
+GLContextInfo
+GameWindow::contextInfo() const
 {
-    info = self->context_info;
+    return self->context_info;
 }
 
 GameWindowInit::GameWindowInit()

@@ -20,8 +20,7 @@ namespace {
 void
 runPrintContextInfo(const Event<CommandEvent> &e)
 {
-    ge::GLContextInfo c;
-    e.info.engine.window().contextInfo(c);
+	auto c = e.info.engine.window().contextInfo();
     e.info.engine.out() << "OpenGL Context Information" << sys::io::endl
                         << "  Version:\t" << c.majorVersion << "."
                         << c.minorVersion << sys::io::endl
@@ -229,9 +228,7 @@ runBindShader(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 void
 runInitGLDebug(const Event<CommandEvent> &e)
 {
-    ge::GLContextInfo c;
-    e.info.engine.window().contextInfo(c);
-    if (c.debugContext) {
+    if (e.info.engine.window().contextInfo().debugContext) {
         glt::initDebug();
     } else {
         e.info.engine.out()
