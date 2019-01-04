@@ -2,11 +2,10 @@
 #define VERTEX_DESCRIPTION_HPP
 
 #include "err/err.hpp"
-#include "glt/conf.hpp"
-#include "opengl.hpp"
-
 #include "glt/color.hpp"
-#include "math/glvec/type.hpp"
+#include "glt/conf.hpp"
+#include "math/glvec.hpp"
+#include "opengl.hpp"
 
 namespace glt {
 
@@ -164,7 +163,7 @@ VD_DEF_GLVEC_ATTR_INFO(math::mat4_t);
 #define VD_GL_DESC_DECL_Z(t, n)
 
 #define VD_GL_DESC_V(name, nattrs)                                             \
-    const ::glt::VertexDescription<name> gl::descr = {                          \
+    const ::glt::VertexDescription<name> gl::descr = {                         \
         sizeof(gl),   alignof(gl),      nattrs,                                \
         #name "::gl", gl::vertex_attrs, gl::store                              \
     };

@@ -8,9 +8,9 @@
 #include "glt/GLObject.hpp"
 #include "glt/VertexDescription.hpp"
 #include "glt/color.hpp"
-#include "math/vec2/type.hpp"
-#include "math/vec3/type.hpp"
-#include "math/vec4/type.hpp"
+#include "math/vec2.hpp"
+#include "math/vec3.hpp"
+#include "math/vec4.hpp"
 #include "opengl.hpp"
 
 namespace glt {
