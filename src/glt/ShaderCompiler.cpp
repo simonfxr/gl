@@ -274,20 +274,17 @@ compilePreprocessed(ShaderCompilerQueue &scq,
             std::string("compiling ") +
               (name.empty() ? " <embedded code> " : name) + " ... ");
 
-#if 0
 
-    {
-        sys::io::OutStream& out = scq.compiler.shaderManager.out();
+    if (scq.shaderCompiler().shaderManager().dumpShadersEnabled())    {
+        sys::io::OutStream& out = scq.shaderCompiler().shaderManager().out();
         out << sys::io::endl;
         out << "BEGIN SHADER SOURCE" << sys::io::endl;
 
-        for (uint32_t i = 0; i < nsegments; ++i)
+        for (int i = 0; i < nsegments; ++i)
             out << std::string(segments[i], segLengths[i]);
 
         out << "END SHADER SOURCE" << sys::io::endl;
     }
-
-#endif
 
     GL_CALL(glShaderSource, *shader, nsegments, segments, segLengths);
     double wct;

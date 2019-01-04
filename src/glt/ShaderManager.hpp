@@ -75,6 +75,9 @@ struct GLT_API ShaderManager
     bool cacheShaderObjects() const;
     void cacheShaderObjects(bool);
 
+    bool dumpShadersEnabled() const;
+    void dumpShadersEnable(bool);
+
     const std::shared_ptr<ShaderCache> &globalShaderCache();
 
     ShaderCompiler &shaderCompiler();

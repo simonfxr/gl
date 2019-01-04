@@ -4,6 +4,7 @@
 #include "math/mdefs.hpp"
 
 #include <cmath>
+#include <limits>
 
 namespace math {
 
