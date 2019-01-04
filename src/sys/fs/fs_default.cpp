@@ -1,16 +1,29 @@
-#include <cstdio>
-#include <sstream>
-
 #define SYS_IO_STREAM_NOWARN 1
+#define _CRT_SECURE_NO_WARNINGS 1
+
+#include "sys/fs.hpp"
 
 #include "err/err.hpp"
-#include "sys/fs.hpp"
+
+#include <cstdio>
+#include <sstream>
 
 namespace sys {
 namespace fs {
 namespace def {
 
 namespace {
+
+bool
+is_pathsep(char c)
+{
+#ifdef HU_OS_WINDOWS
+    return c == '\\' || c == '/';
+#else
+    return c == SEPARATOR;
+#endif
+}
+
 size_t
 dropTrailingSeps(const std::string &path)
 {
@@ -18,7 +31,7 @@ dropTrailingSeps(const std::string &path)
         return std::string::npos;
     size_t pos = path.length() - 1;
 
-    while (pos > 0 && path[pos] == '/')
+    while (pos > 0 && is_pathsep(path[pos]))
         --pos;
 
     return pos;
@@ -42,19 +55,22 @@ dirname(const std::string &path)
     if (path.empty())
         return ".";
 
-    size_t pos = path.rfind(SEPARATOR, dropTrailingSeps(path));
+	auto len = path.size();
+    while (len > 0 && !is_pathsep(path[len - 1]))
+        --len;
 
-    if (pos != std::string::npos) {
-        while (pos > 1 && path[pos - 1] == SEPARATOR)
-            --pos;
+	// FIXME: properly handling windows paths is going to be a pain...
+    if (is_pathsep(path[len])) {
+        while (len > 1 && is_pathsep(path[len - 1]))
+            --len;
     } else {
-        pos = 0;
+        len = 0;
     }
 
-    if (pos == 0)
+    if (len == 0)
         return "/";
 
-    return path.substr(0, pos);
+    return path.substr(0, len);
 }
 
 std::string

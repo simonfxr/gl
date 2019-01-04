@@ -1,21 +1,21 @@
 #include "glt/ShaderCompiler.hpp"
 
+#include "data/range.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/GLSLPreprocessor.hpp"
 #include "glt/utils.hpp"
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
 #include "sys/measure.hpp"
-#include "data/range.hpp"
 
 #include <algorithm>
 #include <functional>
 #include <queue>
+#include <sstream>
 #include <stack>
+#include <string_view>
 #include <utility>
 #include <variant>
-#include <sstream>
-#include <string_view>
 
 template<>
 struct LogTraits<glt::ShaderCompilerQueue>
@@ -254,36 +254,36 @@ includesNeedReload(const ShaderIncludes &incs)
 
 bool
 compilePreprocessed(ShaderCompilerQueue &scq,
-	GLenum shader_type,
-	const std::string &name,
-	GLSLPreprocessor &proc,
-	GLShaderObject &shader)
+                    GLenum shader_type,
+                    const std::string &name,
+                    GLSLPreprocessor &proc,
+                    GLShaderObject &shader)
 {
 
-	auto nsegments = GLsizei(proc.segments.size());
-	const char **segments = &proc.segments[0];
-	const auto *segLengths =
-		reinterpret_cast<const GLint *>(&proc.segLengths[0]);
+    auto nsegments = GLsizei(proc.segments.size());
+    const char **segments = &proc.segments[0];
+    const auto *segLengths =
+      reinterpret_cast<const GLint *>(&proc.segLengths[0]);
 
-	shader.ensure(shader_type);
-	if (!shader.valid()) {
-		COMPILER_ERR_MSG(
-			scq, ShaderCompilerError::OpenGLError, "couldnt create shader");
-		return false;
-	}
+    shader.ensure(shader_type);
+    if (!shader.valid()) {
+        COMPILER_ERR_MSG(
+          scq, ShaderCompilerError::OpenGLError, "couldnt create shader");
+        return false;
+    }
 
-	LOG_BEGIN(scq, err::Info);
-	LOG_PUT(scq,
-		std::string("compiling ") +
-		(name.empty() ? " <embedded code> " : name) + " ... ");
+    LOG_BEGIN(scq, err::Info);
+    LOG_PUT(scq,
+            std::string("compiling ") +
+              (name.empty() ? " <embedded code> " : name) + " ... ");
 
-    if (scq.shaderCompiler().shaderManager().dumpShadersEnabled())    {
-        sys::io::OutStream& out = scq.shaderCompiler().shaderManager().out();
+    if (scq.shaderCompiler().shaderManager().dumpShadersEnabled()) {
+        sys::io::OutStream &out = scq.shaderCompiler().shaderManager().out();
         out << sys::io::endl;
         out << "BEGIN SHADER SOURCE[" << *shader << "]" << sys::io::endl;
-		for (const auto i : irange(nsegments))
-			out << std::string_view{ segments[i], size_t(segLengths[i]) };
-		out << sys::io::endl;
+        for (const auto i : irange(nsegments))
+            out << std::string_view{ segments[i], size_t(segLengths[i]) };
+        out << sys::io::endl;
         out << "END SHADER SOURCE" << sys::io::endl;
     }
 
@@ -377,6 +377,7 @@ std::shared_ptr<ShaderSource>
 ShaderSource::makeFileSource(ShaderManager::ShaderType ty,
                              const std::string &path)
 {
+    ASSERT(sys::fs::exists(path, sys::fs::File));
     return std::make_shared<ShaderSource>(
       Data{ path, ty, { FileSource{ path } } });
 }
@@ -548,6 +549,8 @@ ShaderObject::Data::makeFileShaderObject(std::shared_ptr<ShaderSource> src,
                                          const FileSource &fsrc,
                                          sys::fs::FileTime mtime)
 {
+
+    ASSERT(sys::fs::exists(fsrc.path, sys::fs::File));
     auto so = std::make_unique<ShaderObject>(
       new Data(std::move(src), { FileShaderObject{ fsrc, mtime } }));
     so->self->self = so.get();
@@ -771,6 +774,8 @@ ShaderCompilerQueue::enqueueReload(const std::shared_ptr<ShaderObject> &so)
     if (self->inQueue.count(so->shaderSource()->key()) > 0)
         return;
     auto exec = [so, this]() -> std::shared_ptr<ShaderObject> {
+        sys::io::stdout() << "reloadIfOutdated: " << so->shaderSource()->key()
+                          << sys::io::endl;
         auto [new_so, state] = so->self->reloadIfOutdated(*this);
         switch (state) {
         case ReloadState::Uptodate:
@@ -794,6 +799,8 @@ ShaderCompilerQueue::enqueueLoad(const std::shared_ptr<ShaderSource> &src)
     if (self->inQueue.count(src->key()) > 0)
         return;
     auto exec = [src, this]() -> std::shared_ptr<ShaderObject> {
+        sys::io::stdout() << "load: " << src->key()
+                          << sys::io::endl;
         return ShaderSource::Data::load(src, *this);
     };
     self->toCompile.push({ src, std::move(exec) });

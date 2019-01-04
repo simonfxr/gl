@@ -83,8 +83,15 @@ absolutePath(const std::string &);
 SYS_API std::string
 lookup(const std::vector<std::string> &, const std::string &);
 
-SYS_API std::optional<ObjectType>
+SYS_API HU_NODISCARD std::optional<ObjectType>
 exists(const std::string &path);
+
+HU_NODISCARD inline bool
+exists(const std::string &path, ObjectType ty)
+{
+    auto ret = exists(path);
+    return ret && *ret == ty;
+}
 
 inline constexpr bool
 operator==(const FileTime &a, const FileTime &b)

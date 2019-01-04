@@ -20,7 +20,7 @@ filetimeToUnixTimestap(const FILETIME *ft)
     return ticks - SEC_TO_UNIX_EPOCH;
 }
 
-std::optional<std::wstring> utf8ToUtf16(const std::string& str) {
+std::wstring utf8ToUtf16(const std::string& str) {
     if (str.empty())
         return std::wstring{};
     auto len = MultiByteToWideChar(
@@ -30,10 +30,8 @@ std::optional<std::wstring> utf8ToUtf16(const std::string& str) {
         int(str.size()),
         nullptr,
         0);
-    if (!len) {
-        ERR("MultiByteToWideChar failed (size)");
-        return std::nullopt;
-    }
+    if (!len)
+        FATAL_ERR("MultiByteToWideChar failed (size)");
     std::wstring ret(size_t(len), wchar_t{});
     len = MultiByteToWideChar(
         CP_UTF8,
@@ -42,14 +40,12 @@ std::optional<std::wstring> utf8ToUtf16(const std::string& str) {
         int(str.size()),
         ret.data(),
         len);
-    if (!len) {
-        ERR("MultiByteToWideChar failed");
-        return std::nullopt;
-    }
+    if (!len)
+        FATAL_ERR("MultiByteToWideChar failed");
     return ret;
 }
 
-std::optional<std::string> utf16ToUtf8(const wchar_t *data, size_t sz) {
+std::string utf16ToUtf8(const wchar_t *data, size_t sz) {
     if (!sz)
         return std::string{};
     auto len = WideCharToMultiByte(
@@ -61,10 +57,8 @@ std::optional<std::string> utf16ToUtf8(const wchar_t *data, size_t sz) {
         0,
         nullptr,
         nullptr);
-    if (!len) {
-        ERR("WideCharToMultiByte failed (size)");
-        return std::nullopt;
-    }
+    if (!len)
+        FATAL_ERR("WideCharToMultiByte failed (size)");
     std::string ret(size_t(len), wchar_t{});
     len = WideCharToMultiByte(
         CP_UTF8,
@@ -75,10 +69,8 @@ std::optional<std::string> utf16ToUtf8(const wchar_t *data, size_t sz) {
         len,
         nullptr,
         nullptr);
-    if (!len) {
-        ERR("WideCharToMultiByte failed");
-        return std::nullopt;
-    }
+    if (!len)
+        FATAL_ERR("WideCharToMultiByte failed");
     ret.resize(strlen(ret.c_str()));
     return ret;
 }
@@ -94,15 +86,13 @@ cwd(const std::string &dir)
 std::string
 cwd()
 {
-    char dir[4096];
-
-    if (GetCurrentDirectoryA(sizeof dir, dir) ==
-        0) { // FIXME: could error on small buffer
+    std::wstring dir(MAX_PATH, '\0');
+    auto len = GetCurrentDirectoryW(dir.size(), dir.data());
+    if (!len) {
         WARN("GetCurrentDirectory() failed");
         return "";
     }
-
-    return absolutePath(dir);
+    return absolutePath(utf16ToUtf8(dir.data(), len));
 }
 
 std::string
@@ -138,7 +128,8 @@ dropTrailingSeparators(const std::string &path)
 bool
 isAbsolute(const std::string &path)
 {
-    return PathIsRelativeA(path.c_str()) != TRUE;
+    auto wstr = utf8ToUtf16(path);
+    return PathIsRelativeW(wstr.c_str()) != TRUE;
 }
 
 std::optional<FileTime>
@@ -150,8 +141,9 @@ modificationTime(const std::string &path)
 std::optional<Stat>
 stat(const std::string &path)
 {
+    auto wpath = utf8ToUtf16(path);
     WIN32_FILE_ATTRIBUTE_DATA attrs;
-    if (GetFileAttributesExA(path.c_str(), GetFileExInfoStandard, &attrs) == 0)
+    if (GetFileAttributesExW(wpath.c_str(), GetFileExInfoStandard, &attrs) == 0)
         return std::nullopt;
 
     Stat stat;
@@ -159,30 +151,30 @@ stat(const std::string &path)
     stat.type = (attrs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
                    ? Directory
                    : File;
-    stat.absolute = absolutePath(path);
-
-    if (stat.absolute.empty())
+    std::wstring wabs(MAX_PATH, 0);
+    auto len = GetFullPathNameW(wpath.c_str(), wabs.size(), wabs.data(), nullptr);
+    if (!len)
         return std::nullopt;
-
+    stat.absolute = utf16ToUtf8(wabs.data(), len);
     return stat;
 }
 
 std::string
 absolutePath(const std::string &path)
 {
-    char abs[4096];
-
-    DWORD ret = GetFullPathNameA(path.c_str(), sizeof abs, abs, NULL);
-    if (ret == 0)
+    auto wpath = utf8ToUtf16(path);
+    std::wstring abs(MAX_PATH, '\0');
+    auto len = GetFullPathNameW(wpath.c_str(), abs.size(), abs.data(), NULL);
+    if (!len)
         return "";
 
-    if (ret > sizeof abs) {
+    if (len > abs.size()) {
         // FIXME: error on small buffer
         WARN("buffer too small");
         return "";
     }
 
-    return abs;
+	return utf16ToUtf8(abs.data(), len);
 }
 
 std::string
