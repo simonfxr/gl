@@ -104,7 +104,7 @@ struct GLT_API RenderManager
     FrameStatistics frameStatistics();
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GLT_API, self);
 };
 
 inline math::vec4_t

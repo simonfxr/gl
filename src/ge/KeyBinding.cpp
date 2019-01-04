@@ -3,8 +3,8 @@
 #include "data/range.hpp"
 #include "ge/module.hpp"
 
-#include <unordered_map>
 #include <algorithm>
+#include <unordered_map>
 
 namespace ge {
 
@@ -142,6 +142,7 @@ keycodeStrings(KeyCode code)
 
         K(Count); ///< Keep last -- the total number of keyboard keys
     }
+    return "<unknown-key>";
 #undef K
 }
 

@@ -83,7 +83,7 @@ private:
     friend struct ShaderCache;
     friend struct ShaderObject;
 
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GLT_API, self);
 
 public:
     explicit ShaderSource(Data &&);
@@ -100,7 +100,7 @@ private:
     friend struct ShaderCompilerQueue;
     friend struct ShaderCache;
 
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GLT_API, self);
 
 public:
     ShaderObject(Data *);
@@ -123,7 +123,7 @@ struct GLT_API ShaderCache
     const ShaderCacheEntries &cacheEntries() const;
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GLT_API, self);
 };
 
 namespace ShaderCompilerError {
@@ -157,7 +157,7 @@ struct GLT_API ShaderCompiler
 
 private:
     friend struct ShaderSource;
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GLT_API, self);
 };
 
 struct GLT_API ShaderCompilerQueue
@@ -176,7 +176,7 @@ struct GLT_API ShaderCompilerQueue
     void compileAll();
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GLT_API, self);
 };
 
 } // namespace glt

@@ -11,7 +11,7 @@ namespace {
 uint32_t
 buffersOf(GameWindow &win)
 {
-	auto cs = win.contextInfo();
+    auto cs = win.contextInfo();
     auto bs = glt::RT_COLOR_BUFFER;
     if (cs.depthBits > 0)
         bs |= glt::RT_DEPTH_BUFFER;

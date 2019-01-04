@@ -373,10 +373,8 @@ CommandProcessor::commandParamType(CommandType type)
         return VarRefParam;
     case Nil:
         FATAL_ERR(ERROR_DEFAULT_STREAM, "Nil has no declarable type");
-        // default:
-        //     ERR(ERROR_DEFAULT_STREAM, "invalid type: returning
-        //     IntegerParam"); return IntegerParam;
     }
+    CASE_UNREACHABLE;
 }
 
 CommandArg

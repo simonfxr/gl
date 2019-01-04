@@ -29,7 +29,6 @@ main()
     GLFWwindow *window;
     float aspect_ratio;
     int fb_width, fb_height;
-    GLenum glew_err;
 
     /* Initialize the library */
     if (glfwInit() == 0) {

@@ -18,7 +18,7 @@ ViewFrustum::ViewFrustum()
 void
 ViewFrustum::update(const mat4_t &mvp)
 {
-    aligned_mat4_t A = transpose(mvp);
+    mat4_t A = transpose(mvp);
 
     planes[PLANE_LEFT] = normalize(plane(A[3] + A[0]));
     planes[PLANE_RIGHT] = normalize(plane(A[3] - A[0]));

@@ -52,10 +52,12 @@ Preprocessor::process(const std::string &str)
 }
 
 namespace {
-bool is_newline(char c) {
-	return c == '\n' || c == '\r';
+bool
+is_newline(char c)
+{
+    return c == '\n' || c == '\r';
 }
-}
+} // namespace
 
 void
 Preprocessor::process(const char *begin, size_t size)
@@ -86,9 +88,9 @@ Preprocessor::process(const char *begin, size_t size)
                (isspace(lineBegin[-1]) != 0))
             --lineBegin;
 
-		auto eol = match;
-		while (*eol && !is_newline(*eol))
-			++eol;
+        auto eol = match;
+        while (*eol && !is_newline(*eol))
+            ++eol;
 
         str = eol;
 

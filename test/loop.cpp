@@ -56,7 +56,7 @@ main()
 
     double T0 = game.now();
     game.loop.run(game);
-    double dur = game.now() - T0;
+    double dur = double(game.now()) - T0;
 
     printf("duration: %lf, avg ticks: %lf, avg draws: %lf\n",
            dur,

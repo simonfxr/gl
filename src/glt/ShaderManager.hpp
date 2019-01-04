@@ -89,7 +89,7 @@ struct GLT_API ShaderManager
     void shutdown();
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GLT_API, self);
 };
 
 } // namespace glt

@@ -686,7 +686,7 @@ void
 World::Data::solveContacts(std::vector<Contact> &contacts, float dt)
 {
     for (const auto k : irange(solve_iterations)) {
-
+        UNUSED(k);
         for (auto &con : contacts) {
             // const Contact& con = contacts[i];
             // Particle& p1 = deref(con.x);

@@ -22,15 +22,15 @@ struct GLT_API GeometryTransform
 {
     GeometryTransform();
 
-    const math::aligned_mat4_t &modelMatrix() const;
-    const math::aligned_mat4_t &viewMatrix() const;
-    const math::aligned_mat4_t &projectionMatrix() const;
-    const math::aligned_mat4_t &inverseProjectionMatrix() const;
+    const math::mat4_t &modelMatrix() const;
+    const math::mat4_t &viewMatrix() const;
+    const math::mat4_t &projectionMatrix() const;
+    const math::mat4_t &inverseProjectionMatrix() const;
 
-    const math::aligned_mat4_t &mvpMatrix() const;
-    const math::aligned_mat4_t &mvMatrix() const;
-    const math::aligned_mat4_t &vpMatrix() const;
-    const math::aligned_mat3_t &normalMatrix() const;
+    const math::mat4_t &mvpMatrix() const;
+    const math::mat4_t &mvMatrix() const;
+    const math::mat4_t &vpMatrix() const;
+    const math::mat3_t &normalMatrix() const;
 
     void loadModelMatrix(const math::mat4_t &m);
 
@@ -65,7 +65,7 @@ struct GLT_API GeometryTransform
     size_t depth() const;
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GLT_API, self);
 };
 
 struct GLT_API SavePointArgs

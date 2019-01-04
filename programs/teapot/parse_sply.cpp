@@ -6,4 +6,3 @@
 #include "parse_sply.hpp"
 
 using namespace math;
-

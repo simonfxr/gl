@@ -20,55 +20,35 @@ filetimeToUnixTimestap(const FILETIME *ft)
     return ticks - SEC_TO_UNIX_EPOCH;
 }
 
-std::wstring utf8ToUtf16(const std::string& str) {
+std::wstring
+utf8ToUtf16(const std::string &str)
+{
     if (str.empty())
         return std::wstring{};
-    auto len = MultiByteToWideChar(
-        CP_UTF8,
-        0,
-        str.data(),
-        int(str.size()),
-        nullptr,
-        0);
+    auto len =
+      MultiByteToWideChar(CP_UTF8, 0, str.data(), int(str.size()), nullptr, 0);
     if (!len)
         FATAL_ERR("MultiByteToWideChar failed (size)");
     std::wstring ret(size_t(len), wchar_t{});
     len = MultiByteToWideChar(
-        CP_UTF8,
-        0,
-        str.data(),
-        int(str.size()),
-        ret.data(),
-        len);
+      CP_UTF8, 0, str.data(), int(str.size()), ret.data(), len);
     if (!len)
         FATAL_ERR("MultiByteToWideChar failed");
     return ret;
 }
 
-std::string utf16ToUtf8(const wchar_t *data, size_t sz) {
+std::string
+utf16ToUtf8(const wchar_t *data, size_t sz)
+{
     if (!sz)
         return std::string{};
     auto len = WideCharToMultiByte(
-        CP_UTF8,
-        0,
-        data,
-        int(sz),
-        nullptr,
-        0,
-        nullptr,
-        nullptr);
+      CP_UTF8, 0, data, int(sz), nullptr, 0, nullptr, nullptr);
     if (!len)
         FATAL_ERR("WideCharToMultiByte failed (size)");
     std::string ret(size_t(len), wchar_t{});
     len = WideCharToMultiByte(
-        CP_UTF8,
-        0,
-        data,
-        int(sz),
-        ret.data(),
-        len,
-        nullptr,
-        nullptr);
+      CP_UTF8, 0, data, int(sz), ret.data(), len, nullptr, nullptr);
     if (!len)
         FATAL_ERR("WideCharToMultiByte failed");
     ret.resize(strlen(ret.c_str()));
@@ -149,10 +129,11 @@ stat(const std::string &path)
     Stat stat;
     stat.mtime.seconds = filetimeToUnixTimestap(&attrs.ftLastWriteTime);
     stat.type = (attrs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
-                   ? Directory
-                   : File;
+                  ? Directory
+                  : File;
     std::wstring wabs(MAX_PATH, 0);
-    auto len = GetFullPathNameW(wpath.c_str(), wabs.size(), wabs.data(), nullptr);
+    auto len =
+      GetFullPathNameW(wpath.c_str(), wabs.size(), wabs.data(), nullptr);
     if (!len)
         return std::nullopt;
     stat.absolute = utf16ToUtf8(wabs.data(), len);
@@ -174,7 +155,7 @@ absolutePath(const std::string &path)
         return "";
     }
 
-	return utf16ToUtf8(abs.data(), len);
+    return utf16ToUtf8(abs.data(), len);
 }
 
 std::string

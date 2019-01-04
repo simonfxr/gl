@@ -244,6 +244,16 @@ mix(real a, real b, real t)
     return a + t * (b - a);
 }
 
+inline constexpr real operator"" _r(long double x)
+{
+    return real(x);
+}
+
+inline constexpr real operator"" _r(unsigned long long x)
+{
+    return real(x);
+}
+
 } // namespace math
 
 #endif

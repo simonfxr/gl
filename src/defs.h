@@ -6,16 +6,17 @@
 #include <hu/macros.h>
 #include <hu/platform.h>
 
-#ifndef DEFS_BEGIN_NAMESPACE
-#define DEFS_BEGIN_NAMESPACE
-#define DEFS_END_NAMESPACE
-#endif
-
 #ifdef HU_OS_WINDOWS
 #define WIN32_LEAND_AND_MEAN 1
 #define VC_EXTRALEAN 1
 #define NOMINMAX 1
 #define NOGDI 1
+#endif
+
+#ifdef HU_COMP_CLANG
+#define CASE_UNREACHABLE
+#else
+#define CASE_UNREACHABLE ASSERT_FAIL()
 #endif
 
 #ifdef __cplusplus

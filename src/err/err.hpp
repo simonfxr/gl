@@ -249,7 +249,7 @@ logPutError(const T &v, E err, const std::string &msg)
 #define WARN(...) DETAIL_ERROR(::err::Warn, __VA_ARGS__)
 #define INFO(...) DETAIL_ERROR(::err::Info, __VA_ARGS__)
 
-#if 1
+#if HU_HAVE_NORETURN_P
 #define DETAIL_FATAL_ERR(lvl, ...)                                             \
     ::err::fatalError(                                                         \
       DETAIL_CURRENT_LOCATION, lvl, ::err::ErrorArgs(__VA_ARGS__))

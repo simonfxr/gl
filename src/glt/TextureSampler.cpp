@@ -92,6 +92,7 @@ TextureSampler::availableAxes(TextureType t)
     case Texture3D:
         return S | T | R;
     }
+    CASE_UNREACHABLE;
 }
 
 } // namespace glt

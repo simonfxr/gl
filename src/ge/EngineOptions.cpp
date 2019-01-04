@@ -220,10 +220,8 @@ State::option(OptionCase opt, const char *arg)
             return false;
         }
         return true;
-        // default:
-        //     FATAL_ERR("unhandled option_case");
-        //     return false;
     }
+    FATAL_ERR("foo");
 }
 
 } // namespace
@@ -318,7 +316,7 @@ EngineOptions::printHelp()
 
     out << "Engine options: " << sys::io::endl;
 
-    int max_col = 0;
+    size_t max_col = 0;
 
     for (const auto &i : OPTIONS) {
         size_t w = 2;

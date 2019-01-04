@@ -256,13 +256,13 @@ sigmoid(real t)
 void
 World::zoom(real t)
 {
-    scale *= 1 + 0.005 * t;
+    scale *= 1 + 0.005_r * t;
 }
 
 void
 World::shift(const vec2_t &a)
 {
-    trans += real(0.005) * a / scale;
+    trans += 0.005_r * a / scale;
 }
 
 void

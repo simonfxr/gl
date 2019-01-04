@@ -404,7 +404,7 @@ inverse(const genmat<T, 3> &A)
     struct
     {
         typename genmat<T, 3>::buffer a;
-    } m;
+    } m{};
     load(m.a, AT);
 
     auto t4 = m.a[0] * m.a[4];

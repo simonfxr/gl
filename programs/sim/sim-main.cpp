@@ -35,10 +35,6 @@ static const vec3_t LIGHT_POS = vec3(11.f, 18.f, 11.f);
 
 static const float FPS_RENDER_CYCLE = 1.f;
 
-static const uint32_t NUM_BLUR_TEXTURES = 1;
-
-static const float BLUR_TEXTURES_UPDATE_CYCLE = 0.04f / NUM_BLUR_TEXTURES;
-
 static const float GAMMA = 1.8f;
 
 static const glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
@@ -285,15 +281,6 @@ Game::animate(const ge::Event<ge::AnimationEvent> &ev)
     world.simulate(dt);
 }
 
-template<typename T>
-static std::string
-to_string(T x)
-{
-    std::stringstream out;
-    out << x;
-    return out.str();
-}
-
 void
 Game::windowResized(const ge::Event<ge::WindowResized> &ev)
 {
@@ -455,7 +442,7 @@ Game::resizeRenderTargets()
 
     if (indirect_rendering) {
 
-        auto stride = 1;
+        auto stride = 1u;
         while (stride * stride < AA_SAMPLES)
             ++stride;
 
@@ -628,10 +615,7 @@ Game::calc_sphere_lod(const Sphere &s)
     lod.level = size_t(screen_rad * SPHERE_LOD_MAX);
     if (lod.level >= SPHERE_LOD_MAX)
         lod.level = SPHERE_LOD_MAX - 1;
-    if (lod.level < 0)
-        lod.level = 0;
 
-    ASSERT(0 <= lod.level);
     ASSERT(lod.level < SPHERE_LOD_MAX);
 
     return lod;
@@ -660,7 +644,7 @@ Game::render_sphere(const Sphere &s, const SphereModel &m)
         inst.colorShininess = vec4(vec3(m.color.vec4()), m.shininess);
 
 #endif
-        DEBUG_ASSERT(0 <= lod.level && lod.level < SPHERE_LOD_MAX);
+        DEBUG_ASSERT(lod.level < SPHERE_LOD_MAX);
         sphere_instances[lod.level].push_back(inst);
 
     } else {
@@ -930,7 +914,8 @@ void
 Game::cmdIncWorldSolveIterations(const ge::Event<ge::CommandEvent> & /*unused*/,
                                  const Array<ge::CommandArg> &args)
 {
-    if (args[0].integer < 0 && world.solve_iterations < -args[0].integer)
+    if (args[0].integer < 0 &&
+        world.solve_iterations < size_t(-args[0].integer))
         world.solve_iterations = 0;
     else
         world.solve_iterations += int32_t(args[0].integer);

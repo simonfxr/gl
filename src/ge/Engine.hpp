@@ -55,7 +55,7 @@ struct GE_API Engine
     void setDevelDataDir(const std::string &);
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GE_API, self);
 };
 
 } // namespace ge

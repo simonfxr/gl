@@ -89,7 +89,7 @@ struct GLT_API ShaderProgram
     bool validate(bool printLogOnError = true);
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GLT_API, self);
     ShaderProgram(const ShaderProgram &);
 };
 

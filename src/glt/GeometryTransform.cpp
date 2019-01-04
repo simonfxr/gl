@@ -20,20 +20,20 @@ inline constexpr uint16_t FLAG_ALL = 0x1F;
 
 struct GeometryTransform::Data
 {
-    aligned_mat4_t viewMatrix;
-    aligned_mat4_t projectionMatrix;
+    mat4_t viewMatrix;
+    mat4_t projectionMatrix;
 
-    aligned_mat4_t mvMatrix{};
-    aligned_mat4_t mvpMatrix{};
-    aligned_mat4_t vpMatrix{};
-    aligned_mat3_t normalMatrix{};
+    mat4_t mvMatrix{};
+    mat4_t mvpMatrix{};
+    mat4_t vpMatrix{};
+    mat3_t normalMatrix{};
 
     uint16_t depth{};
     uint16_t dirty_flags;
 
-    aligned_mat4_t inverseProjectionMatrix;
+    mat4_t inverseProjectionMatrix;
 
-    aligned_mat4_t modelMatrices[GEOMETRY_TRANSFORM_MAX_DEPTH]{};
+    mat4_t modelMatrices[GEOMETRY_TRANSFORM_MAX_DEPTH]{};
     uint64_t mods[GEOMETRY_TRANSFORM_MAX_DEPTH]{};
 
     Data()
@@ -66,25 +66,25 @@ DECLARE_PIMPL_DEL(GeometryTransform)
 
 GeometryTransform::GeometryTransform() : self(new Data) {}
 
-const aligned_mat4_t &
+const mat4_t &
 GeometryTransform::modelMatrix() const
 {
     return self->modelMatrices[self->depth];
 }
 
-const aligned_mat4_t &
+const mat4_t &
 GeometryTransform::viewMatrix() const
 {
     return self->viewMatrix;
 }
 
-const aligned_mat4_t &
+const mat4_t &
 GeometryTransform::projectionMatrix() const
 {
     return self->projectionMatrix;
 }
 
-const aligned_mat4_t &
+const mat4_t &
 GeometryTransform::mvpMatrix() const
 {
     if (self->flag(FLAG_MVP))
@@ -92,7 +92,7 @@ GeometryTransform::mvpMatrix() const
     return self->mvpMatrix;
 }
 
-const aligned_mat4_t &
+const mat4_t &
 GeometryTransform::mvMatrix() const
 {
     if (self->flag(FLAG_MV))
@@ -100,7 +100,7 @@ GeometryTransform::mvMatrix() const
     return self->mvMatrix;
 }
 
-const aligned_mat4_t &
+const mat4_t &
 GeometryTransform::vpMatrix() const
 {
     if (self->flag(FLAG_VP))
@@ -108,7 +108,7 @@ GeometryTransform::vpMatrix() const
     return self->vpMatrix;
 }
 
-const aligned_mat3_t &
+const mat3_t &
 GeometryTransform::normalMatrix() const
 {
     if (self->flag(FLAG_NORMAL)) {
@@ -118,7 +118,7 @@ GeometryTransform::normalMatrix() const
     return self->normalMatrix;
 }
 
-const aligned_mat4_t &
+const mat4_t &
 GeometryTransform::inverseProjectionMatrix() const
 {
     if (self->flag(FLAG_INVPROJ))

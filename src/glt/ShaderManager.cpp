@@ -21,7 +21,7 @@ struct ShaderManager::Data
     uint32_t shader_version;
     ShaderProfile shader_profile;
     bool cache_so;
-    bool dumpShaders{false};
+    bool dumpShaders{ false };
     std::shared_ptr<ShaderCache> globalShaderCache;
     PreprocessorDefinitions globalDefines;
     ShaderCompiler shaderCompiler;
@@ -207,14 +207,17 @@ ShaderManager::cacheShaderObjects(bool docache)
     }
 }
 
-bool ShaderManager::dumpShadersEnabled() const {
+bool
+ShaderManager::dumpShadersEnabled() const
+{
     return self->dumpShaders;
 }
 
-void ShaderManager::dumpShadersEnable(bool enable) {
+void
+ShaderManager::dumpShadersEnable(bool enable)
+{
     self->dumpShaders = enable;
 }
-
 
 const std::shared_ptr<ShaderCache> &
 ShaderManager::globalShaderCache()

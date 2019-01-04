@@ -8,8 +8,6 @@ namespace math {
 
 using mat4_t = genmat<real, 4>;
 
-using aligned_mat4_t = HU_ALIGN(16) mat4_t;
-
 constexpr mat4_t
 mat4()
 {

@@ -81,7 +81,7 @@ static void
 runInitShaderVersion(const Event<InitEvent> &e)
 {
     e.info.success = true;
-	auto c = e.info.engine.window().contextInfo();
+    auto c = e.info.engine.window().contextInfo();
     glt::ShaderManager::ShaderProfile prof =
       c.coreProfile ? glt::ShaderManager::CoreProfile
                     : glt::ShaderManager::CompatibilityProfile;

@@ -17,9 +17,9 @@
 #define DEF_ENUM_BITOR(ty)                                                     \
     inline ty operator|(ty a, ty b) { return ty(int(a) | int(b)); }
 
-#define DECLARE_PIMPL(nm)                                                      \
+#define DECLARE_PIMPL(api, nm)                                                 \
     struct Data;                                                               \
-    struct DataDeleter                                                         \
+    struct api DataDeleter                                                     \
     {                                                                          \
         void operator()(Data *) noexcept;                                      \
     };                                                                         \

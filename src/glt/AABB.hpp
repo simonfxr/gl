@@ -3,7 +3,6 @@
 
 #include "math/real.hpp"
 #include "math/vec3.hpp"
-#include "math/vec3.hpp"
 
 namespace glt {
 

@@ -1,6 +1,7 @@
 #include "glt/ShaderCompiler.hpp"
 
 #include "data/range.hpp"
+#include "err/err.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/GLSLPreprocessor.hpp"
 #include "glt/utils.hpp"
@@ -32,8 +33,6 @@ struct LogTraits<glt::ShaderCompilerQueue>
 };
 
 #define COMPILER_ERR_MSG(comp, ec, msg) LOG_RAISE(comp, ec, ::err::Error, msg)
-#define COMPILER_MSG(comp, msg)                                                \
-    (LOG_BEGIN(comp, ::err::Error), LOG_PUT(comp, msg), LOG_END(comp))
 
 namespace glt {
 
@@ -519,12 +518,11 @@ ShaderObject::Data::reloadIfOutdated(ShaderCompilerQueue &scq)
         return { nullptr, state };
     case ReloadState::Outdated:
         auto new_so = ShaderSource::Data::load(source, scq);
-        if (!new_so) {
+        if (!new_so)
             return { nullptr, ReloadState::Failed };
-        } else {
-            return { std::move(new_so), ReloadState::Outdated };
-        }
+        return { std::move(new_so), ReloadState::Outdated };
     }
+    CASE_UNREACHABLE;
 }
 
 void
@@ -788,6 +786,7 @@ ShaderCompilerQueue::enqueueReload(const std::shared_ptr<ShaderObject> &so)
             ASSERT(!new_so);
             return so;
         }
+        CASE_UNREACHABLE;
     };
     self->toCompile.push({ so->shaderSource(), std::move(exec) });
 }
@@ -799,8 +798,7 @@ ShaderCompilerQueue::enqueueLoad(const std::shared_ptr<ShaderSource> &src)
     if (self->inQueue.count(src->key()) > 0)
         return;
     auto exec = [src, this]() -> std::shared_ptr<ShaderObject> {
-        sys::io::stdout() << "load: " << src->key()
-                          << sys::io::endl;
+        sys::io::stdout() << "load: " << src->key() << sys::io::endl;
         return ShaderSource::Data::load(src, *this);
     };
     self->toCompile.push({ src, std::move(exec) });

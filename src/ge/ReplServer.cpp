@@ -126,9 +126,11 @@ Client::handleIO(Engine &e)
         for (auto &s : statement)
             s.free();
         statement.clear();
+        break;
     case ParsingYield:
-        [[fallthrough]];
-    case ParsingStop:; // do nothing
+        break;
+    case ParsingStop:
+        break;
     }
 
     sys::io::StreamResult res = parse_state.in_state;

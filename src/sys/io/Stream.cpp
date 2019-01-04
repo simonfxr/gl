@@ -189,17 +189,17 @@ const StreamEndl endl = {};
 OutStream &
 operator<<(OutStream &out, const std::string &str)
 {
-	return out << std::string_view{ str };
+    return out << std::string_view{ str };
 }
 
 OutStream &
 operator<<(OutStream &out, std::string_view str)
 {
-	if (out.writeable()) {
-		size_t s = str.size();
-		out.write(s, str.data());
-	}
-	return out;
+    if (out.writeable()) {
+        size_t s = str.size();
+        out.write(s, str.data());
+    }
+    return out;
 }
 
 OutStream &

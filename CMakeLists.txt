@@ -5,17 +5,6 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(OpenGL_GL_PREFERENCE GLVND)
 
-if(NOT DEFINED BUILD_TYPE)
-  set(BUILD_TYPE Debug)
-endif()
-set(BUILD_TYPE ${BUILD_TYPE} CACHE STRING "build type Debug|DebugOpt|Release" FORCE)
-
-if(BUILD_TYPE STREQUAL "DebugOpt")
-  set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
-else()
-  set(CMAKE_BUILD_TYPE ${BUILD_TYPE} CACHE STRING "" FORCE)
-endif()
-
 project(gl)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect_env.cmake)
@@ -29,14 +18,12 @@ endmacro()
 
 set_option(BUILD_SHARED_LIBS FALSE BOOL "TRUE to build shared libs, FALSE to build static libs")
 
-if(BUILD_TYPE STREQUAL "Release")
+if(CMAKE_BUILD_TYPE STREQUAL RELEASE)
   set(GLDEBUG_DEFAULT FALSE)
 else()
   set(GLDEBUG_DEFAULT TRUE)
 endif()
 set_option(GLDEBUG ${GLDEBUG_DEFAULT} BOOL "TRUE to enable error checking after every opengl call")
-
-set_option(MATH_INLINE TRUE BOOL "TRUE to inline all custom math functions")
 
 set_option(USE_OPENMP True BOOL "enable openmp support")
 
@@ -46,20 +33,8 @@ if(SYS_LINUX)
   set_option(USE_UNWIND_STACKTRACES TRUE BOOL "use libunwind and libdw to print a stacktrace on errors")
 endif()
 
-if(SYS_WINDOWS)
-  set(LIBS_IN_TREE TRUE)
-else()
-  set(LIBS_IN_TREE FALSE)
-endif()
-
-set_option(USE_GLFW_IN_TREE ${LIBS_IN_TREE} BOOL "use glfw under ext/glfw3")
-set_option(USE_GLEW_IN_TREE ${LIBS_IN_TREE} BOOL "use glew under ext/glew")
-set_option(USE_OPENCL_HEADERS_IN_TREE ${LIBS_IN_TREE} BOOL "use OpenCL headerse under ext/opencl-headers")
-
-if(COMP_CLANG)
-  set_option(USE_CLANG_ADDRESS_SANITIZER FALSE BOOL "enable -fsanitize=address")
-  set_option(USE_CLANG_TRAP_UNDEFINED FALSE BOOL "enable -fsanitize=undefined-trap")
-endif()
+set_option(USE_ADDRESS_SANITIZER FALSE BOOL "enable -fsanitize=address")
+set_option(USE_TRAP_UNDEFINED FALSE BOOL "enable -fsanitize=undefined-trap")
 
 add_subdirectory(deps/cxx-header-utils)
 

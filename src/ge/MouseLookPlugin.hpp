@@ -38,7 +38,7 @@ struct GE_API MouseLookPlugin : public Plugin
     void registerCommands(CommandProcessor &) final override;
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GE_API, self);
 };
 
 } // namespace ge

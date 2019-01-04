@@ -82,7 +82,7 @@ struct GE_API Camera : public Plugin
     void registerCommands(CommandProcessor &proc) final override;
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GE_API, self);
 };
 
 } // namespace ge

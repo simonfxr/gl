@@ -68,7 +68,7 @@ protected:
     virtual void doViewport(const Viewport &vp);
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GLT_API, self);
 };
 
 inline bool

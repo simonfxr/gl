@@ -23,7 +23,7 @@ struct KeyBindingState
 {
     KeyBindingState();
 
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GE_API, self);
 };
 
 struct Module

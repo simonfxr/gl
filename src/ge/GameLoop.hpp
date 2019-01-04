@@ -55,7 +55,7 @@ struct GE_API GameLoop
     int32_t run(Game &logic);
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GE_API, self);
 };
 
 } // namespace ge

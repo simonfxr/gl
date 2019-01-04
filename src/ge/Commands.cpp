@@ -20,7 +20,7 @@ namespace {
 void
 runPrintContextInfo(const Event<CommandEvent> &e)
 {
-	auto c = e.info.engine.window().contextInfo();
+    auto c = e.info.engine.window().contextInfo();
     e.info.engine.out() << "OpenGL Context Information" << sys::io::endl
                         << "  Version:\t" << c.majorVersion << "."
                         << c.minorVersion << sys::io::endl

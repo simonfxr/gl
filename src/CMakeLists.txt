@@ -7,25 +7,6 @@ set(FIBER_LIB)
 
 link_libraries(header-utils)
 
-set(MATH_SRC
-  math/vec2/impl.cpp
-  math/vec3/impl.cpp
-  math/vec4/impl.cpp
-  math/mat2/impl.cpp
-  math/mat3/impl.cpp
-  math/mat4/impl.cpp
-  math/real/impl.cpp
-  math/glvec/impl.cpp
-  math/ivec3/impl.cpp
-  math/plane.cpp)
-
-if(NOT MATH_INLINE)
-  def_lib(vec-math SOURCES ${MATH_SRC})
-  set(VEC_LIB vec-math)
-else()
-  set(VEC_LIB)
-endif()
-
 set(ERR_SRC
   err/err.cpp)
 
@@ -101,7 +82,7 @@ if(SYS_LINUX)
   set(GLT_LIBS ${GLT_LIBS} X11)
 endif()
 
-def_lib(glt SOURCES ${GLT_SRC} DEPEND ${VEC_LIB} sys)
+def_lib(glt SOURCES ${GLT_SRC} DEPEND sys)
 target_link_libraries(glt ${GLT_LIBS})
 
 set(GE_SRC
@@ -129,5 +110,5 @@ set(GE_SRC
 set(GE_LIBS
   ${GLFW_LIBRARY})
 
-def_lib(ge SOURCES ${GE_SRC} DEPEND ${VEC_LIB} sys glt)
+def_lib(ge SOURCES ${GE_SRC} DEPEND sys glt)
 target_link_libraries(ge ${GE_LIBS})

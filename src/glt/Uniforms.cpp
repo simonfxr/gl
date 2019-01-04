@@ -21,6 +21,7 @@ using namespace math;
 
 namespace {
 
+#ifdef GLDEBUG
 std::string
 descGLType(GLenum ty)
 {
@@ -111,6 +112,7 @@ descGLType(GLenum ty)
 
 #undef CASE
 }
+#endif
 
 template<typename T>
 typename T::gl

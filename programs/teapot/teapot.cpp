@@ -12,6 +12,7 @@
 #include "ge/MouseLookPlugin.hpp"
 #include "ge/Timer.hpp"
 #include "glt/Frame.hpp"
+#include "glt/Mesh.hpp"
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/Uniforms.hpp"
 #include "glt/color.hpp"
@@ -26,7 +27,6 @@
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
-#include "glt/Mesh.hpp"
 #ifdef MESH_CUBEMESH
 #include "glt/CubeMesh.hpp"
 #endif
@@ -39,7 +39,10 @@
     V(Vertex, F(math::point3_t, position, Z(math::direction3_t, normal)))
 
 #define VERTEX2(V, F, Z)                                                       \
-    V(Vertex2, F(math::vec3_t, position, F(math::vec3_t, normal, Z(math::vec2_t, texCoord))))
+    V(Vertex2,                                                                 \
+      F(math::vec3_t,                                                          \
+        position,                                                              \
+        F(math::vec3_t, normal, Z(math::vec2_t, texCoord))))
 
 #define SCREEN_VERTEX(V, F, Z)                                                 \
     V(ScreenVertex, F(math::vec3_t, position, Z(math::vec3_t, normal)))
@@ -53,19 +56,18 @@ DEFINE_VERTEX(SCREEN_VERTEX);
 #undef SCREEN_VERTEX
 
 #ifdef MESH_CUBEMESH
-template <typename T>
+template<typename T>
 using MeshOf = glt::Mesh<T>;
 
-template <typename T>
+template<typename T>
 using CubeMeshOf = glt::CubeMesh<T>;
 #else
-template <typename T>
+template<typename T>
 using MeshOf = glt::Mesh<T>;
 
-template <typename T>
+template<typename T>
 using CubeMeshOf = glt::Mesh<T>;
 #endif
-
 
 #include "shaders/glow_pass_constants.h"
 
@@ -355,7 +357,7 @@ Anim::renderScene(const Event<RenderEvent> &e)
 
     glt::RenderTarget *render_target;
     real bg_alpha;
-#if RENDER_NOGLOW
+#ifdef RENDER_NOGLOW
     render_target = &engine.window().renderTarget();
     bg_alpha = 1.f;
 #else
@@ -540,7 +542,7 @@ Anim::setupTeapotShader(const std::string &progname,
     us.optional("useSpot", 1.f * use_spotlight);
     us.optional("spotSmooth", 1.f * spotlight_smooth);
     us.optional("texData", glt::BoundTexture(GL_SAMPLER_2D, 0));
-#if RENDER_NOGLOW
+#ifdef RENDER_NOGLOW
     us.optional("glow", real(1));
 #else
     us.optional("glow", mat.glow /* real(0.8) */);

@@ -55,11 +55,11 @@ dirname(const std::string &path)
     if (path.empty())
         return ".";
 
-	auto len = path.size();
+    auto len = path.size();
     while (len > 0 && !is_pathsep(path[len - 1]))
         --len;
 
-	// FIXME: properly handling windows paths is going to be a pain...
+    // FIXME: properly handling windows paths is going to be a pain...
     if (is_pathsep(path[len])) {
         while (len > 1 && is_pathsep(path[len - 1]))
             --len;

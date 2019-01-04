@@ -4,6 +4,4 @@
 #include "defs.hpp"
 #include "teapot/mesh.h"
 
-
-
 #endif

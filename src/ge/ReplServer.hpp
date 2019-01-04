@@ -28,7 +28,7 @@ struct GE_API ReplServer
     const std::shared_ptr<EventHandler<InputEvent>> &ioHandler();
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GE_API, self);
 };
 
 } // namespace ge

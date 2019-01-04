@@ -7,55 +7,58 @@ macro(cache_var var)
   cache_var_type(${var} STRING)
 endmacro()
 
+set(GLOBAL_DEFINES)
+set(GLOBAL_FLAGS)
+set(GLOBAL_LINK_FLAGS)
+
 if(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_SHARED=1)
+  list(APPEND GLOBAL_DEFINES BUILD_SHARED=1)
 endif()
 
 if(BUILD_OPT)
   if(COMP_GCC)
     if(BUILD_DEBUG)
-      add_definitions(-march=native -Og)
+      list(APPEND GLOBAL_FLAGS -march=native -Og)
     else()
-      add_definitions(-march=native -Ofast)
+      list(APPEND GLOBAL_FLAGS -march=native -Ofast)
     endif()
   elseif(COMP_CLANG)
     if(BUILD_DEBUG)
-      add_definitions(-march=native -O1)
+      list(APPEND GLOBAL_FLAGS -march=native -O1)
     else()
-      add_definitions(-march=native -O3 -ffast-math)
+      list(APPEND GLOBAL_FLAGS -march=native -O3 -ffast-math)
     endif()
   elseif(COMP_ICC)
-    add_definitions(-xHOST -O3 -ipo -no-prec-div)
+    list(APPEND GLOBAL_FLAGS -xHOST -O3 -ipo -no-prec-div)
   endif()
 endif()
 
 if(COMP_CLANG)
-#  add_definitions(-Wglobal-constructors)
+#  list(APPEND GLOBAL_FLAGS -Wglobal-constructors)
 endif()
 
 if(COMP_CLANG AND USE_CLANG_TRAP_UNDEFINED)
-  add_definitions(-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error -ftrap-function=__clang_trap_function)
+  list(APPEND GLOBAL_FLAGS -fsanitize=undefined-trap -fsanitize-undefined-trap-on-error -ftrap-function=__clang_trap_function)
 endif()
 
-if(COMP_CLANG AND USE_CLANG_ADDRESS_SANITIZER)
-  add_definitions(-fsanitize=address)
-  link_libraries(-fsanitize=address)
+if(USE_ADDRESS_SANITIZER)
+  list(APPEND GLOBAL_FLAGS -fsanitize=address)
+  list(APPEND GLOBAL_LINK_FLAGS -fsanitize=address)
 endif()
 
 if(COMP_GCCLIKE)
-  add_definitions(-Wall -Wdate-time -Werror=date-time)
-  # add_definitions(-Werror)
-  # add_definitions(-Weffc++)
+  list(APPEND GLOBAL_FLAGS -Wall -Wswitch-enum -Wdate-time -Werror=date-time)
+  # list(APPEND GLOBAL_FLAGS -Werror)
+  # list(APPEND GLOBAL_FLAGS -Weffc++)
   if (NOT COMP_ICC)
-    add_definitions(-Wextra)
+    list(APPEND GLOBAL_FLAGS -Wextra)
   else()
-    add_definitions("-diag-disable 10120")
-    link_libraries("-diag-disable 11000" "-diag-disable 11006" "-diag-disable 11001" "-diag-disable 11021")
+    list(APPEND GLOBAL_FLAGS "-diag-disable 10120")
   endif()
   if (COMP_GCC)
-    add_definitions(-Wdouble-promotion)
+    list(APPEND GLOBAL_FLAGS -Wdouble-promotion)
   endif()
-  add_definitions(
+  list(APPEND GLOBAL_FLAGS 
     # -Wconversion -Wsign-conversion 
     # -Werror 
     # -Wold-style-cast
@@ -64,7 +67,7 @@ if(COMP_GCCLIKE)
 endif()
 
 if(COMP_CLANG)
-  add_definitions(
+  list(APPEND GLOBAL_FLAGS 
     -Weverything
     -Wno-c++98-compat
     -Wno-c++98-compat-pedantic
@@ -87,7 +90,7 @@ if(COMP_CLANG)
 endif()
 
 if(COMP_GCC)
-#  add_definitions(
+#  list(APPEND GLOBAL_FLAGS 
 #    -Wsuggest-attribute=const
 #    -Wsuggest-attribute=pure
 #    -Wsuggest-attribute=noreturn
@@ -95,17 +98,17 @@ if(COMP_GCC)
 endif()
 
 if(COMP_ICC)
-  add_definitions(-Wcheck)
+  list(APPEND GLOBAL_FLAGS -Wcheck)
 endif()
 
 if(BUILD_DEBUG)
-  add_definitions(-DDEBUG=1)
+  list(APPEND GLOBAL_DEFINES DEBUG=1)
   if(COMP_GCCLIKE)
-    add_definitions(-ggdb)
+    list(APPEND GLOBAL_FLAGS -ggdb)
   endif()
 
   # if(COMP_GCCLIKE)
-  #   add_definitions(-fno-omit-frame-pointer)
+  #   list(APPEND GLOBAL_FLAGS -fno-omit-frame-pointer)
   # endif()
 endif()
 
@@ -127,12 +130,8 @@ if(USE_OPENMP)
   endif()
 endif()
 
-if(MATH_INLINE)
-  add_definitions(-DMATH_INLINE=1)
-endif()
-
 if(GLDEBUG)
-  add_definitions(-DGLDEBUG=1)
+  list(APPEND GLOBAL_DEFINES GLDEBUG=1)
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
@@ -176,4 +175,17 @@ else()
   set(OPENCL_INCLUDE_PATH "${OPENCL_INCLUDE_DIR}")
 endif()
 
-add_definitions(-DSOURCE_DIR="${CMAKE_SOURCE_DIR}")
+list(APPEND GLOBAL_DEFINES SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+
+if(BUILD_OPT)
+  include(CheckIPOSupported)
+  check_ipo_supported(RESULT HAVE_IPO)
+  if(HAVE_IPO)
+    message(STATUS "Enabling IPO")
+    set_state(HAVE_IPO "${HAVE_IPO}")
+  endif()
+endif()
+
+set_state(GLOBAL_DEFINES "${GLOBAL_DEFINES}")
+set_state(GLOBAL_FLAGS "${GLOBAL_FLAGS}")
+set_state(GLOBAL_LINK_FLAGS "${GLOBAL_LINK_FLAGS}")

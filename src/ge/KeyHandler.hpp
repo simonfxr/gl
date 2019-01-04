@@ -45,7 +45,7 @@ struct GE_API KeyHandler
     void handleListBindings(const Event<CommandEvent> &);
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GE_API, self);
 };
 
 } // namespace ge

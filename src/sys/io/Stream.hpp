@@ -5,8 +5,8 @@
 #include "sys/fiber.hpp"
 
 #include <string>
-#include <vector>
 #include <string_view>
+#include <vector>
 
 #ifdef HU_OS_WINDOWS
 #define STDIN_FILE __acrt_iob_func(0)
@@ -22,8 +22,6 @@
 #undef stdout
 #undef stderr
 #undef EOF
-
-
 
 namespace sys {
 

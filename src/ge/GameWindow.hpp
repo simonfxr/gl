@@ -68,7 +68,7 @@ struct GE_API GameWindow
 
     void swapBuffers();
 
-	GLContextInfo contextInfo() const;
+    GLContextInfo contextInfo() const;
 
     size_t windowHeight() const;
 
@@ -83,7 +83,7 @@ struct GE_API GameWindow
     void registerHandlers(EngineEvents &evnts);
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GE_API, self);
 };
 
 struct WindowEvent;

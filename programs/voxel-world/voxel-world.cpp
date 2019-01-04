@@ -683,16 +683,16 @@ density(const vec3_t &p)
     real density = 0.;
 
     real prewarp_stride = 25.;
-    real prewarp_freq = 0.0221f;
-    vec3_t warp = noise3D3(ws * prewarp_freq) * 0.64f +
-                  noise3D3(ws * prewarp_freq * 0.5f) * 0.32f;
+    real prewarp_freq = 0.0221_r;
+    vec3_t warp = noise3D3(ws * prewarp_freq) * 0.64_r +
+                  noise3D3(ws * prewarp_freq * 0.5_r) * 0.32_r;
     ws += warp * prewarp_stride;
 
     density += -ws[1];
     // density += saturate((-4. * ws_orig[1] * 0.3) * 3.0) * 40 *
     // noise3D1(ws_orig * 0.00071f);
 
-    density += sumNoise3D(ws, 9, 0.0125f, 0.5f, false) * 20.;
+    density += sumNoise3D(ws, 9, 0.0125_r, 0.5_r, false) * 20_r;
 
     return density;
 }
@@ -729,7 +729,7 @@ createWorld(Densities &ds)
         for (int32_t j = 0; j < N; ++j)
             for (int32_t k = 0; k < N; ++k) {
                 vec3_t wc =
-                  (vec3(ivec3(i, j, k)) * real(1. / real(N)) - vec3(0.5f)) *
+                  (vec3(ivec3(i, j, k)) * real(1_r / real(N)) - vec3(0.5_r)) *
                   VIRTUAL_DIM;
                 ds.ds[i][j][k] = density(wc);
                 //                sys::io::stderr() << i << " " << j << " " << k
@@ -863,16 +863,16 @@ createModel(CubeMesh &worldModel,
 
                     real dens = ds.ds[ii][jj][kk];
 
-                    vec3_t blue = vec3(0., 0., 1.);
-                    vec3_t yellow = vec3(0., 1., 1.);
-                    vec3_t red = vec3(1., 0., 0.);
+                    vec3_t blue = vec3(0_r, 0_r, 1_r);
+                    vec3_t yellow = vec3(0_r, 1_r, 1_r);
+                    vec3_t red = vec3(1_r, 0_r, 0_r);
 
                     vec3_t col3{};
-                    if (dens <= real(0.5)) {
+                    if (dens <= 0.5_r) {
                         real w = dens * 2;
                         col3 = (1 - w) * blue + w * yellow;
                     } else {
-                        real w = (dens - 0.5) * 2;
+                        real w = (dens - 0.5_r) * 2;
                         col3 = (1 - w) * yellow + w * red;
                     }
 
@@ -896,7 +896,7 @@ createModel(CubeMesh &worldModel,
                             v.position *= BLOCK_DIM;
                             v.position += offset;
                             v.normal[3] =
-                              OCCLUSION ? diffContr->f[side][face] : 1.;
+                              OCCLUSION ? diffContr->f[side][face] : 1_r;
                             v.color = col;
                             worldModel.add(v);
                         }
@@ -1119,7 +1119,6 @@ main(int argc, char *argv[])
 {
     ge::Engine engine;
     engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
-    int32_t ret = 0;
     {
         ge::EngineOptions opts;
         opts.parse(&argc, &argv);
@@ -1144,7 +1143,7 @@ main(int argc, char *argv[])
         state.write_model = write_mdl;
         opts.inits.reg(ge::Init, makeEventHandler(initState, &state));
 
-        ret = engine.run(opts);
+        engine.run(opts);
 
 #ifdef HS_WORLD_GEN
         hs_voxel_destroy(state.voxel_state);
@@ -1278,11 +1277,11 @@ noise3D(const vec3_t &pnt)
 void
 pointsOnSphere(uint32_t n, vec3_t *ps)
 {
-    real inc = PI * (3. - math::sqrt(5.));
-    real off = 2. / n;
+    real inc = PI * (3_r - math::sqrt(5_r));
+    real off = 2_r / n;
     for (uint32_t k = 0; k < n; ++k) {
-        real y = k * off - 1 + (off / 2.);
-        real r = math::sqrt(1. - y * y);
+        real y = k * off - 1 + (off / 2_r);
+        real r = math::sqrt(1_r - y * y);
         real phi = k * inc;
         real s, c;
         sincos(phi, s, c);

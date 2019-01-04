@@ -13,15 +13,14 @@ getGLType(TextureType ty, size_t ss)
     case Texture1D:
         return GL_TEXTURE_1D;
     case Texture2D:
-
         if (ss == 1)
             return GL_TEXTURE_2D;
         else
             return GL_TEXTURE_2D_MULTISAMPLE;
-
     case Texture3D:
         return GL_TEXTURE_3D;
     }
+    CASE_UNREACHABLE;
 }
 
 } // namespace

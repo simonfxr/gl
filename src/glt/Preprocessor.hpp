@@ -77,7 +77,7 @@ struct GLT_API Preprocessor
     //    static DirectiveHandler& nullHandler();
 
 private:
-    DECLARE_PIMPL(self);
+    DECLARE_PIMPL(GLT_API, self);
 };
 
 } // namespace glt
