@@ -20,6 +20,69 @@ filetimeToUnixTimestap(const FILETIME *ft)
     return ticks - SEC_TO_UNIX_EPOCH;
 }
 
+std::optional<std::wstring> utf8ToUtf16(const std::string& str) {
+    if (str.empty())
+        return std::wstring{};
+    auto len = MultiByteToWideChar(
+        CP_UTF8,
+        0,
+        str.data(),
+        int(str.size()),
+        nullptr,
+        0);
+    if (!len) {
+        ERR("MultiByteToWideChar failed (size)");
+        return std::nullopt;
+    }
+    std::wstring ret(size_t(len), wchar_t{});
+    len = MultiByteToWideChar(
+        CP_UTF8,
+        0,
+        str.data(),
+        int(str.size()),
+        ret.data(),
+        len);
+    if (!len) {
+        ERR("MultiByteToWideChar failed");
+        return std::nullopt;
+    }
+    return ret;
+}
+
+std::optional<std::string> utf16ToUtf8(const wchar_t *data, size_t sz) {
+    if (!sz)
+        return std::string{};
+    auto len = WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        data,
+        int(sz),
+        nullptr,
+        0,
+        nullptr,
+        nullptr);
+    if (!len) {
+        ERR("WideCharToMultiByte failed (size)");
+        return std::nullopt;
+    }
+    std::string ret(size_t(len), wchar_t{});
+    len = WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        data,
+        int(sz),
+        ret.data(),
+        len,
+        nullptr,
+        nullptr);
+    if (!len) {
+        ERR("WideCharToMultiByte failed");
+        return std::nullopt;
+    }
+    ret.resize(strlen(ret.c_str()));
+    return ret;
+}
+
 } // namespace
 
 bool
@@ -107,9 +170,13 @@ stat(const std::string &path)
 std::string
 absolutePath(const std::string &path)
 {
-    char abs[4096];
+    wchar_t abs[MAX_PATH];
 
-    DWORD ret = GetFullPathNameA(path.c_str(), sizeof abs, abs, NULL);
+    auto wpath = utf8ToUtf16(path);
+    if (!wpath)
+        return "";
+
+    DWORD ret = GetFullPathNameW(wpath->c_str(), sizeof abs, abs, NULL);
     if (ret == 0)
         return "";
 
@@ -119,7 +186,11 @@ absolutePath(const std::string &path)
         return "";
     }
 
-    return std::string(abs);
+    auto res = utf16ToUtf8(abs, ret);
+    if (!res) {
+        return "";
+    }
+    return std::move(*res);
 }
 
 std::string

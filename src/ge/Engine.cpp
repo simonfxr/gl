@@ -198,7 +198,7 @@ Engine::run(const EngineOptions &opts)
     if (opts.workingDirectory.empty() && opts.defaultCD)
         wd = sys::fs::dirname(opts.binary);
 
-    self->programName = sys::fs::basename(opts.binary);
+    self->programName = sys::fs::dropExtension(sys::fs::basename(opts.binary));
 
     if (!wd.empty()) {
         if (!sys::fs::cwd(wd)) {

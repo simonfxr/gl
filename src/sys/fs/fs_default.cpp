@@ -128,7 +128,7 @@ lookup(const std::vector<std::string> &dirs, const std::string &name)
 
     for (const auto &dir : dirs) {
         std::string filename = dir + suffix;
-        FILE *file = fopen(filename.c_str(), "re");
+        FILE *file = fopen(filename.c_str(), "r");
         if (file != nullptr) {
             fclose(file);
             return filename;

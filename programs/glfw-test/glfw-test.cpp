@@ -21,10 +21,10 @@ gl_arb_debug_callback(GLenum /* source */,
 int
 main()
 {
-    FILE *log = fopen("log.txt", "ae");
+    FILE *log = stdout;
     int ret = 0;
 
-    fprintf(log, "Program started\n");
+    // fprintf(log, "Program started\n");
 
     GLFWwindow *window;
     float aspect_ratio;
