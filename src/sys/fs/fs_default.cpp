@@ -1,4 +1,3 @@
-#define SYS_IO_STREAM_NOWARN 1
 #ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS 1
 #endif

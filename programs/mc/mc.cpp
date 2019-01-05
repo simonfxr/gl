@@ -34,10 +34,6 @@
             return;                                                            \
         }                                                                      \
     } while (0)
-//#define INFO_PRINT(...) __VA_ARGS__
-// #define INFO_TIME(...) time_op(__VA_ARGS__)
-#define INFO_PRINT(...)
-#define INFO_TIME(...) __VA_ARGS__
 
 static const size_t DEFAULT_N = 64;
 
@@ -155,18 +151,18 @@ createCLGLContext(cl::Platform &platform, cl_int *err)
     cl_context_properties props[] = {
 #ifdef HU_OS_WINDOWS
         CL_GL_CONTEXT_KHR,
-        (cl_context_properties) wglGetCurrentContext(),
+        cl_context_properties(wglGetCurrentContext()),
         CL_WGL_HDC_KHR,
-        (cl_context_properties) wglGetCurrentDC(),
+        cl_context_properties(wglGetCurrentDC()),
         CL_CONTEXT_PLATFORM,
-        (cl_context_properties)(platform)(),
+        cl_context_properties((platform)()),
 #elif defined(HU_OS_POSIX)
         CL_GL_CONTEXT_KHR,
-        (cl_context_properties) glXGetCurrentContext(),
+        cl_context_properties(glXGetCurrentContext()),
         CL_GLX_DISPLAY_KHR,
-        (cl_context_properties) glXGetCurrentDisplay(),
+        cl_context_properties(glXGetCurrentDisplay()),
         CL_CONTEXT_PLATFORM,
-        (cl_context_properties)(platform)(),
+        cl_context_properties((platform)()),
 #else
 #error "unknown system"
 #endif

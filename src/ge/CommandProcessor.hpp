@@ -57,9 +57,9 @@ public:
 
     bool evalCommand(const std::string &cmd);
 
-    CommandArg cast(const CommandArg &val, CommandType type);
+    // CommandArg cast(const CommandArg &val, CommandType type);
 
-    static bool isAssignable(CommandParamType lval, CommandType rval);
+    // static bool isAssignable(CommandParamType lval, CommandType rval);
 
     static CommandParamType commandParamType(CommandType type);
 

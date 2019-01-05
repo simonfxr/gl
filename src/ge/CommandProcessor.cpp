@@ -377,21 +377,21 @@ CommandProcessor::commandParamType(CommandType type)
     CASE_UNREACHABLE;
 }
 
-CommandArg
-CommandProcessor::cast(const CommandArg &val, CommandType type)
-{
-    UNUSED(val);
-    UNUSED(type);
-    FATAL_ERR(ERROR_DEFAULT_STREAM, "not yet implemented");
-}
+// CommandArg
+// CommandProcessor::cast(const CommandArg &val, CommandType type)
+// {
+//     UNUSED(val);
+//     UNUSED(type);
+//     FATAL_ERR(ERROR_DEFAULT_STREAM, "not yet implemented");
+// }
 
-bool
-CommandProcessor::isAssignable(CommandParamType lval, CommandType rval)
-{
-    UNUSED(lval);
-    UNUSED(rval);
-    FATAL_ERR(ERROR_DEFAULT_STREAM, "not yet implemented");
-}
+// bool
+// CommandProcessor::isAssignable(CommandParamType lval, CommandType rval)
+// {
+//     UNUSED(lval);
+//     UNUSED(rval);
+//     FATAL_ERR(ERROR_DEFAULT_STREAM, "not yet implemented");
+// }
 
 const char *
 prettyCommandType(CommandType type)

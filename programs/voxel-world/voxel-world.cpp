@@ -406,24 +406,27 @@ initRays(Rays &rays, vec3_t dirs[])
 
     std::sort(dirs, dirs + SPHERE_POINTS, faceIdxLessThan);
 
-    uint32_t off = 0;
-    int face = -1;
-    for (int32_t i = 0; i < SPHERE_POINTS; ++i) {
-        int32_t face1 = faceIdx(dirs[i]);
-        if (face1 != face) {
+    {
+        uint32_t off = 0;
 
-            if (face >= 0) {
-                rays.faceOffsets[face] = off;
-                rays.faceLengths[face] = i - off;
+        int face = -1;
+        for (int32_t i = 0; i < SPHERE_POINTS; ++i) {
+            int32_t face1 = faceIdx(dirs[i]);
+            if (face1 != face) {
+
+                if (face >= 0) {
+                    rays.faceOffsets[face] = off;
+                    rays.faceLengths[face] = i - off;
+                }
+
+                // face = face1;
+                off = i;
             }
-
-            face = face1;
-            off = i;
         }
-    }
 
-    rays.faceOffsets[5] = off;
-    rays.faceLengths[5] = SPHERE_POINTS - off;
+        rays.faceOffsets[5] = off;
+        rays.faceLengths[5] = SPHERE_POINTS - off;
+    }
 
     for (uint32_t i = 0; i < 6; ++i) {
         sys::io::stderr() << "side " << i << ": "

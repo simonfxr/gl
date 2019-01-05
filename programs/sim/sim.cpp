@@ -409,9 +409,10 @@ struct BSP
     }
 };
 
-PRAGMA_PUSH_IGNORE_EXIT_TIME_DESTRUCTOR
+BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
 static const BSP marker_leaf = { plane(), { { nullptr }, { nullptr } } };
-PRAGMA_POP
+END_NO_WARN_GLOBAL_DESTRUCTOR
+
 static BSP *const leaf_marker = const_cast<BSP *>(&marker_leaf);
 
 bool

@@ -120,7 +120,19 @@ typedef long long int64_t;
 #define PARGMA_DISABLE_DIAG_SWITCH
 #endif
 
+#if HU_COMP_CLANG_P
+#define PRAGMA_DISABLE_DIAG_GLOBAL_DESTRUCTOR                                  \
+    _Pragma(AS_STR(clang diagnostic ignored "-Wexit-time-destructors"))        \
+      _Pragma(AS_STR(clang diagnostic ignored "-Wglobal-constructors"))
+#else
+#define PRAGMA_DISABLE_DIAG_GLOBAL_DESTRUCTOR
+#endif
+
 #define BEGIN_NO_WARN_SWITCH PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_SWITCH
 #define END_NO_WARN_SWITCH PRAGMA_DIAGNOSTIC_POP
+
+#define BEGIN_NO_WARN_GLOBAL_DESTRUCTOR                                        \
+    PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_GLOBAL_DESTRUCTOR
+#define END_NO_WARN_GLOBAL_DESTRUCTOR PRAGMA_DIAGNOSTIC_POP
 
 #endif

@@ -1,12 +1,10 @@
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
-
 #include "glt/Mesh.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/primitives.hpp"
 #include "glt/utils.hpp"
-
 #include "math/glvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
@@ -186,9 +184,9 @@ sphere(glt::Mesh<Vertex> &mesh, real rad, int slices, int stacks)
             glt::primitives::setVec(v.binormal, binormal[k]);                  \
             v.uv = uv[k];                                                      \
                                                                                \
-            for (int j = 0; j < 2; ++j)                                        \
-                if (a[j] > 0 && b[j] > 0 && ::math::abs(v.uv[j]) < 0.5f)       \
-                    v.uv[j] = signum(v.uv[j]) * (1.0f - ::math::abs(v.uv[j])); \
+            for (int l = 0; l < 2; ++l)                                        \
+                if (a[l] > 0 && b[l] > 0 && ::math::abs(v.uv[l]) < 0.5f)       \
+                    v.uv[l] = signum(v.uv[l]) * (1.0f - ::math::abs(v.uv[l])); \
                                                                                \
             mesh.addVertex(v);                                                 \
         }                                                                      \
@@ -202,7 +200,6 @@ sphere(glt::Mesh<Vertex> &mesh, real rad, int slices, int stacks)
             MOV(0, 1);
             MOV(1, 3);
 #undef MOV
-
             ADD_MESH;
 #undef ADD_MESH
 #undef TEST

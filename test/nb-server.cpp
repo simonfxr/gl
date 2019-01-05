@@ -25,7 +25,6 @@ struct Client
 int
 main()
 {
-
     io::Socket server;
     std::vector<Client> clients;
     clients.emplace_back();
@@ -104,6 +103,4 @@ main()
             }
         }
     }
-
-    sys::moduleExit();
 }

@@ -510,15 +510,9 @@ Commands::Commands()
 const Commands &
 commands()
 {
-    // static Commands *comms = 0;
-    // if (comms == 0) {
-    //     comms = new Commands;
-    // }
-
-    // return *comms;
-    PRAGMA_PUSH_IGNORE_EXIT_TIME_DESTRUCTOR
+    BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
     static Commands commands;
-    PRAGMA_POP
+    END_NO_WARN_GLOBAL_DESTRUCTOR
     return commands;
 }
 

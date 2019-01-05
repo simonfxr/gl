@@ -18,20 +18,21 @@ struct Handlers
 
 struct Camera::Data
 {
-    real _speed{ real(0.1) };
-    vec2_t _mouse_sensitivity = vec2(real(0.00075));
-    glt::Frame _frame;
-    Commands _commands;
-    Events _events;
-    vec3_t _step_accum = vec3(real(0));
-    Handlers _handlers;
-    bool _mouse_look{ false };
-    Engine *_engine{};
-    std::string _frame_path;
+    Camera &self;
+    real speed = 0.1_r;
+    vec2_t mouse_sensitivity = vec2(0.00075_r);
+    glt::Frame frame;
+    Commands commands;
+    Events events;
+    vec3_t step_accum = vec3(real(0));
+    Handlers handlers;
+    bool mouse_look{ false };
+    Engine *engine{};
+    std::string frame_path;
 
-    explicit Data(Camera * /*me*/);
+    explicit Data(Camera & /*me*/);
 
-    void mouseMoved(Camera *cam, int16_t dx, int16_t dy);
+    void mouseMoved(int16_t dx, int16_t dy);
 
     // commands
     void runMove(const Event<CommandEvent> & /*unused*/,
@@ -96,33 +97,33 @@ const math::real the_dir_table[3 * 12] = { 0.5f,
 
 } // namespace
 
-Camera::Data::Data(Camera *me)
+Camera::Data::Data(Camera &me) : self(me)
 {
-    _commands.move = makeCommand(
+    commands.move = makeCommand(
       this, &Data::runMove, INT_PARAMS, "camera.move", "move the camera frame");
 
-    _commands.saveFrame =
+    commands.saveFrame =
       makeCommand(this,
                   &Data::runSaveFrame,
                   LIST_PARAMS,
                   "camera.saveFrame",
                   "save the orientation and position of the camera in a file");
 
-    _commands.loadFrame = makeCommand(
+    commands.loadFrame = makeCommand(
       this,
       &Data::runLoadFrame,
       LIST_PARAMS,
       "camera.loadFrame",
       "load the orientation and position of the camera from a file");
 
-    _commands.speed =
+    commands.speed =
       makeCommand(this,
                   &Data::runSpeed,
                   NUM_PARAMS,
                   "camera.speed",
                   "set the length the camera is allowed to move in one frame");
 
-    _commands.sensitivity =
+    commands.sensitivity =
       makeCommand(this,
                   &Data::runSensitivity,
                   LIST_PARAMS,
@@ -131,9 +132,9 @@ Camera::Data::Data(Camera *me)
                   "either as a pair of numbers (x- and y-sensitvity)"
                   "or as a single number (x- = y-sensitvity)");
 
-    _handlers.mouseMoved = makeEventHandler(&Data::handleMouseMoved, me);
-    _handlers.handleInput = makeEventHandler(&Data::handleInput, me);
-    _handlers.beforeRender = makeEventHandler(this, &Data::handleBeforeRender);
+    handlers.mouseMoved = makeEventHandler(&Data::handleMouseMoved, &me);
+    handlers.handleInput = makeEventHandler(&Data::handleInput, &me);
+    handlers.beforeRender = makeEventHandler(this, &Data::handleBeforeRender);
 }
 
 void
@@ -145,7 +146,7 @@ Camera::Data::runMove(const Event<CommandEvent> & /*unused*/,
         ERR("argument not >= 1 and <= 12");
         return;
     }
-    _step_accum += vec3(&the_dir_table[3 * (dir - 1)]);
+    step_accum += vec3(&the_dir_table[3 * (dir - 1)]);
 }
 
 void
@@ -155,7 +156,7 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
 
     const std::string *path;
     if (args.size() == 0)
-        path = &_frame_path;
+        path = &frame_path;
     else if (args.size() == 1 && args[0].type == String)
         path = args[0].string;
     else {
@@ -169,8 +170,8 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
         return;
     }
 
-    size_t s = sizeof _frame;
-    out.write(s, reinterpret_cast<const char *>(&_frame));
+    size_t s = sizeof frame;
+    out.write(s, reinterpret_cast<const char *>(&frame));
 }
 
 void
@@ -180,7 +181,7 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
 
     const std::string *path;
     if (args.size() == 0)
-        path = &_frame_path;
+        path = &frame_path;
     else if (args.size() == 1 && args[0].type == String)
         path = args[0].string;
     else {
@@ -194,15 +195,15 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
         return;
     }
 
-    size_t s = sizeof _frame;
-    in.read(s, reinterpret_cast<char *>(&_frame));
+    size_t s = sizeof frame;
+    in.read(s, reinterpret_cast<char *>(&frame));
 }
 
 void
 Camera::Data::runSpeed(const Event<CommandEvent> & /*unused*/,
                        const Array<CommandArg> &args)
 {
-    _speed = math::real(args[0].number);
+    speed = math::real(args[0].number);
 }
 
 void
@@ -210,10 +211,10 @@ Camera::Data::runSensitivity(const Event<CommandEvent> & /*unused*/,
                              const Array<CommandArg> &args)
 {
     if (args.size() == 1 && args[0].type == Number) {
-        _mouse_sensitivity = vec2(real(args[0].number));
+        mouse_sensitivity = vec2(real(args[0].number));
     } else if (args.size() == 2 && args[0].type == Number &&
                args[1].type == Number) {
-        _mouse_sensitivity = vec2(real(args[0].number), real(args[1].number));
+        mouse_sensitivity = vec2(real(args[0].number), real(args[1].number));
     } else {
         ERR("invalid arguments");
     }
@@ -229,16 +230,16 @@ void
 Camera::Data::handleInput(Camera *cam, const Event<InputEvent> & /*unused*/)
 {
     auto &self = *cam->self;
-    real lenSq = quadrance(self._step_accum);
+    real lenSq = quadrance(self.step_accum);
     if (lenSq >= math::real(1e-4)) {
-        vec3_t local_step = self._speed * normalize(self._step_accum);
-        Event<CameraMoved> ev = makeEvent(
-          CameraMoved(*cam, transformVector(self._frame, local_step)));
-        if (self._events.moved.raise(ev))
-            self._frame.translateWorld(ev.info.allowed_step);
+        vec3_t local_step = self.speed * normalize(self.step_accum);
+        Event<CameraMoved> ev =
+          makeEvent(CameraMoved(*cam, transformVector(self.frame, local_step)));
+        if (self.events.moved.raise(ev))
+            self.frame.translateWorld(ev.info.allowed_step);
     }
 
-    self._step_accum = vec3(0.f);
+    self.step_accum = vec3(0.f);
 }
 
 void
@@ -246,120 +247,119 @@ Camera::Data::handleBeforeRender(const Event<RenderEvent> &e)
 {
     //    frame->normalize(); TODO: why dont we call that?
     e.info.engine.renderManager().geometryTransform().loadViewMatrix(
-      transformationWorldToLocal(_frame));
+      transformationWorldToLocal(frame));
 }
 
 void
-Camera::Data::mouseMoved(Camera *cam, int16_t dx, int16_t dy)
+Camera::Data::mouseMoved(int16_t dx, int16_t dy)
 {
-    auto &self = *cam->self;
-    vec2_t rot = vec2(dx, dy) * _mouse_sensitivity;
+    vec2_t rot = vec2(dx, dy) * mouse_sensitivity;
     Event<CameraRotated> re =
-      makeEvent(CameraRotated(*cam, vec2(-rot[1], rot[0])));
-    if (self._events.rotated.raise(re)) {
-        self._frame.rotateLocal(re.info.allowed_angle[0], vec3(1.f, 0.f, 0.f));
-        self._frame.rotateWorld(re.info.allowed_angle[1], vec3(0.f, 1.f, 0.f));
+      makeEvent(CameraRotated(self, vec2(-rot[1], rot[0])));
+    if (events.rotated.raise(re)) {
+        frame.rotateLocal(re.info.allowed_angle[0], vec3(1.f, 0.f, 0.f));
+        frame.rotateWorld(re.info.allowed_angle[1], vec3(0.f, 1.f, 0.f));
     }
 }
 
-Camera::Camera() : self(new Data(this)) {}
+Camera::Camera() : self(new Data(*this)) {}
 
 Camera::~Camera() = default;
 
 Camera::Commands &
 Camera::commands()
 {
-    return self->_commands;
+    return self->commands;
 }
 
 Camera::Events &
 Camera::events()
 {
-    return self->_events;
+    return self->events;
 }
 
 math::vec2_t
 Camera::mouseSensitivity() const
 {
-    return self->_mouse_sensitivity;
+    return self->mouse_sensitivity;
 }
 
 void
 Camera::mouseSensitivity(const math::vec2_t &v)
 {
-    self->_mouse_sensitivity = v;
+    self->mouse_sensitivity = v;
 }
 
 real
 Camera::speed() const
 {
-    return self->_speed;
+    return self->speed;
 }
 
 void
 Camera::speed(real s)
 {
-    self->_speed = s;
+    self->speed = s;
 }
 
 glt::Frame &
 Camera::frame()
 {
-    return self->_frame;
+    return self->frame;
 }
 
 void
 Camera::frame(const glt::Frame &frame)
 {
-    self->_frame = frame;
+    self->frame = frame;
 }
 
 const std::string &
 Camera::framePath() const
 {
-    return self->_frame_path;
+    return self->frame_path;
 }
 
 void
 Camera::framePath(const std::string &path)
 {
-    self->_frame_path = path;
+    self->frame_path = path;
 }
 
 void
 Camera::mouseMoved(int16_t dx, int16_t dy)
 {
-    self->mouseMoved(this, dx, dy);
+    self->mouseMoved(dx, dy);
 }
 
 void
 Camera::mouseLook(bool enable)
 {
-    if (self->_mouse_look != enable) {
-        self->_mouse_look = enable;
+    if (self->mouse_look != enable) {
+        self->mouse_look = enable;
 
-        if (!self->_engine)
+        if (!self->engine)
             return;
 
         if (enable)
-            self->_engine->window().events().mouseMoved.reg(
-              self->_handlers.mouseMoved);
+            self->engine->window().events().mouseMoved.reg(
+              self->handlers.mouseMoved);
         else
-            self->_engine->window().events().mouseMoved.unreg(
-              self->_handlers.mouseMoved);
+            self->engine->window().events().mouseMoved.unreg(
+              self->handlers.mouseMoved);
     }
 }
 
 void
 Camera::registerWith(Engine &e)
 {
-    self->_engine = &e;
-    if (self->_frame_path.empty())
-        self->_frame_path = e.programName() + ".cam";
-    e.events().beforeRender.reg(self->_handlers.beforeRender);
-    self->_engine->events().handleInput.reg(self->_handlers.handleInput);
-    if (self->_mouse_look) {
-        self->_mouse_look = false; // force registering of eventhandlers
+    self->engine = &e;
+    if (self->frame_path.empty())
+        self->frame_path = e.programName() + ".cam";
+    e.events().beforeRender.reg(self->handlers.beforeRender);
+    self->engine->events().handleInput.reg(self->handlers.handleInput);
+    if (self->mouse_look) {
+        self->mouse_look = false; // force registering of eventhandlers
         mouseLook(true);
     }
 }
@@ -367,11 +367,11 @@ Camera::registerWith(Engine &e)
 void
 Camera::registerCommands(CommandProcessor &proc)
 {
-    proc.define(self->_commands.move);
-    proc.define(self->_commands.saveFrame);
-    proc.define(self->_commands.loadFrame);
-    proc.define(self->_commands.speed);
-    proc.define(self->_commands.sensitivity);
+    proc.define(self->commands.move);
+    proc.define(self->commands.saveFrame);
+    proc.define(self->commands.loadFrame);
+    proc.define(self->commands.speed);
+    proc.define(self->commands.sensitivity);
 }
 
 } // namespace ge

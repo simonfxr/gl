@@ -57,14 +57,12 @@ if(COMP_GCC)
     -Wcast-qual
     -Wchar-subscripts
     -Wcomment
-    -Wconversion
     -Wdisabled-optimization
     -Wformat
     -Wformat-nonliteral
     -Wformat-security
     -Wformat-y2k
     -Wformat=2
-    -Wimplicit
     -Wimport
     -Winit-self
     -Winline
@@ -120,7 +118,6 @@ if(COMP_CLANG)
     -Wno-packed
     -Wno-padded
     -Wno-return-std-move-in-c++11
-    -Wno-shadow
     )
 endif()
 

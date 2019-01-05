@@ -5,9 +5,9 @@
 
 namespace sys {
 
-PRAGMA_PUSH_IGNORE_EXIT_TIME_DESTRUCTOR
+BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
 std::unique_ptr<Module> module;
-PRAGMA_POP
+END_NO_WARN_GLOBAL_DESTRUCTOR
 
 void
 moduleInit()

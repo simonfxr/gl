@@ -1,5 +1,3 @@
-#define SYS_IO_STREAM_NOWARN
-
 #include "sys/fs/fs_unix.hpp"
 
 #include "err/err.hpp"

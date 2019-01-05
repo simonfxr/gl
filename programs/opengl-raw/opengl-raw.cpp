@@ -175,18 +175,19 @@ initVertexArray(State &s)
 
     glBindVertexArray(s.vertex_array);
     glBindBuffer(GL_ARRAY_BUFFER, s.vertex_buffer);
-    glVertexAttribPointer(s.attrib_position,
-                          3,
-                          GL_FLOAT,
-                          GL_FALSE,
-                          sizeof(Vertex),
-                          (GLvoid *) offsetof(Vertex, position));
+    glVertexAttribPointer(
+      s.attrib_position,
+      3,
+      GL_FLOAT,
+      GL_FALSE,
+      sizeof(Vertex),
+      reinterpret_cast<GLvoid *>(offsetof(Vertex, position)));
     glVertexAttribPointer(s.attrib_color,
                           3,
                           GL_FLOAT,
                           GL_FALSE,
                           sizeof(Vertex),
-                          (GLvoid *) offsetof(Vertex, color));
+                          reinterpret_cast<GLvoid *>(offsetof(Vertex, color)));
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glEnableVertexAttribArray(s.attrib_position);
     glEnableVertexAttribArray(s.attrib_color);

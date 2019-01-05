@@ -2,30 +2,27 @@
 
 #include "err/err.hpp"
 
-namespace {
 using namespace math;
 using math::sqrt;
 
-const double m = double(1e15);
-const double sec = double(1e12);
-const double kg = double(1);
-const double As = double(1);
+inline constexpr double m = double(1e15);
+inline constexpr double sec = double(1e12);
+inline constexpr double kg = double(1);
+inline constexpr double As = double(1);
 
-const double epsi0 =
+inline constexpr double epsi0 =
   double(8.854187817e-12) * (As * As * (sec / m) * (sec / m) / (kg * m));
-const double c = double(2.99792458e8) * m / sec;
+// inline constexpr double c = double(2.99792458e8) * m / sec;
 
-// const double mu0 = inverse(c * c * epsi0) * (kg * m / (As * As));
-const double mu0 = double(0) * (kg * m / (As * As));
+// inline constexpr double mu0 = inverse(c * c * epsi0) * (kg * m / (As * As));
 
-const double r_p = double(0.84e-15) * m;
-const double r_e = double(2.8e-15) * m;
+inline constexpr double r_p = double(0.84e-15) * m;
+inline constexpr double r_e = double(2.8e-15) * m;
 
-const double m_p = double(1.672e-27) * kg;
-const double m_e = double(9.109382e-31) * kg;
+inline constexpr double m_p = double(1.672e-27) * kg;
+inline constexpr double m_e = double(9.109382e-31) * kg;
 
-const double e0 = double(1.6e-19) * As;
-} // namespace
+inline constexpr double e0 = double(1.6e-19) * As;
 
 ParticleRef::ParticleRef(ParticleArray &a, uint32_t _i) : array(a), i(_i) {}
 

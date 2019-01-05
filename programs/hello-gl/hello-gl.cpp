@@ -137,9 +137,8 @@ Anim::link()
 }
 
 void
-Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
+Anim::renderScene(const ge::Event<ge::RenderEvent> &)
 {
-    ge::Engine &engine = ev.info.engine;
     glt::RenderTarget *rt = engine.renderManager().activeRenderTarget();
 
     rt->clearColor(glt::color(vec4(real(1))));
