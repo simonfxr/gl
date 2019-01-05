@@ -380,7 +380,11 @@ MeshBase::drawArraysInstanced(size_t num, GLenum primType)
         return;
     validatePrimType(primType);
     enableAttributes();
-    GL_CALL(glDrawArraysInstanced, primType, 0, GLsizei(gpu_vertices_size), GLsizei(num));
+    GL_CALL(glDrawArraysInstanced,
+            primType,
+            0,
+            GLsizei(gpu_vertices_size),
+            GLsizei(num));
     disableAttributes();
 }
 

@@ -67,19 +67,16 @@ struct SYS_API InStream
 
     void close();
 
-    bool closed() const { return *_flags & SF_IN_CLOSED; }
-    bool readable() const
-    {
-        return (*_flags & (SF_IN_CLOSED | SF_IN_EOF)) == 0;
-    }
-    bool closable() const { return *_flags & SF_CLOSABLE; }
+    bool closed() const { return flags & SF_IN_CLOSED; }
+    bool readable() const { return (flags & (SF_IN_CLOSED | SF_IN_EOF)) == 0; }
+    bool closable() const { return flags & SF_CLOSABLE; }
 
     InStream &closable(bool yesno)
     {
         if (yesno)
-            *_flags |= SF_CLOSABLE;
+            flags |= SF_CLOSABLE;
         else
-            *_flags &= ~SF_CLOSABLE;
+            flags &= ~SF_CLOSABLE;
         return *this;
     }
 
@@ -88,15 +85,10 @@ struct SYS_API InStream
 protected:
     virtual StreamResult basic_read(size_t &s, char *buf) = 0;
     virtual StreamResult basic_close_in(bool flush_only) = 0;
+    InStream(StreamFlags &);
 
-    void init(StreamFlags *);
-
-    StreamFlags *_flags;
-    union
-    {
-        StreamFlags _flags_store;
-        void *__pad{};
-    };
+    StreamFlags &flags;
+    StreamFlags _flags_store;
 };
 
 struct SYS_API OutStream
@@ -106,19 +98,21 @@ struct SYS_API OutStream
 
     void close();
 
-    bool closed() const { return _flags & SF_OUT_CLOSED; }
+    bool closed() const { return flags & SF_OUT_CLOSED; }
+
     bool writeable() const
     {
-        return (_flags & (SF_OUT_CLOSED | SF_OUT_EOF)) == 0;
+        return (flags & (SF_OUT_CLOSED | SF_OUT_EOF)) == 0;
     }
-    bool closable() const { return _flags & SF_CLOSABLE; }
+
+    bool closable() const { return flags & SF_CLOSABLE; }
 
     OutStream &closable(bool yesno)
     {
         if (yesno)
-            _flags |= SF_CLOSABLE;
+            flags |= SF_CLOSABLE;
         else
-            _flags &= ~SF_CLOSABLE;
+            flags &= ~SF_CLOSABLE;
         return *this;
     }
 
@@ -129,14 +123,7 @@ protected:
     virtual StreamResult basic_write(size_t &s, const char *buf) = 0;
     virtual StreamResult basic_flush() = 0;
     virtual StreamResult basic_close_out() = 0;
-
-    void init(StreamFlags *);
-
-    union
-    {
-        StreamFlags _flags;
-        void *__pad{};
-    };
+    StreamFlags flags;
 };
 
 struct SYS_API IOStream
@@ -161,7 +148,7 @@ protected:
 
     virtual StreamResult basic_close() = 0;
 
-    using OutStream::_flags;
+    using OutStream::flags;
 };
 
 struct SYS_API FileStream : public IOStream
@@ -197,6 +184,33 @@ protected:
     StreamResult basic_write(size_t &, const char *) final override;
 };
 
+struct SYS_API ByteStream : public IOStream
+{
+
+    ByteStream(size_t bufsize = 32);
+    ByteStream(const char *buf, size_t sz);
+    ByteStream(const std::string &);
+
+    ~ByteStream() override;
+
+    size_t size() const { return buffer.size(); }
+    const char *data() const { return buffer.data(); }
+    char *data() { return buffer.data(); }
+    std::string str() const { return std::string(data(), size()); }
+
+    void truncate(size_t);
+
+protected:
+    StreamResult basic_flush() final override;
+    StreamResult basic_close() final override;
+    StreamResult basic_read(size_t &, char *) final override;
+    StreamResult basic_write(size_t &, const char *) final override;
+
+private:
+    std::vector<char> buffer;
+    size_t read_cursor;
+};
+
 struct SYS_API CooperativeInStream : public InStream
 {
     InStream *in;
@@ -208,32 +222,6 @@ struct SYS_API CooperativeInStream : public InStream
 protected:
     virtual StreamResult basic_close_in(bool flush_only) final override;
     virtual StreamResult basic_read(size_t &, char *) final override;
-};
-
-struct SYS_API ByteStream : public IOStream
-{
-
-    std::vector<char> _buffer;
-    size_t _read_cursor;
-
-    ByteStream(size_t bufsize = 32);
-    ByteStream(const char *buf, size_t sz);
-    ByteStream(const std::string &);
-
-    ~ByteStream() override;
-
-    size_t size() const { return _buffer.size(); }
-    const char *data() const { return &_buffer.front(); }
-    char *data() { return &_buffer.front(); }
-    std::string str() const { return std::string(data(), size()); }
-
-    void truncate(size_t);
-
-protected:
-    StreamResult basic_flush() final override;
-    StreamResult basic_close() final override;
-    StreamResult basic_read(size_t &, char *) final override;
-    StreamResult basic_write(size_t &, const char *) final override;
 };
 
 SYS_API OutStream &

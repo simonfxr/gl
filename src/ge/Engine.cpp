@@ -1,10 +1,10 @@
 #include "ge/Engine.hpp"
 
-#include "glt/glt.hpp"
-#include "glt/utils.hpp"
+#include "err/err.hpp"
 #include "ge/Tokenizer.hpp"
 #include "ge/ge.hpp"
-#include "err/err.hpp"
+#include "glt/glt.hpp"
+#include "glt/utils.hpp"
 #include "sys/clock.hpp"
 #include "sys/fs.hpp"
 #include "sys/sys.hpp"
@@ -298,15 +298,18 @@ Engine::Data::tick()
 void
 Engine::Data::render(double interpolation)
 {
-    events.beforeRender.raise(makeEvent(RenderEvent(theEngine, real(interpolation))));
+    events.beforeRender.raise(
+      makeEvent(RenderEvent(theEngine, real(interpolation))));
     if (!skipRender) {
         GL_TRACE("BEGIN_SCENE");
         renderManager.beginScene();
-        events.render.raise(makeEvent(RenderEvent(theEngine, real(interpolation))));
+        events.render.raise(
+          makeEvent(RenderEvent(theEngine, real(interpolation))));
         renderManager.endScene();
         GL_TRACE("END_SCENE");
     }
-    events.afterRender.raise(makeEvent(RenderEvent(theEngine, real(interpolation))));
+    events.afterRender.raise(
+      makeEvent(RenderEvent(theEngine, real(interpolation))));
 }
 
 void

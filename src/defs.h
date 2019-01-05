@@ -54,18 +54,6 @@
 #define DEBUG_DECL(x)
 #endif
 
-#ifdef HU_COMP_GNULIKE
-#define PRAGMA_PUSH_IGNORE_EXIT_TIME_DESTRUCTOR                                \
-    _Pragma("GCC diagnostic push")                                             \
-      _Pragma("GCC diagnostic ignored \"-Wexit-time-destructors\"")            \
-        _Pragma("GCC diagnostic ignored \"-Wglobal-constructors\"")
-
-#define PRAGMA_POP _Pragma("GCC diagnostic pop")
-#else
-#define PRAGMA_PUSH_IGNORE_EXIT_TIME_DESTRUCTOR
-#define PRAGMA_POP
-#endif
-
 #define likely hu_likely
 #define unlikely hu_unlikely
 
@@ -108,24 +96,26 @@ typedef long long int64_t;
 #define PRAGMA_DISABLE_DIAG_SWITCH                                             \
     _Pragma(AS_STR(clang diagnostic ignored "-Wswitch"))                       \
       _Pragma(AS_STR(clang diagnostic ignored "-Wswitch-enum"))
+#define PRAGMA_DISABLE_DIAG_GLOBAL_DESTRUCTOR                                  \
+    _Pragma(AS_STR(clang diagnostic ignored "-Wexit-time-destructors"))        \
+      _Pragma(AS_STR(clang diagnostic ignored "-Wglobal-constructors"))
+#define PRAGMA_DISABLE_DIAG_UNINITIALIZED                                      \
+    _Pragma(AS_STR(clang diagnostic ignored "-Wuninitialized"))
 #elif HU_COMP_GCC_P
 #define PRAGMA_DIAGNOSTIC_PUSH _Pragma("GCC diagnostic push")
 #define PRAGMA_DIAGNOSTIC_POP _Pragma("GCC diagnostic pop")
 #define PRAGMA_DISABLE_DIAG_SWITCH                                             \
     _Pragma(AS_STR(GCC diagnostic ignored "-Wswitch"))                         \
       _Pragma(AS_STR(GCC diagnostic ignored "-Wswitch-enum"))
+#define PRAGMA_DISABLE_DIAG_GLOBAL_DESTRUCTOR
+#define PRAGMA_DISABLE_DIAG_UNINITIALIZED                                      \
+    _Pragma(AS_STR(GCC diagnostic ignored "-Wuninitialized"))
 #else
 #define PRAGMA_DIAGNOSTIC_PUSH
 #define PRAGMA_DIAGNOSTIC_POP
 #define PARGMA_DISABLE_DIAG_SWITCH
-#endif
-
-#if HU_COMP_CLANG_P
-#define PRAGMA_DISABLE_DIAG_GLOBAL_DESTRUCTOR                                  \
-    _Pragma(AS_STR(clang diagnostic ignored "-Wexit-time-destructors"))        \
-      _Pragma(AS_STR(clang diagnostic ignored "-Wglobal-constructors"))
-#else
 #define PRAGMA_DISABLE_DIAG_GLOBAL_DESTRUCTOR
+#define PRAGMA_DISABLE_DIAG_UNINITIALIZED
 #endif
 
 #define BEGIN_NO_WARN_SWITCH PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_SWITCH
@@ -134,5 +124,9 @@ typedef long long int64_t;
 #define BEGIN_NO_WARN_GLOBAL_DESTRUCTOR                                        \
     PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_GLOBAL_DESTRUCTOR
 #define END_NO_WARN_GLOBAL_DESTRUCTOR PRAGMA_DIAGNOSTIC_POP
+
+#define BEGIN_NO_WARN_UNINITIALIZED                                            \
+    PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_UNINITIALIZED
+#define END_NO_WARN_UNINITIALIZED PRAGMA_DIAGNOSTIC_POP
 
 #endif

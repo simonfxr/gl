@@ -145,7 +145,8 @@ absolutePath(const std::string &path)
 {
     auto wpath = utf8ToUtf16(path);
     std::wstring abs(MAX_PATH, '\0');
-    auto len = GetFullPathNameW(wpath.c_str(), DWORD(abs.size()), abs.data(), NULL);
+    auto len =
+      GetFullPathNameW(wpath.c_str(), DWORD(abs.size()), abs.data(), NULL);
     if (!len)
         return "";
 

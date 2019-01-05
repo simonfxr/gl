@@ -344,8 +344,8 @@ GameWindow::Data::glfw_mouse_button_callback(GLFWwindow *win,
     Key b =
       Key::make(action == GLFW_PRESS ? keystate::Pressed : keystate::Released,
                 convertGLFWMouseButton(button));
-    me->events.mouseButton.raise(
-      makeEvent(MouseButton(me->self, int16_t(me->mouse_x), int16_t(me->mouse_y), b)));
+    me->events.mouseButton.raise(makeEvent(
+      MouseButton(me->self, int16_t(me->mouse_x), int16_t(me->mouse_y), b)));
 }
 
 void

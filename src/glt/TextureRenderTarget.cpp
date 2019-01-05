@@ -126,7 +126,8 @@ TextureRenderTarget::doDeactivate()
 }
 
 bool
-TextureRenderTarget::checkFramebufferStatus(GLFramebufferObject& fb, GLenum target)
+TextureRenderTarget::checkFramebufferStatus(GLFramebufferObject &fb,
+                                            GLenum target)
 {
     GLenum status;
     GL_ASSIGN_CALL(status, glCheckNamedFramebufferStatusEXT, *fb, target);

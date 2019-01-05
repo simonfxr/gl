@@ -131,7 +131,8 @@ programUniform(GLuint program, GLint loc, float value)
 void
 programUniform(GLuint program, GLint loc, const Array<float> &value)
 {
-    GL_CALL(glProgramUniform1fv, program, loc, GLsizei(value.size()), &value[0]);
+    GL_CALL(
+      glProgramUniform1fv, program, loc, GLsizei(value.size()), &value[0]);
 }
 
 void

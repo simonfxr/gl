@@ -2,6 +2,8 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #endif
 
+#include "sys/io/Stream.hpp"
+
 #include "err/err.hpp"
 #include "sys/module.hpp"
 
@@ -11,14 +13,10 @@
 #endif
 #include <cstring>
 
-#include "sys/io/Stream.hpp"
-
 namespace sys {
-
 namespace io {
 
 namespace {
-
 FILE *
 castFILE(FileStream::FILE *p)
 {
@@ -34,12 +32,12 @@ castFILE(FILE *p)
 struct StreamState
 {
     static StreamResult track(StreamFlags eof,
-                              StreamFlags * /*flags*/,
+                              StreamFlags & /*flags*/,
                               StreamResult r);
 };
 
 StreamResult
-StreamState::track(StreamFlags eof, StreamFlags *flags, StreamResult res)
+StreamState::track(StreamFlags eof, StreamFlags &flags, StreamResult res)
 {
     switch (res) {
     case StreamResult::OK:
@@ -47,19 +45,20 @@ StreamState::track(StreamFlags eof, StreamFlags *flags, StreamResult res)
     case StreamResult::Blocked:
         return res;
     case StreamResult::EOF:
-        *flags |= eof;
+        flags |= eof;
         return res;
     case StreamResult::Closed:
         return res;
     case StreamResult::Error:
         return res;
     }
-    ASSERT_FAIL();
+    CASE_UNREACHABLE;
 }
-
 } // namespace
 
-InStream::InStream() : _flags(&_flags_store), _flags_store(SF_CLOSABLE) {}
+InStream::InStream() : flags(_flags_store), _flags_store(SF_CLOSABLE) {}
+
+InStream::InStream(StreamFlags &flags_) : flags(flags_), _flags_store(0) {}
 
 InStream::~InStream() = default;
 
@@ -71,12 +70,12 @@ InStream::close()
 
     StreamResult ret;
     if (closable()) {
-        *_flags |= SF_IN_CLOSED;
+        flags |= SF_IN_CLOSED;
         ret = basic_close_in(false);
     } else {
         ret = basic_close_in(true);
     }
-    StreamState::track(SF_IN_EOF | SF_OUT_EOF, _flags, ret);
+    StreamState::track(SF_IN_EOF | SF_OUT_EOF, flags, ret);
 }
 
 StreamResult
@@ -90,16 +89,10 @@ InStream::read(size_t &s, char *buf)
         s = 0;
         return StreamResult::OK;
     }
-    return StreamState::track(SF_IN_EOF, _flags, basic_read(s, buf));
+    return StreamState::track(SF_IN_EOF, flags, basic_read(s, buf));
 }
 
-void
-InStream::init(StreamFlags *flags)
-{
-    _flags = flags;
-}
-
-OutStream::OutStream() : _flags(SF_CLOSABLE) {}
+OutStream::OutStream() : flags(SF_CLOSABLE) {}
 
 OutStream::~OutStream() = default;
 
@@ -111,12 +104,12 @@ OutStream::close()
 
     StreamResult ret;
     if (closable()) {
-        _flags |= SF_OUT_CLOSED;
+        flags |= SF_OUT_CLOSED;
         ret = basic_close_out();
     } else {
         ret = basic_flush();
     }
-    StreamState::track(SF_IN_EOF | SF_OUT_EOF, &_flags, ret);
+    StreamState::track(SF_IN_EOF | SF_OUT_EOF, flags, ret);
 }
 
 StreamResult
@@ -130,7 +123,7 @@ OutStream::write(size_t &s, const char *buf)
         s = 0;
         return StreamResult::OK;
     }
-    return StreamState::track(SF_OUT_EOF, &_flags, basic_write(s, buf));
+    return StreamState::track(SF_OUT_EOF, flags, basic_write(s, buf));
 }
 
 StreamResult
@@ -138,13 +131,12 @@ OutStream::flush()
 {
     if (closed())
         return StreamResult::Closed;
-    return StreamState::track(SF_OUT_EOF, &_flags, basic_flush());
+    return StreamState::track(SF_OUT_EOF, flags, basic_flush());
 }
 
-IOStream::IOStream()
-{
-    InStream::init(&this->_flags);
-}
+BEGIN_NO_WARN_UNINITIALIZED
+IOStream::IOStream() : InStream(flags) {}
+END_NO_WARN_UNINITIALIZED
 
 IOStream::~IOStream() = default;
 
@@ -154,14 +146,14 @@ IOStream::basic_close_in(bool flush_only)
     if (flush_only) {
         return basic_flush();
     }
-    _flags |= SF_OUT_CLOSED;
+    flags |= SF_OUT_CLOSED;
     return basic_close();
 }
 
 StreamResult
 IOStream::basic_close_out()
 {
-    _flags |= SF_IN_CLOSED;
+    flags |= SF_IN_CLOSED;
     return basic_close();
 }
 
@@ -375,8 +367,69 @@ NullStream::basic_close()
     return StreamResult::OK;
 }
 
-CooperativeInStream::CooperativeInStream(InStream *_in, Fiber *ioh, Fiber *su)
-  : in(_in), io_handler(ioh), stream_user(su)
+ByteStream::ByteStream(size_t bufsize) : read_cursor(0)
+{
+    buffer.reserve(bufsize);
+}
+
+ByteStream::ByteStream(const char *buf, size_t sz) : ByteStream(sz)
+{
+    write(sz, buf);
+}
+
+ByteStream::ByteStream(const std::string &str)
+  : ByteStream(str.data(), str.size())
+{}
+
+ByteStream::~ByteStream() = default;
+
+void
+ByteStream::truncate(size_t sz)
+{
+    buffer.resize(sz, 0);
+    if (read_cursor > sz)
+        read_cursor = sz;
+}
+
+StreamResult
+ByteStream::basic_flush()
+{
+    return StreamResult::OK;
+}
+
+StreamResult
+ByteStream::basic_close()
+{
+    return StreamResult::OK;
+}
+
+StreamResult
+ByteStream::basic_read(size_t &s, char *buf)
+{
+    size_t lim = read_cursor + s;
+    if (lim > size())
+        lim = size_t();
+    if (read_cursor >= lim) {
+        s = 0;
+        return StreamResult::EOF;
+    }
+    s = lim - read_cursor;
+    memcpy(buf, data() + read_cursor, s);
+    read_cursor += s;
+    return StreamResult::OK;
+}
+
+StreamResult
+ByteStream::basic_write(size_t &s, const char *buf)
+{
+    size_t end = size();
+    buffer.resize(end + s, 0);
+    memcpy(data() + end, buf, s);
+    return StreamResult::OK;
+}
+
+CooperativeInStream::CooperativeInStream(InStream *in_, Fiber *ioh, Fiber *su)
+  : in(in_), io_handler(ioh), stream_user(su)
 {}
 
 StreamResult
@@ -403,67 +456,5 @@ CooperativeInStream::basic_read(size_t &s, char *buf)
     }
 }
 
-ByteStream::ByteStream(size_t bufsize) : _read_cursor(0)
-{
-    _buffer.reserve(bufsize);
-}
-
-ByteStream::ByteStream(const char *buf, size_t sz) : ByteStream(sz)
-{
-    write(sz, buf);
-}
-
-ByteStream::ByteStream(const std::string &str)
-  : ByteStream(str.data(), str.size())
-{}
-
-ByteStream::~ByteStream() = default;
-
-void
-ByteStream::truncate(size_t sz)
-{
-    _buffer.resize(sz, 0);
-    if (_read_cursor > sz)
-        _read_cursor = sz;
-}
-
-StreamResult
-ByteStream::basic_flush()
-{
-    return StreamResult::OK;
-}
-
-StreamResult
-ByteStream::basic_close()
-{
-    return StreamResult::OK;
-}
-
-StreamResult
-ByteStream::basic_read(size_t &s, char *buf)
-{
-    size_t lim = _read_cursor + s;
-    if (lim > size())
-        lim = size_t();
-    if (_read_cursor >= lim) {
-        s = 0;
-        return StreamResult::EOF;
-    }
-    s = lim - _read_cursor;
-    memcpy(buf, data() + _read_cursor, s);
-    _read_cursor += s;
-    return StreamResult::OK;
-}
-
-StreamResult
-ByteStream::basic_write(size_t &s, const char *buf)
-{
-    size_t end = size();
-    _buffer.resize(end + s, 0);
-    memcpy(data() + end, buf, s);
-    return StreamResult::OK;
-}
-
 } // namespace io
-
 } // namespace sys
