@@ -1,12 +1,3 @@
-
-macro(cache_var_type var type)
-  set(${var} ${${var}} CACHE ${type} "" FORCE)
-endmacro()
-
-macro(cache_var var)
-  cache_var_type(${var} STRING)
-endmacro()
-
 set(GLOBAL_DEFINES)
 set(GLOBAL_FLAGS)
 set(GLOBAL_LINK_FLAGS)
@@ -41,60 +32,96 @@ if(COMP_CLANG AND USE_CLANG_TRAP_UNDEFINED)
   list(APPEND GLOBAL_FLAGS -fsanitize=undefined-trap -fsanitize-undefined-trap-on-error -ftrap-function=__clang_trap_function)
 endif()
 
-if(USE_ADDRESS_SANITIZER)
-  list(APPEND GLOBAL_FLAGS -fsanitize=address)
+if(USE_ASAN)
+  list(APPEND GLOBAL_FLAGS -fsanitize=address -fno-omit-frame-pointer)
   list(APPEND GLOBAL_LINK_FLAGS -fsanitize=address)
+endif()
+
+if(USE_UBSAN)
+  list(APPEND GLOBAL_FLAGS -fsanitize=undefined -fno-omit-frame-pointer)
+  list(APPEND GLOBAL_LINK_FLAGS -fsanitize=undefined)
 endif()
 
 if(COMP_GCCLIKE)
   list(APPEND GLOBAL_FLAGS -Wall -Wswitch-enum -Wdate-time -Werror=date-time)
-  # list(APPEND GLOBAL_FLAGS -Werror)
-  # list(APPEND GLOBAL_FLAGS -Weffc++)
-  if (NOT COMP_ICC)
-    list(APPEND GLOBAL_FLAGS -Wextra)
-  else()
-    list(APPEND GLOBAL_FLAGS "-diag-disable 10120")
-  endif()
-  if (COMP_GCC)
-    list(APPEND GLOBAL_FLAGS -Wdouble-promotion)
-  endif()
-  list(APPEND GLOBAL_FLAGS 
-    # -Wconversion -Wsign-conversion 
-    # -Werror 
-    # -Wold-style-cast
-    )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
-endif()
-
-if(COMP_CLANG)
-  list(APPEND GLOBAL_FLAGS 
-    -Weverything
-    -Wno-c++98-compat
-    -Wno-c++98-compat-pedantic
-    -Wno-missing-prototypes
-    -Wno-padded
-    -Wno-gnu-anonymous-struct
-    -Wno-nested-anon-types
-    -Wno-gnu-statement-expression
-    -Wno-return-std-move-in-c++11
-
-    -Wno-used-but-marked-unused
-    -Wno-missing-noreturn
-    -Wno-float-equal
-    -Wno-sign-conversion
-    -Wno-conversion
-    -Wno-double-promotion
-    -Wno-shadow
-    -Wno-gnu-zero-variadic-macro-arguments
-    )
+  set(APPEND GLOBAL_FLAGS -fno-exceptions -fno-rtti)
+elseif(COMP_MSVC)
+  list(APPEND GLOBAL_FLAGS "/EH-")
+  list(APPEND GLOBAL_LINK_FLAGS "/EH-")
+  list(APPEND GLOBAL_FLAGS "/GR-")
 endif()
 
 if(COMP_GCC)
-#  list(APPEND GLOBAL_FLAGS 
-#    -Wsuggest-attribute=const
-#    -Wsuggest-attribute=pure
-#    -Wsuggest-attribute=noreturn
-#  )
+  list(APPEND GLOBAL_FLAGS
+    -Wcast-align
+    -Wcast-qual
+    -Wchar-subscripts
+    -Wcomment
+    -Wconversion
+    -Wdisabled-optimization
+    -Wformat
+    -Wformat-nonliteral
+    -Wformat-security
+    -Wformat-y2k
+    -Wformat=2
+    -Wimplicit
+    -Wimport
+    -Winit-self
+    -Winline
+    -Winvalid-pch
+    -Wmissing-field-initializers
+    -Wmissing-format-attribute
+    -Wmissing-include-dirs
+    -Wmissing-noreturn
+    -Wparentheses
+    -Wpointer-arith
+    -Wredundant-decls
+    -Wreturn-type
+    -Wsequence-point
+    -Wsign-compare
+    -Wstack-protector
+    -Wstrict-aliasing
+    -Wstrict-aliasing=2
+    -Wswitch
+    -Wswitch-enum
+    -Wtrigraphs
+    -Wuninitialized
+    -Wunknown-pragmas
+    -Wunreachable-code
+    -Wunsafe-loop-optimizations
+    -Wunused
+    -Wunused-function
+    -Wunused-label
+    -Wunused-parameter
+    -Wunused-value
+    -Wunused-variable
+    -Wvariadic-macros
+    -Wvolatile-register-var
+    -Wwrite-strings
+    )
+  list(APPEND GLOBAL_FLAGS -Wextra)
+endif()
+
+if(COMP_CLANG)
+  list(APPEND GLOBAL_FLAGS
+    -Weverything
+    -Wno-c++98-compat
+    -Wno-c++98-compat-pedantic
+    -Wno-conversion
+    -Wno-documentation
+    -Wno-documentation-unknown-command
+    -Wno-double-promotion
+    -Wno-float-equal
+    -Wno-gnu-anonymous-struct
+    -Wno-gnu-zero-variadic-macro-arguments
+    -Wno-missing-noreturn
+    -Wno-missing-prototypes
+    -Wno-nested-anon-types
+    -Wno-packed
+    -Wno-padded
+    -Wno-return-std-move-in-c++11
+    -Wno-shadow
+    )
 endif()
 
 if(COMP_ICC)
@@ -106,27 +133,14 @@ if(BUILD_DEBUG)
   if(COMP_GCCLIKE)
     list(APPEND GLOBAL_FLAGS -ggdb)
   endif()
-
-  # if(COMP_GCCLIKE)
-  #   list(APPEND GLOBAL_FLAGS -fno-omit-frame-pointer)
-  # endif()
 endif()
 
 if(USE_OPENMP)
   if(NOT DEFINED OPENMP_FOUND)
     find_package(OpenMP)
-    if(OPENMP_FOUND)
-      cache_var(OpenMP_C_FLAGS)
-      cache_var(OpenMP_CXX_FLAGS)
-      cache_var(OpenMP_EXE_LINKER_FLAGS)
+    if(NOT OpenMP_FOUND)
+      set(USE_OPENMP FALSE)
     endif()
-    cache_var_type(OPENMP_FOUND BOOL)
-  endif()
-
-  if(OPENMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
   endif()
 endif()
 
@@ -144,48 +158,20 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 # endif()
 
 find_package(OpenGL REQUIRED)
-
-# if(NOT DEFINED GLEW_LIBRARY)
-#   if(USE_GLEW_IN_TREE)
-#     set(GLEW_ROOT_DIR "${PROJECT_SOURCE_DIR}/ext/glew")
-#   endif()
-#   find_package(GLEW REQUIRED)
-# endif()
-
-# if(NOT DEFINED GLFW_LIBRARY)
-#   if(USE_GLFW_IN_TREE)
-#     set(GLFW_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/ext/glfw3/include")
-#     if(CL_VS_VERSION)
-#       set(GLFW_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/ext/glfw3/lib-msvc-${CL_VS_VERSION}")
-#     endif()
-#     find_library(GLFW_LIBRARY "glfw" HINTS "${GLFW_LIBRARY_DIR}")
-#   else()
-#     find_package(PkgConfig REQUIRED)
-#     pkg_search_module(GLFW REQUIRED glfw3)
-#     set(GLFW_LIBRARY "${GLFW_LIBRARIES}")
-#     cache_var(GLFW_LIBRARY)
-#   endif()
-# endif()
-
 find_package(OpenCL)
-
-if(USE_OPENCL_HEADERS_IN_TREE)
-  set(OPENCL_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/ext/opencl-headers/include")
-else()
-  set(OPENCL_INCLUDE_PATH "${OPENCL_INCLUDE_DIR}")
-endif()
 
 list(APPEND GLOBAL_DEFINES SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
 if(BUILD_OPT)
   include(CheckIPOSupported)
   check_ipo_supported(RESULT HAVE_IPO)
-  if(HAVE_IPO)
-    message(STATUS "Enabling IPO")
-    set_state(HAVE_IPO "${HAVE_IPO}")
-  endif()
 endif()
 
-set_state(GLOBAL_DEFINES "${GLOBAL_DEFINES}")
-set_state(GLOBAL_FLAGS "${GLOBAL_FLAGS}")
-set_state(GLOBAL_LINK_FLAGS "${GLOBAL_LINK_FLAGS}")
+message(STATUS "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+message(STATUS "BUILD_DEBUG=${BUILD_DEBUG}")
+message(STATUS "BUILD_OPT=${BUILD_OPT}")
+message(STATUS "HAVE_IPO=${HAVE_IPO}")
+message(STATUS "USE_ASAN=${USE_ASAN}")
+message(STATUS "USE_UBSAN=${USE_UBSAN}")
+message(STATUS "USE_OPENMP=${USE_OPENMP}")
+message(STATUS "GLDEBUG=${GLDEBUG}")

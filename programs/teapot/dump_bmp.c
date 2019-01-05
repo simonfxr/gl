@@ -38,7 +38,6 @@ typedef struct
 {
     unsigned char b, g, r;
 } HU_PACKED Pixel24;
-
 HU_END_PACKED
 
 static const uint16_t MAGIC = 19778; // ascii "BM"

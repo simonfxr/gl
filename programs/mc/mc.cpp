@@ -589,7 +589,7 @@ Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3_t ecLight)
 
     gt.pop();
 
-    const glt::VertexDescription<Vertex> &desc = Vertex::gl::desc;
+    const glt::VertexDescription<Vertex> &desc = Vertex::gl::descr;
 
     for (size_t i = 0; i < desc.nattributes; ++i) {
         const glt::VertexAttr &a = desc.attributes[i];

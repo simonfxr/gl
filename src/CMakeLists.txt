@@ -1,7 +1,3 @@
-
-include(${PROJECT_SOURCE_DIR}/cmake/config.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/macros.cmake)
-
 #set(FIBER_LIB ${PROJECT_SOURCE_DIR}/ext/lib/libfiber.so)
 set(FIBER_LIB)
 
@@ -54,7 +50,7 @@ if(SYS_WINDOWS)
   set(SYS_LIBS Shlwapi ${SYS_LIBS})
 endif()
 
-def_lib(sys SOURCES ${SYS_SRC} ${ERR_SRC} LIB_DEPEND ${SYS_LIBS} ${ERR_LIBS})
+def_lib(sys SOURCES ${SYS_SRC} ${ERR_SRC} DEPEND ${SYS_LIBS} ${ERR_LIBS})
 
 set(GLT_SRC
   glt/utils.cpp
@@ -86,8 +82,7 @@ if(SYS_LINUX)
   set(GLT_LIBS ${GLT_LIBS} X11)
 endif()
 
-def_lib(glt SOURCES ${GLT_SRC} DEPEND sys)
-target_link_libraries(glt ${GLT_LIBS})
+def_lib(glt SOURCES ${GLT_SRC} DEPEND sys ${GLT_LIBS})
 
 set(GE_SRC
   ge/GameLoop.cpp
@@ -114,5 +109,4 @@ set(GE_SRC
 set(GE_LIBS
   ${GLFW_LIBRARY})
 
-def_lib(ge SOURCES ${GE_SRC} DEPEND sys glt)
-target_link_libraries(ge ${GE_LIBS})
+def_lib(ge SOURCES ${GE_SRC} DEPEND sys glt ${GE_LIBS})

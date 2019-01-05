@@ -16,7 +16,12 @@ macro(set_option var default type docstring)
   set(${var} ${${var}} CACHE ${type} ${docstring} FORCE)
 endmacro()
 
-set_option(BUILD_SHARED_LIBS FALSE BOOL "TRUE to build shared libs, FALSE to build static libs")
+set(build_shared_default TRUE)
+if(SYS_WINDOWS AND COMP_MSVC)
+  set(build_shared_default FALSE)
+endif()
+
+set_option(BUILD_SHARED_LIBS ${build_shared_default} BOOL "TRUE to build shared libs, FALSE to build static libs")
 
 if(CMAKE_BUILD_TYPE STREQUAL RELEASE)
   set(GLDEBUG_DEFAULT FALSE)
@@ -33,8 +38,18 @@ if(SYS_LINUX)
   set_option(USE_UNWIND_STACKTRACES TRUE BOOL "use libunwind and libdw to print a stacktrace on errors")
 endif()
 
-set_option(USE_ADDRESS_SANITIZER FALSE BOOL "enable -fsanitize=address")
-set_option(USE_TRAP_UNDEFINED FALSE BOOL "enable -fsanitize=undefined-trap")
+if(COMP_CLANG OR COMP_GCC)
+  set_option(USE_ASAN FALSE BOOL "enable -fsanitize=address")
+  if(BUILD_DEBUG)
+    set(ubsan_default TRUE)
+  else()
+    set(ubsan_default FALSE)
+  endif()
+  set_option(USE_UBSAN ${ubsan_default} BOOL "enable -fsanitize=undefined")
+endif()
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macros.cmake)
 
 add_subdirectory(deps/cxx-header-utils)
 
@@ -64,7 +79,7 @@ if(NOT TARGET glad)
   endif()
 
   set(glad_link_mode)
-  if(SYS_WINDOWS AND COMP_CL)
+  if(SYS_WINDOWS AND COMP_MSVC)
     set(glad_link_mode STATIC)
   endif()
   add_library(glad ${glad_link_mode} "${GLAD_GEN_DIR}/src/glad.c")

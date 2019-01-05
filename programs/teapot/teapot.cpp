@@ -414,7 +414,7 @@ Anim::renderScene(const Event<RenderEvent> &e)
     renderTeapot(teapot1);
     renderTeapot(teapot2);
 
-#if RENDER_GLOW
+#ifdef RENDER_GLOW
     GL_CALL(glDisable, GL_DEPTH_TEST);
 
     { // create the glow texture
@@ -665,6 +665,7 @@ Anim::keyPressed(const Event<KeyPressed> &e)
 {
     using namespace ge::keycode;
 
+    BEGIN_NO_WARN_SWITCH
     switch (e.info.key) {
     case F:
         wireframe_mode = !wireframe_mode;
@@ -703,8 +704,8 @@ Anim::keyPressed(const Event<KeyPressed> &e)
             use_spotlight = true;
         }
         break;
-    default:;
     }
+    END_NO_WARN_SWITCH
 }
 
 void

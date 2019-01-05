@@ -27,21 +27,21 @@
 
 using namespace math;
 
-static const float SPHERE_DENSITY = 999.f;
+inline constexpr real SPHERE_DENSITY = 999_r;
 
-static const vec4_t SPHERE_COLOR = vec4(0.f, 0.f, 1.f, 1.f);
+// inline constexpr vec4_t SPHERE_COLOR = vec4(0.f, 0.f, 1.f, 1.f);
 
-static const vec3_t LIGHT_POS = vec3(11.f, 18.f, 11.f);
+inline constexpr vec3_t LIGHT_POS = vec3(11.f, 18.f, 11.f);
 
-static const float FPS_RENDER_CYCLE = 1.f;
+// inline constexpr real FPS_RENDER_CYCLE = 1_r;
 
-static const float GAMMA = 1.8f;
+inline constexpr float GAMMA = 1.8f;
 
-static const glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
+inline constexpr glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
 
-static const size_t AA_SAMPLES = 4;
+inline constexpr size_t AA_SAMPLES = 4;
 
-static const size_t SPHERE_LOD_MAX = 6;
+inline constexpr size_t SPHERE_LOD_MAX = 6;
 
 struct SphereLOD
 {

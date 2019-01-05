@@ -102,4 +102,25 @@ typedef int int32_t;
 typedef long long int64_t;
 #endif
 
+#if HU_COMP_CLANG_P
+#define PRAGMA_DIAGNOSTIC_PUSH _Pragma("clang diagnostic push")
+#define PRAGMA_DIAGNOSTIC_POP _Pragma("clang diagnostic pop")
+#define PRAGMA_DISABLE_DIAG_SWITCH                                             \
+    _Pragma(AS_STR(clang diagnostic ignored "-Wswitch"))                       \
+      _Pragma(AS_STR(clang diagnostic ignored "-Wswitch-enum"))
+#elif HU_COMP_GCC_P
+#define PRAGMA_DIAGNOSTIC_PUSH _Pragma("GCC diagnostic push")
+#define PRAGMA_DIAGNOSTIC_POP _Pragma("GCC diagnostic pop")
+#define PRAGMA_DISABLE_DIAG_SWITCH                                             \
+    _Pragma(AS_STR(GCC diagnostic ignored "-Wswitch"))                         \
+      _Pragma(AS_STR(GCC diagnostic ignored "-Wswitch-enum"))
+#else
+#define PRAGMA_DIAGNOSTIC_PUSH
+#define PRAGMA_DIAGNOSTIC_POP
+#define PARGMA_DISABLE_DIAG_SWITCH
+#endif
+
+#define BEGIN_NO_WARN_SWITCH PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_SWITCH
+#define END_NO_WARN_SWITCH PRAGMA_DIAGNOSTIC_POP
+
 #endif
