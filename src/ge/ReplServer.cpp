@@ -85,7 +85,7 @@ Client::Client(int _id, Handle h)
   , in_stream(&hstream, client_fiber, &parser_fiber)
   , parse_state(in_stream, "")
 {
-    fiber_alloc(&parser_fiber, 65536);
+    fiber_alloc(&parser_fiber, 65536, 2);
     ParserArgs args{};
     args.client = this;
     fiber_push_return(

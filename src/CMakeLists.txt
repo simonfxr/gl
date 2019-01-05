@@ -1,5 +1,9 @@
-#set(FIBER_LIB ${PROJECT_SOURCE_DIR}/ext/lib/libfiber.so)
 set(FIBER_LIB)
+set(FIBER_DEFINES)
+if(HAVE_FIBER)
+  set(FIBER_LIB fiber)
+  set(FIBER_DEFINES -DHAVE_FIBER=1)
+endif()
 
 link_libraries(header-utils)
 
@@ -51,6 +55,7 @@ if(SYS_WINDOWS)
 endif()
 
 def_lib(sys SOURCES ${SYS_SRC} ${ERR_SRC} DEPEND ${SYS_LIBS} ${ERR_LIBS})
+target_compile_definitions(sys PUBLIC ${FIBER_DEFINES})
 
 set(GLT_SRC
   glt/utils.cpp

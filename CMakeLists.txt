@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(OpenGL_GL_PREFERENCE GLVND)
 
-project(gl)
+project(gl LANGUAGES C CXX)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect_env.cmake)
 
@@ -84,6 +84,11 @@ if(NOT TARGET glad)
   endif()
   add_library(glad ${glad_link_mode} "${GLAD_GEN_DIR}/src/glad.c")
   target_include_directories(glad SYSTEM PUBLIC "${GLAD_GEN_DIR}/include")
+endif()
+
+if(UNIX)
+  set(HAVE_FIBER TRUE)
+  add_subdirectory(deps/fiber)
 endif()
 
 include_directories(src)

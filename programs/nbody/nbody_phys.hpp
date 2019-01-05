@@ -3,8 +3,6 @@
 
 #include "math/vec3.hpp"
 
-using namespace math;
-
 struct Particle;
 struct ParticleRef;
 struct ParticleArray;
@@ -12,16 +10,16 @@ struct Simulation;
 
 struct Particle
 {
-    point3_t position;
-    vec3_t velocity;
-    real inv_mass; // allow for m = infinity -> m^-1 = 0
-    real charge;
-    real radius;
+    math::point3_t position;
+    math::vec3_t velocity;
+    math::real inv_mass; // allow for m = infinity -> m^-1 = 0
+    math::real charge;
+    math::real radius;
 
-    real mass() const { return real(1) / inv_mass; }
-    Particle &mass(real m)
+    math::real mass() const { return math::real(1) / inv_mass; }
+    Particle &mass(math::real m)
     {
-        inv_mass = real(1) / m;
+        inv_mass = math::real(1) / m;
         return *this;
     }
 };
@@ -31,11 +29,11 @@ struct ParticleArray
     size_t _n;
     size_t _size;
 
-    point3_t *_position;
-    vec3_t *_velocity;
-    real *_inv_mass;
-    real *_charge;
-    real *_radius;
+    math::point3_t *_position;
+    math::vec3_t *_velocity;
+    math::real *_inv_mass;
+    math::real *_charge;
+    math::real *_radius;
 
     ParticleArray(size_t);
     ~ParticleArray();
@@ -63,20 +61,20 @@ struct ParticleRef
 struct Simulation
 {
 
-    real time_step;
+    math::real time_step;
     ParticleArray particles;
 
-    Simulation(real time_step);
+    Simulation(math::real time_step);
     ~Simulation();
 
     void init();
 
     void simulate_frame();
-    void extrapolate_particle(Particle &p, real interpolation);
+    void extrapolate_particle(Particle &p, math::real interpolation);
 
-    void compute_acceleration(vec3_t *acceleration,
-                              const vec3_t *position,
-                              const vec3_t *velocity);
+    void compute_acceleration(math::vec3_t *acceleration,
+                              const math::vec3_t *position,
+                              const math::vec3_t *velocity);
 };
 
 #endif

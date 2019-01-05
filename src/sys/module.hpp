@@ -38,8 +38,7 @@ struct IO
 
 struct Fibers
 {
-    Fiber toplevel{};
-
+    Fiber toplevel;
     Fibers();
 };
 

@@ -3,27 +3,17 @@
 
 #include "sys/conf.hpp"
 
-#include <cstdint>
-#include <exception>
-
-#if 0
-#define FIBER_SHARED SHARED_IMPORT
-#if PTR_BITS == 32
-#define FIBER_BITS32
+#ifdef HAVE_FIBER
+#include <fiber/fiber.h>
 #else
-#define FIBER_BITS64
-#endif
 
-#include <fiber.h>
-#endif
-
-#include <cstddef>
+#include <exception>
 
 typedef uint32_t FiberState;
 
-#define FS_EXECUTING (FiberState(1))
-#define FS_TOPLEVEL (FiberState(2))
-#define FS_ALIVE (FiberState(4))
+#define FS_EXECUTING ::FiberState(1)
+#define FS_TOPLEVEL ::FiberState(2)
+#define FS_ALIVE ::FiberState(4)
 
 typedef struct
 {
@@ -49,8 +39,8 @@ fiber_init_toplevel(Fiber *fiber)
     fiber->state = FS_EXECUTING | FS_TOPLEVEL | FS_ALIVE;
 }
 
-inline int
-fiber_alloc(Fiber *, size_t)
+inline bool
+fiber_alloc(Fiber *, size_t, bool)
 {
     FIBER_NYI_RET(0);
 }
@@ -111,6 +101,7 @@ fiber_set_alive(Fiber *fiber, int alive)
     else
         fiber->state &= ~FS_ALIVE;
 }
+#endif
 
 namespace sys {
 
