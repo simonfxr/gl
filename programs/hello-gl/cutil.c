@@ -1,8 +1,9 @@
-#include "defs.h"
 
-#if HU_COMP_MSVC_P
+#ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS 1
 #endif
+
+#include "defs.h"
 
 #include <glad/glad.h>
 #include <math.h>
@@ -29,7 +30,7 @@ file_contents(const char *filename, GLint *length)
     fseek(f, 0, SEEK_SET);
 
     buffer = malloc(*length + 1);
-    *length = fread(buffer, 1, *length, f);
+    *length = (GLint) fread(buffer, 1, *length, f);
     fclose(f);
     ((char *) buffer)[*length] = '\0';
 

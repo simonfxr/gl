@@ -25,7 +25,7 @@ TextureSampler::filterMode(FilterMode mode, Filter filter)
 {
     ensureSampler();
 
-    GLint glmode;
+    GLint glmode{};
     switch (mode) {
     case FilterNearest:
         glmode = GL_NEAREST;
@@ -46,7 +46,7 @@ TextureSampler::clampMode(ClampMode mode, Axis axis)
 {
     ensureSampler();
 
-    GLint glmode;
+    GLint glmode{};
     switch (mode) {
     case ClampToEdge:
         glmode = GL_CLAMP_TO_EDGE;

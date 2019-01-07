@@ -5,24 +5,23 @@
 using namespace math;
 using math::sqrt;
 
-inline constexpr double m = double(1e15);
-inline constexpr double sec = double(1e12);
-inline constexpr double kg = double(1);
-inline constexpr double As = double(1);
+inline constexpr real m = 1e15_r;
+inline constexpr real sec = 1e12_r;
+inline constexpr real kg = 1_r;
+inline constexpr real As = 1_r;
 
-inline constexpr double epsi0 =
-  double(8.854187817e-12) * (As * As * (sec / m) * (sec / m) / (kg * m));
-// inline constexpr double c = double(2.99792458e8) * m / sec;
+inline constexpr real epsi0 = 8.854187817e-12_r * (As * As * (sec / m) * (sec / m) / (kg * m));
+// inline constexpr real c = real(2.99792458e8) * m / sec;
 
-// inline constexpr double mu0 = inverse(c * c * epsi0) * (kg * m / (As * As));
+// inline constexpr real mu0 = inverse(c * c * epsi0) * (kg * m / (As * As));
 
-inline constexpr double r_p = double(0.84e-15) * m;
-inline constexpr double r_e = double(2.8e-15) * m;
+inline constexpr real r_p = 0.84e-15_r * m;
+inline constexpr real r_e = 2.8e-15_r * m;
 
-inline constexpr double m_p = double(1.672e-27) * kg;
-inline constexpr double m_e = double(9.109382e-31) * kg;
+inline constexpr real m_p = 1.672e-27_r * kg;
+inline constexpr real m_e = 9.109382e-31_r * kg;
 
-inline constexpr double e0 = double(1.6e-19) * As;
+inline constexpr real e0 = 1.6e-19_r * As;
 
 ParticleRef::ParticleRef(ParticleArray &a, uint32_t _i) : array(a), i(_i) {}
 
@@ -58,7 +57,7 @@ Particle ParticleArray::operator[](size_t i) const
 
 ParticleRef ParticleArray::operator[](size_t i)
 {
-    return ParticleRef(*this, i);
+    return ParticleRef(*this, uint32_t(i));
 }
 
 namespace {
@@ -133,7 +132,7 @@ Simulation::init()
      * v = sqrt(e^2 / (4 pi epsi0 m_red) 1/r)
      */
 
-#define v(r) math::sqrt(e0 *e0 / (4 * math::PI * epsi0 * m_e) * r)
+#define v(r) math::sqrt(real(e0 *e0 / (4.0 * math::PI * epsi0 * m_e)) * r)
 
     Particle e;
     Particle p;

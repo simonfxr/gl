@@ -13,7 +13,7 @@ namespace io {
     return SE_UNKNOWN
 
 HandleError
-open(const std::string &path, HandleMode mode, Handle *handle)
+open(const std::string &, HandleMode, Handle *)
 {
     UNDEFINED;
 }

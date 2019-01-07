@@ -12,14 +12,11 @@ sys::io::OutStream &
 operator<<(sys::io::OutStream &out, const math::vec3_t &v)
 {
     return out << "[" << v[0] << " " << v[1] << " " << v[2] << "]";
-    return out << "[" << v[0] << " " << v[1] << " " << v[2] << "]";
 }
 
 sys::io::OutStream &
 operator<<(sys::io::OutStream &out, const math::vec4_t &v)
 {
-    return out << "[" << v[0] << " " << v[1] << " " << v[2] << " " << v[3]
-               << "]";
     return out << "[" << v[0] << " " << v[1] << " " << v[2] << " " << v[3]
                << "]";
 }

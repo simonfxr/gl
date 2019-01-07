@@ -789,9 +789,9 @@ orWorldNot(World &r, const World &a, const World &b)
 
 struct Vertices
 {
-    uint32_t size;
+    size_t size;
     Vertex *verts;
-    explicit Vertices(uint32_t s) : size(s), verts(new Vertex[s]) {}
+    explicit Vertices(size_t s) : size(s), verts(new Vertex[s]) {}
     ~Vertices() { delete[] verts; }
 };
 
@@ -1086,7 +1086,7 @@ renderBlocks(State *state, ge::Engine &e)
                       BLOCK_MAT.shininess);
     us.optional("materialProperties", mat);
     us.optional("gammaCorrection", state->gamma_correction);
-    us.optional("sin_time", math::sin(e.gameLoop().tickTime()));
+    us.optional("sin_time", math::sin(real(e.gameLoop().tickTime())));
 
     state->worldModel.drawElements();
 }

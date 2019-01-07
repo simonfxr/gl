@@ -36,7 +36,7 @@ struct Anim
     ge::Engine engine;
     glt::CubeMesh<Vertex> quadBatch;
 
-    float time_print_fps{};
+    ge::GameLoop::time time_print_fps{};
 
     void init(const ge::Event<ge::InitEvent> & /*ev*/);
     void link(ge::Engine &e);
@@ -92,7 +92,7 @@ void
 Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 {
     ge::Engine &e = ev.info.engine;
-    real time = e.gameLoop().tickTime() +
+    auto time = e.gameLoop().tickTime() +
                 ev.info.interpolation * e.gameLoop().tickDuration();
 
     auto renderShader = e.shaderManager().program("render");
@@ -108,7 +108,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 
     time = e.gameLoop().realTime();
     if (time >= time_print_fps) {
-        time_print_fps = time + 1.f;
+        time_print_fps = time + 1;
 
 #define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
         glt::FrameStatistics fs = engine.renderManager().frameStatistics();

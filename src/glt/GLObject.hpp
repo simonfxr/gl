@@ -103,12 +103,12 @@ struct GLObject<ObjectType::Shader> : public GLObjectBase<ObjectType::Shader>
     explicit GLObject(GLuint name = 0) : GLObjectBase<ObjectType::Shader>(name)
     {}
 
-    void generate(GLenum type) { glt::generateShader(type, &this->_name); }
+    void generate(GLenum ty) { glt::generateShader(ty, &this->_name); }
 
-    GLObject<ObjectType::Shader> &ensure(GLenum type)
+    GLObject<ObjectType::Shader> &ensure(GLenum ty)
     {
         if (this->_name == 0)
-            generate(type);
+            generate(ty);
         return *this;
     }
 };

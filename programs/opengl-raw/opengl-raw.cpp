@@ -37,8 +37,8 @@ struct Vertex
     vec3_t color;
 };
 
-#define X .525731112119133606
-#define Z .850650808352039932
+#define X .525731112119133606f
+#define Z .850650808352039932f
 
 const GLfloat VERTEX_DATA[12][3] = {
     { -X, 0.0, Z }, { X, 0.0, Z },  { -X, 0.0, -Z }, { X, 0.0, -Z },

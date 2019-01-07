@@ -29,7 +29,7 @@ struct World
 {
     real scale = 1;
     vec2_t trans = vec2(0, 0);
-    vec2_t julia_constant = vec2(0.3, 0.5);
+    vec2_t julia_constant = vec2(0.3_r, 0.5_r);
 
     void zoom(real t);
     void shift(const vec2_t & /*a*/);
@@ -68,7 +68,7 @@ struct Anim
     World world;
     std::shared_ptr<Commands> commands;
 
-    real time_print_fps{};
+    ge::GameLoop::time time_print_fps{};
 
     void init(const ge::Event<ge::InitEvent> & /*ev*/);
     void link(ge::Engine &e);
@@ -138,7 +138,7 @@ void
 Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 {
     ge::Engine &e = ev.info.engine;
-    real time = e.gameLoop().tickTime() +
+    auto time = e.gameLoop().tickTime() +
                 ev.info.interpolation * e.gameLoop().tickDuration();
 
     glt::RenderManager &rm = engine.renderManager();

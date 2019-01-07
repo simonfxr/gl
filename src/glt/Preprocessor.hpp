@@ -24,7 +24,7 @@ struct GLT_API Preprocessor
         {}
     };
 
-    struct DirectiveContext
+    struct GLT_API DirectiveContext
     {
         ContentContext content;
 
@@ -39,7 +39,7 @@ struct GLT_API Preprocessor
         {}
     };
 
-    struct DirectiveHandler
+    struct GLT_API DirectiveHandler
     {
         virtual ~DirectiveHandler();
         virtual void beginProcessing(const ContentContext &ctx);

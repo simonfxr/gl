@@ -46,9 +46,14 @@ if(COMP_GCCLIKE)
   list(APPEND GLOBAL_FLAGS -Wall -Wswitch-enum -Wdate-time -Werror=date-time)
   set(APPEND GLOBAL_FLAGS -fno-exceptions -fno-rtti)
 elseif(COMP_MSVC)
-  list(APPEND GLOBAL_FLAGS "/EH-")
-  list(APPEND GLOBAL_LINK_FLAGS "/EH-")
-  list(APPEND GLOBAL_FLAGS "/GR-")
+	list(APPEND GLOBAL_FLAGS
+		/wd4201 #anon struct/union
+		/wd4251 #inconsistent dll linkage
+		/wd4204 #non-constant aggregate initializer
+	)
+  #list(APPEND GLOBAL_FLAGS "/EH-")
+  #list(APPEND GLOBAL_LINK_FLAGS "/EH-")
+  #list(APPEND GLOBAL_FLAGS "/GR-")
 endif()
 
 if(COMP_GCC)
@@ -147,8 +152,8 @@ endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
-# set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
-# set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 # if(SYS_WINDOWS)
 #   set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)

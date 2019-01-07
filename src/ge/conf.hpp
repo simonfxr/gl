@@ -3,7 +3,7 @@
 
 #include "defs.hpp"
 
-#ifdef GE_EXPORTS
+#ifdef ge_EXPORTS
 #define GE_API SHARED_EXPORT
 #else
 #define GE_API SHARED_IMPORT

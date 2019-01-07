@@ -3,7 +3,7 @@
 
 #include "defs.hpp"
 
-#ifdef GLT_EXPORTS
+#ifdef glt_EXPORTS
 #define GLT_API SHARED_EXPORT
 #else
 #define GLT_API SHARED_IMPORT

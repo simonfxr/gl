@@ -171,10 +171,9 @@ print_stacktrace(sys::io::OutStream &out, int skip)
         if (skip > 0)
             --skip;
 
-        auto functionAddress = frame.AddrPC.Offset;
+        // auto functionAddress = frame.AddrPC.Offset;
 
-        auto moduleBase = SymGetModuleBase(process, frame.AddrPC.Offset);
-        char moduleBuff[MAX_PATH];
+		// auto moduleBase = SymGetModuleBase(process, frame.AddrPC.Offset);
         // bool have_module = false;
         // if (moduleBase &&
         //    GetModuleFileNameA((HINSTANCE) moduleBase, moduleBuff, MAX_PATH))

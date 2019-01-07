@@ -43,7 +43,11 @@ fiber_init_toplevel(Fiber *fiber)
 inline bool
 fiber_alloc(Fiber *, size_t, FiberCleanupFunc, void *, bool)
 {
-    FIBER_NYI_RET(0);
+#if HU_COMP_MSVC_P
+    FIBER_NYI;
+#else
+	FIBER_NYI_RET(0);
+#endif
 }
 
 inline void

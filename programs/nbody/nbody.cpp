@@ -41,7 +41,7 @@ struct Anim
     vec3_t light_dir;
     vec3_t ec_light_dir;
 
-    real next_fps_counter_draw;
+    ge::GameLoop::time next_fps_counter_draw;
 
     Simulation sim;
 

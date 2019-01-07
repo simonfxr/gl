@@ -111,7 +111,7 @@ MouseLookPlugin::Data::handleMouseMove(const Event<MouseMoved> &ev)
     if (_state == Grabbing) {
         size_t w, h;
         win.windowSize(w, h);
-        win.setMouse(w / 2, h / 2);
+        win.setMouse(int16_t(w / 2), int16_t(h / 2));
     }
 }
 

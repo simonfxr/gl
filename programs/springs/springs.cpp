@@ -117,7 +117,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 
             particle_pos_mass.push_back(vec4(x[0], x[1], x[2], inv_mass));
             particle_vel.push_back(vec3(real(0)));
-#define INDEX(i, j) ((i) *N_SPRINGS + (j))
+#define INDEX(i, j) GLint((i) *N_SPRINGS + (j))
             particle_conn.push_back(i > 0 ? INDEX(i - 1, j) : INDEX(i, j));
             particle_conn.push_back(i + 1 < N_SPRINGS ? INDEX(i + 1, j)
                                                       : INDEX(i, j));
@@ -283,8 +283,8 @@ Anim::animate(const ge::Event<ge::AnimationEvent> &)
     GL_CALL(
       glBindTexture, GL_TEXTURE_BUFFER, particle_pos_mass_tex[particle_source]);
 
-    real dt = engine.gameLoop().tickDuration();
-    real damp_coeff = real(0.99); // damping over the period of 1 sec;
+    auto dt = real(engine.gameLoop().tickDuration());
+    auto damp_coeff = 0.99_r; // damping over the period of 1 sec;
                                   //    real damping = pow(damp_coeff, dt);
     glt::Uniforms(*physics_prog)
       .optional("dt", dt)

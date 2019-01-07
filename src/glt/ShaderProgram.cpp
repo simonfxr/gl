@@ -33,8 +33,7 @@ namespace ShaderProgramError {
 std::string
 stringError(Type e)
 {
-
-    const char *err;
+    const char *err = "";
     switch (e) {
     case NoError:
         err = "no error";

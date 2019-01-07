@@ -51,7 +51,7 @@ TextureRenderTarget3D::createTexture(bool delete_old)
             GLint(_color_format),
             GLsizei(width()),
             GLsizei(height()),
-            _depth,
+            GLsizei(_depth),
             0,
             GL_RGB,
             GL_UNSIGNED_BYTE,
@@ -62,7 +62,7 @@ TextureRenderTarget3D::createTexture(bool delete_old)
     _sampler.clampMode(this->clampMode());
 
     Attachment current = _target_attachment;
-    AttachmentType other;
+    AttachmentType other{};
 
     switch (current.type) {
     case AttachmentLayered:

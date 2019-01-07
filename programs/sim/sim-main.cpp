@@ -277,8 +277,8 @@ Game::constrainCameraMovement(const ge::Event<ge::CameraMoved> &ev)
 void
 Game::animate(const ge::Event<ge::AnimationEvent> &ev)
 {
-    float dt = game_speed * ev.info.engine.gameLoop().tickDuration();
-    world.simulate(dt);
+    auto dt = game_speed * ev.info.engine.gameLoop().tickDuration();
+    world.simulate(real(dt));
 }
 
 void
@@ -352,7 +352,7 @@ Game::renderScene(const ge::Event<ge::RenderEvent> &ev)
 
     //    e.window().window().setActive();
 
-    float dt = interpolation * game_speed * e.gameLoop().tickDuration();
+    auto dt = real(interpolation * game_speed * e.gameLoop().tickDuration());
 
     renderWorld(dt);
 
@@ -484,7 +484,7 @@ Game::end_render_spheres()
                     GL_TEXTURE_1D,
                     0,
                     GL_RGBA32F,
-                    num * 2,
+                    GLsizei(num * 2),
                     0,
                     GL_RGBA,
                     GL_FLOAT,

@@ -185,7 +185,7 @@ bmp_read(FILE *fd, int *wp, int *hp, uint32_t **pixelsp)
 
     offset = decodeU32(prefix.header.payload_byte_offset) - sizeof(BMPPrefix);
     if (offset > 0) {
-        if (fseek(fd, offset, SEEK_CUR))
+        if (fseek(fd, (long)offset, SEEK_CUR))
             goto read_err;
     }
 
