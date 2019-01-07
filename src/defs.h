@@ -101,21 +101,26 @@ typedef long long int64_t;
       _Pragma(AS_STR(clang diagnostic ignored "-Wglobal-constructors"))
 #define PRAGMA_DISABLE_DIAG_UNINITIALIZED                                      \
     _Pragma(AS_STR(clang diagnostic ignored "-Wuninitialized"))
+#define PRAGMA_DISABLE_DIAG_DISABLED_MACRO_EXPANSION                           \
+    _Pragma(AS_STR(clang diagnostic ignored "-Wdisabled-macro-expansion"))
 #elif HU_COMP_GCC_P
 #define PRAGMA_DIAGNOSTIC_PUSH _Pragma("GCC diagnostic push")
 #define PRAGMA_DIAGNOSTIC_POP _Pragma("GCC diagnostic pop")
 #define PRAGMA_DISABLE_DIAG_SWITCH                                             \
     _Pragma(AS_STR(GCC diagnostic ignored "-Wswitch"))                         \
       _Pragma(AS_STR(GCC diagnostic ignored "-Wswitch-enum"))
+#define PRAGMA_DISABLE_DIAG_DISABLED_MACRO_EXPANSION
 #define PRAGMA_DISABLE_DIAG_GLOBAL_DESTRUCTOR
 #define PRAGMA_DISABLE_DIAG_UNINITIALIZED                                      \
     _Pragma(AS_STR(GCC diagnostic ignored "-Wuninitialized"))
+#define PRAGMA_DISABLE_DIAG_DISABLED_MACRO_EXPANSION
 #else
 #define PRAGMA_DIAGNOSTIC_PUSH
 #define PRAGMA_DIAGNOSTIC_POP
 #define PARGMA_DISABLE_DIAG_SWITCH
 #define PRAGMA_DISABLE_DIAG_GLOBAL_DESTRUCTOR
 #define PRAGMA_DISABLE_DIAG_UNINITIALIZED
+#define PRAGMA_DISABLE_DIAG_DISABLED_MACRO_EXPANSION
 #endif
 
 #define BEGIN_NO_WARN_SWITCH PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_SWITCH
@@ -128,5 +133,9 @@ typedef long long int64_t;
 #define BEGIN_NO_WARN_UNINITIALIZED                                            \
     PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_UNINITIALIZED
 #define END_NO_WARN_UNINITIALIZED PRAGMA_DIAGNOSTIC_POP
+
+#define BEGIN_NO_WARN_DISABLED_MACRO_EXPANSION                                 \
+    PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_DISABLED_MACRO_EXPANSION
+#define END_NO_WARN_DISABLED_MACRO_EXPANSION PRAGMA_DIAGNOSTIC_POP
 
 #endif

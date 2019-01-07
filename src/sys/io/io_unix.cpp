@@ -287,10 +287,13 @@ accept(Socket &s, Handle *h)
     socklen_t clen = sizeof client;
 
     int c;
+    // reason: #define SOCK_CLOEXEC SOCK_CLOEXEC
+    BEGIN_NO_WARN_DISABLED_MACRO_EXPANSION
     RETRY_INTR(c = accept4(s.socket,
                            reinterpret_cast<struct sockaddr *>(&client),
                            &clen,
                            SOCK_CLOEXEC));
+    END_NO_WARN_DISABLED_MACRO_EXPANSION
     if (c == -1)
         return convertErrnoSock();
 

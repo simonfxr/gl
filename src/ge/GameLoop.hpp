@@ -2,7 +2,6 @@
 #define GAME_LOOP_HPP
 
 #include "ge/conf.hpp"
-#include "math/real.hpp"
 
 #include <memory>
 
@@ -11,7 +10,7 @@ namespace ge {
 struct GE_API GameLoop
 {
 
-    typedef math::real time;
+    typedef double time;
 
     struct GE_API Game
     {

@@ -3,6 +3,8 @@
 #include "data/range.hpp"
 #include "err/err.hpp"
 
+#include <algorithm>
+
 namespace ge {
 
 GameLoop::Game::~Game() = default;
@@ -51,22 +53,21 @@ GameLoop::GameLoop(size_t _ticks, size_t max_skip, size_t max_fps)
     maxFPS(max_fps);
 }
 
-math::real
+GameLoop::time
 GameLoop::tickTime() const
 {
-    return math::real(self->tick_time);
+    return self->tick_time;
 }
 
-math::real
+GameLoop::time
 GameLoop::realTime() const
 {
-    return math::real(self->clock);
+    return self->clock;
 }
-
-math::real
+GameLoop::time
 GameLoop::tickDuration() const
 {
-    return math::real(self->frame_duration);
+    return self->frame_duration;
 }
 
 size_t
@@ -206,8 +207,8 @@ GameLoop::run(Game &logic)
         if (self->sync_draw || self->paused || self->clock >= next_tick)
             interpolation = 0;
         else
-            interpolation =
-              math::max(0, 1 - (next_tick - self->clock) / self->tick_duration);
+            interpolation = std::max(
+              time(0), 1 - (next_tick - self->clock) / self->tick_duration);
 
         ASSERT(interpolation >= 0);
         ASSERT(interpolation <= 1);

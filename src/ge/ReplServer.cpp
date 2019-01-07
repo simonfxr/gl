@@ -46,16 +46,17 @@ struct Client
     bool handleIO(Engine & /*e*/);
 };
 
-struct ParserArgs
+void
+fiber_cleanup(Fiber *self, void *args)
 {
-    Client *client;
-};
+    ON_DEBUG(INFO("fiber_cleanup()"));
+    fiber_switch(self, reinterpret_cast<Fiber *>(args));
+}
 
 void
-run_parser_fiber(void *args0)
+run_parser_fiber(void *args)
 {
-    auto *args = reinterpret_cast<ParserArgs *>(args0);
-    Client *c = args->client;
+    Client *c = reinterpret_cast<Client *>(args);
     while (c->state != ParsingStop) {
         bool ok = tokenize(c->parse_state, c->statement);
         if (ok) {
@@ -70,10 +71,6 @@ run_parser_fiber(void *args0)
         }
         fiber_switch(&c->parser_fiber, c->client_fiber);
     }
-
-    fiber_set_alive(&c->parser_fiber, 0);
-    INFO("run_parser_fiber returns");
-    fiber_switch(&c->parser_fiber, c->client_fiber);
 }
 
 Client::Client(int _id, Handle h)
@@ -85,11 +82,12 @@ Client::Client(int _id, Handle h)
   , in_stream(&hstream, client_fiber, &parser_fiber)
   , parse_state(in_stream, "")
 {
-    fiber_alloc(&parser_fiber, 65536, 2);
-    ParserArgs args{};
-    args.client = this;
-    fiber_push_return(
-      &parser_fiber, run_parser_fiber, static_cast<void *>(&args), sizeof args);
+    fiber_alloc(&parser_fiber, 65536, fiber_cleanup, &client_fiber, true);
+    Client *parser_args = this;
+    fiber_push_return(&parser_fiber,
+                      run_parser_fiber,
+                      static_cast<void *>(&parser_args),
+                      sizeof parser_args);
     sys::io::ByteStream name;
     name << "<repl " << id << ">";
     parse_state.filename = name.str();

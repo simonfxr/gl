@@ -21,6 +21,7 @@ typedef struct
 } Fiber;
 
 typedef void (*FiberFunc)(void *);
+typedef void (*FiberCleanupFunc)(Fiber *, void *);
 
 #define FIBER_NYI std::terminate()
 #define FIBER_NYI_RET(x)                                                       \
@@ -28,7 +29,7 @@ typedef void (*FiberFunc)(void *);
     return x
 
 inline Fiber *
-fiber_init(Fiber *, void *, size_t)
+fiber_init(Fiber *, void *, size_t, FiberCleanupFunc, void *)
 {
     FIBER_NYI_RET(nullptr);
 }
@@ -40,7 +41,7 @@ fiber_init_toplevel(Fiber *fiber)
 }
 
 inline bool
-fiber_alloc(Fiber *, size_t, bool)
+fiber_alloc(Fiber *, size_t, FiberCleanupFunc, void *, bool)
 {
     FIBER_NYI_RET(0);
 }
