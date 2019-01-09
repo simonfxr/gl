@@ -32,8 +32,12 @@ struct InStream;
 struct StreamEndl;
 struct IOStream;
 
+SYS_API InStream&
+stdin();
+
 SYS_API OutStream &
 stdout();
+
 SYS_API OutStream &
 stderr();
 
@@ -151,6 +155,7 @@ protected:
     using OutStream::flags;
 };
 
+#if 0
 struct SYS_API FileStream : public IOStream
 {
     struct FILE; // use as dummy type, avoid importing stdio.h, on
@@ -172,7 +177,7 @@ protected:
     FileStream(const FileStream &) = delete;
     FileStream &operator=(const FileStream &) = delete;
 };
-
+#endif
 struct SYS_API NullStream : public IOStream
 {
     NullStream();

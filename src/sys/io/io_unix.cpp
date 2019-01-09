@@ -106,7 +106,50 @@ convertErrnoSock()
     }
 }
 
+HandleError
+handleFromFD(int fd, Handle *h)
+{
+    int flags;
+    h->fd = fd;
+    h->mode = 0;
+    RETRY_INTR(flags = fcntl(fd, F_GETFL));
+    if (flags == -1)
+        return convertErrno();
+    h->mode = unconvertMode(flags);
+    return HE_OK;
+}
+
 } // namespace
+
+SYS_API Handle
+stdin_handle()
+{
+    Handle h;
+    auto err = handleFromFD(0, &h);
+    if (err != HE_OK)
+        ERR("error in fcntl");
+    return h;
+}
+
+SYS_API Handle
+stdout_handle()
+{
+    Handle h;
+    auto err = handleFromFD(1, &h);
+    if (err != HE_OK)
+        ERR("error in fcntl");
+    return h;
+}
+
+SYS_API Handle
+stderr_handle()
+{
+    Handle h;
+    auto err = handleFromFD(2, &h);
+    if (err != HE_OK)
+        ERR("error in fcntl");
+    return h;
+}
 
 HandleError
 open(const std::string &path, HandleMode mode, Handle *h)

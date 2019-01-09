@@ -260,11 +260,13 @@ CommandProcessor::loadScript(const std::string &name, bool quiet)
         goto not_found;
 
     {
-        sys::io::FileStream filestream(file, "rb");
-        if (!filestream.isOpen())
+        sys::io::Handle h;
+        auto err = sys::io::open(file, sys::io::HM_READ, &h);
+        if (err != sys::io::HE_OK)
             goto not_found;
+        auto stream = sys::io::HandleStream(h);
         sys::io::stdout() << "loading script: " << file << sys::io::endl;
-        return loadStream(filestream, file);
+        return loadStream(stream, file);
     }
 
 not_found:

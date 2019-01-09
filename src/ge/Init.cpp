@@ -6,8 +6,6 @@
 #include "glt/ShaderManager.hpp"
 #include "glt/utils.hpp"
 
-#include <cstdio>
-
 namespace ge {
 
 EngineInitializers::EngineInitializers(bool default_init)

@@ -9,6 +9,7 @@
 
 #include <cstring>
 #include <optional>
+#include <vector>
 
 namespace sys {
 namespace io {
@@ -240,43 +241,35 @@ make_finally(F &&f)
 std::pair<std::unique_ptr<char[]>, size_t>
 readFile(sys::io::OutStream &err, const std::string &path) noexcept
 {
-    FILE *in = fopen(path.c_str(), "rb");
-    auto close_in = make_finally([in]() {
-        if (in)
-            fclose(in);
-    });
-
-    if (in == nullptr)
+    Handle h;
+    auto ret = open(path, HM_READ, &h);
+    if (ret != HE_OK)
         goto fail;
-
-    if (fseek(in, 0, SEEK_END) == -1)
-        goto fail;
-
     {
-        auto ssize = ftell(in);
-        if (ssize < 0)
-            goto fail;
-        auto size = size_t(ssize);
-        if (fseek(in, 0, SEEK_SET) == -1)
-            goto fail;
-
-        {
-            auto contents = std::make_unique<char[]>(size + 1);
-            if (size == 0)
-                return std::make_pair(std::move(contents), size);
-            if (fread(contents.get(), 1, size, in) == 0)
+        auto close_h = make_finally([&h]() { close(h); });
+        std::vector<char> vec;
+        for (;;) {
+            char buf[8192];
+            auto size = sizeof buf;
+            auto rerr = read(h, size, buf);
+            if (size > 0)
+                vec.insert(vec.end(), buf, buf + size);
+            if (rerr == HE_EOF) {
+                auto data = std::make_unique<char[]>(vec.size() + 1);
+                memcpy(data.get(), vec.data(), vec.size());
+                data[vec.size()] = '\0';
+                return std::make_pair(std::move(data), vec.size());
+            }
+            if (rerr != HE_OK)
                 goto fail;
-            contents[size] = '\0';
-            return std::make_pair(std::move(contents), size);
         }
     }
-
 fail:
     if (err.writeable())
         err << "unable to read file: " << path << sys::io::endl;
 
     return std::make_pair(nullptr, 0);
-}
+} // namespace io
 
 } // namespace io
 } // namespace sys

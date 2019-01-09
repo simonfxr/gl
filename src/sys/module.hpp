@@ -20,8 +20,9 @@ namespace io {
 
 struct Streams
 {
-    FileStream stdout;
-    FileStream stderr;
+    HandleStream stdin;
+    HandleStream stdout;
+    HandleStream stderr;
 
     Streams();
 };

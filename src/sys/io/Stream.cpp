@@ -1,22 +1,16 @@
-#ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS 1
-#endif
-
 #include "sys/io/Stream.hpp"
 
 #include "err/err.hpp"
 #include "sys/module.hpp"
 
 #include <cerrno>
-#ifndef HU_OS_WINDOWS
-#include <cstdio>
-#endif
 #include <cstring>
 
 namespace sys {
 namespace io {
 
 namespace {
+#if 0
 FILE *
 castFILE(FileStream::FILE *p)
 {
@@ -28,7 +22,7 @@ castFILE(FILE *p)
 {
     return reinterpret_cast<FileStream::FILE *>(p);
 }
-
+#endif
 struct StreamState
 {
     static StreamResult track(StreamFlags eof,
@@ -158,10 +152,19 @@ IOStream::basic_close_out()
 }
 
 Streams::Streams()
-  : stdout(castFILE(STDOUT_FILE)), stderr(castFILE(STDERR_FILE))
+  : stdin(stdin_handle()), 
+	stdout(stdout_handle()), 
+	stderr(stderr_handle())
 {
+    stdin.closable(false);
     stdout.closable(false);
     stderr.closable(false);
+}
+
+SYS_API InStream &
+stdin()
+{
+    return module->io_streams.stdin;
 }
 
 OutStream &
@@ -233,7 +236,7 @@ operator<<(OutStream &out, const StreamEndl & /*unused*/)
     out.flush();
     return out;
 }
-
+#if 0
 FileStream::FileStream(FileStream::FILE *file) : _file(file) {}
 
 FileStream::FileStream(const std::string &path, const std::string &mode)
@@ -335,7 +338,7 @@ FileStream::basic_flush()
         return StreamResult::Error;
 #endif
 }
-
+#endif
 NullStream::NullStream()
 {
     close();

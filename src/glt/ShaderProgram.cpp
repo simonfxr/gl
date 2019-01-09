@@ -1,6 +1,5 @@
 #include "glt/ShaderProgram.hpp"
 
-#include <cstdio>
 #include <map>
 #include <set>
 

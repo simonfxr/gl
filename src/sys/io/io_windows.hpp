@@ -4,9 +4,17 @@
 namespace sys {
 namespace io {
 
+struct W32_HANDLE;
+struct W32_SOCKET;
+
 struct Handle
 {
-    HandleMode mode;
+    union
+    {
+        W32_HANDLE *handle;
+        W32_SOCKET *socket;
+    };
+    bool is_handle;
 };
 
 struct Socket

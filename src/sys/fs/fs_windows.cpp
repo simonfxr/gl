@@ -1,60 +1,29 @@
-#include "err/err.hpp"
 #include "sys/fs.hpp"
 
+#include "err/err.hpp"
+#include "sys/win_utf_conv.hpp"
+
 #include <Shlwapi.h>
-#include <windows.h>
+#include <Windows.h>
 
 namespace sys {
 namespace fs {
 
-namespace {
+using sys::win::utf16To8;
+using sys::win::utf8To16;
+
+  namespace
+{
 
 #define WINDOWS_TICK 10000000
 #define SEC_TO_UNIX_EPOCH 11644473600LL
 
-int64_t
-filetimeToUnixTimestap(const FILETIME *ft)
-{
-    auto ticks = (int64_t(ft->dwHighDateTime) << 32) | ft->dwLowDateTime;
-    ticks = ticks / WINDOWS_TICK;
-    return ticks - SEC_TO_UNIX_EPOCH;
-}
-
-std::wstring
-utf8ToUtf16(const std::string &str)
-{
-    if (str.empty())
-        return std::wstring{};
-    auto len =
-      MultiByteToWideChar(CP_UTF8, 0, str.data(), int(str.size()), nullptr, 0);
-    if (!len)
-        FATAL_ERR("MultiByteToWideChar failed (size)");
-    std::wstring ret(size_t(len), wchar_t{});
-    len = MultiByteToWideChar(
-      CP_UTF8, 0, str.data(), int(str.size()), ret.data(), len);
-    if (!len)
-        FATAL_ERR("MultiByteToWideChar failed");
-    return ret;
-}
-
-std::string
-utf16ToUtf8(const wchar_t *data, size_t sz)
-{
-    if (!sz)
-        return std::string{};
-    auto len = WideCharToMultiByte(
-      CP_UTF8, 0, data, int(sz), nullptr, 0, nullptr, nullptr);
-    if (!len)
-        FATAL_ERR("WideCharToMultiByte failed (size)");
-    std::string ret(size_t(len), wchar_t{});
-    len = WideCharToMultiByte(
-      CP_UTF8, 0, data, int(sz), ret.data(), len, nullptr, nullptr);
-    if (!len)
-        FATAL_ERR("WideCharToMultiByte failed");
-    ret.resize(strlen(ret.c_str()));
-    return ret;
-}
-
+    int64_t filetimeToUnixTimestap(const FILETIME *ft)
+    {
+        auto ticks = (int64_t(ft->dwHighDateTime) << 32) | ft->dwLowDateTime;
+        ticks = ticks / WINDOWS_TICK;
+        return ticks - SEC_TO_UNIX_EPOCH;
+    }
 } // namespace
 
 bool
@@ -72,7 +41,7 @@ cwd()
         WARN("GetCurrentDirectory() failed");
         return "";
     }
-    return absolutePath(utf16ToUtf8(dir.data(), len));
+    return absolutePath(utf16To8({ dir.data(), size_t(len) }));
 }
 
 std::string
@@ -108,7 +77,7 @@ dropTrailingSeparators(const std::string &path)
 bool
 isAbsolute(const std::string &path)
 {
-    auto wstr = utf8ToUtf16(path);
+    auto wstr = utf8To16(path);
     return PathIsRelativeW(wstr.c_str()) != TRUE;
 }
 
@@ -121,7 +90,7 @@ modificationTime(const std::string &path)
 std::optional<Stat>
 stat(const std::string &path)
 {
-    auto wpath = utf8ToUtf16(path);
+    auto wpath = utf8To16(path);
     WIN32_FILE_ATTRIBUTE_DATA attrs;
     if (GetFileAttributesExW(wpath.c_str(), GetFileExInfoStandard, &attrs) == 0)
         return std::nullopt;
@@ -136,14 +105,14 @@ stat(const std::string &path)
       GetFullPathNameW(wpath.c_str(), DWORD(wabs.size()), wabs.data(), nullptr);
     if (!len)
         return std::nullopt;
-    stat.absolute = utf16ToUtf8(wabs.data(), len);
+    stat.absolute = utf16To8({wabs.data(), len});
     return stat;
 }
 
 std::string
 absolutePath(const std::string &path)
 {
-    auto wpath = utf8ToUtf16(path);
+    auto wpath = utf8To16(path);
     std::wstring abs(MAX_PATH, '\0');
     auto len =
       GetFullPathNameW(wpath.c_str(), DWORD(abs.size()), abs.data(), NULL);
@@ -156,7 +125,7 @@ absolutePath(const std::string &path)
         return "";
     }
 
-    return utf16ToUtf8(abs.data(), len);
+    return utf16To8({abs.data(), len});
 }
 
 std::string

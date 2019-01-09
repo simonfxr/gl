@@ -66,9 +66,9 @@ struct SYS_API IPAddr4
 } // namespace io
 } // namespace sys
 
-#ifdef HU_OS_POSIX_P
+#if HU_OS_POSIX_P
 #include "sys/io/io_unix.hpp"
-#elif defined(HU_OS_WINDOWS_P)
+#elif HU_OS_WINDOWS_P
 #include "sys/io/io_windows.hpp"
 #else
 #error "no IO implementation available"
@@ -76,6 +76,15 @@ struct SYS_API IPAddr4
 
 namespace sys {
 namespace io {
+
+SYS_API Handle
+stdin_handle();
+
+SYS_API Handle
+stdout_handle();
+
+SYS_API Handle
+stderr_handle();
 
 SYS_API HandleError
 open(const std::string &, HandleMode, Handle *);
@@ -99,6 +108,7 @@ enum SocketError
 {
     SE_OK,
     SE_BLOCKED,
+    SE_EOF,
     SE_BAD_SOCKET,
     SE_INVALID_PARAM,
     SE_UNKNOWN

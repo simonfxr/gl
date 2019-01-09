@@ -24,67 +24,72 @@ if(SYS_WINDOWS)
 endif()
 
 set(SYS_SRC
+  sys/fiber.cpp
   sys/fs/fs_default.cpp
   sys/io.cpp
   sys/io/Stream.cpp
+  sys/mem.cpp
   sys/sys.cpp
-  sys/fiber.cpp
-  sys/mem.cpp)
+  )
 
 if(SYS_UNIX)
   set(SYS_SRC
     ${SYS_SRC}
-    sys/fs/fs_unix.cpp
     sys/clock_unix.cpp
-    sys/io/io_unix.cpp)
+    sys/fs/fs_unix.cpp
+    sys/io/io_unix.cpp
+    )
 elseif(SYS_WINDOWS)
   set(SYS_SRC
     ${SYS_SRC}
-    sys/fs/fs_windows.cpp
     sys/clock_windows.cpp
-    sys/io/io_windows.cpp)
+    sys/fs/fs_windows.cpp
+    sys/io/io_windows.cpp
+    sys/win_utf_conv.cpp
+    )
 endif()
 
 set(SYS_LIBS)
 
 if(SYS_LINUX)
-  set(SYS_LIBS rt ${SYS_LIBS})
-  set(SYS_LIBS ${FIBER_LIB} ${SYS_LIBS})
+  list(APPEND SYS_LIBS rt)
 endif()
 
 if(SYS_WINDOWS)
   set(SYS_LIBS Shlwapi ${SYS_LIBS})
 endif()
 
-def_lib(sys SOURCES ${SYS_SRC} ${ERR_SRC} DEPEND ${SYS_LIBS} ${ERR_LIBS})
+message(STATUS "SYS_LIBS=${SYS_LIBS}")
+def_lib(sys SOURCES ${SYS_SRC} ${ERR_SRC} DEPEND ${SYS_LIBS} ${ERR_LIBS} ${FIBER_LIB})
 target_compile_definitions(sys PUBLIC ${FIBER_DEFINES})
 if(ERR_DEFINES)
   target_compile_definitions(sys PRIVATE ${ERR_DEFINES})
 endif()
 
 set(GLT_SRC
-  glt/utils.cpp
-  glt/ShaderManager.cpp
-  glt/ShaderProgram.cpp
-  glt/ShaderCompiler.cpp
-  glt/Uniforms.cpp
-  glt/Preprocessor.cpp
-  glt/GLSLPreprocessor.cpp
   glt/Frame.cpp
-  glt/GeometryTransform.cpp
-  glt/Transformations.cpp
-  glt/ViewFrustum.cpp
-  glt/RenderManager.cpp
-  glt/RenderTarget.cpp
-  glt/TextureData.cpp
-  glt/TextureSampler.cpp
-  glt/TextureRenderTarget.cpp
-  glt/TextureRenderTarget3D.cpp
-  glt/Mesh.cpp
+  glt/GLDebug.cpp
   glt/GLObject.cpp
   glt/GLPerfCounter.cpp
-  glt/GLDebug.cpp
-  glt/glt.cpp)
+  glt/GLSLPreprocessor.cpp
+  glt/GeometryTransform.cpp
+  glt/Mesh.cpp
+  glt/Preprocessor.cpp
+  glt/RenderManager.cpp
+  glt/RenderTarget.cpp
+  glt/ShaderCompiler.cpp
+  glt/ShaderManager.cpp
+  glt/ShaderProgram.cpp
+  glt/TextureData.cpp
+  glt/TextureRenderTarget.cpp
+  glt/TextureRenderTarget3D.cpp
+  glt/TextureSampler.cpp
+  glt/Transformations.cpp
+  glt/Uniforms.cpp
+  glt/ViewFrustum.cpp
+  glt/glt.cpp
+  glt/utils.cpp
+  )
 
 set(GLT_LIBS OpenGL::GL glfw glad)
 
@@ -95,28 +100,28 @@ endif()
 def_lib(glt SOURCES ${GLT_SRC} DEPEND sys ${GLT_LIBS})
 
 set(GE_SRC
-  ge/GameLoop.cpp
-  ge/GameWindow.cpp
-  ge/WindowRenderTarget.cpp
+  ge/Camera.cpp
+  ge/Command.cpp
+  ge/CommandArgs.cpp
+  ge/CommandParams.cpp
+  ge/CommandProcessor.cpp
+  ge/Commands.cpp
   ge/Engine.cpp
   ge/EngineEvents.cpp
   ge/EngineOptions.cpp
+  ge/GameLoop.cpp
+  ge/GameWindow.cpp
   ge/Init.cpp
-  ge/Command.cpp
-  ge/Commands.cpp
-  ge/CommandArgs.cpp
-  ge/CommandParams.cpp
   ge/KeyBinding.cpp
-  ge/CommandProcessor.cpp
-  ge/Tokenizer.cpp
   ge/KeyHandler.cpp
-  ge/ReplServer.cpp
-  ge/Plugin.cpp
   ge/MouseLookPlugin.cpp
-  ge/Camera.cpp
-  ge/ge.cpp)
+  ge/Plugin.cpp
+  ge/ReplServer.cpp
+  ge/Tokenizer.cpp
+  ge/WindowRenderTarget.cpp
+  ge/ge.cpp
+  )
 
-set(GE_LIBS
-  ${GLFW_LIBRARY})
+set(GE_LIBS ${GLFW_LIBRARY})
 
 def_lib(ge SOURCES ${GE_SRC} DEPEND sys glt ${GE_LIBS})

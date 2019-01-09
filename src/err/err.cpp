@@ -3,17 +3,13 @@
 
 #ifdef UNWIND_STACKTRACES
 #define UNW_LOCAL_ONLY
-
 #include <cassert>
 #include <cxxabi.h>
 #include <elfutils/libdwfl.h>
 #include <libunwind.h>
 #include <unistd.h>
-
 #elif defined(HU_OS_WINDOWS)
-
 #include <Windows.h>
-
 #include <DbgHelp.h>
 #endif
 
@@ -116,7 +112,7 @@ struct ProcessContext
     ProcessContext()
     {
         process = GetCurrentProcess();
-        SymInitialize(process, NULL, TRUE);
+        SymInitialize(process, nullptr, TRUE);
         SymSetOptions(SYMOPT_LOAD_LINES);
     }
 };
@@ -164,8 +160,10 @@ print_stacktrace(sys::io::OutStream &out, int skip)
                 getModuleBase,
                 nullptr)) {
 
-        if (skip > 0)
-            --skip;
+        if (skip > 0) {
+			--skip;
+            continue;
+		}
 
         // auto functionAddress = frame.AddrPC.Offset;
 
@@ -182,7 +180,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
         symbol->MaxNameLength = 254;
 
         out << " ";
-        if (SymGetSymFromAddr(process, frame.AddrPC.Offset, NULL, symbol)) {
+        if (SymGetSymFromAddr(process, frame.AddrPC.Offset, nullptr, symbol)) {
             DWORD offset = 0;
             IMAGEHLP_LINE line;
             line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
@@ -191,8 +189,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
 
             if (SymGetLineFromAddr(
                   process, frame.AddrPC.Offset, &offset, &line)) {
-                out << "[" << line.FileName << ":" << line.LineNumber << "]"
-                    << sys::io::endl;
+                out << "[" << line.FileName << ":" << line.LineNumber << "]";
             }
         } else {
             char buf[20];

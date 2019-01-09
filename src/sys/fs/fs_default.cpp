@@ -6,7 +6,6 @@
 
 #include "err/err.hpp"
 
-#include <cstdio>
 #include <sstream>
 
 namespace sys {
@@ -145,11 +144,8 @@ lookup(const std::vector<std::string> &dirs, const std::string &name)
 
     for (const auto &dir : dirs) {
         std::string filename = dir + suffix;
-        FILE *file = fopen(filename.c_str(), "r");
-        if (file != nullptr) {
-            fclose(file);
+        if (exists(filename))
             return filename;
-        }
     }
 
     return "";
