@@ -17,10 +17,6 @@
 #include <DbgHelp.h>
 #endif
 
-extern "C" void
-__clang_trap_function()
-{}
-
 namespace err {
 
 #ifdef UNWIND_STACKTRACES
@@ -173,7 +169,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
 
         // auto functionAddress = frame.AddrPC.Offset;
 
-		// auto moduleBase = SymGetModuleBase(process, frame.AddrPC.Offset);
+        // auto moduleBase = SymGetModuleBase(process, frame.AddrPC.Offset);
         // bool have_module = false;
         // if (moduleBase &&
         //    GetModuleFileNameA((HINSTANCE) moduleBase, moduleBuff, MAX_PATH))

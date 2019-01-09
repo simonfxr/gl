@@ -15,6 +15,11 @@ macro(do_configure_target target)
   if(HAVE_IPO)
     set_property(TARGET ${target} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
   endif()
+  if(BUILD_SHARED_LIBS)
+    set_target_properties(${target} PROPERTIES
+      C_VISIBILITY_PRESET hidden
+      CXX_VISIBILITY_PRESET hidden)
+  endif()
 endmacro()
 
 macro(def_lib target)

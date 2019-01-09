@@ -16,25 +16,6 @@ macro(set_option var default type docstring)
   set(${var} ${${var}} CACHE ${type} ${docstring} FORCE)
 endmacro()
 
-macro(replace_cmake_flags pat repl)
-	set(types ${CMAKE_CONFIGURATION_TYPES})
-	if(NOT types)
-		set(types DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
-	endif()
-
-	foreach(ty "" ${types})
-		if(ty)
-			set(ty "_${ty}")
-		endif()
-		foreach(pref "" _C_FLAGS _CXX_FLAGS)
-			set(v "CMAKE${pref}${ty}")
-			if(DEFINED "${v}")
-				string(REGEX REPLACE "${pat}" "${repl}" "${v}" "${${v}}")
-			endif()
-		endforeach()
-	endforeach()
-endmacro()
-
 set(build_shared_default True)
 if(SYS_WINDOWS AND COMP_MSVC)
   set(build_shared_default False)
@@ -53,26 +34,12 @@ set_option(USE_OPENMP True BOOL "enable openmp support")
 
 set_option(USE_VOXEL_OPENCL FALSE BOOL "use opencl for the voxel-world program")
 
-if(SYS_LINUX)
+if(UNIX)
   set_option(USE_UNWIND_STACKTRACES TRUE BOOL "use libunwind and libdw to print a stacktrace on errors")
-endif()
-
-if(COMP_CLANG OR COMP_GCC)
-  set_option(USE_ASAN FALSE BOOL "enable -fsanitize=address")
-  if(BUILD_DEBUG)
-    set(ubsan_default TRUE)
-  else()
-    set(ubsan_default FALSE)
-  endif()
-  set_option(USE_UBSAN ${ubsan_default} BOOL "enable -fsanitize=undefined")
 endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macros.cmake)
-
-if(COMP_MSVC)
-	replace_cmake_flags("/GR" "/GR-")
-endif()
 
 if(NOT TARGET glfw)
   set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
@@ -113,10 +80,8 @@ endif()
 
 add_subdirectory(deps/cxx-header-utils)
 
-if(UNIX)
-  set(HAVE_FIBER TRUE)
-  add_subdirectory(deps/fiber)
-endif()
+set(HAVE_FIBER TRUE)
+add_subdirectory(deps/fiber)
 
 include_directories(src)
 

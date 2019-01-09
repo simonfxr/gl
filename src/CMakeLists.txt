@@ -12,9 +12,11 @@ set(ERR_SRC
 
 set(ERR_LIBS)
 
+set(ERR_DEFINES)
+
 if(USE_UNWIND_STACKTRACES)
-  add_definitions(-DUNWIND_STACKTRACES=1)
-  set(ERR_LIBS unwind dw)
+  list(APPEND ERR_DEFINES -DUNWIND_STACKTRACES=1)
+  list(APPEND ERR_LIBS PkgConfig::unwind PkgConfig::dw)
 endif()
 
 if(SYS_WINDOWS)
@@ -56,6 +58,9 @@ endif()
 
 def_lib(sys SOURCES ${SYS_SRC} ${ERR_SRC} DEPEND ${SYS_LIBS} ${ERR_LIBS})
 target_compile_definitions(sys PUBLIC ${FIBER_DEFINES})
+if(ERR_DEFINES)
+  target_compile_definitions(sys PRIVATE ${ERR_DEFINES})
+endif()
 
 set(GLT_SRC
   glt/utils.cpp
