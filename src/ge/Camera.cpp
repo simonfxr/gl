@@ -169,7 +169,7 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
     if (err != sys::io::HE_OK) {
         ERR("couldnt open file: " + *path);
         return;
-	}
+    }
     size_t s = sizeof frame;
     sys::io::write(h, s, reinterpret_cast<const char *>(&frame));
 }
@@ -189,7 +189,7 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
         return;
     }
 
-	sys::io::Handle h;
+    sys::io::Handle h;
     auto err = sys::io::open(*path, sys::io::HM_READ, &h);
     if (err != sys::io::HE_OK) {
         ERR("couldnt open file: " + *path);

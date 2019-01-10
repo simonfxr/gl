@@ -5,22 +5,27 @@ uniform mat3 normalMatrix;
 uniform mat4 pMatrix;
 uniform mat4 vMatrix;
 
-in vec4 position;
-in vec3 normal;
+SL_in vec4 position;
+SL_in vec3 normal;
 
-out vec3 ecPosition;
-out vec3 ecNormal;
-out vec3 color;
-out float shininess;
+SL_out vec3 ecPosition;
+SL_out vec3 ecNormal;
+SL_out vec3 color;
+SL_out float shininess;
 
-vec3 colorGradient(vec3 color, vec3 pos) {
-    return color * vec3(pos.x * 0.5 + 0.5, pos.y * 0.5 + 0.5, pos.z * 0.5 + 0.5);
+vec3
+colorGradient(vec3 color, vec3 pos)
+{
+    return color *
+           vec3(pos.x * 0.5 + 0.5, pos.y * 0.5 + 0.5, pos.z * 0.5 + 0.5);
 }
 
-void main() {
+void
+main()
+{
     vec4 data1 = texelFetch(instanceData, gl_InstanceID * 2, 0);
     vec4 data2 = texelFetch(instanceData, gl_InstanceID * 2 + 1, 0);
-    
+
     vec3 offset = data1.xyz;
     float rad = data1.w;
 

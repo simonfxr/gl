@@ -12,18 +12,18 @@ namespace fs {
 using sys::win::utf16To8;
 using sys::win::utf8To16;
 
-  namespace
-{
+namespace {
 
 #define WINDOWS_TICK 10000000
 #define SEC_TO_UNIX_EPOCH 11644473600LL
 
-    int64_t filetimeToUnixTimestap(const FILETIME *ft)
-    {
-        auto ticks = (int64_t(ft->dwHighDateTime) << 32) | ft->dwLowDateTime;
-        ticks = ticks / WINDOWS_TICK;
-        return ticks - SEC_TO_UNIX_EPOCH;
-    }
+int64_t
+filetimeToUnixTimestap(const FILETIME *ft)
+{
+    auto ticks = (int64_t(ft->dwHighDateTime) << 32) | ft->dwLowDateTime;
+    ticks = ticks / WINDOWS_TICK;
+    return ticks - SEC_TO_UNIX_EPOCH;
+}
 } // namespace
 
 bool
@@ -105,7 +105,7 @@ stat(const std::string &path)
       GetFullPathNameW(wpath.c_str(), DWORD(wabs.size()), wabs.data(), nullptr);
     if (!len)
         return std::nullopt;
-    stat.absolute = utf16To8({wabs.data(), len});
+    stat.absolute = utf16To8({ wabs.data(), len });
     return stat;
 }
 
@@ -125,7 +125,7 @@ absolutePath(const std::string &path)
         return "";
     }
 
-    return utf16To8({abs.data(), len});
+    return utf16To8({ abs.data(), len });
 }
 
 std::string

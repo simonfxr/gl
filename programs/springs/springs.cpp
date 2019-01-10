@@ -285,7 +285,7 @@ Anim::animate(const ge::Event<ge::AnimationEvent> &)
 
     auto dt = real(engine.gameLoop().tickDuration());
     auto damp_coeff = 0.99_r; // damping over the period of 1 sec;
-                                  //    real damping = pow(damp_coeff, dt);
+                              //    real damping = pow(damp_coeff, dt);
     glt::Uniforms(*physics_prog)
       .optional("dt", dt)
       .optional("D", 1.f)

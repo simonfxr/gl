@@ -10,7 +10,8 @@ inline constexpr real sec = 1e12_r;
 inline constexpr real kg = 1_r;
 inline constexpr real As = 1_r;
 
-inline constexpr real epsi0 = 8.854187817e-12_r * (As * As * (sec / m) * (sec / m) / (kg * m));
+inline constexpr real epsi0 =
+  8.854187817e-12_r * (As * As * (sec / m) * (sec / m) / (kg * m));
 // inline constexpr real c = real(2.99792458e8) * m / sec;
 
 // inline constexpr real mu0 = inverse(c * c * epsi0) * (kg * m / (As * As));

@@ -13,7 +13,9 @@ out vec3 ecPosition;
 out float diffFactor;
 flat out vec4 vColor;
 
-void main() {
+void
+main()
+{
     vColor = color;
     ecNormal = normalMatrix * normal.xyz;
     ecPosition = vec3(mvMatrix * vec4(position, 1.0));

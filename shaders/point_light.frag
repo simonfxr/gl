@@ -2,38 +2,46 @@
 
 // from the book "OpenGL Shading Language" with minor modificiations
 
-void PointLight(vec3 ecLight, vec3 attenuation,
-                vec4 lightAmbient, vec4 lightDiffuse, vec4 lightSpecular,
-                vec3 ecPosition, vec3 ecNormal, float shininess,
-                inout vec4 ambient, inout vec4 diffuse, inout vec4 specular) {
+void
+PointLight(vec3 ecLight,
+           vec3 attenuation,
+           vec4 lightAmbient,
+           vec4 lightDiffuse,
+           vec4 lightSpecular,
+           vec3 ecPosition,
+           vec3 ecNormal,
+           float shininess,
+           inout vec4 ambient,
+           inout vec4 diffuse,
+           inout vec4 specular)
+{
 
     vec3 eye = normalize(-ecPosition);
-    
+
     float nDotVP;
-// normal . light direction
+    // normal . light direction
     float nDotHV;
-// normal . light half vector
+    // normal . light half vector
     float pf;
-// power factor
+    // power factor
     float attenuationFactor; // computed attenuation factor
     float d;
-// distance from surface to light source
+    // distance from surface to light source
     vec3 VP;
-// direction from surface to light position
+    // direction from surface to light position
     vec3 halfVector;
-// direction of maximum highlights
-// Compute vector from surface to light position
+    // direction of maximum highlights
+    // Compute vector from surface to light position
     VP = ecLight - ecPosition;
-// Compute distance between surface and light position
+    // Compute distance between surface and light position
     d = length(VP);
-// Normalize the vector from surface to light position
+    // Normalize the vector from surface to light position
     VP = normalize(VP);
-// Compute attenuation
-    
-    attenuationFactor = 1.0 / (attenuation.z +
-                               attenuation.y * d +
-                               attenuation.x * d * d);
-    
+    // Compute attenuation
+
+    attenuationFactor =
+      1.0 / (attenuation.z + attenuation.y * d + attenuation.x * d * d);
+
     halfVector = normalize(VP + eye);
     nDotVP = max(0.0, dot(ecNormal, VP));
     nDotHV = max(0.0, dot(ecNormal, halfVector));
@@ -41,7 +49,7 @@ void PointLight(vec3 ecLight, vec3 attenuation,
         pf = 0.0;
     else
         pf = pow(nDotHV, shininess);
-    
+
     ambient += lightAmbient * attenuationFactor;
     diffuse += lightDiffuse * nDotVP * attenuationFactor;
     specular += lightSpecular * pf * attenuationFactor;

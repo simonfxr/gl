@@ -12,7 +12,9 @@ in vec2 fragUV;
 
 out vec4 fragColor;
 
-vec3 sampleTexture(vec2 uv) {
+vec3
+sampleTexture(vec2 uv)
+{
     ivec2 p = ivec2(floor(BumpDensity * uv));
     if ((p.x + p.y) % 2 != 0)
         return vec3(1, 0, 0);
@@ -20,7 +22,9 @@ vec3 sampleTexture(vec2 uv) {
         return vec3(1);
 }
 
-void main() {
+void
+main()
+{
     vec2 uv = fragUV;
 
     vec3 light = normalize(tsLight);
@@ -45,6 +49,7 @@ void main() {
     /* vec3 albedo = vec3(1, 0, 0); // */
     vec3 lightColor = vec3(1, 1, 1);
 
-    fragColor.rgb = (Ambient + d * Diffuse) * albedo + s * Specular * lightColor;
+    fragColor.rgb =
+      (Ambient + d * Diffuse) * albedo + s * Specular * lightColor;
     fragColor.a = 1;
 }

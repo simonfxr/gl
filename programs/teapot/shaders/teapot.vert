@@ -10,7 +10,9 @@ in vec3 normal;
 out vec3 ecNormal;
 out vec3 ecPosition;
 
-void main() {
+void
+main()
+{
     ecNormal = normalMatrix * normal;
     vec4 ecVert = mvMatrix * vec4(position, 1.0);
     ecPosition = vec3(ecVert) / ecVert.w;

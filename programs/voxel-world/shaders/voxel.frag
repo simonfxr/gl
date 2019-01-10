@@ -13,9 +13,12 @@ in float diffFactor;
 
 out vec4 fragColor;
 
-void main() {
+void
+main()
+{
     /* vec4 L = DirectionalLight(ecPosition, normalize(ecNormal), ecLightDir, */
-    /*                           vec4(materialProperties.x), vec4(materialProperties.z), */
+    /*                           vec4(materialProperties.x),
+     * vec4(materialProperties.z), */
     /*                           materialProperties.w); */
 
     /* fragColor = (L + vec4(materialProperties.y)) * vColor; */
@@ -29,4 +32,3 @@ void main() {
     fragColor.a = 1.0;
     fragColor = gammaCorrect(fragColor);
 }
-

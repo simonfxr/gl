@@ -88,6 +88,8 @@ struct GLT_API ShaderManager
 
     void shutdown();
 
+    static uint32_t glToShaderVersion(uint32_t maj, uint32_t min);
+
 private:
     DECLARE_PIMPL(GLT_API, self);
 };

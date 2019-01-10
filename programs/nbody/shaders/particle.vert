@@ -7,7 +7,9 @@ in vec3 normal;
 
 out vec3 ecNormal;
 
-void main() {
+void
+main()
+{
     gl_Position = mvpMatrix * vec4(position, 1);
     ecNormal = normalMatrix * normal;
 }

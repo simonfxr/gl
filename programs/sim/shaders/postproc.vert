@@ -1,12 +1,11 @@
+SL_in vec4 position;
+SL_in vec3 normal;
 
+SL_out vec2 texCoord;
 
-in vec4 position;
-in vec3 normal;
-
-out vec2 texCoord;
-
-void main() {
+void
+main()
+{
     gl_Position = position;
     texCoord = vec2(0.5) + 0.5 * position.xy;
 }
-

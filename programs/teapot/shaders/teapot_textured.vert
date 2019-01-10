@@ -12,7 +12,9 @@ out vec3 ecNormal;
 out vec3 ecPosition;
 out vec2 fragTexCoord;
 
-void main() {
+void
+main()
+{
     fragTexCoord = texCoord;
     ecNormal = normalMatrix * normal;
     vec4 ecVert = mvMatrix * vec4(position, 1.0);

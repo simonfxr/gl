@@ -741,11 +741,20 @@ ShaderCompiler::Data::initPreprocessor(GLSLPreprocessor &proc)
 
     if (m.shaderVersion() != 0) {
         sys::io::ByteStream glversdef;
-        glversdef << "#version " << m.shaderVersion()
-                  << (m.shaderProfile() == ShaderManager::CoreProfile
-                        ? " core"
-                        : " compatibility")
-                  << sys::io::endl;
+        auto vers = m.shaderVersion();
+        glversdef << "#version " << vers;
+        if (vers > 150)
+            glversdef << (m.shaderProfile() == ShaderManager::CoreProfile
+                            ? " core"
+                            : " compatibility");
+        glversdef << sys::io::endl;
+        if (vers <= 150) {
+            glversdef << "#define SL_in attribute" << sys::io::endl;
+            glversdef << "#define SL_out varying" << sys::io::endl;
+        } else {
+            glversdef << "#define SL_in in" << sys::io::endl;
+            glversdef << "#define SL_out out" << sys::io::endl;
+        }
         proc.appendString(glversdef.str());
     }
 

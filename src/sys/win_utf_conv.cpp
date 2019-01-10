@@ -7,7 +7,8 @@
 namespace sys {
 namespace win {
 
-std::wstring utf8To16(std::string_view str) noexcept
+std::wstring
+utf8To16(std::string_view str) noexcept
 {
     if (str.empty())
         return {};
@@ -23,17 +24,24 @@ std::wstring utf8To16(std::string_view str) noexcept
     return ret;
 }
 
-std::string utf16To8(std::wstring_view str) noexcept
+std::string
+utf16To8(std::wstring_view str) noexcept
 {
     if (str.empty())
         return {};
     auto len = WideCharToMultiByte(
-        CP_UTF8, 0, str.data(), int(str.size()), nullptr, 0, nullptr, nullptr);
+      CP_UTF8, 0, str.data(), int(str.size()), nullptr, 0, nullptr, nullptr);
     if (!len)
         FATAL_ERR("WideCharToMultiByte failed (size)");
     std::string ret(size_t(len), char16_t{});
-    len = WideCharToMultiByte(
-        CP_UTF8, 0, str.data(), int(str.size()), ret.data(), len, nullptr, nullptr);
+    len = WideCharToMultiByte(CP_UTF8,
+                              0,
+                              str.data(),
+                              int(str.size()),
+                              ret.data(),
+                              len,
+                              nullptr,
+                              nullptr);
     if (!len)
         FATAL_ERR("WideCharToMultiByte failed");
     ret.resize(strlen(ret.c_str()));

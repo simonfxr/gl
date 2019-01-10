@@ -11,7 +11,9 @@ out vec3 ecNormal;
 out vec3 ecPosition;
 out vec3 vertColor;
 
-void main() {
+void
+main()
+{
     vertColor = color.rgb;
     gl_Position = mvpMatrix * vec4(position, 1);
     ecNormal = normalMatrix * normal;
