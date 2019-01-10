@@ -6,7 +6,9 @@ in vec3 ecNormal;
 
 out vec4 fragColor;
 
-void main() {
+void
+main()
+{
     vec3 N = normalize(ecNormal);
 
     float diff = max(-dot(N, ecLightDir), 0);

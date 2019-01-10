@@ -140,9 +140,7 @@ IOStream::basic_close_out()
 }
 
 Streams::Streams()
-  : stdin(stdin_handle()), 
-	stdout(stdout_handle()), 
-	stderr(stderr_handle())
+  : stdin(stdin_handle()), stdout(stdout_handle()), stderr(stderr_handle())
 {
     stdin.closable(false);
     stdout.closable(false);

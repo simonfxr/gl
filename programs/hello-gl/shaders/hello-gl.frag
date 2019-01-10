@@ -6,11 +6,10 @@ uniform sampler2D texture1;
 in vec2 texcoord;
 out vec4 FragColor;
 
-void main()
+void
+main()
 {
-    FragColor = mix(
-        texture2D(texture0, texcoord),
-        texture2D(texture1, texcoord),
-        fade_factor
-    );
+    FragColor = mix(texture2D(texture0, texcoord),
+                    texture2D(texture1, texcoord),
+                    fade_factor);
 }

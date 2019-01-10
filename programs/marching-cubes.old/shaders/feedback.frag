@@ -3,7 +3,9 @@ in vec3 ecPosition;
 
 out vec4 fColor;
 
-void main() {
+void
+main()
+{
     vec3 N = normalize(ecNormal);
     vec3 V = normalize(-ecPosition);
     float diff = max(0, dot(N, V));

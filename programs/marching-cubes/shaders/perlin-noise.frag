@@ -41,7 +41,9 @@ out float fNoise;
 /*    67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180 */
 /*     ); */
 
-int P(int i) {
+int
+P(int i)
+{
     if (i < 0) {
         i = 256 - ((-i) & 255);
     } else {
@@ -51,55 +53,70 @@ int P(int i) {
     return i & 255;
 }
 
-float fade(float t) { return t * t * t * (t * (t * 6 - 15) + 10); }
-
-float grad(int hash, float x, float y, float z) {
-    int h = hash & 15;                      
-    float u = h<8 ? x : y;                 
-    float v = h<4 ? y : h==12||h==14 ? x : z;
-    return ((h&1) == 0 ? u : -u) + ((h&2) == 0 ? v : -v);
+float
+fade(float t)
+{
+    return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
-float lerp(float t, float a, float b) {
+float
+grad(int hash, float x, float y, float z)
+{
+    int h = hash & 15;
+    float u = h < 8 ? x : y;
+    float v = h < 4 ? y : h == 12 || h == 14 ? x : z;
+    return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
+}
+
+float
+lerp(float t, float a, float b)
+{
     return a + t * (b - a);
 }
 
-int intFloor(float x) {
-//    return x > 0 ? int(x) : int(x - 1);
+int
+intFloor(float x)
+{
+    //    return x > 0 ? int(x) : int(x - 1);
     return int(floor(x));
 }
-float noise3D(vec3 pnt) {
+float
+noise3D(vec3 pnt)
+{
 
     float x = pnt.x;
     float y = pnt.y;
     float z = pnt.z;
-    
-    int X = intFloor(x) & 255,  
-        Y = intFloor(y) & 255,
-        Z = intFloor(z) & 255;
-    
-    x -= floor(x);                                
-    y -= floor(y);                                
-    z -= floor(z);
-    
-    float u = fade(x);                                
-    float v = fade(y);                                
-    float w = fade(z);
-    
-    int A = P(X  )+Y, AA = P(A)+Z, AB = P(A+1)+Z,      
-        B = P(X+1)+Y, BA = P(B)+Z, BB = P(B+1)+Z;      
 
-    return lerp(w, lerp(v, lerp(u, grad(P(AA  ), x  , y  , z  ),  
-                                   grad(P(BA  ), x-1, y  , z  )), 
-                          lerp(u, grad(P(AB  ), x  , y-1, z  ),  
-                                grad(P(BB  ), x-1, y-1, z  ))),
-                 lerp(v, lerp(u, grad(P(AA+1), x  , y  , z-1),  
-                                grad(P(BA+1), x-1, y  , z-1)), 
-                       lerp(u, grad(P(AB+1), x  , y-1, z-1),
-                             grad(P(BB+1), x-1, y-1, z-1))));
+    int X = intFloor(x) & 255, Y = intFloor(y) & 255, Z = intFloor(z) & 255;
+
+    x -= floor(x);
+    y -= floor(y);
+    z -= floor(z);
+
+    float u = fade(x);
+    float v = fade(y);
+    float w = fade(z);
+
+    int A = P(X) + Y, AA = P(A) + Z, AB = P(A + 1) + Z, B = P(X + 1) + Y,
+        BA = P(B) + Z, BB = P(B + 1) + Z;
+
+    return lerp(
+      w,
+      lerp(v,
+           lerp(u, grad(P(AA), x, y, z), grad(P(BA), x - 1, y, z)),
+           lerp(u, grad(P(AB), x, y - 1, z), grad(P(BB), x - 1, y - 1, z))),
+      lerp(
+        v,
+        lerp(u, grad(P(AA + 1), x, y, z - 1), grad(P(BA + 1), x - 1, y, z - 1)),
+        lerp(u,
+             grad(P(AB + 1), x, y - 1, z - 1),
+             grad(P(BB + 1), x - 1, y - 1, z - 1))));
 }
 
-void main() {
+void
+main()
+{
     vec4 wc4 = worldMatrix * vec4(vTexCoord, 1);
     vec3 wc = wc4.xyz / wc4.w;
     /* /\* wc += vec3(15, 3, 7); *\/ */

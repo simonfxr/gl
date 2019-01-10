@@ -7,10 +7,12 @@ in vec3 ecNormal;
 
 out vec4 fragColor;
 
-void main() {
+void
+main()
+{
 
     vec3 N = normalize(ecNormal);
-    vec3 V = normalize(- ecPosition);
+    vec3 V = normalize(-ecPosition);
     vec3 L = normalize(ecLight - ecPosition);
 
     /* float diff = dot(N, L); */

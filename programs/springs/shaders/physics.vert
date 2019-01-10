@@ -8,15 +8,21 @@ in vec4 position_mass;
 in vec3 velocity;
 in ivec4 connection;
 
-out Out1 {
+out Out1
+{
     vec4 position_mass;
-} out1;
+}
+out1;
 
-out Out2 {
+out Out2
+{
     vec3 velocity;
-} out2;
+}
+out2;
 
-void main() {
+void
+main()
+{
 
     vec3 pos = position_mass.xyz;
     float inv_mass = position_mass.w;
@@ -34,7 +40,7 @@ void main() {
 
     pos += dt * v + (0.5 * dt * dt) * a;
     v = (v + dt * a) * damping;
-    
+
     out1.position_mass = vec4(pos, inv_mass);
     out2.velocity = v;
 }

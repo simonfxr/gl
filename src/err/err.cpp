@@ -12,8 +12,8 @@
 #include <libunwind.h>
 #include <unistd.h>
 #elif defined(HU_OS_WINDOWS)
-#include <Windows.h>
 #include <DbgHelp.h>
+#include <Windows.h>
 #endif
 
 namespace err {
@@ -164,9 +164,9 @@ print_stacktrace(sys::io::OutStream &out, int skip)
                 nullptr)) {
 
         if (skip > 0) {
-			--skip;
+            --skip;
             continue;
-		}
+        }
 
         // auto functionAddress = frame.AddrPC.Offset;
 

@@ -2,13 +2,15 @@
 
 uniform sampler2DMS texture0;
 
-in vec2 texCoord;
+SL_in vec2 texCoord;
 
-out vec4 fragColor;
+SL_out vec4 fragColor;
 
-void main() {
+void
+main()
+{
     ivec2 index = ivec2(textureSize(texture0) * texCoord);
-    
+
     vec4 sum = vec4(0);
     for (int i = 0; i < NUM_SAMPLES; ++i)
         sum += texelFetch(texture0, index, i);

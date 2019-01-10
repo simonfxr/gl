@@ -13,7 +13,7 @@ std::wstring utf8To16(std::string_view) noexcept;
 
 std::string utf16To8(std::wstring_view) noexcept;
 
-}
+} // namespace win
 } // namespace sys
 
 #endif

@@ -32,7 +32,7 @@ struct InStream;
 struct StreamEndl;
 struct IOStream;
 
-SYS_API InStream&
+SYS_API InStream &
 stdin();
 
 SYS_API OutStream &

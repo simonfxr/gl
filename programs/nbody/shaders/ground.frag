@@ -6,9 +6,11 @@ in vec3 ecNormal;
 
 out vec4 fragColor;
 
-void main() {
+void
+main()
+{
     vec3 N = normalize(ecNormal);
-    float diff = max(- dot(N, ecLightDir), 0);
+    float diff = max(-dot(N, ecLightDir), 0);
 
     fragColor.a = 1;
     fragColor.rgb = clamp(0.8 * diff + 0.4, 0, 1) * albedo;

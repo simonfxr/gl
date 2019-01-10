@@ -1,7 +1,7 @@
 
+#include "constants.h"
 #include "gamma.h"
 #include "simplex_noise2.h"
-#include "constants.h"
 
 uniform float time;
 uniform mat3 transform;
@@ -9,16 +9,20 @@ uniform mat3 transform;
 const bool SPLIT_SCREEN = false;
 const bool APPLY_TRANSFORM = false;
 
-in vec2 worldPosition;
-out vec4 color;
+SL_in vec2 worldPosition;
+SL_out vec4 color;
 
-float stretch(float x) {
+float
+stretch(float x)
+{
     return x;
     float x1 = 1 - x;
     return 1 - smoothstep(0, 1, x1);
 }
 
-float evalCrystal(vec2 p) {
+float
+evalCrystal(vec2 p)
+{
     const int n = 7;
     float phi = 0;
     float omega = 2 * 3.14159 / n;
@@ -33,7 +37,9 @@ float evalCrystal(vec2 p) {
     return a;
 }
 
-vec2 polar(vec2 v) {
+vec2
+polar(vec2 v)
+{
     vec2 p;
     p.x = length(v);
 
@@ -48,24 +54,31 @@ vec2 polar(vec2 v) {
     return p;
 }
 
-vec2 kart(vec2 p) {
+vec2
+kart(vec2 p)
+{
     return p.x * vec2(cos(p.y), sin(p.y));
 }
 
-vec3 eval(vec2 p0) {
+vec3
+eval(vec2 p0)
+{
     float rot1 = time * 0.05;
-    vec2 p1 = p0 + (1 * time) * normalize(vec2(1, 2)) + vec2(sin(rot1), cos(rot1)) * (0.5 * time);
-    
+    vec2 p1 = p0 + (1 * time) * normalize(vec2(1, 2)) +
+              vec2(sin(rot1), cos(rot1)) * (0.5 * time);
 
     float rot = time * 0.05;
-    vec2 p2 = p0 + (time * 0.5 * (sin(time * 0.05) + 2)) * vec2(cos(rot), sin(rot));
-    
+    vec2 p2 =
+      p0 + (time * 0.5 * (sin(time * 0.05) + 2)) * vec2(cos(rot), sin(rot));
+
     vec2 f;
     float tau = time * 0.10;
     float omega = 0.02 * sin(tau) + 0.01 * cos(2 * tau);
-    f.x = snoise(p1 * omega + vec2(39, 113)) + snoise(p1 * omega * 2 + vec2(13, 27)) * 0.5;
-    f.y = snoise(p1 * omega + vec2(19, 111)) + snoise(p1 * omega * 2 + vec2(-7, 3)) * 0.5;
-    
+    f.x = snoise(p1 * omega + vec2(39, 113)) +
+          snoise(p1 * omega * 2 + vec2(13, 27)) * 0.5;
+    f.y = snoise(p1 * omega + vec2(19, 111)) +
+          snoise(p1 * omega * 2 + vec2(-7, 3)) * 0.5;
+
     /* f = normalize(f); */
 
     /* f *= snoise(p * 1.55 + vec2(-17, 33)); */
@@ -73,8 +86,8 @@ vec3 eval(vec2 p0) {
     vec2 pol = polar(p2);
     float r = pol.x;
     float phi = pol.y;
-        
-//    f *= 2 * (snoise(p * omega * 3 + vec2(31, -11)) + 1);
+
+    //    f *= 2 * (snoise(p * omega * 3 + vec2(31, -11)) + 1);
     float w = 0.5;
 
     return evalCrystal(p2 * (w * sin(phi) + 1) + f) * vec3(1);
@@ -82,38 +95,47 @@ vec3 eval(vec2 p0) {
     return length(f) * vec3(1);
 }
 
-vec3 evalPolar(vec2 p) {
+vec3
+evalPolar(vec2 p)
+{
     p = polar(p);
 
     float omega = 0.01;
     vec2 f;
 
     f.x = snoise(p * omega) + snoise(p * omega * 2 + vec2(13, 27)) * 0.5;
-    f.y = snoise(p * omega + vec2(19, 111)) + snoise(p * omega * 2 + vec2(-7, 3)) * 0.5;
+    f.y = snoise(p * omega + vec2(19, 111)) +
+          snoise(p * omega * 2 + vec2(-7, 3)) * 0.5;
 
     p.x *= 2 * M_PI;
     p *= 0.05;
     return evalCrystal(p) * vec3(1);
 }
 
-vec2 applyTransform(vec2 v) {
+vec2
+applyTransform(vec2 v)
+{
     vec3 p3 = transform * vec3(v, 1);
     return p3.xy / p3.z;
 }
 
-vec2 applyTransform2(vec2 v) {
+vec2
+applyTransform2(vec2 v)
+{
     return applyTransform(v) * 50;
 }
 
-void main() {
+void
+main()
+{
     vec2 position = worldPosition;
     vec3 albedo = vec3(0);
 
     if (SPLIT_SCREEN) {
         const float border = 0.01;
         const float border2 = border * 0.5;
-        
-        if (position.y < - border2) {
+
+        if (position.y < -border2) {
             position.y += 0.5;
             position *= 2;
             albedo = evalCrystal(applyTransform2(position)) * vec3(1);
@@ -127,8 +149,8 @@ void main() {
     } else {
         albedo = eval(applyTransform2(position));
     }
-    
+
     albedo = vec3(log(0.6 + length(albedo)));
-//    albedo = vec3(pow(1 - exp(-3 * length(albedo)), 60)) * 0.8;
+    //    albedo = vec3(pow(1 - exp(-3 * length(albedo)), 60)) * 0.8;
     color = gammaCorrect(vec4(albedo, 1));
 }
