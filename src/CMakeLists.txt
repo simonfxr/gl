@@ -7,6 +7,7 @@ endif()
 
 link_libraries(header-utils)
 
+
 set(ERR_SRC
   err/err.cpp)
 
@@ -22,6 +23,8 @@ endif()
 if(SYS_WINDOWS)
 	list(APPEND ERR_LIBS Dbghelp)
 endif()
+
+set(SYS_LIBS)
 
 set(SYS_SRC
   sys/fiber.cpp
@@ -49,14 +52,12 @@ elseif(SYS_WINDOWS)
     )
 endif()
 
-set(SYS_LIBS)
-
 if(SYS_LINUX)
   list(APPEND SYS_LIBS rt)
 endif()
 
 if(SYS_WINDOWS)
-  set(SYS_LIBS Shlwapi ${SYS_LIBS})
+  list(APPEND SYS_LIBS Shlwapi wsock32 ws2_32)
 endif()
 
 message(STATUS "SYS_LIBS=${SYS_LIBS}")

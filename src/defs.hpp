@@ -14,9 +14,6 @@
 #error "compiling with rtti not supported"
 #endif
 
-#define DEF_ENUM_BITOR(ty)                                                     \
-    inline ty operator|(ty a, ty b) { return ty(int(a) | int(b)); }
-
 #define DECLARE_PIMPL(api, nm)                                                 \
     struct Data;                                                               \
     struct api DataDeleter                                                     \

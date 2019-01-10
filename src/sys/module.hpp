@@ -18,6 +18,14 @@ namespace sys {
 
 namespace io {
 
+#ifdef HU_OS_WINDOWS
+struct WS32Init
+{
+    WS32Init();
+    ~WS32Init();
+};
+#endif
+
 struct Streams
 {
     HandleStream stdin;
@@ -47,6 +55,9 @@ struct Module
 {
     io::Streams io_streams;
     io::IO io;
+#ifdef HU_OS_WINDOWS
+    io::WS32Init _ws32_init;
+#endif
     Fibers fibers;
 };
 

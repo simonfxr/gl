@@ -92,11 +92,10 @@ convertErrnoSock()
 {
     int errid = errno;
     errno = 0;
-
-    if (errid == EAGAIN || errid == EWOULDBLOCK)
-        return SE_BLOCKED;
-
     switch (errid) {
+    case EAGAIN:
+    case EWOULDBLOCK:
+        return SE_BLOCKED;
     case EBADF:
         DEBUG_ERR(strerror(errid));
         return SE_BAD_SOCKET;
@@ -118,7 +117,6 @@ handleFromFD(int fd, Handle *h)
     h->mode = unconvertMode(flags);
     return HE_OK;
 }
-
 } // namespace
 
 SYS_API Handle
@@ -152,13 +150,9 @@ stderr_handle()
 }
 
 HandleError
-open(const std::string &path, HandleMode mode, Handle *h)
+open(std::string_view path, HandleMode mode, Handle *h)
 {
-
-    if (h == nullptr) {
-        DEBUG_ERR("handle == 0");
-        return HE_INVALID_PARAM;
-    }
+    ASSERT(h);
 
     int flags = convertMode(mode);
     if (flags == -1)
@@ -167,32 +161,32 @@ open(const std::string &path, HandleMode mode, Handle *h)
     int fd;
     RETRY_INTR(fd = ::open(path.c_str(), flags));
 
-    if (fd == -1) {
+    if (fd == -1)
         return convertErrno();
-    }
-    h->mode = mode;
-    h->fd = fd;
+    h->_mode = mode;
+    h->_fd = fd;
     return HE_OK;
 }
 
 HandleMode
 mode(Handle &h)
 {
+    ASSERT(h);
     return h.mode;
 }
 
 HandleError
 elevate(Handle &h, HandleMode mode)
 {
+    ASSERT(h);
     int flags = convertMode(mode);
     if (flags == -1)
         return HE_INVALID_PARAM;
 
     int ret;
     RETRY_INTR(ret = fcntl(h.fd, F_SETFL, flags));
-    if (ret == -1) {
+    if (ret == -1)
         return convertErrno();
-    }
     h.mode = unconvertMode(flags);
     return HE_OK;
 }
@@ -200,6 +194,7 @@ elevate(Handle &h, HandleMode mode)
 HandleError
 read(Handle &h, size_t &s, char *buf)
 {
+    ASSERT(h);
     auto n = s;
     ssize_t k;
     RETRY_INTR(k = ::read(h.fd, static_cast<void *>(buf), n));
@@ -214,6 +209,7 @@ read(Handle &h, size_t &s, char *buf)
 HandleError
 write(Handle &h, size_t &s, const char *buf)
 {
+    ASSERT(h);
     auto n = s;
     ssize_t k;
     RETRY_INTR(k = ::write(h.fd, buf, n));
@@ -228,6 +224,7 @@ write(Handle &h, size_t &s, const char *buf)
 HandleError
 close(Handle &h)
 {
+    ASSERT(h);
     int ret;
     RETRY_INTR(ret = ::close(h.fd));
     if (ret == -1)
@@ -242,31 +239,22 @@ listen(SocketProto proto,
        SocketMode mode,
        Socket *s)
 {
-
     const int BACKLOG = 16;
-
-    if (s == nullptr) {
-        DEBUG_ERR("socket == 0");
-        return SE_INVALID_PARAM;
-    }
+    ASSERT(s);
 
     int type;
-    int protocol;
     int ret;
 
     switch (proto) {
     case SP_TCP:
         type = SOCK_STREAM;
-        //        protocol = IPPROTO_TCP;
-        protocol = 0;
         break;
     default:
-        DEBUG_ERR("invalid protocol");
-        return SE_INVALID_PARAM;
+        ASSERT_FAIL();
     }
 
     int sock;
-    RETRY_INTR(sock = socket(PF_INET, type, protocol));
+    RETRY_INTR(sock = socket(PF_INET, type, 0));
     if (sock == -1)
         return convertErrnoSock();
 
@@ -277,15 +265,14 @@ listen(SocketProto proto,
         goto socket_err;
 
     {
-        struct sockaddr_in server
-        {};
+        sockaddr_in server{};
         memset(&server, 0, sizeof server);
         server.sin_family = AF_INET;
         server.sin_addr.s_addr = addr.addr4;
         server.sin_port = hton(port);
 
         RETRY_INTR(ret = bind(sock,
-                              reinterpret_cast<struct sockaddr *>(&server),
+                              reinterpret_cast<sockaddr *>(&server),
                               sizeof server));
         if (ret == -1)
             goto socket_err;
@@ -319,21 +306,17 @@ socket_err:
 SocketError
 accept(Socket &s, Handle *h)
 {
+    ASSERT(s);
+    ASSERT(h);
 
-    if (h == nullptr) {
-        DEBUG_ERR("handle == 0");
-        return SE_INVALID_PARAM;
-    }
-
-    struct sockaddr_in client
-    {};
+    sockaddr_in client{};
     socklen_t clen = sizeof client;
 
     int c;
     // reason: #define SOCK_CLOEXEC SOCK_CLOEXEC
     BEGIN_NO_WARN_DISABLED_MACRO_EXPANSION
     RETRY_INTR(c = accept4(s.socket,
-                           reinterpret_cast<struct sockaddr *>(&client),
+                           reinterpret_cast<sockaddr *>(&client),
                            &clen,
                            SOCK_CLOEXEC));
     END_NO_WARN_DISABLED_MACRO_EXPANSION
@@ -357,11 +340,11 @@ client_err:
 SocketError
 close(Socket &s)
 {
+    ASSERT(s);
     int ret;
     RETRY_INTR(ret = ::close(s.socket));
     if (ret == -1)
         return convertErrnoSock();
-
     return SE_OK;
 }
 

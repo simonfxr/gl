@@ -1,4 +1,7 @@
 #include "err/err.hpp"
+
+#include "data/string_utils.hpp"
+
 #include <cstdlib>
 
 #ifdef UNWIND_STACKTRACES
@@ -235,7 +238,7 @@ printError(sys::io::OutStream &out,
            const char *type,
            const Location &loc,
            LogLevel lvl,
-           const char *mesg)
+           std::string_view mesg)
 {
     const char *prefix = type;
     bool st = false;
@@ -359,7 +362,7 @@ logBegin(const Location &loc, const LogDestination &dest, LogLevel lvl)
 }
 
 sys::io::OutStream &
-logWrite(const std::string &msg)
+logWrite(std::string_view msg)
 {
     if (checkLogState())
         *log_state->out << msg;
@@ -367,13 +370,13 @@ logWrite(const std::string &msg)
 }
 
 sys::io::OutStream &
-logWriteErr(const std::string &err, const std::string &msg)
+logWriteErr(std::string_view err, std::string_view msg)
 {
     if (checkLogState())
         error(log_state->loc,
               log_state->level,
               ErrorArgs(*log_state->out,
-                        "raised error: " + err + ", reason: " + msg));
+                        string_concat("raised error: ", err, ", reason: ", msg)));
     return *log_state->out;
 }
 
@@ -397,14 +400,14 @@ void
 logRaiseError(const Location &loc,
               const LogDestination &dest,
               LogLevel lvl,
-              const std::string &err,
-              const std::string &msg)
+              std::string_view err,
+              std::string_view msg)
 {
     if (lvl < dest.minimumLevel)
         return;
     error(loc,
           lvl,
-          ErrorArgs(dest.out, "raised error: " + err + ", reason: " + msg));
+          ErrorArgs(dest.out, string_concat("raised error: ", err, ", reason: ", msg)));
 }
 
 } // namespace err

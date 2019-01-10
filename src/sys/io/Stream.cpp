@@ -10,19 +10,7 @@ namespace sys {
 namespace io {
 
 namespace {
-#if 0
-FILE *
-castFILE(FileStream::FILE *p)
-{
-    return reinterpret_cast<FILE *>(p);
-}
 
-FileStream::FILE *
-castFILE(FILE *p)
-{
-    return reinterpret_cast<FileStream::FILE *>(p);
-}
-#endif
 struct StreamState
 {
     static StreamResult track(StreamFlags eof,
@@ -236,109 +224,7 @@ operator<<(OutStream &out, const StreamEndl & /*unused*/)
     out.flush();
     return out;
 }
-#if 0
-FileStream::FileStream(FileStream::FILE *file) : _file(file) {}
 
-FileStream::FileStream(const std::string &path, const std::string &mode)
-  : _file(nullptr)
-{
-    open(path, mode);
-}
-
-FileStream::~FileStream()
-{
-    close();
-}
-
-bool
-FileStream::open(const std::string &path, const std::string &mode)
-{
-    if (isOpen())
-        return false;
-    _file = castFILE(fopen(path.c_str(), mode.c_str()));
-    return _file != nullptr;
-}
-
-StreamResult
-FileStream::basic_read(size_t &s, char *buf)
-{
-    size_t n = s;
-    size_t k = fread(reinterpret_cast<void *>(buf), 1, n, castFILE(_file));
-    s = k;
-    if (n == k)
-        return StreamResult::OK;
-    if (feof(castFILE(_file)) != 0)
-        return StreamResult::EOF;
-    if (ferror(castFILE(_file)) != 0) {
-        return StreamResult::Error;
-    }
-
-    ASSERT_FAIL();
-}
-
-StreamResult
-FileStream::basic_write(size_t &s, const char *buf)
-{
-    size_t n = s;
-    size_t k =
-      fwrite(reinterpret_cast<const void *>(buf), 1, n, castFILE(_file));
-    s = k;
-    if (n == k)
-        return StreamResult::OK;
-    if (feof(castFILE(_file)) != 0)
-        return StreamResult::EOF;
-    if (ferror(castFILE(_file)) != 0)
-        return StreamResult::Error;
-
-    ASSERT_FAIL();
-}
-
-StreamResult
-FileStream::basic_close()
-{
-    StreamResult ret = basic_flush();
-    if (_file != nullptr)
-        fclose(castFILE(_file));
-    return ret;
-}
-
-StreamResult
-FileStream::basic_flush()
-{
-
-    if (_file == nullptr)
-        return StreamResult::Error;
-
-#ifdef HU_OS_POSIX
-    int ret;
-
-    while ((ret = fflush(castFILE(_file))) != 0 && errno == EINTR)
-        errno = 0;
-
-    if (ret == 0)
-        return StreamResult::OK;
-
-    int err = errno;
-    errno = 0;
-
-    if (err == EAGAIN || err == EWOULDBLOCK)
-        return StreamResult::Blocked;
-
-    if (feof(castFILE(_file)) != 0)
-        return StreamResult::EOF;
-    return StreamResult::Error;
-
-#else
-
-    if (fflush(castFILE(_file)) == 0)
-        return StreamResult::OK;
-    if (feof(castFILE(_file)))
-        return StreamResult::EOF;
-    else
-        return StreamResult::Error;
-#endif
-}
-#endif
 NullStream::NullStream()
 {
     close();
@@ -375,14 +261,11 @@ ByteStream::ByteStream(size_t bufsize) : read_cursor(0)
     buffer.reserve(bufsize);
 }
 
-ByteStream::ByteStream(const char *buf, size_t sz) : ByteStream(sz)
+ByteStream::ByteStream(std::string_view str) : ByteStream(str.size())
 {
-    write(sz, buf);
+    auto sz = str.size();
+    write(sz, str.data());
 }
-
-ByteStream::ByteStream(const std::string &str)
-  : ByteStream(str.data(), str.size())
-{}
 
 ByteStream::~ByteStream() = default;
 

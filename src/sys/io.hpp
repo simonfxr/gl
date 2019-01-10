@@ -1,13 +1,13 @@
 #ifndef SYS_IO_HPP
 #define SYS_IO_HPP
 
-#include "sys/conf.hpp"
-
-#include "sys/endian.hpp"
 #include "sys/io/Stream.hpp"
 
+#include "sys/endian.hpp"
+
 #include <memory>
-#include <string>
+#include <optional>
+#include <string_view>
 
 namespace sys {
 namespace io {
@@ -87,7 +87,7 @@ SYS_API Handle
 stderr_handle();
 
 SYS_API HandleError
-open(const std::string &, HandleMode, Handle *);
+open(std::string_view, HandleMode, Handle *);
 
 SYS_API HandleMode
 mode(Handle &);
@@ -134,6 +134,19 @@ struct SYS_API HandleStream : public IOStream
     HandleStream(const Handle & = Handle());
     ~HandleStream() override;
 
+	HU_NODISCARD
+    static std::optional<HandleStream> open(std::string_view path,
+                                            HandleMode mode,
+                                            HandleError &);
+
+	HU_NODISCARD
+    static std::optional<HandleStream> open(std::string_view path,
+                                            HandleMode mode)
+    {
+        HandleError err;
+        return open(path, mode, err);
+    }
+
 protected:
     StreamResult basic_close() final override;
     StreamResult basic_flush() final override;
@@ -143,7 +156,7 @@ protected:
 };
 
 SYS_API std::pair<std::unique_ptr<char[]>, size_t>
-readFile(sys::io::OutStream &err, const std::string &path) noexcept;
+readFile(sys::io::OutStream &err, std::string_view path) noexcept;
 
 } // namespace io
 } // namespace sys

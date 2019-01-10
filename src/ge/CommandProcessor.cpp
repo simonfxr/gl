@@ -1,5 +1,6 @@
 #include "ge/CommandProcessor.hpp"
 
+#include "data/string_utils.hpp"
 #include "data/range.hpp"
 #include "err/err.hpp"
 #include "ge/Engine.hpp"
@@ -11,8 +12,6 @@
 
 namespace ge {
 
-typedef std::map<std::string, CommandPtr> CommandMap;
-
 size_t
 CommandProcessor::size() const
 {
@@ -20,7 +19,7 @@ CommandProcessor::size() const
 }
 
 bool
-CommandProcessor::addScriptDirectory(const std::string &dir, bool check_exists)
+CommandProcessor::addScriptDirectory(std::string_view dir, bool check_exists)
 {
     for (const auto &scriptDir : scriptDirs)
         if (dir == scriptDir)
@@ -32,7 +31,7 @@ CommandProcessor::addScriptDirectory(const std::string &dir, bool check_exists)
             return false;
     }
 
-    scriptDirs.push_back(dir);
+    scriptDirs.emplace_back(dir);
     return true;
 }
 
@@ -43,7 +42,7 @@ CommandProcessor::scriptDirectories()
 }
 
 CommandPtr
-CommandProcessor::command(const std::string &comname)
+CommandProcessor::command(std::string_view comname)
 {
     auto it = commands.find(comname);
     if (it != commands.end())
@@ -58,12 +57,12 @@ CommandProcessor::define(const CommandPtr &comm, bool unique)
 }
 
 bool
-CommandProcessor::define(const std::string &comname,
+CommandProcessor::define(std::string_view comname,
                          const CommandPtr &comm,
                          bool unique)
 {
     if (!comm) {
-        ERR(engine().out(), (comname + ": null command").c_str());
+        ERR(engine().out(), string_concat(comname, ": null command"));
         return false;
     }
 
@@ -72,22 +71,26 @@ CommandProcessor::define(const std::string &comname,
         return false;
     }
 
-    bool dup = command(comname) != nullptr;
+    auto it = commands.find(comname);
+    auto dup = it != commands.end();
     if (dup && unique) {
-        ERR(engine().out(), ("duplicate command name: " + comname).c_str());
+        ERR(engine().out(), string_concat("duplicate command name: ", comname));
         return false;
     }
 
-    commands[comname] = comm;
+    if (dup)
+        it->second = comm;
+    else
+        commands[std::string(comname)] = comm;
     return dup;
 }
 
 bool
-CommandProcessor::exec(const std::string &comname, Array<CommandArg> &args)
+CommandProcessor::exec(std::string_view comname, Array<CommandArg> &args)
 {
     CommandPtr com = command(comname);
     if (!com) {
-        ERR(engine().out(), ("command not found: " + comname).c_str());
+        ERR(engine().out(), string_concat("command not found: ", comname));
         return false;
     }
     return exec(com, args, comname);
@@ -138,7 +141,7 @@ CommandProcessor::exec(Array<CommandArg> &args)
 bool
 CommandProcessor::exec(CommandPtr &com,
                        Array<CommandArg> &args,
-                       const std::string &comname)
+                       std::string_view comname)
 {
 
     if (!com) {
@@ -252,7 +255,7 @@ CommandProcessor::exec(CommandPtr &com,
 }
 
 bool
-CommandProcessor::loadScript(const std::string &name, bool quiet)
+CommandProcessor::loadScript(std::string_view name, bool quiet)
 {
 
     std::string file = sys::fs::lookup(scriptDirectories(), name);
@@ -275,14 +278,13 @@ not_found:
                       << sys::io::endl;
 
     if (!quiet)
-        ERR(engine().out(), ("opening script: " + name).c_str());
+        ERR(engine().out(), string_concat("opening script: ", name));
 
     return false;
 }
 
 bool
-CommandProcessor::loadStream(sys::io::InStream &inp,
-                             const std::string &inp_name)
+CommandProcessor::loadStream(sys::io::InStream &inp, std::string_view inp_name)
 {
     bool ok = true;
     std::vector<CommandArg> args;
@@ -316,7 +318,7 @@ CommandProcessor::loadStream(sys::io::InStream &inp,
 }
 
 bool
-CommandProcessor::evalCommand(const std::string &cmd)
+CommandProcessor::evalCommand(std::string_view cmd)
 {
     sys::io::ByteStream inp(cmd);
     return loadStream(inp, "<eval string>");

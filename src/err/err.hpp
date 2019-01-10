@@ -5,6 +5,7 @@
 #include "sys/io/Stream.hpp"
 
 #include <string>
+#include <string_view>
 
 #ifndef ERROR_DEFAULT_STREAM
 #define ERROR_DEFAULT_STREAM ::sys::io::stdout()
@@ -83,29 +84,16 @@ struct LogDestination
     {}
 };
 
-inline const char *
-_errorString(const char *m)
-{
-    return m;
-}
-inline const char *
-_errorString(const std::string &m)
-{
-    return m.c_str();
-}
-
 struct ErrorArgs
 {
     sys::io::OutStream &out;
-    const char *mesg;
+    std::string_view mesg;
 
-    template<typename T>
-    ErrorArgs(sys::io::OutStream &o, const T &m) : out(o), mesg(_errorString(m))
+    ErrorArgs(sys::io::OutStream &o, std::string_view msg) : out(o), mesg(msg)
     {}
 
 #ifndef ERROR_NO_IMPLICIT_OUT
-    template<typename T>
-    ErrorArgs(const T &m) : out(ERROR_DEFAULT_STREAM), mesg(_errorString(m))
+    ErrorArgs(std::string_view msg) : out(ERROR_DEFAULT_STREAM), mesg(msg)
     {}
 #endif
 };
@@ -121,19 +109,16 @@ printError(sys::io::OutStream &out,
            const char *type,
            const Location &loc,
            LogLevel lvl,
-           const char *mesg);
+           std::string_view);
 
 ERR_API sys::io::OutStream &
 logBegin(const Location &loc, const LogDestination &, LogLevel);
 
 ERR_API sys::io::OutStream &
-logWrite(const std::string &);
+logWrite(std::string_view);
 
 ERR_API sys::io::OutStream &
-logWriteErr(const std::string &, const std::string &);
-
-ERR_API sys::io::OutStream &
-logWrite(const char *);
+logWriteErr(std::string_view, std::string_view);
 
 ERR_API void
 logEnd();
@@ -142,8 +127,8 @@ ERR_API void
 logRaiseError(const Location &,
               const LogDestination &,
               LogLevel,
-              const std::string &,
-              const std::string &);
+              std::string_view,
+              std::string_view);
 
 template<typename T>
 LogDestination
@@ -158,7 +143,7 @@ logRaiseError(const Location &loc,
               T &value,
               E error,
               LogLevel lvl,
-              const std::string &message)
+              std::string_view message)
 {
     ErrorTraits<T>::setError(value, error);
     logRaiseError(loc,
@@ -184,7 +169,7 @@ logDestination(const T &value)
 
 template<typename T, typename E>
 sys::io::OutStream &
-logPutError(const T &v, E err, const std::string &msg)
+logPutError(const T &v, E err, std::string_view msg)
 {
     return logWriteErr(ErrorTraits<T>::stringError(v, err), msg);
 }

@@ -21,7 +21,7 @@ struct GE_API ParseState
     int line;
     int col;
 
-    ParseState(sys::io::InStream &_in, const std::string &fn)
+    ParseState(sys::io::InStream &_in, std::string_view fn)
       : c(0)
       , rawC(0)
       , filename(fn)

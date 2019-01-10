@@ -1,6 +1,7 @@
 #ifndef GLT_TEXTURE_SAMPLER_HPP
 #define GLT_TEXTURE_SAMPLER_HPP
 
+#include "data/enum_flags.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/TextureData.hpp"
 #include "glt/conf.hpp"
@@ -67,8 +68,8 @@ public:
     TextureSampler &operator=(const TextureSampler &) = delete;
 };
 
-DEF_ENUM_BITOR(TextureSampler::FilterMode);
-DEF_ENUM_BITOR(TextureSampler::Axis);
+DEF_ENUM_BIT_OPS(TextureSampler::FilterMode);
+DEF_ENUM_BIT_OPS(TextureSampler::Axis);
 
 } // namespace glt
 

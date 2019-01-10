@@ -27,9 +27,10 @@ using sys::win::utf8To16;
 } // namespace
 
 bool
-cwd(const std::string &dir)
+cwd(std::string_view dir)
 {
-    return SetCurrentDirectory(dir.c_str()) == TRUE;
+    auto dirstr = std::string(dir);
+    return SetCurrentDirectory(dirstr.c_str()) == TRUE;
 }
 
 std::string
@@ -45,50 +46,50 @@ cwd()
 }
 
 std::string
-dirname(const std::string &path)
+dirname(std::string_view path)
 {
     return def::dirname(path);
 }
 
 std::string
-basename(const std::string &path)
+basename(std::string_view path)
 {
     return def::basename(path);
 }
 
 std::string
-extension(const std::string &path)
+extension(std::string_view path)
 {
     return def::extension(path);
 }
 
 std::string
-dropExtension(const std::string &path)
+dropExtension(std::string_view path)
 {
     return def::dropExtension(path);
 }
 
 std::string
-dropTrailingSeparators(const std::string &path)
+dropTrailingSeparators(std::string_view path)
 {
     return def::dropTrailingSeparators(path);
 }
 
 bool
-isAbsolute(const std::string &path)
+isAbsolute(std::string_view path)
 {
     auto wstr = utf8To16(path);
     return PathIsRelativeW(wstr.c_str()) != TRUE;
 }
 
 std::optional<FileTime>
-modificationTime(const std::string &path)
+modificationTime(std::string_view path)
 {
     return def::modificationTime(path);
 }
 
 std::optional<Stat>
-stat(const std::string &path)
+stat(std::string_view path)
 {
     auto wpath = utf8To16(path);
     WIN32_FILE_ATTRIBUTE_DATA attrs;
@@ -110,7 +111,7 @@ stat(const std::string &path)
 }
 
 std::string
-absolutePath(const std::string &path)
+absolutePath(std::string_view path)
 {
     auto wpath = utf8To16(path);
     std::wstring abs(MAX_PATH, '\0');
@@ -129,13 +130,13 @@ absolutePath(const std::string &path)
 }
 
 std::string
-lookup(const std::vector<std::string> &dirs, const std::string &path)
+lookup(const std::vector<std::string> &dirs, std::string_view path)
 {
     return def::lookup(dirs, path);
 }
 
 std::optional<ObjectType>
-exists(const std::string &path)
+exists(std::string_view path)
 {
     return def::exists(path);
 }

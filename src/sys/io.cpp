@@ -1,7 +1,3 @@
-#ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS 1
-#endif
-
 #include "sys/io.hpp"
 
 #include "err/err.hpp"
@@ -239,7 +235,7 @@ make_finally(F &&f)
 } // namespace
 
 std::pair<std::unique_ptr<char[]>, size_t>
-readFile(sys::io::OutStream &err, const std::string &path) noexcept
+readFile(sys::io::OutStream &err, std::string_view path) noexcept
 {
     Handle h;
     auto ret = open(path, HM_READ, &h);

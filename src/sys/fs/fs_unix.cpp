@@ -1,6 +1,7 @@
 #include "sys/fs/fs_unix.hpp"
 
 #include "err/err.hpp"
+#include "data/string_utils.hpp"
 #include "sys/fs.hpp"
 
 #include <cerrno>
@@ -15,7 +16,7 @@ namespace sys {
 namespace fs {
 
 bool
-cwd(const std::string &dir)
+cwd(std::string_view dir)
 {
     if (chdir(dir.c_str()) < 0) {
         ERR(strerror(errno));
@@ -50,7 +51,7 @@ retry:
 }
 
 static size_t
-dropTrailingSlashes(const std::string &path)
+dropTrailingSlashes(std::string_view path)
 {
     if (path.empty())
         return std::string::npos;
@@ -63,7 +64,7 @@ dropTrailingSlashes(const std::string &path)
 }
 
 std::string
-dirname(const std::string &path)
+dirname(std::string_view path)
 {
     if (path.empty())
         return ".";
@@ -80,11 +81,11 @@ dirname(const std::string &path)
     if (pos == 0)
         return "/";
 
-    return path.substr(0, pos);
+    return view_substr(path, 0, pos);
 }
 
 std::string
-basename(const std::string &path)
+basename(std::string_view path)
 {
 
     if (path.empty())
@@ -103,17 +104,17 @@ basename(const std::string &path)
     if (end == std::string::npos)
         end = path.length();
 
-    return path.substr(pos, end - pos);
+	return view_substr(path, pos, end - pos);
 }
 
 std::string
-dropExtension(const std::string &path)
+dropExtension(std::string_view path)
 {
     return def::dropExtension(path);
 }
 
 std::string
-extension(const std::string &path)
+extension(std::string_view path)
 {
     size_t pos = path.rfind('/');
     if (pos == std::string::npos)
@@ -121,17 +122,17 @@ extension(const std::string &path)
     pos = path.find('.', pos);
     if (pos == std::string::npos)
         return "";
-    return path.substr(pos + 1);
+    return view_substr(path, pos + 1);
 }
 
 bool
-isAbsolute(const std::string &path)
+isAbsolute(std::string_view path)
 {
     return !path.empty() && path[0] == '/';
 }
 
 std::string
-absolutePath(const std::string &path)
+absolutePath(std::string_view path)
 {
     if (isAbsolute(path))
         return path;
@@ -144,7 +145,7 @@ absolutePath(const std::string &path)
 }
 
 std::optional<Stat>
-stat(const std::string &path)
+stat(std::string_view path)
 {
     Stat stat;
     stat.absolute = absolutePath(path);
@@ -158,7 +159,7 @@ stat(const std::string &path)
 }
 
 std::optional<FileTime>
-modificationTime(const std::string &path)
+modificationTime(std::string_view path)
 {
     struct stat st;
     if (stat(path.c_str(), &st) != 0) {
@@ -169,13 +170,13 @@ modificationTime(const std::string &path)
 }
 
 std::string
-lookup(const std::vector<std::string> &dirs, const std::string &name)
+lookup(const std::vector<std::string> &dirs, std::string_view name)
 {
     return def::lookup(dirs, name);
 }
 
 std::optional<ObjectType>
-exists(const std::string &path)
+exists(std::string_view path)
 {
     struct stat info;
     if (stat(path.c_str(), &info) == -1)

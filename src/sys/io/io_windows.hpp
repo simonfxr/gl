@@ -4,21 +4,21 @@
 namespace sys {
 namespace io {
 
-struct W32_HANDLE;
-struct W32_SOCKET;
-
 struct Handle
 {
-    union
-    {
-        W32_HANDLE *handle;
-        W32_SOCKET *socket;
-    };
-    bool is_handle;
+    void *_handle{};
+    HandleMode _mode{};
+    bool _is_socket = false;
+
+    constexpr explicit operator bool() const { return _handle != nullptr; }
 };
 
 struct Socket
-{};
+{
+    void *_socket{};
+
+    constexpr explicit operator bool() const { return _socket != nullptr; }
+};
 
 } // namespace io
 } // namespace sys

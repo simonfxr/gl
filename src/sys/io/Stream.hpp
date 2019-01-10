@@ -155,29 +155,6 @@ protected:
     using OutStream::flags;
 };
 
-#if 0
-struct SYS_API FileStream : public IOStream
-{
-    struct FILE; // use as dummy type, avoid importing stdio.h, on
-                 // windows stdin/stdout/stderr are macros, which
-                 // clashes with our definitions
-    FILE *_file;
-    FileStream(FILE *file = nullptr);
-    FileStream(const std::string &path, const std::string &mode);
-    ~FileStream() override;
-    bool isOpen() const { return _file != nullptr; }
-    bool open(const std::string &path, const std::string &mode);
-
-protected:
-    virtual StreamResult basic_read(size_t &, char *) final override;
-    virtual StreamResult basic_write(size_t &, const char *) final override;
-    virtual StreamResult basic_close() final override;
-    virtual StreamResult basic_flush() final override;
-
-    FileStream(const FileStream &) = delete;
-    FileStream &operator=(const FileStream &) = delete;
-};
-#endif
 struct SYS_API NullStream : public IOStream
 {
     NullStream();
@@ -191,10 +168,8 @@ protected:
 
 struct SYS_API ByteStream : public IOStream
 {
-
-    ByteStream(size_t bufsize = 32);
-    ByteStream(const char *buf, size_t sz);
-    ByteStream(const std::string &);
+    explicit ByteStream(size_t bufsize = 32);
+    ByteStream(std::string_view);
 
     ~ByteStream() override;
 

@@ -7,13 +7,14 @@
 #include "sys/io/Stream.hpp"
 
 #include <map>
+#include <string_view>
 #include <vector>
 
 namespace ge {
 
 struct Engine;
 
-typedef std::map<std::string, CommandPtr> CommandMap;
+typedef std::map<std::string, CommandPtr, std::less<>> CommandMap;
 
 struct GE_API CommandProcessor
 {
@@ -26,24 +27,24 @@ public:
     CommandProcessor(Engine &e) : _engine(e) {}
     size_t size() const;
 
-    bool addScriptDirectory(const std::string &dir, bool check_exists = true);
+    bool addScriptDirectory(std::string_view dir, bool check_exists = true);
     const std::vector<std::string> &scriptDirectories();
 
     Engine &engine() { return _engine; }
 
-    CommandPtr command(const std::string &comname);
+    CommandPtr command(std::string_view comname);
 
     bool define(const CommandPtr &comm, bool unique = false);
 
-    bool define(const std::string &comname,
+    bool define(std::string_view comname,
                 const CommandPtr &comm,
                 bool unique = false);
 
-    bool exec(const std::string &comname, Array<CommandArg> &args);
+    bool exec(std::string_view comname, Array<CommandArg> &args);
 
     bool exec(CommandPtr &com,
               Array<CommandArg> &args,
-              const std::string &comname = "");
+              std::string_view comname = "");
 
     bool exec(Array<CommandArg> &args);
 
@@ -51,11 +52,11 @@ public:
 
     bool execCommand(Array<CommandArg> &args);
 
-    bool loadStream(sys::io::InStream &inp, const std::string &inp_name);
+    bool loadStream(sys::io::InStream &inp, std::string_view inp_name);
 
-    bool loadScript(const std::string &name, bool quiet = false);
+    bool loadScript(std::string_view name, bool quiet = false);
 
-    bool evalCommand(const std::string &cmd);
+    bool evalCommand(std::string_view cmd);
 
     // CommandArg cast(const CommandArg &val, CommandType type);
 

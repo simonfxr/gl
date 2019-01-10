@@ -1,9 +1,6 @@
-#ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS 1
-#endif
-
 #include "sys/fs.hpp"
 
+#include "data/string_utils.hpp"
 #include "err/err.hpp"
 
 #include <sstream>
@@ -25,7 +22,7 @@ is_pathsep(char c)
 }
 
 size_t
-dropTrailingSeps(const std::string &path)
+dropTrailingSeps(std::string_view path)
 {
     if (path.empty())
         return std::string::npos;
@@ -39,7 +36,7 @@ dropTrailingSeps(const std::string &path)
 } // namespace
 
 std::string
-join(const std::string &path, const char **parts, size_t n)
+join(std::string_view path, const char **parts, size_t n)
 {
     std::stringstream out;
     out << path;
@@ -50,7 +47,7 @@ join(const std::string &path, const char **parts, size_t n)
 }
 
 std::string
-dirname(const std::string &path)
+dirname(std::string_view path)
 {
     if (path.empty())
         return ".";
@@ -70,11 +67,11 @@ dirname(const std::string &path)
     if (len == 0)
         return "/";
 
-    return path.substr(0, len);
+    return view_substr(path, 0, len);
 }
 
 std::string
-basename(const std::string &path)
+basename(std::string_view path)
 {
 
     if (path.empty())
@@ -93,11 +90,11 @@ basename(const std::string &path)
     if (end == std::string::npos)
         end = path.length();
 
-    return path.substr(pos, end - pos);
+    return view_substr(path, pos, end - pos);
 }
 
 std::string
-extension(const std::string &path)
+extension(std::string_view path)
 {
     size_t pos = path.rfind(SEPARATOR);
     if (pos == std::string::npos)
@@ -105,32 +102,32 @@ extension(const std::string &path)
     pos = path.find('.', pos);
     if (pos == std::string::npos)
         return "";
-    return path.substr(pos + 1);
+    return view_substr(path, pos + 1);
 }
 
 std::string
-dropExtension(const std::string &path)
+dropExtension(std::string_view path)
 {
     size_t pos = path.rfind(SEPARATOR);
     if (pos == std::string::npos)
         pos = 0;
     pos = path.find('.', pos);
     if (pos == std::string::npos)
-        return path;
-    return path.substr(0, pos);
+        return std::string(path);
+    return view_substr(path, 0, pos);
 }
 
 std::string
-dropTrailingSeparators(const std::string &path)
+dropTrailingSeparators(std::string_view path)
 {
     size_t pos = dropTrailingSeps(path);
     if (pos == std::string::npos)
-        return path;
-    return path.substr(0, pos);
+        return std::string(path);
+    return view_substr(path, 0, pos);
 }
 
 std::optional<ObjectType>
-exists(const std::string &path)
+exists(std::string_view path)
 {
     if (auto st = stat(path))
         return st->type;
@@ -138,9 +135,9 @@ exists(const std::string &path)
 }
 
 std::string
-lookup(const std::vector<std::string> &dirs, const std::string &name)
+lookup(const std::vector<std::string> &dirs, std::string_view name)
 {
-    std::string suffix = "/" + name;
+    std::string suffix = string_concat("/", name);
 
     for (const auto &dir : dirs) {
         std::string filename = dir + suffix;
@@ -152,7 +149,7 @@ lookup(const std::vector<std::string> &dirs, const std::string &name)
 }
 
 std::string
-absolutePath(const std::string &path)
+absolutePath(std::string_view path)
 {
     if (auto st = stat(path))
         return st->absolute;
@@ -160,7 +157,7 @@ absolutePath(const std::string &path)
 }
 
 std::optional<FileTime>
-modificationTime(const std::string &path)
+modificationTime(std::string_view path)
 {
     if (auto st = stat(path))
         return st->mtime;
