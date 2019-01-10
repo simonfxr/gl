@@ -11,13 +11,13 @@ struct Handle
     HandleMode _mode{};
     FileDescriptor _fd = -1;
 
-    constexpr explicit bool operator() const { return _fd != -1; }
+    constexpr explicit operator bool() const { return _fd != -1; }
 };
 
 struct Socket
 {
     FileDescriptor _fd = -1;
-    constexpr explicit bool operator() const { return _fd != -1; }
+    constexpr explicit operator bool() const { return _fd != -1; }
 };
 
 } // namespace io

@@ -373,10 +373,11 @@ sys::io::OutStream &
 logWriteErr(std::string_view err, std::string_view msg)
 {
     if (checkLogState())
-        error(log_state->loc,
-              log_state->level,
-              ErrorArgs(*log_state->out,
-                        string_concat("raised error: ", err, ", reason: ", msg)));
+        error(
+          log_state->loc,
+          log_state->level,
+          ErrorArgs(*log_state->out,
+                    string_concat("raised error: ", err, ", reason: ", msg)));
     return *log_state->out;
 }
 
@@ -407,7 +408,8 @@ logRaiseError(const Location &loc,
         return;
     error(loc,
           lvl,
-          ErrorArgs(dest.out, string_concat("raised error: ", err, ", reason: ", msg)));
+          ErrorArgs(dest.out,
+                    string_concat("raised error: ", err, ", reason: ", msg)));
 }
 
 } // namespace err

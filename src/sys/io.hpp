@@ -131,15 +131,18 @@ struct SYS_API HandleStream : public IOStream
     size_t read_cursor;
     size_t write_cursor;
 
-    HandleStream(const Handle & = Handle());
+    HandleStream(HandleStream &&) = default;
+    HandleStream(const HandleStream &) = default;
+
+    HandleStream(const Handle &);
     ~HandleStream() override;
 
-	HU_NODISCARD
+    HU_NODISCARD
     static std::optional<HandleStream> open(std::string_view path,
                                             HandleMode mode,
                                             HandleError &);
 
-	HU_NODISCARD
+    HU_NODISCARD
     static std::optional<HandleStream> open(std::string_view path,
                                             HandleMode mode)
     {

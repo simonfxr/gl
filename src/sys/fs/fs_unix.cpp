@@ -1,7 +1,7 @@
 #include "sys/fs/fs_unix.hpp"
 
-#include "err/err.hpp"
 #include "data/string_utils.hpp"
+#include "err/err.hpp"
 #include "sys/fs.hpp"
 
 #include <cerrno>
@@ -18,7 +18,7 @@ namespace fs {
 bool
 cwd(std::string_view dir)
 {
-    if (chdir(dir.c_str()) < 0) {
+    if (chdir(std::string(dir).c_str()) < 0) {
         ERR(strerror(errno));
         return false;
     }
@@ -104,7 +104,7 @@ basename(std::string_view path)
     if (end == std::string::npos)
         end = path.length();
 
-	return view_substr(path, pos, end - pos);
+    return view_substr(path, pos, end - pos);
 }
 
 std::string
@@ -135,13 +135,13 @@ std::string
 absolutePath(std::string_view path)
 {
     if (isAbsolute(path))
-        return path;
+        return std::string{ path };
 
     std::string dir = cwd();
     if (dir.empty())
         return "";
 
-    return dir + "/" + path;
+    return string_concat(dir, "/", path);
 }
 
 std::optional<Stat>
@@ -162,7 +162,7 @@ std::optional<FileTime>
 modificationTime(std::string_view path)
 {
     struct stat st;
-    if (stat(path.c_str(), &st) != 0) {
+    if (stat(std::string(path).c_str(), &st) != 0) {
         ERR(strerror(errno));
         return std::nullopt;
     }
@@ -179,7 +179,7 @@ std::optional<ObjectType>
 exists(std::string_view path)
 {
     struct stat info;
-    if (stat(path.c_str(), &info) == -1)
+    if (stat(std::string(path).c_str(), &info) == -1)
         return std::nullopt;
     auto objtype = info.st_mode & S_IFMT;
     return { objtype == S_IFDIR ? Directory : File };

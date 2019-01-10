@@ -1,7 +1,7 @@
 #include "ge/CommandProcessor.hpp"
 
-#include "data/string_utils.hpp"
 #include "data/range.hpp"
+#include "data/string_utils.hpp"
 #include "err/err.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Event.hpp"
@@ -263,13 +263,11 @@ CommandProcessor::loadScript(std::string_view name, bool quiet)
         goto not_found;
 
     {
-        sys::io::Handle h;
-        auto err = sys::io::open(file, sys::io::HM_READ, &h);
-        if (err != sys::io::HE_OK)
+        auto opt_stream = sys::io::HandleStream::open(file, sys::io::HM_READ);
+        if (!opt_stream)
             goto not_found;
-        auto stream = sys::io::HandleStream(h);
         sys::io::stdout() << "loading script: " << file << sys::io::endl;
-        return loadStream(stream, file);
+        return loadStream(*opt_stream, file);
     }
 
 not_found:

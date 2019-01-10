@@ -93,7 +93,6 @@ convertErrnoSock()
     int errid = errno;
     errno = 0;
     switch (errid) {
-    case EAGAIN:
     case EWOULDBLOCK:
         return SE_BLOCKED;
     case EBADF:
@@ -109,12 +108,12 @@ HandleError
 handleFromFD(int fd, Handle *h)
 {
     int flags;
-    h->fd = fd;
-    h->mode = 0;
+    h->_fd = fd;
+    h->_mode = 0;
     RETRY_INTR(flags = fcntl(fd, F_GETFL));
     if (flags == -1)
         return convertErrno();
-    h->mode = unconvertMode(flags);
+    h->_mode = unconvertMode(flags);
     return HE_OK;
 }
 } // namespace
@@ -159,7 +158,8 @@ open(std::string_view path, HandleMode mode, Handle *h)
         return HE_INVALID_PARAM;
 
     int fd;
-    RETRY_INTR(fd = ::open(path.c_str(), flags));
+    auto strpath = std::string(path);
+    RETRY_INTR(fd = ::open(strpath.c_str(), flags));
 
     if (fd == -1)
         return convertErrno();
@@ -172,7 +172,7 @@ HandleMode
 mode(Handle &h)
 {
     ASSERT(h);
-    return h.mode;
+    return h._mode;
 }
 
 HandleError
@@ -184,10 +184,10 @@ elevate(Handle &h, HandleMode mode)
         return HE_INVALID_PARAM;
 
     int ret;
-    RETRY_INTR(ret = fcntl(h.fd, F_SETFL, flags));
+    RETRY_INTR(ret = fcntl(h._fd, F_SETFL, flags));
     if (ret == -1)
         return convertErrno();
-    h.mode = unconvertMode(flags);
+    h._mode = unconvertMode(flags);
     return HE_OK;
 }
 
@@ -197,7 +197,7 @@ read(Handle &h, size_t &s, char *buf)
     ASSERT(h);
     auto n = s;
     ssize_t k;
-    RETRY_INTR(k = ::read(h.fd, static_cast<void *>(buf), n));
+    RETRY_INTR(k = ::read(h._fd, static_cast<void *>(buf), n));
     if (k >= 0) {
         s = k;
         return k == 0 ? HE_EOF : HE_OK;
@@ -212,7 +212,7 @@ write(Handle &h, size_t &s, const char *buf)
     ASSERT(h);
     auto n = s;
     ssize_t k;
-    RETRY_INTR(k = ::write(h.fd, buf, n));
+    RETRY_INTR(k = ::write(h._fd, buf, n));
     if (k >= 0) {
         s = k;
         return HE_OK;
@@ -226,7 +226,7 @@ close(Handle &h)
 {
     ASSERT(h);
     int ret;
-    RETRY_INTR(ret = ::close(h.fd));
+    RETRY_INTR(ret = ::close(h._fd));
     if (ret == -1)
         return convertErrno();
     return HE_OK;
@@ -271,9 +271,9 @@ listen(SocketProto proto,
         server.sin_addr.s_addr = addr.addr4;
         server.sin_port = hton(port);
 
-        RETRY_INTR(ret = bind(sock,
-                              reinterpret_cast<sockaddr *>(&server),
-                              sizeof server));
+        RETRY_INTR(
+          ret =
+            bind(sock, reinterpret_cast<sockaddr *>(&server), sizeof server));
         if (ret == -1)
             goto socket_err;
     }
@@ -295,7 +295,7 @@ listen(SocketProto proto,
             goto socket_err;
     }
 
-    s->socket = sock;
+    s->_fd = sock;
     return SE_OK;
 
 socket_err:
@@ -315,10 +315,9 @@ accept(Socket &s, Handle *h)
     int c;
     // reason: #define SOCK_CLOEXEC SOCK_CLOEXEC
     BEGIN_NO_WARN_DISABLED_MACRO_EXPANSION
-    RETRY_INTR(c = accept4(s.socket,
-                           reinterpret_cast<sockaddr *>(&client),
-                           &clen,
-                           SOCK_CLOEXEC));
+    RETRY_INTR(
+      c = accept4(
+        s._fd, reinterpret_cast<sockaddr *>(&client), &clen, SOCK_CLOEXEC));
     END_NO_WARN_DISABLED_MACRO_EXPANSION
     if (c == -1)
         return convertErrnoSock();
@@ -328,8 +327,8 @@ accept(Socket &s, Handle *h)
     if (flags == -1)
         goto client_err;
 
-    h->fd = c;
-    h->mode = unconvertMode(flags);
+    h->_fd = c;
+    h->_mode = unconvertMode(flags);
     return SE_OK;
 
 client_err:
@@ -342,7 +341,7 @@ close(Socket &s)
 {
     ASSERT(s);
     int ret;
-    RETRY_INTR(ret = ::close(s.socket));
+    RETRY_INTR(ret = ::close(s._fd));
     if (ret == -1)
         return convertErrnoSock();
     return SE_OK;

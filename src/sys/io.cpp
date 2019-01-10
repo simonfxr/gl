@@ -197,6 +197,16 @@ HandleStream::flush_buffer()
     return convertErr(err);
 }
 
+std::optional<HandleStream>
+HandleStream::open(std::string_view path, HandleMode mode, HandleError &err)
+{
+    Handle h;
+    err = sys::io::open(path, mode, &h);
+    if (err != HE_OK)
+        return std::nullopt;
+    return { h };
+}
+
 namespace {
 template<typename F>
 struct Finally

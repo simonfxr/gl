@@ -93,8 +93,7 @@ struct ErrorArgs
     {}
 
 #ifndef ERROR_NO_IMPLICIT_OUT
-    ErrorArgs(std::string_view msg) : out(ERROR_DEFAULT_STREAM), mesg(msg)
-    {}
+    ErrorArgs(std::string_view msg) : out(ERROR_DEFAULT_STREAM), mesg(msg) {}
 #endif
 };
 
@@ -114,11 +113,9 @@ printError(sys::io::OutStream &out,
 ERR_API sys::io::OutStream &
 logBegin(const Location &loc, const LogDestination &, LogLevel);
 
-ERR_API sys::io::OutStream &
-logWrite(std::string_view);
+ERR_API sys::io::OutStream &logWrite(std::string_view);
 
-ERR_API sys::io::OutStream &
-logWriteErr(std::string_view, std::string_view);
+ERR_API sys::io::OutStream &logWriteErr(std::string_view, std::string_view);
 
 ERR_API void
 logEnd();

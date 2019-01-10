@@ -19,7 +19,10 @@ struct Client
     size_t buf_pos{};
     size_t buf_end;
 
-    Client() : stream(new io::HandleStream), buf_end(BUF_SIZE) {}
+    Client()
+      : stream(std::make_shared<io::HandleStream>(io::Handle()))
+      , buf_end(BUF_SIZE)
+    {}
 };
 
 int
