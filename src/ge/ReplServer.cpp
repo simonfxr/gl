@@ -78,7 +78,7 @@ Client::Client(int _id, Handle h)
   , parser_fiber()
   , client_fiber(sys::fiber::toplevel())
   , state(ParsingYield)
-  , hstream(h)
+  , hstream(std::move(h))
   , in_stream(&hstream, client_fiber, &parser_fiber)
   , parse_state(in_stream, "")
 {
@@ -209,7 +209,7 @@ ReplServer::acceptClients()
             sys::io::close(handle);
         } else {
             self->clients.push_back(
-              std::make_shared<Client>(self->next_id++, handle));
+              std::make_shared<Client>(self->next_id++, std::move(handle)));
         }
     }
 }

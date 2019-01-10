@@ -4,8 +4,8 @@
 #include "glt/conf.hpp"
 #include "sys/io/Stream.hpp"
 
-#include <map>
 #include <memory>
+#include <unordered_map>
 
 namespace glt {
 
@@ -47,7 +47,7 @@ struct GLT_API Preprocessor
         virtual void directiveEncountered(const DirectiveContext &ctx);
     };
 
-    typedef std::map<std::string, DirectiveHandler *> Handlers;
+    typedef std::unordered_map<std::string, DirectiveHandler *> Handlers;
     typedef std::pair<std::string, DirectiveHandler *> HandlerEntry;
 
     Preprocessor();

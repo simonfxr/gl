@@ -42,10 +42,13 @@ typedef GLObject<ObjectType::Query> GLQueryObject;
 
 GLT_API void
 generate(ObjectType::Type t, GLsizei n, GLuint *names);
+
 GLT_API void
 release(ObjectType::Type t, GLsizei n, const GLuint *names);
+
 GLT_API void
 generateShader(GLenum shader_type, GLuint *shader);
+
 GLT_API void
 printStats(sys::io::OutStream &);
 

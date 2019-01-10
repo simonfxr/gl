@@ -1,7 +1,6 @@
 #include "glt/ShaderProgram.hpp"
 
-#include <map>
-#include <set>
+#include <unordered_map>
 
 #include "defs.hpp"
 #include "opengl.hpp"
@@ -68,7 +67,7 @@ stringError(Type e)
 
 } // namespace ShaderProgramError
 
-typedef std::map<std::string, GLuint> Attributes;
+typedef std::unordered_map<std::string, GLuint> Attributes;
 
 struct ShaderProgram::Data
 {

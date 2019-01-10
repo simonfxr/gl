@@ -1,4 +1,5 @@
 #include "glt/GLObject.hpp"
+
 #include "glt/utils.hpp"
 
 #include <unordered_map>
@@ -37,12 +38,11 @@ del_shaders(GLsizei n, const GLuint *names)
         glDeleteShader(names[i]);
 }
 
-size_t instance_count[ObjectType::Count] = {};
-
 struct ObjectKind
 {
     Generator generator{};
     Destructor destructor{};
+
     const char *kind{};
     ObjectKind() = default;
     ObjectKind(Generator g, Destructor d, const char *k)
@@ -50,23 +50,24 @@ struct ObjectKind
     {}
 };
 
-// has to initialized after glewInit()
-const ObjectKind *kind_table;
-
-DBG(std::unordered_map<GLuint, std::string> *stacktrace_map;)
-
-void
-init_table()
+struct Tables
 {
-    if (kind_table != nullptr)
-        return;
+    size_t instance_count[ObjectType::Count]{};
+    ObjectKind kinds[ObjectType::Count];
+    DBG(std::unordered_map<GLuint, std::string> stacktrace_map;)
+    Tables();
 
-    DBG(stacktrace_map = new std::map<GLuint, std::string>());
+    static Tables &get() noexcept
+    {
+        static Tables tables;
+        return tables;
+    }
+};
 
-    auto *table = new ObjectKind[ObjectType::Count];
-    kind_table = table;
+Tables::Tables()
+{
     int i = 0;
-#define KIND(g, d, k) (table[ObjectType::k] = ObjectKind(g, d, #k)), ++i
+#define KIND(g, d, k) (kinds[ObjectType::k] = ObjectKind(g, d, #k)), ++i
     KIND(gen_programs, del_programs, Program);
     KIND(nullptr, del_shaders, Shader);
     KIND(glGenBuffers, glDeleteBuffers, Buffer);
@@ -79,64 +80,64 @@ init_table()
     KIND(glGenVertexArrays, glDeleteVertexArrays, VertexArray);
     KIND(glGenQueries, glDeleteQueries, Query);
 #undef KIND
-
     ASSERT(i == ObjectType::Count);
 }
-
 } // namespace
 
 void
 generate(ObjectType::Type t, GLsizei n, GLuint *names)
 {
-    init_table();
-
     DBG({
         ByteStream out;
         err::print_stacktrace(out);
         std::string call_stack_str = out.str();
     });
 
+    auto tab = Tables::get();
     ASSERT(0 <= t && t < ObjectType::Count);
-    ASSERT(kind_table[t].generator != nullptr);
-    GL_CALL(kind_table[t].generator, n, names);
-    for (GLsizei i = 0; i < n; ++i)
+    ASSERT(tab.kinds[t].generator != nullptr);
+    GL_CALL(tab.kinds[t].generator, n, names);
+    for (GLsizei i = 0; i < n; ++i) {
         if (names[i] != 0) {
-            ++instance_count[t];
-            DBG((*stacktrace_map)[names[i]] = call_stack_str);
+            ++tab.instance_count[t];
+            DBG(tab.stacktrace_map[names[i]] = call_stack_str);
         }
+    }
 }
 
 void
 generateShader(GLenum shader_type, GLuint *name)
 {
+    auto tab = Tables::get();
     GL_ASSIGN_CALL(*name, glCreateShader, shader_type);
     if (*name != 0)
-        ++instance_count[ObjectType::Shader];
+        ++tab.instance_count[ObjectType::Shader];
 }
 
 void
 release(ObjectType::Type t, GLsizei n, const GLuint *names)
 {
-    init_table();
+    auto tab = Tables::get();
     ASSERT(0 <= t && t < ObjectType::Count);
-    GL_CALL(kind_table[t].destructor, n, names);
-    for (GLsizei i = 0; i < n; ++i)
+    GL_CALL(tab.kinds[t].destructor, n, names);
+    for (GLsizei i = 0; i < n; ++i) {
         if (names[i] != 0) {
             DBG(sys::io::stdout()
-                << "releasing GLObject, stack: " << (*stacktrace_map)[names[i]]
+                << "releasing GLObject, stack: " << tab.stacktrace_map[names[i]]
                 << sys::io::endl);
-            --instance_count[t];
+            --tab.instance_count[t];
         }
+    }
 }
 
 void
 printStats(sys::io::OutStream &out)
 {
-    init_table();
+    auto tab = Tables::get();
     out << "Active OpenGL Objects:" << sys::io::endl;
     for (size_t i = 0; i < ObjectType::Count; ++i)
-        if (instance_count[i] > 0)
-            out << "  " << kind_table[i].kind << "s: " << instance_count[i]
+        if (tab.instance_count[i] > 0)
+            out << "  " << tab.kinds[i].kind << "s: " << tab.instance_count[i]
                 << sys::io::endl;
 }
 

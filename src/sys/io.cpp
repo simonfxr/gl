@@ -45,8 +45,8 @@ IPA_LOCAL()
     return module->io.ipa_local;
 }
 
-HandleStream::HandleStream(const Handle &h)
-  : handle(h), read_cursor(0), write_cursor(0)
+HandleStream::HandleStream(Handle h)
+  : handle(std::move(h)), read_cursor(0), write_cursor(0)
 {}
 
 HandleStream::~HandleStream()
@@ -204,7 +204,7 @@ HandleStream::open(std::string_view path, HandleMode mode, HandleError &err)
     err = sys::io::open(path, mode, &h);
     if (err != HE_OK)
         return std::nullopt;
-    return { h };
+    return { std::move(h) };
 }
 
 namespace {

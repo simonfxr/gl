@@ -134,7 +134,7 @@ struct SYS_API HandleStream : public IOStream
     HandleStream(HandleStream &&) = default;
     HandleStream(const HandleStream &) = default;
 
-    HandleStream(const Handle &);
+    HandleStream(Handle);
     ~HandleStream() override;
 
     HU_NODISCARD

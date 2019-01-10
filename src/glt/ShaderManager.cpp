@@ -4,13 +4,12 @@
 #include "glt/ShaderProgram.hpp"
 
 #include <algorithm>
-#include <map>
+#include <unordered_map>
 
 namespace glt {
 
-#define NULL_PROGRAM_REF std::shared_ptr<ShaderProgram>()
-
-typedef std::map<std::string, std::shared_ptr<ShaderProgram>> ProgramMap;
+using ProgramMap =
+  std::unordered_map<std::string, std::shared_ptr<ShaderProgram>>;
 
 struct ShaderManager::Data
 {
@@ -100,7 +99,7 @@ ShaderManager::program(const std::string &name) const
     if (it != self->programs.end())
         return it->second;
     ERR(("program not found: " + name).c_str());
-    return NULL_PROGRAM_REF;
+    return {};
 }
 
 void

@@ -1,14 +1,11 @@
-#include <cstring>
-#include <set>
-
-#include "defs.hpp"
-#include "opengl.hpp"
-
-#include "glt/GLDebug.hpp"
-#include "glt/module.hpp"
 #include "glt/utils.hpp"
 
 #include "err/err.hpp"
+#include "glt/GLDebug.hpp"
+#include "glt/module.hpp"
+#include "opengl.hpp"
+
+#include <cstring>
 
 #define G (module->utils)
 
@@ -31,11 +28,9 @@ getGLErrorString(GLenum err)
 {
 
     switch (err) {
-
 #define err_case(e)                                                            \
     case e:                                                                    \
         return #e
-
         err_case(GL_NO_ERROR);
         err_case(GL_INVALID_ENUM);
         err_case(GL_INVALID_VALUE);
@@ -45,11 +40,8 @@ getGLErrorString(GLenum err)
         err_case(GL_OUT_OF_MEMORY);
         err_case(GL_TABLE_TOO_LARGE);
         err_case(GL_INVALID_FRAMEBUFFER_OPERATION);
-
 #undef err_case
-
     default:
-
         sys::io::ByteStream rep;
         rep << "Unknown OpenGL error [code = " << err << "]";
         return rep.str();

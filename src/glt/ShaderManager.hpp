@@ -1,9 +1,9 @@
 #ifndef SHADER_MANAGER_HPP
 #define SHADER_MANAGER_HPP
 
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "glt/conf.hpp"
@@ -15,7 +15,7 @@ struct ShaderCompiler;
 struct ShaderProgram;
 struct ShaderCache;
 
-typedef std::map<std::string, std::string> PreprocessorDefinitions;
+typedef std::unordered_map<std::string, std::string> PreprocessorDefinitions;
 
 typedef std::vector<std::string> ShaderDirectories;
 

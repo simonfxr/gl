@@ -6,8 +6,8 @@
 #include "sys/io.hpp"
 
 #include <cstring>
-#include <set>
 #include <stack>
+#include <unordered_set>
 
 namespace glt {
 
@@ -59,9 +59,9 @@ struct FileContext
 
 struct ProcessingState
 {
-    std::set<std::string> visitingFiles;
-    std::set<std::string> deps;
-    std::set<std::string> incs;
+    std::unordered_set<std::string> visitingFiles;
+    std::unordered_set<std::string> deps;
+    std::unordered_set<std::string> incs;
     std::stack<FileContext> stack;
 };
 

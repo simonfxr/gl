@@ -1,7 +1,6 @@
 #ifndef GLT_GLSLPREPROCESSOR_HPP
 #define GLT_GLSLPREPROCESSOR_HPP
 
-#include <set>
 #include <string>
 #include <vector>
 
