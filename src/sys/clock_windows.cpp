@@ -2,10 +2,9 @@
 
 #include <err/err.hpp>
 
-#include <windows.h>
+#include <Windows.h>
 
 namespace sys {
-
 namespace {
 
 double
@@ -17,24 +16,29 @@ initFreq()
     return 1.0 / double(freq.QuadPart);
 }
 
-const double INVERSE_FREQ = initFreq();
-
 double
-getTime()
+getTime(double invFreq)
 {
     LARGE_INTEGER t;
     bool ok = QueryPerformanceCounter(&t) == TRUE;
     ASSERT_MSG(ok, "QueryPerformanceCounter() failed");
-    return t.QuadPart * INVERSE_FREQ;
+    return t.QuadPart * invFreq;
 }
 
+struct Clock
+{
+    const double INVERSE_FREQ;
+    const double T0;
+
+    Clock() : INVERSE_FREQ(initFreq()), T0(getTime(INVERSE_FREQ)) {}
+};
 } // namespace
 
 double
 queryTimer()
 {
-    static const double T0 = getTime();
-    return getTime() - T0;
+    static const Clock clock;
+    return getTime(clock.INVERSE_FREQ) - clock.T0;
 }
 
 void
@@ -47,5 +51,4 @@ sleep(double secs)
     while (queryTimer() < wakeup)
         ;
 }
-
 } // namespace sys

@@ -10,11 +10,11 @@
 
 namespace sys {
 
-static double
+namespace {
+double
 getTime()
 {
-    struct timespec tv
-    {};
+    timespec tv{};
 
     while (clock_gettime(CLOCK_MONOTONIC_RAW, &tv) == -1) {
         if (errno == EINTR) {
@@ -27,20 +27,19 @@ getTime()
 
     return double(tv.tv_sec) + double(tv.tv_nsec) * (1 / 1e9);
 }
+} // namespace
 
 double
 queryTimer()
 {
-    static double T0 = getTime();
+    static const double T0 = getTime();
     return getTime() - T0;
 }
 
 void
 sleep(double secs)
 {
-    struct timespec tv
-    {
-    }, rmtv{};
+    timespec tv{}, rmtv{};
     tv.tv_sec = time_t(secs);
     tv.tv_nsec = long(secs * 1e9);
 

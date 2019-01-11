@@ -3,7 +3,6 @@
 #include <cstring>
 
 namespace sys {
-
 namespace mem {
 
 Ordering
@@ -26,5 +25,4 @@ dup(const char *a, size_t n)
 }
 
 } // namespace mem
-
 } // namespace sys
