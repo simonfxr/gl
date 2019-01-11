@@ -1,13 +1,14 @@
 #ifndef SHADER_MANAGER_HPP
 #define SHADER_MANAGER_HPP
 
+#include "glt/conf.hpp"
+#include "pp/enum.hpp"
+#include "sys/io/Stream.hpp"
+
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include "glt/conf.hpp"
-#include "sys/io/Stream.hpp"
 
 namespace glt {
 
@@ -19,32 +20,27 @@ typedef std::unordered_map<std::string, std::string> PreprocessorDefinitions;
 
 typedef std::vector<std::string> ShaderDirectories;
 
+DEF_ENUM_CLASS(GLT_API,
+               ShaderManagerVerbosity,
+               uint8_t,
+               Quiet,
+               OnlyErrors,
+               Info)
+
+DEF_ENUM_CLASS(GLT_API, ShaderProfile, uint8_t, Core, Compatibility)
+
+DEF_ENUM_CLASS(GLT_API,
+               ShaderType,
+               uint8_t,
+               GuessShaderType,
+               VertexShader,
+               FragmentShader,
+               GeometryShader,
+               TesselationControl,
+               TesselationEvaluation)
+
 struct GLT_API ShaderManager
 {
-
-    enum Verbosity
-    {
-        Quiet,
-        OnlyErrors,
-        Info
-    };
-
-    enum ShaderProfile
-    {
-        CoreProfile,
-        CompatibilityProfile
-    };
-
-    enum ShaderType
-    {
-        GuessShaderType,
-        VertexShader,
-        FragmentShader,
-        GeometryShader,
-        TesselationControl,
-        TesselationEvaluation
-    };
-
     ShaderManager();
 
     std::shared_ptr<ShaderProgram> program(const std::string &name) const;
@@ -54,8 +50,8 @@ struct GLT_API ShaderManager
 
     void reloadShaders();
 
-    Verbosity verbosity() const;
-    void verbosity(Verbosity v);
+    ShaderManagerVerbosity verbosity() const;
+    void verbosity(ShaderManagerVerbosity v);
 
     sys::io::OutStream &out() const;
     void out(sys::io::OutStream &out);
@@ -68,7 +64,7 @@ struct GLT_API ShaderManager
     const ShaderDirectories &shaderDirectories() const;
 
     void setShaderVersion(uint32_t vers /* e.g. 330 */,
-                          ShaderProfile profile = CompatibilityProfile);
+                          ShaderProfile profile = ShaderProfile::Compatibility);
     uint32_t shaderVersion() const;
     ShaderProfile shaderProfile() const;
 

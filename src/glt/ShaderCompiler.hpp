@@ -68,11 +68,11 @@ enum ReloadState : uint8_t
 struct GLT_API ShaderSource
 {
     static std::shared_ptr<ShaderSource> makeStringSource(
-      ShaderManager::ShaderType ty,
+      ShaderType ty,
       const std::string &source);
 
     static std::shared_ptr<ShaderSource> makeFileSource(
-      ShaderManager::ShaderType ty,
+      ShaderType ty,
       const std::string &path);
 
     const ShaderSourceKey &key() const;
@@ -126,22 +126,16 @@ private:
     DECLARE_PIMPL(GLT_API, self);
 };
 
-namespace ShaderCompilerError {
-
-enum Type
-{
-    NoError,
-    CouldntGuessShaderType,
-    InvalidShaderType,
-    FileNotFound,
-    FileNotInShaderPath,
-    CompilationFailed,
-    OpenGLError
-};
-
-std::string GLT_API stringError(Type);
-
-} // namespace ShaderCompilerError
+DEF_ENUM_CLASS(GLT_API,
+               ShaderCompilerError,
+               uint8_t,
+               NoError,
+               CouldntGuessShaderType,
+               InvalidShaderType,
+               FileNotFound,
+               FileNotInShaderPath,
+               CompilationFailed,
+               OpenGLError)
 
 struct GLT_API ShaderCompiler
 {
@@ -152,8 +146,7 @@ struct GLT_API ShaderCompiler
 
     void init();
 
-    static bool guessShaderType(const std::string &path,
-                                ShaderManager::ShaderType *res);
+    static bool guessShaderType(const std::string &path, ShaderType *res);
 
 private:
     friend struct ShaderSource;
@@ -161,9 +154,7 @@ private:
 };
 
 struct GLT_API ShaderCompilerQueue
-  : public err::WithError<ShaderCompilerError::Type,
-                          ShaderCompilerError::NoError,
-                          ShaderCompilerError::stringError>
+  : public err::WithError<ShaderCompilerError, ShaderCompilerError::NoError>
 {
     ShaderCompilerQueue(ShaderCompiler &comp,
                         ShaderObjects &_compiled,

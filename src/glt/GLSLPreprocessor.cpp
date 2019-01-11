@@ -170,7 +170,7 @@ DependencyHandler::directiveEncountered(
 
     proc.advanceSegments(ctx);
 
-    ShaderManager::ShaderType stype;
+    ShaderType stype;
     if (!ShaderCompiler::guessShaderType(file, &stype)) {
         proc.out()
           << ctx.content.name

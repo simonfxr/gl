@@ -8,12 +8,18 @@
 
 namespace glt {
 
+DEF_ENUM_CLASS_OPS(ShaderManagerVerbosity)
+
+DEF_ENUM_CLASS_OPS(ShaderProfile)
+
+DEF_ENUM_CLASS_OPS(ShaderType)
+
 using ProgramMap =
   std::unordered_map<std::string, std::shared_ptr<ShaderProgram>>;
 
 struct ShaderManager::Data
 {
-    Verbosity verbosity;
+    ShaderManagerVerbosity verbosity;
     sys::io::OutStream *out;
     std::vector<std::string> shaderDirs;
     ProgramMap programs;
@@ -27,12 +33,12 @@ struct ShaderManager::Data
     ShaderManager &self;
 
     explicit Data(ShaderManager &me)
-      : verbosity(Info)
+      : verbosity(ShaderManagerVerbosity::Info)
       , out(&sys::io::stdout())
       , shader_version(0)
-      , shader_profile(CoreProfile)
+      , shader_profile(ShaderProfile::Core)
       , cache_so(true)
-      , globalShaderCache(new ShaderCache)
+      , globalShaderCache(std::make_shared<ShaderCache>())
       , shaderCompiler(me)
       , self(me)
     {}
@@ -61,9 +67,9 @@ ShaderManager::shutdown()
 void
 ShaderManager::setShaderVersion(uint32_t vers, ShaderProfile prof)
 {
-    ShaderProfile newprof = CoreProfile;
-    if (prof == CompatibilityProfile)
-        newprof = CompatibilityProfile;
+    ShaderProfile newprof = ShaderProfile::Core;
+    if (prof == ShaderProfile::Compatibility)
+        newprof = prof;
     self->shader_version = vers;
     self->shader_profile = newprof;
 }
@@ -74,20 +80,20 @@ ShaderManager::shaderVersion() const
     return self->shader_version;
 }
 
-ShaderManager::ShaderProfile
+ShaderProfile
 ShaderManager::shaderProfile() const
 {
     return self->shader_profile;
 }
 
-ShaderManager::Verbosity
+ShaderManagerVerbosity
 ShaderManager::verbosity() const
 {
     return self->verbosity;
 }
 
 void
-ShaderManager::verbosity(ShaderManager::Verbosity v)
+ShaderManager::verbosity(ShaderManagerVerbosity v)
 {
     self->verbosity = v;
 }

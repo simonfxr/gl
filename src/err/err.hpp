@@ -14,6 +14,10 @@
 #include "err/WithError.hpp"
 
 template<typename T>
+void
+to_string(T &&) = delete;
+
+template<typename T>
 struct LogTraits
 {
     // static err::LogDestination getDestination(const T&);
@@ -22,24 +26,12 @@ struct LogTraits
 template<typename T>
 struct ErrorTraits
 {
-
-    template<typename E, E NoError, std::string (*StringError)(E)>
-    static std::string stringError(
-      const err::WithError<E, NoError, StringError> &,
-      E err)
-    {
-        return err::WithError<E, NoError, StringError>::stringError(err);
-    }
-
-    template<typename E, E NoError, std::string (*StringError)(E)>
-    static void setError(err::WithError<E, NoError, StringError> &x, E err)
+    template<typename E, E NoError>
+    static void setError(err::WithError<E, NoError> &x, E err)
     {
         x.pushError(err);
     }
 };
-
-extern "C" ERR_API void
-__clang_trap_function();
 
 namespace err {
 
@@ -143,11 +135,9 @@ logRaiseError(const Location &loc,
               std::string_view message)
 {
     ErrorTraits<T>::setError(value, error);
-    logRaiseError(loc,
-                  getLogDestination(value),
-                  lvl,
-                  ErrorTraits<T>::stringError(value, error),
-                  message);
+    using ::to_string;
+    logRaiseError(
+      loc, getLogDestination(value), lvl, to_string(error), message);
 }
 
 template<typename T>
@@ -166,9 +156,10 @@ logDestination(const T &value)
 
 template<typename T, typename E>
 sys::io::OutStream &
-logPutError(const T &v, E err, std::string_view msg)
+logPutError(const T &, E err, std::string_view msg)
 {
-    return logWriteErr(ErrorTraits<T>::stringError(v, err), msg);
+    using ::to_string;
+    return logWriteErr(to_string(err), msg);
 }
 
 #ifdef GNU_EXTENSIONS

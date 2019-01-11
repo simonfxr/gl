@@ -28,28 +28,31 @@ struct Client
 int
 main()
 {
-    io::Socket server;
     std::vector<Client> clients;
     clients.emplace_back();
     int id = 0;
 
     sys::moduleInit();
 
-    if (io::listen(
-          io::SP_TCP, io::IPA_LOCAL(), 1337, io::SM_NONBLOCKING, &server) !=
-        io::SE_OK) {
+    io::SocketError sockerr;
+    auto opt_server = io::listen(
+      io::SP_TCP, io::IPA_LOCAL(), 1337, io::SM_NONBLOCKING, sockerr);
+    if (!opt_server) {
         ERR("failed to start server");
         return 1;
     }
+    auto server = std::move(opt_server).value();
 
     INFO("started server");
 
     for (;;) {
 
-        while (
-          io::accept(server, &clients[clients.size() - 1].stream->handle) ==
-          io::SE_OK) {
+        for (;;) {
+            auto opt_handle = io::accept(server, sockerr);
+            if (!opt_handle)
+                break;
             Client &c = clients[clients.size() - 1];
+            c.stream->handle = std::move(opt_handle).value();
             c.id = id++;
             sys::io::stdout() << "accepted client " << c.id << sys::io::endl;
             io::elevate(c.stream->handle,

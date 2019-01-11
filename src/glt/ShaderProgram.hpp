@@ -10,32 +10,25 @@
 #include "glt/VertexDescription.hpp"
 #include "glt/conf.hpp"
 #include "opengl.hpp"
+#include "pp/enum.hpp"
 
 namespace glt {
 
-namespace ShaderProgramError {
-
-enum Type
-{
-    NoError,
-    FileNotInPath,
-    CompilationFailed,
-    LinkageFailed,
-    AttributeNotBound,
-    UniformNotKnown,
-    ValidationFailed,
-    APIError,
-    OpenGLError
-};
-
-std::string GLT_API stringError(Type);
-
-} // namespace ShaderProgramError
+DEF_ENUM_CLASS(GLT_API,
+               ShaderProgramError,
+               uint8_t,
+               NoError,
+               FileNotInPath,
+               CompilationFailed,
+               LinkageFailed,
+               AttributeNotBound,
+               UniformNotKnown,
+               ValidationFailed,
+               APIError,
+               OpenGLError)
 
 struct GLT_API ShaderProgram
-  : public err::WithError<ShaderProgramError::Type,
-                          ShaderProgramError::NoError,
-                          ShaderProgramError::stringError>
+  : public err::WithError<ShaderProgramError, ShaderProgramError::NoError>
 {
 
     ShaderProgram(ShaderManager &sm);
@@ -44,12 +37,11 @@ struct GLT_API ShaderProgram
 
     GLProgramObject &program();
 
-    bool addShaderSrc(const std::string &src, ShaderManager::ShaderType type);
+    bool addShaderSrc(const std::string &src, ShaderType type);
 
-    bool addShaderFile(
-      const std::string &file,
-      ShaderManager::ShaderType type = ShaderManager::GuessShaderType,
-      bool absolute = false);
+    bool addShaderFile(const std::string &file,
+                       ShaderType type = ShaderType::GuessShaderType,
+                       bool absolute = false);
 
     bool addShaderFilePair(const std::string &vert_file,
                            const std::string &frag_file,

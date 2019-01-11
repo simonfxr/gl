@@ -36,6 +36,8 @@ struct LogTraits<glt::ShaderCompilerQueue>
 
 namespace glt {
 
+DEF_ENUM_CLASS_OPS(ShaderCompilerError);
+
 namespace {
 struct CompileJob
 {
@@ -82,7 +84,7 @@ struct FileShaderObject
 struct ShaderSource::Data
 {
     const ShaderSourceKey key;
-    const ShaderManager::ShaderType type;
+    const ShaderType type;
     const std::variant<StringSource, FileSource> source;
 
     static std::unique_ptr<ShaderObject> load(
@@ -207,16 +209,16 @@ hash(const std::string &source)
 struct ShaderTypeMapping
 {
     const char *fileExtension;
-    ShaderManager::ShaderType type;
+    ShaderType type;
     GLenum glType;
 };
 
 const ShaderTypeMapping shaderTypeMappings[] = {
-    { "frag", ShaderManager::FragmentShader, GL_FRAGMENT_SHADER },
-    { "vert", ShaderManager::VertexShader, GL_VERTEX_SHADER },
-    { "geom", ShaderManager::GeometryShader, GL_GEOMETRY_SHADER },
-    { "tctl", ShaderManager::TesselationControl, GL_TESS_CONTROL_SHADER },
-    { "tevl", ShaderManager::TesselationEvaluation, GL_TESS_EVALUATION_SHADER }
+    { "frag", ShaderType::FragmentShader, GL_FRAGMENT_SHADER },
+    { "vert", ShaderType::VertexShader, GL_VERTEX_SHADER },
+    { "geom", ShaderType::GeometryShader, GL_GEOMETRY_SHADER },
+    { "tctl", ShaderType::TesselationControl, GL_TESS_CONTROL_SHADER },
+    { "tevl", ShaderType::TesselationEvaluation, GL_TESS_EVALUATION_SHADER }
 };
 
 bool
@@ -230,7 +232,7 @@ void
 printShaderLog(GLShaderObject & /*shader*/, sys::io::OutStream &out);
 
 bool
-translateShaderType(ShaderManager::ShaderType type,
+translateShaderType(ShaderType type,
                     GLenum *gltype,
                     const std::string &basename = "");
 
@@ -344,12 +346,12 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
 }
 
 bool
-translateShaderType(ShaderManager::ShaderType type,
+translateShaderType(ShaderType type,
                     GLenum *gltype,
                     const std::string &basename)
 {
 
-    if (type == ShaderManager::GuessShaderType &&
+    if (type == ShaderType::GuessShaderType &&
         !ShaderCompiler::guessShaderType(basename, &type))
         return false;
 
@@ -373,8 +375,7 @@ ShaderSource::key() const
 }
 
 std::shared_ptr<ShaderSource>
-ShaderSource::makeFileSource(ShaderManager::ShaderType ty,
-                             const std::string &path)
+ShaderSource::makeFileSource(ShaderType ty, const std::string &path)
 {
     ASSERT(sys::fs::exists(path, sys::fs::File));
     return std::make_shared<ShaderSource>(
@@ -382,8 +383,7 @@ ShaderSource::makeFileSource(ShaderManager::ShaderType ty,
 }
 
 std::shared_ptr<ShaderSource>
-ShaderSource::makeStringSource(ShaderManager::ShaderType ty,
-                               const std::string &source)
+ShaderSource::makeStringSource(ShaderType ty, const std::string &source)
 {
     return std::make_shared<ShaderSource>(
       Data{ hash(source), ty, { StringSource{ source } } });
@@ -685,16 +685,6 @@ ShaderCache::Data::checkValid()
     }
 }
 
-namespace ShaderCompilerError {
-
-std::string stringError(Type /*unused*/)
-{
-    // FIXME: implement
-    return "{shader compiler error}";
-}
-
-} // namespace ShaderCompilerError
-
 ShaderCompiler::ShaderCompiler(ShaderManager &sm) : self(new Data(sm)) {}
 
 ShaderManager &
@@ -716,8 +706,7 @@ ShaderCompiler::init()
 }
 
 bool
-ShaderCompiler::guessShaderType(const std::string &path,
-                                ShaderManager::ShaderType *res)
+ShaderCompiler::guessShaderType(const std::string &path, ShaderType *res)
 {
     ASSERT(res);
 
@@ -744,7 +733,7 @@ ShaderCompiler::Data::initPreprocessor(GLSLPreprocessor &proc)
         auto vers = m.shaderVersion();
         glversdef << "#version " << vers;
         if (vers > 150)
-            glversdef << (m.shaderProfile() == ShaderManager::CoreProfile
+            glversdef << (m.shaderProfile() == ShaderProfile::Core
                             ? " core"
                             : " compatibility");
         glversdef << sys::io::endl;

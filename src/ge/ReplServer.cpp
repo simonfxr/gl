@@ -1,7 +1,8 @@
 #include "ge/ReplServer.hpp"
+
+#include "data/string_utils.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Tokenizer.hpp"
-
 #include "sys/fiber.hpp"
 
 #include <utility>
@@ -177,9 +178,13 @@ ReplServer::start(const IPAddr4 &listen_addr, uint16_t port)
         return false;
     }
 
-    if (listen(SP_TCP, listen_addr, port, SM_NONBLOCKING, &self->server) !=
-        SE_OK)
+    sys::io::SocketError err;
+    auto opt_sock = listen(SP_TCP, listen_addr, port, SM_NONBLOCKING, err);
+    if (!opt_sock) {
+        ERR(string_concat("failed to open socket for listening: ", err));
         return false;
+    }
+    self->server = std::move(opt_sock).value();
     self->running = true;
     return true;
 }
@@ -201,10 +206,14 @@ ReplServer::acceptClients()
 {
     ASSERT(self->running);
 
-    Handle handle;
-    while (accept(self->server, &handle) == SE_OK) {
+    for (;;) {
+        SocketError err;
+        auto opt_hndl = accept(self->server, err);
+        if (!opt_hndl)
+            break;
+        auto handle = std::move(opt_hndl).value();
         INFO("accepted client");
-        if (elevate(handle, mode(handle) | HM_NONBLOCKING) != HE_OK) {
+        if (elevate(handle, mode(handle) | HM_NONBLOCKING) != HandleError::OK) {
             ERR("couldnt set nonblocking handle mode, closing connection");
             sys::io::close(handle);
         } else {

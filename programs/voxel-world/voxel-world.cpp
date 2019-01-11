@@ -153,7 +153,7 @@ initState(State *state, const InitEv &ev)
 
     e.window().showMouseCursor(false);
 
-    e.shaderManager().verbosity(glt::ShaderManager::Info);
+    e.shaderManager().verbosity(glt::ShaderManagerVerbosity::Info);
 
     e.commandProcessor().define(
       makeCommand(incGamma,

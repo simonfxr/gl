@@ -7,16 +7,7 @@
 
 namespace err {
 
-template<typename E>
-std::string
-defaultStringError(E error)
-{
-    return std::to_string(int(error));
-}
-
-template<typename E,
-         E NoError,
-         std::string (*StringErrorFun)(E) = defaultStringError<E>>
+template<typename E, E NoError>
 struct WithError
 {
     E lastError;
@@ -39,8 +30,6 @@ struct WithError
         lastError = NoError;
         return err;
     }
-
-    static std::string stringError(E err) { return StringErrorFun(err); }
 };
 
 } // namespace err

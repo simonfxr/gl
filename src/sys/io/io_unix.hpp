@@ -15,6 +15,12 @@ struct Handle
     Handle(const Handle &) = delete;
     Handle(Handle &&h) { *this = std::move(h); }
 
+    ~Handle()
+    {
+        if (*this)
+            close(*this);
+    }
+
     Handle &operator=(const Handle &) = delete;
 
     Handle &operator=(Handle &&h)
@@ -34,6 +40,12 @@ struct Socket
     constexpr Socket() = default;
     Socket(const Socket &) = delete;
     Socket(Socket &&s) { *this = std::move(s); }
+
+    ~Socket()
+    {
+        if (*this)
+            close(*this);
+    }
 
     Socket &operator=(const Socket &) = delete;
 

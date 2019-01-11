@@ -73,17 +73,17 @@ convertErrno()
     errno = 0;
 
     if (errid == EAGAIN || errid == EWOULDBLOCK)
-        return HE_BLOCKED;
+        return HandleError::BLOCKED;
 
     switch (errid) {
     case ECONNRESET:
-        return HE_EOF;
+        return HandleError::EOF;
     case EBADF:
         DEBUG_ERR(strerror(errid));
-        return HE_BAD_HANDLE;
+        return HandleError::BAD_HANDLE;
     default:
         DEBUG_ERR(strerror(errid));
-        return HE_UNKNOWN;
+        return HandleError::UNKNOWN;
     }
 }
 
@@ -94,13 +94,13 @@ convertErrnoSock()
     errno = 0;
     switch (errid) {
     case EWOULDBLOCK:
-        return SE_BLOCKED;
+        return SocketError::BLOCKED;
     case EBADF:
         DEBUG_ERR(strerror(errid));
-        return SE_BAD_SOCKET;
+        return SocketError::BAD_SOCKET;
     default:
         DEBUG_ERR(strerror(errid));
-        return SE_UNKNOWN;
+        return SocketError::UNKNOWN;
     }
 }
 
@@ -114,7 +114,7 @@ handleFromFD(int fd, Handle *h)
     if (flags == -1)
         return convertErrno();
     h->_mode = unconvertMode(flags);
-    return HE_OK;
+    return HandleError::OK;
 }
 } // namespace
 
@@ -123,7 +123,7 @@ stdin_handle()
 {
     Handle h;
     auto err = handleFromFD(0, &h);
-    if (err != HE_OK)
+    if (err != HandleError::OK)
         ERR("error in fcntl");
     return h;
 }
@@ -133,7 +133,7 @@ stdout_handle()
 {
     Handle h;
     auto err = handleFromFD(1, &h);
-    if (err != HE_OK)
+    if (err != HandleError::OK)
         ERR("error in fcntl");
     return h;
 }
@@ -143,29 +143,33 @@ stderr_handle()
 {
     Handle h;
     auto err = handleFromFD(2, &h);
-    if (err != HE_OK)
+    if (err != HandleError::OK)
         ERR("error in fcntl");
     return h;
 }
 
-HandleError
-open(std::string_view path, HandleMode mode, Handle *h)
+std::optional<Handle>
+open(std::string_view path, HandleMode mode, HandleError &err)
 {
-    ASSERT(h);
-
     int flags = convertMode(mode);
-    if (flags == -1)
-        return HE_INVALID_PARAM;
+    if (flags == -1) {
+        err = HandleError::INVALID_PARAM;
+        return std::nullopt;
+    }
 
     int fd;
     auto strpath = std::string(path);
     RETRY_INTR(fd = ::open(strpath.c_str(), flags));
 
-    if (fd == -1)
-        return convertErrno();
-    h->_mode = mode;
-    h->_fd = fd;
-    return HE_OK;
+    if (fd == -1) {
+        err = convertErrno();
+        return std::nullopt;
+    }
+    Handle h;
+    h._mode = mode;
+    h._fd = fd;
+    err = HandleError::OK;
+    return { std::move(h) };
 }
 
 HandleMode
@@ -181,14 +185,14 @@ elevate(Handle &h, HandleMode mode)
     ASSERT(h);
     int flags = convertMode(mode);
     if (flags == -1)
-        return HE_INVALID_PARAM;
+        return HandleError::INVALID_PARAM;
 
     int ret;
     RETRY_INTR(ret = fcntl(h._fd, F_SETFL, flags));
     if (ret == -1)
         return convertErrno();
     h._mode = unconvertMode(flags);
-    return HE_OK;
+    return HandleError::OK;
 }
 
 HandleError
@@ -200,7 +204,7 @@ read(Handle &h, size_t &s, char *buf)
     RETRY_INTR(k = ::read(h._fd, static_cast<void *>(buf), n));
     if (k >= 0) {
         s = k;
-        return k == 0 ? HE_EOF : HE_OK;
+        return k == 0 ? HandleError::EOF : HandleError::OK;
     }
     s = 0;
     return convertErrno();
@@ -215,7 +219,7 @@ write(Handle &h, size_t &s, const char *buf)
     RETRY_INTR(k = ::write(h._fd, buf, n));
     if (k >= 0) {
         s = k;
-        return HE_OK;
+        return HandleError::OK;
     }
     s = 0;
     return convertErrno();
@@ -229,18 +233,17 @@ close(Handle &h)
     RETRY_INTR(ret = ::close(h._fd));
     if (ret == -1)
         return convertErrno();
-    return HE_OK;
+    return HandleError::OK;
 }
 
-SocketError
+std::optional<Socket>
 listen(SocketProto proto,
        const IPAddr4 &addr,
        uint16_t port,
        SocketMode mode,
-       Socket *s)
+       SocketError &err)
 {
     const int BACKLOG = 16;
-    ASSERT(s);
 
     int type;
     int ret;
@@ -255,8 +258,10 @@ listen(SocketProto proto,
 
     int sock;
     RETRY_INTR(sock = socket(PF_INET, type, 0));
-    if (sock == -1)
-        return convertErrnoSock();
+    if (sock == -1) {
+        err = convertErrnoSock();
+        return std::nullopt;
+    }
 
     int enable = 1;
     RETRY_INTR(
@@ -295,19 +300,22 @@ listen(SocketProto proto,
             goto socket_err;
     }
 
-    s->_fd = sock;
-    return SE_OK;
-
+    {
+        Socket s;
+        s._fd = sock;
+        err = SocketError::OK;
+        return { std::move(s) };
+    }
 socket_err:
     ::close(sock);
-    return convertErrnoSock();
+    err = convertErrnoSock();
+    return std::nullopt;
 }
 
-SocketError
-accept(Socket &s, Handle *h)
+std::optional<Handle>
+accept(Socket &s, SocketError &err)
 {
     ASSERT(s);
-    ASSERT(h);
 
     sockaddr_in client{};
     socklen_t clen = sizeof client;
@@ -319,21 +327,28 @@ accept(Socket &s, Handle *h)
       c = accept4(
         s._fd, reinterpret_cast<sockaddr *>(&client), &clen, SOCK_CLOEXEC));
     END_NO_WARN_DISABLED_MACRO_EXPANSION
-    if (c == -1)
-        return convertErrnoSock();
+    if (c == -1) {
+        err = convertErrnoSock();
+        return std::nullopt;
+    }
 
     int flags;
     RETRY_INTR(flags = fcntl(c, F_GETFL));
     if (flags == -1)
         goto client_err;
 
-    h->_fd = c;
-    h->_mode = unconvertMode(flags);
-    return SE_OK;
+    {
+        err = SocketError::OK;
+        Handle h;
+        h._fd = c;
+        h._mode = unconvertMode(flags);
+        return { std::move(h) };
+    }
 
 client_err:
     ::close(c);
-    return convertErrnoSock();
+    err = convertErrnoSock();
+    return std::nullopt;
 }
 
 SocketError
@@ -344,7 +359,7 @@ close(Socket &s)
     RETRY_INTR(ret = ::close(s._fd));
     if (ret == -1)
         return convertErrnoSock();
-    return SE_OK;
+    return SocketError::OK;
 }
 
 } // namespace io

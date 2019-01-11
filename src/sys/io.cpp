@@ -10,20 +10,23 @@
 namespace sys {
 namespace io {
 
+DEF_ENUM_CLASS_OPS(HandleError)
+DEF_ENUM_CLASS_OPS(SocketError)
+
 namespace {
 StreamResult
 convertErr(HandleError err)
 {
     switch (err) {
-    case HE_OK:
+    case HandleError::OK:
         return StreamResult::OK;
-    case HE_BLOCKED:
+    case HandleError::BLOCKED:
         return StreamResult::Blocked;
-    case HE_EOF:
+    case HandleError::EOF:
         return StreamResult::EOF;
-    case HE_BAD_HANDLE:
-    case HE_INVALID_PARAM:
-    case HE_UNKNOWN:
+    case HandleError::BAD_HANDLE:
+    case HandleError::INVALID_PARAM:
+    case HandleError::UNKNOWN:
         return StreamResult::Error;
     }
 
@@ -107,8 +110,8 @@ HandleStream::basic_read(size_t &s, char *buf)
             memcpy(buf, read_buffer, s);
             memmove(read_buffer, read_buffer + s, k - s);
 
-            if (err == HE_BLOCKED || err == HE_EOF)
-                err = HE_OK;
+            if (err == HandleError::BLOCKED || err == HandleError::EOF)
+                err = HandleError::OK;
         } else {
             read_cursor = 0;
             n += k;
@@ -135,7 +138,7 @@ HandleStream::basic_write(size_t &s, const char *buf)
 
     size_t n = 0;
     size_t k = 0;
-    HandleError err = HE_OK;
+    HandleError err = HandleError::OK;
 
     if (write_cursor > 0) {
         memcpy(write_buffer + write_cursor, buf, rem);
@@ -143,7 +146,8 @@ HandleStream::basic_write(size_t &s, const char *buf)
         err = sys::io::write(handle, k, write_buffer);
     }
 
-    if (write_cursor == 0 || (k == HANDLE_WRITE_BUFFER_SIZE && err == HE_OK)) {
+    if (write_cursor == 0 ||
+        (k == HANDLE_WRITE_BUFFER_SIZE && err == HandleError::OK)) {
 
         n += rem;
         k = s - rem;
@@ -176,8 +180,8 @@ HandleStream::basic_write(size_t &s, const char *buf)
         }
     }
 
-    if (n == s && (err == HE_BLOCKED || err == HE_EOF))
-        err = HE_OK;
+    if (n == s && (err == HandleError::BLOCKED || err == HandleError::EOF))
+        err = HandleError::OK;
 
     s = n;
     return convertErr(err);
@@ -200,79 +204,42 @@ HandleStream::flush_buffer()
 std::optional<HandleStream>
 HandleStream::open(std::string_view path, HandleMode mode, HandleError &err)
 {
-    Handle h;
-    err = sys::io::open(path, mode, &h);
-    if (err != HE_OK)
+    auto opt_h = sys::io::open(path, mode, err);
+    if (!opt_h)
         return std::nullopt;
-    return { std::move(h) };
+    return { std::move(opt_h).value() };
 }
-
-namespace {
-template<typename F>
-struct Finally
-{
-    std::optional<F> _cleanup;
-
-    Finally(F f) : _cleanup(std::move(f)) {}
-
-    Finally(const Finally &) = delete;
-    Finally(Finally &&) = default;
-
-    ~Finally() { fire(); }
-
-    Finally &operator=(const Finally &) = delete;
-    Finally &operator=(Finally &&) = default;
-
-    void fire()
-    {
-        if (_cleanup) {
-            _cleanup->operator()();
-            _cleanup = std::nullopt;
-        }
-    }
-
-    void disarm() { _cleanup = std::nullopt; }
-};
-} // namespace
-
-namespace {
-template<typename F>
-auto
-make_finally(F &&f)
-{
-    return Finally<std::remove_cv_t<F>>(std::forward<F>(f));
-}
-} // namespace
 
 std::pair<std::unique_ptr<char[]>, size_t>
-readFile(sys::io::OutStream &err, std::string_view path) noexcept
+readFile(sys::io::OutStream &errout,
+         std::string_view path,
+         HandleError &err) noexcept
 {
-    Handle h;
-    auto ret = open(path, HM_READ, &h);
-    if (ret != HE_OK)
+    auto opt_h = open(path, HM_READ, err);
+    if (!opt_h)
         goto fail;
     {
-        auto close_h = make_finally([&h]() { close(h); });
+        auto h = std::move(opt_h).value();
         std::vector<char> vec;
         for (;;) {
             char buf[8192];
             auto size = sizeof buf;
-            auto rerr = read(h, size, buf);
+            err = read(h, size, buf);
             if (size > 0)
                 vec.insert(vec.end(), buf, buf + size);
-            if (rerr == HE_EOF) {
+            if (err == HandleError::EOF) {
                 auto data = std::make_unique<char[]>(vec.size() + 1);
                 memcpy(data.get(), vec.data(), vec.size());
                 data[vec.size()] = '\0';
                 return std::make_pair(std::move(data), vec.size());
             }
-            if (rerr != HE_OK)
+            if (err != HandleError::OK)
                 goto fail;
         }
     }
 fail:
-    if (err.writeable())
-        err << "unable to read file: " << path << sys::io::endl;
+    if (errout.writeable())
+        errout << "unable to read file: " << path << sys::io::endl;
 
     return std::make_pair(nullptr, 0);
 } // namespace io

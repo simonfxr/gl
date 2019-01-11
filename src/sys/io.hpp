@@ -3,6 +3,7 @@
 
 #include "sys/io/Stream.hpp"
 
+#include "pp/enum.hpp"
 #include "sys/endian.hpp"
 
 #include <memory>
@@ -41,15 +42,15 @@ IPA_ANY();
 SYS_API const IPAddr4
 IPA_LOCAL();
 
-enum HandleError
-{
-    HE_OK,
-    HE_BLOCKED,
-    HE_EOF,
-    HE_BAD_HANDLE,
-    HE_INVALID_PARAM,
-    HE_UNKNOWN
-};
+DEF_ENUM_CLASS(SYS_API,
+               HandleError,
+               uint8_t,
+               OK,
+               BLOCKED,
+               EOF,
+               BAD_HANDLE,
+               INVALID_PARAM,
+               UNKNOWN)
 
 struct SYS_API IPAddr4
 {
@@ -63,20 +64,6 @@ struct SYS_API IPAddr4
     explicit constexpr IPAddr4(uint32_t addr) : addr4(addr) {}
 };
 
-} // namespace io
-} // namespace sys
-
-#if HU_OS_POSIX_P
-#include "sys/io/io_unix.hpp"
-#elif HU_OS_WINDOWS_P
-#include "sys/io/io_windows.hpp"
-#else
-#error "no IO implementation available"
-#endif
-
-namespace sys {
-namespace io {
-
 SYS_API Handle
 stdin_handle();
 
@@ -86,8 +73,8 @@ stdout_handle();
 SYS_API Handle
 stderr_handle();
 
-SYS_API HandleError
-open(std::string_view, HandleMode, Handle *);
+SYS_API std::optional<Handle>
+open(std::string_view, HandleMode, HandleError &);
 
 SYS_API HandleMode
 mode(Handle &);
@@ -104,24 +91,38 @@ write(Handle &, size_t &, const char *);
 SYS_API HandleError
 close(Handle &);
 
-enum SocketError
-{
-    SE_OK,
-    SE_BLOCKED,
-    SE_EOF,
-    SE_BAD_SOCKET,
-    SE_INVALID_PARAM,
-    SE_UNKNOWN
-};
+DEF_ENUM_CLASS(SYS_API,
+               SocketError,
+               uint8_t,
+               OK,
+               BLOCKED,
+               EOF,
+               BAD_SOCKET,
+               INVALID_PARAM,
+               UNKNOWN)
 
-SYS_API SocketError
-listen(SocketProto, const IPAddr4 &, uint16_t, SocketMode, Socket *);
+SYS_API std::optional<Socket>
+listen(SocketProto, const IPAddr4 &, uint16_t, SocketMode, SocketError &);
 
-SYS_API SocketError
-accept(Socket &, Handle *);
+SYS_API std::optional<Handle>
+accept(Socket &, SocketError &);
 
 SYS_API SocketError
 close(Socket &);
+
+} // namespace io
+} // namespace sys
+
+#if HU_OS_POSIX_P
+#include "sys/io/io_unix.hpp"
+#elif HU_OS_WINDOWS_P
+#include "sys/io/io_windows.hpp"
+#else
+#error "no IO implementation available"
+#endif
+
+namespace sys {
+namespace io {
 
 struct SYS_API HandleStream : public IOStream
 {
@@ -159,7 +160,16 @@ protected:
 };
 
 SYS_API std::pair<std::unique_ptr<char[]>, size_t>
-readFile(sys::io::OutStream &err, std::string_view path) noexcept;
+readFile(sys::io::OutStream &errout,
+         std::string_view path,
+         HandleError &err) noexcept;
+
+inline std::pair<std::unique_ptr<char[]>, size_t>
+readFile(sys::io::OutStream &errout, std::string_view path) noexcept
+{
+    HandleError err;
+    return readFile(errout, path, err);
+}
 
 } // namespace io
 } // namespace sys

@@ -1,16 +1,15 @@
 #include "glt/ShaderProgram.hpp"
 
-#include <unordered_map>
-
-#include "defs.hpp"
-#include "opengl.hpp"
-
+#include "data/string_utils.hpp"
 #include "err/err.hpp"
 #include "glt/ShaderCompiler.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/utils.hpp"
+#include "opengl.hpp"
 #include "sys/fs.hpp"
 #include "sys/measure.hpp"
+
+#include <unordered_map>
 
 #define RAISE_ERR(val, ec, msg) LOG_RAISE(val, ec, ::err::Error, msg)
 
@@ -26,46 +25,7 @@ struct LogTraits<glt::ShaderProgram>
 
 namespace glt {
 
-namespace ShaderProgramError {
-
-std::string
-stringError(Type e)
-{
-    const char *err = "";
-    switch (e) {
-    case NoError:
-        err = "no error";
-        break;
-    case CompilationFailed:
-        err = "compilation failed";
-        break;
-    case LinkageFailed:
-        err = "linkage failed";
-        break;
-    case AttributeNotBound:
-        err = "couldnt bind attribute";
-        break;
-    case UniformNotKnown:
-        err = "uniform not known";
-        break;
-    case ValidationFailed:
-        err = "state validation failed";
-        break;
-    case APIError:
-        err = "error in api usage";
-        break;
-    case FileNotInPath:
-        err = "file not found in search path";
-        break;
-    case OpenGLError:
-        err = "OpenGL error";
-        break;
-    }
-
-    return err;
-}
-
-} // namespace ShaderProgramError
+DEF_ENUM_CLASS_OPS(ShaderProgramError);
 
 typedef std::unordered_map<std::string, GLuint> Attributes;
 
@@ -99,7 +59,7 @@ struct ShaderProgram::Data
 
     void printProgramLog(GLuint program, sys::io::OutStream &out);
 
-    void handleCompileError(ShaderCompilerError::Type /*unused*/);
+    void handleCompileError(ShaderCompilerError /*unused*/);
 };
 
 DECLARE_PIMPL_DEL(ShaderProgram)
@@ -208,16 +168,15 @@ ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
     }
 }
 
-void ShaderProgram::Data::handleCompileError(
-  ShaderCompilerError::Type /*unused*/)
+void
+ShaderProgram::Data::handleCompileError(ShaderCompilerError err)
 {
-    ERR("compile error occurred"); // FIXME
+    ERR(string_concat("compile error occurred: ", err)); // FIXME
     self.pushError(ShaderProgramError::CompilationFailed);
 }
 
 bool
-ShaderProgram::addShaderSrc(const std::string &src,
-                            ShaderManager::ShaderType type)
+ShaderProgram::addShaderSrc(const std::string &src, ShaderType type)
 {
     auto scq = ShaderCompilerQueue(self->sm.shaderCompiler(), self->shaders);
     auto source = ShaderSource::makeStringSource(type, src);
@@ -240,7 +199,7 @@ ShaderProgram::addShaderSrc(const std::string &src,
 
 bool
 ShaderProgram::addShaderFile(const std::string &file0,
-                             ShaderManager::ShaderType type,
+                             ShaderType type,
                              bool absolute)
 {
     std::string file = file0;
@@ -282,8 +241,8 @@ ShaderProgram::addShaderFilePair(const std::string &vert_file,
                                  const std::string &frag_file,
                                  bool absolute)
 {
-    return addShaderFile(vert_file, ShaderManager::VertexShader, absolute) &&
-           addShaderFile(frag_file, ShaderManager::FragmentShader, absolute);
+    return addShaderFile(vert_file, ShaderType::VertexShader, absolute) &&
+           addShaderFile(frag_file, ShaderType::FragmentShader, absolute);
 }
 
 bool
