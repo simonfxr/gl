@@ -327,9 +327,8 @@ GameWindow::Data::glfw_key_callback(GLFWwindow *win,
         return;
 
     GameWindow::Data *me = getUserPointer(win);
-    Key k =
-      Key::make(action == GLFW_PRESS ? keystate::Pressed : keystate::Released,
-                convertGLFWKey(key));
+    auto k = Key(action == GLFW_PRESS ? keystate::Pressed : keystate::Released,
+                 convertGLFWKey(key));
     me->events.keyChanged.raise(makeEvent(KeyChanged(me->self, k)));
 }
 
@@ -341,9 +340,8 @@ GameWindow::Data::glfw_mouse_button_callback(GLFWwindow *win,
 {
     UNUSED(mods);
     GameWindow::Data *me = getUserPointer(win);
-    Key b =
-      Key::make(action == GLFW_PRESS ? keystate::Pressed : keystate::Released,
-                convertGLFWMouseButton(button));
+    auto b = Key(action == GLFW_PRESS ? keystate::Pressed : keystate::Released,
+                 convertGLFWMouseButton(button));
     me->events.mouseButton.raise(makeEvent(
       MouseButton(me->self, int16_t(me->mouse_x), int16_t(me->mouse_y), b)));
 }

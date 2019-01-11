@@ -66,12 +66,11 @@ getLastHandleError()
     auto err = GetLastError();
     switch (err) {
     case ERROR_HANDLE_EOF:
-        return HE_EOF;
+        return HandleError::EOF;
     case ERROR_INVALID_HANDLE:
-    case ERROR_HANDLE_NO_LONGER_VALID:
-        return HE_BAD_HANDLE;
+        return HandleError::BAD_HANDLE;
     default:
-        return HE_UNKNOWN;
+        return HandleError::UNKNOWN;
     }
 }
 
@@ -80,14 +79,14 @@ convertSocketError(DWORD err)
 {
     switch (err) {
     case WSAEWOULDBLOCK:
-        return SE_BLOCKED;
+        return SocketError::BLOCKED;
     case WSAECONNRESET:
-        return SE_EOF;
+        return SocketError::EOF;
     case WSAENOTSOCK:
     case WSAEBADF:
-        return SE_BAD_SOCKET;
+        return SocketError::BAD_SOCKET;
     default:
-        return SE_UNKNOWN;
+        return SocketError::UNKNOWN;
     }
 }
 
@@ -142,10 +141,9 @@ stderr_handle()
     return h;
 }
 
-HandleError
-open(std::string_view path, HandleMode mode, Handle *h)
+std::optional<Handle>
+open(std::string_view path, HandleMode mode, HandleError &err)
 {
-    ASSERT(h);
     auto wpath = utf8To16(path);
     auto access = handleModeToDWORD(mode);
     auto share = FILE_SHARE_READ | FILE_SHARE_WRITE;
@@ -158,12 +156,16 @@ open(std::string_view path, HandleMode mode, Handle *h)
                             create,
                             FILE_ATTRIBUTE_NORMAL,
                             nullptr);
-    if (hndl == INVALID_HANDLE_VALUE)
-        return getLastHandleError();
-    h->_handle = castFromHandle(hndl);
-    h->_mode = mode;
-    h->_is_socket = false;
-    return HE_OK;
+    if (hndl == INVALID_HANDLE_VALUE) {
+        err = getLastHandleError();
+        return std::nullopt;
+    }
+    Handle h;
+    h._handle = castFromHandle(hndl);
+    h._mode = mode;
+    h._is_socket = false;
+    err = HandleError::OK;
+    return { std::move(h) };
 }
 
 HandleMode
@@ -178,18 +180,18 @@ elevate(Handle &h, HandleMode hm)
 {
     ASSERT(h);
     if (!h._is_socket)
-        return HE_UNKNOWN;
+        return HandleError::UNKNOWN;
     auto do_shutdown = false;
     int sd_mode = 0;
     if ((h._mode & HM_READ) != (hm & HM_READ)) {
         if (hm & HM_READ)
-            return HE_UNKNOWN;
+            return HandleError::UNKNOWN;
         do_shutdown = true;
         sd_mode = SD_RECEIVE;
     }
     if ((h._mode & HM_WRITE) != (hm & HM_WRITE)) {
         if (hm & HM_WRITE)
-            return HE_UNKNOWN;
+            return HandleError::UNKNOWN;
         sd_mode = do_shutdown && sd_mode == SD_RECEIVE ? SD_BOTH : SD_SEND;
         do_shutdown = true;
     }
@@ -208,7 +210,7 @@ elevate(Handle &h, HandleMode hm)
         h._mode &= ~HM_NONBLOCKING;
         h._mode |= hm & HM_NONBLOCKING;
     }
-    return HE_OK;
+    return HandleError::OK;
 }
 
 HandleError
@@ -216,16 +218,16 @@ read(Handle &h, size_t &sz, char *data)
 {
     ASSERT(h);
     if (sz == 0)
-        return HE_OK;
+        return HandleError::OK;
     if (h._is_socket) {
         auto ret = recv(castToSocket(h._handle), data, int(sz), 0);
         sz = 0;
         if (ret == SOCKET_ERROR)
             return HandleError(getLastSocketError());
         if (ret == 0)
-            return HE_EOF;
+            return HandleError::EOF;
         sz = size_t(ret);
-        return HE_OK;
+        return HandleError::OK;
     } else {
         DWORD nread;
         auto ret =
@@ -234,9 +236,9 @@ read(Handle &h, size_t &sz, char *data)
         if (ret == FALSE)
             return getLastHandleError();
         if (nread == 0)
-            return HE_EOF;
+            return HandleError::EOF;
         sz = size_t(nread);
-        return HE_OK;
+        return HandleError::OK;
     }
 }
 
@@ -250,7 +252,7 @@ write(Handle &h, size_t &sz, const char *data)
         if (ret == SOCKET_ERROR)
             return HandleError(getLastSocketError());
         sz = size_t(ret);
-        return HE_OK;
+        return HandleError::OK;
     } else {
         DWORD nwrit;
         auto ret =
@@ -259,7 +261,7 @@ write(Handle &h, size_t &sz, const char *data)
         if (ret == FALSE)
             return getLastHandleError();
         sz = size_t(nwrit);
-        return HE_OK;
+        return HandleError::OK;
     }
 }
 
@@ -272,21 +274,19 @@ close(Handle &h)
     h._mode = {};
     h._is_socket = false;
     if (CloseHandle(hndl) != FALSE)
-        return HE_OK;
+        return HandleError::OK;
     else
-        return HE_UNKNOWN;
+        return HandleError::UNKNOWN;
 }
 
-SocketError
+std::optional<Socket>
 listen(SocketProto proto,
        const IPAddr4 &addr,
        uint16_t port,
        SocketMode mode,
-       Socket *s)
+       SocketError &err)
 {
     const int BACKLOG = 16;
-
-    ASSERT(s);
 
     int type;
     switch (proto) {
@@ -299,8 +299,10 @@ listen(SocketProto proto,
 
     SOCKET sock;
     sock = socket(PF_INET, type, 0);
-    if (sock == INVALID_SOCKET)
-        return getLastSocketError();
+    if (sock == INVALID_SOCKET) {
+        err = getLastSocketError();
+        return std::nullopt;
+    }
 
     int enable = 1;
     auto ret = setsockopt(sock,
@@ -312,15 +314,13 @@ listen(SocketProto proto,
         goto socket_err;
 
     {
-        struct sockaddr_in server
-        {};
+        sockaddr_in server{};
         memset(&server, 0, sizeof server);
         server.sin_family = AF_INET;
         server.sin_addr.s_addr = addr.addr4;
         server.sin_port = hton(port);
 
-        ret = bind(
-          sock, reinterpret_cast<struct sockaddr *>(&server), sizeof server);
+        ret = bind(sock, reinterpret_cast<sockaddr *>(&server), sizeof server);
         if (ret != 0)
             goto socket_err;
     }
@@ -336,20 +336,23 @@ listen(SocketProto proto,
             goto socket_err;
     }
 
-    s->_socket = castFromSocket(sock);
-    return SE_OK;
+    {
+        Socket s;
+        s._socket = castFromSocket(sock);
+        err = SocketError::OK;
+        return { std::move(s) };
+    }
 
 socket_err:
-    auto err = GetLastError();
+    err = getLastSocketError();
     closesocket(sock);
-    return convertSocketError(err);
+    return std::nullopt;
 }
 
-SocketError
-accept(Socket &s, Handle *h)
+std::optional<Handle>
+accept(Socket &s, SocketError &err)
 {
     ASSERT(s);
-    ASSERT(h);
 
     sockaddr_in client{};
     socklen_t clen = sizeof client;
@@ -357,13 +360,17 @@ accept(Socket &s, Handle *h)
     auto c = ::accept(
       castToSocket(s._socket), reinterpret_cast<sockaddr *>(&client), &clen);
 
-    if (c == INVALID_SOCKET)
-        return getLastSocketError();
+    if (c == INVALID_SOCKET) {
+        err = getLastSocketError();
+        return std::nullopt;
+    }
 
-    h->_handle = castFromSocket(c);
-    h->_is_socket = true;
-    h->_mode = HM_READ | HM_WRITE;
-    return SE_OK;
+    Handle h;
+    h._handle = castFromSocket(c);
+    h._is_socket = true;
+    h._mode = HM_READ | HM_WRITE;
+    err = SocketError::OK;
+    return { std::move(h) };
 }
 
 SocketError
@@ -373,9 +380,9 @@ close(Socket &sock)
     auto hndl = castToHandle(sock._socket);
     sock._socket = nullptr;
     if (CloseHandle(hndl) != FALSE)
-        return SE_OK;
+        return SocketError::OK;
     else
-        return SE_UNKNOWN;
+        return SocketError::UNKNOWN;
 }
 
 } // namespace io

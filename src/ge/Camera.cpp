@@ -47,10 +47,8 @@ struct Camera::Data
                         const Array<CommandArg> & /*args*/);
 
     // event handlers
-    static void handleMouseMoved(Camera * /*cam*/,
-                                 const Event<MouseMoved> & /*ev*/);
-    static void handleInput(Camera * /*cam*/,
-                            const Event<InputEvent> & /*unused*/);
+    void handleMouseMoved(const Event<MouseMoved> & /*ev*/);
+    void handleInput(const Event<InputEvent> & /*unused*/);
     void handleBeforeRender(const Event<RenderEvent> & /*e*/);
 };
 
@@ -132,8 +130,8 @@ Camera::Data::Data(Camera &me) : self(me)
                   "either as a pair of numbers (x- and y-sensitvity)"
                   "or as a single number (x- = y-sensitvity)");
 
-    handlers.mouseMoved = makeEventHandler(&Data::handleMouseMoved, &me);
-    handlers.handleInput = makeEventHandler(&Data::handleInput, &me);
+    handlers.mouseMoved = makeEventHandler(this, &Data::handleMouseMoved);
+    handlers.handleInput = makeEventHandler(this, &Data::handleInput);
     handlers.beforeRender = makeEventHandler(this, &Data::handleBeforeRender);
 }
 
@@ -157,8 +155,8 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
     const std::string *path;
     if (args.size() == 0)
         path = &frame_path;
-    else if (args.size() == 1 && args[0].type == String)
-        path = args[0].string;
+    else if (args.size() == 1 && args[0].type() == String)
+        path = &args[0].string;
     else {
         ERR("invalid parameters: expect 0 or 1 filepath");
         return;
@@ -181,8 +179,8 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
     const std::string *path;
     if (args.size() == 0)
         path = &frame_path;
-    else if (args.size() == 1 && args[0].type == String)
-        path = args[0].string;
+    else if (args.size() == 1 && args[0].type() == String)
+        path = &args[0].string;
     else {
         ERR("invalid parameters: expect 0 or 1 filepath");
         return;
@@ -209,10 +207,10 @@ void
 Camera::Data::runSensitivity(const Event<CommandEvent> & /*unused*/,
                              const Array<CommandArg> &args)
 {
-    if (args.size() == 1 && args[0].type == Number) {
+    if (args.size() == 1 && args[0].type() == Number) {
         mouse_sensitivity = vec2(real(args[0].number));
-    } else if (args.size() == 2 && args[0].type == Number &&
-               args[1].type == Number) {
+    } else if (args.size() == 2 && args[0].type() == Number &&
+               args[1].type() == Number) {
         mouse_sensitivity = vec2(real(args[0].number), real(args[1].number));
     } else {
         ERR("invalid arguments");
@@ -220,25 +218,24 @@ Camera::Data::runSensitivity(const Event<CommandEvent> & /*unused*/,
 }
 
 void
-Camera::Data::handleMouseMoved(Camera *cam, const Event<MouseMoved> &ev)
+Camera::Data::handleMouseMoved(const Event<MouseMoved> &ev)
 {
-    cam->mouseMoved(ev.info.dx, ev.info.dy);
+    self.mouseMoved(ev.info.dx, ev.info.dy);
 }
 
 void
-Camera::Data::handleInput(Camera *cam, const Event<InputEvent> & /*unused*/)
+Camera::Data::handleInput(const Event<InputEvent> & /*unused*/)
 {
-    auto &self = *cam->self;
-    real lenSq = quadrance(self.step_accum);
+    real lenSq = quadrance(step_accum);
     if (lenSq >= math::real(1e-4)) {
-        vec3_t local_step = self.speed * normalize(self.step_accum);
+        vec3_t local_step = speed * normalize(step_accum);
         Event<CameraMoved> ev =
-          makeEvent(CameraMoved(*cam, transformVector(self.frame, local_step)));
-        if (self.events.moved.raise(ev))
-            self.frame.translateWorld(ev.info.allowed_step);
+          makeEvent(CameraMoved(self, transformVector(frame, local_step)));
+        if (events.moved.raise(ev))
+            frame.translateWorld(ev.info.allowed_step);
     }
 
-    self.step_accum = vec3(0.f);
+    step_accum = vec3(0.f);
 }
 
 void

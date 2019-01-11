@@ -2,36 +2,177 @@
 
 #include "data/range.hpp"
 #include "ge/Command.hpp"
+#include "ge/Commands.hpp"
 #include "sys/io/Stream.hpp"
 
+#include <algorithm>
 #include <cstring>
 
 namespace ge {
 
-void
-CommandArg::free()
-{
+namespace {
 
-    switch (type) {
+template<typename T>
+void
+destroy(T &x)
+{
+    x.~T();
+}
+
+template<typename T>
+void
+copy(T *dest, const T &x)
+{
+    new (dest) T(x);
+}
+
+template<typename T>
+void
+destructive_move(T *dest, T &&from)
+{
+    new (dest) T(std::move(from));
+    from.~T();
+}
+
+} // namespace
+
+CommandValue::CommandValue(std::shared_ptr<Command> com)
+  : name(com, &com->name()), ref(std::move(com))
+{}
+
+CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
+{
+    switch (_type) {
     case String:
-        delete string;
-        break;
-    case KeyCombo:
-        delete keyBinding;
-        break;
-    case CommandRef:
-        delete command.name;
-        delete command.ref;
-        // command.quotation gets deleted by command.ref
+        copy(&string, std::move(rhs.string));
         break;
     case Integer:
+        integer = rhs.integer;
+        break;
     case Number:
+        number = rhs.number;
+        break;
+    case KeyCombo:
+        copy(&keyBinding, std::move(rhs.keyBinding));
+        break;
+    case CommandRef:
+        copy(&command, std::move(rhs.command));
+        break;
     case VarRef:
+        copy(&var, std::move(rhs.var));
+        break;
     case Nil:
         break;
     }
+}
 
-    memset(this, 0, sizeof *this);
+CommandArg::CommandArg(CommandArg &&rhs) : CommandArg()
+{
+    *this = std::move(rhs);
+}
+
+CommandArg::~CommandArg()
+{
+    reset();
+}
+
+CommandArg &
+CommandArg::operator=(CommandArg &&rhs)
+{
+    if (this == &rhs)
+        return *this;
+    reset();
+    _type = rhs._type;
+    rhs._type = Nil;
+    switch (_type) {
+    case String:
+        destructive_move(&string, std::move(rhs.string));
+        return *this;
+    case Integer:
+        integer = rhs.integer;
+        return *this;
+    case Number:
+        number = rhs.number;
+        return *this;
+    case KeyCombo:
+        destructive_move(&keyBinding, std::move(rhs.keyBinding));
+        return *this;
+    case CommandRef:
+        destructive_move(&command, std::move(rhs.command));
+        return *this;
+    case VarRef:
+        destructive_move(&var, std::move(rhs.var));
+        return *this;
+    case Nil:
+        return *this;
+    }
+    CASE_UNREACHABLE;
+}
+
+CommandArg &
+CommandArg::operator=(const CommandArg &rhs)
+{
+    return *this = CommandArg(rhs);
+}
+
+void
+CommandArg::reset()
+{
+    switch (std::exchange(_type, Nil)) {
+    case String:
+        destroy(string);
+        return;
+    case Integer:
+        return;
+    case Number:
+        return;
+    case KeyCombo:
+        destroy(keyBinding);
+        return;
+    case CommandRef:
+        destroy(command);
+        return;
+    case VarRef:
+        destroy(var);
+        return;
+    case Nil:
+        return;
+    }
+    CASE_UNREACHABLE;
+}
+
+int
+compare(const CommandValue &a, const CommandValue &b)
+{
+    return a.name->compare(*b.name);
+}
+
+int
+compare(const CommandArg &a, const CommandArg &b)
+{
+    using ::compare;
+    if (a.type() != b.type())
+        return compare(a.type(), b.type());
+    switch (a.type()) {
+    case String:
+        return a.string.compare(b.string);
+    case Integer:
+        return compare(a.integer, b.integer);
+    case Number:
+        return compare(a.number, b.number);
+    case KeyCombo:
+        return std::lexicographical_compare(a.keyBinding.begin(),
+                                            a.keyBinding.end(),
+                                            b.keyBinding.begin(),
+                                            b.keyBinding.end());
+    case CommandRef:
+        return compare(a.command, b.command);
+    case VarRef:
+        return a.var.compare(b.var);
+    case Nil:
+        return 0;
+    }
+    CASE_UNREACHABLE;
 }
 
 struct PrettyQuotation
@@ -41,7 +182,7 @@ struct PrettyQuotation
     size_t len{};
 };
 
-struct CommandPrettyPrinter::State
+struct CommandPrettyPrinter::Data
 {
     sys::io::OutStream *out;
     sys::io::OutStream *current_out;
@@ -52,15 +193,16 @@ struct CommandPrettyPrinter::State
 
     std::vector<std::shared_ptr<PrettyQuotation>> quotations;
 
-    State() : out(&sys::io::stdout()), current_out(out) {}
+    Data() : out(&sys::io::stdout()), current_out(out) {}
 };
 
-CommandPrettyPrinter::CommandPrettyPrinter() : self(new State) {}
+DECLARE_PIMPL_DEL(CommandPrettyPrinter)
+
+CommandPrettyPrinter::CommandPrettyPrinter() : self(new Data) {}
 
 CommandPrettyPrinter::~CommandPrettyPrinter()
 {
     flush();
-    delete self;
 }
 
 void
@@ -129,33 +271,38 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
 void
 CommandPrettyPrinter::print(const CommandArg &arg, bool first)
 {
-    switch (arg.type) {
+    switch (arg.type()) {
     case String:
-        *self->current_out << '"' << *arg.string << '"';
-        break;
+        *self->current_out << '"' << arg.string << '"';
+        return;
     case Integer:
         *self->current_out << arg.integer;
-        break;
+        return;
     case Number:
         *self->current_out << arg.number;
-        break;
+        return;
     case KeyCombo:
-        print(*arg.keyBinding);
-        break;
-    case CommandRef:
+        print(arg.keyBinding);
+        return;
+    case CommandRef: {
         if (!first)
             *self->current_out << '&';
         *self->current_out << *arg.command.name;
-        if (arg.command.quotation != nullptr)
-            print(*arg.command.quotation);
-        break;
-    case VarRef:
-        *self->current_out << '$' << *arg.var;
-        break;
-    case Nil:
-        *self->current_out << "nil type not allowed: " << arg.type;
-        break;
+        if (!arg.command.ref)
+            return;
+        auto q = arg.command.ref->castToQuotation();
+        if (q)
+            print(*q->quotation);
+        return;
     }
+    case VarRef:
+        *self->current_out << '$' << arg.var;
+        return;
+    case Nil:
+        *self->current_out << "nil type not allowed: " << arg.type();
+        return;
+    }
+    CASE_UNREACHABLE;
 }
 
 void
@@ -206,7 +353,6 @@ CommandPrettyPrinter::openQuotation()
 void
 CommandPrettyPrinter::closeQuotation()
 {
-
     // FIXME: output is ugly
 
     size_t depth = self->quotations.size();

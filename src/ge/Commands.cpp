@@ -96,15 +96,15 @@ runReloadShaders(const Event<CommandEvent> &e, const Array<CommandArg> &args)
     } else {
         glt::ShaderManager &sm = e.info.engine.shaderManager();
         for (size_t i = 0; i < args.size(); ++i) {
-            auto prog = sm.program(*args[i].string);
+            auto prog = sm.program(args[i].string);
             if (!prog) {
                 WARN(e.info.engine.out(),
-                     "reloadShaders: " + *args[i].string + " not defined");
+                     "reloadShaders: " + args[i].string + " not defined");
             } else {
                 if (!prog->reload())
                     WARN(e.info.engine.out(),
                          "reloadShaders: failed to reload program " +
-                           *args[i].string);
+                           args[i].string);
             }
         }
     }
@@ -146,12 +146,12 @@ struct BindKey : public Command
     void interactive(const Event<CommandEvent> &e,
                      const Array<CommandArg> &args) override
     {
-        CommandPtr &comm = *args[1].command.ref;
+        auto &comm = args[1].command.ref;
         if (!comm) {
             ERR(e.info.engine.out(), "cannot bind key: null command");
             return;
         }
-        auto binding = std::make_shared<KeyBinding>(*args[0].keyBinding);
+        auto binding = std::make_shared<KeyBinding>(args[0].keyBinding);
         e.info.engine.keyHandler().registerBinding(binding, comm);
     }
 };
@@ -179,7 +179,7 @@ runBindShader(const Event<CommandEvent> &e, const Array<CommandArg> &args)
         return;
     }
 
-    if (args[0].type != String) {
+    if (args[0].type() != String) {
         ERR(e.info.engine.out(), "bindShader: first argument not a string");
         return;
     }
@@ -188,22 +188,21 @@ runBindShader(const Event<CommandEvent> &e, const Array<CommandArg> &args)
       std::make_shared<glt::ShaderProgram>(e.info.engine.shaderManager());
 
     size_t i;
-    for (i = 1; i < args.size() && args[i].type == String; ++i) {
-        if (!prog->addShaderFile(*args[i].string)) {
+    for (i = 1; i < args.size() && args[i].type() == String; ++i) {
+        if (!prog->addShaderFile(args[i].string)) {
             ERR(e.info.engine.out(), "bindShader: compilation failed");
             return;
         }
     }
 
-    for (; i + 1 < args.size() && args[i].type == Integer &&
-           args[i + 1].type == String;
+    for (; i + 1 < args.size() && args[i].type() == Integer &&
+           args[i + 1].type() == String;
          i += 2) {
         if (args[i].integer < 0) {
             ERR(e.info.engine.out(), "bindShader: negative size_t");
             return;
         }
-        if (!prog->bindAttribute(*args[i + 1].string,
-                                 GLuint(args[i].integer))) {
+        if (!prog->bindAttribute(args[i + 1].string, GLuint(args[i].integer))) {
             ERR(e.info.engine.out(), "bindShader: couldnt bind attribute");
             return;
         }
@@ -219,10 +218,9 @@ runBindShader(const Event<CommandEvent> &e, const Array<CommandArg> &args)
         return;
     }
 
-    e.info.engine.out() << "bound program: " << *args[0].string
-                        << sys::io::endl;
+    e.info.engine.out() << "bound program: " << args[0].string << sys::io::endl;
 
-    e.info.engine.shaderManager().addProgram(*args[0].string, prog);
+    e.info.engine.shaderManager().addProgram(args[0].string, prog);
 }
 
 void
@@ -241,7 +239,7 @@ void
 runIgnoreGLDebugMessage(const Event<CommandEvent> &e,
                         const Array<CommandArg> &args)
 {
-    const std::string &vendor_str = *args[0].string;
+    const std::string &vendor_str = args[0].string;
     auto id = static_cast<GLint>(args[1].integer);
     glt::OpenGLVendor vendor;
 
@@ -268,10 +266,10 @@ runDescribe(const Event<CommandEvent> &e, const Array<CommandArg> &args)
     CommandProcessor &proc = e.info.engine.commandProcessor();
 
     for (const auto &arg : args) {
-        CommandPtr com = proc.command(*arg.string);
+        CommandPtr com = proc.command(arg.string);
         if (!com) {
             e.info.engine.out()
-              << "unknown command: " << *arg.string << sys::io::endl;
+              << "unknown command: " << arg.string << sys::io::endl;
         } else {
             e.info.engine.out()
               << com->interactiveDescription() << sys::io::endl;
@@ -289,16 +287,15 @@ void
 runLoad(const Event<CommandEvent> &ev, const Array<CommandArg> &args)
 {
     for (const auto &arg : args)
-        ev.info.engine.commandProcessor().loadScript(*arg.string);
+        ev.info.engine.commandProcessor().loadScript(arg.string);
 }
 
 void
 runAddShaderPath(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 {
     for (const auto &arg : args)
-        if (!e.info.engine.shaderManager().addShaderDirectory(*arg.string,
-                                                              true))
-            ERR(e.info.engine.out(), "not a directory: " + *arg.string);
+        if (!e.info.engine.shaderManager().addShaderDirectory(arg.string, true))
+            ERR(e.info.engine.out(), "not a directory: " + arg.string);
 }
 
 void
@@ -307,8 +304,8 @@ runPrependShaderPath(const Event<CommandEvent> &e,
 {
     for (size_t i = args.size(); i > 0; --i) {
         if (!e.info.engine.shaderManager().prependShaderDirectory(
-              *args[i - 1].string, true))
-            ERR(e.info.engine.out(), "not a directory: " + *args[i - 1].string);
+              args[i - 1].string, true))
+            ERR(e.info.engine.out(), "not a directory: " + args[i - 1].string);
     }
 }
 
@@ -316,7 +313,7 @@ void
 runRemoveShaderPath(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 {
     for (const auto &arg : args)
-        e.info.engine.shaderManager().removeShaderDirectory(*arg.string);
+        e.info.engine.shaderManager().removeShaderDirectory(arg.string);
 }
 
 void
@@ -368,7 +365,7 @@ void
 runPostInit(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 {
     e.info.engine.addInit(
-      PostInit, std::make_shared<InitCommandHandler>(*args[0].command.ref));
+      PostInit, std::make_shared<InitCommandHandler>(args[0].command.ref));
 }
 
 void

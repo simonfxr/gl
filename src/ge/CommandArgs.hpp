@@ -1,11 +1,10 @@
 #ifndef GE_COMMAND_ARGS_HPP
 #define GE_COMMAND_ARGS_HPP
 
+#include "data/Array.hpp"
+#include "data/Comparable.hpp"
 #include "ge/KeyBinding.hpp"
 #include "ge/conf.hpp"
-
-#include "data/Array.hpp"
-
 #include "sys/io/Stream.hpp"
 
 #include <memory>
@@ -42,31 +41,103 @@ enum CommandType
 
 struct CommandArg;
 
-typedef std::vector<std::vector<CommandArg>> Quotation;
-
-struct GE_API CommandArg
+struct CommandValue : Comparable<CommandValue>
 {
+    std::shared_ptr<const std::string> name;
+    std::shared_ptr<Command> ref;
 
-    CommandType type;
-    union
+    // marker type for overload disambiguation
+    struct NamedRef
+    {};
+
+    CommandValue(std::shared_ptr<Command> ref);
+
+    CommandValue(std::string nm, NamedRef)
+      : name(std::make_shared<const std::string>(std::move(nm)))
+    {}
+
+    static CommandValue makeNamedRef(std::string nm)
     {
-        const std::string *string;
-        int64_t integer;
-        double number;
-        struct
-        {
-            const std::string *name;
-            std::shared_ptr<Command> *ref;
-            Quotation *quotation;
-        } command;
-        const std::string *var;
-        const KeyBinding *keyBinding;
-    };
-
-    void free();
+        return CommandValue(std::move(nm), NamedRef{});
+    }
 };
 
-static_assert(std::is_pod<CommandArg>::value, "Command Arg has to be POD");
+int
+compare(const CommandValue &, const CommandValue &);
+
+using Quotation = std::vector<std::vector<CommandArg>>;
+
+struct GE_API CommandArg : Comparable<CommandArg>
+{
+    // marker type for overload disambiguation
+    struct CommandArgVar
+    {};
+
+    struct CommandNamedRef
+    {};
+
+    constexpr CommandArg() : integer(0), _type(Nil) {}
+
+    explicit CommandArg(int64_t x) : integer(x), _type(Integer) {}
+
+    explicit CommandArg(std::string x) : string(std::move(x)), _type(String) {}
+
+    explicit CommandArg(double x) : number(std::move(x)), _type(Number) {}
+
+    explicit CommandArg(std::shared_ptr<Command> comm)
+      : command(std::move(comm)), _type(CommandRef)
+    {}
+
+    explicit CommandArg(KeyBinding kb)
+      : keyBinding(std::move(kb)), _type(KeyCombo)
+    {}
+
+    explicit CommandArg(CommandValue comm)
+      : command(std::move(comm)), _type(CommandRef)
+    {}
+
+    explicit CommandArg(std::string var, CommandArgVar)
+      : var(std::move(var)), _type(VarRef)
+    {}
+
+    ~CommandArg();
+
+    static CommandArg varRef(std::string var)
+    {
+        return CommandArg(std::move(var), CommandArgVar{});
+    }
+
+    static CommandArg namedCommandRef(std::string comm)
+    {
+        return CommandArg(CommandValue::makeNamedRef(std::move(comm)));
+    }
+
+    CommandArg(CommandArg &&);
+    CommandArg(const CommandArg &);
+
+    CommandArg &operator=(const CommandArg &);
+    CommandArg &operator=(CommandArg &&);
+
+    CommandType type() const { return _type; }
+
+    void reset(); // reset to Nil
+
+    union
+    {
+        std::string string;
+        int64_t integer;
+        double number;
+        CommandValue command;
+        std::string var;
+        KeyBinding keyBinding;
+    };
+
+private:
+    CommandType _type;
+};
+
+int
+compare(const CommandArg &, const CommandArg &);
 
 struct GE_API CommandPrettyPrinter
 {
@@ -91,8 +162,7 @@ struct GE_API CommandPrettyPrinter
     void flush();
 
 private:
-    struct State;
-    State *const self;
+    DECLARE_PIMPL(GE_API, self);
 };
 
 } // namespace ge

@@ -122,8 +122,6 @@ Client::handleIO(Engine &e)
     switch (state) {
     case ParsingGotStatement:
         e.commandProcessor().execCommand(statement);
-        for (auto &s : statement)
-            s.free();
         statement.clear();
         break;
     case ParsingYield:

@@ -189,13 +189,7 @@ parseKeycombo(ParseState &s, CommandArg &tok)
         return Fail;
     }
 
-    auto *bind = new KeyBinding(keys.size());
-    tok.keyBinding = bind;
-    tok.type = KeyCombo;
-
-    for (size_t i = 0; i < keys.size(); ++i)
-        (*bind)[i] = keys[size_t(i)];
-
+    tok = CommandArg(std::move(keys));
     return EndToken;
 }
 
@@ -255,9 +249,7 @@ parseString(ParseState &s, CommandArg &tok)
     if (s.c == 0)
         return Fail;
 
-    tok.type = String;
-    tok.string = new std::string(buf.str());
-
+    tok = CommandArg(buf.str());
     return EndToken;
 }
 
@@ -275,11 +267,7 @@ parseCommandRef(ParseState &s, CommandArg &arg)
         // //            WARN(("unknown command name: " + sym));
         //         }
 
-        arg.type = CommandRef;
-        arg.command.ref = new CommandPtr();
-        arg.command.name = new std::string(sym);
-        arg.command.quotation = nullptr;
-
+        arg = CommandArg::namedCommandRef(std::move(sym));
         return EndToken;
     }
 
@@ -298,8 +286,7 @@ parseVarRef(ParseState &s, CommandArg &arg)
         if (sym.empty())
             goto fail;
 
-        arg.type = VarRef;
-        arg.var = new std::string(sym);
+        arg = CommandArg::varRef(std::move(sym));
         return EndToken;
     }
 
@@ -314,7 +301,7 @@ statement(ParseState &s, std::vector<CommandArg> &toks, bool quot);
 State
 parseQuot(ParseState &s, CommandArg &arg)
 {
-    auto *q = new Quotation;
+    auto q = std::make_unique<Quotation>();
 
     int line = s.line;
     int col = s.col;
@@ -343,13 +330,8 @@ parseQuot(ParseState &s, CommandArg &arg)
         return Fail;
     }
 
-    arg.type = CommandRef;
-    sys::io::ByteStream buf;
-    buf << "<quotation: " << s.filename << "@" << line << ":" << col << ">";
-    arg.command.name = new std::string(buf.str());
-    arg.command.ref =
-      new CommandPtr(new QuotationCommand(s.filename, line, col, "", q));
-    arg.command.quotation = q;
+    arg = CommandArg(std::make_shared<QuotationCommand>(
+      s.filename, line, col, "", std::move(q)));
 
     return EndToken;
 }
@@ -431,12 +413,10 @@ parseNum(ParseState &s, CommandArg &tok)
     }
 
     if (isNum) {
-        tok.type = Number;
-        tok.number = neg ? -num : num;
+        tok = CommandArg(neg ? -num : num);
         // std::cerr << "parsed number: " << num << std::endl;
     } else {
-        tok.type = Integer;
-        tok.integer = neg ? -k : k;
+        tok = CommandArg(neg ? -k : k);
         // std::cerr << "parsed int: " << k << std::endl;
     }
 

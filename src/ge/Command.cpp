@@ -11,22 +11,7 @@ namespace ge {
 
 const Array<CommandArg> NULL_ARGS = ARRAY_INITIALIZER(CommandArg);
 
-std::string
-Command::name() const
-{
-    if (!namestr.empty())
-        return namestr;
-    sys::io::ByteStream id;
-    const void *self = this;
-    id << "<anonymous " << self << ">";
-    return id.str();
-}
-
-void
-Command::name(const std::string &new_name)
-{
-    namestr = new_name;
-}
+Command::~Command() = default;
 
 CommandEvent::CommandEvent(ge::Engine &e, CommandProcessor &proc)
   : EngineEvent(e), processor(proc)
@@ -37,6 +22,7 @@ Command::Command(const Array<CommandParamType> &ps,
                  std::string desc)
   : params(ps), namestr(name), descr(std::move(desc))
 {
+    ASSERT(!name.empty());
     // std::cerr << "creating command: params: " << &ps << " name = " << name <<
     // " nparams = " << params.size_t() << std::endl;
 }
@@ -98,41 +84,43 @@ Command::interactiveDescription() const
     return desc.str();
 }
 
-static std::string
-describe(const std::string &source,
-         int line,
-         int column,
-         const std::string &desc,
-         Quotation *quot)
+namespace {
+std::string
+describeQuotation(std::string_view &source,
+                  int line,
+                  int column,
+                  std::string_view &desc)
 {
     sys::io::ByteStream str;
     str << "<quotation " << source << "@" << line << ":" << column;
     if (!desc.empty())
         str << " " << desc << ">";
-    // TODO: extend description with source code of quotation
-    UNUSED(quot);
     return str.str();
 }
+} // namespace
 
-QuotationCommand::QuotationCommand(const std::string &source,
+namespace {
+std::string
+nameOfQuotation(std::string_view filename, int line, int col)
+{
+    sys::io::ByteStream buf;
+    buf << "<quotation: " << filename << "@" << line << ":" << col << ">";
+    return buf.str();
+}
+} // namespace
+
+QuotationCommand::QuotationCommand(std::string_view source,
                                    int line,
                                    int column,
-                                   const std::string &desc,
-                                   Quotation *quot)
+                                   std::string_view desc,
+                                   std::unique_ptr<Quotation> quot)
   : Command(NULL_PARAMS,
-            "<anonymous quotation>",
-            describe(source, line, column, desc, quot))
-  , quotation(quot)
+            nameOfQuotation(source, line, column),
+            describeQuotation(source, line, column, desc))
+  , quotation(std::move(quot))
 {}
 
-QuotationCommand::~QuotationCommand()
-{
-    Quotation &q = *quotation;
-    for (auto &qi : q)
-        for (auto &qij : qi)
-            qij.free();
-    delete quotation;
-}
+QuotationCommand::~QuotationCommand() = default;
 
 void
 QuotationCommand::interactive(const Event<CommandEvent> &ev,
@@ -172,7 +160,7 @@ makeCommand(CommandHandler handler,
             const std::string &name,
             const std::string &desc)
 {
-    return CommandPtr(new SimpleCommand(handler, name, desc));
+    return std::make_shared<SimpleCommand>(handler, name, desc);
 }
 
 struct TypedCommand : public Command
@@ -202,7 +190,7 @@ makeCommand(ListCommandHandler handler,
             const std::string &name,
             const std::string &desc)
 {
-    return CommandPtr(new TypedCommand(handler, params, name, desc));
+    return std::make_shared<TypedCommand>(handler, params, name, desc);
 }
 
 struct StringListCommand : public Command
@@ -227,7 +215,7 @@ StringListCommand::interactive(const Event<CommandEvent> &e,
                                const Array<CommandArg> &args)
 {
     for (const auto &arg : args) {
-        if (arg.type != String) {
+        if (arg.type() != String) {
             ERR("expected String argument");
             return;
         }
@@ -270,7 +258,7 @@ makeListCommand(ListCommandHandler handler,
                 const std::string &name,
                 const std::string &desc)
 {
-    return CommandPtr(new ListCommand(handler, name, desc));
+    return std::make_shared<ListCommand>(handler, name, desc);
 }
 
 } // namespace ge

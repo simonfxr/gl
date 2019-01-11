@@ -259,7 +259,7 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
     for (size_t k = 0; k < subdivs; ++k) {
         to->clear();
 
-        for (size_t i = 0; i < SIZE(from->size()); ++i) {
+        for (size_t i = 0; i < from->size(); ++i) {
             Tri tri = (*from)[i];
             size_t ab, bc, ca;
 

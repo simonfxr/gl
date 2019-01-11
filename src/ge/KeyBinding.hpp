@@ -1,10 +1,11 @@
 #ifndef GE_KEY_BINDING_HPP
 #define GE_KEY_BINDING_HPP
 
-#include "data/Array.hpp"
+#include "data/Comparable.hpp"
 #include "ge/conf.hpp"
 
 #include <string>
+#include <vector>
 
 namespace ge {
 
@@ -146,21 +147,22 @@ enum KeyCode
 
 typedef keycode::KeyCode KeyCode;
 
-struct Key
+struct Key : Comparable<Key>
 {
-    KeyState state;
-    KeyCode code;
-
-    static Key make(KeyState s, KeyCode c)
-    {
-        Key key;
-        key.state = s;
-        key.code = c;
-        return key;
-    }
+    KeyState state{};
+    KeyCode code{};
+    Key() = default;
+    Key(KeyState st, KeyCode c) : state(st), code(c) {}
 };
 
-typedef OwnedArray<Key> KeyBinding;
+inline compare(const Key &a, const Key &b)
+{
+    using ::compare;
+    return chained_compare([&]() { return compare(a.state, b.state); },
+                           [&]() { return compare(a.code, b.code); });
+}
+
+using KeyBinding = std::vector<Key>;
 
 GE_API const char *
 prettyKeyCode(KeyCode code);

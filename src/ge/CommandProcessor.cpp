@@ -25,11 +25,8 @@ CommandProcessor::addScriptDirectory(std::string_view dir, bool check_exists)
         if (dir == scriptDir)
             return true;
 
-    if (check_exists) {
-        auto type = sys::fs::exists(dir);
-        if (!type || *type != sys::fs::Directory)
-            return false;
-    }
+    if (check_exists && !sys::fs::exists(dir, sys::fs::Directory))
+        return false;
 
     scriptDirs.emplace_back(dir);
     return true;
@@ -112,11 +109,11 @@ CommandProcessor::exec(Array<CommandArg> &args)
         return true;
     const std::string *com_name = nullptr;
     CommandPtr comm;
-    if (args[0].type == String) {
-        com_name = args[0].string;
-    } else if (args[0].type == CommandRef) {
-        com_name = args[0].command.name;
-        comm = *args[0].command.ref;
+    if (args[0].type() == String) {
+        com_name = &args[0].string;
+    } else if (args[0].type() == CommandRef) {
+        com_name = args[0].command.name.get();
+        comm = args[0].command.ref;
         if (!comm && !com_name->empty()) {
             comm = command(*com_name);
         }
@@ -172,7 +169,6 @@ CommandProcessor::exec(CommandPtr &com,
     for (const auto i : irange(params.size() - (rest_args ? 1 : 0))) {
         const auto &param = params[i];
         if (param != AnyParam) {
-
             CommandType val_type = String;
             switch (param) {
             case StringParam:
@@ -199,27 +195,24 @@ CommandProcessor::exec(CommandPtr &com,
                 ASSERT_FAIL();
             }
 
-            if (val_type != args[i].type) {
-                if (val_type == Number && args[i].type == Integer) {
-                    args[i].type = Integer;
-                    args[i].number = double(args[i].integer);
-                } else if (val_type == CommandRef && args[i].type == String) {
-                    CommandPtr comArg = command(*args[i].string);
+            if (val_type != args[i].type()) {
+                if (val_type == Number && args[i].type() == Integer) {
+                    args[i] = CommandArg(double(args[i].integer));
+                } else if (val_type == CommandRef && args[i].type() == String) {
+                    CommandPtr comArg = command(args[i].string);
                     if (!comArg) {
                         sys::io::ByteStream err;
                         if (!comname.empty())
                             err << "executing Command " << comname << ": ";
                         else
                             err << "executing unknown Command: ";
-                        err << " command not found: " << *args[i].string;
+                        err << " command not found: " << args[i].string;
                         ERR(engine().out(), err.str());
                         return false;
                     }
                     keepAlive.push_back(comArg);
-                    args[i].type = CommandRef;
-                    args[i].command.name = args[i].string;
-                    args[i].command.ref = new CommandPtr(comArg);
-                } else if (val_type == KeyCombo && args[i].type == String) {
+                    args[i] = CommandArg(std::move(comArg));
+                } else if (val_type == KeyCombo && args[i].type() == String) {
                     if (!coerceKeyCombo(args[i])) {
                         sys::io::ByteStream err;
                         if (!comname.empty())
@@ -238,14 +231,13 @@ CommandProcessor::exec(CommandPtr &com,
                         err << "executing unknown Command: ";
                     err << " type mismatch, position: " << (i + 1);
                     err << ", expected: " << prettyCommandType(val_type);
-                    err << ", got: " << prettyCommandType(args[i].type);
+                    err << ", got: " << prettyCommandType(args[i].type());
                     ERR(engine().out(), err.str());
                     return false;
                 }
             } else if (val_type == CommandRef) {
-                if (!*args[i].command.ref && !args[i].command.name->empty()) {
-                    *args[i].command.ref = command(*args[i].command.name);
-                }
+                if (!args[i].command.ref && !args[i].command.name->empty())
+                    args[i].command = CommandValue(command(*args[i].command.name));
             }
         }
     }
@@ -307,11 +299,8 @@ CommandProcessor::loadStream(sys::io::InStream &inp, std::string_view inp_name)
         }
 
     next:;
-        for (auto &arg : args)
-            arg.free();
         args.clear();
     }
-
     return ok;
 }
 

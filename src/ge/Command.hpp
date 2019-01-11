@@ -38,10 +38,10 @@ public:
     Command(const Array<CommandParamType> &ps,
             const std::string &name,
             std::string desc);
-    virtual ~Command() {}
+    virtual ~Command();
     const Array<CommandParamType> &parameters() const { return params; }
-    std::string name() const;
-    void name(const std::string &new_name);
+    const std::string& name() const { return namestr; }
+    void name(const std::string &new_name) { ASSERT(!new_name.empty()); namestr = new_name; }
     const std::string &description() const { return descr; }
     std::string interactiveDescription() const;
     virtual void interactive(const Event<CommandEvent> &ev,
@@ -52,13 +52,13 @@ public:
 
 struct GE_API QuotationCommand : public Command
 {
-    Quotation *const quotation;
+    const std::unique_ptr<Quotation> quotation;
 
-    QuotationCommand(const std::string &source,
+    QuotationCommand(std::string_view source,
                      int line,
                      int column,
-                     const std::string &desc,
-                     Quotation *quot);
+                     std::string_view desc,
+                     std::unique_ptr<Quotation> quot);
     ~QuotationCommand() override;
 
     virtual void interactive(const Event<CommandEvent> &ev,

@@ -12,8 +12,9 @@
 #include <libunwind.h>
 #include <unistd.h>
 #elif defined(HU_OS_WINDOWS)
-#include <DbgHelp.h>
 #include <Windows.h>
+
+#include <DbgHelp.h>
 #endif
 
 namespace err {
@@ -179,7 +180,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
 
         char symbolBuffer[sizeof(IMAGEHLP_SYMBOL) + 255];
         PIMAGEHLP_SYMBOL symbol = (PIMAGEHLP_SYMBOL) symbolBuffer;
-        symbol->SizeOfStruct = (sizeof IMAGEHLP_SYMBOL) + 255;
+        symbol->SizeOfStruct = sizeof (IMAGEHLP_SYMBOL) + 255;
         symbol->MaxNameLength = 254;
 
         out << " ";

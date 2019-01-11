@@ -252,7 +252,7 @@ uint32_t
 ShaderManager::glToShaderVersion(uint32_t maj, uint32_t min)
 {
     if (maj > 3 || (maj == 3 && min >= 3))
-        return maj * 100 + min;
+        return maj * 100 + min * 10;
     if (maj == 3)
         return 130 + min * 10;
     if (maj == 2)

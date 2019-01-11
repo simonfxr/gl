@@ -712,7 +712,7 @@ void
 Anim::setDataDir(const Event<CommandEvent> & /*unused*/,
                  const Array<CommandArg> &args)
 {
-    data_dir = *args[0].string;
+    data_dir = args[0].string;
 
     int w, h;
     uint32_t *wood_data;
