@@ -1,7 +1,7 @@
 #ifndef GE_COMMAND_ARGS_HPP
 #define GE_COMMAND_ARGS_HPP
 
-#include "data/Array.hpp"
+#include "data/ArrayView.hpp"
 #include "data/Comparable.hpp"
 #include "ge/KeyBinding.hpp"
 #include "ge/conf.hpp"
@@ -151,8 +151,7 @@ struct GE_API CommandPrettyPrinter
 
     void print(const KeyBinding &bind);
     void print(const CommandArg &arg, bool first = false);
-    void print(const Array<CommandArg> &);
-    void print(const std::vector<CommandArg> &);
+    void print(ArrayView<const CommandArg>);
     void print(const Quotation &);
     void printSpaces(size_t);
 

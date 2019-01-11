@@ -86,7 +86,7 @@ runPrintMemInfo(const Event<CommandEvent> &e)
 }
 
 void
-runReloadShaders(const Event<CommandEvent> &e, const Array<CommandArg> &args)
+runReloadShaders(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
 {
 
     if (args.size() == 0) {
@@ -144,7 +144,7 @@ struct BindKey : public Command
                 "bind a command to a key combination")
     {}
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args) override
+                     ArrayView<const CommandArg> args) override
     {
         auto &comm = args[1].command.ref;
         if (!comm) {
@@ -172,7 +172,7 @@ runHelp(const Event<CommandEvent> &ev)
 }
 
 void
-runBindShader(const Event<CommandEvent> &e, const Array<CommandArg> &args)
+runBindShader(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
 {
     if (args.size() == 0) {
         ERR(e.info.engine.out(), "bindShader: need at least one argument");
@@ -237,7 +237,7 @@ runInitGLDebug(const Event<CommandEvent> &e)
 
 void
 runIgnoreGLDebugMessage(const Event<CommandEvent> &e,
-                        const Array<CommandArg> &args)
+                        ArrayView<const CommandArg> args)
 {
     const std::string &vendor_str = args[0].string;
     auto id = static_cast<GLint>(args[1].integer);
@@ -260,7 +260,7 @@ runIgnoreGLDebugMessage(const Event<CommandEvent> &e,
 }
 
 void
-runDescribe(const Event<CommandEvent> &e, const Array<CommandArg> &args)
+runDescribe(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
 {
 
     CommandProcessor &proc = e.info.engine.commandProcessor();
@@ -278,20 +278,20 @@ runDescribe(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 }
 
 void
-runEval(const Event<CommandEvent> &e, const Array<CommandArg> & /*unused*/)
+runEval(const Event<CommandEvent> &e, ArrayView<const CommandArg> /*unused*/)
 {
     ERR(e.info.engine.out(), "not yet implemented");
 }
 
 void
-runLoad(const Event<CommandEvent> &ev, const Array<CommandArg> &args)
+runLoad(const Event<CommandEvent> &ev, ArrayView<const CommandArg> args)
 {
     for (const auto &arg : args)
         ev.info.engine.commandProcessor().loadScript(arg.string);
 }
 
 void
-runAddShaderPath(const Event<CommandEvent> &e, const Array<CommandArg> &args)
+runAddShaderPath(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
 {
     for (const auto &arg : args)
         if (!e.info.engine.shaderManager().addShaderDirectory(arg.string, true))
@@ -300,7 +300,7 @@ runAddShaderPath(const Event<CommandEvent> &e, const Array<CommandArg> &args)
 
 void
 runPrependShaderPath(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args)
+                     ArrayView<const CommandArg> args)
 {
     for (size_t i = args.size(); i > 0; --i) {
         if (!e.info.engine.shaderManager().prependShaderDirectory(
@@ -310,7 +310,8 @@ runPrependShaderPath(const Event<CommandEvent> &e,
 }
 
 void
-runRemoveShaderPath(const Event<CommandEvent> &e, const Array<CommandArg> &args)
+runRemoveShaderPath(const Event<CommandEvent> &e,
+                    ArrayView<const CommandArg> args)
 {
     for (const auto &arg : args)
         e.info.engine.shaderManager().removeShaderDirectory(arg.string);
@@ -332,7 +333,7 @@ struct PerspectiveProjection : public Command
     {}
 
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args) override
+                     ArrayView<const CommandArg> args) override
     {
         real fovDeg = real(args[0].number);
         real zn = real(args[1].number);
@@ -362,14 +363,15 @@ struct InitCommandHandler : public EventHandler<InitEvent>
 };
 
 void
-runPostInit(const Event<CommandEvent> &e, const Array<CommandArg> &args)
+runPostInit(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
 {
     e.info.engine.addInit(
       PostInit, std::make_shared<InitCommandHandler>(args[0].command.ref));
 }
 
 void
-runStartReplServer(const Event<CommandEvent> &ev, const Array<CommandArg> &args)
+runStartReplServer(const Event<CommandEvent> &ev,
+                   ArrayView<const CommandArg> args)
 {
     Engine &e = ev.info.engine;
     ReplServer &serv = e.replServer();

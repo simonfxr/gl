@@ -165,27 +165,27 @@ struct Game
     // commands
     void cmdToggleUseInterpolation(
       const ge::Event<ge::CommandEvent> & /*unused*/,
-      const Array<ge::CommandArg> & /*unused*/);
+      ArrayView<const ge::CommandArg> /*unused*/);
     void cmdIncWorldSolveIterations(
       const ge::Event<ge::CommandEvent> & /*unused*/,
-      const Array<ge::CommandArg> & /*args*/);
+      ArrayView<const ge::CommandArg> /*args*/);
     void cmdToggleRenderByDistance(
       const ge::Event<ge::CommandEvent> & /*unused*/,
-      const Array<ge::CommandArg> & /*unused*/);
+      ArrayView<const ge::CommandArg> /*unused*/);
     void cmdToggleRenderSpheresInstanced(
       const ge::Event<ge::CommandEvent> & /*unused*/,
-      const Array<ge::CommandArg> & /*unused*/);
+      ArrayView<const ge::CommandArg> /*unused*/);
     void cmdToggleIndirectRendering(
       const ge::Event<ge::CommandEvent> & /*unused*/,
-      const Array<ge::CommandArg> & /*unused*/);
+      ArrayView<const ge::CommandArg> /*unused*/);
     void cmdSpawnSphere(const ge::Event<ge::CommandEvent> & /*unused*/,
-                        const Array<ge::CommandArg> & /*unused*/);
+                        ArrayView<const ge::CommandArg> /*unused*/);
     void cmdIncSphereRadius(const ge::Event<ge::CommandEvent> & /*unused*/,
-                            const Array<ge::CommandArg> & /*args*/);
+                            ArrayView<const ge::CommandArg> /*args*/);
     void cmdIncSphereSpeed(const ge::Event<ge::CommandEvent> & /*unused*/,
-                           const Array<ge::CommandArg> & /*args*/);
+                           ArrayView<const ge::CommandArg> /*args*/);
     void cmdIncGameSpeed(const ge::Event<ge::CommandEvent> & /*unused*/,
-                         const Array<ge::CommandArg> & /*args*/);
+                         ArrayView<const ge::CommandArg> /*args*/);
 };
 
 Game::Game() : renderer(*this) {}
@@ -903,7 +903,7 @@ Game::link(ge::Engine &e)
 
 void
 Game::cmdToggleUseInterpolation(const ge::Event<ge::CommandEvent> & /*unused*/,
-                                const Array<ge::CommandArg> & /*unused*/)
+                                ArrayView<const ge::CommandArg> /*unused*/)
 {
     use_interpolation = !use_interpolation;
     sys::io::stderr() << "use interpolation: "
@@ -912,7 +912,7 @@ Game::cmdToggleUseInterpolation(const ge::Event<ge::CommandEvent> & /*unused*/,
 
 void
 Game::cmdIncWorldSolveIterations(const ge::Event<ge::CommandEvent> & /*unused*/,
-                                 const Array<ge::CommandArg> &args)
+                                 ArrayView<const ge::CommandArg> args)
 {
     if (args[0].integer < 0 &&
         world.solve_iterations < size_t(-args[0].integer))
@@ -925,7 +925,7 @@ Game::cmdIncWorldSolveIterations(const ge::Event<ge::CommandEvent> & /*unused*/,
 
 void
 Game::cmdToggleRenderByDistance(const ge::Event<ge::CommandEvent> & /*unused*/,
-                                const Array<ge::CommandArg> & /*unused*/)
+                                ArrayView<const ge::CommandArg> /*unused*/)
 {
     world.render_by_distance = !world.render_by_distance;
     sys::io::stderr() << "render by distance: "
@@ -936,7 +936,7 @@ Game::cmdToggleRenderByDistance(const ge::Event<ge::CommandEvent> & /*unused*/,
 void
 Game::cmdToggleRenderSpheresInstanced(
   const ge::Event<ge::CommandEvent> & /*unused*/,
-  const Array<ge::CommandArg> & /*unused*/)
+  ArrayView<const ge::CommandArg> /*unused*/)
 {
     render_spheres_instanced = !render_spheres_instanced;
     sys::io::stderr() << "instanced rendering: "
@@ -946,7 +946,7 @@ Game::cmdToggleRenderSpheresInstanced(
 
 void
 Game::cmdToggleIndirectRendering(const ge::Event<ge::CommandEvent> & /*unused*/,
-                                 const Array<ge::CommandArg> & /*unused*/)
+                                 ArrayView<const ge::CommandArg> /*unused*/)
 {
     updateIndirectRendering(!indirect_rendering);
     sys::io::stderr() << "indirect rendering: "
@@ -955,14 +955,14 @@ Game::cmdToggleIndirectRendering(const ge::Event<ge::CommandEvent> & /*unused*/,
 
 void
 Game::cmdSpawnSphere(const ge::Event<ge::CommandEvent> & /*unused*/,
-                     const Array<ge::CommandArg> & /*unused*/)
+                     ArrayView<const ge::CommandArg> /*unused*/)
 {
     spawn_sphere();
 }
 
 void
 Game::cmdIncSphereRadius(const ge::Event<ge::CommandEvent> & /*unused*/,
-                         const Array<ge::CommandArg> &args)
+                         ArrayView<const ge::CommandArg> args)
 {
     sphere_proto.r =
       std::max(0.05f, sphere_proto.r + static_cast<float>(args[0].number));
@@ -971,7 +971,7 @@ Game::cmdIncSphereRadius(const ge::Event<ge::CommandEvent> & /*unused*/,
 
 void
 Game::cmdIncSphereSpeed(const ge::Event<ge::CommandEvent> & /*unused*/,
-                        const Array<ge::CommandArg> &args)
+                        ArrayView<const ge::CommandArg> args)
 {
     sphere_speed =
       std::max(0.25f, sphere_speed + static_cast<float>(args[0].number));
@@ -979,7 +979,7 @@ Game::cmdIncSphereSpeed(const ge::Event<ge::CommandEvent> & /*unused*/,
 
 void
 Game::cmdIncGameSpeed(const ge::Event<ge::CommandEvent> & /*unused*/,
-                      const Array<ge::CommandArg> &args)
+                      ArrayView<const ge::CommandArg> args)
 {
     game_speed = std::max(0.f, game_speed + static_cast<float>(args[0].number));
 }

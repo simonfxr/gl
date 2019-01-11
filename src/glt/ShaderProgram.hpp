@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "data/Array.hpp"
+#include "data/ArrayView.hpp"
 #include "err/WithError.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/ShaderManager.hpp"
@@ -51,7 +51,7 @@ struct GLT_API ShaderProgram
 
     bool bindAttribute(const std::string &s, GLuint position);
 
-    bool bindStreamOutVaryings(const Array<std::string> &);
+    bool bindStreamOutVaryings(ArrayView<const std::string>);
 
     template<typename T>
     bool bindAttributes(const VertexDescription<T> &desc);

@@ -306,7 +306,7 @@ CommandPrettyPrinter::print(const CommandArg &arg, bool first)
 }
 
 void
-CommandPrettyPrinter::print(const Array<CommandArg> &statement)
+CommandPrettyPrinter::print(ArrayView<const CommandArg> statement)
 {
 
     if (self->ignore_empty_statements && statement.size() == 0)
@@ -320,20 +320,12 @@ CommandPrettyPrinter::print(const Array<CommandArg> &statement)
 }
 
 void
-CommandPrettyPrinter::print(const std::vector<CommandArg> &statement)
-{
-    auto arr = SHARE_ARRAY(const_cast<CommandArg *>(&statement.front()),
-                           statement.size());
-    print(arr);
-}
-
-void
 CommandPrettyPrinter::print(const Quotation &q)
 {
     openQuotation();
 
     for (const auto &qi : q) {
-        print(qi);
+        print(view_array(qi));
         auto &pq = self->quotations.back();
         pq->statements.push_back(pq->out.str());
         pq->out.truncate(0);

@@ -129,10 +129,10 @@ programUniform(GLuint program, GLint loc, float value)
 }
 
 void
-programUniform(GLuint program, GLint loc, const Array<float> &value)
+programUniform(GLuint program, GLint loc, ArrayView<const float> value)
 {
     GL_CALL(
-      glProgramUniform1fv, program, loc, GLsizei(value.size()), &value[0]);
+      glProgramUniform1fv, program, loc, GLsizei(value.size()), value.data());
 }
 
 void
@@ -279,7 +279,7 @@ Uniforms::set(bool mandatory, const std::string &name, double value)
 void
 Uniforms::set(bool mandatory,
               const std::string &name,
-              const Array<float> &value)
+              ArrayView<const float> value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT, value);
 }

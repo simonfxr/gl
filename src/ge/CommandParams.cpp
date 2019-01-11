@@ -1,12 +1,11 @@
 #include "ge/CommandParams.hpp"
-#include "data/StaticArray.hpp"
 
 #define DEFINE_PARAM_ARRAY(name, ...)                                          \
-    DEFINE_CONST_ARRAY(name, ge::CommandParamType, __VA_ARGS__)
+    const std::vector<CommandParamType> name = { __VA_ARGS__ }
 
 namespace ge {
 
-const Array<CommandParamType> NULL_PARAMS = ARRAY_INITIALIZER(CommandParamType);
+DEFINE_PARAM_ARRAY(NULL_PARAMS);
 
 DEFINE_PARAM_ARRAY(KEY_COM_PARAMS, KeyComboParam, CommandParam);
 

@@ -83,7 +83,7 @@ CommandProcessor::define(std::string_view comname,
 }
 
 bool
-CommandProcessor::exec(std::string_view comname, Array<CommandArg> &args)
+CommandProcessor::exec(std::string_view comname, ArrayView<CommandArg> args)
 {
     CommandPtr com = command(comname);
     if (!com) {
@@ -103,7 +103,7 @@ coerceKeyCombo(CommandArg &arg)
 }
 
 bool
-CommandProcessor::exec(Array<CommandArg> &args)
+CommandProcessor::exec(ArrayView<CommandArg> args)
 {
     if (args.size() == 0)
         return true;
@@ -130,14 +130,13 @@ CommandProcessor::exec(Array<CommandArg> &args)
         }
     }
 
-    auto argsArr = SHARE_ARRAY(&args[1], args.size() - 1);
-    bool ok = exec(comm, argsArr, *com_name);
+    bool ok = exec(comm, { args.data() + 1, args.size() - 1 }, *com_name);
     return ok;
 }
 
 bool
 CommandProcessor::exec(CommandPtr &com,
-                       Array<CommandArg> &args,
+                       ArrayView<CommandArg> args,
                        std::string_view comname)
 {
 
@@ -146,7 +145,7 @@ CommandProcessor::exec(CommandPtr &com,
         return false;
     }
 
-    const Array<CommandParamType> &params = com->parameters();
+    const auto &params = com->parameters();
     bool rest_args =
       params.size() > 0 && params[params.size() - 1] == ListParam;
     size_t nparams = rest_args ? params.size() - 1 : params.size();
@@ -237,7 +236,8 @@ CommandProcessor::exec(CommandPtr &com,
                 }
             } else if (val_type == CommandRef) {
                 if (!args[i].command.ref && !args[i].command.name->empty())
-                    args[i].command = CommandValue(command(*args[i].command.name));
+                    args[i].command =
+                      CommandValue(command(*args[i].command.name));
             }
         }
     }
@@ -291,7 +291,7 @@ CommandProcessor::loadStream(sys::io::InStream &inp, std::string_view inp_name)
             goto next;
         }
 
-        ok = execCommand(args);
+        ok = execCommand(view_array(args));
         if (!ok) {
             ERR(engine().out(), "executing command");
             done = true;
@@ -312,18 +312,7 @@ CommandProcessor::evalCommand(std::string_view cmd)
 }
 
 bool
-CommandProcessor::execCommand(std::vector<CommandArg> &args)
-{
-    if (!args.empty()) {
-        auto com_args = SHARE_ARRAY(&args[0], args.size());
-        return execCommand(com_args);
-    }
-    Array<CommandArg> com_args = ARRAY_INITIALIZER(CommandArg);
-    return execCommand(com_args);
-}
-
-bool
-CommandProcessor::execCommand(Array<CommandArg> &args)
+CommandProcessor::execCommand(ArrayView<CommandArg> args)
 {
     if (args.size() == 0)
         return true;

@@ -1,7 +1,6 @@
 #ifndef GLT_GL_PERF_COUNTER
 #define GLT_GL_PERF_COUNTER
 
-#include "data/Array.hpp"
 #include "glt/GLObject.hpp"
 
 namespace glt {

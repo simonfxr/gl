@@ -435,7 +435,7 @@ ShaderProgram::bindAttributesGeneric(const GenVertexDescription &desc)
 }
 
 bool
-ShaderProgram::bindStreamOutVaryings(const Array<std::string> &vars)
+ShaderProgram::bindStreamOutVaryings(ArrayView<const std::string> vars)
 {
 
     // FIXME: record vars to set stream out varyings again if relinked
@@ -445,13 +445,13 @@ ShaderProgram::bindStreamOutVaryings(const Array<std::string> &vars)
         return false;
     }
 
-    std::vector<const char *> cvars(vars.size());
-    for (size_t i = 0; i < vars.size(); ++i)
-        cvars[i] = vars[i].c_str();
-    auto len = GLsizei(vars.size());
+    std::vector<const char *> cvars;
+    cvars.reserve(vars.size());
+    for (const auto& var: vars)
+        cvars.push_back(var.c_str());
     GL_CALL(glTransformFeedbackVaryings,
             *program(),
-            len,
+            GLsizei(vars.size()),
             &cvars[0],
             GL_INTERLEAVED_ATTRIBS);
     return true;

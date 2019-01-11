@@ -21,9 +21,9 @@ struct MouseLookPlugin::Data
 
     // commands
     void runGrabMouse(const Event<CommandEvent> & /*unused*/,
-                      const Array<CommandArg> & /*unused*/);
+                      ArrayView<const CommandArg> /*unused*/);
     void runUngrabMouse(const Event<CommandEvent> & /*unused*/,
-                        const Array<CommandArg> & /*unused*/);
+                        ArrayView<const CommandArg> /*unused*/);
 
     // handlers
     void handleMouseClick(const Event<MouseButton> & /*ev*/);
@@ -82,7 +82,7 @@ MouseLookPlugin::Data::setState(State new_state)
 
 void
 MouseLookPlugin::Data::runGrabMouse(const Event<CommandEvent> & /*unused*/,
-                                    const Array<CommandArg> & /*unused*/)
+                                    ArrayView<const CommandArg> /*unused*/)
 {
     if (_should_grab)
         setState(Grabbing);
@@ -90,7 +90,7 @@ MouseLookPlugin::Data::runGrabMouse(const Event<CommandEvent> & /*unused*/,
 
 void
 MouseLookPlugin::Data::runUngrabMouse(const Event<CommandEvent> & /*unused*/,
-                                      const Array<CommandArg> & /*unused*/)
+                                      ArrayView<const CommandArg> /*unused*/)
 {
     setState(Free);
 }

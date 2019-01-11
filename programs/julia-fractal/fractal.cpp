@@ -203,7 +203,6 @@ Anim::handleWindowResized(const ge::Event<ge::WindowResized> &ev)
 }
 
 using ComEv = ge::Event<ge::CommandEvent>;
-using ComArgs = Array<ge::CommandArg>;
 
 #define DEF_NUM_COMMAND(nm, code)                                              \
     nm(ge::makeNumCommand([&w](const ComEv &, double x) { code; }, #nm, ""))
@@ -221,7 +220,9 @@ Commands::Commands(World &w)
   , DEF_NUM_COMMAND(julia_constant_add_im,
                     w.julia_constant_add(vec2(0, real(x))))
   , julia_constant_reset(makeCommand(
-      [&w](const ComEv &, const ComArgs &) { w.julia_constant_reset(); },
+      [&w](const ComEv &, ArrayView<const ge::CommandArg>) {
+          w.julia_constant_reset();
+      },
       ge::NULL_PARAMS,
       "julia_constant_reset",
       ""))

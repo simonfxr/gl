@@ -1,12 +1,13 @@
-#include <algorithm>
-#include <bitset>
-#include <climits>
-#include <cstdlib>
-#include <cstring>
-#include <memory>
-
-#include "defs.hpp"
-
+#include "ge/Camera.hpp"
+#include "ge/CommandParams.hpp"
+#include "ge/Engine.hpp"
+#include "ge/MouseLookPlugin.hpp"
+#include "ge/Timer.hpp"
+#include "glt/CubeMesh.hpp"
+#include "glt/Frame.hpp"
+#include "glt/color.hpp"
+#include "glt/primitives.hpp"
+#include "glt/utils.hpp"
 #include "math/io.hpp"
 #include "math/ivec3.hpp"
 #include "math/mat3.hpp"
@@ -15,22 +16,14 @@
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
-
-#include "ge/Camera.hpp"
-#include "ge/CommandParams.hpp"
-#include "ge/Engine.hpp"
-#include "ge/MouseLookPlugin.hpp"
-#include "ge/Timer.hpp"
-
-#include "glt/primitives.hpp"
-
-#include "glt/Frame.hpp"
-#include "glt/color.hpp"
-#include "glt/utils.hpp"
-
-#include "glt/CubeMesh.hpp"
-
 #include "sys/measure.hpp"
+
+#include <algorithm>
+#include <bitset>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
+#include <memory>
 
 #ifdef HS_WORLD_GEN
 #include <voxel_hs.h>
@@ -118,6 +111,7 @@ renderScene(State *state, const RenderEv &ev);
 
 static bool
 readModel(const std::string &file, CubeMesh &mdl);
+
 static bool
 writeModel(const std::string &file, const CubeMesh &mdl);
 
@@ -127,7 +121,7 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points);
 static void
 incGamma(real *gamma,
          const ge::Event<ge::CommandEvent> & /*unused*/,
-         const Array<ge::CommandArg> &args)
+         ArrayView<const ge::CommandArg> args)
 {
     *gamma += real(args[0].number);
     if (*gamma < 0)
@@ -137,7 +131,7 @@ incGamma(real *gamma,
 static void
 runRecreateWorld(State *state,
                  const ge::Event<ge::CommandEvent> & /*unused*/,
-                 const Array<ge::CommandArg> & /*unused*/)
+                 const ArrayView<const ge::CommandArg> /*unused*/)
 {
     state->worldModel.freeGPU();
     time_op(initWorld(state, state->worldModel, state->sphere_points));

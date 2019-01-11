@@ -3,7 +3,7 @@
 
 #include "glt/conf.hpp"
 
-#include "data/Array.hpp"
+#include "data/ArrayView.hpp"
 #include "glt/TextureSampler.hpp"
 #include "math/mat2.hpp"
 #include "math/mat3.hpp"
@@ -58,7 +58,7 @@ private:
     void set(bool mandatory, const std::string &name, double value);
     void set(bool mandatory,
              const std::string &name,
-             const Array<float> &value);
+             ArrayView<const float> value);
     void set(bool mandatory,
              const std::string &name,
              const math::vec4_t &value);

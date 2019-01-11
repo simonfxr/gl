@@ -1,15 +1,11 @@
-#include <utility>
-#include <vector>
-
-#include "data/Array.hpp"
-
 #include "ge/Command.hpp"
+
 #include "ge/CommandParams.hpp"
 #include "ge/Engine.hpp"
 
-namespace ge {
+#include <utility>
 
-const Array<CommandArg> NULL_ARGS = ARRAY_INITIALIZER(CommandArg);
+namespace ge {
 
 Command::~Command() = default;
 
@@ -17,7 +13,7 @@ CommandEvent::CommandEvent(ge::Engine &e, CommandProcessor &proc)
   : EngineEvent(e), processor(proc)
 {}
 
-Command::Command(const Array<CommandParamType> &ps,
+Command::Command(std::vector<CommandParamType> ps,
                  const std::string &name,
                  std::string desc)
   : params(ps), namestr(name), descr(std::move(desc))
@@ -31,7 +27,7 @@ void
 Command::handle(const Event<CommandEvent> &ev)
 {
     if (params.size() == 0 || params[params.size() - 1] == ListParam) {
-        interactive(ev, NULL_ARGS);
+        interactive(ev, {});
     } else {
         ERR("cannot execute command without arguments: " + name());
     }
@@ -124,11 +120,10 @@ QuotationCommand::~QuotationCommand() = default;
 
 void
 QuotationCommand::interactive(const Event<CommandEvent> &ev,
-                              const Array<CommandArg> & /*unused*/)
+                              ArrayView<const CommandArg> /*unused*/)
 {
-    for (const auto &arg_vec : *quotation) {
-        OwnedArray<CommandArg> args(arg_vec.size(), &arg_vec[0]);
-        ev.info.engine.commandProcessor().exec(args);
+    for (auto &args : *quotation) {
+        ev.info.engine.commandProcessor().exec(view_array(args));
     }
 }
 
@@ -145,12 +140,12 @@ public:
     {}
 
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> & /*unused*/) override;
+                     ArrayView<const CommandArg> /*unused*/) override;
 };
 
 void
 SimpleCommand::interactive(const Event<CommandEvent> &e,
-                           const Array<CommandArg> & /*unused*/)
+                           ArrayView<const CommandArg> /*unused*/)
 {
     handler(e);
 }
@@ -167,26 +162,26 @@ struct TypedCommand : public Command
 {
     ListCommandHandler handler;
     TypedCommand(ListCommandHandler hndlr,
-                 const Array<CommandParamType> &params,
+                 std::vector<CommandParamType> params,
                  const std::string &name,
                  const std::string &desc)
       : Command(params, name, desc), handler(hndlr)
     {}
 
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args) override;
+                     ArrayView<const CommandArg> args) override;
 };
 
 void
 TypedCommand::interactive(const Event<CommandEvent> &e,
-                          const Array<CommandArg> &args)
+                          ArrayView<const CommandArg> args)
 {
     handler(e, args);
 }
 
 CommandPtr
 makeCommand(ListCommandHandler handler,
-            const Array<CommandParamType> &params,
+            std::vector<CommandParamType> params,
             const std::string &name,
             const std::string &desc)
 {
@@ -207,12 +202,12 @@ public:
         // std::cerr << "list command: " << parameters().size_t() << std::endl;
     }
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args) override;
+                     ArrayView<const CommandArg> args) override;
 };
 
 void
 StringListCommand::interactive(const Event<CommandEvent> &e,
-                               const Array<CommandArg> &args)
+                               ArrayView<const CommandArg> args)
 {
     for (const auto &arg : args) {
         if (arg.type() != String) {
@@ -243,12 +238,12 @@ public:
       : Command(LIST_PARAMS, name, desc), handler(hndlr)
     {}
     void interactive(const Event<CommandEvent> &e,
-                     const Array<CommandArg> &args) override;
+                     ArrayView<const CommandArg> args) override;
 };
 
 void
 ListCommand::interactive(const Event<CommandEvent> &e,
-                         const Array<CommandArg> &args)
+                         ArrayView<const CommandArg> args)
 {
     handler(e, args);
 }

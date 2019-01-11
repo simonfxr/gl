@@ -178,8 +178,7 @@ KeyHandler::handleCommands()
 
         //        std::cerr << "executing command: " << self->frame_id << " " <<
         //        it->second->name() << std::endl;
-        self->processor.exec(it->second,
-                             const_cast<Array<CommandArg> &>(NULL_ARGS));
+        self->processor.exec(it->second, {});
 
     next:;
     }

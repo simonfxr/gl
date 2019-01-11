@@ -173,7 +173,7 @@ struct Anim
     void keyPressed(const Event<KeyPressed> & /*e*/);
 
     void setDataDir(const Event<CommandEvent> & /*unused*/,
-                    const Array<CommandArg> &args);
+                    ArrayView<const CommandArg> args);
 
     void onWindowResized(const Event<WindowResized> & /*ev*/);
 };
@@ -441,7 +441,7 @@ Anim::renderScene(const Event<RenderEvent> &e)
     ASSERT(glow_pass1);
     glow_pass1->use();
 
-    Array<float> kernel = { glow_kernel.size(), &glow_kernel[0] };
+    ArrayView<const float> kernel = { glow_kernel.size(), &glow_kernel[0] };
     for (int pass = 0; pass < 3; ++pass) {
         engine.renderManager().setActiveRenderTarget(to.get());
         from->sampler().bind(0);
@@ -710,7 +710,7 @@ Anim::keyPressed(const Event<KeyPressed> &e)
 
 void
 Anim::setDataDir(const Event<CommandEvent> & /*unused*/,
-                 const Array<CommandArg> &args)
+                 ArrayView<const CommandArg> args)
 {
     data_dir = args[0].string;
 

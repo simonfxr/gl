@@ -1,6 +1,5 @@
 #include "glt/Mesh.hpp"
 
-#include "data/Array.hpp"
 #include "data/range.hpp"
 #include "glt/utils.hpp"
 

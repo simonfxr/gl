@@ -3,7 +3,6 @@
 
 #include "ge/Command.hpp"
 #include "ge/CommandArgs.hpp"
-
 #include "sys/io/Stream.hpp"
 
 #include <map>
@@ -40,17 +39,15 @@ public:
                 const CommandPtr &comm,
                 bool unique = false);
 
-    bool exec(std::string_view comname, Array<CommandArg> &args);
+    bool exec(std::string_view comname, ArrayView<CommandArg> args);
 
     bool exec(CommandPtr &com,
-              Array<CommandArg> &args,
+              ArrayView<CommandArg> args,
               std::string_view comname = "");
 
-    bool exec(Array<CommandArg> &args);
+    bool exec(ArrayView<CommandArg> args);
 
-    bool execCommand(std::vector<CommandArg> &args);
-
-    bool execCommand(Array<CommandArg> &args);
+    bool execCommand(ArrayView<CommandArg> args);
 
     bool loadStream(sys::io::InStream &inp, std::string_view inp_name);
 
