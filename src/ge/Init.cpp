@@ -65,59 +65,29 @@ initMemInfo(RunLevel lvl, EngineInitializers &inits)
     });
 }
 
-static void
-runInitShaderVersion(const Event<InitEvent> &e)
-{
-    e.info.success = true;
-    auto c = e.info.engine.window().contextInfo();
-    auto prof = c.coreProfile ? glt::ShaderProfile::Core
-                              : glt::ShaderProfile::Compatibility;
-
-    auto vers =
-      glt::ShaderManager::glToShaderVersion(c.majorVersion, c.minorVersion);
-    e.info.engine.shaderManager().setShaderVersion(vers, prof);
-}
-
 void
 initShaderVersion(RunLevel lvl, EngineInitializers &inits)
 {
-    inits.reg(lvl, runInitShaderVersion);
-}
+    inits.reg(lvl, [](const Event<InitEvent> &e) {
+        e.info.success = true;
+        auto c = e.info.engine.window().contextInfo();
+        auto prof = c.coreProfile ? glt::ShaderProfile::Core
+                                  : glt::ShaderProfile::Compatibility;
 
-static void
-runInitCommands(const Event<InitEvent> &e)
-{
-    e.info.success = true;
-    CommandProcessor &r = e.info.engine.commandProcessor();
-    const Commands &cs = commands();
-
-    r.define(cs.printContextInfo);
-    r.define(cs.printMemInfo);
-    r.define(cs.reloadShaders);
-    r.define(cs.listCachedShaders);
-    r.define(cs.listBindings);
-    r.define(cs.bindKey);
-    r.define(cs.help);
-    r.define(cs.bindShader);
-    r.define(cs.initGLDebug);
-    r.define(cs.ignoreGLDebugMessage);
-    r.define(cs.describe);
-    r.define(cs.eval);
-    r.define(cs.load);
-    r.define(cs.addShaderPath);
-    r.define(cs.prependShaderPath);
-    r.define(cs.removeShaderPath);
-    r.define(cs.togglePause);
-    r.define(cs.perspectiveProjection);
-    r.define(cs.postInit);
-    r.define(cs.startReplServer);
-    r.define(cs.printGLInstanceStats);
+        auto vers =
+          glt::ShaderManager::glToShaderVersion(c.majorVersion, c.minorVersion);
+        e.info.engine.shaderManager().setShaderVersion(vers, prof);
+    });
 }
 
 void
 initCommands(RunLevel lvl, EngineInitializers &inits)
 {
-    inits.reg(lvl, runInitCommands);
+    inits.reg(lvl, [](const Event<InitEvent> &ev) {
+        ev.info.success = true;
+        CommandProcessor &r = ev.info.engine.commandProcessor();
+        registerCommands(r);
+    });
 }
 
 } // namespace ge

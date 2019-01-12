@@ -33,11 +33,9 @@ public:
 
     CommandPtr command(std::string_view comname);
 
-    bool define(const CommandPtr &comm, bool unique = false);
+    bool define(CommandPtr comm, bool unique = false);
 
-    bool define(std::string_view comname,
-                const CommandPtr &comm,
-                bool unique = false);
+    bool define(std::string_view comname, CommandPtr comm, bool unique = false);
 
     bool exec(std::string_view comname, ArrayView<CommandArg> args);
 

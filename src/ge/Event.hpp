@@ -48,8 +48,25 @@ struct functor_traits_impl<Ret (Functor::*)(Args...) const>
     };
 };
 
+template<typename Ret, typename... Args>
+struct functor_traits_impl<Ret (*)(Args...)>
+{
+    static inline constexpr size_t arity = sizeof...(Args);
+    using result_type = Ret;
+
+    template<size_t N>
+    struct arg_type
+    {
+        using type = std::tuple_element_t<N, std::tuple<Args...>>;
+    };
+};
+
 template<typename F>
 struct functor_traits : functor_traits_impl<decltype(&F::operator())>
+{};
+
+template<typename Ret, typename... Args>
+struct functor_traits<Ret (*)(Args...)> : functor_traits_impl<Ret (*)(Args...)>
 {};
 
 template<typename F, size_t i>
@@ -75,13 +92,6 @@ makeEventHandler(F f)
       std::make_shared<FunctorEventHandler<F, T>>(std::move(f)));
 }
 
-template<typename T>
-auto
-makeEventHandler(void (*handler)(const Event<T> &))
-{
-    return makeEventHandler([h = handler](const Event<T> &ev) { h(ev); });
-}
-
 template<typename T, typename E>
 auto
 makeEventHandler(T &o, void (T::*m)(const Event<E> &))
@@ -104,12 +114,11 @@ struct EventSource
     bool unreg(const std::shared_ptr<EventHandler<T>> &handler);
     void clear();
 
-    std::vector<std::shared_ptr<EventHandler<T>>> handlers;
-
     EventSource() = default;
-
     EventSource(const EventSource<T> &) = delete;
     EventSource<T> &operator=(const EventSource<T> &) = delete;
+
+    std::vector<std::shared_ptr<EventHandler<T>>> handlers;
 };
 
 template<typename T>

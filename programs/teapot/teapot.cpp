@@ -23,7 +23,6 @@
 #include "glt/primitives.hpp"
 #include "glt/utils.hpp"
 #include "math/glvec.hpp"
-#include "math/io.hpp"
 #include "math/mat2.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"

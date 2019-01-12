@@ -237,9 +237,9 @@ DEF_PRINTF_WRITER(long, "ld", 32)
 DEF_PRINTF_WRITER(unsigned long, "lu", 32)
 DEF_PRINTF_WRITER(long long, "lld", 32)
 DEF_PRINTF_WRITER(unsigned long long, "llu", 32)
-DEF_PRINTF_WRITER(float, "f", 16)
-DEF_PRINTF_WRITER(double, "lf", 32)
-DEF_PRINTF_WRITER(long double, "Lf", 32)
+DEF_PRINTF_WRITER(float, ".4g", 16)
+DEF_PRINTF_WRITER(double, ".6lg", 32)
+DEF_PRINTF_WRITER(long double, ".6Lg", 32)
 
 NullStream::NullStream()
 {

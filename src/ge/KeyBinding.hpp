@@ -4,6 +4,7 @@
 #include "data/Comparable.hpp"
 #include "ge/conf.hpp"
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -166,10 +167,10 @@ compare(const Key &a, const Key &b)
 using KeyBinding = std::vector<Key>;
 
 GE_API const char *
-prettyKeyCode(KeyCode code);
+to_string(KeyCode code);
 
-GE_API bool
-parseKeyCode(const std::string &str, KeyCode *code);
+GE_API HU_NODISCARD std::optional<KeyCode>
+parseKeyCode(const std::string &str);
 
 GE_API int
 compareKeyBinding(const KeyBinding &x, const KeyBinding &y);

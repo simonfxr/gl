@@ -48,15 +48,13 @@ CommandProcessor::command(std::string_view comname)
 }
 
 bool
-CommandProcessor::define(const CommandPtr &comm, bool unique)
+CommandProcessor::define(CommandPtr comm, bool unique)
 {
-    return define(comm->name(), comm, unique);
+    return define(comm->name(), std::move(comm), unique);
 }
 
 bool
-CommandProcessor::define(std::string_view comname,
-                         const CommandPtr &comm,
-                         bool unique)
+CommandProcessor::define(std::string_view comname, CommandPtr comm, bool unique)
 {
     if (!comm) {
         ERR(engine().out(), string_concat(comname, ": null command"));
@@ -76,9 +74,9 @@ CommandProcessor::define(std::string_view comname,
     }
 
     if (dup)
-        it->second = comm;
+        it->second = std::move(comm);
     else
-        commands[std::string(comname)] = comm;
+        commands[std::string(comname)] = std::move(comm);
     return dup;
 }
 

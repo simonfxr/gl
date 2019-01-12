@@ -166,7 +166,9 @@ parseKeycombo(ParseState &s, CommandArg &tok)
             return Fail;
         }
 
-        if (!parseKeyCode(sym, &k.code)) {
+        if (auto opt_kcode = parseKeyCode(sym)) {
+            k.code = *opt_kcode;
+        } else {
             PARSE_ERROR(s, "invalid key-symbol: " + sym);
             return Fail;
         }

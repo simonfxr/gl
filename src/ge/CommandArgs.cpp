@@ -258,7 +258,7 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
         if (pre != 0)
             *self->current_out << pre;
 
-        const char *sym = prettyKeyCode(k.code);
+        auto sym = to_string(k.code);
         if (sym == nullptr)
             *self->current_out << "<unknown key code: " << k.code << ">";
         else

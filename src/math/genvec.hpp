@@ -378,6 +378,21 @@ equal(const genvec<T, N> &a, const genvec<T, N> &b, const U &epsi)
     return true;
 }
 
+template<typename OStream, typename T, size_t N>
+OStream &
+operator<<(OStream &out, const genvec<T, N> &v)
+{
+    out << "vec" << N << "[";
+    bool sep = false;
+    for (const auto &x : v) {
+        if (sep)
+            out << ",";
+        out << x;
+        sep = true;
+    }
+    return out << "]";
+}
+
 struct glvec2;
 
 template<>
@@ -424,6 +439,7 @@ get(math::genvec<T, N> &v)
     static_assert(I < N);
     return v[I];
 }
+
 } // namespace std
 
 #endif

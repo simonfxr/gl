@@ -513,6 +513,27 @@ coordinateSystem(const genvec<T, 3> &a)
     return mat3(a, b, cross(a, b));
 }
 
+template<typename OStream, typename T, size_t N>
+OStream &
+operator<<(OStream &out, const genmat<T, N> &A)
+{
+    out << "mat" << N << "[";
+    bool sep = false;
+    for (size_t i = 0; i < N; ++i) {
+        if (sep)
+            out << "; ";
+        sep = true;
+        bool esep = false;
+        for (size_t j = 0; j < N; ++j) {
+            if (esep)
+                out << " ";
+            esep = true;
+            out << A[j][i];
+        }
+    }
+    return out << "]";
+}
+
 struct glmat2;
 
 template<>

@@ -401,118 +401,89 @@ runStartReplServer(const Event<CommandEvent> &ev,
 
 } // namespace
 
-Commands::Commands()
-  : printContextInfo(
+void
+registerCommands(CommandProcessor &proc)
+{
+    proc.define(
       makeCommand(runPrintContextInfo,
                   "printContextInfo",
-                  "prints information about the current OpenGL context"))
-  ,
+                  "prints information about the current OpenGL context"));
 
-  printMemInfo(makeCommand(runPrintMemInfo,
-                           "printMemInfo",
-                           "prints information about current (approximatly) "
-                           "amout of free memory on the GPU"))
-  ,
+    proc.define(makeCommand(runPrintMemInfo,
+                            "printMemInfo",
+                            "prints information about current (approximatly) "
+                            "amout of free memory on the GPU"));
 
-  reloadShaders(makeStringListCommand(runReloadShaders,
-                                      "reloadShaders",
-                                      "reload ShaderPrograms"))
-  ,
+    proc.define(makeStringListCommand(
+      runReloadShaders, "reloadShaders", "reload ShaderPrograms"));
 
-  listCachedShaders(makeCommand(runListCachedShaders,
-                                "listCachedShaders",
-                                "list all shader cache entries"))
-  ,
+    proc.define(makeCommand(runListCachedShaders,
+                            "listCachedShaders",
+                            "list all shader cache entries"));
 
-  listBindings(
-    makeCommand(runListBindings, "listBindings", "list all key bindings"))
-  ,
+    proc.define(
+      makeCommand(runListBindings, "listBindings", "list all key bindings"));
 
-  bindKey(new BindKey)
-  ,
+    proc.define(std::make_shared<BindKey>());
 
-  help(makeCommand(runHelp, "help", "help and command overview"))
-  ,
+    proc.define(makeCommand(runHelp, "help", "help and command overview"));
 
-  bindShader(
-    makeListCommand(runBindShader,
-                    "bindShader",
-                    "compile and linke a ShaderProgram and give it a name"))
-  ,
+    proc.define(
+      makeListCommand(runBindShader,
+                      "bindShader",
+                      "compile and linke a ShaderProgram and give it a name"));
 
-  initGLDebug(makeCommand(runInitGLDebug,
-                          "initGLDebug",
-                          "initialize OpenGL debug output"))
-  ,
+    proc.define(makeCommand(
+      runInitGLDebug, "initGLDebug", "initialize OpenGL debug output"));
 
-  ignoreGLDebugMessage(makeCommand(runIgnoreGLDebugMessage,
-                                   STR_INT_PARAMS,
-                                   "ignoreGLDebugMessage",
-                                   "for opengl vendor <vendor> add the message "
-                                   "<id> to the list of ignored messages"))
-  ,
+    proc.define(makeCommand(runIgnoreGLDebugMessage,
+                            STR_INT_PARAMS,
+                            "ignoreGLDebugMessage",
+                            "for opengl vendor <vendor> add the message "
+                            "<id> to the list of ignored messages"));
 
-  describe(makeListCommand(runDescribe,
-                           "describe",
-                           "print a description of its parameters"))
-  ,
+    proc.define(makeListCommand(
+      runDescribe, "describe", "print a description of its parameters"));
 
-  eval(makeStringListCommand(runEval, "eval", "parse a string and execute it"))
-  ,
+    proc.define(
+      makeStringListCommand(runEval, "eval", "parse a string and execute it"));
 
-  load(makeStringListCommand(runLoad, "load", "execute a script file"))
-  ,
+    proc.define(
+      makeStringListCommand(runLoad, "load", "execute a script file"));
 
-  addShaderPath(makeStringListCommand(runAddShaderPath,
-                                      "addShaderPath",
-                                      "add directories to the shader path"))
-  ,
+    proc.define(makeStringListCommand(
+      runAddShaderPath, "addShaderPath", "add directories to the shader path"));
 
-  prependShaderPath(
-    makeStringListCommand(runPrependShaderPath,
-                          "prependShaderPath",
-                          "add directories to the front of the shader path"))
-  ,
+    proc.define(
+      makeStringListCommand(runPrependShaderPath,
+                            "prependShaderPath",
+                            "add directories to the front of the shader path"));
 
-  removeShaderPath(
-    makeStringListCommand(runRemoveShaderPath,
-                          "removeShaderPath",
-                          "remove directories from the shader path"))
-  ,
+    proc.define(
+      makeStringListCommand(runRemoveShaderPath,
+                            "removeShaderPath",
+                            "remove directories from the shader path"));
 
-  togglePause(
-    makeCommand(runTogglePause, "togglePause", "toggle the pause state"))
-  ,
+    proc.define(
+      makeCommand(runTogglePause, "togglePause", "toggle the pause state"));
 
-  perspectiveProjection(new PerspectiveProjection)
-  ,
+    proc.define(std::make_shared<PerspectiveProjection>());
 
-  postInit(makeCommand(runPostInit,
-                       COM_PARAMS,
-                       "postInit",
-                       "execute its argument command in the postInit hook"))
-  ,
+    proc.define(
+      makeCommand(runPostInit,
+                  COM_PARAMS,
+                  "postInit",
+                  "execute its argument command in the postInit hook"));
 
-  startReplServer(makeCommand(runStartReplServer,
-                              INT_PARAMS,
-                              "startReplServer",
-                              "start a REPL server on the given port"))
-  ,
+    proc.define(makeCommand(runStartReplServer,
+                            INT_PARAMS,
+                            "startReplServer",
+                            "start a REPL server on the given port"));
 
-  printGLInstanceStats(
-    makeCommand(runPrintGLInstanceStats,
-                "printGLInstanceStats",
-                "print number of the allocated opengl object per type"))
-
-{}
-
-const Commands &
-commands()
-{
-    BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
-    static Commands commands;
-    END_NO_WARN_GLOBAL_DESTRUCTOR
-    return commands;
+    proc.define(
+      makeCommand(runPrintGLInstanceStats,
+                  "printGLInstanceStats",
+                  "print number of the allocated opengl object per type"));
 }
 
 } // namespace ge

@@ -4,7 +4,7 @@
     const std::vector<CommandParamType> name = { __VA_ARGS__ }
 
 namespace ge {
-
+BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
 DEFINE_PARAM_ARRAY(NULL_PARAMS);
 
 DEFINE_PARAM_ARRAY(KEY_COM_PARAMS, KeyComboParam, CommandParam);
@@ -22,5 +22,5 @@ DEFINE_PARAM_ARRAY(INT_PARAMS, IntegerParam);
 DEFINE_PARAM_ARRAY(STR_PARAMS, StringParam);
 
 DEFINE_PARAM_ARRAY(STR_INT_PARAMS, StringParam, IntegerParam);
-
+END_NO_WARN_GLOBAL_DESTRUCTOR
 } // namespace ge

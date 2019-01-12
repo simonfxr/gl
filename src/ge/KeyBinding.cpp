@@ -142,7 +142,7 @@ keycodeStrings(KeyCode code)
 
         K(Count); ///< Keep last -- the total number of keyboard keys
     }
-    return "<unknown-key>";
+    return nullptr;
 #undef K
 }
 
@@ -156,21 +156,22 @@ KeyBindingState::Data::Data()
             revtable[table[i]] = KeyCode(i);
 }
 
-bool
-parseKeyCode(const std::string &str, KeyCode *code)
+std::optional<KeyCode>
+parseKeyCode(const std::string &str)
 {
     auto it = global.revtable.find(str);
-    if (it != global.revtable.end()) {
-        *code = it->second;
-        return true;
-    }
-    return false;
+    if (it != global.revtable.end())
+        return { it->second };
+    return std::nullopt;
 }
 
 const char *
-prettyKeyCode(KeyCode code)
+to_string(KeyCode code)
 {
-    return global.table[code];
+    int idx = int(code);
+    if (idx < 0 || idx >= KeyCode::Count)
+        return nullptr;
+    return global.table[idx];
 }
 
 int
