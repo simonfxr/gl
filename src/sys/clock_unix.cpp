@@ -30,14 +30,14 @@ getTime()
 } // namespace
 
 double
-queryTimer()
+queryTimer() noexcept
 {
     static const double T0 = getTime();
     return getTime() - T0;
 }
 
 void
-sleep(double secs)
+sleep(double secs) noexcept
 {
     timespec tv{}, rmtv{};
     tv.tv_sec = time_t(secs);

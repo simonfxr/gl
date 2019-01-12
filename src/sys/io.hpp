@@ -36,11 +36,19 @@ using SocketMode = uint32_t;
 
 inline constexpr SocketMode SM_NONBLOCKING = 1;
 
-SYS_API const IPAddr4
-IPA_ANY();
+struct SYS_API IPAddr4
+{
+    uint32_t addr4{}; // bigendian/network byte order
+    constexpr IPAddr4() = default;
+    constexpr IPAddr4(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
+      : addr4(hton((uint32_t(a) << 24) | (uint32_t(b) << 16) |
+                   (uint32_t(c) << 8) | uint32_t(d)))
+    {}
+    explicit constexpr IPAddr4(uint32_t addr) : addr4(addr) {}
+};
 
-SYS_API const IPAddr4
-IPA_LOCAL();
+inline constexpr IPAddr4 IPA_ANY = { 0, 0, 0, 0 };
+inline constexpr IPAddr4 IPA_LOCAL = { 127, 0, 0, 1 };
 
 DEF_ENUM_CLASS(SYS_API,
                HandleError,
@@ -52,40 +60,28 @@ DEF_ENUM_CLASS(SYS_API,
                INVALID_PARAM,
                UNKNOWN)
 
-struct SYS_API IPAddr4
-{
-    uint32_t addr4; // bigendian/network byte order
-    constexpr IPAddr4() : addr4(0) {}
-    constexpr IPAddr4(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
-      : addr4(hton((uint32_t(a) << 24) | (uint32_t(b) << 16) |
-                   (uint32_t(c) << 8) | uint32_t(d)))
-    {}
-
-    explicit constexpr IPAddr4(uint32_t addr) : addr4(addr) {}
-};
-
-SYS_API Handle
+SYS_API HU_NODISCARD Handle
 stdin_handle();
 
-SYS_API Handle
+SYS_API HU_NODISCARD Handle
 stdout_handle();
 
-SYS_API Handle
+SYS_API HU_NODISCARD Handle
 stderr_handle();
 
-SYS_API std::optional<Handle>
+SYS_API HU_NODISCARD std::optional<Handle>
 open(std::string_view, HandleMode, HandleError &);
 
-SYS_API HandleMode
+SYS_API HU_NODISCARD HandleMode
 mode(Handle &);
 
-SYS_API HandleError
+SYS_API HU_NODISCARD HandleError
 elevate(Handle &, HandleMode);
 
-SYS_API HandleError
+SYS_API HU_NODISCARD HandleError
 read(Handle &, size_t &, char *);
 
-SYS_API HandleError
+SYS_API HU_NODISCARD HandleError
 write(Handle &, size_t &, const char *);
 
 SYS_API HandleError
@@ -101,28 +97,97 @@ DEF_ENUM_CLASS(SYS_API,
                INVALID_PARAM,
                UNKNOWN)
 
-SYS_API std::optional<Socket>
+SYS_API HU_NODISCARD std::optional<Socket>
 listen(SocketProto, const IPAddr4 &, uint16_t, SocketMode, SocketError &);
 
-SYS_API std::optional<Handle>
+SYS_API HU_NODISCARD std::optional<Handle>
 accept(Socket &, SocketError &);
 
 SYS_API SocketError
 close(Socket &);
 
-} // namespace io
-} // namespace sys
-
 #if HU_OS_POSIX_P
-#include "sys/io/io_unix.hpp"
+struct OSHandle
+{
+    int fd = -1;
+    static inline constexpr OSHandle nil() { return {}; }
+    inline constexpr bool is_nil() const { return fd == -1; }
+};
+struct OSSocket
+{
+    int fd = -1;
+    static inline constexpr OSSocket nil() { return {}; }
+    inline constexpr bool is_nil() const { return fd == -1; }
+};
 #elif HU_OS_WINDOWS_P
-#include "sys/io/io_windows.hpp"
+struct OSHandle
+{
+    void *handle{};
+    bool is_socket{};
+    static inline constexpr OSHandle nil() { return {}; }
+    inline constexpr bool is_nil() const { return !handle; }
+};
+struct OSSocket
+{
+    void *handle{};
+    static inline constexpr OSSocket nil() { return {}; }
+    inline constexpr bool is_nil() const { return !handle; }
+};
 #else
-#error "no IO implementation available"
+#error "OS not supported"
 #endif
 
-namespace sys {
-namespace io {
+struct Handle
+{
+    HandleMode _mode{};
+    OSHandle _os{};
+
+    constexpr Handle() = default;
+    Handle(const Handle &) = delete;
+    Handle(Handle &&h) { *this = std::move(h); }
+
+    ~Handle()
+    {
+        if (*this)
+            close(*this);
+    }
+
+    Handle &operator=(const Handle &) = delete;
+
+    Handle &operator=(Handle &&h)
+    {
+        _mode = std::exchange(h._mode, 0);
+        _os = std::exchange(h._os, OSHandle::nil());
+        return *this;
+    }
+
+    constexpr explicit operator bool() const { return !_os.is_nil(); }
+};
+
+struct Socket
+{
+    OSSocket _os;
+
+    constexpr Socket() = default;
+    Socket(const Socket &) = delete;
+    Socket(Socket &&s) { *this = std::move(s); }
+
+    ~Socket()
+    {
+        if (*this)
+            close(*this);
+    }
+
+    Socket &operator=(const Socket &) = delete;
+
+    Socket &operator=(Socket &&s)
+    {
+        _os = std::exchange(s._os, OSSocket::nil());
+        return *this;
+    }
+
+    constexpr explicit operator bool() const { return !_os.is_nil(); }
+};
 
 struct SYS_API HandleStream : public IOStream
 {
@@ -159,12 +224,12 @@ protected:
     StreamResult flush_buffer();
 };
 
-SYS_API std::pair<std::unique_ptr<char[]>, size_t>
+SYS_API HU_NODISCARD std::pair<std::unique_ptr<char[]>, size_t>
 readFile(sys::io::OutStream &errout,
          std::string_view path,
          HandleError &err) noexcept;
 
-inline std::pair<std::unique_ptr<char[]>, size_t>
+HU_NODISCARD inline std::pair<std::unique_ptr<char[]>, size_t>
 readFile(sys::io::OutStream &errout, std::string_view path) noexcept
 {
     HandleError err;

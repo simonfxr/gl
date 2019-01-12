@@ -35,14 +35,14 @@ struct Clock
 } // namespace
 
 double
-queryTimer()
+queryTimer() noexcept
 {
     static const Clock clock;
     return getTime(clock.INVERSE_FREQ) - clock.T0;
 }
 
 void
-sleep(double secs)
+sleep(double secs) noexcept
 {
     DWORD millis = DWORD(secs * 1000);
     double wakeup = queryTimer() + secs;

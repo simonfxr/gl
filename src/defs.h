@@ -41,8 +41,6 @@
 
 #define ARRAY_LENGTH(x) ::size_t(sizeof(x) / sizeof *(x))
 
-#define UNUSED(x) ((void) (x))
-
 #ifdef DEBUG
 #define ON_DEBUG(x)                                                            \
     do {                                                                       \
@@ -77,6 +75,23 @@
 #define AS_STRING_AUX5(a) AS_STRING_AUX6(a)
 #define AS_STRING_AUX6(a) AS_STRING_AUX7(a)
 #define AS_STRING_AUX7(a) #a
+
+#define UNUSED(x) ((void) (x))
+
+#if HU_COMP_CLANG_P
+#define IGNORE_RESULT(x) ((void) (x))
+#else
+#define IGNORE_RESULT_(id, x)                                                  \
+    do {                                                                       \
+        auto CONCAT(ignored_, id) = (x);                                       \
+        UNUSED(CONCAT(ignored_, id));                                          \
+    } while (0)
+#ifdef __COUNTER__
+#define IGNORE_RESULT(x) IGNORE_RESULT_(__COUNTER__, x)
+#else
+#define IGNORE_RESULT(x) IGNORE_RESULT_(__LINE__, x)
+#endif
+#endif
 
 #if 0
 typedef unsigned char uint8_t;

@@ -5,11 +5,11 @@
 
 namespace sys {
 
-SYS_API double
-queryTimer();
+SYS_API HU_NODISCARD double
+queryTimer() noexcept;
 
 SYS_API void
-sleep(double secs);
+sleep(double secs) noexcept;
 
 } // namespace sys
 

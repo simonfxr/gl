@@ -14,7 +14,6 @@
 #undef EOF
 
 namespace sys {
-
 namespace io {
 
 struct OutStream;
@@ -22,13 +21,13 @@ struct InStream;
 struct StreamEndl;
 struct IOStream;
 
-SYS_API InStream &
+SYS_API HU_NODISCARD InStream &
 stdin();
 
-SYS_API OutStream &
+SYS_API HU_NODISCARD OutStream &
 stdout();
 
-SYS_API OutStream &
+SYS_API HU_NODISCARD OutStream &
 stderr();
 
 extern SYS_API const StreamEndl endl;
@@ -236,7 +235,5 @@ operator<<(OutStream &out, const T &x)
 }
 
 } // namespace io
-
 } // namespace sys
-
 #endif

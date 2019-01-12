@@ -35,8 +35,8 @@ main()
     sys::moduleInit();
 
     io::SocketError sockerr;
-    auto opt_server = io::listen(
-      io::SP_TCP, io::IPA_LOCAL(), 1337, io::SM_NONBLOCKING, sockerr);
+    auto opt_server =
+      io::listen(io::SP_TCP, io::IPA_LOCAL, 1337, io::SM_NONBLOCKING, sockerr);
     if (!opt_server) {
         ERR("failed to start server");
         return 1;
@@ -55,8 +55,9 @@ main()
             c.stream->handle = std::move(opt_handle).value();
             c.id = id++;
             sys::io::stdout() << "accepted client " << c.id << sys::io::endl;
-            io::elevate(c.stream->handle,
-                        io::mode(c.stream->handle) | io::HM_NONBLOCKING);
+            IGNORE_RESULT(
+              io::elevate(c.stream->handle,
+                          io::mode(c.stream->handle) | io::HM_NONBLOCKING));
             clients.emplace_back();
         }
 

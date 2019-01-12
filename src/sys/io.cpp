@@ -36,18 +36,6 @@ convertErr(HandleError err)
 
 IO::IO() : ipa_any(0), ipa_local(127, 0, 0, 1) {}
 
-const IPAddr4
-IPA_ANY()
-{
-    return module->io.ipa_any;
-}
-
-const IPAddr4
-IPA_LOCAL()
-{
-    return module->io.ipa_local;
-}
-
 HandleStream::HandleStream(Handle h)
   : handle(std::move(h)), read_cursor(0), write_cursor(0)
 {}
@@ -57,12 +45,34 @@ HandleStream::~HandleStream()
     close();
 }
 
+namespace {
+StreamResult
+toStreamResult(HandleError e)
+{
+    switch (e) {
+    case HandleError::OK:
+        return StreamResult::OK;
+    case HandleError::EOF:
+        return StreamResult::EOF;
+    case HandleError::BLOCKED:
+        return StreamResult::Blocked;
+    case HandleError::BAD_HANDLE:
+        return StreamResult::Closed;
+    case HandleError::INVALID_PARAM:
+        [[fallthrough]];
+    case HandleError::UNKNOWN:
+        return StreamResult::Error;
+    }
+    CASE_UNREACHABLE;
+}
+} // namespace
+
 StreamResult
 HandleStream::basic_close()
 {
-    StreamResult ret = basic_flush();
-    sys::io::close(handle);
-    return ret;
+    StreamResult ret1 = basic_flush();
+    auto ret2 = sys::io::close(handle);
+    return ret1 == StreamResult::OK ? toStreamResult(ret2) : ret1;
 }
 
 StreamResult

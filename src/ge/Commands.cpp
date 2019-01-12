@@ -389,7 +389,7 @@ runStartReplServer(const Event<CommandEvent> &ev,
         return;
     }
 
-    if (!serv.start(sys::io::IPA_LOCAL(), p16)) {
+    if (!serv.start(sys::io::IPA_LOCAL, p16)) {
         ERR(ev.info.engine.out(), "failed to start REPL server");
         return;
     }

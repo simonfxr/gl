@@ -3,35 +3,30 @@
 
 #include "sys/conf.hpp"
 
-#include <optional>
-#include <string>
-#include <string_view>
-#include <vector>
-
-#ifdef HU_OS_POSIX
+#if HU_OS_POSIX_P
 #include "sys/fs/fs_unix.hpp"
-#elif defined(HU_OS_WINDOWS)
+#elif HU_OS_WINDOWS_P
 #include "sys/fs/fs_windows.hpp"
 #else
 #error "no Filesystem implementation available"
 #endif
 
+#include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
+
 namespace sys {
 namespace fs {
 
-// unix time stamp
 struct FileTime
 {
-    int64_t seconds;
+    int64_t seconds{};
 };
 
-namespace {
+inline constexpr FileTime MIN_FILE_TIME{};
 
-inline constexpr FileTime MIN_FILE_TIME = {};
-
-} // namespace
-
-enum ObjectType
+enum ObjectType : uint8_t
 {
     File,
     Directory
@@ -39,9 +34,9 @@ enum ObjectType
 
 struct Stat
 {
-    ObjectType type;
+    ObjectType type{};
     std::string absolute;
-    FileTime mtime;
+    FileTime mtime{};
 };
 
 SYS_API HU_NODISCARD bool
@@ -162,7 +157,7 @@ modificationTime(std::string_view path);
 } // namespace def
 
 template<typename... Args>
-inline std::string
+HU_NODISCARD inline std::string
 join(std::string_view path, Args &&... args)
 {
     const char *parts[] = { std::forward<Args>(args)... };

@@ -1,12 +1,12 @@
 #ifndef PP_MAP_H
 #define PP_MAP_H
 
-#if defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL
-#error                                                                         \
-  "Traditional MSVC Preprocessor not supported: use the /experimental:preprocessor compiler flag"
-#endif
-
 #include "pp/basic.h"
+
+#if defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL
+#include "pp/map_msvc.h"
+#else
+
 #include "pp/is_empty.h"
 
 /**
@@ -144,4 +144,5 @@
  */
 #define PP_REMOVE_TRAILING_COMMAS(...) PP_MAP(PP_PASS, PP_COMMA, __VA_ARGS__)
 
+#endif
 #endif

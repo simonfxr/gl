@@ -108,7 +108,7 @@ HandleError
 handleFromFD(int fd, Handle *h)
 {
     int flags;
-    h->_fd = fd;
+    h->_os.fd = fd;
     h->_mode = 0;
     RETRY_INTR(flags = fcntl(fd, F_GETFL));
     if (flags == -1)
@@ -167,7 +167,7 @@ open(std::string_view path, HandleMode mode, HandleError &err)
     }
     Handle h;
     h._mode = mode;
-    h._fd = fd;
+    h._os.fd = fd;
     err = HandleError::OK;
     return { std::move(h) };
 }
@@ -188,7 +188,7 @@ elevate(Handle &h, HandleMode mode)
         return HandleError::INVALID_PARAM;
 
     int ret;
-    RETRY_INTR(ret = fcntl(h._fd, F_SETFL, flags));
+    RETRY_INTR(ret = fcntl(h._os.fd, F_SETFL, flags));
     if (ret == -1)
         return convertErrno();
     h._mode = unconvertMode(flags);
@@ -201,7 +201,7 @@ read(Handle &h, size_t &s, char *buf)
     ASSERT(h);
     auto n = s;
     ssize_t k;
-    RETRY_INTR(k = ::read(h._fd, static_cast<void *>(buf), n));
+    RETRY_INTR(k = ::read(h._os.fd, static_cast<void *>(buf), n));
     if (k >= 0) {
         s = k;
         return k == 0 ? HandleError::EOF : HandleError::OK;
@@ -216,7 +216,7 @@ write(Handle &h, size_t &s, const char *buf)
     ASSERT(h);
     auto n = s;
     ssize_t k;
-    RETRY_INTR(k = ::write(h._fd, buf, n));
+    RETRY_INTR(k = ::write(h._os.fd, buf, n));
     if (k >= 0) {
         s = k;
         return HandleError::OK;
@@ -230,7 +230,7 @@ close(Handle &h)
 {
     ASSERT(h);
     int ret;
-    RETRY_INTR(ret = ::close(h._fd));
+    RETRY_INTR(ret = ::close(h._os.fd));
     if (ret == -1)
         return convertErrno();
     return HandleError::OK;
@@ -302,7 +302,7 @@ listen(SocketProto proto,
 
     {
         Socket s;
-        s._fd = sock;
+        s._os.fd = sock;
         err = SocketError::OK;
         return { std::move(s) };
     }
@@ -325,7 +325,7 @@ accept(Socket &s, SocketError &err)
     BEGIN_NO_WARN_DISABLED_MACRO_EXPANSION
     RETRY_INTR(
       c = accept4(
-        s._fd, reinterpret_cast<sockaddr *>(&client), &clen, SOCK_CLOEXEC));
+        s._os.fd, reinterpret_cast<sockaddr *>(&client), &clen, SOCK_CLOEXEC));
     END_NO_WARN_DISABLED_MACRO_EXPANSION
     if (c == -1) {
         err = convertErrnoSock();
@@ -340,7 +340,7 @@ accept(Socket &s, SocketError &err)
     {
         err = SocketError::OK;
         Handle h;
-        h._fd = c;
+        h._os.fd = c;
         h._mode = unconvertMode(flags);
         return { std::move(h) };
     }
@@ -356,7 +356,7 @@ close(Socket &s)
 {
     ASSERT(s);
     int ret;
-    RETRY_INTR(ret = ::close(s._fd));
+    RETRY_INTR(ret = ::close(s._os.fd));
     if (ret == -1)
         return convertErrnoSock();
     return SocketError::OK;

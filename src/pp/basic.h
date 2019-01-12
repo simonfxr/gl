@@ -1,15 +1,10 @@
 #ifndef PP_BASIC_H
 #define PP_BASIC_H
 
-#if defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL
-#error                                                                         \
-  "Traditional MSVC Preprocessor not supported: use the /experimental:preprocessor compiler flag"
-#endif
-
 #include "defs.h"
 
 /**
- * adopted from: https://github.com/18sg/uSHET/blob/master/lib/cpp_magic.h
+ * adapted from: https://github.com/18sg/uSHET/blob/master/lib/cpp_magic.h
  */
 
 #define PP_TOSTR0(x) #x
@@ -51,7 +46,8 @@
     id PP_EMPTY PP_EMPTY PP_EMPTY PP_EMPTY PP_EMPTY PP_EMPTY PP_EMPTY          \
     PP_EMPTY()()()()()()()()
 
-#define PP_CAT(a, ...) a##__VA_ARGS__
+#define PP_CAT0(a, ...) a##__VA_ARGS__
+#define PP_CAT(a, ...) PP_CAT0(a, __VA_ARGS__)
 #define PP_CAT3(a, b, ...) a##b##__VA_ARGS__
 
 #define PP_FIRST(a, ...) a
