@@ -155,7 +155,8 @@ struct Key : Comparable<Key>
     Key(KeyState st, KeyCode c) : state(st), code(c) {}
 };
 
-inline compare(const Key &a, const Key &b)
+inline int
+compare(const Key &a, const Key &b)
 {
     using ::compare;
     return chained_compare([&]() { return compare(a.state, b.state); },
