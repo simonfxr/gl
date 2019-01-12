@@ -612,10 +612,9 @@ Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3_t ecLight)
 void
 Anim::link(ge::Engine &e)
 {
-    e.events().animate.reg(ge::makeEventHandler(this, &Anim::animate));
-    e.events().render.reg(ge::makeEventHandler(this, &Anim::renderScene));
-    e.window().events().windowResized.reg(
-      ge::makeEventHandler(this, &Anim::handleWindowResized));
+    e.events().animate.reg(*this, &Anim::animate);
+    e.events().render.reg(*this, &Anim::renderScene);
+    e.window().events().windowResized.reg(*this, &Anim::handleWindowResized);
 }
 
 void
@@ -709,7 +708,7 @@ main(int argc, char *argv[])
 
     anim.engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
     opts.parse(&argc, &argv);
-    opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));
-    opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::initCL));
+    opts.inits.reg(ge::Init, anim, &Anim::init);
+    opts.inits.reg(ge::Init, anim, &Anim::initCL);
     return anim.engine.run(opts);
 }

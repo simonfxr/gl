@@ -20,59 +20,49 @@ EngineInitializers::EngineInitializers(bool default_init)
 
 void
 EngineInitializers::reg(RunLevel lvl,
-                        const std::shared_ptr<EventHandler<InitEvent>> &handler)
+                        std::shared_ptr<EventHandler<InitEvent>> handler)
 {
     switch (lvl) {
     case PreInit0:
-        preInit0.reg(handler);
+        preInit0.reg(std::move(handler));
         break;
     case PreInit1:
-        preInit1.reg(handler);
+        preInit1.reg(std::move(handler));
         break;
     case Init:
-        init.reg(handler);
+        init.reg(std::move(handler));
         break;
     case PostInit:
-        postInit.reg(handler);
+        postInit.reg(std::move(handler));
         break;
     }
-}
-
-static void
-runPreInitStats(std::shared_ptr<math::real> t0, const Event<InitEvent> &e)
-{
-    e.info.success = true;
-    *t0 = e.info.engine.now();
-}
-
-static void
-runPostInitStats(std::shared_ptr<math::real> t0, const Event<InitEvent> &e)
-{
-    e.info.success = true;
-    auto ms = uint32_t((e.info.engine.now() - *t0) * 1000);
-    e.info.engine.out() << "initialized in " << ms << " ms" << sys::io::endl;
 }
 
 void
 initInitStats(EngineInitializers &inits)
 {
     auto initT0 = std::make_shared<math::real>();
-    inits.reg(PreInit0, makeEventHandler(runPreInitStats, initT0));
-    inits.reg(PostInit, makeEventHandler(runPostInitStats, initT0));
-}
+    inits.reg(PreInit0, [=](const Event<InitEvent> &e) {
+        e.info.success = true;
+        *initT0 = e.info.engine.now();
+    });
 
-static void
-runInitMemInfo(const Event<InitEvent> &e)
-{
-    e.info.success = true;
-    glt::GLMemInfoATI::init();
-    glt::GLMemInfoNV::init();
+    inits.reg(PostInit, [=](const Event<InitEvent> &e) {
+        e.info.success = true;
+        auto ms = uint32_t((e.info.engine.now() - *initT0) * 1000);
+        e.info.engine.out()
+          << "initialized in " << ms << " ms" << sys::io::endl;
+    });
 }
 
 void
 initMemInfo(RunLevel lvl, EngineInitializers &inits)
 {
-    inits.reg(lvl, makeEventHandler(runInitMemInfo));
+    inits.reg(lvl, [](const Event<InitEvent> &e) {
+        e.info.success = true;
+        glt::GLMemInfoATI::init();
+        glt::GLMemInfoNV::init();
+    });
 }
 
 static void
@@ -91,7 +81,7 @@ runInitShaderVersion(const Event<InitEvent> &e)
 void
 initShaderVersion(RunLevel lvl, EngineInitializers &inits)
 {
-    inits.reg(lvl, makeEventHandler(runInitShaderVersion));
+    inits.reg(lvl, runInitShaderVersion);
 }
 
 static void
@@ -127,7 +117,7 @@ runInitCommands(const Event<InitEvent> &e)
 void
 initCommands(RunLevel lvl, EngineInitializers &inits)
 {
-    inits.reg(lvl, makeEventHandler(runInitCommands));
+    inits.reg(lvl, runInitCommands);
 }
 
 } // namespace ge

@@ -130,9 +130,9 @@ Camera::Data::Data(Camera &me) : self(me)
                   "either as a pair of numbers (x- and y-sensitvity)"
                   "or as a single number (x- = y-sensitvity)");
 
-    handlers.mouseMoved = makeEventHandler(this, &Data::handleMouseMoved);
-    handlers.handleInput = makeEventHandler(this, &Data::handleInput);
-    handlers.beforeRender = makeEventHandler(this, &Data::handleBeforeRender);
+    handlers.mouseMoved = makeEventHandler(*this, &Data::handleMouseMoved);
+    handlers.handleInput = makeEventHandler(*this, &Data::handleInput);
+    handlers.beforeRender = makeEventHandler(*this, &Data::handleBeforeRender);
 }
 
 void
@@ -230,7 +230,7 @@ Camera::Data::handleInput(const Event<InputEvent> & /*unused*/)
     if (lenSq >= math::real(1e-4)) {
         vec3_t local_step = speed * normalize(step_accum);
         Event<CameraMoved> ev =
-          makeEvent(CameraMoved(self, transformVector(frame, local_step)));
+          Event(CameraMoved(self, transformVector(frame, local_step)));
         if (events.moved.raise(ev))
             frame.translateWorld(ev.info.allowed_step);
     }
@@ -250,8 +250,7 @@ void
 Camera::Data::mouseMoved(int16_t dx, int16_t dy)
 {
     vec2_t rot = vec2(dx, dy) * mouse_sensitivity;
-    Event<CameraRotated> re =
-      makeEvent(CameraRotated(self, vec2(-rot[1], rot[0])));
+    Event<CameraRotated> re = Event(CameraRotated(self, vec2(-rot[1], rot[0])));
     if (events.rotated.raise(re)) {
         frame.rotateLocal(re.info.allowed_angle[0], vec3(1.f, 0.f, 0.f));
         frame.rotateWorld(re.info.allowed_angle[1], vec3(0.f, 1.f, 0.f));

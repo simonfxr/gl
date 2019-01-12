@@ -22,7 +22,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 void
 Anim::link()
 {
-    engine.events().render.reg(ge::makeEventHandler(this, &Anim::renderScene));
+    engine.events().render.reg(*this, &Anim::renderScene);
 }
 
 void
@@ -40,7 +40,7 @@ main(int argc, char *argv[])
     Anim anim;
     anim.engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
     anim.link();
-    opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));
+    opts.inits.reg(ge::Init, anim, &Anim::init);
     opts.parse(&argc, &argv);
     return anim.engine.run(opts);
 }

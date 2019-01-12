@@ -357,8 +357,8 @@ struct InitCommandHandler : public EventHandler<InitEvent>
     void handle(const Event<InitEvent> &e) override
     {
         e.info.success = true;
-        handler->handle(makeEvent(
-          CommandEvent(e.info.engine, e.info.engine.commandProcessor())));
+        handler->handle(
+          Event(CommandEvent(e.info.engine, e.info.engine.commandProcessor())));
     }
 };
 

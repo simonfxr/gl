@@ -850,10 +850,9 @@ Game::render_hud()
 void
 Game::link(ge::Engine &e)
 {
-    e.events().animate.reg(ge::makeEventHandler(this, &Game::animate));
-    e.events().render.reg(ge::makeEventHandler(this, &Game::renderScene));
-    e.window().events().windowResized.reg(
-      ge::makeEventHandler(this, &Game::windowResized));
+    e.events().animate.reg(*this, &Game::animate);
+    e.events().render.reg(*this, &Game::renderScene);
+    e.window().events().windowResized.reg(*this, &Game::windowResized);
 
     ge::CommandProcessor &proc = e.commandProcessor();
 
@@ -897,8 +896,7 @@ Game::link(ge::Engine &e)
     mouse_look.camera(&camera);
     e.enablePlugin(camera);
     e.enablePlugin(mouse_look);
-    camera.events().moved.reg(
-      ge::makeEventHandler(this, &Game::constrainCameraMovement));
+    camera.events().moved.reg(*this, &Game::constrainCameraMovement);
 }
 
 void
@@ -993,7 +991,7 @@ main(int argc, char *argv[])
     Game game;
 
     opts.parse(&argc, &argv);
-    opts.inits.reg(ge::Init, ge::makeEventHandler(&game, &Game::init));
+    opts.inits.reg(ge::Init, game, &Game::init);
     int32_t ec = engine.run(opts);
     return ec;
 }

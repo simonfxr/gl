@@ -205,7 +205,8 @@ elevate(Handle &h, HandleMode hm)
 
     if ((h._mode & HM_NONBLOCKING) != (hm & HM_NONBLOCKING)) {
         unsigned long val = !!(hm & HM_NONBLOCKING);
-        if (ioctlsocket(castToSocket(h._os.handle), FIONBIO, &val) == SOCKET_ERROR)
+        if (ioctlsocket(castToSocket(h._os.handle), FIONBIO, &val) ==
+            SOCKET_ERROR)
             return HandleError(getLastSocketError());
         h._mode &= ~HM_NONBLOCKING;
         h._mode |= hm & HM_NONBLOCKING;
@@ -230,8 +231,8 @@ read(Handle &h, size_t &sz, char *data)
         return HandleError::OK;
     } else {
         DWORD nread;
-        auto ret =
-          ReadFile(castToHandle(h._os.handle), data, DWORD(sz), &nread, nullptr);
+        auto ret = ReadFile(
+          castToHandle(h._os.handle), data, DWORD(sz), &nread, nullptr);
         sz = 0;
         if (ret == FALSE)
             return getLastHandleError();
@@ -255,8 +256,8 @@ write(Handle &h, size_t &sz, const char *data)
         return HandleError::OK;
     } else {
         DWORD nwrit;
-        auto ret =
-          WriteFile(castToHandle(h._os.handle), data, DWORD(sz), &nwrit, nullptr);
+        auto ret = WriteFile(
+          castToHandle(h._os.handle), data, DWORD(sz), &nwrit, nullptr);
         sz = 0;
         if (ret == FALSE)
             return getLastHandleError();

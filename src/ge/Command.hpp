@@ -125,7 +125,8 @@ struct StateHandler : public Command
                  const std::string &desc)
       : Command(params, name, desc), handler(hndlr), state(st)
     {}
-    void interactive(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+    void interactive(const Event<CommandEvent> &e,
+                     ArrayView<const CommandArg> args)
     {
         handler(state, e, args);
     }
@@ -157,7 +158,8 @@ public:
                      const std::string &desc)
       : Command(params, name, desc), o(_o), m(_m)
     {}
-    void interactive(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+    void interactive(const Event<CommandEvent> &e,
+                     ArrayView<const CommandArg> args)
     {
         (o->*m)(e, args);
     }

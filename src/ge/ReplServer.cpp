@@ -139,7 +139,7 @@ Client::handleIO(Engine &e)
 
 struct ReplServer::Data
 {
-    ReplServer *const self;
+    ReplServer &self;
     Socket server;
     std::vector<std::shared_ptr<Client>> clients;
     bool running{ false };
@@ -147,7 +147,7 @@ struct ReplServer::Data
     Engine &engine;
     std::shared_ptr<EventHandler<InputEvent>> io_handler;
 
-    Data(ReplServer *self_,
+    Data(ReplServer &self_,
          Engine &e,
          std::shared_ptr<EventHandler<InputEvent>> _handler)
       : self(self_), engine(e), io_handler(std::move(_handler))
@@ -156,15 +156,16 @@ struct ReplServer::Data
     ~Data()
     {
         if (running)
-            self->shutdown();
+            self.shutdown();
     }
 };
 
 DECLARE_PIMPL_DEL(ReplServer)
 
 ReplServer::ReplServer(Engine &e)
-  : self(
-      new Data(this, e, makeEventHandler(this, &ReplServer::handleInputEvent)))
+  : self(new Data(*this,
+                  e,
+                  makeEventHandler(*this, &ReplServer::handleInputEvent)))
 {}
 
 bool

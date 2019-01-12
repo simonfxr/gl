@@ -25,8 +25,13 @@ struct GE_API EngineInitializers
 
     EngineInitializers(bool default_init = true);
 
-    void reg(RunLevel lvl,
-             const std::shared_ptr<EventHandler<InitEvent>> &handler);
+    void reg(RunLevel lvl, std::shared_ptr<EventHandler<InitEvent>> handler);
+
+    template<typename... Args>
+    void reg(RunLevel lvl, Args &&... args)
+    {
+        reg(lvl, makeEventHandler(std::forward<Args>(args)...));
+    }
 };
 
 GE_API void

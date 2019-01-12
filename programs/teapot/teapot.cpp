@@ -181,14 +181,12 @@ struct Anim
 void
 Anim::link(const Event<InitEvent> &e)
 {
-    engine.events().animate.reg(makeEventHandler(this, &Anim::animate));
-    engine.events().render.reg(makeEventHandler(this, &Anim::renderScene));
+    engine.events().animate.reg(*this, &Anim::animate);
+    engine.events().render.reg(*this, &Anim::renderScene);
     GameWindow &win = engine.window();
-    win.events().mouseMoved.reg(makeEventHandler(this, &Anim::mouseMoved));
-    win.events().windowResized.reg(
-      makeEventHandler(this, &Anim::onWindowResized));
-    engine.keyHandler().keyPressedEvent().reg(
-      makeEventHandler(this, &Anim::keyPressed));
+    win.events().mouseMoved.reg(*this, &Anim::mouseMoved);
+    win.events().windowResized.reg(*this, &Anim::onWindowResized);
+    engine.keyHandler().keyPressedEvent().reg(*this, &Anim::keyPressed);
     e.info.success = true;
 }
 
@@ -765,8 +763,8 @@ main(int argc, char *argv[])
     Anim anim(engine);
     engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
     opts.parse(&argc, &argv);
-    opts.inits.init.reg(makeEventHandler(&anim, &Anim::init));
-    opts.inits.init.reg(makeEventHandler(&anim, &Anim::link));
+    opts.inits.init.reg(anim, &Anim::init);
+    opts.inits.init.reg(anim, &Anim::link);
 
     return engine.run(opts);
 }

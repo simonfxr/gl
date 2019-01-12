@@ -447,7 +447,7 @@ ShaderProgram::bindStreamOutVaryings(ArrayView<const std::string> vars)
 
     std::vector<const char *> cvars;
     cvars.reserve(vars.size());
-    for (const auto& var: vars)
+    for (const auto &var : vars)
         cvars.push_back(var.c_str());
     GL_CALL(glTransformFeedbackVaryings,
             *program(),

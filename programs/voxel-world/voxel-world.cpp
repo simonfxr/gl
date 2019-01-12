@@ -165,7 +165,8 @@ initState(State *state, const InitEv &ev)
     state->mouse_look.camera(&state->camera);
     e.enablePlugin(state->camera);
     e.enablePlugin(state->mouse_look);
-    e.events().render.reg(makeEventHandler(renderScene, state));
+    e.events().render.reg(
+      [state](const RenderEv &rev) { renderScene(state, rev); });
 
     e.gameLoop().ticks(100);
     e.gameLoop().syncDraw(true);
@@ -1138,7 +1139,8 @@ main(int argc, char *argv[])
 
         state.read_model = read_mdl;
         state.write_model = write_mdl;
-        opts.inits.reg(ge::Init, makeEventHandler(initState, &state));
+        opts.inits.reg(ge::Init,
+                       [&](const InitEv &ev) { initState(&state, ev); });
 
         engine.run(opts);
 

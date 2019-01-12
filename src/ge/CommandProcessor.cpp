@@ -242,7 +242,7 @@ CommandProcessor::exec(CommandPtr &com,
         }
     }
 
-    com->interactive(makeEvent(CommandEvent(engine(), *this)), args);
+    com->interactive(Event(CommandEvent(engine(), *this)), args);
     return true;
 }
 

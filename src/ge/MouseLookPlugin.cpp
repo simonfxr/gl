@@ -24,11 +24,6 @@ struct MouseLookPlugin::Data
                       ArrayView<const CommandArg> /*unused*/);
     void runUngrabMouse(const Event<CommandEvent> & /*unused*/,
                         ArrayView<const CommandArg> /*unused*/);
-
-    // handlers
-    void handleMouseClick(const Event<MouseButton> & /*ev*/);
-    void handleMouseMove(const Event<MouseMoved> & /*ev*/);
-    void handleFocusChanged(const Event<FocusChanged> & /*unused*/);
 };
 
 DECLARE_PIMPL_DEL(MouseLookPlugin)
@@ -95,33 +90,6 @@ MouseLookPlugin::Data::runUngrabMouse(const Event<CommandEvent> & /*unused*/,
     setState(Free);
 }
 
-void
-MouseLookPlugin::Data::handleMouseClick(const Event<MouseButton> &ev)
-{
-    if (_should_grab && _state == Free) {
-        setState(Grabbing);
-        ev.abort = true;
-    }
-}
-
-void
-MouseLookPlugin::Data::handleMouseMove(const Event<MouseMoved> &ev)
-{
-    GameWindow &win = ev.info.window;
-    if (_state == Grabbing) {
-        size_t w, h;
-        win.windowSize(w, h);
-        win.setMouse(int16_t(w / 2), int16_t(h / 2));
-    }
-}
-
-void
-MouseLookPlugin::Data::handleFocusChanged(
-  const Event<FocusChanged> & /*unused*/)
-{
-    setState(Free);
-}
-
 MouseLookPlugin::MouseLookPlugin() : self(new Data) {}
 
 MouseLookPlugin::~MouseLookPlugin() = default;
@@ -173,13 +141,26 @@ void
 MouseLookPlugin::registerWith(Engine &e)
 {
     self->_engine = &e;
-    GameWindow &win = e.window();
-    win.events().mouseButton.reg(
-      makeEventHandler(self.get(), &MouseLookPlugin::Data::handleMouseClick));
-    win.events().mouseMoved.reg(
-      makeEventHandler(self.get(), &MouseLookPlugin::Data::handleMouseMove));
+    auto &win = e.window();
+
+    win.events().mouseButton.reg([this](const Event<MouseButton> &ev) {
+        if (self->_should_grab && self->_state == Free) {
+            self->setState(Grabbing);
+            ev.abort = true;
+        }
+    });
+
+    win.events().mouseMoved.reg([this](const Event<MouseMoved> &ev) {
+        auto &curwin = ev.info.window;
+        if (self->_state == Grabbing) {
+            size_t w, h;
+            curwin.windowSize(w, h);
+            curwin.setMouse(int16_t(w / 2), int16_t(h / 2));
+        }
+    });
+
     win.events().focusChanged.reg(
-      makeEventHandler(self.get(), &MouseLookPlugin::Data::handleFocusChanged));
+      [this](const Event<FocusChanged> & /*unused*/) { self->setState(Free); });
 }
 
 void

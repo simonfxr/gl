@@ -75,7 +75,7 @@ KeyHandler::keyPressed(KeyCode code)
     auto idx = int32_t(code);
     CHECK_KEYCODE(idx);
     self->states[idx] = State(true, self->frame_id);
-    self->keyPressedEvent.raise(makeEvent(KeyPressed(*this, code)));
+    self->keyPressedEvent.raise(Event(KeyPressed(*this, code)));
 }
 
 void

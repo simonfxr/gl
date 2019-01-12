@@ -4,10 +4,10 @@
 #include "sys/conf.hpp"
 #include "sys/fiber.hpp"
 
+#include <cstring>
 #include <string>
 #include <string_view>
 #include <vector>
-#include <cstring>
 
 #undef stdin
 #undef stdout
@@ -225,7 +225,7 @@ DEF_OUTSTREAM_OP(long double);
 
 #undef DEF_OUTSTREAM_OP
 
-#ifndef HU_COMP_MSVC
+#if 0
 // leads to ambigous overloads versus const char *
 template<typename OStream, size_t N>
 OStream &
@@ -242,12 +242,12 @@ operator<<(OStream &out, const char *s)
 {
     if (s)
         out << std::string_view(s, strlen(s));
-	return out;
+    return out;
 }
 
-  template<typename OStream>
-  OStream &
-  operator<<(OStream &out, bool x)
+template<typename OStream>
+OStream &
+operator<<(OStream &out, bool x)
 {
     return out << (x ? "true" : "false");
 }
