@@ -129,9 +129,9 @@ struct OSHandle
 };
 struct OSSocket
 {
-    void *handle{};
+    void *socket{};
     static inline constexpr OSSocket nil() { return {}; }
-    inline constexpr bool is_nil() const { return !handle; }
+    inline constexpr bool is_nil() const { return !socket; }
 };
 #else
 #error "OS not supported"

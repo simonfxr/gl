@@ -167,61 +167,79 @@ stderr()
 
 struct StreamEndl
 {};
+
 const StreamEndl endl = {};
 
-OutStream &
-operator<<(OutStream &out, const std::string &str)
-{
-    return out << std::string_view{ str };
-}
-
-OutStream &
-operator<<(OutStream &out, std::string_view str)
+StreamResult
+write_repr(OutStream &out, std::string_view str)
 {
     if (out.writeable()) {
         size_t s = str.size();
-        out.write(s, str.data());
+        return out.write(s, str.data());
     }
-    return out;
+    return StreamResult::OK;
 }
 
-OutStream &
-operator<<(OutStream &out, const char *str)
+StreamResult
+write_repr(OutStream &out, const char *str)
 {
-    if (!out.writeable())
-        return out;
-    if (str == nullptr)
-        return out;
+    if (!out.writeable() || !str)
+        return StreamResult::OK;
     size_t s = strlen(str);
-    out.write(s, str);
-    return out;
+    return out.write(s, str);
 }
 
-OutStream &
-operator<<(OutStream &out, char c)
+StreamResult
+write_repr(OutStream &out, char c)
 {
     if (!out.writeable())
-        return out;
+        return StreamResult::OK;
     size_t s = 1;
-    out.write(s, &c);
-    return out;
+    return out.write(s, &c);
 }
 
-OutStream &
-operator<<(OutStream &out, const void *ptr)
+StreamResult
+write_repr(OutStream &out, signed char c)
 {
-    char buf[20];
-    snprintf(buf, sizeof buf, "%p", ptr);
-    return out << buf;
+    return write_repr(out, static_cast<char>(c));
 }
 
-OutStream &
-operator<<(OutStream &out, const StreamEndl & /*unused*/)
+StreamResult
+write_repr(OutStream &out, unsigned char c)
 {
-    out << "\n";
-    out.flush();
-    return out;
+    return write_repr(out, static_cast<char>(c));
 }
+
+StreamResult
+write_repr(OutStream &out, const StreamEndl & /*unused*/)
+{
+    auto ret1 = write_repr(out, '\n');
+    auto ret2 = out.flush();
+    return ret1 == StreamResult::OK ? ret2 : ret1;
+}
+
+#define DEF_PRINTF_WRITER(T, fmt, bufsz)                                       \
+    StreamResult write_repr(OutStream &out, T value)                           \
+    {                                                                          \
+        if (!out.writeable())                                                  \
+            return StreamResult::OK;                                           \
+        char buf[bufsz];                                                       \
+        auto len = snprintf(buf, sizeof buf, "%" fmt, value);                  \
+        return write_repr(out, std::string_view{ buf, size_t(len) });          \
+    }
+
+DEF_PRINTF_WRITER(const void *, "p", 32)
+DEF_PRINTF_WRITER(short, "hd", 16)
+DEF_PRINTF_WRITER(unsigned short, "hu", 16)
+DEF_PRINTF_WRITER(int, "d", 16)
+DEF_PRINTF_WRITER(unsigned, "u", 16)
+DEF_PRINTF_WRITER(long, "ld", 32)
+DEF_PRINTF_WRITER(unsigned long, "lu", 32)
+DEF_PRINTF_WRITER(long long, "lld", 32)
+DEF_PRINTF_WRITER(unsigned long long, "llu", 32)
+DEF_PRINTF_WRITER(float, "f", 16)
+DEF_PRINTF_WRITER(double, "lf", 32)
+DEF_PRINTF_WRITER(long double, "llf", 32)
 
 NullStream::NullStream()
 {

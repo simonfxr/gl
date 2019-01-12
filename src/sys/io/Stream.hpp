@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <cstring>
 
 #undef stdin
 #undef stdout
@@ -193,45 +194,83 @@ protected:
     virtual StreamResult basic_read(size_t &, char *) final override;
 };
 
-SYS_API OutStream &
-operator<<(OutStream &out, const std::string &str);
+#define DEF_OUTSTREAM_OP(T)                                                    \
+    SYS_API StreamResult write_repr(OutStream &out, T x);                      \
+    template<typename OStream>                                                 \
+    OStream &operator<<(OStream &out, T value)                                 \
+    {                                                                          \
+        write_repr(static_cast<OutStream &>(out), value);                      \
+        return out;                                                            \
+    }
 
-SYS_API OutStream &
-operator<<(OutStream &out, std::string_view str);
+DEF_OUTSTREAM_OP(char)
+DEF_OUTSTREAM_OP(const StreamEndl &)
+DEF_OUTSTREAM_OP(std::string_view)
+DEF_OUTSTREAM_OP(const void *)
 
-SYS_API OutStream &
-operator<<(OutStream &out, const char *str);
+DEF_OUTSTREAM_OP(signed char)
+DEF_OUTSTREAM_OP(unsigned char)
+DEF_OUTSTREAM_OP(short)
+DEF_OUTSTREAM_OP(unsigned short)
+DEF_OUTSTREAM_OP(int)
+DEF_OUTSTREAM_OP(unsigned)
+DEF_OUTSTREAM_OP(long)
+DEF_OUTSTREAM_OP(unsigned long)
+DEF_OUTSTREAM_OP(long long)
+DEF_OUTSTREAM_OP(unsigned long long)
 
-SYS_API OutStream &
-operator<<(OutStream &out, char c);
+DEF_OUTSTREAM_OP(float);
+DEF_OUTSTREAM_OP(double);
+DEF_OUTSTREAM_OP(long double);
 
-inline OutStream &
-operator<<(OutStream &out, char *str)
+#undef DEF_OUTSTREAM_OP
+
+#ifndef HU_COMP_MSVC
+// leads to ambigous overloads versus const char *
+template<typename OStream, size_t N>
+OStream &
+operator<<(OStream &out, const char (&str)[N])
 {
-    const char *msg = str;
-    return out << msg;
+    static_assert(N > 0);
+    return out << std::string_view(str, N - 1);
+}
+#endif
+
+template<typename OStream>
+OStream &
+operator<<(OStream &out, const char *s)
+{
+    if (s)
+        out << std::string_view(s, strlen(s));
+	return out;
 }
 
-SYS_API OutStream &
-operator<<(OutStream &out, const void *ptr);
-
-inline OutStream &
-operator<<(OutStream &out, void *ptr)
+  template<typename OStream>
+  OStream &
+  operator<<(OStream &out, bool x)
 {
-    const void *p = ptr;
-    return out << p;
+    return out << (x ? "true" : "false");
 }
 
-SYS_API OutStream &
-operator<<(OutStream &out, const StreamEndl &);
-
-template<typename T>
-OutStream &
-operator<<(OutStream &out, const T &x)
+template<typename OStream>
+OStream &
+operator<<(OStream &out, const std::string &str)
 {
-    if (out.writeable())
-        out << std::to_string(x);
-    return out;
+    return out << std::string_view(str);
+}
+
+template<typename OStream>
+OStream &
+operator<<(OStream &out, char *str)
+{
+    return out << static_cast<const char *>(str);
+}
+
+template<typename OStream, typename T>
+OStream &
+operator<<(OStream &out, const T *ptr)
+{
+    return out << static_cast<const void *>(ptr);
 }
 
 } // namespace io

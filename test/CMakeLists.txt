@@ -4,3 +4,4 @@
 def_program(nb-server SOURCES nb-server.cpp DEPEND ge)
 #def_program(ref_code SOURCES ref_code.cpp DEPEND ge)
 def_program(loop SOURCES loop.cpp DEPEND ge)
+def_program(enum_to_string SOURCES enum_to_string.cpp DEPEND ge sys glt)

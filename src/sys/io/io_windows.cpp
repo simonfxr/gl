@@ -121,7 +121,7 @@ SYS_API Handle
 stdin_handle()
 {
     Handle h;
-    h._handle = castFromHandle(GetStdHandle(STD_INPUT_HANDLE));
+    h._os.handle = castFromHandle(GetStdHandle(STD_INPUT_HANDLE));
     return h;
 }
 
@@ -129,7 +129,7 @@ SYS_API Handle
 stdout_handle()
 {
     Handle h;
-    h._handle = castFromHandle(GetStdHandle(STD_OUTPUT_HANDLE));
+    h._os.handle = castFromHandle(GetStdHandle(STD_OUTPUT_HANDLE));
     return h;
 }
 
@@ -137,7 +137,7 @@ SYS_API Handle
 stderr_handle()
 {
     Handle h;
-    h._handle = castFromHandle(GetStdHandle(STD_ERROR_HANDLE));
+    h._os.handle = castFromHandle(GetStdHandle(STD_ERROR_HANDLE));
     return h;
 }
 
@@ -161,9 +161,9 @@ open(std::string_view path, HandleMode mode, HandleError &err)
         return std::nullopt;
     }
     Handle h;
-    h._handle = castFromHandle(hndl);
+    h._os.handle = castFromHandle(hndl);
     h._mode = mode;
-    h._is_socket = false;
+    h._os.is_socket = false;
     err = HandleError::OK;
     return { std::move(h) };
 }
@@ -179,7 +179,7 @@ HandleError
 elevate(Handle &h, HandleMode hm)
 {
     ASSERT(h);
-    if (!h._is_socket)
+    if (!h._os.is_socket)
         return HandleError::UNKNOWN;
     auto do_shutdown = false;
     int sd_mode = 0;
@@ -196,7 +196,7 @@ elevate(Handle &h, HandleMode hm)
         do_shutdown = true;
     }
     if (do_shutdown) {
-        if (shutdown(castToSocket(h._handle), sd_mode) == SOCKET_ERROR)
+        if (shutdown(castToSocket(h._os.handle), sd_mode) == SOCKET_ERROR)
             return HandleError(getLastSocketError());
     }
 
@@ -205,7 +205,7 @@ elevate(Handle &h, HandleMode hm)
 
     if ((h._mode & HM_NONBLOCKING) != (hm & HM_NONBLOCKING)) {
         unsigned long val = !!(hm & HM_NONBLOCKING);
-        if (ioctlsocket(castToSocket(h._handle), FIONBIO, &val) == SOCKET_ERROR)
+        if (ioctlsocket(castToSocket(h._os.handle), FIONBIO, &val) == SOCKET_ERROR)
             return HandleError(getLastSocketError());
         h._mode &= ~HM_NONBLOCKING;
         h._mode |= hm & HM_NONBLOCKING;
@@ -219,8 +219,8 @@ read(Handle &h, size_t &sz, char *data)
     ASSERT(h);
     if (sz == 0)
         return HandleError::OK;
-    if (h._is_socket) {
-        auto ret = recv(castToSocket(h._handle), data, int(sz), 0);
+    if (h._os.is_socket) {
+        auto ret = recv(castToSocket(h._os.handle), data, int(sz), 0);
         sz = 0;
         if (ret == SOCKET_ERROR)
             return HandleError(getLastSocketError());
@@ -231,7 +231,7 @@ read(Handle &h, size_t &sz, char *data)
     } else {
         DWORD nread;
         auto ret =
-          ReadFile(castToHandle(h._handle), data, DWORD(sz), &nread, nullptr);
+          ReadFile(castToHandle(h._os.handle), data, DWORD(sz), &nread, nullptr);
         sz = 0;
         if (ret == FALSE)
             return getLastHandleError();
@@ -246,8 +246,8 @@ HandleError
 write(Handle &h, size_t &sz, const char *data)
 {
     ASSERT(h);
-    if (h._is_socket) {
-        auto ret = send(castToSocket(h._handle), data, int(sz), 0);
+    if (h._os.is_socket) {
+        auto ret = send(castToSocket(h._os.handle), data, int(sz), 0);
         sz = 0;
         if (ret == SOCKET_ERROR)
             return HandleError(getLastSocketError());
@@ -256,7 +256,7 @@ write(Handle &h, size_t &sz, const char *data)
     } else {
         DWORD nwrit;
         auto ret =
-          WriteFile(castToHandle(h._handle), data, DWORD(sz), &nwrit, nullptr);
+          WriteFile(castToHandle(h._os.handle), data, DWORD(sz), &nwrit, nullptr);
         sz = 0;
         if (ret == FALSE)
             return getLastHandleError();
@@ -269,10 +269,10 @@ HandleError
 close(Handle &h)
 {
     ASSERT(h);
-    auto hndl = castToHandle(h._handle);
-    h._handle = nullptr;
+    auto hndl = castToHandle(h._os.handle);
+    h._os.handle = nullptr;
     h._mode = {};
-    h._is_socket = false;
+    h._os.is_socket = false;
     if (CloseHandle(hndl) != FALSE)
         return HandleError::OK;
     else
@@ -338,7 +338,7 @@ listen(SocketProto proto,
 
     {
         Socket s;
-        s._socket = castFromSocket(sock);
+        s._os.socket = castFromSocket(sock);
         err = SocketError::OK;
         return { std::move(s) };
     }
@@ -358,7 +358,7 @@ accept(Socket &s, SocketError &err)
     socklen_t clen = sizeof client;
 
     auto c = ::accept(
-      castToSocket(s._socket), reinterpret_cast<sockaddr *>(&client), &clen);
+      castToSocket(s._os.socket), reinterpret_cast<sockaddr *>(&client), &clen);
 
     if (c == INVALID_SOCKET) {
         err = getLastSocketError();
@@ -366,8 +366,8 @@ accept(Socket &s, SocketError &err)
     }
 
     Handle h;
-    h._handle = castFromSocket(c);
-    h._is_socket = true;
+    h._os.handle = castFromSocket(c);
+    h._os.is_socket = true;
     h._mode = HM_READ | HM_WRITE;
     err = SocketError::OK;
     return { std::move(h) };
@@ -377,8 +377,8 @@ SocketError
 close(Socket &sock)
 {
     ASSERT(sock);
-    auto hndl = castToHandle(sock._socket);
-    sock._socket = nullptr;
+    auto hndl = castToHandle(sock._os.socket);
+    sock._os.socket = nullptr;
     if (CloseHandle(hndl) != FALSE)
         return SocketError::OK;
     else

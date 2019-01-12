@@ -3,7 +3,7 @@
 
 #if defined(_MSVC_TRADITIONAL) && !_MSVC_TRADITIONAL
 #error "do not include this file directly, use pp/map.h"
-#else
+#endif
 
 /**
  * We have to work around MSVC's non conforming preprocessor deficiencies...
