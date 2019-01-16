@@ -231,6 +231,8 @@ close(Handle &h)
     ASSERT(h);
     int ret;
     RETRY_INTR(ret = ::close(h._os.fd));
+    h._os = {};
+    h._mode = {};
     if (ret == -1)
         return convertErrno();
     return HandleError::OK;
@@ -357,6 +359,7 @@ close(Socket &s)
     ASSERT(s);
     int ret;
     RETRY_INTR(ret = ::close(s._os.fd));
+    s._os = {};
     if (ret == -1)
         return convertErrnoSock();
     return SocketError::OK;

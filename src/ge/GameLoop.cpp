@@ -161,7 +161,6 @@ GameLoop::run(Game &logic)
 
     time start_time = self->game->now();
     time next_tick = self->clock;
-    time next_draw = self->clock;
 
     if (!self->initialized) {
         self->initialized = true;
@@ -215,7 +214,7 @@ GameLoop::run(Game &logic)
 
         self->game->render(interpolation);
         ++self->frame_id;
-        next_draw =
+        time next_draw =
           (self->sync_draw ? next_tick : self->clock + self->frame_duration);
 
         self->clock = self->now();

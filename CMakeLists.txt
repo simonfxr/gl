@@ -22,6 +22,7 @@ if(SYS_WINDOWS AND COMP_MSVC)
 endif()
 
 set_option(BUILD_SHARED_LIBS ${build_shared_default} BOOL "TRUE to build shared libs, FALSE to build static libs")
+message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
 
 if(CMAKE_BUILD_TYPE STREQUAL RELEASE)
   set(GLDEBUG_DEFAULT FALSE)

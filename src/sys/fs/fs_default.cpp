@@ -141,7 +141,7 @@ lookup(const std::vector<std::string> &dirs, std::string_view name)
 
     for (const auto &dir : dirs) {
         std::string filename = dir + suffix;
-        if (exists(filename))
+        if (sys::fs::exists(filename))
             return filename;
     }
 

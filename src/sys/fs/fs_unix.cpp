@@ -163,7 +163,8 @@ modificationTime(std::string_view path)
 {
     struct stat st;
     if (stat(std::string(path).c_str(), &st) != 0) {
-        ERR(strerror(errno));
+        if (errno != ENOENT)
+            ERR(strerror(errno));
         return std::nullopt;
     }
     return FileTime{ st.st_mtime };
@@ -179,8 +180,11 @@ std::optional<ObjectType>
 exists(std::string_view path)
 {
     struct stat info;
-    if (stat(std::string(path).c_str(), &info) == -1)
+    if (stat(std::string(path).c_str(), &info) == -1) {
+        if (errno != ENOENT)
+            ERR(strerror(errno));
         return std::nullopt;
+    }
     auto objtype = info.st_mode & S_IFMT;
     return { objtype == S_IFDIR ? Directory : File };
 }

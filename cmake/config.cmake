@@ -48,18 +48,23 @@ if(COMP_CLANG)
 #  list(APPEND GLOBAL_FLAGS -Wglobal-constructors)
 endif()
 
-if(COMP_CLANG AND USE_CLANG_TRAP_UNDEFINED)
-  list(APPEND GLOBAL_FLAGS -fsanitize=undefined-trap -fsanitize-undefined-trap-on-error -ftrap-function=__clang_trap_function)
-endif()
+set(san_flags)
 
 if(USE_ASAN)
-  list(APPEND GLOBAL_FLAGS -fsanitize=address -fno-omit-frame-pointer)
-  list(APPEND GLOBAL_LINK_FLAGS -fsanitize=address)
+  set(san_flags address)
 endif()
 
 if(USE_UBSAN)
-  list(APPEND GLOBAL_FLAGS -fsanitize=undefined -fno-omit-frame-pointer)
-  list(APPEND GLOBAL_LINK_FLAGS -fsanitize=undefined)
+  if(san_flags)
+    set(san_flags "${san_flags},undefined")
+  else()
+    set(san_flags undefined)
+  endif()
+endif()
+
+if(san_flags)
+  list(APPEND GLOBAL_FLAGS "-fsanitize=${san_flags}" -fno-omit-frame-pointer)
+  list(APPEND GLOBAL_LINK_FLAGS "-fsanitize=${san_flags}")
 endif()
 
 if(COMP_GCCLIKE)
@@ -67,7 +72,10 @@ if(COMP_GCCLIKE)
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     list(APPEND GLOBAL_FLAGS -Wdate-time -Werror=date-time)
   endif()
-  set(APPEND GLOBAL_FLAGS -fno-exceptions -fno-rtti)
+  list(APPEND GLOBAL_FLAGS
+    -fno-exceptions
+    -fno-rtti
+    )
 elseif(COMP_MSVC)
 	list(APPEND GLOBAL_FLAGS
 		/wd4201 #anon struct/union

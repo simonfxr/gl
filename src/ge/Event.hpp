@@ -39,7 +39,7 @@ private:
 
 public:
     FunctorEventHandler(F f_) : f(std::move(f_)) {}
-    virtual void handle(const Event<T> &ev) final override { f(ev); }
+    void handle(const Event<T> &ev) final override { f(ev); }
 };
 
 template<typename F>

@@ -70,6 +70,8 @@ toStreamResult(HandleError e)
 StreamResult
 HandleStream::basic_close()
 {
+    if (!handle)
+        return StreamResult::OK;
     StreamResult ret1 = basic_flush();
     auto ret2 = sys::io::close(handle);
     return ret1 == StreamResult::OK ? toStreamResult(ret2) : ret1;
