@@ -6,8 +6,8 @@
 #include "data/BitSet.hpp"
 #include "err/err.hpp"
 #include "glt/GLObject.hpp"
-#include "glt/VertexDescription.hpp"
 #include "glt/color.hpp"
+#include "glt/type_info.hpp"
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
@@ -32,41 +32,40 @@ private:
     GLBufferObject element_buffer_name;
     GLBufferObject vertex_buffer_name;
 
-    GLenum usage_hint{};
-    GLenum prim_type{};
+    GLenum usage_hint = GL_STATIC_DRAW;
+    GLenum prim_type;
 
-    bool owning_vertices{};
-    size_t vertices_capacity{};
-    size_t vertices_size{};
-    size_t gpu_vertices_size{};
-    uint8_t *RESTRICT vertex_data{};
+    bool owning_vertices = true;
+    size_t vertices_capacity = 0;
+    size_t vertices_size = 0;
+    size_t gpu_vertices_size = 0;
+    void *RESTRICT vertex_data = nullptr;
 
-    bool owning_elements{};
-    size_t elements_capacity{};
-    size_t elements_size{};
-    size_t gpu_elements_size{};
-    uint32_t *RESTRICT element_data{};
+    bool owning_elements = true;
+    size_t elements_capacity = 0;
+    size_t elements_size = 0;
+    size_t gpu_elements_size = 0;
+    uint32_t *RESTRICT element_data = nullptr;
 
-    DrawType draw_type;
+    DrawType draw_type = DrawArrays;
 
     BitSet enabled_attributes;
 
-    const GenVertexDescription *desc{};
+    const StructInfo &struct_info;
 
 protected:
-    uint8_t *vertexRef(size_t i);
-    const uint8_t *vertexRef(size_t i) const;
+    void *vertexRef(size_t i);
+    const void *vertexRef(size_t i) const;
 
-    void appendVertex(const uint8_t *vert);
-    void appendVertexElem(const uint8_t *vert);
+    void *pushVertex();
+    void *pushVertexElem();
 
 public:
-    MeshBase();
+    MeshBase(const StructInfo &,
+             size_t initial_nverts,
+             size_t initial_nelems,
+             GLenum prim_ty);
     ~MeshBase();
-
-    void initBase(const GenVertexDescription &layout,
-                  size_t initial_nverts = MIN_NUM_VERTICES,
-                  size_t initial_nelems = MIN_NUM_ELEMENTS);
 
     GLenum primType() const { return prim_type; }
     void primType(GLenum primType);
@@ -132,7 +131,6 @@ public:
 private:
     void enableAttributes();
     void disableAttributes();
-    void initState();
     void initVertexBuffer();
     void initVertexArray();
     void initVertexAttribs();
@@ -143,28 +141,28 @@ template<typename T>
 struct Mesh : public MeshBase
 {
     using gl_t = typename T::gl;
-    Mesh(const VertexDescription<T> &layout = gl_t::descr,
-         GLenum primTy = GL_TRIANGLES,
+    Mesh(GLenum primTy = GL_TRIANGLES,
          size_t initial_nverts = MIN_NUM_VERTICES,
          size_t initial_nelems = MIN_NUM_ELEMENTS)
-    {
-        initBase(layout.cast_gen(), initial_nverts, initial_nelems);
-        primType(primTy);
-    }
+      : MeshBase(gl_t::struct_info::info,
+                 initial_nverts,
+                 initial_nelems,
+                 primTy)
+    {}
 
     void addVertex(const T &vert)
     {
-        appendVertex(reinterpret_cast<const uint8_t *>(&vert));
+        *static_cast<gl_t *>(pushVertex()) = static_cast<gl_t>(vert);
     }
 
     void addVertexElem(const T &vert)
     {
-        appendVertexElem(reinterpret_cast<const uint8_t *>(&vert));
+        *static_cast<gl_t *>(pushVertexElem()) = static_cast<gl_t>(vert);
     }
 
     const T at(size_t i) const
     {
-        return T(*reinterpret_cast<const typename T::gl *>(vertexRef(i)));
+        return *static_cast<const gl_t *>(vertexRef(i));
     }
 };
 

@@ -33,15 +33,14 @@ alloc_aligned(size_t size, size_t alignment)
     return mem;
 }
 
-uint8_t *
-reallocVerts(const GenVertexDescription &desc,
-             uint8_t *vertex_data,
+void *
+reallocVerts(const StructInfo &struct_info,
+             void *vertex_data,
              size_t old_size,
              size_t new_capa)
 {
-    uint8_t *verts = static_cast<uint8_t *>(
-      alloc_aligned(desc.sizeof_vertex * new_capa, desc.alignment));
-    memcpy(verts, vertex_data, desc.sizeof_vertex * old_size);
+    auto verts = alloc_aligned(struct_info.size * new_capa, struct_info.align);
+    memcpy(verts, vertex_data, struct_info.size * old_size);
     free(vertex_data);
     return verts;
 }
@@ -85,6 +84,32 @@ validateUsageHint(GLenum usageHint)
     }
 }
 
+namespace {
+GLenum
+toGLScalarType(ScalarType t)
+{
+    switch (t) {
+    case ScalarType::I8:
+        return GL_BYTE;
+    case ScalarType::I16:
+        return GL_SHORT;
+    case ScalarType::I32:
+        return GL_INT;
+    case ScalarType::U8:
+        return GL_UNSIGNED_BYTE;
+    case ScalarType::U16:
+        return GL_UNSIGNED_SHORT;
+    case ScalarType::U32:
+        return GL_UNSIGNED_INT;
+    case ScalarType::F32:
+        return GL_FLOAT;
+    case ScalarType::F64:
+        return GL_DOUBLE;
+    }
+    CASE_UNREACHABLE;
+}
+} // namespace
+
 } // namespace
 
 // VertexDesc *allocVertexDesc(uint32_t sizeof_vertex, uint32_t nattrs, const
@@ -111,41 +136,12 @@ validateUsageHint(GLenum usageHint)
 //     desc->nattrs = nattrs;
 // }
 
-MeshBase::MeshBase()
-{
-    initState();
-}
-
-void
-MeshBase::initState()
-{
-    vertex_array_name.release();
-    element_buffer_name.release();
-    vertex_buffer_name.release();
-    usage_hint = GL_STATIC_DRAW;
-    prim_type = GL_TRIANGLES;
-    owning_vertices = true;
-    vertices_capacity = 0;
-    vertices_size = 0;
-    gpu_vertices_size = 0;
-    vertex_data = nullptr;
-    owning_elements = true;
-    elements_capacity = 0;
-    elements_size = 0;
-    gpu_elements_size = 0;
-    element_data = nullptr;
-    draw_type = DrawArrays;
-    enabled_attributes.resize(0);
-}
-
-void
-MeshBase::initBase(const GenVertexDescription &layout,
+MeshBase::MeshBase(const StructInfo &si,
                    size_t initial_nverts,
-                   size_t initial_nelems)
+                   size_t initial_nelems,
+                   GLenum prim_ty)
+  : prim_type(prim_ty), struct_info(si)
 {
-    free();
-    initState();
-
     vertices_capacity = MIN_NUM_VERTICES;
     while (vertices_capacity < initial_nverts)
         vertices_capacity *= 2;
@@ -154,20 +150,17 @@ MeshBase::initBase(const GenVertexDescription &layout,
     while (elements_capacity < initial_nelems)
         elements_capacity *= 2;
 
-    vertex_data = static_cast<uint8_t *>(alloc_aligned(
-      layout.sizeof_vertex * vertices_capacity, layout.alignment));
+    vertex_data = alloc_aligned(si.size * vertices_capacity, si.align);
     element_data = new uint32_t[elements_capacity];
-    desc = &layout;
-    enabled_attributes.resize(layout.nattributes * 2);
+    enabled_attributes.resize(si.fields.size() * 2);
     enabled_attributes.set(false);
-    for (auto i : irange(layout.nattributes))
+    for (auto i : irange(si.fields.size()))
         enableAttribute(i, true);
 }
 
 void
 MeshBase::free()
 {
-
     vertex_array_name.release();
 
     if (owning_vertices)
@@ -220,16 +213,15 @@ MeshBase::initVertexAttribs()
     ASSERT(vertex_buffer_name.valid());
     ASSERT(vertex_array_name.valid());
 
-    for (const auto i : irange(desc->nattributes)) {
-        const auto &a = desc->attributes[i];
+    for (const auto [i, a] : enumerate(struct_info.fields)) {
         GL_CALL(glVertexArrayVertexAttribOffsetEXT,
                 *vertex_array_name,
                 *vertex_buffer_name,
                 GLuint(i),
-                GLint(a.ncomponents),
-                a.component_type,
-                gl_bool(a.normalized),
-                GLsizei(desc->sizeof_vertex),
+                GLint(a.type_info.arity),
+                toGLScalarType(a.type_info.scalar_type),
+                gl_bool(a.type_info.normalized),
+                GLsizei(struct_info.size),
                 GLintptr(a.offset));
     }
 }
@@ -267,7 +259,7 @@ MeshBase::send(GLenum usageHint)
 
     GL_CALL(glNamedBufferDataEXT,
             *vertex_buffer_name,
-            vertices_size * desc->sizeof_vertex,
+            vertices_size * struct_info.size,
             vertex_data,
             usageHint);
     gpu_vertices_size = vertices_size;
@@ -308,7 +300,7 @@ MeshBase::enableAttributes()
     ASSERT(vertex_buffer_name.valid());
     ASSERT(vertex_array_name.valid());
 
-    for (const auto i : irange(desc->nattributes)) {
+    for (const auto i : irange(struct_info.fields.size())) {
         if (enabled_attributes[2 * i] != enabled_attributes[2 * i + 1]) {
             enabled_attributes[2 * i + 1] = enabled_attributes[2 * i];
 
@@ -413,36 +405,35 @@ MeshBase::drawInstanced(size_t num, GLenum primType)
     }
 }
 
-const uint8_t *
+const void *
 MeshBase::vertexRef(size_t i) const
 {
-    return vertex_data + desc->sizeof_vertex * i;
+    return static_cast<const char *>(vertex_data) + struct_info.size * i;
 }
 
-uint8_t *
+void *
 MeshBase::vertexRef(size_t i)
 {
-    return vertex_data + desc->sizeof_vertex * i;
+    return const_cast<void *>(const_cast<const MeshBase &>(*this).vertexRef(i));
 }
 
-void
-MeshBase::appendVertex(const uint8_t *vertex)
+void *
+MeshBase::pushVertex()
 {
     if (unlikely(vertices_size >= vertices_capacity)) {
         vertex_data = reallocVerts(
-          *desc, vertex_data, vertices_capacity, vertices_capacity * 2);
+          struct_info, vertex_data, vertices_capacity, vertices_capacity * 2);
         vertices_capacity *= 2;
     }
-
-    desc->store(vertexRef(vertices_size), vertex);
-    ++vertices_size;
+    return vertexRef(vertices_size++);
 }
 
-void
-MeshBase::appendVertexElem(const uint8_t *vertex)
+void *
+MeshBase::pushVertexElem()
 {
-    appendVertex(vertex);
+    auto ptr = pushVertex();
     addElement(uint32_t(vertices_size - 1));
+    return ptr;
 }
 
 void
@@ -464,17 +455,16 @@ GLuint
 MeshBase::attributePosition(size_t offset) const
 {
 
-    for (const auto i : irange(desc->nattributes)) {
-        if (desc->attributes[i].offset == offset)
+    for (const auto [i, a] : enumerate(struct_info.fields))
+        if (a.offset == offset)
             return static_cast<GLuint>(i);
-    }
     FATAL_ERR(ERROR_DEFAULT_STREAM, "offset out of range");
 }
 
 void
 MeshBase::enableAttribute(size_t i, bool enabled)
 {
-    if (i >= desc->nattributes) {
+    if (i >= struct_info.fields.size()) {
         ERR("size_t out of range");
         return;
     }
@@ -484,7 +474,7 @@ MeshBase::enableAttribute(size_t i, bool enabled)
 bool
 MeshBase::attributeEnabled(size_t i)
 {
-    if (i >= desc->nattributes) {
+    if (i >= struct_info.fields.size()) {
         ERR("size_t out of range");
         return false;
     }
@@ -509,7 +499,8 @@ MeshBase::setSize(size_t size)
         vertices_size = size;
 
     if (capa != vertices_capacity) {
-        vertex_data = reallocVerts(*desc, vertex_data, vertices_size, capa);
+        vertex_data =
+          reallocVerts(struct_info, vertex_data, vertices_size, capa);
         vertices_capacity = capa;
     }
 }

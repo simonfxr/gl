@@ -16,7 +16,7 @@ bswap(uint8_t x)
 inline constexpr uint16_t
 bswap(uint16_t x)
 {
-    return (x << 8) | (x >> 8);
+    return uint16_t((x << 8) | (x >> 8));
 }
 
 inline constexpr uint32_t

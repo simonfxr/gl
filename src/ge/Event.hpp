@@ -1,10 +1,10 @@
 #ifndef GE_EVENT_HPP
 #define GE_EVENT_HPP
 
+#include "data/functor_traits.hpp"
 #include "ge/conf.hpp"
 
 #include <memory>
-#include <type_traits>
 #include <vector>
 
 namespace ge {
@@ -22,55 +22,14 @@ struct Event
 };
 
 template<typename Ev>
-using value_type_of = typename Ev::value_type;
+using event_value_type = typename Ev::value_type;
 
 template<typename T>
 struct EventHandler
 {
-    virtual ~EventHandler() {}
+    virtual ~EventHandler() = default;
     virtual void handle(const Event<T> &ev) = 0;
 };
-
-template<typename T>
-struct functor_traits_impl
-{};
-
-template<typename Functor, typename Ret, typename... Args>
-struct functor_traits_impl<Ret (Functor::*)(Args...) const>
-{
-    static inline constexpr size_t arity = sizeof...(Args);
-    using result_type = Ret;
-
-    template<size_t N>
-    struct arg_type
-    {
-        using type = std::tuple_element_t<N, std::tuple<Args...>>;
-    };
-};
-
-template<typename Ret, typename... Args>
-struct functor_traits_impl<Ret (*)(Args...)>
-{
-    static inline constexpr size_t arity = sizeof...(Args);
-    using result_type = Ret;
-
-    template<size_t N>
-    struct arg_type
-    {
-        using type = std::tuple_element_t<N, std::tuple<Args...>>;
-    };
-};
-
-template<typename F>
-struct functor_traits : functor_traits_impl<decltype(&F::operator())>
-{};
-
-template<typename Ret, typename... Args>
-struct functor_traits<Ret (*)(Args...)> : functor_traits_impl<Ret (*)(Args...)>
-{};
-
-template<typename F, size_t i>
-using functor_arg_type = typename functor_traits<F>::template arg_type<i>::type;
 
 template<typename F, typename T>
 struct FunctorEventHandler : public EventHandler<T>
@@ -87,7 +46,7 @@ template<typename F>
 auto
 makeEventHandler(F f)
 {
-    using T = value_type_of<std::decay_t<functor_arg_type<F, 0>>>;
+    using T = event_value_type<std::decay_t<functor_arg_type<F, 0>>>;
     return static_cast<std::shared_ptr<EventHandler<T>>>(
       std::make_shared<FunctorEventHandler<F, T>>(std::move(f)));
 }

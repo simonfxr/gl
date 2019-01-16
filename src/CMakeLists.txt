@@ -1,3 +1,4 @@
+
 set(FIBER_LIB)
 set(FIBER_DEFINES)
 if(HAVE_FIBER)
@@ -6,7 +7,6 @@ if(HAVE_FIBER)
 endif()
 
 link_libraries(header-utils)
-
 
 set(ERR_SRC
   err/err.cpp)
@@ -101,6 +101,7 @@ endif()
 def_lib(glt SOURCES ${GLT_SRC} DEPEND sys ${GLT_LIBS})
 
 set(GE_SRC
+  ge/NewParam.cpp
   ge/Camera.cpp
   ge/Command.cpp
   ge/CommandArgs.cpp
@@ -110,6 +111,7 @@ set(GE_SRC
   ge/Engine.cpp
   ge/EngineEvents.cpp
   ge/EngineOptions.cpp
+  ge/Event.cpp
   ge/GameLoop.cpp
   ge/GameWindow.cpp
   ge/Init.cpp

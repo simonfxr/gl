@@ -11,7 +11,7 @@ struct Engine;
 struct GE_API EngineEvent
 {
     Engine &engine;
-    EngineEvent(Engine &_engine) : engine(_engine) {}
+    explicit constexpr EngineEvent(Engine &e) : engine(e) {}
 };
 
 struct GE_API RenderEvent : public EngineEvent
@@ -34,12 +34,12 @@ struct GE_API ExitEvent : public EngineEvent
 
 struct GE_API AnimationEvent : public EngineEvent
 {
-    AnimationEvent(Engine &engine) : EngineEvent(engine) {}
+    explicit AnimationEvent(Engine &engine) : EngineEvent(engine) {}
 };
 
 struct GE_API InputEvent : public EngineEvent
 {
-    InputEvent(Engine &engine) : EngineEvent(engine) {}
+    explicit InputEvent(Engine &engine) : EngineEvent(engine) {}
 };
 
 struct GE_API EngineEvents

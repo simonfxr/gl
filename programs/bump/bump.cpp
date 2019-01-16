@@ -4,24 +4,23 @@
 #include "glt/Mesh.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/primitives.hpp"
+#include "glt/type_info.hpp"
 #include "glt/utils.hpp"
 #include "math/glvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 
 #include <algorithm>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 using namespace math;
 
-#define VERTEX(V, F, Z)                                                        \
-    V(Vertex,                                                                  \
-      F(vec3_t,                                                                \
-        position,                                                              \
-        F(vec3_t, tangent, F(vec3_t, binormal, Z(vec2_t, uv)))))
-DEFINE_VERTEX(VERTEX);
-#undef VERTEX
+DEF_GL_MAPPED_TYPE(Vertex,
+                   (vec3_t, position),
+                   (vec3_t, tangent),
+                   (vec3_t, binormal),
+                   (vec2_t, uv));
 
 template<typename Vertex>
 void
@@ -224,7 +223,7 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
     std::vector<vec3_t> vertices;
     std::vector<Tri> tris;
 
-    typedef std::map<uint64_t, uint32_t> VertexCache;
+    typedef std::unordered_map<uint64_t, uint32_t> VertexCache;
     VertexCache vertex_cache;
 
 #define X .525731112119133606

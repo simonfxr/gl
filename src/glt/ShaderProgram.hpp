@@ -7,8 +7,8 @@
 #include "err/WithError.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/ShaderManager.hpp"
-#include "glt/VertexDescription.hpp"
 #include "glt/conf.hpp"
+#include "glt/type_info.hpp"
 #include "opengl.hpp"
 #include "pp/enum.hpp"
 
@@ -49,20 +49,11 @@ struct GLT_API ShaderProgram
 
     bool addShaderFilePair(const std::string &basename, bool absolute = false);
 
-    bool bindAttribute(const std::string &s, GLuint position);
+    bool bindAttribute(const std::string &, GLuint position);
 
     bool bindStreamOutVaryings(ArrayView<const std::string>);
 
-    template<typename T>
-    bool bindAttributes(const VertexDescription<T> &desc);
-
-    template<typename T>
-    bool bindAttributes()
-    {
-        return bindAttributes(T::gl::desc);
-    }
-
-    bool bindAttributesGeneric(const GenVertexDescription &desc);
+    bool bindAttributes(const StructInfo &);
 
     bool tryLink();
 
@@ -86,13 +77,6 @@ private:
 };
 
 using ShaderProgramRef = std::shared_ptr<ShaderProgram>;
-
-template<typename T>
-bool
-ShaderProgram::bindAttributes(const VertexDescription<T> &desc)
-{
-    return bindAttributesGeneric(desc.cast_gen());
-}
 
 } // namespace glt
 

@@ -63,7 +63,10 @@ if(USE_UBSAN)
 endif()
 
 if(COMP_GCCLIKE)
-  list(APPEND GLOBAL_FLAGS -Wall -Wswitch-enum -Wdate-time -Werror=date-time)
+  list(APPEND GLOBAL_FLAGS -Wall -Wswitch-enum)
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+    list(APPEND GLOBAL_FLAGS -Wdate-time -Werror=date-time)
+  endif()
   set(APPEND GLOBAL_FLAGS -fno-exceptions -fno-rtti)
 elseif(COMP_MSVC)
 	list(APPEND GLOBAL_FLAGS

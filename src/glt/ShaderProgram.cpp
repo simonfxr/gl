@@ -1,5 +1,6 @@
 #include "glt/ShaderProgram.hpp"
 
+#include "data/range.hpp"
 #include "data/string_utils.hpp"
 #include "err/err.hpp"
 #include "glt/ShaderCompiler.hpp"
@@ -332,7 +333,6 @@ ShaderProgram::link()
 bool
 ShaderProgram::bindAttribute(const std::string &s, GLuint position)
 {
-
     if (self->linked) {
         RAISE_ERR(
           *this, ShaderProgramError::APIError, "program already linked");
@@ -340,7 +340,6 @@ ShaderProgram::bindAttribute(const std::string &s, GLuint position)
     }
 
     self->attrs[s] = position;
-
     return true;
 }
 
@@ -426,10 +425,10 @@ ret:
 }
 
 bool
-ShaderProgram::bindAttributesGeneric(const GenVertexDescription &desc)
+ShaderProgram::bindAttributes(const StructInfo &si)
 {
-    for (size_t i = 0; i < desc.nattributes; ++i)
-        if (!bindAttribute(desc.attributes[i].name, GLuint(i)))
+    for (const auto [i, a] : enumerate(si.fields))
+        if (!bindAttribute(a.name, GLuint(i)))
             return false;
     return true;
 }
