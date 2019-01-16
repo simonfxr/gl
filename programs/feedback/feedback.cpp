@@ -7,29 +7,13 @@
 
 using namespace math;
 
-struct QuadVertex
-{
-    vec3_t corner0;
-    vec3_t corner1;
-    vec3_t corner2;
-    vec3_t corner3;
-};
+DEF_GL_MAPPED_TYPE(QuadVertex,
+                   (vec3_t, corner0),
+                   (vec3_t, corner1),
+                   (vec3_t, corner2),
+                   (vec3_t, corner3))
 
-DEFINE_VERTEX_DESC(QuadVertex,
-                   VERTEX_ATTR(QuadVertex, corner0),
-                   VERTEX_ATTR(QuadVertex, corner1),
-                   VERTEX_ATTR(QuadVertex, corner2),
-                   VERTEX_ATTR(QuadVertex, corner3));
-
-struct QuadStreamVertex
-{
-    vec3_t position;
-    vec3_t normal;
-};
-
-DEFINE_VERTEX_DESC(QuadStreamVertex,
-                   VERTEX_ATTR(QuadStreamVertex, position),
-                   VERTEX_ATTR(QuadStreamVertex, normal));
+DEF_GL_MAPPED_TYPE(QuadStreamVertex, (vec3_t, position), (vec3_t, normal))
 
 #define DEF_SHADER(name, ...) const std::string name = AS_STRING(__VA_ARGS__);
 

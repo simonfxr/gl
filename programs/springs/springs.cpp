@@ -7,7 +7,6 @@
 #include "glt/Mesh.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/Uniforms.hpp"
-#include "glt/VertexDescription.hpp"
 #include "glt/primitives.hpp"
 #include "glt/utils.hpp"
 #include "math/mat3.hpp"
@@ -22,9 +21,7 @@ const size_t N_SPRINGS = 20;
 
 using namespace math;
 
-#define VERTEX(V, F, Z) V(Vertex, F(vec3_t, position, Z(vec3_t, normal)))
-
-DEFINE_VERTEX(VERTEX)
+DEF_GL_MAPPED_TYPE(Vertex, (vec3_t, position), (vec3_t, normal))
 
 template<typename Vertex>
 void

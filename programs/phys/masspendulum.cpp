@@ -40,7 +40,7 @@ void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
 
-    engine.gameLoop().ticksPerSecond(1000);
+    engine.gameLoop().ticks(1000);
     engine.gameLoop().maxFPS(59);
 
     engine.window().showMouseCursor(true);
@@ -58,8 +58,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 void
 Anim::link()
 {
-    engine.events().render.reg(ge::makeEventHandler(this, &Anim::renderScene));
-    engine.events().animate.reg(ge::makeEventHandler(this, &Anim::simulate));
+    engine.events().render.reg(*this, &Anim::renderScene);
+    engine.events().animate.reg(*this, &Anim::simulate);
 }
 
 void
@@ -175,7 +175,7 @@ Sim::init()
 void
 Anim::simulate(const ge::Event<ge::AnimationEvent> &ev)
 {
-    real dt = ev.info.engine.gameLoop().frameDuration();
+    real dt = ev.info.engine.gameLoop().tickDuration();
     simulation.integrate(dt);
 };
 
@@ -185,7 +185,7 @@ main(int argc, char *argv[])
     ge::EngineOptions opts;
     Anim anim;
     anim.link();
-    opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));
+    opts.inits.reg(ge::Init, anim, &Anim::init);
     opts.parse(&argc, &argv);
     return anim.engine.run(opts);
 }

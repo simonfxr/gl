@@ -89,6 +89,7 @@ set(GLT_SRC
   glt/Uniforms.cpp
   glt/ViewFrustum.cpp
   glt/glt.cpp
+  glt/type_info.cpp
   glt/utils.cpp
   )
 

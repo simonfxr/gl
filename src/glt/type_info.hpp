@@ -4,6 +4,7 @@
 #include "glt/conf.hpp"
 
 #include "data/ArrayView.hpp"
+#include "glt/color.hpp"
 #include "math/genmat.hpp"
 #include "math/genvec.hpp"
 #include "math/real.hpp"
@@ -131,6 +132,21 @@ struct gl_type_mapping<math::genmat<T, N>>
     using type = math::genmat<typename gl_type_mapping<T>::type, N>;
 };
 
+template<>
+struct type_info_mapping<color>
+{
+    static inline constexpr TypeInfo type_info{ true /* normalized */,
+                                                sizeof(color),
+                                                ScalarType::U8,
+                                                4 };
+};
+
+template<>
+struct gl_type_mapping<color>
+{
+    using type = color;
+};
+
 struct FieldInfo
 {
     const char *name;
@@ -218,6 +234,8 @@ struct StructInfo
     sname::sname(const sname::gl &TI_VAR(arg))                                 \
       : PP_MAP(TI_INIT_FIELD, PP_COMMA, __VA_ARGS__)                           \
     {}
+
+GLT_API unsigned toGLScalarType(ScalarType);
 
 } // namespace glt
 

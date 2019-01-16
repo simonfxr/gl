@@ -38,21 +38,18 @@
 
 #include <vector>
 
-#define VERTEX(V, F, Z)                                                        \
-    V(Vertex, F(math::point3_t, position, Z(math::direction3_t, normal)))
+DEF_GL_MAPPED_TYPE(Vertex,
+                   (math::point3_t, position),
+                   (math::direction3_t, normal))
 
-#define VERTEX2(V, F, Z)                                                       \
-    V(Vertex2,                                                                 \
-      F(math::vec3_t,                                                          \
-        position,                                                              \
-        F(math::vec3_t, normal, Z(math::vec2_t, texCoord))))
+DEF_GL_MAPPED_TYPE(Vertex2,
+                   (math::vec3_t, position),
+                   (math::vec3_t, normal),
+                   (math::vec2_t, texCoord))
 
-#define SCREEN_VERTEX(V, F, Z)                                                 \
-    V(ScreenVertex, F(math::vec3_t, position, Z(math::vec3_t, normal)))
-
-DEFINE_VERTEX(VERTEX);
-DEFINE_VERTEX(VERTEX2);
-DEFINE_VERTEX(SCREEN_VERTEX);
+DEF_GL_MAPPED_TYPE(ScreenVertex,
+                   (math::vec3_t, position),
+                   (math::vec3_t, normal))
 
 #undef VERTEX
 #undef VERTEX2

@@ -71,10 +71,10 @@ sumNoise3D(const vec3_t &p,
 static void
 pointsOnSphere(uint32_t n, vec3_t *ps);
 
-#define VERTEX(V, F, Z)                                                        \
-    V(Vertex, F(vec3_t, position, F(glt::color, color, Z(vec4_t, normal))))
-DEFINE_VERTEX(VERTEX);
-#undef VERTEX
+DEF_GL_MAPPED_TYPE(Vertex,
+                   (vec3_t, position),
+                   (glt::color, color),
+                   (vec4_t, normal))
 
 using CubeMesh = glt::CubeMesh<Vertex>;
 

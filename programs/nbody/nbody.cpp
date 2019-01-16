@@ -26,9 +26,7 @@ static const size_t SIMULATION_FPS = 50;
 #define SIM_CALL(...) __VA_ARGS__
 #endif
 
-#define VERTEX(V, F, Z) V(Vertex, F(vec3_t, position, Z(vec3_t, normal)))
-DEFINE_VERTEX(VERTEX);
-#undef VERTEX
+DEF_GL_MAPPED_TYPE(Vertex, (vec3_t, position), (vec3_t, normal))
 
 struct Anim
 {

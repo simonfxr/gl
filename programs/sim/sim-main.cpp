@@ -75,10 +75,7 @@ HU_END_PACKED
 #error "no SPHERE_INSTANCED_* specified"
 #endif
 
-#define VERTEX(V, F, Z) V(Vertex, F(vec4_t, position, Z(vec3_t, normal)))
-
-DEFINE_VERTEX(VERTEX);
-#undef VERTEX
+DEF_GL_MAPPED_TYPE(Vertex, (vec4_t, position), (vec3_t, normal))
 
 namespace {
 

@@ -1,3 +1,4 @@
+#include "data/range.hpp"
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
@@ -39,10 +40,7 @@ static const size_t DEFAULT_N = 64;
 
 using namespace math;
 
-#define VERTEX(V, F, Z) V(Vertex, F(vec3_t, position, Z(vec3_t, normal)))
-
-DEFINE_VERTEX(VERTEX);
-#undef VERTEX
+DEF_GL_MAPPED_TYPE(Vertex, (vec3_t, position), (vec3_t, normal))
 
 struct MCState
 {
@@ -585,18 +583,17 @@ Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3_t ecLight)
 
     gt.pop();
 
-    const glt::VertexDescription<Vertex> &desc = Vertex::gl::descr;
+    auto struct_info = Vertex::gl::struct_info::info;
 
-    for (size_t i = 0; i < desc.nattributes; ++i) {
-        const glt::VertexAttr &a = desc.attributes[i];
+    for (const auto [i, a] : enumerate(struct_info.fields)) {
         GL_CALL(glVertexArrayVertexAttribOffsetEXT,
                 cur_mc.vao,
                 cur_mc.vbo,
                 GLuint(i),
-                a.ncomponents,
-                a.component_type,
-                a.normalized ? GL_TRUE : GL_FALSE,
-                desc.sizeof_vertex,
+                a.type_info.arity,
+                glt::toGLScalarType(a.type_info.scalar_type),
+                a.type_info.normalized ? GL_TRUE : GL_FALSE,
+                struct_info.size,
                 GLintptr(a.offset));
         GL_CALL(glEnableVertexArrayAttribEXT, cur_mc.vao, GLuint(i));
     }

@@ -26,10 +26,7 @@
 
 using namespace math;
 
-#define VERTEX(V, F, Z) V(Vertex, Z(vec2_t, position))
-
-DEFINE_VERTEX(VERTEX);
-#undef VERTEX
+DEF_GL_MAPPED_TYPE(Vertex, (vec2_t, position))
 
 struct Anim
 {

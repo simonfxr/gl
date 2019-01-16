@@ -37,29 +37,11 @@ typedef GLuint GLTransformFeedback;
 typedef GLuint GLArrayBuffer;
 typedef GLuint GLVertexArray;
 
-struct WorldVertex
-{
-    vec3_t position;
-};
+DEF_GL_MAPPED_TYPE(WorldVertex, (vec3_t, position));
 
-struct MCVertex
-{
-    vec3_t position;
-};
+DEF_GL_MAPPED_TYPE(MCVertex, (vec3_t, position));
 
-struct MCFeedbackVertex
-{
-    vec3_t position;
-    vec3_t normal;
-};
-
-DEFINE_VERTEX_DESC(WorldVertex, VERTEX_ATTR(WorldVertex, position));
-
-DEFINE_VERTEX_DESC(MCVertex, VERTEX_ATTR(MCVertex, position));
-
-DEFINE_VERTEX_DESC(MCFeedbackVertex,
-                   VERTEX_ATTR(MCFeedbackVertex, position),
-                   VERTEX_ATTR(MCFeedbackVertex, normal));
+DEF_GL_MAPPED_TYPE(MCFeedbackVertex, (vec3_t, position), (vec3_t, normal))
 
 struct Block
 {
