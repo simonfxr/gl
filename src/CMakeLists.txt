@@ -31,7 +31,6 @@ set(SYS_SRC
   sys/fs/fs_default.cpp
   sys/io.cpp
   sys/io/Stream.cpp
-  sys/mem.cpp
   sys/sys.cpp
   )
 

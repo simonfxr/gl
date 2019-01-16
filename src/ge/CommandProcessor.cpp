@@ -50,7 +50,8 @@ CommandProcessor::command(std::string_view comname)
 bool
 CommandProcessor::define(CommandPtr comm, bool unique)
 {
-    return define(comm->name(), std::move(comm), unique);
+    const auto &name = comm->name();
+    return define(name, std::move(comm), unique);
 }
 
 bool

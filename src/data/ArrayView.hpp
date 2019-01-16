@@ -68,4 +68,11 @@ view_array(T &a)
     return ArrayView<std::remove_pointer_t<decltype(p)>>(p, a.size());
 }
 
+template<typename T>
+ArrayView<T>
+view_array(T *ptr, size_t n)
+{
+    return ArrayView<T>(ptr, n);
+}
+
 #endif

@@ -22,6 +22,62 @@ DEF_GL_MAPPED_TYPE(Vertex,
                    (vec3_t, binormal),
                    (vec2_t, uv));
 
+#if 0
+#define sname Vertex
+
+struct sname
+{
+    PP_MAP(TI_DEF_STRUCT_FIELD,
+           PP_SEMI,
+           (vec3_t, position),
+           (vec3_t, tangent),
+           (vec3_t, binormal),
+           (vec2_t, uv));
+    struct gl;
+    sname() = default;
+    inline sname(const gl &);
+};
+struct sname::gl
+{
+    struct struct_info;
+    PP_MAP(TI_DEF_GL_STRUCT_FIELD,
+           PP_SEMI,
+           (vec3_t, position),
+           (vec3_t, tangent),
+           (vec3_t, binormal),
+           (vec2_t, uv));
+    gl() = default;
+    explicit gl(const sname &TI_VAR(arg)): PP_MAP(TI_INIT_GL_FIELD, PP_COMMA, (vec3_t, position), (vec3_t, tangent),(vec3_t, binormal),(vec2_t, uv))
+    {}
+};
+
+struct sname::gl::struct_info
+{
+    static const ::glt::FieldInfo _fields[4];
+    static const ::glt::StructInfo info;
+
+};
+
+const ::glt::FieldInfo sname::gl::struct_info::_fields[4] = { PP_MAP_WITH_ARG(
+																TI_DEF_FIELD_INFO,
+                                                             PP_COMMA,
+                                                             sname,
+                                                             (vec3_t, position),
+                                                             (vec3_t, tangent),
+                                                             (vec3_t, binormal),
+                                                             (vec2_t, uv)) };
+
+
+const ::glt::StructInfo sname::gl::struct_info::info = ::glt::StructInfo(
+  PP_TOSTR(sname),
+  sizeof(sname::gl),
+  alignof(sname::gl),
+  ::ArrayView<const ::glt::FieldInfo>(sname::gl::struct_info::_fields,
+								sizeof sname::gl::struct_info::_fields / sizeof(::glt::FieldInfo)));
+
+sname::sname(const sname::gl &TI_VAR(arg)): PP_MAP(TI_INIT_FIELD,PP_COMMA,(vec3_t, position),   (vec3_t, tangent),     (vec3_t, binormal),    (vec2_t, uv))
+{}
+#endif
 template<typename Vertex>
 void
 sphere(glt::Mesh<Vertex> &mesh, real radius, int slices, int stacks);

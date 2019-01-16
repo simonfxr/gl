@@ -168,7 +168,7 @@ invoke_indexed_vararg(F &&f,
       args.drop(sizeof...(Is)));
 }
 
-template<typename F, bool VarArg, typename... Ts, size_t... Is>
+template<typename F, bool VarArg, typename... Ts>
 void
 invoke(F &&f,
        std::bool_constant<VarArg>,

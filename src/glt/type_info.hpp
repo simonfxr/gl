@@ -81,8 +81,14 @@ DEF_GL_TYPE_MAPPING(math::real, float);
 
 struct TypeInfo
 {
+#ifdef HU_COMP_MSVC
+    // in 15.8 this leads to an internal compiler error
+    bool normalized;
+    uint16_t size;
+#else
     uint16_t normalized : 1;
     uint16_t size : 15;
+#endif
     ScalarType scalar_type;
     uint8_t arity;
 };
@@ -152,11 +158,9 @@ struct FieldInfo
     const char *name;
     TypeInfo type_info;
     uint16_t offset;
-    template<typename T>
-    static constexpr FieldInfo make(const char *name, uint16_t offset)
-    {
-        return { name, ::glt::type_info_mapping<T>::type_info, offset };
-    }
+    constexpr FieldInfo(const char *nm, TypeInfo ti, uint16_t off)
+      : name(nm), type_info(ti), offset(off)
+    {}
 };
 
 struct StructInfo
@@ -165,20 +169,19 @@ struct StructInfo
     uint16_t size;
     uint16_t align;
     ArrayView<const FieldInfo> fields;
-
-    template<typename T>
-    static constexpr StructInfo make(const char *name,
-                                     const FieldInfo *fields,
-                                     size_t nfields)
-    {
-        return { name, sizeof(T), alignof(T), { fields, nfields } };
-    }
+    constexpr StructInfo(const char *nm,
+                         uint16_t sz,
+                         uint16_t algn,
+                         ArrayView<const FieldInfo> fs)
+      : name(nm), size(sz), align(algn), fields(fs)
+    {}
 };
 
 #define TI_DEF_FIELD_INFO0(type, field_name) PP_TOSTR(field_name)
 #define TI_DEF_FIELD_INFO(struct_type, type_and_name)                          \
-    ::glt::FieldInfo::make<PP_DEFER1(PP_ARG1) type_and_name>(                  \
+    ::glt::FieldInfo(                                                          \
       PP_DEFER1(TI_DEF_FIELD_INFO0) type_and_name,                             \
+      ::glt::type_info_mapping<PP_DEFER1(PP_ARG1) type_and_name>::type_info,   \
       ti_offsetof(struct_type, PP_DEFER1(PP_ARG2) type_and_name))
 
 #define TI_DEF_STRUCT_FIELD0(t, nm) t nm
@@ -222,14 +225,18 @@ struct StructInfo
     };                                                                         \
     struct sname::gl::struct_info                                              \
     {                                                                          \
-        static constexpr ::glt::FieldInfo _fields[] = {                        \
-            PP_MAP_WITH_ARG(TI_DEF_FIELD_INFO, PP_COMMA, sname, __VA_ARGS__)   \
-        };                                                                     \
+        static constexpr ::glt::FieldInfo _fields[] = { PP_MAP_WITH_ARG(       \
+          TI_DEF_FIELD_INFO,                                                   \
+          PP_COMMA,                                                            \
+          sname::gl,                                                           \
+          __VA_ARGS__) };                                                      \
         static constexpr ::glt::StructInfo info =                              \
-          ::glt::StructInfo::make<sname>(PP_TOSTR(sname),                      \
-                                         _fields,                              \
-                                         sizeof _fields /                      \
-                                           sizeof(::glt::FieldInfo));          \
+          ::glt::StructInfo(PP_TOSTR(sname),                                   \
+                            sizeof(sname::gl),                                 \
+                            alignof(sname::gl),                                \
+                            ::ArrayView<const ::glt::FieldInfo>(               \
+                              _fields,                                         \
+                              sizeof _fields / sizeof(::glt::FieldInfo)));     \
     };                                                                         \
     sname::sname(const sname::gl &TI_VAR(arg))                                 \
       : PP_MAP(TI_INIT_FIELD, PP_COMMA, __VA_ARGS__)                           \

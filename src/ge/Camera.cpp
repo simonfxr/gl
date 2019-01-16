@@ -190,7 +190,7 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
 void
 Camera::Data::runSpeed(const Event<CommandEvent> & /*unused*/, double s)
 {
-    speed = s;
+    speed = math::real(s);
 }
 
 void
