@@ -47,4 +47,7 @@ struct functor_traits<Ret (*)(Args...)> : functor_traits_impl<Ret (*)(Args...)>
 template<typename F, size_t i>
 using functor_arg_type = typename functor_traits<F>::template arg_type<i>::type;
 
+template<typename FTraits, size_t i>
+using functor_traits_arg_type = typename FTraits::template arg_type<i>::type;
+
 #endif

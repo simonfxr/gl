@@ -1,6 +1,8 @@
 #include "err/err.hpp"
 #include "sys/io.hpp"
 
+#include "sys/fs.hpp"
+
 #include <arpa/inet.h>
 #include <cerrno>
 #include <cstring>
@@ -22,18 +24,16 @@ convertMode(HandleMode m)
     int flags = 0;
     bool w = OPTION(m, HM_WRITE);
     bool r = OPTION(m, HM_READ);
+    bool append = OPTION(m, HM_APPEND);
 
     if (w && r)
         flags |= O_RDWR | O_CREAT;
     else if (w)
-        flags |= O_WRONLY | O_CREAT;
+        flags |= O_WRONLY | O_CREAT | (append ? O_APPEND : O_TRUNC);
     else if (r)
         flags |= O_RDONLY;
     else
         return -1;
-
-    if (OPTION(m, HM_APPEND))
-        flags |= O_APPEND;
 
     if (OPTION(m, HM_NONBLOCKING))
         flags |= O_NONBLOCK;
@@ -69,8 +69,7 @@ unconvertMode(int flags)
 HandleError
 convertErrno()
 {
-    int errid = errno;
-    errno = 0;
+    auto errid = std::exchange(errno, 0);
 
     if (errid == EAGAIN || errid == EWOULDBLOCK)
         return HandleError::BLOCKED;
@@ -78,6 +77,8 @@ convertErrno()
     switch (errid) {
     case ECONNRESET:
         return HandleError::EOF;
+    case ENOENT:
+        return HandleError::UNKNOWN;
     case EBADF:
         DEBUG_ERR(strerror(errid));
         return HandleError::BAD_HANDLE;
@@ -159,7 +160,7 @@ open(std::string_view path, HandleMode mode, HandleError &err)
 
     int fd;
     auto strpath = std::string(path);
-    RETRY_INTR(fd = ::open(strpath.c_str(), flags));
+    RETRY_INTR(fd = ::open(strpath.c_str(), flags, 0777));
 
     if (fd == -1) {
         err = convertErrno();

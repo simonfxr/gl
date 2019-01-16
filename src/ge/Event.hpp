@@ -27,6 +27,13 @@ using event_value_type = typename Ev::value_type;
 template<typename T>
 struct EventHandler
 {
+    EventHandler() = default;
+    EventHandler(const EventHandler &) = default;
+    EventHandler(EventHandler &&) = default;
+
+    EventHandler &operator=(const EventHandler &) = default;
+    EventHandler &operator=(EventHandler &&) = default;
+
     virtual ~EventHandler() = default;
     virtual void handle(const Event<T> &ev) = 0;
 };

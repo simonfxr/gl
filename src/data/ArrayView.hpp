@@ -37,6 +37,19 @@ struct ArrayView
 
     constexpr T *begin() const { return _elems; }
     constexpr T *end() const { return _elems + _size; }
+
+    ArrayView<T> slice(size_t start, size_t n)
+    {
+        ASSERT(start < size());
+        ASSERT(start + n <= size());
+        return { _elems + start, n };
+    }
+
+    ArrayView<T> drop(size_t n)
+    {
+        ASSERT(n <= size());
+        return { _elems + n, _size - n };
+    }
 };
 
 template<typename T>

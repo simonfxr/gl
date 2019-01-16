@@ -3,7 +3,7 @@
 
 #include "data/ArrayView.hpp"
 #include "ge/CommandArgs.hpp"
-#include "ge/CommandParams.hpp"
+#include "ge/Command_detail.hpp"
 #include "ge/EngineEvents.hpp"
 #include "ge/conf.hpp"
 
@@ -34,9 +34,16 @@ private:
 
 public:
     Command(std::vector<CommandParamType> ps,
-            const std::string &name,
+            std::string name,
             std::string desc);
-    virtual ~Command();
+
+    Command(const Command &) = default;
+    Command(Command &&) = default;
+
+    Command &operator=(const Command &) = default;
+    Command &operator=(Command &&) = default;
+
+    virtual ~Command() override;
     std::vector<CommandParamType> parameters() const { return params; }
     const std::string &name() const { return namestr; }
     void name(const std::string &new_name)
@@ -48,7 +55,7 @@ public:
     std::string interactiveDescription() const;
     virtual void interactive(const Event<CommandEvent> &ev,
                              ArrayView<const CommandArg>) = 0;
-    virtual void handle(const Event<CommandEvent> &ev);
+    void handle(const Event<CommandEvent> &ev) final override;
     virtual QuotationCommand *castToQuotation() { return nullptr; }
 };
 
@@ -71,158 +78,60 @@ struct GE_API QuotationCommand : public Command
     QuotationCommand(const QuotationCommand &) = delete;
 };
 
-typedef void (*CommandHandler)(const Event<CommandEvent> &);
-
-GE_API CommandPtr
-makeCommand(CommandHandler handler,
-            const std::string &name,
-            const std::string &desc);
-
-typedef void (*ListCommandHandler)(const Event<CommandEvent> &,
-                                   ArrayView<const CommandArg>);
-
-GE_API CommandPtr
-makeListCommand(ListCommandHandler handler,
-                const std::string &name,
-                const std::string &desc);
-
-GE_API CommandPtr
-makeCommand(ListCommandHandler handler,
-            std::vector<CommandParamType> params,
-            const std::string &name,
-            const std::string &desc);
-
-template<typename S>
-struct StateCommandHandler
-{
-    typedef void (*type)(S,
-                         const Event<CommandEvent> &,
-                         ArrayView<const CommandArg>);
-};
-
-template<typename S>
-CommandPtr
-makeCommand(typename StateCommandHandler<S>::type handler,
-            S state,
-            std::vector<CommandParamType> params,
-            const std::string &name,
-            const std::string &desc);
-
-GE_API CommandPtr
-makeStringListCommand(ListCommandHandler handler,
-                      const std::string &name,
-                      const std::string &desc);
-
-template<typename S>
-struct StateHandler : public Command
-{
-    typename StateCommandHandler<S>::type handler;
-    S state;
-    StateHandler(typename StateCommandHandler<S>::type hndlr,
-                 S st,
-                 std::vector<CommandParamType> params,
-                 const std::string &name,
-                 const std::string &desc)
-      : Command(params, name, desc), handler(hndlr), state(st)
-    {}
-    void interactive(const Event<CommandEvent> &e,
-                     ArrayView<const CommandArg> args)
-    {
-        handler(state, e, args);
-    }
-};
-
-template<typename S>
-CommandPtr
-makeCommand(typename StateCommandHandler<S>::type handler,
-            S state,
-            std::vector<CommandParamType> params,
-            const std::string &name,
-            const std::string &desc)
-{
-    return CommandPtr(new StateHandler<S>(handler, state, params, name, desc));
-}
-
-template<typename T, typename M>
-struct MemberFunCommand : public Command
-{
-private:
-    T *o;
-    M m;
-
-public:
-    MemberFunCommand(T *_o,
-                     M _m,
-                     std::vector<CommandParamType> params,
-                     const std::string &name,
-                     const std::string &desc)
-      : Command(params, name, desc), o(_o), m(_m)
-    {}
-    void interactive(const Event<CommandEvent> &e,
-                     ArrayView<const CommandArg> args)
-    {
-        (o->*m)(e, args);
-    }
-};
-
-template<typename T>
-CommandPtr
-makeCommand(T *o,
-            void (T::*m)(const Event<CommandEvent> &,
-                         ArrayView<const CommandArg>),
-            std::vector<CommandParamType> params,
-            const std::string &name,
-            const std::string &desc = "")
-{
-    return CommandPtr(
-      new MemberFunCommand<T,
-                           void (T::*)(const Event<CommandEvent> &,
-                                       ArrayView<const CommandArg>)>(
-        o, m, params, name, desc));
-}
-
 template<typename F>
-struct FunctionCommand : public Command
+struct FunctorCommand : public Command
 {
+    FunctorCommand(std::string name, std::string descr, F f_)
+      : Command(make_params(arg_seq{}), std::move(name), std::move(descr))
+      , _f(std::move(f_))
+    {}
+
+    void interactive(const Event<CommandEvent> &ev,
+                     ArrayView<const CommandArg> args) final override
+    {
+        invoke(_f, is_var_arg_t{}, arg_seq{}, ev, args);
+    }
+
+private:
+    using ftraits = functor_traits<F>;
+
+    static_assert(std::is_same_v<typename ftraits::result_type, void>);
+    static_assert(ftraits::arity > 0);
+
+    using arg_seq = decltype(detail::make_arg_seq<ftraits>());
+    using is_var_arg_t = decltype(detail::is_var_arg(arg_seq{}));
+
     F _f;
 
-    FunctionCommand(F &&f,
-                    std::vector<CommandParamType> ps,
-                    const std::string &nm,
-                    const std::string &desc)
-      : Command(ps, nm, desc), _f(f)
-    {}
-
-    virtual ~FunctionCommand() {}
-
-    void interactive(const Event<CommandEvent> &e,
-                     ArrayView<const CommandArg> args)
+    template<typename... Ts>
+    static std::vector<CommandParamType> make_params(
+      detail::CommandArgSeq<Ts...>)
     {
-        _f(e, args);
+        return { detail::decayed_command_param_mapping<Ts>::param_type... };
     }
 };
 
 template<typename F>
-CommandPtr
-makeCommand(F &&f,
-            std::vector<CommandParamType> params,
-            const std::string &nm,
-            const std::string &desc)
+std::shared_ptr<Command>
+makeCommand(std::string name, std::string descr, F &&f)
 {
-    return CommandPtr(new FunctionCommand<F>(std::move(f), params, nm, desc));
+    return std::make_shared<FunctorCommand<std::decay_t<F>>>(
+      std::move(name), std::move(descr), std::forward<F>(f));
 }
 
-template<typename F>
-CommandPtr
-makeNumCommand(F &&f, const std::string &nm, const std::string &desc)
+template<typename T, typename... Args>
+std::shared_ptr<Command>
+makeCommand(std::string name,
+            std::string descr,
+            T &receiver,
+            void (T::*m)(const Event<CommandEvent> &, Args...))
 {
     return makeCommand(
-      [f](const Event<CommandEvent> &ev, ArrayView<const CommandArg> args) {
-          f(ev, args[0].number);
-      },
-      NUM_PARAMS,
-      nm,
-      desc);
+      std::move(name),
+      std::move(descr),
+      [&receiver, m](const Event<CommandEvent> &ev, Args... args) {
+          (receiver.*m)(ev, args...);
+      });
 }
 
 } // namespace ge

@@ -1,5 +1,4 @@
 #include "ge/Camera.hpp"
-#include "ge/CommandParams.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
 #include "ge/Timer.hpp"
@@ -117,26 +116,7 @@ writeModel(const std::string &file, const CubeMesh &mdl);
 static bool
 initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points);
 
-static void
-incGamma(real *gamma,
-         const ge::Event<ge::CommandEvent> & /*unused*/,
-         ArrayView<const ge::CommandArg> args)
-{
-    *gamma += real(args[0].number);
-    if (*gamma < 0)
-        *gamma = 0.;
-}
-
-static void
-runRecreateWorld(State *state,
-                 const ge::Event<ge::CommandEvent> & /*unused*/,
-                 const ArrayView<const ge::CommandArg> /*unused*/)
-{
-    state->worldModel.freeGPU();
-    time_op(initWorld(state, state->worldModel, state->sphere_points));
-}
-
-static void
+void
 initState(State *state, const InitEv &ev)
 {
 
@@ -148,18 +128,22 @@ initState(State *state, const InitEv &ev)
 
     e.shaderManager().verbosity(glt::ShaderManagerVerbosity::Info);
 
-    e.commandProcessor().define(
-      makeCommand(incGamma,
-                  &state->gamma_correction,
-                  ge::NUM_PARAMS,
-                  "incGamma",
-                  "increase the value of gamma correction"));
+    e.commandProcessor().define(ge::makeCommand(
+      "incGamma",
+      "increase the value of gamma correction",
+      [state](const ge::Event<ge::CommandEvent> & /*unused*/, double inc) {
+          state->gamma_correction += real(inc);
+          if (state->gamma_correction < 0)
+              state->gamma_correction = 0.;
+      }));
 
-    e.commandProcessor().define(makeCommand(runRecreateWorld,
-                                            state,
-                                            ge::NULL_PARAMS,
-                                            "recreateWorld",
-                                            "recreate the entire world"));
+    e.commandProcessor().define(ge::makeCommand(
+      "recreateWorld",
+      "recreate the entire world",
+      [state](const ge::Event<ge::CommandEvent> & /*unused*/) {
+          state->worldModel.freeGPU();
+          time_op(initWorld(state, state->worldModel, state->sphere_points));
+      }));
 
     state->mouse_look.camera(&state->camera);
     e.enablePlugin(state->camera);

@@ -11,7 +11,6 @@
 #include "defs.hpp"
 
 #include "ge/Camera.hpp"
-#include "ge/CommandParams.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
 #include "ge/Timer.hpp"
@@ -30,6 +29,7 @@
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
+#include "sys/fs.hpp"
 #ifdef MESH_CUBEMESH
 #include "glt/CubeMesh.hpp"
 #endif
@@ -148,11 +148,11 @@ struct Anim
 
     std::string data_dir;
 
-    CommandPtr setDataDirCommand;
-
     explicit Anim(ge::Engine &e) : engine(e), glow_kernel(KERNEL_SIZE) {}
 
     void init(const Event<InitEvent> & /*ev*/);
+    void loadResources(const std::string &dir);
+
     void link(const Event<InitEvent> & /*e*/);
     void animate(const Event<AnimationEvent> & /*unused*/);
     void renderScene(const Event<RenderEvent> & /*e*/);
@@ -167,9 +167,6 @@ struct Anim
 
     void mouseMoved(const Event<MouseMoved> & /*e*/);
     void keyPressed(const Event<KeyPressed> & /*e*/);
-
-    void setDataDir(const Event<CommandEvent> & /*unused*/,
-                    ArrayView<const CommandArg> args);
 
     void onWindowResized(const Event<WindowResized> & /*ev*/);
 };
@@ -189,7 +186,7 @@ Anim::link(const Event<InitEvent> &e)
 void
 Anim::init(const Event<InitEvent> &ev)
 {
-
+    loadResources(sys::fs::join(CMAKE_CURRENT_SOURCE_DIR, "data"));
     engine.out() << "in init()" << sys::io::endl;
 
     mouse_look.camera(&camera);
@@ -198,13 +195,6 @@ Anim::init(const Event<InitEvent> &ev)
 
     fpsTimer = std::make_shared<Timer>(engine);
     fpsTimer->start(1.f, true);
-
-    setDataDirCommand = makeCommand(this,
-                                    &Anim::setDataDir,
-                                    ge::STR_PARAMS,
-                                    "setDataDir",
-                                    "set the texture directory");
-    engine.commandProcessor().define(setDataDirCommand);
 
     engine.gameLoop().ticks(100);
     engine.gameLoop().syncDraw(true);
@@ -703,10 +693,9 @@ Anim::keyPressed(const Event<KeyPressed> &e)
 }
 
 void
-Anim::setDataDir(const Event<CommandEvent> & /*unused*/,
-                 ArrayView<const CommandArg> args)
+Anim::loadResources(const std::string &dir)
 {
-    data_dir = args[0].string;
+    data_dir = dir;
 
     int w, h;
     uint32_t *wood_data;
@@ -756,12 +745,11 @@ main(int argc, char *argv[])
 {
     EngineOptions opts;
     Engine engine;
-    Anim anim(engine);
     engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
+    Anim anim(engine);
     opts.parse(&argc, &argv);
     opts.inits.init.reg(anim, &Anim::init);
     opts.inits.init.reg(anim, &Anim::link);
-
     return engine.run(opts);
 }
 

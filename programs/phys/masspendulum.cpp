@@ -175,7 +175,7 @@ Sim::init()
 void
 Anim::simulate(const ge::Event<ge::AnimationEvent> &ev)
 {
-    real dt = ev.info.engine.gameLoop().tickDuration();
+    real dt = 0.15_r * ev.info.engine.gameLoop().tickDuration();
     simulation.integrate(dt);
 };
 
@@ -184,6 +184,7 @@ main(int argc, char *argv[])
 {
     ge::EngineOptions opts;
     Anim anim;
+    anim.engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
     anim.link();
     opts.inits.reg(ge::Init, anim, &Anim::init);
     opts.parse(&argc, &argv);

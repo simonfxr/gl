@@ -736,16 +736,17 @@ World::Data::solveContacts(std::vector<Contact> &contacts, float dt)
 }
 
 static vec3_t
-potentialAccel(const point3_t &p0)
+potentialAccel(const point3_t &)
 {
 
-    //    return GRAVITY;
+    return GRAVITY;
 
-    vec3_t p = p0;
+    // vec3_t p = p0;
 
     // our potential energy equation is: U = m * sqrt(x^2 + z^2)
     // so force is - m * (2 x, 0, 2 z)
-    return vec3(p[0] * real(2), real(0), p[2] * real(2)) * real(-2) + GRAVITY;
+    // return vec3(p[0] * real(2), real(0), p[2] * real(2)) * real(-2) +
+    // GRAVITY;
 
     // r = sqrt(x^2 + z^2)
     // U = sin(r * omega) * r * alpha

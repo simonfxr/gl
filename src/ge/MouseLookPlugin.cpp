@@ -1,5 +1,4 @@
 #include "ge/MouseLookPlugin.hpp"
-#include "ge/CommandParams.hpp"
 #include "ge/Engine.hpp"
 #include "ge/GameWindow.hpp"
 #include "ge/KeyHandler.hpp"
@@ -18,28 +17,22 @@ struct MouseLookPlugin::Data
 
     void stateChanged(State new_state);
     void setState(State new_state);
-
-    // commands
-    void runGrabMouse(const Event<CommandEvent> & /*unused*/,
-                      ArrayView<const CommandArg> /*unused*/);
-    void runUngrabMouse(const Event<CommandEvent> & /*unused*/,
-                        ArrayView<const CommandArg> /*unused*/);
 };
 
 DECLARE_PIMPL_DEL(MouseLookPlugin)
 
 MouseLookPlugin::Data::Data()
 {
-    _commands.grab = makeCommand(this,
-                                 &MouseLookPlugin::Data::runGrabMouse,
-                                 NULL_PARAMS,
-                                 "mouseLook.grab",
-                                 "");
-    _commands.ungrab = makeCommand(this,
-                                   &MouseLookPlugin::Data::runUngrabMouse,
-                                   NULL_PARAMS,
-                                   "mouseLook.ungrab",
-                                   "");
+    _commands.grab =
+      makeCommand("mouseLook.grab", "", [this](const Event<CommandEvent> &) {
+          if (_should_grab)
+              setState(Grabbing);
+      });
+
+    _commands.ungrab =
+      makeCommand("mouseLook.ungrab", "", [this](const Event<CommandEvent> &) {
+          setState(Free);
+      });
 }
 
 void
@@ -73,21 +66,6 @@ MouseLookPlugin::Data::setState(State new_state)
         _state = new_state;
         stateChanged(new_state);
     }
-}
-
-void
-MouseLookPlugin::Data::runGrabMouse(const Event<CommandEvent> & /*unused*/,
-                                    ArrayView<const CommandArg> /*unused*/)
-{
-    if (_should_grab)
-        setState(Grabbing);
-}
-
-void
-MouseLookPlugin::Data::runUngrabMouse(const Event<CommandEvent> & /*unused*/,
-                                      ArrayView<const CommandArg> /*unused*/)
-{
-    setState(Free);
 }
 
 MouseLookPlugin::MouseLookPlugin() : self(new Data) {}

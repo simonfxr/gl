@@ -3,7 +3,6 @@
 #include "math/vec3.hpp"
 
 #include "ge/Camera.hpp"
-#include "ge/CommandParams.hpp"
 
 using namespace math;
 
@@ -35,14 +34,12 @@ struct Camera::Data
     void mouseMoved(int16_t dx, int16_t dy);
 
     // commands
-    void runMove(const Event<CommandEvent> & /*unused*/,
-                 ArrayView<const CommandArg> /*args*/);
+    void runMove(const Event<CommandEvent> &, int64_t dir);
     void runSaveFrame(const Event<CommandEvent> & /*unused*/,
                       ArrayView<const CommandArg> /*args*/);
     void runLoadFrame(const Event<CommandEvent> & /*unused*/,
                       ArrayView<const CommandArg> /*args*/);
-    void runSpeed(const Event<CommandEvent> & /*unused*/,
-                  ArrayView<const CommandArg> /*args*/);
+    void runSpeed(const Event<CommandEvent> & /*unused*/, double);
     void runSensitivity(const Event<CommandEvent> & /*unused*/,
                         ArrayView<const CommandArg> /*args*/);
 
@@ -98,37 +95,33 @@ const math::real the_dir_table[3 * 12] = { 0.5f,
 Camera::Data::Data(Camera &me) : self(me)
 {
     commands.move = makeCommand(
-      this, &Data::runMove, INT_PARAMS, "camera.move", "move the camera frame");
+      "camera.move", "move the camera frame", *this, &Data::runMove);
 
     commands.saveFrame =
-      makeCommand(this,
-                  &Data::runSaveFrame,
-                  LIST_PARAMS,
-                  "camera.saveFrame",
-                  "save the orientation and position of the camera in a file");
+      makeCommand("camera.saveFrame",
+                  "save the orientation and position of the camera in a file",
+                  *this,
+                  &Data::runSaveFrame);
 
-    commands.loadFrame = makeCommand(
-      this,
-      &Data::runLoadFrame,
-      LIST_PARAMS,
-      "camera.loadFrame",
-      "load the orientation and position of the camera from a file");
+    commands.loadFrame =
+      makeCommand("camera.loadFrame",
+                  "load the orientation and position of the camera from a file",
+                  *this,
+                  &Data::runLoadFrame);
 
     commands.speed =
-      makeCommand(this,
-                  &Data::runSpeed,
-                  NUM_PARAMS,
-                  "camera.speed",
-                  "set the length the camera is allowed to move in one frame");
+      makeCommand("camera.speed",
+                  "set the length the camera is allowed to move in one frame",
+                  *this,
+                  &Data::runSpeed);
 
     commands.sensitivity =
-      makeCommand(this,
-                  &Data::runSensitivity,
-                  LIST_PARAMS,
-                  "camera.sensitivity",
+      makeCommand("camera.sensitivity",
                   "specify the camera sensitivity: "
                   "either as a pair of numbers (x- and y-sensitvity)"
-                  "or as a single number (x- = y-sensitvity)");
+                  "or as a single number (x- = y-sensitvity)",
+                  *this,
+                  &Data::runSensitivity);
 
     handlers.mouseMoved = makeEventHandler(*this, &Data::handleMouseMoved);
     handlers.handleInput = makeEventHandler(*this, &Data::handleInput);
@@ -136,10 +129,8 @@ Camera::Data::Data(Camera &me) : self(me)
 }
 
 void
-Camera::Data::runMove(const Event<CommandEvent> & /*unused*/,
-                      ArrayView<const CommandArg> args)
+Camera::Data::runMove(const Event<CommandEvent> & /*unused*/, int64_t dir)
 {
-    auto dir = args[0].integer;
     if (dir < 1 || dir > 12) {
         ERR("argument not >= 1 and <= 12");
         return;
@@ -197,10 +188,9 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
 }
 
 void
-Camera::Data::runSpeed(const Event<CommandEvent> & /*unused*/,
-                       ArrayView<const CommandArg> args)
+Camera::Data::runSpeed(const Event<CommandEvent> & /*unused*/, double s)
 {
-    speed = math::real(args[0].number);
+    speed = s;
 }
 
 void

@@ -1,7 +1,7 @@
 #include "sim.hpp"
 
 #include "ge/Camera.hpp"
-#include "ge/CommandParams.hpp"
+#include "ge/Command.hpp"
 #include "ge/Engine.hpp"
 #include "ge/GameWindow.hpp"
 #include "ge/MouseLookPlugin.hpp"
@@ -157,31 +157,6 @@ struct Game
     void render_hud();
 
     void update_sphere_mass();
-
-    // commands
-    void cmdToggleUseInterpolation(
-      const ge::Event<ge::CommandEvent> & /*unused*/,
-      ArrayView<const ge::CommandArg> /*unused*/);
-    void cmdIncWorldSolveIterations(
-      const ge::Event<ge::CommandEvent> & /*unused*/,
-      ArrayView<const ge::CommandArg> /*args*/);
-    void cmdToggleRenderByDistance(
-      const ge::Event<ge::CommandEvent> & /*unused*/,
-      ArrayView<const ge::CommandArg> /*unused*/);
-    void cmdToggleRenderSpheresInstanced(
-      const ge::Event<ge::CommandEvent> & /*unused*/,
-      ArrayView<const ge::CommandArg> /*unused*/);
-    void cmdToggleIndirectRendering(
-      const ge::Event<ge::CommandEvent> & /*unused*/,
-      ArrayView<const ge::CommandArg> /*unused*/);
-    void cmdSpawnSphere(const ge::Event<ge::CommandEvent> & /*unused*/,
-                        ArrayView<const ge::CommandArg> /*unused*/);
-    void cmdIncSphereRadius(const ge::Event<ge::CommandEvent> & /*unused*/,
-                            ArrayView<const ge::CommandArg> /*args*/);
-    void cmdIncSphereSpeed(const ge::Event<ge::CommandEvent> & /*unused*/,
-                           ArrayView<const ge::CommandArg> /*args*/);
-    void cmdIncGameSpeed(const ge::Event<ge::CommandEvent> & /*unused*/,
-                         ArrayView<const ge::CommandArg> /*args*/);
 };
 
 Game::Game() : renderer(*this) {}
@@ -214,7 +189,7 @@ Game::init(const ge::Event<ge::InitEvent> &ev)
         rectBatch.send();
     }
 
-    e.gameLoop().ticks(100);
+    e.gameLoop().ticks(200);
     e.gameLoop().syncDraw(false);
 
     use_interpolation = true;
@@ -852,130 +827,97 @@ Game::link(ge::Engine &e)
 
     ge::CommandProcessor &proc = e.commandProcessor();
 
-    proc.define(ge::makeCommand(this,
-                                &Game::cmdToggleUseInterpolation,
-                                ge::NULL_PARAMS,
-                                "toggleUseInterpolation"));
-
-    proc.define(ge::makeCommand(this,
-                                &Game::cmdIncWorldSolveIterations,
-                                ge::INT_PARAMS,
-                                "incWorldSolveIterations"));
-
-    proc.define(ge::makeCommand(this,
-                                &Game::cmdToggleRenderByDistance,
-                                ge::NULL_PARAMS,
-                                "toggleRenderByDistance"));
-
-    proc.define(ge::makeCommand(this,
-                                &Game::cmdToggleRenderSpheresInstanced,
-                                ge::NULL_PARAMS,
-                                "toggleRenderSpheresInstanced"));
-
-    proc.define(ge::makeCommand(this,
-                                &Game::cmdToggleIndirectRendering,
-                                ge::NULL_PARAMS,
-                                "toggleIndirectRendering"));
+    proc.define(ge::makeCommand(
+      "toggleUseInterpolation",
+      "",
+      [this](const ge::Event<ge::CommandEvent> & /*unused*/
+      ) {
+          use_interpolation = !use_interpolation;
+          sys::io::stderr()
+            << "use interpolation: " << (use_interpolation ? "yes" : "no")
+            << sys::io::endl;
+      }));
 
     proc.define(ge::makeCommand(
-      this, &Game::cmdSpawnSphere, ge::NULL_PARAMS, "spawnSphere"));
+      "incWorldSolveIterations",
+      "",
+      [this](const ge::Event<ge::CommandEvent> & /*unused*/,
+             ArrayView<const ge::CommandArg> args) {
+          if (args[0].integer < 0 &&
+              world.solve_iterations < size_t(-args[0].integer))
+              world.solve_iterations = 0;
+          else
+              world.solve_iterations += int32_t(args[0].integer);
+          sys::io::stderr()
+            << "number of contact-solver iterations: " << world.solve_iterations
+            << sys::io::endl;
+      }));
 
     proc.define(ge::makeCommand(
-      this, &Game::cmdIncSphereRadius, ge::NUM_PARAMS, "incSphereRadius"));
+      "toggleRenderByDistance",
+      "",
+      [this](const ge::Event<ge::CommandEvent> & /*unused*/) {
+          world.render_by_distance = !world.render_by_distance;
+          sys::io::stderr()
+            << "render by distance: "
+            << (world.render_by_distance ? "yes" : "no") << sys::io::endl;
+      }));
 
     proc.define(ge::makeCommand(
-      this, &Game::cmdIncSphereSpeed, ge::NUM_PARAMS, "incSphereSpeed"));
+      "toggleRenderSpheresInstanced",
+      "",
+      [this](const ge::Event<ge::CommandEvent> & /*unused*/) {
+          render_spheres_instanced = !render_spheres_instanced;
+          sys::io::stderr()
+            << "instanced rendering: "
+            << (render_spheres_instanced ? "yes" : "no") << sys::io::endl;
+      }));
 
     proc.define(ge::makeCommand(
-      this, &Game::cmdIncGameSpeed, ge::NUM_PARAMS, "incGameSpeed"));
+      "toggleIndirectRendering",
+      "",
+      [this](const ge::Event<ge::CommandEvent> & /*unused*/) {
+          updateIndirectRendering(!indirect_rendering);
+          sys::io::stderr()
+            << "indirect rendering: " << (indirect_rendering ? "yes" : "no")
+            << sys::io::endl;
+      }));
+
+    proc.define(
+      ge::makeCommand("spawnSphere",
+                      "",
+                      [this](const ge::Event<ge::CommandEvent> & /*unused*/) {
+                          spawn_sphere();
+                      }));
+
+    proc.define(ge::makeCommand(
+      "incSphereRadius",
+      "",
+      [this](const ge::Event<ge::CommandEvent> & /*unused*/, double rad) {
+          sphere_proto.r =
+            std::max(0.05_r, sphere_proto.r + static_cast<math::real>(rad));
+          update_sphere_mass();
+      }));
+
+    proc.define(ge::makeCommand(
+      "incSphereSpeed",
+      "",
+      [this](const ge::Event<ge::CommandEvent> & /*unused*/, double inc) {
+          sphere_speed =
+            std::max(0.25_r, sphere_speed + static_cast<math::real>(inc));
+      }));
+
+    proc.define(ge::makeCommand(
+      "incGameSpeed",
+      "",
+      [this](const ge::Event<ge::CommandEvent> & /*unused*/, double inc) {
+          game_speed = std::max(0_r, game_speed + static_cast<math::real>(inc));
+      }));
 
     mouse_look.camera(&camera);
     e.enablePlugin(camera);
     e.enablePlugin(mouse_look);
     camera.events().moved.reg(*this, &Game::constrainCameraMovement);
-}
-
-void
-Game::cmdToggleUseInterpolation(const ge::Event<ge::CommandEvent> & /*unused*/,
-                                ArrayView<const ge::CommandArg> /*unused*/)
-{
-    use_interpolation = !use_interpolation;
-    sys::io::stderr() << "use interpolation: "
-                      << (use_interpolation ? "yes" : "no") << sys::io::endl;
-}
-
-void
-Game::cmdIncWorldSolveIterations(const ge::Event<ge::CommandEvent> & /*unused*/,
-                                 ArrayView<const ge::CommandArg> args)
-{
-    if (args[0].integer < 0 &&
-        world.solve_iterations < size_t(-args[0].integer))
-        world.solve_iterations = 0;
-    else
-        world.solve_iterations += int32_t(args[0].integer);
-    sys::io::stderr() << "number of contact-solver iterations: "
-                      << world.solve_iterations << sys::io::endl;
-}
-
-void
-Game::cmdToggleRenderByDistance(const ge::Event<ge::CommandEvent> & /*unused*/,
-                                ArrayView<const ge::CommandArg> /*unused*/)
-{
-    world.render_by_distance = !world.render_by_distance;
-    sys::io::stderr() << "render by distance: "
-                      << (world.render_by_distance ? "yes" : "no")
-                      << sys::io::endl;
-}
-
-void
-Game::cmdToggleRenderSpheresInstanced(
-  const ge::Event<ge::CommandEvent> & /*unused*/,
-  ArrayView<const ge::CommandArg> /*unused*/)
-{
-    render_spheres_instanced = !render_spheres_instanced;
-    sys::io::stderr() << "instanced rendering: "
-                      << (render_spheres_instanced ? "yes" : "no")
-                      << sys::io::endl;
-}
-
-void
-Game::cmdToggleIndirectRendering(const ge::Event<ge::CommandEvent> & /*unused*/,
-                                 ArrayView<const ge::CommandArg> /*unused*/)
-{
-    updateIndirectRendering(!indirect_rendering);
-    sys::io::stderr() << "indirect rendering: "
-                      << (indirect_rendering ? "yes" : "no") << sys::io::endl;
-}
-
-void
-Game::cmdSpawnSphere(const ge::Event<ge::CommandEvent> & /*unused*/,
-                     ArrayView<const ge::CommandArg> /*unused*/)
-{
-    spawn_sphere();
-}
-
-void
-Game::cmdIncSphereRadius(const ge::Event<ge::CommandEvent> & /*unused*/,
-                         ArrayView<const ge::CommandArg> args)
-{
-    sphere_proto.r =
-      std::max(0.05f, sphere_proto.r + static_cast<float>(args[0].number));
-    update_sphere_mass();
-}
-
-void
-Game::cmdIncSphereSpeed(const ge::Event<ge::CommandEvent> & /*unused*/,
-                        ArrayView<const ge::CommandArg> args)
-{
-    sphere_speed =
-      std::max(0.25f, sphere_speed + static_cast<float>(args[0].number));
-}
-
-void
-Game::cmdIncGameSpeed(const ge::Event<ge::CommandEvent> & /*unused*/,
-                      ArrayView<const ge::CommandArg> args)
-{
-    game_speed = std::max(0.f, game_speed + static_cast<float>(args[0].number));
 }
 
 int

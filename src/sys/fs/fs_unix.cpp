@@ -19,7 +19,7 @@ bool
 cwd(std::string_view dir)
 {
     if (chdir(std::string(dir).c_str()) < 0) {
-        ERR(strerror(errno));
+        ERR(strerror(std::exchange(errno, 0)));
         return false;
     }
     return true;
@@ -39,7 +39,8 @@ retry:
             if (errno == ERANGE)
                 goto retry;
             if (errno != EINTR) {
-                ERR("cwd() failed");
+                ERR(string_concat("cwd() failed: ",
+                                  strerror(std::exchange(errno, 0))));
                 return "";
             }
         }
@@ -163,8 +164,9 @@ modificationTime(std::string_view path)
 {
     struct stat st;
     if (stat(std::string(path).c_str(), &st) != 0) {
-        if (errno != ENOENT)
-            ERR(strerror(errno));
+        auto err = std::exchange(errno, 0);
+        if (err != ENOENT)
+            ERR(strerror(err));
         return std::nullopt;
     }
     return FileTime{ st.st_mtime };
@@ -181,8 +183,9 @@ exists(std::string_view path)
 {
     struct stat info;
     if (stat(std::string(path).c_str(), &info) == -1) {
-        if (errno != ENOENT)
-            ERR(strerror(errno));
+        auto err = std::exchange(errno, 0);
+        if (err != ENOENT)
+            ERR(strerror(err));
         return std::nullopt;
     }
     auto objtype = info.st_mode & S_IFMT;

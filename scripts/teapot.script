@@ -18,5 +18,4 @@ ignoreGLDebugMessage "Nvidia" 1281
 
 postInit {
     camera.speed 0.3
-    setDataDir "programs/teapot/data"
 }

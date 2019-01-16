@@ -102,11 +102,9 @@ endif()
 def_lib(glt SOURCES ${GLT_SRC} DEPEND sys ${GLT_LIBS})
 
 set(GE_SRC
-  ge/NewParam.cpp
   ge/Camera.cpp
   ge/Command.cpp
   ge/CommandArgs.cpp
-  ge/CommandParams.cpp
   ge/CommandProcessor.cpp
   ge/Commands.cpp
   ge/Engine.cpp

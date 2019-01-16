@@ -2,14 +2,14 @@
 
 #include "ge/Commands.hpp"
 
-#include "ge/CommandParams.hpp"
 #include "ge/Engine.hpp"
-#include <utility>
-
 #include "glt/GLObject.hpp"
 #include "glt/ShaderCompiler.hpp"
 #include "glt/ShaderProgram.hpp"
 #include "glt/utils.hpp"
+
+#include <utility>
+#include <vector>
 
 namespace ge {
 
@@ -17,8 +17,34 @@ using namespace math;
 
 namespace {
 
-void
-runPrintContextInfo(const Event<CommandEvent> &e)
+BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
+std::vector<std::shared_ptr<Command>> defined_commands;
+
+struct command_decl
+{
+    std::string name;
+    std::string descr;
+};
+
+struct defined_command
+{};
+
+template<typename F>
+defined_command
+operator+(command_decl &&decl, F &&effect)
+{
+    defined_commands.emplace_back(makeCommand(
+      std::move(decl.name), std::move(decl.descr), std::forward<F>(effect)));
+    return {};
+}
+
+#define COMMAND(name, descr)                                                   \
+    const defined_command PP_CAT(defined_command_, __LINE__) =                 \
+      command_decl{ name, descr } +
+
+COMMAND("printContextInfo",
+        "prints information about the current OpenGL context")
+[](const Event<CommandEvent> &e)
 {
     auto c = e.info.engine.window().contextInfo();
     e.info.engine.out() << "OpenGL Context Information" << sys::io::endl
@@ -36,16 +62,12 @@ runPrintContextInfo(const Event<CommandEvent> &e)
                         << (e.info.engine.window().vsync() ? "yes" : "no")
                         << sys::io::endl
                         << sys::io::endl;
-}
+};
 
-void
-runPrintGLInstanceStats(const Event<CommandEvent> &e)
-{
-    glt::printStats(e.info.engine.out());
-}
-
-void
-runPrintMemInfo(const Event<CommandEvent> &e)
+COMMAND("printMemInfo",
+        "prints information about current (approximatly) amout of free memory "
+        "on the GPU")
+[](const Event<CommandEvent> &e)
 {
     bool success = false;
     glt::GLMemInfoATI info{};
@@ -83,10 +105,17 @@ runPrintMemInfo(const Event<CommandEvent> &e)
 
     if (!success)
         ERR(e.info.engine.out(), "couldnt query amount of free memory");
-}
+};
 
-void
-runReloadShaders(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+COMMAND("printGLInstanceStats",
+        "print number of the allocated opengl object per type")
+[](const Event<CommandEvent> &e)
+{
+    glt::printStats(e.info.engine.out());
+};
+
+COMMAND("reloadShaders", "reload ShaderPrograms")
+[](const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
 {
 
     if (args.size() == 0) {
@@ -108,10 +137,10 @@ runReloadShaders(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
             }
         }
     }
-}
+};
 
-void
-runListCachedShaders(const Event<CommandEvent> &e)
+COMMAND("listCachedShaders", "list all shader cache entries")
+[](const Event<CommandEvent> &e)
 {
     auto cache = e.info.engine.shaderManager().globalShaderCache();
 
@@ -128,36 +157,27 @@ runListCachedShaders(const Event<CommandEvent> &e)
     }
 
     e.info.engine.out() << n << " shaders cached" << sys::io::endl;
-}
-
-void
-runListBindings(const Event<CommandEvent> &e)
-{
-    e.info.engine.keyHandler().handleListBindings(e);
-}
-
-struct BindKey : public Command
-{
-    BindKey()
-      : Command(KEY_COM_PARAMS,
-                "bindKey",
-                "bind a command to a key combination")
-    {}
-    void interactive(const Event<CommandEvent> &e,
-                     ArrayView<const CommandArg> args) override
-    {
-        auto &comm = args[1].command.ref;
-        if (!comm) {
-            ERR(e.info.engine.out(), "cannot bind key: null command");
-            return;
-        }
-        auto binding = std::make_shared<KeyBinding>(args[0].keyBinding);
-        e.info.engine.keyHandler().registerBinding(binding, comm);
-    }
 };
 
-void
-runHelp(const Event<CommandEvent> &ev)
+COMMAND("listBindings", "list all key bindings")[](const Event<CommandEvent> &e)
+{
+    e.info.engine.keyHandler().handleListBindings(e);
+};
+
+COMMAND("bindKey", "bind a command to a key combination")
+[](const Event<CommandEvent> &e,
+   const KeyBinding &keyBinding,
+   const std::shared_ptr<Command> &comm)
+{
+    if (!comm) {
+        ERR(e.info.engine.out(), "cannot bind key: null command");
+        return;
+    }
+    e.info.engine.keyHandler().registerBinding(
+      std::make_shared<KeyBinding>(keyBinding), comm);
+};
+
+COMMAND("help", "help and command overview")[](const Event<CommandEvent> &ev)
 {
     ge::CommandProcessor &cp = ev.info.engine.commandProcessor();
     ev.info.engine.out() << "list of Commands: " << sys::io::endl;
@@ -169,10 +189,10 @@ runHelp(const Event<CommandEvent> &ev)
                          << "use describe <command name> to get more "
                             "information about a specific command"
                          << sys::io::endl;
-}
+};
 
-void
-runBindShader(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+COMMAND("bindShader", "compile and linke a ShaderProgram and give it a name")
+[](const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
 {
     if (args.size() == 0) {
         ERR(e.info.engine.out(), "bindShader: need at least one argument");
@@ -221,10 +241,10 @@ runBindShader(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
     e.info.engine.out() << "bound program: " << args[0].string << sys::io::endl;
 
     e.info.engine.shaderManager().addProgram(args[0].string, prog);
-}
+};
 
-void
-runInitGLDebug(const Event<CommandEvent> &e)
+COMMAND("initGLDebug", "initialize OpenGL debug output")
+[](const Event<CommandEvent> &e)
 {
     if (e.info.engine.window().contextInfo().debugContext) {
         glt::initDebug();
@@ -233,11 +253,12 @@ runInitGLDebug(const Event<CommandEvent> &e)
           << "cannot initialize OpenGL debug output: no debug context"
           << sys::io::endl;
     }
-}
+};
 
-void
-runIgnoreGLDebugMessage(const Event<CommandEvent> &e,
-                        ArrayView<const CommandArg> args)
+COMMAND("ignoreGLDebugMessage",
+        "for opengl vendor <vendor> add the message <id> to the list of "
+        "ignored messages")
+[](const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
 {
     const std::string &vendor_str = args[0].string;
     auto id = static_cast<GLint>(args[1].integer);
@@ -257,10 +278,10 @@ runIgnoreGLDebugMessage(const Event<CommandEvent> &e,
     } else {
         e.info.engine.out() << "invalid opengl vendor: " << vendor_str;
     }
-}
+};
 
-void
-runDescribe(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+COMMAND("describe", "print a description of its parameters")
+[](const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
 {
 
     CommandProcessor &proc = e.info.engine.commandProcessor();
@@ -275,79 +296,63 @@ runDescribe(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
               << com->interactiveDescription() << sys::io::endl;
         }
     }
-}
+};
 
-void
-runEval(const Event<CommandEvent> &e, ArrayView<const CommandArg> /*unused*/)
+COMMAND("eval", "parse a string and execute it")
+[](const Event<CommandEvent> &e, ArrayView<const CommandArg> /*unused*/)
 {
     ERR(e.info.engine.out(), "not yet implemented");
-}
+};
 
-void
-runLoad(const Event<CommandEvent> &ev, ArrayView<const CommandArg> args)
+COMMAND("load", "execute a script file")
+[](const Event<CommandEvent> &ev, ArrayView<const CommandArg> args)
 {
     for (const auto &arg : args)
         ev.info.engine.commandProcessor().loadScript(arg.string);
-}
+};
 
-void
-runAddShaderPath(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+COMMAND("addShaderPath", "add directories to the shader path")
+[](const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
 {
     for (const auto &arg : args)
         if (!e.info.engine.shaderManager().addShaderDirectory(arg.string, true))
             ERR(e.info.engine.out(), "not a directory: " + arg.string);
-}
+};
 
-void
-runPrependShaderPath(const Event<CommandEvent> &e,
-                     ArrayView<const CommandArg> args)
+COMMAND("prependShaderPath", "add directories to the front of the shader path")
+[](const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
 {
     for (size_t i = args.size(); i > 0; --i) {
         if (!e.info.engine.shaderManager().prependShaderDirectory(
               args[i - 1].string, true))
             ERR(e.info.engine.out(), "not a directory: " + args[i - 1].string);
     }
-}
+};
 
-void
-runRemoveShaderPath(const Event<CommandEvent> &e,
-                    ArrayView<const CommandArg> args)
+COMMAND("removeShaderPath", "remove directories from the shader path")
+[](const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
 {
     for (const auto &arg : args)
         e.info.engine.shaderManager().removeShaderDirectory(arg.string);
-}
+};
 
-void
-runTogglePause(const Event<CommandEvent> &e)
+COMMAND("togglePause", "toggle the pause state")[](const Event<CommandEvent> &e)
 {
     Engine &eng = e.info.engine;
     eng.gameLoop().pause(!eng.gameLoop().paused());
-}
+};
 
-struct PerspectiveProjection : public Command
+COMMAND("perspectiveProjection", "set parameters for perspective projection")
+[](const Event<CommandEvent> &e, double fovDeg, double zn, double zf)
 {
-    PerspectiveProjection()
-      : Command(NUM_NUM_NUM_PARAMS,
-                "perspectiveProjection",
-                "set parameters for perspective projection")
-    {}
+    glt::RenderManager &rm = e.info.engine.renderManager();
 
-    void interactive(const Event<CommandEvent> &e,
-                     ArrayView<const CommandArg> args) override
-    {
-        real fovDeg = real(args[0].number);
-        real zn = real(args[1].number);
-        real zf = real(args[2].number);
-
-        glt::RenderManager &rm = e.info.engine.renderManager();
-
-        rm.setDefaultProjection(
-          glt::Projection::mkPerspective(math::degToRad(fovDeg), zn, zf));
-        glt::RenderTarget *tgt = rm.activeRenderTarget();
-        if (tgt != nullptr)
-            rm.updateProjection(math::real(tgt->width()) /
-                                math::real(tgt->height()));
-    }
+    rm.setDefaultProjection(
+      glt::Projection::mkPerspective(math::degToRad(fovDeg), zn, zf));
+    glt::RenderTarget *tgt = rm.activeRenderTarget();
+    if (tgt != nullptr)
+        rm.updateProjection(math::real(tgt->width()) /
+                            math::real(tgt->height()));
 };
 
 struct InitCommandHandler : public EventHandler<InitEvent>
@@ -362,16 +367,14 @@ struct InitCommandHandler : public EventHandler<InitEvent>
     }
 };
 
-void
-runPostInit(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+COMMAND("postInit", "execute its argument command in the postInit hook")
+[](const Event<CommandEvent> &e, const std::shared_ptr<Command> &comm)
 {
-    e.info.engine.addInit(
-      PostInit, std::make_shared<InitCommandHandler>(args[0].command.ref));
-}
+    e.info.engine.addInit(PostInit, std::make_shared<InitCommandHandler>(comm));
+};
 
-void
-runStartReplServer(const Event<CommandEvent> &ev,
-                   ArrayView<const CommandArg> args)
+COMMAND("startReplServer", "start a REPL server on the given port")
+[](const Event<CommandEvent> &ev, ArrayView<const CommandArg> args)
 {
     Engine &e = ev.info.engine;
     ReplServer &serv = e.replServer();
@@ -397,93 +400,16 @@ runStartReplServer(const Event<CommandEvent> &ev,
     INFO(ev.info.engine.out(), "REPL server started");
 
     e.events().handleInput.reg(serv.ioHandler());
-}
+};
 
+END_NO_WARN_UNINITIALIZED
 } // namespace
 
 void
 registerCommands(CommandProcessor &proc)
 {
-    proc.define(
-      makeCommand(runPrintContextInfo,
-                  "printContextInfo",
-                  "prints information about the current OpenGL context"));
-
-    proc.define(makeCommand(runPrintMemInfo,
-                            "printMemInfo",
-                            "prints information about current (approximatly) "
-                            "amout of free memory on the GPU"));
-
-    proc.define(makeStringListCommand(
-      runReloadShaders, "reloadShaders", "reload ShaderPrograms"));
-
-    proc.define(makeCommand(runListCachedShaders,
-                            "listCachedShaders",
-                            "list all shader cache entries"));
-
-    proc.define(
-      makeCommand(runListBindings, "listBindings", "list all key bindings"));
-
-    proc.define(std::make_shared<BindKey>());
-
-    proc.define(makeCommand(runHelp, "help", "help and command overview"));
-
-    proc.define(
-      makeListCommand(runBindShader,
-                      "bindShader",
-                      "compile and linke a ShaderProgram and give it a name"));
-
-    proc.define(makeCommand(
-      runInitGLDebug, "initGLDebug", "initialize OpenGL debug output"));
-
-    proc.define(makeCommand(runIgnoreGLDebugMessage,
-                            STR_INT_PARAMS,
-                            "ignoreGLDebugMessage",
-                            "for opengl vendor <vendor> add the message "
-                            "<id> to the list of ignored messages"));
-
-    proc.define(makeListCommand(
-      runDescribe, "describe", "print a description of its parameters"));
-
-    proc.define(
-      makeStringListCommand(runEval, "eval", "parse a string and execute it"));
-
-    proc.define(
-      makeStringListCommand(runLoad, "load", "execute a script file"));
-
-    proc.define(makeStringListCommand(
-      runAddShaderPath, "addShaderPath", "add directories to the shader path"));
-
-    proc.define(
-      makeStringListCommand(runPrependShaderPath,
-                            "prependShaderPath",
-                            "add directories to the front of the shader path"));
-
-    proc.define(
-      makeStringListCommand(runRemoveShaderPath,
-                            "removeShaderPath",
-                            "remove directories from the shader path"));
-
-    proc.define(
-      makeCommand(runTogglePause, "togglePause", "toggle the pause state"));
-
-    proc.define(std::make_shared<PerspectiveProjection>());
-
-    proc.define(
-      makeCommand(runPostInit,
-                  COM_PARAMS,
-                  "postInit",
-                  "execute its argument command in the postInit hook"));
-
-    proc.define(makeCommand(runStartReplServer,
-                            INT_PARAMS,
-                            "startReplServer",
-                            "start a REPL server on the given port"));
-
-    proc.define(
-      makeCommand(runPrintGLInstanceStats,
-                  "printGLInstanceStats",
-                  "print number of the allocated opengl object per type"));
+    for (auto &comm : defined_commands)
+        proc.define(comm);
 }
 
 } // namespace ge

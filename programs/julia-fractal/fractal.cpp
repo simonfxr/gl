@@ -1,20 +1,16 @@
+#include "ge/Command.hpp"
 #include "ge/Engine.hpp"
-
-#include "math/glvec.hpp"
-#include "math/real.hpp"
-#include "math/vec2.hpp"
-
+#include "ge/Event.hpp"
 #include "glt/CubeMesh.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/ShaderProgram.hpp"
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/utils.hpp"
+#include "math/glvec.hpp"
+#include "math/real.hpp"
+#include "math/vec2.hpp"
 
 #include "shaders/quasi_constants.h"
-
-#include "ge/Command.hpp"
-#include "ge/Engine.hpp"
-#include "ge/Event.hpp"
 
 static const bool MULTISAMPLING = false; // via multisample texture
 
@@ -201,7 +197,8 @@ Anim::handleWindowResized(const ge::Event<ge::WindowResized> &ev)
 using ComEv = ge::Event<ge::CommandEvent>;
 
 #define DEF_NUM_COMMAND(nm, code)                                              \
-    nm(ge::makeNumCommand([&w](const ComEv &, double x) { code; }, #nm, ""))
+    nm(ge::makeCommand(                                                        \
+      PP_TOSTR(nm), "", [&w](const ComEv &, double x) { code; }))
 
 Commands::Commands(World &w)
   : DEF_NUM_COMMAND(zoom, w.zoom(real(x)))
@@ -215,13 +212,10 @@ Commands::Commands(World &w)
                     w.julia_constant_add(vec2(real(x), 0)))
   , DEF_NUM_COMMAND(julia_constant_add_im,
                     w.julia_constant_add(vec2(0, real(x))))
-  , julia_constant_reset(makeCommand(
-      [&w](const ComEv &, ArrayView<const ge::CommandArg>) {
+  , julia_constant_reset(
+      ge::makeCommand("julia_constant_reset", "", [&w](const ComEv &) {
           w.julia_constant_reset();
-      },
-      ge::NULL_PARAMS,
-      "julia_constant_reset",
-      ""))
+      }))
 {}
 
 void
