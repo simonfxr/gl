@@ -36,27 +36,30 @@ DEF_ENUM_CLASS(GLT_API,
                F64);
 
 template<typename T>
-struct scalar_type_mapping;
+struct scalar_type_traits;
 
 template<typename T>
-struct gl_type_mapping;
+struct gl_mapped_type;
 
-#define DEF_SCALAR_TYPE_MAPPING(ty, sc)                                        \
+template<typename T>
+using gl_mapped_type_t = typename gl_mapped_type<T>::type;
+
+#define DEF_SCALAR_TYPE_TRAITS(ty, sc)                                         \
     template<>                                                                 \
-    struct scalar_type_mapping<ty>                                             \
+    struct scalar_type_traits<ty>                                              \
     {                                                                          \
         static inline constexpr ScalarType scalar_type = ScalarType::sc;       \
     }
 
-#define DEF_GL_TYPE_MAPPING(ty, gl_ty)                                         \
+#define DEF_GL_MAPPED_TYPE(ty, gl_ty)                                          \
     template<>                                                                 \
-    struct gl_type_mapping<ty>                                                 \
+    struct gl_mapped_type<ty>                                                  \
     {                                                                          \
         using type = gl_ty;                                                    \
     }
 #define DEF_DIRECT_TYPE_MAPPING(ty, sc)                                        \
-    DEF_SCALAR_TYPE_MAPPING(ty, sc);                                           \
-    DEF_GL_TYPE_MAPPING(ty, ty)
+    DEF_SCALAR_TYPE_TRAITS(ty, sc);                                            \
+    DEF_GL_MAPPED_TYPE(ty, ty)
 
 DEF_DIRECT_TYPE_MAPPING(int8_t, I8);
 DEF_DIRECT_TYPE_MAPPING(int16_t, I16);
@@ -71,13 +74,13 @@ DEF_DIRECT_TYPE_MAPPING(float, F32);
 DEF_DIRECT_TYPE_MAPPING(double, F64);
 #else
 DEF_DIRECT_TYPE_MAPPING(float, F32);
-DEF_SCALAR_TYPE_MAPPING(double, F64);
-DEF_GL_TYPE_MAPPING(math::real, float);
+DEF_SCALAR_TYPE_TRAITS(double, F64);
+DEF_GL_MAPPED_TYPE(math::real, float);
 #endif
 
 #undef DEF_DIRECT_TYPE_MAPPING
-#undef DEF_GL_TYPE_MAPPING
-#undef DEF_SCALAR_TYPE_MAPPING
+#undef DEF_GL_MAPPED_TYPE
+#undef DEF_SCALAR_TYPE_TRAITS
 
 struct TypeInfo
 {
@@ -94,17 +97,17 @@ struct TypeInfo
 };
 
 template<typename T>
-struct type_info_mapping
+struct type_info_traits
 {
     static inline constexpr TypeInfo
-      type_info{ false, sizeof(T), scalar_type_mapping<T>::scalar_type, 1 };
+      type_info{ false, sizeof(T), scalar_type_traits<T>::scalar_type, 1 };
 };
 
 template<typename T, size_t N>
-struct type_info_mapping<math::genvec<T, N>>
+struct type_info_traits<math::genvec<T, N>>
 {
     static inline constexpr TypeInfo component_info =
-      type_info_mapping<T>::type_info;
+      type_info_traits<T>::type_info;
     static inline constexpr TypeInfo type_info{
         component_info.normalized,
         sizeof(math::genvec<T, N>),
@@ -114,16 +117,16 @@ struct type_info_mapping<math::genvec<T, N>>
 };
 
 template<typename T, size_t N>
-struct gl_type_mapping<math::genvec<T, N>>
+struct gl_mapped_type<math::genvec<T, N>>
 {
-    using type = math::genvec<typename gl_type_mapping<T>::type, N>;
+    using type = math::genvec<gl_mapped_type_t<T>, N>;
 };
 
 template<typename T, size_t N>
-struct type_info_mapping<math::genmat<T, N>>
+struct type_info_traits<math::genmat<T, N>>
 {
     static inline constexpr TypeInfo component_info =
-      type_info_mapping<T>::type_info;
+      type_info_traits<T>::type_info;
     static inline constexpr TypeInfo type_info{
         component_info.normalized,
         sizeof(math::genmat<T, N>),
@@ -133,13 +136,13 @@ struct type_info_mapping<math::genmat<T, N>>
 };
 
 template<typename T, size_t N>
-struct gl_type_mapping<math::genmat<T, N>>
+struct gl_mapped_type<math::genmat<T, N>>
 {
-    using type = math::genmat<typename gl_type_mapping<T>::type, N>;
+    using type = math::genmat<gl_mapped_type_t<T>, N>;
 };
 
 template<>
-struct type_info_mapping<color>
+struct type_info_traits<color>
 {
     static inline constexpr TypeInfo type_info{ true /* normalized */,
                                                 sizeof(color),
@@ -148,7 +151,7 @@ struct type_info_mapping<color>
 };
 
 template<>
-struct gl_type_mapping<color>
+struct gl_mapped_type<color>
 {
     using type = color;
 };
@@ -181,15 +184,14 @@ struct StructInfo
 #define TI_DEF_FIELD_INFO(struct_type, type_and_name)                          \
     ::glt::FieldInfo(                                                          \
       PP_DEFER1(TI_DEF_FIELD_INFO0) type_and_name,                             \
-      ::glt::type_info_mapping<PP_DEFER1(PP_ARG1) type_and_name>::type_info,   \
+      ::glt::type_info_traits<PP_DEFER1(PP_ARG1) type_and_name>::type_info,    \
       ti_offsetof(struct_type, PP_DEFER1(PP_ARG2) type_and_name))
 
 #define TI_DEF_STRUCT_FIELD0(t, nm) t nm
 #define TI_DEF_STRUCT_FIELD(type_and_name)                                     \
     PP_DEFER1(TI_DEF_STRUCT_FIELD0) type_and_name
 
-#define TI_DEF_GL_STRUCT_FIELD0(t, nm)                                         \
-    typename ::glt::gl_type_mapping<t>::type nm
+#define TI_DEF_GL_STRUCT_FIELD0(t, nm) ::glt::gl_mapped_type_t<t> nm
 #define TI_DEF_GL_STRUCT_FIELD(type_and_name)                                  \
     PP_DEFER1(TI_DEF_GL_STRUCT_FIELD0) type_and_name
 
@@ -199,7 +201,7 @@ struct StructInfo
 #define TI_VAR(x) PP_CAT(PP_CAT(ti_tmp_, x), __LINE__)
 
 #define TI_INIT_GL_FIELD0(ty, fld)                                             \
-    fld(static_cast<typename ::glt::gl_type_mapping<ty>::type>(TI_VAR(arg).fld))
+    fld(static_cast<::glt::gl_mapped_type_t<ty>>(TI_VAR(arg).fld))
 #define TI_INIT_GL_FIELD(type_and_field)                                       \
     PP_DEFER1(TI_INIT_GL_FIELD0) type_and_field
 

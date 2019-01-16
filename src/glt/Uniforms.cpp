@@ -1,25 +1,30 @@
-#include "opengl.hpp"
+#include "glt/Uniforms.hpp"
 
-#include "math/glvec.hpp"
+#include "err/err.hpp"
+#include "glt/ShaderProgram.hpp"
+#include "glt/color.hpp"
+#include "glt/type_info.hpp"
+#include "glt/utils.hpp"
 #include "math/mat2.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
-
-#include "glt/ShaderProgram.hpp"
-#include "glt/Uniforms.hpp"
-#include "glt/color.hpp"
-
-#include "err/err.hpp"
-#include "glt/utils.hpp"
+#include "opengl.hpp"
 
 namespace glt {
 
 using namespace math;
 
 namespace {
+
+template<typename T>
+auto
+gltype(const T &x) -> gl_mapped_type_t<T>
+{
+    return x;
+}
 
 #ifdef GLDEBUG
 std::string
@@ -114,14 +119,6 @@ descGLType(GLenum ty)
 }
 #endif
 
-template<typename T>
-typename T::gl
-glvec(const T &x)
-{
-    typename T::gl gl(x);
-    return gl;
-}
-
 void
 programUniform(GLuint program, GLint loc, float value)
 {
@@ -138,19 +135,19 @@ programUniform(GLuint program, GLint loc, ArrayView<const float> value)
 void
 programUniform(GLuint program, GLint loc, const vec4_t &value)
 {
-    GL_CALL(glProgramUniform4fv, program, loc, 1, glvec(value).buffer);
+    GL_CALL(glProgramUniform4fv, program, loc, 1, gltype(value).data());
 }
 
 void
 programUniform(GLuint program, GLint loc, const vec3_t &value)
 {
-    GL_CALL(glProgramUniform3fv, program, loc, 1, glvec(value).buffer);
+    GL_CALL(glProgramUniform3fv, program, loc, 1, gltype(value).data());
 }
 
 void
 programUniform(GLuint program, GLint loc, const vec2_t &value)
 {
-    GL_CALL(glProgramUniform2fv, program, loc, 1, glvec(value).buffer);
+    GL_CALL(glProgramUniform2fv, program, loc, 1, gltype(value).data());
 }
 
 void
@@ -161,7 +158,7 @@ programUniform(GLuint program, GLint loc, const mat4_t &value)
             loc,
             1,
             GL_FALSE,
-            glvec(value).buffer);
+            gltype(value).data());
 }
 
 void
@@ -172,7 +169,7 @@ programUniform(GLuint program, GLint loc, const mat3_t &value)
             loc,
             1,
             GL_FALSE,
-            glvec(value).buffer);
+            gltype(value).data());
 }
 
 void
@@ -183,7 +180,7 @@ programUniform(GLuint program, GLint loc, const mat2_t &value)
             loc,
             1,
             GL_FALSE,
-            glvec(value).buffer);
+            gltype(value).data());
 }
 
 void

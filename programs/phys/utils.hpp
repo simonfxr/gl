@@ -41,7 +41,7 @@ private:
     std::shared_ptr<glt::ShaderProgram> shader;
 };
 
-#define DEF_SHADER(name, ...) const std::string name = AS_STRING(__VA_ARGS__);
+#define DEF_SHADER(name, ...) const char *const name = AS_STRING(__VA_ARGS__);
 
 DEF_SHADER(PARTICLE_VERTEX_SHADER, uniform mat4 mvpMatrix;
            uniform sampler1D instanceData;

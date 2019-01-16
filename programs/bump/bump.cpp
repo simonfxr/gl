@@ -6,7 +6,6 @@
 #include "glt/primitives.hpp"
 #include "glt/type_info.hpp"
 #include "glt/utils.hpp"
-#include "math/glvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 

@@ -9,7 +9,6 @@
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/geometric.hpp"
 #include "glt/utils.hpp"
-#include "math/glvec.hpp"
 #include "math/mat4.hpp"
 #include "math/real.hpp"
 #include "math/vec4.hpp"

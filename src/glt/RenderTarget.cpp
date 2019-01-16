@@ -1,9 +1,9 @@
 #include "glt/RenderTarget.hpp"
+
 #include "err/err.hpp"
+#include "glt/type_info.hpp"
 #include "glt/utils.hpp"
 #include "opengl.hpp"
-
-#include "math/glvec.hpp"
 
 namespace glt {
 
@@ -150,8 +150,8 @@ RenderTarget::doClear(uint32_t buffers, color c)
     GLbitfield bits = 0;
 
     if ((buffers & RT_COLOR_BUFFER) != 0u) {
-        const math::vec4_t::gl col4 = c.vec4();
-        GL_CALL(glClearBufferfv, GL_COLOR, 0, col4.buffer);
+        const gl_mapped_type_t<math::vec4_t> col4 = c.vec4();
+        GL_CALL(glClearBufferfv, GL_COLOR, 0, col4.data());
     }
 
     if ((buffers & RT_DEPTH_BUFFER) != 0u)

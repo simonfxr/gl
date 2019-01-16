@@ -4,7 +4,6 @@
 #include "defs.hpp"
 #include "err/err.hpp"
 
-#include "math/glvec.hpp"
 #include "math/ivec3.hpp"
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
@@ -24,7 +23,7 @@ setPoint(math::vec3_t &a, const math::vec3_t &b)
 constexpr void
 setPoint(math::vec4_t &a, const math::vec3_t &b)
 {
-    a = math::vec4(b, 1.f);
+    a = math::vec4(b, math::real(1));
 }
 
 constexpr void
@@ -36,7 +35,7 @@ setVec(math::vec3_t &a, const math::vec3_t &b)
 constexpr void
 setVec(math::vec4_t &a, const math::vec3_t &b)
 {
-    a = math::vec4(b, 0.f);
+    a = math::vec4(b, math::real(0));
 }
 
 template<typename V>

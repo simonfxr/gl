@@ -10,7 +10,6 @@
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/primitives.hpp"
 #include "glt/utils.hpp"
-#include "math/glvec.hpp"
 #include "math/ivec3.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"

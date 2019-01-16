@@ -178,6 +178,10 @@ struct genmat
         return ret;
     }
 
+    const T *data() const { return columns[0].data(); }
+
+    T *data() { return columns[0].data(); }
+
     const column_type *begin() const { return columns; }
     column_type *begin() { return columns; }
 
@@ -533,30 +537,6 @@ operator<<(OStream &out, const genmat<T, N> &A)
     }
     return out << "]";
 }
-
-struct glmat2;
-
-template<>
-struct gltype_mat_mapping<real, 2>
-{
-    using type = glmat2;
-};
-
-struct glmat3;
-
-template<>
-struct gltype_mat_mapping<real, 3>
-{
-    using type = glmat3;
-};
-
-struct glmat4;
-
-template<>
-struct gltype_mat_mapping<real, 4>
-{
-    using type = glmat4;
-};
 
 } // namespace math
 

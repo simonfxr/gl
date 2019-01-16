@@ -150,15 +150,17 @@ struct genvec
         return ret;
     }
 
-    const T *begin() const { return components; }
-    T *begin() { return components; }
+    const buffer &data() const { return components; }
+    buffer &data() { return components; }
+
+    const T *begin() const { return data(); }
+    T *begin() { return data(); }
 
     const T *end() const { return components + N; }
     T *end() { return components + N; }
 
-    const T *cbegin() const { return components; }
-
-    const T *cend() const { return components + N; }
+    const T *cbegin() const { return begin(); }
+    const T *cend() const { return end(); }
 };
 
 #undef DEF_GENVEC_OP
@@ -392,30 +394,6 @@ operator<<(OStream &out, const genvec<T, N> &v)
     }
     return out << "]";
 }
-
-struct glvec2;
-
-template<>
-struct gltype_mapping<real, 2>
-{
-    using type = glvec2;
-};
-
-struct glvec3;
-
-template<>
-struct gltype_mapping<real, 3>
-{
-    using type = glvec3;
-};
-
-struct glvec4;
-
-template<>
-struct gltype_mapping<real, 4>
-{
-    using type = glvec4;
-};
 
 } // namespace math
 

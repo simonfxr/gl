@@ -21,7 +21,6 @@
 #include "glt/color.hpp"
 #include "glt/primitives.hpp"
 #include "glt/utils.hpp"
-#include "math/glvec.hpp"
 #include "math/mat2.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"

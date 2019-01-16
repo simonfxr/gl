@@ -1,28 +1,13 @@
 #include "ge/Engine.hpp"
-
-#include "math/glvec.hpp"
-#include "math/real.hpp"
-#include "math/vec2.hpp"
-
 #include "glt/CubeMesh.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/ShaderProgram.hpp"
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/utils.hpp"
-
-#include "math/glvec.hpp"
 #include "math/real.hpp"
 #include "math/vec2.hpp"
-
-#include "glt/CubeMesh.hpp"
-#include "glt/Mesh.hpp"
-#include "glt/ShaderProgram.hpp"
-#include "glt/TextureRenderTarget.hpp"
-#include "glt/utils.hpp"
 
 #include "shaders/quasi_constants.h"
-
-#include "ge/Engine.hpp"
 
 using namespace math;
 

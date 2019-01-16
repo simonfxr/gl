@@ -9,7 +9,6 @@
 #include "glt/utils.hpp"
 
 #include <cassert>
-#include <cstdio>
 #include <utility>
 #include <vector>
 
@@ -29,7 +28,6 @@ template<typename F>
 std::shared_ptr<Command>
 operator+(CommandDecl &&decl, F &&effect)
 {
-    fprintf(__acrt_iob_func(2), "constructing command: %s\n", decl.name);
     return makeCommand(decl.name, decl.descr, std::forward<F>(effect));
 }
 
@@ -369,8 +367,8 @@ COMMAND("perspectiveProjection", "set parameters for perspective projection")
 {
     glt::RenderManager &rm = e.info.engine.renderManager();
 
-    rm.setDefaultProjection(
-      glt::Projection::mkPerspective(math::degToRad(math::real(fovDeg)), math::real(zn), math::real(zf)));
+    rm.setDefaultProjection(glt::Projection::mkPerspective(
+      math::degToRad(math::real(fovDeg)), math::real(zn), math::real(zf)));
     glt::RenderTarget *tgt = rm.activeRenderTarget();
     if (tgt != nullptr)
         rm.updateProjection(math::real(tgt->width()) /
@@ -421,8 +419,8 @@ registerCommands(CommandProcessor &proc)
     for (const auto &comm : predefinedCommands()) {
         assert(comm);
         assert(comm->name().size() > 0);
-		proc.define(comm);
-	}
+        proc.define(comm);
+    }
 }
 
 } // namespace ge

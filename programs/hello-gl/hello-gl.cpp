@@ -1,19 +1,16 @@
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-
-#include "opengl.hpp"
 
 #include "cutil.h"
 
 #include "ge/Engine.hpp"
-#include "sys/clock.hpp"
-
-#include "math/glvec.hpp"
-#include "math/vec2.hpp"
-
 #include "glt/Mesh.hpp"
 #include "glt/utils.hpp"
+#include "math/vec2.hpp"
+#include "opengl.hpp"
+#include "sys/clock.hpp"
+
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 using namespace math;
 
