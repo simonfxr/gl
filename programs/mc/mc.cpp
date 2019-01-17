@@ -702,7 +702,7 @@ main(int argc, char *argv[])
     Anim anim;
     ge::EngineOptions opts;
 
-    anim.engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
+    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     opts.parse(&argc, &argv);
     opts.inits.reg(ge::Init, anim, &Anim::init);
     opts.inits.reg(ge::Init, anim, &Anim::initCL);

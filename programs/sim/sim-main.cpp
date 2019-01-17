@@ -19,7 +19,6 @@
 #include "math/vec4.hpp"
 
 #include <algorithm>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -923,7 +922,7 @@ int
 main(int argc, char *argv[])
 {
     ge::Engine engine;
-    engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
+    engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     ge::EngineOptions opts;
     Game game;
 

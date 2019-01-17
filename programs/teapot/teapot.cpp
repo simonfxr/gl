@@ -37,23 +37,6 @@
 
 #include <vector>
 
-DEF_GL_MAPPED_TYPE(Vertex,
-                   (math::point3_t, position),
-                   (math::direction3_t, normal))
-
-DEF_GL_MAPPED_TYPE(Vertex2,
-                   (math::vec3_t, position),
-                   (math::vec3_t, normal),
-                   (math::vec2_t, texCoord))
-
-DEF_GL_MAPPED_TYPE(ScreenVertex,
-                   (math::vec3_t, position),
-                   (math::vec3_t, normal))
-
-#undef VERTEX
-#undef VERTEX2
-#undef SCREEN_VERTEX
-
 #ifdef MESH_CUBEMESH
 template<typename T>
 using MeshOf = glt::Mesh<T>;
@@ -76,6 +59,19 @@ using CubeMeshOf = glt::Mesh<T>;
 
 using namespace math;
 using namespace ge;
+
+DEF_GL_MAPPED_TYPE(Vertex,
+                   (math::point3_t, position),
+                   (math::direction3_t, normal))
+
+DEF_GL_MAPPED_TYPE(Vertex2,
+                   (math::vec3_t, position),
+                   (math::vec3_t, normal),
+                   (math::vec2_t, texCoord))
+
+DEF_GL_MAPPED_TYPE(ScreenVertex,
+                   (math::vec3_t, position),
+                   (math::vec3_t, normal))
 
 int32_t
 parse_sply(const char *filename, CubeMeshOf<Vertex> &model);
@@ -185,7 +181,7 @@ Anim::link(const Event<InitEvent> &e)
 void
 Anim::init(const Event<InitEvent> &ev)
 {
-    loadResources(sys::fs::join(CMAKE_CURRENT_SOURCE_DIR, "data"));
+    loadResources(sys::fs::join(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR), "data"));
     engine.out() << "in init()" << sys::io::endl;
 
     mouse_look.camera(&camera);
@@ -691,6 +687,13 @@ Anim::keyPressed(const Event<KeyPressed> &e)
     END_NO_WARN_SWITCH
 }
 
+struct FileDeleter
+{
+    void operator()(FILE *h) noexcept { fclose(h); }
+};
+
+using unique_file = std::unique_ptr<FILE, FileDeleter>;
+
 void
 Anim::loadResources(const std::string &dir)
 {
@@ -698,17 +701,15 @@ Anim::loadResources(const std::string &dir)
 
     int w, h;
     uint32_t *wood_data;
-    FILE *file = fopen((data_dir + "/wood.bmp").c_str(), "rb");
-    if (file == nullptr) {
+    auto file = unique_file(fopen((data_dir + "/wood.bmp").c_str(), "rb"));
+    if (!file) {
         ERR("couldnt open data/wood.bmp");
         return;
     }
-    if (bmp_read(file, &w, &h, &wood_data) != BMP_OK) {
+    if (bmp_read(file.get(), &w, &h, &wood_data) != BMP_OK) {
         ERR("couldnt load data/wood.bmp");
-        fclose(file);
         return;
     }
-    fclose(file);
 
     GL_CALL(glTextureImage2DEXT,
             *woodTexture.data()->ensureHandle(),
@@ -744,7 +745,7 @@ main(int argc, char *argv[])
 {
     EngineOptions opts;
     Engine engine;
-    engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
+    engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     Anim anim(engine);
     opts.parse(&argc, &argv);
     opts.inits.init.reg(anim, &Anim::init);
@@ -755,7 +756,7 @@ main(int argc, char *argv[])
 int32_t
 parse_sply(const char *filename, CubeMeshOf<Vertex> &model)
 {
-    FILE *data = fopen(filename, "rb");
+    auto data = unique_file(fopen(filename, "rb"));
     if (!data)
         return -1;
 
@@ -765,10 +766,11 @@ parse_sply(const char *filename, CubeMeshOf<Vertex> &model)
     uint32_t nverts = 0;
     uint32_t nfaces = 0;
 
-    if (fscanf(data, "%u\n%u\n", &nverts, &nfaces) != 2)
+    if (fscanf(data.get(), "%u\n%u\n", &nverts, &nfaces) != 2)
         return -1;
 
-    while (fgets(line, sizeof line, data) != nullptr && verts.size() < nverts) {
+    while (fgets(line, sizeof line, data.get()) != nullptr &&
+           verts.size() < nverts) {
         point3_t p;
         direction3_t n;
         int nparsed = sscanf(line,
@@ -781,10 +783,8 @@ parse_sply(const char *filename, CubeMeshOf<Vertex> &model)
                              &n[1],
                              &n[2]);
 
-        if (nparsed != 6) {
-            fclose(data);
+        if (nparsed != 6)
             return -1;
-        }
 
         Vertex v{};
         v.position = p;
@@ -792,24 +792,20 @@ parse_sply(const char *filename, CubeMeshOf<Vertex> &model)
         verts.push_back(v);
     }
 
-    if (verts.size() != nverts) {
-        fclose(data);
+    if (verts.size() != nverts)
         return -1;
-    }
 
     uint32_t faces = 0;
 
     for (const auto &vert : verts)
         model.addVertex(vert);
 
-    while (fgets(line, sizeof line, data) != nullptr && faces < nfaces) {
+    while (fgets(line, sizeof line, data.get()) != nullptr && faces < nfaces) {
         uint32_t n, i, j, k, l;
         int nparsed = sscanf(line, "%u %u %u %u %u", &n, &i, &j, &k, &l);
 
-        if (nparsed != 5 || n != 4) {
-            fclose(data);
+        if (nparsed != 5 || n != 4)
             return -1;
-        }
 
 #ifdef MESH_CUBEMESH
 
@@ -831,8 +827,6 @@ parse_sply(const char *filename, CubeMeshOf<Vertex> &model)
 
         ++faces;
     }
-
-    fclose(data);
 
     return int32_t(nfaces) * 4;
 

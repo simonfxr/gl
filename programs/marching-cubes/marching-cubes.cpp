@@ -425,7 +425,7 @@ main(int argc, char *argv[])
     ge::Engine engine;
     Anim anim;
 
-    engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
+    engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     anim.link(engine);
     ge::EngineOptions opts;
 

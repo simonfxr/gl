@@ -251,7 +251,7 @@ int
 main(int argc, char *argv[])
 {
     ge::Engine engine;
-    engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
+    engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     Program program(engine);
     program.link();
     ge::EngineOptions opts;

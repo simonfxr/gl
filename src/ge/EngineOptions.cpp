@@ -6,6 +6,7 @@
 
 #include "glt/utils.hpp"
 #include "opengl.hpp"
+#include "pp/basic.h"
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
 
@@ -231,7 +232,7 @@ State::option(OptionCase opt, const char *arg)
 } // namespace
 
 EngineOptions::EngineOptions()
-  : workingDirectory(SOURCE_DIR)
+  : workingDirectory(PP_TOSTR(SOURCE_DIR))
   , inhibitInitScript(false)
   , defaultCD(false)
   , mode(Animate)

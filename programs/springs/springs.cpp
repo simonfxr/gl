@@ -318,7 +318,7 @@ main(int argc, char *argv[])
     ge::EngineOptions opts;
     Anim anim;
     anim.link();
-    anim.engine.setDevelDataDir(CMAKE_CURRENT_SOURCE_DIR);
+    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     opts.inits.reg(ge::Init, anim, &Anim::init);
     opts.parse(&argc, &argv);
     return anim.engine.run(opts);
