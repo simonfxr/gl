@@ -3,6 +3,8 @@
 
 #include "sys/conf.hpp"
 
+#include "pp/enum.hpp"
+
 #if HU_OS_POSIX_P
 #include "sys/fs/fs_unix.hpp"
 #elif HU_OS_WINDOWS_P
@@ -26,11 +28,10 @@ struct FileTime
 
 inline constexpr FileTime MIN_FILE_TIME{};
 
-enum ObjectType : uint8_t
-{
-    File,
-    Directory
-};
+#define SYS_OBJECT_TYPE_ENUM_DEF(T, V0, V)                                     \
+    T(ObjectType, uint8_t, V0(File) V(Directory))
+
+PP_DEF_ENUM_WITH_API(SYS_API, SYS_OBJECT_TYPE_ENUM_DEF);
 
 struct Stat
 {
@@ -82,11 +83,23 @@ lookup(const std::vector<std::string> &, std::string_view path);
 SYS_API HU_NODISCARD std::optional<ObjectType>
 exists(std::string_view path);
 
-HU_NODISCARD inline HU_NODISCARD bool
+HU_NODISCARD inline bool
 exists(std::string_view path, ObjectType ty)
 {
     auto ret = exists(path);
     return ret && *ret == ty;
+}
+
+HU_NODISCARD inline bool
+fileExists(std::string_view path)
+{
+    return exists(path, ObjectType::File);
+}
+
+HU_NODISCARD inline bool
+directoryExists(std::string_view path)
+{
+    return exists(path, ObjectType::Directory);
 }
 
 inline constexpr HU_NODISCARD bool

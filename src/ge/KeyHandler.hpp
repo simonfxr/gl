@@ -14,9 +14,9 @@ struct KeyHandler;
 struct GE_API KeyPressed
 {
     KeyHandler &handler;
-    keycode::KeyCode key;
+    KeyCode key;
 
-    KeyPressed(KeyHandler &h, keycode::KeyCode k) : handler(h), key(k) {}
+    KeyPressed(KeyHandler &h, KeyCode k) : handler(h), key(k) {}
 };
 
 struct GE_API KeyHandler

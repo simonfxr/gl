@@ -1,6 +1,7 @@
 #ifndef SYS_IO_STREAM_HPP
 #define SYS_IO_STREAM_HPP
 
+#include "pp/enum.hpp"
 #include "sys/conf.hpp"
 #include "sys/fiber.hpp"
 
@@ -33,14 +34,10 @@ stderr();
 
 extern SYS_API const StreamEndl endl;
 
-enum class StreamResult : uint16_t
-{
-    OK,
-    Blocked,
-    EOF,
-    Closed,
-    Error
-};
+#define SYS_STREAM_RESULT_ENUM_DEF(T, V0, V)                                   \
+    T(StreamResult, uint8_t, V0(OK) V(Blocked) V(EOF) V(Closed) V(Error))
+
+PP_DEF_ENUM_WITH_API(SYS_API, SYS_STREAM_RESULT_ENUM_DEF);
 
 using StreamFlags = uint16_t;
 
@@ -195,7 +192,6 @@ protected:
 };
 
 #define DEF_OUTSTREAM_OP(T)                                                    \
-    SYS_API StreamResult write_repr(OutStream &out, T x);                      \
     template<typename OStream>                                                 \
     OStream &operator<<(OStream &out, T value)                                 \
     {                                                                          \
@@ -203,47 +199,80 @@ protected:
         return out;                                                            \
     }
 
-DEF_OUTSTREAM_OP(char)
-DEF_OUTSTREAM_OP(const StreamEndl &)
-DEF_OUTSTREAM_OP(std::string_view)
-DEF_OUTSTREAM_OP(const void *)
+inline StreamResult
+write_repr(OutStream &out, std::string_view str)
+{
+    if (out.writeable()) {
+        size_t s = str.size();
+        return out.write(s, str.data());
+    }
+    return StreamResult::OK;
+}
 
-DEF_OUTSTREAM_OP(signed char)
-DEF_OUTSTREAM_OP(unsigned char)
-DEF_OUTSTREAM_OP(short)
-DEF_OUTSTREAM_OP(unsigned short)
-DEF_OUTSTREAM_OP(int)
-DEF_OUTSTREAM_OP(unsigned)
-DEF_OUTSTREAM_OP(long)
-DEF_OUTSTREAM_OP(unsigned long)
-DEF_OUTSTREAM_OP(long long)
-DEF_OUTSTREAM_OP(unsigned long long)
+inline StreamResult
+write_repr(OutStream &out, const char *str)
+{
+    if (!out.writeable() || !str)
+        return StreamResult::OK;
+    size_t s = strlen(str);
+    return out.write(s, str);
+}
 
-DEF_OUTSTREAM_OP(float);
-DEF_OUTSTREAM_OP(double);
-DEF_OUTSTREAM_OP(long double);
+inline StreamResult
+write_repr(OutStream &out, char c)
+{
+    if (!out.writeable())
+        return StreamResult::OK;
+    size_t s = 1;
+    return out.write(s, &c);
+}
 
+inline StreamResult
+write_repr(OutStream &out, signed char c)
+{
+    return write_repr(out, static_cast<char>(c));
+}
+
+inline StreamResult
+write_repr(OutStream &out, unsigned char c)
+{
+    return write_repr(out, static_cast<char>(c));
+}
+
+inline StreamResult
+write_repr(OutStream &out, const StreamEndl & /*unused*/)
+{
+    auto ret1 = write_repr(out, '\n');
+    auto ret2 = out.flush();
+    return ret1 == StreamResult::OK ? ret2 : ret1;
+}
+
+#define DEF_OPAQUE_OUTSTREAM_OP(T)                                             \
+    SYS_API StreamResult write_repr(OutStream &out, T x);                      \
+    DEF_OUTSTREAM_OP(T)
+
+DEF_OUTSTREAM_OP(char);
+DEF_OUTSTREAM_OP(signed char);
+DEF_OUTSTREAM_OP(unsigned char);
+DEF_OUTSTREAM_OP(const char *);
+DEF_OUTSTREAM_OP(std::string_view);
+DEF_OUTSTREAM_OP(const StreamEndl &);
+
+DEF_OPAQUE_OUTSTREAM_OP(short)
+DEF_OPAQUE_OUTSTREAM_OP(unsigned short)
+DEF_OPAQUE_OUTSTREAM_OP(int)
+DEF_OPAQUE_OUTSTREAM_OP(unsigned)
+DEF_OPAQUE_OUTSTREAM_OP(long)
+DEF_OPAQUE_OUTSTREAM_OP(unsigned long)
+DEF_OPAQUE_OUTSTREAM_OP(long long)
+DEF_OPAQUE_OUTSTREAM_OP(unsigned long long)
+
+DEF_OPAQUE_OUTSTREAM_OP(float);
+DEF_OPAQUE_OUTSTREAM_OP(double);
+DEF_OPAQUE_OUTSTREAM_OP(long double);
+
+#undef DEF_OPAQUE_OUTSTREAM_OP
 #undef DEF_OUTSTREAM_OP
-
-#if 0
-// leads to ambigous overloads versus const char *
-template<typename OStream, size_t N>
-OStream &
-operator<<(OStream &out, const char (&str)[N])
-{
-    static_assert(N > 0);
-    return out << std::string_view(str, N - 1);
-}
-#endif
-
-template<typename OStream>
-OStream &
-operator<<(OStream &out, const char *s)
-{
-    if (s)
-        out << std::string_view(s, strlen(s));
-    return out;
-}
 
 template<typename OStream>
 OStream &

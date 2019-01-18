@@ -57,17 +57,11 @@ public:
 
     // static bool isAssignable(CommandParamType lval, CommandType rval);
 
-    static CommandParamType commandParamType(CommandType type);
+    static CommandParamType commandParamType(CommandArgType type);
 
     CommandProcessor(const CommandProcessor &) = delete;
     CommandProcessor &operator=(const CommandProcessor &) = delete;
 };
-
-GE_API const char *
-prettyCommandType(CommandType type);
-
-GE_API const char *
-prettyCommandParamType(CommandParamType type);
 
 } // namespace ge
 

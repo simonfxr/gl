@@ -5,6 +5,7 @@
 #include "data/Comparable.hpp"
 #include "ge/KeyBinding.hpp"
 #include "ge/conf.hpp"
+#include "pp/enum.hpp"
 #include "sys/io/Stream.hpp"
 
 #include <memory>
@@ -15,29 +16,29 @@ namespace ge {
 
 struct Command;
 
-enum CommandParamType
-{
-    StringParam,   // "abcd", 'foo'
-    IntegerParam,  // 42, 12334, ...
-    NumberParam,   // 3.14159
-    KeyComboParam, // keycombo: [LShift;+Up;-A], [!Mouse1] ...
-    CommandParam,  // commandref: &comname or quotation: { com1 arg1 arg2 ; com2
-                   // arg3 ... }
-    VarRefParam,   // $var
-    AnyParam,      // one parameter of any type
-    ListParam // all remaining params, can only appear as the last parameter
-};
+#define GE_COMMAND_PARAM_TYPE_ENUM_DEF(T, V0, V)                               \
+    T(CommandParamType,                                                        \
+      uint8_t,                                                                 \
+      V0(String)  /* "abcd", 'foo' */                                          \
+      V(Integer)  /* 42, 12334, ... */                                         \
+      V(Number)   /* 3.14159 */                                                \
+      V(KeyCombo) /* keycombo: [LShift;+Up;-A], [!Mouse1] ... */               \
+      V(Command)  /* commandref: &comname or quotation: { com1 arg1 arg2 ;     \
+                          com2 arg3 ... } */                                   \
+      V(VarRef)   /* $var */                                                   \
+      V(Any)      /* some parameter of any type */                             \
+      V(List)     /* all remaining params, can only appear as the last         \
+                          parameter */                                         \
+    )
 
-enum CommandType
-{
-    String,
-    Integer,
-    Number,
-    KeyCombo,
-    CommandRef,
-    VarRef,
-    Nil
-};
+#define GE_COMMAND_ARG_TYPE_ENUM_DEF(T, V0, V)                                 \
+    T(CommandArgType,                                                          \
+      uint8_t,                                                                 \
+      V0(String) V(Integer) V(Number) V(KeyCombo) V(CommandRef) V(VarRef)      \
+        V(Nil))
+
+PP_DEF_ENUM_WITH_API(GE_API, GE_COMMAND_PARAM_TYPE_ENUM_DEF);
+PP_DEF_ENUM_WITH_API(GE_API, GE_COMMAND_ARG_TYPE_ENUM_DEF);
 
 struct CommandArg;
 
@@ -76,28 +77,33 @@ struct GE_API CommandArg : Comparable<CommandArg>
     struct CommandNamedRef
     {};
 
-    constexpr CommandArg() : integer(0), _type(Nil) {}
+    constexpr CommandArg() : integer(0), _type(CommandArgType::Nil) {}
 
-    explicit CommandArg(int64_t x) : integer(x), _type(Integer) {}
+    explicit CommandArg(int64_t x) : integer(x), _type(CommandArgType::Integer)
+    {}
 
-    explicit CommandArg(std::string x) : string(std::move(x)), _type(String) {}
+    explicit CommandArg(std::string x)
+      : string(std::move(x)), _type(CommandArgType::String)
+    {}
 
-    explicit CommandArg(double x) : number(std::move(x)), _type(Number) {}
+    explicit CommandArg(double x)
+      : number(std::move(x)), _type(CommandArgType::Number)
+    {}
 
     explicit CommandArg(std::shared_ptr<Command> comm)
-      : command(std::move(comm)), _type(CommandRef)
+      : command(std::move(comm)), _type(CommandArgType::CommandRef)
     {}
 
     explicit CommandArg(KeyBinding kb)
-      : keyBinding(std::move(kb)), _type(KeyCombo)
+      : keyBinding(std::move(kb)), _type(CommandArgType::KeyCombo)
     {}
 
     explicit CommandArg(CommandValue comm)
-      : command(std::move(comm)), _type(CommandRef)
+      : command(std::move(comm)), _type(CommandArgType::CommandRef)
     {}
 
     explicit CommandArg(std::string var, CommandArgVar)
-      : var(std::move(var)), _type(VarRef)
+      : var(std::move(var)), _type(CommandArgType::VarRef)
     {}
 
     ~CommandArg();
@@ -118,7 +124,7 @@ struct GE_API CommandArg : Comparable<CommandArg>
     CommandArg &operator=(const CommandArg &);
     CommandArg &operator=(CommandArg &&);
 
-    CommandType type() const { return _type; }
+    CommandArgType type() const { return _type; }
 
     void reset(); // reset to Nil
 
@@ -133,7 +139,7 @@ struct GE_API CommandArg : Comparable<CommandArg>
     };
 
 private:
-    CommandType _type;
+    CommandArgType _type;
 };
 
 int

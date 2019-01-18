@@ -12,6 +12,8 @@
 
 namespace glt {
 
+PP_DEF_ENUM_IMPL(GLT_OBJECT_TYPE_ENUM_DEF)
+
 namespace {
 
 using Generator = PFNGLGENBUFFERSPROC;
@@ -52,8 +54,8 @@ struct ObjectKind
 
 struct Tables
 {
-    size_t instance_count[ObjectType::Count]{};
-    ObjectKind kinds[ObjectType::Count];
+    size_t instance_count[ObjectType::count]{};
+    ObjectKind kinds[ObjectType::count];
     DBG(std::unordered_map<GLuint, std::string> stacktrace_map;)
     Tables();
 
@@ -80,12 +82,12 @@ Tables::Tables()
     KIND(glGenVertexArrays, glDeleteVertexArrays, VertexArray);
     KIND(glGenQueries, glDeleteQueries, Query);
 #undef KIND
-    ASSERT(i == ObjectType::Count);
+    ASSERT(i == ObjectType::count);
 }
 } // namespace
 
 void
-generate(ObjectType::Type t, GLsizei n, GLuint *names)
+generate(ObjectType t, GLsizei n, GLuint *names)
 {
     DBG({
         ByteStream out;
@@ -94,13 +96,14 @@ generate(ObjectType::Type t, GLsizei n, GLuint *names)
     });
 
     auto tab = Tables::get();
-    ASSERT(0 <= t && t < ObjectType::Count);
-    ASSERT(tab.kinds[t].generator != nullptr);
-    GL_CALL(tab.kinds[t].generator, n, names);
+    ASSERT(t.is_valid());
+    auto idx = size_t(t.value);
+    ASSERT(tab.kinds[idx].generator != nullptr);
+    GL_CALL(tab.kinds[idx].generator, n, names);
     for (GLsizei i = 0; i < n; ++i) {
         if (names[i] != 0) {
-            ++tab.instance_count[t];
-            DBG(tab.stacktrace_map[names[i]] = call_stack_str);
+            ++tab.instance_count[idx];
+            DBG(tab.stacktrace_map[names[idx]] = call_stack_str);
         }
     }
 }
@@ -115,17 +118,18 @@ generateShader(GLenum shader_type, GLuint *name)
 }
 
 void
-release(ObjectType::Type t, GLsizei n, const GLuint *names)
+release(ObjectType t, GLsizei n, const GLuint *names)
 {
     auto tab = Tables::get();
-    ASSERT(0 <= t && t < ObjectType::Count);
-    GL_CALL(tab.kinds[t].destructor, n, names);
+    ASSERT(t.is_valid());
+    auto idx = size_t(t.value);
+    GL_CALL(tab.kinds[idx].destructor, n, names);
     for (GLsizei i = 0; i < n; ++i) {
         if (names[i] != 0) {
             DBG(sys::io::stdout()
                 << "releasing GLObject, stack: " << tab.stacktrace_map[names[i]]
                 << sys::io::endl);
-            --tab.instance_count[t];
+            --tab.instance_count[idx];
         }
     }
 }
@@ -135,7 +139,7 @@ printStats(sys::io::OutStream &out)
 {
     auto tab = Tables::get();
     out << "Active OpenGL Objects:" << sys::io::endl;
-    for (size_t i = 0; i < ObjectType::Count; ++i)
+    for (size_t i = 0; i < ObjectType::count; ++i)
         if (tab.instance_count[i] > 0)
             out << "  " << tab.kinds[i].kind << "s: " << tab.instance_count[i]
                 << sys::io::endl;

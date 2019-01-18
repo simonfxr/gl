@@ -8,6 +8,7 @@
 #include "glt/GLObject.hpp"
 #include "glt/ShaderManager.hpp"
 #include "opengl.hpp"
+#include "pp/enum.hpp"
 #include "sys/fs.hpp"
 
 #include <memory>
@@ -126,16 +127,14 @@ private:
     DECLARE_PIMPL(GLT_API, self);
 };
 
-DEF_ENUM_CLASS(GLT_API,
-               ShaderCompilerError,
-               uint8_t,
-               NoError,
-               CouldntGuessShaderType,
-               InvalidShaderType,
-               FileNotFound,
-               FileNotInShaderPath,
-               CompilationFailed,
-               OpenGLError)
+#define GLT_SHADER_COMPILER_ERROR_ENUM_DEF(T, V0, V)                           \
+    T(ShaderCompilerError,                                                     \
+      uint8_t,                                                                 \
+      V0(NoError) V(CouldntGuessShaderType) V(InvalidShaderType)               \
+        V(FileNotFound) V(FileNotInShaderPath) V(CompilationFailed)            \
+          V(OpenGLError))
+
+PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_COMPILER_ERROR_ENUM_DEF);
 
 struct GLT_API ShaderCompiler
 {
@@ -153,8 +152,7 @@ private:
     DECLARE_PIMPL(GLT_API, self);
 };
 
-struct GLT_API ShaderCompilerQueue
-  : public err::WithError<ShaderCompilerError, ShaderCompilerError::NoError>
+struct GLT_API ShaderCompilerQueue : public err::WithError<ShaderCompilerError>
 {
     ShaderCompilerQueue(ShaderCompiler &comp,
                         ShaderObjects &_compiled,

@@ -24,7 +24,7 @@ struct GLT_API FrameStatistics
 
 struct GLT_API Projection
 {
-    enum Type
+    enum Type : uint8_t
     {
         Identity,
         Perspective

@@ -20,24 +20,21 @@ typedef std::unordered_map<std::string, std::string> PreprocessorDefinitions;
 
 typedef std::vector<std::string> ShaderDirectories;
 
-DEF_ENUM_CLASS(GLT_API,
-               ShaderManagerVerbosity,
-               uint8_t,
-               Quiet,
-               OnlyErrors,
-               Info)
+#define GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF(T, V0, V)                        \
+    T(ShaderManagerVerbosity, uint8_t, V0(Quiet) V(OnlyErrors) V(Info))
 
-DEF_ENUM_CLASS(GLT_API, ShaderProfile, uint8_t, Core, Compatibility)
+#define GLT_SHADER_PROFILE_ENUM_DEF(T, V0, V)                                  \
+    T(ShaderProfile, uint8_t, V0(Core) V(Compatibility))
 
-DEF_ENUM_CLASS(GLT_API,
-               ShaderType,
-               uint8_t,
-               GuessShaderType,
-               VertexShader,
-               FragmentShader,
-               GeometryShader,
-               TesselationControl,
-               TesselationEvaluation)
+#define GLT_SHADER_TYPE_ENUM_DEF(T, V0, V)                                     \
+    T(ShaderType,                                                              \
+      uint8_t,                                                                 \
+      V0(GuessShaderType) V(VertexShader) V(FragmentShader) V(GeometryShader)  \
+        V(TesselationControl) V(TesselationEvaluation))
+
+PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF);
+PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_PROFILE_ENUM_DEF);
+PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_TYPE_ENUM_DEF);
 
 struct GLT_API ShaderManager
 {

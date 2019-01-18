@@ -1,8 +1,10 @@
 #ifndef GE_KEY_BINDING_HPP
 #define GE_KEY_BINDING_HPP
 
-#include "data/Comparable.hpp"
 #include "ge/conf.hpp"
+
+#include "data/Comparable.hpp"
+#include "pp/enum.hpp"
 
 #include <optional>
 #include <string>
@@ -10,9 +12,7 @@
 
 namespace ge {
 
-namespace keystate {
-
-enum KeyState
+enum class KeyState : uint8_t
 {
     Pressed = 3,  // 0011
     Down = 1,     // 0001
@@ -20,157 +20,141 @@ enum KeyState
     Released = 12 // 1100
 };
 
-} // namespace keystate
+// clang-format off
+#define GE_KEY_CODE_ENUM_DEF(T, __, _) \
+  T(KeyCode, uint8_t,  \
+    __(    A         ) \
+     _(    B         ) \
+     _(    C         ) \
+     _(    D         ) \
+     _(    E         ) \
+     _(    F         ) \
+     _(    G         ) \
+     _(    H         ) \
+     _(    I         ) \
+     _(    J         ) \
+     _(    K         ) \
+     _(    L         ) \
+     _(    M         ) \
+     _(    N         ) \
+     _(    O         ) \
+     _(    P         ) \
+     _(    Q         ) \
+     _(    R         ) \
+     _(    S         ) \
+     _(    T         ) \
+     _(    U         ) \
+     _(    V         ) \
+     _(    W         ) \
+     _(    X         ) \
+     _(    Y         ) \
+     _(    Z         ) \
+     _(    Num0      ) \
+     _(    Num1      ) \
+     _(    Num2      ) \
+     _(    Num3      ) \
+     _(    Num4      ) \
+     _(    Num5      ) \
+     _(    Num6      ) \
+     _(    Num7      ) \
+     _(    Num8      ) \
+     _(    Num9      ) \
+     _(    Escape    ) \
+     _(    LControl  ) \
+     _(    LShift    ) \
+     _(    LAlt      ) \
+     _(    LSystem   ) \
+     _(    RControl  ) \
+     _(    RShift    ) \
+     _(    RAlt      ) \
+     _(    RSystem   ) \
+     _(    Menu      ) \
+     _(    LBracket  ) \
+     _(    RBracket  ) \
+     _(    SemiColon ) \
+     _(    Comma     ) \
+     _(    Period    ) \
+     _(    Quote     ) \
+     _(    Slash     ) \
+     _(    BackSlash ) \
+     _(    Tilde     ) \
+     _(    Equal     ) \
+     _(    Dash      ) \
+     _(    Space     ) \
+     _(    Return    ) \
+     _(    Back      ) \
+     _(    Tab       ) \
+     _(    PageUp    ) \
+     _(    PageDown  ) \
+     _(    End       ) \
+     _(    Home      ) \
+     _(    Insert    ) \
+     _(    Delete    ) \
+     _(    Add       ) \
+     _(    Subtract  ) \
+     _(    Multiply  ) \
+     _(    Divide    ) \
+     _(    Left      ) \
+     _(    Right     ) \
+     _(    Up        ) \
+     _(    Down      ) \
+     _(    Numpad0   ) \
+     _(    Numpad1   ) \
+     _(    Numpad2   ) \
+     _(    Numpad3   ) \
+     _(    Numpad4   ) \
+     _(    Numpad5   ) \
+     _(    Numpad6   ) \
+     _(    Numpad7   ) \
+     _(    Numpad8   ) \
+     _(    Numpad9   ) \
+     _(    F1        ) \
+     _(    F2        ) \
+     _(    F3        ) \
+     _(    F4        ) \
+     _(    F5        ) \
+     _(    F6        ) \
+     _(    F7        ) \
+     _(    F8        ) \
+     _(    F9        ) \
+     _(    F10       ) \
+     _(    F11       ) \
+     _(    F12       ) \
+     _(    F13       ) \
+     _(    F14       ) \
+     _(    F15       ) \
+     _(    Pause     ) \
+     _(    KeyCount  ) \
+     _(    MLeft     ) \
+     _(    MRight    ) \
+     _(    MMiddle   ) \
+     _(    MXButton1 ) \
+     _(    MXButton2 ))
 
-typedef keystate::KeyState KeyState;
+// clang-format off
 
-namespace keycode {
-
-// stolen from SFML
-enum KeyCode
-{
-    A,         ///< The A key
-    B,         ///< The B key
-    C,         ///< The C key
-    D,         ///< The D key
-    E,         ///< The E key
-    F,         ///< The F key
-    G,         ///< The G key
-    H,         ///< The H key
-    I,         ///< The I key
-    J,         ///< The J key
-    K,         ///< The K key
-    L,         ///< The L key
-    M,         ///< The M key
-    N,         ///< The N key
-    O,         ///< The O key
-    P,         ///< The P key
-    Q,         ///< The Q key
-    R,         ///< The R key
-    S,         ///< The S key
-    T,         ///< The T key
-    U,         ///< The U key
-    V,         ///< The V key
-    W,         ///< The W key
-    X,         ///< The X key
-    Y,         ///< The Y key
-    Z,         ///< The Z key
-    Num0,      ///< The 0 key
-    Num1,      ///< The 1 key
-    Num2,      ///< The 2 key
-    Num3,      ///< The 3 key
-    Num4,      ///< The 4 key
-    Num5,      ///< The 5 key
-    Num6,      ///< The 6 key
-    Num7,      ///< The 7 key
-    Num8,      ///< The 8 key
-    Num9,      ///< The 9 key
-    Escape,    ///< The Escape key
-    LControl,  ///< The left Control key
-    LShift,    ///< The left Shift key
-    LAlt,      ///< The left Alt key
-    LSystem,   ///< The left OS specific key: window (Windows and Linux), apple
-               ///< (MacOS X), ...
-    RControl,  ///< The right Control key
-    RShift,    ///< The right Shift key
-    RAlt,      ///< The right Alt key
-    RSystem,   ///< The right OS specific key: window (Windows and Linux), apple
-               ///< (MacOS X), ...
-    Menu,      ///< The Menu key
-    LBracket,  ///< The [ key
-    RBracket,  ///< The ] key
-    SemiColon, ///< The ; key
-    Comma,     ///< The , key
-    Period,    ///< The . key
-    Quote,     ///< The ' key
-    Slash,     ///< The / key
-    BackSlash, ///< The \ key
-    Tilde,     ///< The ~ key
-    Equal,     ///< The = key
-    Dash,      ///< The - key
-    Space,     ///< The Space key
-    Return,    ///< The Return key
-    Back,      ///< The Backspace key
-    Tab,       ///< The Tabulation key
-    PageUp,    ///< The Page up key
-    PageDown,  ///< The Page down key
-    End,       ///< The End key
-    Home,      ///< The Home key
-    Insert,    ///< The Insert key
-    Delete,    ///< The Delete key
-    Add,       ///< +
-    Subtract,  ///< -
-    Multiply,  ///< *
-    Divide,    ///< /
-    Left,      ///< Left arrow
-    Right,     ///< Right arrow
-    Up,        ///< Up arrow
-    Down,      ///< Down arrow
-    Numpad0,   ///< The numpad 0 key
-    Numpad1,   ///< The numpad 1 key
-    Numpad2,   ///< The numpad 2 key
-    Numpad3,   ///< The numpad 3 key
-    Numpad4,   ///< The numpad 4 key
-    Numpad5,   ///< The numpad 5 key
-    Numpad6,   ///< The numpad 6 key
-    Numpad7,   ///< The numpad 7 key
-    Numpad8,   ///< The numpad 8 key
-    Numpad9,   ///< The numpad 9 key
-    F1,        ///< The F1 key
-    F2,        ///< The F2 key
-    F3,        ///< The F3 key
-    F4,        ///< The F4 key
-    F5,        ///< The F5 key
-    F6,        ///< The F6 key
-    F7,        ///< The F7 key
-    F8,        ///< The F8 key
-    F9,        ///< The F8 key
-    F10,       ///< The F10 key
-    F11,       ///< The F11 key
-    F12,       ///< The F12 key
-    F13,       ///< The F13 key
-    F14,       ///< The F14 key
-    F15,       ///< The F15 key
-    Pause,     ///< The Pause key
-
-    KeyCount, ///< Keep last -- the total number of keyboard keys
-
-    MLeft,     ///< The left mouse button
-    MRight,    ///< The right mouse button
-    MMiddle,   ///< The middle (wheel) mouse button
-    MXButton1, ///< The first extra mouse button
-    MXButton2, ///< The second extra mouse button
-
-    Count ///< Keep last -- the total number of keyboard keys + mouse keys
-};
-
-} // namespace keycode
-
-typedef keycode::KeyCode KeyCode;
+PP_DEF_ENUM_WITH_API(GE_API, GE_KEY_CODE_ENUM_DEF);
 
 struct Key : Comparable<Key>
 {
-    KeyState state{};
     KeyCode code{};
-    Key() = default;
-    Key(KeyState st, KeyCode c) : state(st), code(c) {}
+    KeyState state{};
+    constexpr Key() = default;
+    constexpr Key(KeyState st, KeyCode c) : code(c), state(st) {}
 };
 
 inline int
 compare(const Key &a, const Key &b)
 {
     using ::compare;
-    return chained_compare([&]() { return compare(a.state, b.state); },
-                           [&]() { return compare(a.code, b.code); });
+    return chained_compare([&]() { return compare(a.code, b.code); },
+                           [&]() { return compare(a.state, b.state); });
 }
 
 using KeyBinding = std::vector<Key>;
 
-GE_API const char *
-to_string(KeyCode code);
-
 GE_API HU_NODISCARD std::optional<KeyCode>
-parseKeyCode(const std::string &str);
+parseKeyCode(const std::string_view &str);
 
 GE_API int
 compareKeyBinding(const KeyBinding &x, const KeyBinding &y);

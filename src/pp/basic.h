@@ -31,6 +31,10 @@
 #define PP_ZERO() 0
 #define PP_ONE() 1
 
+#define PP_NIL /*empty*/
+
+#define PP_IGNORE(...) PP_EMPTY()
+
 #define PP_DEFER1(id) id PP_EMPTY()
 
 #define PP_DEFER2(id) id PP_EMPTY PP_EMPTY()()

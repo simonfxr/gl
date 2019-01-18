@@ -19,17 +19,9 @@ struct GameWindowInit
     ~GameWindowInit();
 };
 
-struct KeyBindingState
-{
-    KeyBindingState();
-
-    DECLARE_PIMPL(GE_API, self);
-};
-
 struct Module
 {
     GameWindowInit __game_window_init;
-    KeyBindingState key_binding;
 };
 
 extern std::unique_ptr<Module> module;

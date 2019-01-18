@@ -12,7 +12,7 @@
 #include <map>
 #include <vector>
 
-#include "nbody_phys.hpp"
+#include "nbody/nbody_phys.hpp"
 
 using namespace math;
 

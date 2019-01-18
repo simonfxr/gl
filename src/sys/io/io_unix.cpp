@@ -98,7 +98,7 @@ convertErrnoSock()
         return SocketError::BLOCKED;
     case EBADF:
         DEBUG_ERR(strerror(errid));
-        return SocketError::BAD_SOCKET;
+        return SocketError::BAD_HANDLE;
     default:
         DEBUG_ERR(strerror(errid));
         return SocketError::UNKNOWN;

@@ -14,23 +14,17 @@
 
 namespace glt {
 
-DEF_ENUM_CLASS(GLT_API,
-               ShaderProgramError,
-               uint8_t,
-               NoError,
-               FileNotInPath,
-               CompilationFailed,
-               LinkageFailed,
-               AttributeNotBound,
-               UniformNotKnown,
-               ValidationFailed,
-               APIError,
-               OpenGLError)
+#define GLT_SHADER_PROGRAM_ERROR_ENUM_DEF(T, V0, V)                            \
+    T(ShaderProgramError,                                                      \
+      uint8_t,                                                                 \
+      V0(NoError) V(FileNotInPath) V(CompilationFailed) V(LinkageFailed)       \
+        V(AttributeNotBound) V(UniformNotKnown) V(ValidationFailed)            \
+          V(APIError) V(OpenGLError))
 
-struct GLT_API ShaderProgram
-  : public err::WithError<ShaderProgramError, ShaderProgramError::NoError>
+PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_PROGRAM_ERROR_ENUM_DEF);
+
+struct GLT_API ShaderProgram : public err::WithError<ShaderProgramError>
 {
-
     ShaderProgram(ShaderManager &sm);
 
     ShaderManager &shaderManager();

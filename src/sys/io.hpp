@@ -50,15 +50,12 @@ struct SYS_API IPAddr4
 inline constexpr IPAddr4 IPA_ANY = { 0, 0, 0, 0 };
 inline constexpr IPAddr4 IPA_LOCAL = { 127, 0, 0, 1 };
 
-DEF_ENUM_CLASS(SYS_API,
-               HandleError,
-               uint8_t,
-               OK,
-               BLOCKED,
-               EOF,
-               BAD_HANDLE,
-               INVALID_PARAM,
-               UNKNOWN)
+#define SYS_HANDLE_ERROR_ENUM_DEF(T, V0, V)                                    \
+    T(HandleError,                                                             \
+      uint8_t,                                                                 \
+      V0(OK) V(BLOCKED) V(EOF) V(BAD_HANDLE) V(INVALID_PARAM) V(UNKNOWN))
+
+PP_DEF_ENUM_WITH_API(SYS_API, SYS_HANDLE_ERROR_ENUM_DEF);
 
 SYS_API HU_NODISCARD Handle
 stdin_handle();
@@ -87,15 +84,12 @@ write(Handle &, size_t &, const char *);
 SYS_API HandleError
 close(Handle &);
 
-DEF_ENUM_CLASS(SYS_API,
-               SocketError,
-               uint8_t,
-               OK,
-               BLOCKED,
-               EOF,
-               BAD_SOCKET,
-               INVALID_PARAM,
-               UNKNOWN)
+#define SYS_SOCKET_ERROR_ENUM_DEF(T, V0, V)                                    \
+    T(SocketError,                                                             \
+      uint8_t,                                                                 \
+      V0(OK) V(BLOCKED) V(EOF) V(BAD_HANDLE) V(INVALID_PARAM) V(UNKNOWN))
+
+PP_DEF_ENUM_WITH_API(SYS_API, SYS_SOCKET_ERROR_ENUM_DEF);
 
 SYS_API HU_NODISCARD std::optional<Socket>
 listen(SocketProto, const IPAddr4 &, uint16_t, SocketMode, SocketError &);

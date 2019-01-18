@@ -26,10 +26,10 @@ struct LogTraits
 template<typename T>
 struct ErrorTraits
 {
-    template<typename E, E NoError>
-    static void setError(err::WithError<E, NoError> &x, E err)
+    template<typename E, typename Arg>
+    static void setError(err::WithError<E> &x, Arg &&err)
     {
-        x.pushError(err);
+        x.pushError(std::forward<Arg>(err));
     }
 };
 

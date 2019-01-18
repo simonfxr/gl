@@ -19,7 +19,7 @@ inline constexpr uint32_t ALIGNMENT_DEFAULT = 0;
 inline constexpr size_t MIN_NUM_VERTICES = 8;
 inline constexpr size_t MIN_NUM_ELEMENTS = 8;
 
-enum DrawType
+enum DrawType : uint8_t
 {
     DrawArrays,
     DrawElements

@@ -27,24 +27,24 @@ struct command_param_mapping
 };
 
 inline bool
-has_type(CommandParamType pt, CommandType t)
+has_type(CommandParamType pt, CommandArgType t)
 {
-    switch (pt) {
-    case StringParam:
-        return t == String;
-    case IntegerParam:
-        return t == Integer;
-    case NumberParam:
-        return t == Number;
-    case KeyComboParam:
-        return t == KeyCombo;
-    case VarRefParam:
-        return t == VarRef;
-    case CommandParam:
-        return t == CommandRef;
-    case AnyParam:
+    switch (pt.value) {
+    case CommandParamType::String:
+        return t == CommandArgType::String;
+    case CommandParamType::Integer:
+        return t == CommandArgType::Integer;
+    case CommandParamType::Number:
+        return t == CommandArgType::Number;
+    case CommandParamType::KeyCombo:
+        return t == CommandArgType::KeyCombo;
+    case CommandParamType::VarRef:
+        return t == CommandArgType::VarRef;
+    case CommandParamType::Command:
+        return t == CommandArgType::CommandRef;
+    case CommandParamType::Any:
         return true;
-    case ListParam:
+    case CommandParamType::List:
         ASSERT_FAIL();
     }
     CASE_UNREACHABLE;
@@ -71,22 +71,25 @@ has_type(CommandParamType pt, CommandType t)
         }                                                                      \
     }
 
-DEF_COMMAND_TYPE_MAPPING(int64_t, integer, IntegerParam);
-DEF_COMMAND_TYPE_MAPPING(double, number, NumberParam);
-DEF_COMMAND_TYPE_MAPPING(std::string, string, StringParam);
-DEF_COMMAND_TYPE_MAPPING(std::shared_ptr<Command>, command.ref, CommandParam);
-DEF_COMMAND_TYPE_MAPPING(KeyBinding, keyBinding, KeyComboParam);
+DEF_COMMAND_TYPE_MAPPING(int64_t, integer, CommandParamType::Integer);
+DEF_COMMAND_TYPE_MAPPING(double, number, CommandParamType::Number);
+DEF_COMMAND_TYPE_MAPPING(std::string, string, CommandParamType::String);
+DEF_COMMAND_TYPE_MAPPING(std::shared_ptr<Command>,
+                         command.ref,
+                         CommandParamType::Command);
+DEF_COMMAND_TYPE_MAPPING(KeyBinding, keyBinding, CommandParamType::KeyCombo);
 
 template<>
 struct command_param_mapping<ArrayView<const CommandArg>>
 {
-    static inline constexpr CommandParamType param_type = ListParam;
+    static inline constexpr CommandParamType param_type =
+      CommandParamType::List;
 };
 
 template<>
 struct command_param_mapping<CommandArg>
 {
-    static inline constexpr CommandParamType param_type = AnyParam;
+    static inline constexpr CommandParamType param_type = CommandParamType::Any;
     static void check() {}
     static const CommandArg &unwrap(const CommandArg &a) { return a; }
     static CommandArg &unwrap(CommandArg &a) { return a; }

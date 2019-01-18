@@ -25,7 +25,7 @@ CommandProcessor::addScriptDirectory(std::string_view dir, bool check_exists)
         if (dir == scriptDir)
             return true;
 
-    if (check_exists && !sys::fs::exists(dir, sys::fs::Directory))
+    if (check_exists && !sys::fs::directoryExists(dir))
         return false;
 
     scriptDirs.emplace_back(dir);
@@ -108,9 +108,9 @@ CommandProcessor::exec(ArrayView<CommandArg> args)
         return true;
     const std::string *com_name = nullptr;
     CommandPtr comm;
-    if (args[0].type() == String) {
+    if (args[0].type() == CommandArgType::String) {
         com_name = &args[0].string;
-    } else if (args[0].type() == CommandRef) {
+    } else if (args[0].type() == CommandArgType::CommandRef) {
         com_name = args[0].command.name.get();
         comm = args[0].command.ref;
         if (!comm && !com_name->empty()) {
@@ -138,15 +138,15 @@ CommandProcessor::exec(CommandPtr &com,
                        ArrayView<CommandArg> args,
                        std::string_view comname)
 {
-
+    using PT = CommandParamType;
+    using AT = CommandArgType;
     if (!com) {
         ERR(engine().out(), "Command == 0");
         return false;
     }
 
     const auto &params = com->parameters();
-    bool rest_args =
-      params.size() > 0 && params[params.size() - 1] == ListParam;
+    bool rest_args = params.size() > 0 && params[params.size() - 1] == PT::List;
     size_t nparams = rest_args ? params.size() - 1 : params.size();
 
     if (nparams != args.size() && !(rest_args && args.size() > nparams)) {
@@ -166,37 +166,39 @@ CommandProcessor::exec(CommandPtr &com,
     std::vector<CommandPtr> keepAlive;
     for (const auto i : irange(params.size() - (rest_args ? 1 : 0))) {
         const auto &param = params[i];
-        if (param != AnyParam) {
-            CommandType val_type = String;
-            switch (param) {
-            case StringParam:
-                val_type = String;
+        if (param != PT::Any) {
+            AT val_type = AT::String;
+            switch (param.value) {
+            case PT::String:
+                val_type = AT::String;
                 break;
-            case IntegerParam:
-                val_type = Integer;
+            case PT::Integer:
+                val_type = AT::Integer;
                 break;
-            case NumberParam:
-                val_type = Number;
+            case PT::Number:
+                val_type = AT::Number;
                 break;
-            case CommandParam:
-                val_type = CommandRef;
+            case PT::Command:
+                val_type = AT::CommandRef;
                 break;
-            case KeyComboParam:
-                val_type = KeyCombo;
+            case PT::KeyCombo:
+                val_type = AT::KeyCombo;
                 break;
-            case VarRefParam:
-                val_type = VarRef;
+            case PT::VarRef:
+                val_type = AT::VarRef;
                 break;
-            case AnyParam:
+            case PT::Any:
                 ASSERT_FAIL();
-            case ListParam:
+            case PT::List:
                 ASSERT_FAIL();
             }
 
+            // perform some implicit conversion
             if (val_type != args[i].type()) {
-                if (val_type == Number && args[i].type() == Integer) {
+                if (val_type == AT::Number && args[i].type() == AT::Integer) {
                     args[i] = CommandArg(double(args[i].integer));
-                } else if (val_type == CommandRef && args[i].type() == String) {
+                } else if (val_type == AT::CommandRef &&
+                           args[i].type() == AT::String) {
                     CommandPtr comArg = command(args[i].string);
                     if (!comArg) {
                         sys::io::ByteStream err;
@@ -210,7 +212,8 @@ CommandProcessor::exec(CommandPtr &com,
                     }
                     keepAlive.push_back(comArg);
                     args[i] = CommandArg(std::move(comArg));
-                } else if (val_type == KeyCombo && args[i].type() == String) {
+                } else if (val_type == AT::KeyCombo &&
+                           args[i].type() == AT::String) {
                     if (!coerceKeyCombo(args[i])) {
                         sys::io::ByteStream err;
                         if (!comname.empty())
@@ -228,12 +231,12 @@ CommandProcessor::exec(CommandPtr &com,
                     else
                         err << "executing unknown Command: ";
                     err << " type mismatch, position: " << (i + 1);
-                    err << ", expected: " << prettyCommandType(val_type);
-                    err << ", got: " << prettyCommandType(args[i].type());
+                    err << ", expected: " << val_type;
+                    err << ", got: " << args[i].type();
                     ERR(engine().out(), err.str());
                     return false;
                 }
-            } else if (val_type == CommandRef) {
+            } else if (val_type == AT::CommandRef) {
                 if (!args[i].command.ref && !args[i].command.name->empty())
                     args[i].command =
                       CommandValue(command(*args[i].command.name));
@@ -335,55 +338,25 @@ CommandProcessor::execCommand(ArrayView<CommandArg> args)
 }
 
 CommandParamType
-CommandProcessor::commandParamType(CommandType type)
+CommandProcessor::commandParamType(CommandArgType type)
 {
-    switch (type) {
-    case String:
-        return StringParam;
-    case Integer:
-        return IntegerParam;
-    case Number:
-        return NumberParam;
-    case KeyCombo:
-        return KeyComboParam;
-    case CommandRef:
-        return CommandParam;
-    case VarRef:
-        return VarRefParam;
-    case Nil:
+    switch (type.value) {
+    case CommandArgType::String:
+        return CommandParamType::String;
+    case CommandArgType::Integer:
+        return CommandParamType::Integer;
+    case CommandArgType::Number:
+        return CommandParamType::Number;
+    case CommandArgType::KeyCombo:
+        return CommandParamType::KeyCombo;
+    case CommandArgType::CommandRef:
+        return CommandParamType::Command;
+    case CommandArgType::VarRef:
+        return CommandParamType::VarRef;
+    case CommandArgType::Nil:
         FATAL_ERR(ERROR_DEFAULT_STREAM, "Nil has no declarable type");
     }
     CASE_UNREACHABLE;
-}
-
-// CommandArg
-// CommandProcessor::cast(const CommandArg &val, CommandType type)
-// {
-//     UNUSED(val);
-//     UNUSED(type);
-//     FATAL_ERR(ERROR_DEFAULT_STREAM, "not yet implemented");
-// }
-
-// bool
-// CommandProcessor::isAssignable(CommandParamType lval, CommandType rval)
-// {
-//     UNUSED(lval);
-//     UNUSED(rval);
-//     FATAL_ERR(ERROR_DEFAULT_STREAM, "not yet implemented");
-// }
-
-const char *
-prettyCommandType(CommandType type)
-{
-    UNUSED(type);
-    return "<type: not yet implemented>";
-}
-
-const char *
-prettyCommandParamType(CommandParamType type)
-{
-    UNUSED(type);
-    return "<type: not yet implemented>";
 }
 
 } // namespace ge

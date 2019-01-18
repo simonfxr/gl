@@ -23,7 +23,8 @@ Command::Command(std::vector<CommandParamType> ps,
 void
 Command::handle(const Event<CommandEvent> &ev)
 {
-    if (params.size() == 0 || (params.size() == 1 && params[0] == ListParam)) {
+    if (params.size() == 0 ||
+        (params.size() == 1 && params[0] == CommandParamType::List)) {
         interactive(ev, {});
     } else {
         ERR("cannot execute command without arguments: " + name());
@@ -40,29 +41,29 @@ Command::interactiveDescription() const
     for (const auto &param : parameters()) {
         desc << delim;
         delim = ", ";
-        switch (param) {
-        case StringParam:
+        switch (param.value) {
+        case CommandParamType::String:
             desc << "string";
             break;
-        case IntegerParam:
+        case CommandParamType::Integer:
             desc << "int";
             break;
-        case NumberParam:
+        case CommandParamType::Number:
             desc << "num";
             break;
-        case KeyComboParam:
+        case CommandParamType::KeyCombo:
             desc << "key";
             break;
-        case CommandParam:
+        case CommandParamType::Command:
             desc << "command";
             break;
-        case VarRefParam:
+        case CommandParamType::VarRef:
             desc << "var";
             break;
-        case AnyParam:
+        case CommandParamType::Any:
             desc << "?";
             break;
-        case ListParam:
+        case CommandParamType::List:
             desc << "*";
             break;
         }

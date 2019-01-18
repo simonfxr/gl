@@ -9,6 +9,8 @@
 namespace sys {
 namespace io {
 
+PP_DEF_ENUM_IMPL(SYS_STREAM_RESULT_ENUM_DEF)
+
 namespace {
 
 struct StreamState
@@ -21,7 +23,7 @@ struct StreamState
 StreamResult
 StreamState::track(StreamFlags eof, StreamFlags &flags, StreamResult res)
 {
-    switch (res) {
+    switch (res.value) {
     case StreamResult::OK:
         return res;
     case StreamResult::Blocked:
@@ -169,54 +171,6 @@ struct StreamEndl
 {};
 
 const StreamEndl endl = {};
-
-StreamResult
-write_repr(OutStream &out, std::string_view str)
-{
-    if (out.writeable()) {
-        size_t s = str.size();
-        return out.write(s, str.data());
-    }
-    return StreamResult::OK;
-}
-
-StreamResult
-write_repr(OutStream &out, const char *str)
-{
-    if (!out.writeable() || !str)
-        return StreamResult::OK;
-    size_t s = strlen(str);
-    return out.write(s, str);
-}
-
-StreamResult
-write_repr(OutStream &out, char c)
-{
-    if (!out.writeable())
-        return StreamResult::OK;
-    size_t s = 1;
-    return out.write(s, &c);
-}
-
-StreamResult
-write_repr(OutStream &out, signed char c)
-{
-    return write_repr(out, static_cast<char>(c));
-}
-
-StreamResult
-write_repr(OutStream &out, unsigned char c)
-{
-    return write_repr(out, static_cast<char>(c));
-}
-
-StreamResult
-write_repr(OutStream &out, const StreamEndl & /*unused*/)
-{
-    auto ret1 = write_repr(out, '\n');
-    auto ret2 = out.flush();
-    return ret1 == StreamResult::OK ? ret2 : ret1;
-}
 
 #define DEF_PRINTF_WRITER(T, fmt, bufsz)                                       \
     StreamResult write_repr(OutStream &out, T value)                           \

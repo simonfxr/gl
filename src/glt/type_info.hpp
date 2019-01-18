@@ -9,6 +9,7 @@
 #include "math/genvec.hpp"
 #include "math/real.hpp"
 #include "pp/enum.hpp"
+#include "pp/map.h"
 
 #include <array>
 #include <cstddef>
@@ -23,17 +24,14 @@
 
 namespace glt {
 
-DEF_ENUM_CLASS(GLT_API,
-               ScalarType,
-               uint8_t,
-               I8,
-               I16,
-               I32,
-               U8,
-               U16,
-               U32,
-               F32,
-               F64);
+#define SCALAR_TYPE_ENUM_DEF(T, V0, V)                                         \
+    T(ScalarType,                                                              \
+      uint8_t,                                                                 \
+      V0(I8) V(I16) V(I32) V(U8) V(U16) V(U32) V(F32) V(F64))
+
+struct GLT_API ScalarType;
+
+PP_DEF_ENUM(SCALAR_TYPE_ENUM_DEF);
 
 template<typename T>
 struct scalar_type_traits;

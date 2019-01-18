@@ -3,30 +3,20 @@
 
 #include "glt/conf.hpp"
 #include "opengl.hpp"
+#include "pp/enum.hpp"
 #include "sys/io/Stream.hpp"
 
 namespace glt {
 
-namespace ObjectType {
+#define GLT_OBJECT_TYPE_ENUM_DEF(T, V0, V)                                     \
+    T(ObjectType,                                                              \
+      uint8_t,                                                                 \
+      V0(Program) V(Shader) V(Buffer) V(Framebuffer) V(Renderbuffer)           \
+        V(Sampler) V(Texture) V(TransformFeedback) V(VertexArray) V(Query))
 
-enum Type
-{
-    Program,
-    Shader,
-    Buffer,
-    Framebuffer,
-    Renderbuffer,
-    Sampler,
-    Texture,
-    TransformFeedback,
-    VertexArray,
-    Query,
-    Count
-};
+PP_DEF_ENUM_WITH_API(GLT_API, GLT_OBJECT_TYPE_ENUM_DEF);
 
-} // namespace ObjectType
-
-template<ObjectType::Type>
+template<ObjectType::enum_t>
 struct GLObject;
 
 typedef GLObject<ObjectType::Program> GLProgramObject;
@@ -41,10 +31,10 @@ typedef GLObject<ObjectType::VertexArray> GLVertexArrayObject;
 typedef GLObject<ObjectType::Query> GLQueryObject;
 
 GLT_API void
-generate(ObjectType::Type t, GLsizei n, GLuint *names);
+generate(ObjectType t, GLsizei n, GLuint *names);
 
 GLT_API void
-release(ObjectType::Type t, GLsizei n, const GLuint *names);
+release(ObjectType t, GLsizei n, const GLuint *names);
 
 GLT_API void
 generateShader(GLenum shader_type, GLuint *shader);
@@ -52,10 +42,10 @@ generateShader(GLenum shader_type, GLuint *shader);
 GLT_API void
 printStats(sys::io::OutStream &);
 
-template<ObjectType::Type T>
+template<ObjectType::enum_t T>
 struct GLObjectBase
 {
-    static const ObjectType::Type type;
+    static inline constexpr ObjectType type = T;
     GLuint _name;
 
     explicit GLObjectBase(GLuint name = 0) : _name(name) {}
@@ -78,10 +68,7 @@ private:
     GLObjectBase<T> &operator=(const GLObjectBase<T> &) = delete;
 };
 
-template<ObjectType::Type T>
-const ObjectType::Type GLObjectBase<T>::type = T;
-
-template<ObjectType::Type T>
+template<ObjectType::enum_t T>
 struct GLObject : public GLObjectBase<T>
 {
     explicit GLObject(GLuint name = 0) : GLObjectBase<T>(name) {}

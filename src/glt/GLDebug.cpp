@@ -15,19 +15,19 @@ GLDebug::init()
 {
     const GLubyte *gl_vendor_str = glGetString(GL_VENDOR);
     if (gl_vendor_str == nullptr) {
-        vendor = glvendor::Unknown;
+        vendor = OpenGLVendor::Unknown;
         return;
     }
 
     const char *vendor_str = reinterpret_cast<const char *>(gl_vendor_str);
     if (strcmp(vendor_str, "NVIDIA Corporation") == 0)
-        vendor = glvendor::Nvidia;
+        vendor = OpenGLVendor::Nvidia;
     else if (strcmp(vendor_str, "ATI Technologies") == 0)
-        vendor = glvendor::ATI;
+        vendor = OpenGLVendor::ATI;
     else if (strcmp(vendor_str, "INTEL") == 0)
-        vendor = glvendor::Intel;
+        vendor = OpenGLVendor::Intel;
     else
-        vendor = glvendor::Unknown;
+        vendor = OpenGLVendor::Unknown;
 }
 
 bool
@@ -39,7 +39,7 @@ GLDebug::shouldIgnore(GLuint id)
 void
 GLDebug::ignoreMessage(OpenGLVendor id_vendor, GLuint id)
 {
-    if (vendor != glvendor::Unknown && vendor == id_vendor)
+    if (vendor != OpenGLVendor::Unknown && vendor == id_vendor)
         ignored.insert(id);
 }
 

@@ -10,29 +10,8 @@
 namespace sys {
 namespace io {
 
-DEF_ENUM_CLASS_OPS(HandleError)
-DEF_ENUM_CLASS_OPS(SocketError)
-
-namespace {
-StreamResult
-convertErr(HandleError err)
-{
-    switch (err) {
-    case HandleError::OK:
-        return StreamResult::OK;
-    case HandleError::BLOCKED:
-        return StreamResult::Blocked;
-    case HandleError::EOF:
-        return StreamResult::EOF;
-    case HandleError::BAD_HANDLE:
-    case HandleError::INVALID_PARAM:
-    case HandleError::UNKNOWN:
-        return StreamResult::Error;
-    }
-
-    ASSERT_FAIL();
-}
-} // namespace
+PP_DEF_ENUM_IMPL(SYS_HANDLE_ERROR_ENUM_DEF)
+PP_DEF_ENUM_IMPL(SYS_SOCKET_ERROR_ENUM_DEF)
 
 IO::IO() : ipa_any(0), ipa_local(127, 0, 0, 1) {}
 
@@ -49,7 +28,7 @@ namespace {
 StreamResult
 toStreamResult(HandleError e)
 {
-    switch (e) {
+    switch (e.value) {
     case HandleError::OK:
         return StreamResult::OK;
     case HandleError::EOF:
@@ -132,7 +111,7 @@ HandleStream::basic_read(size_t &s, char *buf)
     }
 
     s = n;
-    StreamResult res = convertErr(err);
+    auto res = toStreamResult(err);
     ASSERT(res != StreamResult::OK || s > 0);
     return res;
 }
@@ -196,7 +175,7 @@ HandleStream::basic_write(size_t &s, const char *buf)
         err = HandleError::OK;
 
     s = n;
-    return convertErr(err);
+    return toStreamResult(err);
 }
 
 StreamResult
@@ -210,7 +189,7 @@ HandleStream::flush_buffer()
         write_cursor -= k;
     }
 
-    return convertErr(err);
+    return toStreamResult(err);
 }
 
 std::optional<HandleStream>

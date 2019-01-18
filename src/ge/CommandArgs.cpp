@@ -10,6 +10,10 @@
 
 namespace ge {
 
+PP_DEF_ENUM_IMPL(GE_COMMAND_PARAM_TYPE_ENUM_DEF)
+
+PP_DEF_ENUM_IMPL(GE_COMMAND_ARG_TYPE_ENUM_DEF)
+
 namespace {
 
 template<typename T>
@@ -42,26 +46,26 @@ CommandValue::CommandValue(std::shared_ptr<Command> com)
 
 CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
 {
-    switch (_type) {
-    case String:
+    switch (_type.value) {
+    case CommandArgType::String:
         copy(&string, std::move(rhs.string));
         break;
-    case Integer:
+    case CommandArgType::Integer:
         integer = rhs.integer;
         break;
-    case Number:
+    case CommandArgType::Number:
         number = rhs.number;
         break;
-    case KeyCombo:
+    case CommandArgType::KeyCombo:
         copy(&keyBinding, std::move(rhs.keyBinding));
         break;
-    case CommandRef:
+    case CommandArgType::CommandRef:
         copy(&command, std::move(rhs.command));
         break;
-    case VarRef:
+    case CommandArgType::VarRef:
         copy(&var, std::move(rhs.var));
         break;
-    case Nil:
+    case CommandArgType::Nil:
         break;
     }
 }
@@ -83,27 +87,27 @@ CommandArg::operator=(CommandArg &&rhs)
         return *this;
     reset();
     _type = rhs._type;
-    rhs._type = Nil;
-    switch (_type) {
-    case String:
+    rhs._type = CommandArgType::Nil;
+    switch (_type.value) {
+    case CommandArgType::String:
         destructive_move(&string, std::move(rhs.string));
         return *this;
-    case Integer:
+    case CommandArgType::Integer:
         integer = rhs.integer;
         return *this;
-    case Number:
+    case CommandArgType::Number:
         number = rhs.number;
         return *this;
-    case KeyCombo:
+    case CommandArgType::KeyCombo:
         destructive_move(&keyBinding, std::move(rhs.keyBinding));
         return *this;
-    case CommandRef:
+    case CommandArgType::CommandRef:
         destructive_move(&command, std::move(rhs.command));
         return *this;
-    case VarRef:
+    case CommandArgType::VarRef:
         destructive_move(&var, std::move(rhs.var));
         return *this;
-    case Nil:
+    case CommandArgType::Nil:
         return *this;
     }
     CASE_UNREACHABLE;
@@ -118,24 +122,24 @@ CommandArg::operator=(const CommandArg &rhs)
 void
 CommandArg::reset()
 {
-    switch (std::exchange(_type, Nil)) {
-    case String:
+    switch (std::exchange(_type.value, CommandArgType::Nil)) {
+    case CommandArgType::String:
         destroy(string);
         return;
-    case Integer:
+    case CommandArgType::Integer:
         return;
-    case Number:
+    case CommandArgType::Number:
         return;
-    case KeyCombo:
+    case CommandArgType::KeyCombo:
         destroy(keyBinding);
         return;
-    case CommandRef:
+    case CommandArgType::CommandRef:
         destroy(command);
         return;
-    case VarRef:
+    case CommandArgType::VarRef:
         destroy(var);
         return;
-    case Nil:
+    case CommandArgType::Nil:
         return;
     }
     CASE_UNREACHABLE;
@@ -153,23 +157,23 @@ compare(const CommandArg &a, const CommandArg &b)
     using ::compare;
     if (a.type() != b.type())
         return compare(a.type(), b.type());
-    switch (a.type()) {
-    case String:
+    switch (a.type().value) {
+    case CommandArgType::String:
         return a.string.compare(b.string);
-    case Integer:
+    case CommandArgType::Integer:
         return compare(a.integer, b.integer);
-    case Number:
+    case CommandArgType::Number:
         return compare(a.number, b.number);
-    case KeyCombo:
+    case CommandArgType::KeyCombo:
         return std::lexicographical_compare(a.keyBinding.begin(),
                                             a.keyBinding.end(),
                                             b.keyBinding.begin(),
                                             b.keyBinding.end());
-    case CommandRef:
+    case CommandArgType::CommandRef:
         return compare(a.command, b.command);
-    case VarRef:
+    case CommandArgType::VarRef:
         return a.var.compare(b.var);
-    case Nil:
+    case CommandArgType::Nil:
         return 0;
     }
     CASE_UNREACHABLE;
@@ -241,16 +245,16 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
         sep = ", ";
         char pre = 0;
         switch (k.state) {
-        case keystate::Up:
+        case KeyState::Up:
             pre = '!';
             break;
-        case keystate::Down:
+        case KeyState::Down:
             pre = 0;
             break;
-        case keystate::Pressed:
+        case KeyState::Pressed:
             pre = '+';
             break;
-        case keystate::Released:
+        case KeyState::Released:
             pre = '-';
             break;
         }
@@ -259,8 +263,9 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
             *self->current_out << pre;
 
         auto sym = to_string(k.code);
-        if (sym == nullptr)
-            *self->current_out << "<unknown key code: " << k.code << ">";
+        if (!sym)
+            *self->current_out << "<unknown key code: " << k.code.numeric()
+                               << ">";
         else
             *self->current_out << sym;
     }
@@ -271,20 +276,20 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
 void
 CommandPrettyPrinter::print(const CommandArg &arg, bool first)
 {
-    switch (arg.type()) {
-    case String:
+    switch (arg.type().value) {
+    case CommandArgType::String:
         *self->current_out << '"' << arg.string << '"';
         return;
-    case Integer:
+    case CommandArgType::Integer:
         *self->current_out << arg.integer;
         return;
-    case Number:
+    case CommandArgType::Number:
         *self->current_out << arg.number;
         return;
-    case KeyCombo:
+    case CommandArgType::KeyCombo:
         print(arg.keyBinding);
         return;
-    case CommandRef: {
+    case CommandArgType::CommandRef: {
         if (!first)
             *self->current_out << '&';
         *self->current_out << *arg.command.name;
@@ -295,10 +300,10 @@ CommandPrettyPrinter::print(const CommandArg &arg, bool first)
             print(*q->quotation);
         return;
     }
-    case VarRef:
+    case CommandArgType::VarRef:
         *self->current_out << '$' << arg.var;
         return;
-    case Nil:
+    case CommandArgType::Nil:
         *self->current_out << "nil type not allowed: " << arg.type();
         return;
     }

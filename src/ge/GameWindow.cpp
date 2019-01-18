@@ -93,21 +93,21 @@ convertGLFWKey(int key)
 {
 
     if (GLFW_KEY_A <= key && key <= GLFW_KEY_Z)
-        return keycode::KeyCode(key - GLFW_KEY_A + int(keycode::A));
+        return KeyCode(key - GLFW_KEY_A + int(KeyCode::A));
     if (GLFW_KEY_0 <= key && key <= GLFW_KEY_9)
-        return keycode::KeyCode(key - GLFW_KEY_0 + int(keycode::Num0));
+        return KeyCode(key - GLFW_KEY_0 + int(KeyCode::Num0));
     if (GLFW_KEY_KP_0 <= key && key <= GLFW_KEY_KP_9)
-        return keycode::KeyCode(key - GLFW_KEY_KP_0 + int(keycode::Numpad0));
+        return KeyCode(key - GLFW_KEY_KP_0 + int(KeyCode::Numpad0));
     if (GLFW_KEY_F1 <= key && key <= GLFW_KEY_F15)
-        return keycode::KeyCode(key - GLFW_KEY_F1 + int(keycode::F1));
+        return KeyCode(key - GLFW_KEY_F1 + int(KeyCode::F1));
     if (GLFW_KEY_F16 <= key && key <= GLFW_KEY_F25) {
         ERR("invalid function key > F15 pressed");
-        return keycode::Space;
+        return KeyCode::Space;
     }
 
 #define K(a, b)                                                                \
     case GLFW_KEY_##a:                                                         \
-        return keycode::b;                                                     \
+        return KeyCode::b;                                                     \
         break
 
     switch (key) {
@@ -162,7 +162,7 @@ convertGLFWKey(int key)
         K(MENU, Menu);
     default:
         ERR("invalid key");
-        return keycode::Tilde;
+        return KeyCode::Tilde;
     }
 
 #undef K
@@ -173,7 +173,7 @@ convertGLFWMouseButton(int button)
 {
 #define B(a, b)                                                                \
     case GLFW_MOUSE_BUTTON_##a:                                                \
-        return keycode::b;                                                     \
+        return KeyCode::b;                                                     \
         break
 
     switch (button) {
@@ -187,7 +187,7 @@ convertGLFWMouseButton(int button)
         B(8, MXButton1);
     default:
         ERR("invalid button");
-        return keycode::MXButton1;
+        return KeyCode::MXButton1;
     }
 #undef B
 }
@@ -325,7 +325,7 @@ GameWindow::Data::glfw_key_callback(GLFWwindow *win,
         return;
 
     GameWindow::Data *me = getUserPointer(win);
-    auto k = Key(action == GLFW_PRESS ? keystate::Pressed : keystate::Released,
+    auto k = Key(action == GLFW_PRESS ? KeyState::Pressed : KeyState::Released,
                  convertGLFWKey(key));
     me->events.keyChanged.raise(Event(KeyChanged(me->self, k)));
 }
@@ -338,7 +338,7 @@ GameWindow::Data::glfw_mouse_button_callback(GLFWwindow *win,
 {
     UNUSED(mods);
     GameWindow::Data *me = getUserPointer(win);
-    auto b = Key(action == GLFW_PRESS ? keystate::Pressed : keystate::Released,
+    auto b = Key(action == GLFW_PRESS ? KeyState::Pressed : KeyState::Released,
                  convertGLFWMouseButton(button));
     me->events.mouseButton.raise(Event(
       MouseButton(me->self, int16_t(me->mouse_x), int16_t(me->mouse_y), b)));

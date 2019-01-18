@@ -8,11 +8,9 @@
 
 namespace glt {
 
-DEF_ENUM_CLASS_OPS(ShaderManagerVerbosity)
-
-DEF_ENUM_CLASS_OPS(ShaderProfile)
-
-DEF_ENUM_CLASS_OPS(ShaderType)
+PP_DEF_ENUM_IMPL(GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF);
+PP_DEF_ENUM_IMPL(GLT_SHADER_PROFILE_ENUM_DEF);
+PP_DEF_ENUM_IMPL(GLT_SHADER_TYPE_ENUM_DEF);
 
 using ProgramMap =
   std::unordered_map<std::string, std::shared_ptr<ShaderProgram>>;
@@ -154,11 +152,8 @@ ShaderManager::prependShaderDirectory(const std::string &dir, bool check_exists)
 {
     removeShaderDirectory(dir);
 
-    if (check_exists) {
-        auto type = sys::fs::exists(dir);
-        if (!type || *type != sys::fs::Directory)
-            return false;
-    }
+    if (check_exists && !sys::fs::directoryExists(dir))
+        return false;
 
     self->shaderDirs.insert(self->shaderDirs.begin(), dir);
     return true;
@@ -169,11 +164,8 @@ ShaderManager::addShaderDirectory(const std::string &dir, bool check_exists)
 {
     removeShaderDirectory(dir);
 
-    if (check_exists) {
-        auto type = sys::fs::exists(dir);
-        if (!type || *type != sys::fs::Directory)
-            return false;
-    }
+    if (check_exists && !sys::fs::directoryExists(dir))
+        return false;
 
     self->shaderDirs.push_back(dir);
     return true;

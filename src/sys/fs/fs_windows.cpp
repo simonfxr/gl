@@ -99,8 +99,8 @@ stat(std::string_view path)
     Stat stat;
     stat.mtime.seconds = filetimeToUnixTimestap(&attrs.ftLastWriteTime);
     stat.type = (attrs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
-                  ? Directory
-                  : File;
+                  ? ObjectType::Directory
+                  : ObjectType::File;
     std::wstring wabs(MAX_PATH, 0);
     auto len =
       GetFullPathNameW(wpath.c_str(), DWORD(wabs.size()), wabs.data(), nullptr);

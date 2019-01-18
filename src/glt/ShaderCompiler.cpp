@@ -36,7 +36,7 @@ struct LogTraits<glt::ShaderCompilerQueue>
 
 namespace glt {
 
-DEF_ENUM_CLASS_OPS(ShaderCompilerError);
+PP_DEF_ENUM_IMPL(GLT_SHADER_COMPILER_ERROR_ENUM_DEF)
 
 namespace {
 struct CompileJob
@@ -377,7 +377,7 @@ ShaderSource::key() const
 std::shared_ptr<ShaderSource>
 ShaderSource::makeFileSource(ShaderType ty, const std::string &path)
 {
-    ASSERT(sys::fs::exists(path, sys::fs::File));
+    ASSERT(sys::fs::fileExists(path));
     return std::make_shared<ShaderSource>(
       Data{ path, ty, { FileSource{ path } } });
 }
@@ -547,8 +547,7 @@ ShaderObject::Data::makeFileShaderObject(std::shared_ptr<ShaderSource> src,
                                          const FileSource &fsrc,
                                          sys::fs::FileTime mtime)
 {
-
-    ASSERT(sys::fs::exists(fsrc.path, sys::fs::File));
+    ASSERT(sys::fs::fileExists(fsrc.path));
     auto so = std::make_unique<ShaderObject>(
       new Data(std::move(src), { FileShaderObject{ fsrc, mtime } }));
     so->self->self = so.get();

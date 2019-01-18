@@ -7,8 +7,10 @@
 
 namespace sys {
 namespace fs {
-namespace def {
 
+PP_DEF_ENUM_IMPL(SYS_OBJECT_TYPE_ENUM_DEF)
+
+namespace def {
 namespace {
 
 bool

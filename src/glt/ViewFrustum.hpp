@@ -11,7 +11,7 @@ namespace glt {
 
 using Outcode = uint32_t;
 
-enum PlaneIndex
+enum PlaneIndex : uint8_t
 {
     PLANE_LEFT = 0,
     PLANE_RIGHT = 1,

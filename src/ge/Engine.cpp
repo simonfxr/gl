@@ -417,8 +417,7 @@ Engine::enablePlugin(Plugin &p)
 void
 Engine::setDevelDataDir(const std::string &dir)
 {
-    auto type = sys::fs::exists(dir);
-    if (!type || *type != sys::fs::Directory) {
+    if (!sys::fs::directoryExists(dir)) {
         WARN("not a directory");
         return;
     }

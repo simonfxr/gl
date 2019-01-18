@@ -26,7 +26,7 @@ struct LogTraits<glt::ShaderProgram>
 
 namespace glt {
 
-DEF_ENUM_CLASS_OPS(ShaderProgramError);
+PP_DEF_ENUM_IMPL(GLT_SHADER_PROGRAM_ERROR_ENUM_DEF);
 
 typedef std::unordered_map<std::string, GLuint> Attributes;
 

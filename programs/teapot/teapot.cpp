@@ -632,7 +632,7 @@ Anim::mouseMoved(const Event<MouseMoved> &e)
 
     dx = -dx;
 
-    if (engine.keyHandler().keyState(ge::keycode::M) <= keystate::Pressed) {
+    if (engine.keyHandler().keyState(ge::KeyCode::M) <= KeyState::Pressed) {
         teapot1.frame.rotateWorld(-dx * 0.001f, camera.frame().localY());
         teapot1.frame.rotateWorld(dy * 0.001f, camera.frame().localX());
         e.abort = true;
@@ -642,38 +642,38 @@ Anim::mouseMoved(const Event<MouseMoved> &e)
 void
 Anim::keyPressed(const Event<KeyPressed> &e)
 {
-    using namespace ge::keycode;
+    using K = ge::KeyCode;
 
     BEGIN_NO_WARN_SWITCH
-    switch (e.info.key) {
-    case F:
+    switch (e.info.key.value) {
+    case K::F:
         wireframe_mode = !wireframe_mode;
         GL_CALL(
           glPolygonMode, GL_FRONT_AND_BACK, wireframe_mode ? GL_LINE : GL_FILL);
         break;
-    case H:
+    case K::H:
 
         if (shade_mode == SHADE_MODE_DEFAULT)
             shade_mode = 0;
         else
             shade_mode = SHADE_MODE_DEFAULT;
         break;
-    case J:
+    case K::J:
         shade_mode ^= SHADE_MODE_AMBIENT;
         break;
-    case K:
+    case K::K:
         shade_mode ^= SHADE_MODE_DIFFUSE;
         break;
-    case L:
+    case K::L:
         shade_mode ^= SHADE_MODE_SPECULAR;
         break;
-    case O:
+    case K::O:
         gamma_correction += 0.05f;
         break;
-    case P:
+    case K::P:
         gamma_correction -= 0.05f;
         break;
-    case G:
+    case K::G:
         if (use_spotlight && spotlight_smooth) {
             use_spotlight = false;
             spotlight_smooth = false;

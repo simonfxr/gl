@@ -18,25 +18,25 @@ private:
     GLSamplerObject _sampler;
 
 public:
-    enum FilterMode
+    enum FilterMode : uint8_t
     {
         FilterNearest,
         FilterLinear
     };
 
-    enum Filter
+    enum Filter : uint8_t
     {
         FilterMin = 1,
         FilterMag = 2
     };
 
-    enum ClampMode
+    enum ClampMode : uint8_t
     {
         ClampToEdge,
         ClampRepeat
     };
 
-    enum Axis
+    enum Axis : uint8_t
     {
         S = 1,
         T = 2,

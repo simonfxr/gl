@@ -7,27 +7,25 @@
 
 namespace err {
 
-template<typename E, E NoError>
+template<typename E>
 struct WithError
 {
     E lastError;
-
-    WithError() : lastError(NoError) {}
 
     E getError() const { return lastError; }
 
     void pushError(E err)
     {
-        if (lastError == NoError)
+        if (lastError == E{})
             lastError = err;
     }
 
-    bool wasError() const { return lastError != NoError; }
+    bool wasError() const { return lastError != E{}; }
 
     E clearError()
     {
         E err = lastError;
-        lastError = NoError;
+        lastError = E{};
         return err;
     }
 };

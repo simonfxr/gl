@@ -48,7 +48,7 @@ struct KeyHandler::Data
     CommandProcessor &processor;
     uint32_t frame_id{ 1 };
     CommandBindings bindings;
-    State states[keycode::Count];
+    State states[KeyCode::count];
     EventSource<KeyPressed> keyPressedEvent;
 
     explicit Data(CommandProcessor &proc);
@@ -62,8 +62,7 @@ KeyHandler::Data::Data(CommandProcessor &proc) : processor(proc)
         state = State();
 }
 
-#define CHECK_KEYCODE(kc)                                                      \
-    ASSERT_MSG((kc) >= 0 && (kc) < int32_t(keycode::Count), "invalid keycode")
+#define CHECK_KEYCODE(kc) ASSERT_MSG(kc.is_valid(), "invalid keycode")
 
 KeyHandler::KeyHandler(CommandProcessor &proc) : self(new Data(proc)) {}
 
@@ -72,8 +71,8 @@ KeyHandler::keyPressed(KeyCode code)
 {
     // std::cerr << "key pressed: " << self->frame_id << " " <<
     // prettyKeyCode(code) << std::endl;
-    auto idx = int32_t(code);
-    CHECK_KEYCODE(idx);
+    auto idx = code.numeric();
+    CHECK_KEYCODE(code);
     self->states[idx] = State(true, self->frame_id);
     self->keyPressedEvent.raise(Event(KeyPressed(*this, code)));
 }
@@ -83,8 +82,8 @@ KeyHandler::keyReleased(KeyCode code)
 {
     // std::cerr << "key released: " << self->frame_id << " " <<
     // prettyKeyCode(code) << std::endl;
-    auto idx = int32_t(code);
-    CHECK_KEYCODE(idx);
+    auto idx = code.numeric();
+    CHECK_KEYCODE(code);
     if (self->states[idx].down)
         self->states[idx] = State(false, self->frame_id);
 }
@@ -92,9 +91,9 @@ KeyHandler::keyReleased(KeyCode code)
 void
 KeyHandler::keyEvent(Key key)
 {
-    if (key.state == keystate::Pressed)
+    if (key.state == KeyState::Pressed)
         keyPressed(key.code);
-    else if (key.state == keystate::Released)
+    else if (key.state == KeyState::Released)
         keyReleased(key.code);
 }
 
@@ -108,14 +107,14 @@ KeyHandler::clearStates()
 KeyState
 KeyHandler::keyState(KeyCode code)
 {
-    auto idx = int32_t(code);
-    CHECK_KEYCODE(idx);
+    auto idx = code.numeric();
+    CHECK_KEYCODE(code);
     State state = self->states[idx];
 
     if (state.timestamp == self->frame_id)
-        return state.down ? keystate::Pressed : keystate::Released;
+        return state.down ? KeyState::Pressed : KeyState::Released;
 
-    return state.down ? keystate::Down : keystate::Up;
+    return state.down ? KeyState::Down : KeyState::Up;
 }
 
 void
@@ -141,16 +140,6 @@ KeyHandler::keyPressedEvent()
     return self->keyPressedEvent;
 }
 
-// static const char *prettyKeyState(KeyState state) {
-//     switch (state) {
-//     case Up: return "Up";
-//     case Down: return "Down";
-//     case Pressed: return "Pressed";
-//     case Released: return "Released";
-//     default: return "<unknown>";
-//     }
-// }
-
 void
 KeyHandler::handleCommands()
 {
@@ -161,11 +150,12 @@ KeyHandler::handleCommands()
 
         for (size_t i = 0; i < bind->size(); ++i) {
 
-            KeyCode code = bind->at(i).code;
-            KeyState reqState = bind->at(i).state;
+            auto key = (*bind)[i];
+            KeyCode code = key.code;
+            KeyState reqState = key.state;
             KeyState curState = keyState(code);
 
-            bool match = (reqState & curState) == reqState;
+            bool match = (int(reqState) & int(curState)) == int(reqState);
 
             // if (curState != Up)
             //     std::cerr << "checking key: " << prettyKeyCode(code) <<  "

@@ -219,7 +219,7 @@ COMMAND("bindShader", "compile and linke a ShaderProgram and give it a name")
         return;
     }
 
-    if (args[0].type() != String) {
+    if (args[0].type() != CommandArgType::String) {
         ERR(e.info.engine.out(), "bindShader: first argument not a string");
         return;
     }
@@ -228,15 +228,16 @@ COMMAND("bindShader", "compile and linke a ShaderProgram and give it a name")
       std::make_shared<glt::ShaderProgram>(e.info.engine.shaderManager());
 
     size_t i;
-    for (i = 1; i < args.size() && args[i].type() == String; ++i) {
+    for (i = 1; i < args.size() && args[i].type() == CommandArgType::String;
+         ++i) {
         if (!prog->addShaderFile(args[i].string)) {
             ERR(e.info.engine.out(), "bindShader: compilation failed");
             return;
         }
     }
 
-    for (; i + 1 < args.size() && args[i].type() == Integer &&
-           args[i + 1].type() == String;
+    for (; i + 1 < args.size() && args[i].type() == CommandArgType::Integer &&
+           args[i + 1].type() == CommandArgType::String;
          i += 2) {
         if (args[i].integer < 0) {
             ERR(e.info.engine.out(), "bindShader: negative size_t");
@@ -285,15 +286,15 @@ COMMAND("ignoreGLDebugMessage",
     glt::OpenGLVendor vendor;
 
     if (vendor_str == "Nvidia")
-        vendor = glt::glvendor::Nvidia;
+        vendor = glt::OpenGLVendor::Nvidia;
     else if (vendor_str == "ATI")
-        vendor = glt::glvendor::ATI;
+        vendor = glt::OpenGLVendor::ATI;
     else if (vendor_str == "Intel")
-        vendor = glt::glvendor::Intel;
+        vendor = glt::OpenGLVendor::Intel;
     else
-        vendor = glt::glvendor::Unknown;
+        vendor = glt::OpenGLVendor::Unknown;
 
-    if (vendor != glt::glvendor::Unknown) {
+    if (vendor != glt::OpenGLVendor::Unknown) {
         glt::ignoreDebugMessage(vendor, id);
     } else {
         e.info.engine.out() << "invalid opengl vendor: " << vendor_str;

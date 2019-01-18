@@ -146,7 +146,7 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
     const std::string *path;
     if (args.size() == 0)
         path = &frame_path;
-    else if (args.size() == 1 && args[0].type() == String)
+    else if (args.size() == 1 && args[0].type() == CommandArgType::String)
         path = &args[0].string;
     else {
         ERR("invalid parameters: expect 0 or 1 filepath");
@@ -170,7 +170,7 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
     const std::string *path;
     if (args.size() == 0)
         path = &frame_path;
-    else if (args.size() == 1 && args[0].type() == String)
+    else if (args.size() == 1 && args[0].type() == CommandArgType::String)
         path = &args[0].string;
     else {
         ERR("invalid parameters: expect 0 or 1 filepath");
@@ -197,10 +197,10 @@ void
 Camera::Data::runSensitivity(const Event<CommandEvent> & /*unused*/,
                              ArrayView<const CommandArg> args)
 {
-    if (args.size() == 1 && args[0].type() == Number) {
+    if (args.size() == 1 && args[0].type() == CommandArgType::Number) {
         mouse_sensitivity = vec2(real(args[0].number));
-    } else if (args.size() == 2 && args[0].type() == Number &&
-               args[1].type() == Number) {
+    } else if (args.size() == 2 && args[0].type() == CommandArgType::Number &&
+               args[1].type() == CommandArgType::Number) {
         mouse_sensitivity = vec2(real(args[0].number), real(args[1].number));
     } else {
         ERR("invalid arguments");

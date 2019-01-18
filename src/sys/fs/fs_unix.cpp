@@ -189,7 +189,7 @@ exists(std::string_view path)
         return std::nullopt;
     }
     auto objtype = info.st_mode & S_IFMT;
-    return { objtype == S_IFDIR ? Directory : File };
+    return { objtype == S_IFDIR ? ObjectType::Directory : ObjectType::File };
 }
 
 } // namespace fs

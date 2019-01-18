@@ -31,19 +31,13 @@
 
 namespace glt {
 
-namespace glvendor {
-
-enum OpenGLVendor
+enum OpenGLVendor : uint8_t
 {
     Unknown,
     Nvidia,
     ATI,
     Intel
 };
-
-} // namespace glvendor
-
-typedef glvendor::OpenGLVendor OpenGLVendor;
 
 GLT_API bool
 printOpenGLCalls();
