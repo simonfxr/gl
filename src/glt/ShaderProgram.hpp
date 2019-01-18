@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "data/ArrayView.hpp"
+#include "util/ArrayView.hpp"
 #include "err/WithError.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/ShaderManager.hpp"

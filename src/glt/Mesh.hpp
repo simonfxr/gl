@@ -3,7 +3,7 @@
 
 #include "glt/conf.hpp"
 
-#include "data/BitSet.hpp"
+#include "util/BitSet.hpp"
 #include "err/err.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/color.hpp"

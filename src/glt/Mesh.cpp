@@ -1,6 +1,6 @@
 #include "glt/Mesh.hpp"
 
-#include "data/range.hpp"
+#include "util/range.hpp"
 #include "glt/utils.hpp"
 
 #ifdef HU_OS_POSIX

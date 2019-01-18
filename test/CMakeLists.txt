@@ -1,7 +1,4 @@
-#def_program(chan SOURCES chan.cpp DEPEND ge pthread)
-#def_program(ref_test SOURCES ref_test.cpp DEPEND ge)
-#def_program(tokenizer SOURCES tokenizer.cpp DEPEND ge)
 def_program(nb-server SOURCES nb-server.cpp DEPEND ge)
-#def_program(ref_code SOURCES ref_code.cpp DEPEND ge)
 def_program(loop SOURCES loop.cpp DEPEND ge)
 def_program(enum_to_string SOURCES enum_to_string.cpp DEPEND ge sys glt)
+def_program(math_test SOURCES math_test.cpp DEPEND sys glt)

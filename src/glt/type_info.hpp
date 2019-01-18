@@ -3,7 +3,7 @@
 
 #include "glt/conf.hpp"
 
-#include "data/ArrayView.hpp"
+#include "util/ArrayView.hpp"
 #include "glt/color.hpp"
 #include "math/genmat.hpp"
 #include "math/genvec.hpp"

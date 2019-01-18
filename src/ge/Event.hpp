@@ -1,7 +1,7 @@
 #ifndef GE_EVENT_HPP
 #define GE_EVENT_HPP
 
-#include "data/functor_traits.hpp"
+#include "util/functor_traits.hpp"
 #include "ge/conf.hpp"
 
 #include <memory>

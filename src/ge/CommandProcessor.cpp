@@ -1,7 +1,7 @@
 #include "ge/CommandProcessor.hpp"
 
-#include "data/range.hpp"
-#include "data/string_utils.hpp"
+#include "util/range.hpp"
+#include "util/string_utils.hpp"
 #include "err/err.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Event.hpp"

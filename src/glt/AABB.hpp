@@ -21,8 +21,8 @@ struct AABB
 
     constexpr void clear()
     {
-        corner_min = math::vec3(math::POS_INF);
-        corner_max = math::vec3(math::NEG_INF);
+        corner_min = math::vec3(math::REAL_MAX);
+        corner_max = math::vec3(math::REAL_MIN);
     }
 
     constexpr math::point3_t center() const

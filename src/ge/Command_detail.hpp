@@ -1,7 +1,7 @@
 #ifndef GE_COMMAND_DETAIL_HPP
 #define GE_COMMAND_DETAIL_HPP
 
-#include "data/functor_traits.hpp"
+#include "util/functor_traits.hpp"
 #include "err/err.hpp"
 #include "ge/Command.hpp"
 #include "ge/CommandArgs.hpp"

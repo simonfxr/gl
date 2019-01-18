@@ -1,6 +1,6 @@
 #include "ge/ReplServer.hpp"
 
-#include "data/string_utils.hpp"
+#include "util/string_utils.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Tokenizer.hpp"
 #include "sys/fiber.hpp"

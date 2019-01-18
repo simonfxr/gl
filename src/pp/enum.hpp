@@ -1,7 +1,7 @@
 #ifndef PP_ENUM_HPP
 #define PP_ENUM_HPP
 
-#include "data/Comparable.hpp"
+#include "util/Comparable.hpp"
 #include "pp/basic.h"
 
 #define PP_ENUM_DEF_VALLIST_V0(val) val

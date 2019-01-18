@@ -1,8 +1,8 @@
 #ifndef GE_COMMAND_ARGS_HPP
 #define GE_COMMAND_ARGS_HPP
 
-#include "data/ArrayView.hpp"
-#include "data/Comparable.hpp"
+#include "util/ArrayView.hpp"
+#include "util/Comparable.hpp"
 #include "ge/KeyBinding.hpp"
 #include "ge/conf.hpp"
 #include "pp/enum.hpp"

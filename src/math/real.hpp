@@ -18,9 +18,9 @@ using real = double;
 
 inline constexpr real PI = real(3.1415926535897932384626433832);
 
-inline constexpr real POS_INF = std::numeric_limits<real>::infinity();
+inline constexpr real REAL_MAX = std::numeric_limits<real>::max();
 
-inline constexpr real NEG_INF = -POS_INF;
+inline constexpr real REAL_MIN = std::numeric_limits<real>::lowest();
 
 inline real
 sqrt(real x)

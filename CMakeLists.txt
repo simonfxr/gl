@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_C_STANDARD 11)
@@ -21,22 +20,31 @@ if(SYS_WINDOWS AND COMP_MSVC)
   set(build_shared_default False)
 endif()
 
-set_option(BUILD_SHARED_LIBS ${build_shared_default} BOOL "TRUE to build shared libs, FALSE to build static libs")
+set_option(BUILD_SHARED_LIBS
+           ${build_shared_default}
+           BOOL
+           "True to build shared libs, False to build static libs")
 message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
 
-if(CMAKE_BUILD_TYPE STREQUAL RELEASE)
-  set(GLDEBUG_DEFAULT FALSE)
+if(build_type STREQUAL RELEASE)
+  set(GLDEBUG_DEFAULT False)
 else()
-  set(GLDEBUG_DEFAULT TRUE)
+  set(GLDEBUG_DEFAULT True)
 endif()
-set_option(GLDEBUG ${GLDEBUG_DEFAULT} BOOL "TRUE to enable error checking after every opengl call")
+set_option(GLDEBUG
+           ${GLDEBUG_DEFAULT}
+           BOOL
+           "True to enable error checking after every opengl call")
 
 set_option(USE_OPENMP True BOOL "enable openmp support")
 
-set_option(USE_VOXEL_OPENCL FALSE BOOL "use opencl for the voxel-world program")
+set_option(USE_VOXEL_OPENCL False BOOL "use opencl for the voxel-world program")
 
 if(UNIX)
-  set_option(USE_UNWIND_STACKTRACES TRUE BOOL "use libunwind and libdw to print a stacktrace on errors")
+  set_option(USE_UNWIND_STACKTRACES
+             True
+             BOOL
+             "use libunwind and libdw to print a stacktrace on errors")
 endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake)
@@ -53,15 +61,16 @@ endif()
 if(NOT TARGET glad)
   find_package(PythonInterp 3 REQUIRED)
   set(GLAD_DIR "${CMAKE_CURRENT_LIST_DIR}/deps/glad")
-  get_filename_component(GLAD_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/glad-generated" ABSOLUTE)
+  get_filename_component(GLAD_GEN_DIR
+                         "${CMAKE_CURRENT_BINARY_DIR}/glad-generated" ABSOLUTE)
 
   if(NOT EXISTS "${GLAD_GEN_DIR}/src/glad.c")
     message(STATUS "invokding glad generator: ${GLAD_GEN_DIR}")
     file(MAKE_DIRECTORY "${GLAD_GEN_DIR}")
-    execute_process(
-      COMMAND "${PYTHON_EXECUTABLE}" -m glad --out-path "${GLAD_GEN_DIR}" --generator c
-      WORKING_DIRECTORY "${GLAD_DIR}"
-      RESULT_VARIABLE glad_ec)
+    execute_process(COMMAND "${PYTHON_EXECUTABLE}" -m glad --out-path
+                            "${GLAD_GEN_DIR}" --generator c
+                    WORKING_DIRECTORY "${GLAD_DIR}"
+                    RESULT_VARIABLE glad_ec)
     if(NOT glad_ec EQUAL "0")
       message(FATAL_ERROR "glad generator failed with exit code: ${glad_ec}")
     endif()
@@ -76,12 +85,12 @@ if(NOT TARGET glad)
 endif()
 
 if(COMP_MSVC)
-	replace_cmake_flags("/W[0-4]" "/W4")
+  replace_cmake_flags("/W[0-4]" "/W4")
 endif()
 
 add_subdirectory(deps/cxx-header-utils)
 
-set(HAVE_FIBER TRUE)
+set(HAVE_FIBER True)
 add_subdirectory(deps/fiber)
 
 include_directories(src)

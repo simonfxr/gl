@@ -1,7 +1,7 @@
 #ifndef GE_COMMAND_HPP
 #define GE_COMMAND_HPP
 
-#include "data/ArrayView.hpp"
+#include "util/ArrayView.hpp"
 #include "ge/CommandArgs.hpp"
 #include "ge/Command_detail.hpp"
 #include "ge/EngineEvents.hpp"

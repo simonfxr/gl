@@ -3,7 +3,7 @@
 
 #include "ge/conf.hpp"
 
-#include "data/Comparable.hpp"
+#include "util/Comparable.hpp"
 #include "pp/enum.hpp"
 
 #include <optional>

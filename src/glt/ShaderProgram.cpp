@@ -1,7 +1,7 @@
 #include "glt/ShaderProgram.hpp"
 
-#include "data/range.hpp"
-#include "data/string_utils.hpp"
+#include "util/range.hpp"
+#include "util/string_utils.hpp"
 #include "err/err.hpp"
 #include "glt/ShaderCompiler.hpp"
 #include "glt/ShaderManager.hpp"

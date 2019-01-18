@@ -2,50 +2,47 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "sys/clock.hpp"
-
-#include "math/io.hpp"
+#include "sys/io/Stream.hpp"
 
 #include <iostream>
 
 using namespace math;
 
-#define NOINLINE ATTRS(ATTR_NOINLINE)
-
-static void NOINLINE
+static void HU_NOINLINE
 mul(vec4_t *RESTRICT rr,
     const mat4_t *RESTRICT m,
     const vec4_t *RESTRICT v,
-    uptr n)
+    size_t n)
 {
-    aligned_mat4_t M = *m;
-    aligned_vec4_t r = vec4(0.f);
-    for (uptr i = 0; i < n; ++i)
+    mat4_t M = *m;
+    vec4_t r = vec4(0.f);
+    for (size_t i = 0; i < n; ++i)
         r += M * v[i];
     *rr = r;
 }
 
-static void NOINLINE
+static void HU_NOINLINE
 mul(mat4_t *RESTRICT c,
     const mat4_t *RESTRICT a,
     const mat4_t *RESTRICT b,
-    uptr n)
+    size_t n)
 {
-    aligned_mat4_t M = *a;
-    aligned_mat4_t R = mat4(0.f);
-    for (uptr i = 0; i < n; ++i)
+    mat4_t M = *a;
+    mat4_t R = mat4(0.f);
+    for (size_t i = 0; i < n; ++i)
         R += M * b[i];
     *c = R;
 }
 
 template<typename T>
 float
-test(uptr n, const mat4_t &m_init, const T &init)
+test(size_t n, const mat4_t &m_init, const T &init)
 {
 
     T *in = new T[n];
     T out;
 
-    for (uptr i = 0; i < n; ++i)
+    for (size_t i = 0; i < n; ++i)
         in[i] = init;
 
     float T0 = sys::queryTimer();

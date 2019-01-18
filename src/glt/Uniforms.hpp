@@ -3,7 +3,7 @@
 
 #include "glt/conf.hpp"
 
-#include "data/ArrayView.hpp"
+#include "util/ArrayView.hpp"
 #include "glt/TextureSampler.hpp"
 #include "math/mat2.hpp"
 #include "math/mat3.hpp"

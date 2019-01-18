@@ -1,6 +1,6 @@
 #include "ge/CommandArgs.hpp"
 
-#include "data/range.hpp"
+#include "util/range.hpp"
 #include "ge/Command.hpp"
 #include "ge/Commands.hpp"
 #include "sys/io/Stream.hpp"
