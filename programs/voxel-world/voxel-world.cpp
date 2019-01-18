@@ -891,9 +891,7 @@ createModel(CubeMesh &worldModel,
 static bool
 initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
 {
-
-    worldModel.setSize(0);
-    worldModel.setElementsSize(0);
+    worldModel.freeHost();
 
     CubeMesh cubeModel;
     glt::primitives::unitCube(cubeModel);

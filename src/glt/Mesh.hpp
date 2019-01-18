@@ -3,7 +3,6 @@
 
 #include "glt/conf.hpp"
 
-#include "util/BitSet.hpp"
 #include "err/err.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/color.hpp"
@@ -12,6 +11,8 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "opengl.hpp"
+
+#include <vector>
 
 namespace glt {
 
@@ -28,6 +29,15 @@ enum DrawType : uint8_t
 struct GLT_API MeshBase
 {
 private:
+    char *vertex_data{};
+    char *vertex_data_end{};
+    char *vertex_data_lim{};
+    size_t vertex_count{};
+    std::vector<uint32_t> elements;
+    const StructInfo &struct_info;
+    std::vector<bool> enabled_attributes;
+    size_t gpu_vertex_count = 0;
+    size_t gpu_element_count = 0;
     GLVertexArrayObject vertex_array_name;
     GLBufferObject element_buffer_name;
     GLBufferObject vertex_buffer_name;
@@ -35,30 +45,36 @@ private:
     GLenum usage_hint = GL_STATIC_DRAW;
     GLenum prim_type;
 
-    bool owning_vertices = true;
-    size_t vertices_capacity = 0;
-    size_t vertices_size = 0;
-    size_t gpu_vertices_size = 0;
-    void *RESTRICT vertex_data = nullptr;
-
-    bool owning_elements = true;
-    size_t elements_capacity = 0;
-    size_t elements_size = 0;
-    size_t gpu_elements_size = 0;
-    uint32_t *RESTRICT element_data = nullptr;
-
     DrawType draw_type = DrawArrays;
 
-    BitSet enabled_attributes;
-
-    const StructInfo &struct_info;
-
 protected:
-    void *vertexRef(size_t i);
-    const void *vertexRef(size_t i) const;
+    void *vertexRef(size_t i)
+    {
+        return static_cast<void *>(vertex_data + i * struct_info.size);
+    }
 
-    void *pushVertex();
-    void *pushVertexElem();
+    const void *vertexRef(size_t i) const
+    {
+        return static_cast<const void *>(vertex_data + i * struct_info.size);
+    }
+
+    void *pushVertex()
+    {
+        if (hu_unlikely(vertex_data_end == vertex_data_lim))
+            growVertexBuf();
+        auto end = vertex_data_end;
+        vertex_data_end += struct_info.size;
+        ++vertex_count;
+        return end;
+    }
+
+    void *pushVertexElem()
+    {
+        auto elem_idx = vertex_count;
+        auto v = pushVertex();
+        pushElement(elem_idx);
+        return v;
+    }
 
 public:
     MeshBase(const StructInfo &,
@@ -73,21 +89,17 @@ public:
     GLenum usageHint() const { return usage_hint; }
     void usageHint(GLenum usageHint);
 
-    size_t verticesSize() const { return vertices_size; }
-    size_t elementsSize() const { return elements_size; }
+    size_t verticesSize() const { return vertex_count; }
+    size_t elementsSize() const { return elements.size(); }
 
-    size_t gpuVerticesSize() const { return gpu_vertices_size; }
-    size_t gpuElementsSize() const { return gpu_elements_size; }
+    size_t gpuVerticesSize() const { return gpu_vertex_count; }
+    size_t gpuElementsSize() const { return gpu_element_count; }
 
     DrawType drawType() const { return draw_type; }
     void drawType(DrawType type);
 
     void enableAttribute(size_t i, bool enabled = true);
     bool attributeEnabled(size_t i);
-
-    void setSize(size_t);
-
-    void setElementsSize(size_t);
 
     void freeHost();
 
@@ -120,15 +132,16 @@ public:
     void drawInstanced(size_t num) { drawInstanced(num, prim_type); }
     void drawInstanced(size_t num, GLenum primType);
 
-    void addElement(uint32_t size_t);
-    uint32_t element(size_t size_t) const { return element_data[size_t]; }
-    uint32_t &element(size_t size_t) { return element_data[size_t]; }
+    void pushElement(uint32_t idx) { elements.push_back(idx); }
+    uint32_t element(size_t i) const { return elements[i]; }
+    uint32_t &element(size_t i) { return elements[i]; }
 
     GLuint attributePosition(size_t offset) const;
 
     void bind();
 
 private:
+    void growVertexBuf();
     void enableAttributes();
     void disableAttributes();
     void initVertexBuffer();

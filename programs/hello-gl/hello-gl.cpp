@@ -105,7 +105,7 @@ Anim::make_resources()
     }
 
     for (unsigned short i : g_element_buffer_data) {
-        mesh.addElement(i);
+        mesh.pushElement(i);
     }
 
     mesh.primType(GL_TRIANGLE_STRIP);

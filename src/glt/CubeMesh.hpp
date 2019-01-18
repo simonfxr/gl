@@ -22,12 +22,12 @@ struct CubeMesh : public Mesh<T>
         this->addVertex(vert);
         uint32_t s = uint32_t(this->verticesSize());
         if (s % 4 == 0) {
-            this->addElement(s - 4);
-            this->addElement(s - 3);
-            this->addElement(s - 2);
-            this->addElement(s - 4);
-            this->addElement(s - 2);
-            this->addElement(s - 1);
+            this->pushElement(s - 4);
+            this->pushElement(s - 3);
+            this->pushElement(s - 2);
+            this->pushElement(s - 4);
+            this->pushElement(s - 2);
+            this->pushElement(s - 1);
         }
     }
 

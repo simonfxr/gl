@@ -809,19 +809,19 @@ parse_sply(const char *filename, CubeMeshOf<Vertex> &model)
 
 #ifdef MESH_CUBEMESH
 
-        model.addElement(i);
-        model.addElement(j);
-        model.addElement(k);
-        model.addElement(i);
-        model.addElement(k);
-        model.addElement(l);
+        model.pushElement(i);
+        model.pushElement(j);
+        model.pushElement(k);
+        model.pushElement(i);
+        model.pushElement(k);
+        model.pushElement(l);
 
 #else
 
-        model.addElement(i);
-        model.addElement(j);
-        model.addElement(k);
-        model.addElement(l);
+        model.pushElement(i);
+        model.pushElement(j);
+        model.pushElement(k);
+        model.pushElement(l);
 
 #endif
 
