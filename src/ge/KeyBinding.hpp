@@ -21,8 +21,8 @@ enum class KeyState : uint8_t
 };
 
 // clang-format off
-#define GE_KEY_CODE_ENUM_DEF(T, __, _) \
-  T(KeyCode, uint8_t,  \
+#define GE_KEY_CODE_ENUM_DEF(TY, __, _) \
+  TY(KeyCode, uint8_t,  \
     __(    A         ) \
      _(    B         ) \
      _(    C         ) \

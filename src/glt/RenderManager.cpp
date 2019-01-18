@@ -35,8 +35,8 @@ struct RenderManager::Data
     Projection projection;
     bool projection_outdated{ true };
 
-    uint64_t frame_id_current{};
-    uint64_t frame_id_last{};
+    uint64_t frame_id_current = 1;
+    uint64_t frame_id_last = 0;
 
     bool perf_initialized{ false };
     GLPerfCounter perf_counter;
@@ -240,7 +240,8 @@ RenderManager::Data::beginStats()
         sum_elapsed = 0;
         min_elapsed = 0;
         max_elapsed = 0;
-        frame_id_last = frame_id_current;
+        ASSERT(frame_id_current > 0);
+        frame_id_last = frame_id_current - 1;
     }
 
     perf_counter.begin();
