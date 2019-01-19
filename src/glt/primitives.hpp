@@ -1,7 +1,7 @@
 #ifndef GLT_PRIMITIVES_HPP
 #define GLT_PRIMITIVES_HPP
 
-#include "defs.hpp"
+#include "defs.h"
 #include "err/err.hpp"
 
 #include "math/ivec3.hpp"

@@ -57,28 +57,28 @@ inline constexpr IPAddr4 IPA_LOCAL = { 127, 0, 0, 1 };
 
 PP_DEF_ENUM_WITH_API(SYS_API, SYS_HANDLE_ERROR_ENUM_DEF);
 
-SYS_API HU_NODISCARD Handle
+HU_NODISCARD SYS_API Handle
 stdin_handle();
 
-SYS_API HU_NODISCARD Handle
+HU_NODISCARD SYS_API Handle
 stdout_handle();
 
-SYS_API HU_NODISCARD Handle
+HU_NODISCARD SYS_API Handle
 stderr_handle();
 
-SYS_API HU_NODISCARD std::optional<Handle>
+HU_NODISCARD SYS_API std::optional<Handle>
 open(std::string_view, HandleMode, HandleError &);
 
-SYS_API HU_NODISCARD HandleMode
+HU_NODISCARD SYS_API HandleMode
 mode(Handle &);
 
-SYS_API HU_NODISCARD HandleError
+HU_NODISCARD SYS_API HandleError
 elevate(Handle &, HandleMode);
 
-SYS_API HU_NODISCARD HandleError
+HU_NODISCARD SYS_API HandleError
 read(Handle &, size_t &, char *);
 
-SYS_API HU_NODISCARD HandleError
+HU_NODISCARD SYS_API HandleError
 write(Handle &, size_t &, const char *);
 
 SYS_API HandleError
@@ -91,10 +91,10 @@ close(Handle &);
 
 PP_DEF_ENUM_WITH_API(SYS_API, SYS_SOCKET_ERROR_ENUM_DEF);
 
-SYS_API HU_NODISCARD std::optional<Socket>
+HU_NODISCARD SYS_API std::optional<Socket>
 listen(SocketProto, const IPAddr4 &, uint16_t, SocketMode, SocketError &);
 
-SYS_API HU_NODISCARD std::optional<Handle>
+HU_NODISCARD SYS_API std::optional<Handle>
 accept(Socket &, SocketError &);
 
 SYS_API SocketError
@@ -218,7 +218,7 @@ protected:
     StreamResult flush_buffer();
 };
 
-SYS_API HU_NODISCARD std::pair<std::unique_ptr<char[]>, size_t>
+HU_NODISCARD SYS_API std::pair<std::unique_ptr<char[]>, size_t>
 readFile(sys::io::OutStream &errout,
          std::string_view path,
          HandleError &err) noexcept;

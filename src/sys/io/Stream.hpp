@@ -23,13 +23,13 @@ struct InStream;
 struct StreamEndl;
 struct IOStream;
 
-SYS_API HU_NODISCARD InStream &
+HU_NODISCARD SYS_API InStream &
 stdin();
 
-SYS_API HU_NODISCARD OutStream &
+HU_NODISCARD SYS_API OutStream &
 stdout();
 
-SYS_API HU_NODISCARD OutStream &
+HU_NODISCARD SYS_API OutStream &
 stderr();
 
 extern SYS_API const StreamEndl endl;

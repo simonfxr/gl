@@ -1,7 +1,7 @@
 #ifndef GE_MODULE_HPP
 #define GE_MODULE_HPP
 
-#include "defs.hpp"
+#include "defs.h"
 
 #include <memory>
 

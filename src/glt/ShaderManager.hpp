@@ -3,6 +3,7 @@
 
 #include "glt/conf.hpp"
 #include "pp/enum.hpp"
+#include "pp/pimpl.hpp"
 #include "sys/io/Stream.hpp"
 
 #include <memory>

@@ -3,6 +3,7 @@
 
 #include "glt/color.hpp"
 #include "glt/conf.hpp"
+#include "pp/pimpl.hpp"
 
 #include <memory>
 

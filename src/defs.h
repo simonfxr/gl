@@ -1,8 +1,6 @@
 #ifndef DEFS_H_INCLUDED
 #define DEFS_H_INCLUDED
 
-#define SIGNED_SIZE
-
 #include <hu/macros.h>
 #include <hu/platform.h>
 
@@ -39,7 +37,7 @@
 #define SHARED_EXPORT
 #endif
 
-#define ARRAY_LENGTH(x) ::size_t(sizeof(x) / sizeof *(x))
+#define ARRAY_LENGTH(x) (sizeof(x) / sizeof *(x))
 
 #ifdef DEBUG
 #define ON_DEBUG(x)                                                            \
@@ -57,24 +55,13 @@
 
 #define RESTRICT HU_RESTRICT
 
-#define CONCAT(a, b) CONCAT_AUX1(a, b)
-#define CONCAT_AUX1(a, b) CONCAT_AUX2(a, b)
-#define CONCAT_AUX2(a, b) CONCAT_AUX3(a, b)
-#define CONCAT_AUX3(a, b) CONCAT_AUX4(a, b)
-#define CONCAT_AUX4(a, b) CONCAT_AUX5(a, b)
-#define CONCAT_AUX5(a, b) a##b
+#define PP_CAT_I(a, ...) a##__VA_ARGS__
+#define PP_CAT(a, ...) PP_CAT_I(a, __VA_ARGS__)
 
-#define CONCAT3(a, b, c) CONCAT(a, CONCAT(b, c))
+#define PP_CAT3(a, b, ...) PP_CAT(PP_CAT(a, b), __VA_ARGS__)
 
-#define AS_STR(a) AS_STRING_AUX1(a)
-#define AS_STRING(a) AS_STRING_AUX1(a)
-#define AS_STRING_AUX1(a) AS_STRING_AUX2(a)
-#define AS_STRING_AUX2(a) AS_STRING_AUX3(a)
-#define AS_STRING_AUX3(a) AS_STRING_AUX4(a)
-#define AS_STRING_AUX4(a) AS_STRING_AUX5(a)
-#define AS_STRING_AUX5(a) AS_STRING_AUX6(a)
-#define AS_STRING_AUX6(a) AS_STRING_AUX7(a)
-#define AS_STRING_AUX7(a) #a
+#define PP_TOSTR0(x) #x
+#define PP_TOSTR(x) PP_TOSTR0(x)
 
 #define UNUSED(x) ((void) (x))
 
@@ -83,8 +70,8 @@
 #else
 #define IGNORE_RESULT_(id, x)                                                  \
     do {                                                                       \
-        auto CONCAT(ignored_, id) = (x);                                       \
-        UNUSED(CONCAT(ignored_, id));                                          \
+        auto PP_CAT(ignored_, id) = (x);                                       \
+        UNUSED(PP_CAT(ignored_, id));                                          \
     } while (0)
 #ifdef __COUNTER__
 #define IGNORE_RESULT(x) IGNORE_RESULT_(__COUNTER__, x)
@@ -93,41 +80,29 @@
 #endif
 #endif
 
-#if 0
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned uint32_t;
-typedef unsigned long long uint64_t;
-
-typedef signed char int8_t;
-typedef short int16_t;
-typedef int int32_t;
-typedef long long int64_t;
-#endif
-
 #if HU_COMP_CLANG_P
 #define PRAGMA_DIAGNOSTIC_PUSH _Pragma("clang diagnostic push")
 #define PRAGMA_DIAGNOSTIC_POP _Pragma("clang diagnostic pop")
 #define PRAGMA_DISABLE_DIAG_SWITCH                                             \
-    _Pragma(AS_STR(clang diagnostic ignored "-Wswitch"))                       \
-      _Pragma(AS_STR(clang diagnostic ignored "-Wswitch-enum"))
+    _Pragma(PP_TOSTR(clang diagnostic ignored "-Wswitch"))                     \
+      _Pragma(PP_TOSTR(clang diagnostic ignored "-Wswitch-enum"))
 #define PRAGMA_DISABLE_DIAG_GLOBAL_DESTRUCTOR                                  \
-    _Pragma(AS_STR(clang diagnostic ignored "-Wexit-time-destructors"))        \
-      _Pragma(AS_STR(clang diagnostic ignored "-Wglobal-constructors"))
+    _Pragma(PP_TOSTR(clang diagnostic ignored "-Wexit-time-destructors"))      \
+      _Pragma(PP_TOSTR(clang diagnostic ignored "-Wglobal-constructors"))
 #define PRAGMA_DISABLE_DIAG_UNINITIALIZED                                      \
-    _Pragma(AS_STR(clang diagnostic ignored "-Wuninitialized"))
+    _Pragma(PP_TOSTR(clang diagnostic ignored "-Wuninitialized"))
 #define PRAGMA_DISABLE_DIAG_DISABLED_MACRO_EXPANSION                           \
-    _Pragma(AS_STR(clang diagnostic ignored "-Wdisabled-macro-expansion"))
+    _Pragma(PP_TOSTR(clang diagnostic ignored "-Wdisabled-macro-expansion"))
 #elif HU_COMP_GCC_P
 #define PRAGMA_DIAGNOSTIC_PUSH _Pragma("GCC diagnostic push")
 #define PRAGMA_DIAGNOSTIC_POP _Pragma("GCC diagnostic pop")
 #define PRAGMA_DISABLE_DIAG_SWITCH                                             \
-    _Pragma(AS_STR(GCC diagnostic ignored "-Wswitch"))                         \
-      _Pragma(AS_STR(GCC diagnostic ignored "-Wswitch-enum"))
+    _Pragma(PP_TOSTR(GCC diagnostic ignored "-Wswitch"))                       \
+      _Pragma(PP_TOSTR(GCC diagnostic ignored "-Wswitch-enum"))
 #define PRAGMA_DISABLE_DIAG_DISABLED_MACRO_EXPANSION
 #define PRAGMA_DISABLE_DIAG_GLOBAL_DESTRUCTOR
 #define PRAGMA_DISABLE_DIAG_UNINITIALIZED                                      \
-    _Pragma(AS_STR(GCC diagnostic ignored "-Wuninitialized"))
+    _Pragma(PP_TOSTR(GCC diagnostic ignored "-Wuninitialized"))
 #define PRAGMA_DISABLE_DIAG_DISABLED_MACRO_EXPANSION
 #else
 #define PRAGMA_DIAGNOSTIC_PUSH

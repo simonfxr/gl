@@ -5,6 +5,7 @@
 
 #include "ge/EngineEvents.hpp"
 #include "ge/Event.hpp"
+#include "pp/pimpl.hpp"
 
 namespace ge {
 

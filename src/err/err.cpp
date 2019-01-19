@@ -19,6 +19,8 @@
 
 namespace err {
 
+using LL = LogLevel;
+
 #ifdef UNWIND_STACKTRACES
 
 namespace {
@@ -222,8 +224,8 @@ void
 error(const Location &loc, LogLevel lvl, const ErrorArgs &args)
 {
     printError(args.out, nullptr, loc, lvl, args.mesg);
-
-    if (lvl == FatalError || lvl == Assertion || lvl == DebugAssertion)
+    if (lvl == LL::FatalError || lvl == LL::Assertion ||
+        lvl == LL::DebugAssertion)
         abort();
 }
 
@@ -246,34 +248,34 @@ printError(sys::io::OutStream &out,
 
     if (prefix == nullptr) {
         switch (lvl) {
-        case DebugError:
+        case LL::DebugError:
             prefix = "ERROR (Debug)";
             st = true;
             break;
-        case DebugAssertion:
+        case LL::DebugAssertion:
             prefix = "ASSERTION failed (Debug)";
             st = true;
             break;
-        case Warn:
+        case LL::Warn:
             prefix = "WARNING";
             break;
-        case Assertion:
+        case LL::Assertion:
             prefix = "ASSERTION failed";
             st = true;
             break;
-        case Error:
+        case LL::Error:
             prefix = "ERROR";
             st = true;
             break;
-        case ErrorOnce:
+        case LL::ErrorOnce:
             prefix = "ERROR (only reported once)";
             st = true;
             break;
-        case FatalError:
+        case LL::FatalError:
             prefix = "FATAL ERROR";
             st = true;
             break;
-        case Info:
+        case LL::Info:
             prefix = "INFO";
             break;
             // default:
@@ -290,7 +292,7 @@ printError(sys::io::OutStream &out,
     if (loc.operation != nullptr)
         out << "  operation: " << loc.operation << sys::io::endl;
 
-    if (lvl == DebugAssertion || lvl == Assertion)
+    if (lvl == LL::DebugAssertion || lvl == LL::Assertion)
         out << "  assertion: " << mesg << sys::io::endl;
     else
         out << "  message: " << mesg << sys::io::endl;
@@ -306,7 +308,7 @@ struct LogState
     int in_log{};
     bool null{ true };
     Location loc;
-    LogLevel level{ Info };
+    LogLevel level{ LL::Info };
     sys::io::NullStream null_stream;
     sys::io::OutStream *out;
 

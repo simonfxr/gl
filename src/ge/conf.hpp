@@ -1,7 +1,7 @@
 #ifndef GE_CONF_HPP
 #define GE_CONF_HPP
 
-#include "defs.hpp"
+#include "defs.h"
 
 #ifdef ge_EXPORTS
 #define GE_API SHARED_EXPORT

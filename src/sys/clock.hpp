@@ -5,7 +5,7 @@
 
 namespace sys {
 
-SYS_API HU_NODISCARD double
+HU_NODISCARD SYS_API double
 queryTimer() noexcept;
 
 SYS_API void

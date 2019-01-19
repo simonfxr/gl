@@ -1,7 +1,7 @@
-#ifndef DATA_ARRAY_VIEW_HPP
-#define DATA_ARRAY_VIEW_HPP
+#ifndef UTIL_ARRAY_VIEW_HPP
+#define UTIL_ARRAY_VIEW_HPP
 
-#include "defs.hpp"
+#include "defs.h"
 #include "err/err.hpp"
 
 #include <type_traits>

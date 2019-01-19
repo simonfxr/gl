@@ -3,8 +3,8 @@
 
 #include "ge/conf.hpp"
 
-#include "util/Comparable.hpp"
 #include "pp/enum.hpp"
+#include "util/Comparable.hpp"
 
 #include <optional>
 #include <string>
@@ -153,7 +153,7 @@ compare(const Key &a, const Key &b)
 
 using KeyBinding = std::vector<Key>;
 
-GE_API HU_NODISCARD std::optional<KeyCode>
+HU_NODISCARD GE_API  std::optional<KeyCode>
 parseKeyCode(const std::string_view &str);
 
 GE_API int

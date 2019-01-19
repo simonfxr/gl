@@ -1,7 +1,7 @@
 #ifndef SYS_ENDIAN_HPP
 #define SYS_ENDIAN_HPP
 
-#include "defs.hpp"
+#include "defs.h"
 
 #include <type_traits>
 

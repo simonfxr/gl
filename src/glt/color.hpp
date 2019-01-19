@@ -1,7 +1,7 @@
 #ifndef COLOR_HPP
 #define COLOR_HPP
 
-#include "defs.hpp"
+#include "defs.h"
 
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"

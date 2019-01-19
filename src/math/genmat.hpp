@@ -35,7 +35,7 @@
 
 #define DEF_GENMAT_MUT_OP(op)                                                  \
     template<typename U>                                                       \
-    constexpr genmat &operator CONCAT(op, =)(const genmat<U, N> &rhs)          \
+    constexpr genmat &operator PP_CAT(op, =)(const genmat<U, N> &rhs)          \
     {                                                                          \
         return *this = *this op rhs;                                           \
     }
@@ -43,7 +43,7 @@
 #define DEF_GENMAT_SCALAR_MUT_OP(op)                                           \
     template<typename U,                                                       \
              typename = std::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>  \
-    constexpr genmat &operator CONCAT(op, =)(const U &rhs)                     \
+    constexpr genmat &operator PP_CAT(op, =)(const U &rhs)                     \
     {                                                                          \
         return *this = *this op rhs;                                           \
     }

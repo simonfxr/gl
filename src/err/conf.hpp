@@ -1,7 +1,7 @@
 #ifndef ERR_CONF_HPP
 #define ERR_CONF_HPP
 
-#include "defs.hpp"
+#include "defs.h"
 
 #ifdef sys_EXPORTS
 #define ERR_API SHARED_EXPORT

@@ -1,6 +1,5 @@
 #include "glt/ShaderCompiler.hpp"
 
-#include "util/range.hpp"
 #include "err/err.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/GLSLPreprocessor.hpp"
@@ -8,6 +7,7 @@
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
 #include "sys/measure.hpp"
+#include "util/range.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -24,7 +24,7 @@ struct LogTraits<glt::ShaderCompilerQueue>
     static err::LogDestination getDestination(
       const glt::ShaderCompilerQueue &scq)
     {
-        return err::LogDestination(err::Info,
+        return err::LogDestination(err::LogLevel::Info,
                                    const_cast<glt::ShaderCompilerQueue &>(scq)
                                      .shaderCompiler()
                                      .shaderManager()
@@ -32,7 +32,8 @@ struct LogTraits<glt::ShaderCompilerQueue>
     }
 };
 
-#define COMPILER_ERR_MSG(comp, ec, msg) LOG_RAISE(comp, ec, ::err::Error, msg)
+#define COMPILER_ERR_MSG(comp, ec, msg)                                        \
+    LOG_RAISE(comp, ec, ::err::LogLevel::Error, msg)
 
 namespace glt {
 
@@ -273,7 +274,7 @@ compilePreprocessed(ShaderCompilerQueue &scq,
         return false;
     }
 
-    LOG_BEGIN(scq, err::Info);
+    LOG_BEGIN(scq, err::LogLevel::Info);
     LOG_PUT(scq,
             std::string("compiling ") +
               (name.empty() ? " <embedded code> " : name) + " ... ");
@@ -300,8 +301,9 @@ compilePreprocessed(ShaderCompilerQueue &scq,
       << " (" << (wct * 1000) << " ms)" << sys::io::endl;
     LOG_END(scq);
 
-    if ((!ok && LOG_LEVEL(scq, err::Error)) || LOG_LEVEL(scq, err::Info)) {
-        LOG_BEGIN(scq, ok ? err::Info : err::Error);
+    if ((!ok && LOG_LEVEL(scq, err::LogLevel::Error)) ||
+        LOG_LEVEL(scq, err::LogLevel::Info)) {
+        LOG_BEGIN(scq, ok ? err::LogLevel::Info : err::LogLevel::Error);
         printShaderLog(shader, LOG_DESTINATION(scq));
         LOG_END(scq);
     }

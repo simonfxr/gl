@@ -28,7 +28,7 @@ parse_err(const ParseState &s,
         sys::io::ByteStream buf;
         buf << "parsing " << s.filename << "@" << s.line << ":" << s.col;
         buf << " parse-error: " << mesg;
-        err::error(loc, err::Error, err::ErrorArgs(buf.str()));
+        err::error(loc, err::LogLevel::Error, err::ErrorArgs(buf.str()));
     }
 }
 

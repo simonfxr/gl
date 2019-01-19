@@ -1,5 +1,5 @@
-#ifndef DATA_STRING_UTILS_HPP
-#define DATA_STRING_UTILS_HPP
+#ifndef UTIL_STRING_UTILS_HPP
+#define UTIL_STRING_UTILS_HPP
 
 #include "err/err.hpp"
 

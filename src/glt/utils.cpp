@@ -86,7 +86,7 @@ printGLError(const err::Location &loc, GLenum err)
     err::printError(sys::io::stdout(),
                     "OpenGL Error",
                     loc,
-                    err::Error,
+                    err::LogLevel::Error,
                     getGLErrorString(err).c_str());
 }
 

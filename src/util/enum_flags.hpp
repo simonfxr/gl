@@ -1,7 +1,7 @@
-#ifndef DATA_ENUM_FLAGS_HPP
-#define DATA_ENUM_FLAGS_HPP
+#ifndef UTIL_ENUM_FLAGS_HPP
+#define UTIL_ENUM_FLAGS_HPP
 
-#include "defs.hpp"
+#include "defs.h"
 
 #include <type_traits>
 
@@ -11,7 +11,7 @@
         using T = std::underlying_type_t<ty>;                                  \
         return static_cast<ty>(static_cast<T>(a) op static_cast<T>(b));        \
     }                                                                          \
-    inline constexpr ty operator CONCAT(op, =)(ty &a, ty b)                    \
+    inline constexpr ty operator PP_CAT(op, =)(ty &a, ty b)                    \
     {                                                                          \
         return a = a op b;                                                     \
     }

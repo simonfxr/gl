@@ -45,16 +45,16 @@ struct Location
     const char *operation; // may be null
     int line;
 
-    static Location make(const char *_file,
-                         int _line,
-                         const char *_function,
-                         const char *_operation = nullptr)
+    static constexpr Location make(const char *_file,
+                                   int _line,
+                                   const char *_function,
+                                   const char *_operation = nullptr) noexcept
     {
         return { _file, _function, _operation, _line };
     }
 };
 
-enum LogLevel
+enum class LogLevel : uint8_t
 {
     Info,
     Warn,
@@ -71,7 +71,7 @@ struct LogDestination
     LogLevel minimumLevel;
     sys::io::OutStream &out;
 
-    LogDestination(LogLevel minLvl, sys::io::OutStream &_out)
+    constexpr LogDestination(LogLevel minLvl, sys::io::OutStream &_out) noexcept
       : minimumLevel(minLvl), out(_out)
     {}
 };
@@ -81,18 +81,21 @@ struct ErrorArgs
     sys::io::OutStream &out;
     std::string_view mesg;
 
-    ErrorArgs(sys::io::OutStream &o, std::string_view msg) : out(o), mesg(msg)
+    constexpr ErrorArgs(sys::io::OutStream &o, std::string_view msg) noexcept
+      : out(o), mesg(msg)
     {}
 
 #ifndef ERROR_NO_IMPLICIT_OUT
-    ErrorArgs(std::string_view msg) : out(ERROR_DEFAULT_STREAM), mesg(msg) {}
+    ErrorArgs(std::string_view msg) noexcept
+      : out(ERROR_DEFAULT_STREAM), mesg(msg)
+    {}
 #endif
 };
 
 ERR_API void
 error(const Location &loc, LogLevel lvl, const ErrorArgs &);
 
-ERR_API HU_NORETURN void
+HU_NORETURN ERR_API void
 fatalError(const Location &loc, LogLevel lvl, const ErrorArgs &);
 
 ERR_API void
@@ -120,7 +123,7 @@ logRaiseError(const Location &,
               std::string_view);
 
 template<typename T>
-LogDestination
+constexpr LogDestination
 getLogDestination(const T &v)
 {
     return LogTraits<T>::getDestination(v);
@@ -141,14 +144,14 @@ logRaiseError(const Location &loc,
 }
 
 template<typename T>
-bool
+constexpr bool
 logLevel(const T &value, LogLevel lvl)
 {
     return lvl >= getLogDestination(value).minimumLevel;
 }
 
 template<typename T>
-sys::io::OutStream &
+constexpr sys::io::OutStream &
 logDestination(const T &value)
 {
     return getLogDestination(value).out;
@@ -162,34 +165,34 @@ logPutError(const T &, E err, std::string_view msg)
     return logWriteErr(to_string(err), msg);
 }
 
-#ifdef GNU_EXTENSIONS
-#define DETAIL_INIT_CURRENT_LOCATION_OP(op)                                    \
-    ::err::Location::make(__FILE__, __LINE__, __PRETTY_FUNCTION__, op)
-
-#define DETAIL_CURRENT_LOCATION_OP_DYNAMIC(op)                                 \
-    DETAIL_INIT_CURRENT_LOCATION_OP(op)
-#if 0
-#define DETAIL_CURRENT_LOCATION_OP_STATIC(op)                                  \
-    (*({                                                                       \
-        static const ::err::Location CONCAT(__loc__, __LINE__) =               \
-          DETAIL_INIT_CURRENT_LOCATION_OP(op);                                 \
-        &CONCAT(__loc__, __LINE__);                                            \
-    }))
+#ifdef HU_PRETTY_FUNCTION
+#define ERR_FUNCTION HU_PRETTY_FUNCTION
+#else
+#define ERR_FUNCTION __func__
 #endif
+
+#define DETAIL_CURRENT_LOCATION_OP_BASIC(op)                                   \
+    ::err::Location::make(__FILE__, __LINE__, ERR_FUNCTION, op)
+
+#if defined(hu_constant_p) && HU_COMP_GNULIKE_P
 #define DETAIL_CURRENT_LOCATION_OP_STATIC(op)                                  \
-    DETAIL_CURRENT_LOCATION_OP_DYNAMIC(op)
+    ({                                                                         \
+        static constexpr auto PP_CAT(err_loc, __LINE__) =                      \
+          DETAIL_CURRENT_LOCATION_OP_BASIC(op);                                \
+        PP_CAT(err_loc, __LINE__);                                             \
+    })
 
 #define DETAIL_CURRENT_LOCATION_OP(op)                                         \
-    (__builtin_constant_p((op)) ? DETAIL_CURRENT_LOCATION_OP_STATIC(op)        \
-                                : DETAIL_CURRENT_LOCATION_OP_DYNAMIC(op))
+    (hu_constant_p(op) ? DETAIL_CURRENT_LOCATION_OP_STATIC(op)                 \
+                       : DETAIL_CURRENT_LOCATION_OP_BASIC(op))
+#define DETAIL_CURRENT_LOCATION DETAIL_CURRENT_LOCATION_OP_STATIC(nullptr)
+
 #else
 
-#define DETAIL_CURRENT_LOCATION_OP(op)                                         \
-    ::err::Location::make(__FILE__, __LINE__, __FUNCTION__, op)
+#define DETAIL_CURRENT_LOCATION_OP DETAIL_CURRENT_LOCATION_OP_BASIC
+#define DETAIL_CURRENT_LOCATION DETAIL_CURRENT_LOCATION_OP(nullptr)
 
 #endif
-
-#define DETAIL_CURRENT_LOCATION DETAIL_CURRENT_LOCATION_OP(nullptr)
 
 #define DETAIL_ERROR(lvl, ...)                                                 \
     ::err::error(DETAIL_CURRENT_LOCATION, lvl, ::err::ErrorArgs(__VA_ARGS__))
@@ -203,24 +206,25 @@ logPutError(const T &, E err, std::string_view msg)
      (expr))
 
 #ifdef DEBUG
-#define DEBUG_ASSERT_MSG(x, msg) DETAIL_ASSERT(x, ::err::DebugAssertion, msg)
-#define DEBUG_ERR(...) DETAIL_ERROR(::err::DebugError, __VA_ARGS__)
+#define DEBUG_ASSERT_MSG(x, msg)                                               \
+    DETAIL_ASSERT(x, ::err::LogLevel::DebugAssertion, msg)
+#define DEBUG_ERR(...) DETAIL_ERROR(::err::LogLevel::DebugError, __VA_ARGS__)
 #else
 #define DEBUG_ASSERT_MSG(x, msg) UNUSED(0)
 #define DEBUG_ERR(msg) UNUSED(0)
 #endif
 
-#define DEBUG_ASSERT(x) DEBUG_ASSERT_MSG(x, AS_STR(x))
+#define DEBUG_ASSERT(x) DEBUG_ASSERT_MSG(x, PP_TOSTR(x))
 
-#define ASSERT_MSG(x, msg) DETAIL_ASSERT(x, ::err::Assertion, msg)
-#define ASSERT(x) ASSERT_MSG(x, AS_STR(x))
+#define ASSERT_MSG(x, msg) DETAIL_ASSERT(x, ::err::LogLevel::Assertion, msg)
+#define ASSERT(x) ASSERT_MSG(x, PP_TOSTR(x))
 #define ASSERT_MSG_EXPR(x, msg, expr)                                          \
-    DETAIL_ASSERT_EXPR(x, ::err::Assertion, msg, expr)
-#define ASSERT_EXPR(x, expr) ASSERT_MSG_EXPR(x, AS_STR(x), expr)
+    DETAIL_ASSERT_EXPR(x, ::err::LogLevel::Assertion, msg, expr)
+#define ASSERT_EXPR(x, expr) ASSERT_MSG_EXPR(x, PP_TOSTR(x), expr)
 
-#define ERR(...) DETAIL_ERROR(::err::Error, __VA_ARGS__)
-#define WARN(...) DETAIL_ERROR(::err::Warn, __VA_ARGS__)
-#define INFO(...) DETAIL_ERROR(::err::Info, __VA_ARGS__)
+#define ERR(...) DETAIL_ERROR(::err::LogLevel::Error, __VA_ARGS__)
+#define WARN(...) DETAIL_ERROR(::err::LogLevel::Warn, __VA_ARGS__)
+#define INFO(...) DETAIL_ERROR(::err::LogLevel::Info, __VA_ARGS__)
 
 #if HU_HAVE_NORETURN_P
 #define DETAIL_FATAL_ERR(lvl, ...)                                             \
@@ -233,20 +237,21 @@ logPutError(const T &, E err, std::string_view msg)
      ::abort())
 #endif
 
-#define FATAL_ERR(...) DETAIL_FATAL_ERR(::err::FatalError, __VA_ARGS__)
+#define FATAL_ERR(...)                                                         \
+    DETAIL_FATAL_ERR(::err::LogLevel::FatalError, __VA_ARGS__)
 
 #define ASSERT_FAIL_MSG(msg)                                                   \
-    DETAIL_FATAL_ERR(::err::Assertion, ERROR_DEFAULT_STREAM, msg)
+    DETAIL_FATAL_ERR(::err::LogLevel::Assertion, ERROR_DEFAULT_STREAM, msg)
 
 #define ASSERT_FAIL() ASSERT_FAIL_MSG("unreachable")
 
 #define ERR_ONCE(...)                                                          \
     do {                                                                       \
-        static bool _reported = false;                                         \
-        if (unlikely(!_reported)) {                                            \
-            _reported = true;                                                  \
-            DETAIL_ERROR(::err::ErrorOnce, __VA_ARGS__);                       \
-        }                                                                      \
+        static const bool _reported = [&]() {                                  \
+            DETAIL_ERROR(::err::LogLevel::ErrorOnce, __VA_ARGS__);             \
+            return true;                                                       \
+        }();                                                                   \
+        UNUSED(_reported);                                                     \
     } while (0)
 
 #define LOG_BEGIN(val, lvl)                                                    \

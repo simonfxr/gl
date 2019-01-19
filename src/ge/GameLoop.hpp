@@ -2,6 +2,7 @@
 #define GAME_LOOP_HPP
 
 #include "ge/conf.hpp"
+#include "pp/pimpl.hpp"
 
 #include <memory>
 

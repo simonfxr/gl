@@ -1,7 +1,5 @@
 #include "glt/ShaderProgram.hpp"
 
-#include "util/range.hpp"
-#include "util/string_utils.hpp"
 #include "err/err.hpp"
 #include "glt/ShaderCompiler.hpp"
 #include "glt/ShaderManager.hpp"
@@ -9,10 +7,12 @@
 #include "opengl.hpp"
 #include "sys/fs.hpp"
 #include "sys/measure.hpp"
+#include "util/range.hpp"
+#include "util/string_utils.hpp"
 
 #include <unordered_map>
 
-#define RAISE_ERR(val, ec, msg) LOG_RAISE(val, ec, ::err::Error, msg)
+#define RAISE_ERR(val, ec, msg) LOG_RAISE(val, ec, ::err::LogLevel::Error, msg)
 
 template<>
 struct LogTraits<glt::ShaderProgram>
@@ -20,7 +20,8 @@ struct LogTraits<glt::ShaderProgram>
     static err::LogDestination getDestination(const glt::ShaderProgram &x)
     {
         return err::LogDestination(
-          err::Info, const_cast<glt::ShaderProgram &>(x).shaderManager().out());
+          err::LogLevel::Info,
+          const_cast<glt::ShaderProgram &>(x).shaderManager().out());
     }
 };
 
@@ -287,7 +288,7 @@ ShaderProgram::link()
         added.push_back(*it->second->handle());
     }
 
-    LOG_BEGIN(*this, err::Info);
+    LOG_BEGIN(*this, err::LogLevel::Info);
     LOG_PUT(*this, "linking ... ");
 
     double wct;
@@ -311,10 +312,10 @@ ShaderProgram::link()
     bool write_llog = true;
     err::LogLevel lvl{};
 
-    if (!ok && LOG_LEVEL(*this, err::Error))
-        lvl = err::Error;
-    else if (LOG_LEVEL(*this, err::Info))
-        lvl = err::Info;
+    if (!ok && LOG_LEVEL(*this, err::LogLevel::Error))
+        lvl = err::LogLevel::Error;
+    else if (LOG_LEVEL(*this, err::LogLevel::Info))
+        lvl = err::LogLevel::Info;
     else
         write_llog = false;
 
@@ -353,7 +354,7 @@ ShaderProgram::use()
     }
 
     if (wasError()) {
-        LOG_BEGIN(*this, err::Info);
+        LOG_BEGIN(*this, err::LogLevel::Info);
         LOG_PUT_ERR(*this, getError(), "using program despite error");
         LOG_END(*this);
     }
@@ -378,7 +379,7 @@ ShaderProgram::replaceWith(ShaderProgram &new_prog)
             new_prog.reset();
             return true;
         }
-        LOG_BEGIN(*this, err::Info);
+        LOG_BEGIN(*this, err::LogLevel::Info);
         LOG_PUT_ERR(*this, new_prog.getError(), "replaceWith failed");
         LOG_END(*this);
         return false;

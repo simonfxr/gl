@@ -7,9 +7,6 @@
  * adapted from: https://github.com/18sg/uSHET/blob/master/lib/cpp_magic.h
  */
 
-#define PP_TOSTR0(x) #x
-#define PP_TOSTR(x) PP_TOSTR0(x)
-
 #define PP_EVAL(...) PP_EVAL1024(__VA_ARGS__)
 #define PP_EVAL1024(...) PP_EVAL512(PP_EVAL512(__VA_ARGS__))
 #define PP_EVAL512(...) PP_EVAL256(PP_EVAL256(__VA_ARGS__))
@@ -49,10 +46,6 @@
 #define PP_DEFER8(id)                                                          \
     id PP_EMPTY PP_EMPTY PP_EMPTY PP_EMPTY PP_EMPTY PP_EMPTY PP_EMPTY          \
     PP_EMPTY()()()()()()()()
-
-#define PP_CAT0(a, ...) a##__VA_ARGS__
-#define PP_CAT(a, ...) PP_CAT0(a, __VA_ARGS__)
-#define PP_CAT3(a, b, ...) a##b##__VA_ARGS__
 
 #define PP_FIRST(a, ...) a
 #define PP_SECOND(a, b, ...) b

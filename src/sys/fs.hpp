@@ -40,47 +40,47 @@ struct Stat
     FileTime mtime{};
 };
 
-SYS_API HU_NODISCARD bool
+HU_NODISCARD SYS_API bool
 cwd(std::string_view dir);
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 cwd();
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 dirname(std::string_view path);
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 basename(std::string_view path);
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 extension(std::string_view path);
 
 template<typename... Args>
-inline HU_NODISCARD std::string
+HU_NODISCARD inline std::string
 join(std::string_view path, Args &&... args);
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 dropExtension(std::string_view path);
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 dropTrailingSeparators(std::string_view path);
 
-SYS_API HU_NODISCARD bool
+HU_NODISCARD SYS_API bool
 isAbsolute(std::string_view path);
 
-SYS_API HU_NODISCARD std::optional<FileTime>
+HU_NODISCARD SYS_API std::optional<FileTime>
 modificationTime(std::string_view path);
 
 SYS_API std::optional<Stat>
 stat(std::string_view path);
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 absolutePath(std::string_view path);
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 lookup(const std::vector<std::string> &, std::string_view path);
 
-SYS_API HU_NODISCARD std::optional<ObjectType>
+HU_NODISCARD SYS_API std::optional<ObjectType>
 exists(std::string_view path);
 
 HU_NODISCARD inline bool
@@ -102,34 +102,37 @@ directoryExists(std::string_view path)
     return exists(path, ObjectType::Directory);
 }
 
-inline constexpr HU_NODISCARD bool
+HU_NODISCARD inline constexpr bool
 operator==(const FileTime &a, const FileTime &b)
 {
     return a.seconds == b.seconds;
 }
 
-inline constexpr HU_NODISCARD bool
+HU_NODISCARD inline constexpr bool
 operator<(const FileTime &a, const FileTime &b)
 {
     return a.seconds < b.seconds;
 }
 
-inline constexpr HU_NODISCARD bool
+HU_NODISCARD inline constexpr bool
 operator!=(const FileTime &a, const FileTime &b)
 {
     return !(a == b);
 }
-inline constexpr HU_NODISCARD bool
+
+HU_NODISCARD inline constexpr bool
 operator<=(const FileTime &a, const FileTime &b)
 {
     return a < b || a == b;
 }
-inline constexpr HU_NODISCARD bool
+
+HU_NODISCARD inline constexpr bool
 operator>=(const FileTime &a, const FileTime &b)
 {
     return !(a < b);
 }
-inline constexpr HU_NODISCARD bool
+
+HU_NODISCARD inline constexpr bool
 operator>(const FileTime &a, const FileTime &b)
 {
     return !(a <= b);
@@ -138,33 +141,33 @@ operator>(const FileTime &a, const FileTime &b)
 // default implementations
 namespace def {
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 join(std::string_view path, const char **, size_t n);
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 dirname(std::string_view path);
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 basename(std::string_view path);
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 extension(std::string_view path);
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 dropExtension(std::string_view path);
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 dropTrailingSeparators(std::string_view path);
 
-SYS_API HU_NODISCARD std::optional<ObjectType>
+HU_NODISCARD SYS_API std::optional<ObjectType>
 exists(std::string_view path);
 
-SYS_API HU_NODISCARD std::string
+HU_NODISCARD SYS_API std::string
 lookup(const std::vector<std::string> &dirs, std::string_view name);
 
-SYS_API HU_NODISCARD std::string absolutePath(std::string_view);
+HU_NODISCARD SYS_API std::string absolutePath(std::string_view);
 
-SYS_API HU_NODISCARD std::optional<FileTime>
+HU_NODISCARD SYS_API std::optional<FileTime>
 modificationTime(std::string_view path);
 
 } // namespace def

@@ -1,7 +1,7 @@
-#ifndef DATA_RANGE_HPP
-#define DATA_RANGE_HPP
+#ifndef UTIL_RANGE_HPP
+#define UTIL_RANGE_HPP
 
-#include "defs.hpp"
+#include "defs.h"
 
 #include <iterator>
 

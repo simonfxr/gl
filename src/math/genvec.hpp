@@ -30,14 +30,14 @@
 
 #define DEF_GENVEC_MUT_OP(op)                                                  \
     template<typename U>                                                       \
-    constexpr genvec &operator CONCAT(op, =)(const genvec<U, N> &rhs)          \
+    constexpr genvec &operator PP_CAT(op, =)(const genvec<U, N> &rhs)          \
     {                                                                          \
         return *this = *this op rhs;                                           \
     }
 
 #define DEF_GENVEC_SCALAR_MUT_OP(op)                                           \
     template<typename U, typename = std::enable_if_t<!is_genvec_v<U>>>         \
-    constexpr genvec &operator CONCAT(op, =)(const U &rhs)                     \
+    constexpr genvec &operator PP_CAT(op, =)(const U &rhs)                     \
     {                                                                          \
         return *this = *this op rhs;                                           \
     }

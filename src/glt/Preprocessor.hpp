@@ -2,6 +2,7 @@
 #define PREPROCESSOR_HPP
 
 #include "glt/conf.hpp"
+#include "pp/pimpl.hpp"
 #include "sys/io/Stream.hpp"
 
 #include <memory>

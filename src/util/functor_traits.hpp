@@ -1,7 +1,7 @@
-#ifndef DATA_FUNCTOR_TRAITS_HPP
-#define DATA_FUNCTOR_TRAITS_HPP
+#ifndef UTIL_FUNCTOR_TRAITS_HPP
+#define UTIL_FUNCTOR_TRAITS_HPP
 
-#include "defs.hpp"
+#include "defs.h"
 
 #include <type_traits>
 #include <utility>

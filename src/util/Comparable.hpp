@@ -1,7 +1,7 @@
-#ifndef DATA_COMPARABLE_HPP
-#define DATA_COMPARABLE_HPP
+#ifndef UTIL_COMPARABLE_HPP
+#define UTIL_COMPARABLE_HPP
 
-#include "defs.hpp"
+#include "defs.h"
 
 #include <type_traits>
 #include <utility>

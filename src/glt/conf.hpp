@@ -1,7 +1,7 @@
 #ifndef GLT_CONF_HPP
 #define GLT_CONF_HPP
 
-#include "defs.hpp"
+#include "defs.h"
 
 #ifdef glt_EXPORTS
 #define GLT_API SHARED_EXPORT
