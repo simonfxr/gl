@@ -1,8 +1,9 @@
+#include "ge/Camera.hpp"
+
 #include "math/real.hpp"
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
-
-#include "ge/Camera.hpp"
+#include "util/string_utils.hpp"
 
 using namespace math;
 
@@ -166,7 +167,6 @@ void
 Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
                            ArrayView<const CommandArg> args)
 {
-
     const std::string *path;
     if (args.size() == 0)
         path = &frame_path;
@@ -179,12 +179,21 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
 
     auto opt_stream = sys::io::HandleStream::open(*path, sys::io::HM_READ);
     if (!opt_stream) {
-        ERR("couldnt open file: " + *path);
+        WARN("couldnt open file: " + *path);
         return;
     }
 
-    size_t s = sizeof frame;
-    opt_stream->read(s, reinterpret_cast<char *>(&frame));
+    glt::Frame new_frame;
+    size_t s = sizeof new_frame;
+    auto ret = opt_stream->read(s, reinterpret_cast<char *>(&new_frame));
+    if (ret != sys::io::StreamResult::OK) {
+        ERR(string_concat(
+          "failed to read frame from file: ", *path, ", io error: ", ret));
+        return;
+    }
+
+    frame = new_frame;
+    frame.normalize();
 }
 
 void

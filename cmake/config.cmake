@@ -32,24 +32,20 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 if(BUILD_OPT)
-  if(COMP_GCC)
-    if(BUILD_DEBUG)
-      list(APPEND GLOBAL_FLAGS -march=native -Og)
-    else()
-      list(APPEND GLOBAL_FLAGS -march=native -Ofast)
-    endif()
-  elseif(COMP_CLANG)
-    if(BUILD_DEBUG)
-      list(APPEND GLOBAL_FLAGS -march=native -Og)
-    else()
-      list(APPEND GLOBAL_FLAGS -march=native -Ofast)
-    endif()
+  if(COMP_GCC OR COMP_CLANG)
+    list(APPEND GLOBAL_FLAGS -march=native -Ofast)
   elseif(COMP_ICC)
     list(APPEND GLOBAL_FLAGS
                 -xHOST
                 -O3
                 -ipo
                 -no-prec-div)
+  endif()
+endif()
+
+if(BUILD_DEBUG)
+  if(COMP_GCC OR COMP_CLANG)
+    list(APPEND GLOBAL_FLAGS -march=native -Og)
   endif()
 endif()
 
@@ -79,7 +75,7 @@ endif()
 if(COMP_GCCLIKE)
   list(APPEND GLOBAL_FLAGS -Wall -Wswitch-enum)
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-    list(APPEND GLOBAL_FLAGS -Wdate-time -Werror=date-time)
+    list(APPEND GLOBAL_FLAGS -Wdate-time -Werror=date-time -Werror=return-type)
   endif()
   list(APPEND GLOBAL_FLAGS -fno-exceptions -fno-rtti)
 elseif(COMP_MSVC)
@@ -158,7 +154,8 @@ if(COMP_CLANG)
               -Wno-packed
               -Wno-padded
               -Wno-return-std-move-in-c++11
-              -Wno-gnu-statement-expression)
+              -Wno-gnu-statement-expression
+              -Wno-assume)
 endif()
 
 if(COMP_ICC)
@@ -166,7 +163,6 @@ if(COMP_ICC)
 endif()
 
 if(BUILD_DEBUG)
-  list(APPEND GLOBAL_DEFINES DEBUG=1)
   if(COMP_GCCLIKE)
     list(APPEND GLOBAL_FLAGS -ggdb)
   endif()

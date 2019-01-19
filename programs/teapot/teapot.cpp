@@ -491,7 +491,7 @@ Anim::setupTeapotShader(const std::string &progname,
     glt::RenderManager &rm = engine.renderManager();
     auto prog = engine.shaderManager().program(progname);
     if (!prog) {
-        ASSERT_MSG(prog, "undefined program: " + progname);
+        ASSERT(prog, "undefined program: " + progname);
         return;
     }
 

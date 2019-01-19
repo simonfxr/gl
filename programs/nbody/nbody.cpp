@@ -123,7 +123,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 
     {
         auto program = engine.shaderManager().program("ground");
-        ASSERT_MSG(program, "ground program not found");
+        ASSERT(program, "ground program not found");
 
         rm.geometryTransform().dup();
         rm.geometryTransform().scale(vec3(real(20)));
@@ -168,7 +168,7 @@ Anim::renderParticles(real interpolation)
 
     Ref<glt::ShaderProgram> program =
       engine.shaderManager().program("particle");
-    ASSERT_MSG(program, "particle program not found");
+    ASSERT(program, "particle program not found");
 
     program->use();
 

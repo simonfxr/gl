@@ -48,7 +48,22 @@ struct GLObjectBase
     static inline constexpr ObjectType type = T;
     GLuint _name;
 
-    explicit GLObjectBase(GLuint name = 0) : _name(name) {}
+    explicit constexpr GLObjectBase(GLuint name = 0) : _name(name) {}
+
+    constexpr GLObjectBase(const GLObjectBase &&rhs)
+      : _name(std::exchange(rhs._name, 0))
+    {}
+
+    GLObjectBase(const GLObjectBase &) = delete;
+
+    constexpr GLObjectBase &operator=(GLObjectBase &&rhs)
+    {
+        _name = std::exchange(rhs._name, 0);
+        return *this;
+    }
+
+    GLObjectBase &operator=(const GLObjectBase &rhs) = delete;
+
     ~GLObjectBase() { release(); }
 
     void release()
@@ -62,10 +77,6 @@ struct GLObjectBase
 
     GLuint operator*() const { return _name; }
     GLuint &operator*() { return _name; }
-
-private:
-    GLObjectBase(const GLObjectBase<T> &) = delete;
-    GLObjectBase<T> &operator=(const GLObjectBase<T> &) = delete;
 };
 
 template<ObjectType::enum_t T>
@@ -80,16 +91,11 @@ struct GLObject : public GLObjectBase<T>
             generate();
         return *this;
     }
-
-private:
-    GLObject(const GLObject<T> &) = delete;
-    GLObject<T> &operator=(const GLObject<T> &) = delete;
 };
 
 template<>
 struct GLObject<ObjectType::Shader> : public GLObjectBase<ObjectType::Shader>
 {
-
     explicit GLObject(GLuint name = 0) : GLObjectBase<ObjectType::Shader>(name)
     {}
 

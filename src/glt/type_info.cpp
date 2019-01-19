@@ -25,7 +25,7 @@ toGLScalarType(ScalarType t)
     case ScalarType::F64:
         return GL_DOUBLE;
     }
-    CASE_UNREACHABLE;
+    UNREACHABLE;
 }
 
 } // namespace glt

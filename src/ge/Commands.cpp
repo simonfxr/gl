@@ -1,5 +1,3 @@
-#define ERROR_NO_IMPLICIT_OUT
-
 #include "ge/Commands.hpp"
 
 #include "ge/Engine.hpp"

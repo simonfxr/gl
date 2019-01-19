@@ -11,12 +11,6 @@
 #define NOGDI 1
 #endif
 
-#ifdef HU_COMP_CLANG
-#define CASE_UNREACHABLE
-#else
-#define CASE_UNREACHABLE ASSERT_FAIL()
-#endif
-
 #ifdef __cplusplus
 #include <cstdint>
 #else
@@ -39,15 +33,15 @@
 
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof *(x))
 
-#ifdef DEBUG
-#define ON_DEBUG(x)                                                            \
+#ifndef NDEBUG
+#define ON_DEBUG(...)                                                          \
     do {                                                                       \
-        (x);                                                                   \
+        __VA_ARGS__;                                                           \
     } while (0)
-#define DEBUG_DECL(x) x
+#define DEBUG_DECL(...) __VA_ARGS__;
 #else
-#define ON_DEBUG(x) ((void) 0)
-#define DEBUG_DECL(x)
+#define ON_DEBUG(...) ((void) 0)
+#define DEBUG_DECL(...)
 #endif
 
 #define likely hu_likely
@@ -62,6 +56,18 @@
 
 #define PP_TOSTR0(x) #x
 #define PP_TOSTR(x) PP_TOSTR0(x)
+
+#define PP_ARG1(_1, ...) _1
+#define PP_ARG2(_1, _2, ...) _2
+#define PP_ARG3(_1, _2, _3, ...) _3
+#define PP_ARG4(_1, _2, _3, _4, ...) _4
+#define PP_ARG5(_1, _2, _3, _4, _5, ...) _5
+
+#define PP_DROP1(_1, ...) __VA_ARGS__
+#define PP_DROP2(_1, _2, ...) __VA_ARGS__
+#define PP_DROP3(_1, _2, _3, ...) __VA_ARGS__
+#define PP_DROP4(_1, _2, _3, _4, ...) __VA_ARGS__
+#define PP_DROP5(_1, _2, _3, _4, _5, ...) __VA_ARGS__
 
 #define UNUSED(x) ((void) (x))
 

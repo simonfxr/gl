@@ -26,7 +26,6 @@ printOpenGLCalls(bool yesno)
 std::string
 getGLErrorString(GLenum err)
 {
-
     switch (err) {
 #define err_case(e)                                                            \
     case e:                                                                    \
@@ -81,28 +80,28 @@ ignoreDebugMessage(OpenGLVendor vendor, GLuint id)
 }
 
 void
-printGLError(const err::Location &loc, GLenum err)
+printGLError(const err::Location *loc, GLenum err)
 {
-    err::printError(sys::io::stdout(),
-                    "OpenGL Error",
-                    loc,
-                    err::LogLevel::Error,
-                    getGLErrorString(err).c_str());
+    err::reportError(sys::io::stdout(),
+                     "OpenGL Error",
+                     *loc,
+                     err::LogLevel::Error,
+                     getGLErrorString(err).c_str());
 }
 
 void
-printGLTrace(const err::Location &loc)
+printGLTrace(const err::Location *loc)
 {
     if (G.print_opengl_calls)
-        sys::io::stdout() << "OPENGL " << loc.operation << " " << loc.file
-                          << ":" << loc.line << sys::io::endl;
+        sys::io::stdout() << "OPENGL " << loc->operation << " " << loc->file
+                          << ":" << loc->line << sys::io::endl;
 }
 
 bool
-checkForGLError(const err::Location &loc)
+checkForGLError(const err::Location *loc)
 {
 
-    if (G.print_opengl_calls && loc.operation != nullptr) {
+    if (G.print_opengl_calls && loc->operation) {
         printGLTrace(loc);
     }
 
@@ -111,7 +110,7 @@ checkForGLError(const err::Location &loc)
     for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
         printGLError(loc, err);
 
-    G.gl_debug->printDebugMessages(loc);
+    G.gl_debug->printDebugMessages(*loc);
 
     return was_error;
 }

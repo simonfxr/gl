@@ -20,7 +20,7 @@ getGLType(TextureType ty, size_t ss)
     case Texture3D:
         return GL_TEXTURE_3D;
     }
-    CASE_UNREACHABLE;
+    UNREACHABLE;
 }
 
 } // namespace
@@ -72,7 +72,7 @@ TextureData::glType() const
 void
 TextureData::type(TextureType ty, size_t ss)
 {
-    ASSERT_MSG((ty == _type && ss == _samples) || *_handle == 0,
+    ASSERT((ty == _type && ss == _samples) || *_handle == 0,
                "cannot change type, texture already created");
     _type = ty;
     _samples = ss;

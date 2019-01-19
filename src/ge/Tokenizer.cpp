@@ -17,18 +17,18 @@ enum State
     Fail
 };
 
-#define PARSE_ERROR(s, mesg) parse_err((s), DETAIL_CURRENT_LOCATION, (mesg))
+#define PARSE_ERROR(s, mesg) parse_err((s), ERROR_LOCATION, (mesg))
 
 void
 parse_err(const ParseState &s,
-          const err::Location &loc,
+          const err::Location *loc,
           const std::string &mesg)
 {
     if (s.in_state != sys::io::StreamResult::Blocked) {
         sys::io::ByteStream buf;
         buf << "parsing " << s.filename << "@" << s.line << ":" << s.col;
         buf << " parse-error: " << mesg;
-        err::error(loc, err::LogLevel::Error, err::ErrorArgs(buf.str()));
+        err::error(loc, err::LogLevel::Error, buf);
     }
 }
 

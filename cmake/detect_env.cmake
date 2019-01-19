@@ -46,7 +46,6 @@ string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
 
 if(build_type STREQUAL DEBUG)
   set(BUILD_DEBUG True)
-  set(BUILD_OPT True)
 elseif(build_type STREQUAL RELWITHDEBINFO)
   set(BUILD_OPT True)
   set(BUILD_DEBUG True)

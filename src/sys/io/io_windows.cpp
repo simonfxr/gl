@@ -295,7 +295,7 @@ listen(SocketProto proto,
         type = SOCK_STREAM;
         break;
     default:
-        ASSERT_FAIL();
+        UNREACHABLE;
     }
 
     SOCKET sock;

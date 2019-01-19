@@ -1,11 +1,11 @@
 #ifndef GE_COMMAND_DETAIL_HPP
 #define GE_COMMAND_DETAIL_HPP
 
-#include "util/functor_traits.hpp"
 #include "err/err.hpp"
 #include "ge/Command.hpp"
 #include "ge/CommandArgs.hpp"
 #include "ge/Event.hpp"
+#include "util/functor_traits.hpp"
 
 #include <tuple>
 
@@ -26,8 +26,8 @@ struct command_param_mapping
     // type");
 };
 
-inline bool
-has_type(CommandParamType pt, CommandArgType t)
+HU_PURE inline bool
+has_type(CommandParamType pt, CommandArgType t) noexcept
 {
     switch (pt.value) {
     case CommandParamType::String:
@@ -45,9 +45,9 @@ has_type(CommandParamType pt, CommandArgType t)
     case CommandParamType::Any:
         return true;
     case CommandParamType::List:
-        ASSERT_FAIL();
+        UNREACHABLE;
     }
-    CASE_UNREACHABLE;
+    UNREACHABLE;
 }
 
 #define DEF_COMMAND_TYPE_MAPPING(T, fld, ComTy)                                \

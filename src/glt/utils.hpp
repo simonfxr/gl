@@ -10,14 +10,14 @@
 #ifdef GLDEBUG
 #define GL_TRACE(msg)                                                          \
     do {                                                                       \
-        ::glt::printGLTrace(DETAIL_CURRENT_LOCATION_OP(msg));                  \
+        ::glt::printGLTrace(ERROR_LOCATION_OP(msg));                           \
     } while (0)
 #define GL_CHECK(op)                                                           \
     do {                                                                       \
         (op);                                                                  \
-        ::glt::checkForGLError(DETAIL_CURRENT_LOCATION_OP(#op));               \
+        ::glt::checkForGLError(ERROR_LOCATION_OP(PP_TOSTR(op)));               \
     } while (0)
-#define GL_CHECK_ERRORS() ::glt::checkForGLError(DETAIL_CURRENT_LOCATION)
+#define GL_CHECK_ERRORS() ::glt::checkForGLError(ERROR_LOCATION)
 #else
 #define GL_CHECK(op) UNUSED(op)
 #define GL_CHECK_ERRORS() UNUSED(0)
@@ -31,7 +31,7 @@
 
 namespace glt {
 
-enum OpenGLVendor : uint8_t
+enum class OpenGLVendor : uint8_t
 {
     Unknown,
     Nvidia,
@@ -46,7 +46,7 @@ GLT_API void
 printOpenGLCalls(bool);
 
 GLT_API void
-printGLTrace(const err::Location &loc);
+printGLTrace(const err::Location *loc);
 
 GLT_API std::string
 getGLErrorString(GLenum err);
@@ -55,10 +55,10 @@ GLT_API bool
 printGLErrors(sys::io::OutStream &out);
 
 GLT_API void
-printGLError(const err::Location &loc, GLenum err);
+printGLError(const err::Location *loc, GLenum err);
 
 GLT_API bool
-checkForGLError(const err::Location &loc);
+checkForGLError(const err::Location *loc);
 
 GLT_API bool
 isExtensionSupported(const char *extension);

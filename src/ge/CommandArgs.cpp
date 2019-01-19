@@ -110,7 +110,7 @@ CommandArg::operator=(CommandArg &&rhs)
     case CommandArgType::Nil:
         return *this;
     }
-    CASE_UNREACHABLE;
+    UNREACHABLE;
 }
 
 CommandArg &
@@ -142,7 +142,7 @@ CommandArg::reset()
     case CommandArgType::Nil:
         return;
     }
-    CASE_UNREACHABLE;
+    UNREACHABLE;
 }
 
 int
@@ -176,7 +176,7 @@ compare(const CommandArg &a, const CommandArg &b)
     case CommandArgType::Nil:
         return 0;
     }
-    CASE_UNREACHABLE;
+    UNREACHABLE;
 }
 
 struct PrettyQuotation
@@ -307,7 +307,7 @@ CommandPrettyPrinter::print(const CommandArg &arg, bool first)
         *self->current_out << "nil type not allowed: " << arg.type();
         return;
     }
-    CASE_UNREACHABLE;
+    UNREACHABLE;
 }
 
 void

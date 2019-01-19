@@ -134,7 +134,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> & /*unused*/)
     rt->clear();
 
     auto program = engine.shaderManager().program("sphere");
-    ASSERT_MSG(program, "sphere program not found");
+    ASSERT(program, "sphere program not found");
     glt::RenderManager &rm = engine.renderManager();
 
     vec3_t ecLight =

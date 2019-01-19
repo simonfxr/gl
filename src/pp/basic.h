@@ -50,18 +50,6 @@
 #define PP_FIRST(a, ...) a
 #define PP_SECOND(a, b, ...) b
 
-#define PP_ARG1(_1, ...) _1
-#define PP_ARG2(_1, _2, ...) _2
-#define PP_ARG3(_1, _2, _3, ...) _3
-#define PP_ARG4(_1, _2, _3, _4, ...) _4
-#define PP_ARG5(_1, _2, _3, _4, _5, ...) _5
-
-#define PP_DROP1(_1, ...) __VA_ARGS__
-#define PP_DROP2(_1, _2, ...) __VA_ARGS__
-#define PP_DROP3(_1, _2, _3, ...) __VA_ARGS__
-#define PP_DROP4(_1, _2, _3, _4, ...) __VA_ARGS__
-#define PP_DROP5(_1, _2, _3, _4, _5, ...) __VA_ARGS__
-
 #define PP_IS_PROBE(...) PP_SECOND(__VA_ARGS__, 0)
 #define PP_PROBE() ~, 1
 

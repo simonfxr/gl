@@ -356,8 +356,8 @@ Anim::initMC(MCState &cur_mc, vec3_t orig, vec3_t dim, bool *success)
 #define IS_POWER_OF_2(x) ((((x) -1) & (x)) == 0)
     int cl_err;
 
-    ASSERT_MSG(IS_POWER_OF_2(N), "N has to be a power of 2!");
-    ASSERT_MSG(N <= 512, "N has to be <= 512");
+    ASSERT(IS_POWER_OF_2(N), "N has to be a power of 2!");
+    ASSERT(N <= 512, "N has to be <= 512");
 
 #undef IS_POWER_OF_2
 

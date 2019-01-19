@@ -74,7 +74,7 @@ RenderManager::shutdown()
         self->def_rt = nullptr;
     }
 
-    self->perf_counter.shutdown();
+    self->perf_counter.clear();
 }
 
 const ViewFrustum &
@@ -182,9 +182,9 @@ RenderManager::activeRenderTarget() const
 void
 RenderManager::beginScene()
 {
-    ASSERT_MSG(!self->inScene, "nested beginScene()");
-    ASSERT_MSG(self->current_rt != nullptr || self->def_rt != nullptr,
-               "no RenderTarget specified");
+    ASSERT(!self->inScene, "nested beginScene()");
+    ASSERT(self->current_rt != nullptr || self->def_rt != nullptr,
+           "no RenderTarget specified");
 
     self->beginStats();
 
@@ -206,7 +206,7 @@ RenderManager::beginScene()
 void
 RenderManager::endScene()
 {
-    ASSERT_MSG(self->inScene, "cannot endScene() without beginScene()");
+    ASSERT(self->inScene, "cannot endScene() without beginScene()");
     self->inScene = false;
     self->transform.restore(self->transformStateBOS);
     self->endStats(); // dont count swap buffers

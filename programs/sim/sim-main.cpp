@@ -613,7 +613,7 @@ Game::render_sphere(const Sphere &s, const SphereModel &m)
         inst.colorShininess = vec4(vec3(m.color.vec4()), m.shininess);
 
 #endif
-        DEBUG_ASSERT(lod.level < SPHERE_LOD_MAX);
+        ASSERT(lod.level < SPHERE_LOD_MAX);
         sphere_instances[lod.level].push_back(inst);
 
     } else {

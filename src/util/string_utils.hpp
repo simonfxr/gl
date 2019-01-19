@@ -2,8 +2,8 @@
 #define UTIL_STRING_UTILS_HPP
 
 #include "err/err.hpp"
+#include "sys/io/Stream.hpp"
 
-#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -11,7 +11,7 @@ template<typename... Args>
 std::string
 string_concat(Args &&... args)
 {
-    std::stringstream sstream;
+    sys::io::ByteStream sstream;
     (sstream << ... << std::forward<Args>(args));
     return sstream.str();
 }

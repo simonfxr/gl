@@ -165,6 +165,8 @@ struct SYS_API ByteStream : public IOStream
     char *data() { return buffer.data(); }
     std::string str() const { return std::string(data(), size()); }
 
+    operator std::string_view() const { return { data(), size() }; }
+
     void truncate(size_t);
 
 protected:
@@ -193,7 +195,8 @@ protected:
 
 #define DEF_OUTSTREAM_OP(T)                                                    \
     template<typename OStream>                                                 \
-    OStream &operator<<(OStream &out, T value)                                 \
+    std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>  \
+      &operator<<(OStream &out, T value)                                       \
     {                                                                          \
         write_repr(static_cast<OutStream &>(out), value);                      \
         return out;                                                            \
@@ -276,28 +279,28 @@ DEF_OPAQUE_OUTSTREAM_OP(const void *);
 #undef DEF_OUTSTREAM_OP
 
 template<typename OStream>
-OStream &
+std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
 operator<<(OStream &out, bool x)
 {
     return out << (x ? "true" : "false");
 }
 
 template<typename OStream>
-OStream &
+std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
 operator<<(OStream &out, const std::string &str)
 {
     return out << std::string_view(str);
 }
 
 template<typename OStream>
-OStream &
+std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
 operator<<(OStream &out, char *str)
 {
     return out << static_cast<const char *>(str);
 }
 
 template<typename OStream, typename T>
-OStream &
+std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
 operator<<(OStream &out, const T *ptr)
 {
     return out << static_cast<const void *>(ptr);

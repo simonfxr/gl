@@ -1,6 +1,7 @@
 #include "glt/ShaderProgram.hpp"
 
 #include "err/err.hpp"
+#include "err/log.hpp"
 #include "glt/ShaderCompiler.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/utils.hpp"
@@ -12,18 +13,18 @@
 
 #include <unordered_map>
 
-#define RAISE_ERR(val, ec, msg) LOG_RAISE(val, ec, ::err::LogLevel::Error, msg)
+#define RAISE_ERR(sender, ec, msg) LOG_RAISE_ERROR(sender, ec, msg)
 
+namespace err {
 template<>
 struct LogTraits<glt::ShaderProgram>
 {
-    static err::LogDestination getDestination(const glt::ShaderProgram &x)
+    static auto getDestination(glt::ShaderProgram &x)
     {
-        return err::LogDestination(
-          err::LogLevel::Info,
-          const_cast<glt::ShaderProgram &>(x).shaderManager().out());
+        return makeLogSettings(x.shaderManager().out());
     }
 };
+} // namespace err
 
 namespace glt {
 
@@ -158,13 +159,13 @@ ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
         while (logBegin < log.get() + log_len - 1 && isspace(*logBegin))
             ++logBegin;
 
-        const char *log_msg = log.get();
+        const char *logmsg = log.get();
 
         if (logBegin == log.get() + log_len - 1) {
             out << "link log empty" << sys::io::endl;
         } else {
             out << "link log: " << sys::io::endl
-                << log_msg << sys::io::endl
+                << logmsg << sys::io::endl
                 << "end link log" << sys::io::endl;
         }
     }
@@ -288,42 +289,33 @@ ShaderProgram::link()
         added.push_back(*it->second->handle());
     }
 
-    LOG_BEGIN(*this, err::LogLevel::Info);
-    LOG_PUT(*this, "linking ... ");
+    bool ok{};
+    {
+        auto logmsg = err::beginLog(*this, err::LogLevel::Info);
+        logmsg << "linking ... ";
 
-    double wct;
-    measure_time(wct, glLinkProgram(*self->program));
-    GL_CHECK_ERRORS();
+        double wct;
+        measure_time(wct, glLinkProgram(*self->program));
+        GL_CHECK_ERRORS();
 
-    GLint success;
-    GL_CALL(glGetProgramiv, *self->program, GL_LINK_STATUS, &success);
-    bool ok = gl_unbool(success);
-    LOG_PUT(*this, ok ? "success" : "failed")
-      << " (" << (wct * 1000) << " ms)" << sys::io::endl;
-    LOG_END(*this);
+        GLint success;
+        GL_CALL(glGetProgramiv, *self->program, GL_LINK_STATUS, &success);
+        ok = gl_unbool(success);
+        logmsg << (ok ? "success" : "failed") << " (" << (wct * 1000) << " ms)"
+               << sys::io::endl;
 
-    if (!ok) {
-        pushError(ShaderProgramError::LinkageFailed);
+        if (!ok) {
+            pushError(ShaderProgramError::LinkageFailed);
 
-        for (size_t i = 0; i < added.size(); ++i)
-            GL_CALL(glDetachShader, *self->program, added[size_t(i)]);
+            for (size_t i = 0; i < added.size(); ++i)
+                GL_CALL(glDetachShader, *self->program, added[size_t(i)]);
+        }
     }
 
-    bool write_llog = true;
-    err::LogLevel lvl{};
-
-    if (!ok && LOG_LEVEL(*this, err::LogLevel::Error))
-        lvl = err::LogLevel::Error;
-    else if (LOG_LEVEL(*this, err::LogLevel::Info))
-        lvl = err::LogLevel::Info;
-    else
-        write_llog = false;
-
-    if (write_llog) {
-        LOG_BEGIN(*this, lvl);
-        self->printProgramLog(*self->program, LOG_DESTINATION(*this));
-        LOG_END(*this);
-    }
+    auto logmsg =
+      err::beginLog(*this, ok ? err::LogLevel::Info : err::LogLevel::Error);
+    if (logmsg)
+        self->printProgramLog(*self->program, logmsg.out());
 
     if (ok)
         self->linked = true;
@@ -354,9 +346,10 @@ ShaderProgram::use()
     }
 
     if (wasError()) {
-        LOG_BEGIN(*this, err::LogLevel::Info);
-        LOG_PUT_ERR(*this, getError(), "using program despite error");
-        LOG_END(*this);
+        auto logmsg = err::beginLog(*this);
+        (logmsg << "trying to use program inspite of an error: ")
+            .append(getError())
+          << sys::io::endl;
     }
 
     GL_CALL(glUseProgram, *self->program);
@@ -365,27 +358,20 @@ ShaderProgram::use()
 bool
 ShaderProgram::replaceWith(ShaderProgram &new_prog)
 {
-    if (&new_prog != this) {
-        ASSERT(&new_prog.self->sm == &self->sm);
+    if (&new_prog == this)
+        return true;
+    ASSERT(&new_prog.self->sm == &self->sm);
 
-        if (new_prog.self->program.valid() &&
-            new_prog.getError() == ShaderProgramError::NoError) {
-            reset();
-            self->program._name = new_prog.self->program._name;
-            this->lastError = new_prog.lastError;
-            self->rootdeps = new_prog.self->rootdeps;
-            self->shaders = new_prog.self->shaders;
-            new_prog.self->program._name = 0;
-            new_prog.reset();
-            return true;
-        }
-        LOG_BEGIN(*this, err::LogLevel::Info);
-        LOG_PUT_ERR(*this, new_prog.getError(), "replaceWith failed");
-        LOG_END(*this);
-        return false;
+    if (new_prog.self->program.valid() &&
+        new_prog.getError() == ShaderProgramError::NoError) {
+        self.swap(new_prog.self);
+        return true;
     }
 
-    return true;
+    auto logmsg = err::beginLog(*this, err::LogLevel::Error);
+    (logmsg << "replaceWith failed, the replaceing program has errors: ")
+      .append(new_prog.getError());
+    return false;
 }
 
 GLint
@@ -408,19 +394,19 @@ ShaderProgram::validate(bool printLogOnError)
         goto ret;
     }
 
-    GL_CALL(glValidateProgram, *self->program);
-    GLint valid;
-    GL_CALL(glGetProgramiv, *self->program, GL_VALIDATE_STATUS, &valid);
+    {
+        GL_CALL(glValidateProgram, *self->program);
+        GLint valid = GL_FALSE;
+        GL_CALL(glGetProgramiv, *self->program, GL_VALIDATE_STATUS, &valid);
 
-    if (valid == GL_FALSE)
-        pushError(ShaderProgramError::ValidationFailed);
-    else
-        ok = true;
-
+        if (valid == GL_FALSE)
+            pushError(ShaderProgramError::ValidationFailed);
+        else
+            ok = true;
+    }
 ret:
-
     if (!ok && printLogOnError)
-        self->printProgramLog(*self->program, LOG_DESTINATION(*this));
+        self->printProgramLog(*self->program, shaderManager().out());
 
     return ok;
 }

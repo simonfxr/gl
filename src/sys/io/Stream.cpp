@@ -36,7 +36,7 @@ StreamState::track(StreamFlags eof, StreamFlags &flags, StreamResult res)
     case StreamResult::Error:
         return res;
     }
-    CASE_UNREACHABLE;
+    UNREACHABLE;
 }
 } // namespace
 

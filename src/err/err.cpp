@@ -221,41 +221,62 @@ print_stacktrace(sys::io::OutStream &out, int)
 #endif
 
 void
-error(const Location &loc, LogLevel lvl, const ErrorArgs &args)
+error(const Location *loc, LogLevel lvl, std::string_view msg)
 {
-    printError(args.out, nullptr, loc, lvl, args.mesg);
-    if (lvl == LL::FatalError || lvl == LL::Assertion ||
-        lvl == LL::DebugAssertion)
-        abort();
+    error(loc, lvl, sys::io::stdout(), msg);
 }
 
 void
-fatalError(const Location &loc, LogLevel lvl, const ErrorArgs &args)
+error(const Location *loc,
+      LogLevel lvl,
+      sys::io::OutStream &out,
+      std::string_view msg)
 {
-    error(loc, lvl, args);
-    abort(); // keep the control flow analyser happy
+    reportError(out, nullptr, *loc, lvl, msg);
+    if (lvl >= LogLevel::FatalError)
+        std::abort();
 }
 
 void
-printError(sys::io::OutStream &out,
-           const char *type,
-           const Location &loc,
+error(const ErrorStaticCallSite *args)
+{
+    error(&args->location, args->level, args->message);
+}
+
+void
+fatalError(const Location *loc, LogLevel lvl, std::string_view msg)
+{
+    fatalError(loc, lvl, sys::io::stderr(), msg);
+}
+
+void
+fatalError(const Location *loc,
            LogLevel lvl,
-           std::string_view mesg)
+           sys::io::OutStream &out,
+           std::string_view msg)
+{
+    error(loc, lvl, out, msg);
+    std::abort(); // keep control flow analyser happy
+}
+
+void
+fatalError(const ErrorStaticCallSite *args)
+{
+    fatalError(&args->location, args->level, args->message);
+}
+
+void
+reportError(sys::io::OutStream &out,
+            const char *type,
+            const Location &loc,
+            LogLevel lvl,
+            std::string_view mesg)
 {
     const char *prefix = type;
     bool st = false;
 
-    if (prefix == nullptr) {
+    if (!prefix) {
         switch (lvl) {
-        case LL::DebugError:
-            prefix = "ERROR (Debug)";
-            st = true;
-            break;
-        case LL::DebugAssertion:
-            prefix = "ASSERTION failed (Debug)";
-            st = true;
-            break;
         case LL::Warn:
             prefix = "WARNING";
             break;
@@ -278,10 +299,6 @@ printError(sys::io::OutStream &out,
         case LL::Info:
             prefix = "INFO";
             break;
-            // default:
-            //     prefix = "UNKNOWN";
-            //     st = true;
-            //     break;
         }
     }
 
@@ -289,20 +306,20 @@ printError(sys::io::OutStream &out,
         << " in " << loc.function << sys::io::endl
         << "  at " << loc.file << ":" << loc.line << sys::io::endl;
 
-    if (loc.operation != nullptr)
-        out << "  operation: " << loc.operation << sys::io::endl;
-
-    if (lvl == LL::DebugAssertion || lvl == LL::Assertion)
-        out << "  assertion: " << mesg << sys::io::endl;
-    else
-        out << "  message: " << mesg << sys::io::endl;
+    if (loc.operation) {
+        if (lvl == LL::Assertion)
+            out << "  assertion: " << mesg << sys::io::endl;
+        else
+            out << "  operation: " << loc.operation << sys::io::endl;
+    }
+    out << "  message: " << mesg << sys::io::endl;
 
     if (st)
         print_stacktrace(out);
 }
 
+#if 0
 namespace {
-
 struct LogState
 {
     int in_log{};
@@ -312,7 +329,7 @@ struct LogState
     sys::io::NullStream null_stream;
     sys::io::OutStream *out;
 
-    LogState() : loc(DETAIL_CURRENT_LOCATION), out(&null_stream) {}
+    LogState() : loc(*DETAIL_CURRENT_LOCATION), out(&null_stream) {}
 
 private:
     LogState(const LogState &) = delete;
@@ -347,7 +364,7 @@ checkLogState()
 } // namespace
 
 sys::io::OutStream &
-logBegin(const Location &loc, const LogDestination &dest, LogLevel lvl)
+logBegin(const Location *loc, const LogDestination &dest, LogLevel lvl)
 {
     initLogState();
     ++log_state->in_log;
@@ -357,7 +374,7 @@ logBegin(const Location &loc, const LogDestination &dest, LogLevel lvl)
         return log_state->null_stream;
     }
 
-    log_state->loc = loc;
+    log_state->loc = *loc;
     log_state->null = lvl < dest.minimumLevel;
     log_state->out = log_state->null ? &log_state->null_stream : &dest.out;
 
@@ -377,7 +394,7 @@ logWriteErr(std::string_view err, std::string_view msg)
 {
     if (checkLogState())
         error(
-          log_state->loc,
+          &log_state->loc,
           log_state->level,
           ErrorArgs(*log_state->out,
                     string_concat("raised error: ", err, ", reason: ", msg)));
@@ -401,7 +418,7 @@ logEnd()
 }
 
 void
-logRaiseError(const Location &loc,
+logRaiseError(const Location *loc,
               const LogDestination &dest,
               LogLevel lvl,
               std::string_view err,
@@ -414,5 +431,5 @@ logRaiseError(const Location &loc,
           ErrorArgs(dest.out,
                     string_concat("raised error: ", err, ", reason: ", msg)));
 }
-
+#endif
 } // namespace err

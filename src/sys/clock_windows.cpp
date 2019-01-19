@@ -12,7 +12,7 @@ initFreq()
 {
     LARGE_INTEGER freq;
     bool ok = QueryPerformanceFrequency(&freq) == TRUE;
-    ASSERT_MSG(ok && freq.QuadPart != 0, "QueryPerformanceFrequency() failed");
+    ASSERT(ok && freq.QuadPart != 0, "QueryPerformanceFrequency() failed");
     return 1.0 / double(freq.QuadPart);
 }
 
@@ -21,7 +21,7 @@ getTime(double invFreq)
 {
     LARGE_INTEGER t;
     bool ok = QueryPerformanceCounter(&t) == TRUE;
-    ASSERT_MSG(ok, "QueryPerformanceCounter() failed");
+    ASSERT(ok, "QueryPerformanceCounter() failed");
     return t.QuadPart * invFreq;
 }
 

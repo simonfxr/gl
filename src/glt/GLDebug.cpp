@@ -63,7 +63,7 @@ ARBDebug::init()
       GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
-        printGLError(DETAIL_CURRENT_LOCATION, err);
+        printGLError(ERROR_LOCATION, err);
         return nullptr;
     }
 
@@ -133,11 +133,11 @@ ARBDebug::printDebugMessages(const err::Location &loc)
              << ", type: " << stype << ", id: " << id
              << "  message: " << message_buffer;
 
-        err::printError(sys::io::stdout(),
-                        "OpenGL DEBUG",
-                        loc,
-                        err::LogLevel::Error,
-                        mesg.str().c_str());
+        err::reportError(sys::io::stdout(),
+                         "OpenGL DEBUG",
+                         loc,
+                         err::LogLevel::Error,
+                         mesg.str().c_str());
     }
 }
 
@@ -160,7 +160,7 @@ AMDDebug::init()
 
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
-        printGLError(DETAIL_CURRENT_LOCATION, err);
+        printGLError(ERROR_LOCATION, err);
         return nullptr;
     }
 
@@ -219,11 +219,11 @@ AMDDebug::printDebugMessages(const err::Location &loc)
         mesg << "category: " << scat << ", severity: " << ssev << ", id: " << id
              << "  message: " << message_buffer;
 
-        err::printError(sys::io::stdout(),
-                        "OpenGL DEBUG",
-                        loc,
-                        err::LogLevel::Error,
-                        mesg.str().c_str());
+        err::reportError(sys::io::stdout(),
+                         "OpenGL DEBUG",
+                         loc,
+                         err::LogLevel::Error,
+                         mesg.str().c_str());
     }
 }
 

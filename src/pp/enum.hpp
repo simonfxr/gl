@@ -104,7 +104,7 @@
         switch (value) {                                                       \
             DEFN(PP_ARG3, PP_DEF_ENUM_TO_STRING_V, PP_DEF_ENUM_TO_STRING_V)    \
         }                                                                      \
-        CASE_UNREACHABLE;                                                      \
+        UNREACHABLE;                                                      \
     }
 
 #endif

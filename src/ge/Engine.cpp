@@ -99,7 +99,7 @@ Engine::Engine() : self(new Data(*this)) {}
 GameWindow &
 Engine::window()
 {
-    ASSERT_MSG(SELF->window != nullptr,
+    ASSERT(SELF->window != nullptr,
                "window not available, too early init phase");
     return *SELF->window;
 }

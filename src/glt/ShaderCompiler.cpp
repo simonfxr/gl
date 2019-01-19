@@ -1,6 +1,7 @@
 #include "glt/ShaderCompiler.hpp"
 
 #include "err/err.hpp"
+#include "err/log.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/GLSLPreprocessor.hpp"
 #include "glt/utils.hpp"
@@ -18,22 +19,18 @@
 #include <utility>
 #include <variant>
 
+namespace err {
 template<>
 struct LogTraits<glt::ShaderCompilerQueue>
 {
-    static err::LogDestination getDestination(
-      const glt::ShaderCompilerQueue &scq)
+    static auto getDestination(glt::ShaderCompilerQueue &x)
     {
-        return err::LogDestination(err::LogLevel::Info,
-                                   const_cast<glt::ShaderCompilerQueue &>(scq)
-                                     .shaderCompiler()
-                                     .shaderManager()
-                                     .out());
+        return makeLogSettings(x.shaderCompiler().shaderManager().out());
     }
 };
+} // namespace err
 
-#define COMPILER_ERR_MSG(comp, ec, msg)                                        \
-    LOG_RAISE(comp, ec, ::err::LogLevel::Error, msg)
+#define COMPILER_ERR_MSG(comp, ec, msg) LOG_RAISE_ERROR(comp, ec, msg)
 
 namespace glt {
 
@@ -274,39 +271,39 @@ compilePreprocessed(ShaderCompilerQueue &scq,
         return false;
     }
 
-    LOG_BEGIN(scq, err::LogLevel::Info);
-    LOG_PUT(scq,
-            std::string("compiling ") +
-              (name.empty() ? " <embedded code> " : name) + " ... ");
+    bool ok{};
+    {
+        auto logmsg = err::beginLog(scq);
+        logmsg << "compiling " << (name.empty() ? " <embedded code> " : name)
+               << " ... ";
 
-    if (scq.shaderCompiler().shaderManager().dumpShadersEnabled()) {
-        sys::io::OutStream &out = scq.shaderCompiler().shaderManager().out();
-        out << sys::io::endl;
-        out << "BEGIN SHADER SOURCE[" << *shader << "]" << sys::io::endl;
-        for (const auto i : irange(nsegments))
-            out << std::string_view{ segments[i], size_t(segLengths[i]) };
-        out << sys::io::endl;
-        out << "END SHADER SOURCE" << sys::io::endl;
+        if (logmsg &&
+            scq.shaderCompiler().shaderManager().dumpShadersEnabled()) {
+            logmsg << sys::io::endl;
+            logmsg << "BEGIN SHADER SOURCE[" << *shader << "]" << sys::io::endl;
+            for (const auto i : irange(nsegments))
+                logmsg << std::string_view{ segments[i],
+                                            size_t(segLengths[i]) };
+            logmsg << sys::io::endl;
+            logmsg << "END SHADER SOURCE" << sys::io::endl;
+        }
+
+        GL_CALL(glShaderSource, *shader, nsegments, segments, segLengths);
+        double wct;
+        measure_time(wct, glCompileShader(*shader));
+        GL_CHECK_ERRORS();
+
+        GLint success;
+        GL_CALL(glGetShaderiv, *shader, GL_COMPILE_STATUS, &success);
+        ok = success == GL_TRUE;
+        logmsg << (ok ? "success" : "failed") << " (" << (wct * 1000) << " ms)"
+               << sys::io::endl;
     }
 
-    GL_CALL(glShaderSource, *shader, nsegments, segments, segLengths);
-    double wct;
-    measure_time(wct, glCompileShader(*shader));
-    GL_CHECK_ERRORS();
-
-    GLint success;
-    GL_CALL(glGetShaderiv, *shader, GL_COMPILE_STATUS, &success);
-    bool ok = success == GL_TRUE;
-    LOG_PUT(scq, (ok ? "success" : "failed"))
-      << " (" << (wct * 1000) << " ms)" << sys::io::endl;
-    LOG_END(scq);
-
-    if ((!ok && LOG_LEVEL(scq, err::LogLevel::Error)) ||
-        LOG_LEVEL(scq, err::LogLevel::Info)) {
-        LOG_BEGIN(scq, ok ? err::LogLevel::Info : err::LogLevel::Error);
-        printShaderLog(shader, LOG_DESTINATION(scq));
-        LOG_END(scq);
-    }
+    auto logmsg =
+      err::beginLog(scq, ok ? err::LogLevel::Info : err::LogLevel::Error);
+    if (logmsg)
+        printShaderLog(shader, logmsg.out());
 
     if (!ok) {
         scq.pushError(ShaderCompilerError::CompilationFailed);
@@ -524,7 +521,7 @@ ShaderObject::Data::reloadIfOutdated(ShaderCompilerQueue &scq)
             return { nullptr, ReloadState::Failed };
         return { std::move(new_so), ReloadState::Outdated };
     }
-    CASE_UNREACHABLE;
+    UNREACHABLE;
 }
 
 void
@@ -785,7 +782,7 @@ ShaderCompilerQueue::enqueueReload(const std::shared_ptr<ShaderObject> &so)
             ASSERT(!new_so);
             return so;
         }
-        CASE_UNREACHABLE;
+        UNREACHABLE;
     };
     self->toCompile.push({ so->shaderSource(), std::move(exec) });
 }

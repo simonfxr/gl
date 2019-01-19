@@ -76,7 +76,7 @@ MeshBase::MeshBase(const StructInfo &si,
   , enabled_attributes(si.fields.size() * 2, false)
   , prim_type(prim_ty)
 {
-    ASSERT_MSG(si.align < alignof(std::max_align_t),
+    ASSERT(si.align < alignof(std::max_align_t),
                "overaligned types not supported");
     elements.reserve(initial_nelems);
     auto nverts = MIN_NUM_VERTICES;
@@ -324,7 +324,7 @@ MeshBase::attributePosition(size_t offset) const
     for (const auto [i, a] : enumerate(struct_info.fields))
         if (a.offset == offset)
             return static_cast<GLuint>(i);
-    FATAL_ERR(ERROR_DEFAULT_STREAM, "offset out of range");
+    FATAL_ERR("offset out of range");
 }
 
 void

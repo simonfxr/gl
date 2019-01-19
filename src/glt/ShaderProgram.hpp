@@ -3,7 +3,6 @@
 
 #include <string>
 
-#include "util/ArrayView.hpp"
 #include "err/WithError.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/ShaderManager.hpp"
@@ -11,6 +10,7 @@
 #include "glt/type_info.hpp"
 #include "opengl.hpp"
 #include "pp/enum.hpp"
+#include "util/ArrayView.hpp"
 
 namespace glt {
 
@@ -66,7 +66,7 @@ struct GLT_API ShaderProgram : public err::WithError<ShaderProgramError>
     bool validate(bool printLogOnError = true);
 
 private:
-    DECLARE_PIMPL(GLT_API, self);
+    DECLARE_MUT_PIMPL(GLT_API, self);
     ShaderProgram(const ShaderProgram &);
 };
 

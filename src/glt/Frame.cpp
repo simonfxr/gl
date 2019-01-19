@@ -89,11 +89,13 @@ Frame::translateWorld(const vec3_t &v)
 void
 Frame::normalize()
 {
-    vec3_t y = localY();
+    using math::normalize;
+    // gram-schmidt orthonormalization
+    vec3_t y = normalize(localY());
     vec3_t x = x_axis - projectAlong(x_axis, y);
     vec3_t z = z_axis - projectAlong(z_axis, y) - projectAlong(z_axis, x);
-    x_axis = math::normalize(x);
-    z_axis = math::normalize(z);
+    x_axis = normalize(x);
+    z_axis = normalize(z);
 }
 
 vec4_t

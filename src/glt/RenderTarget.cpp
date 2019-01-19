@@ -17,7 +17,7 @@ struct RenderTarget::Data
 
     bool viewport_changed;
 
-    DEBUG_DECL(bool active;)
+    DEBUG_DECL(bool active)
 
     Data(size_t w, size_t h, RenderTargetBuffers bs, const Viewport &vp)
       : width(w), height(h), buffers(bs), viewport(vp), viewport_changed(false)
@@ -111,7 +111,7 @@ RenderTarget::beginScene()
 void
 RenderTarget::clear(uint32_t buffers)
 {
-    DEBUG_ASSERT_MSG(self->active, "RenderTarget not active");
+    DEBUG_ASSERT(self->active);
     buffers &= self->buffers;
     doClear(buffers, self->clearColor);
 }

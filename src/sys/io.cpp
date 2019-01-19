@@ -42,7 +42,7 @@ toStreamResult(HandleError e)
     case HandleError::UNKNOWN:
         return StreamResult::Error;
     }
-    CASE_UNREACHABLE;
+    UNREACHABLE;
 }
 } // namespace
 

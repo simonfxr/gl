@@ -96,7 +96,7 @@ bool
 coerceKeyCombo(CommandArg &arg)
 {
     UNUSED(arg);
-    ERR_ONCE(ERROR_DEFAULT_STREAM, "not yet implemented");
+    ERR_ONCE("not yet implemented");
     // TODO: implement
     return false;
 }
@@ -188,9 +188,9 @@ CommandProcessor::exec(CommandPtr &com,
                 val_type = AT::VarRef;
                 break;
             case PT::Any:
-                ASSERT_FAIL();
+                UNREACHABLE;
             case PT::List:
-                ASSERT_FAIL();
+                UNREACHABLE;
             }
 
             // perform some implicit conversion
@@ -354,9 +354,9 @@ CommandProcessor::commandParamType(CommandArgType type)
     case CommandArgType::VarRef:
         return CommandParamType::VarRef;
     case CommandArgType::Nil:
-        FATAL_ERR(ERROR_DEFAULT_STREAM, "Nil has no declarable type");
+        FATAL_ERR("Nil has no declarable type");
     }
-    CASE_UNREACHABLE;
+    UNREACHABLE;
 }
 
 } // namespace ge
