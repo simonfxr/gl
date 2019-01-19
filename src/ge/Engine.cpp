@@ -96,11 +96,13 @@ runInit(EventSource<InitEvent> &source, const Event<InitEvent> &e);
 
 Engine::Engine() : self(new Data(*this)) {}
 
+Engine::~Engine() = default;
+
 GameWindow &
 Engine::window()
 {
     ASSERT(SELF->window != nullptr,
-               "window not available, too early init phase");
+           "window not available, too early init phase");
     return *SELF->window;
 }
 

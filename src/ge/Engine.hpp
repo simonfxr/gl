@@ -26,6 +26,7 @@ namespace ge {
 struct GE_API Engine
 {
     Engine();
+    ~Engine();
 
     GameWindow &window();
     GameLoop &gameLoop();

@@ -75,9 +75,9 @@ endif()
 if(COMP_GCCLIKE)
   list(APPEND GLOBAL_FLAGS -Wall -Wswitch-enum)
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-    list(APPEND GLOBAL_FLAGS -Wdate-time -Werror=date-time -Werror=return-type)
+    list(APPEND GLOBAL_FLAGS -Wdate-time -Werror=date-time)
   endif()
-  list(APPEND GLOBAL_FLAGS -fno-exceptions -fno-rtti)
+  list(APPEND GLOBAL_FLAGS -Werror=return-type -fno-exceptions -fno-rtti)
 elseif(COMP_MSVC)
   list(APPEND GLOBAL_FLAGS
               /wd4201 # anon struct/union

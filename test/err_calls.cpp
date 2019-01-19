@@ -24,7 +24,7 @@ baz(int x)
 void
 bazzz(int x)
 {
-    ASSERT_ALWAYS(x > 0, x % 2 ? "odd" : "even");
+    ASSERT_ALWAYS(x > 0, string_concat("value: ", x));
 }
 
 int
