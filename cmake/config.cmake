@@ -157,7 +157,8 @@ if(COMP_CLANG)
               -Wno-nested-anon-types
               -Wno-packed
               -Wno-padded
-              -Wno-return-std-move-in-c++11)
+              -Wno-return-std-move-in-c++11
+              -Wno-gnu-statement-expression)
 endif()
 
 if(COMP_ICC)

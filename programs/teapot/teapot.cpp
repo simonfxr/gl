@@ -8,7 +8,7 @@
 // #define RENDER_GLOW 1
 #define RENDER_NOGLOW 1
 
-#include "defs.hpp"
+#include "defs.h"
 
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"

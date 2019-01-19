@@ -1,7 +1,7 @@
 #ifndef TABLES_HPP
 #define TABLES_HPP
 
-#include "defs.hpp"
+#include "defs.h"
 
 namespace {
 
