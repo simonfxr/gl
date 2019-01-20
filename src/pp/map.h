@@ -4,16 +4,16 @@
 #include "pp/basic.h"
 
 #if defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL
-#include "pp/map_msvc.h"
+#    include "pp/map_msvc.h"
 #else
 
-#include "pp/is_empty.h"
+#    include "pp/is_empty.h"
 
 /**
  * adopted from: https://github.com/18sg/uSHET/blob/master/lib/cpp_magic.h
  */
 
-#define PP_HAS_ARGS(...) PP_NOT(PP_IS_EMPTY(__VA_ARGS__))
+#    define PP_HAS_ARGS(...) PP_NOT(PP_IS_EMPTY(__VA_ARGS__))
 
 /**
  * Macro map/list comprehension. Usage:
@@ -27,12 +27,12 @@
  * Which expands to:
  *    happy_1 , happy_2 , happy_3
  */
-#define PP_MAP(...)                                                            \
-    PP_IF(PP_HAS_ARGS(__VA_ARGS__))(PP_EVAL(PP_MAP_INNER(__VA_ARGS__)))
-#define PP_MAP_INNER(op, sep, cur_val, ...)                                    \
-    op(cur_val) PP_IF(PP_HAS_ARGS(__VA_ARGS__))(                               \
-      sep() PP_DEFER2(PP_IMAP_INNER)()(op, sep, ##__VA_ARGS__))
-#define PP_IMAP_INNER() PP_MAP_INNER
+#    define PP_MAP(...)                                                        \
+        PP_IF(PP_HAS_ARGS(__VA_ARGS__))(PP_EVAL(PP_MAP_INNER(__VA_ARGS__)))
+#    define PP_MAP_INNER(op, sep, cur_val, ...)                                \
+        op(cur_val) PP_IF(PP_HAS_ARGS(__VA_ARGS__))(                           \
+          sep() PP_DEFER2(PP_IMAP_INNER)()(op, sep, ##__VA_ARGS__))
+#    define PP_IMAP_INNER() PP_MAP_INNER
 
 /**
  * Macro map/list comprehension with an additional threaded argument. Usage:
@@ -47,12 +47,13 @@
  * Which expands to:
  *    very_happy_1 , very_happy_2 , very_happy_3
  */
-#define PP_MAP_WITH_ARG(...)                                                   \
-    PP_IF(PP_HAS_ARGS(__VA_ARGS__))(PP_EVAL(PP_MAP_WITH_ARG_INNER(__VA_ARGS__)))
-#define PP_MAP_WITH_ARG_INNER(op, sep, arg1, cur_val, ...)                     \
-    op(arg1, cur_val) PP_IF(PP_HAS_ARGS(__VA_ARGS__))(                         \
-      sep() PP_DEFER2(PP_IMAP_WITH_ARG_INNER)()(op, sep, arg1, ##__VA_ARGS__))
-#define PP_IMAP_WITH_ARG_INNER() PP_MAP_WITH_ARG_INNER
+#    define PP_MAP_WITH_ARG(...)                                               \
+        PP_IF(PP_HAS_ARGS(__VA_ARGS__))                                        \
+        (PP_EVAL(PP_MAP_WITH_ARG_INNER(__VA_ARGS__)))
+#    define PP_MAP_WITH_ARG_INNER(op, sep, arg1, cur_val, ...)                 \
+        op(arg1, cur_val) PP_IF(PP_HAS_ARGS(__VA_ARGS__))(sep() PP_DEFER2(     \
+          PP_IMAP_WITH_ARG_INNER)()(op, sep, arg1, ##__VA_ARGS__))
+#    define PP_IMAP_WITH_ARG_INNER() PP_MAP_WITH_ARG_INNER
 
 /**
  * This is a variant of the MAP macro which also includes as an argument to the
@@ -72,13 +73,13 @@
  *   static int I; static int II; static int III; static bool IIII; static char
  * IIIII;
  */
-#define PP_MAP_WITH_ID(op, sep, ...)                                           \
-    PP_IF(PP_HAS_ARGS(__VA_ARGS__))                                            \
-    (PP_EVAL(PP_MAP_WITH_ID_INNER(op, sep, I, ##__VA_ARGS__)))
-#define PP_MAP_WITH_ID_INNER(op, sep, id, cur_val, ...)                        \
-    op(cur_val, id) PP_IF(PP_HAS_ARGS(__VA_ARGS__))(sep() PP_DEFER2(           \
-      PP_IMAP_WITH_ID_INNER)()(op, sep, PP_CAT(id, I), ##__VA_ARGS__))
-#define PP_IMAP_WITH_ID_INNER() PP_MAP_WITH_ID_INNER
+#    define PP_MAP_WITH_ID(op, sep, ...)                                       \
+        PP_IF(PP_HAS_ARGS(__VA_ARGS__))                                        \
+        (PP_EVAL(PP_MAP_WITH_ID_INNER(op, sep, I, ##__VA_ARGS__)))
+#    define PP_MAP_WITH_ID_INNER(op, sep, id, cur_val, ...)                    \
+        op(cur_val, id) PP_IF(PP_HAS_ARGS(__VA_ARGS__))(sep() PP_DEFER2(       \
+          PP_IMAP_WITH_ID_INNER)()(op, sep, PP_CAT(id, I), ##__VA_ARGS__))
+#    define PP_IMAP_WITH_ID_INNER() PP_MAP_WITH_ID_INNER
 
 /**
  * This is a variant of the MAP macro which iterates over pairs rather than
@@ -97,13 +98,13 @@
  * Which expands to:
  *   static char my_char; static int my_int;
  */
-#define PP_MAP_PAIRS(op, sep, ...)                                             \
-    PP_IF(PP_HAS_ARGS(__VA_ARGS__))                                            \
-    (PP_EVAL(PP_MAP_PAIRS_INNER(op, sep, __VA_ARGS__)))
-#define PP_MAP_PAIRS_INNER(op, sep, cur_val_1, cur_val_2, ...)                 \
-    op(cur_val_1, cur_val_2) PP_IF(PP_HAS_ARGS(__VA_ARGS__))(                  \
-      sep() PP_DEFER2(PP_IMAP_PAIRS_INNER)()(op, sep, __VA_ARGS__))
-#define PP_IMAP_PAIRS_INNER() PP_MAP_PAIRS_INNER
+#    define PP_MAP_PAIRS(op, sep, ...)                                         \
+        PP_IF(PP_HAS_ARGS(__VA_ARGS__))                                        \
+        (PP_EVAL(PP_MAP_PAIRS_INNER(op, sep, __VA_ARGS__)))
+#    define PP_MAP_PAIRS_INNER(op, sep, cur_val_1, cur_val_2, ...)             \
+        op(cur_val_1, cur_val_2) PP_IF(PP_HAS_ARGS(__VA_ARGS__))(              \
+          sep() PP_DEFER2(PP_IMAP_PAIRS_INNER)()(op, sep, __VA_ARGS__))
+#    define PP_IMAP_PAIRS_INNER() PP_MAP_PAIRS_INNER
 
 /**
  * This is a variant of the MAP macro which iterates over a two-element sliding
@@ -128,21 +129,22 @@
  * Which expands to:
  *   dance boogie last_but_not_least_stop
  */
-#define PP_MAP_SLIDE(op, last_op, sep, ...)                                    \
-    PP_IF(PP_HAS_ARGS(__VA_ARGS__))                                            \
-    (PP_EVAL(PP_MAP_SLIDE_INNER(op, last_op, sep, __VA_ARGS__)))
-#define PP_MAP_SLIDE_INNER(op, last_op, sep, cur_val, ...)                     \
-    PP_IF(PP_HAS_ARGS(__VA_ARGS__))                                            \
-    (op(cur_val, PP_FIRST(__VA_ARGS__)))                                       \
-      PP_IF(PP_NOT(PP_HAS_ARGS(__VA_ARGS__)))(last_op(cur_val))                \
-        PP_IF(PP_HAS_ARGS(__VA_ARGS__))(sep() PP_DEFER2(                       \
-          PP_IMAP_SLIDE_INNER)()(op, last_op, sep, __VA_ARGS__))
-#define PP_IMAP_SLIDE_INNER() PP_MAP_SLIDE_INNER
+#    define PP_MAP_SLIDE(op, last_op, sep, ...)                                \
+        PP_IF(PP_HAS_ARGS(__VA_ARGS__))                                        \
+        (PP_EVAL(PP_MAP_SLIDE_INNER(op, last_op, sep, __VA_ARGS__)))
+#    define PP_MAP_SLIDE_INNER(op, last_op, sep, cur_val, ...)                 \
+        PP_IF(PP_HAS_ARGS(__VA_ARGS__))                                        \
+        (op(cur_val, PP_FIRST(__VA_ARGS__)))                                   \
+          PP_IF(PP_NOT(PP_HAS_ARGS(__VA_ARGS__)))(last_op(cur_val))            \
+            PP_IF(PP_HAS_ARGS(__VA_ARGS__))(sep() PP_DEFER2(                   \
+              PP_IMAP_SLIDE_INNER)()(op, last_op, sep, __VA_ARGS__))
+#    define PP_IMAP_SLIDE_INNER() PP_MAP_SLIDE_INNER
 
 /**
  * Strip any excess commas from a set of arguments.
  */
-#define PP_REMOVE_TRAILING_COMMAS(...) PP_MAP(PP_PASS, PP_COMMA, __VA_ARGS__)
+#    define PP_REMOVE_TRAILING_COMMAS(...)                                     \
+        PP_MAP(PP_PASS, PP_COMMA, __VA_ARGS__)
 
 #endif
 #endif

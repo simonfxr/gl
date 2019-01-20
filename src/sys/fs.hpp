@@ -1,22 +1,21 @@
 #ifndef FS_HPP
 #define FS_HPP
 
-#include "sys/conf.hpp"
-
 #include "pp/enum.hpp"
+#include "sys/conf.hpp"
+#include "util/ArrayView.hpp"
 
 #if HU_OS_POSIX_P
-#include "sys/fs/fs_unix.hpp"
+#    include "sys/fs/fs_unix.hpp"
 #elif HU_OS_WINDOWS_P
-#include "sys/fs/fs_windows.hpp"
+#    include "sys/fs/fs_windows.hpp"
 #else
-#error "no Filesystem implementation available"
+#    error "no Filesystem implementation available"
 #endif
 
 #include <optional>
 #include <string>
 #include <string_view>
-#include <vector>
 
 namespace sys {
 namespace fs {
@@ -78,7 +77,7 @@ HU_NODISCARD SYS_API std::string
 absolutePath(std::string_view path);
 
 HU_NODISCARD SYS_API std::string
-lookup(const std::vector<std::string> &, std::string_view path);
+lookup(ArrayView<const std::string>, std::string_view path);
 
 HU_NODISCARD SYS_API std::optional<ObjectType>
 exists(std::string_view path);
@@ -163,7 +162,7 @@ HU_NODISCARD SYS_API std::optional<ObjectType>
 exists(std::string_view path);
 
 HU_NODISCARD SYS_API std::string
-lookup(const std::vector<std::string> &dirs, std::string_view name);
+lookup(ArrayView<const std::string> dirs, std::string_view name);
 
 HU_NODISCARD SYS_API std::string absolutePath(std::string_view);
 

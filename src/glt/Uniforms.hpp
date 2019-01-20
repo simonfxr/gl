@@ -3,7 +3,6 @@
 
 #include "glt/conf.hpp"
 
-#include "util/ArrayView.hpp"
 #include "glt/TextureSampler.hpp"
 #include "math/mat2.hpp"
 #include "math/mat3.hpp"
@@ -11,6 +10,7 @@
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
+#include "util/ArrayView.hpp"
 
 #include <string>
 

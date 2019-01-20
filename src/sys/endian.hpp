@@ -3,6 +3,8 @@
 
 #include "defs.h"
 
+#include <hu/endian.h>
+
 #include <type_traits>
 
 namespace sys {

@@ -6,43 +6,81 @@
 #include "ge/Tokenizer.hpp"
 #include "sys/fs.hpp"
 #include "util/range.hpp"
-#include "util/string_utils.hpp"
+#include "util/string.hpp"
 
+#include <unordered_map>
 #include <vector>
 
 namespace ge {
 
-size_t
-CommandProcessor::size() const
+using CommandMap = std::unordered_map<std::string_view, CommandPtr>;
+
+namespace {
+bool
+coerceKeyCombo(CommandArg &arg)
 {
-    return commands.size();
+    UNUSED(arg);
+    ERR_ONCE("not yet implemented");
+    // TODO: implement
+    return false;
+}
+} // namespace
+
+struct CommandProcessor::Data
+{
+    Engine &engine;
+    CommandMap commands;
+    std::vector<std::string> scriptDirs;
+    Data(Engine &e) : engine(e) {}
+};
+
+DECLARE_PIMPL_DEL(CommandProcessor);
+
+CommandProcessor::CommandProcessor(Engine &e) : self(new Data(e)) {}
+
+CommandProcessor::~CommandProcessor() = default;
+
+std::vector<CommandPtr>
+CommandProcessor::commands() const
+{
+    std::vector<CommandPtr> coms;
+    coms.reserve(self->commands.size());
+    for (const auto &ent : self->commands)
+        coms.push_back(ent.second);
+    return coms;
+}
+
+Engine &
+CommandProcessor::engine()
+{
+    return self->engine;
 }
 
 bool
-CommandProcessor::addScriptDirectory(std::string_view dir, bool check_exists)
+CommandProcessor::addScriptDirectory(std::string dir, bool check_exists)
 {
-    for (const auto &scriptDir : scriptDirs)
+    for (const auto &scriptDir : self->scriptDirs)
         if (dir == scriptDir)
             return true;
 
     if (check_exists && !sys::fs::directoryExists(dir))
         return false;
 
-    scriptDirs.emplace_back(dir);
+    self->scriptDirs.emplace_back(std::move(dir));
     return true;
 }
 
-const std::vector<std::string> &
-CommandProcessor::scriptDirectories()
+ArrayView<const std::string>
+CommandProcessor::scriptDirectories() const
 {
-    return scriptDirs;
+    return view_array(self->scriptDirs);
 }
 
 CommandPtr
-CommandProcessor::command(std::string_view comname)
+CommandProcessor::command(std::string_view comname) const
 {
-    auto it = commands.find(comname);
-    if (it != commands.end())
+    auto it = self->commands.find(comname);
+    if (it != self->commands.end())
         return it->second;
     return nullptr;
 }
@@ -50,25 +88,19 @@ CommandProcessor::command(std::string_view comname)
 bool
 CommandProcessor::define(CommandPtr comm, bool unique)
 {
-    const auto &name = comm->name();
-    return define(name, std::move(comm), unique);
-}
-
-bool
-CommandProcessor::define(std::string_view comname, CommandPtr comm, bool unique)
-{
     if (!comm) {
-        ERR(engine().out(), string_concat(comname, ": null command"));
+        ERR(engine().out(), "null command");
         return false;
     }
 
+    const auto &comname = comm->name();
     if (comname.empty()) {
         ERR(engine().out(), "cannot define command without name");
         return false;
     }
 
-    auto it = commands.find(comname);
-    auto dup = it != commands.end();
+    auto it = self->commands.find(comname);
+    auto dup = it != self->commands.end();
     if (dup && unique) {
         ERR(engine().out(), string_concat("duplicate command name: ", comname));
         return false;
@@ -77,7 +109,7 @@ CommandProcessor::define(std::string_view comname, CommandPtr comm, bool unique)
     if (dup)
         it->second = std::move(comm);
     else
-        commands[std::string(comname)] = std::move(comm);
+        self->commands[comname] = std::move(comm);
     return dup;
 }
 
@@ -89,16 +121,7 @@ CommandProcessor::exec(std::string_view comname, ArrayView<CommandArg> args)
         ERR(engine().out(), string_concat("command not found: ", comname));
         return false;
     }
-    return exec(com, args, comname);
-}
-
-bool
-coerceKeyCombo(CommandArg &arg)
-{
-    UNUSED(arg);
-    ERR_ONCE("not yet implemented");
-    // TODO: implement
-    return false;
+    return exec(com, args);
 }
 
 bool
@@ -129,22 +152,22 @@ CommandProcessor::exec(ArrayView<CommandArg> args)
         }
     }
 
-    bool ok = exec(comm, { args.data() + 1, args.size() - 1 }, *com_name);
+    bool ok = exec(comm, { args.data() + 1, args.size() - 1 });
     return ok;
 }
 
 bool
-CommandProcessor::exec(CommandPtr &com,
-                       ArrayView<CommandArg> args,
-                       std::string_view comname)
+CommandProcessor::exec(CommandPtr &com, ArrayView<CommandArg> args)
 {
-    using PT = CommandParamType;
-    using AT = CommandArgType;
     if (!com) {
         ERR(engine().out(), "Command == 0");
         return false;
     }
 
+    using PT = CommandParamType;
+    using AT = CommandArgType;
+
+    const auto &comname = com->name();
     const auto &params = com->parameters();
     bool rest_args = params.size() > 0 && params[params.size() - 1] == PT::List;
     size_t nparams = rest_args ? params.size() - 1 : params.size();
@@ -251,7 +274,6 @@ CommandProcessor::exec(CommandPtr &com,
 bool
 CommandProcessor::loadScript(std::string_view name, bool quiet)
 {
-
     std::string file = sys::fs::lookup(scriptDirectories(), name);
     if (file.empty())
         goto not_found;

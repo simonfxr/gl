@@ -6,9 +6,9 @@
 #include <memory>
 
 #ifdef DEFINE_GE_MODULE
-#define GE_MODULE_ACCESS
+#    define GE_MODULE_ACCESS
 #else
-#define GE_MODULE_ACCESS const
+#    define GE_MODULE_ACCESS const
 #endif
 
 namespace ge {

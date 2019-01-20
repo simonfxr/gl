@@ -1,5 +1,5 @@
-#ifndef UTIL_STRING_UTILS_HPP
-#define UTIL_STRING_UTILS_HPP
+#ifndef UTIL_STRING_HPP
+#define UTIL_STRING_HPP
 
 #include "err/err.hpp"
 #include "sys/io/Stream.hpp"
@@ -8,12 +8,12 @@
 #include <string_view>
 
 template<typename... Args>
-std::string
+inline std::string
 string_concat(Args &&... args)
 {
     sys::io::ByteStream sstream;
     (sstream << ... << std::forward<Args>(args));
-    return sstream.str();
+    return std::move(sstream).str();
 }
 
 inline std::string

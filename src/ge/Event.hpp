@@ -1,8 +1,8 @@
 #ifndef GE_EVENT_HPP
 #define GE_EVENT_HPP
 
-#include "util/functor_traits.hpp"
 #include "ge/conf.hpp"
+#include "util/functor_traits.hpp"
 
 #include <memory>
 #include <vector>

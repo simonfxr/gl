@@ -27,9 +27,12 @@ set(GLOBAL_DEFINES)
 set(GLOBAL_FLAGS)
 set(GLOBAL_LINK_FLAGS)
 
+set(build_shared_val 0)
 if(BUILD_SHARED_LIBS)
-  list(APPEND GLOBAL_DEFINES BUILD_SHARED=1)
+  set(build_shared_val 1)
 endif()
+
+list(APPEND GLOBAL_DEFINES "BUILD_SHARED_P=${build_shared_val}")
 
 if(BUILD_OPT)
   if(COMP_GCC OR COMP_CLANG)
@@ -55,11 +58,11 @@ endif()
 
 set(san_flags)
 
-if(USE_ASAN)
+if(ENABLE_ASAN)
   set(san_flags address)
 endif()
 
-if(USE_UBSAN)
+if(ENABLE_UBSAN)
   if(san_flags)
     set(san_flags "${san_flags},undefined")
   else()
@@ -77,7 +80,10 @@ if(COMP_GCCLIKE)
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     list(APPEND GLOBAL_FLAGS -Wdate-time -Werror=date-time)
   endif()
-  list(APPEND GLOBAL_FLAGS -Werror=return-type -fno-exceptions -fno-rtti)
+  list(APPEND GLOBAL_FLAGS
+              -Werror=return-type
+              -fno-exceptions
+              -fno-rtti)
 elseif(COMP_MSVC)
   list(APPEND GLOBAL_FLAGS
               /wd4201 # anon struct/union
@@ -158,6 +164,12 @@ if(COMP_CLANG)
               -Wno-assume)
 endif()
 
+if(COMP_CLANG AND ENABLE_LIBCXX)
+  list(APPEND GLOBAL_FLAGS -stdlib=libc++)
+  list(APPEND GLOBAL_LINK_FLAGS -stdlib=libc++)
+  list(APPEND GLOBAL_DEFINES _LIBCPP_ENABLE_NODISCARD=1)
+endif()
+
 if(COMP_ICC)
   list(APPEND GLOBAL_FLAGS -Wcheck)
 endif()
@@ -173,18 +185,22 @@ set(THREADS_PREFER_PTHREAD_FLAG True)
 
 find_package(Threads)
 
-if(USE_OPENMP)
+if(ENABLE_OPENMP)
   if(NOT DEFINED OPENMP_FOUND)
     find_package(OpenMP)
     if(NOT OpenMP_FOUND)
-      set(USE_OPENMP False)
+      set(ENABLE_OPENMP False)
     endif()
   endif()
 endif()
 
-if(GLDEBUG)
-  list(APPEND GLOBAL_DEFINES GLDEBUG=1)
+
+set(gldebug_val 0)
+if(ENABLE_GLDEBUG)
+  set(gldebug_val 1)
 endif()
+
+list(APPEND GLOBAL_DEFINES "ENABLE_GLDEBUG_P=${gldebug_val}")
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
@@ -200,30 +216,30 @@ list(APPEND GLOBAL_DEFINES "SOURCE_DIR=${CMAKE_SOURCE_DIR}")
 
 if(BUILD_OPT)
   include(CheckIPOSupported)
-  check_ipo_supported(RESULT HAVE_IPO)
+  check_ipo_supported(RESULT ENABLE_IPO)
 endif()
 
 find_package(PkgConfig)
 if(PKG_CONFIG_FOUND)
-  if(USE_UNWIND_STACKTRACES)
+  if(ENABLE_STACKTRACES AND SYS_UNIX)
     pkg_check_modules(unwind IMPORTED_TARGET libunwind)
     pkg_check_modules(dw IMPORTED_TARGET libdw)
     if(NOT TARGET PkgConfig::unwind OR NOT TARGET PkgConfig::dw)
       message(
-        WARNING "USE_UNWIND_STACKTRACES set, but libunwind or libdw not found")
-      set(USE_UNWIND_STACKTRACES False)
+        WARNING "ENABLE_STACKTRACES set, but libunwind or libdw not found")
+      set(ENABLE_STACKTRACES False)
     endif()
   endif()
 endif()
 
 if(COMP_CLANG OR COMP_GCC)
-  set_option(USE_ASAN False BOOL "enable -fsanitize=address")
+  set_option(ENABLE_ASAN False BOOL "enable -fsanitize=address")
   if(BUILD_DEBUG)
     set(ubsan_default True)
   else()
     set(ubsan_default False)
   endif()
-  set_option(USE_UBSAN ${ubsan_default} BOOL "enable -fsanitize=undefined")
+  set_option(ENABLE_UBSAN ${ubsan_default} BOOL "enable -fsanitize=undefined")
 endif()
 
 if(COMP_MSVC)
@@ -231,10 +247,13 @@ if(COMP_MSVC)
 endif()
 
 message(STATUS "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+
 message(STATUS "BUILD_DEBUG=${BUILD_DEBUG}")
 message(STATUS "BUILD_OPT=${BUILD_OPT}")
-message(STATUS "HAVE_IPO=${HAVE_IPO}")
-message(STATUS "USE_ASAN=${USE_ASAN}")
-message(STATUS "USE_UBSAN=${USE_UBSAN}")
-message(STATUS "USE_OPENMP=${USE_OPENMP}")
-message(STATUS "GLDEBUG=${GLDEBUG}")
+
+message(STATUS "ENABLE_ASAN=${ENABLE_ASAN}")
+message(STATUS "ENABLE_GLDEBUG=${ENABLE_GLDEBUG}")
+message(STATUS "ENABLE_IPO=${ENABLE_IPO}")
+message(STATUS "ENABLE_LIBCXX=${ENABLE_LIBCXX}")
+message(STATUS "ENABLE_OPENMP=${ENABLE_OPENMP}")
+message(STATUS "ENABLE_UBSAN=${ENABLE_UBSAN}")

@@ -4,7 +4,7 @@
 #include "sys/conf.hpp"
 
 #ifndef HAVE_FIBER
-#error "HAVE_FIBER not defined"
+#    error "HAVE_FIBER not defined"
 #endif
 
 #include <fiber/fiber.h>

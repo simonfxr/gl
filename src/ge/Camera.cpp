@@ -3,7 +3,7 @@
 #include "math/real.hpp"
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
-#include "util/string_utils.hpp"
+#include "util/string.hpp"
 
 using namespace math;
 

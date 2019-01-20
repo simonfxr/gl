@@ -9,7 +9,7 @@
 #include "sys/fs.hpp"
 #include "sys/measure.hpp"
 #include "util/range.hpp"
-#include "util/string_utils.hpp"
+#include "util/string.hpp"
 
 #include <unordered_map>
 
@@ -208,7 +208,7 @@ ShaderProgram::addShaderFile(const std::string &file0,
     std::string file = file0;
 
     if (!absolute) {
-        file = sys::fs::lookup(self->sm.shaderDirectories(), file);
+        file = sys::fs::lookup(view_array(self->sm.shaderDirectories()), file);
         if (file.empty()) {
             RAISE_ERR(*this,
                       ShaderProgramError::FileNotInPath,

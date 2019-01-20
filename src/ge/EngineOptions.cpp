@@ -1,5 +1,5 @@
 #ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS 1
+#    define _CRT_SECURE_NO_WARNINGS 1
 #endif
 
 #include "ge/EngineOptions.hpp"
@@ -242,7 +242,7 @@ EngineOptions::EngineOptions()
 {
     window.settings.majorVersion = 3;
     window.settings.minorVersion = 3;
-#ifdef GLDEBUG
+#if ENABLE_GLDEBUG_P
     window.settings.debugContext = true;
 #endif
 }

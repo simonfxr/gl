@@ -1,8 +1,8 @@
 #ifndef PP_ENUM_HPP
 #define PP_ENUM_HPP
 
-#include "util/Comparable.hpp"
 #include "pp/basic.h"
+#include "util/Comparable.hpp"
 
 #define PP_ENUM_DEF_VALLIST_V0(val) val
 #define PP_ENUM_DEF_VALLIST_V(val) , val
@@ -95,8 +95,8 @@
 #define PP_DEF_ENUM(DEFN) PP_DEF_ENUM_WITH_API(PP_NIL, DEFN)
 
 #define PP_DEF_ENUM_TO_STRING_V(c)                                             \
-    case c:                                                                    \
-        return PP_TOSTR(c);
+case c:                                                                        \
+    return PP_TOSTR(c);
 
 #define PP_DEF_ENUM_IMPL(DEFN)                                                 \
     const char *PP_ENUM_DEF_NAME(DEFN)::to_string() const                      \
@@ -104,7 +104,7 @@
         switch (value) {                                                       \
             DEFN(PP_ARG3, PP_DEF_ENUM_TO_STRING_V, PP_DEF_ENUM_TO_STRING_V)    \
         }                                                                      \
-        UNREACHABLE;                                                      \
+        UNREACHABLE;                                                           \
     }
 
 #endif

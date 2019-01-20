@@ -2,11 +2,12 @@
 #define SYS_DEFS_HPP
 
 #include "defs.h"
+#include <hu/os.h>
 
 #ifdef sys_EXPORTS
-#define SYS_API SHARED_EXPORT
+#    define SYS_API SHARED_EXPORT
 #else
-#define SYS_API SHARED_IMPORT
+#    define SYS_API SHARED_IMPORT
 #endif
 
 #endif

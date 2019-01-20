@@ -1,7 +1,7 @@
 #include "ge/GameLoop.hpp"
 
-#include "util/range.hpp"
 #include "err/err.hpp"
+#include "util/range.hpp"
 
 #include <algorithm>
 

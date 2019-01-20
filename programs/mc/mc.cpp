@@ -1,4 +1,3 @@
-#include "util/range.hpp"
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
@@ -13,6 +12,7 @@
 #include "math/real.hpp"
 #include "math/vec4.hpp"
 #include "sys/measure.hpp"
+#include "util/range.hpp"
 
 #include "shaders/shader_constants.h"
 
@@ -24,7 +24,7 @@
 #include <CL/cl.hpp>
 
 #ifdef HU_OS_POSIX
-#include <GL/glx.h>
+#    include <GL/glx.h>
 #endif
 
 #define CL_ERR(msg)                                                            \
@@ -161,7 +161,7 @@ createCLGLContext(cl::Platform &platform, cl_int *err)
         CL_CONTEXT_PLATFORM,
         cl_context_properties((platform)()),
 #else
-#error "unknown system"
+#    error "unknown system"
 #endif
         0
     };

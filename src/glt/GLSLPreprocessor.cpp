@@ -159,7 +159,7 @@ DependencyHandler::directiveEncountered(
     }
 
     std::string file(arg, len);
-    std::string realPath = sys::fs::lookup(proc.includePath, file);
+    std::string realPath = sys::fs::lookup(view_array(proc.includePath), file);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
                    << ": #need-directive: cannot find file: " << file
@@ -219,7 +219,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
     }
 
     std::string file(arg, len);
-    std::string realPath = sys::fs::lookup(proc.includePath, file);
+    std::string realPath = sys::fs::lookup(view_array(proc.includePath), file);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
                    << ": #include-directive: cannot find file: " << file

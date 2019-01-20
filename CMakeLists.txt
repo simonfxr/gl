@@ -24,27 +24,31 @@ set_option(BUILD_SHARED_LIBS
            ${build_shared_default}
            BOOL
            "True to build shared libs, False to build static libs")
+
 message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
 
-if(build_type STREQUAL RELEASE)
-  set(GLDEBUG_DEFAULT False)
-else()
-  set(GLDEBUG_DEFAULT True)
+if(COMP_CLANG)
+  set_option(ENABLE_LIBCXX True BOOL "True to use libc++ when compiling with clang")
 endif()
-set_option(GLDEBUG
-           ${GLDEBUG_DEFAULT}
+
+set(gldebug_default True)
+if(build_type STREQUAL RELEASE)
+  set(gldebug_default False)
+endif()
+set_option(ENABLE_GLDEBUG
+           ${gldebug_default}
            BOOL
            "True to enable error checking after every opengl call")
 
-set_option(USE_OPENMP True BOOL "enable openmp support")
+set_option(ENABLE_OPENMP True BOOL "enable openmp support")
 
-set_option(USE_VOXEL_OPENCL False BOOL "use opencl for the voxel-world program")
+set_option(ENABLE_VOXEL_OPENCL False BOOL "use opencl for the voxel-world program")
 
 if(UNIX)
-  set_option(USE_UNWIND_STACKTRACES
+  set_option(ENABLE_STACKTRACES
              True
              BOOL
-             "use libunwind and libdw to print a stacktrace on errors")
+             "print a stacktrace on errors")
 endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake)

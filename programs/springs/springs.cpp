@@ -1,4 +1,3 @@
-#include "util/range.hpp"
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
@@ -12,6 +11,7 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/vec3.hpp"
+#include "util/range.hpp"
 
 #include <algorithm>
 #include <map>

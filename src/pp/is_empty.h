@@ -2,8 +2,8 @@
 #define PP_IS_EMPTY_H
 
 #if defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL
-#error                                                                         \
-  "Traditional MSVC Preprocessor not supported: use the /experimental:preprocessor compiler flag"
+#    error                                                                     \
+      "Traditional MSVC Preprocessor not supported: use the /experimental:preprocessor compiler flag"
 #endif
 
 #include "defs.h"

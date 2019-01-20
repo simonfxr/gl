@@ -4,9 +4,9 @@
 #include "defs.h"
 
 #ifdef glt_EXPORTS
-#define GLT_API SHARED_EXPORT
+#    define GLT_API SHARED_EXPORT
 #else
-#define GLT_API SHARED_IMPORT
+#    define GLT_API SHARED_IMPORT
 #endif
 
 #endif

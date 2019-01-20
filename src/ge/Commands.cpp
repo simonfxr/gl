@@ -177,7 +177,8 @@ COMMAND("listCachedShaders", "list all shader cache entries")
     e.info.engine.out() << n << " shaders cached" << sys::io::endl;
 }
 
-COMMAND("listBindings", "list all key bindings")(const Event<CommandEvent> &e)
+COMMAND("listBindings", "list all key bindings")
+(const Event<CommandEvent> &e)
 {
     e.info.engine.keyHandler().handleListBindings(e);
 }
@@ -200,8 +201,8 @@ COMMAND("help", "help and command overview")(const Event<CommandEvent> &ev)
     ge::CommandProcessor &cp = ev.info.engine.commandProcessor();
     ev.info.engine.out() << "list of Commands: " << sys::io::endl;
 
-    for (const auto &com : cp.commands)
-        ev.info.engine.out() << "    " << com.first << sys::io::endl;
+    for (const auto &com : cp.commands())
+        ev.info.engine.out() << "    " << com->name() << sys::io::endl;
 
     ev.info.engine.out() << sys::io::endl
                          << "use describe <command name> to get more "
@@ -355,7 +356,8 @@ COMMAND("removeShaderPath", "remove directories from the shader path")
         e.info.engine.shaderManager().removeShaderDirectory(arg.string);
 }
 
-COMMAND("togglePause", "toggle the pause state")(const Event<CommandEvent> &e)
+COMMAND("togglePause", "toggle the pause state")
+(const Event<CommandEvent> &e)
 {
     Engine &eng = e.info.engine;
     eng.gameLoop().pause(!eng.gameLoop().paused());

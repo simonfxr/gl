@@ -3,45 +3,34 @@
 
 #include "ge/Command.hpp"
 #include "ge/CommandArgs.hpp"
+#include "pp/pimpl.hpp"
 #include "sys/io/Stream.hpp"
+#include "util/ArrayView.hpp"
 
-#include <map>
-#include <string_view>
+#include <string>
 #include <vector>
 
 namespace ge {
 
 struct Engine;
 
-typedef std::map<std::string, CommandPtr, std::less<>> CommandMap;
-
 struct GE_API CommandProcessor
 {
-public:
-    Engine &_engine;
-    CommandMap commands;
-    std::vector<std::string> scriptDirs;
+    CommandProcessor(Engine &e);
+    ~CommandProcessor() noexcept;
 
-public:
-    CommandProcessor(Engine &e) : _engine(e) {}
-    size_t size() const;
+    bool addScriptDirectory(std::string dir, bool check_exists = true);
+    ArrayView<const std::string> scriptDirectories() const;
 
-    bool addScriptDirectory(std::string_view dir, bool check_exists = true);
-    const std::vector<std::string> &scriptDirectories();
+    Engine &engine();
 
-    Engine &engine() { return _engine; }
-
-    CommandPtr command(std::string_view comname);
+    CommandPtr command(std::string_view comname) const;
 
     bool define(CommandPtr comm, bool unique = false);
 
-    bool define(std::string_view comname, CommandPtr comm, bool unique = false);
-
     bool exec(std::string_view comname, ArrayView<CommandArg> args);
 
-    bool exec(CommandPtr &com,
-              ArrayView<CommandArg> args,
-              std::string_view comname = "");
+    bool exec(CommandPtr &com, ArrayView<CommandArg> args);
 
     bool exec(ArrayView<CommandArg> args);
 
@@ -53,14 +42,12 @@ public:
 
     bool evalCommand(std::string_view cmd);
 
-    // CommandArg cast(const CommandArg &val, CommandType type);
-
-    // static bool isAssignable(CommandParamType lval, CommandType rval);
+    std::vector<CommandPtr> commands() const;
 
     static CommandParamType commandParamType(CommandArgType type);
 
-    CommandProcessor(const CommandProcessor &) = delete;
-    CommandProcessor &operator=(const CommandProcessor &) = delete;
+private:
+    DECLARE_PIMPL(GE_API, self);
 };
 
 } // namespace ge

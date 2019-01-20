@@ -1,9 +1,9 @@
 #include "ge/ReplServer.hpp"
 
-#include "util/string_utils.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Tokenizer.hpp"
 #include "sys/fiber.hpp"
+#include "util/string.hpp"
 
 #include <utility>
 #include <vector>

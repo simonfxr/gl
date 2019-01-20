@@ -1,9 +1,8 @@
 #include "sys/fs.hpp"
 
-#include "util/string_utils.hpp"
 #include "err/err.hpp"
-
-#include <sstream>
+#include "sys/io/Stream.hpp"
+#include "util/string.hpp"
 
 namespace sys {
 namespace fs {
@@ -40,11 +39,10 @@ dropTrailingSeps(std::string_view path)
 std::string
 join(std::string_view path, const char **parts, size_t n)
 {
-    std::stringstream out;
+    sys::io::ByteStream out;
     out << path;
-    for (auto i = size_t{ 0 }; i < n; ++i) {
+    for (auto i = size_t{ 0 }; i < n; ++i)
         out << SEPARATOR << parts[i];
-    }
     return std::move(out).str();
 }
 
@@ -137,7 +135,7 @@ exists(std::string_view path)
 }
 
 std::string
-lookup(const std::vector<std::string> &dirs, std::string_view name)
+lookup(ArrayView<const std::string> dirs, std::string_view name)
 {
     std::string suffix = string_concat("/", name);
 

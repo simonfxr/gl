@@ -73,7 +73,7 @@ void
 TextureData::type(TextureType ty, size_t ss)
 {
     ASSERT((ty == _type && ss == _samples) || *_handle == 0,
-               "cannot change type, texture already created");
+           "cannot change type, texture already created");
     _type = ty;
     _samples = ss;
 }

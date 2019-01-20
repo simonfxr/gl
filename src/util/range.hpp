@@ -4,6 +4,7 @@
 #include "defs.h"
 
 #include <iterator>
+#include <limits>
 
 template<typename T>
 struct IntIterator

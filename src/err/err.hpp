@@ -97,23 +97,23 @@ reportError(sys::io::OutStream &out,
             std::string_view);
 
 #ifdef HU_PRETTY_FUNCTION
-#define ERR_FUNCTION HU_PRETTY_FUNCTION
+#    define ERR_FUNCTION HU_PRETTY_FUNCTION
 #else
-#define ERR_FUNCTION __func__
+#    define ERR_FUNCTION __func__
 #endif
 
 #define ERROR_LOCATION_OP_BASIC(op)                                            \
     ::err::Location(__FILE__, __LINE__, ERR_FUNCTION, op)
 
 #if HU_COMP_GNULIKE_P
-#define ERROR_LOCATION_OP(op)                                                  \
-    ({                                                                         \
-        static constexpr auto PP_CAT(err_loc, __LINE__) =                      \
-          ERROR_LOCATION_OP_BASIC(op);                                         \
-        &PP_CAT(err_loc, __LINE__);                                            \
-    })
+#    define ERROR_LOCATION_OP(op)                                              \
+        ({                                                                     \
+            static constexpr auto PP_CAT(err_loc, __LINE__) =                  \
+              ERROR_LOCATION_OP_BASIC(op);                                     \
+            &PP_CAT(err_loc, __LINE__);                                        \
+        })
 #else
-#define ERROR_LOCATION_OP(op) &ERROR_LOCATION_OP_BASIC(op)
+#    define ERROR_LOCATION_OP(op) &ERROR_LOCATION_OP_BASIC(op)
 #endif
 
 #define ERROR_LOCATION ERROR_LOCATION_OP(nullptr)
@@ -122,24 +122,24 @@ reportError(sys::io::OutStream &out,
     errfun(ERROR_LOCATION_OP(op), lvl, __VA_ARGS__)
 
 #if HU_HAVE_constant_p && HU_COMP_GNULIKE_P
-#define CALL_ERROR_WITH_LEVEL_CHECK_CONSTANT(a, b, ...)                        \
-    hu_constant_p(a) && hu_constant_p(b)
-#define CALL_ERROR_WITH_LEVEL(errfun, lvl, op, ...)                            \
-    do {                                                                       \
-        if (hu_constant_p(lvl) &&                                              \
-            CALL_ERROR_WITH_LEVEL_CHECK_CONSTANT(__VA_ARGS__, 0)) {            \
-            static const auto PP_CAT(_fatal_error_static_callsite_,            \
-                                     __LINE__) =                               \
-              ::err::ErrorStaticCallSite(                                      \
-                ERROR_LOCATION_OP_BASIC(op), lvl, __VA_ARGS__);                \
-            errfun(&PP_CAT(_fatal_error_static_callsite_, __LINE__));          \
-        } else {                                                               \
-            CALL_ERROR_WITH_LEVEL_BASIC(errfun, lvl, op, __VA_ARGS__);         \
-        }                                                                      \
-    } while (0)
+#    define CALL_ERROR_WITH_LEVEL_CHECK_CONSTANT(a, b, ...)                    \
+        hu_constant_p(a) && hu_constant_p(b)
+#    define CALL_ERROR_WITH_LEVEL(errfun, lvl, op, ...)                        \
+        do {                                                                   \
+            if (hu_constant_p(lvl) &&                                          \
+                CALL_ERROR_WITH_LEVEL_CHECK_CONSTANT(__VA_ARGS__, 0)) {        \
+                static const auto PP_CAT(_fatal_error_static_callsite_,        \
+                                         __LINE__) =                           \
+                  ::err::ErrorStaticCallSite(                                  \
+                    ERROR_LOCATION_OP_BASIC(op), lvl, __VA_ARGS__);            \
+                errfun(&PP_CAT(_fatal_error_static_callsite_, __LINE__));      \
+            } else {                                                           \
+                CALL_ERROR_WITH_LEVEL_BASIC(errfun, lvl, op, __VA_ARGS__);     \
+            }                                                                  \
+        } while (0)
 #else
-#define CALL_ERROR_WITH_LEVEL(errfun, lvl, op, ...)                            \
-    CALL_ERROR_WITH_LEVEL_BASIC(errfun, lvl, op, __VA_ARGS__)
+#    define CALL_ERROR_WITH_LEVEL(errfun, lvl, op, ...)                        \
+        CALL_ERROR_WITH_LEVEL_BASIC(errfun, lvl, op, __VA_ARGS__)
 #endif
 
 #define ERROR_WITH_LEVEL(lvl, ...)                                             \
@@ -167,25 +167,25 @@ reportError(sys::io::OutStream &out,
     } while (0)
 
 #ifdef NDEBUG
-#define ASSERT(cond, ...) hu_assume(cond)
-#define UNREACHABLE_MSG(msg) hu_assume_unreachable()
-#define DEBUG_ERR(...) ((void) 0)
-#define DEBUG_ASSERT(...) ((void) 0)
-#define TRACE(...)                                                             \
-    do {                                                                       \
-        __VA_ARGS__;                                                           \
-    } while (0)
+#    define ASSERT(cond, ...) hu_assume(cond)
+#    define UNREACHABLE_MSG(msg) hu_assume_unreachable()
+#    define DEBUG_ERR(...) ((void) 0)
+#    define DEBUG_ASSERT(...) ((void) 0)
+#    define TRACE(...)                                                         \
+        do {                                                                   \
+            __VA_ARGS__;                                                       \
+        } while (0)
 #else
-#define ASSERT(...) ASSERT_ALWAYS(__VA_ARGS__)
-#define UNREACHABLE_MSG(msg)                                                   \
-    FATAL_ERROR_WITH_LEVEL_AND_OP(::err::LogLevel::Assertion, nullptr, msg)
-#define DEBUG_ERR(...) ERR(__VA_ARGS__)
-#define DEBUG_ASSERT(...) ASSERT(__VA_ARGS__)
-#define TRACE(...)                                                             \
-    do {                                                                       \
-        INFO(HU_TOSTR(__VA_ARGS__));                                           \
-        __VA_ARGS__;                                                           \
-    } while (0)
+#    define ASSERT(...) ASSERT_ALWAYS(__VA_ARGS__)
+#    define UNREACHABLE_MSG(msg)                                               \
+        FATAL_ERROR_WITH_LEVEL_AND_OP(::err::LogLevel::Assertion, nullptr, msg)
+#    define DEBUG_ERR(...) ERR(__VA_ARGS__)
+#    define DEBUG_ASSERT(...) ASSERT(__VA_ARGS__)
+#    define TRACE(...)                                                         \
+        do {                                                                   \
+            INFO(HU_TOSTR(__VA_ARGS__));                                       \
+            __VA_ARGS__;                                                       \
+        } while (0)
 #endif
 
 #define UNREACHABLE UNREACHABLE_MSG("assumed to be unreachable")

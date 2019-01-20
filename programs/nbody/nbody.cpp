@@ -21,9 +21,9 @@ static const size_t SIMULATION_FPS = 50;
 #define USE_NO_SIM
 
 #ifdef USE_NO_SIM
-#define SIM_CALL(...)
+#    define SIM_CALL(...)
 #else
-#define SIM_CALL(...) __VA_ARGS__
+#    define SIM_CALL(...) __VA_ARGS__
 #endif
 
 DEF_GL_MAPPED_TYPE(Vertex, (vec3_t, position), (vec3_t, normal))

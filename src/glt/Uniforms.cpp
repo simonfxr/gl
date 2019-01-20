@@ -26,12 +26,12 @@ gltype(const T &x) -> gl_mapped_type_t<T>
     return x;
 }
 
-#ifdef GLDEBUG
+#if ENABLE_GLDEBUG_P
 std::string
 descGLType(GLenum ty)
 {
 
-#define CASE(ty)                                                               \
+#    define CASE(ty)                                                           \
     case ty:                                                                   \
         return #ty;
 
@@ -115,7 +115,7 @@ descGLType(GLenum ty)
         return "unknown OpenGL type";
     }
 
-#undef CASE
+#    undef CASE
 }
 #endif
 
@@ -228,7 +228,7 @@ setUniform(bool mandatory,
         return;
     }
 
-#ifdef GLDEBUG
+#if ENABLE_GLDEBUG_P
 
     GLint num_active;
     GL_CALL(glGetProgramiv, *prog.program(), GL_ACTIVE_UNIFORMS, &num_active);

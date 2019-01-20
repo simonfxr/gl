@@ -3,7 +3,6 @@
 #include "err/err.hpp"
 
 using namespace math;
-using math::sqrt;
 
 inline constexpr real m = 1e15_r;
 inline constexpr real sec = 1e12_r;
@@ -130,7 +129,7 @@ Simulation::init()
 
     /*
      * m_e v^2 = e^2 / (4 pi epsi0) 1/r
-     * v = sqrt(e^2 / (4 pi epsi0 m_red) 1/r)
+     * v = math::sqrt(e^2 / (4 pi epsi0 m_red) 1/r)
      */
 
 #define v(r) math::sqrt(real(e0 *e0 / (4.0 * math::PI * epsi0 * m_e)) * r)

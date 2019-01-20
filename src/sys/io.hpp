@@ -128,7 +128,7 @@ struct OSSocket
     inline constexpr bool is_nil() const { return !socket; }
 };
 #else
-#error "OS not supported"
+#    error "OS not supported"
 #endif
 
 struct Handle

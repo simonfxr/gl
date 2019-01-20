@@ -2,7 +2,7 @@
 #define PP_MAP_MSVC_H
 
 #if defined(_MSVC_TRADITIONAL) && !_MSVC_TRADITIONAL
-#error "do not include this file directly, use pp/map.h"
+#    error "do not include this file directly, use pp/map.h"
 #endif
 
 /**

@@ -1,11 +1,11 @@
 #ifndef GE_COMMAND_HPP
 #define GE_COMMAND_HPP
 
-#include "util/ArrayView.hpp"
 #include "ge/CommandArgs.hpp"
 #include "ge/Command_detail.hpp"
 #include "ge/EngineEvents.hpp"
 #include "ge/conf.hpp"
+#include "util/ArrayView.hpp"
 
 #include <functional>
 #include <memory>

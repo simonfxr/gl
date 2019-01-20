@@ -278,9 +278,7 @@ ByteStream::basic_read(size_t &s, char *buf)
 StreamResult
 ByteStream::basic_write(size_t &s, const char *buf)
 {
-    size_t end = size();
-    buffer.resize(end + s, 0);
-    memcpy(data() + end, buf, s);
+    buffer.append(buf, s);
     return StreamResult::OK;
 }
 

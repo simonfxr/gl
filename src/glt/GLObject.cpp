@@ -5,9 +5,9 @@
 #include <unordered_map>
 
 #if defined(DEBUG_GLOBJECT) || defined(DEBUG_ALL)
-#define DBG(...) __VA_ARGS__
+#    define DBG(...) __VA_ARGS__
 #else
-#define DBG(...)
+#    define DBG(...)
 #endif
 
 namespace glt {

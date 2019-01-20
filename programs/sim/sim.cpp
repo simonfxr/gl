@@ -1,10 +1,10 @@
 #include "sim.hpp"
 
-#include "util/range.hpp"
 #include "math/plane.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "sys/clock.hpp"
+#include "util/range.hpp"
 
 #include <algorithm>
 #include <cstdlib>
@@ -13,23 +13,23 @@
 
 #if 0
 
-#define time_msg(msg, op)                                                      \
-    do {                                                                       \
-        float __t0 = ::sys::queryTimer();                                      \
-        {                                                                      \
-            op                                                                 \
-        }                                                                      \
-        float __delta = ::sys::queryTimer() - __t0;                            \
-        __delta *= 1000.f;                                                     \
-        std::cout << msg << " took " << __delta << " ms" << std::endl;         \
-    } while (0)
+#    define time_msg(msg, op)                                                  \
+        do {                                                                   \
+            float __t0 = ::sys::queryTimer();                                  \
+            {                                                                  \
+                op                                                             \
+            }                                                                  \
+            float __delta = ::sys::queryTimer() - __t0;                        \
+            __delta *= 1000.f;                                                 \
+            std::cout << msg << " took " << __delta << " ms" << std::endl;     \
+        } while (0)
 
 #else
 
-#define time_msg(msg, op)                                                      \
-    do {                                                                       \
-        op                                                                     \
-    } while (0)
+#    define time_msg(msg, op)                                                  \
+        do {                                                                   \
+            op                                                                 \
+        } while (0)
 
 #endif
 

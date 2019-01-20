@@ -13,13 +13,13 @@ set(ERR_LIBS)
 
 set(ERR_DEFINES)
 
-if(USE_UNWIND_STACKTRACES)
-  list(APPEND ERR_DEFINES -DUNWIND_STACKTRACES=1)
-  list(APPEND ERR_LIBS PkgConfig::unwind PkgConfig::dw)
-endif()
-
-if(SYS_WINDOWS)
-  list(APPEND ERR_LIBS Dbghelp)
+if(ENABLE_STACKTRACES)
+  list(APPEND ERR_DEFINES -DENABLE_STACKTRACES=1)
+  if(SYS_UNIX)
+    list(APPEND ERR_LIBS PkgConfig::unwind PkgConfig::dw)
+  elseif(SYS_WINDOWS)
+    list(APPEND ERR_LIBS Dbghelp)
+  endif()
 endif()
 
 set(SYS_LIBS)

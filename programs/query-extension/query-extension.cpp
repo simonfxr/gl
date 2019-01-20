@@ -6,13 +6,13 @@
 #include <cstring>
 
 #ifdef SYSTEM_UNIX
-#include <GL/glxew.h>
-#define GLEW_IS_SUPPORTED(ext) glxewIsSupported((ext))
+#    include <GL/glxew.h>
+#    define GLEW_IS_SUPPORTED(ext) glxewIsSupported((ext))
 #elif defined(SYSTEM_WINDOWS)
-#include <GL/wglew.h>
-#define GLEW_IS_SUPPORTED(ext) wglewIsSupported((ext))
+#    include <GL/wglew.h>
+#    define GLEW_IS_SUPPORTED(ext) wglewIsSupported((ext))
 #else
-#error "unknown system"
+#    error "unknown system"
 #endif
 
 namespace {

@@ -1,10 +1,12 @@
 #include "err/err.hpp"
-#include "util/string_utils.hpp"
+#include "util/string.hpp"
 
 HU_NOINLINE int
 foo()
 {
+#if HU_COMP_GNULIKE_P
     __asm__ __volatile__("" : ::"memory");
+#endif
     return 42;
 }
 

@@ -24,7 +24,7 @@
 #include <memory>
 
 #ifdef HS_WORLD_GEN
-#include <voxel_hs.h>
+#    include <voxel_hs.h>
 #endif
 
 #define USE_PERMUT 1

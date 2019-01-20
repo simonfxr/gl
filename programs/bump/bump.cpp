@@ -22,7 +22,7 @@ DEF_GL_MAPPED_TYPE(Vertex,
                    (vec2_t, uv));
 
 #if 0
-#define sname Vertex
+#    define sname Vertex
 
 struct sname
 {

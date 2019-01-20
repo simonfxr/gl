@@ -30,9 +30,8 @@ TextureRenderTarget::resize(size_t w, size_t h)
         return;
 
     ASSERT(buffers() & RT_COLOR_BUFFER,
-               "TextureRenderTarget without Colorbuffer not supported");
-    ASSERT(!(buffers() & RT_STENCIL_BUFFER),
-               "StencilBuffer not yet supported");
+           "TextureRenderTarget without Colorbuffer not supported");
+    ASSERT(!(buffers() & RT_STENCIL_BUFFER), "StencilBuffer not yet supported");
 
     updateSize(w, h);
 

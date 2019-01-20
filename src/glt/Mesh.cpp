@@ -4,7 +4,7 @@
 #include "util/range.hpp"
 
 #ifdef HU_OS_POSIX
-#include <cstdlib>
+#    include <cstdlib>
 #endif
 
 #include <cstdlib>
@@ -77,7 +77,7 @@ MeshBase::MeshBase(const StructInfo &si,
   , prim_type(prim_ty)
 {
     ASSERT(si.align < alignof(std::max_align_t),
-               "overaligned types not supported");
+           "overaligned types not supported");
     elements.reserve(initial_nelems);
     auto nverts = MIN_NUM_VERTICES;
     while (nverts < initial_nverts)

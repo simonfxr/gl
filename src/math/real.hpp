@@ -10,10 +10,10 @@ namespace math {
 
 #ifdef MATH_REAL_FLOAT
 using real = float;
-#define R_FMT "f"
+#    define R_FMT "f"
 #elif defined(MATH_REAL_DOUBLE)
 using real = double;
-#define R_FMT "lf"
+#    define R_FMT "lf"
 #endif
 
 inline constexpr real PI = real(3.1415926535897932384626433832);

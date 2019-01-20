@@ -70,7 +70,7 @@ struct SphereInstance
 } HU_PACKED;
 HU_END_PACKED
 #else
-#error "no SPHERE_INSTANCED_* specified"
+#    error "no SPHERE_INSTANCED_* specified"
 #endif
 
 DEF_GL_MAPPED_TYPE(Vertex, (vec4_t, position), (vec3_t, normal))
@@ -644,7 +644,7 @@ Game::render_sphere(const Sphere &s, const SphereModel &m)
         us.optional("shininess", m.shininess);
         us.optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
 
-#ifdef GLDEBUG
+#if ENABLE_GLDEBUG_P
         sphereShader->validate();
 #endif
         sphereBatches[lod.level].draw();
@@ -689,7 +689,7 @@ Game::render_box(const glt::AABB &box)
     us.optional("spotAngle", wallUniforms.spotAngle);
     us.optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
 
-#ifdef GLDEBUG
+#if ENABLE_GLDEBUG_P
     wallShader->validate(true);
 #endif
 

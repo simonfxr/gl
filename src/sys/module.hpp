@@ -9,9 +9,9 @@
 #include <memory>
 
 #ifdef DEFINE_SYS_MODULE
-#define SYS_MODULE_ACCESS
+#    define SYS_MODULE_ACCESS
 #else
-#define SYS_MODULE_ACCESS const
+#    define SYS_MODULE_ACCESS const
 #endif
 
 namespace sys {

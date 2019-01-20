@@ -187,10 +187,10 @@ Engine::run(const EngineOptions &opts)
     }
 
     if (opts.traceOpenGL) {
-#ifdef GLDEBUG
+#if ENABLE_GLDEBUG_P
         glt::printOpenGLCalls(true);
 #else
-        WARN("cannot enable OpenGL tracing: not compiled with GLDEBUG");
+        WARN("cannot enable OpenGL tracing: not compiled with ENABLE_GLDEBUG");
 #endif
     }
 

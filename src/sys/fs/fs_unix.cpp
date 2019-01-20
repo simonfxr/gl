@@ -1,8 +1,8 @@
 #include "sys/fs/fs_unix.hpp"
 
-#include "util/string_utils.hpp"
 #include "err/err.hpp"
 #include "sys/fs.hpp"
+#include "util/string.hpp"
 
 #include <cerrno>
 #include <cstring>
@@ -173,7 +173,7 @@ modificationTime(std::string_view path)
 }
 
 std::string
-lookup(const std::vector<std::string> &dirs, std::string_view name)
+lookup(ArrayView<const std::string> dirs, std::string_view name)
 {
     return def::lookup(dirs, name);
 }

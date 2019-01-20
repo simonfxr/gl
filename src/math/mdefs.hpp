@@ -4,9 +4,9 @@
 #include "defs.h"
 
 #if defined(MATH_REAL_FLOAT) && defined(MATH_REAL_DOUBLE)
-#error "MATH_REAL_FLOAT and MATH_REAL_DOUBLE both defined"
+#    error "MATH_REAL_FLOAT and MATH_REAL_DOUBLE both defined"
 #elif !defined(MATH_REAL_FLOAT) && !defined(MATH_REAL_DOUBLE)
-#define MATH_REAL_FLOAT 1
+#    define MATH_REAL_FLOAT 1
 #endif
 
 #endif

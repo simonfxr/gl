@@ -8,7 +8,6 @@
 #include <cstring>
 #include <string>
 #include <string_view>
-#include <vector>
 
 #undef stdin
 #undef stdout
@@ -163,7 +162,8 @@ struct SYS_API ByteStream : public IOStream
     size_t size() const { return buffer.size(); }
     const char *data() const { return buffer.data(); }
     char *data() { return buffer.data(); }
-    std::string str() const { return std::string(data(), size()); }
+    std::string str() const & { return std::string(data(), size()); }
+    std::string str() const && { return std::move(buffer); }
 
     operator std::string_view() const { return { data(), size() }; }
 
@@ -176,7 +176,7 @@ protected:
     StreamResult basic_write(size_t &, const char *) final override;
 
 private:
-    std::vector<char> buffer;
+    std::string buffer;
     size_t read_cursor;
 };
 

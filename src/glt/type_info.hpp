@@ -3,23 +3,23 @@
 
 #include "glt/conf.hpp"
 
-#include "util/ArrayView.hpp"
 #include "glt/color.hpp"
 #include "math/genmat.hpp"
 #include "math/genvec.hpp"
 #include "math/real.hpp"
 #include "pp/enum.hpp"
 #include "pp/map.h"
+#include "util/ArrayView.hpp"
 
 #include <array>
 #include <cstddef>
 
 #if HU_COMP_GNULIKE_P
-#define ti_offsetof(t, fld) __builtin_offsetof(t, fld)
+#    define ti_offsetof(t, fld) __builtin_offsetof(t, fld)
 #elif defined(offsetof)
-#define ti_offsetof offsetof
+#    define ti_offsetof offsetof
 #else
-#error "NEITHER offsetof nor __builtin_offsetof available"
+#    error "NEITHER offsetof nor __builtin_offsetof available"
 #endif
 
 namespace glt {

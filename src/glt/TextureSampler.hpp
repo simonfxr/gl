@@ -1,11 +1,11 @@
 #ifndef GLT_TEXTURE_SAMPLER_HPP
 #define GLT_TEXTURE_SAMPLER_HPP
 
-#include "util/enum_flags.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/TextureData.hpp"
 #include "glt/conf.hpp"
 #include "opengl.hpp"
+#include "util/enum_flags.hpp"
 
 #include <memory>
 

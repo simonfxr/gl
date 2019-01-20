@@ -1,20 +1,20 @@
 #include "err/err.hpp"
 
-#include "util/string_utils.hpp"
+#include "util/string.hpp"
 
 #include <cstdlib>
 
 #ifdef UNWIND_STACKTRACES
-#define UNW_LOCAL_ONLY
-#include <cassert>
-#include <cxxabi.h>
-#include <elfutils/libdwfl.h>
-#include <libunwind.h>
-#include <unistd.h>
+#    define UNW_LOCAL_ONLY
+#    include <cassert>
+#    include <cxxabi.h>
+#    include <elfutils/libdwfl.h>
+#    include <libunwind.h>
+#    include <unistd.h>
 #elif defined(HU_OS_WINDOWS)
-#include <Windows.h>
+#    include <Windows.h>
 
-#include <DbgHelp.h>
+#    include <DbgHelp.h>
 #endif
 
 namespace err {
@@ -135,7 +135,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
     RtlCaptureContext(&context);
 
     STACKFRAME frame = {};
-#ifdef HU_BITS_32
+#    ifdef HU_BITS_32
     DWORD machine = IMAGE_FILE_MACHINE_I386;
     frame.AddrPC.Offset = context.Eip;
     frame.AddrFrame.Offset = context.Ebp;
@@ -143,7 +143,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
     const auto tableAccess = SymFunctionTableAccess;
     const auto getModuleBase = SymGetModuleBase;
     const auto walk = StackWalk;
-#else
+#    else
     DWORD machine = IMAGE_FILE_MACHINE_AMD64;
     frame.AddrPC.Offset = context.Rip;
     frame.AddrFrame.Offset = context.Rbp;
@@ -151,7 +151,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
     const auto tableAccess = SymFunctionTableAccess64;
     const auto getModuleBase = SymGetModuleBase64;
     const auto walk = StackWalk64;
-#endif
+#    endif
     frame.AddrPC.Mode = AddrModeFlat;
     frame.AddrFrame.Mode = AddrModeFlat;
     frame.AddrStack.Mode = AddrModeFlat;

@@ -92,7 +92,8 @@ Sim::acc_x1(real x, real dx_dt, real alpha, real dalpha_dt)
     UNUSED(dx_dt);
     real sin_alpha, cos_alpha;
     sincos(alpha, sin_alpha, cos_alpha);
-    return (l * m2 * sin_alpha * squared(dalpha_dt) + g * m2 * cos_alpha * sin_alpha) /
+    return (l * m2 * sin_alpha * squared(dalpha_dt) +
+            g * m2 * cos_alpha * sin_alpha) /
            (m2 * squared(sin_alpha) + m1);
 }
 

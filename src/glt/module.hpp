@@ -7,9 +7,9 @@
 #include <memory>
 
 #ifdef DEFINE_GLT_MODULE
-#define GLT_MODULE_ACCESS
+#    define GLT_MODULE_ACCESS
 #else
-#define GLT_MODULE_ACCESS const
+#    define GLT_MODULE_ACCESS const
 #endif
 
 namespace glt {

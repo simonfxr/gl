@@ -1,5 +1,5 @@
 #ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS 1
+#    define _CRT_SECURE_NO_WARNINGS 1
 #endif
 
 #define MESH_CUBEMESH
@@ -30,7 +30,7 @@
 #include "math/vec4.hpp"
 #include "sys/fs.hpp"
 #ifdef MESH_CUBEMESH
-#include "glt/CubeMesh.hpp"
+#    include "glt/CubeMesh.hpp"
 #endif
 
 #include "dump_bmp.h"
@@ -54,7 +54,7 @@ using CubeMeshOf = glt::Mesh<T>;
 #include "shaders/glow_pass_constants.h"
 
 #if !(defined(RENDER_GLOW) || defined(RENDER_NOGLOW))
-#error "no glowmode defined"
+#    error "no glowmode defined"
 #endif
 
 using namespace math;

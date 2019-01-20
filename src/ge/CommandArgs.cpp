@@ -1,9 +1,9 @@
 #include "ge/CommandArgs.hpp"
 
-#include "util/range.hpp"
 #include "ge/Command.hpp"
 #include "ge/Commands.hpp"
 #include "sys/io/Stream.hpp"
+#include "util/range.hpp"
 
 #include <algorithm>
 #include <cstring>
