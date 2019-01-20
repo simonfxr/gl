@@ -352,22 +352,22 @@ transpose(const genmat<T, N> &A)
     return B;
 }
 
-// template<typename T>
-// constexpr T
-// determinant(const genmat<T, 2> &A)
-// {
-//     return A[0][0] * A[1][1] - A[0][1] * A[1][0];
-// }
+template<typename T>
+constexpr T
+determinant(const genmat<T, 2> &A)
+{
+    return A[0][0] * A[1][1] - A[0][1] * A[1][0];
+}
 
-// template<typename T>
-// constexpr T
-// determinant(const genmat<T, 3> &A)
-// {
-//     auto d = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]);
-//     d -= A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]);
-//     d += A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
-//     return d;
-// }
+template<typename T>
+constexpr T
+determinant(const genmat<T, 3> &A)
+{
+    auto d = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]);
+    d -= A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]);
+    d += A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+    return d;
+}
 
 template<typename T>
 constexpr T
