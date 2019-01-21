@@ -41,8 +41,6 @@ struct GameWindow::Data
       : self(_self), owning_win(owns_win), win(rw)
     {}
 
-    ~Data();
-
     void init(const WindowOptions &opts);
     void handleInputEvents();
     void setMouse(int16_t x, int16_t y);
@@ -414,22 +412,19 @@ GameWindow::Data::setMouse(int16_t x, int16_t y)
     mouse_y = y;
 }
 
-GameWindow::Data::~Data()
-{
-    delete renderTarget;
-
-    glfwMakeContextCurrent(nullptr);
-
-    if (owning_win) {
-        glfwDestroyWindow(win);
-        win = nullptr;
-    }
-}
-
 GameWindow::GameWindow(const WindowOptions &opts)
   : self(new Data(*this, true, Data::makeWindow(opts)))
 {
     self->init(opts);
+}
+
+GameWindow::~GameWindow()
+{
+    delete self->renderTarget;
+    glfwMakeContextCurrent(nullptr);
+    if (self->owning_win) {
+        glfwDestroyWindow(self->win);
+    }
 }
 
 bool

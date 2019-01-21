@@ -5,9 +5,10 @@
 
 #include "pp/enum.hpp"
 #include "sys/endian.hpp"
+#include "util/Array.hpp"
 
-#include <memory>
 #include <optional>
+#include <string>
 #include <string_view>
 
 namespace sys {
@@ -218,12 +219,12 @@ protected:
     StreamResult flush_buffer();
 };
 
-HU_NODISCARD SYS_API std::pair<std::unique_ptr<char[]>, size_t>
+HU_NODISCARD SYS_API std::string
 readFile(sys::io::OutStream &errout,
          std::string_view path,
          HandleError &err) noexcept;
 
-HU_NODISCARD inline std::pair<std::unique_ptr<char[]>, size_t>
+HU_NODISCARD inline std::string
 readFile(sys::io::OutStream &errout, std::string_view path) noexcept
 {
     HandleError err;

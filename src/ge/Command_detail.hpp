@@ -120,27 +120,18 @@ template<typename T>
 struct Proxy
 {};
 
-inline constexpr auto is_var_arg(CommandArgSeq<>) -> std::false_type
-{
-    return {};
-}
+auto is_var_arg(CommandArgSeq<>) -> std::false_type;
 
-inline constexpr auto
-is_var_arg(CommandArgSeq<ArrayView<const CommandArg>>) -> std::true_type
-{
-    return {};
-}
+auto
+is_var_arg(CommandArgSeq<ArrayView<const CommandArg>>) -> std::true_type;
 
 template<typename T, typename... Ts>
-constexpr auto
+auto
 is_var_arg(CommandArgSeq<T, Ts...>)
-  -> decltype(is_var_arg(CommandArgSeq<Ts...>{}))
-{
-    return {};
-}
+  -> decltype(is_var_arg(CommandArgSeq<Ts...>{}));
 
 template<typename F, typename... Ts, size_t... Is>
-void
+inline void
 invoke_indexed(F &&f,
                CommandArgSeq<Ts...>,
                std::integer_sequence<size_t, Is...>,
@@ -156,7 +147,7 @@ invoke_indexed(F &&f,
 }
 
 template<typename F, typename... Ts, size_t... Is>
-void
+inline void
 invoke_indexed_vararg(F &&f,
                       CommandArgSeq<Ts...>,
                       std::integer_sequence<size_t, Is...>,
@@ -172,7 +163,7 @@ invoke_indexed_vararg(F &&f,
 }
 
 template<typename F, bool VarArg, typename... Ts>
-void
+inline void
 invoke(F &&f,
        std::bool_constant<VarArg>,
        CommandArgSeq<Ts...> arg_seq,
@@ -195,20 +186,14 @@ invoke(F &&f,
 }
 
 template<typename FTraits, size_t... Is>
-constexpr auto
+auto
 make_arg_seq(std::index_sequence<Is...>)
-  -> CommandArgSeq<functor_traits_arg_type<FTraits, Is + 1>...>
-{
-    return {};
-}
+  -> CommandArgSeq<functor_traits_arg_type<FTraits, Is + 1>...>;
 
 template<typename FTraits>
-constexpr auto
-make_arg_seq()
-{
-    return make_arg_seq<FTraits>(
-      std::make_index_sequence<FTraits::arity - 1>{});
-}
+auto
+make_arg_seq() -> decltype(
+  make_arg_seq<FTraits>(std::make_index_sequence<FTraits::arity - 1>{}));
 
 } // namespace detail
 

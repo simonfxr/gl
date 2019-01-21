@@ -41,18 +41,20 @@ struct ShaderManager::Data
       , self(me)
     {}
 
-    ~Data() { self.shutdown(); }
-
 private:
     Data(const Data &) = delete;
     Data &operator=(const Data &) = delete;
 };
 
-DECLARE_PIMPL_DEL(ShaderManager)
-
 ShaderManager::ShaderManager() : self(new Data(*this))
 {
     self->shaderCompiler.init();
+}
+
+ShaderManager::~ShaderManager()
+{
+    shutdown();
+    delete self;
 }
 
 void
@@ -117,7 +119,7 @@ ShaderManager::addProgram(const std::string &name,
 std::shared_ptr<ShaderProgram>
 ShaderManager::declareProgram(const std::string &name)
 {
-    std::shared_ptr<ShaderProgram> prog(new ShaderProgram(*this));
+    auto prog = std::make_shared<ShaderProgram>(*this);
     self->programs[name] = prog;
     return prog;
 }

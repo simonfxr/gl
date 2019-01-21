@@ -95,7 +95,7 @@ CommandProcessor::define(CommandPtr comm, bool unique)
 
     const auto &comname = comm->name();
     if (comname.empty()) {
-        ERR(engine().out(), "cannot define command without name");
+        ERR(engine().out(), "cannot define command without a name");
         return false;
     }
 

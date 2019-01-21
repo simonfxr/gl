@@ -63,12 +63,6 @@ struct Engine::Data : public GameLoop::Game
       , out(&sys::io::stdout())
     {}
 
-    ~Data()
-    {
-        renderManager.shutdown();
-        shaderManager.shutdown();
-    }
-
     bool init(const EngineOptions &opts);
 
     void tick() final;
@@ -96,7 +90,11 @@ runInit(EventSource<InitEvent> &source, const Event<InitEvent> &e);
 
 Engine::Engine() : self(new Data(*this)) {}
 
-Engine::~Engine() = default;
+Engine::~Engine()
+{
+    self->renderManager.shutdown();
+    self->shaderManager.shutdown();
+}
 
 GameWindow &
 Engine::window()
@@ -366,7 +364,7 @@ namespace {
 bool
 runInit(EventSource<InitEvent> &source, const Event<InitEvent> &e)
 {
-    for (auto &handler : source.handlers) {
+    for (auto &handler : source.handlers()) {
         e.info.success = false;
         handler->handle(e);
         if (!e.info.success) {

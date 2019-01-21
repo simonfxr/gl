@@ -201,7 +201,7 @@ HandleStream::open(std::string_view path, HandleMode mode, HandleError &err)
     return { std::move(opt_h).value() };
 }
 
-std::pair<std::unique_ptr<char[]>, size_t>
+std::string
 readFile(sys::io::OutStream &errout,
          std::string_view path,
          HandleError &err) noexcept
@@ -211,18 +211,16 @@ readFile(sys::io::OutStream &errout,
         goto fail;
     {
         auto h = std::move(opt_h).value();
-        std::vector<char> vec;
+        std::string str;
         for (;;) {
             char buf[8192];
             auto size = sizeof buf;
             err = read(h, size, buf);
             if (size > 0)
-                vec.insert(vec.end(), buf, buf + size);
+                str.insert(str.end(), buf, buf + size);
             if (err == HandleError::EOF) {
-                auto data = std::make_unique<char[]>(vec.size() + 1);
-                memcpy(data.get(), vec.data(), vec.size());
-                data[vec.size()] = '\0';
-                return std::make_pair(std::move(data), vec.size());
+                err = HandleError::OK;
+                return str;
             }
             if (err != HandleError::OK)
                 goto fail;
@@ -232,7 +230,7 @@ fail:
     if (errout.writeable())
         errout << "unable to read file: " << path << sys::io::endl;
 
-    return std::make_pair(nullptr, 0);
+    return {};
 } // namespace io
 
 } // namespace io

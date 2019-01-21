@@ -51,8 +51,6 @@ struct RenderManager::Data
     Data(RenderManager &self_) : transformStateBOS(transform, 0, 0), self(self_)
     {}
 
-    ~Data() { self.shutdown(); }
-
     void beginStats();
     void endStats();
 };
@@ -60,6 +58,11 @@ struct RenderManager::Data
 DECLARE_PIMPL_DEL(RenderManager)
 
 RenderManager::RenderManager() : self(new Data(*this)) {}
+
+RenderManager::~RenderManager()
+{
+    shutdown();
+}
 
 void
 RenderManager::shutdown()

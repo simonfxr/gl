@@ -4,14 +4,14 @@
 
 #include <cstdlib>
 
-#ifdef UNWIND_STACKTRACES
+#if defined(ENABLE_STACKTRACES) && HU_OS_POSIX_P
 #    define UNW_LOCAL_ONLY
 #    include <cassert>
 #    include <cxxabi.h>
 #    include <elfutils/libdwfl.h>
 #    include <libunwind.h>
 #    include <unistd.h>
-#elif defined(HU_OS_WINDOWS)
+#elif defined(ENABLE_STACKTRACES) && defined(HU_OS_WINDOWS)
 #    include <Windows.h>
 
 #    include <DbgHelp.h>
@@ -21,7 +21,7 @@ namespace err {
 
 using LL = LogLevel;
 
-#ifdef UNWIND_STACKTRACES
+#if defined(ENABLE_STACKTRACES) && HU_OS_POSIX_P
 
 namespace {
 
@@ -110,7 +110,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
     out << "  end of stacktrace" << sys::io::endl;
 }
 
-#elif defined(HU_OS_WINDOWS)
+#elif defined(ENABLE_STACKTRACES) && HU_OS_WINDOWS_P
 
 struct ProcessContext
 {

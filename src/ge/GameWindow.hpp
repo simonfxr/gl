@@ -53,6 +53,7 @@ struct GE_API WindowOptions
 struct GE_API GameWindow
 {
     GameWindow(const WindowOptions &opts = WindowOptions());
+    ~GameWindow();
 
     void showMouseCursor(bool show);
     bool showMouseCursor() const;

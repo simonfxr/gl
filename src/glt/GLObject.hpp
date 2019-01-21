@@ -50,7 +50,7 @@ struct GLObjectBase
 
     explicit constexpr GLObjectBase(GLuint name = 0) : _name(name) {}
 
-    constexpr GLObjectBase(const GLObjectBase &&rhs)
+    constexpr GLObjectBase(GLObjectBase &&rhs)
       : _name(std::exchange(rhs._name, 0))
     {}
 

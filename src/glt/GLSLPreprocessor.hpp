@@ -42,7 +42,7 @@ struct GLT_API GLSLPreprocessor : public Preprocessor
 
     std::vector<uint32_t> segLengths;
     std::vector<const char *> segments;
-    std::vector<std::unique_ptr<char[]>> contents;
+    std::vector<std::string> contents;
 
     std::unique_ptr<ProcessingState, ProcessingStateDeleter> state;
 

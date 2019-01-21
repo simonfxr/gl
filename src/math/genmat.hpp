@@ -2,6 +2,7 @@
 #define GL_MATH_GENMAT_HPP
 
 #include "math/genvec.hpp"
+#include "math/math.hpp"
 #include "math/real.hpp"
 
 #include <array>
@@ -59,9 +60,6 @@
 namespace math {
 
 template<typename T, size_t N>
-struct gltype_mat_mapping;
-
-template<typename T, size_t N>
 struct genmat;
 
 template<typename T>
@@ -84,23 +82,29 @@ struct genmat
     static inline constexpr size_t size = N * N;
     static inline constexpr size_t padded_size = N * column_type::padded_size;
     using buffer = T[size];
-    using gl = typename gltype_mat_mapping<T, N>::type;
 
     column_type columns[N];
 
-    constexpr column_type &operator[](size_t i) { return columns[i]; }
-
-    constexpr const column_type &operator[](size_t i) const
+    HU_FORCE_INLINE constexpr column_type &operator[](size_t i)
     {
         return columns[i];
     }
 
-    constexpr inline const T &operator()(size_t i, size_t j) const
+    HU_FORCE_INLINE constexpr const column_type &operator[](size_t i) const
+    {
+        return columns[i];
+    }
+
+    HU_FORCE_INLINE constexpr inline const T &operator()(size_t i,
+                                                         size_t j) const
     {
         return columns[i][j];
     }
 
-    constexpr inline T &operator()(size_t i, size_t j) { return columns[i][j]; }
+    HU_FORCE_INLINE constexpr inline T &operator()(size_t i, size_t j)
+    {
+        return columns[i][j];
+    }
 
     template<typename F>
     constexpr auto map(F &&f) const
@@ -201,13 +205,7 @@ struct genmat
 #undef DEF_GENMAT_SCALAR_OP_BOTH
 
 template<typename T, size_t N>
-struct gltype_mat_mapping
-{
-    using type = void;
-};
-
-template<typename T, size_t N>
-constexpr void
+inline constexpr void
 load(T *buffer, const genmat<T, N> &v)
 {
     for (size_t i = 0; i < N; ++i)
@@ -219,7 +217,7 @@ template<typename T,
          typename U,
          size_t N,
          typename = std::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>
-constexpr auto operator*(const T &lhs, const genmat<U, N> &rhs)
+inline constexpr auto operator*(const T &lhs, const genmat<U, N> &rhs)
 {
     using V = std::decay_t<decltype(lhs * rhs[0][0])>;
     genmat<V, N> ret{};
@@ -230,7 +228,7 @@ constexpr auto operator*(const T &lhs, const genmat<U, N> &rhs)
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto operator*(const genmat<T, N> &A, const genvec<U, N> &v)
+inline constexpr auto operator*(const genmat<T, N> &A, const genvec<U, N> &v)
 {
     using V = decltype(A[0][0] * v[0]);
     genvec<V, N> u{};
@@ -241,14 +239,15 @@ constexpr auto operator*(const genmat<T, N> &A, const genvec<U, N> &v)
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto
+inline constexpr auto
 transform(const genmat<T, N> &A, const genvec<U, N> &v)
 {
     return A * v;
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto operator*(const genmat<T, N> &A, const genmat<U, N> &B)
+HU_FORCE_INLINE inline constexpr auto
+inline_mat_mul(const genmat<T, N> &A, const genmat<U, N> &B)
 {
     using V = decltype(A[0][0] * B[0][0]);
     genmat<V, N> C{};
@@ -260,14 +259,45 @@ constexpr auto operator*(const genmat<T, N> &A, const genmat<U, N> &B)
 }
 
 template<typename T, typename U, size_t N>
-constexpr genmat<T, N> &
-operator*=(genmat<T, N> &A, const genmat<U, N> &B)
+inline constexpr auto operator*(const genmat<T, N> &A, const genmat<U, N> &B)
+  -> genmat<decltype(A[0][0] * B[0][0]), N>
 {
-    return A = A * B;
+    return inline_mat_mul(A, B);
 }
 
+extern template MATH_API genmat<float, 3> operator*(const genmat<float, 3> &,
+                                                    const genmat<float, 3> &);
+
+extern template MATH_API genmat<double, 3> operator*(const genmat<double, 3> &,
+                                                     const genmat<double, 3> &);
+
+extern template MATH_API genmat<float, 4> operator*(const genmat<float, 4> &,
+                                                    const genmat<float, 4> &);
+
+extern template MATH_API genmat<double, 4> operator*(const genmat<double, 4> &,
+                                                     const genmat<double, 4> &);
+
 template<typename T, typename U, size_t N>
-constexpr bool
+inline constexpr genmat<T, N> &
+operator*=(genmat<T, N> &A, const genmat<U, N> &B)
+{
+    return A = inline_mat_mul(A, B);
+}
+
+extern template MATH_API genmat<float, 3> &
+operator*=(genmat<float, 3> &, const genmat<float, 3> &);
+
+extern template MATH_API genmat<double, 3> &
+operator*=(genmat<double, 3> &, const genmat<double, 3> &);
+
+extern template MATH_API genmat<float, 4> &
+operator*=(genmat<float, 4> &, const genmat<float, 4> &);
+
+extern template MATH_API genmat<double, 4> &
+operator*=(genmat<double, 4> &, const genmat<double, 4> &);
+
+template<typename T, typename U, size_t N>
+inline constexpr bool
 operator==(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
 {
     for (size_t i = 0; i < N; ++i)
@@ -278,14 +308,14 @@ operator==(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
 }
 
 template<typename T, typename U, size_t N>
-constexpr bool
+inline constexpr bool
 operator!=(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
 {
     return !(lhs == rhs);
 }
 
 template<typename T, size_t N>
-constexpr genvec<T, N>
+inline constexpr genvec<T, N>
 sum(const genmat<T, N> &v)
 {
     genvec<T, N> ret{};
@@ -295,7 +325,7 @@ sum(const genmat<T, N> &v)
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto
+inline constexpr auto
 min(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
 {
     return lhs.map(rhs, [](const T &x, const U &y) {
@@ -305,7 +335,7 @@ min(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto
+inline constexpr auto
 max(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
 {
     return lhs.map(rhs, [](const T &x, const U &y) {
@@ -315,7 +345,7 @@ max(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
 }
 
 template<typename T, size_t N>
-constexpr auto
+inline constexpr auto
 abs(const genmat<T, N> &v)
 {
     return v.map([](const T &x) {
@@ -325,14 +355,14 @@ abs(const genmat<T, N> &v)
 }
 
 template<typename T, typename U, typename V, size_t N>
-constexpr auto
+inline constexpr auto
 lerp(const genmat<T, N> &a, const genmat<U, N> &b, const V &t)
 {
     return a + (b - a) * t;
 }
 
 template<typename T, size_t N, typename U>
-constexpr bool
+inline constexpr bool
 equal(const genmat<T, N> &a, const genmat<T, N> &b, const U &epsi)
 {
     for (size_t i = 0; i < N; ++i)
@@ -342,7 +372,7 @@ equal(const genmat<T, N> &a, const genmat<T, N> &b, const U &epsi)
 }
 
 template<typename T, size_t N>
-constexpr genmat<T, N>
+inline constexpr genmat<T, N>
 transpose(const genmat<T, N> &A)
 {
     genmat<T, N> B{};
@@ -353,14 +383,14 @@ transpose(const genmat<T, N> &A)
 }
 
 template<typename T>
-constexpr T
+inline constexpr T
 determinant(const genmat<T, 2> &A)
 {
     return A[0][0] * A[1][1] - A[0][1] * A[1][0];
 }
 
 template<typename T>
-constexpr T
+inline constexpr T
 determinant(const genmat<T, 3> &A)
 {
     auto d = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]);
@@ -370,7 +400,7 @@ determinant(const genmat<T, 3> &A)
 }
 
 template<typename T>
-constexpr T
+inline constexpr T
 determinant(const genmat<T, 4> &A)
 {
     auto d = A[0][0] * (A[1][1] * (A[2][2] * A[3][3] - A[2][3] * A[3][2]) -
@@ -389,7 +419,7 @@ determinant(const genmat<T, 4> &A)
 }
 
 template<typename T>
-constexpr genmat<T, 2>
+inline constexpr genmat<T, 2>
 inverse(const genmat<T, 2> &A)
 {
     genmat<T, 2> B{};
@@ -401,7 +431,7 @@ inverse(const genmat<T, 2> &A)
 }
 
 template<typename T>
-constexpr genmat<T, 3>
+inline constexpr genmat<T, 3>
 inverse(const genmat<T, 3> &A)
 {
     const auto AT = transpose(A);
@@ -440,8 +470,14 @@ inverse(const genmat<T, 3> &A)
     return transpose(genmat<T, 3>::load(a));
 }
 
+extern template MATH_API genmat<float, 3>
+inverse(const genmat<float, 3> &A);
+
+extern template MATH_API genmat<double, 3>
+inverse(const genmat<double, 3> &);
+
 template<typename T>
-constexpr genmat<T, 4>
+inline constexpr genmat<T, 4>
 inverse(const genmat<T, 4> &A)
 {
     auto m = &A[0][0];
@@ -491,8 +527,14 @@ inverse(const genmat<T, 4> &A)
     return Ainv * recip(det);
 }
 
+extern template MATH_API genmat<float, 4>
+inverse(const genmat<float, 4> &A);
+
+extern template MATH_API genmat<double, 4>
+inverse(const genmat<double, 4> &A);
+
 template<typename T>
-genmat<T, 3>
+inline genmat<T, 3>
 orthonormalBasis(const genmat<T, 3> &A)
 {
     auto u = normalize(A[0]);
@@ -501,7 +543,7 @@ orthonormalBasis(const genmat<T, 3> &A)
 }
 
 template<typename T>
-constexpr genmat<T, 3>
+inline constexpr genmat<T, 3>
 coordinateSystem(const genvec<T, 3> &a)
 {
     auto aa = abs(a);
@@ -518,7 +560,7 @@ coordinateSystem(const genvec<T, 3> &a)
 }
 
 template<typename OStream, typename T, size_t N>
-OStream &
+inline OStream &
 operator<<(OStream &out, const genmat<T, N> &A)
 {
     out << "mat" << N << "[";
@@ -548,7 +590,7 @@ struct tuple_size<math::genmat<T, N>> : public std::integral_constant<size_t, N>
 END_NO_WARN_MISMATCHED_TAGS
 
 template<size_t I, typename T, size_t N>
-const math::genvec<T, N> &
+HU_FORCE_INLINE inline const math::genvec<T, N> &
 get(const math::genmat<T, N> &A)
 {
     static_assert(I < N);
@@ -556,7 +598,7 @@ get(const math::genmat<T, N> &A)
 }
 
 template<size_t I, typename T, size_t N>
-math::genvec<T, N> &
+HU_FORCE_INLINE inline math::genvec<T, N> &
 get(math::genmat<T, N> &A)
 {
     static_assert(I < N);

@@ -12,10 +12,9 @@
 #include "sys/fs.hpp"
 
 #include <memory>
-#include <queue>
 #include <string>
+#include <string_view>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace glt {
@@ -66,15 +65,13 @@ enum ReloadState : uint8_t
     Outdated
 };
 
-struct GLT_API ShaderSource
+struct GLT_API ShaderSource : std::enable_shared_from_this<ShaderSource>
 {
-    static std::shared_ptr<ShaderSource> makeStringSource(
-      ShaderType ty,
-      const std::string &source);
+    static std::shared_ptr<ShaderSource> makeStringSource(ShaderType ty,
+                                                          std::string source);
 
-    static std::shared_ptr<ShaderSource> makeFileSource(
-      ShaderType ty,
-      const std::string &path);
+    static std::shared_ptr<ShaderSource> makeFileSource(ShaderType ty,
+                                                        std::string path);
 
     const ShaderSourceKey &key() const;
 
@@ -90,10 +87,11 @@ public:
     explicit ShaderSource(Data &&);
 };
 
-struct GLT_API ShaderObject
+struct GLT_API ShaderObject : std::enable_shared_from_this<ShaderObject>
 {
     const GLShaderObject &handle() const;
     const std::shared_ptr<ShaderSource> &shaderSource();
+    ~ShaderObject();
 
 private:
     friend struct ShaderCompiler;
@@ -102,38 +100,40 @@ private:
     friend struct ShaderCache;
 
     DECLARE_PIMPL(GLT_API, self);
+    struct InitArgs;
 
 public:
-    ShaderObject(Data *);
+    ShaderObject(InitArgs &&);
 };
 
-struct GLT_API ShaderCache
+struct GLT_API ShaderCache : std::enable_shared_from_this<ShaderCache>
 {
-    void flush();
     ShaderCache();
+    ~ShaderCache();
 
-    static bool remove(
-      const std::shared_ptr<ShaderCache> & /* pointer to this */,
-      ShaderObject *);
+    void flush();
 
-    static bool put(const std::shared_ptr<ShaderCache> & /* pointer to this */,
-                    const std::shared_ptr<ShaderObject> &);
-
+    bool remove(ShaderObject *);
+    bool put(const std::shared_ptr<ShaderObject> &);
     std::shared_ptr<ShaderObject> lookup(const ShaderSourceKey &);
-
     const ShaderCacheEntries &cacheEntries() const;
 
 private:
     DECLARE_PIMPL(GLT_API, self);
 };
 
+// clang-format off
 #define GLT_SHADER_COMPILER_ERROR_ENUM_DEF(T, V0, V)                           \
     T(ShaderCompilerError,                                                     \
       uint8_t,                                                                 \
-      V0(NoError) V(CouldntGuessShaderType) V(InvalidShaderType)               \
-        V(FileNotFound) V(FileNotInShaderPath) V(CompilationFailed)            \
-          V(OpenGLError))
-
+      V0(NoError)                                                              \
+      V(CouldntGuessShaderType)                                                \
+      V(InvalidShaderType)                                                     \
+      V(FileNotFound)                                                          \
+      V(FileNotInShaderPath)                                                   \
+      V(CompilationFailed)                                                     \
+      V(OpenGLError))
+// clang-format on
 PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_COMPILER_ERROR_ENUM_DEF);
 
 struct GLT_API ShaderCompiler
@@ -145,7 +145,7 @@ struct GLT_API ShaderCompiler
 
     void init();
 
-    static bool guessShaderType(const std::string &path, ShaderType *res);
+    static bool guessShaderType(std::string_view path, ShaderType *res);
 
 private:
     friend struct ShaderSource;

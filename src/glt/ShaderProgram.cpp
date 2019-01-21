@@ -48,39 +48,53 @@ struct ShaderProgram::Data
 
     Data(ShaderProgram &owner, const Data &rhs)
       : self(owner)
-      , program(0)
+      , program()
       , sm(rhs.sm)
-      , shaders(rhs.shaders)
+      , shaders()
       , rootdeps(rhs.rootdeps)
       , attrs(rhs.attrs)
       , linked(false)
     {}
-
-    ~Data() { self.reset(); }
 
     bool createProgram();
 
     void printProgramLog(GLuint program, sys::io::OutStream &out);
 
     void handleCompileError(ShaderCompilerError /*unused*/);
+
+    void swap(Data &rhs)
+    {
+        if (this == &rhs)
+            return;
+        ASSERT(&sm == &rhs.sm);
+        using std::swap;
+        swap(program, rhs.program);
+        swap(shaders, rhs.shaders);
+        swap(rootdeps, rhs.rootdeps);
+        swap(attrs, rhs.attrs);
+        swap(linked, rhs.linked);
+    }
 };
 
 DECLARE_PIMPL_DEL(ShaderProgram)
 
 ShaderProgram::ShaderProgram(ShaderManager &sm) : self(new Data(*this, sm)) {}
 
-ShaderProgram::ShaderProgram(const ShaderProgram &prog)
-  : self(new Data(*this, *prog.self))
-{}
+ShaderProgram::ShaderProgram(const Data &rhs) : self(new Data(*this, rhs)) {}
+
+ShaderProgram::~ShaderProgram()
+{
+    reset();
+}
 
 void
 ShaderProgram::reset()
 {
     self->program.release();
-    clearError();
     self->shaders.clear();
-    self->attrs.clear();
     self->rootdeps.clear();
+    self->attrs.clear();
+    clearError();
 }
 
 bool
@@ -111,11 +125,10 @@ ShaderProgram::reload()
     if (unchanged)
         return true;
 
-    ShaderProgram new_prog(*this);
+    ShaderProgram new_prog(*this->self);
     new_prog.self->shaders = newshaders;
-    if (new_prog.tryLink()) {
+    if (new_prog.tryLink())
         return replaceWith(new_prog);
-    }
     return false;
 }
 
@@ -339,7 +352,6 @@ ShaderProgram::bindAttribute(const std::string &s, GLuint position)
 void
 ShaderProgram::use()
 {
-
     if (!self->program.valid() || !self->linked) {
         RAISE_ERR(*this, ShaderProgramError::APIError, "program not linked");
         return;
@@ -364,7 +376,7 @@ ShaderProgram::replaceWith(ShaderProgram &new_prog)
 
     if (new_prog.self->program.valid() &&
         new_prog.getError() == ShaderProgramError::NoError) {
-        self.swap(new_prog.self);
+        self->swap(*new_prog.self);
         return true;
     }
 

@@ -66,6 +66,8 @@ if(ERR_DEFINES)
   target_compile_definitions(sys PRIVATE ${ERR_DEFINES})
 endif()
 
+def_lib(math SOURCES math/math.cpp DEPEND sys)
+
 set(GLT_SRC
     glt/Frame.cpp
     glt/GLDebug.cpp
@@ -91,7 +93,7 @@ set(GLT_SRC
     glt/type_info.cpp
     glt/utils.cpp)
 
-set(GLT_LIBS OpenGL::GL glfw glad)
+set(GLT_LIBS OpenGL::GL glfw glad math)
 
 if(SYS_LINUX)
   set(GLT_LIBS ${GLT_LIBS} X11)

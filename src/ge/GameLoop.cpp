@@ -35,7 +35,7 @@ struct GameLoop::Data
     time now();
 };
 
-DECLARE_PIMPL_DEL(GameLoop)
+DECLARE_PIMPL_DEL_AUDIT(GameLoop)
 
 GameLoop::time
 GameLoop::Data::now()

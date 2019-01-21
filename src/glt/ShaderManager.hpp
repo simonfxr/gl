@@ -40,6 +40,7 @@ PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_TYPE_ENUM_DEF);
 struct GLT_API ShaderManager
 {
     ShaderManager();
+    ~ShaderManager();
 
     std::shared_ptr<ShaderProgram> program(const std::string &name) const;
     void addProgram(const std::string &name,
@@ -85,7 +86,8 @@ struct GLT_API ShaderManager
     static uint32_t glToShaderVersion(uint32_t maj, uint32_t min);
 
 private:
-    DECLARE_PIMPL(GLT_API, self);
+    struct Data;
+    Data *const self;
 };
 
 } // namespace glt

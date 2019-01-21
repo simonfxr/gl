@@ -62,7 +62,7 @@ struct GeometryTransform::Data
     }
 };
 
-DECLARE_PIMPL_DEL(GeometryTransform)
+DECLARE_PIMPL_DEL_AUDIT(GeometryTransform)
 
 GeometryTransform::GeometryTransform() : self(new Data) {}
 

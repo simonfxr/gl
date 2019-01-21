@@ -306,16 +306,17 @@ Anim::initCLKernels(bool *success)
 {
     cl_int cl_err;
 
-    auto [source_code, code_size] =
-      sys::io::readFile(engine.out(), "programs/mc/cl/program.cl");
+    sys::io::HandleError err;
+    auto source_code =
+      sys::io::readFile(engine.out(), "programs/mc/cl/program.cl", err);
 
-    if (!source_code) {
+    if (err != sys::io::HandleError::OK) {
         ERR("failed reading CL program");
         return;
     }
 
-    cl::Program::Sources source(1,
-                                std::make_pair(source_code.get(), code_size));
+    cl::Program::Sources source(
+      1, std::make_pair(source_code.data(), source_code.size()));
     cl_program = cl::Program(cl_ctx, source, &cl_err);
     CL_ERR("creating program failed");
 

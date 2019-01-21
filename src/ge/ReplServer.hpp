@@ -13,8 +13,8 @@ struct Engine;
 
 struct GE_API ReplServer
 {
-
     ReplServer(Engine &);
+    ~ReplServer();
 
     bool start(const sys::io::IPAddr4 &, uint16_t);
     bool running();

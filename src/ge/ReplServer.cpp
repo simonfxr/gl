@@ -152,12 +152,6 @@ struct ReplServer::Data
          std::shared_ptr<EventHandler<InputEvent>> _handler)
       : self(self_), engine(e), io_handler(std::move(_handler))
     {}
-
-    ~Data()
-    {
-        if (running)
-            self.shutdown();
-    }
 };
 
 DECLARE_PIMPL_DEL(ReplServer)
@@ -167,6 +161,12 @@ ReplServer::ReplServer(Engine &e)
                   e,
                   makeEventHandler(*this, &ReplServer::handleInputEvent)))
 {}
+
+ReplServer::~ReplServer()
+{
+    if (self->running)
+        shutdown();
+}
 
 bool
 ReplServer::start(const IPAddr4 &listen_addr, uint16_t port)

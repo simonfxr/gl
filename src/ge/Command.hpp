@@ -85,6 +85,7 @@ struct FunctorCommand : public Command
       : Command(make_params(arg_seq{}), std::move(name), std::move(descr))
       , _f(std::move(f_))
     {}
+    ~FunctorCommand() override = default;
 
     void interactive(const Event<CommandEvent> &ev,
                      ArrayView<const CommandArg> args) final override
@@ -112,15 +113,17 @@ private:
 };
 
 template<typename F>
-std::shared_ptr<Command>
+inline std::shared_ptr<Command>
 makeCommand(std::string name, std::string descr, F &&f)
 {
-    return std::make_shared<FunctorCommand<std::decay_t<F>>>(
-      std::move(name), std::move(descr), std::forward<F>(f));
+    // avoid excessive std::shared_ptr<XX> template instantiations
+    return std::shared_ptr<Command>{ static_cast<Command *>(
+      new FunctorCommand<std::decay_t<F>>(
+        std::move(name), std::move(descr), std::forward<F>(f))) };
 }
 
 template<typename T, typename... Args>
-std::shared_ptr<Command>
+inline std::shared_ptr<Command>
 makeCommand(std::string name,
             std::string descr,
             T &receiver,

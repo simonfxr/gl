@@ -23,9 +23,12 @@ namespace glt {
 
 PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_PROGRAM_ERROR_ENUM_DEF);
 
-struct GLT_API ShaderProgram : public err::WithError<ShaderProgramError>
+struct GLT_API ShaderProgram
+  : public std::enable_shared_from_this<ShaderProgram>
+  , public err::WithError<ShaderProgramError>
 {
     ShaderProgram(ShaderManager &sm);
+    ~ShaderProgram();
 
     ShaderManager &shaderManager();
 
@@ -65,9 +68,14 @@ struct GLT_API ShaderProgram : public err::WithError<ShaderProgramError>
 
     bool validate(bool printLogOnError = true);
 
+    std::shared_ptr<ShaderProgram> get_shared_ptr()
+    {
+        return shared_from_this();
+    }
+
 private:
-    DECLARE_MUT_PIMPL(GLT_API, self);
-    ShaderProgram(const ShaderProgram &);
+    DECLARE_PIMPL(GLT_API, self);
+    ShaderProgram(const Data &);
 };
 
 using ShaderProgramRef = std::shared_ptr<ShaderProgram>;

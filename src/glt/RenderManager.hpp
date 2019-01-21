@@ -74,6 +74,7 @@ struct GLT_API Projection
 struct GLT_API RenderManager
 {
     RenderManager();
+    ~RenderManager();
 
     const ViewFrustum &viewFrustum() const;
 

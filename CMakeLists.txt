@@ -28,7 +28,7 @@ set_option(BUILD_SHARED_LIBS
 message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
 
 if(COMP_CLANG)
-  set_option(ENABLE_LIBCXX True BOOL "True to use libc++ when compiling with clang")
+  set_option(ENABLE_LIBCXX False BOOL "True to use libc++ when compiling with clang")
 endif()
 
 set(gldebug_default True)

@@ -23,10 +23,10 @@ struct CommandDecl
 };
 
 template<typename F>
-std::shared_ptr<Command>
-operator+(CommandDecl &&decl, F &&effect)
+inline std::shared_ptr<Command>
+operator+(CommandDecl &&decl, F f)
 {
-    return makeCommand(decl.name, decl.descr, std::forward<F>(effect));
+    return makeCommand(decl.name, decl.descr, decay_stateless_functor(f));
 }
 
 struct InitCommandHandler : public EventHandler<InitEvent>

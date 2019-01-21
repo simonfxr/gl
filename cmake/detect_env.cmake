@@ -13,17 +13,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   set(SYS_UNIX True)
 endif()
 
-include(CheckTypeSize)
-check_type_size(void* SIZEOF_VOID_PTR)
-if(${SIZEOF_VOID_PTR} EQUAL "4")
-  set(BITS32 True)
-elseif(${SIZEOF_VOID_PTR} EQUAL "8")
-  set(BITS64 True)
-else()
-  message(FATAL_ERROR "Unsupported architecture")
-  return()
-endif()
-
 if(MSVC
    OR MSVC_IDE
    OR CMAKE_COMPILER_2005

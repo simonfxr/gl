@@ -53,9 +53,6 @@
 namespace math {
 
 template<typename T, size_t N>
-struct gltype_mapping;
-
-template<typename T, size_t N>
 struct genvec;
 
 template<typename T>
@@ -76,13 +73,15 @@ struct genvec
     static const size_t padded_size = N;
     using component_type = T;
     using buffer = T[N];
-    using gl = typename gltype_mapping<T, N>::type;
 
     T components[N];
 
-    constexpr T &operator[](size_t i) { return components[i]; }
+    HU_FORCE_INLINE constexpr T &operator[](size_t i) { return components[i]; }
 
-    constexpr const T &operator[](size_t i) const { return components[i]; }
+    HU_FORCE_INLINE constexpr const T &operator[](size_t i) const
+    {
+        return components[i];
+    }
 
     template<typename F>
     constexpr auto map(F &&f) const
@@ -171,13 +170,7 @@ struct genvec
 #undef DEF_GENVEC_SCALAR_OP_BOTH
 
 template<typename T, size_t N>
-struct gltype_mapping
-{
-    using type = void;
-};
-
-template<typename T, size_t N>
-constexpr void
+inline constexpr void
 load(T *buffer, const genvec<T, N> &v)
 {
     for (size_t i = 0; i < N; ++i)
@@ -185,20 +178,20 @@ load(T *buffer, const genvec<T, N> &v)
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto operator*(const T &lhs, const genvec<U, N> &rhs)
+inline constexpr auto operator*(const T &lhs, const genvec<U, N> &rhs)
 {
     return rhs.map([&](const U &x) { return lhs * x; });
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto
+inline constexpr auto
 operator/(const T &lhs, const genvec<U, N> &rhs)
 {
     return rhs.map([&](const U &x) { return lhs / x; });
 }
 
 template<typename T, typename U, size_t N>
-constexpr bool
+inline constexpr bool
 operator==(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 {
     for (size_t i = 0; i < N; ++i)
@@ -208,14 +201,14 @@ operator==(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 }
 
 template<typename T, typename U, size_t N>
-constexpr bool
+inline constexpr bool
 operator!=(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 {
     return !(lhs == rhs);
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto
+inline constexpr auto
 dot(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 {
     static_assert(N > 0, "N not > 0");
@@ -226,7 +219,7 @@ dot(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 }
 
 template<typename T, typename U>
-constexpr auto
+inline constexpr auto
 cross(const genvec<T, 3> &lhs, const genvec<U, 3> &rhs)
 {
     auto x = lhs[1] * rhs[2] - lhs[2] * rhs[1];
@@ -240,7 +233,7 @@ cross(const genvec<T, 3> &lhs, const genvec<U, 3> &rhs)
 }
 
 template<typename T, size_t N>
-constexpr T
+inline constexpr T
 sum(const genvec<T, N> &v)
 {
     T ret{};
@@ -250,63 +243,63 @@ sum(const genvec<T, N> &v)
 }
 
 template<typename T, size_t N>
-constexpr T
+inline constexpr T
 quadrance(const genvec<T, N> &v)
 {
     return dot(v, v);
 }
 
 template<typename T, size_t N>
-constexpr real
+inline constexpr real
 length(const genvec<T, N> &v)
 {
     return sqrt(quadrance(v));
 }
 
 template<typename T, size_t N>
-constexpr real
+inline constexpr real
 inverseLength(const genvec<T, N> &v)
 {
     return rsqrt(quadrance(v));
 }
 
 template<typename T, size_t N>
-constexpr auto
+inline constexpr auto
 normalize(const genvec<T, N> &v)
 {
     return v * inverseLength(v);
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto
+inline constexpr auto
 distance(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 {
     return length(lhs - rhs);
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto
+inline constexpr auto
 inverseDistance(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 {
     return inverseLength(lhs - rhs);
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto
+inline constexpr auto
 distanceSq(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 {
     return quadrance(lhs - rhs);
 }
 
 template<typename T, typename U, size_t N, typename V = int>
-constexpr auto
+inline constexpr auto
 reflect(const genvec<T, N> &a, const genvec<U, N> &n, const V &amp = 1)
 {
     return a - n * (2 * amp * dot(n, a));
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto
+inline constexpr auto
 min(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 {
     return lhs.map(rhs, [](const T &x, const U &y) {
@@ -316,7 +309,7 @@ min(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto
+inline constexpr auto
 max(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 {
     return lhs.map(rhs, [](const T &x, const U &y) {
@@ -326,7 +319,7 @@ max(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 }
 
 template<typename T, size_t N>
-constexpr auto
+inline constexpr auto
 abs(const genvec<T, N> &v)
 {
     return v.map([](const T &x) {
@@ -336,42 +329,42 @@ abs(const genvec<T, N> &v)
 }
 
 template<typename T, size_t N>
-constexpr auto
+inline constexpr auto
 recip(const genvec<T, N> &v)
 {
     return v.map([](const T &x) { return recip(x); });
 }
 
 template<typename T, typename U, typename V, size_t N>
-constexpr auto
+inline constexpr auto
 lerp(const genvec<T, N> &a, const genvec<U, N> &b, const V &t)
 {
     return a + (b - a) * t;
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto
+inline constexpr auto
 directionFromTo(const genvec<T, N> &a, const genvec<U, N> &b)
 {
     return normalize(b - a);
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto
+inline constexpr auto
 cos(const genvec<T, N> &a, const genvec<U, N> &b)
 {
     return dot(a, b) / (length(a) * length(b));
 }
 
 template<typename T, typename U, size_t N>
-constexpr auto
+inline constexpr auto
 projectAlong(const genvec<T, N> &a, const genvec<U, N> &x)
 {
     return dot(a, x) / quadrance(x) * x;
 }
 
 template<typename T, size_t N, typename U>
-constexpr bool
+inline constexpr bool
 equal(const genvec<T, N> &a, const genvec<T, N> &b, const U &epsi)
 {
     for (size_t i = 0; i < N; ++i)
@@ -381,7 +374,7 @@ equal(const genvec<T, N> &a, const genvec<T, N> &b, const U &epsi)
 }
 
 template<typename OStream, typename T, size_t N>
-OStream &
+inline OStream &
 operator<<(OStream &out, const genvec<T, N> &v)
 {
     out << "vec" << N << "[";
@@ -405,7 +398,7 @@ struct tuple_size<math::genvec<T, N>> : public std::integral_constant<size_t, N>
 END_NO_WARN_MISMATCHED_TAGS
 
 template<size_t I, typename T, size_t N>
-const T &
+HU_FORCE_INLINE inline const T &
 get(const math::genvec<T, N> &v)
 {
     static_assert(I < N);
@@ -413,7 +406,7 @@ get(const math::genvec<T, N> &v)
 }
 
 template<size_t I, typename T, size_t N>
-T &
+HU_FORCE_INLINE inline T &
 get(math::genvec<T, N> &v)
 {
     static_assert(I < N);

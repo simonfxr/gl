@@ -2,6 +2,7 @@
 #define GE_EVENT_HPP
 
 #include "ge/conf.hpp"
+#include "util/ArrayView.hpp"
 #include "util/functor_traits.hpp"
 
 #include <memory>
@@ -50,16 +51,17 @@ public:
 };
 
 template<typename F>
-auto
+inline auto
 makeEventHandler(F f)
 {
     using T = event_value_type<std::decay_t<functor_arg_type<F, 0>>>;
-    return static_cast<std::shared_ptr<EventHandler<T>>>(
-      std::make_shared<FunctorEventHandler<F, T>>(std::move(f)));
+    // avoid excessive std::shared_ptr<XX> template instantiations
+    return std::shared_ptr<EventHandler<T>>(static_cast<EventHandler<T> *>(
+      new FunctorEventHandler<F, T>(std::move(f))));
 }
 
 template<typename T, typename E>
-auto
+inline auto
 makeEventHandler(T &o, void (T::*m)(const Event<E> &))
 {
     return makeEventHandler([=, &o](const Event<E> &ev) { return (o.*m)(ev); });
@@ -68,8 +70,8 @@ makeEventHandler(T &o, void (T::*m)(const Event<E> &))
 template<typename T>
 struct EventSource
 {
-    bool raise(const Event<T> &evnt);
-    bool reg(std::shared_ptr<EventHandler<T>> handler);
+    inline bool raise(const Event<T> &evnt);
+    inline bool reg(std::shared_ptr<EventHandler<T>> handler);
 
     template<typename... Args>
     bool reg(Args &&... args)
@@ -77,21 +79,32 @@ struct EventSource
         return reg(makeEventHandler(std::forward<Args>(args)...));
     }
 
-    bool unreg(const std::shared_ptr<EventHandler<T>> &handler);
-    void clear();
+    inline bool unreg(const std::shared_ptr<EventHandler<T>> &handler);
+    inline void clear();
 
     EventSource() = default;
     EventSource(const EventSource<T> &) = delete;
     EventSource<T> &operator=(const EventSource<T> &) = delete;
 
-    std::vector<std::shared_ptr<EventHandler<T>>> handlers;
+    ArrayView<std::shared_ptr<EventHandler<T>>> handlers()
+    {
+        return view_array(_handlers);
+    }
+
+    ArrayView<const std::shared_ptr<EventHandler<T>>> handlers() const
+    {
+        return view_array(_handlers);
+    }
+
+private:
+    std::vector<std::shared_ptr<EventHandler<T>>> _handlers;
 };
 
 template<typename T>
 bool
 EventSource<T>::raise(const Event<T> &e)
 {
-    for (auto &h : handlers) {
+    for (auto &h : _handlers) {
         h->handle(e);
         if (e.canAbort && e.abort)
             return false;
@@ -106,10 +119,10 @@ EventSource<T>::reg(std::shared_ptr<EventHandler<T>> handler)
 {
     if (!handler)
         return true;
-    for (auto &h : handlers)
+    for (auto &h : _handlers)
         if (h == handler)
             return false;
-    handlers.push_back(std::move(handler));
+    _handlers.push_back(std::move(handler));
     return true;
 }
 
@@ -119,9 +132,9 @@ EventSource<T>::unreg(const std::shared_ptr<EventHandler<T>> &handler)
 {
     if (!handler)
         return true;
-    for (size_t i = 0; i < handlers.size(); ++i) {
-        if (handlers[i] == handler) {
-            handlers.erase(handlers.begin() + i);
+    for (size_t i = 0; i < _handlers.size(); ++i) {
+        if (_handlers[i] == handler) {
+            _handlers.erase(_handlers.begin() + i);
             return true;
         }
     }
@@ -132,7 +145,7 @@ template<typename T>
 void
 EventSource<T>::clear()
 {
-    handlers.clear();
+    _handlers.clear();
 }
 
 } // namespace ge
