@@ -7,6 +7,7 @@
 #include "glt/Preprocessor.hpp"
 #include "glt/ShaderCompiler.hpp"
 #include "sys/fs.hpp"
+#include "util/Array.hpp"
 
 namespace glt {
 
@@ -35,14 +36,13 @@ struct GLT_API DependencyHandler : public Preprocessor::DirectiveHandler
 
 struct GLT_API GLSLPreprocessor : public Preprocessor
 {
-
     const IncludePath &includePath;
     ShaderIncludes &includes;
     ShaderDependencies &dependencies;
 
     std::vector<uint32_t> segLengths;
     std::vector<const char *> segments;
-    std::vector<std::string> contents;
+    std::vector<Array<char>> contents;
 
     std::unique_ptr<ProcessingState, ProcessingStateDeleter> state;
 
@@ -54,11 +54,11 @@ struct GLT_API GLSLPreprocessor : public Preprocessor
                      ShaderDependencies &);
     ~GLSLPreprocessor();
 
-    void appendString(const std::string &);
+    void appendString(std::string_view);
 
     void addDefines(const PreprocessorDefinitions &);
 
-    void processFileRecursively(const std::string &);
+    void processFileRecursively(std::string &&);
 
     // internal use only
     void advanceSegments(const Preprocessor::DirectiveContext &);

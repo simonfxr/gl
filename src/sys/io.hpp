@@ -219,12 +219,12 @@ protected:
     StreamResult flush_buffer();
 };
 
-HU_NODISCARD SYS_API std::string
+HU_NODISCARD SYS_API Array<char>
 readFile(sys::io::OutStream &errout,
          std::string_view path,
          HandleError &err) noexcept;
 
-HU_NODISCARD inline std::string
+HU_NODISCARD inline Array<char>
 readFile(sys::io::OutStream &errout, std::string_view path) noexcept
 {
     HandleError err;

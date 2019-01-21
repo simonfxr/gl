@@ -83,11 +83,11 @@ GLSLPreprocessor::GLSLPreprocessor(const IncludePath &incPath,
 GLSLPreprocessor::~GLSLPreprocessor() = default;
 
 void
-GLSLPreprocessor::appendString(const std::string &str)
+GLSLPreprocessor::appendString(std::string_view str)
 {
     if (!str.empty()) {
-        auto &data = contents.emplace_back(str);
-        segments.push_back(data.c_str());
+        auto &data = contents.emplace_back(view_array(str));
+        segments.push_back(data.data());
         segLengths.push_back(uint32_t(data.size()));
     }
 }
@@ -119,7 +119,7 @@ GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext &ctx)
 }
 
 void
-GLSLPreprocessor::processFileRecursively(const std::string &file)
+GLSLPreprocessor::processFileRecursively(std::string &&file)
 {
     if (wasError())
         return;
@@ -134,8 +134,8 @@ GLSLPreprocessor::processFileRecursively(const std::string &file)
 
     auto &dref = contents.emplace_back(std::move(data));
 
-    this->name(file);
-    process(dref.c_str(), dref.size());
+    this->name(std::move(file));
+    process(std::string_view(dref.data(), dref.size()));
 }
 
 void
@@ -239,9 +239,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
     proc.state->incs.insert(filestat->absolute);
 
     if (proc.state->visitingFiles.count(filestat->absolute) == 0) {
-        proc.includes.push_back(
-          ShaderInclude(filestat->absolute, filestat->mtime));
-        proc.name(filestat->absolute);
+        proc.includes.emplace_back(filestat->absolute, filestat->mtime);
 
         sys::io::HandleError err;
         auto contents = readFile(proc.out(), filestat->absolute, err);
@@ -251,8 +249,8 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
         }
 
         auto &dref = proc.contents.emplace_back(std::move(contents));
-        proc.name(filestat->absolute);
-        proc.process(dref.c_str(), dref.size());
+        proc.name(std::move(filestat->absolute));
+        proc.process(std::string_view(dref.data(), dref.size()));
     }
 }
 

@@ -1,8 +1,8 @@
-#include <cstring>
-
 #include "glt/Preprocessor.hpp"
 
 #include "err/err.hpp"
+
+#include <cstring>
 
 namespace glt {
 
@@ -10,24 +10,18 @@ Preprocessor::DirectiveHandler::~DirectiveHandler() = default;
 
 void
 Preprocessor::DirectiveHandler::beginProcessing(
-  const Preprocessor::ContentContext &ctx)
-{
-    UNUSED(ctx);
-}
+  const Preprocessor::ContentContext &)
+{}
 
 void
 Preprocessor::DirectiveHandler::endProcessing(
-  const Preprocessor::ContentContext &ctx)
-{
-    UNUSED(ctx);
-}
+  const Preprocessor::ContentContext &)
+{}
 
 void
 Preprocessor::DirectiveHandler::directiveEncountered(
-  const Preprocessor::DirectiveContext &ctx)
-{
-    UNUSED(ctx);
-}
+  const Preprocessor::DirectiveContext &)
+{}
 
 struct Preprocessor::Data
 {
@@ -45,12 +39,6 @@ DECLARE_PIMPL_DEL(Preprocessor)
 
 Preprocessor::Preprocessor() : self(new Data) {}
 
-void
-Preprocessor::process(const std::string &str)
-{
-    process(str.data(), uint32_t(str.length()));
-}
-
 namespace {
 bool
 is_newline(char c)
@@ -60,12 +48,14 @@ is_newline(char c)
 } // namespace
 
 void
-Preprocessor::process(const char *begin, size_t size)
+Preprocessor::process(std::string_view data)
 {
     if (wasError())
         return;
 
-    DirectiveContext ctx(*this, self->sourceName);
+    const char *const begin = data.data();
+    const size_t size = data.size();
+    DirectiveContext ctx(*this, std::string(self->sourceName));
 
     ctx.content.data = begin;
     ctx.content.size = size;
@@ -80,7 +70,9 @@ Preprocessor::process(const char *begin, size_t size)
     const char *str = begin;
     const char *match;
 
-    while (!wasError() && (match = strchr(str, '#')) < end &&
+    while (!wasError() &&
+           (match = static_cast<const char *>(memchr(str, '#', end - str))) <
+             end &&
            match != nullptr) {
 
         const char *lineBegin = match;
@@ -89,7 +81,7 @@ Preprocessor::process(const char *begin, size_t size)
             --lineBegin;
 
         auto eol = match;
-        while (*eol && !is_newline(*eol))
+        while (eol < end && !is_newline(*eol))
             ++eol;
 
         str = eol;
@@ -98,11 +90,11 @@ Preprocessor::process(const char *begin, size_t size)
             continue;
 
         const char *directiveBegin = match + 1;
-        while (directiveBegin < eol && (isspace(*directiveBegin) != 0))
+        while (directiveBegin < eol && isspace(*directiveBegin))
             ++directiveBegin;
 
         const char *directiveEnd = directiveBegin;
-        while (directiveEnd < eol && (isspace(*directiveEnd) == 0))
+        while (directiveEnd < eol && !isspace(*directiveEnd))
             ++directiveEnd;
 
         ctx.lineLength = eol - lineBegin;
@@ -119,17 +111,10 @@ Preprocessor::process(const char *begin, size_t size)
             self->defaultHandler->directiveEncountered(ctx);
     }
 
-    for (auto &handler : self->handlers) {
+    for (auto &handler : self->handlers)
         handler.second->endProcessing(ctx.content);
-    }
 
     self->defaultHandler->endProcessing(ctx.content);
-}
-
-void
-Preprocessor::process(const char *contents)
-{
-    process(contents, uint32_t(strlen(contents)));
 }
 
 Preprocessor::DirectiveHandler &
@@ -182,18 +167,14 @@ bool
 Preprocessor::setError()
 {
     WARN("setting error");
-    bool isError = self->errorState;
-    self->errorState = true;
-    return isError;
+    return std::exchange(self->errorState, true);
 }
 
 bool
 Preprocessor::wasError() const
 {
-    if (self->errorState) {
+    if (self->errorState)
         WARN("in Error state");
-    }
-
     return self->errorState;
 }
 
@@ -212,9 +193,9 @@ Preprocessor::name() const
 }
 
 void
-Preprocessor::name(const std::string &name)
+Preprocessor::name(std::string &&name)
 {
-    self->sourceName = name;
+    self->sourceName = std::move(name);
 }
 
 // Preprocessor::DirectiveHandler &Preprocessor::nullHandler() {

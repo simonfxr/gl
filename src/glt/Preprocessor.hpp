@@ -20,8 +20,8 @@ struct GLT_API Preprocessor
         const char *data;
         size_t size;
 
-        ContentContext(Preprocessor &proc, const std::string &nam)
-          : processor(proc), name(nam)
+        ContentContext(Preprocessor &proc, std::string &&nam)
+          : processor(proc), name(std::move(nam))
         {}
     };
 
@@ -35,8 +35,8 @@ struct GLT_API Preprocessor
         size_t endDirective; // size_t of first char behind directive, so length
                              // of directive = endDirective - beginDirective
 
-        DirectiveContext(Preprocessor &proc, const std::string &name)
-          : content(proc, name)
+        DirectiveContext(Preprocessor &proc, std::string &&name)
+          : content(proc, std::move(name))
         {}
     };
 
@@ -54,11 +54,11 @@ struct GLT_API Preprocessor
     Preprocessor();
 
     const std::string &name() const;
-    void name(const std::string &name);
+    void name(std::string &&name);
 
-    void process(const std::string &);
-    void process(const char *begin, size_t size);
-    void process(const char *contents);
+    void process(std::string_view);
+
+    void process(const char *contents) { process(std::string_view(contents)); }
 
     DirectiveHandler &defaultHandler(DirectiveHandler &handler);
     DirectiveHandler &defaultHandler() const;

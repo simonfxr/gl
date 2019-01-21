@@ -112,13 +112,17 @@ struct Array : private std::vector<T>
     using base::operator[];
 
     template<typename U = T>
+    Array(const U *arr, size_t n) : base(arr, arr + n)
+    {}
+
+    template<typename U = T>
     Array(ArrayView<U> arr) : base(arr.begin(), arr.end())
     {}
 
     template<typename U>
     static Array<T> transfer_from(const U *data, size_t n)
     {
-        return Array<T>(data, data + n);
+        return Array<T>(data, n);
     }
 };
 

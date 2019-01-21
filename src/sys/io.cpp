@@ -201,7 +201,7 @@ HandleStream::open(std::string_view path, HandleMode mode, HandleError &err)
     return { std::move(opt_h).value() };
 }
 
-std::string
+Array<char>
 readFile(sys::io::OutStream &errout,
          std::string_view path,
          HandleError &err) noexcept
@@ -220,7 +220,7 @@ readFile(sys::io::OutStream &errout,
                 str.insert(str.end(), buf, buf + size);
             if (err == HandleError::EOF) {
                 err = HandleError::OK;
-                return str;
+                return Array<char>(str.data(), str.size());
             }
             if (err != HandleError::OK)
                 goto fail;
