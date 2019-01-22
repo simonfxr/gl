@@ -1,6 +1,6 @@
 
 //
-// Description : Array and textureless GLSL 2D simplex noise function.
+// Description : bl::dyn_array and textureless GLSL 2D simplex noise function.
 //      Author : Ian McEwan, Ashima Arts.
 //  Maintainer : ijm
 //     Lastmod : 20110822 (ijm)

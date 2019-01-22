@@ -2,9 +2,9 @@
 #define ERROR_HPP
 
 #include "err/conf.hpp"
-#include "sys/io/Stream.hpp"
 
-#include <string_view>
+#include "bl/string_view_fwd.hpp"
+#include "sys/io/Stream_fwd.hpp"
 
 namespace err {
 
@@ -52,12 +52,12 @@ struct ErrorStaticCallSite
 
     ErrorStaticCallSite(const Location &loc,
                         LogLevel lvl,
-                        std::string_view msg) noexcept;
+                        bl::string_view msg) noexcept;
 
     ErrorStaticCallSite(const Location &loc,
                         LogLevel lvl,
                         sys::io::OutStream &,
-                        std::string_view msg) noexcept;
+                        bl::string_view msg) noexcept;
 };
 
 // we have some nearly identical overloads, this is because we try to generate
@@ -66,25 +66,22 @@ struct ErrorStaticCallSite
 // arguments into the static data/readonly section
 
 ERR_API void
-error(const Location *loc, LogLevel lvl, std::string_view);
+error(const Location *loc, LogLevel lvl, bl::string_view);
 
 ERR_API void
-error(const Location *loc,
-      LogLevel lvl,
-      sys::io::OutStream &,
-      std::string_view);
+error(const Location *loc, LogLevel lvl, sys::io::OutStream &, bl::string_view);
 
 ERR_API void
 error(const ErrorStaticCallSite *);
 
 HU_NORETURN ERR_API void
-fatalError(const Location *loc, LogLevel lvl, std::string_view);
+fatalError(const Location *loc, LogLevel lvl, bl::string_view);
 
 HU_NORETURN ERR_API void
 fatalError(const Location *loc,
            LogLevel lvl,
            sys::io::OutStream &,
-           std::string_view);
+           bl::string_view);
 
 HU_NORETURN ERR_API void
 fatalError(const ErrorStaticCallSite *);
@@ -94,7 +91,7 @@ reportError(sys::io::OutStream &out,
             const char *type,
             const Location &loc,
             LogLevel lvl,
-            std::string_view);
+            bl::string_view);
 
 #ifdef HU_PRETTY_FUNCTION
 #    define ERR_FUNCTION HU_PRETTY_FUNCTION

@@ -3,13 +3,14 @@
 
 #include "sys/io/Stream.hpp"
 
+#include "bl/dyn_array.hpp"
+#include "bl/optional.hpp"
+#include "bl/string.hpp"
+#include "bl/string_view.hpp"
 #include "pp/enum.hpp"
 #include "sys/endian.hpp"
-#include "util/Array.hpp"
 
-#include <optional>
-#include <string>
-#include <string_view>
+#undef EOF
 
 namespace sys {
 namespace io {
@@ -67,8 +68,8 @@ stdout_handle();
 HU_NODISCARD SYS_API Handle
 stderr_handle();
 
-HU_NODISCARD SYS_API std::optional<Handle>
-open(std::string_view, HandleMode, HandleError &);
+HU_NODISCARD SYS_API bl::optional<Handle>
+open(bl::string_view, HandleMode, HandleError &);
 
 HU_NODISCARD SYS_API HandleMode
 mode(Handle &);
@@ -92,10 +93,10 @@ close(Handle &);
 
 PP_DEF_ENUM_WITH_API(SYS_API, SYS_SOCKET_ERROR_ENUM_DEF);
 
-HU_NODISCARD SYS_API std::optional<Socket>
+HU_NODISCARD SYS_API bl::optional<Socket>
 listen(SocketProto, const IPAddr4 &, uint16_t, SocketMode, SocketError &);
 
-HU_NODISCARD SYS_API std::optional<Handle>
+HU_NODISCARD SYS_API bl::optional<Handle>
 accept(Socket &, SocketError &);
 
 SYS_API SocketError
@@ -139,7 +140,7 @@ struct Handle
 
     constexpr Handle() = default;
     Handle(const Handle &) = delete;
-    Handle(Handle &&h) { *this = std::move(h); }
+    Handle(Handle &&h) { *this = bl::move(h); }
 
     ~Handle()
     {
@@ -151,8 +152,8 @@ struct Handle
 
     Handle &operator=(Handle &&h)
     {
-        _mode = std::exchange(h._mode, 0);
-        _os = std::exchange(h._os, OSHandle::nil());
+        _mode = bl::exchange(h._mode, 0);
+        _os = bl::exchange(h._os, OSHandle::nil());
         return *this;
     }
 
@@ -165,7 +166,7 @@ struct Socket
 
     constexpr Socket() = default;
     Socket(const Socket &) = delete;
-    Socket(Socket &&s) { *this = std::move(s); }
+    Socket(Socket &&s) { *this = bl::move(s); }
 
     ~Socket()
     {
@@ -177,7 +178,7 @@ struct Socket
 
     Socket &operator=(Socket &&s)
     {
-        _os = std::exchange(s._os, OSSocket::nil());
+        _os = bl::exchange(s._os, OSSocket::nil());
         return *this;
     }
 
@@ -199,13 +200,13 @@ struct SYS_API HandleStream : public IOStream
     ~HandleStream() override;
 
     HU_NODISCARD
-    static std::optional<HandleStream> open(std::string_view path,
-                                            HandleMode mode,
-                                            HandleError &);
+    static bl::optional<HandleStream> open(bl::string_view path,
+                                           HandleMode mode,
+                                           HandleError &);
 
     HU_NODISCARD
-    static std::optional<HandleStream> open(std::string_view path,
-                                            HandleMode mode)
+    static bl::optional<HandleStream> open(bl::string_view path,
+                                           HandleMode mode)
     {
         HandleError err;
         return open(path, mode, err);
@@ -219,13 +220,13 @@ protected:
     StreamResult flush_buffer();
 };
 
-HU_NODISCARD SYS_API Array<char>
+HU_NODISCARD SYS_API bl::dyn_array<char>
 readFile(sys::io::OutStream &errout,
-         std::string_view path,
+         bl::string_view path,
          HandleError &err) noexcept;
 
-HU_NODISCARD inline Array<char>
-readFile(sys::io::OutStream &errout, std::string_view path) noexcept
+HU_NODISCARD inline bl::dyn_array<char>
+readFile(sys::io::OutStream &errout, bl::string_view path) noexcept
 {
     HandleError err;
     return readFile(errout, path, err);

@@ -1,3 +1,6 @@
+#include "bl/range.hpp"
+#include "bl/string.hpp"
+#include "bl/vector.hpp"
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
@@ -12,12 +15,10 @@
 #include "math/real.hpp"
 #include "math/vec4.hpp"
 #include "sys/measure.hpp"
-#include "util/range.hpp"
 
 #include "shaders/shader_constants.h"
 
 #include <sstream>
-#include <string>
 #include <vector>
 
 #include <CL/cl.h>
@@ -56,7 +57,7 @@ struct MCState
     cl::BufferGL vbo_buf;
 
     cl::Image3D volume;
-    std::vector<cl::Image3D> images;
+    bl::vector<cl::Image3D> images;
     cl::Event readHistoJob;
     cl::Event writeVBOJob;
 };
@@ -209,7 +210,7 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
 
 #define PLAT_INFO(info)                                                        \
     platform.getInfo(info, &info_value);                                       \
-    engine.out() << "  " << #info << ": " << info_value << sys::io::endl
+    engine.out() << "  " << #info << ": " << info_value.c_str() << sys::io::endl
 
     PLAT_INFO(CL_PLATFORM_NAME);
     PLAT_INFO(CL_PLATFORM_PROFILE);
@@ -222,7 +223,7 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     std::istringstream exts(info_value);
     std::string ext;
     while (std::getline(exts, ext, ' '))
-        engine.out() << "    " << ext << sys::io::endl;
+        engine.out() << "    " << ext.c_str() << sys::io::endl;
 
     engine.out() << "  END EXTENSIONS" << sys::io::endl;
 
@@ -244,7 +245,7 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
 
 #define DEV_INFO(info)                                                         \
     cl_device.getInfo(info, &info_value);                                      \
-    engine.out() << "  " << #info << ": " << info_value << sys::io::endl
+    engine.out() << "  " << #info << ": " << info_value.c_str() << sys::io::endl
 
     DEV_INFO(CL_DEVICE_NAME);
     DEV_INFO(CL_DEVICE_OPENCL_C_VERSION);
@@ -260,7 +261,7 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
 
     bool supports_3d_image_write = false;
     while (std::getline(dev_exts, dev_ext, ' ')) {
-        engine.out() << "    " << dev_ext << sys::io::endl;
+        engine.out() << "    " << dev_ext.c_str() << sys::io::endl;
         if (dev_ext == "cl_khr_3d_image_writes")
             supports_3d_image_write = true;
     }
@@ -320,17 +321,19 @@ Anim::initCLKernels(bool *success)
     cl_program = cl::Program(cl_ctx, source, &cl_err);
     CL_ERR("creating program failed");
 
-    std::stringstream num;
+    sys::io::ByteStream num;
     num << N;
     std::vector<cl::Device> devices;
     devices.push_back(cl_device);
     cl_err = cl_program.build(
-      devices, (std::string("-I programs/mc/ -DSIZE=") + num.str()).c_str());
+      devices,
+      (std::string("-I programs/mc/ -DSIZE=") + num.str().c_str()).c_str());
     engine.out() << "building cl program: "
                  << (cl_err == CL_SUCCESS ? "success" : "failed")
                  << ", log:" << sys::io::endl;
-    engine.out() << cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl_device)
-                 << sys::io::endl;
+    engine.out()
+      << cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl_device).c_str()
+      << sys::io::endl;
 
     if (cl_err != CL_SUCCESS)
         return;

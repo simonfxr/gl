@@ -1,33 +1,23 @@
 #ifndef UTIL_STRING_HPP
 #define UTIL_STRING_HPP
 
+#include "bl/string.hpp"
 #include "err/err.hpp"
 #include "sys/io/Stream.hpp"
 
-#include <string>
-#include <string_view>
-
 template<typename... Args>
-inline std::string
+inline bl::string
 string_concat(Args &&... args)
 {
     sys::io::ByteStream sstream;
-    (sstream << ... << std::forward<Args>(args));
-    return std::move(sstream).str();
+    (sstream << ... << bl::forward<Args>(args));
+    return bl::move(sstream).str();
 }
 
-inline std::string
-view_substr(std::string_view s, size_t begin)
+inline bl::string
+string_concat(bl::string &&str) noexcept
 {
-    ASSERT(begin <= s.size());
-    return { s.data() + begin, s.size() - begin };
-}
-
-inline std::string
-view_substr(std::string_view s, size_t begin, size_t len)
-{
-    ASSERT(begin < s.size() && begin + len <= s.size());
-    return { s.data() + begin, len };
+    return bl::move(str);
 }
 
 #endif

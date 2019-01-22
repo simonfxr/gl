@@ -1,8 +1,10 @@
 #ifndef GLT_SHADER_COMPILER_HPP
 #define GLT_SHADER_COMPILER_HPP
 
-#include "glt/conf.hpp"
-
+#include "bl/hashtable.hpp"
+#include "bl/string.hpp"
+#include "bl/string_view.hpp"
+#include "bl/vector.hpp"
 #include "err/WithError.hpp"
 #include "err/err.hpp"
 #include "glt/GLObject.hpp"
@@ -10,12 +12,6 @@
 #include "opengl.hpp"
 #include "pp/enum.hpp"
 #include "sys/fs.hpp"
-
-#include <memory>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <vector>
 
 namespace glt {
 
@@ -25,30 +21,38 @@ struct ShaderCache;
 struct ShaderCompiler;
 struct ShaderCompilerQueue;
 
-using ShaderSourceKey = std::string;
+using ShaderSourceKey = bl::string;
 
 using ShaderObjects =
-  std::unordered_map<ShaderSourceKey, std::shared_ptr<ShaderObject>>;
+  bl::hashtable<ShaderSourceKey, bl::shared_ptr<ShaderObject>>;
 
 using ShaderRootDependencies =
-  std::unordered_map<ShaderSourceKey, std::shared_ptr<ShaderSource>>;
+  bl::hashtable<ShaderSourceKey, bl::shared_ptr<ShaderSource>>;
 
-using IncludePath = std::vector<std::string>;
+using IncludePath = bl::vector<bl::string>;
 
-using ShaderInclude = std::pair<std::string, sys::fs::FileTime>;
+struct ShaderInclude
+{
+    bl::string path;
+    sys::fs::FileTime mtime;
+};
 
-using ShaderIncludes = std::vector<ShaderInclude>;
+using ShaderIncludes = bl::vector<ShaderInclude>;
 
-using ShaderDependencies = std::vector<std::shared_ptr<ShaderSource>>;
+using ShaderDependencies = bl::vector<bl::shared_ptr<ShaderSource>>;
 
 using ShaderCompileFlags = uint32_t;
 
 using Version = int;
 
-using ShaderCacheEntry = std::pair<Version, std::weak_ptr<ShaderObject>>;
+struct ShaderCacheEntry
+{
+    bl::weak_ptr<ShaderObject> shaderObject;
+    Version version;
+};
 
 using ShaderCacheEntries =
-  std::unordered_multimap<ShaderSourceKey, ShaderCacheEntry>;
+  bl::hashtable<ShaderSourceKey, bl::vector<ShaderCacheEntry>>;
 
 static const ShaderCompileFlags SC_LOOKUP_CACHE = 1 << 0;
 static const ShaderCompileFlags SC_PUT_CACHE = 1 << 1;
@@ -65,13 +69,13 @@ enum ReloadState : uint8_t
     Outdated
 };
 
-struct GLT_API ShaderSource : std::enable_shared_from_this<ShaderSource>
+struct GLT_API ShaderSource : bl::enable_shared_from_this<ShaderSource>
 {
-    static std::shared_ptr<ShaderSource> makeStringSource(ShaderType ty,
-                                                          std::string source);
+    static bl::shared_ptr<ShaderSource> makeStringSource(ShaderType ty,
+                                                         bl::string source);
 
-    static std::shared_ptr<ShaderSource> makeFileSource(ShaderType ty,
-                                                        std::string path);
+    static bl::shared_ptr<ShaderSource> makeFileSource(ShaderType ty,
+                                                       bl::string path);
 
     const ShaderSourceKey &key() const;
 
@@ -87,10 +91,10 @@ public:
     explicit ShaderSource(Data &&);
 };
 
-struct GLT_API ShaderObject : std::enable_shared_from_this<ShaderObject>
+struct GLT_API ShaderObject : bl::enable_shared_from_this<ShaderObject>
 {
     const GLShaderObject &handle() const;
-    const std::shared_ptr<ShaderSource> &shaderSource();
+    const bl::shared_ptr<ShaderSource> &shaderSource();
     ~ShaderObject();
 
 private:
@@ -106,7 +110,7 @@ public:
     ShaderObject(InitArgs &&);
 };
 
-struct GLT_API ShaderCache : std::enable_shared_from_this<ShaderCache>
+struct GLT_API ShaderCache : bl::enable_shared_from_this<ShaderCache>
 {
     ShaderCache();
     ~ShaderCache();
@@ -114,8 +118,8 @@ struct GLT_API ShaderCache : std::enable_shared_from_this<ShaderCache>
     void flush();
 
     bool remove(ShaderObject *);
-    bool put(const std::shared_ptr<ShaderObject> &);
-    std::shared_ptr<ShaderObject> lookup(const ShaderSourceKey &);
+    bool put(const bl::shared_ptr<ShaderObject> &);
+    bl::shared_ptr<ShaderObject> lookup(const ShaderSourceKey &);
     const ShaderCacheEntries &cacheEntries() const;
 
 private:
@@ -141,11 +145,11 @@ struct GLT_API ShaderCompiler
     ShaderCompiler(ShaderManager &);
 
     ShaderManager &shaderManager();
-    const std::shared_ptr<ShaderCache> &shaderCache();
+    const bl::shared_ptr<ShaderCache> &shaderCache();
 
     void init();
 
-    static bool guessShaderType(std::string_view path, ShaderType *res);
+    static bool guessShaderType(bl::string_view path, ShaderType *res);
 
 private:
     friend struct ShaderSource;
@@ -160,8 +164,8 @@ struct GLT_API ShaderCompilerQueue : public err::WithError<ShaderCompilerError>
 
     ShaderCompiler &shaderCompiler();
 
-    void enqueueLoad(const std::shared_ptr<ShaderSource> &);
-    void enqueueReload(const std::shared_ptr<ShaderObject> &);
+    void enqueueLoad(const bl::shared_ptr<ShaderSource> &);
+    void enqueueReload(const bl::shared_ptr<ShaderObject> &);
     void compileAll();
 
 private:

@@ -1,20 +1,17 @@
 #ifndef GE_COMMAND_HPP
 #define GE_COMMAND_HPP
 
+#include "bl/array_view.hpp"
+#include "bl/string.hpp"
+#include "bl/vector.hpp"
 #include "ge/CommandArgs.hpp"
 #include "ge/Command_detail.hpp"
 #include "ge/EngineEvents.hpp"
 #include "ge/conf.hpp"
-#include "util/ArrayView.hpp"
-
-#include <functional>
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace ge {
 
-using CommandPtr = std::shared_ptr<Command>;
+using CommandPtr = bl::shared_ptr<Command>;
 
 struct CommandProcessor;
 struct QuotationCommand;
@@ -28,14 +25,12 @@ struct GE_API CommandEvent : public EngineEvent
 struct GE_API Command : public EventHandler<CommandEvent>
 {
 private:
-    const std::vector<CommandParamType> params;
-    std::string namestr;
-    std::string descr;
+    const bl::vector<CommandParamType> params;
+    bl::string namestr;
+    bl::string descr;
 
 public:
-    Command(std::vector<CommandParamType> ps,
-            std::string name,
-            std::string desc);
+    Command(bl::vector<CommandParamType> ps, bl::string name, bl::string desc);
 
     Command(const Command &) = default;
     Command(Command &&) = default;
@@ -44,34 +39,34 @@ public:
     Command &operator=(Command &&) = default;
 
     virtual ~Command() override;
-    std::vector<CommandParamType> parameters() const { return params; }
-    const std::string &name() const { return namestr; }
-    void name(const std::string &new_name)
+    bl::vector<CommandParamType> parameters() const { return params; }
+    const bl::string &name() const { return namestr; }
+    void name(const bl::string &new_name)
     {
         ASSERT(!new_name.empty());
         namestr = new_name;
     }
-    const std::string &description() const { return descr; }
-    std::string interactiveDescription() const;
+    const bl::string &description() const { return descr; }
+    bl::string interactiveDescription() const;
     virtual void interactive(const Event<CommandEvent> &ev,
-                             ArrayView<const CommandArg>) = 0;
+                             bl::array_view<const CommandArg>) = 0;
     void handle(const Event<CommandEvent> &ev) final override;
     virtual QuotationCommand *castToQuotation() { return nullptr; }
 };
 
 struct GE_API QuotationCommand : public Command
 {
-    const std::unique_ptr<Quotation> quotation;
+    const bl::unique_ptr<Quotation> quotation;
 
-    QuotationCommand(std::string_view source,
+    QuotationCommand(bl::string_view source,
                      int line,
                      int column,
-                     std::string_view desc,
-                     std::unique_ptr<Quotation> quot);
+                     bl::string_view desc,
+                     bl::unique_ptr<Quotation> quot);
     ~QuotationCommand() override;
 
     virtual void interactive(const Event<CommandEvent> &ev,
-                             ArrayView<const CommandArg>) override;
+                             bl::array_view<const CommandArg>) override;
     QuotationCommand *castToQuotation() override { return this; }
 
     QuotationCommand &operator=(const QuotationCommand &) = delete;
@@ -81,14 +76,14 @@ struct GE_API QuotationCommand : public Command
 template<typename F>
 struct FunctorCommand : public Command
 {
-    FunctorCommand(std::string name, std::string descr, F f_)
-      : Command(make_params(arg_seq{}), std::move(name), std::move(descr))
-      , _f(std::move(f_))
+    FunctorCommand(bl::string name, bl::string descr, F f_)
+      : Command(make_params(arg_seq{}), bl::move(name), bl::move(descr))
+      , _f(bl::move(f_))
     {}
     ~FunctorCommand() override = default;
 
     void interactive(const Event<CommandEvent> &ev,
-                     ArrayView<const CommandArg> args) final override
+                     bl::array_view<const CommandArg> args) final override
     {
         invoke(_f, is_var_arg_t{}, arg_seq{}, ev, args);
     }
@@ -105,33 +100,34 @@ private:
     F _f;
 
     template<typename... Ts>
-    static std::vector<CommandParamType> make_params(
+    static bl::vector<CommandParamType> make_params(
       detail::CommandArgSeq<Ts...>)
     {
-        return { detail::decayed_command_param_mapping<Ts>::param_type... };
+        return bl::make_vector<CommandParamType>(
+          detail::decayed_command_param_mapping<Ts>::param_type...);
     }
 };
 
 template<typename F>
-inline std::shared_ptr<Command>
-makeCommand(std::string name, std::string descr, F &&f)
+inline bl::shared_ptr<Command>
+makeCommand(bl::string name, bl::string descr, F &&f)
 {
-    // avoid excessive std::shared_ptr<XX> template instantiations
-    return std::shared_ptr<Command>{ static_cast<Command *>(
+    // avoid excessive bl::shared_ptr<XX> template instantiations
+    return bl::shared_ptr<Command>{ static_cast<Command *>(
       new FunctorCommand<std::decay_t<F>>(
-        std::move(name), std::move(descr), std::forward<F>(f))) };
+        bl::move(name), bl::move(descr), bl::forward<F>(f))) };
 }
 
 template<typename T, typename... Args>
-inline std::shared_ptr<Command>
-makeCommand(std::string name,
-            std::string descr,
+inline bl::shared_ptr<Command>
+makeCommand(bl::string name,
+            bl::string descr,
             T &receiver,
             void (T::*m)(const Event<CommandEvent> &, Args...))
 {
     return makeCommand(
-      std::move(name),
-      std::move(descr),
+      bl::move(name),
+      bl::move(descr),
       [&receiver, m](const Event<CommandEvent> &ev, Args... args) {
           (receiver.*m)(ev, args...);
       });

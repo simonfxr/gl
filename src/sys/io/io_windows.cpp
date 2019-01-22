@@ -141,8 +141,8 @@ stderr_handle()
     return h;
 }
 
-std::optional<Handle>
-open(std::string_view path, HandleMode mode, HandleError &err)
+bl::optional<Handle>
+open(bl::string_view path, HandleMode mode, HandleError &err)
 {
     auto wpath = utf8To16(path);
     auto access = handleModeToDWORD(mode);
@@ -158,14 +158,14 @@ open(std::string_view path, HandleMode mode, HandleError &err)
                             nullptr);
     if (hndl == INVALID_HANDLE_VALUE) {
         err = getLastHandleError();
-        return std::nullopt;
+        return bl::nullopt;
     }
     Handle h;
     h._os.handle = castFromHandle(hndl);
     h._mode = mode;
     h._os.is_socket = false;
     err = HandleError::OK;
-    return { std::move(h) };
+    return { bl::move(h) };
 }
 
 HandleMode
@@ -280,7 +280,7 @@ close(Handle &h)
         return HandleError::UNKNOWN;
 }
 
-std::optional<Socket>
+bl::optional<Socket>
 listen(SocketProto proto,
        const IPAddr4 &addr,
        uint16_t port,
@@ -302,7 +302,7 @@ listen(SocketProto proto,
     sock = socket(PF_INET, type, 0);
     if (sock == INVALID_SOCKET) {
         err = getLastSocketError();
-        return std::nullopt;
+        return bl::nullopt;
     }
 
     int enable = 1;
@@ -341,16 +341,16 @@ listen(SocketProto proto,
         Socket s;
         s._os.socket = castFromSocket(sock);
         err = SocketError::OK;
-        return { std::move(s) };
+        return { bl::move(s) };
     }
 
 socket_err:
     err = getLastSocketError();
     closesocket(sock);
-    return std::nullopt;
+    return bl::nullopt;
 }
 
-std::optional<Handle>
+bl::optional<Handle>
 accept(Socket &s, SocketError &err)
 {
     ASSERT(s);
@@ -363,7 +363,7 @@ accept(Socket &s, SocketError &err)
 
     if (c == INVALID_SOCKET) {
         err = getLastSocketError();
-        return std::nullopt;
+        return bl::nullopt;
     }
 
     Handle h;
@@ -371,7 +371,7 @@ accept(Socket &s, SocketError &err)
     h._os.is_socket = true;
     h._mode = HM_READ | HM_WRITE;
     err = SocketError::OK;
-    return { std::move(h) };
+    return { bl::move(h) };
 }
 
 SocketError

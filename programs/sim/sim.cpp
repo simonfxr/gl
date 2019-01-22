@@ -1,15 +1,15 @@
 #include "sim.hpp"
 
+#include "bl/range.hpp"
 #include "math/plane.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "sys/clock.hpp"
-#include "util/range.hpp"
 
+#include "bl/vector.hpp"
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
-#include <vector>
 
 #if 0
 
@@ -114,9 +114,9 @@ struct Node;
 
 struct World::Data
 {
-    std::vector<Particle> particles;
-    std::vector<SphereData> spheres;
-    std::vector<SphereModel> sphereModels;
+    bl::vector<Particle> particles;
+    bl::vector<SphereData> spheres;
+    bl::vector<SphereModel> sphereModels;
 
     glt::AABB room;
 
@@ -133,8 +133,8 @@ struct World::Data
                          float r,
                          point3_t &out_collision);
 
-    void generateContacts(std::vector<Contact> &contacts, float dt);
-    void solveContacts(std::vector<Contact> &contacts, float dt);
+    void generateContacts(bl::vector<Contact> &contacts, float dt);
+    void solveContacts(bl::vector<Contact> &contacts, float dt);
     void integrate(float dt);
 
     void insertBSP(BSP *&p,
@@ -144,10 +144,10 @@ struct World::Data
                    Node *node,
                    const point3_t &center,
                    float r);
-    void findCollisions(std::vector<Contact> &contacts,
+    void findCollisions(bl::vector<Contact> &contacts,
                         const BSP *t,
                         int ni,
-                        std::vector<bool> &collided,
+                        bl::vector<bool> &collided,
                         SphereRef s,
                         const point3_t &center,
                         float r);
@@ -209,7 +209,7 @@ World::simulate(math::real dt)
 {
     {
         self->solve_iterations = solve_iterations;
-        std::vector<Contact> contacts;
+        bl::vector<Contact> contacts;
         time_msg("generating contacts", self->generateContacts(contacts, dt););
         time_msg("solving contacts", self->solveContacts(contacts, dt););
     }
@@ -287,9 +287,9 @@ World::render(Renderer &renderer, float dt)
 
     if (render_by_distance) {
         const point3_t &cam = renderer.camera().origin;
-        std::vector<SphereDistance> spheres_ordered;
+        bl::vector<SphereDistance> spheres_ordered;
 
-        for (const auto [i, s] : enumerate(self->spheres)) {
+        for (const auto [i, s] : bl::enumerate(self->spheres)) {
             const Particle &p = self->deref(s.particle);
             const point3_t pos = p.pos + p.vel * dt;
 
@@ -311,7 +311,7 @@ World::render(Renderer &renderer, float dt)
         }
 
     } else {
-        for (const auto i : irange(n)) {
+        for (const auto i : bl::irange(n)) {
             Sphere s = self->makeSphere(sphereRef(i));
             s.center += s.v * dt;
             renderer.renderSphere(s, self->sphereModels[i]);
@@ -339,7 +339,7 @@ World::Data::collidesWall(const point3_t &center,
     real dist_min = r;
     int32_t hit = -1;
 
-    for (auto i : irange(6)) {
+    for (auto i : bl::irange(6)) {
         real dist = distance(walls[i], center);
         if (dist < r && dist < dist_min) {
             dist_min = dist;
@@ -538,10 +538,10 @@ World::Data::insertBSP(BSP *&p,
 }
 
 void
-World::Data::findCollisions(std::vector<Contact> &contacts,
+World::Data::findCollisions(bl::vector<Contact> &contacts,
                             const BSP *t,
                             int ni,
-                            std::vector<bool> &collided,
+                            bl::vector<bool> &collided,
                             SphereRef s,
                             const point3_t &center,
                             float r)
@@ -600,7 +600,7 @@ World::Data::findCollisions(std::vector<Contact> &contacts,
 }
 
 void
-World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
+World::Data::generateContacts(bl::vector<Contact> &contacts, float dt)
 {
 
     UNUSED(dt);
@@ -651,7 +651,7 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
 
     time_msg("tree building",
              for (const auto i
-                  : irange(n)) {
+                  : bl::irange(n)) {
                  const SphereData &s1 = spheres[i];
                  const Particle &p1 = deref(s1.particle);
                  Node *node = allocNode();
@@ -662,10 +662,10 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
              });
 
     time_msg("testing collisions",
-             std::vector<bool> collided(particles.size(), false);
+             bl::vector<bool> collided(particles.size(), false);
 
              for (const auto i
-                  : irange(n)) {
+                  : bl::irange(n)) {
                  const SphereData &s1 = spheres[i];
                  const Particle &p1 = deref(s1.particle);
                  auto num_coll = contacts.size();
@@ -684,9 +684,9 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
 }
 
 void
-World::Data::solveContacts(std::vector<Contact> &contacts, float dt)
+World::Data::solveContacts(bl::vector<Contact> &contacts, float dt)
 {
-    for (const auto k : irange(solve_iterations)) {
+    for (const auto k : bl::irange(solve_iterations)) {
         UNUSED(k);
         for (auto &con : contacts) {
             // const Contact& con = contacts[i];

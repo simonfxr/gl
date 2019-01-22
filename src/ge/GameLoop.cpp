@@ -1,7 +1,9 @@
 #include "ge/GameLoop.hpp"
 
+#include "bl/range.hpp"
+#include "bl/string.hpp"
+#include "bl/string_view.hpp"
 #include "err/err.hpp"
-#include "util/range.hpp"
 
 #include <algorithm>
 
@@ -35,7 +37,7 @@ struct GameLoop::Data
     time now();
 };
 
-DECLARE_PIMPL_DEL_AUDIT(GameLoop)
+DECLARE_PIMPL_DEL(GameLoop)
 
 GameLoop::time
 GameLoop::Data::now()
@@ -174,7 +176,7 @@ GameLoop::run(Game &logic)
         size_t lim =
           self->sync_draw || self->max_skip == 0 ? 1 : self->max_skip;
 
-        for (const auto i : irange()) {
+        for (const auto i : bl::irange()) {
             self->clock = self->now();
             auto cur_tick_duration = self->tick_duration;
 

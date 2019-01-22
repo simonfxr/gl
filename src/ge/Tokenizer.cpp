@@ -20,9 +20,7 @@ enum State
 #define PARSE_ERROR(s, mesg) parse_err((s), ERROR_LOCATION, (mesg))
 
 void
-parse_err(const ParseState &s,
-          const err::Location *loc,
-          const std::string &mesg)
+parse_err(const ParseState &s, const err::Location *loc, const bl::string &mesg)
 {
     if (s.in_state != sys::io::StreamResult::Blocked) {
         sys::io::ByteStream buf;
@@ -82,9 +80,6 @@ getch(ParseState &s)
     if (s.c == '\n')
         s.c = ';';
 
-    //    std::cerr << "getch: state = " << ok << ", eof = " << s.eof << ", c =
-    //    " << s.c << std::endl;
-
     return ok;
 }
 
@@ -118,7 +113,7 @@ symChar(char c)
     return symFirst(c) || (c >= '0' && c <= '9') || (c == '.');
 }
 
-std::string
+bl::string
 parseSym(ParseState &s)
 {
     sys::io::ByteStream buf;
@@ -137,7 +132,7 @@ parseSym(ParseState &s)
 State
 parseKeycombo(ParseState &s, CommandArg &tok)
 {
-    std::vector<Key> keys;
+    bl::vector<Key> keys;
 
     bool needOne = true;
 
@@ -159,7 +154,7 @@ parseKeycombo(ParseState &s, CommandArg &tok)
             skipSpace(s);
         }
 
-        std::string sym = parseSym(s);
+        bl::string sym = parseSym(s);
 
         if (sym.empty()) {
             PARSE_ERROR(s, "expected a key symbol");
@@ -191,7 +186,7 @@ parseKeycombo(ParseState &s, CommandArg &tok)
         return Fail;
     }
 
-    tok = CommandArg(std::move(keys));
+    tok = CommandArg(bl::move(keys));
     return EndToken;
 }
 
@@ -261,7 +256,7 @@ parseCommandRef(ParseState &s, CommandArg &arg)
     if (s.c == 0)
         goto fail;
     {
-        std::string sym = parseSym(s);
+        bl::string sym = parseSym(s);
         if (sym.empty())
             goto fail;
         //         CommandPtr comref = s.proc.command(sym);
@@ -269,7 +264,7 @@ parseCommandRef(ParseState &s, CommandArg &arg)
         // //            WARN(("unknown command name: " + sym));
         //         }
 
-        arg = CommandArg::namedCommandRef(std::move(sym));
+        arg = CommandArg::namedCommandRef(bl::move(sym));
         return EndToken;
     }
 
@@ -284,11 +279,11 @@ parseVarRef(ParseState &s, CommandArg &arg)
     if (s.c == 0)
         goto fail;
     {
-        std::string sym = parseSym(s);
+        bl::string sym = parseSym(s);
         if (sym.empty())
             goto fail;
 
-        arg = CommandArg::varRef(std::move(sym));
+        arg = CommandArg::varRef(bl::move(sym));
         return EndToken;
     }
 
@@ -298,20 +293,20 @@ fail:
 }
 
 State
-statement(ParseState &s, std::vector<CommandArg> &toks, bool quot);
+statement(ParseState &s, bl::vector<CommandArg> &toks, bool quot);
 
 State
 parseQuot(ParseState &s, CommandArg &arg)
 {
-    auto q = std::make_unique<Quotation>();
+    auto q = bl::make_unique<Quotation>();
 
     int line = s.line;
     int col = s.col;
 
     for (;;) {
         getch(s);
-        q->push_back(std::vector<CommandArg>());
-        std::vector<CommandArg> &toks = (*q)[q->size() - 1];
+        q->push_back(bl::vector<CommandArg>());
+        bl::vector<CommandArg> &toks = (*q)[q->size() - 1];
         State st = statement(s, toks, true);
 
         if (st == Fail || toks.empty())
@@ -332,8 +327,8 @@ parseQuot(ParseState &s, CommandArg &arg)
         return Fail;
     }
 
-    arg = CommandArg(std::make_shared<QuotationCommand>(
-      s.filename, line, col, "", std::move(q)));
+    arg = CommandArg(bl::make_shared<QuotationCommand>(
+      s.filename, line, col, "", bl::move(q)));
 
     return EndToken;
 }
@@ -414,13 +409,10 @@ parseNum(ParseState &s, CommandArg &tok)
         return Fail;
     }
 
-    if (isNum) {
+    if (isNum)
         tok = CommandArg(neg ? -num : num);
-        // std::cerr << "parsed number: " << num << std::endl;
-    } else {
+    else
         tok = CommandArg(neg ? -k : k);
-        // std::cerr << "parsed int: " << k << std::endl;
-    }
 
     return EndToken;
 }
@@ -464,7 +456,7 @@ token(ParseState &s, CommandArg &tok, bool first)
 }
 
 State
-statement(ParseState &s, std::vector<CommandArg> &toks, bool quot)
+statement(ParseState &s, bl::vector<CommandArg> &toks, bool quot)
 {
     State st;
     bool first = true;
@@ -508,7 +500,7 @@ skipStatement(ParseState &s)
 }
 
 bool
-tokenize(ParseState &s, std::vector<CommandArg> &args)
+tokenize(ParseState &s, bl::vector<CommandArg> &args)
 {
     getch(s);
     if (s.in_state != sys::io::StreamResult::OK)

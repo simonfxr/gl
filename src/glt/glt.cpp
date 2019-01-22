@@ -9,7 +9,7 @@
 namespace glt {
 
 BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
-std::unique_ptr<Module> module;
+bl::unique_ptr<Module> module;
 END_NO_WARN_GLOBAL_DESTRUCTOR
 
 void

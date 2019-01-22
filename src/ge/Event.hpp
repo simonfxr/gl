@@ -1,12 +1,11 @@
 #ifndef GE_EVENT_HPP
 #define GE_EVENT_HPP
 
+#include "bl/array_view.hpp"
+#include "bl/shared_ptr.hpp"
+#include "bl/vector.hpp"
 #include "ge/conf.hpp"
-#include "util/ArrayView.hpp"
 #include "util/functor_traits.hpp"
-
-#include <memory>
-#include <vector>
 
 namespace ge {
 
@@ -18,7 +17,7 @@ struct Event
     mutable bool abort;
     bool canAbort;
     Event() : info(), abort(false), canAbort(true) {}
-    explicit Event(T &&nfo) : info(std::move(nfo)), abort(false), canAbort(true)
+    explicit Event(T &&nfo) : info(bl::move(nfo)), abort(false), canAbort(true)
     {}
 };
 
@@ -46,7 +45,7 @@ private:
     F f;
 
 public:
-    FunctorEventHandler(F f_) : f(std::move(f_)) {}
+    FunctorEventHandler(F f_) : f(bl::move(f_)) {}
     void handle(const Event<T> &ev) final override { f(ev); }
 };
 
@@ -55,9 +54,9 @@ inline auto
 makeEventHandler(F f)
 {
     using T = event_value_type<std::decay_t<functor_arg_type<F, 0>>>;
-    // avoid excessive std::shared_ptr<XX> template instantiations
-    return std::shared_ptr<EventHandler<T>>(static_cast<EventHandler<T> *>(
-      new FunctorEventHandler<F, T>(std::move(f))));
+    // avoid excessive bl::shared_ptr<XX> template instantiations
+    return bl::shared_ptr<EventHandler<T>>(static_cast<EventHandler<T> *>(
+      new FunctorEventHandler<F, T>(bl::move(f))));
 }
 
 template<typename T, typename E>
@@ -71,33 +70,33 @@ template<typename T>
 struct EventSource
 {
     inline bool raise(const Event<T> &evnt);
-    inline bool reg(std::shared_ptr<EventHandler<T>> handler);
+    inline bool reg(bl::shared_ptr<EventHandler<T>> handler);
 
     template<typename... Args>
     bool reg(Args &&... args)
     {
-        return reg(makeEventHandler(std::forward<Args>(args)...));
+        return reg(makeEventHandler(bl::forward<Args>(args)...));
     }
 
-    inline bool unreg(const std::shared_ptr<EventHandler<T>> &handler);
+    inline bool unreg(const bl::shared_ptr<EventHandler<T>> &handler);
     inline void clear();
 
     EventSource() = default;
     EventSource(const EventSource<T> &) = delete;
     EventSource<T> &operator=(const EventSource<T> &) = delete;
 
-    ArrayView<std::shared_ptr<EventHandler<T>>> handlers()
+    bl::array_view<bl::shared_ptr<EventHandler<T>>> handlers()
     {
-        return view_array(_handlers);
+        return _handlers;
     }
 
-    ArrayView<const std::shared_ptr<EventHandler<T>>> handlers() const
+    bl::array_view<const bl::shared_ptr<EventHandler<T>>> handlers() const
     {
         return view_array(_handlers);
     }
 
 private:
-    std::vector<std::shared_ptr<EventHandler<T>>> _handlers;
+    bl::vector<bl::shared_ptr<EventHandler<T>>> _handlers;
 };
 
 template<typename T>
@@ -115,20 +114,20 @@ EventSource<T>::raise(const Event<T> &e)
 
 template<typename T>
 bool
-EventSource<T>::reg(std::shared_ptr<EventHandler<T>> handler)
+EventSource<T>::reg(bl::shared_ptr<EventHandler<T>> handler)
 {
     if (!handler)
         return true;
     for (auto &h : _handlers)
         if (h == handler)
             return false;
-    _handlers.push_back(std::move(handler));
+    _handlers.push_back(bl::move(handler));
     return true;
 }
 
 template<typename T>
 bool
-EventSource<T>::unreg(const std::shared_ptr<EventHandler<T>> &handler)
+EventSource<T>::unreg(const bl::shared_ptr<EventHandler<T>> &handler)
 {
     if (!handler)
         return true;

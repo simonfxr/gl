@@ -1,10 +1,9 @@
 #ifndef GL_MATH_GENVEC_HPP
 #define GL_MATH_GENVEC_HPP
 
+#include "bl/core.hpp"
+#include "bl/type_traits.hpp"
 #include "math/real.hpp"
-#include <array>
-
-#include <type_traits>
 
 #define DEF_GENVEC_OP(op)                                                      \
     template<typename U>                                                       \
@@ -18,7 +17,7 @@
     }
 
 #define DEF_GENVEC_SCALAR_OP(op)                                               \
-    template<typename U, typename = std::enable_if_t<!is_genvec_v<U>>>         \
+    template<typename U, typename = bl::enable_if_t<!is_genvec_v<U>>>          \
     constexpr auto operator op(const U &rhs) const                             \
     {                                                                          \
         using V = std::decay_t<decltype(components[0] op rhs)>;                \
@@ -36,7 +35,7 @@
     }
 
 #define DEF_GENVEC_SCALAR_MUT_OP(op)                                           \
-    template<typename U, typename = std::enable_if_t<!is_genvec_v<U>>>         \
+    template<typename U, typename = bl::enable_if_t<!is_genvec_v<U>>>          \
     constexpr genvec &operator PP_CAT(op, =)(const U &rhs)                     \
     {                                                                          \
         return *this = *this op rhs;                                           \
@@ -129,7 +128,7 @@ struct genvec
     {
         static_assert(sizeof...(args) == N,
                       "can only initialize using exactly N elements");
-        return { T{ std::forward<Args>(args) }... };
+        return { T{ bl::forward<Args>(args) }... };
     }
 
     static constexpr genvec load(const buffer b)
@@ -303,7 +302,7 @@ inline constexpr auto
 min(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 {
     return lhs.map(rhs, [](const T &x, const U &y) {
-        using std::min;
+        using bl::min;
         return min(x, y);
     });
 }
@@ -313,7 +312,7 @@ inline constexpr auto
 max(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
 {
     return lhs.map(rhs, [](const T &x, const U &y) {
-        using std::max;
+        using bl::max;
         return max(x, y);
     });
 }
@@ -322,10 +321,7 @@ template<typename T, size_t N>
 inline constexpr auto
 abs(const genvec<T, N> &v)
 {
-    return v.map([](const T &x) {
-        using std::abs;
-        return abs(x);
-    });
+    return v.map([](const T &x) { return abs(x); });
 }
 
 template<typename T, size_t N>
@@ -390,6 +386,7 @@ operator<<(OStream &out, const genvec<T, N> &v)
 
 } // namespace math
 
+#if 0
 BEGIN_NO_WARN_MISMATCHED_TAGS
 namespace std {
 template<typename T, size_t N>
@@ -414,5 +411,6 @@ get(math::genvec<T, N> &v)
 }
 
 } // namespace std
+#endif
 
 #endif

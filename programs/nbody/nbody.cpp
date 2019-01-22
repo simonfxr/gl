@@ -8,9 +8,9 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 
+#include "bl/vector.hpp"
 #include <algorithm>
 #include <map>
-#include <vector>
 
 #include "nbody/nbody_phys.hpp"
 

@@ -1,8 +1,9 @@
 #ifndef GLT_SHADER_PROGRAM_HPP
 #define GLT_SHADER_PROGRAM_HPP
 
-#include <string>
-
+#include "bl/array_view.hpp"
+#include "bl/shared_ptr.hpp"
+#include "bl/string.hpp"
 #include "err/WithError.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/ShaderManager.hpp"
@@ -10,7 +11,6 @@
 #include "glt/type_info.hpp"
 #include "opengl.hpp"
 #include "pp/enum.hpp"
-#include "util/ArrayView.hpp"
 
 namespace glt {
 
@@ -24,7 +24,7 @@ namespace glt {
 PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_PROGRAM_ERROR_ENUM_DEF);
 
 struct GLT_API ShaderProgram
-  : public std::enable_shared_from_this<ShaderProgram>
+  : public bl::enable_shared_from_this<ShaderProgram>
   , public err::WithError<ShaderProgramError>
 {
     ShaderProgram(ShaderManager &sm);
@@ -34,21 +34,21 @@ struct GLT_API ShaderProgram
 
     GLProgramObject &program();
 
-    bool addShaderSrc(const std::string &src, ShaderType type);
+    bool addShaderSrc(const bl::string &src, ShaderType type);
 
-    bool addShaderFile(const std::string &file,
+    bool addShaderFile(const bl::string &file,
                        ShaderType type = ShaderType::GuessShaderType,
                        bool absolute = false);
 
-    bool addShaderFilePair(const std::string &vert_file,
-                           const std::string &frag_file,
+    bool addShaderFilePair(const bl::string &vert_file,
+                           const bl::string &frag_file,
                            bool absolute = false);
 
-    bool addShaderFilePair(const std::string &basename, bool absolute = false);
+    bool addShaderFilePair(const bl::string &basename, bool absolute = false);
 
-    bool bindAttribute(const std::string &, GLuint position);
+    bool bindAttribute(const bl::string &, GLuint position);
 
-    bool bindStreamOutVaryings(ArrayView<const std::string>);
+    bool bindStreamOutVaryings(bl::array_view<const bl::string>);
 
     bool bindAttributes(const StructInfo &);
 
@@ -64,11 +64,11 @@ struct GLT_API ShaderProgram
 
     bool replaceWith(ShaderProgram &new_program);
 
-    GLint uniformLocation(const std::string &name);
+    GLint uniformLocation(const bl::string &name);
 
     bool validate(bool printLogOnError = true);
 
-    std::shared_ptr<ShaderProgram> get_shared_ptr()
+    bl::shared_ptr<ShaderProgram> get_shared_ptr()
     {
         return shared_from_this();
     }
@@ -78,7 +78,7 @@ private:
     ShaderProgram(const Data &);
 };
 
-using ShaderProgramRef = std::shared_ptr<ShaderProgram>;
+using ShaderProgramRef = bl::shared_ptr<ShaderProgram>;
 
 } // namespace glt
 

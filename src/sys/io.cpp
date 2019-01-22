@@ -3,9 +3,9 @@
 #include "err/err.hpp"
 #include "sys/module.hpp"
 
+#include "bl/optional.hpp"
+#include "bl/vector.hpp"
 #include <cstring>
-#include <optional>
-#include <vector>
 
 namespace sys {
 namespace io {
@@ -16,7 +16,7 @@ PP_DEF_ENUM_IMPL(SYS_SOCKET_ERROR_ENUM_DEF)
 IO::IO() : ipa_any(0), ipa_local(127, 0, 0, 1) {}
 
 HandleStream::HandleStream(Handle h)
-  : handle(std::move(h)), read_cursor(0), write_cursor(0)
+  : handle(bl::move(h)), read_cursor(0), write_cursor(0)
 {}
 
 HandleStream::~HandleStream()
@@ -192,35 +192,35 @@ HandleStream::flush_buffer()
     return toStreamResult(err);
 }
 
-std::optional<HandleStream>
-HandleStream::open(std::string_view path, HandleMode mode, HandleError &err)
+bl::optional<HandleStream>
+HandleStream::open(bl::string_view path, HandleMode mode, HandleError &err)
 {
     auto opt_h = sys::io::open(path, mode, err);
     if (!opt_h)
-        return std::nullopt;
-    return { std::move(opt_h).value() };
+        return bl::nullopt;
+    return { bl::move(opt_h).value() };
 }
 
-Array<char>
+bl::dyn_array<char>
 readFile(sys::io::OutStream &errout,
-         std::string_view path,
+         bl::string_view path,
          HandleError &err) noexcept
 {
     auto opt_h = open(path, HM_READ, err);
     if (!opt_h)
         goto fail;
     {
-        auto h = std::move(opt_h).value();
-        std::string str;
+        auto h = bl::move(opt_h).value();
+        bl::string str;
         for (;;) {
             char buf[8192];
             auto size = sizeof buf;
             err = read(h, size, buf);
             if (size > 0)
-                str.insert(str.end(), buf, buf + size);
+                str += bl::string_view(buf, size);
             if (err == HandleError::EOF) {
                 err = HandleError::OK;
-                return Array<char>(str.data(), str.size());
+                return bl::dyn_array<char>(str.data(), str.size());
             }
             if (err != HandleError::OK)
                 goto fail;

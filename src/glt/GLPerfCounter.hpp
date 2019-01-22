@@ -3,7 +3,7 @@
 
 #include "glt/GLObject.hpp"
 
-#include <vector>
+#include "bl/vector.hpp"
 
 namespace glt {
 
@@ -19,7 +19,7 @@ struct GLT_API GLPerfCounter
         GLQueryObject end;
     };
 
-    std::vector<Counter> _queries;
+    bl::vector<Counter> _queries;
     size_t _active_query{};
     double _last_query = -1.0;
 

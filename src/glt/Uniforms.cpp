@@ -27,7 +27,7 @@ gltype(const T &x) -> gl_mapped_type_t<T>
 }
 
 #if ENABLE_GLDEBUG_P
-std::string
+bl::string
 descGLType(GLenum ty)
 {
 
@@ -126,7 +126,7 @@ programUniform(GLuint program, GLint loc, float value)
 }
 
 void
-programUniform(GLuint program, GLint loc, ArrayView<const float> value)
+programUniform(GLuint program, GLint loc, bl::array_view<const float> value)
 {
     GL_CALL(
       glProgramUniform1fv, program, loc, GLsizei(value.size()), value.data());
@@ -211,7 +211,7 @@ template<typename T>
 void
 setUniform(bool mandatory,
            ShaderProgram &prog,
-           const std::string &name,
+           const bl::string &name,
            GLenum type,
            const T &value)
 {
@@ -244,7 +244,7 @@ setUniform(bool mandatory,
         if (actual_typei != -1) {
             auto actual_type = GLenum(actual_typei);
             if (actual_type != type) {
-                std::string err =
+                bl::string err =
                   "uniform \"" + name +
                   "\": types dont match, got: " + descGLType(type) +
                   ", expected: " + descGLType(actual_type);
@@ -262,89 +262,89 @@ setUniform(bool mandatory,
 } // namespace
 
 void
-Uniforms::set(bool mandatory, const std::string &name, float value)
+Uniforms::set(bool mandatory, const bl::string &name, float value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, double value)
+Uniforms::set(bool mandatory, const bl::string &name, double value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT, float(value));
 }
 
 void
 Uniforms::set(bool mandatory,
-              const std::string &name,
-              ArrayView<const float> value)
+              const bl::string &name,
+              bl::array_view<const float> value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const vec4_t &value)
+Uniforms::set(bool mandatory, const bl::string &name, const vec4_t &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_VEC4, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const vec3_t &value)
+Uniforms::set(bool mandatory, const bl::string &name, const vec3_t &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_VEC3, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const vec2_t &value)
+Uniforms::set(bool mandatory, const bl::string &name, const vec2_t &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_VEC2, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const mat4_t &value)
+Uniforms::set(bool mandatory, const bl::string &name, const mat4_t &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_MAT4, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const mat3_t &value)
+Uniforms::set(bool mandatory, const bl::string &name, const mat3_t &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_MAT3, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const mat2_t &value)
+Uniforms::set(bool mandatory, const bl::string &name, const mat2_t &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_MAT2, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, color value)
+Uniforms::set(bool mandatory, const bl::string &name, color value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_VEC4, value.vec4());
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, GLint value)
+Uniforms::set(bool mandatory, const bl::string &name, GLint value)
 {
     setUniform(mandatory, prog, name, GL_INT, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, GLuint value)
+Uniforms::set(bool mandatory, const bl::string &name, GLuint value)
 {
     setUniform(mandatory, prog, name, GL_UNSIGNED_INT, value);
 }
 
 void
 Uniforms::set(bool mandatory,
-              const std::string &name,
+              const bl::string &name,
               const BoundTexture &sampler)
 {
     setUniform(mandatory, prog, name, sampler.type, sampler);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const Sampler &sampler)
+Uniforms::set(bool mandatory, const bl::string &name, const Sampler &sampler)
 {
     setUniform(mandatory, prog, name, sampler.type, sampler);
 }

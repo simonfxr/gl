@@ -19,8 +19,6 @@
 #include "glt/Uniforms.hpp"
 #include "sys/io/Stream.hpp"
 
-#include <memory>
-
 namespace ge {
 
 struct GE_API Engine
@@ -42,18 +40,18 @@ struct GE_API Engine
     sys::io::OutStream &out();
     void out(sys::io::OutStream &);
 
-    const std::string programName() const;
+    const bl::string programName() const;
 
     math::real now();
 
     void addInit(RunLevel lvl,
-                 const std::shared_ptr<EventHandler<InitEvent>> &comm);
+                 const bl::shared_ptr<EventHandler<InitEvent>> &comm);
 
     int32_t run(const EngineOptions &opts = EngineOptions());
 
     void enablePlugin(Plugin &);
 
-    void setDevelDataDir(const std::string &);
+    void setDevelDataDir(const bl::string &);
 
 private:
     DECLARE_PIMPL(GE_API, self);

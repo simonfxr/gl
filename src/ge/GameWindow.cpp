@@ -9,9 +9,9 @@
 #include "math/real.hpp"
 #include "opengl.hpp"
 
+#include "bl/vector.hpp"
 #include <GLFW/glfw3.h>
 #include <limits>
-#include <vector>
 
 namespace ge {
 
@@ -77,7 +77,7 @@ void
 glfw_error_callback(int error, const char *desc)
 {
     UNUSED(error);
-    ERR("GLFW error: " + std::string(desc));
+    ERR("GLFW error: " + bl::string(desc));
 }
 
 void

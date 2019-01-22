@@ -1,9 +1,8 @@
 #ifndef GE_INIT_HPP
 #define GE_INIT_HPP
 
+#include "bl/shared_ptr.hpp"
 #include "ge/EngineEvents.hpp"
-
-#include <memory>
 
 namespace ge {
 
@@ -25,12 +24,12 @@ struct GE_API EngineInitializers
 
     EngineInitializers(bool default_init = true);
 
-    void reg(RunLevel lvl, std::shared_ptr<EventHandler<InitEvent>> handler);
+    void reg(RunLevel lvl, bl::shared_ptr<EventHandler<InitEvent>> handler);
 
     template<typename... Args>
     void reg(RunLevel lvl, Args &&... args)
     {
-        reg(lvl, makeEventHandler(std::forward<Args>(args)...));
+        reg(lvl, makeEventHandler(bl::forward<Args>(args)...));
     }
 };
 

@@ -1,19 +1,18 @@
 #include "ge/CommandProcessor.hpp"
 
+#include "bl/hashtable.hpp"
+#include "bl/range.hpp"
+#include "bl/vector.hpp"
 #include "err/err.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Event.hpp"
 #include "ge/Tokenizer.hpp"
 #include "sys/fs.hpp"
-#include "util/range.hpp"
 #include "util/string.hpp"
-
-#include <unordered_map>
-#include <vector>
 
 namespace ge {
 
-using CommandMap = std::unordered_map<std::string_view, CommandPtr>;
+using CommandMap = bl::hashtable<bl::string_view, CommandPtr>;
 
 namespace {
 bool
@@ -30,7 +29,7 @@ struct CommandProcessor::Data
 {
     Engine &engine;
     CommandMap commands;
-    std::vector<std::string> scriptDirs;
+    bl::vector<bl::string> scriptDirs;
     Data(Engine &e) : engine(e) {}
 };
 
@@ -40,13 +39,13 @@ CommandProcessor::CommandProcessor(Engine &e) : self(new Data(e)) {}
 
 CommandProcessor::~CommandProcessor() = default;
 
-std::vector<CommandPtr>
+bl::vector<CommandPtr>
 CommandProcessor::commands() const
 {
-    std::vector<CommandPtr> coms;
+    bl::vector<CommandPtr> coms;
     coms.reserve(self->commands.size());
     for (const auto &ent : self->commands)
-        coms.push_back(ent.second);
+        coms.push_back(ent.value);
     return coms;
 }
 
@@ -57,7 +56,7 @@ CommandProcessor::engine()
 }
 
 bool
-CommandProcessor::addScriptDirectory(std::string dir, bool check_exists)
+CommandProcessor::addScriptDirectory(bl::string dir, bool check_exists)
 {
     for (const auto &scriptDir : self->scriptDirs)
         if (dir == scriptDir)
@@ -66,22 +65,22 @@ CommandProcessor::addScriptDirectory(std::string dir, bool check_exists)
     if (check_exists && !sys::fs::directoryExists(dir))
         return false;
 
-    self->scriptDirs.emplace_back(std::move(dir));
+    self->scriptDirs.emplace_back(bl::move(dir));
     return true;
 }
 
-ArrayView<const std::string>
+bl::array_view<const bl::string>
 CommandProcessor::scriptDirectories() const
 {
-    return view_array(self->scriptDirs);
+    return self->scriptDirs;
 }
 
 CommandPtr
-CommandProcessor::command(std::string_view comname) const
+CommandProcessor::command(bl::string_view comname) const
 {
     auto it = self->commands.find(comname);
     if (it != self->commands.end())
-        return it->second;
+        return it->value;
     return nullptr;
 }
 
@@ -107,14 +106,14 @@ CommandProcessor::define(CommandPtr comm, bool unique)
     }
 
     if (dup)
-        it->second = std::move(comm);
+        it->value = bl::move(comm);
     else
-        self->commands[comname] = std::move(comm);
+        self->commands[comname] = bl::move(comm);
     return dup;
 }
 
 bool
-CommandProcessor::exec(std::string_view comname, ArrayView<CommandArg> args)
+CommandProcessor::exec(bl::string_view comname, bl::array_view<CommandArg> args)
 {
     CommandPtr com = command(comname);
     if (!com) {
@@ -125,11 +124,11 @@ CommandProcessor::exec(std::string_view comname, ArrayView<CommandArg> args)
 }
 
 bool
-CommandProcessor::exec(ArrayView<CommandArg> args)
+CommandProcessor::exec(bl::array_view<CommandArg> args)
 {
     if (args.size() == 0)
         return true;
-    const std::string *com_name = nullptr;
+    const bl::string *com_name = nullptr;
     CommandPtr comm;
     if (args[0].type() == CommandArgType::String) {
         com_name = &args[0].string;
@@ -157,7 +156,7 @@ CommandProcessor::exec(ArrayView<CommandArg> args)
 }
 
 bool
-CommandProcessor::exec(CommandPtr &com, ArrayView<CommandArg> args)
+CommandProcessor::exec(CommandPtr &com, bl::array_view<CommandArg> args)
 {
     if (!com) {
         ERR(engine().out(), "Command == 0");
@@ -186,8 +185,8 @@ CommandProcessor::exec(CommandPtr &com, ArrayView<CommandArg> args)
         ERR(engine().out(), err.str());
     }
 
-    std::vector<CommandPtr> keepAlive;
-    for (const auto i : irange(params.size() - (rest_args ? 1 : 0))) {
+    bl::vector<CommandPtr> keepAlive;
+    for (const auto i : bl::irange(params.size() - (rest_args ? 1 : 0))) {
         const auto &param = params[i];
         if (param != PT::Any) {
             AT val_type = AT::String;
@@ -234,7 +233,7 @@ CommandProcessor::exec(CommandPtr &com, ArrayView<CommandArg> args)
                         return false;
                     }
                     keepAlive.push_back(comArg);
-                    args[i] = CommandArg(std::move(comArg));
+                    args[i] = CommandArg(bl::move(comArg));
                 } else if (val_type == AT::KeyCombo &&
                            args[i].type() == AT::String) {
                     if (!coerceKeyCombo(args[i])) {
@@ -272,9 +271,9 @@ CommandProcessor::exec(CommandPtr &com, ArrayView<CommandArg> args)
 }
 
 bool
-CommandProcessor::loadScript(std::string_view name, bool quiet)
+CommandProcessor::loadScript(bl::string_view name, bool quiet)
 {
-    std::string file = sys::fs::lookup(scriptDirectories(), name);
+    bl::string file = sys::fs::lookup(scriptDirectories(), name);
     if (file.empty())
         goto not_found;
 
@@ -298,10 +297,10 @@ not_found:
 }
 
 bool
-CommandProcessor::loadStream(sys::io::InStream &inp, std::string_view inp_name)
+CommandProcessor::loadStream(sys::io::InStream &inp, bl::string_view inp_name)
 {
     bool ok = true;
-    std::vector<CommandArg> args;
+    bl::vector<CommandArg> args;
     ParseState state(inp, inp_name);
     bool done = false;
     while (!done) {
@@ -315,7 +314,7 @@ CommandProcessor::loadStream(sys::io::InStream &inp, std::string_view inp_name)
             goto next;
         }
 
-        ok = execCommand(view_array(args));
+        ok = execCommand(args);
         if (!ok) {
             ERR(engine().out(), "executing command");
             done = true;
@@ -329,14 +328,14 @@ CommandProcessor::loadStream(sys::io::InStream &inp, std::string_view inp_name)
 }
 
 bool
-CommandProcessor::evalCommand(std::string_view cmd)
+CommandProcessor::evalCommand(bl::string_view cmd)
 {
     sys::io::ByteStream inp(cmd);
     return loadStream(inp, "<eval string>");
 }
 
 bool
-CommandProcessor::execCommand(ArrayView<CommandArg> args)
+CommandProcessor::execCommand(bl::array_view<CommandArg> args)
 {
     if (args.size() == 0)
         return true;
@@ -350,7 +349,7 @@ CommandProcessor::execCommand(ArrayView<CommandArg> args)
         {
             CommandPrettyPrinter printer;
             printer.out(err);
-            printer.print(args);
+            printer.print(args.as_const());
         }
 
         ERR(engine().out(), err.str());

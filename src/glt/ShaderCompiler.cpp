@@ -1,5 +1,8 @@
 #include "glt/ShaderCompiler.hpp"
 
+#include "bl/hashset.hpp"
+#include "bl/range.hpp"
+#include "bl/string_view.hpp"
 #include "err/err.hpp"
 #include "err/log.hpp"
 #include "glt/GLObject.hpp"
@@ -8,15 +11,12 @@
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
 #include "sys/measure.hpp"
-#include "util/range.hpp"
+#include "util/string.hpp"
 
 #include <algorithm>
 #include <functional>
 #include <queue>
 #include <stack>
-#include <string_view>
-#include <unordered_set>
-#include <utility>
 #include <variant>
 
 namespace err {
@@ -39,28 +39,28 @@ PP_DEF_ENUM_IMPL(GLT_SHADER_COMPILER_ERROR_ENUM_DEF)
 namespace {
 struct CompileJob
 {
-    std::shared_ptr<ShaderSource> source;
-    std::function<std::shared_ptr<ShaderObject>()> exec;
+    bl::shared_ptr<ShaderSource> source;
+    std::function<bl::shared_ptr<ShaderObject>()> exec;
 };
 } // namespace
 
-using QueuedJobs = std::unordered_set<ShaderSourceKey>;
+using QueuedJobs = bl::hashset<ShaderSourceKey>;
 
-using ShaderSourceFilePath = std::string; // absolute path
+using ShaderSourceFilePath = bl::string; // absolute path
 
 using CompileJobs = std::queue<CompileJob>;
 
 namespace {
 struct StringSource
 {
-    const std::string source;
+    const bl::string source;
 };
 } // namespace
 
 namespace {
 struct FileSource
 {
-    const std::string path;
+    const bl::string path;
 };
 } // namespace
 
@@ -85,18 +85,18 @@ struct ShaderSource::Data
     const ShaderType type;
     const std::variant<StringSource, FileSource> source;
 
-    static std::shared_ptr<ShaderObject> load(
-      const std::shared_ptr<ShaderSource> &,
+    static bl::shared_ptr<ShaderObject> load(
+      const bl::shared_ptr<ShaderSource> &,
       const StringSource &,
       ShaderCompilerQueue &);
 
-    static std::shared_ptr<ShaderObject> load(
-      const std::shared_ptr<ShaderSource> &,
+    static bl::shared_ptr<ShaderObject> load(
+      const bl::shared_ptr<ShaderSource> &,
       const FileSource &,
       ShaderCompilerQueue &);
 
-    static std::shared_ptr<ShaderObject> load(
-      const std::shared_ptr<ShaderSource> &,
+    static bl::shared_ptr<ShaderObject> load(
+      const bl::shared_ptr<ShaderSource> &,
       ShaderCompilerQueue &);
 };
 
@@ -104,7 +104,7 @@ DECLARE_PIMPL_DEL(ShaderSource)
 
 struct ShaderObject::InitArgs
 {
-    std::shared_ptr<ShaderSource> source;
+    bl::shared_ptr<ShaderSource> source;
     std::variant<StringShaderObject, FileShaderObject> obj;
 };
 
@@ -114,26 +114,26 @@ struct ShaderObject::Data
     GLShaderObject handle{};
     ShaderIncludes includes;
     ShaderDependencies dependencies;
-    std::weak_ptr<ShaderCache> cache;
-    std::shared_ptr<ShaderSource> source;
+    bl::weak_ptr<ShaderCache> cache;
+    bl::shared_ptr<ShaderSource> source;
     std::variant<StringShaderObject, FileShaderObject> object;
 
     Data(ShaderObject &self_, InitArgs &&args)
-      : self(self_), source(std::move(args.source)), object(std::move(args.obj))
+      : self(self_), source(bl::move(args.source)), object(bl::move(args.obj))
     {}
 
-    std::pair<std::shared_ptr<ShaderObject>, ReloadState> reloadIfOutdated(
+    std::pair<bl::shared_ptr<ShaderObject>, ReloadState> reloadIfOutdated(
       ShaderCompilerQueue &);
 
-    void linkCache(const std::shared_ptr<ShaderCache> &);
-    void unlinkCache(const std::shared_ptr<ShaderCache> &);
+    void linkCache(const bl::shared_ptr<ShaderCache> &);
+    void unlinkCache(const bl::shared_ptr<ShaderCache> &);
 
-    static std::shared_ptr<ShaderObject> makeStringShaderObject(
-      std::shared_ptr<ShaderSource>,
+    static bl::shared_ptr<ShaderObject> makeStringShaderObject(
+      bl::shared_ptr<ShaderSource>,
       const StringSource &);
 
-    static std::shared_ptr<ShaderObject> makeFileShaderObject(
-      std::shared_ptr<ShaderSource>,
+    static bl::shared_ptr<ShaderObject> makeFileShaderObject(
+      bl::shared_ptr<ShaderSource>,
       const FileSource &,
       sys::fs::FileTime mtime);
 };
@@ -156,7 +156,7 @@ struct ShaderCompiler::Data
 {
     ShaderManager &shaderManager;
     PreprocessorDefinitions defines;
-    std::shared_ptr<ShaderCache> cache;
+    bl::shared_ptr<ShaderCache> cache;
 
     Data(ShaderManager &sm) : shaderManager(sm) {}
     void initPreprocessor(GLSLPreprocessor & /*proc*/);
@@ -180,8 +180,8 @@ struct ShaderCompilerQueue::Data
       : self(self_), compiler(comp), flags(flgs), compiled(_compiled)
     {}
 
-    void put(const std::shared_ptr<ShaderObject> &);
-    std::shared_ptr<ShaderObject> reload(const std::shared_ptr<ShaderObject> &);
+    void put(const bl::shared_ptr<ShaderObject> &);
+    bl::shared_ptr<ShaderObject> reload(const std::shared_ptr<ShaderObject> &);
 };
 
 DECLARE_PIMPL_DEL(ShaderCompilerQueue)
@@ -192,10 +192,10 @@ template<class T>
 struct always_false : std::false_type
 {};
 
-std::string
-hash(std::string_view source)
+bl::string
+hash(bl::string_view source)
 {
-    return "h" + std::to_string(std::hash<std::string_view>{}(source));
+    return string_concat("h", source.hash());
 }
 
 struct ShaderTypeMapping
@@ -216,7 +216,7 @@ const ShaderTypeMapping shaderTypeMappings[] = {
 bool
 compilePreprocessed(ShaderCompilerQueue & /*scq*/,
                     GLenum /*shader_type*/,
-                    const std::string & /*name*/,
+                    const bl::string & /*name*/,
                     GLSLPreprocessor & /*proc*/,
                     GLShaderObject & /*shader*/);
 
@@ -226,7 +226,7 @@ printShaderLog(GLShaderObject & /*shader*/, sys::io::OutStream &out);
 bool
 translateShaderType(ShaderType type,
                     GLenum *gltype,
-                    const std::string &basename = "");
+                    const bl::string &basename = "");
 
 ReloadState
 includesNeedReload(const ShaderIncludes & /*incs*/);
@@ -235,10 +235,10 @@ ReloadState
 includesNeedReload(const ShaderIncludes &incs)
 {
     for (const auto &inc : incs) {
-        auto mtime = sys::fs::modificationTime(inc.first);
+        auto mtime = sys::fs::modificationTime(inc.path);
         if (!mtime)
             return ReloadState::Failed;
-        if (*mtime != inc.second)
+        if (*mtime != inc.mtime)
             return ReloadState::Outdated;
     }
 
@@ -248,7 +248,7 @@ includesNeedReload(const ShaderIncludes &incs)
 bool
 compilePreprocessed(ShaderCompilerQueue &scq,
                     GLenum shader_type,
-                    const std::string &name,
+                    const bl::string &name,
                     GLSLPreprocessor &proc,
                     GLShaderObject &shader)
 {
@@ -275,9 +275,8 @@ compilePreprocessed(ShaderCompilerQueue &scq,
             scq.shaderCompiler().shaderManager().dumpShadersEnabled()) {
             logmsg << sys::io::endl;
             logmsg << "BEGIN SHADER SOURCE[" << *shader << "]" << sys::io::endl;
-            for (const auto i : irange(nsegments))
-                logmsg << std::string_view{ segments[i],
-                                            size_t(segLengths[i]) };
+            for (const auto i : bl::irange(nsegments))
+                logmsg << bl::string_view{ segments[i], size_t(segLengths[i]) };
             logmsg << sys::io::endl;
             logmsg << "END SHADER SOURCE" << sys::io::endl;
         }
@@ -316,7 +315,7 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
     if (log_len > 0) {
 
         // log_len includes null terminator
-        auto log = std::make_unique<GLchar[]>(size_t(log_len));
+        auto log = bl::make_unique<GLchar[]>(size_t(log_len));
         GL_CALL(glGetShaderInfoLog, *shader, log_len, nullptr, log.get());
 
         GLchar *logBegin = log.get();
@@ -340,9 +339,7 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
 }
 
 bool
-translateShaderType(ShaderType type,
-                    GLenum *gltype,
-                    const std::string &basename)
+translateShaderType(ShaderType type, GLenum *gltype, const bl::string &basename)
 {
 
     if (type == ShaderType::GuessShaderType &&
@@ -361,7 +358,7 @@ translateShaderType(ShaderType type,
 } // namespace
 
 ShaderSource::ShaderSource(ShaderSource::Data &&args)
-  : self(new Data(std::move(args)))
+  : self(new Data(bl::move(args)))
 {}
 
 const ShaderSourceKey &
@@ -370,24 +367,24 @@ ShaderSource::key() const
     return self->key;
 }
 
-std::shared_ptr<ShaderSource>
-ShaderSource::makeFileSource(ShaderType ty, std::string path)
+bl::shared_ptr<ShaderSource>
+ShaderSource::makeFileSource(ShaderType ty, bl::string path)
 {
     ASSERT(sys::fs::fileExists(path));
-    return std::make_shared<ShaderSource>(
-      Data{ path, ty, { FileSource{ std::move(path) } } });
+    return bl::make_shared<ShaderSource>(
+      Data{ path, ty, { FileSource{ bl::move(path) } } });
 }
 
-std::shared_ptr<ShaderSource>
-ShaderSource::makeStringSource(ShaderType ty, std::string source)
+bl::shared_ptr<ShaderSource>
+ShaderSource::makeStringSource(ShaderType ty, bl::string source)
 {
-    auto h = hash(source);
-    return std::make_shared<ShaderSource>(
-      Data{ std::move(h), ty, { StringSource{ std::move(source) } } });
+    auto h = hash(source.view());
+    return bl::make_shared<ShaderSource>(
+      Data{ bl::move(h), ty, { StringSource{ bl::move(source) } } });
 }
 
-std::shared_ptr<ShaderObject>
-ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
+bl::shared_ptr<ShaderObject>
+ShaderSource::Data::load(const bl::shared_ptr<ShaderSource> &src,
                          const StringSource &strsrc,
                          ShaderCompilerQueue &scq)
 {
@@ -417,8 +414,8 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
     return so;
 }
 
-std::shared_ptr<ShaderObject>
-ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
+bl::shared_ptr<ShaderObject>
+ShaderSource::Data::load(const bl::shared_ptr<ShaderSource> &src,
                          const FileSource &filesrc,
                          ShaderCompilerQueue &scq)
 {
@@ -446,7 +443,7 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
       so->self->dependencies);
     scq.shaderCompiler().self->initPreprocessor(preproc);
 
-    preproc.processFileRecursively(std::string(path));
+    preproc.processFileRecursively(bl::string(path));
     if (preproc.wasError())
         return nullptr;
 
@@ -456,8 +453,8 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
     return so;
 }
 
-std::shared_ptr<ShaderObject>
-ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
+bl::shared_ptr<ShaderObject>
+ShaderSource::Data::load(const bl::shared_ptr<ShaderSource> &src,
                          ShaderCompilerQueue &scq)
 {
     ASSERT(src);
@@ -466,7 +463,7 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
 }
 
 ShaderObject::ShaderObject(InitArgs &&args)
-  : self(new Data(*this, std::move(args)))
+  : self(new Data(*this, bl::move(args)))
 {}
 
 ShaderObject::~ShaderObject()
@@ -482,14 +479,14 @@ ShaderObject::handle() const
     return self->handle;
 }
 
-const std::shared_ptr<ShaderSource> &
+const bl::shared_ptr<ShaderSource> &
 ShaderObject::shaderSource()
 {
     return self->source;
 }
 
 void
-ShaderObject::Data::unlinkCache(const std::shared_ptr<ShaderCache> &newcache)
+ShaderObject::Data::unlinkCache(const bl::shared_ptr<ShaderCache> &newcache)
 {
     auto curr = cache.lock();
     ASSERT(newcache && curr);
@@ -497,7 +494,7 @@ ShaderObject::Data::unlinkCache(const std::shared_ptr<ShaderCache> &newcache)
         cache.reset();
 }
 
-std::pair<std::shared_ptr<ShaderObject>, ReloadState>
+std::pair<bl::shared_ptr<ShaderObject>, ReloadState>
 ShaderObject::Data::reloadIfOutdated(ShaderCompilerQueue &scq)
 {
     auto state = std::visit(
@@ -527,35 +524,35 @@ ShaderObject::Data::reloadIfOutdated(ShaderCompilerQueue &scq)
         auto new_so = ShaderSource::Data::load(source, scq);
         if (!new_so)
             return { nullptr, ReloadState::Failed };
-        return { std::move(new_so), ReloadState::Outdated };
+        return { bl::move(new_so), ReloadState::Outdated };
     }
     UNREACHABLE;
 }
 
 void
-ShaderObject::Data::linkCache(const std::shared_ptr<ShaderCache> &newcache)
+ShaderObject::Data::linkCache(const bl::shared_ptr<ShaderCache> &newcache)
 {
     ASSERT(newcache && cache.expired());
     cache = newcache;
 }
 
-std::shared_ptr<ShaderObject>
-ShaderObject::Data::makeStringShaderObject(std::shared_ptr<ShaderSource> src,
+bl::shared_ptr<ShaderObject>
+ShaderObject::Data::makeStringShaderObject(bl::shared_ptr<ShaderSource> src,
                                            const StringSource &ssrc)
 {
-    auto so = std::make_shared<ShaderObject>(
-      InitArgs{ std::move(src), { StringShaderObject{ ssrc } } });
+    auto so = bl::make_shared<ShaderObject>(
+      InitArgs{ bl::move(src), { StringShaderObject{ ssrc } } });
     return so;
 }
 
-std::shared_ptr<ShaderObject>
-ShaderObject::Data::makeFileShaderObject(std::shared_ptr<ShaderSource> src,
+bl::shared_ptr<ShaderObject>
+ShaderObject::Data::makeFileShaderObject(bl::shared_ptr<ShaderSource> src,
                                          const FileSource &fsrc,
                                          sys::fs::FileTime mtime)
 {
     ASSERT(sys::fs::fileExists(fsrc.path));
-    auto so = std::make_shared<ShaderObject>(
-      InitArgs{ std::move(src), { FileShaderObject{ fsrc, mtime } } });
+    auto so = bl::make_shared<ShaderObject>(
+      InitArgs{ bl::move(src), { FileShaderObject{ fsrc, mtime } } });
     return so;
 }
 
@@ -572,23 +569,24 @@ ShaderCache::cacheEntries() const
     return self->entries;
 }
 
-std::shared_ptr<ShaderObject>
+bl::shared_ptr<ShaderObject>
 ShaderCache::lookup(const ShaderSourceKey &key)
 {
+    auto it = self->entries.find(key);
+    if (it == self->entries.end())
+        return nullptr;
+    auto &ents = it->value;
+    ASSERT(ents.size() > 0);
     int best_version = -1;
-    std::weak_ptr<ShaderObject> best_ref;
-
-    for (auto itpair = self->entries.equal_range(key);
-         itpair.first != itpair.second;
-         ++itpair.first) {
-        auto &ent = itpair.first->second;
-        if (ent.first > best_version) {
-            best_version = ent.first;
-            best_ref = ent.second;
+    bl::weak_ptr<ShaderObject> best_ref;
+    for (const auto &ent : ents) {
+        if (ent.version > best_version) {
+            best_version = ent.version;
+            best_ref = ent.shaderObject;
         }
     }
 
-    std::shared_ptr<ShaderObject> so;
+    bl::shared_ptr<ShaderObject> so;
     bool found = best_version >= 0;
     if (found) {
         so = best_ref.lock();
@@ -601,7 +599,7 @@ ShaderCache::lookup(const ShaderSourceKey &key)
 }
 
 bool
-ShaderCache::put(const std::shared_ptr<ShaderObject> &so)
+ShaderCache::put(const bl::shared_ptr<ShaderObject> &so)
 {
     auto cache = shared_from_this();
     ASSERT(cache && so);
@@ -612,26 +610,33 @@ ShaderCache::put(const std::shared_ptr<ShaderObject> &so)
     const ShaderSourceKey &key = so->shaderSource()->key();
     int next_version = 1;
     bool already_present = false;
+    bl::vector<ShaderCacheEntry> *ents = nullptr;
 
-    for (auto itpair = cache->self->entries.equal_range(key);
-         itpair.first != itpair.second;
-         ++itpair.first) {
-        const auto &ent = itpair.first->second;
+    auto it = cache->self->entries.find(key);
+    if (it != cache->self->entries.end()) {
+        ents = &it->value;
+        for (const auto &ent : *ents) {
+            if (so == ent.shaderObject.lock()) {
+                already_present = true;
+                break;
+            }
 
-        if (so == ent.second.lock()) {
-            already_present = true;
-            break;
+            if (ent.version >= next_version)
+                next_version = ent.version + 1;
         }
-
-        if (ent.first >= next_version)
-            next_version = ent.first + 1;
     }
 
     if (!already_present) {
         ASSERT(!curr_cache);
         so->self->cache = cache;
-        cache->self->entries.insert(
-          std::make_pair(key, std::make_pair(next_version, so)));
+        if (ents) {
+            ents->push_back(ShaderCacheEntry{ so, next_version });
+        } else {
+            cache->self->entries.insert(
+              key,
+              bl::make_vector<ShaderCacheEntry>(
+                ShaderCacheEntry{ so, next_version }));
+        }
     }
 
     cache->self->checkValid();
@@ -649,7 +654,15 @@ ShaderCache::flush()
 {
     // be careful not to invalidate iterators
     while (!self->entries.empty()) {
-        auto so = self->entries.begin()->second.second.lock();
+        auto it = self->entries.begin();
+        auto &ents = it->value;
+        if (ents.empty()) {
+            self->entries.erase(it->key);
+            continue;
+        }
+
+        auto &ent = *ents.begin();
+        auto so = ent.shaderObject.lock();
         ASSERT(so);
         self->remove(so.get());
     }
@@ -664,20 +677,26 @@ ShaderCache::Data::remove(ShaderObject *so)
 
     auto removed = false;
     const auto &key = so->shaderSource()->key();
-    for (auto itpair = entries.equal_range(key);
-         itpair.first != itpair.second;) {
-        const auto &ent = itpair.first->second;
 
-        auto ref = ent.second.lock();
-        if (!ref) {
-            itpair.first = entries.erase(itpair.first);
-        } else if (ref.get() == so) {
-            itpair.first = entries.erase(itpair.first);
-            removed = true;
-            break;
-        } else {
-            ++itpair.first;
+    auto keyit = entries.find(key);
+    if (keyit != entries.end()) {
+        auto &ents = keyit->value;
+        ASSERT(!ents.empty());
+        for (auto it = ents.begin(); it != ents.end();) {
+            auto ref = it->shaderObject.lock();
+            if (!ref) {
+                it = ents.erase(it);
+            } else if (ref.get() == so) {
+                it = ents.erase(it);
+                removed = true;
+                break;
+            } else {
+                ++it;
+            }
         }
+
+        if (ents.empty())
+            entries.erase(keyit->key);
     }
 
     checkValid();
@@ -687,10 +706,12 @@ ShaderCache::Data::remove(ShaderObject *so)
 void
 ShaderCache::Data::checkValid()
 {
-    for (auto &kv : entries) {
-        auto so = kv.second.second.lock();
-        ASSERT(so);
-        ASSERT(so->shaderSource()->key() == kv.first);
+    for (const auto &entlist : entries) {
+        for (const auto &ent : entlist.value) {
+            auto so = ent.shaderObject.lock();
+            ASSERT(so);
+            ASSERT(so->shaderSource()->key() == entlist.key);
+        }
     }
 }
 
@@ -702,7 +723,7 @@ ShaderCompiler::shaderManager()
     return self->shaderManager;
 }
 
-const std::shared_ptr<ShaderCache> &
+const bl::shared_ptr<ShaderCache> &
 ShaderCompiler::shaderCache()
 {
     return self->cache;
@@ -715,11 +736,11 @@ ShaderCompiler::init()
 }
 
 bool
-ShaderCompiler::guessShaderType(std::string_view path, ShaderType *res)
+ShaderCompiler::guessShaderType(bl::string_view path, ShaderType *res)
 {
     ASSERT(res);
 
-    std::string ext = sys::fs::extension(path);
+    bl::string ext = sys::fs::extension(path);
 
     for (uint32_t i = 0; i < ARRAY_LENGTH(shaderTypeMappings); ++i) {
         if (ext == shaderTypeMappings[i].fileExtension) {
@@ -773,12 +794,12 @@ ShaderCompilerQueue::shaderCompiler()
 }
 
 void
-ShaderCompilerQueue::enqueueReload(const std::shared_ptr<ShaderObject> &so)
+ShaderCompilerQueue::enqueueReload(const bl::shared_ptr<ShaderObject> &so)
 {
     ASSERT(so);
-    if (self->inQueue.count(so->shaderSource()->key()) > 0)
+    if (self->inQueue.contains(so->shaderSource()->key()))
         return;
-    auto exec = [so, this]() -> std::shared_ptr<ShaderObject> {
+    auto exec = [so, this]() -> bl::shared_ptr<ShaderObject> {
         sys::io::stdout() << "reloadIfOutdated: " << so->shaderSource()->key()
                           << sys::io::endl;
         auto [new_so, state] = so->self->reloadIfOutdated(*this);
@@ -788,27 +809,27 @@ ShaderCompilerQueue::enqueueReload(const std::shared_ptr<ShaderObject> &so)
             return so;
         case ReloadState::Outdated:
             ASSERT(new_so);
-            return { std::move(new_so) };
+            return { bl::move(new_so) };
         case ReloadState::Failed:
             ASSERT(!new_so);
             return so;
         }
         UNREACHABLE;
     };
-    self->toCompile.push({ so->shaderSource(), std::move(exec) });
+    self->toCompile.push({ so->shaderSource(), bl::move(exec) });
 }
 
 void
-ShaderCompilerQueue::enqueueLoad(const std::shared_ptr<ShaderSource> &src)
+ShaderCompilerQueue::enqueueLoad(const bl::shared_ptr<ShaderSource> &src)
 {
     ASSERT(src);
-    if (self->inQueue.count(src->key()) > 0)
+    if (self->inQueue.contains(src->key()))
         return;
-    auto exec = [src, this]() -> std::shared_ptr<ShaderObject> {
+    auto exec = [src, this]() -> bl::shared_ptr<ShaderObject> {
         sys::io::stdout() << "load: " << src->key() << sys::io::endl;
         return ShaderSource::Data::load(src, *this);
     };
-    self->toCompile.push({ src, std::move(exec) });
+    self->toCompile.push({ src, bl::move(exec) });
 }
 
 void
@@ -816,7 +837,7 @@ ShaderCompilerQueue::compileAll()
 {
     for (; !wasError() && !self->toCompile.empty();) {
 
-        auto job = std::move(self->toCompile.front());
+        auto job = bl::move(self->toCompile.front());
         self->toCompile.pop();
         const ShaderSourceKey &key = job.source->key();
 
@@ -825,7 +846,7 @@ ShaderCompilerQueue::compileAll()
             continue;
         }
 
-        std::shared_ptr<ShaderObject> so;
+        bl::shared_ptr<ShaderObject> so;
         bool cache_hit = false;
         if (self->flags & SC_LOOKUP_CACHE) {
             if ((so = self->compiler.shaderCache()->lookup(key))) {
@@ -853,23 +874,23 @@ ShaderCompilerQueue::compileAll()
 }
 
 void
-ShaderCompilerQueue::Data::put(const std::shared_ptr<ShaderObject> &so)
+ShaderCompilerQueue::Data::put(const bl::shared_ptr<ShaderObject> &so)
 {
     ASSERT(so);
-    ASSERT(compiled.count(so->shaderSource()->key()) == 0);
+    ASSERT(!compiled.contains(so->shaderSource()->key()));
 
-    compiled.insert(std::make_pair(so->shaderSource()->key(), so));
+    compiled.insert(so->shaderSource()->key(), so);
 
     if (flags & SC_PUT_CACHE) {
-        std::shared_ptr<ShaderObject> so_mut(so);
+        bl::shared_ptr<ShaderObject> so_mut(so);
         auto cache = compiler.shaderCache();
         if (cache)
             cache->put(so_mut);
     }
 }
 
-std::shared_ptr<ShaderObject>
-ShaderCompilerQueue::Data::reload(const std::shared_ptr<ShaderObject> &so)
+bl::shared_ptr<ShaderObject>
+ShaderCompilerQueue::Data::reload(const bl::shared_ptr<ShaderObject> &so)
 {
     ASSERT(so);
     auto new_so = so->self->reloadIfOutdated(self).first;

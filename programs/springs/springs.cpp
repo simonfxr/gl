@@ -1,3 +1,5 @@
+#include "bl/range.hpp"
+#include "bl/vector.hpp"
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
@@ -11,11 +13,8 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/vec3.hpp"
-#include "util/range.hpp"
 
 #include <algorithm>
-#include <map>
-#include <vector>
 
 const size_t N_SPRINGS = 20;
 
@@ -61,7 +60,7 @@ struct Anim
     double pc_sum;
     int pc_count;
 
-    std::shared_ptr<glt::ShaderProgram> physics_prog;
+    bl::shared_ptr<glt::ShaderProgram> physics_prog;
 
     Anim() : fpsTimer(engine) {}
 
@@ -92,12 +91,12 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     physics_perf_counter.init(2);
 
     particle_source = 0;
-    std::vector<vec4_t> particle_pos_mass;
-    std::vector<vec3_t> particle_vel;
-    std::vector<GLint> particle_conn;
+    bl::vector<vec4_t> particle_pos_mass;
+    bl::vector<vec3_t> particle_vel;
+    bl::vector<GLint> particle_conn;
 
-    for (const auto i : irange(N_SPRINGS)) {
-        for (const auto j : irange(N_SPRINGS)) {
+    for (const auto i : bl::irange(N_SPRINGS)) {
+        for (const auto j : bl::irange(N_SPRINGS)) {
             // arrange in grid of N_SPRINGS by N_SPRINGS
             vec3_t x = vec3(real(i * N_SPRINGS), 0, real(j * N_SPRINGS));
             real inv_mass = real(N_SPRINGS * N_SPRINGS); // accumulated
@@ -165,7 +164,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
             &particle_conn[0],
             GL_STREAM_DRAW);
 
-    for (const auto i : irange(2)) {
+    for (const auto i : bl::irange(2)) {
         GL_CALL(glBindVertexArray, particle_vertex_array[i]);
 
         GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, particle_pos_mass_handle[i]);
@@ -187,7 +186,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     GL_CALL(glGenTextures, 2, particle_vel_tex);
     GL_CALL(glGenTextures, 1, &particle_conn_tex);
 
-    for (const auto i : irange(2)) {
+    for (const auto i : bl::irange(2)) {
         GL_CALL(glBindTexture, GL_TEXTURE_BUFFER, particle_pos_mass_tex[i]);
         GL_CALL(glTexBuffer,
                 GL_TEXTURE_BUFFER,
@@ -202,7 +201,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     GL_CALL(glBindTexture, GL_TEXTURE_BUFFER, particle_conn_tex);
     GL_CALL(glTexBuffer, GL_TEXTURE_BUFFER, GL_RGBA32I, particle_conn_handle);
 
-    physics_prog = std::make_shared<glt::ShaderProgram>(engine.shaderManager());
+    physics_prog = bl::make_shared<glt::ShaderProgram>(engine.shaderManager());
     physics_prog->addShaderFile("physics.vert");
     physics_prog->bindAttribute("position_mass", 0);
     physics_prog->bindAttribute("velocity", 1);

@@ -37,8 +37,8 @@ struct ParticleRenderer
 private:
     ge::Engine *engine;
     Opts opts;
-    std::shared_ptr<glt::Mesh<Vertex2D>> circle_mesh;
-    std::shared_ptr<glt::ShaderProgram> shader;
+    bl::shared_ptr<glt::Mesh<Vertex2D>> circle_mesh;
+    bl::shared_ptr<glt::ShaderProgram> shader;
 };
 
 #define DEF_SHADER(name, ...) const char *const name = PP_TOSTR(__VA_ARGS__);
@@ -73,7 +73,7 @@ ParticleRenderer::init(ge::Engine *e, const ParticleRenderer::Opts &popts)
     this->engine = e;
     this->opts = popts;
 
-    this->shader = std::make_shared<glt::ShaderProgram>(e->shaderManager());
+    this->shader = bl::make_shared<glt::ShaderProgram>(e->shaderManager());
     this->shader->addShaderSrc(PARTICLE_VERTEX_SHADER,
                                glt::ShaderType::VertexShader);
     this->shader->addShaderSrc(PARTICLE_FRAGMENT_SHADER,
@@ -83,7 +83,7 @@ ParticleRenderer::init(ge::Engine *e, const ParticleRenderer::Opts &popts)
     if (!this->shader->tryLink())
         return false;
 
-    this->circle_mesh = std::make_shared<glt::Mesh<Vertex2D>>();
+    this->circle_mesh = bl::make_shared<glt::Mesh<Vertex2D>>();
     this->circle_mesh->primType(GL_TRIANGLE_FAN);
 
     Vertex2D vertex;
@@ -110,7 +110,7 @@ ParticleRenderer::renderParticles(const ge::Event<ge::RenderEvent> &ev,
 {
 
     glt::TextureSampler particle_sampler(
-      std::make_shared<glt::TextureData>(glt::Texture1D));
+      bl::make_shared<glt::TextureData>(glt::Texture1D));
 
     particle_sampler.filterMode(glt::TextureSampler::FilterNearest);
     particle_sampler.clampMode(glt::TextureSampler::ClampRepeat);

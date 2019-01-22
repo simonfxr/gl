@@ -92,7 +92,7 @@ struct State
 
     vec3_t ecLightDir{};
 
-    std::unique_ptr<ge::Timer> fpsTimer;
+    bl::unique_ptr<ge::Timer> fpsTimer;
 
     bool write_model{};
     bool read_model{};
@@ -108,10 +108,10 @@ static void
 renderScene(State *state, const RenderEv &ev);
 
 static bool
-readModel(const std::string &file, CubeMesh &mdl);
+readModel(const bl::string &file, CubeMesh &mdl);
 
 static bool
-writeModel(const std::string &file, const CubeMesh &mdl);
+writeModel(const bl::string &file, const CubeMesh &mdl);
 
 static bool
 initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points);
@@ -188,7 +188,7 @@ initState(State *state, const InitEv &ev)
             ERR("couldnt write model file");
     }
 
-    // std::shared_ptr<glt::ShaderProgram> voxel =
+    // bl::shared_ptr<glt::ShaderProgram> voxel =
     // e.shaderManager().declareProgram("voxel"); glt::ShaderProgram& vs =
     // *voxel;
 
@@ -873,7 +873,7 @@ createModel(CubeMesh &worldModel,
                             //                            sys::io::endl;
                             int32_t face = n[0] + n[1] * 2 + n[2] * 3;
                             int32_t side = face < 0 ? 1 : 0;
-                            face = abs(face) - 1;
+                            face = math::abs(face) - 1;
                             v.position *= BLOCK_DIM;
                             v.position += offset;
                             v.normal[3] =
@@ -896,10 +896,10 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
     CubeMesh cubeModel;
     glt::primitives::unitCube(cubeModel);
 
-    auto worldp = std::make_unique<World>();
+    auto worldp = bl::make_unique<World>();
     World &world = *worldp;
 
-    auto densitiesp = std::make_unique<Densities>();
+    auto densitiesp = bl::make_unique<Densities>();
 
     world.zero();
 
@@ -925,13 +925,13 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
 
     time_op(createGeometry(world, *densitiesp));
 
-    auto raysp = std::make_unique<Rays>();
+    auto raysp = bl::make_unique<Rays>();
     Rays &rays = *raysp;
     time_op(initRays(rays, sphere_points));
     sys::io::stderr() << "rays crossing planes: " << rays.sumcos.f[0] << ", "
                       << rays.sumcos.f[1] << sys::io::endl;
 
-    std::unique_ptr<World> visp;
+    bl::unique_ptr<World> visp;
     time_op(visp.reset(filterOccluded(world)));
     World &vis = *visp;
 
@@ -946,15 +946,15 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
         permut[i + j] = t;
     }
 
-    auto worldAndVisp = std::make_unique<World>();
+    auto worldAndVisp = bl::make_unique<World>();
     World &worldAndVis = *worldAndVisp;
     andWorld(worldAndVis, world, vis);
 
-    auto worldOrVisp = std::make_unique<World>();
+    auto worldOrVisp = bl::make_unique<World>();
     World &worldOrVis = *worldOrVisp;
     orWorldNot(worldOrVis, world, vis);
 
-    auto hullp = std::make_unique<World>();
+    auto hullp = bl::make_unique<World>();
     World &hull = *hullp;
 
     for (int32_t i = 0; i < N; ++i)
@@ -975,7 +975,7 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
 
     Stats stats{};
 
-    auto vertsp = std::make_unique<Vertices>(cubeModel.size());
+    auto vertsp = bl::make_unique<Vertices>(cubeModel.size());
     Vertices &verts = *vertsp;
 
     for (uint32_t i = 0; i < verts.size; ++i)
@@ -1076,7 +1076,7 @@ renderBlocks(State *state, ge::Engine &e)
 // }
 
 static bool
-readModel(const std::string &file, CubeMesh &mdl)
+readModel(const bl::string &file, CubeMesh &mdl)
 {
     UNUSED(file);
     UNUSED(mdl);
@@ -1085,7 +1085,7 @@ readModel(const std::string &file, CubeMesh &mdl)
 }
 
 static bool
-writeModel(const std::string &file, const CubeMesh &mdl)
+writeModel(const bl::string &file, const CubeMesh &mdl)
 {
     UNUSED(file);
     UNUSED(mdl);

@@ -1,16 +1,12 @@
 #ifndef GE_GAMEWINDOW_HPP
 #define GE_GAMEWINDOW_HPP
 
-#include "ge/conf.hpp"
-
+#include "bl/string.hpp"
 #include "ge/Command.hpp"
 #include "ge/EngineEvents.hpp"
 #include "ge/Event.hpp"
 #include "ge/KeyBinding.hpp"
 #include "ge/WindowRenderTarget.hpp"
-
-#include <memory>
-#include <string>
 
 namespace ge {
 
@@ -41,7 +37,7 @@ struct GE_API WindowOptions
 {
     size_t width;
     size_t height;
-    std::string title;
+    bl::string title;
     GLContextInfo settings;
     bool vsync;
 

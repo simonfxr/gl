@@ -12,20 +12,19 @@ PP_DEF_ENUM_IMPL(GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF);
 PP_DEF_ENUM_IMPL(GLT_SHADER_PROFILE_ENUM_DEF);
 PP_DEF_ENUM_IMPL(GLT_SHADER_TYPE_ENUM_DEF);
 
-using ProgramMap =
-  std::unordered_map<std::string, std::shared_ptr<ShaderProgram>>;
+using ProgramMap = bl::hashtable<bl::string, bl::shared_ptr<ShaderProgram>>;
 
 struct ShaderManager::Data
 {
     ShaderManagerVerbosity verbosity;
     sys::io::OutStream *out;
-    std::vector<std::string> shaderDirs;
+    bl::vector<bl::string> shaderDirs;
     ProgramMap programs;
     uint32_t shader_version;
     ShaderProfile shader_profile;
     bool cache_so;
     bool dumpShaders{ false };
-    std::shared_ptr<ShaderCache> globalShaderCache;
+    bl::shared_ptr<ShaderCache> globalShaderCache;
     PreprocessorDefinitions globalDefines;
     ShaderCompiler shaderCompiler;
     ShaderManager &self;
@@ -36,7 +35,7 @@ struct ShaderManager::Data
       , shader_version(0)
       , shader_profile(ShaderProfile::Core)
       , cache_so(true)
-      , globalShaderCache(std::make_shared<ShaderCache>())
+      , globalShaderCache(bl::make_shared<ShaderCache>())
       , shaderCompiler(me)
       , self(me)
     {}
@@ -98,28 +97,28 @@ ShaderManager::verbosity(ShaderManagerVerbosity v)
     self->verbosity = v;
 }
 
-std::shared_ptr<ShaderProgram>
-ShaderManager::program(const std::string &name) const
+bl::shared_ptr<ShaderProgram>
+ShaderManager::program(const bl::string &name) const
 {
     auto it = self->programs.find(name);
     if (it != self->programs.end())
-        return it->second;
-    ERR(("program not found: " + name).c_str());
+        return it->value;
+    ERR("program not found: " + name);
     return {};
 }
 
 void
-ShaderManager::addProgram(const std::string &name,
-                          std::shared_ptr<ShaderProgram> &program)
+ShaderManager::addProgram(const bl::string &name,
+                          bl::shared_ptr<ShaderProgram> &program)
 {
     ASSERT(program);
     self->programs[name] = program;
 }
 
-std::shared_ptr<ShaderProgram>
-ShaderManager::declareProgram(const std::string &name)
+bl::shared_ptr<ShaderProgram>
+ShaderManager::declareProgram(const bl::string &name)
 {
-    auto prog = std::make_shared<ShaderProgram>(*this);
+    auto prog = bl::make_shared<ShaderProgram>(*this);
     self->programs[name] = prog;
     return prog;
 }
@@ -130,7 +129,7 @@ ShaderManager::reloadShaders()
     const auto n = self->programs.size();
     auto failed = size_t{ 0 };
     for (auto &ent : self->programs)
-        if (!ent.second->reload())
+        if (!ent.value->reload())
             ++failed;
 
     out() << "all shaders reloaded (" << (n - failed) << " successful, "
@@ -150,19 +149,19 @@ ShaderManager::out(sys::io::OutStream &out)
 }
 
 bool
-ShaderManager::prependShaderDirectory(const std::string &dir, bool check_exists)
+ShaderManager::prependShaderDirectory(const bl::string &dir, bool check_exists)
 {
     removeShaderDirectory(dir);
 
     if (check_exists && !sys::fs::directoryExists(dir))
         return false;
 
-    self->shaderDirs.insert(self->shaderDirs.begin(), dir);
+    self->shaderDirs.push_front(dir);
     return true;
 }
 
 bool
-ShaderManager::addShaderDirectory(const std::string &dir, bool check_exists)
+ShaderManager::addShaderDirectory(const bl::string &dir, bool check_exists)
 {
     removeShaderDirectory(dir);
 
@@ -174,17 +173,17 @@ ShaderManager::addShaderDirectory(const std::string &dir, bool check_exists)
 }
 
 bool
-ShaderManager::removeShaderDirectory(const std::string &dir)
+ShaderManager::removeShaderDirectory(const bl::string &dir)
 {
     ShaderDirectories &dirs = self->shaderDirs;
-    auto it = find(dirs.begin(), dirs.end(), dir);
+    auto it = std::find(dirs.begin(), dirs.end(), dir);
     if (it == dirs.end())
         return false;
     dirs.erase(it);
     return true;
 }
 
-const std::vector<std::string> &
+const bl::vector<bl::string> &
 ShaderManager::shaderDirectories() const
 {
     return self->shaderDirs;
@@ -218,7 +217,7 @@ ShaderManager::dumpShadersEnable(bool enable)
     self->dumpShaders = enable;
 }
 
-const std::shared_ptr<ShaderCache> &
+const bl::shared_ptr<ShaderCache> &
 ShaderManager::globalShaderCache()
 {
     return self->globalShaderCache;

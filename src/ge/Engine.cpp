@@ -35,14 +35,14 @@ struct Engine::Data : public GameLoop::Game
     Modules __modules;
 
     Engine &theEngine; // owning engine
-    std::unique_ptr<GameWindow> window;
+    bl::unique_ptr<GameWindow> window;
     GameLoop gameLoop;
     CommandProcessor commandProcessor;
     KeyHandler keyHandler;
     ReplServer replServer;
     bool skipRender{ false };
-    std::string programName;
-    std::string develDataDir;
+    bl::string programName;
+    bl::string develDataDir;
 
     sys::io::OutStream *out;
 
@@ -73,7 +73,7 @@ struct Engine::Data : public GameLoop::Game
     void atExit(int32_t exit_code) final;
 
     void registerHandlers();
-    bool execCommand(std::vector<CommandArg> &args);
+    bool execCommand(bl::vector<CommandArg> &args);
 };
 
 DECLARE_PIMPL_DEL(Engine)
@@ -165,7 +165,7 @@ Engine::now()
     return math::real(SELF->now());
 }
 
-const std::string
+const bl::string
 Engine::programName() const
 {
     return self->programName;
@@ -196,7 +196,7 @@ Engine::run(const EngineOptions &opts)
 
     self->skipRender = opts.disableRender;
 
-    std::string wd = opts.workingDirectory;
+    bl::string wd = opts.workingDirectory;
     if (opts.workingDirectory.empty() && opts.defaultCD)
         wd = sys::fs::dirname(opts.binary);
 
@@ -245,7 +245,7 @@ Engine::run(const EngineOptions &opts)
         return 1;
 
     if (!opts.inhibitInitScript) {
-        std::string script = sys::fs::basename(opts.binary);
+        bl::string script = sys::fs::basename(opts.binary);
         if (!script.empty())
             script = sys::fs::dropExtension(script);
 
@@ -256,7 +256,7 @@ Engine::run(const EngineOptions &opts)
 
     for (const auto &i : opts.commands) {
         bool ok;
-        std::string command;
+        bl::string command;
         if (i.first == EngineOptions::Script) {
             ok = commandProcessor().loadScript(i.second);
             if (!ok)
@@ -348,7 +348,7 @@ Engine::Data::init(const EngineOptions &eopts)
 
 void
 Engine::addInit(RunLevel lvl,
-                const std::shared_ptr<EventHandler<InitEvent>> &comm)
+                const bl::shared_ptr<EventHandler<InitEvent>> &comm)
 {
 
     if (SELF->opts == nullptr) {
@@ -415,7 +415,7 @@ Engine::enablePlugin(Plugin &p)
 }
 
 void
-Engine::setDevelDataDir(const std::string &dir)
+Engine::setDevelDataDir(const bl::string &dir)
 {
     if (!sys::fs::directoryExists(dir)) {
         WARN("not a directory");

@@ -2,7 +2,7 @@
 
 #include "ge/Engine.hpp"
 
-#include <utility>
+#include "util/string.hpp"
 
 namespace ge {
 
@@ -12,10 +12,10 @@ CommandEvent::CommandEvent(ge::Engine &e, CommandProcessor &proc)
   : EngineEvent(e), processor(proc)
 {}
 
-Command::Command(std::vector<CommandParamType> ps,
-                 std::string name_,
-                 std::string desc_)
-  : params(ps), namestr(std::move(name_)), descr(std::move(desc_))
+Command::Command(bl::vector<CommandParamType> ps,
+                 bl::string name_,
+                 bl::string desc_)
+  : params(ps), namestr(bl::move(name_)), descr(bl::move(desc_))
 {
     ASSERT(!namestr.empty());
 }
@@ -27,11 +27,12 @@ Command::handle(const Event<CommandEvent> &ev)
         (params.size() == 1 && params[0] == CommandParamType::List)) {
         interactive(ev, {});
     } else {
-        ERR("cannot execute command without arguments: " + name());
+        ERR(
+          string_concat("cannot execute command without arguments: ", name()));
     }
 }
 
-std::string
+bl::string
 Command::interactiveDescription() const
 {
     sys::io::ByteStream desc;
@@ -79,11 +80,11 @@ Command::interactiveDescription() const
 }
 
 namespace {
-std::string
-describeQuotation(std::string_view &source,
+bl::string
+describeQuotation(bl::string_view &source,
                   int line,
                   int column,
-                  std::string_view &desc)
+                  bl::string_view &desc)
 {
     sys::io::ByteStream str;
     str << "<quotation " << source << "@" << line << ":" << column;
@@ -94,8 +95,8 @@ describeQuotation(std::string_view &source,
 } // namespace
 
 namespace {
-std::string
-nameOfQuotation(std::string_view filename, int line, int col)
+bl::string
+nameOfQuotation(bl::string_view filename, int line, int col)
 {
     sys::io::ByteStream buf;
     buf << "<quotation: " << filename << "@" << line << ":" << col << ">";
@@ -103,25 +104,25 @@ nameOfQuotation(std::string_view filename, int line, int col)
 }
 } // namespace
 
-QuotationCommand::QuotationCommand(std::string_view source,
+QuotationCommand::QuotationCommand(bl::string_view source,
                                    int line,
                                    int column,
-                                   std::string_view desc,
-                                   std::unique_ptr<Quotation> quot)
+                                   bl::string_view desc,
+                                   bl::unique_ptr<Quotation> quot)
   : Command({},
             nameOfQuotation(source, line, column),
             describeQuotation(source, line, column, desc))
-  , quotation(std::move(quot))
+  , quotation(bl::move(quot))
 {}
 
 QuotationCommand::~QuotationCommand() = default;
 
 void
 QuotationCommand::interactive(const Event<CommandEvent> &ev,
-                              ArrayView<const CommandArg> /*unused*/)
+                              bl::array_view<const CommandArg> /*unused*/)
 {
     for (auto &args : *quotation)
-        ev.info.engine.commandProcessor().exec(view_array(args));
+        ev.info.engine.commandProcessor().exec(args);
 }
 
 } // namespace ge

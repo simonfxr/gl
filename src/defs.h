@@ -102,6 +102,11 @@
                                                   "expansion"))
 #    define PRAGMA_DISABLE_DIAG_MISMATCHED_TAGS                                \
         _Pragma(PP_TOSTR(clang diagnostic ignored "-Wmismatched-tags"))
+#    define PRAGMA_DISABLE_DIAG_DEPRECATED_EX_SPEC                             \
+        _Pragma(PP_TOSTR(clang diagnostic ignored                              \
+                         "-Wdeprecated-dynamic-exception-spec"))
+#    define PRAGMA_DISABLE_DIAG_RESERVED_ID_MACRO                              \
+        _Pragma(PP_TOSTR(clang diagnostic ignored "-Wreserved-id-macro"))
 #elif HU_COMP_GCC_P
 #    define PRAGMA_DIAGNOSTIC_PUSH _Pragma("GCC diagnostic push")
 #    define PRAGMA_DIAGNOSTIC_POP _Pragma("GCC diagnostic pop")
@@ -140,6 +145,14 @@
 #    define PRAGMA_DISABLE_DIAG_MISMATCHED_TAGS
 #endif
 
+#ifndef PRAGMA_DISABLE_DIAG_DEPRECATED_EX_SPEC
+#    define PRAGMA_DISABLE_DIAG_DEPRECATED_EX_SPEC
+#endif
+
+#ifndef PRAGMA_DISABLE_DIAG_RESERVED_ID_MACRO
+#    define PRAGMA_DISABLE_DIAG_RESERVED_ID_MACRO
+#endif
+
 #define BEGIN_NO_WARN_SWITCH PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_SWITCH
 #define END_NO_WARN_SWITCH PRAGMA_DIAGNOSTIC_POP
 
@@ -158,5 +171,13 @@
 #define BEGIN_NO_WARN_MISMATCHED_TAGS                                          \
     PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_MISMATCHED_TAGS
 #define END_NO_WARN_MISMATCHED_TAGS PRAGMA_DIAGNOSTIC_POP
+
+#define BEGIN_NO_WARN_DEPRECATED_EX_SPEC                                       \
+    PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_DEPRECATED_EX_SPEC
+#define END_NO_WARN_DEPRECATED_EX_SPEC PRAGMA_DIAGNOSTIC_POP
+
+#define BEGIN_NO_WARN_RESERVED_ID_MACRO                                        \
+    PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_RESERVED_ID_MACRO
+#define END_NO_WARN_RESERVED_ID_MACRO PRAGMA_DIAGNOSTIC_POP
 
 #endif

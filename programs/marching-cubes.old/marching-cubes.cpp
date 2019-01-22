@@ -205,7 +205,7 @@ Anim::renderBlock(const vec3_t &aabb_min, const vec3_t &aabb_max)
     glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
     glt::SavePoint sp(gt.save());
 
-    // GL_CALL(glBindVertexArray, 0);
+    // GL_CALL(glBindVertexbl::dyn_array, 0);
 
     // GLuint feedback_buf;
     // GL_CALL(glGenBuffers, 1, &feedback_buf);

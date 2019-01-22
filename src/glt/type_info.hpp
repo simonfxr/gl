@@ -3,16 +3,13 @@
 
 #include "glt/conf.hpp"
 
+#include "bl/array_view.hpp"
 #include "glt/color.hpp"
 #include "math/genmat.hpp"
 #include "math/genvec.hpp"
 #include "math/real.hpp"
 #include "pp/enum.hpp"
 #include "pp/map.h"
-#include "util/ArrayView.hpp"
-
-#include <array>
-#include <cstddef>
 
 #if HU_COMP_GNULIKE_P
 #    define ti_offsetof(t, fld) __builtin_offsetof(t, fld)
@@ -169,11 +166,11 @@ struct StructInfo
     const char *name;
     uint16_t size;
     uint16_t align;
-    ArrayView<const FieldInfo> fields;
+    bl::array_view<const FieldInfo> fields;
     constexpr StructInfo(const char *nm,
                          uint16_t sz,
                          uint16_t algn,
-                         ArrayView<const FieldInfo> fs)
+                         bl::array_view<const FieldInfo> fs)
       : name(nm), size(sz), align(algn), fields(fs)
     {}
 };
@@ -234,7 +231,7 @@ struct StructInfo
           ::glt::StructInfo(PP_TOSTR(sname),                                   \
                             sizeof(sname::gl),                                 \
                             alignof(sname::gl),                                \
-                            ::ArrayView<const ::glt::FieldInfo>(               \
+                            ::bl::array_view<const ::glt::FieldInfo>(          \
                               _fields,                                         \
                               sizeof _fields / sizeof(::glt::FieldInfo)));     \
     };                                                                         \

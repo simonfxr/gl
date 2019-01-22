@@ -1,17 +1,16 @@
 #ifndef GE_COMMAND_ARGS_HPP
 #define GE_COMMAND_ARGS_HPP
 
+#include "bl/array_view.hpp"
+#include "bl/compare.hpp"
+#include "bl/shared_ptr.hpp"
+#include "bl/string.hpp"
+#include "bl/vector.hpp"
 #include "ge/KeyBinding.hpp"
 #include "ge/conf.hpp"
 #include "pp/enum.hpp"
 #include "pp/pimpl.hpp"
 #include "sys/io/Stream.hpp"
-#include "util/ArrayView.hpp"
-#include "util/Comparable.hpp"
-
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace ge {
 
@@ -43,33 +42,33 @@ PP_DEF_ENUM_WITH_API(GE_API, GE_COMMAND_ARG_TYPE_ENUM_DEF);
 
 struct CommandArg;
 
-struct CommandValue : Comparable<CommandValue>
+struct CommandValue : bl::comparable<CommandValue>
 {
-    std::shared_ptr<const std::string> name;
-    std::shared_ptr<Command> ref;
+    bl::shared_ptr<const bl::string> name;
+    bl::shared_ptr<Command> ref;
 
     // marker type for overload disambiguation
     struct NamedRef
     {};
 
-    CommandValue(std::shared_ptr<Command> ref);
+    CommandValue(bl::shared_ptr<Command> ref);
 
-    CommandValue(std::string nm, NamedRef)
-      : name(std::make_shared<const std::string>(std::move(nm)))
+    CommandValue(bl::string nm, NamedRef)
+      : name(bl::make_shared<const bl::string>(bl::move(nm)))
     {}
 
-    static CommandValue makeNamedRef(std::string nm)
+    static CommandValue makeNamedRef(bl::string nm)
     {
-        return CommandValue(std::move(nm), NamedRef{});
+        return CommandValue(bl::move(nm), NamedRef{});
     }
 };
 
 int
 compare(const CommandValue &, const CommandValue &);
 
-using Quotation = std::vector<std::vector<CommandArg>>;
+using Quotation = bl::vector<bl::vector<CommandArg>>;
 
-struct GE_API CommandArg : Comparable<CommandArg>
+struct GE_API CommandArg : bl::comparable<CommandArg>
 {
     // marker type for overload disambiguation
     struct CommandArgVar
@@ -83,40 +82,40 @@ struct GE_API CommandArg : Comparable<CommandArg>
     explicit CommandArg(int64_t x) : integer(x), _type(CommandArgType::Integer)
     {}
 
-    explicit CommandArg(std::string x)
-      : string(std::move(x)), _type(CommandArgType::String)
+    explicit CommandArg(bl::string x)
+      : string(bl::move(x)), _type(CommandArgType::String)
     {}
 
     explicit CommandArg(double x)
-      : number(std::move(x)), _type(CommandArgType::Number)
+      : number(bl::move(x)), _type(CommandArgType::Number)
     {}
 
-    explicit CommandArg(std::shared_ptr<Command> comm)
-      : command(std::move(comm)), _type(CommandArgType::CommandRef)
+    explicit CommandArg(bl::shared_ptr<Command> comm)
+      : command(bl::move(comm)), _type(CommandArgType::CommandRef)
     {}
 
     explicit CommandArg(KeyBinding kb)
-      : keyBinding(std::move(kb)), _type(CommandArgType::KeyCombo)
+      : keyBinding(bl::move(kb)), _type(CommandArgType::KeyCombo)
     {}
 
     explicit CommandArg(CommandValue comm)
-      : command(std::move(comm)), _type(CommandArgType::CommandRef)
+      : command(bl::move(comm)), _type(CommandArgType::CommandRef)
     {}
 
-    explicit CommandArg(std::string var, CommandArgVar)
-      : var(std::move(var)), _type(CommandArgType::VarRef)
+    explicit CommandArg(bl::string var, CommandArgVar)
+      : var(bl::move(var)), _type(CommandArgType::VarRef)
     {}
 
     ~CommandArg();
 
-    static CommandArg varRef(std::string var)
+    static CommandArg varRef(bl::string var)
     {
-        return CommandArg(std::move(var), CommandArgVar{});
+        return CommandArg(bl::move(var), CommandArgVar{});
     }
 
-    static CommandArg namedCommandRef(std::string comm)
+    static CommandArg namedCommandRef(bl::string comm)
     {
-        return CommandArg(CommandValue::makeNamedRef(std::move(comm)));
+        return CommandArg(CommandValue::makeNamedRef(bl::move(comm)));
     }
 
     CommandArg(CommandArg &&);
@@ -131,11 +130,11 @@ struct GE_API CommandArg : Comparable<CommandArg>
 
     union
     {
-        std::string string;
+        bl::string string;
         int64_t integer;
         double number;
         CommandValue command;
-        std::string var;
+        bl::string var;
         KeyBinding keyBinding;
     };
 
@@ -158,7 +157,7 @@ struct GE_API CommandPrettyPrinter
 
     void print(const KeyBinding &bind);
     void print(const CommandArg &arg, bool first = false);
-    void print(ArrayView<const CommandArg>);
+    void print(bl::array_view<const CommandArg>);
     void print(const Quotation &);
     void printSpaces(size_t);
 

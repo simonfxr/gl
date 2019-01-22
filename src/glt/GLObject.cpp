@@ -1,8 +1,7 @@
 #include "glt/GLObject.hpp"
 
+#include "bl/hashtable.hpp"
 #include "glt/utils.hpp"
-
-#include <unordered_map>
 
 #if defined(DEBUG_GLOBJECT) || defined(DEBUG_ALL)
 #    define DBG(...) __VA_ARGS__
@@ -56,7 +55,7 @@ struct Tables
 {
     size_t instance_count[ObjectType::count]{};
     ObjectKind kinds[ObjectType::count];
-    DBG(std::unordered_map<GLuint, std::string> stacktrace_map;)
+    DBG(bl::hashtable<GLuint, bl::string> stacktrace_map;)
     Tables();
 
     static Tables &get() noexcept
@@ -92,7 +91,7 @@ generate(ObjectType t, GLsizei n, GLuint *names)
     DBG({
         ByteStream out;
         err::print_stacktrace(out);
-        std::string call_stack_str = out.str();
+        bl::string call_stack_str = out.str();
     });
 
     auto tab = Tables::get();

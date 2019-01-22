@@ -1,11 +1,10 @@
 #ifndef GE_KEYHANDLER_HPP
 #define GE_KEYHANDLER_HPP
 
+#include "bl/shared_ptr.hpp"
 #include "ge/CommandProcessor.hpp"
 #include "ge/KeyBinding.hpp"
 #include "ge/conf.hpp"
-
-#include <memory>
 
 namespace ge {
 
@@ -33,10 +32,10 @@ struct GE_API KeyHandler
 
     KeyState keyState(KeyCode code);
 
-    void registerBinding(const std::shared_ptr<KeyBinding> &binding,
+    void registerBinding(const bl::shared_ptr<KeyBinding> &binding,
                          const CommandPtr &comm);
 
-    CommandPtr unregisterBinding(const std::shared_ptr<KeyBinding> &binding);
+    CommandPtr unregisterBinding(const bl::shared_ptr<KeyBinding> &binding);
 
     void handleCommands();
 

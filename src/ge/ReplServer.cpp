@@ -1,12 +1,10 @@
 #include "ge/ReplServer.hpp"
 
+#include "bl/vector.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Tokenizer.hpp"
 #include "sys/fiber.hpp"
 #include "util/string.hpp"
-
-#include <utility>
-#include <vector>
 
 namespace ge {
 
@@ -38,7 +36,7 @@ struct Client
     CooperativeInStream in_stream;
     ParseState parse_state;
 
-    std::vector<CommandArg> statement;
+    bl::vector<CommandArg> statement;
 
     Client(int _id, Handle h);
     ~Client();
@@ -79,7 +77,7 @@ Client::Client(int _id, Handle h)
   , parser_fiber()
   , client_fiber(sys::fiber::toplevel())
   , state(ParsingYield)
-  , hstream(std::move(h))
+  , hstream(bl::move(h))
   , in_stream(&hstream, client_fiber, &parser_fiber)
   , parse_state(in_stream, "")
 {
@@ -121,7 +119,7 @@ Client::handleIO(Engine &e)
     fiber_switch(client_fiber, &parser_fiber);
     switch (state) {
     case ParsingGotStatement:
-        e.commandProcessor().execCommand(view_array(statement));
+        e.commandProcessor().execCommand(statement);
         statement.clear();
         break;
     case ParsingYield:
@@ -141,16 +139,16 @@ struct ReplServer::Data
 {
     ReplServer &self;
     Socket server;
-    std::vector<std::shared_ptr<Client>> clients;
+    bl::vector<bl::shared_ptr<Client>> clients;
     bool running{ false };
     int next_id{};
     Engine &engine;
-    std::shared_ptr<EventHandler<InputEvent>> io_handler;
+    bl::shared_ptr<EventHandler<InputEvent>> io_handler;
 
     Data(ReplServer &self_,
          Engine &e,
-         std::shared_ptr<EventHandler<InputEvent>> _handler)
-      : self(self_), engine(e), io_handler(std::move(_handler))
+         bl::shared_ptr<EventHandler<InputEvent>> _handler)
+      : self(self_), engine(e), io_handler(bl::move(_handler))
     {}
 };
 
@@ -183,7 +181,7 @@ ReplServer::start(const IPAddr4 &listen_addr, uint16_t port)
         ERR(string_concat("failed to open socket for listening: ", err));
         return false;
     }
-    self->server = std::move(opt_sock).value();
+    self->server = bl::move(opt_sock).value();
     self->running = true;
     return true;
 }
@@ -194,7 +192,7 @@ ReplServer::running()
     return self->running;
 }
 
-const std::shared_ptr<EventHandler<InputEvent>> &
+const bl::shared_ptr<EventHandler<InputEvent>> &
 ReplServer::ioHandler()
 {
     return self->io_handler;
@@ -210,14 +208,14 @@ ReplServer::acceptClients()
         auto opt_hndl = accept(self->server, err);
         if (!opt_hndl)
             break;
-        auto handle = std::move(opt_hndl).value();
+        auto handle = bl::move(opt_hndl).value();
         INFO("accepted client");
         if (elevate(handle, mode(handle) | HM_NONBLOCKING) != HandleError::OK) {
             ERR("couldnt set nonblocking handle mode, closing connection");
             sys::io::close(handle);
         } else {
             self->clients.push_back(
-              std::make_shared<Client>(self->next_id++, std::move(handle)));
+              bl::make_shared<Client>(self->next_id++, bl::move(handle)));
         }
     }
 }

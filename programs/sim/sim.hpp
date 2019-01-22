@@ -1,13 +1,12 @@
 #ifndef SIM_HPP
 #define SIM_HPP
 
+#include "bl/unique_ptr.hpp"
 #include "glt/AABB.hpp"
 #include "glt/Frame.hpp"
 #include "glt/ViewFrustum.hpp"
 #include "glt/color.hpp"
 #include "math/vec3.hpp"
-
-#include <memory>
 
 static const float CAMERA_SPHERE_RAD = 1.f;
 
@@ -73,7 +72,7 @@ private:
     {
         void operator()(Data *) noexcept;
     };
-    const std::unique_ptr<Data, DataDeleter> self;
+    const bl::unique_ptr<Data, DataDeleter> self;
 };
 
 #endif

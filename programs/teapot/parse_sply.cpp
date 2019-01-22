@@ -1,6 +1,6 @@
+#include "bl/vector.hpp"
 #include <cstdio>
 #include <cstring>
-#include <vector>
 
 #include "math/vec3.hpp"
 #include "parse_sply.hpp"

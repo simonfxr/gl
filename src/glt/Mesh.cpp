@@ -1,7 +1,7 @@
 #include "glt/Mesh.hpp"
 
+#include "bl/range.hpp"
 #include "glt/utils.hpp"
-#include "util/range.hpp"
 
 #ifdef HU_OS_POSIX
 #    include <cstdlib>
@@ -86,7 +86,7 @@ MeshBase::MeshBase(const StructInfo &si,
     vertex_data = realloc_vertex_buf(nullptr, si.size, nverts);
     vertex_data_end = vertex_data;
     vertex_data_lim = vertex_data + si.size * nverts;
-    for (auto i : irange(si.fields.size()))
+    for (auto i : bl::irange(si.fields.size()))
         enableAttribute(i);
 }
 
@@ -212,7 +212,7 @@ MeshBase::enableAttributes()
     ASSERT(vertex_buffer_name.valid());
     ASSERT(vertex_array_name.valid());
 
-    for (const auto i : irange(struct_info.fields.size())) {
+    for (const auto i : bl::irange(struct_info.fields.size())) {
         if (enabled_attributes[2 * i] != enabled_attributes[2 * i + 1]) {
             enabled_attributes[2 * i + 1] = enabled_attributes[2 * i];
 

@@ -4,7 +4,7 @@
 #include "ge/GameWindow.hpp"
 #include "ge/Init.hpp"
 
-#include <vector>
+#include "bl/vector.hpp"
 
 namespace ge {
 
@@ -23,13 +23,13 @@ struct GE_API EngineOptions
         Animate
     };
 
-    std::vector<std::pair<CommandType, std::string>> commands;
-    std::string workingDirectory;
+    bl::vector<std::pair<CommandType, bl::string>> commands;
+    bl::string workingDirectory;
     bool inhibitInitScript;
-    std::string binary;
+    bl::string binary;
     bool defaultCD;
-    std::vector<std::string> shaderDirs;
-    std::vector<std::string> scriptDirs;
+    bl::vector<bl::string> shaderDirs;
+    bl::vector<bl::string> scriptDirs;
     WindowOptions window;
     Mode mode;
     bool traceOpenGL;

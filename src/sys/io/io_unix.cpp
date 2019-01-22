@@ -69,7 +69,7 @@ unconvertMode(int flags)
 HandleError
 convertErrno()
 {
-    auto errid = std::exchange(errno, 0);
+    auto errid = bl::exchange(errno, 0);
 
     if (errid == EAGAIN || errid == EWOULDBLOCK)
         return HandleError::BLOCKED;
@@ -149,28 +149,28 @@ stderr_handle()
     return h;
 }
 
-std::optional<Handle>
-open(std::string_view path, HandleMode mode, HandleError &err)
+bl::optional<Handle>
+open(bl::string_view path, HandleMode mode, HandleError &err)
 {
     int flags = convertMode(mode);
     if (flags == -1) {
         err = HandleError::INVALID_PARAM;
-        return std::nullopt;
+        return bl::nullopt;
     }
 
     int fd;
-    auto strpath = std::string(path);
+    auto strpath = bl::string(path);
     RETRY_INTR(fd = ::open(strpath.c_str(), flags, 0777));
 
     if (fd == -1) {
         err = convertErrno();
-        return std::nullopt;
+        return bl::nullopt;
     }
     Handle h;
     h._mode = mode;
     h._os.fd = fd;
     err = HandleError::OK;
-    return { std::move(h) };
+    return { bl::move(h) };
 }
 
 HandleMode
@@ -239,7 +239,7 @@ close(Handle &h)
     return HandleError::OK;
 }
 
-std::optional<Socket>
+bl::optional<Socket>
 listen(SocketProto proto,
        const IPAddr4 &addr,
        uint16_t port,
@@ -263,7 +263,7 @@ listen(SocketProto proto,
     RETRY_INTR(sock = socket(PF_INET, type, 0));
     if (sock == -1) {
         err = convertErrnoSock();
-        return std::nullopt;
+        return bl::nullopt;
     }
 
     int enable = 1;
@@ -307,15 +307,15 @@ listen(SocketProto proto,
         Socket s;
         s._os.fd = sock;
         err = SocketError::OK;
-        return { std::move(s) };
+        return { bl::move(s) };
     }
 socket_err:
     ::close(sock);
     err = convertErrnoSock();
-    return std::nullopt;
+    return bl::nullopt;
 }
 
-std::optional<Handle>
+bl::optional<Handle>
 accept(Socket &s, SocketError &err)
 {
     ASSERT(s);
@@ -332,7 +332,7 @@ accept(Socket &s, SocketError &err)
     END_NO_WARN_DISABLED_MACRO_EXPANSION
     if (c == -1) {
         err = convertErrnoSock();
-        return std::nullopt;
+        return bl::nullopt;
     }
 
     int flags;
@@ -345,13 +345,13 @@ accept(Socket &s, SocketError &err)
         Handle h;
         h._os.fd = c;
         h._mode = unconvertMode(flags);
-        return { std::move(h) };
+        return { bl::move(h) };
     }
 
 client_err:
     ::close(c);
     err = convertErrnoSock();
-    return std::nullopt;
+    return bl::nullopt;
 }
 
 SocketError

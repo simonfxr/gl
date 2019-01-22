@@ -1,21 +1,16 @@
 #ifndef GLT_GL_DEBUG_HPP
 #define GLT_GL_DEBUG_HPP
 
-#include "opengl.hpp"
-
+#include "err/err.hpp"
 #include "glt/conf.hpp"
 #include "glt/utils.hpp"
-
-#include "err/err.hpp"
-
-#include <unordered_set>
+#include "opengl.hpp"
+#include "pp/pimpl.hpp"
 
 namespace glt {
 
-struct GLDebug
+struct GLT_API GLDebug
 {
-    std::unordered_set<GLuint> ignored;
-    OpenGLVendor vendor;
 
     GLDebug();
     virtual ~GLDebug();
@@ -26,16 +21,19 @@ struct GLDebug
 
     GLDebug(const GLDebug &) = delete;
     GLDebug &operator=(const GLDebug &) = delete;
+
+protected:
+    DECLARE_PIMPL(GLT_API, self);
 };
 
-struct NoDebug : public GLDebug
+struct GLT_API NoDebug : public GLDebug
 {
     NoDebug() = default;
     ~NoDebug() override;
     virtual void printDebugMessages(const err::Location &) final override {}
 };
 
-struct ARBDebug : public GLDebug
+struct GLT_API ARBDebug : public GLDebug
 {
     GLsizei message_buffer_length;
     char *message_buffer;
@@ -47,7 +45,7 @@ struct ARBDebug : public GLDebug
     virtual void printDebugMessages(const err::Location &loc) final override;
 };
 
-struct AMDDebug : public GLDebug
+struct GLT_API AMDDebug : public GLDebug
 {
     GLsizei message_buffer_length;
     char *message_buffer;

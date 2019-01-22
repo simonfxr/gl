@@ -1,18 +1,16 @@
 #ifndef SYS_IO_STREAM_HPP
 #define SYS_IO_STREAM_HPP
 
-#include "pp/enum.hpp"
-#include "sys/conf.hpp"
+#include "sys/io/Stream_fwd.hpp"
+
+#include "bl/string.hpp"
+#include "bl/string_view.hpp"
 #include "sys/fiber.hpp"
 
-#include <cstring>
-#include <string>
-#include <string_view>
-
-#undef stdin
-#undef stdout
-#undef stderr
 #undef EOF
+#undef stdin
+#undef stderr
+#undef stdout
 
 namespace sys {
 namespace io {
@@ -22,33 +20,7 @@ struct InStream;
 struct StreamEndl;
 struct IOStream;
 
-HU_NODISCARD SYS_API InStream &
-stdin();
-
-HU_NODISCARD SYS_API OutStream &
-stdout();
-
-HU_NODISCARD SYS_API OutStream &
-stderr();
-
-extern SYS_API const StreamEndl endl;
-
-#define SYS_STREAM_RESULT_ENUM_DEF(T, V0, V)                                   \
-    T(StreamResult, uint8_t, V0(OK) V(Blocked) V(EOF) V(Closed) V(Error))
-
 PP_DEF_ENUM_WITH_API(SYS_API, SYS_STREAM_RESULT_ENUM_DEF);
-
-using StreamFlags = uint16_t;
-
-namespace {
-
-inline constexpr StreamFlags SF_IN_EOF = 1;
-inline constexpr StreamFlags SF_OUT_EOF = 2;
-inline constexpr StreamFlags SF_IN_CLOSED = 4;
-inline constexpr StreamFlags SF_OUT_CLOSED = 8;
-inline constexpr StreamFlags SF_CLOSABLE = 16;
-
-} // namespace
 
 struct SYS_API InStream
 {
@@ -155,17 +127,17 @@ protected:
 struct SYS_API ByteStream : public IOStream
 {
     explicit ByteStream(size_t bufsize = 32);
-    ByteStream(std::string_view);
+    ByteStream(bl::string_view);
 
     ~ByteStream() override;
 
     size_t size() const { return buffer.size(); }
     const char *data() const { return buffer.data(); }
     char *data() { return buffer.data(); }
-    std::string str() const & { return std::string(data(), size()); }
-    std::string str() const && { return std::move(buffer); }
+    bl::string str() const & { return bl::string(data(), size()); }
+    bl::string str() const && { return bl::move(buffer); }
 
-    operator std::string_view() const { return { data(), size() }; }
+    operator bl::string_view() const { return { data(), size() }; }
 
     void truncate(size_t);
 
@@ -176,7 +148,7 @@ protected:
     StreamResult basic_write(size_t &, const char *) final override;
 
 private:
-    std::string buffer;
+    bl::string buffer;
     size_t read_cursor;
 };
 
@@ -195,7 +167,7 @@ protected:
 
 #define DEF_OUTSTREAM_OP(T)                                                    \
     template<typename OStream>                                                 \
-    std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>  \
+    bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>   \
       &operator<<(OStream &out, T value)                                       \
     {                                                                          \
         write_repr(static_cast<OutStream &>(out), value);                      \
@@ -203,7 +175,7 @@ protected:
     }
 
 inline StreamResult
-write_repr(OutStream &out, std::string_view str)
+write_repr(OutStream &out, bl::string_view str)
 {
     if (out.writeable()) {
         size_t s = str.size();
@@ -250,58 +222,57 @@ write_repr(OutStream &out, const StreamEndl & /*unused*/)
     return ret1 == StreamResult::OK ? ret2 : ret1;
 }
 
-#define DEF_OPAQUE_OUTSTREAM_OP(T)                                             \
-    SYS_API StreamResult write_repr(OutStream &out, T x);                      \
-    DEF_OUTSTREAM_OP(T)
-
 DEF_OUTSTREAM_OP(char);
 DEF_OUTSTREAM_OP(signed char);
 DEF_OUTSTREAM_OP(unsigned char);
 DEF_OUTSTREAM_OP(const char *);
-DEF_OUTSTREAM_OP(std::string_view);
+DEF_OUTSTREAM_OP(bl::string_view);
 DEF_OUTSTREAM_OP(const StreamEndl &);
 
-DEF_OPAQUE_OUTSTREAM_OP(short)
-DEF_OPAQUE_OUTSTREAM_OP(unsigned short)
-DEF_OPAQUE_OUTSTREAM_OP(int)
-DEF_OPAQUE_OUTSTREAM_OP(unsigned)
-DEF_OPAQUE_OUTSTREAM_OP(long)
-DEF_OPAQUE_OUTSTREAM_OP(unsigned long)
-DEF_OPAQUE_OUTSTREAM_OP(long long)
-DEF_OPAQUE_OUTSTREAM_OP(unsigned long long)
+DEF_OUTSTREAM_OP(short)
+DEF_OUTSTREAM_OP(unsigned short)
+DEF_OUTSTREAM_OP(int)
+DEF_OUTSTREAM_OP(unsigned)
+DEF_OUTSTREAM_OP(long)
+DEF_OUTSTREAM_OP(unsigned long)
+DEF_OUTSTREAM_OP(long long)
+DEF_OUTSTREAM_OP(unsigned long long)
 
-DEF_OPAQUE_OUTSTREAM_OP(float);
-DEF_OPAQUE_OUTSTREAM_OP(double);
-DEF_OPAQUE_OUTSTREAM_OP(long double);
-DEF_OPAQUE_OUTSTREAM_OP(const void *);
+DEF_OUTSTREAM_OP(float);
+DEF_OUTSTREAM_OP(double);
+DEF_OUTSTREAM_OP(long double);
+DEF_OUTSTREAM_OP(const void *);
 
-#undef DEF_OPAQUE_OUTSTREAM_OP
 #undef DEF_OUTSTREAM_OP
 
 template<typename OStream>
-std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
-operator<<(OStream &out, bool x)
+inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
+  &
+  operator<<(OStream &out, bool x)
 {
     return out << (x ? "true" : "false");
 }
 
 template<typename OStream>
-std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
-operator<<(OStream &out, const std::string &str)
+inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
+  &
+  operator<<(OStream &out, const bl::string &str)
 {
-    return out << std::string_view(str);
+    return out << static_cast<bl::string_view>(str);
 }
 
 template<typename OStream>
-std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
-operator<<(OStream &out, char *str)
+inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
+  &
+  operator<<(OStream &out, char *str)
 {
     return out << static_cast<const char *>(str);
 }
 
 template<typename OStream, typename T>
-std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
-operator<<(OStream &out, const T *ptr)
+inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
+  &
+  operator<<(OStream &out, const T *ptr)
 {
     return out << static_cast<const void *>(ptr);
 }

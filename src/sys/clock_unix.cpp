@@ -2,11 +2,11 @@
 
 #include "err/err.hpp"
 
+#include "bl/string.hpp"
 #include <cerrno>
 #include <cmath>
 #include <cstring>
 #include <ctime>
-#include <string>
 
 namespace sys {
 
@@ -20,7 +20,7 @@ getTime()
         if (errno == EINTR) {
             errno = 0;
         } else {
-            ERR(std::string("clock_gettime failed") + strerror(errno));
+            ERR(bl::string("clock_gettime failed") + strerror(errno));
             return NAN;
         }
     }
@@ -48,7 +48,7 @@ sleep(double secs) noexcept
             errno = 0;
             tv = rmtv;
         } else {
-            ERR(std::string("sleep failed: ") + strerror(errno));
+            ERR(bl::string("sleep failed: ") + strerror(errno));
         }
     }
 }

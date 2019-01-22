@@ -35,7 +35,7 @@
 
 #include "dump_bmp.h"
 
-#include <vector>
+#include "bl/vector.hpp"
 
 #ifdef MESH_CUBEMESH
 template<typename T>
@@ -106,7 +106,7 @@ struct Anim
     ge::Engine &engine;
     ge::Camera camera;
     ge::MouseLookPlugin mouse_look;
-    std::vector<float> glow_kernel;
+    bl::vector<float> glow_kernel;
 
     CubeMeshOf<Vertex> groundModel;
     CubeMeshOf<Vertex> teapotModel;
@@ -135,30 +135,30 @@ struct Anim
     bool spotlight_smooth{};
     direction3_t ec_spotlight_dir{};
 
-    std::shared_ptr<glt::TextureRenderTarget> tex_render_target;
-    std::shared_ptr<glt::TextureRenderTarget> glow_render_target_src;
-    std::shared_ptr<glt::TextureRenderTarget> glow_render_target_dst;
+    bl::shared_ptr<glt::TextureRenderTarget> tex_render_target;
+    bl::shared_ptr<glt::TextureRenderTarget> glow_render_target_src;
+    bl::shared_ptr<glt::TextureRenderTarget> glow_render_target_dst;
 
-    std::shared_ptr<Timer> fpsTimer;
+    bl::shared_ptr<Timer> fpsTimer;
 
-    std::string data_dir;
+    bl::string data_dir;
 
     explicit Anim(ge::Engine &e) : engine(e), glow_kernel(KERNEL_SIZE) {}
 
     void init(const Event<InitEvent> & /*ev*/);
-    void loadResources(const std::string &dir);
+    void loadResources(const bl::string &dir);
 
     void link(const Event<InitEvent> & /*e*/);
     void animate(const Event<AnimationEvent> & /*unused*/);
     void renderScene(const Event<RenderEvent> & /*e*/);
     vec3_t lightPosition(real interpolation);
-    void setupTeapotShader(const std::string &prog,
+    void setupTeapotShader(const bl::string &prog,
                            const vec4_t &surfaceColor,
                            const MaterialProperties &mat);
     void renderTeapot(const Teapot &teapot);
     void renderGround();
     void renderLight();
-    void renderTable(const std::string &shader);
+    void renderTable(const bl::string &shader);
 
     void mouseMoved(const Event<MouseMoved> & /*e*/);
     void keyPressed(const Event<KeyPressed> & /*e*/);
@@ -188,7 +188,7 @@ Anim::init(const Event<InitEvent> &ev)
     engine.enablePlugin(camera);
     engine.enablePlugin(mouse_look);
 
-    fpsTimer = std::make_shared<Timer>(engine);
+    fpsTimer = bl::make_shared<Timer>(engine);
     fpsTimer->start(1.f, true);
 
     engine.gameLoop().ticks(100);
@@ -209,7 +209,7 @@ Anim::init(const Event<InitEvent> &ev)
 
 #ifdef MESH_MESH
     cubeModel.primType(GL_QUADS);
-    cubeModel.drawType(glt::DrawArrays);
+    cubeModel.drawType(glt::Drawbl::dyn_arrays);
 #endif
     glt::primitives::unitCube3(cubeModel);
     cubeModel.send();
@@ -281,8 +281,7 @@ Anim::init(const Event<InitEvent> &ev)
         glt::TextureRenderTarget::Params ps;
         ps.samples = 4;
         ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
-        tex_render_target =
-          std::make_shared<glt::TextureRenderTarget>(w, h, ps);
+        tex_render_target = bl::make_shared<glt::TextureRenderTarget>(w, h, ps);
         engine.renderManager().setDefaultRenderTarget(tex_render_target.get());
     }
 
@@ -293,9 +292,9 @@ Anim::init(const Event<InitEvent> &ev)
         ps.buffers = glt::RT_COLOR_BUFFER;
         ps.filter_mode = glt::TextureSampler::FilterLinear;
         glow_render_target_src =
-          std::make_shared<glt::TextureRenderTarget>(w, h, ps);
+          bl::make_shared<glt::TextureRenderTarget>(w, h, ps);
         glow_render_target_dst =
-          std::make_shared<glt::TextureRenderTarget>(w, h, ps);
+          bl::make_shared<glt::TextureRenderTarget>(w, h, ps);
     }
 
     {
@@ -420,7 +419,8 @@ Anim::renderScene(const Event<RenderEvent> &e)
     ASSERT(glow_pass1);
     glow_pass1->use();
 
-    ArrayView<const float> kernel = { glow_kernel.size(), &glow_kernel[0] };
+    bl::array_view<const float> kernel = { glow_kernel.size(),
+                                           &glow_kernel[0] };
     for (int pass = 0; pass < 3; ++pass) {
         engine.renderManager().setActiveRenderTarget(to.get());
         from->sampler().bind(0);
@@ -484,7 +484,7 @@ Anim::onWindowResized(const Event<WindowResized> &ev)
 }
 
 void
-Anim::setupTeapotShader(const std::string &progname,
+Anim::setupTeapotShader(const bl::string &progname,
                         const vec4_t &surfaceColor,
                         const MaterialProperties &mat)
 {
@@ -576,7 +576,7 @@ Anim::renderGround()
 }
 
 void
-Anim::renderTable(const std::string &shader)
+Anim::renderTable(const bl::string &shader)
 {
     glt::RenderManager &rm = engine.renderManager();
     glt::GeometryTransform &gt = rm.geometryTransform();
@@ -692,10 +692,10 @@ struct FileDeleter
     void operator()(FILE *h) noexcept { fclose(h); }
 };
 
-using unique_file = std::unique_ptr<FILE, FileDeleter>;
+using unique_file = bl::unique_ptr<FILE, FileDeleter>;
 
 void
-Anim::loadResources(const std::string &dir)
+Anim::loadResources(const bl::string &dir)
 {
     data_dir = dir;
 
@@ -762,7 +762,7 @@ parse_sply(const char *filename, CubeMeshOf<Vertex> &model)
 
     char line[512];
 
-    std::vector<Vertex> verts;
+    bl::vector<Vertex> verts;
     uint32_t nverts = 0;
     uint32_t nfaces = 0;
 

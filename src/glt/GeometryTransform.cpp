@@ -1,7 +1,8 @@
 #include "glt/GeometryTransform.hpp"
+
+#include "bl/string.hpp"
 #include "err/err.hpp"
 #include "glt/Transformations.hpp"
-
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/vec3.hpp"
@@ -62,7 +63,7 @@ struct GeometryTransform::Data
     }
 };
 
-DECLARE_PIMPL_DEL_AUDIT(GeometryTransform)
+DECLARE_PIMPL_DEL(GeometryTransform)
 
 GeometryTransform::GeometryTransform() : self(new Data) {}
 

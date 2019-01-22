@@ -1,5 +1,7 @@
 #include "ge/Commands.hpp"
 
+#include "bl/shared_ptr.hpp"
+#include "bl/vector.hpp"
 #include "ge/Engine.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/ShaderCompiler.hpp"
@@ -7,8 +9,6 @@
 #include "glt/utils.hpp"
 
 #include <cassert>
-#include <utility>
-#include <vector>
 
 namespace ge {
 
@@ -23,7 +23,7 @@ struct CommandDecl
 };
 
 template<typename F>
-inline std::shared_ptr<Command>
+inline bl::shared_ptr<Command>
 operator+(CommandDecl &&decl, F f)
 {
     return makeCommand(decl.name, decl.descr, decay_stateless_functor(f));
@@ -32,7 +32,7 @@ operator+(CommandDecl &&decl, F f)
 struct InitCommandHandler : public EventHandler<InitEvent>
 {
     CommandPtr handler;
-    explicit InitCommandHandler(CommandPtr hndlr) : handler(std::move(hndlr)) {}
+    explicit InitCommandHandler(CommandPtr hndlr) : handler(bl::move(hndlr)) {}
     void handle(const Event<InitEvent> &e) override
     {
         e.info.success = true;
@@ -42,16 +42,17 @@ struct InitCommandHandler : public EventHandler<InitEvent>
 };
 
 #define BEGIN_COMMANDS                                                         \
-    ArrayView<const std::shared_ptr<Command>> predefinedCommands()             \
+    bl::array_view<const bl::shared_ptr<Command>> predefinedCommands()         \
     {                                                                          \
-        BEGIN_NO_WARN_GLOBAL_DESTRUCTOR static const std::shared_ptr<Command>  \
+        BEGIN_NO_WARN_GLOBAL_DESTRUCTOR static const bl::shared_ptr<Command>   \
           predefinedCommandArray[] = {
 
 #define END_COMMANDS                                                           \
     }                                                                          \
     ;                                                                          \
-    END_NO_WARN_GLOBAL_DESTRUCTOR return view_array(                           \
-      predefinedCommandArray, ARRAY_LENGTH(predefinedCommandArray));           \
+    END_NO_WARN_GLOBAL_DESTRUCTOR return bl::array_view<                       \
+      const bl::shared_ptr<Command>>(predefinedCommandArray,                   \
+                                     ARRAY_LENGTH(predefinedCommandArray));    \
     }
 
 #define COMMAND0(name, descr) CommandDecl{ name, descr } + []
@@ -133,13 +134,12 @@ COMMAND("printGLInstanceStats",
 }
 
 COMMAND("reloadShaders", "reload ShaderPrograms")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::array_view<const CommandArg> args)
 {
 
     if (args.size() == 0) {
         e.info.engine.out() << "reloading shaders" << sys::io::endl;
         e.info.engine.shaderManager().reloadShaders();
-        // std::cerr << "all shaders reloaded" << sys::io::endl;
     } else {
         glt::ShaderManager &sm = e.info.engine.shaderManager();
         for (size_t i = 0; i < args.size(); ++i) {
@@ -168,9 +168,8 @@ COMMAND("listCachedShaders", "list all shader cache entries")
     }
 
     uint32_t n = 0;
-    for (auto &entrie : cache->cacheEntries()) {
-        e.info.engine.out()
-          << "cached shader: " << entrie.first << sys::io::endl;
+    for (auto &ent : cache->cacheEntries()) {
+        e.info.engine.out() << "cached shader: " << ent.key << sys::io::endl;
         ++n;
     }
 
@@ -186,14 +185,14 @@ COMMAND("listBindings", "list all key bindings")
 COMMAND("bindKey", "bind a command to a key combination")
 (const Event<CommandEvent> &e,
  const KeyBinding &keyBinding,
- const std::shared_ptr<Command> &comm)
+ const bl::shared_ptr<Command> &comm)
 {
     if (!comm) {
         ERR(e.info.engine.out(), "cannot bind key: null command");
         return;
     }
     e.info.engine.keyHandler().registerBinding(
-      std::make_shared<KeyBinding>(keyBinding), comm);
+      bl::make_shared<KeyBinding>(keyBinding), comm);
 }
 
 COMMAND("help", "help and command overview")(const Event<CommandEvent> &ev)
@@ -211,7 +210,7 @@ COMMAND("help", "help and command overview")(const Event<CommandEvent> &ev)
 }
 
 COMMAND("bindShader", "compile and linke a ShaderProgram and give it a name")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::array_view<const CommandArg> args)
 {
     if (args.size() == 0) {
         ERR(e.info.engine.out(), "bindShader: need at least one argument");
@@ -224,7 +223,7 @@ COMMAND("bindShader", "compile and linke a ShaderProgram and give it a name")
     }
 
     auto prog =
-      std::make_shared<glt::ShaderProgram>(e.info.engine.shaderManager());
+      bl::make_shared<glt::ShaderProgram>(e.info.engine.shaderManager());
 
     size_t i;
     for (i = 1; i < args.size() && args[i].type() == CommandArgType::String;
@@ -278,9 +277,9 @@ COMMAND("initGLDebug", "initialize OpenGL debug output")
 COMMAND("ignoreGLDebugMessage",
         "for opengl vendor <vendor> add the message <id> to the list of "
         "ignored messages")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::array_view<const CommandArg> args)
 {
-    const std::string &vendor_str = args[0].string;
+    const bl::string &vendor_str = args[0].string;
     auto id = static_cast<GLint>(args[1].integer);
     glt::OpenGLVendor vendor;
 
@@ -301,7 +300,7 @@ COMMAND("ignoreGLDebugMessage",
 }
 
 COMMAND("describe", "print a description of its parameters")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::array_view<const CommandArg> args)
 {
 
     CommandProcessor &proc = e.info.engine.commandProcessor();
@@ -319,20 +318,20 @@ COMMAND("describe", "print a description of its parameters")
 }
 
 COMMAND("eval", "parse a string and execute it")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> /*unused*/)
+(const Event<CommandEvent> &e, bl::array_view<const CommandArg> /*unused*/)
 {
     ERR(e.info.engine.out(), "not yet implemented");
 }
 
 COMMAND("load", "execute a script file")
-(const Event<CommandEvent> &ev, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &ev, bl::array_view<const CommandArg> args)
 {
     for (const auto &arg : args)
         ev.info.engine.commandProcessor().loadScript(arg.string);
 }
 
 COMMAND("addShaderPath", "add directories to the shader path")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::array_view<const CommandArg> args)
 {
     for (const auto &arg : args)
         if (!e.info.engine.shaderManager().addShaderDirectory(arg.string, true))
@@ -340,7 +339,7 @@ COMMAND("addShaderPath", "add directories to the shader path")
 }
 
 COMMAND("prependShaderPath", "add directories to the front of the shader path")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::array_view<const CommandArg> args)
 {
     for (size_t i = args.size(); i > 0; --i) {
         if (!e.info.engine.shaderManager().prependShaderDirectory(
@@ -350,7 +349,7 @@ COMMAND("prependShaderPath", "add directories to the front of the shader path")
 }
 
 COMMAND("removeShaderPath", "remove directories from the shader path")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::array_view<const CommandArg> args)
 {
     for (const auto &arg : args)
         e.info.engine.shaderManager().removeShaderDirectory(arg.string);
@@ -377,13 +376,13 @@ COMMAND("perspectiveProjection", "set parameters for perspective projection")
 }
 
 COMMAND("postInit", "execute its argument command in the postInit hook")
-(const Event<CommandEvent> &e, const std::shared_ptr<Command> &comm)
+(const Event<CommandEvent> &e, const bl::shared_ptr<Command> &comm)
 {
-    e.info.engine.addInit(PostInit, std::make_shared<InitCommandHandler>(comm));
+    e.info.engine.addInit(PostInit, bl::make_shared<InitCommandHandler>(comm));
 }
 
 COMMAND("startReplServer", "start a REPL server on the given port")
-(const Event<CommandEvent> &ev, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &ev, bl::array_view<const CommandArg> args)
 {
     Engine &e = ev.info.engine;
     ReplServer &serv = e.replServer();

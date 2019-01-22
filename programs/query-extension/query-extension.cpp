@@ -28,7 +28,7 @@ animate(State *state, const ge::Event<ge::AnimationEvent> &ev)
 {
     ge::Engine &e = ev.info.engine;
 
-    Array<ge::CommandArg> args = { 0, nullptr };
+    bl::dyn_array<ge::CommandArg> args = { 0, nullptr };
     e.commandProcessor().exec("printContextInfo", args);
 
     for (int i = 1; i < state->argc; ++i) {

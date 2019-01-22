@@ -5,7 +5,7 @@
 
 #include <hu/endian.h>
 
-#include <type_traits>
+#include "bl/type_traits.hpp"
 
 namespace sys {
 
@@ -39,7 +39,7 @@ bswap(uint64_t x)
     return x;
 }
 
-template<typename T, typename = std::enable_if_t<std::is_signed_v<T>>>
+template<typename T, typename = bl::enable_if_t<std::is_signed_v<T>>>
 inline constexpr T
 bswap(T x)
 {

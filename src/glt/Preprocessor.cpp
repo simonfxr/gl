@@ -1,5 +1,6 @@
 #include "glt/Preprocessor.hpp"
 
+#include "bl/string.hpp"
 #include "err/err.hpp"
 
 #include <cstring>
@@ -30,7 +31,7 @@ struct Preprocessor::Data
     bool errorState{ false };
     sys::io::OutStream *out;
     Preprocessor::Handlers handlers;
-    std::string sourceName;
+    bl::string sourceName;
 
     Data() : defaultHandler(&nullHandler), out(&sys::io::stdout()) {}
 };
@@ -48,21 +49,20 @@ is_newline(char c)
 } // namespace
 
 void
-Preprocessor::process(std::string_view data)
+Preprocessor::process(bl::string_view data)
 {
     if (wasError())
         return;
 
     const char *const begin = data.data();
     const size_t size = data.size();
-    DirectiveContext ctx(*this, std::string(self->sourceName));
+    DirectiveContext ctx(*this, bl::string(self->sourceName));
 
     ctx.content.data = begin;
     ctx.content.size = size;
 
-    for (auto &handler : self->handlers) {
-        handler.second->beginProcessing(ctx.content);
-    }
+    for (auto &handler : self->handlers)
+        handler.value->beginProcessing(ctx.content);
 
     self->defaultHandler->beginProcessing(ctx.content);
 
@@ -102,17 +102,17 @@ Preprocessor::process(std::string_view data)
         ctx.beginDirective = directiveBegin - begin;
         ctx.endDirective = directiveEnd - begin;
 
-        std::string key(directiveBegin, size_t(directiveEnd - directiveBegin));
+        bl::string key(directiveBegin, size_t(directiveEnd - directiveBegin));
 
         auto it = self->handlers.find(key);
         if (it != self->handlers.end())
-            it->second->directiveEncountered(ctx);
+            it->value->directiveEncountered(ctx);
         else
             self->defaultHandler->directiveEncountered(ctx);
     }
 
     for (auto &handler : self->handlers)
-        handler.second->endProcessing(ctx.content);
+        handler.value->endProcessing(ctx.content);
 
     self->defaultHandler->endProcessing(ctx.content);
 }
@@ -138,16 +138,14 @@ Preprocessor::handlers() const
 }
 
 Preprocessor::DirectiveHandler *
-Preprocessor::installHandler(const std::string &directive,
+Preprocessor::installHandler(const bl::string &directive,
                              DirectiveHandler &handler)
 {
     DirectiveHandler *old = nullptr;
     auto it = self->handlers.find(directive);
-    if (it != self->handlers.end()) {
-        old = it->second;
-    }
-
-    self->handlers.insert(HandlerEntry(directive, &handler));
+    if (it != self->handlers.end())
+        old = it->value;
+    self->handlers.insert_or_assign(directive, &handler);
     return old;
 }
 
@@ -167,7 +165,7 @@ bool
 Preprocessor::setError()
 {
     WARN("setting error");
-    return std::exchange(self->errorState, true);
+    return bl::exchange(self->errorState, true);
 }
 
 bool
@@ -186,16 +184,16 @@ Preprocessor::clearError()
     return s;
 }
 
-const std::string &
+const bl::string &
 Preprocessor::name() const
 {
     return self->sourceName;
 }
 
 void
-Preprocessor::name(std::string &&name)
+Preprocessor::name(bl::string &&name)
 {
-    self->sourceName = std::move(name);
+    self->sourceName = bl::move(name);
 }
 
 // Preprocessor::DirectiveHandler &Preprocessor::nullHandler() {

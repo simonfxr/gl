@@ -1,12 +1,11 @@
 #ifndef SYS_MODULE_HPP
 #define SYS_MODULE_HPP
 
+#include "bl/unique_ptr.hpp"
 #include "sys/conf.hpp"
 #include "sys/fiber.hpp"
 #include "sys/io.hpp"
 #include "sys/io/Stream.hpp"
-
-#include <memory>
 
 #ifdef DEFINE_SYS_MODULE
 #    define SYS_MODULE_ACCESS
@@ -61,7 +60,7 @@ struct Module
     Fibers fibers;
 };
 
-extern std::unique_ptr<Module> module;
+extern bl::unique_ptr<Module> module;
 
 #undef SYS_MODULE_ACCESS
 

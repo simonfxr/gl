@@ -20,7 +20,7 @@ GLPerfCounter::init(size_t s)
     ASSERT(s > 0);
     _last_query = -1.0;
     _active_query = 0;
-    _queries = std::vector<Counter>(s);
+    _queries = bl::vector<Counter>(s);
 }
 
 void

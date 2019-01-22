@@ -23,7 +23,7 @@ printOpenGLCalls(bool yesno)
     G.print_opengl_calls = yesno;
 }
 
-std::string
+bl::string
 getGLErrorString(GLenum err)
 {
     switch (err) {
@@ -246,6 +246,6 @@ GLMemInfoNV::info(GLMemInfoNV *mi)
     return true;
 }
 
-Utils::Utils() : gl_debug(std::make_shared<NoDebug>()) {}
+Utils::Utils() : gl_debug(bl::make_shared<NoDebug>()) {}
 
 } // namespace glt

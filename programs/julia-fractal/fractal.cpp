@@ -55,10 +55,10 @@ struct Anim
 {
     ge::Engine engine;
     glt::CubeMesh<Vertex> quadBatch;
-    std::shared_ptr<glt::TextureRenderTarget> render_texture;
+    bl::shared_ptr<glt::TextureRenderTarget> render_texture;
 
     World world;
-    std::shared_ptr<Commands> commands;
+    bl::shared_ptr<Commands> commands;
 
     ge::GameLoop::time time_print_fps{};
 
@@ -75,7 +75,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
     link(ev.info.engine);
 
-    commands = std::make_shared<Commands>(world);
+    commands = bl::make_shared<Commands>(world);
     engine.enablePlugin(*commands);
 
     time_print_fps = 0;
@@ -100,7 +100,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
         glt::TextureRenderTarget::Params ps;
         ps.samples = NUM_SAMPLES;
         ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
-        render_texture = std::make_shared<glt::TextureRenderTarget>(w, h, ps);
+        render_texture = bl::make_shared<glt::TextureRenderTarget>(w, h, ps);
         engine.renderManager().setDefaultRenderTarget(render_texture.get());
 
         GL_CALL(glEnable, GL_MULTISAMPLE);

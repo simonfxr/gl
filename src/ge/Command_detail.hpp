@@ -73,14 +73,14 @@ has_type(CommandParamType pt, CommandArgType t) noexcept
 
 DEF_COMMAND_TYPE_MAPPING(int64_t, integer, CommandParamType::Integer);
 DEF_COMMAND_TYPE_MAPPING(double, number, CommandParamType::Number);
-DEF_COMMAND_TYPE_MAPPING(std::string, string, CommandParamType::String);
-DEF_COMMAND_TYPE_MAPPING(std::shared_ptr<Command>,
+DEF_COMMAND_TYPE_MAPPING(bl::string, string, CommandParamType::String);
+DEF_COMMAND_TYPE_MAPPING(bl::shared_ptr<Command>,
                          command.ref,
                          CommandParamType::Command);
 DEF_COMMAND_TYPE_MAPPING(KeyBinding, keyBinding, CommandParamType::KeyCombo);
 
 template<>
-struct command_param_mapping<ArrayView<const CommandArg>>
+struct command_param_mapping<bl::array_view<const CommandArg>>
 {
     static inline constexpr CommandParamType param_type =
       CommandParamType::List;
@@ -123,7 +123,7 @@ struct Proxy
 auto is_var_arg(CommandArgSeq<>) -> std::false_type;
 
 auto
-is_var_arg(CommandArgSeq<ArrayView<const CommandArg>>) -> std::true_type;
+is_var_arg(CommandArgSeq<bl::array_view<const CommandArg>>) -> std::true_type;
 
 template<typename T, typename... Ts>
 auto
@@ -136,7 +136,7 @@ invoke_indexed(F &&f,
                CommandArgSeq<Ts...>,
                std::integer_sequence<size_t, Is...>,
                const Event<CommandEvent> &ev,
-               ArrayView<const CommandArg> args)
+               bl::array_view<const CommandArg> args)
 {
     static_assert(sizeof...(Ts) == sizeof...(Is));
     ASSERT(args.size() == sizeof...(Ts));
@@ -152,7 +152,7 @@ invoke_indexed_vararg(F &&f,
                       CommandArgSeq<Ts...>,
                       std::integer_sequence<size_t, Is...>,
                       const Event<CommandEvent> &ev,
-                      ArrayView<const CommandArg> args)
+                      bl::array_view<const CommandArg> args)
 {
     static_assert(sizeof...(Ts) == sizeof...(Is) + 1);
     ASSERT(args.size() >= sizeof...(Is));
@@ -168,16 +168,16 @@ invoke(F &&f,
        std::bool_constant<VarArg>,
        CommandArgSeq<Ts...> arg_seq,
        const Event<CommandEvent> &ev,
-       ArrayView<const CommandArg> args)
+       bl::array_view<const CommandArg> args)
 {
     if constexpr (VarArg) {
-        invoke_indexed_vararg(std::forward<F>(f),
+        invoke_indexed_vararg(bl::forward<F>(f),
                               arg_seq,
                               std::make_index_sequence<sizeof...(Ts) - 1>{},
                               ev,
                               args);
     } else {
-        invoke_indexed(std::forward<F>(f),
+        invoke_indexed(bl::forward<F>(f),
                        arg_seq,
                        std::index_sequence_for<Ts...>{},
                        ev,

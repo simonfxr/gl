@@ -3,12 +3,12 @@
 
 #include "ge/conf.hpp"
 
+#include "bl/compare.hpp"
+#include "bl/optional.hpp"
+#include "bl/string.hpp"
+#include "bl/string_view.hpp"
+#include "bl/vector.hpp"
 #include "pp/enum.hpp"
-#include "util/Comparable.hpp"
-
-#include <optional>
-#include <string>
-#include <vector>
 
 namespace ge {
 
@@ -135,7 +135,7 @@ enum class KeyState : uint8_t
 
 PP_DEF_ENUM_WITH_API(GE_API, GE_KEY_CODE_ENUM_DEF);
 
-struct Key : Comparable<Key>
+struct Key : bl::comparable<Key>
 {
     KeyCode code{};
     KeyState state{};
@@ -146,15 +146,15 @@ struct Key : Comparable<Key>
 inline int
 compare(const Key &a, const Key &b)
 {
-    using ::compare;
-    return chained_compare([&]() { return compare(a.code, b.code); },
+    using bl::compare;
+    return bl::chained_compare([&]() { return compare(a.code, b.code); },
                            [&]() { return compare(a.state, b.state); });
 }
 
-using KeyBinding = std::vector<Key>;
+using KeyBinding = bl::vector<Key>;
 
-HU_NODISCARD GE_API  std::optional<KeyCode>
-parseKeyCode(const std::string_view &str);
+HU_NODISCARD GE_API  bl::optional<KeyCode>
+parseKeyCode(const bl::string_view &str);
 
 GE_API int
 compareKeyBinding(const KeyBinding &x, const KeyBinding &y);

@@ -1,9 +1,7 @@
 #ifndef GE_MODULE_HPP
 #define GE_MODULE_HPP
 
-#include "defs.h"
-
-#include <memory>
+#include "bl/unique_ptr.hpp"
 
 #ifdef DEFINE_GE_MODULE
 #    define GE_MODULE_ACCESS
@@ -24,7 +22,7 @@ struct Module
     GameWindowInit __game_window_init;
 };
 
-extern std::unique_ptr<Module> module;
+extern bl::unique_ptr<Module> module;
 
 } // namespace ge
 

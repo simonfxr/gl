@@ -1,15 +1,11 @@
 #ifndef GE_CAMERA_HPP
 #define GE_CAMERA_HPP
 
-#include "ge/conf.hpp"
-
 #include "ge/Command.hpp"
 #include "ge/Engine.hpp"
 #include "ge/Event.hpp"
 #include "glt/Frame.hpp"
 #include "math/vec2.hpp"
-
-#include <memory>
 
 namespace ge {
 
@@ -39,7 +35,6 @@ struct GE_API CameraRotated
 
 struct GE_API Camera : public Plugin
 {
-
     struct Events
     {
         EventSource<CameraMoved> moved;
@@ -71,8 +66,8 @@ struct GE_API Camera : public Plugin
     glt::Frame &frame();
     void frame(const glt::Frame &);
 
-    const std::string &framePath() const;
-    void framePath(const std::string &);
+    const bl::string &framePath() const;
+    void framePath(const bl::string &);
 
     void mouseMoved(int16_t dx, int16_t dy);
 

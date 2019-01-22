@@ -3,7 +3,6 @@
 
 #include <cstring>
 #include <map>
-#include <utility>
 
 namespace ge {
 
@@ -22,10 +21,9 @@ struct State
 
 struct Binding
 {
-    std::shared_ptr<KeyBinding> binding;
+    bl::shared_ptr<KeyBinding> binding;
 
-    explicit Binding(std::shared_ptr<KeyBinding> bind)
-      : binding(std::move(bind))
+    explicit Binding(bl::shared_ptr<KeyBinding> bind) : binding(bl::move(bind))
     {}
 
     bool operator<(const Binding &other) const
@@ -69,8 +67,6 @@ KeyHandler::KeyHandler(CommandProcessor &proc) : self(new Data(proc)) {}
 void
 KeyHandler::keyPressed(KeyCode code)
 {
-    // std::cerr << "key pressed: " << self->frame_id << " " <<
-    // prettyKeyCode(code) << std::endl;
     auto idx = code.numeric();
     CHECK_KEYCODE(code);
     self->states[idx] = State(true, self->frame_id);
@@ -80,8 +76,6 @@ KeyHandler::keyPressed(KeyCode code)
 void
 KeyHandler::keyReleased(KeyCode code)
 {
-    // std::cerr << "key released: " << self->frame_id << " " <<
-    // prettyKeyCode(code) << std::endl;
     auto idx = code.numeric();
     CHECK_KEYCODE(code);
     if (self->states[idx].down)
@@ -118,14 +112,14 @@ KeyHandler::keyState(KeyCode code)
 }
 
 void
-KeyHandler::registerBinding(const std::shared_ptr<KeyBinding> &binding,
+KeyHandler::registerBinding(const bl::shared_ptr<KeyBinding> &binding,
                             const CommandPtr &comm)
 {
     self->bindings[Binding(binding)] = comm;
 }
 
 CommandPtr
-KeyHandler::unregisterBinding(const std::shared_ptr<KeyBinding> &binding)
+KeyHandler::unregisterBinding(const bl::shared_ptr<KeyBinding> &binding)
 {
     auto it = self->bindings.find(Binding(binding));
     if (it == self->bindings.end())
@@ -157,17 +151,10 @@ KeyHandler::handleCommands()
 
             bool match = (int(reqState) & int(curState)) == int(reqState);
 
-            // if (curState != Up)
-            //     std::cerr << "checking key: " << prettyKeyCode(code) <<  "
-            //     req: " << prettyKeyState(reqState) << " cur: " <<
-            //     prettyKeyState(curState) << " -> " << match << std::endl;
-
             if (!match)
                 goto next;
         }
 
-        //        std::cerr << "executing command: " << self->frame_id << " " <<
-        //        it->second->name() << std::endl;
         self->processor.exec(it->second, {});
 
     next:;

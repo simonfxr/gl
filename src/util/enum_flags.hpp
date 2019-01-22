@@ -3,7 +3,7 @@
 
 #include "defs.h"
 
-#include <type_traits>
+#include "bl/type_traits.hpp"
 
 #define DEF_ENUM_BIT_OP(ty, op)                                                \
     inline constexpr ty operator op(ty a, ty b)                                \

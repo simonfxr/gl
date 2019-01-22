@@ -10,7 +10,7 @@ TextureRenderTarget::TextureRenderTarget(size_t w,
                                          size_t h,
                                          const TextureRenderTarget::Params &ps)
   : RenderTarget(0, 0, ps.buffers)
-  , _sampler(std::make_shared<TextureData>(Texture2D, ps.samples))
+  , _sampler(bl::make_shared<TextureData>(Texture2D, ps.samples))
   , _frame_buffer(0)
   , _depth_buffer(0)
   , _samples(ps.samples)

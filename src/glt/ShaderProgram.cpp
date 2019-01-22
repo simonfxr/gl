@@ -1,5 +1,6 @@
 #include "glt/ShaderProgram.hpp"
 
+#include "bl/range.hpp"
 #include "err/err.hpp"
 #include "err/log.hpp"
 #include "glt/ShaderCompiler.hpp"
@@ -8,7 +9,6 @@
 #include "opengl.hpp"
 #include "sys/fs.hpp"
 #include "sys/measure.hpp"
-#include "util/range.hpp"
 #include "util/string.hpp"
 
 #include <unordered_map>
@@ -30,7 +30,7 @@ namespace glt {
 
 PP_DEF_ENUM_IMPL(GLT_SHADER_PROGRAM_ERROR_ENUM_DEF);
 
-typedef std::unordered_map<std::string, GLuint> Attributes;
+typedef bl::hashtable<bl::string, GLuint> Attributes;
 
 struct ShaderProgram::Data
 {
@@ -104,7 +104,7 @@ ShaderProgram::reload()
     auto scq = ShaderCompilerQueue(self->sm.shaderCompiler(), newshaders);
 
     for (const auto &ent : self->rootdeps)
-        scq.enqueueReload(self->shaders[ent.first]);
+        scq.enqueueReload(self->shaders[ent.key]);
 
     scq.compileAll();
     if (scq.wasError())
@@ -115,7 +115,7 @@ ShaderProgram::reload()
         for (auto it1 = self->shaders.begin(), it2 = newshaders.begin();
              it1 != self->shaders.end() && it2 != newshaders.end();
              ++it1, ++it2) {
-            if (it1->second != it2->second) {
+            if (it1->value != it2->value) {
                 unchanged = false;
                 break;
             }
@@ -165,7 +165,7 @@ ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
 
     if (log_len > 0) {
 
-        auto log = std::make_unique<GLchar[]>(size_t(log_len));
+        auto log = bl::make_unique<GLchar[]>(size_t(log_len));
         GL_CALL(glGetProgramInfoLog, progh, log_len, nullptr, log.get());
 
         auto logBegin = log.get();
@@ -192,13 +192,13 @@ ShaderProgram::Data::handleCompileError(ShaderCompilerError err)
 }
 
 bool
-ShaderProgram::addShaderSrc(const std::string &src, ShaderType type)
+ShaderProgram::addShaderSrc(const bl::string &src, ShaderType type)
 {
     auto scq = ShaderCompilerQueue(self->sm.shaderCompiler(), self->shaders);
     auto source = ShaderSource::makeStringSource(type, src);
 
     {
-        self->rootdeps.insert(std::make_pair(source->key(), source));
+        self->rootdeps.insert(source->key(), source);
         scq.enqueueLoad(source);
     }
 
@@ -214,14 +214,14 @@ ShaderProgram::addShaderSrc(const std::string &src, ShaderType type)
 }
 
 bool
-ShaderProgram::addShaderFile(const std::string &file0,
+ShaderProgram::addShaderFile(const bl::string &file0,
                              ShaderType type,
                              bool absolute)
 {
-    std::string file = file0;
+    bl::string file = file0;
 
     if (!absolute) {
-        file = sys::fs::lookup(view_array(self->sm.shaderDirectories()), file);
+        file = sys::fs::lookup(self->sm.shaderDirectories(), file);
         if (file.empty()) {
             RAISE_ERR(*this,
                       ShaderProgramError::FileNotInPath,
@@ -237,7 +237,7 @@ ShaderProgram::addShaderFile(const std::string &file0,
     auto source = ShaderSource::makeFileSource(type, file);
 
     {
-        self->rootdeps.insert(std::make_pair(source->key(), source));
+        self->rootdeps.insert(source->key(), source);
         scq.enqueueLoad(source);
     }
 
@@ -253,8 +253,8 @@ ShaderProgram::addShaderFile(const std::string &file0,
 }
 
 bool
-ShaderProgram::addShaderFilePair(const std::string &vert_file,
-                                 const std::string &frag_file,
+ShaderProgram::addShaderFilePair(const bl::string &vert_file,
+                                 const bl::string &frag_file,
                                  bool absolute)
 {
     return addShaderFile(vert_file, ShaderType::VertexShader, absolute) &&
@@ -262,7 +262,7 @@ ShaderProgram::addShaderFilePair(const std::string &vert_file,
 }
 
 bool
-ShaderProgram::addShaderFilePair(const std::string &basename, bool absolute)
+ShaderProgram::addShaderFilePair(const bl::string &basename, bool absolute)
 {
     return addShaderFilePair(basename + ".vert", basename + ".frag", absolute);
 }
@@ -290,16 +290,16 @@ ShaderProgram::link()
     if (self->linked)
         return true;
 
-    for (auto it = self->attrs.begin(); it != self->attrs.end(); ++it) {
+    for (const auto &attr : self->attrs) {
         GL_CALL(
-          glBindAttribLocation, *self->program, it->second, it->first.c_str());
+          glBindAttribLocation, *self->program, attr.value, attr.key.c_str());
         // FIXME: check wether attrib was added correctly
     }
 
-    std::vector<GLuint> added;
-    for (auto it = self->shaders.begin(); it != self->shaders.end(); ++it) {
-        GL_CALL(glAttachShader, *self->program, *it->second->handle());
-        added.push_back(*it->second->handle());
+    bl::vector<GLuint> added;
+    for (auto &ent : self->shaders) {
+        GL_CALL(glAttachShader, *self->program, *ent.value->handle());
+        added.push_back(*ent.value->handle());
     }
 
     bool ok{};
@@ -337,7 +337,7 @@ ShaderProgram::link()
 }
 
 bool
-ShaderProgram::bindAttribute(const std::string &s, GLuint position)
+ShaderProgram::bindAttribute(const bl::string &s, GLuint position)
 {
     if (self->linked) {
         RAISE_ERR(
@@ -387,7 +387,7 @@ ShaderProgram::replaceWith(ShaderProgram &new_prog)
 }
 
 GLint
-ShaderProgram::uniformLocation(const std::string &name)
+ShaderProgram::uniformLocation(const bl::string &name)
 {
     GLint loc;
     GL_ASSIGN_CALL(loc, glGetUniformLocation, *self->program, name.c_str());
@@ -433,7 +433,7 @@ ShaderProgram::bindAttributes(const StructInfo &si)
 }
 
 bool
-ShaderProgram::bindStreamOutVaryings(ArrayView<const std::string> vars)
+ShaderProgram::bindStreamOutVaryings(bl::array_view<const bl::string> vars)
 {
 
     // FIXME: record vars to set stream out varyings again if relinked
@@ -443,7 +443,7 @@ ShaderProgram::bindStreamOutVaryings(ArrayView<const std::string> vars)
         return false;
     }
 
-    std::vector<const char *> cvars;
+    bl::vector<const char *> cvars;
     cvars.reserve(vars.size());
     for (const auto &var : vars)
         cvars.push_back(var.c_str());

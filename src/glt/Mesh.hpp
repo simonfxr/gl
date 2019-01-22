@@ -12,7 +12,7 @@
 #include "math/vec4.hpp"
 #include "opengl.hpp"
 
-#include <vector>
+#include "bl/vector.hpp"
 
 namespace glt {
 
@@ -33,9 +33,9 @@ private:
     char *vertex_data_end{};
     char *vertex_data_lim{};
     size_t vertex_count{};
-    std::vector<uint32_t> elements;
+    bl::vector<uint32_t> elements;
     const StructInfo &struct_info;
-    std::vector<bool> enabled_attributes;
+    bl::vector<bool> enabled_attributes;
     size_t gpu_vertex_count = 0;
     size_t gpu_element_count = 0;
     GLVertexArrayObject vertex_array_name;

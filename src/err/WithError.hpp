@@ -3,7 +3,7 @@
 
 #include "defs.h"
 
-#include <string>
+#include "bl/string.hpp"
 
 namespace err {
 

@@ -5,7 +5,7 @@
 
 #include "sys/io/Stream.hpp"
 
-#include <vector>
+#include "bl/vector.hpp"
 
 namespace ge {
 
@@ -13,7 +13,7 @@ struct GE_API ParseState
 {
     char c;
     char rawC;
-    std::string filename;
+    bl::string filename;
 
     sys::io::StreamResult in_state;
     sys::io::InStream *in;
@@ -21,7 +21,7 @@ struct GE_API ParseState
     int line;
     int col;
 
-    ParseState(sys::io::InStream &_in, std::string_view fn)
+    ParseState(sys::io::InStream &_in, bl::string_view fn)
       : c(0)
       , rawC(0)
       , filename(fn)
@@ -36,7 +36,7 @@ GE_API bool
 skipStatement(ParseState &state);
 
 GE_API bool
-tokenize(ParseState &state, std::vector<CommandArg> &args);
+tokenize(ParseState &state, bl::vector<CommandArg> &args);
 
 } // namespace ge
 

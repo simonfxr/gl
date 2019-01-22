@@ -5,10 +5,10 @@
 #    include <memory>
 
 template<typename... Args>
-using unique_ptr = std::unique_ptr<Args...>;
+using unique_ptr = bl::unique_ptr<Args...>;
 
 #else
-#    include <type_traits>
+#    include "bl/type_traits.hpp"
 
 template<typename T>
 struct DefaultDeleter
@@ -30,7 +30,7 @@ struct CompressedPair : private U
     constexpr CompressedPair() = default;
     constexpr CompressedPair(const T &a, const U &b) : U(b), _fst(a) {}
 
-    constexpr CompressedPair(T &&a, U &&b) : U(std::move(b)), _fst(std::move(a))
+    constexpr CompressedPair(T &&a, U &&b) : U(bl::move(b)), _fst(bl::move(a))
     {}
 
     constexpr CompressedPair(const CompressedPair &) = default;
@@ -50,12 +50,12 @@ template<typename T, typename Deleter = DefaultDeleter<T>>
 struct unique_ptr
 {
     constexpr unique_ptr(T *p = nullptr, Deleter d = Deleter{})
-      : _impl(p, std::move(d))
+      : _impl(p, bl::move(d))
     {}
 
     unique_ptr(const unique_ptr &) = delete;
 
-    constexpr unique_ptr(unique_ptr &&rhs) : _impl(std::move(rhs._impl))
+    constexpr unique_ptr(unique_ptr &&rhs) : _impl(bl::move(rhs._impl))
     {
         rhs._impl.fst() = nullptr;
     }
@@ -67,7 +67,7 @@ struct unique_ptr
     constexpr unique_ptr &operator=(unique_ptr &&rhs)
     {
         reset();
-        _impl = std::move(rhs._impl);
+        _impl = bl::move(rhs._impl);
         rhs._impl.fst() = nullptr;
         return *this;
     }

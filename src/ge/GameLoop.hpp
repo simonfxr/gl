@@ -4,8 +4,6 @@
 #include "ge/conf.hpp"
 #include "pp/pimpl.hpp"
 
-#include <memory>
-
 namespace ge {
 
 struct GE_API GameLoop

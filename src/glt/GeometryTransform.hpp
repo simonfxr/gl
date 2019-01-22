@@ -9,8 +9,6 @@
 #include "math/vec4.hpp"
 #include "pp/pimpl.hpp"
 
-#include <memory>
-
 namespace glt {
 
 inline constexpr uint32_t GEOMETRY_TRANSFORM_MAX_DEPTH = 16;

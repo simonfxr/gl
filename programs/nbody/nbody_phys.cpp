@@ -1,6 +1,7 @@
 #include "nbody_phys.hpp"
 
 #include "err/err.hpp"
+#include "util/string.hpp"
 
 using namespace math;
 
@@ -147,9 +148,9 @@ Simulation::init()
     //    INFO("epsi0 = " + std::to_string(epsi0 * 1e20));
     //    INFO("e0 = " + std::to_string(e0 * 1e20));
 
-    INFO("r = " + std::to_string(length(r)));
-    INFO("vv = " + std::to_string(vv));
-    INFO("time_step = " + std::to_string(time_step * 1e20));
+    INFO(string_concat("r = ", length(r)));
+    INFO(string_concat("vv = ", vv));
+    INFO(string_concat("time_step = ", time_step * 1e20));
 
     e.velocity = vv * normalize(cross(normalize(r), vec3(real(1))));
 

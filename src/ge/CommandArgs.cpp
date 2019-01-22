@@ -1,9 +1,11 @@
 #include "ge/CommandArgs.hpp"
 
+#include "bl/range.hpp"
+#include "bl/string.hpp"
+#include "bl/string_view.hpp"
 #include "ge/Command.hpp"
 #include "ge/Commands.hpp"
 #include "sys/io/Stream.hpp"
-#include "util/range.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -34,21 +36,21 @@ template<typename T>
 void
 destructive_move(T *dest, T &&from)
 {
-    new (dest) T(std::move(from));
+    new (dest) T(bl::move(from));
     from.~T();
 }
 
 } // namespace
 
-CommandValue::CommandValue(std::shared_ptr<Command> com)
-  : name(com, &com->name()), ref(std::move(com))
+CommandValue::CommandValue(bl::shared_ptr<Command> com)
+  : name(com, &com->name()), ref(bl::move(com))
 {}
 
 CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
 {
     switch (_type.value) {
     case CommandArgType::String:
-        copy(&string, std::move(rhs.string));
+        copy(&string, bl::move(rhs.string));
         break;
     case CommandArgType::Integer:
         integer = rhs.integer;
@@ -57,13 +59,13 @@ CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
         number = rhs.number;
         break;
     case CommandArgType::KeyCombo:
-        copy(&keyBinding, std::move(rhs.keyBinding));
+        copy(&keyBinding, bl::move(rhs.keyBinding));
         break;
     case CommandArgType::CommandRef:
-        copy(&command, std::move(rhs.command));
+        copy(&command, bl::move(rhs.command));
         break;
     case CommandArgType::VarRef:
-        copy(&var, std::move(rhs.var));
+        copy(&var, bl::move(rhs.var));
         break;
     case CommandArgType::Nil:
         break;
@@ -72,7 +74,7 @@ CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
 
 CommandArg::CommandArg(CommandArg &&rhs) : CommandArg()
 {
-    *this = std::move(rhs);
+    *this = bl::move(rhs);
 }
 
 CommandArg::~CommandArg()
@@ -90,7 +92,7 @@ CommandArg::operator=(CommandArg &&rhs)
     rhs._type = CommandArgType::Nil;
     switch (_type.value) {
     case CommandArgType::String:
-        destructive_move(&string, std::move(rhs.string));
+        destructive_move(&string, bl::move(rhs.string));
         return *this;
     case CommandArgType::Integer:
         integer = rhs.integer;
@@ -99,13 +101,13 @@ CommandArg::operator=(CommandArg &&rhs)
         number = rhs.number;
         return *this;
     case CommandArgType::KeyCombo:
-        destructive_move(&keyBinding, std::move(rhs.keyBinding));
+        destructive_move(&keyBinding, bl::move(rhs.keyBinding));
         return *this;
     case CommandArgType::CommandRef:
-        destructive_move(&command, std::move(rhs.command));
+        destructive_move(&command, bl::move(rhs.command));
         return *this;
     case CommandArgType::VarRef:
-        destructive_move(&var, std::move(rhs.var));
+        destructive_move(&var, bl::move(rhs.var));
         return *this;
     case CommandArgType::Nil:
         return *this;
@@ -122,7 +124,7 @@ CommandArg::operator=(const CommandArg &rhs)
 void
 CommandArg::reset()
 {
-    switch (std::exchange(_type.value, CommandArgType::Nil)) {
+    switch (bl::exchange(_type.value, CommandArgType::Nil)) {
     case CommandArgType::String:
         destroy(string);
         return;
@@ -148,18 +150,18 @@ CommandArg::reset()
 int
 compare(const CommandValue &a, const CommandValue &b)
 {
-    return a.name->compare(*b.name);
+    return compare(*a.name, *b.name);
 }
 
 int
 compare(const CommandArg &a, const CommandArg &b)
 {
-    using ::compare;
+    using bl::compare;
     if (a.type() != b.type())
         return compare(a.type(), b.type());
     switch (a.type().value) {
     case CommandArgType::String:
-        return a.string.compare(b.string);
+        return compare(a.string, b.string);
     case CommandArgType::Integer:
         return compare(a.integer, b.integer);
     case CommandArgType::Number:
@@ -172,7 +174,7 @@ compare(const CommandArg &a, const CommandArg &b)
     case CommandArgType::CommandRef:
         return compare(a.command, b.command);
     case CommandArgType::VarRef:
-        return a.var.compare(b.var);
+        return compare(a.var, b.var);
     case CommandArgType::Nil:
         return 0;
     }
@@ -181,7 +183,7 @@ compare(const CommandArg &a, const CommandArg &b)
 
 struct PrettyQuotation
 {
-    std::vector<std::string> statements;
+    bl::vector<bl::string> statements;
     sys::io::ByteStream out;
     size_t len{};
 };
@@ -195,7 +197,7 @@ struct CommandPrettyPrinter::Data
     size_t block_indent{ 4 };
     bool ignore_empty_statements{ true };
 
-    std::vector<std::shared_ptr<PrettyQuotation>> quotations;
+    bl::vector<bl::shared_ptr<PrettyQuotation>> quotations;
 
     Data() : out(&sys::io::stdout()), current_out(out) {}
 };
@@ -311,7 +313,7 @@ CommandPrettyPrinter::print(const CommandArg &arg, bool first)
 }
 
 void
-CommandPrettyPrinter::print(ArrayView<const CommandArg> statement)
+CommandPrettyPrinter::print(bl::array_view<const CommandArg> statement)
 {
 
     if (self->ignore_empty_statements && statement.size() == 0)
@@ -330,11 +332,11 @@ CommandPrettyPrinter::print(const Quotation &q)
     openQuotation();
 
     for (const auto &qi : q) {
-        print(view_array(qi));
+        print(qi.view());
         auto &pq = self->quotations.back();
         pq->statements.push_back(pq->out.str());
         pq->out.truncate(0);
-        pq->len += pq->statements.back().length();
+        pq->len += pq->statements.back().size();
     }
 
     closeQuotation();
@@ -343,7 +345,7 @@ CommandPrettyPrinter::print(const Quotation &q)
 void
 CommandPrettyPrinter::openQuotation()
 {
-    self->quotations.push_back(std::make_shared<PrettyQuotation>());
+    self->quotations.push_back(bl::make_shared<PrettyQuotation>());
     self->current_out = &self->quotations.back()->out;
 }
 
@@ -378,7 +380,7 @@ CommandPrettyPrinter::closeQuotation()
 void
 CommandPrettyPrinter::printSpaces(size_t n)
 {
-    for (auto i : irange(n)) {
+    for (auto i : bl::irange(n)) {
         UNUSED(i);
         *self->current_out << " ";
     }

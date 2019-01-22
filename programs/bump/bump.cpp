@@ -9,9 +9,9 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 
+#include "bl/vector.hpp"
 #include <algorithm>
 #include <unordered_map>
-#include <vector>
 
 using namespace math;
 
@@ -71,7 +71,7 @@ const ::glt::StructInfo sname::gl::struct_info::info = ::glt::StructInfo(
   PP_TOSTR(sname),
   sizeof(sname::gl),
   alignof(sname::gl),
-  ::ArrayView<const ::glt::FieldInfo>(sname::gl::struct_info::_fields,
+  ::bl::array_view<const ::glt::FieldInfo>(sname::gl::struct_info::_fields,
 								sizeof sname::gl::struct_info::_fields / sizeof(::glt::FieldInfo)));
 
 sname::sname(const sname::gl &TI_VAR(arg)): PP_MAP(TI_INIT_FIELD,PP_COMMA,(vec3_t, position),   (vec3_t, tangent),     (vec3_t, binormal),    (vec2_t, uv))
@@ -275,10 +275,10 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
         Tri(uint32_t _a, uint32_t _b, uint32_t _c) : a(_a), b(_b), c(_c) {}
     };
 
-    std::vector<vec3_t> vertices;
-    std::vector<Tri> tris;
+    bl::vector<vec3_t> vertices;
+    bl::vector<Tri> tris;
 
-    typedef std::unordered_map<uint64_t, uint32_t> VertexCache;
+    typedef bl::hashtable<uint64_t, uint32_t> VertexCache;
     VertexCache vertex_cache;
 
 #define X .525731112119133606
@@ -303,8 +303,8 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
     for (auto element : elements)
         tris.push_back(Tri(element[0], element[1], element[2]));
 
-    std::vector<Tri> tris2;
-    std::vector<Tri> *from, *to;
+    bl::vector<Tri> tris2;
+    bl::vector<Tri> *from, *to;
     from = &tris;
     to = &tris2;
 
@@ -321,9 +321,9 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
     do {                                                                       \
         uint64_t key =                                                         \
           (a) < (b) ? (uint64_t(a) << 32 | (b)) : (uint64_t(b) << 32 | (a));   \
-        VertexCache::const_iterator it = vertex_cache.find(key);               \
+        auto it = vertex_cache.find(key);                                      \
         if (it != vertex_cache.end()) {                                        \
-            (ab) = it->second;                                                 \
+            (ab) = it->value;                                                  \
         } else {                                                               \
             vec3_t pa = vertices[a];                                           \
             vec3_t pb = vertices[b];                                           \

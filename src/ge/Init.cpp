@@ -20,20 +20,20 @@ EngineInitializers::EngineInitializers(bool default_init)
 
 void
 EngineInitializers::reg(RunLevel lvl,
-                        std::shared_ptr<EventHandler<InitEvent>> handler)
+                        bl::shared_ptr<EventHandler<InitEvent>> handler)
 {
     switch (lvl) {
     case PreInit0:
-        preInit0.reg(std::move(handler));
+        preInit0.reg(bl::move(handler));
         break;
     case PreInit1:
-        preInit1.reg(std::move(handler));
+        preInit1.reg(bl::move(handler));
         break;
     case Init:
-        init.reg(std::move(handler));
+        init.reg(bl::move(handler));
         break;
     case PostInit:
-        postInit.reg(std::move(handler));
+        postInit.reg(bl::move(handler));
         break;
     }
 }
@@ -41,7 +41,7 @@ EngineInitializers::reg(RunLevel lvl,
 void
 initInitStats(EngineInitializers &inits)
 {
-    auto initT0 = std::make_shared<math::real>();
+    auto initT0 = bl::make_shared<math::real>();
     inits.reg(PreInit0, [=](const Event<InitEvent> &e) {
         e.info.success = true;
         *initT0 = e.info.engine.now();

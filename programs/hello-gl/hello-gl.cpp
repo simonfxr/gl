@@ -21,8 +21,8 @@ struct Anim
     ge::Engine engine;
     glt::ShaderProgramRef program;
 
-    std::shared_ptr<glt::TextureSampler> texture0;
-    std::shared_ptr<glt::TextureSampler> texture1;
+    bl::shared_ptr<glt::TextureSampler> texture0;
+    bl::shared_ptr<glt::TextureSampler> texture1;
     glt::Mesh<Vertex> mesh;
 
     struct GlobalResources
@@ -36,14 +36,14 @@ struct Anim
     void link();
 
     void renderScene(const ge::Event<ge::RenderEvent> & /*ev*/);
-    std::shared_ptr<glt::TextureSampler> make_texture(const char *filename);
+    bl::shared_ptr<glt::TextureSampler> make_texture(const char *filename);
     int make_resources();
 };
 
-std::shared_ptr<glt::TextureSampler>
+bl::shared_ptr<glt::TextureSampler>
 Anim::make_texture(const char *filename)
 {
-    std::shared_ptr<glt::TextureSampler> tex;
+    bl::shared_ptr<glt::TextureSampler> tex;
     int width, height;
     void *pixels = read_tga(filename, &width, &height);
 

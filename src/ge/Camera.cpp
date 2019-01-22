@@ -1,5 +1,6 @@
 #include "ge/Camera.hpp"
 
+#include "bl/string.hpp"
 #include "math/real.hpp"
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
@@ -11,9 +12,9 @@ namespace ge {
 
 struct Handlers
 {
-    std::shared_ptr<EventHandler<MouseMoved>> mouseMoved;
-    std::shared_ptr<EventHandler<InputEvent>> handleInput;
-    std::shared_ptr<EventHandler<RenderEvent>> beforeRender;
+    bl::shared_ptr<EventHandler<MouseMoved>> mouseMoved;
+    bl::shared_ptr<EventHandler<InputEvent>> handleInput;
+    bl::shared_ptr<EventHandler<RenderEvent>> beforeRender;
 };
 
 struct Camera::Data
@@ -28,7 +29,7 @@ struct Camera::Data
     Handlers handlers;
     bool mouse_look{ false };
     Engine *engine{};
-    std::string frame_path;
+    bl::string frame_path;
 
     explicit Data(Camera & /*me*/);
 
@@ -37,12 +38,12 @@ struct Camera::Data
     // commands
     void runMove(const Event<CommandEvent> &, int64_t dir);
     void runSaveFrame(const Event<CommandEvent> & /*unused*/,
-                      ArrayView<const CommandArg> /*args*/);
+                      bl::array_view<const CommandArg> /*args*/);
     void runLoadFrame(const Event<CommandEvent> & /*unused*/,
-                      ArrayView<const CommandArg> /*args*/);
+                      bl::array_view<const CommandArg> /*args*/);
     void runSpeed(const Event<CommandEvent> & /*unused*/, double);
     void runSensitivity(const Event<CommandEvent> & /*unused*/,
-                        ArrayView<const CommandArg> /*args*/);
+                        bl::array_view<const CommandArg> /*args*/);
 
     // event handlers
     void handleMouseMoved(const Event<MouseMoved> & /*ev*/);
@@ -141,10 +142,10 @@ Camera::Data::runMove(const Event<CommandEvent> & /*unused*/, int64_t dir)
 
 void
 Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
-                           ArrayView<const CommandArg> args)
+                           bl::array_view<const CommandArg> args)
 {
 
-    const std::string *path;
+    const bl::string *path;
     if (args.size() == 0)
         path = &frame_path;
     else if (args.size() == 1 && args[0].type() == CommandArgType::String)
@@ -165,9 +166,9 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
 
 void
 Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
-                           ArrayView<const CommandArg> args)
+                           bl::array_view<const CommandArg> args)
 {
-    const std::string *path;
+    const bl::string *path;
     if (args.size() == 0)
         path = &frame_path;
     else if (args.size() == 1 && args[0].type() == CommandArgType::String)
@@ -204,7 +205,7 @@ Camera::Data::runSpeed(const Event<CommandEvent> & /*unused*/, double s)
 
 void
 Camera::Data::runSensitivity(const Event<CommandEvent> & /*unused*/,
-                             ArrayView<const CommandArg> args)
+                             bl::array_view<const CommandArg> args)
 {
     if (args.size() == 1 && args[0].type() == CommandArgType::Number) {
         mouse_sensitivity = vec2(real(args[0].number));
@@ -308,14 +309,14 @@ Camera::frame(const glt::Frame &frame)
     self->frame = frame;
 }
 
-const std::string &
+const bl::string &
 Camera::framePath() const
 {
     return self->frame_path;
 }
 
 void
-Camera::framePath(const std::string &path)
+Camera::framePath(const bl::string &path)
 {
     self->frame_path = path;
 }

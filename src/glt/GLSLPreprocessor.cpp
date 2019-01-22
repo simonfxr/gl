@@ -1,5 +1,6 @@
 #include "glt/GLSLPreprocessor.hpp"
 
+#include "bl/hashset.hpp"
 #include "err/err.hpp"
 #include "glt/ShaderCompiler.hpp"
 #include "sys/fs.hpp"
@@ -7,7 +8,6 @@
 
 #include <cstring>
 #include <stack>
-#include <unordered_set>
 
 namespace glt {
 
@@ -59,9 +59,9 @@ struct FileContext
 
 struct ProcessingState
 {
-    std::unordered_set<std::string> visitingFiles;
-    std::unordered_set<std::string> deps;
-    std::unordered_set<std::string> incs;
+    bl::hashset<bl::string> visitingFiles;
+    bl::hashset<bl::string> deps;
+    bl::hashset<bl::string> incs;
     std::stack<FileContext> stack;
 };
 
@@ -83,10 +83,10 @@ GLSLPreprocessor::GLSLPreprocessor(const IncludePath &incPath,
 GLSLPreprocessor::~GLSLPreprocessor() = default;
 
 void
-GLSLPreprocessor::appendString(std::string_view str)
+GLSLPreprocessor::appendString(bl::string_view str)
 {
     if (!str.empty()) {
-        auto &data = contents.emplace_back(view_array(str));
+        auto &data = contents.emplace_back(str.array_view());
         segments.push_back(data.data());
         segLengths.push_back(uint32_t(data.size()));
     }
@@ -97,7 +97,7 @@ GLSLPreprocessor::addDefines(const PreprocessorDefinitions &defines)
 {
     for (const auto &define : defines) {
         sys::io::ByteStream defn;
-        defn << "#define " << define.first << " " << define.second
+        defn << "#define " << define.key << " " << define.value
              << sys::io::endl;
         appendString(defn.str());
     }
@@ -119,7 +119,7 @@ GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext &ctx)
 }
 
 void
-GLSLPreprocessor::processFileRecursively(std::string &&file)
+GLSLPreprocessor::processFileRecursively(bl::string &&file)
 {
     if (wasError())
         return;
@@ -132,10 +132,10 @@ GLSLPreprocessor::processFileRecursively(std::string &&file)
         return;
     }
 
-    auto &dref = contents.emplace_back(std::move(data));
+    auto &dref = contents.emplace_back(bl::move(data));
 
-    this->name(std::move(file));
-    process(std::string_view(dref.data(), dref.size()));
+    this->name(bl::move(file));
+    process(bl::string_view(dref.data(), dref.size()));
 }
 
 void
@@ -156,8 +156,8 @@ DependencyHandler::directiveEncountered(
         return;
     }
 
-    std::string file(arg, len);
-    std::string realPath = sys::fs::lookup(view_array(proc.includePath), file);
+    bl::string file(arg, len);
+    bl::string realPath = sys::fs::lookup(proc.includePath, file);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
                    << ": #need-directive: cannot find file: " << file
@@ -178,8 +178,8 @@ DependencyHandler::directiveEncountered(
         return;
     }
 
-    std::string absPath = sys::fs::absolutePath(realPath);
-    if (proc.state->deps.insert(absPath).second)
+    bl::string absPath = sys::fs::absolutePath(realPath);
+    if (proc.state->deps.insert(absPath).snd())
         proc.dependencies.push_back(
           ShaderSource::makeFileSource(stype, absPath));
 }
@@ -216,8 +216,8 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
         return;
     }
 
-    std::string file(arg, len);
-    std::string realPath = sys::fs::lookup(view_array(proc.includePath), file);
+    bl::string file(arg, len);
+    bl::string realPath = sys::fs::lookup(proc.includePath, file);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
                    << ": #include-directive: cannot find file: " << file
@@ -238,8 +238,9 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
     }
     proc.state->incs.insert(filestat->absolute);
 
-    if (proc.state->visitingFiles.count(filestat->absolute) == 0) {
-        proc.includes.emplace_back(filestat->absolute, filestat->mtime);
+    if (!proc.state->visitingFiles.contains(filestat->absolute)) {
+        proc.includes.emplace_back(
+          ShaderInclude{ filestat->absolute, filestat->mtime });
 
         sys::io::HandleError err;
         auto contents = readFile(proc.out(), filestat->absolute, err);
@@ -248,9 +249,9 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
             return;
         }
 
-        auto &dref = proc.contents.emplace_back(std::move(contents));
-        proc.name(std::move(filestat->absolute));
-        proc.process(std::string_view(dref.data(), dref.size()));
+        auto &dref = proc.contents.emplace_back(bl::move(contents));
+        proc.name(bl::move(filestat->absolute));
+        proc.process(bl::string_view(dref.data(), dref.size()));
     }
 }
 

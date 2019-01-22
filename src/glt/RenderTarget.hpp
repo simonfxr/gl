@@ -5,8 +5,6 @@
 #include "glt/conf.hpp"
 #include "pp/pimpl.hpp"
 
-#include <memory>
-
 namespace glt {
 
 struct GLT_API Viewport

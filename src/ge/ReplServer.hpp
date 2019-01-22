@@ -26,7 +26,7 @@ struct GE_API ReplServer
 
     void shutdown();
 
-    const std::shared_ptr<EventHandler<InputEvent>> &ioHandler();
+    const bl::shared_ptr<EventHandler<InputEvent>> &ioHandler();
 
 private:
     DECLARE_PIMPL(GE_API, self);

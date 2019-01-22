@@ -1,15 +1,14 @@
 #ifndef SHADER_MANAGER_HPP
 #define SHADER_MANAGER_HPP
 
+#include "bl/hashtable.hpp"
+#include "bl/shared_ptr.hpp"
+#include "bl/string.hpp"
+#include "bl/vector.hpp"
 #include "glt/conf.hpp"
 #include "pp/enum.hpp"
 #include "pp/pimpl.hpp"
 #include "sys/io/Stream.hpp"
-
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace glt {
 
@@ -17,9 +16,9 @@ struct ShaderCompiler;
 struct ShaderProgram;
 struct ShaderCache;
 
-typedef std::unordered_map<std::string, std::string> PreprocessorDefinitions;
+typedef bl::hashtable<bl::string, bl::string> PreprocessorDefinitions;
 
-typedef std::vector<std::string> ShaderDirectories;
+typedef bl::vector<bl::string> ShaderDirectories;
 
 #define GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF(T, V0, V)                        \
     T(ShaderManagerVerbosity, uint8_t, V0(Quiet) V(OnlyErrors) V(Info))
@@ -42,10 +41,10 @@ struct GLT_API ShaderManager
     ShaderManager();
     ~ShaderManager();
 
-    std::shared_ptr<ShaderProgram> program(const std::string &name) const;
-    void addProgram(const std::string &name,
-                    std::shared_ptr<ShaderProgram> &program);
-    std::shared_ptr<ShaderProgram> declareProgram(const std::string &name);
+    bl::shared_ptr<ShaderProgram> program(const bl::string &name) const;
+    void addProgram(const bl::string &name,
+                    bl::shared_ptr<ShaderProgram> &program);
+    bl::shared_ptr<ShaderProgram> declareProgram(const bl::string &name);
 
     void reloadShaders();
 
@@ -55,11 +54,11 @@ struct GLT_API ShaderManager
     sys::io::OutStream &out() const;
     void out(sys::io::OutStream &out);
 
-    bool prependShaderDirectory(const std::string &directory,
+    bool prependShaderDirectory(const bl::string &directory,
                                 bool check_exists = true);
-    bool addShaderDirectory(const std::string &directory,
+    bool addShaderDirectory(const bl::string &directory,
                             bool check_exists = true);
-    bool removeShaderDirectory(const std::string &dir);
+    bool removeShaderDirectory(const bl::string &dir);
     const ShaderDirectories &shaderDirectories() const;
 
     void setShaderVersion(uint32_t vers /* e.g. 330 */,
@@ -73,7 +72,7 @@ struct GLT_API ShaderManager
     bool dumpShadersEnabled() const;
     void dumpShadersEnable(bool);
 
-    const std::shared_ptr<ShaderCache> &globalShaderCache();
+    const bl::shared_ptr<ShaderCache> &globalShaderCache();
 
     ShaderCompiler &shaderCompiler();
 

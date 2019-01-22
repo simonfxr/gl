@@ -34,8 +34,8 @@ static const ivec3_t BLOCKS = ivec3(10, 3, 10);
 static const ivec3_t ORIGIN = ivec3(0, 0, 0);
 
 typedef GLuint GLTransformFeedback;
-typedef GLuint GLArrayBuffer;
-typedef GLuint GLVertexArray;
+typedef GLuint GLbl::dyn_arrayBuffer;
+typedef GLuint GLVertexbl::dyn_array;
 
 DEF_GL_MAPPED_TYPE(WorldVertex, (vec3_t, position));
 
@@ -48,8 +48,8 @@ struct Block
     vec3_t aabb_min;
     vec3_t aabb_max;
     GLTransformFeedback stream;
-    GLArrayBuffer data;
-    GLVertexArray array;
+    GLbl::dyn_arrayBuffer data;
+    GLVertexbl::dyn_array array;
 };
 
 struct Anim
@@ -69,7 +69,7 @@ struct Anim
     ge::Camera camera;
     Ref<ge::Timer> fpsTimer;
 
-    std::vector<Block> blocks;
+    bl::vector<Block> blocks;
 
     Anim() : engine(0) {}
 
@@ -182,9 +182,9 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     marchingCubesProgram->addShaderFile("marching-cubes.vert");
     marchingCubesProgram->addShaderFile("marching-cubes.geom");
     marchingCubesProgram->bindAttributes<MCVertex>();
-    std::string vars[] = { "gPosition", "gNormal" };
+    bl::string vars[] = { "gPosition", "gNormal" };
     marchingCubesProgram->bindStreamOutVaryings(
-      Array<std::string>(vars, ARRAY_LENGTH(vars)));
+      bl::dyn_array<bl::string>(vars, ARRAY_LENGTH(vars)));
     if (!marchingCubesProgram->tryLink())
         return;
 
@@ -229,8 +229,8 @@ Anim::initBlock(Block *block)
             GL_STREAM_DRAW);
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
-    GL_CALL(glGenVertexArrays, 1, &block->array);
-    GL_CALL(glBindVertexArray, block->array);
+    GL_CALL(glGenVertexbl::dyn_arrays, 1, &block->array);
+    GL_CALL(glBindVertexbl::dyn_array, block->array);
 
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, block->data);
     GL_CALL(glVertexAttribPointer,
@@ -249,9 +249,9 @@ Anim::initBlock(Block *block)
             (void *) offsetof(MCFeedbackVertex, normal));
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
-    GL_CALL(glEnableVertexAttribArray, 0);
-    GL_CALL(glEnableVertexAttribArray, 1);
-    GL_CALL(glBindVertexArray, 0);
+    GL_CALL(glEnableVertexAttribbl::dyn_array, 0);
+    GL_CALL(glEnableVertexAttribbl::dyn_array, 1);
+    GL_CALL(glBindVertexbl::dyn_array, 0);
 
     GL_CALL(glGenTransformFeedbacks, 1, &block->stream);
     GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, block->stream);
@@ -264,7 +264,7 @@ Anim::destroyBlock(Block *block)
 {
     GL_CALL(glDeleteTransformFeedbacks, 1, &block->stream);
     block->stream = 0;
-    GL_CALL(glDeleteVertexArrays, 1, &block->array);
+    GL_CALL(glDeleteVertexbl::dyn_arrays, 1, &block->array);
     block->array = 0;
     GL_CALL(glDeleteBuffers, 1, &block->data);
     block->data = 0;
@@ -384,9 +384,9 @@ Anim::renderPolygon(const Block &block)
       .mandatory("projectionMatrix", gt.projectionMatrix())
       .mandatory("normalMatrix", gt.normalMatrix());
 
-    GL_CALL(glBindVertexArray, block.array);
+    GL_CALL(glBindVertexbl::dyn_array, block.array);
     GL_CALL(glDrawTransformFeedback, GL_TRIANGLES, block.stream);
-    GL_CALL(glBindVertexArray, 0);
+    GL_CALL(glBindVertexbl::dyn_array, 0);
 }
 
 void

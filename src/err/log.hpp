@@ -3,7 +3,7 @@
 
 #include "err/err.hpp"
 
-#include <type_traits>
+#include "bl/type_traits.hpp"
 
 #define LOG_RAISE(val, ec, lvl, msg)                                           \
     do {                                                                       \
@@ -50,14 +50,14 @@ struct LogMessage
     LogMessage &append(T &&arg)
     {
         if (_writeable)
-            _destination << std::forward<T>(arg);
+            _destination << bl::forward<T>(arg);
         return *this;
     }
 
     template<typename T>
     friend LogMessage &operator<<(LogMessage &log, T &&arg)
     {
-        return log.append(std::forward<T>(arg));
+        return log.append(bl::forward<T>(arg));
     }
 
     OStream &out() { return _destination; }

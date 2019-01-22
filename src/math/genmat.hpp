@@ -1,13 +1,10 @@
 #ifndef GL_MATH_GENMAT_HPP
 #define GL_MATH_GENMAT_HPP
 
+#include "bl/type_traits.hpp"
 #include "math/genvec.hpp"
 #include "math/math.hpp"
 #include "math/real.hpp"
-
-#include <array>
-
-#include <type_traits>
 
 #define DEF_GENMAT_OP(op)                                                      \
     template<typename U>                                                       \
@@ -23,7 +20,7 @@
 
 #define DEF_GENMAT_SCALAR_OP(op)                                               \
     template<typename U,                                                       \
-             typename = std::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>  \
+             typename = bl::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>   \
     constexpr auto operator op(const U &rhs) const                             \
     {                                                                          \
         using V = std::decay_t<decltype(columns[0][0] op rhs)>;                \
@@ -43,7 +40,7 @@
 
 #define DEF_GENMAT_SCALAR_MUT_OP(op)                                           \
     template<typename U,                                                       \
-             typename = std::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>  \
+             typename = bl::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>   \
     constexpr genmat &operator PP_CAT(op, =)(const U &rhs)                     \
     {                                                                          \
         return *this = *this op rhs;                                           \
@@ -152,7 +149,7 @@ struct genmat
     {
         static_assert(sizeof...(args) == N,
                       "can only initialize using exactly N elements");
-        return { std::forward<Args>(args)... };
+        return { bl::forward<Args>(args)... };
     }
 
     static constexpr genmat identity()
@@ -216,7 +213,7 @@ load(T *buffer, const genmat<T, N> &v)
 template<typename T,
          typename U,
          size_t N,
-         typename = std::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>
+         typename = bl::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>
 inline constexpr auto operator*(const T &lhs, const genmat<U, N> &rhs)
 {
     using V = std::decay_t<decltype(lhs * rhs[0][0])>;
@@ -329,7 +326,7 @@ inline constexpr auto
 min(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
 {
     return lhs.map(rhs, [](const T &x, const U &y) {
-        using std::min;
+        using bl::min;
         return min(x, y);
     });
 }
@@ -339,7 +336,7 @@ inline constexpr auto
 max(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
 {
     return lhs.map(rhs, [](const T &x, const U &y) {
-        using std::max;
+        using bl::max;
         return max(x, y);
     });
 }
@@ -348,10 +345,7 @@ template<typename T, size_t N>
 inline constexpr auto
 abs(const genmat<T, N> &v)
 {
-    return v.map([](const T &x) {
-        using std::abs;
-        return abs(x);
-    });
+    return v.map([](const T &x) { return abs(x); });
 }
 
 template<typename T, typename U, typename V, size_t N>
@@ -582,6 +576,7 @@ operator<<(OStream &out, const genmat<T, N> &A)
 
 } // namespace math
 
+#if 0
 BEGIN_NO_WARN_MISMATCHED_TAGS
 namespace std {
 template<typename T, size_t N>
@@ -605,5 +600,6 @@ get(math::genmat<T, N> &A)
     return A[I];
 }
 } // namespace std
+#endif
 
 #endif

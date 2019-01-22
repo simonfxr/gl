@@ -1,10 +1,10 @@
 #ifndef GLT_MODULE_HPP
 #define GLT_MODULE_HPP
 
+#include "bl/shared_ptr.hpp"
+#include "bl/unique_ptr.hpp"
 #include "glt/GLDebug.hpp"
 #include "glt/utils.hpp"
-
-#include <memory>
 
 #ifdef DEFINE_GLT_MODULE
 #    define GLT_MODULE_ACCESS
@@ -16,7 +16,7 @@ namespace glt {
 
 struct Utils
 {
-    std::shared_ptr<GLDebug> gl_debug;
+    bl::shared_ptr<GLDebug> gl_debug;
 
     bool print_opengl_calls = false;
 
@@ -35,7 +35,7 @@ struct Module
     Utils utils;
 };
 
-extern std::unique_ptr<Module> module;
+extern bl::unique_ptr<Module> module;
 
 } // namespace glt
 

@@ -179,7 +179,7 @@ const StreamEndl endl = {};
             return StreamResult::OK;                                           \
         char buf[bufsz];                                                       \
         auto len = snprintf(buf, sizeof buf, "%" fmt, value);                  \
-        return write_repr(out, std::string_view{ buf, size_t(len) });          \
+        return write_repr(out, bl::string_view{ buf, size_t(len) });           \
     }
 
 DEF_PRINTF_WRITER(const void *, "p", 32)
@@ -231,7 +231,7 @@ ByteStream::ByteStream(size_t bufsize) : read_cursor(0)
     buffer.reserve(bufsize);
 }
 
-ByteStream::ByteStream(std::string_view str) : ByteStream(str.size())
+ByteStream::ByteStream(bl::string_view str) : ByteStream(str.size())
 {
     auto sz = str.size();
     write(sz, str.data());
@@ -278,7 +278,7 @@ ByteStream::basic_read(size_t &s, char *buf)
 StreamResult
 ByteStream::basic_write(size_t &s, const char *buf)
 {
-    buffer.append(buf, s);
+    buffer += bl::string_view(buf, s);
     return StreamResult::OK;
 }
 

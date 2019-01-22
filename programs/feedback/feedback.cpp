@@ -15,7 +15,7 @@ DEF_GL_MAPPED_TYPE(QuadVertex,
 
 DEF_GL_MAPPED_TYPE(QuadStreamVertex, (vec3_t, position), (vec3_t, normal))
 
-#define DEF_SHADER(name, ...) const std::string name = AS_STRING(__VA_ARGS__);
+#define DEF_SHADER(name, ...) const bl::string name = AS_STRING(__VA_ARGS__);
 
 DEF_SHADER(
   QUAD_VERTEX_SHADER,
@@ -109,7 +109,7 @@ struct Program
     glt::Mesh<QuadVertex> quadMesh;
 
     glt::GLTransformFeedbackObject quadStream;
-    glt::GLVertexArrayObject quadStreamArray;
+    glt::GLVertexbl::dyn_arrayObject quadStreamArray;
     glt::GLBufferObject quadStreamData;
     GLuint primitives_written;
 
@@ -131,9 +131,9 @@ Program::init(const ge::Event<ge::InitEvent> &ev)
                               glt::ShaderManager::VertexShader);
     quadProgram->addShaderSrc(QUAD_GEOMETRY_SHADER,
                               glt::ShaderManager::GeometryShader);
-    std::string vars[] = { "position", "normal" };
+    bl::string vars[] = { "position", "normal" };
     quadProgram->bindStreamOutVaryings(
-      Array<std::string>(vars, ARRAY_LENGTH(vars)));
+      bl::dyn_array<bl::string>(vars, ARRAY_LENGTH(vars)));
     quadProgram->bindAttributes<QuadVertex>();
 
     if (!quadProgram->tryLink())
@@ -169,8 +169,8 @@ Program::init(const ge::Event<ge::InitEvent> &ev)
             GL_STREAM_DRAW);
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
-    quadStreamArray.generate();
-    GL_CALL(glBindVertexArray, *quadStreamArray);
+    quadStreambl::dyn_array.generate();
+    GL_CALL(glBindVertexbl::dyn_array, *quadStreamArray);
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, *quadStreamData);
     GL_CALL(glVertexAttribPointer,
             0,
@@ -188,9 +188,9 @@ Program::init(const ge::Event<ge::InitEvent> &ev)
             (void *) offsetof(QuadStreamVertex, normal));
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
-    GL_CALL(glEnableVertexAttribArray, 0);
-    GL_CALL(glEnableVertexAttribArray, 1);
-    GL_CALL(glBindVertexArray, 0);
+    GL_CALL(glEnableVertexAttribbl::dyn_array, 0);
+    GL_CALL(glEnableVertexAttribbl::dyn_array, 1);
+    GL_CALL(glBindVertexbl::dyn_array, 0);
 
     quadStream.generate();
     GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, *quadStream);
@@ -238,11 +238,15 @@ Program::render(const ge::Event<ge::RenderEvent> &)
     rm.activeRenderTarget()->clearColor(glt::color(0xFF, 0xFF, 0xFF));
     rm.activeRenderTarget()->clear();
     renderProgram->use();
-    GL_CALL(glBindVertexArray, *quadStreamArray);
+    GL_CALL(glBindVertexbl::dyn_array, *quadStreamArray);
     //    GL_CALL(glDrawTransformFeedbackInstanced, GL_TRIANGLES, *quadStream,
     //    1);
-    GL_CALL(glDrawArraysInstanced, GL_TRIANGLES, 0, primitives_written * 3, 1);
-    GL_CALL(glBindVertexArray, 0);
+    GL_CALL(glDrawbl::dyn_arraysInstanced,
+            GL_TRIANGLES,
+            0,
+            primitives_written * 3,
+            1);
+    GL_CALL(glBindVertexbl::dyn_array, 0);
 }
 
 } // namespace

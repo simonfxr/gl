@@ -1,11 +1,12 @@
-#ifndef UTIL_RANGE_HPP
-#define UTIL_RANGE_HPP
+#ifndef BL_RANGE_HPP
+#define BL_RANGE_HPP
 
 #include "defs.h"
 
 #include <iterator>
 #include <limits>
 
+namespace bl {
 template<typename T>
 struct IntIterator
 {
@@ -95,14 +96,14 @@ struct IntRange
 };
 
 template<typename T>
-constexpr IntRange<T>
+inline constexpr IntRange<T>
 irange(T lim)
 {
     return { T{}, T{ 1 }, lim };
 }
 
 template<typename T, typename U>
-constexpr auto
+inline constexpr auto
 irange(T start, U lim)
 {
     using V = std::decay_t<decltype(start + lim)>;
@@ -110,10 +111,10 @@ irange(T start, U lim)
 }
 
 template<typename T = size_t>
-IntRange<T>
+inline IntRange<T>
 irange()
 {
-    return irange(std::numeric_limits<T>::max());
+    return bl::irange(std::numeric_limits<T>::max());
 }
 
 template<typename Idx, typename It>
@@ -157,11 +158,12 @@ struct EnumeratedRange
 };
 
 template<typename Idx = size_t, typename T>
-constexpr auto
+inline constexpr auto
 enumerate(T &&coll)
 {
     using Iter = std::decay_t<decltype(coll.begin())>;
     return EnumeratedRange<Idx, Iter>{ coll.begin(), coll.end() };
 }
 
+} // namespace bl
 #endif

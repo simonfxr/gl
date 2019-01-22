@@ -1,5 +1,6 @@
 #include "glt/type_info.hpp"
 
+#include "err/err.hpp"
 #include "opengl.hpp"
 
 namespace glt {
@@ -25,7 +26,7 @@ toGLScalarType(ScalarType t)
     case ScalarType::F64:
         return GL_DOUBLE;
     }
-    UNREACHABLE;
+    // FIXME??? UNREACHABLE;
 }
 
 } // namespace glt

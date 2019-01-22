@@ -18,9 +18,9 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 
+#include "bl/string.hpp"
+#include "bl/vector.hpp"
 #include <algorithm>
-#include <string>
-#include <vector>
 
 using namespace math;
 
@@ -121,7 +121,7 @@ struct Game
     bool render_spheres_instanced{};
     bool indirect_rendering{};
 
-    std::vector<SphereInstance> sphere_instances[SPHERE_LOD_MAX];
+    bl::vector<SphereInstance> sphere_instances[SPHERE_LOD_MAX];
 
     Game();
 
@@ -444,7 +444,7 @@ Game::end_render_spheres()
 
 #ifdef SPHERE_INSTANCED_TEXTURED
             glt::TextureSampler sphereMap(
-              std::make_shared<glt::TextureData>(glt::Texture1D));
+              bl::make_shared<glt::TextureData>(glt::Texture1D));
 
             sphereMap.filterMode(glt::TextureSampler::FilterNearest);
             sphereMap.clampMode(glt::TextureSampler::ClampRepeat);
@@ -520,7 +520,7 @@ Game::end_render_spheres()
                         (void *) (offsetof(SphereInstance, mvMatrix) +
                                   col * sizeof(vec4_t)));
                 GL_CALL(glVertexAttribDivisor, attr_mvMatrix + col, 1);
-                GL_CALL(glEnableVertexAttribArray, attr_mvMatrix + col);
+                GL_CALL(glEnableVertexAttribbl::dyn_array, attr_mvMatrix + col);
             }
 
             GL_CALL(glVertexAttribPointer,
@@ -531,7 +531,7 @@ Game::end_render_spheres()
                     sizeof(SphereInstance),
                     (void *) offsetof(SphereInstance, colorShininess));
             GL_CALL(glVertexAttribDivisor, attr_colorShininess, 1);
-            GL_CALL(glEnableVertexAttribArray, attr_colorShininess);
+            GL_CALL(glEnableVertexAttribbl::dyn_array, attr_colorShininess);
 
             GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
@@ -546,11 +546,12 @@ Game::end_render_spheres()
             sphereBatches[lod].bind();
 
             for (uint32 col = 0; col < 4; ++col) {
-                GL_CALL(glDisableVertexAttribArray, attr_mvMatrix + col);
+                GL_CALL(glDisableVertexAttribbl::dyn_array,
+                        attr_mvMatrix + col);
             }
 
-            GL_CALL(glDisableVertexAttribArray, attr_colorShininess);
-            GL_CALL(glBindVertexArray, 0);
+            GL_CALL(glDisableVertexAttribbl::dyn_array, attr_colorShininess);
+            GL_CALL(glBindVertexbl::dyn_array, 0);
 #endif
         }
     }
@@ -783,18 +784,18 @@ Game::render_hud()
     txtAnimSpeed.SetPosition(2, height);
 
     height += uint32(txtAnimSpeed.GetGlobalBounds().Height) + 2;
-    sf::Text txtInter(std::string("Interpolation: ") + (use_interpolation ? "on"
+    sf::Text txtInter(bl::string("Interpolation: ") + (use_interpolation ? "on"
     : "off")); txtInter.SetCharacterSize(12); txtInter.SetColor(c);
     txtInter.SetPosition(2, height);
 
     height += uint32(txtInter.GetGlobalBounds().Height) + 2;
-    sf::Text txtNumBalls(std::string("NO Spheres: ") +
+    sf::Text txtNumBalls(bl::string("NO Spheres: ") +
     to_string(world.numSpheres())); txtNumBalls.SetCharacterSize(12);
     txtNumBalls.SetColor(c);
     txtNumBalls.SetPosition(2, height);
 
     height += uint32(txtNumBalls.GetGlobalBounds().Height) + 2;
-    std::string render_stat = "FPS(Rendering): " + to_string(fs.rt_avg) + " " +
+    bl::string render_stat = "FPS(Rendering): " + to_string(fs.rt_avg) + " " +
         to_string(fs.rt_current) + " " + to_string(fs.rt_min) + " " +
     to_string(fs.rt_max); sf::Text txtRenderTime(render_stat);
     txtRenderTime.SetCharacterSize(12);
@@ -840,7 +841,7 @@ Game::link(ge::Engine &e)
       "incWorldSolveIterations",
       "",
       [this](const ge::Event<ge::CommandEvent> & /*unused*/,
-             ArrayView<const ge::CommandArg> args) {
+             bl::array_view<const ge::CommandArg> args) {
           if (args[0].integer < 0 &&
               world.solve_iterations < size_t(-args[0].integer))
               world.solve_iterations = 0;

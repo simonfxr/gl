@@ -1,10 +1,9 @@
+#include "bl/shared_ptr.hpp"
+#include "bl/vector.hpp"
 #include "err/err.hpp"
 #include "sys/io.hpp"
 #include "sys/io/Stream.hpp"
 #include "sys/sys.hpp"
-
-#include <memory>
-#include <vector>
 
 using namespace sys;
 
@@ -12,7 +11,7 @@ static const size_t BUF_SIZE = 4096;
 
 struct Client
 {
-    std::shared_ptr<io::HandleStream> stream;
+    bl::shared_ptr<io::HandleStream> stream;
     int id{};
     bool reading{ true };
     char buffer[BUF_SIZE]{};
@@ -20,7 +19,7 @@ struct Client
     size_t buf_end;
 
     Client()
-      : stream(std::make_shared<io::HandleStream>(io::Handle()))
+      : stream(bl::make_shared<io::HandleStream>(io::Handle()))
       , buf_end(BUF_SIZE)
     {}
 };
@@ -28,7 +27,7 @@ struct Client
 int
 main()
 {
-    std::vector<Client> clients;
+    bl::vector<Client> clients;
     clients.emplace_back();
     int id = 0;
 
@@ -41,7 +40,7 @@ main()
         ERR("failed to start server");
         return 1;
     }
-    auto server = std::move(opt_server).value();
+    auto server = bl::move(opt_server).value();
 
     INFO("started server");
 
@@ -52,7 +51,7 @@ main()
             if (!opt_handle)
                 break;
             Client &c = clients[clients.size() - 1];
-            c.stream->handle = std::move(opt_handle).value();
+            c.stream->handle = bl::move(opt_handle).value();
             c.id = id++;
             sys::io::stdout() << "accepted client " << c.id << sys::io::endl;
             IGNORE_RESULT(

@@ -3,7 +3,7 @@
 
 #include "defs.h"
 
-#include <type_traits>
+#include "bl/type_traits.hpp"
 #include <utility>
 
 namespace detail {
@@ -61,7 +61,7 @@ using functor_arg_type = typename functor_traits<F>::template arg_type<i>::type;
 template<typename FTraits, size_t i>
 using functor_traits_arg_type = typename FTraits::template arg_type<i>::type;
 
-template<typename F, typename = std::enable_if<std::is_empty_v<F>>>
+template<typename F, typename = bl::enable_if<std::is_empty_v<F>>>
 auto
 decay_stateless_functor(F f)
 {

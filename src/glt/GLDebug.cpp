@@ -1,12 +1,21 @@
 #include "glt/GLDebug.hpp"
-#include "glt/conf.hpp"
+
+#include "bl/hashset.hpp"
 #include "glt/utils.hpp"
 
 #include <cstring>
 
 namespace glt {
 
-GLDebug::GLDebug() = default;
+struct GLDebug::Data
+{
+    bl::hashset<GLuint> ignored;
+    OpenGLVendor vendor{};
+};
+
+DECLARE_PIMPL_DEL(GLDebug)
+
+GLDebug::GLDebug() : self(new Data) {}
 
 GLDebug::~GLDebug() = default;
 
@@ -15,32 +24,32 @@ GLDebug::init()
 {
     const GLubyte *gl_vendor_str = glGetString(GL_VENDOR);
     if (gl_vendor_str == nullptr) {
-        vendor = OpenGLVendor::Unknown;
+        self->vendor = OpenGLVendor::Unknown;
         return;
     }
 
     const char *vendor_str = reinterpret_cast<const char *>(gl_vendor_str);
     if (strcmp(vendor_str, "NVIDIA Corporation") == 0)
-        vendor = OpenGLVendor::Nvidia;
+        self->vendor = OpenGLVendor::Nvidia;
     else if (strcmp(vendor_str, "ATI Technologies") == 0)
-        vendor = OpenGLVendor::ATI;
+        self->vendor = OpenGLVendor::ATI;
     else if (strcmp(vendor_str, "INTEL") == 0)
-        vendor = OpenGLVendor::Intel;
+        self->vendor = OpenGLVendor::Intel;
     else
-        vendor = OpenGLVendor::Unknown;
+        self->vendor = OpenGLVendor::Unknown;
 }
 
 bool
 GLDebug::shouldIgnore(GLuint id)
 {
-    return ignored.find(id) != ignored.end();
+    return self->ignored.find(id) != self->ignored.end();
 }
 
 void
 GLDebug::ignoreMessage(OpenGLVendor id_vendor, GLuint id)
 {
-    if (vendor != OpenGLVendor::Unknown && vendor == id_vendor)
-        ignored.insert(id);
+    if (self->vendor != OpenGLVendor::Unknown && self->vendor == id_vendor)
+        self->ignored.insert(id);
 }
 
 NoDebug::~NoDebug() = default;

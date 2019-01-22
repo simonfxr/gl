@@ -12,9 +12,9 @@
 
 #include <GLFW/glfw3.h>
 
+#include "bl/vector.hpp"
 #include <cstdlib>
 #include <iostream>
-#include <vector>
 
 using namespace math;
 
@@ -147,7 +147,7 @@ bool
 initVertexArray(State &s)
 {
 
-    std::vector<Vertex> vertices;
+    bl::vector<Vertex> vertices;
 
     for (int i = 0; i < 20; ++i) {
         Vertex v;
