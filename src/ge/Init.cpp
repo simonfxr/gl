@@ -24,16 +24,16 @@ EngineInitializers::reg(RunLevel lvl,
 {
     switch (lvl) {
     case PreInit0:
-        preInit0.reg(bl::move(handler));
+        preInit0.reg(std::move(handler));
         break;
     case PreInit1:
-        preInit1.reg(bl::move(handler));
+        preInit1.reg(std::move(handler));
         break;
     case Init:
-        init.reg(bl::move(handler));
+        init.reg(std::move(handler));
         break;
     case PostInit:
-        postInit.reg(bl::move(handler));
+        postInit.reg(std::move(handler));
         break;
     }
 }

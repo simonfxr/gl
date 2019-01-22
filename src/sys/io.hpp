@@ -3,7 +3,6 @@
 
 #include "sys/io/Stream.hpp"
 
-#include "bl/dyn_array.hpp"
 #include "bl/optional.hpp"
 #include "bl/string.hpp"
 #include "bl/string_view.hpp"
@@ -140,7 +139,7 @@ struct Handle
 
     constexpr Handle() = default;
     Handle(const Handle &) = delete;
-    Handle(Handle &&h) { *this = bl::move(h); }
+    Handle(Handle &&h) { *this = std::move(h); }
 
     ~Handle()
     {
@@ -166,7 +165,7 @@ struct Socket
 
     constexpr Socket() = default;
     Socket(const Socket &) = delete;
-    Socket(Socket &&s) { *this = bl::move(s); }
+    Socket(Socket &&s) { *this = std::move(s); }
 
     ~Socket()
     {
@@ -220,12 +219,12 @@ protected:
     StreamResult flush_buffer();
 };
 
-HU_NODISCARD SYS_API bl::dyn_array<char>
+HU_NODISCARD SYS_API bl::string
 readFile(sys::io::OutStream &errout,
          bl::string_view path,
          HandleError &err) noexcept;
 
-HU_NODISCARD inline bl::dyn_array<char>
+HU_NODISCARD inline bl::string
 readFile(sys::io::OutStream &errout, bl::string_view path) noexcept
 {
     HandleError err;

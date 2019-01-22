@@ -36,21 +36,21 @@ template<typename T>
 void
 destructive_move(T *dest, T &&from)
 {
-    new (dest) T(bl::move(from));
+    new (dest) T(std::move(from));
     from.~T();
 }
 
 } // namespace
 
 CommandValue::CommandValue(bl::shared_ptr<Command> com)
-  : name(com, &com->name()), ref(bl::move(com))
+  : name(com, &com->name()), ref(std::move(com))
 {}
 
 CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
 {
     switch (_type.value) {
     case CommandArgType::String:
-        copy(&string, bl::move(rhs.string));
+        copy(&string, std::move(rhs.string));
         break;
     case CommandArgType::Integer:
         integer = rhs.integer;
@@ -59,13 +59,13 @@ CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
         number = rhs.number;
         break;
     case CommandArgType::KeyCombo:
-        copy(&keyBinding, bl::move(rhs.keyBinding));
+        copy(&keyBinding, std::move(rhs.keyBinding));
         break;
     case CommandArgType::CommandRef:
-        copy(&command, bl::move(rhs.command));
+        copy(&command, std::move(rhs.command));
         break;
     case CommandArgType::VarRef:
-        copy(&var, bl::move(rhs.var));
+        copy(&var, std::move(rhs.var));
         break;
     case CommandArgType::Nil:
         break;
@@ -74,7 +74,7 @@ CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
 
 CommandArg::CommandArg(CommandArg &&rhs) : CommandArg()
 {
-    *this = bl::move(rhs);
+    *this = std::move(rhs);
 }
 
 CommandArg::~CommandArg()
@@ -92,7 +92,7 @@ CommandArg::operator=(CommandArg &&rhs)
     rhs._type = CommandArgType::Nil;
     switch (_type.value) {
     case CommandArgType::String:
-        destructive_move(&string, bl::move(rhs.string));
+        destructive_move(&string, std::move(rhs.string));
         return *this;
     case CommandArgType::Integer:
         integer = rhs.integer;
@@ -101,13 +101,13 @@ CommandArg::operator=(CommandArg &&rhs)
         number = rhs.number;
         return *this;
     case CommandArgType::KeyCombo:
-        destructive_move(&keyBinding, bl::move(rhs.keyBinding));
+        destructive_move(&keyBinding, std::move(rhs.keyBinding));
         return *this;
     case CommandArgType::CommandRef:
-        destructive_move(&command, bl::move(rhs.command));
+        destructive_move(&command, std::move(rhs.command));
         return *this;
     case CommandArgType::VarRef:
-        destructive_move(&var, bl::move(rhs.var));
+        destructive_move(&var, std::move(rhs.var));
         return *this;
     case CommandArgType::Nil:
         return *this;

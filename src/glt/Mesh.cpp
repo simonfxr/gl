@@ -1,14 +1,11 @@
 #include "glt/Mesh.hpp"
 
+#include "bl/enumerate.hpp"
 #include "bl/range.hpp"
 #include "glt/utils.hpp"
 
-#ifdef HU_OS_POSIX
-#    include <cstdlib>
-#endif
-
-#include <cstdlib>
-#include <cstring>
+#include <stdlib.h>
+#include <string.h>
 
 namespace glt {
 

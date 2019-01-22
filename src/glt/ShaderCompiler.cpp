@@ -119,7 +119,7 @@ struct ShaderObject::Data
     std::variant<StringShaderObject, FileShaderObject> object;
 
     Data(ShaderObject &self_, InitArgs &&args)
-      : self(self_), source(bl::move(args.source)), object(bl::move(args.obj))
+      : self(self_), source(std::move(args.source)), object(std::move(args.obj))
     {}
 
     std::pair<bl::shared_ptr<ShaderObject>, ReloadState> reloadIfOutdated(
@@ -181,7 +181,7 @@ struct ShaderCompilerQueue::Data
     {}
 
     void put(const bl::shared_ptr<ShaderObject> &);
-    bl::shared_ptr<ShaderObject> reload(const std::shared_ptr<ShaderObject> &);
+    bl::shared_ptr<ShaderObject> reload(const bl::shared_ptr<ShaderObject> &);
 };
 
 DECLARE_PIMPL_DEL(ShaderCompilerQueue)
@@ -315,18 +315,18 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
     if (log_len > 0) {
 
         // log_len includes null terminator
-        auto log = bl::make_unique<GLchar[]>(size_t(log_len));
-        GL_CALL(glGetShaderInfoLog, *shader, log_len, nullptr, log.get());
+        bl::string log(log_len);
+        GL_CALL(glGetShaderInfoLog, *shader, log_len, nullptr, log.data());
 
-        GLchar *logBegin = log.get();
-        while (logBegin < log.get() + log_len - 1 && isspace(*logBegin))
+        GLchar *logBegin = log.data();
+        while (logBegin < log.data() + log_len - 1 && isspace(*logBegin))
             ++logBegin;
 
-        GLchar *end = log.get() + log_len - 1;
+        GLchar *end = log.data() + log_len - 1;
         while (end > logBegin && isspace(end[-1]))
             --end;
         *end = 0;
-        const char *log_msg = log.get();
+        const char *log_msg = log.data();
 
         if (logBegin == end) {
             out << "shader compile log empty" << sys::io::endl;
@@ -358,7 +358,7 @@ translateShaderType(ShaderType type, GLenum *gltype, const bl::string &basename)
 } // namespace
 
 ShaderSource::ShaderSource(ShaderSource::Data &&args)
-  : self(new Data(bl::move(args)))
+  : self(new Data(std::move(args)))
 {}
 
 const ShaderSourceKey &
@@ -372,7 +372,7 @@ ShaderSource::makeFileSource(ShaderType ty, bl::string path)
 {
     ASSERT(sys::fs::fileExists(path));
     return bl::make_shared<ShaderSource>(
-      Data{ path, ty, { FileSource{ bl::move(path) } } });
+      Data{ path, ty, { FileSource{ std::move(path) } } });
 }
 
 bl::shared_ptr<ShaderSource>
@@ -380,7 +380,7 @@ ShaderSource::makeStringSource(ShaderType ty, bl::string source)
 {
     auto h = hash(source.view());
     return bl::make_shared<ShaderSource>(
-      Data{ bl::move(h), ty, { StringSource{ bl::move(source) } } });
+      Data{ std::move(h), ty, { StringSource{ std::move(source) } } });
 }
 
 bl::shared_ptr<ShaderObject>
@@ -463,7 +463,7 @@ ShaderSource::Data::load(const bl::shared_ptr<ShaderSource> &src,
 }
 
 ShaderObject::ShaderObject(InitArgs &&args)
-  : self(new Data(*this, bl::move(args)))
+  : self(new Data(*this, std::move(args)))
 {}
 
 ShaderObject::~ShaderObject()
@@ -524,7 +524,7 @@ ShaderObject::Data::reloadIfOutdated(ShaderCompilerQueue &scq)
         auto new_so = ShaderSource::Data::load(source, scq);
         if (!new_so)
             return { nullptr, ReloadState::Failed };
-        return { bl::move(new_so), ReloadState::Outdated };
+        return { std::move(new_so), ReloadState::Outdated };
     }
     UNREACHABLE;
 }
@@ -541,7 +541,7 @@ ShaderObject::Data::makeStringShaderObject(bl::shared_ptr<ShaderSource> src,
                                            const StringSource &ssrc)
 {
     auto so = bl::make_shared<ShaderObject>(
-      InitArgs{ bl::move(src), { StringShaderObject{ ssrc } } });
+      InitArgs{ std::move(src), { StringShaderObject{ ssrc } } });
     return so;
 }
 
@@ -552,7 +552,7 @@ ShaderObject::Data::makeFileShaderObject(bl::shared_ptr<ShaderSource> src,
 {
     ASSERT(sys::fs::fileExists(fsrc.path));
     auto so = bl::make_shared<ShaderObject>(
-      InitArgs{ bl::move(src), { FileShaderObject{ fsrc, mtime } } });
+      InitArgs{ std::move(src), { FileShaderObject{ fsrc, mtime } } });
     return so;
 }
 
@@ -809,14 +809,14 @@ ShaderCompilerQueue::enqueueReload(const bl::shared_ptr<ShaderObject> &so)
             return so;
         case ReloadState::Outdated:
             ASSERT(new_so);
-            return { bl::move(new_so) };
+            return { std::move(new_so) };
         case ReloadState::Failed:
             ASSERT(!new_so);
             return so;
         }
         UNREACHABLE;
     };
-    self->toCompile.push({ so->shaderSource(), bl::move(exec) });
+    self->toCompile.push({ so->shaderSource(), std::move(exec) });
 }
 
 void
@@ -829,7 +829,7 @@ ShaderCompilerQueue::enqueueLoad(const bl::shared_ptr<ShaderSource> &src)
         sys::io::stdout() << "load: " << src->key() << sys::io::endl;
         return ShaderSource::Data::load(src, *this);
     };
-    self->toCompile.push({ src, bl::move(exec) });
+    self->toCompile.push({ src, std::move(exec) });
 }
 
 void
@@ -837,7 +837,7 @@ ShaderCompilerQueue::compileAll()
 {
     for (; !wasError() && !self->toCompile.empty();) {
 
-        auto job = bl::move(self->toCompile.front());
+        auto job = std::move(self->toCompile.front());
         self->toCompile.pop();
         const ShaderSourceKey &key = job.source->key();
 

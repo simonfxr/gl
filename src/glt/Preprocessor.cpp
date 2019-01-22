@@ -3,7 +3,8 @@
 #include "bl/string.hpp"
 #include "err/err.hpp"
 
-#include <cstring>
+#include <ctype.h>
+#include <string.h>
 
 namespace glt {
 
@@ -193,7 +194,7 @@ Preprocessor::name() const
 void
 Preprocessor::name(bl::string &&name)
 {
-    self->sourceName = bl::move(name);
+    self->sourceName = std::move(name);
 }
 
 // Preprocessor::DirectiveHandler &Preprocessor::nullHandler() {

@@ -40,7 +40,7 @@ main()
         ERR("failed to start server");
         return 1;
     }
-    auto server = bl::move(opt_server).value();
+    auto server = std::move(opt_server).value();
 
     INFO("started server");
 
@@ -51,7 +51,7 @@ main()
             if (!opt_handle)
                 break;
             Client &c = clients[clients.size() - 1];
-            c.stream->handle = bl::move(opt_handle).value();
+            c.stream->handle = std::move(opt_handle).value();
             c.id = id++;
             sys::io::stdout() << "accepted client " << c.id << sys::io::endl;
             IGNORE_RESULT(

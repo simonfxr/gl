@@ -31,6 +31,8 @@
 #    define SHARED_EXPORT
 #endif
 
+#define FORCE_INLINE HU_FORCE_INLINE
+
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof *(x))
 
 #ifndef NDEBUG

@@ -18,6 +18,10 @@ struct basic_string : private vector<CharT>
 
     constexpr basic_string() = default;
 
+    basic_string(size_t n) : base_t(n) {}
+
+    basic_string(size_t n, CharT ch) : base_t(n, ch) {}
+
     basic_string(basic_string_view<CharT> view)
       : base_t(view.begin(), view.end())
     {}
@@ -62,7 +66,7 @@ struct basic_string : private vector<CharT>
 
     basic_string &operator+=(basic_string_view<CharT> b)
     {
-        base_t::operator+=({ b.data(), b.size() });
+        base_t::append(b.begin(), b.end());
         return *this;
     }
 

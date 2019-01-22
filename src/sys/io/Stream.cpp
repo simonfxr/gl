@@ -3,8 +3,14 @@
 #include "err/err.hpp"
 #include "sys/module.hpp"
 
-#include <cerrno>
-#include <cstring>
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+
+#undef EOF
+#undef stdin
+#undef stdout
+#undef stderr
 
 namespace sys {
 namespace io {

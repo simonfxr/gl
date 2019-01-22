@@ -1,9 +1,8 @@
 #ifndef MATH_HPP
 #define MATH_HPP
 
+#include "bl/limits.hpp"
 #include "math/mdefs.hpp"
-
-#include <limits>
 
 #define MATH_WRAPPER_TY_1(ty, cnm, nm)                                         \
     extern "C" ty cnm(ty x) throw();                                           \
@@ -79,11 +78,11 @@ using real = double;
 #    define R_FMT "lf"
 #endif
 
-inline constexpr real PI = real(3.1415926535897932384626433832);
+inline constexpr real PI = real(3.1415926535897932384626433832L);
 
-inline constexpr real REAL_MAX = std::numeric_limits<real>::max();
+inline constexpr real REAL_MAX = bl::numeric_limits<real>::max();
 
-inline constexpr real REAL_MIN = std::numeric_limits<real>::lowest();
+inline constexpr real REAL_MIN = -REAL_MAX;
 
 inline constexpr real
 recip(real x)

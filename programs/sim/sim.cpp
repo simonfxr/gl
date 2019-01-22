@@ -1,15 +1,12 @@
 #include "sim.hpp"
 
+#include "bl/enumerate.hpp"
 #include "bl/range.hpp"
+#include "bl/vector.hpp"
 #include "math/plane.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "sys/clock.hpp"
-
-#include "bl/vector.hpp"
-#include <algorithm>
-#include <cstdlib>
-#include <ctime>
 
 #if 0
 

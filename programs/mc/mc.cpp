@@ -1,3 +1,4 @@
+#include "bl/enumerate.hpp"
 #include "bl/range.hpp"
 #include "bl/string.hpp"
 #include "bl/vector.hpp"

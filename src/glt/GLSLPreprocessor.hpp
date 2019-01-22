@@ -1,7 +1,6 @@
 #ifndef GLT_GLSLPREPROCESSOR_HPP
 #define GLT_GLSLPREPROCESSOR_HPP
 
-#include "bl/dyn_array.hpp"
 #include "bl/string.hpp"
 #include "bl/vector.hpp"
 #include "glt/Preprocessor.hpp"
@@ -41,7 +40,7 @@ struct GLT_API GLSLPreprocessor : public Preprocessor
 
     bl::vector<uint32_t> segLengths;
     bl::vector<const char *> segments;
-    bl::vector<bl::dyn_array<char>> contents;
+    bl::vector<bl::string> contents;
 
     bl::unique_ptr<ProcessingState, ProcessingStateDeleter> state;
 

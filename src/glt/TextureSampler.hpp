@@ -42,7 +42,7 @@ public:
         R = 4
     };
 
-    TextureSampler() : _data(new TextureData), _sampler(0) {}
+    TextureSampler() : _data(bl::make_shared<TextureData>()), _sampler(0) {}
     explicit TextureSampler(const bl::shared_ptr<TextureData> &data)
       : _data(data), _sampler(0)
     {}

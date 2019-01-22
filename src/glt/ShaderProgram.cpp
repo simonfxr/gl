@@ -1,5 +1,6 @@
 #include "glt/ShaderProgram.hpp"
 
+#include "bl/enumerate.hpp"
 #include "bl/range.hpp"
 #include "err/err.hpp"
 #include "err/log.hpp"
@@ -11,7 +12,7 @@
 #include "sys/measure.hpp"
 #include "util/string.hpp"
 
-#include <unordered_map>
+#include <ctype.h>
 
 #define RAISE_ERR(sender, ec, msg) LOG_RAISE_ERROR(sender, ec, msg)
 
@@ -67,7 +68,7 @@ struct ShaderProgram::Data
         if (this == &rhs)
             return;
         ASSERT(&sm == &rhs.sm);
-        using std::swap;
+        using bl::swap;
         swap(program, rhs.program);
         swap(shaders, rhs.shaders);
         swap(rootdeps, rhs.rootdeps);
@@ -165,16 +166,16 @@ ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
 
     if (log_len > 0) {
 
-        auto log = bl::make_unique<GLchar[]>(size_t(log_len));
-        GL_CALL(glGetProgramInfoLog, progh, log_len, nullptr, log.get());
+        bl::string log(log_len);
+        GL_CALL(glGetProgramInfoLog, progh, log_len, nullptr, log.data());
 
-        auto logBegin = log.get();
-        while (logBegin < log.get() + log_len - 1 && isspace(*logBegin))
+        auto logBegin = log.data();
+        while (logBegin < log.end() - 1 && isspace(*logBegin))
             ++logBegin;
 
-        const char *logmsg = log.get();
+        const char *logmsg = log.data();
 
-        if (logBegin == log.get() + log_len - 1) {
+        if (logBegin == log.data() + log_len - 1) {
             out << "link log empty" << sys::io::endl;
         } else {
             out << "link log: " << sys::io::endl

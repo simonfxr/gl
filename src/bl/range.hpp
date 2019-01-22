@@ -1,10 +1,10 @@
 #ifndef BL_RANGE_HPP
 #define BL_RANGE_HPP
 
-#include "defs.h"
-
-#include <iterator>
-#include <limits>
+#include "bl/core.hpp"
+#include "bl/iterator.hpp"
+#include "bl/limits.hpp"
+#include "bl/type_traits.hpp"
 
 namespace bl {
 template<typename T>
@@ -17,7 +17,7 @@ struct IntIterator
     using value_type = const T;
     using pointer = std::add_pointer_t<const T>;
     using reference = const T &;
-    using iterator_category = std::random_access_iterator_tag;
+    using iterator_category = bl::random_access_iterator_tag;
 
     constexpr IntIterator &operator++()
     {
@@ -114,55 +114,7 @@ template<typename T = size_t>
 inline IntRange<T>
 irange()
 {
-    return bl::irange(std::numeric_limits<T>::max());
-}
-
-template<typename Idx, typename It>
-struct Enumerated
-{
-    Idx _index;
-    It _iter;
-
-    constexpr Enumerated &operator++()
-    {
-        ++_index;
-        ++_iter;
-        return *this;
-    }
-
-    constexpr bool operator==(const Enumerated &rhs) const
-    {
-        return _iter == rhs._iter;
-    }
-
-    constexpr bool operator!=(const Enumerated &rhs) const
-    {
-        return !operator==(rhs);
-    }
-
-    constexpr std::pair<Idx, typename std::iterator_traits<It>::reference>
-    operator*()
-    {
-        return { _index, *_iter };
-    }
-};
-
-template<typename Idx, typename It>
-struct EnumeratedRange
-{
-    It _begin;
-    It _end;
-
-    constexpr Enumerated<Idx, It> begin() const { return { Idx{}, _begin }; }
-    constexpr Enumerated<Idx, It> end() const { return { Idx{}, _end }; }
-};
-
-template<typename Idx = size_t, typename T>
-inline constexpr auto
-enumerate(T &&coll)
-{
-    using Iter = std::decay_t<decltype(coll.begin())>;
-    return EnumeratedRange<Idx, Iter>{ coll.begin(), coll.end() };
+    return bl::irange(bl::numeric_limits<T>::max());
 }
 
 } // namespace bl

@@ -56,10 +56,10 @@ template<typename F, typename... Fs>
 inline int
 chained_compare(F &&f, Fs &&... fs)
 {
-    int ret = bl::forward<F>(f).operator()();
+    int ret = std::forward<F>(f).operator()();
     if (ret != 0)
         return ret;
-    return chained_compare(bl::forward<Fs>(fs)...);
+    return chained_compare(std::forward<Fs>(fs)...);
 }
 
 } // namespace bl

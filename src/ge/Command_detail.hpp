@@ -1,13 +1,12 @@
 #ifndef GE_COMMAND_DETAIL_HPP
 #define GE_COMMAND_DETAIL_HPP
 
+#include "bl/meta.hpp"
 #include "err/err.hpp"
 #include "ge/Command.hpp"
 #include "ge/CommandArgs.hpp"
 #include "ge/Event.hpp"
 #include "util/functor_traits.hpp"
-
-#include <tuple>
 
 namespace ge {
 
@@ -109,12 +108,12 @@ struct CommandArgSeqToTuple
 template<typename... Ts>
 struct CommandArgSeqToTuple<CommandArgSeq<Ts...>>
 {
-    using type = std::tuple<Ts...>;
+    using type = bl::type_seq<Ts...>;
 };
 
 template<size_t I, typename Seq>
 using command_arg_seq_element =
-  std::tuple_element_t<I, typename CommandArgSeqToTuple<Seq>::type>;
+  bl::index_type_seq<I, typename CommandArgSeqToTuple<Seq>::type>;
 
 template<typename T>
 struct Proxy
@@ -134,7 +133,7 @@ template<typename F, typename... Ts, size_t... Is>
 inline void
 invoke_indexed(F &&f,
                CommandArgSeq<Ts...>,
-               std::integer_sequence<size_t, Is...>,
+               bl::index_sequence<Is...>,
                const Event<CommandEvent> &ev,
                bl::array_view<const CommandArg> args)
 {
@@ -150,7 +149,7 @@ template<typename F, typename... Ts, size_t... Is>
 inline void
 invoke_indexed_vararg(F &&f,
                       CommandArgSeq<Ts...>,
-                      std::integer_sequence<size_t, Is...>,
+                      bl::index_sequence<Is...>,
                       const Event<CommandEvent> &ev,
                       bl::array_view<const CommandArg> args)
 {
@@ -171,15 +170,15 @@ invoke(F &&f,
        bl::array_view<const CommandArg> args)
 {
     if constexpr (VarArg) {
-        invoke_indexed_vararg(bl::forward<F>(f),
+        invoke_indexed_vararg(std::forward<F>(f),
                               arg_seq,
-                              std::make_index_sequence<sizeof...(Ts) - 1>{},
+                              bl::make_index_sequence<sizeof...(Ts) - 1>{},
                               ev,
                               args);
     } else {
-        invoke_indexed(bl::forward<F>(f),
+        invoke_indexed(std::forward<F>(f),
                        arg_seq,
-                       std::index_sequence_for<Ts...>{},
+                       bl::index_sequence_for<Ts...>{},
                        ev,
                        args);
     }
@@ -187,13 +186,13 @@ invoke(F &&f,
 
 template<typename FTraits, size_t... Is>
 auto
-make_arg_seq(std::index_sequence<Is...>)
+make_arg_seq(bl::index_sequence<Is...>)
   -> CommandArgSeq<functor_traits_arg_type<FTraits, Is + 1>...>;
 
 template<typename FTraits>
 auto
 make_arg_seq() -> decltype(
-  make_arg_seq<FTraits>(std::make_index_sequence<FTraits::arity - 1>{}));
+  make_arg_seq<FTraits>(bl::make_index_sequence<FTraits::arity - 1>{}));
 
 } // namespace detail
 

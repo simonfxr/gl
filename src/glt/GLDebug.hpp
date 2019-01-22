@@ -1,6 +1,7 @@
 #ifndef GLT_GL_DEBUG_HPP
 #define GLT_GL_DEBUG_HPP
 
+#include "bl/string.hpp"
 #include "err/err.hpp"
 #include "glt/conf.hpp"
 #include "glt/utils.hpp"
@@ -11,7 +12,6 @@ namespace glt {
 
 struct GLT_API GLDebug
 {
-
     GLDebug();
     virtual ~GLDebug();
     void init();
@@ -35,26 +35,27 @@ struct GLT_API NoDebug : public GLDebug
 
 struct GLT_API ARBDebug : public GLDebug
 {
-    GLsizei message_buffer_length;
-    char *message_buffer;
-
-    explicit ARBDebug(GLsizei buf_len);
+    ARBDebug();
     ~ARBDebug() override;
-
-    static GLDebug *init();
     virtual void printDebugMessages(const err::Location &loc) final override;
+    bool initialized() const { return _initialized; }
+
+private:
+    bl::string message_buffer;
+    bool _initialized = false;
 };
 
 struct GLT_API AMDDebug : public GLDebug
 {
-    GLsizei message_buffer_length;
-    char *message_buffer;
-
-    explicit AMDDebug(GLsizei buf_len);
+    AMDDebug();
     ~AMDDebug() override;
 
-    static GLDebug *init();
     virtual void printDebugMessages(const err::Location &loc) final override;
+    bool initialized() const { return _initialized; }
+
+private:
+    bl::string message_buffer;
+    bool _initialized = false;
 };
 
 } // namespace glt

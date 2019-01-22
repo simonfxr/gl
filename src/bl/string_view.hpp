@@ -1,11 +1,10 @@
 #ifndef BL_STRING_VIEW_HPP
 #define BL_STRING_VIEW_HPP
 
+#include "bl/algorithm.hpp"
 #include "bl/array_view.hpp"
 #include "bl/string_fwd.hpp"
 #include "bl/string_view_fwd.hpp"
-
-#include <cstring>
 
 namespace bl {
 
@@ -22,25 +21,25 @@ struct basic_string_view
     basic_string_view(basic_string_view &&) = default;
 
     basic_string_view(const CharT *str)
-      : basic_string_view(str, std::strlen(str))
+      : basic_string_view(str, find_sentinel(str, CharT{}) - str)
     {}
 
     basic_string_view(const CharT *str, size_t n) : base_t(str, n) {}
 
     constexpr array_view<const CharT> array_view() const { return *this; }
 
-    size_t find(char ch, size_t pos = 0) const
+    size_t find(CharT ch, size_t pos = 0) const
     {
-        auto p = static_cast<const char *>(
-          std::memchr(data() + pos, ch, size() - pos));
-        return p ? p - data() : size_t(-1);
+        auto p = ::bl::find(begin() + pos, end(), ch);
+        return p == end() ? size_t(-1) : p - begin();
     }
 
-    size_t rfind(char ch, size_t pos = 0) const
+    size_t rfind(CharT ch, size_t pos = size_t(-1)) const
     {
-        auto p =
-          static_cast<const char *>(::memrchr(data() + pos, ch, size() - pos));
-        return p ? p - data() : size_t(-1);
+        if (pos > size())
+            pos = size();
+        auto p = ::bl::rfind(begin(), begin() + pos, ch);
+        return p ? p - begin() : size_t(-1);
     }
 
     using base_t::begin;
@@ -99,16 +98,11 @@ private:
         auto n = a.size();
         auto m = b.size();
         auto nm = n <= m ? n : m;
-        if constexpr (std::is_same_v<CharT, char>) {
-            int ord = std::memcmp(a.data(), b.data(), nm);
-            if (ord != 0)
-                return ord;
-        } else {
-            for (size_t i = 0; i < nm; ++i) {
-                if (a[i] != b[i])
-                    return a[i] < b[i] ? -1 : 1;
-            }
+        for (size_t i = 0; i < nm; ++i) {
+            if (a[i] != b[i])
+                return a[i] < b[i] ? -1 : 1;
         }
+
         return n < m ? -1 : n > m ? 1 : 0;
     }
 };

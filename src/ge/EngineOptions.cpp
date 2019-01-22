@@ -13,8 +13,9 @@
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
 
-#include <cctype>
-#include <cstring>
+#include <ctype.h>
+#include <stdio.h>
+#include <string.h>
 
 namespace ge {
 

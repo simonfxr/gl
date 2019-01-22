@@ -32,7 +32,7 @@ operator+(CommandDecl &&decl, F f)
 struct InitCommandHandler : public EventHandler<InitEvent>
 {
     CommandPtr handler;
-    explicit InitCommandHandler(CommandPtr hndlr) : handler(bl::move(hndlr)) {}
+    explicit InitCommandHandler(CommandPtr hndlr) : handler(std::move(hndlr)) {}
     void handle(const Event<InitEvent> &e) override
     {
         e.info.success = true;

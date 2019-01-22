@@ -3,6 +3,7 @@
 
 #include "sys/io/Stream_fwd.hpp"
 
+#include "bl/non_copyable.hpp"
 #include "bl/string.hpp"
 #include "bl/string_view.hpp"
 #include "sys/fiber.hpp"
@@ -26,6 +27,12 @@ struct SYS_API InStream
 {
     InStream();
     virtual ~InStream();
+
+    InStream(const InStream &) = default;
+    InStream(InStream &&) = default;
+
+    InStream &operator=(const InStream &) = default;
+    InStream &operator=(InStream &&) = default;
 
     void close();
 
@@ -57,6 +64,12 @@ struct SYS_API OutStream
 {
     OutStream();
     virtual ~OutStream();
+
+    OutStream(const OutStream &) = default;
+    OutStream(OutStream &&) = default;
+
+    OutStream &operator=(const OutStream &) = default;
+    OutStream &operator=(OutStream &&) = default;
 
     void close();
 
@@ -94,6 +107,12 @@ struct SYS_API IOStream
 {
     IOStream();
     virtual ~IOStream() override;
+
+    IOStream(const IOStream &) = default;
+    IOStream(IOStream &&) = default;
+
+    IOStream &operator=(const IOStream &) = default;
+    IOStream &operator=(IOStream &&) = default;
 
     using OutStream::close;
     using OutStream::closed;
@@ -135,7 +154,7 @@ struct SYS_API ByteStream : public IOStream
     const char *data() const { return buffer.data(); }
     char *data() { return buffer.data(); }
     bl::string str() const & { return bl::string(data(), size()); }
-    bl::string str() const && { return bl::move(buffer); }
+    bl::string str() const && { return std::move(buffer); }
 
     operator bl::string_view() const { return { data(), size() }; }
 
@@ -187,10 +206,7 @@ write_repr(OutStream &out, bl::string_view str)
 inline StreamResult
 write_repr(OutStream &out, const char *str)
 {
-    if (!out.writeable() || !str)
-        return StreamResult::OK;
-    size_t s = strlen(str);
-    return out.write(s, str);
+    return write_repr(out, bl::string_view(str));
 }
 
 inline StreamResult

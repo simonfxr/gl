@@ -3,6 +3,7 @@
 
 #include "defs.h"
 
+#include "bl/iterator.hpp"
 #include "bl/type_traits.hpp"
 
 #include <new>
@@ -15,6 +16,42 @@
 
 namespace bl {
 
+template<class T>
+FORCE_INLINE inline void
+destroy_at(T *p) noexcept
+{
+    static_assert(std::is_nothrow_destructible_v<T>);
+    p->~T();
+}
+
+template<class ForwardIt>
+inline void
+destroy(ForwardIt first, ForwardIt last)
+{
+    using T = typename iterator_traits<ForwardIt>::value_type;
+    if constexpr (!std::is_trivially_destructible_v<T>) {
+        for (; first != last; ++last)
+            destroy_at(addressof(*first));
+    }
+}
+
+template<typename T>
+using destroy_fun_ptr = void (*)(T *) noexcept;
+
+template<typename T>
+inline auto
+get_destroy_fun_ptr()
+{
+    return static_cast<destroy_fun_ptr<T>>(&destroy_at<T>);
+}
+
+template<typename T>
+inline destroy_fun_ptr<void>
+get_punned_destroy_fun_ptr()
+{
+    return reinterpret_cast<destroy_fun_ptr<void>>(get_destroy_fun_ptr<T>());
+}
+
 namespace detail {
 inline constexpr size_t
 sat_fma(size_t a, size_t b, size_t c)
@@ -25,57 +62,16 @@ sat_fma(size_t a, size_t b, size_t c)
 
 template<typename T>
 ATTR_MALLOC inline T *
-new_bare_uninitialized_array(size_t n) noexcept
+new_uninitialized_bare_array(size_t n) noexcept
 {
     return static_cast<T *>(operator new[](detail::sat_fma(n, sizeof(T), 0)));
-}
-
-template<typename T>
-ATTR_MALLOC inline T *
-new_uninitialized_array(size_t n) noexcept
-{
-    if constexpr (std::is_trivially_destructible_v<T>) {
-        return static_cast<T *>(operator new[](
-          detail::sat_fma(n, sizeof(T), 0)));
-    } else {
-        static_assert(alignof(T) <= alignof(std::max_align_t));
-        constexpr size_t overhead =
-          (sizeof(n) + alignof(T) - 1) / alignof(T) * alignof(T);
-        char *p = static_cast<char *>(operator new[](
-          detail::sat_fma(n, sizeof(T), overhead)));
-        char *q = p + overhead;
-        *reinterpret_cast<size_t *>(p) = n;
-        return reinterpret_cast<T *>(q);
-    }
-}
-
-template<typename T, typename Arg, typename... Args>
-ATTR_MALLOC inline T *
-new_array(size_t n, Arg arg, Args... args)
-{
-    auto *p = new_uninitialized_array<T>(n);
-    for (size_t i = 0; i < n; ++i)
-        new (p + i) T(arg, args...);
-    return p;
-}
-
-template<typename T>
-ATTR_MALLOC inline T *
-new_array(size_t n)
-{
-    auto *p = new_uninitialized_array<T>(n);
-    if constexpr (!std::is_trivially_default_constructible_v<T>) {
-        for (size_t i = 0; i < n; ++i)
-            new (p + i) T;
-    }
-    return p;
 }
 
 template<typename T, typename Arg, typename... Args>
 ATTR_MALLOC inline T *
 new_bare_array(size_t n, Arg arg, Args... args)
 {
-    auto *p = new_bare_uninitialized_array<T>(n);
+    auto *p = new_uninitialized_bare_array<T>(n);
     for (size_t i = 0; i < n; ++i)
         new (p + i) T(arg, args...);
     return p;
@@ -85,7 +81,7 @@ template<typename T>
 ATTR_MALLOC inline T *
 new_bare_array(size_t n)
 {
-    auto *p = new_bare_uninitialized_array<T>(n);
+    auto *p = new_uninitialized_bare_array<T>(n);
     if constexpr (!std::is_trivially_default_constructible_v<T>) {
         for (size_t i = 0; i < n; ++i)
             new (p + i) T;
@@ -95,81 +91,9 @@ new_bare_array(size_t n)
 
 template<typename T>
 inline void
-delete_array(T *arr)
+delete_uninitialized_bare_array(T *arr, size_t)
 {
-    if constexpr (std::is_trivially_destructible_v<T>) {
-        operator delete[](static_cast<void *>(arr));
-    } else {
-        constexpr size_t overhead =
-          (sizeof(size_t) + alignof(T) - 1) / alignof(T) * alignof(T);
-        auto *q = reinterpret_cast<char *>(arr);
-        auto *p = q - overhead;
-        auto n = *reinterpret_cast<size_t *>(p);
-        for (size_t i = 0; i < n; ++i)
-            arr[i].~T();
-        operator delete[](static_cast<void *>(p));
-    }
-}
-
-template<typename T>
-inline void
-delete_bare_array(T *arr)
-{
-    if constexpr (std::is_trivially_destructible_v<T>) {
-        operator delete[](static_cast<void *>(arr));
-    } else {
-        constexpr size_t overhead =
-          (sizeof(size_t) + alignof(T) - 1) / alignof(T) * alignof(T);
-        auto *q = reinterpret_cast<char *>(arr);
-        auto *p = q - overhead;
-        auto n = *reinterpret_cast<size_t *>(p);
-        for (size_t i = 0; i < n; ++i)
-            arr[i].~T();
-        operator delete[](static_cast<void *>(p));
-    }
-}
-
-template<typename T>
-inline void
-delete_uninitialized_array(T *arr)
-{
-    if constexpr (std::is_trivially_destructible_v<T>) {
-        operator delete[](static_cast<void *>(arr));
-    } else {
-        constexpr size_t overhead =
-          (sizeof(size_t) + alignof(T) - 1) / alignof(T) * alignof(T);
-        auto *q = reinterpret_cast<char *>(arr);
-        auto *p = q - overhead;
-        operator delete[](static_cast<void *>(p));
-    }
-}
-
-template<typename T, typename U>
-ATTR_MALLOC T *
-copy_array(const U *arr, size_t n)
-{
-    T *dst = new_uninitialized_array<T>(n);
-    for (size_t i = 0; i < n; ++i)
-        dst[i] = arr[i];
-    return dst;
-}
-
-template<typename T, typename U>
-ATTR_MALLOC T *
-copy_bare_array(const U *arr, size_t n)
-{
-    T *dst = new_bare_uninitialized_array<T>(n);
-    for (size_t i = 0; i < n; ++i)
-        dst[i] = arr[i];
-    return dst;
-}
-
-template<typename T, typename U>
-void
-copy_array_data(T *HU_RESTRICT dst, const U *HU_RESTRICT src, size_t n)
-{
-    for (size_t i = 0; i < n; ++i)
-        dst[i] = src[i];
+    operator delete[](static_cast<void *>(arr));
 }
 
 } // namespace bl

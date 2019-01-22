@@ -3,38 +3,22 @@
 
 #include "defs.h"
 
-#include "bl/type_traits.hpp"
+#ifdef __GLIBCXX__
+#    include <bits/move.h>
+#elif defined(_LIBCPP_VERSION)
+#    include <type_traits>
+#else
+#    include <utility>
+#endif
 
 namespace bl {
-
-template<class T>
-HU_FORCE_INLINE inline constexpr std::remove_reference_t<T> &&
-move(T &&x) noexcept
-{
-    return static_cast<std::remove_reference_t<T> &&>(x);
-}
-
-template<class T>
-HU_FORCE_INLINE inline constexpr T &&
-forward(std::remove_reference_t<T> &x) noexcept
-{
-    return static_cast<T &&>(x);
-}
-
-template<class T>
-HU_FORCE_INLINE inline constexpr T &&
-forward(std::remove_reference_t<T> &&x) noexcept
-{
-    static_assert(!std::is_lvalue_reference_v<T>);
-    return static_cast<T &&>(x);
-}
 
 template<typename T, typename U = T>
 HU_FORCE_INLINE inline constexpr T
 exchange(T &place, U &&nval)
 {
-    T oval = move(place);
-    place = forward<U>(nval);
+    T oval = std::move(place);
+    place = std::forward<U>(nval);
     return oval;
 }
 
@@ -55,6 +39,17 @@ max(const T &a, const T &b)
 template<typename T>
 inline T
 declval(); /* undefined */
+
+template<typename T>
+constexpr T *
+addressof(T &arg) noexcept
+{
+    return __builtin_addressof(arg);
+}
+
+template<typename T>
+const T *
+addressof(const T &&) = delete;
 
 } // namespace bl
 

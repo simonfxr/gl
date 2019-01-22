@@ -6,8 +6,8 @@
 #include "sys/fs.hpp"
 #include "sys/io.hpp"
 
-#include <cstring>
-#include <stack>
+#include <ctype.h>
+#include <string.h>
 
 namespace glt {
 
@@ -62,7 +62,7 @@ struct ProcessingState
     bl::hashset<bl::string> visitingFiles;
     bl::hashset<bl::string> deps;
     bl::hashset<bl::string> incs;
-    std::stack<FileContext> stack;
+    bl::vector<FileContext> stack;
 };
 
 void
@@ -86,7 +86,7 @@ void
 GLSLPreprocessor::appendString(bl::string_view str)
 {
     if (!str.empty()) {
-        auto &data = contents.emplace_back(str.array_view());
+        auto &data = contents.emplace_back(str);
         segments.push_back(data.data());
         segLengths.push_back(uint32_t(data.size()));
     }
@@ -106,7 +106,7 @@ GLSLPreprocessor::addDefines(const PreprocessorDefinitions &defines)
 void
 GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext &ctx)
 {
-    FileContext &frame = state->stack.top();
+    FileContext &frame = state->stack.back();
 
     size_t seglen = ctx.content.data + ctx.lineOffset - frame.pos;
 
@@ -132,9 +132,9 @@ GLSLPreprocessor::processFileRecursively(bl::string &&file)
         return;
     }
 
-    auto &dref = contents.emplace_back(bl::move(data));
+    auto &dref = contents.emplace_back(std::move(data));
 
-    this->name(bl::move(file));
+    this->name(std::move(file));
     process(bl::string_view(dref.data(), dref.size()));
 }
 
@@ -189,7 +189,7 @@ IncludeHandler::beginProcessing(const Preprocessor::ContentContext &ctx)
 {
     auto &proc = static_cast<GLSLPreprocessor &>(ctx.processor);
 
-    if (proc.state == nullptr)
+    if (!proc.state)
         proc.state.reset(new ProcessingState);
 
     if (!ctx.name.empty())
@@ -197,7 +197,7 @@ IncludeHandler::beginProcessing(const Preprocessor::ContentContext &ctx)
 
     FileContext frame{};
     frame.pos = ctx.data;
-    proc.state->stack.push(frame);
+    proc.state->stack.push_back(frame);
 }
 
 void
@@ -249,8 +249,8 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
             return;
         }
 
-        auto &dref = proc.contents.emplace_back(bl::move(contents));
-        proc.name(bl::move(filestat->absolute));
+        auto &dref = proc.contents.emplace_back(std::move(contents));
+        proc.name(std::move(filestat->absolute));
         proc.process(bl::string_view(dref.data(), dref.size()));
     }
 }
@@ -260,7 +260,7 @@ IncludeHandler::endProcessing(const Preprocessor::ContentContext &ctx)
 {
     auto &proc = static_cast<GLSLPreprocessor &>(ctx.processor);
 
-    FileContext &frame = proc.state->stack.top();
+    FileContext &frame = proc.state->stack.back();
     size_t seglen = ctx.data + ctx.size - frame.pos;
 
     if (seglen > 0) {
@@ -268,7 +268,7 @@ IncludeHandler::endProcessing(const Preprocessor::ContentContext &ctx)
         proc.segLengths.push_back(uint32_t(seglen));
     }
 
-    proc.state->stack.pop();
+    proc.state->stack.back();
 
     if (!ctx.name.empty())
         proc.state->visitingFiles.erase(ctx.name);

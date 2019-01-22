@@ -149,7 +149,7 @@ struct genmat
     {
         static_assert(sizeof...(args) == N,
                       "can only initialize using exactly N elements");
-        return { bl::forward<Args>(args)... };
+        return { std::forward<Args>(args)... };
     }
 
     static constexpr genmat identity()

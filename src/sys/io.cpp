@@ -16,7 +16,7 @@ PP_DEF_ENUM_IMPL(SYS_SOCKET_ERROR_ENUM_DEF)
 IO::IO() : ipa_any(0), ipa_local(127, 0, 0, 1) {}
 
 HandleStream::HandleStream(Handle h)
-  : handle(bl::move(h)), read_cursor(0), write_cursor(0)
+  : handle(std::move(h)), read_cursor(0), write_cursor(0)
 {}
 
 HandleStream::~HandleStream()
@@ -198,10 +198,10 @@ HandleStream::open(bl::string_view path, HandleMode mode, HandleError &err)
     auto opt_h = sys::io::open(path, mode, err);
     if (!opt_h)
         return bl::nullopt;
-    return { bl::move(opt_h).value() };
+    return { std::move(opt_h).value() };
 }
 
-bl::dyn_array<char>
+bl::string
 readFile(sys::io::OutStream &errout,
          bl::string_view path,
          HandleError &err) noexcept
@@ -210,7 +210,7 @@ readFile(sys::io::OutStream &errout,
     if (!opt_h)
         goto fail;
     {
-        auto h = bl::move(opt_h).value();
+        auto h = std::move(opt_h).value();
         bl::string str;
         for (;;) {
             char buf[8192];
@@ -220,7 +220,7 @@ readFile(sys::io::OutStream &errout,
                 str += bl::string_view(buf, size);
             if (err == HandleError::EOF) {
                 err = HandleError::OK;
-                return bl::dyn_array<char>(str.data(), str.size());
+                return str;
             }
             if (err != HandleError::OK)
                 goto fail;

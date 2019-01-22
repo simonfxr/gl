@@ -99,8 +99,7 @@ Engine::~Engine()
 GameWindow &
 Engine::window()
 {
-    ASSERT(SELF->window != nullptr,
-           "window not available, too early init phase");
+    ASSERT(SELF->window, "window not available, too early init phase");
     return *SELF->window;
 }
 
@@ -257,18 +256,18 @@ Engine::run(const EngineOptions &opts)
     for (const auto &i : opts.commands) {
         bool ok;
         bl::string command;
-        if (i.first == EngineOptions::Script) {
-            ok = commandProcessor().loadScript(i.second);
+        if (i.fst() == EngineOptions::Script) {
+            ok = commandProcessor().loadScript(i.snd());
             if (!ok)
                 command = "script";
         } else {
-            ok = commandProcessor().evalCommand(i.second);
+            ok = commandProcessor().evalCommand(i.snd());
             if (!ok)
                 command = "command";
         }
 
         if (!ok) {
-            ERR(command + " failed: " + i.second);
+            ERR(command + " failed: " + i.snd());
             return 1;
         }
     }

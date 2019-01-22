@@ -128,7 +128,7 @@ struct genvec
     {
         static_assert(sizeof...(args) == N,
                       "can only initialize using exactly N elements");
-        return { T{ bl::forward<Args>(args) }... };
+        return { T{ std::forward<Args>(args) }... };
     }
 
     static constexpr genvec load(const buffer b)

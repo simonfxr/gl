@@ -77,15 +77,15 @@ template<typename F>
 struct FunctorCommand : public Command
 {
     FunctorCommand(bl::string name, bl::string descr, F f_)
-      : Command(make_params(arg_seq{}), bl::move(name), bl::move(descr))
-      , _f(bl::move(f_))
+      : Command(make_params(arg_seq{}), std::move(name), std::move(descr))
+      , _f(std::move(f_))
     {}
     ~FunctorCommand() override = default;
 
     void interactive(const Event<CommandEvent> &ev,
                      bl::array_view<const CommandArg> args) final override
     {
-        invoke(_f, is_var_arg_t{}, arg_seq{}, ev, args);
+        detail::invoke(_f, is_var_arg_t{}, arg_seq{}, ev, args);
     }
 
 private:
@@ -113,9 +113,11 @@ inline bl::shared_ptr<Command>
 makeCommand(bl::string name, bl::string descr, F &&f)
 {
     // avoid excessive bl::shared_ptr<XX> template instantiations
-    return bl::shared_ptr<Command>{ static_cast<Command *>(
-      new FunctorCommand<std::decay_t<F>>(
-        bl::move(name), bl::move(descr), bl::forward<F>(f))) };
+    return bl::shared_ptr<Command>{
+        bl::shared_from_ptr_t{},
+        static_cast<Command *>(new FunctorCommand<std::decay_t<F>>(
+          std::move(name), std::move(descr), std::forward<F>(f)))
+    };
 }
 
 template<typename T, typename... Args>
@@ -126,8 +128,8 @@ makeCommand(bl::string name,
             void (T::*m)(const Event<CommandEvent> &, Args...))
 {
     return makeCommand(
-      bl::move(name),
-      bl::move(descr),
+      std::move(name),
+      std::move(descr),
       [&receiver, m](const Event<CommandEvent> &ev, Args... args) {
           (receiver.*m)(ev, args...);
       });

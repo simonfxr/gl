@@ -37,6 +37,8 @@
 
 #include "bl/vector.hpp"
 
+#include <stdlib.h>
+
 #ifdef MESH_CUBEMESH
 template<typename T>
 using MeshOf = glt::Mesh<T>;

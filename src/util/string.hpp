@@ -10,14 +10,14 @@ inline bl::string
 string_concat(Args &&... args)
 {
     sys::io::ByteStream sstream;
-    (sstream << ... << bl::forward<Args>(args));
-    return bl::move(sstream).str();
+    (sstream << ... << std::forward<Args>(args));
+    return std::move(sstream).str();
 }
 
 inline bl::string
 string_concat(bl::string &&str) noexcept
 {
-    return bl::move(str);
+    return std::move(str);
 }
 
 #endif

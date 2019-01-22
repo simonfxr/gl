@@ -50,7 +50,7 @@ Anim::make_texture(const char *filename)
     if (!pixels)
         return tex;
 
-    tex.reset(new glt::TextureSampler);
+    tex = bl::make_shared<glt::TextureSampler>();
     GL_CALL(glBindTexture, GL_TEXTURE_2D, *tex->data()->ensureHandle());
 
     GL_CALL(glTexImage2D,

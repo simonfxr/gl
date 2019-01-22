@@ -118,37 +118,39 @@ checkForGLError(const err::Location *loc)
 bool
 initDebug()
 {
-
-    GLDebug *dbg = nullptr;
     const char *debug_impl = nullptr;
+    bool initialized = false;
 
-    if (dbg == nullptr && GLAD_GL_ARB_debug_output) {
+    if (GLAD_GL_ARB_debug_output) {
         debug_impl = "GL_ARB_debug_output";
         sys::io::stdout() << "trying ARB debug" << sys::io::endl;
-        dbg = ARBDebug::init();
+        auto dbg = bl::make_shared<ARBDebug>();
+        if (dbg->initialized()) {
+            G.gl_debug = dbg;
+            initialized = true;
+        }
     }
 
-    if (dbg == nullptr && GLAD_GL_AMD_debug_output) {
+    if (!initialized && GLAD_GL_AMD_debug_output) {
         debug_impl = "GL_AMD_debug_output";
         sys::io::stdout() << "trying AMD debug" << sys::io::endl;
-        dbg = AMDDebug::init();
+        auto dbg = bl::make_shared<AMDDebug>();
+        if (dbg->initialized()) {
+            G.gl_debug = dbg;
+            initialized = true;
+        }
     }
 
-    bool initialized;
-
-    if (dbg == nullptr) {
+    if (!initialized) {
         sys::io::stdout()
           << "couldnt initialize Debug Output, no debug implementaion available"
           << sys::io::endl;
-        dbg = new NoDebug();
-        initialized = false;
+        G.gl_debug = bl::make_shared<NoDebug>();
     } else {
         sys::io::stdout() << "initialized Debug Output using " << debug_impl
                           << sys::io::endl;
-        initialized = true;
     }
 
-    G.gl_debug.reset(dbg);
     return initialized;
 }
 

@@ -50,13 +50,13 @@ struct GLObjectBase
 
     explicit constexpr GLObjectBase(GLuint name = 0) : _name(name) {}
 
-    constexpr GLObjectBase(GLObjectBase &&rhs)
+    constexpr GLObjectBase(GLObjectBase &&rhs) noexcept
       : _name(bl::exchange(rhs._name, 0))
     {}
 
     GLObjectBase(const GLObjectBase &) = delete;
 
-    constexpr GLObjectBase &operator=(GLObjectBase &&rhs)
+    constexpr GLObjectBase &operator=(GLObjectBase &&rhs) noexcept
     {
         _name = bl::exchange(rhs._name, 0);
         return *this;

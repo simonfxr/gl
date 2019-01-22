@@ -1,6 +1,8 @@
 #ifndef BL_TYPE_TRAITS_HPP
 #define BL_TYPE_TRAITS_HPP
 
+#include "defs.h"
+
 #include <type_traits>
 
 namespace bl {

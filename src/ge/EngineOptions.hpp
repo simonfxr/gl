@@ -4,6 +4,7 @@
 #include "ge/GameWindow.hpp"
 #include "ge/Init.hpp"
 
+#include "bl/pair.hpp"
 #include "bl/vector.hpp"
 
 namespace ge {
@@ -23,7 +24,7 @@ struct GE_API EngineOptions
         Animate
     };
 
-    bl::vector<std::pair<CommandType, bl::string>> commands;
+    bl::vector<bl::pair<CommandType, bl::string>> commands;
     bl::string workingDirectory;
     bool inhibitInitScript;
     bl::string binary;

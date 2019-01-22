@@ -1,10 +1,11 @@
 #include "ge/Tokenizer.hpp"
+
 #include "ge/Command.hpp"
+#include "math/real.hpp"
 
 #include <cctype>
-#include <cmath>
 
-#include "math/real.hpp"
+#undef EOF
 
 namespace ge {
 
@@ -186,7 +187,7 @@ parseKeycombo(ParseState &s, CommandArg &tok)
         return Fail;
     }
 
-    tok = CommandArg(bl::move(keys));
+    tok = CommandArg(std::move(keys));
     return EndToken;
 }
 
@@ -264,7 +265,7 @@ parseCommandRef(ParseState &s, CommandArg &arg)
         // //            WARN(("unknown command name: " + sym));
         //         }
 
-        arg = CommandArg::namedCommandRef(bl::move(sym));
+        arg = CommandArg::namedCommandRef(std::move(sym));
         return EndToken;
     }
 
@@ -283,7 +284,7 @@ parseVarRef(ParseState &s, CommandArg &arg)
         if (sym.empty())
             goto fail;
 
-        arg = CommandArg::varRef(bl::move(sym));
+        arg = CommandArg::varRef(std::move(sym));
         return EndToken;
     }
 
@@ -328,7 +329,7 @@ parseQuot(ParseState &s, CommandArg &arg)
     }
 
     arg = CommandArg(bl::make_shared<QuotationCommand>(
-      s.filename, line, col, "", bl::move(q)));
+      s.filename, line, col, "", std::move(q)));
 
     return EndToken;
 }
