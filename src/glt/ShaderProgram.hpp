@@ -9,7 +9,7 @@
 #include "glt/ShaderManager.hpp"
 #include "glt/conf.hpp"
 #include "glt/type_info.hpp"
-#include "opengl.hpp"
+#include "opengl_fwd.hpp"
 #include "pp/enum.hpp"
 
 namespace glt {

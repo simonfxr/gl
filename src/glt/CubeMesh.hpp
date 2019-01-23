@@ -12,7 +12,7 @@ struct CubeMesh : public Mesh<T>
 
     CubeMesh(size_t initial_nverts = MIN_NUM_VERTICES,
              size_t initial_nelems = MIN_NUM_ELEMENTS)
-      : Mesh<T>(GL_TRIANGLES, initial_nverts, initial_nelems)
+      : Mesh<T>(initial_nverts, initial_nelems)
     {
         this->drawType(DrawElements);
     }

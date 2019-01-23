@@ -8,6 +8,7 @@
 #include "glt/GLObject.hpp"
 #include "glt/GLSLPreprocessor.hpp"
 #include "glt/utils.hpp"
+#include "opengl.hpp"
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
 #include "sys/measure.hpp"
@@ -16,7 +17,6 @@
 #include <algorithm>
 #include <functional>
 #include <queue>
-#include <stack>
 #include <variant>
 
 namespace err {

@@ -4,7 +4,13 @@
 #include "math/ivec3.hpp"
 #include "math/vec3.hpp"
 
+#include "opengl.hpp"
+
 namespace glt {
+
+TextureRenderTarget3D::Params::Params()
+  : TextureRenderTarget::Params(), color_format(GL_RGB8)
+{}
 
 TextureRenderTarget3D::TextureRenderTarget3D(
   const math::ivec3_t &s,

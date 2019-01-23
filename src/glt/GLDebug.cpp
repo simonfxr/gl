@@ -3,6 +3,7 @@
 #include "bl/hashset.hpp"
 #include "glt/utils.hpp"
 
+#include "opengl.hpp"
 #include <cstring>
 
 namespace glt {

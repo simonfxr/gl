@@ -8,7 +8,6 @@
 #include "bl/string_view.hpp"
 #include "bl/unique_ptr.hpp"
 #include "glt/utils.hpp"
-#include "opengl.hpp"
 #include "pp/basic.h"
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"

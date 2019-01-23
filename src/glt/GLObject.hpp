@@ -2,7 +2,7 @@
 #define GLT_GL_OBJECT_HPP
 
 #include "glt/conf.hpp"
-#include "opengl.hpp"
+#include "opengl_fwd.hpp"
 #include "pp/enum.hpp"
 #include "sys/io/Stream.hpp"
 

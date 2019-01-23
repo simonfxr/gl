@@ -5,7 +5,7 @@
 #include "err/err.hpp"
 #include "glt/conf.hpp"
 #include "glt/utils.hpp"
-#include "opengl.hpp"
+#include "opengl_fwd.hpp"
 #include "pp/pimpl.hpp"
 
 namespace glt {

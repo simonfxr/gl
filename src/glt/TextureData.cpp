@@ -2,6 +2,8 @@
 #include "err/err.hpp"
 #include "glt/utils.hpp"
 
+#include "opengl.hpp"
+
 namespace glt {
 
 namespace {

@@ -1,5 +1,7 @@
 #include "glt/TextureSampler.hpp"
+
 #include "glt/utils.hpp"
+#include "opengl.hpp"
 
 namespace glt {
 

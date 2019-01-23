@@ -2,7 +2,7 @@
 #define GL_UTILS
 
 #include "glt/conf.hpp"
-#include "opengl.hpp"
+#include "opengl_fwd.hpp"
 
 #include "err/err.hpp"
 #include "sys/io/Stream.hpp"
@@ -113,19 +113,13 @@ gl_unstr(const GLubyte *glstr)
 inline GLboolean
 gl_bool(bool b)
 {
-    return b ? GLboolean(GL_TRUE) : GLboolean(GL_FALSE);
+    return GLboolean(b);
 }
 
 inline bool
 gl_unbool(GLboolean b)
 {
-    return b != GLboolean(GL_FALSE) ? true : false;
-}
-
-inline bool
-gl_unbool(GLint b)
-{
-    return b != GLint(GL_FALSE) ? true : false;
+    return !!b;
 }
 
 } // namespace glt

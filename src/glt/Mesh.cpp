@@ -4,6 +4,7 @@
 #include "bl/range.hpp"
 #include "glt/utils.hpp"
 
+#include "opengl.hpp"
 #include <stdlib.h>
 #include <string.h>
 
@@ -64,6 +65,12 @@ validateUsageHint(GLenum usageHint)
     }
 }
 } // namespace
+
+MeshBase::MeshBase(const StructInfo &si,
+                   size_t initial_nverts,
+                   size_t initial_nelems)
+  : MeshBase(si, initial_nverts, initial_nelems, GL_TRIANGLES)
+{}
 
 MeshBase::MeshBase(const StructInfo &si,
                    size_t initial_nverts,
@@ -146,6 +153,12 @@ MeshBase::primType(GLenum primType)
 {
     validatePrimType(primType);
     prim_type = primType;
+}
+
+void
+MeshBase::primTypeTriangles()
+{
+    primType(GL_TRIANGLES);
 }
 
 void

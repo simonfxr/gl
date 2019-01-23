@@ -3,6 +3,8 @@
 #include "bl/hashtable.hpp"
 #include "glt/utils.hpp"
 
+#include "opengl.hpp"
+
 #if defined(DEBUG_GLOBJECT) || defined(DEBUG_ALL)
 #    define DBG(...) __VA_ARGS__
 #else

@@ -5,7 +5,7 @@
 #include "glt/RenderTarget.hpp"
 #include "glt/TextureSampler.hpp"
 #include "glt/conf.hpp"
-#include "opengl.hpp"
+#include "opengl_fwd.hpp"
 
 namespace glt {
 

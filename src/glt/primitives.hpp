@@ -512,7 +512,7 @@ sphere(Mesh<Vertex> &sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks)
     }
 
     sphereBatch.drawType(DrawArrays);
-    sphereBatch.primType(GL_TRIANGLES);
+    sphereBatch.primTypeTriangles();
 }
 
 } // namespace primitives

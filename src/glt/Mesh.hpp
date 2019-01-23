@@ -10,7 +10,7 @@
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
-#include "opengl.hpp"
+#include "opengl_fwd.hpp"
 
 #include "bl/vector.hpp"
 
@@ -42,7 +42,7 @@ private:
     GLBufferObject element_buffer_name;
     GLBufferObject vertex_buffer_name;
 
-    GLenum usage_hint = GL_STATIC_DRAW;
+    GLenum usage_hint; // = GL_STATIC_DRAW
     GLenum prim_type;
 
     DrawType draw_type = DrawArrays;
@@ -81,10 +81,13 @@ public:
              size_t initial_nverts,
              size_t initial_nelems,
              GLenum prim_ty);
+    MeshBase(const StructInfo &, size_t initial_nverts, size_t initial_nelems);
     ~MeshBase();
 
     GLenum primType() const { return prim_type; }
     void primType(GLenum primType);
+
+    void primTypeTriangles();
 
     GLenum usageHint() const { return usage_hint; }
     void usageHint(GLenum usageHint);
@@ -154,14 +157,20 @@ template<typename T>
 struct Mesh : public MeshBase
 {
     using gl_t = typename T::gl;
-    Mesh(GLenum primTy = GL_TRIANGLES,
-         size_t initial_nverts = MIN_NUM_VERTICES,
-         size_t initial_nelems = MIN_NUM_ELEMENTS)
+
+    Mesh() : Mesh(MIN_NUM_VERTICES, MIN_NUM_ELEMENTS) {}
+
+    Mesh(GLenum primTy,         // = GL_TRIANGLES,
+         size_t initial_nverts, // = MIN_NUM_VERTICES,
+         size_t initial_nelems  // = MIN_NUM_ELEMENTS
+         )
       : MeshBase(gl_t::struct_info::info,
                  initial_nverts,
                  initial_nelems,
                  primTy)
     {}
+
+    Mesh(GLenum primTy) : Mesh(MIN_NUM_VERTICES, MIN_NUM_ELEMENTS, primTy) {}
 
     void addVertex(const T &vert)
     {
@@ -177,6 +186,11 @@ struct Mesh : public MeshBase
     {
         return *static_cast<const gl_t *>(vertexRef(i));
     }
+
+protected:
+    Mesh(size_t initial_nverts, size_t initial_nelems)
+      : MeshBase(gl_t::struct_info::info, initial_nverts, initial_nelems)
+    {}
 };
 
 } // namespace glt

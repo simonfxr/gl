@@ -3,7 +3,7 @@
 
 #include "glt/GLObject.hpp"
 #include "glt/conf.hpp"
-#include "opengl.hpp"
+#include "opengl_fwd.hpp"
 
 namespace glt {
 

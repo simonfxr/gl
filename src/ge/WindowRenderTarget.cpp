@@ -3,6 +3,7 @@
 #include "glt/utils.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
+#include "opengl.hpp"
 
 namespace ge {
 

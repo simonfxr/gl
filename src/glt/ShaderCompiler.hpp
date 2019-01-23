@@ -9,7 +9,7 @@
 #include "err/err.hpp"
 #include "glt/GLObject.hpp"
 #include "glt/ShaderManager.hpp"
-#include "opengl.hpp"
+#include "opengl_fwd.hpp"
 #include "pp/enum.hpp"
 #include "sys/fs.hpp"
 
