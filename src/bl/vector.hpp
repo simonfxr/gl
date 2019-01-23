@@ -82,8 +82,8 @@ struct vector : private std::vector<T>
     constexpr const T *endp() const { return data() + size(); }
     constexpr T *endp() { return data() + size(); }
 
-    constexpr const T *beginp() const { return data() + size(); }
-    constexpr T *beginp() { return data() + size(); }
+    constexpr const T *beginp() const { return data(); }
+    constexpr T *beginp() { return data(); }
 
     T &push_front(const T &x)
     {

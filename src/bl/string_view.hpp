@@ -15,47 +15,55 @@ struct basic_string_view
 {
     using base_t = array_view<const CharT>;
 
-    constexpr basic_string_view() = default;
-
-    basic_string_view(const basic_string_view &) = default;
-    basic_string_view(basic_string_view &&) = default;
-
-    basic_string_view(const CharT *str)
-      : basic_string_view(str, find_sentinel(str, CharT{}) - str)
-    {}
-
-    basic_string_view(const CharT *str, size_t n) : base_t(str, n) {}
-
-    constexpr array_view<const CharT> array_view() const { return *this; }
-
-    size_t find(CharT ch, size_t pos = 0) const
-    {
-        auto p = ::bl::find(begin() + pos, end(), ch);
-        return p == end() ? size_t(-1) : p - begin();
-    }
-
-    size_t rfind(CharT ch, size_t pos = size_t(-1)) const
-    {
-        if (pos > size())
-            pos = size();
-        auto p = ::bl::rfind(begin(), begin() + pos, ch);
-        return p ? p - begin() : size_t(-1);
-    }
-
     using base_t::begin;
     using base_t::data;
     using base_t::empty;
     using base_t::end;
     using base_t::size;
     using base_t::operator[];
+    using base_t::npos;
+    using typename base_t::value_type;
 
-    basic_string_view substr(size_t start, size_t n)
+    constexpr basic_string_view() = default;
+
+    constexpr basic_string_view(const basic_string_view &) = default;
+    constexpr basic_string_view(basic_string_view &&) = default;
+
+    constexpr basic_string_view(const CharT *str)
+      : basic_string_view(str, find_sentinel(str, CharT{}) - str)
+    {}
+
+    constexpr basic_string_view(const CharT *str, size_t n) : base_t(str, n) {}
+
+    constexpr array_view<const CharT> array_view() const { return *this; }
+
+    BL_constexpr size_t find(CharT ch, size_t pos = 0) const
+    {
+        if (empty() || pos >= size())
+            return npos;
+        auto p = ::bl::find(begin() + pos, end(), ch);
+        return p == end() ? npos : p - begin();
+    }
+
+    BL_constexpr size_t rfind(CharT ch, size_t pos = npos) const
+    {
+        if (empty())
+            return npos;
+        if (pos >= size())
+            pos = size();
+        else
+            ++pos;
+        auto p = ::bl::rfind(begin(), begin() + pos, ch);
+        return p ? p - begin() : npos;
+    }
+
+    BL_constexpr basic_string_view substr(size_t start, size_t n) const
     {
         auto v = base_t::slice(start, n);
         return { v.data(), v.size() };
     }
 
-    basic_string_view substr(size_t start)
+    BL_constexpr basic_string_view substr(size_t start) const
     {
         auto v = base_t::drop(start);
         return { v.data(), v.size() };
@@ -77,8 +85,8 @@ struct basic_string_view
     BL_DEF_REL_OPS_VIA(template<typename Ch> friend, ta, tb, compare(a, b))
 
     DEF_STRING_BIN_OPS(basic_string_view<Ch>, basic_string_view<Ch>)
-    DEF_STRING_BIN_OPS(basic_string_view<Ch>, const Ch *)
-    DEF_STRING_BIN_OPS(const Ch *, basic_string_view<Ch>)
+    // DEF_STRING_BIN_OPS(basic_string_view<Ch>, const Ch *)
+    // DEF_STRING_BIN_OPS(const Ch *, basic_string_view<Ch>)
 
     constexpr size_t hash() const noexcept
     {
@@ -127,6 +135,18 @@ struct hash<basic_string_view<CharT>>
         return x.hash();
     }
 };
+
+namespace literals {
+inline string_view operator"" _sv(const char *s, unsigned long n)
+{
+    return string_view(s, n);
+}
+
+inline wstring_view operator"" _sv(const wchar_t *s, unsigned long n)
+{
+    return wstring_view(s, n);
+}
+} // namespace literals
 
 } // namespace bl
 

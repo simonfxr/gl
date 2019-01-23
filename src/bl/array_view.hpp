@@ -4,6 +4,7 @@
 #include "bl/array_view_fwd.hpp"
 
 #include "bl/compare.hpp"
+#include "bl/debug.hpp"
 #include "bl/type_traits.hpp"
 
 namespace bl {
@@ -11,6 +12,10 @@ namespace bl {
 template<typename T>
 struct array_view : public comparable<array_view<T>>
 {
+    using value_type = T;
+
+    static inline constexpr size_t npos = size_t(-1);
+
     constexpr array_view() = default;
 
     template<typename U = T>
@@ -42,16 +47,16 @@ struct array_view : public comparable<array_view<T>>
     constexpr T *begin() const { return _elems; }
     constexpr T *end() const { return _elems + _size; }
 
-    constexpr array_view<T> slice(size_t start, size_t n) const
+    BL_constexpr array_view<T> slice(size_t start, size_t n) const
     {
-        // ASSERT(start < size());
-        // ASSERT(start + n <= size());
+        BL_ASSERT(start < size());
+        BL_ASSERT(start + n <= size());
         return { _elems + start, n };
     }
 
-    constexpr array_view<T> drop(size_t n) const
+    BL_constexpr array_view<T> drop(size_t n) const
     {
-        // ASSERT(n <= size());
+        BL_ASSERT(n <= size());
         return { _elems + n, _size - n };
     }
 

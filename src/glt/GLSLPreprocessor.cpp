@@ -50,6 +50,18 @@ parseFileArg(const Preprocessor::DirectiveContext &ctx,
     return false;
 }
 
+void
+checkSegment(GLSLPreprocessor &proc, const char *s, size_t len)
+{
+    ASSERT(len < 8000);
+    for (const auto &str : proc.contents) {
+        if (str.beginp() <= str && str < str.endp()) {
+            ASSERT(s + len <= str.endp());
+        }
+    }
+    UNREACHABLE_MSG("no string containing segment found");
+}
+
 } // namespace
 
 struct FileContext
@@ -87,6 +99,7 @@ GLSLPreprocessor::appendString(bl::string_view str)
 {
     if (!str.empty()) {
         auto &data = contents.emplace_back(str);
+        checkSegment(*this, data.data(), data.size());
         segments.push_back(data.data());
         segLengths.push_back(uint32_t(data.size()));
     }
@@ -111,6 +124,7 @@ GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext &ctx)
     size_t seglen = ctx.content.data + ctx.lineOffset - frame.pos;
 
     if (seglen > 0) {
+        checkSegment(*this, frame.pos, seglen);
         segments.push_back(frame.pos);
         segLengths.push_back(uint32_t(seglen));
     }
@@ -264,6 +278,7 @@ IncludeHandler::endProcessing(const Preprocessor::ContentContext &ctx)
     size_t seglen = ctx.data + ctx.size - frame.pos;
 
     if (seglen > 0) {
+        checkSegment(proc, frame.pos, seglen);
         proc.segments.push_back(frame.pos);
         proc.segLengths.push_back(uint32_t(seglen));
     }

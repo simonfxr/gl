@@ -24,18 +24,9 @@
 #    define GL_TRACE(loc)
 #endif
 
-#define GL_CALL(fn, ...)                                                       \
-    do {                                                                       \
-        if (fn)                                                                \
-            GL_CHECK(fn(__VA_ARGS__));                                         \
-    } while (0)
-#define GL_ASSIGN_CALL(var, fn, ...)                                           \
-    do {                                                                       \
-        if (fn)                                                                \
-            GL_CHECK(var = fn(__VA_ARGS__));                                   \
-    } while (0)
+#define GL_CALL(fn, ...) GL_CHECK(fn(__VA_ARGS__))
 
-// #define GL_CALL_NO_CHECK(fn, ...)
+#define GL_ASSIGN_CALL(var, fn, ...) GL_CHECK(var = fn(__VA_ARGS__))
 
 namespace glt {
 

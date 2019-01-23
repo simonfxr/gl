@@ -69,6 +69,9 @@ ERR_API void
 error(const Location *loc, LogLevel lvl, bl::string_view);
 
 ERR_API void
+error(const Location *loc, LogLevel lvl, const char *);
+
+ERR_API void
 error(const Location *loc, LogLevel lvl, sys::io::OutStream &, bl::string_view);
 
 ERR_API void
@@ -76,6 +79,9 @@ error(const ErrorStaticCallSite *);
 
 HU_NORETURN ERR_API void
 fatalError(const Location *loc, LogLevel lvl, bl::string_view);
+
+HU_NORETURN ERR_API void
+fatalError(const Location *loc, LogLevel lvl, const char *);
 
 HU_NORETURN ERR_API void
 fatalError(const Location *loc,

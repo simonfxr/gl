@@ -227,6 +227,12 @@ error(const Location *loc, LogLevel lvl, bl::string_view msg)
 }
 
 void
+error(const Location *loc, LogLevel lvl, const char *msg)
+{
+    error(loc, lvl, sys::io::stdout(), bl::string_view(msg));
+}
+
+void
 error(const Location *loc,
       LogLevel lvl,
       sys::io::OutStream &out,
@@ -247,6 +253,12 @@ void
 fatalError(const Location *loc, LogLevel lvl, bl::string_view msg)
 {
     fatalError(loc, lvl, sys::io::stderr(), msg);
+}
+
+void
+fatalError(const Location *loc, LogLevel lvl, const char *msg)
+{
+    fatalError(loc, lvl, sys::io::stderr(), bl::string_view(msg));
 }
 
 void

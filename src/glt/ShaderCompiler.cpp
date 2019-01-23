@@ -271,12 +271,18 @@ compilePreprocessed(ShaderCompilerQueue &scq,
         logmsg << "compiling " << (name.empty() ? " <embedded code> " : name)
                << " ... ";
 
-        if (logmsg &&
-            scq.shaderCompiler().shaderManager().dumpShadersEnabled()) {
+        if (logmsg && true
+
+            // scq.shaderCompiler().shaderManager().dumpShadersEnabled()
+        ) {
             logmsg << sys::io::endl;
             logmsg << "BEGIN SHADER SOURCE[" << *shader << "]" << sys::io::endl;
-            for (const auto i : bl::irange(nsegments))
+            size_t len = 0;
+            for (const auto i : bl::irange(nsegments)) {
+                len += segLengths[i];
+                ASSERT(len < 8000);
                 logmsg << bl::string_view{ segments[i], size_t(segLengths[i]) };
+            }
             logmsg << sys::io::endl;
             logmsg << "END SHADER SOURCE" << sys::io::endl;
         }

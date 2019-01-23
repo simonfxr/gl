@@ -6,7 +6,7 @@
 namespace bl {
 
 template<typename InputIt, typename OutputIt>
-constexpr OutputIt
+inline constexpr OutputIt
 copy(InputIt first, InputIt last, OutputIt d_first)
 {
     for (; first != last; ++first, ++d_first)
@@ -15,7 +15,7 @@ copy(InputIt first, InputIt last, OutputIt d_first)
 }
 
 template<typename InputIt, typename OutputIt>
-constexpr OutputIt
+inline constexpr OutputIt
 move(InputIt first, InputIt last, OutputIt d_first)
 {
     for (; first != last; ++first, ++d_first)
@@ -37,9 +37,11 @@ template<typename U, typename T>
 inline constexpr const U *
 rfind(const U *first, const U *last, const T &value)
 {
-    while (first != last)
-        if (value == *--last)
+    while (first != last) {
+        --last;
+        if (value == *last)
             return last;
+    }
     return nullptr;
 }
 

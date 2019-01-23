@@ -1,6 +1,8 @@
 #ifndef DEFS_H_INCLUDED
 #define DEFS_H_INCLUDED
 
+#define BL_DEBUG 1
+
 #include <hu/macros.h>
 #include <hu/os.h>
 

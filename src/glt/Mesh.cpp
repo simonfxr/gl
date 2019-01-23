@@ -78,6 +78,7 @@ MeshBase::MeshBase(const StructInfo &si,
                    GLenum prim_ty)
   : struct_info(si)
   , enabled_attributes(si.fields.size() * 2, false)
+  , usage_hint(GL_STATIC_DRAW)
   , prim_type(prim_ty)
 {
     ASSERT(si.align < alignof(std::max_align_t),

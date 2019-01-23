@@ -7,6 +7,7 @@
 #include "glt/ShaderCompiler.hpp"
 #include "glt/ShaderProgram.hpp"
 #include "glt/utils.hpp"
+#include "util/string.hpp"
 
 #include <cassert>
 
@@ -146,12 +147,14 @@ COMMAND("reloadShaders", "reload ShaderPrograms")
             auto prog = sm.program(args[i].string);
             if (!prog) {
                 WARN(e.info.engine.out(),
-                     "reloadShaders: " + args[i].string + " not defined");
+                     string_concat(
+                       "reloadShaders: ", args[i].string, " not defined"));
             } else {
                 if (!prog->reload())
-                    WARN(e.info.engine.out(),
-                         "reloadShaders: failed to reload program " +
-                           args[i].string);
+                    WARN(
+                      e.info.engine.out(),
+                      string_concat("reloadShaders: failed to reload program ",
+                                    args[i].string));
             }
         }
     }

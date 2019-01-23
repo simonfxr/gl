@@ -106,9 +106,9 @@ struct basic_string : private vector<CharT>
 
     DEF_STRING_BIN_OPS(const basic_string<Ch> &, const basic_string<Ch> &)
     DEF_STRING_BIN_OPS(const basic_string<Ch> &, basic_string_view<Ch>)
-    DEF_STRING_BIN_OPS(const basic_string<Ch> &, const Ch *)
+    // DEF_STRING_BIN_OPS(const basic_string<Ch> &, const Ch *)
     DEF_STRING_BIN_OPS(basic_string_view<Ch>, const basic_string<Ch> &)
-    DEF_STRING_BIN_OPS(const Ch *, const basic_string<Ch> &)
+    // DEF_STRING_BIN_OPS(const Ch *, const basic_string<Ch> &)
 
 #undef DEF_STRING_BIN_OP
 };
