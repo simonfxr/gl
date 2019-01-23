@@ -9,6 +9,7 @@
 #include "math/real.hpp"
 #include "math/vec2.hpp"
 
+#include "opengl.hpp"
 #include "shaders/quasi_constants.h"
 
 static const bool MULTISAMPLING = false; // via multisample texture

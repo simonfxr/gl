@@ -11,11 +11,94 @@
 #include "bl/vector_fwd.hpp"
 #include "err/err.hpp"
 
+#define BL_STD_VECTOR 1
+
+#ifdef BL_STD_VECTOR
+#    include <vector>
+#endif
+
 #ifndef NDEBUG
 #    include "bl/string_view.hpp"
 #endif
 
 namespace bl {
+
+#ifdef BL_STD_VECTOR
+
+template<typename T>
+struct vector : private std::vector<T>
+{
+
+    using base_t = std::vector<T>;
+    using std::vector<T>::vector;
+
+    template<typename U = T>
+    constexpr vector(array_view<U> v) : vector(v.begin(), v.end())
+    {}
+
+    using base_t::begin;
+    using base_t::clear;
+    using base_t::empty;
+    using base_t::end;
+    using base_t::size;
+    using base_t::operator[];
+    using base_t::back;
+    using base_t::capacity;
+    using base_t::data;
+    using base_t::emplace_back;
+    using base_t::erase;
+    using base_t::front;
+    using base_t::pop_back;
+    using base_t::push_back;
+    using base_t::reserve;
+    using base_t::resize;
+    using typename base_t::reference;
+    using typename base_t::value_type;
+
+    template<typename Iter>
+    void append(Iter first, Iter last)
+    {
+        base_t::insert(end(), first, last);
+    }
+
+    template<typename U>
+    void append(array_view<U> arr)
+    {
+        append(arr.begin(), arr.end());
+    }
+
+    constexpr array_view<const T> view() const { return { data(), size() }; }
+    constexpr array_view<T> view() { return { data(), size() }; }
+
+    constexpr operator array_view<const T>() const { return view(); }
+    constexpr operator array_view<T>() { return view(); }
+
+    template<typename Iter>
+    void move_assign(Iter first, Iter last)
+    {
+        std::move(std::move(first), std::move(last), std::back_inserter(*this));
+    }
+
+    constexpr const T *endp() const { return data() + size(); }
+    constexpr T *endp() { return data() + size(); }
+
+    constexpr const T *beginp() const { return data() + size(); }
+    constexpr T *beginp() { return data() + size(); }
+
+    T &push_front(const T &x)
+    {
+        base_t::insert(begin(), x);
+        return front();
+    }
+
+    T &push_front(T &&x)
+    {
+        base_t::insert(begin(), std::move(x));
+        return front();
+    }
+};
+
+#else
 
 template<typename T>
 struct vector : public comparable<vector<T>>
@@ -398,6 +481,8 @@ private:
                                                     ? 1
                                                     : 32 / sizeof(T);
 };
+
+#endif
 
 template<typename T>
 inline constexpr vector<T>

@@ -1,5 +1,7 @@
 #include "sim.hpp"
 
+#include "bl/string.hpp"
+#include "bl/vector.hpp"
 #include "ge/Camera.hpp"
 #include "ge/Command.hpp"
 #include "ge/Engine.hpp"
@@ -18,8 +20,7 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 
-#include "bl/string.hpp"
-#include "bl/vector.hpp"
+#include "opengl.hpp"
 #include <algorithm>
 
 using namespace math;

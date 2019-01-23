@@ -38,9 +38,11 @@ struct basic_string : private vector<CharT>
     using base_t::end;
     using base_t::size;
     using base_t::operator[];
+    using base_t::beginp;
     using base_t::capacity;
     using base_t::clear;
     using base_t::emplace_back;
+    using base_t::endp;
     using base_t::push_back;
     using base_t::reserve;
     using base_t::resize;
@@ -70,14 +72,14 @@ struct basic_string : private vector<CharT>
         return *this;
     }
 
-    basic_string substr(size_t start, size_t n) const
+    basic_string_view<CharT> substr(size_t start, size_t n) const
     {
-        return { data() + start, n };
+        return view().substr(start, n);
     }
 
-    basic_string substr(size_t start) const
+    basic_string_view<CharT> substr(size_t start) const
     {
-        return { data() + start, size() - start };
+        return view().substr(start);
     }
 
     constexpr basic_string_view<CharT> view() const

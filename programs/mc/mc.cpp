@@ -19,6 +19,7 @@
 
 #include "shaders/shader_constants.h"
 
+#include "opengl.hpp"
 #include <sstream>
 #include <vector>
 

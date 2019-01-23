@@ -7,6 +7,7 @@
 #include "math/real.hpp"
 #include "math/vec2.hpp"
 
+#include "opengl.hpp"
 #include "shaders/quasi_constants.h"
 
 using namespace math;

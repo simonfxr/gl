@@ -16,9 +16,9 @@
 #include "math/vec4.hpp"
 #include "sys/measure.hpp"
 
+#include "opengl.hpp"
 #include <algorithm>
 #include <bitset>
-#include <climits>
 #include <cstdlib>
 #include <cstring>
 #include <memory>

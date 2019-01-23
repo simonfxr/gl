@@ -13,6 +13,7 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/vec3.hpp"
+#include "opengl.hpp"
 
 #include <algorithm>
 

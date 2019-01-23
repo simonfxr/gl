@@ -2,13 +2,14 @@
 #define SIM_UTILS_HPP 1
 
 #include "ge/Engine.hpp"
+#include "glt/Mesh.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/color.hpp"
+#include "glt/utils.hpp"
 #include "math/vec2.hpp"
 #include "math/vec4.hpp"
 
-#include "glt/Mesh.hpp"
-#include "glt/utils.hpp"
+#include "opengl.hpp"
 
 DEF_GL_MAPPED_TYPE(Vertex2D, (math::vec2_t, position))
 

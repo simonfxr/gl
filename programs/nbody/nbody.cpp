@@ -1,3 +1,4 @@
+#include "bl/vector.hpp"
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
@@ -8,7 +9,7 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 
-#include "bl/vector.hpp"
+#include "opengl.hpp"
 #include <algorithm>
 #include <map>
 

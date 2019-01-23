@@ -213,8 +213,8 @@ private:
     shared_ptr &assign(shared_ptr<U> &&r) noexcept
     {
         reset();
-        _ptr = exchange(r._ptr, nullptr);
-        _cnt = exchange(r._cnt, nullptr);
+        _ptr = ::bl::exchange(r._ptr, nullptr);
+        _cnt = ::bl::exchange(r._cnt, nullptr);
         return *this;
     }
 

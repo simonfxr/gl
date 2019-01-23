@@ -29,7 +29,8 @@ struct unique_ptr
 
     unique_ptr(const unique_ptr &) = delete;
 
-    constexpr unique_ptr(unique_ptr &&rhs) : _ptr(exchange(rhs._ptr, nullptr))
+    constexpr unique_ptr(unique_ptr &&rhs)
+      : _ptr(::bl::exchange(rhs._ptr, nullptr))
     {}
 
     template<typename U, typename D>

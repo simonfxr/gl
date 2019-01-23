@@ -69,11 +69,11 @@ struct ShaderProgram::Data
             return;
         ASSERT(&sm == &rhs.sm);
         using bl::swap;
-        swap(program, rhs.program);
-        swap(shaders, rhs.shaders);
-        swap(rootdeps, rhs.rootdeps);
-        swap(attrs, rhs.attrs);
-        swap(linked, rhs.linked);
+        bl::swap(program, rhs.program);
+        bl::swap(shaders, rhs.shaders);
+        bl::swap(rootdeps, rhs.rootdeps);
+        bl::swap(attrs, rhs.attrs);
+        bl::swap(linked, rhs.linked);
     }
 };
 
@@ -170,7 +170,7 @@ ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
         GL_CALL(glGetProgramInfoLog, progh, log_len, nullptr, log.data());
 
         auto logBegin = log.data();
-        while (logBegin < log.end() - 1 && isspace(*logBegin))
+        while (logBegin < log.endp() - 1 && isspace(*logBegin))
             ++logBegin;
 
         const char *logmsg = log.data();

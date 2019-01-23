@@ -10,6 +10,7 @@
 
 #include "defs.h"
 
+#include "bl/vector.hpp"
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
@@ -35,8 +36,7 @@
 
 #include "dump_bmp.h"
 
-#include "bl/vector.hpp"
-
+#include "opengl.hpp"
 #include <stdlib.h>
 
 #ifdef MESH_CUBEMESH
