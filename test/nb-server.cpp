@@ -51,12 +51,12 @@ main()
             if (!opt_handle)
                 break;
             Client &c = clients[clients.size() - 1];
-            c.stream->handle = std::move(opt_handle).value();
+            c.stream->handle() = std::move(opt_handle).value();
             c.id = id++;
             sys::io::stdout() << "accepted client " << c.id << sys::io::endl;
             IGNORE_RESULT(
-              io::elevate(c.stream->handle,
-                          io::mode(c.stream->handle) | io::HM_NONBLOCKING));
+              io::elevate(c.stream->handle(),
+                          io::mode(c.stream->handle()) | io::HM_NONBLOCKING));
             clients.emplace_back();
         }
 

@@ -421,6 +421,13 @@ registerCommands(CommandProcessor &proc)
         assert(comm->name().size() > 0);
         proc.define(comm);
     }
+
+    // auto &out = sys::io::stdout();
+    // out << "registeredCommands: " << sys::io::endl;
+    // auto coms = proc.commands();
+    // for (auto& com : coms) {
+    //     out << com->name() << ", nparams: " <<
+    // }
 }
 
 } // namespace ge

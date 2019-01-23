@@ -6,6 +6,7 @@
 #include "bl/non_copyable.hpp"
 #include "bl/string.hpp"
 #include "bl/string_view.hpp"
+#include "bl/type_traits.hpp"
 #include "sys/fiber.hpp"
 
 #undef EOF
@@ -23,7 +24,29 @@ struct IOStream;
 
 PP_DEF_ENUM_WITH_API(SYS_API, SYS_STREAM_RESULT_ENUM_DEF);
 
-struct SYS_API InStream
+struct StreamState
+{
+    constexpr bool closable() const { return flags() & SF_CLOSABLE; }
+
+    constexpr StreamState &closable(bool yesno)
+    {
+        if (yesno)
+            flags() |= SF_CLOSABLE;
+        else
+            flags() &= ~SF_CLOSABLE;
+        return *this;
+    }
+
+    constexpr StreamFlags flags() const { return _flags; }
+
+protected:
+    constexpr StreamFlags &flags() { return _flags; }
+
+private:
+    StreamFlags _flags{};
+};
+
+struct SYS_API InStream : virtual StreamState
 {
     InStream();
     virtual ~InStream();
@@ -36,31 +59,22 @@ struct SYS_API InStream
 
     void close();
 
-    bool closed() const { return flags & SF_IN_CLOSED; }
-    bool readable() const { return (flags & (SF_IN_CLOSED | SF_IN_EOF)) == 0; }
-    bool closable() const { return flags & SF_CLOSABLE; }
+    StreamResult read(size_t &s, char *buf);
 
-    InStream &closable(bool yesno)
+    bool readable() const
     {
-        if (yesno)
-            flags |= SF_CLOSABLE;
-        else
-            flags &= ~SF_CLOSABLE;
-        return *this;
+        return (flags() & (SF_IN_CLOSED | SF_IN_EOF)) == 0;
     }
 
-    StreamResult read(size_t &s, char *buf);
+    bool closed() const { return flags() & SF_IN_CLOSED; }
 
 protected:
     virtual StreamResult basic_read(size_t &s, char *buf) = 0;
     virtual StreamResult basic_close_in(bool flush_only) = 0;
     InStream(StreamFlags &);
-
-    StreamFlags &flags;
-    StreamFlags _flags_store;
 };
 
-struct SYS_API OutStream
+struct SYS_API OutStream : StreamState
 {
     OutStream();
     virtual ~OutStream();
@@ -71,25 +85,14 @@ struct SYS_API OutStream
     OutStream &operator=(const OutStream &) = default;
     OutStream &operator=(OutStream &&) = default;
 
+    bool closed() const { return flags() & SF_IN_CLOSED; }
+
+    constexpr bool writable() const
+    {
+        return (flags() & (SF_OUT_CLOSED | SF_OUT_EOF)) == 0;
+    }
+
     void close();
-
-    bool closed() const { return flags & SF_OUT_CLOSED; }
-
-    bool writeable() const
-    {
-        return (flags & (SF_OUT_CLOSED | SF_OUT_EOF)) == 0;
-    }
-
-    bool closable() const { return flags & SF_CLOSABLE; }
-
-    OutStream &closable(bool yesno)
-    {
-        if (yesno)
-            flags |= SF_CLOSABLE;
-        else
-            flags &= ~SF_CLOSABLE;
-        return *this;
-    }
 
     StreamResult write(size_t &s, const char *buf);
     StreamResult flush();
@@ -98,7 +101,6 @@ protected:
     virtual StreamResult basic_write(size_t &s, const char *buf) = 0;
     virtual StreamResult basic_flush() = 0;
     virtual StreamResult basic_close_out() = 0;
-    StreamFlags flags;
 };
 
 struct SYS_API IOStream
@@ -115,7 +117,8 @@ struct SYS_API IOStream
     IOStream &operator=(IOStream &&) = default;
 
     using OutStream::close;
-    using OutStream::closed;
+
+    StreamFlags flags() const { return OutStream::flags(); }
 
     IOStream &closable(bool yesno)
     {
@@ -127,9 +130,9 @@ protected:
     StreamResult basic_close_out() final override;
     StreamResult basic_close_in(bool flush_only) final override;
 
-    virtual StreamResult basic_close() = 0;
+    StreamFlags &flags() { return OutStream::flags(); }
 
-    using OutStream::flags;
+    virtual StreamResult basic_close() = 0;
 };
 
 struct SYS_API NullStream : public IOStream
@@ -196,7 +199,7 @@ protected:
 inline StreamResult
 write_repr(OutStream &out, bl::string_view str)
 {
-    if (out.writeable()) {
+    if (out.writable()) {
         size_t s = str.size();
         return out.write(s, str.data());
     }
@@ -212,7 +215,7 @@ write_repr(OutStream &out, const char *str)
 inline StreamResult
 write_repr(OutStream &out, char c)
 {
-    if (!out.writeable())
+    if (!out.writable())
         return StreamResult::OK;
     size_t s = 1;
     return out.write(s, &c);

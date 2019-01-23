@@ -59,8 +59,8 @@ if(COMP_CLANG)
 endif()
 
 if(COMP_CLANG OR COMP_GCC)
-  set_option(ENABLE_ASAN False BOOL "enable -fsanitize=address")
-  set(ubsan_default False)
+  set_option(ENABLE_ASAN True BOOL "enable -fsanitize=address")
+  set(ubsan_default True)
   # if(BUILD_DEBUG)
   #   set(ubsan_default True)
   # endif()
@@ -72,7 +72,9 @@ if(ENABLE_ASAN)
 endif()
 
 if(ENABLE_UBSAN)
-  list(APPEND GLOBAL_FLAGS_BOTH -fsanitize=undefined -fsanitize-undefined-trap-on-error)
+  list(APPEND GLOBAL_FLAGS_BOTH -fsanitize=undefined
+    #-fsanitize-undefined-trap-on-error
+    )
 endif()
 
 if(ENABLE_ASAN OR ENABLE_UBSAN)

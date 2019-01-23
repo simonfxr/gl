@@ -35,7 +35,7 @@ extern SYS_API const StreamEndl endl;
 
 PP_FWD_DEF_ENUM_WITH_API(SYS_API, SYS_STREAM_RESULT_ENUM_DEF);
 
-using StreamFlags = uint16_t;
+using StreamFlags = uint8_t;
 
 inline constexpr StreamFlags SF_IN_EOF = 1;
 inline constexpr StreamFlags SF_OUT_EOF = 2;

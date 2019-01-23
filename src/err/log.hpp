@@ -69,7 +69,7 @@ beginLog(T &sender, LogLevel level = LogLevel::Info)
 {
     const auto &settings = LogTraits<std::decay_t<T>>::getDestination(sender);
     return LogMessage<std::decay_t<decltype(settings.out)>>{
-        settings.out, settings.out.writeable() && settings.min_level <= level
+        settings.out, settings.out.writable() && settings.min_level <= level
     };
 }
 

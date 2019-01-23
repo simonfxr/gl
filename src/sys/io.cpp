@@ -1,7 +1,6 @@
 #include "sys/io.hpp"
 
 #include "err/err.hpp"
-#include "sys/module.hpp"
 
 #include "bl/optional.hpp"
 #include "bl/vector.hpp"
@@ -13,11 +12,7 @@ namespace io {
 PP_DEF_ENUM_IMPL(SYS_HANDLE_ERROR_ENUM_DEF)
 PP_DEF_ENUM_IMPL(SYS_SOCKET_ERROR_ENUM_DEF)
 
-IO::IO() : ipa_any(0), ipa_local(127, 0, 0, 1) {}
-
-HandleStream::HandleStream(Handle h)
-  : handle(std::move(h)), read_cursor(0), write_cursor(0)
-{}
+HandleStream::HandleStream(Handle h) : _handle(std::move(h)) {}
 
 HandleStream::~HandleStream()
 {
@@ -49,10 +44,10 @@ toStreamResult(HandleError e)
 StreamResult
 HandleStream::basic_close()
 {
-    if (!handle)
+    if (!_handle)
         return StreamResult::OK;
     StreamResult ret1 = basic_flush();
-    auto ret2 = sys::io::close(handle);
+    auto ret2 = sys::io::close(_handle);
     return ret1 == StreamResult::OK ? toStreamResult(ret2) : ret1;
 }
 
@@ -89,12 +84,12 @@ HandleStream::basic_read(size_t &s, char *buf)
 
     if (s > HANDLE_READ_BUFFER_SIZE) {
         size_t k = s;
-        err = sys::io::read(handle, k, buf);
+        err = sys::io::read(_handle, k, buf);
         read_cursor = 0;
         n += k;
     } else {
         size_t k = HANDLE_READ_BUFFER_SIZE;
-        err = sys::io::read(handle, k, read_buffer);
+        err = sys::io::read(_handle, k, read_buffer);
         if (k > s) {
             n += s;
             read_cursor = k - s;
@@ -134,7 +129,7 @@ HandleStream::basic_write(size_t &s, const char *buf)
     if (write_cursor > 0) {
         memcpy(write_buffer + write_cursor, buf, rem);
         k = HANDLE_WRITE_BUFFER_SIZE;
-        err = sys::io::write(handle, k, write_buffer);
+        err = sys::io::write(_handle, k, write_buffer);
     }
 
     if (write_cursor == 0 ||
@@ -142,7 +137,7 @@ HandleStream::basic_write(size_t &s, const char *buf)
 
         n += rem;
         k = s - rem;
-        err = sys::io::write(handle, k, buf + rem);
+        err = sys::io::write(_handle, k, buf + rem);
         n += k;
         const char *unwritten = buf + n;
         size_t rest = s - n;
@@ -182,7 +177,7 @@ StreamResult
 HandleStream::flush_buffer()
 {
     size_t k = write_cursor;
-    HandleError err = sys::io::write(handle, k, write_buffer);
+    HandleError err = sys::io::write(_handle, k, write_buffer);
 
     if (k > 0) {
         memmove(write_buffer, write_buffer + k, write_cursor - k);
@@ -198,7 +193,7 @@ HandleStream::open(bl::string_view path, HandleMode mode, HandleError &err)
     auto opt_h = sys::io::open(path, mode, err);
     if (!opt_h)
         return bl::nullopt;
-    return { std::move(opt_h).value() };
+    return { HandleStream(std::move(opt_h).value()) };
 }
 
 bl::string
@@ -227,7 +222,7 @@ readFile(sys::io::OutStream &errout,
         }
     }
 fail:
-    if (errout.writeable())
+    if (errout.writable())
         errout << "unable to read file: " << path << sys::io::endl;
 
     return {};

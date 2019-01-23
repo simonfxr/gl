@@ -8,6 +8,7 @@
 #include "ge/Command_detail.hpp"
 #include "ge/EngineEvents.hpp"
 #include "ge/conf.hpp"
+#include "sys/io/Stream.hpp"
 
 namespace ge {
 
@@ -39,7 +40,7 @@ public:
     Command &operator=(Command &&) = default;
 
     virtual ~Command() override;
-    bl::vector<CommandParamType> parameters() const { return params; }
+    bl::array_view<const CommandParamType> parameters() const { return params; }
     const bl::string &name() const { return namestr; }
     void name(const bl::string &new_name)
     {
@@ -103,8 +104,20 @@ private:
     static bl::vector<CommandParamType> make_params(
       detail::CommandArgSeq<Ts...>)
     {
-        return bl::make_vector<CommandParamType>(
+        bl::vector<CommandParamType> params;
+        params = bl::make_vector<CommandParamType>(
           detail::decayed_command_param_mapping<Ts>::param_type...);
+        auto &out = sys::io::stdout();
+        out << "make_params: " << __PRETTY_FUNCTION__ << sys::io::endl;
+        out << " is_var_arg: " << is_var_arg_t::value << sys::io::endl;
+        ;
+        out << " params: ";
+        for (const auto &param : params) {
+            out << to_string(param) << " ";
+        }
+        out << sys::io::endl;
+
+        return params;
     }
 };
 
@@ -113,11 +126,23 @@ inline bl::shared_ptr<Command>
 makeCommand(bl::string name, bl::string descr, F &&f)
 {
     // avoid excessive bl::shared_ptr<XX> template instantiations
-    return bl::shared_ptr<Command>{
+    auto com = bl::shared_ptr<Command>{
         bl::shared_from_ptr_t{},
         static_cast<Command *>(new FunctorCommand<std::decay_t<F>>(
           std::move(name), std::move(descr), std::forward<F>(f)))
     };
+
+    auto &out = sys::io::stdout();
+
+    out << "makeCommand: " << com->name();
+    out << " params: ";
+    for (const auto &param : com->parameters()) {
+        out << to_string(param) << " ";
+    }
+    out << sys::io::endl;
+    out << sys::io::endl;
+
+    return com;
 }
 
 template<typename T, typename... Args>

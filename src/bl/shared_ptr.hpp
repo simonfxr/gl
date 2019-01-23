@@ -15,6 +15,16 @@ struct ptr_inplace_init_t
 struct shared_from_ptr_t
 {};
 
+struct enable_shared_from_this_tag
+{};
+
+template<typename T>
+using shared_from_this_enabled =
+  std::is_assignable<enable_shared_from_this_tag, std::decay_t<T>>;
+
+template<typename T>
+struct enable_shared_from_this;
+
 struct shared_ref_count
 {
     void retain() noexcept { ++strong_count; }
@@ -88,7 +98,9 @@ struct shared_ptr
     template<typename U = T>
     shared_ptr(shared_from_ptr_t tag, U *p) noexcept
       : _ptr(p), _cnt(p ? init_shared_ref_count<T>(tag, p) : nullptr)
-    {}
+    {
+        handle_shared_from_this(p);
+    }
 
     shared_ptr(const shared_ptr &x) noexcept : shared_ptr(x, x.get()) {}
 
@@ -100,8 +112,10 @@ struct shared_ptr
     shared_ptr(const shared_ptr<U> &r, T *ptr) noexcept
       : _ptr(ptr), _cnt(ptr ? r._cnt : nullptr)
     {
-        if (_cnt)
+        if (_cnt) {
             _cnt->retain();
+            handle_shared_from_this(ptr);
+        }
     }
 
     template<typename U = T>
@@ -110,6 +124,7 @@ struct shared_ptr
         if (ptr) {
             *this = std::move(r);
             _ptr = ptr;
+            handle_shared_from_this(ptr);
         }
     }
 
@@ -132,7 +147,9 @@ struct shared_ptr
     template<typename... Args>
     shared_ptr(ptr_inplace_init_t, Args &&... args)
       : _cnt(init_shared_ref_count<T>(_ptr, std::forward<Args>(args)...))
-    {}
+    {
+        handle_shared_from_this(_ptr);
+    }
 
     ~shared_ptr() { reset(); }
 
@@ -199,6 +216,24 @@ private:
         _ptr = exchange(r._ptr, nullptr);
         _cnt = exchange(r._cnt, nullptr);
         return *this;
+    }
+
+    template<typename U>
+    void handle_shared_from_this(U *ptr)
+    {
+        if constexpr (shared_from_this_enabled<std::decay_t<U>>::value) {
+            if (ptr)
+                handle_shared_from_this(
+                  const_cast<std::remove_const_t<U> &>(*ptr));
+        }
+    }
+
+    template<typename U>
+    void handle_shared_from_this(enable_shared_from_this<U> &r)
+    {
+        if (!r._ref._cnt) {
+            r._ref = weak_ptr<U>(*this);
+        }
     }
 
 public:
@@ -319,7 +354,7 @@ private:
 }; // namespace bl
 
 template<typename T>
-struct enable_shared_from_this
+struct enable_shared_from_this : enable_shared_from_this_tag
 {
     shared_ptr<T> shared_from_this() { return _ref.lock(); }
     shared_ptr<const T> shared_from_this() const { return _ref.lock(); }
@@ -329,6 +364,9 @@ struct enable_shared_from_this
 
 private:
     weak_ptr<T> _ref;
+
+    template<typename U>
+    friend struct shared_ptr;
 };
 
 template<typename T, typename... Args>

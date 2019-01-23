@@ -168,6 +168,7 @@ CommandProcessor::exec(CommandPtr &com, bl::array_view<CommandArg> args)
 
     const auto &comname = com->name();
     const auto &params = com->parameters();
+
     bool rest_args = params.size() > 0 && params[params.size() - 1] == PT::List;
     size_t nparams = rest_args ? params.size() - 1 : params.size();
 
@@ -177,11 +178,10 @@ CommandProcessor::exec(CommandPtr &com, bl::array_view<CommandArg> args)
             err << "executing Command " << comname << ": ";
         else
             err << "executing unknown Command: ";
-        err << "expected " << nparams;
+        err << "expected " << nparams << " parameters";
         if (rest_args)
             err << " or more";
-        err << " got " << args.size();
-        err << " (rest_args=" << rest_args << ", nparams=" << nparams << ")";
+        err << ", but got " << args.size();
         ERR(engine().out(), err.str());
     }
 
@@ -314,6 +314,14 @@ CommandProcessor::loadStream(sys::io::InStream &inp, bl::string_view inp_name)
             goto next;
         }
 
+        {
+            auto &out = engine().out();
+            out << "parsed command: ";
+            CommandPrettyPrinter pp;
+            pp.out(out);
+            pp.print(bl::array_view<const CommandArg>(args.view()));
+            out << sys::io::endl;
+        }
         ok = execCommand(args);
         if (!ok) {
             ERR(engine().out(), "executing command");

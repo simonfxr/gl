@@ -308,7 +308,7 @@ reportError(sys::io::OutStream &out,
 
     if (loc.operation) {
         if (lvl == LL::Assertion)
-            out << "  assertion: " << mesg << sys::io::endl;
+            out << "  assertion: " << loc.operation << sys::io::endl;
         else
             out << "  operation: " << loc.operation << sys::io::endl;
     }

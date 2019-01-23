@@ -19,15 +19,8 @@ PP_DEF_ENUM_IMPL(SYS_STREAM_RESULT_ENUM_DEF)
 
 namespace {
 
-struct StreamState
-{
-    static StreamResult track(StreamFlags eof,
-                              StreamFlags & /*flags*/,
-                              StreamResult r);
-};
-
 StreamResult
-StreamState::track(StreamFlags eof, StreamFlags &flags, StreamResult res)
+track_state(StreamFlags eof, StreamFlags &flags, StreamResult res)
 {
     switch (res.value) {
     case StreamResult::OK:
@@ -46,9 +39,10 @@ StreamState::track(StreamFlags eof, StreamFlags &flags, StreamResult res)
 }
 } // namespace
 
-InStream::InStream() : flags(_flags_store), _flags_store(SF_CLOSABLE) {}
-
-InStream::InStream(StreamFlags &flags_) : flags(flags_), _flags_store(0) {}
+InStream::InStream()
+{
+    this->flags() |= SF_CLOSABLE | SF_OUT_CLOSED;
+}
 
 InStream::~InStream() = default;
 
@@ -60,12 +54,12 @@ InStream::close()
 
     StreamResult ret;
     if (closable()) {
-        flags |= SF_IN_CLOSED;
+        flags() |= SF_IN_CLOSED;
         ret = basic_close_in(false);
     } else {
         ret = basic_close_in(true);
     }
-    StreamState::track(SF_IN_EOF | SF_OUT_EOF, flags, ret);
+    track_state(SF_IN_EOF | SF_OUT_EOF, flags(), ret);
 }
 
 StreamResult
@@ -79,10 +73,13 @@ InStream::read(size_t &s, char *buf)
         s = 0;
         return StreamResult::OK;
     }
-    return StreamState::track(SF_IN_EOF, flags, basic_read(s, buf));
+    return track_state(SF_IN_EOF, flags(), basic_read(s, buf));
 }
 
-OutStream::OutStream() : flags(SF_CLOSABLE) {}
+OutStream::OutStream()
+{
+    flags() |= SF_CLOSABLE | SF_IN_CLOSED;
+}
 
 OutStream::~OutStream() = default;
 
@@ -94,18 +91,18 @@ OutStream::close()
 
     StreamResult ret;
     if (closable()) {
-        flags |= SF_OUT_CLOSED;
+        flags() |= SF_OUT_CLOSED;
         ret = basic_close_out();
     } else {
         ret = basic_flush();
     }
-    StreamState::track(SF_IN_EOF | SF_OUT_EOF, flags, ret);
+    track_state(SF_IN_EOF | SF_OUT_EOF, flags(), ret);
 }
 
 StreamResult
 OutStream::write(size_t &s, const char *buf)
 {
-    if (!writeable()) {
+    if (!writable()) {
         s = 0;
         return closed() ? StreamResult::Closed : StreamResult::EOF;
     }
@@ -113,7 +110,7 @@ OutStream::write(size_t &s, const char *buf)
         s = 0;
         return StreamResult::OK;
     }
-    return StreamState::track(SF_OUT_EOF, flags, basic_write(s, buf));
+    return track_state(SF_OUT_EOF, flags(), basic_write(s, buf));
 }
 
 StreamResult
@@ -121,12 +118,13 @@ OutStream::flush()
 {
     if (closed())
         return StreamResult::Closed;
-    return StreamState::track(SF_OUT_EOF, flags, basic_flush());
+    return track_state(SF_OUT_EOF, flags(), basic_flush());
 }
 
-BEGIN_NO_WARN_UNINITIALIZED
-IOStream::IOStream() : InStream(flags) {}
-END_NO_WARN_UNINITIALIZED
+IOStream::IOStream()
+{
+    OutStream::flags() = SF_CLOSABLE;
+}
 
 IOStream::~IOStream() = default;
 
@@ -136,14 +134,14 @@ IOStream::basic_close_in(bool flush_only)
     if (flush_only) {
         return basic_flush();
     }
-    flags |= SF_OUT_CLOSED;
+    flags() |= SF_OUT_CLOSED;
     return basic_close();
 }
 
 StreamResult
 IOStream::basic_close_out()
 {
-    flags |= SF_IN_CLOSED;
+    flags() |= SF_IN_CLOSED;
     return basic_close();
 }
 
@@ -181,7 +179,7 @@ const StreamEndl endl = {};
 #define DEF_PRINTF_WRITER(T, fmt, bufsz)                                       \
     StreamResult write_repr(OutStream &out, T value)                           \
     {                                                                          \
-        if (!out.writeable())                                                  \
+        if (!out.writable())                                                   \
             return StreamResult::OK;                                           \
         char buf[bufsz];                                                       \
         auto len = snprintf(buf, sizeof buf, "%" fmt, value);                  \

@@ -1,9 +1,8 @@
 #include "ge/Tokenizer.hpp"
-
 #include "ge/Command.hpp"
 #include "math/real.hpp"
 
-#include <cctype>
+#include <ctype.h>
 
 #undef EOF
 
@@ -11,7 +10,7 @@ namespace ge {
 
 namespace {
 
-enum State
+enum State : uint8_t
 {
     EndToken,
     EndStatement,
@@ -475,9 +474,15 @@ statement(ParseState &s, bl::vector<CommandArg> &toks, bool quot)
             break;
         CommandArg tok{};
         st = token(s, tok, first);
-        if (st != Fail)
+        if (st != Fail) {
+            auto &out = sys::io::stdout();
+            out << "tokenizer: ";
+            CommandPrettyPrinter pp;
+            pp.out(out);
+            pp.print(tok);
+            out << "END TOKEN" << sys::io::endl;
             toks.push_back(tok);
-        else
+        } else
             return Fail;
         first = false;
         if (s.c == ';' || s.c == 0)

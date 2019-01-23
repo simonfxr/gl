@@ -1,11 +1,9 @@
 #ifndef GE_TOKENIZER_HPP
 #define GE_TOKENIZER_HPP
 
-#include "ge/CommandArgs.hpp"
-
-#include "sys/io/Stream.hpp"
-
 #include "bl/vector.hpp"
+#include "ge/CommandArgs.hpp"
+#include "sys/io/Stream.hpp"
 
 namespace ge {
 

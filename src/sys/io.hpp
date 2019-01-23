@@ -138,8 +138,9 @@ struct Handle
     OSHandle _os{};
 
     constexpr Handle() = default;
+
     Handle(const Handle &) = delete;
-    Handle(Handle &&h) { *this = std::move(h); }
+    Handle(Handle &&h) noexcept { *this = std::move(h); }
 
     ~Handle()
     {
@@ -148,8 +149,7 @@ struct Handle
     }
 
     Handle &operator=(const Handle &) = delete;
-
-    Handle &operator=(Handle &&h)
+    Handle &operator=(Handle &&h) noexcept
     {
         _mode = bl::exchange(h._mode, 0);
         _os = bl::exchange(h._os, OSHandle::nil());
@@ -165,7 +165,7 @@ struct Socket
 
     constexpr Socket() = default;
     Socket(const Socket &) = delete;
-    Socket(Socket &&s) { *this = std::move(s); }
+    Socket(Socket &&s) noexcept { *this = std::move(s); }
 
     ~Socket()
     {
@@ -175,7 +175,7 @@ struct Socket
 
     Socket &operator=(const Socket &) = delete;
 
-    Socket &operator=(Socket &&s)
+    Socket &operator=(Socket &&s) noexcept
     {
         _os = bl::exchange(s._os, OSSocket::nil());
         return *this;
@@ -186,16 +186,13 @@ struct Socket
 
 struct SYS_API HandleStream : public IOStream
 {
-    Handle handle;
-    char read_buffer[HANDLE_READ_BUFFER_SIZE]{};
-    char write_buffer[HANDLE_WRITE_BUFFER_SIZE]{};
-    size_t read_cursor;
-    size_t write_cursor;
-
     HandleStream(HandleStream &&) = default;
     HandleStream(const HandleStream &) = default;
 
-    HandleStream(Handle);
+    HandleStream &operator=(const HandleStream &) = default;
+    HandleStream &operator=(HandleStream &) = default;
+
+    explicit HandleStream(Handle);
     ~HandleStream() override;
 
     HU_NODISCARD
@@ -211,12 +208,25 @@ struct SYS_API HandleStream : public IOStream
         return open(path, mode, err);
     }
 
+    const Handle &handle() const & { return _handle; }
+    const Handle &&handle() const && { return std::move(_handle); }
+
+    Handle &handle() & { return _handle; }
+    Handle &&handle() && { return std::move(_handle); }
+
 protected:
     StreamResult basic_close() final override;
     StreamResult basic_flush() final override;
     StreamResult basic_read(size_t &, char *) final override;
     StreamResult basic_write(size_t &, const char *) final override;
     StreamResult flush_buffer();
+
+private:
+    char read_buffer[HANDLE_READ_BUFFER_SIZE]{};
+    char write_buffer[HANDLE_WRITE_BUFFER_SIZE]{};
+    size_t read_cursor{};
+    size_t write_cursor{};
+    Handle _handle;
 };
 
 HU_NODISCARD SYS_API bl::string

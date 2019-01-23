@@ -601,8 +601,9 @@ ShaderCache::lookup(const ShaderSourceKey &key)
 bool
 ShaderCache::put(const bl::shared_ptr<ShaderObject> &so)
 {
+    ASSERT(so);
     auto cache = shared_from_this();
-    ASSERT(cache && so);
+    ASSERT(cache);
 
     auto curr_cache = so->self->cache.lock();
     ASSERT(!curr_cache || curr_cache == cache);

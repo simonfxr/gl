@@ -70,8 +70,8 @@ struct vector : public comparable<vector<T>>
             return;
         }
 
-        if constexpr (std::is_trivially_constructible_v<T, U> &&
-                      std::is_trivially_assignable_v<T, U> &&
+        if constexpr (std::is_trivially_constructible_v<T, const U &> &&
+                      std::is_trivially_assignable_v<T, const U &> &&
                       std::is_trivially_destructible_v<T>) {
             copy(first, last, begin());
             _count = n;
@@ -86,10 +86,11 @@ struct vector : public comparable<vector<T>>
                 _count = n;
             }
         }
+        check();
     }
 
     template<typename U>
-    void move_assign(const U *first, const U *last)
+    void move_assign(U *first, U *last)
     {
         if (first == _data)
             return;
@@ -102,8 +103,8 @@ struct vector : public comparable<vector<T>>
             return;
         }
 
-        if constexpr (std::is_trivially_constructible_v<T, U> &&
-                      std::is_trivially_move_assignable_v<T, U> &&
+        if constexpr (std::is_trivially_constructible_v<T, U &&> &&
+                      std::is_trivially_assignable_v<T, U &&> &&
                       std::is_trivially_destructible_v<T>) {
             move(first, last, begin());
             _count = n;
@@ -118,6 +119,7 @@ struct vector : public comparable<vector<T>>
                 _count = n;
             }
         }
+        check();
     }
 
     vector &operator=(const vector &x)
@@ -145,6 +147,7 @@ struct vector : public comparable<vector<T>>
         _data = exchange(rhs._data, nullptr);
         _count = exchange(rhs._count, 0);
         _capa = exchange(rhs._capa, 0);
+        check();
         return *this;
     }
 
@@ -174,7 +177,6 @@ struct vector : public comparable<vector<T>>
             ASSERT(last >= first);
             size_t n = last - first;
             reserve(size() + n);
-            // FIXME:
             auto p = uninitialized_copy(first, last, _data + _count);
             ASSERT(size_t(p - _data) == _count + n);
             _count += n;
@@ -182,6 +184,7 @@ struct vector : public comparable<vector<T>>
             for (; first != last; ++first)
                 push_back(*first);
         }
+        check();
     }
 
     template<typename U>
@@ -217,6 +220,7 @@ struct vector : public comparable<vector<T>>
     {
         destroy(begin(), end());
         _count = 0;
+        check();
     }
 
     void reserve(size_t n)
@@ -228,6 +232,7 @@ struct vector : public comparable<vector<T>>
             _data = buf;
             _capa = n;
         }
+        check();
     }
 
     void resize(size_t n)
@@ -237,6 +242,7 @@ struct vector : public comparable<vector<T>>
             uninitialized_default_construct(end(), begin() + n);
             _count = n;
         }
+        check();
     }
 
     void resize(size_t n, const T &x)
@@ -246,6 +252,7 @@ struct vector : public comparable<vector<T>>
             uninitialized_fill(end(), begin() + n, x);
             _count = n;
         }
+        check();
     }
 
     const T *erase(const T *p) { return erase(const_cast<T *>(p)); }
@@ -256,6 +263,7 @@ struct vector : public comparable<vector<T>>
         if (p + 1 != end())
             move(p + 1, end(), p);
         --_count;
+        check();
         return p;
     }
 
@@ -301,8 +309,9 @@ struct vector : public comparable<vector<T>>
     void pop_back()
     {
         ASSERT(_count > 0);
-        destroy_at(_data + _count);
+        destroy_at(_data + (_count - 1));
         --_count;
+        check();
     }
 
 private:
@@ -310,6 +319,7 @@ private:
     {
         ASSERT(begin() <= p && p <= end());
         UNUSED(p);
+        check();
     }
 
     bool _resize(size_t n)
@@ -317,6 +327,7 @@ private:
         if (n <= _count) {
             destroy(begin() + n, end());
             _count = n;
+            check();
             return false;
         }
 
@@ -328,6 +339,7 @@ private:
             swap(_data, buf);
             delete_uninitialized_bare_array(buf, _count);
             _capa = n;
+            check();
         }
 
         return true;
@@ -346,18 +358,21 @@ private:
             move(begin(), end() - 1, begin() + 1);
         }
         ++_count;
+        check();
     }
 
     void ensure_capa()
     {
         if (unlikely(_count == _capa))
             reserve(_count == 0 ? min_capacity : _count * 2);
+        check();
     }
 
     void reset()
     {
         if (!_data) {
             ASSERT(_count == 0 && _capa == 0);
+            check();
             return;
         }
         ASSERT(_capa > 0);
@@ -365,11 +380,19 @@ private:
         delete_uninitialized_bare_array(_data, _capa);
         _data = nullptr;
         _count = _capa = 0;
+        check();
     }
 
     T *_data{};
     uint32_t _count = 0;
     uint32_t _capa = 0;
+
+    void check()
+    {
+        ASSERT((_data != nullptr) == (_capa != 0));
+        ASSERT(_count <= _capa);
+        ASSERT(_capa < 10000);
+    }
 
     static inline constexpr size_t min_capacity = sizeof(T) > 32
                                                     ? 1
@@ -384,12 +407,15 @@ make_vector()
 }
 
 template<typename T, typename Arg, typename... Args>
-inline constexpr vector<T>
+inline vector<T>
 make_vector(Arg &&arg, Args &&... args)
 {
     T elems[] = { static_cast<T>(std::forward<Arg>(arg)),
                   static_cast<T>(std::forward<Args>(args))... };
-    return vector<T>(elems, elems + sizeof...(args));
+    vector<T> v;
+    v.move_assign(elems, elems + ARRAY_LENGTH(elems));
+    ASSERT(v.size() == 1 + sizeof...(args));
+    return v;
 }
 
 } // namespace bl

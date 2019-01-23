@@ -18,6 +18,31 @@ namespace bl {
 
 template<class T>
 FORCE_INLINE inline void
+punned_destroy_at(void *p) noexcept
+{
+    static_assert(std::is_nothrow_destructible_v<T>);
+    static_cast<T *>(p)->~T();
+}
+
+template<typename T>
+using destroy_fun_ptr = void (*)(T *) noexcept;
+
+template<typename T>
+inline auto
+get_destroy_fun_ptr()
+{
+    return &punned_destroy_at<T>;
+}
+
+template<typename T>
+inline destroy_fun_ptr<void>
+get_punned_destroy_fun_ptr()
+{
+    return reinterpret_cast<destroy_fun_ptr<void>>(get_destroy_fun_ptr<T>());
+}
+
+template<class T>
+FORCE_INLINE inline void
 destroy_at(T *p) noexcept
 {
     static_assert(std::is_nothrow_destructible_v<T>);
@@ -30,26 +55,9 @@ destroy(ForwardIt first, ForwardIt last)
 {
     using T = typename iterator_traits<ForwardIt>::value_type;
     if constexpr (!std::is_trivially_destructible_v<T>) {
-        for (; first != last; ++last)
+        for (; first != last; ++first)
             destroy_at(addressof(*first));
     }
-}
-
-template<typename T>
-using destroy_fun_ptr = void (*)(T *) noexcept;
-
-template<typename T>
-inline auto
-get_destroy_fun_ptr()
-{
-    return static_cast<destroy_fun_ptr<T>>(&destroy_at<T>);
-}
-
-template<typename T>
-inline destroy_fun_ptr<void>
-get_punned_destroy_fun_ptr()
-{
-    return reinterpret_cast<destroy_fun_ptr<void>>(get_destroy_fun_ptr<T>());
 }
 
 namespace detail {

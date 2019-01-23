@@ -34,14 +34,6 @@ struct Streams
     Streams();
 };
 
-struct IO
-{
-    const IPAddr4 ipa_any;
-    const IPAddr4 ipa_local;
-
-    IO();
-};
-
 } // namespace io
 
 struct Fibers
@@ -53,7 +45,6 @@ struct Fibers
 struct Module
 {
     io::Streams io_streams;
-    io::IO io;
 #ifdef HU_OS_WINDOWS
     io::WS32Init _ws32_init;
 #endif
