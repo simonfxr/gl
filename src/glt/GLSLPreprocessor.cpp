@@ -204,8 +204,6 @@ GLSLPreprocessor::DependencyHandler::directiveEncountered(
 {
     auto &proc = static_cast<GLSLPreprocessor &>(ctx.content.processor);
 
-    proc.out() << "#need directive: " << ctx.line << sys::io::endl;
-
     // FIXME: add an option to specify ShaderType explicitly
     bl::string_view path;
     if (!parseFileArg(ctx, path) || path.empty()) {
@@ -259,7 +257,6 @@ GLSLPreprocessor::IncludeHandler::directiveEncountered(
   const Preprocessor::DirectiveContext &ctx)
 {
     auto &proc = static_cast<GLSLPreprocessor &>(ctx.content.processor);
-    proc.out() << "#include directive: " << ctx.line << sys::io::endl;
     bl::string_view path;
     if (!parseFileArg(ctx, path) || path.empty()) {
         proc.out() << ctx.content.name

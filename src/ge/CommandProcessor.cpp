@@ -316,14 +316,6 @@ CommandProcessor::loadStream(sys::io::InStream &inp, bl::string_view inp_name)
             goto next;
         }
 
-        {
-            auto &out = engine().out();
-            out << "parsed command: ";
-            CommandPrettyPrinter pp;
-            pp.out(out);
-            pp.print(bl::array_view<const CommandArg>(args.view()));
-            out << sys::io::endl;
-        }
         ok = execCommand(args);
         if (!ok) {
             ERR(engine().out(), "executing command");

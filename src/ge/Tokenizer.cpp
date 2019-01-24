@@ -53,8 +53,6 @@ getchAny(ParseState &s)
         return false;
     }
 
-    //    sys::io::stdout() << "getch: '" << s.rawC << "'" << sys::io::endl;
-
     if (s.c == '\n' || s.c == '\r') {
         if (lastC == '\r' && s.c == '\n') {
             return getchAny(s);
@@ -476,15 +474,9 @@ statement(ParseState &s, bl::vector<CommandArg> &toks, bool quot)
             break;
         CommandArg tok{};
         st = token(s, tok, first);
-        if (st != Fail) {
-            auto &out = sys::io::stdout();
-            out << "tokenizer: ";
-            CommandPrettyPrinter pp;
-            pp.out(out);
-            pp.print(tok);
-            out << "END TOKEN" << sys::io::endl;
+        if (st != Fail)
             toks.push_back(tok);
-        } else
+        else
             return Fail;
         first = false;
         if (s.c == ';' || s.c == 0)
