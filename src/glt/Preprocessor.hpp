@@ -2,6 +2,7 @@
 #define PREPROCESSOR_HPP
 
 #include "bl/hashtable.hpp"
+#include "bl/string_view.hpp"
 #include "glt/conf.hpp"
 #include "pp/pimpl.hpp"
 #include "sys/io/Stream.hpp"
@@ -15,8 +16,7 @@ struct GLT_API Preprocessor
     {
         Preprocessor &processor;
         const bl::string name;
-        const char *data;
-        size_t size;
+        bl::string_view data;
 
         ContentContext(Preprocessor &proc, bl::string &&nam)
           : processor(proc), name(std::move(nam))
@@ -27,11 +27,8 @@ struct GLT_API Preprocessor
     {
         ContentContext content;
 
-        size_t lineLength;
-        size_t lineOffset;
-        size_t beginDirective; // size_t of first char in directive
-        size_t endDirective; // size_t of first char behind directive, so length
-                             // of directive = endDirective - beginDirective
+        bl::string_view line;
+        bl::string_view directive;
 
         DirectiveContext(Preprocessor &proc, bl::string &&name)
           : content(proc, std::move(name))

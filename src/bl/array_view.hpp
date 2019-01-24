@@ -16,48 +16,92 @@ struct array_view : public comparable<array_view<T>>
 
     static inline constexpr size_t npos = size_t(-1);
 
-    constexpr array_view() = default;
+    BL_inline constexpr array_view() noexcept = default;
 
     template<typename U = T>
-    constexpr array_view(U *es, size_t s) : _size(s), _elems(es)
+    BL_inline constexpr array_view(U *d, size_t s) noexcept : _data(d), _size(s)
     {}
 
-    constexpr array_view(const array_view &v) = default;
+    BL_inline constexpr array_view(const array_view &v) noexcept = default;
 
     template<typename U>
-    constexpr array_view(const array_view<U> &v)
-      : _size(v.size()), _elems(v.data())
+    BL_inline constexpr array_view(const array_view<U> &v) noexcept
+      : array_view(v.data(), v.size())
     {}
 
-    constexpr array_view(array_view &&) = default;
+    BL_inline constexpr array_view(array_view &&) noexcept = default;
 
-    constexpr bool empty() const { return _size == 0; }
+    BL_inline constexpr bool empty() const noexcept { return _size == 0; }
 
-    constexpr size_t size() const { return _size; }
+    BL_inline constexpr size_t size() const noexcept { return _size; }
 
-    constexpr T &operator[](size_t i) const { return _elems[i]; }
+    BL_inline constexpr T &operator[](size_t i) const { return _data[i]; }
 
-    array_view &operator=(const array_view &) = delete;
-    array_view &operator=(array_view &&) = delete;
+    BL_inline array_view &operator=(const array_view &) noexcept = default;
 
-    constexpr T *data() const { return _elems; }
-
-    constexpr array_view<const T> as_const() const { return { _elems, _size }; }
-
-    constexpr T *begin() const { return _elems; }
-    constexpr T *end() const { return _elems + _size; }
-
-    BL_constexpr array_view<T> slice(size_t start, size_t n) const
+    template<typename U>
+    BL_inline array_view &operator=(const array_view<U> &av) noexcept
     {
-        BL_ASSERT(start < size());
-        BL_ASSERT(start + n <= size());
-        return { _elems + start, n };
+        _data = av.data();
+        _size = av.size();
     }
 
-    BL_constexpr array_view<T> drop(size_t n) const
+    BL_inline constexpr T *data() const noexcept { return _data; }
+
+    BL_inline constexpr array_view<const T> as_const() const noexcept
     {
-        BL_ASSERT(n <= size());
-        return { _elems + n, _size - n };
+        return { data(), size() };
+    }
+
+    BL_inline constexpr T *begin() const noexcept { return data(); }
+    BL_inline constexpr T *end() const noexcept { return data() + size(); }
+
+    BL_inline constexpr T *beginp() const noexcept { return begin(); }
+    BL_inline constexpr T *endp() const noexcept { return end(); }
+
+    BL_inline BL_constexpr T &front() const noexcept
+    {
+        BL_ASSERT(!empty());
+        return *begin();
+    }
+
+    BL_inline BL_constexpr T &back() const noexcept
+    {
+        BL_ASSERT(!empty());
+        return endp()[-1];
+    }
+
+    BL_inline constexpr array_view<T> remove_prefix(size_t n) const noexcept
+    {
+        if (n <= size())
+            return { data() + n, size() - n };
+        else
+            return {};
+    }
+
+    BL_inline constexpr array_view<T> remove_suffix(size_t n) const noexcept
+    {
+        if (n <= size())
+            return { data(), size() - n };
+        else
+            return {};
+    }
+
+    BL_inline constexpr array_view<T> subspan(size_t offset) const noexcept
+    {
+        return remove_prefix(offset);
+    }
+
+    BL_inline BL_constexpr array_view<T> subspan(size_t offset, size_t n) const
+      noexcept
+    {
+        // FIXME: offset + n might overflow
+        if (offset + n <= size())
+            return { data() + offset, n };
+        else if (offset <= size())
+            return { data() + offset, size() - offset };
+        else
+            return {};
     }
 
     template<typename U>
@@ -77,8 +121,8 @@ struct array_view : public comparable<array_view<T>>
     }
 
 private:
-    size_t _size{};
-    T *_elems{};
+    T *_data;
+    size_t _size;
 };
 
 template<typename T>

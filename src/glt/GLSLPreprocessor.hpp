@@ -5,61 +5,45 @@
 #include "bl/vector.hpp"
 #include "glt/Preprocessor.hpp"
 #include "glt/ShaderCompiler.hpp"
+#include "pp/pimpl.hpp"
 #include "sys/fs.hpp"
 
 namespace glt {
 
-struct ProcessingState;
-
-struct ProcessingStateDeleter
-{
-    void operator()(ProcessingState *) noexcept;
-};
-
-struct GLT_API IncludeHandler : public Preprocessor::DirectiveHandler
-{
-    virtual void beginProcessing(
-      const Preprocessor::ContentContext &) final override;
-    virtual void directiveEncountered(
-      const Preprocessor::DirectiveContext &) final override;
-    virtual void endProcessing(
-      const Preprocessor::ContentContext &) final override;
-};
-
-struct GLT_API DependencyHandler : public Preprocessor::DirectiveHandler
-{
-    virtual void directiveEncountered(
-      const Preprocessor::DirectiveContext &) final override;
-};
-
 struct GLT_API GLSLPreprocessor : public Preprocessor
 {
-    const IncludePath &includePath;
-    ShaderIncludes &includes;
-    ShaderDependencies &dependencies;
+    // OpenGL's glShaderSource expects two arrays of strings and their lengths.
+    // To avoid concatenation we store it in this way from the beginning
 
     bl::vector<uint32_t> segLengths;
+
+    // pointers to data inside contents
     bl::vector<const char *> segments;
+
+    // owned source code data
     bl::vector<bl::string> contents;
-
-    bl::unique_ptr<ProcessingState, ProcessingStateDeleter> state;
-
-    IncludeHandler includeHandler;
-    DependencyHandler dependencyHandler;
 
     GLSLPreprocessor(const IncludePath &,
                      ShaderIncludes &,
                      ShaderDependencies &);
     ~GLSLPreprocessor();
 
-    void appendString(bl::string_view);
+    void appendString(bl::string);
 
     void addDefines(const PreprocessorDefinitions &);
 
     void processFileRecursively(bl::string &&);
 
-    // internal use only
+private:
     void advanceSegments(const Preprocessor::DirectiveContext &);
+
+    struct IncludeHandler;
+    friend struct IncludeHandler;
+
+    struct DependencyHandler;
+    friend struct DependencyHandler;
+
+    DECLARE_PIMPL(GLT_API, self);
 };
 
 } // namespace glt

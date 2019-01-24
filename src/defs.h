@@ -1,8 +1,6 @@
 #ifndef DEFS_H_INCLUDED
 #define DEFS_H_INCLUDED
 
-#define BL_DEBUG 1
-
 #include <hu/macros.h>
 #include <hu/os.h>
 
@@ -185,5 +183,18 @@
 #define BEGIN_NO_WARN_RESERVED_ID_MACRO                                        \
     PRAGMA_DIAGNOSTIC_PUSH PRAGMA_DISABLE_DIAG_RESERVED_ID_MACRO
 #define END_NO_WARN_RESERVED_ID_MACRO PRAGMA_DIAGNOSTIC_POP
+
+#define BL_DEBUG 1
+
+#ifndef NDEBUG
+BEGIN_NO_WARN_RESERVED_ID_MACRO
+#    ifndef _GLIBCXX_DEBUG
+#        define _GLIBCXX_DEBUG 1
+#    endif
+#    ifndef _LIBCPP_DEBUG
+#        define _LIBCPP_DEBUG 1
+#    endif
+END_NO_WARN_RESERVED_ID_MACRO
+#endif
 
 #endif

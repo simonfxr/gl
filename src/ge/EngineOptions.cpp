@@ -39,7 +39,9 @@ enum OptionCase
     AASamples,
     VSync,
     DisableRender,
-    DumpShaders
+    DumpShaders,
+    ErrorAbort,
+    ErrorExit
 };
 
 struct Option
@@ -88,9 +90,15 @@ const Option OPTIONS[] = {
       DisableRender,
       "disable calling the renderfunction" },
     { "--dump-shaders",
-      "BOOL",
+      nullptr,
       DumpShaders,
       "dump shader source after preprocessing" },
+    { "--error-exit", nullptr, ErrorExit, "exit program if an error occurs" },
+    { "--error-abort",
+      nullptr,
+      ErrorAbort,
+      "abort program if an error occurs" },
+
 };
 
 struct State
@@ -225,13 +233,16 @@ State::option(OptionCase opt, const char *arg)
         }
         return true;
     case DumpShaders:
-        if (!parse_bool(arg, options.dumpShaders)) {
-            CMDWARN("--dump-shaders: not a boolean option"_sv);
-            return false;
-        }
+        options.dumpShaders = true;
+        return true;
+    case ErrorExit:
+        err::set_error_mode(err::ErrorMode::Exit);
+        return true;
+    case ErrorAbort:
+        err::set_error_mode(err::ErrorMode::Abort);
         return true;
     }
-    FATAL_ERR("foo");
+    UNREACHABLE;
 }
 
 } // namespace

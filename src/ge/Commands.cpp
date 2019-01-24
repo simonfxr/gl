@@ -9,8 +9,6 @@
 #include "glt/utils.hpp"
 #include "util/string.hpp"
 
-#include <cassert>
-
 namespace ge {
 
 USE_STRING_LITERALS;
@@ -29,6 +27,23 @@ inline bl::shared_ptr<Command>
 operator+(CommandDecl &&decl, F f)
 {
     return makeCommand(decl.name, decl.descr, decay_stateless_functor(f));
+}
+
+bool
+checkStringArgs(const Event<CommandEvent> &ev,
+                bl::string_view name,
+                bl::array_view<const CommandArg> &args)
+{
+    int i = 0;
+    for (const auto &arg : args) {
+        ++i;
+        if (arg.type() != CommandArgType::String) {
+            ERR(ev.info.engine.out(),
+                string_concat(name, ": argument ", i, " not a string"));
+            return false;
+        }
+    }
+    return true;
 }
 
 struct InitCommandHandler : public EventHandler<InitEvent>
@@ -138,6 +153,8 @@ COMMAND("printGLInstanceStats",
 COMMAND("reloadShaders", "reload ShaderPrograms")
 (const Event<CommandEvent> &e, bl::array_view<const CommandArg> args)
 {
+    if (!checkStringArgs(e, "reloadShaders", args))
+        return;
 
     if (args.size() == 0) {
         e.info.engine.out() << "reloading shaders" << sys::io::endl;
@@ -281,10 +298,9 @@ COMMAND("initGLDebug", "initialize OpenGL debug output")
 COMMAND("ignoreGLDebugMessage",
         "for opengl vendor <vendor> add the message <id> to the list of "
         "ignored messages")
-(const Event<CommandEvent> &e, bl::array_view<const CommandArg> args)
+(const Event<CommandEvent> &e, const bl::string &vendor_str, int64_t id64)
 {
-    const bl::string &vendor_str = args[0].string;
-    auto id = static_cast<GLint>(args[1].integer);
+    auto id = static_cast<GLint>(id64);
     glt::OpenGLVendor vendor;
 
     if (vendor_str == "Nvidia"_sv)
@@ -306,7 +322,8 @@ COMMAND("ignoreGLDebugMessage",
 COMMAND("describe", "print a description of its parameters")
 (const Event<CommandEvent> &e, bl::array_view<const CommandArg> args)
 {
-
+    if (!checkStringArgs(e, "describe", args))
+        return;
     CommandProcessor &proc = e.info.engine.commandProcessor();
 
     for (const auto &arg : args) {
@@ -330,6 +347,8 @@ COMMAND("eval", "parse a string and execute it")
 COMMAND("load", "execute a script file")
 (const Event<CommandEvent> &ev, bl::array_view<const CommandArg> args)
 {
+    if (!checkStringArgs(ev, "load", args))
+        return;
     for (const auto &arg : args)
         ev.info.engine.commandProcessor().loadScript(arg.string);
 }
@@ -337,6 +356,8 @@ COMMAND("load", "execute a script file")
 COMMAND("addShaderPath", "add directories to the shader path")
 (const Event<CommandEvent> &e, bl::array_view<const CommandArg> args)
 {
+    if (!checkStringArgs(e, "addShaderPath", args))
+        return;
     for (const auto &arg : args)
         if (!e.info.engine.shaderManager().addShaderDirectory(arg.string, true))
             ERR(e.info.engine.out(), "not a directory: "_sv + arg.string);
@@ -345,6 +366,8 @@ COMMAND("addShaderPath", "add directories to the shader path")
 COMMAND("prependShaderPath", "add directories to the front of the shader path")
 (const Event<CommandEvent> &e, bl::array_view<const CommandArg> args)
 {
+    if (!checkStringArgs(e, "prependShaderPath", args))
+        return;
     for (size_t i = args.size(); i > 0; --i) {
         if (!e.info.engine.shaderManager().prependShaderDirectory(
               args[i - 1].string, true))
@@ -356,6 +379,8 @@ COMMAND("prependShaderPath", "add directories to the front of the shader path")
 COMMAND("removeShaderPath", "remove directories from the shader path")
 (const Event<CommandEvent> &e, bl::array_view<const CommandArg> args)
 {
+    if (!checkStringArgs(e, "removeShaderPath", args))
+        return;
     for (const auto &arg : args)
         e.info.engine.shaderManager().removeShaderDirectory(arg.string);
 }
@@ -387,7 +412,7 @@ COMMAND("postInit", "execute its argument command in the postInit hook")
 }
 
 COMMAND("startReplServer", "start a REPL server on the given port")
-(const Event<CommandEvent> &ev, bl::array_view<const CommandArg> args)
+(const Event<CommandEvent> &ev, int64_t port)
 {
     Engine &e = ev.info.engine;
     ReplServer &serv = e.replServer();
@@ -397,7 +422,6 @@ COMMAND("startReplServer", "start a REPL server on the given port")
         return;
     }
 
-    auto port = args[0].integer;
     auto p16 = uint16_t(port);
 
     if (port < 0 || p16 != port) {
@@ -421,18 +445,8 @@ END_COMMANDS
 void
 registerCommands(CommandProcessor &proc)
 {
-    for (const auto &comm : predefinedCommands()) {
-        assert(comm);
-        assert(comm->name().size() > 0);
+    for (const auto &comm : predefinedCommands())
         proc.define(comm);
-    }
-
-    // auto &out = sys::io::stdout();
-    // out << "registeredCommands: " << sys::io::endl;
-    // auto coms = proc.commands();
-    // for (auto& com : coms) {
-    //     out << com->name() << ", nparams: " <<
-    // }
 }
 
 } // namespace ge

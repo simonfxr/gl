@@ -11,6 +11,13 @@ namespace err {
 ERR_API void
 print_stacktrace(sys::io::OutStream &, int skip = 0);
 
+enum class ErrorMode : uint8_t
+{
+    Continue, // default
+    Exit,
+    Abort
+};
+
 struct Location
 {
     const char *file;
@@ -59,6 +66,11 @@ struct ErrorStaticCallSite
                         sys::io::OutStream &,
                         bl::string_view msg) noexcept;
 };
+
+ERR_API ErrorMode
+get_error_mode() noexcept;
+
+ERR_API ErrorMode set_error_mode(ErrorMode) noexcept;
 
 // we have some nearly identical overloads, this is because we try to generate
 // the minimal amount of code for calls to such functions. Taking pointers

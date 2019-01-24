@@ -272,10 +272,9 @@ compilePreprocessed(ShaderCompilerQueue &scq,
         logmsg << "compiling " << (name.empty() ? " <embedded code> " : name)
                << " ... ";
 
-        if (logmsg && true
+        if (logmsg &&
+            scq.shaderCompiler().shaderManager().dumpShadersEnabled()) {
 
-            // scq.shaderCompiler().shaderManager().dumpShadersEnabled()
-        ) {
             logmsg << sys::io::endl;
             logmsg << "BEGIN SHADER SOURCE[" << *shader << "]" << sys::io::endl;
             size_t len = 0;

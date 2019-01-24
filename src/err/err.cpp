@@ -220,6 +220,22 @@ print_stacktrace(sys::io::OutStream &out, int)
 
 #endif
 
+namespace {
+ErrorMode error_mode;
+}
+
+ErrorMode
+get_error_mode() noexcept
+{
+    return error_mode;
+}
+
+ErrorMode
+set_error_mode(ErrorMode mode) noexcept
+{
+    return bl::exchange(error_mode, mode);
+}
+
 void
 error(const Location *loc, LogLevel lvl, bl::string_view msg)
 {
@@ -239,8 +255,22 @@ error(const Location *loc,
       bl::string_view msg)
 {
     reportError(out, nullptr, *loc, lvl, msg);
-    if (lvl >= LogLevel::FatalError)
-        std::abort();
+    if (lvl < LL::Error)
+        return;
+
+    auto mode = error_mode;
+    if (lvl < LL::FatalError && mode == ErrorMode::Continue)
+        return;
+
+    switch (mode) {
+    case ErrorMode::Continue:
+        [[fallthrough]];
+    case ErrorMode::Exit:
+        exit(EXIT_FAILURE);
+    case ErrorMode::Abort:
+        abort();
+    }
+    UNREACHABLE;
 }
 
 void
@@ -285,7 +315,7 @@ reportError(sys::io::OutStream &out,
             bl::string_view mesg)
 {
     const char *prefix = type;
-    bool st = false;
+    bool trace = false;
 
     if (!prefix) {
         switch (lvl) {
@@ -294,19 +324,19 @@ reportError(sys::io::OutStream &out,
             break;
         case LL::Assertion:
             prefix = "ASSERTION failed";
-            st = true;
+            trace = true;
             break;
         case LL::Error:
             prefix = "ERROR";
-            st = true;
+            trace = true;
             break;
         case LL::ErrorOnce:
             prefix = "ERROR (only reported once)";
-            st = true;
+            trace = true;
             break;
         case LL::FatalError:
             prefix = "FATAL ERROR";
-            st = true;
+            trace = true;
             break;
         case LL::Info:
             prefix = "INFO";
@@ -326,7 +356,7 @@ reportError(sys::io::OutStream &out,
     }
     out << "  message: " << mesg << sys::io::endl;
 
-    if (st)
+    if (trace)
         print_stacktrace(out);
 }
 

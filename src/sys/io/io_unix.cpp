@@ -6,7 +6,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -167,7 +166,6 @@ open(bl::string_view path, HandleMode mode, HandleError &err)
     int fd;
     auto strpath = bl::string(path);
     RETRY_INTR(fd = ::open(strpath.c_str(), flags, 0777));
-    printf("open(%s) = %d\n", strpath.c_str(), fd);
     if (fd == -1) {
         err = convertErrno();
         return bl::nullopt;
@@ -238,7 +236,6 @@ close(Handle &h)
 {
     ASSERT(h);
     int ret;
-    printf("close(%d)\n", h._os.fd);
     RETRY_INTR(ret = ::close(h._os.fd));
     h._os = {};
     h._mode = {};

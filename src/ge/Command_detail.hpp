@@ -158,7 +158,7 @@ invoke_indexed_vararg(F &&f,
     f(ev,
       decayed_command_param_mapping<
         command_arg_seq_element<Is, CommandArgSeq<Ts...>>>::unwrap(args[Is])...,
-      args.drop(sizeof...(Is)));
+      args.remove_prefix(sizeof...(Is)));
 }
 
 template<typename F, bool VarArg, typename... Ts>

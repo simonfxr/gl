@@ -59,8 +59,7 @@ Preprocessor::process(bl::string_view data)
     const size_t size = data.size();
     DirectiveContext ctx(*this, bl::string(self->sourceName));
 
-    ctx.content.data = begin;
-    ctx.content.size = size;
+    ctx.content.data = data;
 
     for (auto &handler : self->handlers)
         handler.value->beginProcessing(ctx.content);
@@ -98,14 +97,11 @@ Preprocessor::process(bl::string_view data)
         while (directiveEnd < eol && !isspace(*directiveEnd))
             ++directiveEnd;
 
-        ctx.lineLength = eol - lineBegin;
-        ctx.lineOffset = lineBegin - begin;
-        ctx.beginDirective = directiveBegin - begin;
-        ctx.endDirective = directiveEnd - begin;
+        ctx.line = bl::string_view(lineBegin, eol - lineBegin);
+        ctx.directive =
+          bl::string_view(directiveBegin, directiveEnd - directiveBegin);
 
-        bl::string key(directiveBegin, size_t(directiveEnd - directiveBegin));
-
-        auto it = self->handlers.find(key);
+        auto it = self->handlers.find(ctx.directive);
         if (it != self->handlers.end())
             it->value->directiveEncountered(ctx);
         else

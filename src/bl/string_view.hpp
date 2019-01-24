@@ -16,11 +16,15 @@ struct basic_string_view
     using base_t = array_view<const CharT>;
 
     using base_t::begin;
+    using base_t::beginp;
     using base_t::data;
     using base_t::empty;
     using base_t::end;
+    using base_t::endp;
     using base_t::size;
     using base_t::operator[];
+    using base_t::back;
+    using base_t::front;
     using base_t::npos;
     using typename base_t::value_type;
 
@@ -44,6 +48,9 @@ struct basic_string_view
         return *this;
     }
 
+    BL_inline basic_string_view &operator=(const basic_string_view &) noexcept =
+      default;
+
     BL_constexpr size_t find(CharT ch, size_t pos = 0) const noexcept
     {
         if (empty() || pos >= size())
@@ -64,17 +71,40 @@ struct basic_string_view
         return p ? p - begin() : npos;
     }
 
-    BL_inline BL_constexpr basic_string_view substr(size_t start,
-                                                    size_t n) const noexcept
+    BL_inline constexpr basic_string_view remove_prefix(size_t n) const noexcept
     {
-        auto v = base_t::slice(start, n);
-        return { v.data(), v.size() };
+        auto av = base_t::remove_prefix(n);
+        return { av.data(), av.size() };
     }
 
-    BL_inline BL_constexpr basic_string_view substr(size_t start) const noexcept
+    BL_inline constexpr basic_string_view remove_suffix(size_t n) const noexcept
     {
-        auto v = base_t::drop(start);
-        return { v.data(), v.size() };
+        auto av = base_t::remove_prefix(n);
+        return { av.data(), av.size() };
+    }
+
+    BL_inline constexpr basic_string_view subspan(size_t start, size_t n) const
+      noexcept
+    {
+        auto av = base_t::subspan(start, n);
+        return { av.data(), av.size() };
+    }
+
+    BL_inline constexpr basic_string_view subspan(size_t start) const noexcept
+    {
+        auto av = base_t::subspan(start);
+        return { av.data(), av.size() };
+    }
+
+    BL_inline constexpr basic_string_view substr(size_t start, size_t n) const
+      noexcept
+    {
+        return subspan(start, n);
+    }
+
+    BL_inline constexpr basic_string_view substr(size_t start) const noexcept
+    {
+        return subspan(start);
     }
 
 #define DEF_STRING_BIN_OPS(ta, tb)                                             \
@@ -108,16 +138,7 @@ struct basic_string_view
 private:
     int str_compare(const basic_string_view &b) const noexcept
     {
-        const auto &a = *this;
-        auto n = a.size();
-        auto m = b.size();
-        auto nm = n <= m ? n : m;
-        for (size_t i = 0; i < nm; ++i) {
-            if (a[i] != b[i])
-                return a[i] < b[i] ? -1 : 1;
-        }
-
-        return n < m ? -1 : n > m ? 1 : 0;
+        return base_t::compare(b);
     }
 };
 
