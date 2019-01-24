@@ -18,7 +18,7 @@
 
 namespace ge {
 
-using namespace bl::literals;
+USE_STRING_LITERALS;
 
 namespace {
 
@@ -102,7 +102,7 @@ struct State
     bool option(OptionCase opt, const char *arg);
 };
 
-#define CMDWARN(msg) WARN("parsing options: "_s + (msg))
+#define CMDWARN(msg) WARN("parsing options: "_sv + (msg))
 
 bool
 str_eq(const char *a, const char *b)
@@ -155,7 +155,7 @@ State::option(OptionCase opt, const char *arg)
         return true;
     case CD:
         if (!parse_bool(arg, options.defaultCD)) {
-            CMDWARN("--cd: not a boolean option");
+            CMDWARN("--cd: not a boolean option"_sv);
             return false;
         }
         return true;
@@ -172,7 +172,7 @@ State::option(OptionCase opt, const char *arg)
         int maj, min;
         if (sscanf(arg, "%d.%d", &maj, &min) != 2 || maj < 0 || min < 0 ||
             maj > 9 || min > 9) {
-            CMDWARN("invalid OpenGL Version: " + bl::string(arg));
+            CMDWARN("invalid OpenGL Version: "_sv + bl::string(arg));
             return false;
         }
         options.window.settings.majorVersion = unsigned(maj);
@@ -185,27 +185,27 @@ State::option(OptionCase opt, const char *arg)
         } else if (str_eq(arg, "compat") || str_eq(arg, "compatibility")) {
             options.window.settings.coreProfile = false;
         } else {
-            CMDWARN("--gl-profile: invalid OpenGL Profile type: " +
+            CMDWARN("--gl-profile: invalid OpenGL Profile type: "_sv +
                     bl::string(arg));
             return false;
         }
         return true;
     case GLDebug:
         if (!parse_bool(arg, options.window.settings.debugContext)) {
-            CMDWARN("--gl-debug: not a boolean option");
+            CMDWARN("--gl-debug: not a boolean option"_sv);
             return false;
         }
         return true;
     case GLTrace:
         if (!parse_bool(arg, options.traceOpenGL)) {
-            CMDWARN("--gl-trace: not a boolean option");
+            CMDWARN("--gl-trace: not a boolean option"_sv);
             return false;
         }
         return true;
     case AASamples:
         unsigned samples;
         if (sscanf(arg, "%u", &samples) != 1) {
-            CMDWARN("--aa-samples: not an integer");
+            CMDWARN("--aa-samples: not an integer"_sv);
             return false;
         }
 
@@ -213,20 +213,20 @@ State::option(OptionCase opt, const char *arg)
         return true;
     case VSync: {
         if (!parse_bool(arg, options.window.vsync)) {
-            CMDWARN("--vsync: not a boolean option");
+            CMDWARN("--vsync: not a boolean option"_sv);
             return false;
         }
         return true;
     }
     case DisableRender:
         if (!parse_bool(arg, options.disableRender)) {
-            CMDWARN("--disable-render: not a boolean option");
+            CMDWARN("--disable-render: not a boolean option"_sv);
             return false;
         }
         return true;
     case DumpShaders:
         if (!parse_bool(arg, options.dumpShaders)) {
-            CMDWARN("--dump-shaders: not a boolean option");
+            CMDWARN("--dump-shaders: not a boolean option"_sv);
             return false;
         }
         return true;
@@ -290,7 +290,8 @@ EngineOptions::parse(int *argcp, char ***argvp)
                         err = !state.option(opt.option_case, nullptr);
                     } else if (i + 1 >= argc) {
                         skip = 1;
-                        CMDWARN(bl::string(opt.option) + " missing argument");
+                        CMDWARN(bl::string(opt.option) +
+                                " missing argument"_sv);
                     } else {
                         skip = 2;
                         err = !state.option(opt.option_case, argv[i + 1]);

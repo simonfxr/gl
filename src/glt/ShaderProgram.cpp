@@ -2,6 +2,7 @@
 
 #include "bl/enumerate.hpp"
 #include "bl/range.hpp"
+#include "bl/string_view.hpp"
 #include "err/err.hpp"
 #include "err/log.hpp"
 #include "glt/ShaderCompiler.hpp"
@@ -17,6 +18,9 @@
 #define RAISE_ERR(sender, ec, msg) LOG_RAISE_ERROR(sender, ec, msg)
 
 namespace err {
+
+using namespace bl::literals;
+
 template<>
 struct LogTraits<glt::ShaderProgram>
 {
@@ -224,9 +228,11 @@ ShaderProgram::addShaderFile(const bl::string &file0,
     if (!absolute) {
         file = sys::fs::lookup(self->sm.shaderDirectories(), file);
         if (file.empty()) {
-            RAISE_ERR(*this,
-                      ShaderProgramError::FileNotInPath,
-                      "couldnt find file in shader directories: " + file);
+            RAISE_ERR(
+              *this,
+              ShaderProgramError::FileNotInPath,
+              bl::string_view("couldnt find file in shader directories: ") +
+                file);
             return false;
         }
     }
@@ -265,7 +271,9 @@ ShaderProgram::addShaderFilePair(const bl::string &vert_file,
 bool
 ShaderProgram::addShaderFilePair(const bl::string &basename, bool absolute)
 {
-    return addShaderFilePair(basename + ".vert", basename + ".frag", absolute);
+    return addShaderFilePair(string_concat(basename, ".vert"),
+                             string_concat(basename, ".frag"),
+                             absolute);
 }
 
 bool

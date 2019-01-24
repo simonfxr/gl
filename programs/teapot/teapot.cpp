@@ -10,6 +10,7 @@
 
 #include "defs.h"
 
+#include "bl/string_view.hpp"
 #include "bl/vector.hpp"
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"
@@ -61,6 +62,7 @@ using CubeMeshOf = glt::Mesh<T>;
 
 using namespace math;
 using namespace ge;
+USE_STRING_LITERALS;
 
 DEF_GL_MAPPED_TYPE(Vertex,
                    (math::point3_t, position),
@@ -493,7 +495,7 @@ Anim::setupTeapotShader(const bl::string &progname,
     glt::RenderManager &rm = engine.renderManager();
     auto prog = engine.shaderManager().program(progname);
     if (!prog) {
-        ASSERT(prog, "undefined program: " + progname);
+        ASSERT(prog, "undefined program: "_sv + progname);
         return;
     }
 
@@ -703,7 +705,7 @@ Anim::loadResources(const bl::string &dir)
 
     int w, h;
     uint32_t *wood_data;
-    auto file = unique_file(fopen((data_dir + "/wood.bmp").c_str(), "rb"));
+    auto file = unique_file(fopen((data_dir + "/wood.bmp"_sv).c_str(), "rb"));
     if (!file) {
         ERR("couldnt open data/wood.bmp");
         return;
@@ -727,9 +729,10 @@ Anim::loadResources(const bl::string &dir)
     free(wood_data);
     woodTexture.filterMode(glt::TextureSampler::FilterLinear);
 
-    auto nfaces = parse_sply((data_dir + "/teapot.sply").c_str(), teapotModel);
+    auto nfaces =
+      parse_sply((data_dir + "/teapot.sply"_sv).c_str(), teapotModel);
     if (nfaces < 0) {
-        ERR("couldnt parse teapot model");
+        ERR("couldnt parse teapot model"_sv);
         return;
     }
     sys::io::stdout() << "parsed teapot model: " << nfaces << " vertices"

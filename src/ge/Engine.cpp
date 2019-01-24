@@ -11,6 +11,7 @@
 
 namespace ge {
 
+USE_STRING_LITERALS;
 using math::real;
 
 struct Engine::Data : public GameLoop::Game
@@ -203,7 +204,7 @@ Engine::run(const EngineOptions &opts)
 
     if (!wd.empty()) {
         if (!sys::fs::cwd(wd)) {
-            ERR("couldnt change into directory: " + wd);
+            ERR("couldnt change into directory: "_sv + wd);
             return 1;
         }
     }
@@ -221,14 +222,14 @@ Engine::run(const EngineOptions &opts)
 
     for (const auto &scriptDir : opts.scriptDirs) {
         if (!commandProcessor().addScriptDirectory(scriptDir)) {
-            ERR("script directory not found: " + scriptDir);
+            ERR("script directory not found: "_sv + scriptDir);
             //            return 1;
         }
     }
 
     for (const auto &shaderDir : opts.shaderDirs) {
         if (!shaderManager().addShaderDirectory(shaderDir)) {
-            ERR("shader directory not found: " + shaderDir);
+            ERR("shader directory not found: "_sv + shaderDir);
             //            return 1;
         }
     }
@@ -249,7 +250,7 @@ Engine::run(const EngineOptions &opts)
             script = sys::fs::dropExtension(script);
 
         if (script.empty() ||
-            !commandProcessor().loadScript(script + ".script"))
+            !commandProcessor().loadScript(script + ".script"_sv))
             return 1;
     }
 
@@ -267,7 +268,7 @@ Engine::run(const EngineOptions &opts)
         }
 
         if (!ok) {
-            ERR(command + " failed: " + i.snd());
+            ERR(command + " failed: "_sv + i.snd());
             return 1;
         }
     }

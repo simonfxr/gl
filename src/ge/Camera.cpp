@@ -10,6 +10,8 @@ using namespace math;
 
 namespace ge {
 
+USE_STRING_LITERALS;
+
 struct Handlers
 {
     bl::shared_ptr<EventHandler<MouseMoved>> mouseMoved;
@@ -157,7 +159,7 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
 
     auto opt_stream = sys::io::HandleStream::open(*path, sys::io::HM_WRITE);
     if (!opt_stream) {
-        ERR("couldnt open file: " + *path);
+        ERR("couldnt open file: "_sv + *path);
         return;
     }
     size_t s = sizeof frame;
@@ -180,7 +182,7 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
 
     auto opt_stream = sys::io::HandleStream::open(*path, sys::io::HM_READ);
     if (!opt_stream) {
-        WARN("couldnt open file: " + *path);
+        WARN("couldnt open file: "_sv + *path);
         return;
     }
 
@@ -350,7 +352,7 @@ Camera::registerWith(Engine &e)
 {
     self->engine = &e;
     if (self->frame_path.empty())
-        self->frame_path = e.programName() + ".cam";
+        self->frame_path = e.programName() + ".cam"_sv;
     e.events().beforeRender.reg(self->handlers.beforeRender);
     self->engine->events().handleInput.reg(self->handlers.handleInput);
     if (self->mouse_look) {

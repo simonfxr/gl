@@ -34,6 +34,7 @@ struct LogTraits<glt::ShaderCompilerQueue>
 
 namespace glt {
 
+USE_STRING_LITERALS;
 PP_DEF_ENUM_IMPL(GLT_SHADER_COMPILER_ERROR_ENUM_DEF)
 
 namespace {
@@ -200,17 +201,17 @@ hash(bl::string_view source)
 
 struct ShaderTypeMapping
 {
-    const char *fileExtension;
+    const bl::string_view fileExtension;
     ShaderType type;
     GLenum glType;
 };
 
 const ShaderTypeMapping shaderTypeMappings[] = {
-    { "frag", ShaderType::FragmentShader, GL_FRAGMENT_SHADER },
-    { "vert", ShaderType::VertexShader, GL_VERTEX_SHADER },
-    { "geom", ShaderType::GeometryShader, GL_GEOMETRY_SHADER },
-    { "tctl", ShaderType::TesselationControl, GL_TESS_CONTROL_SHADER },
-    { "tevl", ShaderType::TesselationEvaluation, GL_TESS_EVALUATION_SHADER }
+    { "frag"_sv, ShaderType::FragmentShader, GL_FRAGMENT_SHADER },
+    { "vert"_sv, ShaderType::VertexShader, GL_VERTEX_SHADER },
+    { "geom"_sv, ShaderType::GeometryShader, GL_GEOMETRY_SHADER },
+    { "tctl"_sv, ShaderType::TesselationControl, GL_TESS_CONTROL_SHADER },
+    { "tevl"_sv, ShaderType::TesselationEvaluation, GL_TESS_EVALUATION_SHADER }
 };
 
 bool

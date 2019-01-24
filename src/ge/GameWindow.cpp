@@ -11,9 +11,10 @@
 
 #include "bl/vector.hpp"
 #include <GLFW/glfw3.h>
-#include <limits>
 
 namespace ge {
+
+USE_STRING_LITERALS;
 
 struct GameWindow::Data
 {
@@ -77,7 +78,7 @@ void
 glfw_error_callback(int error, const char *desc)
 {
     UNUSED(error);
-    ERR("GLFW error: " + bl::string(desc));
+    ERR("GLFW error: "_sv + bl::string_view(desc));
 }
 
 void

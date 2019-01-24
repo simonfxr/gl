@@ -1,14 +1,17 @@
 #include "sys/clock.hpp"
 
-#include "err/err.hpp"
-
+#include "bl/limits.hpp"
 #include "bl/string.hpp"
-#include <cerrno>
-#include <cmath>
-#include <cstring>
-#include <ctime>
+#include "err/err.hpp"
+#include "util/string.hpp"
+
+#include <errno.h>
+#include <string.h>
+#include <time.h>
 
 namespace sys {
+
+USE_STRING_LITERALS;
 
 namespace {
 double
@@ -20,8 +23,8 @@ getTime()
         if (errno == EINTR) {
             errno = 0;
         } else {
-            ERR(bl::string("clock_gettime failed") + strerror(errno));
-            return NAN;
+            ERR(string_concat("clock_gettime failed", strerror(errno)));
+            return bl::numeric_limits<double>::quiet_NaN();
         }
     }
 
@@ -48,7 +51,7 @@ sleep(double secs) noexcept
             errno = 0;
             tv = rmtv;
         } else {
-            ERR(bl::string("sleep failed: ") + strerror(errno));
+            ERR(string_concat("sleep failed: ", strerror(errno)));
         }
     }
 }

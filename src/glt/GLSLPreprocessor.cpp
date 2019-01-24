@@ -55,7 +55,7 @@ checkSegment(GLSLPreprocessor &proc, const char *s, size_t len)
 {
     ASSERT(len < 8000);
     for (const auto &str : proc.contents) {
-        if (str.beginp() <= str && str < str.endp()) {
+        if (str.beginp() <= s && s < str.endp()) {
             ASSERT(s + len <= str.endp());
         }
     }

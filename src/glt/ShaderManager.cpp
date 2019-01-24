@@ -8,6 +8,8 @@
 
 namespace glt {
 
+USE_STRING_LITERALS;
+
 PP_DEF_ENUM_IMPL(GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF);
 PP_DEF_ENUM_IMPL(GLT_SHADER_PROFILE_ENUM_DEF);
 PP_DEF_ENUM_IMPL(GLT_SHADER_TYPE_ENUM_DEF);
@@ -103,7 +105,7 @@ ShaderManager::program(const bl::string &name) const
     auto it = self->programs.find(name);
     if (it != self->programs.end())
         return it->value;
-    ERR("program not found: " + name);
+    ERR("program not found: "_sv + name);
     return {};
 }
 

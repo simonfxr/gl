@@ -24,20 +24,27 @@ struct basic_string_view
     using base_t::npos;
     using typename base_t::value_type;
 
-    constexpr basic_string_view() = default;
+    BL_inline constexpr basic_string_view() noexcept = default;
 
-    constexpr basic_string_view(const basic_string_view &) = default;
-    constexpr basic_string_view(basic_string_view &&) = default;
+    BL_inline constexpr basic_string_view(const basic_string_view &) noexcept =
+      default;
+    BL_inline constexpr basic_string_view(basic_string_view &&) noexcept =
+      default;
 
-    constexpr basic_string_view(const CharT *str)
+    BL_inline constexpr basic_string_view(const CharT *str) noexcept
       : basic_string_view(str, find_sentinel(str, CharT{}) - str)
     {}
 
-    constexpr basic_string_view(const CharT *str, size_t n) : base_t(str, n) {}
+    BL_inline constexpr basic_string_view(const CharT *str, size_t n) noexcept
+      : base_t(str, n)
+    {}
 
-    constexpr array_view<const CharT> array_view() const { return *this; }
+    BL_inline constexpr array_view<const CharT> array_view() const noexcept
+    {
+        return *this;
+    }
 
-    BL_constexpr size_t find(CharT ch, size_t pos = 0) const
+    BL_constexpr size_t find(CharT ch, size_t pos = 0) const noexcept
     {
         if (empty() || pos >= size())
             return npos;
@@ -45,7 +52,7 @@ struct basic_string_view
         return p == end() ? npos : p - begin();
     }
 
-    BL_constexpr size_t rfind(CharT ch, size_t pos = npos) const
+    BL_constexpr size_t rfind(CharT ch, size_t pos = npos) const noexcept
     {
         if (empty())
             return npos;
@@ -57,13 +64,14 @@ struct basic_string_view
         return p ? p - begin() : npos;
     }
 
-    BL_constexpr basic_string_view substr(size_t start, size_t n) const
+    BL_inline BL_constexpr basic_string_view substr(size_t start,
+                                                    size_t n) const noexcept
     {
         auto v = base_t::slice(start, n);
         return { v.data(), v.size() };
     }
 
-    BL_constexpr basic_string_view substr(size_t start) const
+    BL_inline BL_constexpr basic_string_view substr(size_t start) const noexcept
     {
         auto v = base_t::drop(start);
         return { v.data(), v.size() };
@@ -71,22 +79,20 @@ struct basic_string_view
 
 #define DEF_STRING_BIN_OPS(ta, tb)                                             \
     template<typename Ch>                                                      \
-    friend basic_string<Ch> operator+(ta a, tb b)                              \
+    BL_inline friend basic_string<Ch> operator+(ta a, tb b) noexcept           \
     {                                                                          \
         basic_string<Ch> ret = a;                                              \
         ret += b;                                                              \
         return ret;                                                            \
     }                                                                          \
     template<typename Ch>                                                      \
-    friend int compare(ta a, tb b)                                             \
+    BL_inline friend constexpr int compare(ta a, tb b) noexcept                \
     {                                                                          \
         return basic_string_view<Ch>(a).str_compare(basic_string_view<Ch>(b)); \
     }                                                                          \
     BL_DEF_REL_OPS_VIA(template<typename Ch> friend, ta, tb, compare(a, b))
 
     DEF_STRING_BIN_OPS(basic_string_view<Ch>, basic_string_view<Ch>)
-    // DEF_STRING_BIN_OPS(basic_string_view<Ch>, const Ch *)
-    // DEF_STRING_BIN_OPS(const Ch *, basic_string_view<Ch>)
 
     constexpr size_t hash() const noexcept
     {
@@ -100,7 +106,7 @@ struct basic_string_view
 #undef DEF_STRING_BIN_OPS
 
 private:
-    int str_compare(const basic_string_view &b) const
+    int str_compare(const basic_string_view &b) const noexcept
     {
         const auto &a = *this;
         auto n = a.size();
@@ -137,17 +143,17 @@ struct hash<basic_string_view<CharT>>
 };
 
 namespace literals {
-inline string_view operator"" _sv(const char *s, unsigned long n)
+BL_inline constexpr string_view operator"" _sv(const char *s, unsigned long n)
 {
     return string_view(s, n);
 }
 
-inline wstring_view operator"" _sv(const wchar_t *s, unsigned long n)
+BL_inline constexpr wstring_view operator"" _sv(const wchar_t *s,
+                                                unsigned long n)
 {
     return wstring_view(s, n);
 }
 } // namespace literals
-
 } // namespace bl
 
 #endif

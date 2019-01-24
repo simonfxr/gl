@@ -8,6 +8,8 @@
 
 namespace ge {
 
+USE_STRING_LITERALS;
+
 namespace {
 
 enum State : uint8_t
@@ -164,7 +166,7 @@ parseKeycombo(ParseState &s, CommandArg &tok)
         if (auto opt_kcode = parseKeyCode(sym)) {
             k.code = *opt_kcode;
         } else {
-            PARSE_ERROR(s, "invalid key-symbol: " + sym);
+            PARSE_ERROR(s, "invalid key-symbol: "_sv + sym);
             return Fail;
         }
 

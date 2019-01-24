@@ -12,9 +12,11 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "opengl.hpp"
+#include "util/string.hpp"
 
 namespace glt {
 
+USE_STRING_LITERALS;
 using namespace math;
 
 namespace {
@@ -27,13 +29,13 @@ gltype(const T &x) -> gl_mapped_type_t<T>
 }
 
 #if ENABLE_GLDEBUG_P
-bl::string
+bl::string_view
 descGLType(GLenum ty)
 {
 
 #    define CASE(ty)                                                           \
     case ty:                                                                   \
-        return #ty;
+        return PP_CAT(PP_TOSTR(ty), _sv);
 
     switch (ty) {
         CASE(GL_FLOAT);
@@ -224,7 +226,7 @@ setUniform(bool mandatory,
 
     if (locationi == -1) {
         if (mandatory)
-            ERR("unknown uniform: " + name);
+            ERR("unknown uniform: "_sv + name);
         return;
     }
 
@@ -244,11 +246,14 @@ setUniform(bool mandatory,
         if (actual_typei != -1) {
             auto actual_type = GLenum(actual_typei);
             if (actual_type != type) {
-                bl::string err =
-                  "uniform \"" + name +
-                  "\": types dont match, got: " + descGLType(type) +
-                  ", expected: " + descGLType(actual_type);
-                ERR(err.c_str());
+                ERR(string_concat("uniform \"",
+                                  name,
+                                  "\": types dont match, got: ",
+                                  descGLType(type),
+                                  ", expected: ",
+                                  descGLType(actual_type))
+
+                );
                 return;
             }
         }

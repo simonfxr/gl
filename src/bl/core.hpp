@@ -3,6 +3,8 @@
 
 #include "defs.h"
 
+#define BL_inline HU_FORCE_INLINE inline
+
 #ifdef __GLIBCXX__
 #    include <bits/move.h>
 #elif defined(_LIBCPP_VERSION)

@@ -35,6 +35,8 @@
 
 #define FORCE_INLINE HU_FORCE_INLINE
 
+#define USE_STRING_LITERALS using namespace bl::literals
+
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof *(x))
 
 #ifndef NDEBUG

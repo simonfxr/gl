@@ -13,6 +13,7 @@
 
 namespace ge {
 
+USE_STRING_LITERALS;
 using namespace math;
 
 namespace {
@@ -286,11 +287,11 @@ COMMAND("ignoreGLDebugMessage",
     auto id = static_cast<GLint>(args[1].integer);
     glt::OpenGLVendor vendor;
 
-    if (vendor_str == "Nvidia")
+    if (vendor_str == "Nvidia"_sv)
         vendor = glt::OpenGLVendor::Nvidia;
-    else if (vendor_str == "ATI")
+    else if (vendor_str == "ATI"_sv)
         vendor = glt::OpenGLVendor::ATI;
-    else if (vendor_str == "Intel")
+    else if (vendor_str == "Intel"_sv)
         vendor = glt::OpenGLVendor::Intel;
     else
         vendor = glt::OpenGLVendor::Unknown;
@@ -338,7 +339,7 @@ COMMAND("addShaderPath", "add directories to the shader path")
 {
     for (const auto &arg : args)
         if (!e.info.engine.shaderManager().addShaderDirectory(arg.string, true))
-            ERR(e.info.engine.out(), "not a directory: " + arg.string);
+            ERR(e.info.engine.out(), "not a directory: "_sv + arg.string);
 }
 
 COMMAND("prependShaderPath", "add directories to the front of the shader path")
@@ -347,7 +348,8 @@ COMMAND("prependShaderPath", "add directories to the front of the shader path")
     for (size_t i = args.size(); i > 0; --i) {
         if (!e.info.engine.shaderManager().prependShaderDirectory(
               args[i - 1].string, true))
-            ERR(e.info.engine.out(), "not a directory: " + args[i - 1].string);
+            ERR(e.info.engine.out(),
+                "not a directory: "_sv + args[i - 1].string);
     }
 }
 

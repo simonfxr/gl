@@ -49,7 +49,7 @@ struct basic_string : private vector<CharT>
 
     size_t find(CharT ch, size_t pos = 0) const { return view().find(ch, pos); }
 
-    size_t rfind(CharT ch, size_t pos = 0) const
+    size_t rfind(CharT ch, size_t pos = npos) const
     {
         return view().rfind(ch, pos);
     }
@@ -106,9 +106,7 @@ struct basic_string : private vector<CharT>
 
     DEF_STRING_BIN_OPS(const basic_string<Ch> &, const basic_string<Ch> &)
     DEF_STRING_BIN_OPS(const basic_string<Ch> &, basic_string_view<Ch>)
-    // DEF_STRING_BIN_OPS(const basic_string<Ch> &, const Ch *)
     DEF_STRING_BIN_OPS(basic_string_view<Ch>, const basic_string<Ch> &)
-    // DEF_STRING_BIN_OPS(const Ch *, const basic_string<Ch> &)
 
 #undef DEF_STRING_BIN_OP
 };
@@ -137,7 +135,6 @@ inline wstring operator"" _s(const wchar_t *s, unsigned long n)
     return wstring(s, n);
 }
 } // namespace literals
-
 } // namespace bl
 
 #endif

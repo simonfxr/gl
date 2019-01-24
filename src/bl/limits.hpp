@@ -1,7 +1,7 @@
 #ifndef BL_LIMITS_HPP
 #define BL_LIMITS_HPP
 
-#include "defs.h"
+#include "bl/core.hpp"
 
 namespace bl {
 
@@ -33,18 +33,28 @@ DEF_SINT_LIMITS(int64_t, uint64_t);
 template<>
 struct numeric_limits<float>
 {
-    FORCE_INLINE static inline constexpr float max() noexcept
+    BL_inline static constexpr float max() noexcept
     {
         return float(3.40282346638528859811704183484516925e+38L);
+    }
+
+    BL_inline static constexpr float quiet_NaN() noexcept
+    {
+        return __builtin_nanf("");
     }
 };
 
 template<>
 struct numeric_limits<double>
 {
-    FORCE_INLINE static inline constexpr double max() noexcept
+    BL_inline static constexpr double max() noexcept
     {
         return double(1.79769313486231570814527423731704357e+308L);
+    }
+
+    BL_inline static constexpr double quiet_NaN() noexcept
+    {
+        return __builtin_nan("");
     }
 };
 

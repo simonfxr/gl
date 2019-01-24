@@ -12,6 +12,8 @@
 
 namespace ge {
 
+USE_STRING_LITERALS;
+
 using CommandMap = bl::hashtable<bl::string_view, CommandPtr>;
 
 namespace {
@@ -146,7 +148,7 @@ CommandProcessor::exec(bl::array_view<CommandArg> args)
     if (!comm) {
         comm = command(*com_name);
         if (!comm) {
-            ERR(engine().out(), "unknown command: " + *com_name);
+            ERR(engine().out(), "unknown command: "_sv + *com_name);
             return false;
         }
     }
@@ -307,7 +309,7 @@ CommandProcessor::loadStream(sys::io::InStream &inp, bl::string_view inp_name)
         ok = tokenize(state, args);
         if (!ok) {
             if (state.in_state != sys::io::StreamResult::EOF)
-                ERR(engine().out(), "parsing failed: " + state.filename);
+                ERR(engine().out(), "parsing failed: "_sv + state.filename);
             else
                 ok = true;
             done = true;
