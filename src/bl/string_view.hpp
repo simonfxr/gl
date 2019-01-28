@@ -15,6 +15,14 @@ struct basic_string_view
 {
     using base_t = array_view<const CharT>;
 
+    using typename base_t::const_iterator;
+    using typename base_t::const_reference;
+    using typename base_t::difference_type;
+    using typename base_t::iterator;
+    using typename base_t::reference;
+    using typename base_t::size_type;
+    using typename base_t::value_type;
+
     using base_t::begin;
     using base_t::beginp;
     using base_t::data;
@@ -26,7 +34,6 @@ struct basic_string_view
     using base_t::back;
     using base_t::front;
     using base_t::npos;
-    using typename base_t::value_type;
 
     BL_inline constexpr basic_string_view() noexcept = default;
 

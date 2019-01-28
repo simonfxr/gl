@@ -13,6 +13,12 @@ template<typename T>
 struct array_view : public comparable<array_view<T>>
 {
     using value_type = T;
+    using reference = T &;
+    using const_reference = const T &;
+    using iterator = T *;
+    using const_iterator = const T *;
+    using size_type = size_t;
+    using difference_type = ptrdiff_t;
 
     static inline constexpr size_t npos = size_t(-1);
 

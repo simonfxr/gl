@@ -23,6 +23,15 @@ move(InputIt first, InputIt last, OutputIt d_first)
     return d_first;
 }
 
+template<typename AssignTag, typename InputIt, typename OutputIt>
+inline constexpr OutputIt
+assign(AssignTag assign_tag, InputIt first, InputIt last, OutputIt d_first)
+{
+    for (; first != last; ++first, ++d_first)
+        assign(assign_tag, *d_first, *first);
+    return d_first;
+}
+
 template<typename InputIt, typename T>
 inline constexpr InputIt
 find(InputIt first, InputIt last, const T &value)

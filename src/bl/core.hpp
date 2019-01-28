@@ -1,9 +1,7 @@
 #ifndef BL_CORE_HPP
 #define BL_CORE_HPP
 
-#include "defs.h"
-
-#define BL_inline HU_FORCE_INLINE inline
+#include "bl/config.hpp"
 
 #ifdef __GLIBCXX__
 #    include <bits/move.h>
@@ -15,8 +13,16 @@
 
 namespace bl {
 
+struct assign_tag_t
+{};
+
+struct move_tag_t : assign_tag_t
+{};
+struct copy_tag_t : assign_tag_t
+{};
+
 template<typename T, typename U = T>
-HU_FORCE_INLINE inline constexpr T
+BL_inline constexpr T
 exchange(T &place, U &&nval)
 {
     T oval = std::move(place);
@@ -25,14 +31,14 @@ exchange(T &place, U &&nval)
 }
 
 template<typename T>
-HU_FORCE_INLINE inline constexpr const T &
+BL_inline constexpr const T &
 min(const T &a, const T &b)
 {
     return (b < a) ? b : a;
 }
 
 template<typename T>
-HU_FORCE_INLINE inline constexpr const T &
+BL_inline constexpr const T &
 max(const T &a, const T &b)
 {
     return (a < b) ? b : a;
@@ -43,7 +49,7 @@ inline T
 declval(); /* undefined */
 
 template<typename T>
-constexpr T *
+BL_inline constexpr T *
 addressof(T &arg) noexcept
 {
     return __builtin_addressof(arg);
@@ -52,6 +58,34 @@ addressof(T &arg) noexcept
 template<typename T>
 const T *
 addressof(const T &&) = delete;
+
+template<typename T, typename U>
+inline constexpr T &
+assign(copy_tag_t, T &dest, U &&src)
+{
+    return dest = std::forward<U>(src);
+}
+
+template<typename T, typename U>
+inline constexpr T &
+assign(move_tag_t, T &dest, U &&src)
+{
+    return dest = std::move(src);
+}
+
+template<typename T, typename U>
+inline constexpr T &
+initialize(copy_tag_t, T *dest, U &&src)
+{
+    return *new (dest) T(std::forward<U>(src));
+}
+
+template<typename T, typename U>
+inline constexpr T &
+initialize(move_tag_t, T *dest, U &&src)
+{
+    return *new (dest) T(std::move(src));
+}
 
 } // namespace bl
 
