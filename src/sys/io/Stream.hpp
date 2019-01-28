@@ -177,10 +177,10 @@ private:
 struct SYS_API CooperativeInStream : public InStream
 {
     InStream *in;
-    Fiber *io_handler; // switched to on blocking reads
-    Fiber *stream_user;
+    Fiber &io_handler; // switched to on blocking reads
+    Fiber &stream_user;
 
-    CooperativeInStream(InStream *in, Fiber *ioh, Fiber *su);
+    CooperativeInStream(InStream *in, Fiber &ioh, Fiber &su);
 
 protected:
     virtual StreamResult basic_close_in(bool flush_only) final override;

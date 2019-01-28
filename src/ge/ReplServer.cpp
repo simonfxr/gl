@@ -9,6 +9,8 @@
 namespace ge {
 
 using namespace sys::io;
+using namespace sys;
+using sys::Fiber;
 
 namespace {
 
@@ -30,7 +32,7 @@ struct Client
 {
     int id;
     Fiber parser_fiber;
-    Fiber *client_fiber;
+    Fiber &client_fiber;
     ParsingState state;
     HandleStream hstream;
     CooperativeInStream in_stream;
@@ -43,50 +45,45 @@ struct Client
 
     bool handle(Engine & /*e*/);
     bool handleIO(Engine & /*e*/);
+
+    void run_parser();
 };
 
-void
-fiber_cleanup(Fiber *self, void *args)
-{
-    ON_DEBUG(INFO("fiber_cleanup()"));
-    fiber_switch(self, reinterpret_cast<Fiber *>(args));
-}
+// void
+// fiber_cleanup(Fiber *self, void *args)
+// {
+//     ON_DEBUG(INFO("fiber_cleanup()"));
+//     fiber_switch(self, reinterpret_cast<Fiber *>(args));
+// }
 
 void
-run_parser_fiber(void *args)
+Client::run_parser()
 {
-    Client *c = reinterpret_cast<Client *>(args);
-    while (c->state != ParsingStop) {
-        bool ok = tokenize(c->parse_state, c->statement);
+    while (state != ParsingStop) {
+        bool ok = tokenize(parse_state, statement);
         if (ok) {
-            c->state = ParsingGotStatement;
+            state = ParsingGotStatement;
         } else {
-            c->state = ParsingYield;
-            fiber_switch(&c->parser_fiber, c->client_fiber);
-            if (c->state == ParsingStop)
+            state = ParsingYield;
+            Fiber::switch_to(client_fiber);
+            if (state == ParsingStop)
                 break;
-            skipStatement(c->parse_state);
-            c->state = ParsingYield;
+            skipStatement(parse_state);
+            state = ParsingYield;
         }
-        fiber_switch(&c->parser_fiber, c->client_fiber);
+        Fiber::switch_to(client_fiber);
     }
 }
 
 Client::Client(int _id, Handle h)
   : id(_id)
-  , parser_fiber()
-  , client_fiber(sys::fiber::toplevel())
+  , parser_fiber(Fiber::make([this]() { this->run_parser(); }))
+  , client_fiber(sys::Fiber::toplevel())
   , state(ParsingYield)
   , hstream(std::move(h))
-  , in_stream(&hstream, client_fiber, &parser_fiber)
+  , in_stream(&hstream, client_fiber, parser_fiber)
   , parse_state(in_stream, "")
 {
-    fiber_alloc(&parser_fiber, 65536, fiber_cleanup, &client_fiber, true);
-    Client *parser_args = this;
-    fiber_push_return(&parser_fiber,
-                      run_parser_fiber,
-                      static_cast<void *>(&parser_args),
-                      sizeof parser_args);
     sys::io::ByteStream name;
     name << "<repl " << id << ">";
     parse_state.filename = name.str();
@@ -94,13 +91,7 @@ Client::Client(int _id, Handle h)
 
 Client::~Client()
 {
-    INFO("invoking ~Client()");
-    if (fiber_is_alive(&parser_fiber)) {
-        state = ParsingStop;
-        fiber_switch(client_fiber, &parser_fiber);
-    }
-    ASSERT(!fiber_is_alive(&parser_fiber));
-    fiber_destroy(&parser_fiber);
+    ASSERT(!parser_fiber.is_alive());
 }
 
 bool
@@ -116,7 +107,7 @@ Client::handle(Engine &e)
 bool
 Client::handleIO(Engine &e)
 {
-    fiber_switch(client_fiber, &parser_fiber);
+    Fiber::switch_to(parser_fiber);
     switch (state) {
     case ParsingGotStatement:
         e.commandProcessor().execCommand(statement);
@@ -169,7 +160,6 @@ ReplServer::~ReplServer()
 bool
 ReplServer::start(const IPAddr4 &listen_addr, uint16_t port)
 {
-
     if (self->running) {
         ERR("already running");
         return false;

@@ -1,7 +1,7 @@
 #include "sys/io/Stream.hpp"
 
 #include "err/err.hpp"
-#include "sys/module.hpp"
+#include "sys/io.hpp"
 
 #include <errno.h>
 #include <stdio.h>
@@ -145,30 +145,31 @@ IOStream::basic_close_out()
     return basic_close();
 }
 
-Streams::Streams()
-  : stdin(stdin_handle()), stdout(stdout_handle()), stderr(stderr_handle())
-{
-    stdin.closable(false);
-    stdout.closable(false);
-    stderr.closable(false);
-}
-
 SYS_API InStream &
 stdin()
 {
-    return module->io_streams.stdin;
+    BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
+    static HandleStream stream(stdin_handle());
+    END_NO_WARN_GLOBAL_DESTRUCTOR
+    return stream;
 }
 
 OutStream &
 stdout()
 {
-    return module->io_streams.stdout;
+    BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
+    static HandleStream stream(stdout_handle());
+    END_NO_WARN_GLOBAL_DESTRUCTOR
+    return stream;
 }
 
 OutStream &
 stderr()
 {
-    return module->io_streams.stderr;
+    BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
+    static HandleStream stream(stderr_handle());
+    END_NO_WARN_GLOBAL_DESTRUCTOR
+    return stream;
 }
 
 struct StreamEndl
@@ -286,7 +287,7 @@ ByteStream::basic_write(size_t &s, const char *buf)
     return StreamResult::OK;
 }
 
-CooperativeInStream::CooperativeInStream(InStream *in_, Fiber *ioh, Fiber *su)
+CooperativeInStream::CooperativeInStream(InStream *in_, Fiber &ioh, Fiber &su)
   : in(in_), io_handler(ioh), stream_user(su)
 {}
 
@@ -308,7 +309,7 @@ CooperativeInStream::basic_read(size_t &s, char *buf)
         if (res == StreamResult::OK)
             return res;
         if (res == StreamResult::Blocked)
-            fiber_switch(stream_user, io_handler);
+            Fiber::switch_to(io_handler);
         else
             return res; // error
     }

@@ -7,7 +7,9 @@ endif()
 
 link_libraries(header-utils)
 
-set(ERR_SRC err/err.cpp)
+set(ERR_SRC
+  err/err.cpp
+  err/stacktrace.cpp)
 
 set(ERR_LIBS)
 
@@ -28,8 +30,7 @@ set(SYS_SRC
     sys/fiber.cpp
     sys/fs/fs_default.cpp
     sys/io.cpp
-    sys/io/Stream.cpp
-    sys/sys.cpp)
+    sys/io/Stream.cpp)
 
 if(SYS_UNIX)
   set(SYS_SRC

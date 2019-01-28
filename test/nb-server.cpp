@@ -3,7 +3,6 @@
 #include "err/err.hpp"
 #include "sys/io.hpp"
 #include "sys/io/Stream.hpp"
-#include "sys/sys.hpp"
 
 using namespace sys;
 
@@ -30,8 +29,6 @@ main()
     bl::vector<Client> clients;
     clients.emplace_back();
     int id = 0;
-
-    sys::moduleInit();
 
     io::SocketError sockerr;
     auto opt_server =

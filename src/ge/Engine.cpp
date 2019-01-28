@@ -7,7 +7,6 @@
 #include "glt/utils.hpp"
 #include "sys/clock.hpp"
 #include "sys/fs.hpp"
-#include "sys/sys.hpp"
 
 namespace ge {
 
@@ -20,7 +19,6 @@ struct Engine::Data : public GameLoop::Game
     {
         Modules()
         {
-            sys::moduleInit();
             glt::moduleInit();
             ge::moduleInit();
         }
@@ -29,7 +27,6 @@ struct Engine::Data : public GameLoop::Game
         {
             ge::moduleExit();
             glt::moduleExit();
-            sys::moduleExit();
         }
     };
 

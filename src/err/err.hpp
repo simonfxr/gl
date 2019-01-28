@@ -8,9 +8,6 @@
 
 namespace err {
 
-ERR_API void
-print_stacktrace(sys::io::OutStream &, int skip = 0);
-
 enum class ErrorMode : uint8_t
 {
     Continue, // default
@@ -56,15 +53,16 @@ struct ErrorStaticCallSite
 
     // the following constructors will not be called, they are necessary to make
     // the __builtin_constant_p machinery work
+    // TODO: maybe we can get rid of it using __builtin_choose_expr?
 
     ErrorStaticCallSite(const Location &loc,
                         LogLevel lvl,
-                        bl::string_view msg) noexcept;
+                        bl::string_view msg) noexcept; // not defined
 
     ErrorStaticCallSite(const Location &loc,
                         LogLevel lvl,
                         sys::io::OutStream &,
-                        bl::string_view msg) noexcept;
+                        bl::string_view msg) noexcept; // not defined
 };
 
 ERR_API ErrorMode
