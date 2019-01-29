@@ -98,23 +98,22 @@ struct basic_string : private vector<CharT>
     constexpr operator basic_string_view<CharT>() const { return view(); }
 
 #define DEF_STRING_BIN_OPS(ta, tb)                                             \
-    template<typename Ch>                                                      \
-    friend basic_string<Ch> operator+(ta a, tb b)                              \
+    friend basic_string<CharT> operator+(ta a, tb b)                           \
     {                                                                          \
-        basic_string<Ch> ret = a;                                              \
+        basic_string<CharT> ret = a;                                           \
         ret += b;                                                              \
         return ret;                                                            \
     }                                                                          \
-    template<typename Ch>                                                      \
     friend int compare(ta a, tb b)                                             \
     {                                                                          \
-        return compare(basic_string_view<Ch>(a), basic_string_view<Ch>(b));    \
+        return compare(basic_string_view<CharT>(a),                            \
+                       basic_string_view<CharT>(b));                           \
     }                                                                          \
-    BL_DEF_REL_OPS_VIA(template<typename Ch> friend, ta, tb, compare(a, b))
+    BL_DEF_REL_OPS_VIA(friend, ta, tb, compare(a, b))
 
-    DEF_STRING_BIN_OPS(const basic_string<Ch> &, const basic_string<Ch> &)
-    DEF_STRING_BIN_OPS(const basic_string<Ch> &, basic_string_view<Ch>)
-    DEF_STRING_BIN_OPS(basic_string_view<Ch>, const basic_string<Ch> &)
+    DEF_STRING_BIN_OPS(const basic_string<CharT> &, const basic_string<CharT> &)
+    DEF_STRING_BIN_OPS(const basic_string<CharT> &, basic_string_view<CharT>)
+    DEF_STRING_BIN_OPS(basic_string_view<CharT>, const basic_string<CharT> &)
 
 #undef DEF_STRING_BIN_OP
 };

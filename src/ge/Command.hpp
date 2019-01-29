@@ -41,11 +41,7 @@ public:
     virtual ~Command() override;
     bl::array_view<const CommandParamType> parameters() const { return params; }
     const bl::string &name() const { return namestr; }
-    void name(const bl::string &new_name)
-    {
-        ASSERT(!new_name.empty());
-        namestr = new_name;
-    }
+    void name(bl::string &&new_name) { namestr = std::move(new_name); }
     const bl::string &description() const { return descr; }
     bl::string interactiveDescription() const;
     virtual void interactive(const Event<CommandEvent> &ev,

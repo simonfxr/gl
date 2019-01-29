@@ -9,20 +9,27 @@ endmacro()
 macro(do_configure_target target)
   target_compile_definitions(${target} PUBLIC ${GLOBAL_DEFINES})
   target_compile_options(${target} PUBLIC ${GLOBAL_FLAGS} ${GLOBAL_FLAGS_BOTH})
-  do_target_link_options(${target} PUBLIC ${GLOBAL_LINK_FLAGS} ${GLOBAL_FLAGS_BOTH})
+  do_target_link_options(${target}
+                         PUBLIC
+                         ${GLOBAL_LINK_FLAGS}
+                         ${GLOBAL_FLAGS_BOTH})
   target_link_libraries(${target} PUBLIC ${ARGN})
   if(ENABLE_IPO)
     set_property(TARGET ${target} PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
   endif()
   if(GLOBAL_CXX_FLAGS)
-    target_compile_options(${target} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${GLOBAL_CXX_FLAGS}>)
+    target_compile_options(
+      ${target}
+      PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${GLOBAL_CXX_FLAGS}>)
   endif()
   if(BUILD_SHARED_LIBS)
     set_target_properties(${target}
-                          PROPERTIES C_VISIBILITY_PRESET hidden
-                                     CXX_VISIBILITY_PRESET hidden
-                                     VISIBILITY_INLINES_HIDDEN True
-                                     )
+                          PROPERTIES C_VISIBILITY_PRESET
+                                     hidden
+                                     CXX_VISIBILITY_PRESET
+                                     hidden
+                                     # VISIBILITY_INLINES_HIDDEN True
+                          )
   endif()
 endmacro()
 

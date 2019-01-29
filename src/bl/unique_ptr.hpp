@@ -88,7 +88,7 @@ private:
 
 public:
 #define DEF_REL_OP(ta, tb, op, px, py)                                         \
-    template<typename A, typename B>                                           \
+    template<typename U>                                                       \
     friend bool operator op(const ta x, const tb y) noexcept                   \
     {                                                                          \
         return px op py;                                                       \
@@ -102,9 +102,9 @@ public:
     DEF_REL_OP(ta, tb, >, px, py)                                              \
     DEF_REL_OP(ta, tb, >=, px, py)
 
-    DEF_REL_OPS(unique_ptr<A> &, unique_ptr<B>, x.get(), y.get())
-    DEF_REL_OPS(unique_ptr<A> &, B *, x.get(), y)
-    DEF_REL_OPS(A *, unique_ptr<B> &, x, y.get())
+    DEF_REL_OPS(unique_ptr &, unique_ptr<U>, x.get(), y.get())
+    DEF_REL_OPS(unique_ptr &, U *, x.get(), y)
+    DEF_REL_OPS(U *, unique_ptr &, x, y.get())
 
 #undef DEF_REL_OPS
 #undef DEF_REL_OP

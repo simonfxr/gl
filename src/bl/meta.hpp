@@ -20,8 +20,35 @@ using index_sequence = integer_sequence<size_t, Ints...>;
 template<class T, T E>
 using make_integer_sequence = __make_integer_seq<integer_sequence, T, E>;
 
+#elif GU_COMP_GNULIKE_P
+
+template<class T, T E>
+using make_integer_sequence = integer_sequence<T, __integer_pack(E)...>;
+
 #else
-#    error "dont have __make_integer_seq"
+
+template<class T, T E, T... Is>
+struct make_integer_sequence_impl
+{
+    struct base_case
+    {
+        template<T EE>
+        using rec_t = integer_sequence<T, Is...>;
+    };
+    struct rec_case
+    {
+        template<T EE>
+        using rec_t =
+          typename make_integer_sequence_impl<T, EE, EE, Is...>::type;
+    };
+    using type =
+      typename std::conditional_t<E == 0, base_case, rec_case>::template rec_t<
+        E - 1>;
+};
+
+template<class T, T E>
+using make_integer_sequence = typename make_integer_sequence_impl<T, E>::type;
+
 #endif
 
 template<std::size_t N>

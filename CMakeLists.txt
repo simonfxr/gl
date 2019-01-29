@@ -28,13 +28,16 @@ set_option(BUILD_SHARED_LIBS
 message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
 
 if(COMP_CLANG)
-  set_option(ENABLE_LIBCXX False BOOL "True to use libc++ when compiling with clang")
+  set_option(ENABLE_LIBCXX
+             False
+             BOOL
+             "True to use libc++ when compiling with clang")
 endif()
 
 set(gldebug_level_default 0)
-if(build_type STREQUAL DEBUG)
+if(BUILD_TYPE STREQUAL DEBUG)
   set(gldebug_level_default 2)
-elseif(build_type STREQUAL RELWITHDEBINFO)
+elseif(BUILD_TYPE STREQUAL RELWITHDEBINFO)
   set(gldebug_level_default 1)
 endif()
 set_option(GLDEBUG_LEVEL
@@ -42,14 +45,18 @@ set_option(GLDEBUG_LEVEL
            BOOL
            "Enable OpenGL debug output and checks")
 
-set_option(ENABLE_OPENMP True BOOL "Enable OpenMP support")
+set(openmp_default True)
+if(BUILD_TYPE STREQUAL DEBUG)
+  set(openmp_default False)
+endif()
+set_option(ENABLE_OPENMP ${openmp_default} BOOL "Enable OpenMP support")
 
-set_option(ENABLE_VOXEL_OPENCL False BOOL "Use OpenCL for the voxel-world program")
+set_option(ENABLE_VOXEL_OPENCL
+           False
+           BOOL
+           "Use OpenCL for the voxel-world program")
 
-set_option(ENABLE_STACKTRACES
-  True
-  BOOL
-  "print a stacktrace on errors")
+set_option(ENABLE_STACKTRACES True BOOL "print a stacktrace on errors")
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macros.cmake)
@@ -86,6 +93,9 @@ if(NOT TARGET glad)
   endif()
   add_library(glad ${glad_link_mode} "${GLAD_GEN_DIR}/src/glad.c")
   target_include_directories(glad SYSTEM PUBLIC "${GLAD_GEN_DIR}/include")
+  if(SYS_UNIX)
+    target_link_libraries(glad dl)
+  endif()
 endif()
 
 if(COMP_MSVC)

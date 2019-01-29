@@ -93,8 +93,17 @@ void
 printGLTrace(const err::Location *loc)
 {
     if (G.print_opengl_calls)
-        sys::io::stdout() << "OPENGL " << loc->operation << " " << loc->file
-                          << ":" << loc->line << sys::io::endl;
+        sys::io::stdout() << "OPENGL " << loc->operation << " [" << loc->file
+                          << ":" << loc->line << "]" << sys::io::endl;
+}
+
+GLT_API void
+printGLTrace(const err::Location *loc, bl::string_view msg)
+{
+    if (G.print_opengl_calls)
+        sys::io::stdout() << "OPENGL " << loc->operation << " [" << loc->file
+                          << ":" << loc->line << "]"
+                          << " " << msg << sys::io::endl;
 }
 
 bool

@@ -50,7 +50,7 @@ struct basic_string_view
       : base_t(str, n)
     {}
 
-    BL_inline constexpr array_view<const CharT> array_view() const noexcept
+    BL_inline constexpr array_view<const CharT> to_array_view() const noexcept
     {
         return *this;
     }
@@ -115,21 +115,20 @@ struct basic_string_view
     }
 
 #define DEF_STRING_BIN_OPS(ta, tb)                                             \
-    template<typename Ch>                                                      \
-    BL_inline friend basic_string<Ch> operator+(ta a, tb b) noexcept           \
+    BL_inline friend basic_string<CharT> operator+(ta a, tb b) noexcept        \
     {                                                                          \
-        basic_string<Ch> ret = a;                                              \
+        basic_string<CharT> ret = a;                                           \
         ret += b;                                                              \
         return ret;                                                            \
     }                                                                          \
-    template<typename Ch>                                                      \
     BL_inline friend constexpr int compare(ta a, tb b) noexcept                \
     {                                                                          \
-        return basic_string_view<Ch>(a).str_compare(basic_string_view<Ch>(b)); \
+        return basic_string_view<CharT>(a).str_compare(                        \
+          basic_string_view<CharT>(b));                                        \
     }                                                                          \
-    BL_DEF_REL_OPS_VIA(template<typename Ch> friend, ta, tb, compare(a, b))
+    BL_DEF_REL_OPS_VIA(friend, ta, tb, compare(a, b))
 
-    DEF_STRING_BIN_OPS(basic_string_view<Ch>, basic_string_view<Ch>)
+    DEF_STRING_BIN_OPS(basic_string_view<CharT>, basic_string_view<CharT>)
 
     constexpr size_t hash() const noexcept
     {

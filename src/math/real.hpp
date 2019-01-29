@@ -4,67 +4,82 @@
 #include "bl/limits.hpp"
 #include "math/mdefs.hpp"
 
-#define MATH_WRAPPER_TY_1(ty, cnm, nm)                                         \
-    extern "C" ty cnm(ty x) throw();                                           \
+#if defined(__FINITE_MATH_ONLY__) && __FINITE_MATH_ONLY__ > 0 &&               \
+  HU_COMP_GNULIKE_P
+#    define MATH_IMPORT_ATTRS_F(fn)                                            \
+        throw() __asm__(""                                                     \
+                        "__" #fn "_finite")
+#endif
+
+#define MATH_IMPORT_ATTRS_N(fn) throw()
+
+#ifndef MATH_IMPORT_ATTRS_F
+#    define MATH_IMPORT_ATTRS_F(fn) MATH_IMPORT_ATTRS_N(fn)
+#endif
+
+#define MATH_IMPORT_ATTRS(fn, suf) PP_CAT(MATH_IMPORT_ATTRS_, suf)(fn)
+
+#define MATH_WRAPPER_TY_1(ty, cnm, nm, suf)                                    \
+    extern "C" ty cnm(ty x) MATH_IMPORT_ATTRS(cnm, suf);                       \
     namespace math {                                                           \
     HU_FORCE_INLINE inline ty nm(ty x) noexcept { return ::cnm(x); }           \
     }
 
-#define MATH_WRAPPER_TY_2(ty, cnm, nm)                                         \
-    extern "C" ty cnm(ty x, ty y) throw();                                     \
+#define MATH_WRAPPER_TY_2(ty, cnm, nm, suf)                                    \
+    extern "C" ty cnm(ty x, ty y) MATH_IMPORT_ATTRS(cnm, suf);                 \
     namespace math {                                                           \
     HU_FORCE_INLINE inline ty nm(ty x, ty y) noexcept { return ::cnm(x, y); }  \
     }
 
-#define MATH_WRAPPER_NAMED_1(cnm, nm)                                          \
-    MATH_WRAPPER_TY_1(float, PP_CAT(cnm, f), nm)                               \
-    MATH_WRAPPER_TY_1(double, cnm, nm)
+#define MATH_WRAPPER_NAMED_1(cnm, nm, suf)                                     \
+    MATH_WRAPPER_TY_1(float, PP_CAT(cnm, f), nm, suf)                          \
+    MATH_WRAPPER_TY_1(double, cnm, nm, suf)
 
-#define MATH_WRAPPER_NAMED_2(cnm, nm)                                          \
-    MATH_WRAPPER_TY_2(float, PP_CAT(cnm, f), nm)                               \
-    MATH_WRAPPER_TY_2(double, cnm, nm)
+#define MATH_WRAPPER_NAMED_2(cnm, nm, suf)                                     \
+    MATH_WRAPPER_TY_2(float, PP_CAT(cnm, f), nm, suf)                          \
+    MATH_WRAPPER_TY_2(double, cnm, nm, suf)
 
-#define MATH_WRAPPER_1(nm) MATH_WRAPPER_NAMED_1(nm, nm)
+#define MATH_WRAPPER_1(nm, suf) MATH_WRAPPER_NAMED_1(nm, nm, suf)
 
-#define MATH_WRAPPER_2(nm) MATH_WRAPPER_NAMED_2(nm, nm)
+#define MATH_WRAPPER_2(nm, suf) MATH_WRAPPER_NAMED_2(nm, nm, suf)
 
 BEGIN_NO_WARN_DEPRECATED_EX_SPEC
 
-MATH_WRAPPER_NAMED_1(fabs, abs)
-MATH_WRAPPER_2(fmod);
+MATH_WRAPPER_NAMED_1(fabs, abs, N)
+MATH_WRAPPER_2(fmod, F);
 
-MATH_WRAPPER_1(exp)
-MATH_WRAPPER_1(exp2)
-MATH_WRAPPER_1(expm1)
-MATH_WRAPPER_1(log)
-MATH_WRAPPER_1(log10)
-MATH_WRAPPER_1(log2)
-MATH_WRAPPER_1(log1p)
+MATH_WRAPPER_1(exp, F)
+MATH_WRAPPER_1(exp2, F)
+MATH_WRAPPER_1(expm1, N)
+MATH_WRAPPER_1(log, F)
+MATH_WRAPPER_1(log10, F)
+MATH_WRAPPER_1(log2, F)
+MATH_WRAPPER_1(log1p, N)
 
-MATH_WRAPPER_2(pow)
-MATH_WRAPPER_1(sqrt)
-MATH_WRAPPER_1(cbrt)
-MATH_WRAPPER_2(hypot)
+MATH_WRAPPER_2(pow, F)
+MATH_WRAPPER_1(sqrt, F)
+MATH_WRAPPER_1(cbrt, N)
+MATH_WRAPPER_2(hypot, F)
 
-MATH_WRAPPER_1(sin)
-MATH_WRAPPER_1(cos)
-MATH_WRAPPER_1(tan)
-MATH_WRAPPER_1(asin)
-MATH_WRAPPER_1(acos)
-MATH_WRAPPER_1(atan)
-MATH_WRAPPER_2(atan2)
+MATH_WRAPPER_1(sin, N)
+MATH_WRAPPER_1(cos, N)
+MATH_WRAPPER_1(tan, N)
+MATH_WRAPPER_1(asin, F)
+MATH_WRAPPER_1(acos, F)
+MATH_WRAPPER_1(atan, F)
+MATH_WRAPPER_2(atan2, F)
 
-MATH_WRAPPER_1(sinh)
-MATH_WRAPPER_1(cosh)
-MATH_WRAPPER_1(tanh)
-MATH_WRAPPER_1(asinh)
-MATH_WRAPPER_1(acosh)
-MATH_WRAPPER_1(atanh)
+MATH_WRAPPER_1(sinh, F)
+MATH_WRAPPER_1(cosh, F)
+MATH_WRAPPER_1(tanh, F)
+MATH_WRAPPER_1(asinh, N)
+MATH_WRAPPER_1(acosh, F)
+MATH_WRAPPER_1(atanh, F)
 
-MATH_WRAPPER_1(ceil)
-MATH_WRAPPER_1(floor);
-MATH_WRAPPER_1(round);
-MATH_WRAPPER_1(truncate);
+MATH_WRAPPER_1(ceil, N)
+MATH_WRAPPER_1(floor, N);
+MATH_WRAPPER_1(round, N);
+MATH_WRAPPER_1(truncate, N);
 
 END_NO_WARN_DEPRECATED_EX_SPEC
 

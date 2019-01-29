@@ -67,8 +67,7 @@ endif()
 
 if(BUILD_DEBUG)
   if(COMP_GCC OR COMP_CLANG)
-    #list(APPEND GLOBAL_FLAGS -march=native -Og)
-    list(APPEND GLOBAL_FLAGS -march=native -O0 -g0)
+    # list(APPEND GLOBAL_FLAGS -march=native -Og)
   endif()
 endif()
 
@@ -77,12 +76,15 @@ if(COMP_CLANG)
 endif()
 
 if(COMP_CLANG OR COMP_GCC)
-  set_option(ENABLE_ASAN False BOOL "enable -fsanitize=address")
+
+  set(asan_default False)
+  # if(BUILD_TYPE STREQUAL DEBUG) set(asan_default True) endif()
+  set_option(ENABLE_ASAN ${asan_default} BOOL "enable -fsanitize=address")
+
   set(ubsan_default False)
-  # if(BUILD_DEBUG)
-  #   set(ubsan_default True)
-  # endif()
+  # if(BUILD_DEBUG) set(ubsan_default True) endif()
   set_option(ENABLE_UBSAN ${ubsan_default} BOOL "enable -fsanitize=undefined")
+
 endif()
 
 if(ENABLE_ASAN)
@@ -91,8 +93,8 @@ endif()
 
 if(ENABLE_UBSAN)
   list(APPEND GLOBAL_FLAGS_BOTH -fsanitize=undefined
-    #-fsanitize-undefined-trap-on-error
-    )
+              # -fsanitize-undefined-trap-on-error
+       )
 endif()
 
 if(ENABLE_ASAN OR ENABLE_UBSAN)
@@ -216,7 +218,6 @@ if(ENABLE_OPENMP)
   endif()
 endif()
 
-
 list(APPEND GLOBAL_DEFINES "GLDEBUG_LEVEL=${GLDEBUG_LEVEL}")
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
@@ -239,11 +240,9 @@ endif()
 find_package(PkgConfig)
 if(PKG_CONFIG_FOUND)
   if(ENABLE_STACKTRACES AND SYS_LINUX)
-    pkg_check_modules(unwind IMPORTED_TARGET libunwind)
     pkg_check_modules(dw IMPORTED_TARGET libdw)
-    if(NOT TARGET PkgConfig::unwind OR NOT TARGET PkgConfig::dw)
-      message(
-        WARNING "ENABLE_STACKTRACES set, but libunwind or libdw not found")
+    if(NOT TARGET PkgConfig::dw)
+      message(WARNING "ENABLE_STACKTRACES set, but libdw (elfutils) not found")
       set(ENABLE_STACKTRACES False)
     endif()
   endif()

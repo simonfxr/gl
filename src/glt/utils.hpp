@@ -17,7 +17,7 @@
 #define GL_CHECK(op)                                                           \
     do {                                                                       \
         (op);                                                                  \
-        if (GLDEBUG_LEVEL > 0) {                                               \
+        if (GLDEBUG_LEVEL > 1) {                                               \
             ::glt::checkForGLError(ERROR_LOCATION_OP(#op));                    \
         }                                                                      \
     } while (0)

@@ -7,9 +7,7 @@ endif()
 
 link_libraries(header-utils)
 
-set(ERR_SRC
-  err/err.cpp
-  err/stacktrace.cpp)
+set(ERR_SRC err/err.cpp err/stacktrace.cpp)
 
 set(ERR_LIBS)
 
@@ -18,7 +16,7 @@ set(ERR_DEFINES)
 if(ENABLE_STACKTRACES)
   list(APPEND ERR_DEFINES -DENABLE_STACKTRACES=1)
   if(SYS_LINUX)
-    list(APPEND ERR_LIBS PkgConfig::unwind PkgConfig::dw)
+    list(APPEND ERR_LIBS PkgConfig::dw)
   elseif(SYS_WINDOWS)
     list(APPEND ERR_LIBS Dbghelp)
   endif()
@@ -26,11 +24,7 @@ endif()
 
 set(SYS_LIBS)
 
-set(SYS_SRC
-    sys/fiber.cpp
-    sys/fs/fs_default.cpp
-    sys/io.cpp
-    sys/io/Stream.cpp)
+set(SYS_SRC sys/fiber.cpp sys/fs/fs_default.cpp sys/io.cpp sys/io/Stream.cpp)
 
 if(SYS_UNIX)
   set(SYS_SRC

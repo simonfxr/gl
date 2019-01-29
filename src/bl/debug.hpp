@@ -3,12 +3,12 @@
 
 #ifdef BL_DEBUG
 #    define BL_constexpr
-#    include "bl/string_view_fwd.hpp"
-#    include "err/err.hpp"
-#    define BL_ASSERT ASSERT
+#    define BL_ASSERT(...) ((void) 0)
+#    define BL_UNREACHABLE BL_ASSERT(0 && "unreachable")
 #else
 #    define BL_constexpr constexpr
-#    define BL_ASSERT(...)
+#    define BL_ASSERT(...) ((void) 0)
+#    define BL_UNREACHABLE hu_assume_unreachable()
 #endif
 
 #endif

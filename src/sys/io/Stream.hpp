@@ -17,11 +17,6 @@
 namespace sys {
 namespace io {
 
-struct OutStream;
-struct InStream;
-struct StreamEndl;
-struct IOStream;
-
 PP_DEF_ENUM_WITH_API(SYS_API, SYS_STREAM_RESULT_ENUM_DEF);
 
 struct StreamState
@@ -46,7 +41,7 @@ private:
     StreamFlags _flags{};
 };
 
-struct SYS_API InStream : virtual StreamState
+struct InStream : virtual StreamState
 {
     InStream();
     virtual ~InStream();
@@ -74,7 +69,7 @@ protected:
     InStream(StreamFlags &);
 };
 
-struct SYS_API OutStream : StreamState
+struct OutStream : virtual StreamState
 {
     OutStream();
     virtual ~OutStream();
@@ -87,7 +82,7 @@ struct SYS_API OutStream : StreamState
 
     bool closed() const { return flags() & SF_IN_CLOSED; }
 
-    constexpr bool writable() const
+    bool writable() const
     {
         return (flags() & (SF_OUT_CLOSED | SF_OUT_EOF)) == 0;
     }
@@ -103,7 +98,7 @@ protected:
     virtual StreamResult basic_close_out() = 0;
 };
 
-struct SYS_API IOStream
+struct IOStream
   : public InStream
   , public OutStream
 {
@@ -135,7 +130,7 @@ protected:
     virtual StreamResult basic_close() = 0;
 };
 
-struct SYS_API NullStream : public IOStream
+struct NullStream : public IOStream
 {
     NullStream();
 
@@ -146,7 +141,7 @@ protected:
     StreamResult basic_write(size_t &, const char *) final override;
 };
 
-struct SYS_API ByteStream : public IOStream
+struct ByteStream : public IOStream
 {
     explicit ByteStream(size_t bufsize = 32);
     ByteStream(bl::string_view);
@@ -174,7 +169,7 @@ private:
     size_t read_cursor;
 };
 
-struct SYS_API CooperativeInStream : public InStream
+struct CooperativeInStream : public InStream
 {
     InStream *in;
     Fiber &io_handler; // switched to on blocking reads

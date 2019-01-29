@@ -26,7 +26,7 @@ toGLScalarType(ScalarType t)
     case ScalarType::F64:
         return GL_DOUBLE;
     }
-    // FIXME??? UNREACHABLE;
+    UNREACHABLE;
 }
 
 } // namespace glt

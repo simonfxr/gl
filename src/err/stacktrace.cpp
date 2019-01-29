@@ -8,11 +8,12 @@
 
 #if defined(ENABLE_STACKTRACES) && HU_OS_LINUX_P
 #    define STACKTRACE_LINUX 1
-#    define UNW_LOCAL_ONLY
 #    include "bl/unique_ptr.hpp"
 #    include <cxxabi.h>
+#    include <dwarf.h>
+#    include <elfutils/libdw.h>
 #    include <elfutils/libdwfl.h>
-#    include <libunwind.h>
+#    include <execinfo.h>
 #    include <unistd.h>
 #elif defined(ENABLE_STACKTRACES) && defined(HU_OS_WINDOWS)
 #    define STACKTRACE_WINDOWS
@@ -64,6 +65,71 @@ struct FrameView
 
 #ifdef STACKTRACE_LINUX
 
+bool
+die_has_pc(Dwarf_Die *die, Dwarf_Addr pc)
+{
+    Dwarf_Addr low, high;
+
+    // continuous range
+    if (dwarf_hasattr(die, DW_AT_low_pc) && dwarf_hasattr(die, DW_AT_high_pc)) {
+        if (dwarf_lowpc(die, &low) != 0) {
+            return false;
+        }
+        if (dwarf_highpc(die, &high) != 0) {
+            Dwarf_Attribute attr_mem;
+            Dwarf_Attribute *attr = dwarf_attr(die, DW_AT_high_pc, &attr_mem);
+            Dwarf_Word value;
+            if (dwarf_formudata(attr, &value) != 0) {
+                return false;
+            }
+            high = low + value;
+        }
+        return pc >= low && pc < high;
+    }
+
+    // non-continuous range.
+    Dwarf_Addr base;
+    ptrdiff_t offset = 0;
+    while ((offset = dwarf_ranges(die, offset, &base, &low, &high)) > 0) {
+        if (pc >= low && pc < high) {
+            return true;
+        }
+    }
+    return false;
+}
+
+Dwarf_Die *
+find_fundie_by_pc(Dwarf_Die *parent_die, Dwarf_Addr pc, Dwarf_Die *result)
+{
+    if (dwarf_child(parent_die, result) != 0)
+        return nullptr;
+
+    Dwarf_Die *die = result;
+    do {
+        switch (dwarf_tag(die)) {
+        case DW_TAG_subprogram:
+        case DW_TAG_inlined_subroutine:
+            if (die_has_pc(die, pc)) {
+                return result;
+            }
+        };
+        bool declaration = false;
+        Dwarf_Attribute attr_mem;
+        dwarf_formflag(dwarf_attr(die, DW_AT_declaration, &attr_mem),
+                       &declaration);
+        if (!declaration) {
+            Dwarf_Die die_mem;
+            Dwarf_Die *indie = find_fundie_by_pc(die, pc, &die_mem);
+            if (indie) {
+                *result = die_mem;
+                return result;
+            }
+        }
+    } while (dwarf_siblingof(die, result) == 0);
+
+    return nullptr;
+}
+
 template<typename F>
 FORCE_INLINE bool
 iterate_stacktrace(size_t skip,
@@ -71,12 +137,6 @@ iterate_stacktrace(size_t skip,
                    size_t max,
                    F &&callback) noexcept
 {
-    unw_context_t uc;
-    unw_getcontext(&uc);
-
-    unw_cursor_t cursor;
-    unw_init_local(&cursor, &uc);
-
     char *debuginfo_path = nullptr;
     Dwfl_Callbacks callbacks;
     callbacks.find_elf = dwfl_linux_proc_find_elf;
@@ -86,28 +146,39 @@ iterate_stacktrace(size_t skip,
     Dwfl *dwfl = dwfl_begin(&callbacks);
     assert(dwfl != nullptr);
 
-    dwfl_report_begin(dwfl);
-    auto ret = dwfl_linux_proc_report(dwfl, getpid());
+    auto mypid = getpid();
+    auto ret = dwfl_linux_proc_report(dwfl, mypid);
     dwfl_report_end(dwfl, nullptr, nullptr);
     if (ret != 0)
         return false;
 
-    while (unw_step(&cursor) > 0) {
-        unw_word_t unw_ip;
-        unw_get_reg(&cursor, UNW_REG_IP, &unw_ip);
+    void *trace[128];
+    auto ntrace = backtrace(trace, max < 128 ? max : 128);
+    using index_t = decltype(ntrace);
+    if (intptr_t(ntrace) < 0)
+        return false;
 
-        if (skip > 0) {
-            --skip;
-            continue;
-        }
-
-        if (max-- == 0)
-            break;
-
+    for (index_t i = index_t(skip); i < ntrace; ++i) {
         FrameView nfo;
-        nfo.ip = reinterpret_cast<void **>(unw_ip) - 1;
+        nfo.ip = trace[i];
         auto addr = Dwarf_Addr(nfo.ip);
-        Dwfl_Module *module = dwfl_addrmodule(dwfl, addr);
+
+        auto module = dwfl_addrmodule(dwfl, addr);
+        if (!module)
+            return false;
+
+        Dwarf_Addr mod_bias{};
+        Dwarf_Die *cudie = dwfl_module_addrdie(module, addr, &mod_bias);
+        if (!cudie) {
+            while ((cudie = dwfl_module_nextcu(module, cudie, &mod_bias))) {
+                Dwarf_Die die_mem;
+                Dwarf_Die *fundie =
+                  find_fundie_by_pc(cudie, addr - mod_bias, &die_mem);
+                if (fundie) {
+                    break;
+                }
+            }
+        }
 
         nfo.function = dwfl_module_addrname(module, addr);
         if (demangle && nfo.function) {
@@ -126,11 +197,10 @@ iterate_stacktrace(size_t skip,
                                       nullptr,
                                       nullptr);
 
-        Dwfl_Line *line = dwfl_getsrc(dwfl, addr);
-        if (line != nullptr) {
-            Dwarf_Addr faddr;
-            nfo.file =
-              dwfl_lineinfo(line, &faddr, &nfo.line, nullptr, nullptr, nullptr);
+        auto srcloc = dwarf_getsrc_die(cudie, addr - mod_bias);
+        if (srcloc) {
+            nfo.file = dwarf_linesrc(srcloc, nullptr, nullptr);
+            dwarf_lineno(srcloc, &nfo.line);
         }
 
         callback(nfo);

@@ -14,10 +14,14 @@
 namespace sys {
 namespace io {
 
+struct SYS_API StreamState;
 struct SYS_API OutStream;
 struct SYS_API InStream;
 struct SYS_API StreamEndl;
 struct SYS_API IOStream;
+struct SYS_API NullStream;
+struct SYS_API ByteStream;
+struct SYS_API CooperativeInStream;
 
 HU_NODISCARD SYS_API InStream &
 stdin();

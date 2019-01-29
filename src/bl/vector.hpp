@@ -4,21 +4,17 @@
 #include "bl/algorithm.hpp"
 #include "bl/array_view.hpp"
 #include "bl/core.hpp"
+#include "bl/debug.hpp"
 #include "bl/iterator.hpp"
 #include "bl/memory.hpp"
 #include "bl/new.hpp"
 #include "bl/swap.hpp"
 #include "bl/vector_fwd.hpp"
-#include "err/err.hpp"
 
 // #define BL_STD_VECTOR 1
 
 #ifdef BL_STD_VECTOR
 #    include <vector>
-#endif
-
-#ifndef NDEBUG
-#    include "bl/string_view.hpp"
 #endif
 
 namespace bl {
@@ -155,7 +151,7 @@ struct vector : public comparable<vector<T>>
     {
         if (first == _data)
             return;
-        ASSERT(last >= first);
+        BL_ASSERT(last >= first);
         auto n = size_t(last - first);
 
         if (_capa < n) {
@@ -229,12 +225,13 @@ struct vector : public comparable<vector<T>>
     void append(AssignTag assign_tag, Iter first, Iter last)
     {
         if constexpr (is_random_access_iterator<Iter>) {
-            ASSERT(last >= first);
+            BL_ASSERT(last >= first);
             size_t n = last - first;
             reserve(size() + n);
             auto p =
               uninitialized_assign(assign_tag, first, last, _data + _size);
-            ASSERT(size_t(p - _data) == _size + n);
+            BL_ASSERT(size_t(p - _data) == _size + n);
+            UNUSED(p);
             _size += n;
         } else {
             for (; first != last; ++first)
@@ -306,7 +303,7 @@ struct vector : public comparable<vector<T>>
     void resize(size_t n)
     {
         if (_resize(n)) {
-            ASSERT(_size < n);
+            BL_ASSERT(_size < n);
             uninitialized_default_construct(end(), begin() + n);
             _size = n;
         }
@@ -316,7 +313,7 @@ struct vector : public comparable<vector<T>>
     void resize(size_t n, const T &x)
     {
         if (_resize(n)) {
-            ASSERT(_size < n);
+            BL_ASSERT(_size < n);
             uninitialized_fill(end(), begin() + n, x);
             _size = n;
         }
@@ -327,7 +324,7 @@ struct vector : public comparable<vector<T>>
 
     T *erase(T *p)
     {
-        ASSERT(begin() <= p && p < end());
+        BL_ASSERT(begin() <= p && p < end());
         if (p + 1 != end())
             move(p + 1, end(), p);
         --_size;
@@ -370,7 +367,7 @@ struct vector : public comparable<vector<T>>
 
     void pop_back()
     {
-        ASSERT(_size > 0);
+        BL_ASSERT(_size > 0);
         destroy_at(_data + (_size - 1));
         --_size;
         check();
@@ -379,7 +376,7 @@ struct vector : public comparable<vector<T>>
 private:
     void check_iterator(const T *p)
     {
-        ASSERT(begin() <= p && p <= end());
+        BL_ASSERT(begin() <= p && p <= end());
         UNUSED(p);
         check();
     }
@@ -396,7 +393,7 @@ private:
         if (n > _capa) {
             auto buf = new_uninitialized_bare_array<T>(n);
             auto new_end = uninitialized_destructive_move(begin(), end(), buf);
-            ASSERT(new_end - buf == _size);
+            BL_ASSERT(new_end - buf == _size);
             UNUSED(new_end);
             swap(_data, buf);
             delete_uninitialized_bare_array(buf, _size);
@@ -428,11 +425,11 @@ private:
     void reset()
     {
         if (!_data) {
-            ASSERT(_size == 0 && _capa == 0);
+            BL_ASSERT(_size == 0 && _capa == 0);
             check();
             return;
         }
-        ASSERT(_capa > 0);
+        BL_ASSERT(_capa > 0);
         destroy(begin(), end());
         delete_uninitialized_bare_array(_data, _capa);
         _data = nullptr;
@@ -446,9 +443,9 @@ private:
 
     void check()
     {
-        ASSERT((_data != nullptr) == (_capa != 0));
-        ASSERT(_size <= _capa);
-        ASSERT(_capa < 10000);
+        BL_ASSERT((_data != nullptr) == (_capa != 0));
+        BL_ASSERT(_size <= _capa);
+        BL_ASSERT(_capa < 10000);
     }
 
     static inline constexpr size_t min_capacity = sizeof(T) > 32

@@ -28,14 +28,14 @@ gltype(const T &x) -> gl_mapped_type_t<T>
     return x;
 }
 
-#if ENABLE_GLDEBUG_P
+#if GLDEBUG_LEVEL > 1
 bl::string_view
 descGLType(GLenum ty)
 {
 
 #    define CASE(ty)                                                           \
     case ty:                                                                   \
-        return PP_CAT(PP_TOSTR(ty), _sv);
+        return PP_TOSTR(ty);
 
     switch (ty) {
         CASE(GL_FLOAT);
@@ -230,7 +230,7 @@ setUniform(bool mandatory,
         return;
     }
 
-#if ENABLE_GLDEBUG_P
+#if GLDEBUG_LEVEL > 1
 
     GLint num_active;
     GL_CALL(glGetProgramiv, *prog.program(), GL_ACTIVE_UNIFORMS, &num_active);

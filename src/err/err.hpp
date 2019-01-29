@@ -6,6 +6,8 @@
 #include "bl/string_view_fwd.hpp"
 #include "sys/io/Stream_fwd.hpp"
 
+#define ERR_INLINE HU_FORCE_INLINE inline
+
 namespace err {
 
 enum class ErrorMode : uint8_t
@@ -81,6 +83,12 @@ error(const Location *loc, LogLevel lvl, bl::string_view);
 ERR_API void
 error(const Location *loc, LogLevel lvl, const char *);
 
+ERR_INLINE void
+error(const Location &loc, LogLevel lvl, const char *msg)
+{
+    error(&loc, lvl, msg);
+}
+
 ERR_API void
 error(const Location *loc, LogLevel lvl, sys::io::OutStream &, bl::string_view);
 
@@ -92,6 +100,12 @@ fatalError(const Location *loc, LogLevel lvl, bl::string_view);
 
 HU_NORETURN ERR_API void
 fatalError(const Location *loc, LogLevel lvl, const char *);
+
+HU_NORETURN ERR_INLINE void
+fatalError(const Location &loc, LogLevel lvl, const char *msg)
+{
+    fatalError(&loc, lvl, msg);
+}
 
 HU_NORETURN ERR_API void
 fatalError(const Location *loc,
@@ -126,7 +140,7 @@ reportError(sys::io::OutStream &out,
             &PP_CAT(err_loc, __LINE__);                                        \
         })
 #else
-#    define ERROR_LOCATION_OP(op) &ERROR_LOCATION_OP_BASIC(op)
+#    define ERROR_LOCATION_OP(op) ERROR_LOCATION_OP_BASIC(op)
 #endif
 
 #define ERROR_LOCATION ERROR_LOCATION_OP(nullptr)
@@ -134,13 +148,16 @@ reportError(sys::io::OutStream &out,
 #define CALL_ERROR_WITH_LEVEL_BASIC(errfun, lvl, op, ...)                      \
     errfun(ERROR_LOCATION_OP(op), lvl, __VA_ARGS__)
 
+#define INLINE_CALL_ERROR_WITH_LEVEL(errfun, lvl, op, ...)                     \
+    errfun(ERROR_LOCATION_OP_BASIC(op), lvl, __VA_ARGS__)
+
 #if HU_HAVE_constant_p && HU_COMP_GNULIKE_P
 #    define CALL_ERROR_WITH_LEVEL_CHECK_CONSTANT(a, b, ...)                    \
         hu_constant_p(a) && hu_constant_p(b)
 #    define CALL_ERROR_WITH_LEVEL(errfun, lvl, op, ...)                        \
         do {                                                                   \
             if (hu_constant_p(lvl) &&                                          \
-                CALL_ERROR_WITH_LEVEL_CHECK_CONSTANT(__VA_ARGS__, 0)) {        \
+                CALL_ERROR_WITH_LEVEL_CHECK_CONSTANT(__VA_ARGS__, 1)) {        \
                 static const auto PP_CAT(_fatal_error_static_callsite_,        \
                                          __LINE__) =                           \
                   ::err::ErrorStaticCallSite(                                  \
@@ -158,6 +175,9 @@ reportError(sys::io::OutStream &out,
 #define ERROR_WITH_LEVEL(lvl, ...)                                             \
     CALL_ERROR_WITH_LEVEL(::err::error, lvl, nullptr, __VA_ARGS__)
 
+#define INLINE_FATAL_ERROR_WITH_LEVEL_AND_OP(lvl, op, ...)                     \
+    INLINE_CALL_ERROR_WITH_LEVEL(::err::fatalError, lvl, op, __VA_ARGS__)
+
 #define FATAL_ERROR_WITH_LEVEL_AND_OP(lvl, op, ...)                            \
     CALL_ERROR_WITH_LEVEL(::err::fatalError, lvl, op, __VA_ARGS__)
 
@@ -170,18 +190,25 @@ reportError(sys::io::OutStream &out,
 #define FATAL_ERR(...)                                                         \
     FATAL_ERROR_WITH_LEVEL(::err::LogLevel::FatalError, __VA_ARGS__)
 
-#define ASSERT_ALWAYS(...)                                                     \
+#define ASSERT_GEN(fatal, ...)                                                 \
     do {                                                                       \
         if (unlikely(!(PP_ARG1(__VA_ARGS__))))                                 \
-            FATAL_ERROR_WITH_LEVEL_AND_OP(                                     \
-              ::err::LogLevel::Assertion,                                      \
-              PP_TOSTR(PP_ARG1(__VA_ARGS__)),                                  \
-              PP_ARG2(__VA_ARGS__, "assertion failed"));                       \
+            fatal(::err::LogLevel::Assertion,                                  \
+                  PP_TOSTR(PP_ARG1(__VA_ARGS__)),                              \
+                  PP_ARG2(__VA_ARGS__, "assertion failed"));                   \
     } while (0)
+
+#define ASSERT_ALWAYS(...)                                                     \
+    ASSERT_GEN(FATAL_ERROR_WITH_LEVEL_AND_OP, __VA_ARGS__)
+
+#define INLINE_ASSERT_ALWAYS(...)                                              \
+    ASSERT_GEN(INLINE_FATAL_ERROR_WITH_LEVEL_AND_OP, __VA_ARGS__)
 
 #ifdef NDEBUG
 #    define ASSERT(cond, ...) hu_assume(cond)
+#    define INLINE_ASSERT(cond, ...) hu_assume(cond)
 #    define UNREACHABLE_MSG(msg) hu_assume_unreachable()
+#    define INLINE_UNREACHABLE_MSG(msg) hu_assume_unreachble()
 #    define DEBUG_ERR(...) ((void) 0)
 #    define DEBUG_ASSERT(...) ((void) 0)
 #    define TRACE(...)                                                         \
@@ -190,8 +217,12 @@ reportError(sys::io::OutStream &out,
         } while (0)
 #else
 #    define ASSERT(...) ASSERT_ALWAYS(__VA_ARGS__)
+#    define INLINE_ASSERT(...) INLINE_ASSERT_ALWAYS(__VA_ARGS__)
 #    define UNREACHABLE_MSG(msg)                                               \
         FATAL_ERROR_WITH_LEVEL_AND_OP(::err::LogLevel::Assertion, nullptr, msg)
+#    define INLINE_UNREACHABLE_MSG(msg)                                        \
+        INLINE_FATAL_ERROR_WITH_LEVEL_AND_OP(                                  \
+          ::err::LogLevel::Assertion, nullptr, msg)
 #    define DEBUG_ERR(...) ERR(__VA_ARGS__)
 #    define DEBUG_ASSERT(...) ASSERT(__VA_ARGS__)
 #    define TRACE(...)                                                         \
@@ -202,6 +233,7 @@ reportError(sys::io::OutStream &out,
 #endif
 
 #define UNREACHABLE UNREACHABLE_MSG("assumed to be unreachable")
+#define INLINE_UNREACHABLE INLINE_UNREACHABLE_MSG("assumed to be unreachable")
 
 #define ERR_ONCE(...)                                                          \
     do {                                                                       \

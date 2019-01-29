@@ -3,9 +3,7 @@
 
 #include "bl/core.hpp"
 #include "bl/new.hpp"
-#include "bl/string_view.hpp"
 #include "bl/swap.hpp"
-#include "err/err.hpp"
 
 namespace bl {
 
@@ -29,62 +27,67 @@ struct shared_ref_count
 {
     void retain() noexcept { ++strong_count; }
 
-    bool release() noexcept
+    static bool release(shared_ref_count *cnt, void *ptr) noexcept
     {
-        if (--strong_count != 0)
+        if (--cnt->strong_count != 0)
             return false;
-
-        if (deleter && object) {
-            deleter(object);
-            object = nullptr;
-        }
-
+        cnt->deleter(cnt, ptr);
+        release_weak(cnt);
         return true;
     }
 
     void retain_weak() noexcept { ++weak_count; }
-    bool release_weak() noexcept { return --weak_count == 0; }
+
+    static bool release_weak(shared_ref_count *cnt) noexcept
+    {
+        if (--cnt->weak_count != 0)
+            return false;
+        auto del = cnt->deleter;
+        del(cnt, nullptr);
+        return true;
+    }
 
     uint32_t strong_count = 1;
     uint32_t weak_count = 1;
-    const destroy_fun_ptr<void> deleter = nullptr;
-    void *object = nullptr;
+    using deleter_t = void (*)(shared_ref_count *, void *) noexcept;
+    const deleter_t deleter;
 
-    explicit shared_ref_count(destroy_fun_ptr<void> del) : deleter(del) {}
+    explicit shared_ref_count(deleter_t del) : deleter(del) {}
+
+    template<typename T>
+    static void deleter_func(shared_ref_count *self, void *ptr) noexcept
+    {
+        if (ptr)
+            delete static_cast<T *>(ptr);
+        else
+            delete self;
+    }
 };
 
 template<typename T>
 struct shared_ref_count_of : shared_ref_count
 {
-    T value;
-    template<typename... Args>
-    shared_ref_count_of(ptr_inplace_init_t, Args &&... args)
-      : shared_ref_count(get_punned_destroy_fun_ptr<T>())
-      , value(std::forward<Args>(args)...)
+    union
     {
-        this->object = const_cast<void *>(static_cast<const void *>(&value));
+        T value;
+    };
+
+    ~shared_ref_count_of() {}
+
+    template<typename... Args>
+    shared_ref_count_of(Args &&... args)
+      : shared_ref_count(&deleter_func), value(std::forward<Args>(args)...)
+    {}
+
+    static void deleter_func(shared_ref_count *self, void *ptr) noexcept
+    {
+        auto p = static_cast<shared_ref_count_of *>(self);
+        if (ptr)
+            p->value.~T();
+        else
+            delete p;
     }
 };
-
-template<typename T, typename... Args>
-inline shared_ref_count *
-init_shared_ref_count(T *&ptr_dest, Args &&... args)
-{
-    ASSERT(!ptr_dest);
-    auto *p = new shared_ref_count_of<T>(ptr_inplace_init_t{},
-                                         std::forward<Args>(args)...);
-    ptr_dest = &p->value;
-    return p;
-}
-
-template<typename T, typename U>
-inline shared_ref_count *
-init_shared_ref_count(shared_from_ptr_t, U *ptr)
-{
-    auto p = new shared_ref_count(get_punned_destroy_fun_ptr<T>());
-    p->object = const_cast<void *>(static_cast<const void *>(ptr));
-    return p;
-}
 
 template<typename T>
 struct weak_ptr;
@@ -96,8 +99,10 @@ struct shared_ptr
     constexpr shared_ptr(std::nullptr_t) noexcept {}
 
     template<typename U = T>
-    shared_ptr(shared_from_ptr_t tag, U *p) noexcept
-      : _ptr(p), _cnt(p ? init_shared_ref_count<T>(tag, p) : nullptr)
+    shared_ptr(shared_from_ptr_t, U *p) noexcept
+      : _ptr(p)
+      , _cnt(p ? new shared_ref_count(&shared_ref_count::deleter_func<T>)
+               : nullptr)
     {
         handle_shared_from_this(p);
     }
@@ -146,8 +151,10 @@ struct shared_ptr
 
     template<typename... Args>
     shared_ptr(ptr_inplace_init_t, Args &&... args)
-      : _cnt(init_shared_ref_count<T>(_ptr, std::forward<Args>(args)...))
     {
+        auto cnt = new shared_ref_count_of<T>(std::forward<Args>(args)...);
+        _cnt = cnt;
+        _ptr = bl::addressof(cnt->value);
         handle_shared_from_this(_ptr);
     }
 
@@ -174,8 +181,9 @@ struct shared_ptr
 
     void reset() noexcept
     {
-        if (_cnt && _cnt->release() && _cnt->release_weak())
-            delete _cnt;
+        if (_cnt)
+            shared_ref_count::release(
+              _cnt, const_cast<void *>(static_cast<const void *>(_ptr)));
         _cnt = nullptr;
         _ptr = nullptr;
     }
@@ -225,6 +233,8 @@ private:
             if (ptr)
                 handle_shared_from_this(
                   const_cast<std::remove_const_t<U> &>(*ptr));
+        } else {
+            UNUSED(ptr);
         }
     }
 
@@ -238,7 +248,7 @@ private:
 
 public:
 #define DEF_REL_OP(ta, tb, op, px, py)                                         \
-    template<typename A, typename B>                                           \
+    template<typename U>                                                       \
     friend bool operator op(const ta x, const tb y) noexcept                   \
     {                                                                          \
         return px op py;                                                       \
@@ -252,9 +262,9 @@ public:
     DEF_REL_OP(ta, tb, >, px, py)                                              \
     DEF_REL_OP(ta, tb, >=, px, py)
 
-    DEF_REL_OPS(shared_ptr<A> &, shared_ptr<B>, x.get(), y.get())
-    DEF_REL_OPS(shared_ptr<A> &, B *, x.get(), y)
-    DEF_REL_OPS(A *, shared_ptr<B> &, x, y.get())
+    DEF_REL_OPS(shared_ptr &, shared_ptr<U>, x.get(), y.get())
+    DEF_REL_OPS(shared_ptr &, U *, x.get(), y)
+    DEF_REL_OPS(U *, shared_ptr &, x, y.get())
 
 #undef DEF_REL_OPS
 #undef DEF_REL_OP
@@ -317,8 +327,8 @@ struct weak_ptr
 
     void reset()
     {
-        if (_cnt && _cnt->release_weak())
-            delete _cnt;
+        if (_cnt)
+            shared_ref_count::release_weak(_cnt);
         _cnt = nullptr;
         _ptr = nullptr;
     }

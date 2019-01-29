@@ -60,7 +60,7 @@ template<typename T>
 BL_inline BL_MEMSET_CONSTEXPR void
 memzero(T *dst, size_t n = sizeof(T)) noexcept
 {
-    memset(dst, 0, n);
+    ::bl::memset(dst, 0, n);
 }
 
 template<class To, class From>
@@ -71,7 +71,7 @@ BL_inline BL_MEMCPY_CONSTEXPR std::enable_if_t<
 bit_cast(const From &src) noexcept
 {
     To dst;
-    memcpy(&dst, &src, sizeof(To));
+    ::bl::memcpy(&dst, &src, sizeof(To));
     return dst;
 }
 } // namespace bl

@@ -57,6 +57,9 @@ destroy(ForwardIt first, ForwardIt last)
     if constexpr (!std::is_trivially_destructible_v<T>) {
         for (; first != last; ++first)
             destroy_at(addressof(*first));
+    } else {
+        UNUSED(first);
+        UNUSED(last);
     }
 }
 

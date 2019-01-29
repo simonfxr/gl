@@ -56,7 +56,7 @@ has_type(CommandParamType pt, CommandArgType t) noexcept
         static inline constexpr CommandParamType param_type = ComTy;           \
         static void check(const ge::CommandArg &arg)                           \
         {                                                                      \
-            ASSERT(has_type(ComTy, arg.type()));                               \
+            INLINE_ASSERT(has_type(ComTy, arg.type()));                        \
         }                                                                      \
         static const T &unwrap(const ge::CommandArg &arg)                      \
         {                                                                      \
@@ -138,7 +138,7 @@ invoke_indexed(F &&f,
                bl::array_view<const CommandArg> args)
 {
     static_assert(sizeof...(Ts) == sizeof...(Is));
-    ASSERT(args.size() == sizeof...(Ts));
+    INLINE_ASSERT(args.size() == sizeof...(Ts));
     f(ev,
       decayed_command_param_mapping<
         command_arg_seq_element<Is,
@@ -154,7 +154,7 @@ invoke_indexed_vararg(F &&f,
                       bl::array_view<const CommandArg> args)
 {
     static_assert(sizeof...(Ts) == sizeof...(Is) + 1);
-    ASSERT(args.size() >= sizeof...(Is));
+    INLINE_ASSERT(args.size() >= sizeof...(Is));
     f(ev,
       decayed_command_param_mapping<
         command_arg_seq_element<Is, CommandArgSeq<Ts...>>>::unwrap(args[Is])...,
