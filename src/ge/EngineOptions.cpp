@@ -258,9 +258,7 @@ EngineOptions::EngineOptions()
 {
     window.settings.majorVersion = 3;
     window.settings.minorVersion = 3;
-#if ENABLE_GLDEBUG_P
-    window.settings.debugContext = true;
-#endif
+    window.settings.debugContext = GLDEBUG_LEVEL > 0;
 }
 
 EngineOptions &

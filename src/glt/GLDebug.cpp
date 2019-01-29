@@ -67,7 +67,8 @@ ARBDebug::ARBDebug()
         return;
     }
 
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+    if (GLDEBUG_LEVEL > 1)
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
 
     GLsizei max_len;
     glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH_ARB, &max_len);

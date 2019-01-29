@@ -17,7 +17,7 @@ set(ERR_DEFINES)
 
 if(ENABLE_STACKTRACES)
   list(APPEND ERR_DEFINES -DENABLE_STACKTRACES=1)
-  if(SYS_UNIX)
+  if(SYS_LINUX)
     list(APPEND ERR_LIBS PkgConfig::unwind PkgConfig::dw)
   elseif(SYS_WINDOWS)
     list(APPEND ERR_LIBS Dbghelp)

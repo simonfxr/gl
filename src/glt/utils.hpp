@@ -7,22 +7,22 @@
 #include "err/err.hpp"
 #include "sys/io/Stream.hpp"
 
-#if ENABLE_GLDEBUG_P
-#    define GL_TRACE(msg)                                                      \
-        do {                                                                   \
-            ::glt::printGLTrace(ERROR_LOCATION_OP(msg));                       \
-        } while (0)
-#    define GL_CHECK(op)                                                       \
-        do {                                                                   \
-            (op);                                                              \
-            ::glt::checkForGLError(ERROR_LOCATION_OP(PP_TOSTR(op)));           \
-        } while (0)
-#    define GL_CHECK_ERRORS() ::glt::checkForGLError(ERROR_LOCATION)
-#else
-#    define GL_CHECK(op) UNUSED(op)
-#    define GL_CHECK_ERRORS() UNUSED(0)
-#    define GL_TRACE(loc)
-#endif
+#define GL_TRACE(msg)                                                          \
+    do {                                                                       \
+        if (GLDEBUG_LEVEL > 0) {                                               \
+            ::glt::printGLTrace(ERROR_LOCATION, msg);                          \
+        }                                                                      \
+    } while (0)
+
+#define GL_CHECK(op)                                                           \
+    do {                                                                       \
+        (op);                                                                  \
+        if (GLDEBUG_LEVEL > 0) {                                               \
+            ::glt::checkForGLError(ERROR_LOCATION_OP(#op));                    \
+        }                                                                      \
+    } while (0)
+
+#define GL_CHECK_ERRORS_ALWAYS() (::glt::checkForGLError(ERROR_LOCATION))
 
 #define GL_CALL(fn, ...) GL_CHECK(fn(__VA_ARGS__))
 
@@ -46,6 +46,9 @@ printOpenGLCalls(bool);
 
 GLT_API void
 printGLTrace(const err::Location *loc);
+
+GLT_API void
+printGLTrace(const err::Location *loc, bl::string_view);
 
 GLT_API bl::string
 getGLErrorString(GLenum err);

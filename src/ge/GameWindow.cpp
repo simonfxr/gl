@@ -379,7 +379,7 @@ GameWindow::Data::init(const WindowOptions &opts)
 
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
         FATAL_ERR("GLAD initialization failed");
-    GL_CHECK_ERRORS();
+    GL_CHECK_ERRORS_ALWAYS();
 
     vsync = opts.vsync;
     //    win->setVerticalSyncEnabled(opts.vsync);

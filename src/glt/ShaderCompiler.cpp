@@ -290,7 +290,6 @@ compilePreprocessed(ShaderCompilerQueue &scq,
         GL_CALL(glShaderSource, *shader, nsegments, segments, segLengths);
         double wct;
         measure_time(wct, glCompileShader(*shader));
-        GL_CHECK_ERRORS();
 
         GLint success;
         GL_CALL(glGetShaderiv, *shader, GL_COMPILE_STATUS, &success);

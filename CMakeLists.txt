@@ -31,25 +31,25 @@ if(COMP_CLANG)
   set_option(ENABLE_LIBCXX False BOOL "True to use libc++ when compiling with clang")
 endif()
 
-set(gldebug_default True)
-if(build_type STREQUAL RELEASE)
-  set(gldebug_default False)
+set(gldebug_level_default 0)
+if(build_type STREQUAL DEBUG)
+  set(gldebug_level_default 2)
+elseif(build_type STREQUAL RELWITHDEBINFO)
+  set(gldebug_level_default 1)
 endif()
-set_option(ENABLE_GLDEBUG
-           ${gldebug_default}
+set_option(GLDEBUG_LEVEL
+           ${gldebug_level_default}
            BOOL
-           "True to enable error checking after every opengl call")
+           "Enable OpenGL debug output and checks")
 
-set_option(ENABLE_OPENMP True BOOL "enable openmp support")
+set_option(ENABLE_OPENMP True BOOL "Enable OpenMP support")
 
-set_option(ENABLE_VOXEL_OPENCL False BOOL "use opencl for the voxel-world program")
+set_option(ENABLE_VOXEL_OPENCL False BOOL "Use OpenCL for the voxel-world program")
 
-if(UNIX)
-  set_option(ENABLE_STACKTRACES
-             True
-             BOOL
-             "print a stacktrace on errors")
-endif()
+set_option(ENABLE_STACKTRACES
+  True
+  BOOL
+  "print a stacktrace on errors")
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macros.cmake)

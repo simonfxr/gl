@@ -646,7 +646,7 @@ Game::render_sphere(const Sphere &s, const SphereModel &m)
         us.optional("shininess", m.shininess);
         us.optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
 
-#if ENABLE_GLDEBUG_P
+#if GLDEBUG_LEVEL > 0
         sphereShader->validate();
 #endif
         sphereBatches[lod.level].draw();
@@ -691,7 +691,7 @@ Game::render_box(const glt::AABB &box)
     us.optional("spotAngle", wallUniforms.spotAngle);
     us.optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
 
-#if ENABLE_GLDEBUG_P
+#if GLDEBUG_LEVEL > 0
     wallShader->validate(true);
 #endif
 

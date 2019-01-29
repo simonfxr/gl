@@ -1,6 +1,6 @@
 set(CMAKE_POSITION_INDEPENDENT_CODE True)
 
-macro(replace_cmake_flags pat repl)
+macro(replace_global_cmake_flags pat repl)
   set(types ${CMAKE_CONFIGURATION_TYPES})
   if(NOT types)
     set(types DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
@@ -19,6 +19,23 @@ macro(replace_cmake_flags pat repl)
                        "${v}"
                        "${${v}}")
       endif()
+    endforeach()
+  endforeach()
+endmacro()
+
+macro(add_global_cmake_linker_flags)
+  set(types ${CMAKE_CONFIGURATION_TYPES})
+  if(NOT types)
+    set(types DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
+  endif()
+
+  foreach(ty "" ${types})
+    if(ty)
+      set(ty "_${ty}")
+    endif()
+    foreach(kind EXE SHARED STATIC MODULE)
+      set(v "CMAKE_${kind}_LINKER_FLAGS${ty}")
+      list(APPEND "${v}" ${ARGN})
     endforeach()
   endforeach()
 endmacro()
@@ -51,6 +68,7 @@ endif()
 if(BUILD_DEBUG)
   if(COMP_GCC OR COMP_CLANG)
     #list(APPEND GLOBAL_FLAGS -march=native -Og)
+    list(APPEND GLOBAL_FLAGS -march=native -O0 -g0)
   endif()
 endif()
 
@@ -199,12 +217,7 @@ if(ENABLE_OPENMP)
 endif()
 
 
-set(gldebug_val 0)
-if(ENABLE_GLDEBUG)
-  set(gldebug_val 1)
-endif()
-
-list(APPEND GLOBAL_DEFINES "ENABLE_GLDEBUG_P=${gldebug_val}")
+list(APPEND GLOBAL_DEFINES "GLDEBUG_LEVEL=${GLDEBUG_LEVEL}")
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
@@ -225,7 +238,7 @@ endif()
 
 find_package(PkgConfig)
 if(PKG_CONFIG_FOUND)
-  if(ENABLE_STACKTRACES AND SYS_UNIX)
+  if(ENABLE_STACKTRACES AND SYS_LINUX)
     pkg_check_modules(unwind IMPORTED_TARGET libunwind)
     pkg_check_modules(dw IMPORTED_TARGET libdw)
     if(NOT TARGET PkgConfig::unwind OR NOT TARGET PkgConfig::dw)
@@ -237,7 +250,13 @@ if(PKG_CONFIG_FOUND)
 endif()
 
 if(COMP_MSVC)
-  replace_cmake_flags("/GR" "/GR-")
+  replace_global_cmake_flags("/GR" "/GR-")
+endif()
+
+if(COMP_CLANG)
+  add_global_cmake_linker_flags("-fuse-ld=lld")
+elseif(COMP_GCC)
+  add_global_cmake_linker_flags("-fuse-ld=gold")
 endif()
 
 message(STATUS "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")

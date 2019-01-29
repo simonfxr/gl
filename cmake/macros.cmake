@@ -21,7 +21,7 @@ macro(do_configure_target target)
     set_target_properties(${target}
                           PROPERTIES C_VISIBILITY_PRESET hidden
                                      CXX_VISIBILITY_PRESET hidden
-                                     #VISIBILITY_INLINES_HIDDEN True
+                                     VISIBILITY_INLINES_HIDDEN True
                                      )
   endif()
 endmacro()

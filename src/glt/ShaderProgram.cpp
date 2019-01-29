@@ -318,7 +318,6 @@ ShaderProgram::link()
 
         double wct;
         measure_time(wct, glLinkProgram(*self->program));
-        GL_CHECK_ERRORS();
 
         GLint success;
         GL_CALL(glGetProgramiv, *self->program, GL_LINK_STATUS, &success);
