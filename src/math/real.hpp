@@ -16,7 +16,8 @@
 #    define MATH_FN_BUILTIN_IMPORT(fn, ...)
 #    define MATH_FN_BUILTIN_NAME(fn) PP_CAT(__builtin_, fn)
 #else
-#    define MATH_FN_BUILTIN_IMPORT(fn, ...) MATH_FN_C_IMPORT(fn, __VA_ARGS__)
+#    define MATH_FN_BUILTIN_IMPORT(fn, ret, ...)                               \
+        MATH_FN_C_IMPORT(fn, ret, __VA_ARGS__)
 #    define MATH_FN_BUILTIN_NAME(fn) fn
 #endif
 

@@ -183,15 +183,17 @@ if(COMP_CLANG)
               -Wno-nested-anon-types
               -Wno-packed
               -Wno-padded
-              -Wno-return-std-move-in-c++11
               -Wno-gnu-statement-expression
               -Wno-assume)
+  if(NOT COMP_ZAPCC)
+    list(APPEND GLOBAL_FLAGS -Wno-return-std-move-in-c++11)
+  endif()
 endif()
 
 if(COMP_CLANG AND ENABLE_LIBCXX)
   list(APPEND GLOBAL_CXX_FLAGS -stdlib=libc++)
   list(APPEND GLOBAL_LINK_FLAGS -stdlib=libc++)
-  list(APPEND GLOBAL_DEFINES _LIBCPP_ENABLE_NODISCARD=1)
+  list(APPEND GLOBAL_DEFINES _LIBCPP_ENABLE_NODISCARD=1 _LIBCPP_ABI_VERSION=2)
 endif()
 
 if(COMP_ICC)
@@ -208,6 +210,19 @@ set(CMAKE_THREAD_PREFER_PTHREAD True)
 set(THREADS_PREFER_PTHREAD_FLAG True)
 
 find_package(Threads)
+
+if(NOT TARGET Threads::Threads AND COMP_ZAPCC)
+  set(CMAKE_THREAD_LIBS_INIT -pthread)
+  set(CMAKE_USE_PTHREADS_INIT 1)
+  set(Threads_FOUND TRUE)
+  add_library(Threads::Threads INTERFACE IMPORTED)
+  set_property(TARGET Threads::Threads
+    PROPERTY INTERFACE_COMPILE_OPTIONS
+    $<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler -pthread>
+    $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:-pthread>)
+  set_property(TARGET Threads::Threads
+    PROPERTY INTERFACE_LINK_LIBRARIES -pthread)
+endif()
 
 if(ENABLE_OPENMP)
   if(NOT DEFINED OPENMP_FOUND)
