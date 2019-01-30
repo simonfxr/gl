@@ -4,82 +4,162 @@
 #include "bl/limits.hpp"
 #include "math/mdefs.hpp"
 
-#if defined(__FINITE_MATH_ONLY__) && __FINITE_MATH_ONLY__ > 0 &&               \
-  HU_COMP_GNULIKE_P
-#    define MATH_IMPORT_ATTRS_F(fn)                                            \
-        throw() __asm__(""                                                     \
-                        "__" #fn "_finite")
+#if HU_COMP_GCC_P || HU_COMP_INTEL_P
+#    define MATH_FN_CONSTEXPR constexpr
+#else
+#    define MATH_FN_CONSTEXPR
 #endif
 
-#define MATH_IMPORT_ATTRS_N(fn) throw()
+#define MATH_FN_C_IMPORT(fn, ret, ...) extern "C" ret fn(__VA_ARGS__) throw();
 
-#ifndef MATH_IMPORT_ATTRS_F
-#    define MATH_IMPORT_ATTRS_F(fn) MATH_IMPORT_ATTRS_N(fn)
+#if HU_COMP_GNULIKE_P
+#    define MATH_FN_BUILTIN_IMPORT(fn, ...)
+#    define MATH_FN_BUILTIN_NAME(fn) PP_CAT(__builtin_, fn)
+#else
+#    define MATH_FN_BUILTIN_IMPORT(fn, ...) MATH_FN_C_IMPORT(fn, __VA_ARGS__)
+#    define MATH_FN_BUILTIN_NAME(fn) fn
 #endif
 
-#define MATH_IMPORT_ATTRS(fn, suf) PP_CAT(MATH_IMPORT_ATTRS_, suf)(fn)
+#define MATH_FN_INLINE HU_FORCE_INLINE inline
 
-#define MATH_WRAPPER_TY_1(ty, cnm, nm, suf)                                    \
-    extern "C" ty cnm(ty x) MATH_IMPORT_ATTRS(cnm, suf);                       \
+#define MATH_WRAP_BUILTIN_TY_1(ret, cret, ty, cnm, nm, suf)                    \
+    MATH_FN_BUILTIN_IMPORT(cnm, cret, ty)                                      \
     namespace math {                                                           \
-    HU_FORCE_INLINE inline ty nm(ty x) noexcept { return ::cnm(x); }           \
+    MATH_FN_INLINE MATH_FN_CONSTEXPR ret nm(ty x) noexcept                     \
+    {                                                                          \
+        return ret(MATH_FN_BUILTIN_NAME(cnm)(x));                              \
+    }                                                                          \
     }
 
-#define MATH_WRAPPER_TY_2(ty, cnm, nm, suf)                                    \
-    extern "C" ty cnm(ty x, ty y) MATH_IMPORT_ATTRS(cnm, suf);                 \
+#define MATH_WRAP_C_TY_1(ret, cret, ty, cnm, nm, suf)                          \
+    MATH_FN_C_IMPORT(cnm, cret, ty)                                            \
     namespace math {                                                           \
-    HU_FORCE_INLINE inline ty nm(ty x, ty y) noexcept { return ::cnm(x, y); }  \
+    MATH_FN_INLINE ret nm(ty x) noexcept { return ret(::cnm(x)); }             \
     }
 
-#define MATH_WRAPPER_NAMED_1(cnm, nm, suf)                                     \
-    MATH_WRAPPER_TY_1(float, PP_CAT(cnm, f), nm, suf)                          \
-    MATH_WRAPPER_TY_1(double, cnm, nm, suf)
+#define MATH_WRAP_BUILTIN_TY_2(ret, cret, ty, cnm, nm, suf)                    \
+    MATH_FN_BUILTIN_IMPORT(cnm, cret, ty, ty)                                  \
+    namespace math {                                                           \
+    MATH_FN_INLINE MATH_FN_CONSTEXPR ret nm(ty x, ty y) noexcept               \
+    {                                                                          \
+        return ret(MATH_FN_BUILTIN_NAME(cnm)(x, y));                           \
+    }                                                                          \
+    }
 
-#define MATH_WRAPPER_NAMED_2(cnm, nm, suf)                                     \
-    MATH_WRAPPER_TY_2(float, PP_CAT(cnm, f), nm, suf)                          \
-    MATH_WRAPPER_TY_2(double, cnm, nm, suf)
+#define MATH_WRAP_C_TY_2(ret, cret, ty, cnm, nm, suf)                          \
+    MATH_FN_C_IMPORT(cnm, cret, ty, ty)                                        \
+    namespace math {                                                           \
+    MATH_FN_INLINE ret nm(ty x, ty y) noexcept { return ret(::cnm(x, y)); }    \
+    }
 
-#define MATH_WRAPPER_1(nm, suf) MATH_WRAPPER_NAMED_1(nm, nm, suf)
+#define MATH_WRAP_BUILTIN_NAMED_RET_1(cnm, nm, ret, cret, suf)                 \
+    MATH_WRAP_BUILTIN_TY_1(ret, cret, float, PP_CAT(cnm, f), nm, suf)          \
+    MATH_WRAP_BUILTIN_TY_1(ret, cret, double, cnm, nm, suf)
 
-#define MATH_WRAPPER_2(nm, suf) MATH_WRAPPER_NAMED_2(nm, nm, suf)
+#define MATH_WRAP_C_NAMED_RET_1(cnm, nm, ret, cret, suf)                       \
+    MATH_WRAP_C_TY_1(ret, cret, float, PP_CAT(cnm, f), nm, suf)                \
+    MATH_WRAP_C_TY_1(ret, cret, double, cnm, nm, suf)
+
+#define MATH_WRAP_BUILTIN_NAMED_1(cnm, nm, suf)                                \
+    MATH_WRAP_BUILTIN_TY_1(float, float, float, PP_CAT(cnm, f), nm, suf)       \
+    MATH_WRAP_BUILTIN_TY_1(double, double, double, cnm, nm, suf)
+
+#define MATH_WRAP_BUILTIN_NAMED_RET_2(cnm, nm, ret, cret, suf)                 \
+    MATH_WRAP_BUILTIN_TY_2(ret, cret, float, PP_CAT(cnm, f), nm, suf)          \
+    MATH_WRAP_BUILTIN_TY_2(ret, cret, double, cnm, nm, suf)
+
+#define MATH_WRAP_BUILTIN_NAMED_2(cnm, nm, suf)                                \
+    MATH_WRAP_BUILTIN_TY_2(float, float, float, PP_CAT(cnm, f), nm, suf)       \
+    MATH_WRAP_BUILTIN_TY_2(double, double, double, cnm, nm, suf)
+
+#define MATH_WRAP_BUILTIN_1(cnm, nm, suf)                                      \
+    MATH_WRAP_BUILTIN_NAMED_1(cnm, nm, suf)
+
+#define MATH_WRAP_C_1(nm, suf) MATH_WRAP_C_NAMED_1(nm, nm, suf)
+
+#define MATH_WRAP_1(nm, suf) MATH_WRAP_BUILTIN_NAMED_1(nm, nm, suf)
+
+#define MATH_WRAP_RET_1(nm, ret, cret, suf)                                    \
+    MATH_WRAP_BUILTIN_NAMED_RET_1(nm, nm, ret, cret, suf)
+
+#define MATH_WRAP_BUILTIN_2(cnm, nm, suf)                                      \
+    MATH_WRAP_BUILTIN_NAMED_2(cnm, nm, suf)
+
+#define MATH_WRAP_C_2(nm, suf) MATH_WRAP_C_NAMED_2(nm, nm, suf)
+
+#define MATH_WRAP_2(nm, suf) MATH_WRAP_BUILTIN_NAMED_2(nm, nm, suf)
+
+#if HU_COMP_GNULIKE_P
+#    define MATH_WRAP_CLASSIFY(nm)                                             \
+        MATH_WRAP_BUILTIN_TY_1(bool, int, float, nm, nm, N)                    \
+        MATH_WRAP_BUILTIN_TY_1(bool, int, double, nm, nm, N)
+#else
+#    define MATH_WRAP_CLASSIFY(nm) MATH_WRAP_C_NAMED_RET_1(nm, nm, int, bool, N)
+#endif
 
 BEGIN_NO_WARN_DEPRECATED_EX_SPEC
 
-MATH_WRAPPER_NAMED_1(fabs, abs, N)
-MATH_WRAPPER_2(fmod, F);
+MATH_WRAP_BUILTIN_NAMED_1(fabs, abs, N)
+MATH_WRAP_2(fmod, F)
 
-MATH_WRAPPER_1(exp, F)
-MATH_WRAPPER_1(exp2, F)
-MATH_WRAPPER_1(expm1, N)
-MATH_WRAPPER_1(log, F)
-MATH_WRAPPER_1(log10, F)
-MATH_WRAPPER_1(log2, F)
-MATH_WRAPPER_1(log1p, N)
+MATH_WRAP_1(exp, F)
+MATH_WRAP_1(exp2, F)
+MATH_WRAP_1(expm1, N)
 
-MATH_WRAPPER_2(pow, F)
-MATH_WRAPPER_1(sqrt, F)
-MATH_WRAPPER_1(cbrt, N)
-MATH_WRAPPER_2(hypot, F)
+MATH_WRAP_1(log, F)
+MATH_WRAP_1(log10, F)
+MATH_WRAP_1(log1p, N)
+MATH_WRAP_1(log2, F)
 
-MATH_WRAPPER_1(sin, N)
-MATH_WRAPPER_1(cos, N)
-MATH_WRAPPER_1(tan, N)
-MATH_WRAPPER_1(asin, F)
-MATH_WRAPPER_1(acos, F)
-MATH_WRAPPER_1(atan, F)
-MATH_WRAPPER_2(atan2, F)
+MATH_WRAP_2(pow, F)
+MATH_WRAP_1(sqrt, F)
+MATH_WRAP_1(cbrt, N)
+MATH_WRAP_2(hypot, F)
 
-MATH_WRAPPER_1(sinh, F)
-MATH_WRAPPER_1(cosh, F)
-MATH_WRAPPER_1(tanh, F)
-MATH_WRAPPER_1(asinh, N)
-MATH_WRAPPER_1(acosh, F)
-MATH_WRAPPER_1(atanh, F)
+MATH_WRAP_1(sin, N)
+MATH_WRAP_1(cos, N)
+MATH_WRAP_1(tan, N)
+MATH_WRAP_1(asin, F)
+MATH_WRAP_1(acos, F)
+MATH_WRAP_1(atan, F)
+MATH_WRAP_2(atan2, F)
 
-MATH_WRAPPER_1(ceil, N)
-MATH_WRAPPER_1(floor, N);
-MATH_WRAPPER_1(round, N);
-MATH_WRAPPER_1(truncate, N);
+MATH_WRAP_1(sinh, F)
+MATH_WRAP_1(cosh, F)
+MATH_WRAP_1(tanh, F)
+MATH_WRAP_1(asinh, N)
+MATH_WRAP_1(acosh, F)
+MATH_WRAP_1(atanh, F)
+
+MATH_WRAP_1(erf, F)
+MATH_WRAP_1(erfc, F)
+MATH_WRAP_1(lgamma, F)
+MATH_WRAP_1(tgamma, F)
+
+MATH_WRAP_1(ceil, N)
+MATH_WRAP_1(floor, N)
+MATH_WRAP_1(round, N)
+MATH_WRAP_1(trunc, N)
+
+MATH_WRAP_2(nextafter, N)
+MATH_WRAP_2(nexttoward, N)
+
+#if HU_COMP_GNULIKE_P
+MATH_WRAP_CLASSIFY(isfinite)
+#else
+MATH_WRAP_C_NAMED_RET_1(finite, isfinite, int, bool, N)
+#endif
+
+MATH_WRAP_CLASSIFY(isnan)
+MATH_WRAP_CLASSIFY(isinf)
+
+#if HU_COMP_GNULIKE_P
+MATH_WRAP_CLASSIFY(isnormal)
+#endif
+
+MATH_WRAP_2(copysign, N);
+
+MATH_WRAP_BUILTIN_NAMED_RET_1(signbit, signbit, bool, int, N)
 
 END_NO_WARN_DEPRECATED_EX_SPEC
 
@@ -154,6 +234,7 @@ cubed(real x)
     return x * x * x;
 }
 
+#if !HU_COMP_GNULIKE_P
 inline constexpr real
 pow(real x, int32_t n)
 {
@@ -174,6 +255,7 @@ pow(real x, int32_t n)
     real r = a * p;
     return n < 0 ? recip(r) : r;
 }
+#endif
 
 inline constexpr int32_t
 signum(real x)
@@ -181,17 +263,16 @@ signum(real x)
     return x < real(0) ? -1 : x > real(0) ? +1 : 0;
 }
 
-// bool signbit(real x) {
-//     return x < 0.f;
-// }
-
-inline real
-wrapPi(real x)
+inline MATH_FN_CONSTEXPR real
+fract(real x) noexcept
 {
-    x += PI;
-    x -= floor(x * (1 / (2 * PI))) * (2 * PI);
-    x -= PI;
-    return x;
+    return x - floor(x);
+}
+
+inline MATH_FN_CONSTEXPR real
+wrapPi(real x) noexcept
+{
+    return fract((x - PI) / (2 * PI)) * (2 * PI) + PI;
 }
 
 inline real
