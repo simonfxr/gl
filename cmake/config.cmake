@@ -217,11 +217,12 @@ if(NOT TARGET Threads::Threads AND COMP_ZAPCC)
   set(Threads_FOUND TRUE)
   add_library(Threads::Threads INTERFACE IMPORTED)
   set_property(TARGET Threads::Threads
-    PROPERTY INTERFACE_COMPILE_OPTIONS
-    $<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler -pthread>
-    $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:-pthread>)
+               PROPERTY INTERFACE_COMPILE_OPTIONS
+                        $<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler
+                        -pthread>
+                        $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:-pthread>)
   set_property(TARGET Threads::Threads
-    PROPERTY INTERFACE_LINK_LIBRARIES -pthread)
+               PROPERTY INTERFACE_LINK_LIBRARIES -pthread)
 endif()
 
 if(ENABLE_OPENMP)
