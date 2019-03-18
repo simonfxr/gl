@@ -1,6 +1,6 @@
 
-in vec2 position;
-out vec2 texcoord;
+SL_in vec2 position;
+SL_out vec2 texcoord;
 
 void
 main()

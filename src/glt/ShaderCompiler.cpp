@@ -160,7 +160,7 @@ struct ShaderCompiler::Data
     bl::shared_ptr<ShaderCache> cache;
 
     Data(ShaderManager &sm) : shaderManager(sm) {}
-    void initPreprocessor(GLSLPreprocessor & /*proc*/);
+    void initPreprocessor(GLSLPreprocessor & /*proc*/, GLenum);
 };
 
 DECLARE_PIMPL_DEL(ShaderCompiler)
@@ -331,13 +331,12 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
         while (end > logBegin && isspace(end[-1]))
             --end;
         *end = 0;
-        const char *log_msg = log.data();
 
         if (logBegin == end) {
             out << "shader compile log empty" << sys::io::endl;
         } else {
             out << "shader compile log: " << sys::io::endl
-                << log_msg << sys::io::endl
+                << logBegin << sys::io::endl
                 << "end compile log" << sys::io::endl;
         }
     }
@@ -407,7 +406,7 @@ ShaderSource::Data::load(const bl::shared_ptr<ShaderSource> &src,
       so->self->includes,
       so->self->dependencies);
     preproc.name("");
-    scq.shaderCompiler().self->initPreprocessor(preproc);
+    scq.shaderCompiler().self->initPreprocessor(preproc, gltype);
 
     preproc.process(strsrc.source);
 
@@ -446,7 +445,7 @@ ShaderSource::Data::load(const bl::shared_ptr<ShaderSource> &src,
       scq.shaderCompiler().shaderManager().shaderDirectories(),
       so->self->includes,
       so->self->dependencies);
-    scq.shaderCompiler().self->initPreprocessor(preproc);
+    scq.shaderCompiler().self->initPreprocessor(preproc, gltype);
 
     preproc.processFileRecursively(bl::string(path));
     if (preproc.wasError())
@@ -759,7 +758,7 @@ ShaderCompiler::guessShaderType(bl::string_view path, ShaderType *res)
 }
 
 void
-ShaderCompiler::Data::initPreprocessor(GLSLPreprocessor &proc)
+ShaderCompiler::Data::initPreprocessor(GLSLPreprocessor &proc, GLenum type)
 {
     auto &m = shaderManager;
     proc.out(m.out());
@@ -774,11 +773,22 @@ ShaderCompiler::Data::initPreprocessor(GLSLPreprocessor &proc)
                             : " compatibility");
         glversdef << sys::io::endl;
         if (vers <= 150) {
-            glversdef << "#define SL_in attribute" << sys::io::endl;
-            glversdef << "#define SL_out varying" << sys::io::endl;
+            if (type == GL_FRAGMENT_SHADER) {
+                glversdef << "#define SL_in varying" << sys::io::endl;
+                glversdef << "#define DEF_FRAG_COLOR" << sys::io::endl;
+                glversdef << "#define FragColor gl_FragColor" << sys::io::endl;
+            } else {
+                glversdef << "#define SL_in attribute" << sys::io::endl;
+                glversdef << "#define SL_out varying" << sys::io::endl;
+            }
+            glversdef << "#define SL_flat" << sys::io::endl;
         } else {
             glversdef << "#define SL_in in" << sys::io::endl;
             glversdef << "#define SL_out out" << sys::io::endl;
+            if (type == GL_FRAGMENT_SHADER)
+                glversdef << "#define DEF_FRAG_COLOR out vec4 FragColor;"
+                          << sys::io::endl;
+            glversdef << "#define SL_flat flat" << sys::io::endl;
         }
         proc.appendString(glversdef.str());
     }

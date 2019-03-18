@@ -231,34 +231,35 @@ setUniform(bool mandatory,
     }
 
 #if GLDEBUG_LEVEL > 1
+    if (glGetActiveUniformsiv != nullptr) {
+        GLint num_active;
+        GL_CALL(
+          glGetProgramiv, *prog.program(), GL_ACTIVE_UNIFORMS, &num_active);
+        if (locationi < num_active) {
+            auto location = GLuint(locationi);
+            GLint actual_typei = -1;
+            GL_CALL(glGetActiveUniformsiv,
+                    *prog.program(),
+                    1,
+                    &location,
+                    GL_UNIFORM_TYPE,
+                    &actual_typei);
+            if (actual_typei != -1) {
+                auto actual_type = GLenum(actual_typei);
+                if (actual_type != type) {
+                    ERR(string_concat("uniform \"",
+                                      name,
+                                      "\": types dont match, got: ",
+                                      descGLType(type),
+                                      ", expected: ",
+                                      descGLType(actual_type))
 
-    GLint num_active;
-    GL_CALL(glGetProgramiv, *prog.program(), GL_ACTIVE_UNIFORMS, &num_active);
-    if (locationi < num_active) {
-        auto location = GLuint(locationi);
-        GLint actual_typei = -1;
-        GL_CALL(glGetActiveUniformsiv,
-                *prog.program(),
-                1,
-                &location,
-                GL_UNIFORM_TYPE,
-                &actual_typei);
-        if (actual_typei != -1) {
-            auto actual_type = GLenum(actual_typei);
-            if (actual_type != type) {
-                ERR(string_concat("uniform \"",
-                                  name,
-                                  "\": types dont match, got: ",
-                                  descGLType(type),
-                                  ", expected: ",
-                                  descGLType(actual_type))
-
-                );
-                return;
+                    );
+                    return;
+                }
             }
         }
     }
-
 #endif
 
     programUniform(*prog.program(), locationi, value);

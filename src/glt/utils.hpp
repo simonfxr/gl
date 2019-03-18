@@ -24,9 +24,17 @@
 
 #define GL_CHECK_ERRORS_ALWAYS() (::glt::checkForGLError(ERROR_LOCATION))
 
-#define GL_CALL(fn, ...) GL_CHECK(fn(__VA_ARGS__))
+#define GL_CALL(fn, ...)                                                       \
+    do {                                                                       \
+        ASSERT(fn != nullptr);                                                 \
+        GL_CHECK(fn(__VA_ARGS__));                                             \
+    } while (0)
 
-#define GL_ASSIGN_CALL(var, fn, ...) GL_CHECK(var = fn(__VA_ARGS__))
+#define GL_ASSIGN_CALL(var, fn, ...)                                           \
+    do {                                                                       \
+        ASSERT(fn != nullptr);                                                 \
+        GL_CHECK(var = fn(__VA_ARGS__));                                       \
+    } while (0)
 
 namespace glt {
 

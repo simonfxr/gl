@@ -22,6 +22,7 @@ struct GLT_API GLPerfCounter
     bl::vector<Counter> _queries;
     size_t _active_query{};
     double _last_query = -1.0;
+    bool _available = false;
 
     GLPerfCounter();
     GLPerfCounter(size_t);

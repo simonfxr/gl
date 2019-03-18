@@ -1,7 +1,7 @@
 load "default.script"
 
 bindShader "render" "render.vert" "render.frag" 0 "position"
-bindShader "postproc" "postproc.vert" "postproc.frag" 0 "position"
+#bindShader "postproc" "postproc.vert" "postproc.frag" 0 "position"
 
 bindKey [I] { zoom 1 }
 bindKey [O] { zoom -1 }

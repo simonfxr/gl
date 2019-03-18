@@ -18,10 +18,16 @@ gl_arb_debug_callback(GLenum /* source */,
     fprintf(log, "GL message: %s\n", message);
 }
 
+void
+glfw_err_callback(int err, const char *msg)
+{
+    fprintf(stderr, "GLFW error(%d): %s\n", err, msg);
+}
+
 int
 main()
 {
-    FILE *log = stdout;
+    FILE *log = stderr;
     int ret = 0;
 
     // fprintf(log, "Program started\n");
@@ -37,16 +43,30 @@ main()
         goto err_init;
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+    glfwSetErrorCallback(glfw_err_callback);
 
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", nullptr, nullptr);
-    if (window == nullptr) {
-        ret = -1;
-        goto err_win;
+    for (int i = 0; i < 2; ++i) {
+
+        if (i == 0) {
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+        } else {
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);
+            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_FALSE);
+        }
+
+        /* Create a windowed mode window and its OpenGL context */
+        window = glfwCreateWindow(640, 480, "Hello World", nullptr, nullptr);
+        if (window)
+            break;
+        if (window == nullptr && i > 0) {
+            ret = -1;
+            goto err_win;
+        }
     }
 
     /* Make the window's context current */

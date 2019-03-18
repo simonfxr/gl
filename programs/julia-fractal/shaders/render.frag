@@ -4,11 +4,11 @@ uniform mat3 transform;
 
 SL_in vec2 worldPosition;
 
-flat SL_in vec2 C;
-flat SL_in float zoom;
-flat SL_in vec2 shift;
+SL_flat SL_in vec2 C;
+SL_flat SL_in float zoom;
+SL_flat SL_in vec2 shift;
 
-SL_out vec4 fragColor;
+DEF_FRAG_COLOR
 
 const float pi = 3.14159265;
 
@@ -87,6 +87,6 @@ main()
       pow(clamp(pow(a, 1 / 1.11) - 0.4, 0, 1), 1 / 1.4) * pi / 2 + pi / 4;
     float r = sigmoid(a * 4);
 
-    fragColor = vec4(sphericToEuclidean(vec3(r, theta, phi)), 1);
-    //    fragColor = vec4(vec3(a), 1);
+    FragColor = vec4(sphericToEuclidean(vec3(r, theta, phi)), 1);
+    //    FragColor = vec4(vec3(a), 1);
 }

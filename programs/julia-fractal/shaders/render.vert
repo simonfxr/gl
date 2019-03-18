@@ -7,9 +7,9 @@ uniform float world_zoom;
 SL_in vec2 position;
 
 SL_out vec2 worldPosition;
-flat SL_out float zoom;
-flat SL_out vec2 shift;
-flat SL_out vec2 C;
+SL_flat SL_out float zoom;
+SL_flat SL_out vec2 shift;
+SL_flat SL_out vec2 C;
 
 void
 main()

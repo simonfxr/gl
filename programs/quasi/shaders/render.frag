@@ -10,7 +10,7 @@ const bool SPLIT_SCREEN = false;
 const bool APPLY_TRANSFORM = false;
 
 SL_in vec2 worldPosition;
-SL_out vec4 color;
+DEF_FRAG_COLOR
 
 float
 stretch(float x)
@@ -152,5 +152,5 @@ main()
 
     albedo = vec3(log(0.6 + length(albedo)));
     //    albedo = vec3(pow(1 - exp(-3 * length(albedo)), 60)) * 0.8;
-    color = gammaCorrect(vec4(albedo, 1));
+    FragColor = gammaCorrect(vec4(albedo, 1));
 }

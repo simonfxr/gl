@@ -136,16 +136,36 @@ MeshBase::initVertexAttribs()
     ASSERT(vertex_buffer_name.valid());
     ASSERT(vertex_array_name.valid());
 
+    if (!glVertexArrayVertexAttribOffsetEXT) {
+        GL_CALL(glBindVertexArray, *vertex_array_name);
+        GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, *vertex_buffer_name);
+    }
+
     for (const auto [i, a] : enumerate(struct_info.fields)) {
-        GL_CALL(glVertexArrayVertexAttribOffsetEXT,
-                *vertex_array_name,
-                *vertex_buffer_name,
-                GLuint(i),
-                GLint(a.type_info.arity),
-                toGLScalarType(a.type_info.scalar_type),
-                gl_bool(a.type_info.normalized),
-                GLsizei(struct_info.size),
-                GLintptr(a.offset));
+        if (glVertexArrayVertexAttribOffsetEXT) {
+            GL_CALL(glVertexArrayVertexAttribOffsetEXT,
+                    *vertex_array_name,
+                    *vertex_buffer_name,
+                    GLuint(i),
+                    GLint(a.type_info.arity),
+                    toGLScalarType(a.type_info.scalar_type),
+                    gl_bool(a.type_info.normalized),
+                    GLsizei(struct_info.size),
+                    GLintptr(a.offset));
+        } else {
+            GL_CALL(glVertexAttribPointer,
+                    GLuint(i),
+                    GLint(a.type_info.arity),
+                    toGLScalarType(a.type_info.scalar_type),
+                    gl_bool(a.type_info.normalized),
+                    GLsizei(struct_info.size),
+                    reinterpret_cast<void *>(a.offset));
+        }
+    }
+
+    if (!glVertexArrayVertexAttribOffsetEXT) {
+        GL_CALL(glBindVertexArray, 0);
+        GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
     }
 }
 
@@ -175,6 +195,19 @@ MeshBase::send()
     send(usage_hint);
 }
 
+namespace {
+void
+namedBufferData(GLuint vb, size_t bytes, const void *data, GLenum usage_hint)
+{
+    if (glNamedBufferDataEXT) {
+        GL_CALL(glNamedBufferDataEXT, vb, bytes, data, usage_hint);
+    } else {
+        GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, vb);
+        GL_CALL(glBufferData, GL_ARRAY_BUFFER, bytes, data, usage_hint);
+    }
+}
+} // namespace
+
 void
 MeshBase::send(GLenum usageHint)
 {
@@ -186,11 +219,10 @@ MeshBase::send(GLenum usageHint)
     if (!vertex_buffer_name.valid())
         initVertexBuffer();
 
-    GL_CALL(glNamedBufferDataEXT,
-            *vertex_buffer_name,
-            vertex_count * struct_info.size,
-            vertex_data,
-            usageHint);
+    namedBufferData(*vertex_buffer_name,
+                    vertex_count * struct_info.size,
+                    vertex_data,
+                    usageHint);
     gpu_vertex_count = vertex_count;
     initVertexAttribs();
 
@@ -198,11 +230,10 @@ MeshBase::send(GLenum usageHint)
         element_buffer_name.ensure();
 
     if (element_buffer_name.valid()) {
-        GL_CALL(glNamedBufferDataEXT,
-                *element_buffer_name,
-                GLsizeiptr(elements.size() * sizeof(GLuint)),
-                elements.data(),
-                usageHint);
+        namedBufferData(*element_buffer_name,
+                        GLsizeiptr(elements.size() * sizeof(GLuint)),
+                        elements.data(),
+                        usageHint);
         gpu_element_count = elements.size();
 
         GL_CALL(glBindVertexArray, *vertex_array_name);
@@ -223,20 +254,18 @@ MeshBase::enableAttributes()
     ASSERT(vertex_buffer_name.valid());
     ASSERT(vertex_array_name.valid());
 
+    GL_CALL(glBindVertexArray, *vertex_array_name);
+
     for (const auto i : bl::irange(struct_info.fields.size())) {
         if (enabled_attributes[2 * i] != enabled_attributes[2 * i + 1]) {
             enabled_attributes[2 * i + 1] = enabled_attributes[2 * i];
 
             if (enabled_attributes[2 * i])
-                GL_CALL(
-                  glEnableVertexArrayAttribEXT, *vertex_array_name, GLuint(i));
+                GL_CALL(glEnableVertexAttribArray, GLuint(i));
             else
-                GL_CALL(
-                  glDisableVertexArrayAttribEXT, *vertex_array_name, GLuint(i));
+                GL_CALL(glDisableVertexAttribArray, GLuint(i));
         }
     }
-
-    GL_CALL(glBindVertexArray, *vertex_array_name);
 }
 
 void

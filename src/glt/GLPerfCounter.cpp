@@ -18,6 +18,7 @@ void
 GLPerfCounter::init(size_t s)
 {
     ASSERT(s > 0);
+    _available = glQueryCounter != nullptr;
     _last_query = -1.0;
     _active_query = 0;
     _queries = bl::vector<Counter>(s);
@@ -27,6 +28,10 @@ void
 GLPerfCounter::begin()
 {
     ASSERT(!_queries.empty());
+
+    if (!_available)
+        return;
+
     if (!_queries[_active_query].begin.valid()) {
         _queries[_active_query].begin.ensure();
         _queries[_active_query].end.ensure();
@@ -50,6 +55,8 @@ GLPerfCounter::begin()
 void
 GLPerfCounter::end()
 {
+    if (!_available)
+        return;
     GL_CALL(glQueryCounter, *_queries[_active_query].end, GL_TIMESTAMP);
     _active_query = (_active_query + 1) % _queries.size();
 }
