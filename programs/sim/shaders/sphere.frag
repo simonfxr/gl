@@ -19,12 +19,12 @@ shade(vec3 ecLight,
 SL_in vec3 ecPosition;
 SL_in vec3 ecNormal;
 
-SL_out vec4 fragColor;
+DEF_FRAG_COLOR
 
 void
 main()
 {
-    fragColor =
+    FragColor =
       shade(ecLight, ecPosition, normalize(ecNormal), shininess, color);
-    fragColor = gammaCorrect(fragColor);
+    FragColor = gammaCorrect(FragColor);
 }

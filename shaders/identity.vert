@@ -2,7 +2,7 @@
 
 uniform mat4 mvpMatrix;
 
-in vec3 position;
+SL_in vec3 position;
 
 void
 main()

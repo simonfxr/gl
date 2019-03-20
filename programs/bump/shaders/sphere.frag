@@ -6,17 +6,17 @@ const float Specular = 0;
 const float BumpDensity = 16;
 const float BumpSize = 0.15;
 
-in vec3 tsLight;
-in vec3 tsEye;
-in vec2 fragUV;
+SL_in vec3 tsLight;
+SL_in vec3 tsEye;
+SL_in vec2 fragUV;
 
-out vec4 fragColor;
+DEF_FRAG_COLOR
 
 vec3
 sampleTexture(vec2 uv)
 {
     ivec2 p = ivec2(floor(BumpDensity * uv));
-    if ((p.x + p.y) % 2 != 0)
+    if (mod(p.x + p.y, 2) != 0)
         return vec3(1, 0, 0);
     else
         return vec3(1);
@@ -49,7 +49,7 @@ main()
     /* vec3 albedo = vec3(1, 0, 0); // */
     vec3 lightColor = vec3(1, 1, 1);
 
-    fragColor.rgb =
+    FragColor.rgb =
       (Ambient + d * Diffuse) * albedo + s * Specular * lightColor;
-    fragColor.a = 1;
+    FragColor.a = 1;
 }

@@ -5,7 +5,8 @@ uniform float offset;
 uniform float depth;
 
 SL_in vec2 texCoord;
-SL_out vec4 fragColor;
+
+DEF_FRAG_COLOR
 
 void
 main()
@@ -23,6 +24,6 @@ main()
 
     /* fragColor /= depth; */
 
-    fragColor = texture(textures, texCoord);
-    fragColor = gammaCorrect(fragColor);
+    FragColor = texture2D(textures, texCoord);
+    FragColor = gammaCorrect(FragColor);
 }

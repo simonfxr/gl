@@ -152,6 +152,7 @@ RenderTarget::doClear(uint32_t buffers, color c)
     if ((buffers & RT_COLOR_BUFFER) != 0u) {
         const gl_mapped_type_t<math::vec4_t> col4 = c.vec4();
         GL_CALL(glClearColor, col4[0], col4[1], col4[2], col4[3]);
+        bits |= GL_COLOR_BUFFER_BIT;
         // GL_CALL(glClearBufferfv, GL_COLOR, 0, col4.data());
     }
 

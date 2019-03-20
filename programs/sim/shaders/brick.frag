@@ -17,7 +17,7 @@ SL_in vec3 ecPosition;
 SL_in vec3 ecNormal;
 SL_in vec2 texCoord;
 
-SL_out vec4 fragColor;
+DEF_FRAG_COLOR
 
 vec3
 textureSample(vec2 coord)
@@ -40,7 +40,7 @@ main()
 
     vec3 color = textureSample(texCoord);
 
-    fragColor = shade(
+    FragColor = shade(
       ecLight, ecPosition, normalize(ecNormal), Shininess, vec4(color, 1));
-    fragColor = gammaCorrect(fragColor);
+    FragColor = gammaCorrect(FragColor);
 }

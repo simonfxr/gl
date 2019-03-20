@@ -5,14 +5,14 @@ uniform mat4 mvpMatrix;
 uniform mat3 normalMatrix;
 uniform vec3 ecLight;
 
-in vec3 position;
-in vec3 tangent;
-in vec3 binormal;
-in vec2 uv;
+SL_in vec3 position;
+SL_in vec3 tangent;
+SL_in vec3 binormal;
+SL_in vec2 uv;
 
-out vec3 tsLight;
-out vec3 tsEye;
-out vec2 fragUV;
+SL_out vec3 tsLight;
+SL_out vec3 tsEye;
+SL_out vec2 fragUV;
 
 void
 main()

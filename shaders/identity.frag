@@ -2,10 +2,10 @@
 
 uniform vec4 color;
 
-out vec4 fColor;
+DEF_FRAG_COLOR
 
 void
 main()
 {
-    fColor = color;
+    FragColor = color;
 }
