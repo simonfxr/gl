@@ -123,11 +123,7 @@ reportError(sys::io::OutStream &out,
             LogLevel lvl,
             bl::string_view);
 
-#ifdef HU_PRETTY_FUNCTION
-#    define ERR_FUNCTION HU_PRETTY_FUNCTION
-#else
-#    define ERR_FUNCTION __func__
-#endif
+#define ERR_FUNCTION HU_PRETTY_FUNCTION
 
 #define ERROR_LOCATION_OP_BASIC(op)                                            \
     ::err::Location(__FILE__, __LINE__, ERR_FUNCTION, op)

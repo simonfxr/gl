@@ -15,7 +15,7 @@ namespace {
 bool
 is_pathsep(char c)
 {
-#ifdef HU_OS_WINDOWS
+#if HU_OS_WINDOWS_P
     return c == '\\' || c == '/';
 #else
     return c == SEPARATOR;

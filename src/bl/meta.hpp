@@ -15,7 +15,7 @@ struct integer_sequence
 template<size_t... Ints>
 using index_sequence = integer_sequence<size_t, Ints...>;
 
-#if __has_builtin(__make_integer_seq)
+#if hu_has_builtin(__make_integer_seq)
 
 template<class T, T E>
 using make_integer_sequence = __make_integer_seq<integer_sequence, T, E>;

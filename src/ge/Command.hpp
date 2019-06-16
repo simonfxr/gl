@@ -35,8 +35,8 @@ public:
     Command(const Command &) = default;
     Command(Command &&) = default;
 
-    Command &operator=(const Command &) = default;
-    Command &operator=(Command &&) = default;
+    // Command &operator=(const Command &) = default;
+    // Command &operator=(Command &&) = default;
 
     virtual ~Command() override;
     bl::array_view<const CommandParamType> parameters() const { return params; }

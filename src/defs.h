@@ -1,15 +1,20 @@
 #ifndef DEFS_H_INCLUDED
 #define DEFS_H_INCLUDED
 
-#include <hu/macros.h>
 #include <hu/os.h>
 
-#ifdef HU_OS_WINDOWS
-#    define WIN32_LEAND_AND_MEAN 1
+#if HU_OS_WINDOWS_P
+#    define WIN32_LEAN_AND_MEAN 1
 #    define VC_EXTRALEAN 1
 #    define NOMINMAX 1
 #    define NOGDI 1
 #endif
+
+#include <hu/annotations.h>
+#include <hu/compiler.h>
+#include <hu/features.h>
+#include <hu/macros.h>
+#include <hu/objfmt.h>
 
 #ifdef __cplusplus
 #    include <cstdint>
@@ -24,8 +29,8 @@
 #endif
 
 #if BUILD_SHARED_P
-#    define SHARED_IMPORT HU_LIB_IMPORT
-#    define SHARED_EXPORT HU_LIB_EXPORT
+#    define SHARED_IMPORT HU_DSO_IMPORT
+#    define SHARED_EXPORT HU_DSO_EXPORT
 #else
 #    define SHARED_IMPORT
 #    define SHARED_EXPORT
@@ -49,7 +54,13 @@
 #endif
 
 #define likely hu_likely
+#define if_likely(x)                                                           \
+    if                                                                         \
+    likely(x)
 #define unlikely hu_unlikely
+#define if_unlikely(x)                                                         \
+    if                                                                         \
+    unlikely(x)
 
 #define RESTRICT HU_RESTRICT
 

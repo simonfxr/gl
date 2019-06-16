@@ -54,13 +54,13 @@ struct SphereLOD
 
 // dont change layout (directly mapped to texture)
 HU_BEGIN_PACKED
-struct SphereInstance
+struct HU_PACKED SphereInstance
 {
     vec3_t pos;
     float rad;
     vec3_t col_rgb;
     float shininess;
-} HU_PACKED;
+};
 HU_END_PACKED
 #elif defined(SPHERE_INSTANCED_ARRAY)
 HU_BEGIN_PACKED
@@ -171,7 +171,7 @@ Game::init(const ge::Event<ge::InitEvent> &ev)
     textureRenderTarget = nullptr;
     indirect_rendering = true;
     updateIndirectRendering(indirect_rendering);
-    render_spheres_instanced = true;
+    render_spheres_instanced = false;
 
     {
         Vertex v{};
@@ -197,7 +197,6 @@ Game::init(const ge::Event<ge::InitEvent> &ev)
         return;
 
     world.render_by_distance = true;
-    ;
 
     sphere_speed = 10.f;
     sphere_proto.state = Bouncing;

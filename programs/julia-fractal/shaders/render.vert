@@ -19,7 +19,8 @@ main()
 
     zoom = world_zoom;
     shift = world_shift;
-    C = julia_constant;
+    float t = time + 1.47;
+    C = vec2(sin(0.1 * t), 0.3 * cos(0.19 * t));
 
     //     // float zooom = (1 + sin(0.05 * time - 1.57 ));
     //     // zooom = 1 + 5 * zoom;

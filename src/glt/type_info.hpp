@@ -79,7 +79,7 @@ DEF_GL_MAPPED_TYPE(math::real, float);
 
 struct TypeInfo
 {
-#ifdef HU_COMP_MSVC
+#if HU_COMP_MSVC_P
     // in 15.8 this leads to an internal compiler error
     bool normalized;
     uint16_t size;

@@ -234,7 +234,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
     RtlCaptureContext(&context);
 
     STACKFRAME frame = {};
-#    ifdef HU_BITS_32
+#    if HU_BITS_32_P
     DWORD machine = IMAGE_FILE_MACHINE_I386;
     frame.AddrPC.Offset = context.Eip;
     frame.AddrFrame.Offset = context.Ebp;

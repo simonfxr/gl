@@ -3,6 +3,8 @@
 
 #include "defs.h"
 
+#include <hu/features.h>
+
 #define BL_CAT PP_CAT
 #define BL_TOSTR PP_TOSTR
 

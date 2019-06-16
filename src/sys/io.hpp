@@ -187,10 +187,10 @@ struct Socket
 struct SYS_API HandleStream : public IOStream
 {
     HandleStream(HandleStream &&) = default;
-    HandleStream(const HandleStream &) = default;
+    // HandleStream(const HandleStream &) = default;
 
-    HandleStream &operator=(const HandleStream &) = default;
-    HandleStream &operator=(HandleStream &) = default;
+    // HandleStream &operator=(const HandleStream &) = default;
+    HandleStream &operator=(HandleStream &&) = default;
 
     explicit HandleStream(Handle);
     ~HandleStream() override;

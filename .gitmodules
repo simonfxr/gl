@@ -10,3 +10,6 @@
 [submodule "deps/fiber"]
 	path = deps/fiber
 	url = https://github.com/simonfxr/fiber
+[submodule "cmake/cmake-utils"]
+	path = cmake/cmake-utils
+	url = https://github.com/simonfxr/cmake-utils

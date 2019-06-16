@@ -8,7 +8,11 @@ project(gl LANGUAGES C CXX)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect_env.cmake)
 
-macro(set_option var default type docstring)
+macro(set_option
+      var
+      default
+      type
+      docstring)
   if(NOT DEFINED ${var})
     set(${var} ${default})
   endif()
@@ -49,14 +53,20 @@ set(openmp_default True)
 if(BUILD_TYPE STREQUAL DEBUG)
   set(openmp_default False)
 endif()
-set_option(ENABLE_OPENMP ${openmp_default} BOOL "Enable OpenMP support")
+set_option(ENABLE_OPENMP
+           ${openmp_default}
+           BOOL
+           "Enable OpenMP support")
 
 set_option(ENABLE_VOXEL_OPENCL
            False
            BOOL
            "Use OpenCL for the voxel-world program")
 
-set_option(ENABLE_STACKTRACES True BOOL "print a stacktrace on errors")
+set_option(ENABLE_STACKTRACES
+           True
+           BOOL
+           "print a stacktrace on errors")
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macros.cmake)
@@ -78,8 +88,11 @@ if(NOT TARGET glad)
   if(NOT EXISTS "${GLAD_GEN_DIR}/src/glad.c")
     message(STATUS "invokding glad generator: ${GLAD_GEN_DIR}")
     file(MAKE_DIRECTORY "${GLAD_GEN_DIR}")
-    execute_process(COMMAND "${PYTHON_EXECUTABLE}" -m glad --out-path
-                            "${GLAD_GEN_DIR}" --generator c
+    execute_process(COMMAND "${PYTHON_EXECUTABLE}"
+                            -m
+                            glad
+                            --out-path "${GLAD_GEN_DIR}"
+                            --generator c
                     WORKING_DIRECTORY "${GLAD_DIR}"
                     RESULT_VARIABLE glad_ec)
     if(NOT glad_ec EQUAL "0")
@@ -91,7 +104,7 @@ if(NOT TARGET glad)
   if(SYS_WINDOWS AND COMP_MSVC)
     set(glad_link_mode STATIC)
   endif()
-  add_library(glad ${glad_link_mode} "${GLAD_GEN_DIR}/src/glad.c")
+  add_library(glad "${GLAD_GEN_DIR}/src/glad.c" ${glad_link_mode})
   target_include_directories(glad SYSTEM PUBLIC "${GLAD_GEN_DIR}/include")
   if(SYS_UNIX)
     target_link_libraries(glad dl)

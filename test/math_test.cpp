@@ -78,7 +78,7 @@ DEF_WRAP_2(copysign)
 
 DEF_WRAP_1B(signbit)
 
-static void HU_NOINLINE
+HU_NOINLINE static void
 mul(vec4_t *RESTRICT rr,
     const mat4_t *RESTRICT m,
     const vec4_t *RESTRICT v,
@@ -91,7 +91,7 @@ mul(vec4_t *RESTRICT rr,
     *rr = r;
 }
 
-static void HU_NOINLINE
+HU_NOINLINE static void
 mul(mat4_t *RESTRICT c,
     const mat4_t *RESTRICT a,
     const mat4_t *RESTRICT b,

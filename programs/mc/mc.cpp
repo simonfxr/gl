@@ -26,7 +26,7 @@
 #include <CL/cl.h>
 #include <CL/cl.hpp>
 
-#ifdef HU_OS_POSIX
+#if HU_OS_POSIX_P
 #    include <GL/glx.h>
 #endif
 
@@ -149,23 +149,20 @@ createCLGLContext(cl::Platform &platform, cl_int *err)
 {
 
     cl_context_properties props[] = {
-#ifdef HU_OS_WINDOWS
         CL_GL_CONTEXT_KHR,
+#if HU_OS_WINDOWS_P
         cl_context_properties(wglGetCurrentContext()),
         CL_WGL_HDC_KHR,
         cl_context_properties(wglGetCurrentDC()),
-        CL_CONTEXT_PLATFORM,
-        cl_context_properties((platform)()),
-#elif defined(HU_OS_POSIX)
-        CL_GL_CONTEXT_KHR,
+#elif HU_OS_POSIX_P
         cl_context_properties(glXGetCurrentContext()),
         CL_GLX_DISPLAY_KHR,
         cl_context_properties(glXGetCurrentDisplay()),
-        CL_CONTEXT_PLATFORM,
-        cl_context_properties((platform)()),
 #else
 #    error "unknown system"
 #endif
+        CL_CONTEXT_PLATFORM,
+        cl_context_properties((platform)()),
         0
     };
 

@@ -417,8 +417,8 @@ private:
 
     void ensure_capa()
     {
-        if (unlikely(_size == _capa))
-            reserve(_size == 0 ? min_capacity : _size * 2);
+        if_unlikely(_size == _capa)
+          reserve(_size == 0 ? min_capacity : _size * 2);
         check();
     }
 

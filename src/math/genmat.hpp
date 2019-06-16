@@ -262,17 +262,17 @@ inline constexpr auto operator*(const genmat<T, N> &A, const genmat<U, N> &B)
     return inline_mat_mul(A, B);
 }
 
-extern template MATH_API genmat<float, 3> operator*(const genmat<float, 3> &,
-                                                    const genmat<float, 3> &);
+MATH_EXTERN_TEMPLATE genmat<float, 3> operator*(const genmat<float, 3> &,
+                                                const genmat<float, 3> &);
 
-extern template MATH_API genmat<double, 3> operator*(const genmat<double, 3> &,
-                                                     const genmat<double, 3> &);
+MATH_EXTERN_TEMPLATE genmat<double, 3> operator*(const genmat<double, 3> &,
+                                                 const genmat<double, 3> &);
 
-extern template MATH_API genmat<float, 4> operator*(const genmat<float, 4> &,
-                                                    const genmat<float, 4> &);
+MATH_EXTERN_TEMPLATE genmat<float, 4> operator*(const genmat<float, 4> &,
+                                                const genmat<float, 4> &);
 
-extern template MATH_API genmat<double, 4> operator*(const genmat<double, 4> &,
-                                                     const genmat<double, 4> &);
+MATH_EXTERN_TEMPLATE genmat<double, 4> operator*(const genmat<double, 4> &,
+                                                 const genmat<double, 4> &);
 
 template<typename T, typename U, size_t N>
 inline constexpr genmat<T, N> &
@@ -281,16 +281,16 @@ operator*=(genmat<T, N> &A, const genmat<U, N> &B)
     return A = inline_mat_mul(A, B);
 }
 
-extern template MATH_API genmat<float, 3> &
+MATH_EXTERN_TEMPLATE genmat<float, 3> &
 operator*=(genmat<float, 3> &, const genmat<float, 3> &);
 
-extern template MATH_API genmat<double, 3> &
+MATH_EXTERN_TEMPLATE genmat<double, 3> &
 operator*=(genmat<double, 3> &, const genmat<double, 3> &);
 
-extern template MATH_API genmat<float, 4> &
+MATH_EXTERN_TEMPLATE genmat<float, 4> &
 operator*=(genmat<float, 4> &, const genmat<float, 4> &);
 
-extern template MATH_API genmat<double, 4> &
+MATH_EXTERN_TEMPLATE genmat<double, 4> &
 operator*=(genmat<double, 4> &, const genmat<double, 4> &);
 
 template<typename T, typename U, size_t N>
@@ -464,10 +464,10 @@ inverse(const genmat<T, 3> &A)
     return transpose(genmat<T, 3>::load(a));
 }
 
-extern template MATH_API genmat<float, 3>
+MATH_EXTERN_TEMPLATE genmat<float, 3>
 inverse(const genmat<float, 3> &A);
 
-extern template MATH_API genmat<double, 3>
+MATH_EXTERN_TEMPLATE genmat<double, 3>
 inverse(const genmat<double, 3> &);
 
 template<typename T>
@@ -521,10 +521,10 @@ inverse(const genmat<T, 4> &A)
     return Ainv * recip(det);
 }
 
-extern template MATH_API genmat<float, 4>
+MATH_EXTERN_TEMPLATE genmat<float, 4>
 inverse(const genmat<float, 4> &A);
 
-extern template MATH_API genmat<double, 4>
+MATH_EXTERN_TEMPLATE genmat<double, 4>
 inverse(const genmat<double, 4> &A);
 
 template<typename T>

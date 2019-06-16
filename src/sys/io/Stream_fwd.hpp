@@ -32,7 +32,7 @@ stdout();
 HU_NODISCARD SYS_API OutStream &
 stderr();
 
-extern SYS_API const StreamEndl endl;
+SYS_API extern const StreamEndl endl;
 
 #define SYS_STREAM_RESULT_ENUM_DEF(T, V0, V)                                   \
     T(StreamResult, uint8_t, V0(OK) V(Blocked) V(EOF) V(Closed) V(Error))

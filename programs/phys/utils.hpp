@@ -44,26 +44,27 @@ private:
 
 #define DEF_SHADER(name, ...) const char *const name = PP_TOSTR(__VA_ARGS__);
 
-DEF_SHADER(PARTICLE_VERTEX_SHADER, uniform mat4 mvpMatrix;
-           uniform sampler1D instanceData;
+DEF_SHADER(
+  PARTICLE_VERTEX_SHADER, uniform mat4 mvpMatrix;
+  uniform sampler1D instanceData;
 
-           in vec2 position;
-           out vec4 color;
+  in vec2 position;
+  out vec4 color;
 
-           void main() {
-               vec4 data1 = texelFetch(instanceData, gl_InstanceID * 2, 0);
-               vec4 data2 = texelFetch(instanceData, gl_InstanceID * 2 + 1, 0);
+  void main() {
+      vec4 data1 = texelFetch(instanceData, gl_InstanceID * 2, 0);
+      vec4 data2 = texelFetch(instanceData, gl_InstanceID * 2 + 1, 0);
 
-               vec2 center = data1.xy;
-               float radius = data1.z;
-               color = data2.rgba;
+      vec2 center = data1.xy;
+      float radius = data1.z;
+      color = data2.rgba;
 
-               gl_Position =
-                 mvpMatrix * vec4(position * vec2(radius) + center, 0, 1);
-           });
+      gl_Position = mvpMatrix * vec4(position * vec2(radius) + center, 0, 1);
+  });
 
-DEF_SHADER(PARTICLE_FRAGMENT_SHADER, in vec4 color; out vec4 fragColor;
-           void main() { fragColor = color; });
+DEF_SHADER(
+  PARTICLE_FRAGMENT_SHADER, in vec4 color; out vec4 fragColor;
+  void main() { fragColor = color; });
 
 #undef DEF_SHADER
 

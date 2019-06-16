@@ -35,7 +35,7 @@ descGLType(GLenum ty)
 
 #    define CASE(ty)                                                           \
     case ty:                                                                   \
-        return PP_TOSTR(ty);
+        return PP_TOSTR(ty)
 
     switch (ty) {
         CASE(GL_FLOAT);

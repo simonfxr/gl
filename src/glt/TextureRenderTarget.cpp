@@ -105,11 +105,21 @@ TextureRenderTarget::createTexture(bool delete_old)
     }
     _sampler.data()->unbind(0, false);
 
-    GL_CALL(glNamedFramebufferTextureEXT,
-            *_frame_buffer,
-            GL_COLOR_ATTACHMENT0,
-            *_sampler.data()->handle(),
-            0);
+    if (glNamedFramebufferTextureEXT) {
+        GL_CALL(glNamedFramebufferTextureEXT,
+                *_frame_buffer,
+                GL_COLOR_ATTACHMENT0,
+                *_sampler.data()->handle(),
+                0);
+    } else {
+        GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, *_frame_buffer);
+        GL_CALL(glFramebufferTextureARB,
+                GL_FRAMEBUFFER,
+                GL_COLOR_ATTACHMENT0,
+                *_sampler.data()->handle(),
+                0);
+        GL_CALL(glBindFramebuffer, GL_FRAMEBUFFER, 0);
+    }
 }
 
 void

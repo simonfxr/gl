@@ -30,7 +30,7 @@ evalFractal(vec2 x)
     x += shift;
     x *= zoom;
 
-    const float L = 1000;
+    const float L = 4;
     int i = 0;
     int N = 200;
 
@@ -38,10 +38,10 @@ evalFractal(vec2 x)
         x = cmul(x, x) + C;
         ++i;
     }
-
-    float h = float(i) / float(N);
-    h = 1 - pow(1 - h, 3);
-    return h;
+    if (i >= N)
+        return 1.;
+    else
+        return float(i) * (1 / float(N)) * (L / length(x));
 }
 
 float
@@ -82,11 +82,14 @@ main()
     /*     fragColor = vec4(vec3(1), 1); */
     /* return; */
 
-    float phi = pow(a, 1 / 1.5) * pi / 2;
-    float theta =
-      pow(clamp(pow(a, 1 / 1.11) - 0.4, 0, 1), 1 / 1.4) * pi / 2 + pi / 4;
-    float r = sigmoid(a * 4);
+    // float phi = pow(a, 1 / 1.5) * pi / 2;
+    // float theta =
+    //   pow(clamp(pow(a, 1 / 1.11) - 0.4, 0, 1), 1 / 1.4) * pi / 2 + pi / 4;
+    // float r = sigmoid(a * 4);
 
-    FragColor = vec4(sphericToEuclidean(vec3(r, theta, phi)), 1);
+    // FragColor = vec4(sphericToEuclidean(vec3(r, theta, phi)), 1);
+    // a = exp(-2 * pow(1 - a, 4));
+    a = pow(a, 0.7);
+    FragColor = vec4(0.8 * vec3(a), 1.);
     //    FragColor = vec4(vec3(a), 1);
 }

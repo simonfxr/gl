@@ -57,7 +57,7 @@ struct SYS_API Fiber
         Fiber fbr;
         using EntryArgs_t = EntryArgs<std::decay_t<F>>;
         void *args0{};
-        fiber_alloc(
+        (void) fiber_alloc(
           &fbr._bare, stack_size, fiber_guard, nullptr, FIBER_FLAG_GUARD_LO);
         fiber_push_return(&fbr._bare, fiber_entry, &args0, sizeof(EntryArgs_t));
         auto args = static_cast<EntryArgs_t *>(args0);
