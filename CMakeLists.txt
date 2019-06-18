@@ -33,7 +33,7 @@ message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
 
 if(COMP_CLANG)
   set_option(ENABLE_LIBCXX
-             False
+             True
              BOOL
              "True to use libc++ when compiling with clang")
 endif()

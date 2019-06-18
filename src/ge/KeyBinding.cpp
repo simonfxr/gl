@@ -4,7 +4,7 @@
 #include "bl/range.hpp"
 #include "err/err.hpp"
 
-#include <algorithm>
+// #include <algorithm>
 #include <cstring>
 
 namespace ge {
@@ -40,7 +40,7 @@ parseKeyCode(const bl::string_view &str)
 int
 compareKeyBinding(const KeyBinding &x, const KeyBinding &y)
 {
-    for (const auto i : bl::irange(std::min(x.size(), y.size()))) {
+    for (const auto i : bl::irange(bl::min(x.size(), y.size()))) {
         auto a = y[i].code;
         auto b = x[i].code;
         if (a != b)

@@ -1,3 +1,5 @@
+#include <vector>
+
 #include "bl/enumerate.hpp"
 #include "bl/range.hpp"
 #include "bl/string.hpp"
@@ -20,8 +22,10 @@
 #include "shaders/shader_constants.h"
 
 #include "opengl.hpp"
+
+#include <algorithm>
+
 #include <sstream>
-#include <vector>
 
 #include <CL/cl.h>
 #include <CL/cl.hpp>

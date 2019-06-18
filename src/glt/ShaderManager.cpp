@@ -3,7 +3,8 @@
 #include "glt/ShaderCompiler.hpp"
 #include "glt/ShaderProgram.hpp"
 
-#include <algorithm>
+#include "bl/algorithm.hpp"
+
 #include <unordered_map>
 
 namespace glt {
@@ -178,7 +179,7 @@ bool
 ShaderManager::removeShaderDirectory(const bl::string &dir)
 {
     ShaderDirectories &dirs = self->shaderDirs;
-    auto it = std::find(dirs.begin(), dirs.end(), dir);
+    auto it = bl::find(dirs.begin(), dirs.end(), dir);
     if (it == dirs.end())
         return false;
     dirs.erase(it);

@@ -1,5 +1,6 @@
 #include "sim.hpp"
 
+#include "bl/pcg_rand.hpp"
 #include "bl/string.hpp"
 #include "bl/vector.hpp"
 #include "ge/Camera.hpp"
@@ -21,7 +22,6 @@
 #include "math/vec4.hpp"
 
 #include "opengl.hpp"
-#include <algorithm>
 
 using namespace math;
 
@@ -40,6 +40,8 @@ inline constexpr glt::color CONNECTION_COLOR(0x00, 0xFF, 0x00);
 inline constexpr size_t AA_SAMPLES = 4;
 
 inline constexpr size_t SPHERE_LOD_MAX = 6;
+
+bl::pcg32 PCG32_GLOBAL;
 
 struct SphereLOD
 {
@@ -278,7 +280,7 @@ Game::update_sphere_mass()
 static float
 rand1()
 {
-    return rand() * (1.f / RAND_MAX);
+    return PCG32_GLOBAL.rand() * (1.f / bl::numeric_limits<uint32_t>::max());
 }
 
 static glt::color
@@ -894,7 +896,7 @@ Game::link(ge::Engine &e)
       "",
       [this](const ge::Event<ge::CommandEvent> & /*unused*/, double rad) {
           sphere_proto.r =
-            std::max(0.05_r, sphere_proto.r + static_cast<math::real>(rad));
+            bl::max(0.05_r, sphere_proto.r + static_cast<math::real>(rad));
           update_sphere_mass();
       }));
 
@@ -903,14 +905,14 @@ Game::link(ge::Engine &e)
       "",
       [this](const ge::Event<ge::CommandEvent> & /*unused*/, double inc) {
           sphere_speed =
-            std::max(0.25_r, sphere_speed + static_cast<math::real>(inc));
+            bl::max(0.25_r, sphere_speed + static_cast<math::real>(inc));
       }));
 
     proc.define(ge::makeCommand(
       "incGameSpeed",
       "",
       [this](const ge::Event<ge::CommandEvent> & /*unused*/, double inc) {
-          game_speed = std::max(0_r, game_speed + static_cast<math::real>(inc));
+          game_speed = bl::max(0_r, game_speed + static_cast<math::real>(inc));
       }));
 
     mouse_look.camera(&camera);

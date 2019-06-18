@@ -1,3 +1,6 @@
+
+#include <vector>
+
 #include "glt/ShaderCompiler.hpp"
 
 #include "bl/hashset.hpp"
@@ -14,7 +17,7 @@
 #include "sys/measure.hpp"
 #include "util/string.hpp"
 
-#include <algorithm>
+#include <cctype>
 #include <functional>
 #include <queue>
 #include <variant>

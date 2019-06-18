@@ -15,8 +15,6 @@
 #include "math/vec3.hpp"
 #include "opengl.hpp"
 
-#include <algorithm>
-
 const size_t N_SPRINGS = 20;
 
 using namespace math;

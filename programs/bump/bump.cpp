@@ -11,7 +11,7 @@
 #include "math/mat4.hpp"
 
 #include "opengl.hpp"
-#include <algorithm>
+
 #include <unordered_map>
 
 using namespace math;

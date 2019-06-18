@@ -10,7 +10,7 @@
 #include "math/mat4.hpp"
 
 #include "opengl.hpp"
-#include <algorithm>
+
 #include <map>
 
 #include "nbody/nbody_phys.hpp"

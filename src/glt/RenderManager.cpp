@@ -13,7 +13,7 @@
 
 #include "sys/clock.hpp"
 
-#include <algorithm>
+#include "bl/limits.hpp"
 
 namespace glt {
 
@@ -227,7 +227,7 @@ RenderManager::frameStatistics()
 
     self->frame_id_last = self->frame_id_current;
     self->sum_elapsed = 0.0;
-    self->min_elapsed = std::numeric_limits<double>::infinity();
+    self->min_elapsed = bl::numeric_limits<double>::infinity();
     self->max_elapsed = 0.0;
 
     return self->stats;

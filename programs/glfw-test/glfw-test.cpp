@@ -32,7 +32,7 @@ main()
 
     // fprintf(log, "Program started\n");
 
-    GLFWwindow *window;
+    GLFWwindow *window = nullptr;
     float aspect_ratio;
     int fb_width, fb_height;
 

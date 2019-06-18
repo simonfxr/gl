@@ -28,10 +28,6 @@ struct vector : private std::vector<T>
     using base_t = std::vector<T>;
     using std::vector<T>::vector;
 
-    template<typename U = T>
-    constexpr vector(array_view<U> v) : vector(v.begin(), v.end())
-    {}
-
     using base_t::begin;
     using base_t::clear;
     using base_t::empty;
@@ -112,7 +108,7 @@ struct vector : public comparable<vector<T>>
 
     constexpr vector() = default;
 
-    vector(size_t n) { resize(n); }
+    explicit vector(size_t n) { resize(n); }
 
     vector(size_t n, const T &init) { resize(n, init); }
 
@@ -141,7 +137,7 @@ struct vector : public comparable<vector<T>>
     }
 
     template<typename U = T>
-    constexpr vector(array_view<U> v) : vector(v.begin(), v.end())
+    constexpr explicit vector(array_view<U> v) : vector(v.begin(), v.end())
     {}
 
     ~vector() { reset(); }

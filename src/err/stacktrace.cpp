@@ -112,7 +112,7 @@ find_fundie_by_pc(Dwarf_Die *parent_die, Dwarf_Addr pc, Dwarf_Die *result)
             if (die_has_pc(die, pc)) {
                 return result;
             }
-        };
+        }
         bool declaration = false;
         Dwarf_Attribute attr_mem;
         dwarf_formflag(dwarf_attr(die, DW_AT_declaration, &attr_mem),

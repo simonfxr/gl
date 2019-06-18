@@ -14,6 +14,10 @@ struct numeric_limits;
     {                                                                          \
         FORCE_INLINE static inline constexpr t max() noexcept { return hi; }   \
         FORCE_INLINE static inline constexpr t min() noexcept { return lo; }   \
+        FORCE_INLINE static inline constexpr t lowest() noexcept               \
+        {                                                                      \
+            return lo;                                                         \
+        }                                                                      \
     }
 
 #define DEF_UINT_LIMITS(t) DEF_INT_LIMITS(t, t(0), t(-1))
@@ -38,6 +42,13 @@ struct numeric_limits<float>
         return float(3.40282346638528859811704183484516925e+38L);
     }
 
+    BL_inline static constexpr float lowest() noexcept { return -max(); }
+
+    BL_inline static constexpr float infinity() noexcept
+    {
+        return __builtin_huge_valf();
+    }
+
     BL_inline static constexpr float quiet_NaN() noexcept
     {
         return __builtin_nanf("");
@@ -50,6 +61,13 @@ struct numeric_limits<double>
     BL_inline static constexpr double max() noexcept
     {
         return double(1.79769313486231570814527423731704357e+308L);
+    }
+
+    BL_inline static constexpr double lowest() noexcept { return -max(); }
+
+    BL_inline static constexpr double infinity() noexcept
+    {
+        return __builtin_huge_val();
     }
 
     BL_inline static constexpr double quiet_NaN() noexcept

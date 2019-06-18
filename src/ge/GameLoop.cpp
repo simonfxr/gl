@@ -5,7 +5,7 @@
 #include "bl/string_view.hpp"
 #include "err/err.hpp"
 
-#include <algorithm>
+// #include <algorithm>
 
 namespace ge {
 
@@ -208,7 +208,7 @@ GameLoop::run(Game &logic)
         if (self->sync_draw || self->paused || self->clock >= next_tick)
             interpolation = 0;
         else
-            interpolation = std::max(
+            interpolation = bl::max(
               time(0), 1 - (next_tick - self->clock) / self->tick_duration);
 
         ASSERT(interpolation >= 0);

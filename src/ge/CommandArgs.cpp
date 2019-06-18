@@ -7,7 +7,7 @@
 #include "ge/Commands.hpp"
 #include "sys/io/Stream.hpp"
 
-#include <algorithm>
+// #include <algorithm>
 #include <cstring>
 
 namespace ge {
@@ -167,10 +167,10 @@ compare(const CommandArg &a, const CommandArg &b)
     case CommandArgType::Number:
         return compare(a.number, b.number);
     case CommandArgType::KeyCombo:
-        return std::lexicographical_compare(a.keyBinding.begin(),
-                                            a.keyBinding.end(),
-                                            b.keyBinding.begin(),
-                                            b.keyBinding.end());
+        return bl::lexicographical_compare(a.keyBinding.begin(),
+                                           a.keyBinding.end(),
+                                           b.keyBinding.begin(),
+                                           b.keyBinding.end());
     case CommandArgType::CommandRef:
         return compare(a.command, b.command);
     case CommandArgType::VarRef:

@@ -63,6 +63,24 @@ find_sentinel(InputIt first, const T &value)
     return first;
 }
 
+template<class InputIt1, class InputIt2>
+constexpr bool
+lexicographical_compare(InputIt1 af, InputIt1 ae, InputIt2 bf, InputIt2 be)
+{
+    for (;;) {
+        auto aend = af == ae;
+        auto bend = bf == be;
+        if (aend && !bend)
+            return true;
+        if (bend)
+            return false;
+        if (*af < *bf)
+            return true;
+        if (*bf < *af)
+            return false;
+    }
+}
+
 } // namespace bl
 
 #endif
