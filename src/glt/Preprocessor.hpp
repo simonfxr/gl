@@ -19,7 +19,7 @@ struct GLT_API Preprocessor
         bl::string_view data;
 
         ContentContext(Preprocessor &proc, bl::string &&nam)
-          : processor(proc), name(std::move(nam))
+          : processor(proc), name(bl::move(nam))
         {}
     };
 
@@ -31,7 +31,7 @@ struct GLT_API Preprocessor
         bl::string_view directive;
 
         DirectiveContext(Preprocessor &proc, bl::string &&name)
-          : content(proc, std::move(name))
+          : content(proc, bl::move(name))
         {}
     };
 

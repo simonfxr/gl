@@ -152,7 +152,7 @@ struct ByteStream : public IOStream
     const char *data() const { return buffer.data(); }
     char *data() { return buffer.data(); }
     bl::string str() const & { return bl::string(data(), size()); }
-    bl::string str() const && { return std::move(buffer); }
+    bl::string str() const && { return bl::move(buffer); }
 
     operator bl::string_view() const { return { data(), size() }; }
 
@@ -184,7 +184,7 @@ protected:
 
 #define DEF_OUTSTREAM_OP(T)                                                    \
     template<typename OStream>                                                 \
-    bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>   \
+    bl::enable_if_t<bl::is_base_of_v<sys::io::OutStream, OStream>, OStream>   \
       &operator<<(OStream &out, T value)                                       \
     {                                                                          \
         write_repr(static_cast<OutStream &>(out), value);                      \
@@ -260,7 +260,7 @@ DEF_OUTSTREAM_OP(const void *);
 #undef DEF_OUTSTREAM_OP
 
 template<typename OStream>
-inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
+inline bl::enable_if_t<bl::is_base_of_v<sys::io::OutStream, OStream>, OStream>
   &
   operator<<(OStream &out, bool x)
 {
@@ -268,7 +268,7 @@ inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
 }
 
 template<typename OStream>
-inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
+inline bl::enable_if_t<bl::is_base_of_v<sys::io::OutStream, OStream>, OStream>
   &
   operator<<(OStream &out, const bl::string &str)
 {
@@ -276,7 +276,7 @@ inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
 }
 
 template<typename OStream>
-inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
+inline bl::enable_if_t<bl::is_base_of_v<sys::io::OutStream, OStream>, OStream>
   &
   operator<<(OStream &out, char *str)
 {
@@ -284,7 +284,7 @@ inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
 }
 
 template<typename OStream, typename T>
-inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
+inline bl::enable_if_t<bl::is_base_of_v<sys::io::OutStream, OStream>, OStream>
   &
   operator<<(OStream &out, const T *ptr)
 {

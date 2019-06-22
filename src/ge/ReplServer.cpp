@@ -80,7 +80,7 @@ Client::Client(int _id, Handle h)
   , parser_fiber(Fiber::make([this]() { this->run_parser(); }))
   , client_fiber(sys::Fiber::toplevel())
   , state(ParsingYield)
-  , hstream(std::move(h))
+  , hstream(bl::move(h))
   , in_stream(&hstream, client_fiber, parser_fiber)
   , parse_state(in_stream, "")
 {
@@ -139,7 +139,7 @@ struct ReplServer::Data
     Data(ReplServer &self_,
          Engine &e,
          bl::shared_ptr<EventHandler<InputEvent>> _handler)
-      : self(self_), engine(e), io_handler(std::move(_handler))
+      : self(self_), engine(e), io_handler(bl::move(_handler))
     {}
 };
 
@@ -171,7 +171,7 @@ ReplServer::start(const IPAddr4 &listen_addr, uint16_t port)
         ERR(string_concat("failed to open socket for listening: ", err));
         return false;
     }
-    self->server = std::move(opt_sock).value();
+    self->server = bl::move(opt_sock).value();
     self->running = true;
     return true;
 }
@@ -198,14 +198,14 @@ ReplServer::acceptClients()
         auto opt_hndl = accept(self->server, err);
         if (!opt_hndl)
             break;
-        auto handle = std::move(opt_hndl).value();
+        auto handle = bl::move(opt_hndl).value();
         INFO("accepted client");
         if (elevate(handle, mode(handle) | HM_NONBLOCKING) != HandleError::OK) {
             ERR("couldnt set nonblocking handle mode, closing connection");
             sys::io::close(handle);
         } else {
             self->clients.push_back(
-              bl::make_shared<Client>(self->next_id++, std::move(handle)));
+              bl::make_shared<Client>(self->next_id++, bl::move(handle)));
         }
     }
 }

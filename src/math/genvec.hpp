@@ -9,7 +9,7 @@
     template<typename U>                                                       \
     constexpr auto operator op(const genvec<U, N> &rhs) const                  \
     {                                                                          \
-        using V = std::decay_t<decltype(components[0] op rhs[0])>;             \
+        using V = bl::decay_t<decltype(components[0] op rhs[0])>;             \
         genvec<V, N> ret{};                                                    \
         for (size_t i = 0; i < N; ++i)                                         \
             ret[i] = components[i] op rhs[i];                                  \
@@ -20,7 +20,7 @@
     template<typename U, typename = bl::enable_if_t<!is_genvec_v<U>>>          \
     constexpr auto operator op(const U &rhs) const                             \
     {                                                                          \
-        using V = std::decay_t<decltype(components[0] op rhs)>;                \
+        using V = bl::decay_t<decltype(components[0] op rhs)>;                \
         genvec<V, N> ret{};                                                    \
         for (size_t i = 0; i < N; ++i)                                         \
             ret[i] = components[i] op rhs;                                     \
@@ -55,11 +55,11 @@ template<typename T, size_t N>
 struct genvec;
 
 template<typename T>
-struct is_genvec : public std::false_type
+struct is_genvec : public bl::false_type
 {};
 
 template<typename T, size_t N>
-struct is_genvec<genvec<T, N>> : public std::true_type
+struct is_genvec<genvec<T, N>> : public bl::true_type
 {};
 
 template<typename T>
@@ -85,7 +85,7 @@ struct genvec
     template<typename F>
     constexpr auto map(F &&f) const
     {
-        using U = std::decay_t<std::invoke_result_t<F, const T &>>;
+        using U = bl::decay_t<bl::invoke_result_t<F, const T &>>;
         genvec<U, N> ret{};
         for (size_t i = 0; i < N; ++i)
             ret[i] = f(components[i]);
@@ -95,7 +95,7 @@ struct genvec
     template<typename U, typename F>
     constexpr auto map(const genvec<U, N> &rhs, F &&f) const
     {
-        using V = std::decay_t<std::invoke_result_t<F, const T &, const U &>>;
+        using V = bl::decay_t<bl::invoke_result_t<F, const T &, const U &>>;
         genvec<V, N> ret{};
         for (size_t i = 0; i < N; ++i)
             ret[i] = f(components[i], rhs[i]);
@@ -128,7 +128,7 @@ struct genvec
     {
         static_assert(sizeof...(args) == N,
                       "can only initialize using exactly N elements");
-        return { T{ std::forward<Args>(args) }... };
+        return { T{ bl::forward<Args>(args) }... };
     }
 
     static constexpr genvec load(const buffer b)
@@ -390,7 +390,7 @@ operator<<(OStream &out, const genvec<T, N> &v)
 BEGIN_NO_WARN_MISMATCHED_TAGS
 namespace std {
 template<typename T, size_t N>
-struct tuple_size<math::genvec<T, N>> : public std::integral_constant<size_t, N>
+struct tuple_size<math::genvec<T, N>> : public bl::integral_constant<size_t, N>
 {};
 END_NO_WARN_MISMATCHED_TAGS
 

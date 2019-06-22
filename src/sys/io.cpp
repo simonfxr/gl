@@ -12,7 +12,7 @@ namespace io {
 PP_DEF_ENUM_IMPL(SYS_HANDLE_ERROR_ENUM_DEF)
 PP_DEF_ENUM_IMPL(SYS_SOCKET_ERROR_ENUM_DEF)
 
-HandleStream::HandleStream(Handle h) : _handle(std::move(h)) {}
+HandleStream::HandleStream(Handle h) : _handle(bl::move(h)) {}
 
 HandleStream::~HandleStream()
 {
@@ -193,7 +193,7 @@ HandleStream::open(bl::string_view path, HandleMode mode, HandleError &err)
     auto opt_h = sys::io::open(path, mode, err);
     if (!opt_h)
         return bl::nullopt;
-    return { HandleStream(std::move(opt_h).value()) };
+    return { HandleStream(bl::move(opt_h).value()) };
 }
 
 bl::string
@@ -205,7 +205,7 @@ readFile(sys::io::OutStream &errout,
     if (!opt_h)
         goto fail;
     {
-        auto h = std::move(opt_h).value();
+        auto h = bl::move(opt_h).value();
         bl::string str;
         for (;;) {
             char buf[8192];

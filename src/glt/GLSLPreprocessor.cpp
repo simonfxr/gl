@@ -145,7 +145,7 @@ void
 GLSLPreprocessor::appendString(bl::string str)
 {
     if (!str.empty()) {
-        auto &data = contents.emplace_back(std::move(str));
+        auto &data = contents.emplace_back(bl::move(str));
         checkSegment(*this, data.data(), data.size());
         segments.push_back(data.data());
         segLengths.push_back(uint32_t(data.size()));
@@ -193,8 +193,8 @@ GLSLPreprocessor::processFileRecursively(bl::string &&file)
         return;
     }
 
-    auto &dref = contents.emplace_back(std::move(data));
-    this->name(std::move(file));
+    auto &dref = contents.emplace_back(bl::move(data));
+    this->name(bl::move(file));
     process(bl::string_view(dref.data(), dref.size()));
 }
 
@@ -237,7 +237,7 @@ GLSLPreprocessor::DependencyHandler::directiveEncountered(
     bl::string absPath = sys::fs::absolutePath(realPath);
     if (proc.self->deps.insert(absPath).snd())
         proc.self->dependencies.push_back(
-          ShaderSource::makeFileSource(stype, std::move(absPath)));
+          ShaderSource::makeFileSource(stype, bl::move(absPath)));
 }
 
 void
@@ -298,8 +298,8 @@ GLSLPreprocessor::IncludeHandler::directiveEncountered(
             return;
         }
 
-        auto &dref = proc.contents.emplace_back(std::move(source_code));
-        proc.name(std::move(filestat->absolute));
+        auto &dref = proc.contents.emplace_back(bl::move(source_code));
+        proc.name(bl::move(filestat->absolute));
         proc.process(bl::string_view(dref.data(), dref.size()));
     }
 }

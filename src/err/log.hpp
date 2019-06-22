@@ -50,14 +50,14 @@ struct LogMessage
     LogMessage &append(T &&arg)
     {
         if (_writeable)
-            _destination << std::forward<T>(arg);
+            _destination << bl::forward<T>(arg);
         return *this;
     }
 
     template<typename T>
     friend LogMessage &operator<<(LogMessage &log, T &&arg)
     {
-        return log.append(std::forward<T>(arg));
+        return log.append(bl::forward<T>(arg));
     }
 
     OStream &out() { return _destination; }
@@ -67,8 +67,8 @@ template<typename T>
 static auto
 beginLog(T &sender, LogLevel level = LogLevel::Info)
 {
-    const auto &settings = LogTraits<std::decay_t<T>>::getDestination(sender);
-    return LogMessage<std::decay_t<decltype(settings.out)>>{
+    const auto &settings = LogTraits<bl::decay_t<T>>::getDestination(sender);
+    return LogMessage<bl::decay_t<decltype(settings.out)>>{
         settings.out, settings.out.writable() && settings.min_level <= level
     };
 }

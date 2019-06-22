@@ -34,7 +34,7 @@ template<typename T>
 struct iterator_traits<T *>
 {
     using difference_type = ptrdiff_t;
-    using value_type = std::remove_cv_t<T>;
+    using value_type = remove_cv_t<T>;
     using pointer = T *;
     using reference = T &;
     using iterator_category = random_access_iterator_tag;
@@ -42,8 +42,8 @@ struct iterator_traits<T *>
 
 template<typename It>
 inline constexpr bool is_random_access_iterator =
-  std::is_same_v<typename iterator_traits<It>::iterator_category,
-                 random_access_iterator_tag>;
+  is_same_v<typename iterator_traits<It>::iterator_category,
+            random_access_iterator_tag>;
 
 template<class InputIt>
 inline constexpr typename std::iterator_traits<InputIt>::difference_type

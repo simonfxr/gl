@@ -16,7 +16,7 @@ char *
 realloc_vertex_buf(char *buf, size_t vsize, size_t n)
 {
     auto p = static_cast<char *>(realloc(buf, vsize * n));
-    ASSERT(reinterpret_cast<uintptr_t>(p) % alignof(std::max_align_t) == 0);
+    ASSERT(reinterpret_cast<uintptr_t>(p) % alignof(bl::max_align_t) == 0);
     return p;
 }
 
@@ -81,7 +81,7 @@ MeshBase::MeshBase(const StructInfo &si,
   , usage_hint(GL_STATIC_DRAW)
   , prim_type(prim_ty)
 {
-    ASSERT(si.align < alignof(std::max_align_t),
+    ASSERT(si.align < alignof(bl::max_align_t),
            "overaligned types not supported");
     elements.reserve(initial_nelems);
     auto nverts = MIN_NUM_VERTICES;

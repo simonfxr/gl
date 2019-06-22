@@ -54,12 +54,12 @@ struct CommandValue : bl::comparable<CommandValue>
     CommandValue(bl::shared_ptr<Command> ref);
 
     CommandValue(bl::string nm, NamedRef)
-      : name(bl::make_shared<const bl::string>(std::move(nm)))
+      : name(bl::make_shared<const bl::string>(bl::move(nm)))
     {}
 
     static CommandValue makeNamedRef(bl::string nm)
     {
-        return CommandValue(std::move(nm), NamedRef{});
+        return CommandValue(bl::move(nm), NamedRef{});
     }
 };
 
@@ -83,39 +83,39 @@ struct GE_API CommandArg : bl::comparable<CommandArg>
     {}
 
     explicit CommandArg(bl::string x)
-      : string(std::move(x)), _type(CommandArgType::String)
+      : string(bl::move(x)), _type(CommandArgType::String)
     {}
 
     explicit CommandArg(double x)
-      : number(std::move(x)), _type(CommandArgType::Number)
+      : number(bl::move(x)), _type(CommandArgType::Number)
     {}
 
     explicit CommandArg(bl::shared_ptr<Command> comm)
-      : command(std::move(comm)), _type(CommandArgType::CommandRef)
+      : command(bl::move(comm)), _type(CommandArgType::CommandRef)
     {}
 
     explicit CommandArg(KeyBinding kb)
-      : keyBinding(std::move(kb)), _type(CommandArgType::KeyCombo)
+      : keyBinding(bl::move(kb)), _type(CommandArgType::KeyCombo)
     {}
 
     explicit CommandArg(CommandValue comm)
-      : command(std::move(comm)), _type(CommandArgType::CommandRef)
+      : command(bl::move(comm)), _type(CommandArgType::CommandRef)
     {}
 
     explicit CommandArg(bl::string var, CommandArgVar)
-      : var(std::move(var)), _type(CommandArgType::VarRef)
+      : var(bl::move(var)), _type(CommandArgType::VarRef)
     {}
 
     ~CommandArg();
 
     static CommandArg varRef(bl::string var)
     {
-        return CommandArg(std::move(var), CommandArgVar{});
+        return CommandArg(bl::move(var), CommandArgVar{});
     }
 
     static CommandArg namedCommandRef(bl::string comm)
     {
-        return CommandArg(CommandValue::makeNamedRef(std::move(comm)));
+        return CommandArg(CommandValue::makeNamedRef(bl::move(comm)));
     }
 
     CommandArg(CommandArg &&);

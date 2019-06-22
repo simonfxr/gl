@@ -15,7 +15,7 @@ struct GE_API CommandEvent;
 namespace detail {
 
 template<typename T>
-struct always_false : std::false_type
+struct always_false : bl::false_type
 {};
 
 template<typename T>
@@ -95,7 +95,7 @@ struct command_param_mapping<CommandArg>
 };
 
 template<typename T>
-using decayed_command_param_mapping = command_param_mapping<std::decay_t<T>>;
+using decayed_command_param_mapping = command_param_mapping<bl::decay_t<T>>;
 
 template<typename... Ts>
 struct CommandArgSeq
@@ -119,10 +119,10 @@ template<typename T>
 struct Proxy
 {};
 
-auto is_var_arg(CommandArgSeq<>) -> std::false_type;
+auto is_var_arg(CommandArgSeq<>) -> bl::false_type;
 
 auto
-is_var_arg(CommandArgSeq<bl::array_view<const CommandArg>>) -> std::true_type;
+is_var_arg(CommandArgSeq<bl::array_view<const CommandArg>>) -> bl::true_type;
 
 template<typename T, typename... Ts>
 auto
@@ -164,19 +164,19 @@ invoke_indexed_vararg(F &&f,
 template<typename F, bool VarArg, typename... Ts>
 inline void
 invoke(F &&f,
-       std::bool_constant<VarArg>,
+       bl::bool_constant<VarArg>,
        CommandArgSeq<Ts...> arg_seq,
        const Event<CommandEvent> &ev,
        bl::array_view<const CommandArg> args)
 {
     if constexpr (VarArg) {
-        invoke_indexed_vararg(std::forward<F>(f),
+        invoke_indexed_vararg(bl::forward<F>(f),
                               arg_seq,
                               bl::make_index_sequence<sizeof...(Ts) - 1>{},
                               ev,
                               args);
     } else {
-        invoke_indexed(std::forward<F>(f),
+        invoke_indexed(bl::forward<F>(f),
                        arg_seq,
                        bl::index_sequence_for<Ts...>{},
                        ev,

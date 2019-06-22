@@ -42,7 +42,7 @@ struct make_integer_sequence_impl
           typename make_integer_sequence_impl<T, EE, EE, Is...>::type;
     };
     using type =
-      typename std::conditional_t<E == 0, base_case, rec_case>::template rec_t<
+      typename bl::conditional_t<E == 0, base_case, rec_case>::template rec_t<
         E - 1>;
 };
 

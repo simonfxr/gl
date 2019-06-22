@@ -12,7 +12,7 @@ template<typename InputIt, typename ForwardIt>
 inline ForwardIt
 uninitialized_copy(InputIt first, InputIt last, ForwardIt d_first)
 {
-    using T = std::remove_cv_t<std::remove_reference_t<decltype(*d_first)>>;
+    using T = remove_cv_t<remove_reference_t<decltype(*d_first)>>;
     for (; first != last; ++first, ++d_first)
         new (addressof(*d_first)) T(*first);
     return d_first;
@@ -22,9 +22,9 @@ template<typename InputIt, typename ForwardIt>
 inline ForwardIt
 uninitialized_move(InputIt first, InputIt last, ForwardIt d_first)
 {
-    using T = std::remove_cv_t<std::remove_reference_t<decltype(*d_first)>>;
+    using T = remove_cv_t<remove_reference_t<decltype(*d_first)>>;
     for (; first != last; ++first, ++d_first)
-        new (addressof(*d_first)) T(std::move(*first));
+        new (addressof(*d_first)) T(bl::move(*first));
     return d_first;
 }
 
@@ -35,7 +35,7 @@ uninitialized_assign(AssignTag assign,
                      InputIt last,
                      ForwardIt d_first)
 {
-    using T = std::remove_cv_t<std::remove_reference_t<decltype(*d_first)>>;
+    using T = remove_cv_t<remove_reference_t<decltype(*d_first)>>;
     for (; first != last; ++first, ++d_first)
         initialize(assign, addressof(*d_first), T(*first));
     return d_first;
@@ -54,7 +54,7 @@ template<typename ForwardIt, typename T>
 inline void
 uninitialized_fill(ForwardIt first, ForwardIt last, const T &value)
 {
-    using U = std::remove_cv_t<std::remove_reference_t<decltype(*first)>>;
+    using U = remove_cv_t<remove_reference_t<decltype(*first)>>;
     for (; first != last; ++first)
         new (addressof(*first)) U(value);
 }
@@ -63,9 +63,9 @@ template<typename InputIt, typename ForwardIt>
 inline ForwardIt
 uninitialized_destructive_move(InputIt first, InputIt last, ForwardIt d_first)
 {
-    using T = std::remove_cv_t<std::remove_reference_t<decltype(*d_first)>>;
+    using T = remove_cv_t<remove_reference_t<decltype(*d_first)>>;
     for (; first != last; ++first, ++d_first) {
-        new (addressof(*d_first)) T(std::move(*first));
+        new (addressof(*d_first)) T(bl::move(*first));
         destroy_at(addressof(*first));
     }
     return d_first;

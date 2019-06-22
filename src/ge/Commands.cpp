@@ -49,7 +49,7 @@ checkStringArgs(const Event<CommandEvent> &ev,
 struct InitCommandHandler : public EventHandler<InitEvent>
 {
     CommandPtr handler;
-    explicit InitCommandHandler(CommandPtr hndlr) : handler(std::move(hndlr)) {}
+    explicit InitCommandHandler(CommandPtr hndlr) : handler(bl::move(hndlr)) {}
     void handle(const Event<InitEvent> &e) override
     {
         e.info.success = true;

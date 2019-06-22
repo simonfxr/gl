@@ -19,7 +19,7 @@ inline constexpr OutputIt
 move(InputIt first, InputIt last, OutputIt d_first)
 {
     for (; first != last; ++first, ++d_first)
-        *d_first = std::move(*first);
+        *d_first = bl::move(*first);
     return d_first;
 }
 

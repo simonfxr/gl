@@ -51,7 +51,7 @@ template<typename Idx = size_t, typename T>
 inline constexpr auto
 enumerate(T &&coll)
 {
-    using Iter = std::decay_t<decltype(coll.begin())>;
+    using Iter = bl::decay_t<decltype(coll.begin())>;
     return EnumeratedRange<Idx, Iter>{ coll.begin(), coll.end() };
 }
 

@@ -10,7 +10,7 @@
     template<typename U>                                                       \
     constexpr auto operator op(const genmat<U, N> &rhs) const                  \
     {                                                                          \
-        using V = std::decay_t<decltype(columns[0][0] op rhs[0][0])>;          \
+        using V = bl::decay_t<decltype(columns[0][0] op rhs[0][0])>;           \
         genmat<V, N> ret{};                                                    \
         for (size_t i = 0; i < N; ++i)                                         \
             for (size_t j = 0; j < N; ++j)                                     \
@@ -23,7 +23,7 @@
              typename = bl::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>   \
     constexpr auto operator op(const U &rhs) const                             \
     {                                                                          \
-        using V = std::decay_t<decltype(columns[0][0] op rhs)>;                \
+        using V = bl::decay_t<decltype(columns[0][0] op rhs)>;                 \
         genmat<V, N> ret{};                                                    \
         for (size_t i = 0; i < N; ++i)                                         \
             for (size_t j = 0; j < N; ++j)                                     \
@@ -60,11 +60,11 @@ template<typename T, size_t N>
 struct genmat;
 
 template<typename T>
-struct is_genmat : public std::false_type
+struct is_genmat : public bl::false_type
 {};
 
 template<typename T, size_t N>
-struct is_genmat<genmat<T, N>> : public std::true_type
+struct is_genmat<genmat<T, N>> : public bl::true_type
 {};
 
 template<typename T>
@@ -106,7 +106,7 @@ struct genmat
     template<typename F>
     constexpr auto map(F &&f) const
     {
-        using U = std::decay_t<std::invoke_result_t<F, const column_type &>>;
+        using U = bl::decay_t<bl::invoke_result_t<F, const column_type &>>;
         genmat<U, N> ret{};
         for (size_t i = 0; i < N; ++i)
             ret[i] = f(columns[i]);
@@ -116,8 +116,8 @@ struct genmat
     template<typename U, typename F>
     constexpr auto map(const genmat<U, N> &rhs, F &&f) const
     {
-        using V = std::decay_t<
-          std::invoke_result_t<F, const column_type &, const column_type &>>;
+        using V = bl::decay_t<
+          bl::invoke_result_t<F, const column_type &, const column_type &>>;
         genmat<V, N> ret{};
         for (size_t i = 0; i < N; ++i)
             ret[i] = f(columns[i], rhs[i]);
@@ -149,7 +149,7 @@ struct genmat
     {
         static_assert(sizeof...(args) == N,
                       "can only initialize using exactly N elements");
-        return { std::forward<Args>(args)... };
+        return { bl::forward<Args>(args)... };
     }
 
     static constexpr genmat identity()
@@ -216,7 +216,7 @@ template<typename T,
          typename = bl::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>
 inline constexpr auto operator*(const T &lhs, const genmat<U, N> &rhs)
 {
-    using V = std::decay_t<decltype(lhs * rhs[0][0])>;
+    using V = bl::decay_t<decltype(lhs * rhs[0][0])>;
     genmat<V, N> ret{};
     for (size_t i = 0; i < N; ++i)
         for (size_t j = 0; j < N; ++j)
@@ -580,7 +580,7 @@ operator<<(OStream &out, const genmat<T, N> &A)
 BEGIN_NO_WARN_MISMATCHED_TAGS
 namespace std {
 template<typename T, size_t N>
-struct tuple_size<math::genmat<T, N>> : public std::integral_constant<size_t, N>
+struct tuple_size<math::genmat<T, N>> : public bl::integral_constant<size_t, N>
 {};
 END_NO_WARN_MISMATCHED_TAGS
 

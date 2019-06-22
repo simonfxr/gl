@@ -10,11 +10,11 @@ template<typename T>
 void
 swap(T &x, T &y)
 {
-    static_assert(std::is_nothrow_move_assignable_v<T> &&
-                  std::is_nothrow_move_constructible_v<T>);
-    T tmp(std::move(x));
-    x = std::move(y);
-    y = std::move(tmp);
+    static_assert(is_nothrow_move_assignable_v<T> &&
+                  is_nothrow_move_constructible_v<T>);
+    T tmp(bl::move(x));
+    x = bl::move(y);
+    y = bl::move(tmp);
 }
 
 } // namespace bl

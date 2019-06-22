@@ -16,8 +16,8 @@ template<typename Arg, typename... Args>
 inline void
 string_concat_aux(sys::io::ByteStream &out, Arg &&arg, Args &&... args)
 {
-    out << std::forward<Arg>(arg);
-    string_concat_aux(out, std::forward<Args>(args)...);
+    out << bl::forward<Arg>(arg);
+    string_concat_aux(out, bl::forward<Args>(args)...);
 }
 
 } // namespace detail
@@ -27,8 +27,8 @@ inline bl::string
 string_concat(Args &&... args)
 {
     sys::io::ByteStream sstream;
-    detail::string_concat_aux(sstream, std::forward<Args>(args)...);
-    return std::move(sstream).str();
+    detail::string_concat_aux(sstream, bl::forward<Args>(args)...);
+    return bl::move(sstream).str();
 }
 
 #else
@@ -37,15 +37,15 @@ inline bl::string
 string_concat(Args &&... args)
 {
     sys::io::ByteStream sstream;
-    (sstream << ... << std::forward<Args>(args));
-    return std::move(sstream).str();
+    (sstream << ... << bl::forward<Args>(args));
+    return bl::move(sstream).str();
 }
 #endif
 
 inline bl::string
 string_concat(bl::string &&str) noexcept
 {
-    return std::move(str);
+    return bl::move(str);
 }
 
 #endif

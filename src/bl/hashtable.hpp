@@ -12,7 +12,7 @@ struct MapEntry
     V value;
 
     template<typename A, typename B>
-    MapEntry(A &&x, B &&y) : key(std::forward<A>(x)), value(std::forward<B>(y))
+    MapEntry(A &&x, B &&y) : key(bl::forward<A>(x)), value(bl::forward<B>(y))
     {}
 };
 
@@ -69,7 +69,7 @@ struct hashtable : private hashset<MapEntry<K, V, H, Eq>>
         auto it = base_t::find(k);
         if (it == base_t::end())
             return base_t::insert(
-              entry_t(std::forward<KT>(k), std::forward<VT>(v)));
+              entry_t(bl::forward<KT>(k), bl::forward<VT>(v)));
         return { *it, false };
     }
 
@@ -77,7 +77,7 @@ struct hashtable : private hashset<MapEntry<K, V, H, Eq>>
     pair<entry_t &, bool> insert_or_assign(KT &&k, VT &&v)
     {
         return base_t::insert_or_assign(
-          entry_t(std::forward<KT>(k), std::forward<VT>(v)));
+          entry_t(bl::forward<KT>(k), bl::forward<VT>(v)));
     }
 
     template<typename KT>
@@ -86,7 +86,7 @@ struct hashtable : private hashset<MapEntry<K, V, H, Eq>>
         auto it = base_t::find(k);
         if (it != base_t::end())
             return it->value;
-        return insert(std::forward<KT>(k), V()).fst().value;
+        return insert(bl::forward<KT>(k), V()).fst().value;
     }
 };
 

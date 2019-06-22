@@ -41,7 +41,9 @@ inline constexpr size_t AA_SAMPLES = 4;
 
 inline constexpr size_t SPHERE_LOD_MAX = 6;
 
+namespace {
 bl::pcg32 PCG32_GLOBAL;
+}
 
 struct SphereLOD
 {
@@ -286,8 +288,10 @@ rand1()
 static glt::color
 randomColor()
 {
-    return glt::color(
-      uint8_t(rand1() * 255), uint8_t(rand1() * 255), uint8_t(rand1() * 255));
+    auto r = uint8_t(rand1() * 255);
+    auto g = uint8_t(rand1() * 255);
+    auto b = uint8_t(rand1() * 255);
+    return glt::color(r, g, b);
 }
 
 void
