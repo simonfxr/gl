@@ -43,7 +43,7 @@ join(bl::string_view path, const char **parts, size_t n)
     out << path;
     for (auto i = size_t{ 0 }; i < n; ++i)
         out << SEPARATOR << parts[i];
-    return std::move(out).str();
+    return bl::move(out).str();
 }
 
 bl::string

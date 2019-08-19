@@ -39,11 +39,11 @@ bswap(uint64_t x)
     return x;
 }
 
-template<typename T, typename = bl::enable_if_t<std::is_signed_v<T>>>
+template<typename T, typename = bl::enable_if_t<bl::is_signed_v<T>>>
 inline constexpr T
 bswap(T x)
 {
-    using U = std::make_unsigned_t<std::decay_t<T>>;
+    using U = bl::make_unsigned_t<bl::decay_t<T>>;
     return T(bswap(U(x)));
 }
 

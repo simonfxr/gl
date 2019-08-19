@@ -41,7 +41,7 @@ public:
     virtual ~Command() override;
     bl::array_view<const CommandParamType> parameters() const { return params; }
     const bl::string &name() const { return namestr; }
-    void name(bl::string &&new_name) { namestr = std::move(new_name); }
+    void name(bl::string &&new_name) { namestr = bl::move(new_name); }
     const bl::string &description() const { return descr; }
     bl::string interactiveDescription() const;
     virtual void interactive(const Event<CommandEvent> &ev,
@@ -73,8 +73,8 @@ template<typename F>
 struct FunctorCommand : public Command
 {
     FunctorCommand(bl::string name, bl::string descr, F f_)
-      : Command(make_params(arg_seq{}), std::move(name), std::move(descr))
-      , _f(std::move(f_))
+      : Command(make_params(arg_seq{}), bl::move(name), bl::move(descr))
+      , _f(bl::move(f_))
     {}
     ~FunctorCommand() override = default;
 
@@ -87,7 +87,7 @@ struct FunctorCommand : public Command
 private:
     using ftraits = functor_traits<F>;
 
-    static_assert(std::is_same_v<typename ftraits::result_type, void>);
+    static_assert(bl::is_same_v<typename ftraits::result_type, void>);
     static_assert(ftraits::arity > 0);
 
     using arg_seq = decltype(detail::make_arg_seq<ftraits>());
@@ -111,8 +111,8 @@ makeCommand(bl::string name, bl::string descr, F &&f)
     // avoid excessive bl::shared_ptr<XX> template instantiations
     return bl::shared_ptr<Command>{
         bl::shared_from_ptr_t{},
-        static_cast<Command *>(new FunctorCommand<std::decay_t<F>>(
-          std::move(name), std::move(descr), std::forward<F>(f)))
+        static_cast<Command *>(new FunctorCommand<bl::decay_t<F>>(
+          bl::move(name), bl::move(descr), bl::forward<F>(f)))
     };
 }
 
@@ -124,8 +124,8 @@ makeCommand(bl::string name,
             void (T::*m)(const Event<CommandEvent> &, Args...))
 {
     return makeCommand(
-      std::move(name),
-      std::move(descr),
+      bl::move(name),
+      bl::move(descr),
       [&receiver, m](const Event<CommandEvent> &ev, Args... args) {
           (receiver.*m)(ev, args...);
       });

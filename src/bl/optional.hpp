@@ -14,7 +14,7 @@ inline constexpr nullopt_t nullopt = nullopt_t{};
 template<typename T>
 struct optional
 {
-    static_assert(std::is_nothrow_destructible_v<T>);
+    static_assert(is_nothrow_destructible_v<T>);
 
     constexpr optional() noexcept : _dummy() {}
 
@@ -22,12 +22,12 @@ struct optional
 
     optional(const T &value) : _value(value), _present(true) {}
 
-    optional(T &&value) : _value(std::move(value)), _present(true) {}
+    optional(T &&value) : _value(bl::move(value)), _present(true) {}
 
     template<typename U = T>
     optional(optional<U> &&opt) : optional()
     {
-        assign(std::move(opt));
+        assign(bl::move(opt));
     }
 
     template<typename U = T>
@@ -47,7 +47,7 @@ struct optional
     template<typename U = T>
     optional &operator=(optional<U> &&rhs)
     {
-        return assign(std::move(rhs));
+        return assign(bl::move(rhs));
     }
 
     void clear() noexcept
@@ -58,17 +58,17 @@ struct optional
     }
 
     FORCE_INLINE const T &value() const & { return _value; }
-    FORCE_INLINE const T &&value() const && { return std::move(_value); }
+    FORCE_INLINE const T &&value() const && { return bl::move(_value); }
     FORCE_INLINE T &value() & { return _value; }
-    FORCE_INLINE T &&value() && { return std::move(_value); }
+    FORCE_INLINE T &&value() && { return bl::move(_value); }
 
     FORCE_INLINE const T *operator->() const { return addressof(_value); }
     FORCE_INLINE T *operator->() { return addressof(_value); }
 
     FORCE_INLINE const T &operator*() const & { return value(); }
-    FORCE_INLINE const T &&operator*() const && { return std::move(value()); }
+    FORCE_INLINE const T &&operator*() const && { return bl::move(value()); }
     FORCE_INLINE T &operator*() & { return value(); }
-    FORCE_INLINE T &&operator*() && { return std::move(value()); }
+    FORCE_INLINE T &&operator*() && { return bl::move(value()); }
 
     FORCE_INLINE constexpr explicit operator bool() const noexcept
     {
@@ -80,9 +80,9 @@ private:
     void assign_val(U &&val)
     {
         if (_present) {
-            _value = std::forward<U>(val);
+            _value = bl::forward<U>(val);
         } else {
-            new (addressof(_value)) T(std::forward<U>(val));
+            new (addressof(_value)) T(bl::forward<U>(val));
         }
     }
 
@@ -100,7 +100,7 @@ private:
     optional &assign(const optional<U> &&r)
     {
         if (r._present)
-            assign_val(std::move(r._value));
+            assign_val(bl::move(r._value));
         else
             clear();
         return *this;

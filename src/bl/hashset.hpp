@@ -52,7 +52,7 @@ struct hashset : private vector<T>
     {
         auto it = find(arg);
         if (it == base_t::end())
-            return { base_t::emplace_back(std::forward<U>(arg)), true };
+            return { base_t::emplace_back(bl::forward<U>(arg)), true };
         return { *it, false };
     }
 
@@ -61,7 +61,7 @@ struct hashset : private vector<T>
     {
         auto it = find(arg);
         if (it == base_t::end())
-            return { base_t::emplace_back(std::forward<U>(arg)), true };
+            return { base_t::emplace_back(bl::forward<U>(arg)), true };
         *it = arg;
         return { *it, false };
     }

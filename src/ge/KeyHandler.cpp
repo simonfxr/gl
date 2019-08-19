@@ -23,7 +23,7 @@ struct Binding
 {
     bl::shared_ptr<KeyBinding> binding;
 
-    explicit Binding(bl::shared_ptr<KeyBinding> bind) : binding(std::move(bind))
+    explicit Binding(bl::shared_ptr<KeyBinding> bind) : binding(bl::move(bind))
     {}
 
     bool operator<(const Binding &other) const

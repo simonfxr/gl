@@ -18,7 +18,7 @@ struct enable_shared_from_this_tag
 
 template<typename T>
 using shared_from_this_enabled =
-  std::is_assignable<enable_shared_from_this_tag, std::decay_t<T>>;
+  bl::is_assignable<enable_shared_from_this_tag, bl::decay_t<T>>;
 
 template<typename T>
 struct enable_shared_from_this;
@@ -76,7 +76,7 @@ struct shared_ref_count_of : shared_ref_count
 
     template<typename... Args>
     shared_ref_count_of(Args &&... args)
-      : shared_ref_count(&deleter_func), value(std::forward<Args>(args)...)
+      : shared_ref_count(&deleter_func), value(bl::forward<Args>(args)...)
     {}
 
     static void deleter_func(shared_ref_count *self, void *ptr) noexcept
@@ -96,7 +96,7 @@ template<typename T>
 struct shared_ptr
 {
     constexpr shared_ptr() = default;
-    constexpr shared_ptr(std::nullptr_t) noexcept {}
+    constexpr shared_ptr(bl::nullptr_t) noexcept {}
 
     template<typename U = T>
     shared_ptr(shared_from_ptr_t, U *p) noexcept
@@ -127,16 +127,16 @@ struct shared_ptr
     shared_ptr(shared_ptr<U> &&r, T *ptr) noexcept
     {
         if (ptr) {
-            *this = std::move(r);
+            *this = bl::move(r);
             _ptr = ptr;
             handle_shared_from_this(ptr);
         }
     }
 
-    shared_ptr(shared_ptr &&p) : shared_ptr(std::move(p), p.get()) {}
+    shared_ptr(shared_ptr &&p) : shared_ptr(bl::move(p), p.get()) {}
 
     template<typename U>
-    shared_ptr(shared_ptr<U> &&p) : shared_ptr(std::move(p), p.get())
+    shared_ptr(shared_ptr<U> &&p) : shared_ptr(bl::move(p), p.get())
     {}
 
     template<typename U>
@@ -152,7 +152,7 @@ struct shared_ptr
     template<typename... Args>
     shared_ptr(ptr_inplace_init_t, Args &&... args)
     {
-        auto cnt = new shared_ref_count_of<T>(std::forward<Args>(args)...);
+        auto cnt = new shared_ref_count_of<T>(bl::forward<Args>(args)...);
         _cnt = cnt;
         _ptr = bl::addressof(cnt->value);
         handle_shared_from_this(_ptr);
@@ -170,13 +170,13 @@ struct shared_ptr
 
     shared_ptr &operator=(shared_ptr &&r) noexcept
     {
-        return assign(std::move(r));
+        return assign(bl::move(r));
     }
 
     template<typename U>
     shared_ptr &operator=(shared_ptr<U> &&r) noexcept
     {
-        return assign(std::move(r));
+        return assign(bl::move(r));
     }
 
     void reset() noexcept
@@ -229,10 +229,10 @@ private:
     template<typename U>
     void handle_shared_from_this(U *ptr)
     {
-        if constexpr (shared_from_this_enabled<std::decay_t<U>>::value) {
+        if constexpr (shared_from_this_enabled<bl::decay_t<U>>::value) {
             if (ptr)
                 handle_shared_from_this(
-                  const_cast<std::remove_const_t<U> &>(*ptr));
+                  const_cast<bl::remove_const_t<U> &>(*ptr));
         } else {
             UNUSED(ptr);
         }
@@ -291,10 +291,10 @@ struct weak_ptr
     template<typename U>
     weak_ptr(weak_ptr<U> &&r) noexcept
     {
-        *this = std::move(r);
+        *this = bl::move(r);
     }
 
-    weak_ptr(weak_ptr &&r) noexcept { *this = std::move(r); }
+    weak_ptr(weak_ptr &&r) noexcept { *this = bl::move(r); }
 
     template<typename U>
     weak_ptr(const shared_ptr<U> &x) : _ptr(x._ptr), _cnt(x._cnt)
@@ -314,12 +314,12 @@ struct weak_ptr
     template<typename U>
     weak_ptr &operator=(weak_ptr<U> &&r) noexcept
     {
-        return assign(std::move(r));
+        return assign(bl::move(r));
     }
 
     weak_ptr &operator=(const weak_ptr &r) noexcept { return assign(r); }
 
-    weak_ptr &operator=(weak_ptr &&r) noexcept { return assign(std::move(r)); }
+    weak_ptr &operator=(weak_ptr &&r) noexcept { return assign(bl::move(r)); }
 
     shared_ptr<T> lock() const noexcept { return shared_ptr<T>(*this); }
 
@@ -383,7 +383,7 @@ template<typename T, typename... Args>
 inline constexpr shared_ptr<T>
 make_shared(Args &&... args)
 {
-    return shared_ptr<T>(ptr_inplace_init_t{}, std::forward<Args>(args)...);
+    return shared_ptr<T>(ptr_inplace_init_t{}, bl::forward<Args>(args)...);
 }
 
 } // namespace bl

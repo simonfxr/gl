@@ -154,7 +154,7 @@ struct Handle
     constexpr Handle() = default;
 
     Handle(const Handle &) = delete;
-    Handle(Handle &&h) noexcept { *this = std::move(h); }
+    Handle(Handle &&h) noexcept { *this = bl::move(h); }
 
     ~Handle()
     {
@@ -179,7 +179,7 @@ struct Socket
 
     constexpr Socket() = default;
     Socket(const Socket &) = delete;
-    Socket(Socket &&s) noexcept { *this = std::move(s); }
+    Socket(Socket &&s) noexcept { *this = bl::move(s); }
 
     ~Socket()
     {
@@ -223,10 +223,10 @@ struct SYS_API HandleStream : public IOStream
     }
 
     const Handle &handle() const & { return _handle; }
-    const Handle &&handle() const && { return std::move(_handle); }
+    const Handle &&handle() const && { return bl::move(_handle); }
 
     Handle &handle() & { return _handle; }
-    Handle &&handle() && { return std::move(_handle); }
+    Handle &&handle() && { return bl::move(_handle); }
 
 protected:
     StreamResult basic_close() final override;

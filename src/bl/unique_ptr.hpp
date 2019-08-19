@@ -15,11 +15,9 @@ struct DefaultDeleter
 template<typename T, typename Deleter = DefaultDeleter<T>>
 struct unique_ptr
 {
-    static_assert(std::is_empty_v<Deleter>,
-                  "only stateless deleters are supported");
-    static_assert(std::is_nothrow_default_constructible_v<Deleter>);
-    static_assert(!std::is_array_v<T>,
-                  "unique_ptr with array is not supported");
+    static_assert(is_empty_v<Deleter>, "only stateless deleters are supported");
+    static_assert(is_nothrow_default_constructible_v<Deleter>);
+    static_assert(!is_array_v<T>, "unique_ptr with array is not supported");
 
     constexpr unique_ptr() = default;
 
@@ -114,7 +112,7 @@ template<typename T, typename... Args>
 FORCE_INLINE inline unique_ptr<T>
 make_unique(Args &&... args)
 {
-    return unique_ptr<T>(new T(std::forward<Args>(args)...));
+    return unique_ptr<T>(new T(bl::forward<Args>(args)...));
 }
 
 } // namespace bl

@@ -68,7 +68,7 @@ struct vector : private std::vector<T>
     template<typename Iter>
     void move_assign(Iter first, Iter last)
     {
-        std::move(std::move(first), std::move(last), std::back_inserter(*this));
+        bl::move(bl::move(first), bl::move(last), std::back_inserter(*this));
     }
 
     constexpr const T *endp() const { return data() + size(); }
@@ -85,7 +85,7 @@ struct vector : private std::vector<T>
 
     T &push_front(T &&x)
     {
-        base_t::insert(begin(), std::move(x));
+        base_t::insert(begin(), bl::move(x));
         return front();
     }
 };
@@ -95,7 +95,7 @@ struct vector : private std::vector<T>
 template<typename T>
 struct vector : public comparable<vector<T>>
 {
-    static_assert(std::is_same_v<std::remove_cv_t<T>, T>,
+    static_assert(bl::is_same_v<bl::remove_cv_t<T>, T>,
                   "T cannot be cv qualified");
 
     using value_type = T;
@@ -202,7 +202,7 @@ struct vector : public comparable<vector<T>>
     template<typename U>
     vector &operator=(vector<U> &&rhs)
     {
-        return *this = vector<T>(std::move(rhs));
+        return *this = vector<T>(bl::move(rhs));
     }
 
     constexpr array_view<const T> view() const { return { data(), size() }; }
@@ -239,7 +239,7 @@ struct vector : public comparable<vector<T>>
     template<typename Iter>
     void append(Iter first, Iter last)
     {
-        append(copy_tag_t{}, std::move(first), std::move(last));
+        append(copy_tag_t{}, bl::move(first), bl::move(last));
     }
 
     template<typename U>
@@ -332,20 +332,20 @@ struct vector : public comparable<vector<T>>
     T &push_back(AssignTag assign_tag, U &&x)
     {
         ensure_capa();
-        auto &y = initialize(assign_tag, _data + _size, std::forward<U>(x));
+        auto &y = initialize(assign_tag, _data + _size, bl::forward<U>(x));
         ++_size;
         return y;
     }
 
     T &push_back(const T &x) { return push_back(copy_tag_t{}, x); }
 
-    T &push_back(T &&x) { return push_back(move_tag_t{}, std::move(x)); }
+    T &push_back(T &&x) { return push_back(move_tag_t{}, bl::move(x)); }
 
     template<typename... Args>
     T &emplace_back(Args &&... args)
     {
         ensure_capa();
-        auto y = new (_data + _size) T(std::forward<Args>(args)...);
+        auto y = new (_data + _size) T(bl::forward<Args>(args)...);
         ++_size;
         return *y;
     }
@@ -354,12 +354,12 @@ struct vector : public comparable<vector<T>>
     T &push_front(AssignTag assign_tag, U &&x)
     {
         shift();
-        return initialize(assign_tag, _data, std::forward<U>(x));
+        return initialize(assign_tag, _data, bl::forward<U>(x));
     }
 
     T &push_front(const T &x) { return push_front(copy_tag_t{}, x); }
 
-    T &push_front(T &&x) { return push_front(move_tag_t{}, std::move(x)); }
+    T &push_front(T &&x) { return push_front(move_tag_t{}, bl::move(x)); }
 
     void pop_back()
     {
@@ -405,7 +405,7 @@ private:
         reserve(size() + 1);
         if (!_size)
             return;
-        new (end()) T(std::move(*(end() - 1)));
+        new (end()) T(bl::move(*(end() - 1)));
         move(begin(), end() - 1, begin() + 1);
         ++_size;
         check();
@@ -462,8 +462,8 @@ template<typename T, typename Arg, typename... Args>
 inline vector<T>
 make_vector(Arg &&arg, Args &&... args)
 {
-    T elems[] = { static_cast<T>(std::forward<Arg>(arg)),
-                  static_cast<T>(std::forward<Args>(args))... };
+    T elems[] = { static_cast<T>(bl::forward<Arg>(arg)),
+                  static_cast<T>(bl::forward<Args>(args))... };
     vector<T> v;
     v.assign(move_tag_t{}, elems, elems + ARRAY_LENGTH(elems));
     return v;

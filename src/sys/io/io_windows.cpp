@@ -165,7 +165,7 @@ open(bl::string_view path, HandleMode mode, HandleError &err)
     h._mode = mode;
     h._os.is_socket = false;
     err = HandleError::OK;
-    return { std::move(h) };
+    return { bl::move(h) };
 }
 
 HandleMode
@@ -341,7 +341,7 @@ listen(SocketProto proto,
         Socket s;
         s._os.socket = castFromSocket(sock);
         err = SocketError::OK;
-        return { std::move(s) };
+        return { bl::move(s) };
     }
 
 socket_err:
@@ -371,7 +371,7 @@ accept(Socket &s, SocketError &err)
     h._os.is_socket = true;
     h._mode = HM_READ | HM_WRITE;
     err = SocketError::OK;
-    return { std::move(h) };
+    return { bl::move(h) };
 }
 
 SocketError

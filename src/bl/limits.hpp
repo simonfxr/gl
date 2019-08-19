@@ -20,7 +20,7 @@ struct numeric_limits;
         }                                                                      \
     }
 
-#define DEF_UINT_LIMITS(t) DEF_INT_LIMITS(t, t(0), t(-1))
+#define DEF_UINT_LIMITS(t) DEF_INT_LIMITS(t, t(0), t(int64_t(-1)))
 #define DEF_SINT_LIMITS(t, ut)                                                 \
     DEF_INT_LIMITS(t, t(ut(-1) >> 1), t(~(ut(-1) >> 1)))
 

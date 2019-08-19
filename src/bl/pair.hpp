@@ -16,7 +16,7 @@ struct pair
 
     template<typename U, typename V>
     constexpr pair(U &&x, V &&y)
-      : _fst(std::forward<U>(x)), _snd(std::forward<V>(y))
+      : _fst(bl::forward<U>(x)), _snd(bl::forward<V>(y))
     {}
 
 private:

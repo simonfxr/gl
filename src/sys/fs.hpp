@@ -174,7 +174,7 @@ template<typename... Args>
 HU_NODISCARD inline bl::string
 join(bl::string_view path, Args &&... args)
 {
-    const char *parts[] = { std::forward<Args>(args)... };
+    const char *parts[] = { bl::forward<Args>(args)... };
     return def::join(path, parts, sizeof...(args));
 }
 

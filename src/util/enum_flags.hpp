@@ -8,7 +8,7 @@
 #define DEF_ENUM_BIT_OP(ty, op)                                                \
     inline constexpr ty operator op(ty a, ty b)                                \
     {                                                                          \
-        using T = std::underlying_type_t<ty>;                                  \
+        using T = bl::underlying_type_t<ty>;                                   \
         return static_cast<ty>(static_cast<T>(a) op static_cast<T>(b));        \
     }                                                                          \
     inline constexpr ty operator PP_CAT(op, =)(ty &a, ty b)                    \
@@ -22,7 +22,7 @@
     DEF_ENUM_BIT_OP(ty, ^)                                                     \
     inline constexpr ty operator~(ty a)                                        \
     {                                                                          \
-        using T = std::underlying_type_t<ty>;                                  \
+        using T = bl::underlying_type_t<ty>;                                   \
         return static_cast<ty>(~static_cast<T>(a));                            \
     }
 

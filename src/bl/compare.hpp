@@ -7,17 +7,17 @@
 namespace bl {
 
 template<typename T>
-bl::enable_if_t<std::is_arithmetic_v<T>, int>
+bl::enable_if_t<bl::is_arithmetic_v<T>, int>
 compare(const T &a, const T &b)
 {
     return a < b ? -1 : a > b ? 1 : 0;
 }
 
 template<typename T>
-bl::enable_if_t<std::is_enum_v<T>, int>
+bl::enable_if_t<bl::is_enum_v<T>, int>
 compare(const T &a, const T &b)
 {
-    using U = std::underlying_type_t<T>;
+    using U = bl::underlying_type_t<T>;
     return compare(static_cast<U>(a), static_cast<U>(b));
 }
 
@@ -56,10 +56,10 @@ template<typename F, typename... Fs>
 inline int
 chained_compare(F &&f, Fs &&... fs)
 {
-    int ret = std::forward<F>(f).operator()();
+    int ret = bl::forward<F>(f).operator()();
     if (ret != 0)
         return ret;
-    return chained_compare(std::forward<Fs>(fs)...);
+    return chained_compare(bl::forward<Fs>(fs)...);
 }
 
 } // namespace bl

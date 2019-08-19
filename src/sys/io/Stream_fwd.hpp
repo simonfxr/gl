@@ -56,7 +56,7 @@ struct SYS_API CooperativeInStream;
 
 #define FWD_DEF_OUTSTREAM_OP(T)                                                \
     template<typename OStream>                                                 \
-    inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>,     \
+    inline bl::enable_if_t<bl::is_base_of_v<sys::io::OutStream, OStream>,     \
                            OStream>                                            \
       &operator<<(OStream &out, T value);
 
@@ -107,22 +107,22 @@ FWD_DEF_OPAQUE_OUTSTREAM_OP(const void *);
 #undef FWD_DEF_OUTSTREAM_OP
 
 template<typename OStream>
-inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
+inline bl::enable_if_t<bl::is_base_of_v<sys::io::OutStream, OStream>, OStream>
   &
   operator<<(OStream &out, bool x);
 
 template<typename OStream>
-inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
+inline bl::enable_if_t<bl::is_base_of_v<sys::io::OutStream, OStream>, OStream>
   &
   operator<<(OStream &out, const bl::string &str);
 
 template<typename OStream>
-inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
+inline bl::enable_if_t<bl::is_base_of_v<sys::io::OutStream, OStream>, OStream>
   &
   operator<<(OStream &out, char *str);
 
 template<typename OStream, typename T>
-inline bl::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>
+inline bl::enable_if_t<bl::is_base_of_v<sys::io::OutStream, OStream>, OStream>
   &
   operator<<(OStream &out, const T *ptr);
 

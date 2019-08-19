@@ -15,7 +15,7 @@ struct IntIterator
 
     using difference_type = ptrdiff_t;
     using value_type = const T;
-    using pointer = std::add_pointer_t<const T>;
+    using pointer = bl::add_pointer_t<const T>;
     using reference = const T &;
     using iterator_category = bl::random_access_iterator_tag;
 
@@ -106,7 +106,7 @@ template<typename T, typename U>
 inline constexpr auto
 irange(T start, U lim)
 {
-    using V = std::decay_t<decltype(start + lim)>;
+    using V = bl::decay_t<decltype(start + lim)>;
     return IntRange<V>{ static_cast<V>(start), V{ 1 }, static_cast<V>(lim) };
 }
 

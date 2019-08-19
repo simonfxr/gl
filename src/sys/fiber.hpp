@@ -19,7 +19,7 @@ struct SYS_API Fiber
     ~Fiber();
 
 #ifndef NDEBUG
-    Fiber(Fiber &&f) noexcept { *this = std::move(f); }
+    Fiber(Fiber &&f) noexcept { *this = bl::move(f); }
 #else
     Fiber(Fiber &&f) noexcept = default;
 #endif
@@ -55,7 +55,7 @@ struct SYS_API Fiber
     static Fiber make(F &&f, size_t stack_size = 64 * 1024)
     {
         Fiber fbr;
-        using EntryArgs_t = EntryArgs<std::decay_t<F>>;
+        using EntryArgs_t = EntryArgs<bl::decay_t<F>>;
         void *args0{};
         (void) fiber_alloc(
           &fbr._bare, stack_size, fiber_guard, nullptr, FIBER_FLAG_GUARD_LO);
@@ -63,7 +63,7 @@ struct SYS_API Fiber
         auto args = static_cast<EntryArgs_t *>(args0);
         args->functorp = &args->functor;
         args->invoke = EntryArgs_t::run_invoke;
-        new (bl::addressof(args->functor)) F(std::forward<F>(f));
+        new (bl::addressof(args->functor)) F(bl::forward<F>(f));
         return fbr;
     }
 

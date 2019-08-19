@@ -20,7 +20,7 @@ template<class T>
 FORCE_INLINE inline void
 punned_destroy_at(void *p) noexcept
 {
-    static_assert(std::is_nothrow_destructible_v<T>);
+    static_assert(bl::is_nothrow_destructible_v<T>);
     static_cast<T *>(p)->~T();
 }
 
@@ -45,7 +45,7 @@ template<class T>
 FORCE_INLINE inline void
 destroy_at(T *p) noexcept
 {
-    static_assert(std::is_nothrow_destructible_v<T>);
+    static_assert(bl::is_nothrow_destructible_v<T>);
     p->~T();
 }
 
@@ -54,7 +54,7 @@ inline void
 destroy(ForwardIt first, ForwardIt last)
 {
     using T = typename iterator_traits<ForwardIt>::value_type;
-    if constexpr (!std::is_trivially_destructible_v<T>) {
+    if constexpr (!bl::is_trivially_destructible_v<T>) {
         for (; first != last; ++first)
             destroy_at(addressof(*first));
     } else {
@@ -93,7 +93,7 @@ ATTR_MALLOC inline T *
 new_bare_array(size_t n)
 {
     auto *p = new_uninitialized_bare_array<T>(n);
-    if constexpr (!std::is_trivially_default_constructible_v<T>) {
+    if constexpr (!bl::is_trivially_default_constructible_v<T>) {
         for (size_t i = 0; i < n; ++i)
             new (p + i) T;
     }

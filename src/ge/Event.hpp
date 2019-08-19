@@ -17,7 +17,7 @@ struct Event
     mutable bool abort;
     bool canAbort;
     Event() : info(), abort(false), canAbort(true) {}
-    explicit Event(T &&nfo) : info(std::move(nfo)), abort(false), canAbort(true)
+    explicit Event(T &&nfo) : info(bl::move(nfo)), abort(false), canAbort(true)
     {}
 };
 
@@ -48,7 +48,7 @@ private:
     F f;
 
 public:
-    FunctorEventHandler(F f_) : f(std::move(f_)) {}
+    FunctorEventHandler(F f_) : f(bl::move(f_)) {}
     void handle(const Event<T> &ev) final override { f(ev); }
 };
 
@@ -56,12 +56,12 @@ template<typename F>
 inline auto
 makeEventHandler(F f)
 {
-    using T = event_value_type<std::decay_t<functor_arg_type<F, 0>>>;
+    using T = event_value_type<bl::decay_t<functor_arg_type<F, 0>>>;
     // avoid excessive bl::shared_ptr<XX> template instantiations
     return bl::shared_ptr<EventHandler<T>>(
       bl::shared_from_ptr_t{},
       static_cast<EventHandler<T> *>(
-        new FunctorEventHandler<F, T>(std::move(f))));
+        new FunctorEventHandler<F, T>(bl::move(f))));
 }
 
 template<typename T, typename E>
@@ -80,7 +80,7 @@ struct EventSource
     template<typename... Args>
     bool reg(Args &&... args)
     {
-        return reg(makeEventHandler(std::forward<Args>(args)...));
+        return reg(makeEventHandler(bl::forward<Args>(args)...));
     }
 
     inline bool unreg(const bl::shared_ptr<EventHandler<T>> &handler);
@@ -126,7 +126,7 @@ EventSource<T>::reg(bl::shared_ptr<EventHandler<T>> handler)
     for (auto &h : _handlers)
         if (h == handler)
             return false;
-    _handlers.push_back(std::move(handler));
+    _handlers.push_back(bl::move(handler));
     return true;
 }
 
