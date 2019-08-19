@@ -271,7 +271,7 @@ if(COMP_MSVC)
 endif()
 
 if(COMP_CLANG)
-  add_global_cmake_linker_flags("-fuse-ld=lld")
+  #add_global_cmake_linker_flags("-fuse-ld=lld")
 elseif(COMP_GCC)
   add_global_cmake_linker_flags("-fuse-ld=gold")
 endif()

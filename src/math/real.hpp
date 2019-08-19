@@ -18,7 +18,7 @@
 #else
 #    define MATH_FN_BUILTIN_IMPORT(fn, ret, ...)                               \
         MATH_FN_C_IMPORT(fn, ret, __VA_ARGS__)
-#    define MATH_FN_BUILTIN_NAME(fn) fn
+#    define MATH_FN_BUILTIN_NAME(fn) ::fn
 #endif
 
 #define MATH_FN_INLINE HU_FORCE_INLINE inline

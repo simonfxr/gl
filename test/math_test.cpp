@@ -9,9 +9,9 @@
 using namespace math;
 
 #define DEF_WRAP_RT1(nm, r, t)                                                 \
-    r PP_CAT(nm, _wrap)(t x) { return nm(x); }
+    r PP_CAT(nm, _wrap)(t x) { return math::nm(x); }
 #define DEF_WRAP_RT2(nm, r, t)                                                 \
-    r PP_CAT(nm, _wrap)(t x, t y) { return nm(x, y); }
+    r PP_CAT(nm, _wrap)(t x, t y) { return math::nm(x, y); }
 
 #define DEF_WRAP_1(nm)                                                         \
     DEF_WRAP_RT1(nm, float, float) DEF_WRAP_RT1(nm, double, double)

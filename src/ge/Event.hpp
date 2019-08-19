@@ -21,6 +21,9 @@ struct Event
     {}
 };
 
+template<typename T>
+Event(T)->Event<T>;
+
 template<typename Ev>
 using event_value_type = typename Ev::value_type;
 

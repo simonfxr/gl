@@ -51,11 +51,18 @@ struct SYS_API IPAddr4
 inline constexpr IPAddr4 IPA_ANY = { 0, 0, 0, 0 };
 inline constexpr IPAddr4 IPA_LOCAL = { 127, 0, 0, 1 };
 
-#define SYS_HANDLE_ERROR_ENUM_DEF(T, V0, V)                                    \
-    T(HandleError,                                                             \
-      uint8_t,                                                                 \
-      V0(OK) V(BLOCKED) V(EOF) V(BAD_HANDLE) V(INVALID_PARAM) V(UNKNOWN))
-
+// clang-format off
+#define SYS_HANDLE_ERROR_ENUM_DEF(T, V0, V) \
+    T(HandleError,                          \
+      uint8_t,                              \
+                                            \
+      V0(OK)                                \
+      V(BLOCKED)                            \
+      V(EOF)                                \
+      V(BAD_HANDLE)                         \
+      V(INVALID_PARAM)                      \
+      V(UNKNOWN))
+// clang-format on
 PP_DEF_ENUM_WITH_API(SYS_API, SYS_HANDLE_ERROR_ENUM_DEF);
 
 HU_NODISCARD SYS_API Handle
@@ -85,11 +92,18 @@ write(Handle &, size_t &, const char *);
 SYS_API HandleError
 close(Handle &);
 
-#define SYS_SOCKET_ERROR_ENUM_DEF(T, V0, V)                                    \
-    T(SocketError,                                                             \
-      uint8_t,                                                                 \
-      V0(OK) V(BLOCKED) V(EOF) V(BAD_HANDLE) V(INVALID_PARAM) V(UNKNOWN))
-
+// clang-format off
+#define SYS_SOCKET_ERROR_ENUM_DEF(T, V0, V) \
+    T(SocketError,                          \
+      uint8_t,                              \
+                                            \
+      V0(OK)                                \
+      V(BLOCKED)                            \
+      V(EOF)                                \
+      V(BAD_HANDLE)                         \
+      V(INVALID_PARAM)                      \
+      V(UNKNOWN))
+// clang-format on
 PP_DEF_ENUM_WITH_API(SYS_API, SYS_SOCKET_ERROR_ENUM_DEF);
 
 HU_NODISCARD SYS_API bl::optional<Socket>
