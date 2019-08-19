@@ -1,0 +1,29 @@
+#+TITLE: GL
+#+OPTIONS: toc:nil
+
+This is a basic OpenGL "Engine" with cross platform support.
+
+* About this project
+
+I wrote most of this code to learn about OpenGL and 3D rendering in general,
+including the necessary math/LA bits. Simultaneously I got more experience using
+C++ and CMake. Most of the code was written during 2010 and 2011. Originally it
+was using C++98/C++03, but has since been updated and (mostly cleaned up) to
+make use of C++17.
+
+* Some Features
+
+- Minimal dependencies.
+- Dynamic (and minimal) recompiling of shaders during runtime, with a simple
+  preprocessor to allow for includes und declaration of shader dependencies.
+- Cross platform system interfaces for clock and filesystem io and some unicode
+  support (since it was originally C++03).
+- Math code necessary for 3D rendering, including generic (fixed size) vector
+  and matrix code.
+- A very basic scripting language, which is use for configuration, setup of
+  shaders and binding of keys to actions, it can also register events. The
+  scripting language can be accessed over TCP (if the REPL server is enabled)
+
+* Examples
+
+Example programs can be found under programs.
