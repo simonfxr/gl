@@ -8,7 +8,7 @@ namespace ge {
 
 struct GE_API MouseLookPlugin : public Plugin
 {
-    enum State
+    enum State : uint8_t
     {
         Grabbing,
         Free

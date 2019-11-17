@@ -14,29 +14,22 @@ using namespace sys::io;
 
 namespace {
 
-enum TokenizeResult
+enum class ParsingState : uint8_t
 {
-    TokenizeOk,
-    TokenizeFailed,
-    TokenizeIncomplete
-};
-
-enum ParsingState
-{
-    ParsingGotStatement,
-    ParsingYield,
-    ParsingStop
+    GotStatement,
+    Yield,
+    Stop,
 };
 
 struct Client
 {
-    int id;
-    Fiber parser_fiber;
-    Fiber *client_fiber;
-    ParsingState state;
+    Fiber parser_fiber{};
+    Fiber *client_fiber{};
     HandleStream hstream;
     CooperativeInStream in_stream;
-    ParseState parse_state;
+    ParserState parser;
+    ParsingState state = ParsingState::Yield;
+    int id;
 
     std::vector<CommandArg> statement;
 
@@ -58,30 +51,28 @@ void
 run_parser_fiber(void *args)
 {
     Client *c = reinterpret_cast<Client *>(args);
-    while (c->state != ParsingStop) {
-        bool ok = tokenize(c->parse_state, c->statement);
+    while (c->state != ParsingState::Stop) {
+        bool ok = tokenize(c->parser, c->statement);
         if (ok) {
-            c->state = ParsingGotStatement;
+            c->state = ParsingState::GotStatement;
         } else {
-            c->state = ParsingYield;
+            c->state = ParsingState::Yield;
             fiber_switch(&c->parser_fiber, c->client_fiber);
-            if (c->state == ParsingStop)
+            if (c->state == ParsingState::Stop)
                 break;
-            skipStatement(c->parse_state);
-            c->state = ParsingYield;
+            skipStatement(c->parser);
+            c->state = ParsingState::Yield;
         }
         fiber_switch(&c->parser_fiber, c->client_fiber);
     }
 }
 
 Client::Client(int _id, Handle h)
-  : id(_id)
-  , parser_fiber()
-  , client_fiber(sys::fiber::toplevel())
-  , state(ParsingYield)
+  : client_fiber(sys::fiber::toplevel())
   , hstream(std::move(h))
   , in_stream(&hstream, client_fiber, &parser_fiber)
-  , parse_state(in_stream, "")
+  , parser(in_stream, "")
+  , id(_id)
 {
     fiber_alloc(&parser_fiber, 65536, fiber_cleanup, &client_fiber, true);
     Client *parser_args = this;
@@ -91,14 +82,14 @@ Client::Client(int _id, Handle h)
                       sizeof parser_args);
     sys::io::ByteStream name;
     name << "<repl " << id << ">";
-    parse_state.filename = name.str();
+    parser.filename = name.str();
 }
 
 Client::~Client()
 {
     INFO("invoking ~Client()");
     if (fiber_is_alive(&parser_fiber)) {
-        state = ParsingStop;
+        state = ParsingState::Stop;
         fiber_switch(client_fiber, &parser_fiber);
     }
     ASSERT(!fiber_is_alive(&parser_fiber));
@@ -120,17 +111,17 @@ Client::handleIO(Engine &e)
 {
     fiber_switch(client_fiber, &parser_fiber);
     switch (state) {
-    case ParsingGotStatement:
+    case ParsingState::GotStatement:
         e.commandProcessor().execCommand(view_array(statement));
         statement.clear();
         break;
-    case ParsingYield:
+    case ParsingState::Yield:
         break;
-    case ParsingStop:
+    case ParsingState::Stop:
         break;
     }
 
-    sys::io::StreamResult res = parse_state.in_state;
+    sys::io::StreamResult res = parser.in_state;
     return res == sys::io::StreamResult::Blocked ||
            res == sys::io::StreamResult::OK;
 }

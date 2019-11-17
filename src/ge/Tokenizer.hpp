@@ -9,34 +9,28 @@
 
 namespace ge {
 
-struct GE_API ParseState
+struct GE_API ParserState
 {
-    char c;
-    char rawC;
+    char c{};
+    char rawC{};
     std::string filename;
 
     sys::io::StreamResult in_state;
     sys::io::InStream *in;
 
-    int line;
-    int col;
+    int line = 1;
+    int col = 0;
 
-    ParseState(sys::io::InStream &_in, std::string_view fn)
-      : c(0)
-      , rawC(0)
-      , filename(fn)
-      , in_state(sys::io::StreamResult::OK)
-      , in(&_in)
-      , line(1)
-      , col(0)
+    ParserState(sys::io::InStream &_in, std::string_view fn)
+      : filename(fn), in_state(sys::io::StreamResult::OK), in(&_in)
     {}
 };
 
 GE_API bool
-skipStatement(ParseState &state);
+skipStatement(ParserState &state);
 
 GE_API bool
-tokenize(ParseState &state, std::vector<CommandArg> &args);
+tokenize(ParserState &state, std::vector<CommandArg> &args);
 
 } // namespace ge
 

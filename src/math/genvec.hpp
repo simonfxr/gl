@@ -177,13 +177,19 @@ load(T *buffer, const genvec<T, N> &v)
         buffer[i] = v[i];
 }
 
-template<typename T, typename U, size_t N>
+template<typename T,
+         typename U,
+         size_t N,
+         typename = std::enable_if_t<!is_genvec_v<T>>>
 inline constexpr auto operator*(const T &lhs, const genvec<U, N> &rhs)
 {
     return rhs.map([&](const U &x) { return lhs * x; });
 }
 
-template<typename T, typename U, size_t N>
+template<typename T,
+         typename U,
+         size_t N,
+         typename = std::enable_if_t<!is_genvec_v<T>>>
 inline constexpr auto
 operator/(const T &lhs, const genvec<U, N> &rhs)
 {

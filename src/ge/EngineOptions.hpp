@@ -10,14 +10,13 @@ namespace ge {
 
 struct GE_API EngineOptions
 {
-
-    enum CommandType
+    enum CommandType : uint8_t
     {
         Script,
         Command
     };
 
-    enum Mode
+    enum Mode : uint8_t
     {
         Help,
         Animate

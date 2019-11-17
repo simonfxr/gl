@@ -302,7 +302,7 @@ CommandProcessor::loadStream(sys::io::InStream &inp, std::string_view inp_name)
 {
     bool ok = true;
     std::vector<CommandArg> args;
-    ParseState state(inp, inp_name);
+    ParserState state(inp, inp_name);
     bool done = false;
     while (!done) {
         ok = tokenize(state, args);

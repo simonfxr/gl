@@ -105,7 +105,14 @@ reportError(sys::io::OutStream &out,
 #define ERROR_LOCATION_OP_BASIC(op)                                            \
     ::err::Location(__FILE__, __LINE__, ERR_FUNCTION, op)
 
-#if HU_COMP_GNULIKE_P
+#if HU_COMP_INTEL_P
+#    define ERROR_LOCATION_OP(op)                                              \
+        [&] {                                                                  \
+            static constexpr auto PP_CAT(err_loc, __LINE__) =                  \
+              ERROR_LOCATION_OP_BASIC(op);                                     \
+            return &PP_CAT(err_loc, __LINE__);                                 \
+        }()
+#elif HU_COMP_GNULIKE_P
 #    define ERROR_LOCATION_OP(op)                                              \
         __extension__({                                                        \
             static constexpr auto PP_CAT(err_loc, __LINE__) =                  \
@@ -121,7 +128,7 @@ reportError(sys::io::OutStream &out,
 #define CALL_ERROR_WITH_LEVEL_BASIC(errfun, lvl, op, ...)                      \
     errfun(ERROR_LOCATION_OP(op), lvl, __VA_ARGS__)
 
-#if HU_HAVE_constant_p && HU_COMP_GNULIKE_P
+#if HU_HAVE_constant_p && HU_COMP_GNULIKE_P && !HU_COMP_INTEL_P
 #    define CALL_ERROR_WITH_LEVEL_CHECK_CONSTANT(a, b, ...)                    \
         hu_constant_p(a) && hu_constant_p(b)
 #    define CALL_ERROR_WITH_LEVEL(errfun, lvl, op, ...)                        \

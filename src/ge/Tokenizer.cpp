@@ -20,7 +20,7 @@ enum State
 #define PARSE_ERROR(s, mesg) parse_err((s), ERROR_LOCATION, (mesg))
 
 void
-parse_err(const ParseState &s,
+parse_err(const ParserState &s,
           const err::Location *loc,
           const std::string &mesg)
 {
@@ -42,7 +42,7 @@ next(sys::io::InStream &in, char &c)
 }
 
 bool
-getchAny(ParseState &s)
+getchAny(ParserState &s)
 {
     char lastC = s.rawC;
 
@@ -69,7 +69,7 @@ getchAny(ParseState &s)
 }
 
 bool
-getch(ParseState &s)
+getch(ParserState &s)
 {
     getchAny(s);
     bool ok = true;
@@ -89,7 +89,7 @@ getch(ParseState &s)
 }
 
 void
-skipSpace(ParseState &s)
+skipSpace(ParserState &s)
 {
 
     while (isspace(s.c))
@@ -119,7 +119,7 @@ symChar(char c)
 }
 
 std::string
-parseSym(ParseState &s)
+parseSym(ParserState &s)
 {
     sys::io::ByteStream buf;
 
@@ -135,7 +135,7 @@ parseSym(ParseState &s)
 }
 
 State
-parseKeycombo(ParseState &s, CommandArg &tok)
+parseKeycombo(ParserState &s, CommandArg &tok)
 {
     std::vector<Key> keys;
 
@@ -196,7 +196,7 @@ parseKeycombo(ParseState &s, CommandArg &tok)
 }
 
 State
-parseString(ParseState &s, CommandArg &tok)
+parseString(ParserState &s, CommandArg &tok)
 {
     char delim = s.c == '"' ? '"' : s.c == '\'' ? '\'' : ' ';
 
@@ -256,7 +256,7 @@ parseString(ParseState &s, CommandArg &tok)
 }
 
 State
-parseCommandRef(ParseState &s, CommandArg &arg)
+parseCommandRef(ParserState &s, CommandArg &arg)
 {
     if (s.c == 0)
         goto fail;
@@ -279,7 +279,7 @@ fail:
 }
 
 State
-parseVarRef(ParseState &s, CommandArg &arg)
+parseVarRef(ParserState &s, CommandArg &arg)
 {
     if (s.c == 0)
         goto fail;
@@ -298,10 +298,10 @@ fail:
 }
 
 State
-statement(ParseState &s, std::vector<CommandArg> &toks, bool quot);
+statement(ParserState &s, std::vector<CommandArg> &toks, bool quot);
 
 State
-parseQuot(ParseState &s, CommandArg &arg)
+parseQuot(ParserState &s, CommandArg &arg)
 {
     auto q = std::make_unique<Quotation>();
 
@@ -339,7 +339,7 @@ parseQuot(ParseState &s, CommandArg &arg)
 }
 
 int
-parsePow(ParseState &s)
+parsePow(ParserState &s)
 {
     int pow = 1;
     int sig = 1;
@@ -365,7 +365,7 @@ parsePow(ParseState &s)
 }
 
 State
-parseNum(ParseState &s, CommandArg &tok)
+parseNum(ParserState &s, CommandArg &tok)
 {
     bool neg = false;
     while (s.c == '+' || s.c == '-') {
@@ -426,7 +426,7 @@ parseNum(ParseState &s, CommandArg &tok)
 }
 
 State
-token(ParseState &s, CommandArg &tok, bool first)
+token(ParserState &s, CommandArg &tok, bool first)
 {
     skipSpace(s);
 
@@ -464,7 +464,7 @@ token(ParseState &s, CommandArg &tok, bool first)
 }
 
 State
-statement(ParseState &s, std::vector<CommandArg> &toks, bool quot)
+statement(ParserState &s, std::vector<CommandArg> &toks, bool quot)
 {
     State st;
     bool first = true;
@@ -500,7 +500,7 @@ statement(ParseState &s, std::vector<CommandArg> &toks, bool quot)
 } // namespace
 
 bool
-skipStatement(ParseState &s)
+skipStatement(ParserState &s)
 {
     while (getch(s) && s.c != ';')
         ;
@@ -508,7 +508,7 @@ skipStatement(ParseState &s)
 }
 
 bool
-tokenize(ParseState &s, std::vector<CommandArg> &args)
+tokenize(ParserState &s, std::vector<CommandArg> &args)
 {
     getch(s);
     if (s.in_state != sys::io::StreamResult::OK)

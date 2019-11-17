@@ -9,11 +9,20 @@
 
 namespace glt {
 
-#define GLT_OBJECT_TYPE_ENUM_DEF(T, V0, V)                                     \
-    T(ObjectType,                                                              \
-      uint8_t,                                                                 \
-      V0(Program) V(Shader) V(Buffer) V(Framebuffer) V(Renderbuffer)           \
-        V(Sampler) V(Texture) V(TransformFeedback) V(VertexArray) V(Query))
+// clang-format off
+#define GLT_OBJECT_TYPE_ENUM_DEF(T, V0, V)                              \
+    T(ObjectType, uint8_t,                                              \
+      V0(Program)                                                       \
+      V(Shader)                                                         \
+      V(Buffer)                                                         \
+      V(Framebuffer)                                                    \
+      V(Renderbuffer)                                                   \
+      V(Sampler)                                                        \
+      V(Texture)                                                        \
+      V(TransformFeedback)                                              \
+      V(VertexArray)                                                    \
+      V(Query))
+// clang-format on
 
 PP_DEF_ENUM_WITH_API(GLT_API, GLT_OBJECT_TYPE_ENUM_DEF);
 
