@@ -196,7 +196,6 @@ Game::init(const ge::Event<ge::InitEvent> &ev)
         return;
 
     world.render_by_distance = true;
-    ;
 
     sphere_speed = 10.f;
     sphere_proto.state = Bouncing;
@@ -263,7 +262,7 @@ Game::windowResized(const ge::Event<ge::WindowResized> &ev)
     // ASSERT(e.renderManager().renderTarget().height() == height);
 
     sys::io::stderr() << "new window dimensions: " << width << "x" << height
-                      << sys::io::endl;
+                      << "\n";
 
     resizeRenderTargets();
 }
@@ -734,10 +733,10 @@ Game::render_con(const point3_t &a, const point3_t &b)
     us.optional("color", CONNECTION_COLOR);
     us.optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
 
-    // sys::io::stderr() << "con: a = " << va << ", b = " << vb << sys::io::endl
+    // sys::io::stderr() << "con: a = " << va << ", b = " << vb << "\n"
     //           << "  a' = " << gt.transformPoint(vec3(0.f))
     //           << ", b' = " << gt.transformPoint(vec3(1.f, 0.f, 0.f))
-    //           << sys::io::endl;
+    //           << "\n";
 
     lineBatch.draw();
 
@@ -833,7 +832,7 @@ Game::link(ge::Engine &e)
           use_interpolation = !use_interpolation;
           sys::io::stderr()
             << "use interpolation: " << (use_interpolation ? "yes" : "no")
-            << sys::io::endl;
+            << "\n";
       }));
 
     proc.define(ge::makeCommand(
@@ -848,7 +847,7 @@ Game::link(ge::Engine &e)
               world.solve_iterations += int32_t(args[0].integer);
           sys::io::stderr()
             << "number of contact-solver iterations: " << world.solve_iterations
-            << sys::io::endl;
+            << "\n";
       }));
 
     proc.define(ge::makeCommand(
@@ -858,7 +857,7 @@ Game::link(ge::Engine &e)
           world.render_by_distance = !world.render_by_distance;
           sys::io::stderr()
             << "render by distance: "
-            << (world.render_by_distance ? "yes" : "no") << sys::io::endl;
+            << (world.render_by_distance ? "yes" : "no") << "\n";
       }));
 
     proc.define(ge::makeCommand(
@@ -868,7 +867,7 @@ Game::link(ge::Engine &e)
           render_spheres_instanced = !render_spheres_instanced;
           sys::io::stderr()
             << "instanced rendering: "
-            << (render_spheres_instanced ? "yes" : "no") << sys::io::endl;
+            << (render_spheres_instanced ? "yes" : "no") << "\n";
       }));
 
     proc.define(ge::makeCommand(
@@ -878,7 +877,7 @@ Game::link(ge::Engine &e)
           updateIndirectRendering(!indirect_rendering);
           sys::io::stderr()
             << "indirect rendering: " << (indirect_rendering ? "yes" : "no")
-            << sys::io::endl;
+            << "\n";
       }));
 
     proc.define(

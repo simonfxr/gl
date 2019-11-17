@@ -122,12 +122,10 @@ struct Proxy
 
 auto is_var_arg(CommandArgSeq<>) -> std::false_type;
 
-auto
-is_var_arg(CommandArgSeq<ArrayView<const CommandArg>>) -> std::true_type;
+auto is_var_arg(CommandArgSeq<ArrayView<const CommandArg>>) -> std::true_type;
 
 template<typename T, typename... Ts>
-auto
-is_var_arg(CommandArgSeq<T, Ts...>)
+auto is_var_arg(CommandArgSeq<T, Ts...>)
   -> decltype(is_var_arg(CommandArgSeq<Ts...>{}));
 
 template<typename F, typename... Ts, size_t... Is>
@@ -186,8 +184,7 @@ invoke(F &&f,
 }
 
 template<typename FTraits, size_t... Is>
-auto
-make_arg_seq(std::index_sequence<Is...>)
+auto make_arg_seq(std::index_sequence<Is...>)
   -> CommandArgSeq<functor_traits_arg_type<FTraits, Is + 1>...>;
 
 template<typename FTraits>

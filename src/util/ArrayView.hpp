@@ -3,6 +3,7 @@
 
 #include "defs.h"
 #include "err/err.hpp"
+#include "util/NonCopyable.hpp"
 
 #include <type_traits>
 
@@ -30,7 +31,6 @@ struct ArrayView
 
     constexpr const T &operator[](size_t i) const { return _elems[i]; }
 
-    ArrayView &operator=(const ArrayView &) = delete;
     ArrayView &operator=(ArrayView &&) = delete;
 
     constexpr T *data() const { return _elems; }

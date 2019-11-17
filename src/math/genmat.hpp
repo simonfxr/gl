@@ -582,8 +582,8 @@ operator<<(OStream &out, const genmat<T, N> &A)
 
 } // namespace math
 
-BEGIN_NO_WARN_MISMATCHED_TAGS
 namespace std {
+BEGIN_NO_WARN_MISMATCHED_TAGS
 template<typename T, size_t N>
 struct tuple_size<math::genmat<T, N>> : public std::integral_constant<size_t, N>
 {};

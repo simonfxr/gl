@@ -138,7 +138,7 @@ print_cl_error(const char *msg,
                ::size_t /*unused*/,
                void * /*unused*/)
 {
-    sys::io::stdout() << msg << sys::io::endl;
+    sys::io::stdout() << msg << "\n";
 }
 
 static cl::Context
@@ -198,18 +198,18 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     cl::Platform::get(&platforms);
 
     engine.out() << "found " << platforms.size() << " CL platforms"
-                 << sys::io::endl;
+                 << "\n";
     if (platforms.empty())
         return;
     platforms.resize(1);
 
     cl::Platform &platform = platforms[0];
     std::string info_value;
-    engine.out() << "selecting CL platform:" << sys::io::endl;
+    engine.out() << "selecting CL platform:\n";
 
 #define PLAT_INFO(info)                                                        \
     platform.getInfo(info, &info_value);                                       \
-    engine.out() << "  " << #info << ": " << info_value << sys::io::endl
+    engine.out() << "  " << #info << ": " << info_value << "\n"
 
     PLAT_INFO(CL_PLATFORM_NAME);
     PLAT_INFO(CL_PLATFORM_PROFILE);
@@ -217,14 +217,14 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     PLAT_INFO(CL_PLATFORM_VERSION);
 #undef PLAT_INFO
 
-    engine.out() << "  CL_PLATFORM_EXTENSIONS:" << sys::io::endl;
+    engine.out() << "  CL_PLATFORM_EXTENSIONS:\n";
     platform.getInfo(CL_PLATFORM_EXTENSIONS, &info_value);
     std::istringstream exts(info_value);
     std::string ext;
     while (std::getline(exts, ext, ' '))
-        engine.out() << "    " << ext << sys::io::endl;
+        engine.out() << "    " << ext << "\n";
 
-    engine.out() << "  END EXTENSIONS" << sys::io::endl;
+    engine.out() << "  END EXTENSIONS\n";
 
     cl_int cl_err;
     cl_ctx = createCLGLContext(platform, &cl_err);
@@ -233,18 +233,18 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
         return;
     }
 
-    engine.out() << "created CL context" << sys::io::endl;
+    engine.out() << "created CL context\n";
 
     std::vector<cl::Device> devices = cl_ctx.getInfo<CL_CONTEXT_DEVICES>();
     if (devices.empty())
         return;
     devices.resize(1);
-    engine.out() << "selecting CL device:" << sys::io::endl;
+    engine.out() << "selecting CL device:\n";
     cl_device = devices[0];
 
 #define DEV_INFO(info)                                                         \
     cl_device.getInfo(info, &info_value);                                      \
-    engine.out() << "  " << #info << ": " << info_value << sys::io::endl
+    engine.out() << "  " << #info << ": " << info_value << "\n"
 
     DEV_INFO(CL_DEVICE_NAME);
     DEV_INFO(CL_DEVICE_OPENCL_C_VERSION);
@@ -253,19 +253,19 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     DEV_INFO(CL_DEVICE_VERSION);
     DEV_INFO(CL_DRIVER_VERSION);
 
-    engine.out() << "  CL_DEVICE_EXTENSIONS:" << sys::io::endl;
+    engine.out() << "  CL_DEVICE_EXTENSIONS:\n";
     cl_device.getInfo(CL_DEVICE_EXTENSIONS, &info_value);
     std::istringstream dev_exts(info_value);
     std::string dev_ext;
 
     bool supports_3d_image_write = false;
     while (std::getline(dev_exts, dev_ext, ' ')) {
-        engine.out() << "    " << dev_ext << sys::io::endl;
+        engine.out() << "    " << dev_ext << "\n";
         if (dev_ext == "cl_khr_3d_image_writes")
             supports_3d_image_write = true;
     }
 
-    engine.out() << "  END EXTENSIONS" << sys::io::endl;
+    engine.out() << "  END EXTENSIONS\n";
 
     if (!supports_3d_image_write) {
         ERR("cl_khr_3d_image_writes not supported");
@@ -327,10 +327,9 @@ Anim::initCLKernels(bool *success)
     cl_err = cl_program.build(
       devices, (std::string("-I programs/mc/ -DSIZE=") + num.str()).c_str());
     engine.out() << "building cl program: "
-                 << (cl_err == CL_SUCCESS ? "success" : "failed")
-                 << ", log:" << sys::io::endl;
+                 << (cl_err == CL_SUCCESS ? "success" : "failed") << ", log:\n";
     engine.out() << cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl_device)
-                 << sys::io::endl;
+                 << "\n";
 
     if (cl_err != CL_SUCCESS)
         return;
@@ -401,7 +400,7 @@ Anim::initMC(MCState &cur_mc, vec3_t orig, vec3_t dim, bool *success)
     // apparently creating a 3d texture of size 1x1x1 fails
     // while (sz > 0) {
     while (sz > 1) {
-        engine.out() << "sz = " << sz << sys::io::endl;
+        engine.out() << "sz = " << sz << "\n";
         max_size *= 8;
         cl_channel_type type;
         if (max_size >= (1 << 16))
@@ -678,12 +677,12 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
         double avg = INV(fs.avg);
         engine.out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                      << fps << "; " << avg << "; " << min << "; " << max
-                     << sys::io::endl;
+                     << "\n";
 
         double avg_tris = sum_tris / num_renders;
 
         engine.out() << "Avg Tris: " << avg_tris << " Max Tris: " << max_tris
-                     << sys::io::endl;
+                     << "\n";
 
         max_tris = 0;
         num_renders = 0;

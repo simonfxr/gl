@@ -79,31 +79,33 @@ opengl_error_callback(GLenum source,
 
 #define DEF_GL_SHADER(name, src) const char *const name = "#version 330\n" #src
 
-DEF_GL_SHADER(VERTEX_SHADER,
+DEF_GL_SHADER(
+  VERTEX_SHADER,
 
-              uniform mat4 mvpMatrix;
-              uniform mat4 mvMatrix;
+  uniform mat4 mvpMatrix;
+  uniform mat4 mvMatrix;
 
-              in vec3 position;
-              in vec3 color;
+  in vec3 position;
+  in vec3 color;
 
-              out vec3 fragColor;
+  out vec3 fragColor;
 
-              void main() {
-                  gl_Position = mvpMatrix * vec4(position, 1);
-                  fragColor = color;
-              });
+  void main() {
+      gl_Position = mvpMatrix * vec4(position, 1);
+      fragColor = color;
+  });
 
-DEF_GL_SHADER(FRAGMENT_SHADER,
+DEF_GL_SHADER(
+  FRAGMENT_SHADER,
 
-              in vec3 fragColor;
+  in vec3 fragColor;
 
-              out vec4 color;
+  out vec4 color;
 
-              void main() {
-                  color.rgb = fragColor;
-                  color.a = 1;
-              });
+  void main() {
+      color.rgb = fragColor;
+      color.a = 1;
+  });
 
 bool
 initProgram(State &s)

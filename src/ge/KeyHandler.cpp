@@ -193,15 +193,15 @@ KeyHandler::handleListBindings(const Event<CommandEvent> &e)
         QuotationCommand *quot = it->second->castToQuotation();
         if (quot == nullptr) {
             out << it->second->name();
-            out << sys::io::endl;
+            out << "\n";
         } else {
-            out << sys::io::endl;
+            out << "\n";
             {
                 CommandPrettyPrinter printer;
                 printer.out(out);
                 printer.print(*quot->quotation);
             }
-            out << sys::io::endl;
+            out << "\n";
         }
     }
 }

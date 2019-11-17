@@ -259,7 +259,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &)
     if (fpsTimer.fire()) {
         sys::io::stdout() << "simulation fps: "
                           << (1 / physics_perf_counter.query())
-                          << ", avg: " << (pc_count / pc_sum) << sys::io::endl;
+                          << ", avg: " << (pc_count / pc_sum) << "\n";
         pc_sum = 0.0;
         pc_count = 0;
     }

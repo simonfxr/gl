@@ -97,8 +97,7 @@ GLSLPreprocessor::addDefines(const PreprocessorDefinitions &defines)
 {
     for (const auto &define : defines) {
         sys::io::ByteStream defn;
-        defn << "#define " << define.first << " " << define.second
-             << sys::io::endl;
+        defn << "#define " << define.first << " " << define.second << "\n";
         appendString(defn.str());
     }
 }
@@ -151,7 +150,7 @@ DependencyHandler::directiveEncountered(
 
     if (!parseFileArg(ctx, arg, len)) {
         proc.out() << ctx.content.name << ": #need-directive: invalid parameter"
-                   << sys::io::endl;
+                   << "\n";
         proc.setError();
         return;
     }
@@ -160,8 +159,7 @@ DependencyHandler::directiveEncountered(
     std::string realPath = sys::fs::lookup(view_array(proc.includePath), file);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
-                   << ": #need-directive: cannot find file: " << file
-                   << sys::io::endl;
+                   << ": #need-directive: cannot find file: " << file << "\n";
         proc.setError();
         return;
     }
@@ -173,7 +171,7 @@ DependencyHandler::directiveEncountered(
         proc.out()
           << ctx.content.name
           << ": #need-directive: cannot guess shader type based on name: "
-          << file << sys::io::endl;
+          << file << "\n";
         proc.setError();
         return;
     }
@@ -211,7 +209,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
     if (!parseFileArg(ctx, arg, len) || len == 0) {
         proc.out() << ctx.content.name
                    << ": #include-directive: invalid parameter"
-                   << sys::io::endl;
+                   << "\n";
         proc.setError();
         return;
     }
@@ -221,7 +219,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
     if (realPath.empty()) {
         proc.out() << ctx.content.name
                    << ": #include-directive: cannot find file: " << file
-                   << sys::io::endl;
+                   << "\n";
         proc.setError();
         return;
     }
@@ -232,7 +230,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
     if (!filestat) {
         proc.out() << ctx.content.name
                    << ": #include-directive: cannot open file: " << realPath
-                   << sys::io::endl;
+                   << "\n";
         proc.setError();
         return;
     }

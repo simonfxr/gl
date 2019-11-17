@@ -319,7 +319,7 @@ EngineOptions::printHelp()
 {
     sys::io::OutStream &out = sys::io::stderr();
 
-    out << "Engine options: " << sys::io::endl;
+    out << "Engine options:\n";
 
     size_t max_col = 0;
 
@@ -344,10 +344,10 @@ EngineOptions::printHelp()
         while (w++ < max_col + 3)
             out << ' ';
 
-        out << i.description << sys::io::endl;
+        out << i.description << "\n";
     }
 
-    out << sys::io::endl;
+    out << "\n";
 }
 
 } // namespace ge

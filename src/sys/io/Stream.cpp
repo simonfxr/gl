@@ -167,11 +167,6 @@ stderr()
     return module->io_streams.stderr;
 }
 
-struct StreamEndl
-{};
-
-const StreamEndl endl = {};
-
 #define DEF_PRINTF_WRITER(T, fmt, bufsz)                                       \
     StreamResult write_repr(OutStream &out, T value)                           \
     {                                                                          \

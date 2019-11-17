@@ -182,7 +182,7 @@ void
 Anim::init(const Event<InitEvent> &ev)
 {
     loadResources(sys::fs::join(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR), "data"));
-    engine.out() << "in init()" << sys::io::endl;
+    engine.out() << "in init()\n";
 
     mouse_look.camera(&camera);
     engine.enablePlugin(camera);
@@ -469,7 +469,7 @@ Anim::renderScene(const Event<RenderEvent> &e)
         double avg = INV(fs.avg);
         sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                           << fps << "; " << avg << "; " << min << "; " << max
-                          << sys::io::endl;
+                          << "\n";
     }
 }
 
@@ -731,7 +731,7 @@ Anim::loadResources(const std::string &dir)
         return;
     }
     sys::io::stdout() << "parsed teapot model: " << nfaces << " vertices"
-                      << sys::io::endl;
+                      << "\n";
 
 #ifdef MESH_MESH
     teapotModel.primType(GL_QUADS);

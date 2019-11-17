@@ -5,13 +5,13 @@
 #include "glt/TextureData.hpp"
 #include "glt/conf.hpp"
 #include "opengl.hpp"
+#include "util/NonCopyable.hpp"
 #include "util/enum_flags.hpp"
-
 #include <memory>
 
 namespace glt {
 
-struct GLT_API TextureSampler
+struct GLT_API TextureSampler : NonCopyable
 {
 private:
     std::shared_ptr<TextureData> _data;
@@ -44,9 +44,11 @@ public:
     };
 
     TextureSampler() : _data(new TextureData), _sampler(0) {}
+
     explicit TextureSampler(const std::shared_ptr<TextureData> &data)
       : _data(data), _sampler(0)
     {}
+
     ~TextureSampler();
 
     void free();
@@ -63,9 +65,6 @@ public:
     void unbind(uint32_t idx, bool set_active_idx = true);
 
     static Axis availableAxes(TextureType);
-
-    TextureSampler(const TextureSampler &) = delete;
-    TextureSampler &operator=(const TextureSampler &) = delete;
 };
 
 DEF_ENUM_BIT_OPS(TextureSampler::FilterMode);

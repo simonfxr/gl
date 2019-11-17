@@ -11,7 +11,7 @@
         PP_CAT(_log_raise_err_sender_, __LINE__).pushError(ec);                \
         auto logmsg =                                                          \
           ::err::beginLog(PP_CAT(_log_raise_err_sender_, __LINE__), lvl);      \
-        logmsg << msg << sys::io::endl;                                        \
+        logmsg << msg << "\n";                                                 \
     } while (0)
 
 #define LOG_RAISE_ERROR(val, ec, msg)                                          \

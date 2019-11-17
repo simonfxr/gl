@@ -1,5 +1,4 @@
 #include "err/err.hpp"
-
 #include "util/string.hpp"
 
 #include <cstdlib>
@@ -13,7 +12,7 @@
 #    include <unistd.h>
 #elif defined(ENABLE_STACKTRACES) && defined(HU_OS_WINDOWS)
 #    include <Windows.h>
-
+\\ keep newline to avoid sorting of includes
 #    include <DbgHelp.h>
 #endif
 
@@ -88,7 +87,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
     unw_cursor_t cursor;
     unw_init_local(&cursor, &uc);
 
-    out << "  stacktrace: (most recent call first)" << sys::io::endl;
+    out << "  stacktrace: (most recent call first)\n";
 
     while (unw_step(&cursor) > 0) {
         unw_word_t ip;
@@ -101,121 +100,122 @@ print_stacktrace(sys::io::OutStream &out, int skip)
         if (skip <= 0) {
             out << "    ";
             debugInfo(out, (reinterpret_cast<void **>(ip) - 1));
-            out << sys::io::endl;
+            out << "\n";
         } else {
             skip--;
         }
     }
 
-    out << "  end of stacktrace" << sys::io::endl;
+    out << "  end of stacktrace\n";
 }
 
 #elif defined(ENABLE_STACKTRACES) && HU_OS_WINDOWS_P
 
-struct ProcessContext
-{
-    HANDLE process;
-    ProcessContext()
+    struct ProcessContext
     {
-        process = GetCurrentProcess();
-        SymInitialize(process, nullptr, TRUE);
-        SymSetOptions(SYMOPT_LOAD_LINES);
-    }
-};
+        HANDLE process;
+        ProcessContext()
+        {
+            process = GetCurrentProcess();
+            SymInitialize(process, nullptr, TRUE);
+            SymSetOptions(SYMOPT_LOAD_LINES);
+        }
+    };
 
-void
-print_stacktrace(sys::io::OutStream &out, int skip)
-{
-    static ProcessContext proc_context;
-    auto process = proc_context.process;
+    void print_stacktrace(sys::io::OutStream & out, int skip)
+    {
+        static ProcessContext proc_context;
+        auto process = proc_context.process;
 
-    HANDLE thread = GetCurrentThread();
-    CONTEXT context = {};
-    context.ContextFlags = CONTEXT_FULL;
-    RtlCaptureContext(&context);
+        HANDLE thread = GetCurrentThread();
+        CONTEXT context = {};
+        context.ContextFlags = CONTEXT_FULL;
+        RtlCaptureContext(&context);
 
-    STACKFRAME frame = {};
+        STACKFRAME frame = {};
 #    ifdef HU_BITS_32
-    DWORD machine = IMAGE_FILE_MACHINE_I386;
-    frame.AddrPC.Offset = context.Eip;
-    frame.AddrFrame.Offset = context.Ebp;
-    frame.AddrStack.Offset = context.Esp;
-    const auto tableAccess = SymFunctionTableAccess;
-    const auto getModuleBase = SymGetModuleBase;
-    const auto walk = StackWalk;
+        DWORD machine = IMAGE_FILE_MACHINE_I386;
+        frame.AddrPC.Offset = context.Eip;
+        frame.AddrFrame.Offset = context.Ebp;
+        frame.AddrStack.Offset = context.Esp;
+        const auto tableAccess = SymFunctionTableAccess;
+        const auto getModuleBase = SymGetModuleBase;
+        const auto walk = StackWalk;
 #    else
-    DWORD machine = IMAGE_FILE_MACHINE_AMD64;
-    frame.AddrPC.Offset = context.Rip;
-    frame.AddrFrame.Offset = context.Rbp;
-    frame.AddrStack.Offset = context.Rsp;
-    const auto tableAccess = SymFunctionTableAccess64;
-    const auto getModuleBase = SymGetModuleBase64;
-    const auto walk = StackWalk64;
+        DWORD machine = IMAGE_FILE_MACHINE_AMD64;
+        frame.AddrPC.Offset = context.Rip;
+        frame.AddrFrame.Offset = context.Rbp;
+        frame.AddrStack.Offset = context.Rsp;
+        const auto tableAccess = SymFunctionTableAccess64;
+        const auto getModuleBase = SymGetModuleBase64;
+        const auto walk = StackWalk64;
 #    endif
-    frame.AddrPC.Mode = AddrModeFlat;
-    frame.AddrFrame.Mode = AddrModeFlat;
-    frame.AddrStack.Mode = AddrModeFlat;
+        frame.AddrPC.Mode = AddrModeFlat;
+        frame.AddrFrame.Mode = AddrModeFlat;
+        frame.AddrStack.Mode = AddrModeFlat;
 
-    while (walk(machine,
-                process,
-                thread,
-                &frame,
-                &context,
-                nullptr,
-                tableAccess,
-                getModuleBase,
-                nullptr)) {
+        while (walk(machine,
+                    process,
+                    thread,
+                    &frame,
+                    &context,
+                    nullptr,
+                    tableAccess,
+                    getModuleBase,
+                    nullptr)) {
 
-        if (skip > 0) {
-            --skip;
-            continue;
-        }
-
-        // auto functionAddress = frame.AddrPC.Offset;
-
-        // auto moduleBase = SymGetModuleBase(process, frame.AddrPC.Offset);
-        // bool have_module = false;
-        // if (moduleBase &&
-        //    GetModuleFileNameA((HINSTANCE) moduleBase, moduleBuff, MAX_PATH))
-        //    { have_module = true;
-        // }
-
-        char symbolBuffer[sizeof(IMAGEHLP_SYMBOL) + 255];
-        PIMAGEHLP_SYMBOL symbol = (PIMAGEHLP_SYMBOL) symbolBuffer;
-        symbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL) + 255;
-        symbol->MaxNameLength = 254;
-
-        out << " ";
-        if (SymGetSymFromAddr(process, frame.AddrPC.Offset, nullptr, symbol)) {
-            DWORD offset = 0;
-            IMAGEHLP_LINE line;
-            line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
-
-            out << symbol->Name << "()";
-
-            if (SymGetLineFromAddr(
-                  process, frame.AddrPC.Offset, &offset, &line)) {
-                out << "[" << line.FileName << ":" << line.LineNumber << "]";
+            if (skip > 0) {
+                --skip;
+                continue;
             }
-        } else {
-            char buf[20];
-            snprintf(buf,
-                     sizeof buf,
-                     "%p",
-                     reinterpret_cast<void *>(frame.AddrPC.Offset));
-            out << "ip:" << buf;
+
+            // auto functionAddress = frame.AddrPC.Offset;
+
+            // auto moduleBase = SymGetModuleBase(process, frame.AddrPC.Offset);
+            // bool have_module = false;
+            // if (moduleBase &&
+            //    GetModuleFileNameA((HINSTANCE) moduleBase, moduleBuff,
+            //    MAX_PATH)) { have_module = true;
+            // }
+
+            char symbolBuffer[sizeof(IMAGEHLP_SYMBOL) + 255];
+            PIMAGEHLP_SYMBOL symbol = (PIMAGEHLP_SYMBOL) symbolBuffer;
+            symbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL) + 255;
+            symbol->MaxNameLength = 254;
+
+            out << " ";
+            if (SymGetSymFromAddr(
+                  process, frame.AddrPC.Offset, nullptr, symbol)) {
+                DWORD offset = 0;
+                IMAGEHLP_LINE line;
+                line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
+
+                out << symbol->Name << "()";
+
+                if (SymGetLineFromAddr(
+                      process, frame.AddrPC.Offset, &offset, &line)) {
+                    out << "[" << line.FileName << ":" << line.LineNumber
+                        << "]";
+                }
+            } else {
+                char buf[20];
+                snprintf(buf,
+                         sizeof buf,
+                         "%p",
+                         reinterpret_cast<void *>(frame.AddrPC.Offset));
+                out << "ip:" << buf;
+            }
+            // if (have_module)
+            //    out << " in " << moduleBuff;
+            out << "\n";
         }
-        // if (have_module)
-        //    out << " in " << moduleBuff;
-        out << sys::io::endl;
     }
-}
 #else
 
 void
 print_stacktrace(sys::io::OutStream &out, int)
 {
-    out << "  stacktrace: not available" << sys::io::endl;
+    out << "  stacktrace: not available\n";
 }
 
 #endif
@@ -303,16 +303,16 @@ reportError(sys::io::OutStream &out,
     }
 
     out << "[" << prefix << "]"
-        << " in " << loc.function << sys::io::endl
-        << "  at " << loc.file << ":" << loc.line << sys::io::endl;
+        << " in " << loc.function << "\n"
+        << "  at " << loc.file << ":" << loc.line << "\n";
 
     if (loc.operation) {
         if (lvl == LL::Assertion)
-            out << "  assertion: " << mesg << sys::io::endl;
+            out << "  assertion: " << mesg << "\n";
         else
-            out << "  operation: " << loc.operation << sys::io::endl;
+            out << "  operation: " << loc.operation << "\n";
     }
-    out << "  message: " << mesg << sys::io::endl;
+    out << "  message: " << mesg << "\n";
 
     if (st)
         print_stacktrace(out);

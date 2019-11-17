@@ -8,6 +8,8 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "pp/pimpl.hpp"
+#include "util/NonCopyable.hpp"
+#include "util/NonMoveable.hpp"
 
 #include <memory>
 
@@ -82,22 +84,15 @@ public:
     SavePointArgs(GeometryTransform &_g, uint64_t _cookie, uint16_t _depth)
       : g(&_g), cookie(_cookie), depth(_depth)
     {}
-
-    SavePointArgs(const SavePoint &) = delete;
-    SavePointArgs &operator=(const SavePoint &) = delete;
 };
 
 struct GLT_API SavePoint
+  : NonCopyable
+  , NonMoveable
 {
     const SavePointArgs args;
     SavePoint(const SavePointArgs &_args) : args(_args) {}
-
     ~SavePoint() { args.g->restore(args); }
-
-    SavePoint(const SavePoint &) = delete;
-    SavePoint(SavePoint &&) = delete;
-    SavePoint &operator=(const SavePoint &) = delete;
-    SavePoint &operator=(SavePoint &&) = delete;
 };
 
 } // namespace glt

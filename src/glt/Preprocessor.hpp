@@ -48,8 +48,8 @@ struct GLT_API Preprocessor
         virtual void directiveEncountered(const DirectiveContext &ctx);
     };
 
-    typedef std::unordered_map<std::string, DirectiveHandler *> Handlers;
-    typedef std::pair<std::string, DirectiveHandler *> HandlerEntry;
+    using Handlers = std::unordered_map<std::string, DirectiveHandler *>;
+    using HandlerEntry = std::pair<std::string, DirectiveHandler *>;
 
     Preprocessor();
 

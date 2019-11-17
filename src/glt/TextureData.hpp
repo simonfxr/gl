@@ -4,6 +4,7 @@
 #include "glt/GLObject.hpp"
 #include "glt/conf.hpp"
 #include "opengl.hpp"
+#include "util/NonCopyable.hpp"
 
 namespace glt {
 
@@ -14,17 +15,10 @@ enum TextureType
     Texture3D
 };
 
-struct GLT_API TextureData
+struct GLT_API TextureData : NonCopyable
 {
-public:
-private:
-    size_t _samples;
-    GLTextureObject _handle;
-    TextureType _type;
-
-public:
     TextureData() : _samples(1), _handle(0), _type(Texture2D) {}
-    TextureData(TextureType type, size_t samples = 1);
+    explicit TextureData(TextureType type, size_t samples = 1);
 
     ~TextureData();
 
@@ -41,8 +35,10 @@ public:
 
     void type(TextureType ty, size_t ss = 1);
 
-    TextureData(const TextureData &) = delete;
-    TextureData &operator=(const TextureData &) = delete;
+private:
+    size_t _samples;
+    GLTextureObject _handle;
+    TextureType _type;
 };
 
 inline bool

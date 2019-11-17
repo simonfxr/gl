@@ -65,21 +65,20 @@ COMMAND0("printContextInfo",
 (const Event<CommandEvent> &e)
 {
     auto c = e.info.engine.window().contextInfo();
-    e.info.engine.out() << "OpenGL Context Information" << sys::io::endl
+    e.info.engine.out() << "OpenGL Context Information\n"
                         << "  Version:\t" << c.majorVersion << "."
-                        << c.minorVersion << sys::io::endl
-                        << "  DepthBits:\t" << c.depthBits << sys::io::endl
-                        << "  StencilBits:\t" << c.stencilBits << sys::io::endl
-                        << "  Antialiasing:\t" << c.antialiasingLevel
-                        << sys::io::endl
+                        << c.minorVersion << "\n"
+                        << "  DepthBits:\t" << c.depthBits << "\n"
+                        << "  StencilBits:\t" << c.stencilBits << "\n"
+                        << "  Antialiasing:\t" << c.antialiasingLevel << "\n"
                         << "  CoreProfile:\t" << (c.coreProfile ? "yes" : "no")
-                        << sys::io::endl
+                        << "\n"
                         << "  DebugContext:\t"
-                        << (c.debugContext ? "yes" : "no") << sys::io::endl
+                        << (c.debugContext ? "yes" : "no") << "\n"
                         << "  VSync:\t"
                         << (e.info.engine.window().vsync() ? "yes" : "no")
-                        << sys::io::endl
-                        << sys::io::endl;
+                        << "\n"
+                        << "\n";
 } // namespace
 
 COMMAND("printMemInfo",
@@ -97,14 +96,13 @@ COMMAND("printMemInfo",
                              math::real(info.initial.freeTexture);
         math::real fracRBO = math::real(info.current.freeRenderbuffer) /
                              math::real(info.initial.freeRenderbuffer);
-        e.info.engine.out()
-          << "OpenGL Free Memory: " << sys::io::endl
-          << "  VBO: " << info.current.freeVBO << " kbyte (" << (fracVBO * 100)
-          << "%)" << sys::io::endl
-          << "  Texture: " << info.current.freeVBO << " kbyte ("
-          << (fracTex * 100) << "%)" << sys::io::endl
-          << "  Renderbuffer: " << info.current.freeVBO << " kbyte ("
-          << (fracRBO * 100) << "%)" << sys::io::endl;
+        e.info.engine.out() << "OpenGL Free Memory:\n"
+                            << "  VBO: " << info.current.freeVBO << " kbyte ("
+                            << (fracVBO * 100) << "%)\n"
+                            << "  Texture: " << info.current.freeVBO
+                            << " kbyte (" << (fracTex * 100) << "%)\n"
+                            << "  Renderbuffer: " << info.current.freeVBO
+                            << " kbyte (" << (fracRBO * 100) << "%)\n";
     }
 
     glt::GLMemInfoNV info_nv{};
@@ -112,13 +110,13 @@ COMMAND("printMemInfo",
         success = true;
 
         e.info.engine.out()
-          << "OpenGL Memory Information:" << sys::io::endl
+          << "OpenGL Memory Information:\n"
           << "  total: " << info_nv.total
           << " kbyte, dedicated: " << info_nv.total_dedicated << " kbyte"
-          << sys::io::endl
-          << "  current: " << info_nv.current << " kbyte" << sys::io::endl
+          << "\n"
+          << "  current: " << info_nv.current << " kbyte\n"
           << "  evicted: " << info_nv.evicted << " kbyte, "
-          << info_nv.num_evictions << " evictions" << sys::io::endl;
+          << info_nv.num_evictions << " evictions\n";
     }
 
     if (!success)
@@ -137,9 +135,9 @@ COMMAND("reloadShaders", "reload ShaderPrograms")
 {
 
     if (args.size() == 0) {
-        e.info.engine.out() << "reloading shaders" << sys::io::endl;
+        e.info.engine.out() << "reloading shaders\n";
         e.info.engine.shaderManager().reloadShaders();
-        // std::cerr << "all shaders reloaded" << sys::io::endl;
+        // std::cerr << "all shaders reloaded\n";
     } else {
         glt::ShaderManager &sm = e.info.engine.shaderManager();
         for (size_t i = 0; i < args.size(); ++i) {
@@ -163,18 +161,17 @@ COMMAND("listCachedShaders", "list all shader cache entries")
     auto cache = e.info.engine.shaderManager().globalShaderCache();
 
     if (!cache) {
-        e.info.engine.out() << "no shader cache available" << sys::io::endl;
+        e.info.engine.out() << "no shader cache available\n";
         return;
     }
 
     uint32_t n = 0;
     for (auto &entrie : cache->cacheEntries()) {
-        e.info.engine.out()
-          << "cached shader: " << entrie.first << sys::io::endl;
+        e.info.engine.out() << "cached shader: " << entrie.first << "\n";
         ++n;
     }
 
-    e.info.engine.out() << n << " shaders cached" << sys::io::endl;
+    e.info.engine.out() << n << " shaders cached\n";
 }
 
 COMMAND("listBindings", "list all key bindings")
@@ -199,15 +196,15 @@ COMMAND("bindKey", "bind a command to a key combination")
 COMMAND("help", "help and command overview")(const Event<CommandEvent> &ev)
 {
     ge::CommandProcessor &cp = ev.info.engine.commandProcessor();
-    ev.info.engine.out() << "list of Commands: " << sys::io::endl;
+    ev.info.engine.out() << "list of Commands:\n";
 
     for (const auto &com : cp.commands())
-        ev.info.engine.out() << "    " << com->name() << sys::io::endl;
+        ev.info.engine.out() << "    " << com->name() << "\n";
 
-    ev.info.engine.out() << sys::io::endl
+    ev.info.engine.out() << "\n"
                          << "use describe <command name> to get more "
                             "information about a specific command"
-                         << sys::io::endl;
+                         << "\n";
 }
 
 COMMAND("bindShader", "compile and linke a ShaderProgram and give it a name")
@@ -258,7 +255,7 @@ COMMAND("bindShader", "compile and linke a ShaderProgram and give it a name")
         return;
     }
 
-    e.info.engine.out() << "bound program: " << args[0].string << sys::io::endl;
+    e.info.engine.out() << "bound program: " << args[0].string << "\n";
 
     e.info.engine.shaderManager().addProgram(args[0].string, prog);
 }
@@ -271,7 +268,7 @@ COMMAND("initGLDebug", "initialize OpenGL debug output")
     } else {
         e.info.engine.out()
           << "cannot initialize OpenGL debug output: no debug context"
-          << sys::io::endl;
+          << "\n";
     }
 }
 
@@ -309,11 +306,9 @@ COMMAND("describe", "print a description of its parameters")
     for (const auto &arg : args) {
         CommandPtr com = proc.command(arg.string);
         if (!com) {
-            e.info.engine.out()
-              << "unknown command: " << arg.string << sys::io::endl;
+            e.info.engine.out() << "unknown command: " << arg.string << "\n";
         } else {
-            e.info.engine.out()
-              << com->interactiveDescription() << sys::io::endl;
+            e.info.engine.out() << com->interactiveDescription() << "\n";
         }
     }
 }

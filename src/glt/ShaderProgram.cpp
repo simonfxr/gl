@@ -30,7 +30,7 @@ namespace glt {
 
 PP_DEF_ENUM_IMPL(GLT_SHADER_PROGRAM_ERROR_ENUM_DEF);
 
-typedef std::unordered_map<std::string, GLuint> Attributes;
+using Attributes = std::unordered_map<std::string, GLuint>;
 
 struct ShaderProgram::Data
 {
@@ -175,11 +175,11 @@ ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
         const char *logmsg = log.get();
 
         if (logBegin == log.get() + log_len - 1) {
-            out << "link log empty" << sys::io::endl;
+            out << "link log empty\n";
         } else {
-            out << "link log: " << sys::io::endl
-                << logmsg << sys::io::endl
-                << "end link log" << sys::io::endl;
+            out << "link log:\n"
+                << logmsg << "\n"
+                << "end link log\n";
         }
     }
 }
@@ -315,7 +315,7 @@ ShaderProgram::link()
         GL_CALL(glGetProgramiv, *self->program, GL_LINK_STATUS, &success);
         ok = gl_unbool(success);
         logmsg << (ok ? "success" : "failed") << " (" << (wct * 1000) << " ms)"
-               << sys::io::endl;
+               << "\n";
 
         if (!ok) {
             pushError(ShaderProgramError::LinkageFailed);
@@ -361,7 +361,7 @@ ShaderProgram::use()
         auto logmsg = err::beginLog(*this);
         (logmsg << "trying to use program inspite of an error: ")
             .append(getError())
-          << sys::io::endl;
+          << "\n";
     }
 
     GL_CALL(glUseProgram, *self->program);

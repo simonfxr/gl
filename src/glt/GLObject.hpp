@@ -5,6 +5,7 @@
 #include "opengl.hpp"
 #include "pp/enum.hpp"
 #include "sys/io/Stream.hpp"
+#include "util/NonCopyable.hpp"
 
 namespace glt {
 
@@ -19,16 +20,16 @@ PP_DEF_ENUM_WITH_API(GLT_API, GLT_OBJECT_TYPE_ENUM_DEF);
 template<ObjectType::enum_t>
 struct GLObject;
 
-typedef GLObject<ObjectType::Program> GLProgramObject;
-typedef GLObject<ObjectType::Shader> GLShaderObject;
-typedef GLObject<ObjectType::Buffer> GLBufferObject;
-typedef GLObject<ObjectType::Framebuffer> GLFramebufferObject;
-typedef GLObject<ObjectType::Renderbuffer> GLRenderbufferObject;
-typedef GLObject<ObjectType::Sampler> GLSamplerObject;
-typedef GLObject<ObjectType::Texture> GLTextureObject;
-typedef GLObject<ObjectType::TransformFeedback> GLTransformFeedbackObject;
-typedef GLObject<ObjectType::VertexArray> GLVertexArrayObject;
-typedef GLObject<ObjectType::Query> GLQueryObject;
+using GLProgramObject = GLObject<ObjectType::Program>;
+using GLShaderObject = GLObject<ObjectType::Shader>;
+using GLBufferObject = GLObject<ObjectType::Buffer>;
+using GLFramebufferObject = GLObject<ObjectType::Framebuffer>;
+using GLRenderbufferObject = GLObject<ObjectType::Renderbuffer>;
+using GLSamplerObject = GLObject<ObjectType::Sampler>;
+using GLTextureObject = GLObject<ObjectType::Texture>;
+using GLTransformFeedbackObject = GLObject<ObjectType::TransformFeedback>;
+using GLVertexArrayObject = GLObject<ObjectType::VertexArray>;
+using GLQueryObject = GLObject<ObjectType::Query>;
 
 GLT_API void
 generate(ObjectType t, GLsizei n, GLuint *names);
@@ -43,7 +44,7 @@ GLT_API void
 printStats(sys::io::OutStream &);
 
 template<ObjectType::enum_t T>
-struct GLObjectBase
+struct GLObjectBase : NonCopyable
 {
     static inline constexpr ObjectType type = T;
     GLuint _name;
@@ -54,15 +55,11 @@ struct GLObjectBase
       : _name(std::exchange(rhs._name, 0))
     {}
 
-    GLObjectBase(const GLObjectBase &) = delete;
-
     constexpr GLObjectBase &operator=(GLObjectBase &&rhs)
     {
         _name = std::exchange(rhs._name, 0);
         return *this;
     }
-
-    GLObjectBase &operator=(const GLObjectBase &rhs) = delete;
 
     ~GLObjectBase() { release(); }
 

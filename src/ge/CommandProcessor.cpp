@@ -282,14 +282,14 @@ CommandProcessor::loadScript(std::string_view name, bool quiet)
         auto opt_stream = sys::io::HandleStream::open(file, sys::io::HM_READ);
         if (!opt_stream)
             goto not_found;
-        sys::io::stdout() << "loading script: " << file << sys::io::endl;
+        sys::io::stdout() << "loading script: " << file << "\n";
         return loadStream(*opt_stream, file);
     }
 
 not_found:
 
     sys::io::stdout() << "loading script: " << name << " -> not found"
-                      << sys::io::endl;
+                      << "\n";
 
     if (!quiet)
         ERR(engine().out(), string_concat("opening script: ", name));

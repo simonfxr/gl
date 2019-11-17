@@ -49,7 +49,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 
     if (engine.window().contextInfo().antialiasingLevel > 0) {
         GL_CALL(glEnable, GL_MULTISAMPLE);
-        engine.out() << "enableing multisampling" << sys::io::endl;
+        engine.out() << "enableing multisampling\n";
     }
 
     GL_CALL(glDisable, GL_DEPTH_TEST);
@@ -100,7 +100,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
         double avg = INV(fs.avg);
         engine.out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                      << fps << "; " << avg << "; " << min << "; " << max
-                     << sys::io::endl;
+                     << "\n";
     }
 }
 

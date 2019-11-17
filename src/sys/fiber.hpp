@@ -11,7 +11,7 @@
 
 namespace sys {
 
-typedef ::Fiber Fiber;
+using Fiber = ::Fiber;
 
 namespace fiber {
 

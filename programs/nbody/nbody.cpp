@@ -154,7 +154,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
         double avg = INV(fs.avg);
         sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                           << fps << "; " << avg << "; " << min << "; " << max
-                          << sys::io::endl;
+                          << "\n";
 #undef INV
     }
 }

@@ -36,11 +36,11 @@ animate(State *state, const ge::Event<ge::AnimationEvent> &ev)
             bool ok = glt::isExtensionSupported(state->argv[i]);
             ok = ok || GLEW_IS_SUPPORTED(state->argv[i]);
             sys::io::stderr() << "extension " << state->argv[i] << ": "
-                              << (ok ? "yes" : "no") << sys::io::endl;
+                              << (ok ? "yes" : "no") << "\n";
         } else {
             bool ok = GLEW_IS_SUPPORTED(state->argv[i]) != 0;
             sys::io::stderr() << "function " << state->argv[i] << ": "
-                              << (ok ? "yes" : "no") << sys::io::endl;
+                              << (ok ? "yes" : "no") << "\n";
         }
     }
 
@@ -58,7 +58,7 @@ main(int argc, char *argv[])
     opts.parse(&argc, &argv);
     for (int i = 1; i < argc; ++i)
         if (argv[i] != 0 && argv[i][0] == '-')
-            sys::io::stderr() << "unknown option: " << argv[i] << sys::io::endl;
+            sys::io::stderr() << "unknown option: " << argv[i] << "\n";
 
     State state;
     state.argc = argc;

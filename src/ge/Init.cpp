@@ -50,8 +50,7 @@ initInitStats(EngineInitializers &inits)
     inits.reg(PostInit, [=](const Event<InitEvent> &e) {
         e.info.success = true;
         auto ms = uint32_t((e.info.engine.now() - *initT0) * 1000);
-        e.info.engine.out()
-          << "initialized in " << ms << " ms" << sys::io::endl;
+        e.info.engine.out() << "initialized in " << ms << " ms\n";
     });
 }
 

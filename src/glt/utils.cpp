@@ -53,8 +53,7 @@ printGLErrors(sys::io::OutStream &out)
     bool was_error = false;
 
     for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
-        out << "OpenGL error occurred: " << getGLErrorString(err)
-            << sys::io::endl;
+        out << "OpenGL error occurred: " << getGLErrorString(err) << "\n";
 
     return was_error;
 }
@@ -94,7 +93,7 @@ printGLTrace(const err::Location *loc)
 {
     if (G.print_opengl_calls)
         sys::io::stdout() << "OPENGL " << loc->operation << " " << loc->file
-                          << ":" << loc->line << sys::io::endl;
+                          << ":" << loc->line << "\n";
 }
 
 bool
@@ -124,13 +123,13 @@ initDebug()
 
     if (dbg == nullptr && GLAD_GL_ARB_debug_output) {
         debug_impl = "GL_ARB_debug_output";
-        sys::io::stdout() << "trying ARB debug" << sys::io::endl;
+        sys::io::stdout() << "trying ARB debug\n";
         dbg = ARBDebug::init();
     }
 
     if (dbg == nullptr && GLAD_GL_AMD_debug_output) {
         debug_impl = "GL_AMD_debug_output";
-        sys::io::stdout() << "trying AMD debug" << sys::io::endl;
+        sys::io::stdout() << "trying AMD debug\n";
         dbg = AMDDebug::init();
     }
 
@@ -139,12 +138,12 @@ initDebug()
     if (dbg == nullptr) {
         sys::io::stdout()
           << "couldnt initialize Debug Output, no debug implementaion available"
-          << sys::io::endl;
+          << "\n";
         dbg = new NoDebug();
         initialized = false;
     } else {
         sys::io::stdout() << "initialized Debug Output using " << debug_impl
-                          << sys::io::endl;
+                          << "\n";
         initialized = true;
     }
 

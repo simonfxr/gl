@@ -35,7 +35,7 @@ std::string
 Command::interactiveDescription() const
 {
     sys::io::ByteStream desc;
-    desc << "command " << name() << sys::io::endl << "  params:";
+    desc << "command " << name() << "\n  params:";
 
     const char *delim = " ";
     for (const auto &param : parameters()) {
@@ -72,8 +72,8 @@ Command::interactiveDescription() const
     if (parameters().size() == 0)
         desc << " none";
 
-    desc << sys::io::endl
-         << "  description: " << description() << sys::io::endl;
+    desc << "\n"
+         << "  description: " << description() << "\n";
 
     return desc.str();
 }

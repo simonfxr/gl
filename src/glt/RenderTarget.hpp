@@ -27,7 +27,7 @@ struct GLT_API Viewport
     bool operator!=(const Viewport &vp) const;
 };
 
-typedef uint32_t RenderTargetBuffers;
+using RenderTargetBuffers = uint32_t;
 
 inline constexpr RenderTargetBuffers RT_COLOR_BUFFER = 1u;
 inline constexpr RenderTargetBuffers RT_DEPTH_BUFFER = 2u;

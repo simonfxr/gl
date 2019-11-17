@@ -40,9 +40,6 @@ public:
     Command(const Command &) = default;
     Command(Command &&) = default;
 
-    Command &operator=(const Command &) = default;
-    Command &operator=(Command &&) = default;
-
     virtual ~Command() override;
     std::vector<CommandParamType> parameters() const { return params; }
     const std::string &name() const { return namestr; }
@@ -59,7 +56,9 @@ public:
     virtual QuotationCommand *castToQuotation() { return nullptr; }
 };
 
-struct GE_API QuotationCommand : public Command
+struct GE_API QuotationCommand
+  : Command
+  , NonCopyable
 {
     const std::unique_ptr<Quotation> quotation;
 
@@ -73,9 +72,6 @@ struct GE_API QuotationCommand : public Command
     virtual void interactive(const Event<CommandEvent> &ev,
                              ArrayView<const CommandArg>) override;
     QuotationCommand *castToQuotation() override { return this; }
-
-    QuotationCommand &operator=(const QuotationCommand &) = delete;
-    QuotationCommand(const QuotationCommand &) = delete;
 };
 
 template<typename F>

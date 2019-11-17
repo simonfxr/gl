@@ -367,7 +367,7 @@ CommandPrettyPrinter::closeQuotation()
         *self->current_out << "{";
         for (const auto &qi : q->statements) {
             printSpaces(indent);
-            *self->current_out << qi << sys::io::endl;
+            *self->current_out << qi << "\n";
         }
         *self->current_out << "}";
     }

@@ -273,13 +273,13 @@ compilePreprocessed(ShaderCompilerQueue &scq,
 
         if (logmsg &&
             scq.shaderCompiler().shaderManager().dumpShadersEnabled()) {
-            logmsg << sys::io::endl;
-            logmsg << "BEGIN SHADER SOURCE[" << *shader << "]" << sys::io::endl;
+            logmsg << "\n";
+            logmsg << "BEGIN SHADER SOURCE[" << *shader << "]\n";
             for (const auto i : irange(nsegments))
                 logmsg << std::string_view{ segments[i],
                                             size_t(segLengths[i]) };
-            logmsg << sys::io::endl;
-            logmsg << "END SHADER SOURCE" << sys::io::endl;
+            logmsg << "\n";
+            logmsg << "END SHADER SOURCE\n";
         }
 
         GL_CALL(glShaderSource, *shader, nsegments, segments, segLengths);
@@ -291,7 +291,7 @@ compilePreprocessed(ShaderCompilerQueue &scq,
         GL_CALL(glGetShaderiv, *shader, GL_COMPILE_STATUS, &success);
         ok = success == GL_TRUE;
         logmsg << (ok ? "success" : "failed") << " (" << (wct * 1000) << " ms)"
-               << sys::io::endl;
+               << "\n";
     }
 
     auto logmsg =
@@ -330,11 +330,11 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
         const char *log_msg = log.get();
 
         if (logBegin == end) {
-            out << "shader compile log empty" << sys::io::endl;
+            out << "shader compile log empty\n";
         } else {
-            out << "shader compile log: " << sys::io::endl
-                << log_msg << sys::io::endl
-                << "end compile log" << sys::io::endl;
+            out << "shader compile log:\n"
+                << log_msg << "\n"
+                << "end compile log\n";
         }
     }
 }
@@ -745,13 +745,13 @@ ShaderCompiler::Data::initPreprocessor(GLSLPreprocessor &proc)
             glversdef << (m.shaderProfile() == ShaderProfile::Core
                             ? " core"
                             : " compatibility");
-        glversdef << sys::io::endl;
+        glversdef << "\n";
         if (vers <= 150) {
-            glversdef << "#define SL_in attribute" << sys::io::endl;
-            glversdef << "#define SL_out varying" << sys::io::endl;
+            glversdef << "#define SL_in attribute\n";
+            glversdef << "#define SL_out varying\n";
         } else {
-            glversdef << "#define SL_in in" << sys::io::endl;
-            glversdef << "#define SL_out out" << sys::io::endl;
+            glversdef << "#define SL_in in\n";
+            glversdef << "#define SL_out out\n";
         }
         proc.appendString(glversdef.str());
     }
@@ -780,7 +780,7 @@ ShaderCompilerQueue::enqueueReload(const std::shared_ptr<ShaderObject> &so)
         return;
     auto exec = [so, this]() -> std::shared_ptr<ShaderObject> {
         sys::io::stdout() << "reloadIfOutdated: " << so->shaderSource()->key()
-                          << sys::io::endl;
+                          << "\n";
         auto [new_so, state] = so->self->reloadIfOutdated(*this);
         switch (state) {
         case ReloadState::Uptodate:
@@ -805,7 +805,7 @@ ShaderCompilerQueue::enqueueLoad(const std::shared_ptr<ShaderSource> &src)
     if (self->inQueue.count(src->key()) > 0)
         return;
     auto exec = [src, this]() -> std::shared_ptr<ShaderObject> {
-        sys::io::stdout() << "load: " << src->key() << sys::io::endl;
+        sys::io::stdout() << "load: " << src->key() << "\n";
         return ShaderSource::Data::load(src, *this);
     };
     self->toCompile.push({ src, std::move(exec) });

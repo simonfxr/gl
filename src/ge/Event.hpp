@@ -3,6 +3,7 @@
 
 #include "ge/conf.hpp"
 #include "util/ArrayView.hpp"
+#include "util/NonCopyable.hpp"
 #include "util/functor_traits.hpp"
 
 #include <memory>
@@ -68,7 +69,7 @@ makeEventHandler(T &o, void (T::*m)(const Event<E> &))
 }
 
 template<typename T>
-struct EventSource
+struct EventSource : NonCopyable
 {
     inline bool raise(const Event<T> &evnt);
     inline bool reg(std::shared_ptr<EventHandler<T>> handler);
@@ -81,10 +82,6 @@ struct EventSource
 
     inline bool unreg(const std::shared_ptr<EventHandler<T>> &handler);
     inline void clear();
-
-    EventSource() = default;
-    EventSource(const EventSource<T> &) = delete;
-    EventSource<T> &operator=(const EventSource<T> &) = delete;
 
     ArrayView<std::shared_ptr<EventHandler<T>>> handlers()
     {

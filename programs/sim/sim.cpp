@@ -649,33 +649,34 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
     num_tree = 0;
     num_nodes = 0;
 
-    time_msg("tree building",
-             for (const auto i
-                  : irange(n)) {
-                 const SphereData &s1 = spheres[i];
-                 const Particle &p1 = deref(s1.particle);
-                 Node *node = allocNode();
-                 ++num_nodes;
-                 node->nxt = nullptr;
-                 node->sphere = sphereRef(i);
-                 insertBSP(root, 0, volume, 0, node, p1.pos, s1.r);
-             });
+    time_msg(
+      "tree building",
+      for (const auto i
+           : irange(n)) {
+          const SphereData &s1 = spheres[i];
+          const Particle &p1 = deref(s1.particle);
+          Node *node = allocNode();
+          ++num_nodes;
+          node->nxt = nullptr;
+          node->sphere = sphereRef(i);
+          insertBSP(root, 0, volume, 0, node, p1.pos, s1.r);
+      });
 
-    time_msg("testing collisions",
-             std::vector<bool> collided(particles.size(), false);
+    time_msg(
+      "testing collisions", std::vector<bool> collided(particles.size(), false);
 
-             for (const auto i
-                  : irange(n)) {
-                 const SphereData &s1 = spheres[i];
-                 const Particle &p1 = deref(s1.particle);
-                 auto num_coll = contacts.size();
-                 findCollisions(
-                   contacts, root, 0, collided, sphereRef(i), p1.pos, s1.r);
-                 auto k = contacts.size();
-                 for (size_t j = num_coll; j < k; ++j) {
-                     collided[contacts[j].y.index] = false;
-                 }
-             });
+      for (const auto i
+           : irange(n)) {
+          const SphereData &s1 = spheres[i];
+          const Particle &p1 = deref(s1.particle);
+          auto num_coll = contacts.size();
+          findCollisions(
+            contacts, root, 0, collided, sphereRef(i), p1.pos, s1.r);
+          auto k = contacts.size();
+          for (size_t j = num_coll; j < k; ++j) {
+              collided[contacts[j].y.index] = false;
+          }
+      });
 
     //    std::cerr << "number of tree nodes: " << num_tree << ", number of list
     //    nodes: " << num_nodes << std::endl;

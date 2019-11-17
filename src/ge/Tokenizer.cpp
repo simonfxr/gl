@@ -53,7 +53,7 @@ getchAny(ParseState &s)
         return false;
     }
 
-    //    sys::io::stdout() << "getch: '" << s.rawC << "'" << sys::io::endl;
+    //    sys::io::stdout() << "getch: '" << s.rawC << "'\n";
 
     if (s.c == '\n' || s.c == '\r') {
         if (lastC == '\r' && s.c == '\n') {

@@ -6,6 +6,7 @@
 #include "pp/enum.hpp"
 #include "sys/endian.hpp"
 #include "util/Array.hpp"
+#include "util/NonCopyable.hpp"
 
 #include <optional>
 #include <string>
@@ -132,13 +133,12 @@ struct OSSocket
 #    error "OS not supported"
 #endif
 
-struct Handle
+struct Handle : NonCopyable
 {
     HandleMode _mode{};
     OSHandle _os{};
 
     constexpr Handle() = default;
-    Handle(const Handle &) = delete;
     Handle(Handle &&h) { *this = std::move(h); }
 
     ~Handle()
@@ -146,8 +146,6 @@ struct Handle
         if (*this)
             close(*this);
     }
-
-    Handle &operator=(const Handle &) = delete;
 
     Handle &operator=(Handle &&h)
     {
@@ -159,12 +157,11 @@ struct Handle
     constexpr explicit operator bool() const { return !_os.is_nil(); }
 };
 
-struct Socket
+struct Socket : NonCopyable
 {
     OSSocket _os;
 
     constexpr Socket() = default;
-    Socket(const Socket &) = delete;
     Socket(Socket &&s) { *this = std::move(s); }
 
     ~Socket()
@@ -172,8 +169,6 @@ struct Socket
         if (*this)
             close(*this);
     }
-
-    Socket &operator=(const Socket &) = delete;
 
     Socket &operator=(Socket &&s)
     {
@@ -193,7 +188,6 @@ struct SYS_API HandleStream : public IOStream
     size_t write_cursor;
 
     HandleStream(HandleStream &&) = default;
-    HandleStream(const HandleStream &) = default;
 
     HandleStream(Handle);
     ~HandleStream() override;

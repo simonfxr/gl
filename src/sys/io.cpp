@@ -228,7 +228,7 @@ readFile(sys::io::OutStream &errout,
     }
 fail:
     if (errout.writeable())
-        errout << "unable to read file: " << path << sys::io::endl;
+        errout << "unable to read file: " << path << "\n";
 
     return {};
 } // namespace io

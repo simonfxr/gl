@@ -39,11 +39,12 @@ vec3(const genvec<T, 4> &v)
     return vec3(v[0], v[1], v[2]);
 }
 
-typedef vec3_t point3_t;
+using point3_t = vec3_t;
 
-typedef vec3_t direction3_t; // a unit vector
+using direction3_t = vec3_t; // a unit vector
 
-typedef vec3_t normal3_t; // a unit vector, perdendicular to some surface
+using normal3_t = vec3_t; // a unit vector, perdendicular to some surface
+
 } // namespace math
 
 #endif

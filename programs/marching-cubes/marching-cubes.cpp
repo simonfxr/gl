@@ -415,7 +415,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
         glt::FrameStatistics fs = engine->renderManager().frameStatistics();
         sys::io::stdout() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                           << fs.avg_fps << "; " << fs.rt_avg << "; "
-                          << fs.rt_min << "; " << fs.rt_max << sys::io::endl;
+                          << fs.rt_min << "; " << fs.rt_max << "\n";
     }
 }
 

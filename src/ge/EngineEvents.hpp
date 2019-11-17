@@ -34,12 +34,12 @@ struct GE_API ExitEvent : public EngineEvent
 
 struct GE_API AnimationEvent : public EngineEvent
 {
-    explicit AnimationEvent(Engine &engine) : EngineEvent(engine) {}
+    explicit AnimationEvent(Engine &e) : EngineEvent(e) {}
 };
 
 struct GE_API InputEvent : public EngineEvent
 {
-    explicit InputEvent(Engine &engine) : EngineEvent(engine) {}
+    explicit InputEvent(Engine &e) : EngineEvent(e) {}
 };
 
 struct GE_API EngineEvents

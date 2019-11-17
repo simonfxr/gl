@@ -54,7 +54,7 @@ main()
             Client &c = clients[clients.size() - 1];
             c.stream->handle = std::move(opt_handle).value();
             c.id = id++;
-            sys::io::stdout() << "accepted client " << c.id << sys::io::endl;
+            sys::io::stdout() << "accepted client " << c.id << "\n";
             IGNORE_RESULT(
               io::elevate(c.stream->handle,
                           io::mode(c.stream->handle) | io::HM_NONBLOCKING));
@@ -104,7 +104,7 @@ main()
 
             if (close) {
                 sys::io::stdout()
-                  << "closing connection to client " << c.id << sys::io::endl;
+                  << "closing connection to client " << c.id << "\n";
                 c.stream->close();
                 clients.erase(clients.begin() + i);
             }

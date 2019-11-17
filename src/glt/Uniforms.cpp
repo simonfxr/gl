@@ -33,7 +33,7 @@ descGLType(GLenum ty)
 
 #    define CASE(ty)                                                           \
     case ty:                                                                   \
-        return #ty;
+        return #ty
 
     switch (ty) {
         CASE(GL_FLOAT);

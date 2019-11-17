@@ -39,63 +39,66 @@ DEF_SHADER(
 
 );
 
-DEF_SHADER(QUAD_GEOMETRY_SHADER,
+DEF_SHADER(
+  QUAD_GEOMETRY_SHADER,
 
-           layout(points) in;
+  layout(points) in;
 
-           in vec3 vCorner0[1];
-           in vec3 vCorner1[1];
-           in vec3 vCorner2[1];
-           in vec3 vCorner3[1];
+  in vec3 vCorner0[1];
+  in vec3 vCorner1[1];
+  in vec3 vCorner2[1];
+  in vec3 vCorner3[1];
 
-           layout(triangle_strip, max_vertices = 6) out;
+  layout(triangle_strip, max_vertices = 6) out;
 
-           out vec3 position;
-           out vec3 normal;
+  out vec3 position;
+  out vec3 normal;
 
-           vec3 transform(vec3 point) { return point; }
+  vec3 transform(vec3 point) { return point; }
 
-           void main() {
-               vec3 positions[4];
-               normal = vec3(0, 0, 1);
-               positions[0] = transform(vCorner0[0]);
-               positions[1] = transform(vCorner1[0]);
-               positions[2] = transform(vCorner2[0]);
-               positions[3] = transform(vCorner3[0]);
+  void main() {
+      vec3 positions[4];
+      normal = vec3(0, 0, 1);
+      positions[0] = transform(vCorner0[0]);
+      positions[1] = transform(vCorner1[0]);
+      positions[2] = transform(vCorner2[0]);
+      positions[3] = transform(vCorner3[0]);
 
-               position = positions[0];
-               EmitVertex();
-               position = positions[1];
-               EmitVertex();
-               position = positions[3];
-               EmitVertex();
-               EndPrimitive();
+      position = positions[0];
+      EmitVertex();
+      position = positions[1];
+      EmitVertex();
+      position = positions[3];
+      EmitVertex();
+      EndPrimitive();
 
-               position = positions[3];
-               EmitVertex();
-               position = positions[1];
-               EmitVertex();
-               position = positions[2];
-               EmitVertex();
-               EndPrimitive();
-           }
-
-);
-
-DEF_SHADER(RENDER_VERTEX_SHADER,
-
-           in vec3 position;
-           in vec3 normal;
-
-           void main() { gl_Position = vec4(position, 1); }
+      position = positions[3];
+      EmitVertex();
+      position = positions[1];
+      EmitVertex();
+      position = positions[2];
+      EmitVertex();
+      EndPrimitive();
+  }
 
 );
 
-DEF_SHADER(FRAGMENT_SHADER,
+DEF_SHADER(
+  RENDER_VERTEX_SHADER,
 
-           out vec4 color;
+  in vec3 position;
+  in vec3 normal;
 
-           void main() { color = vec4(1, 0, 0, 1); }
+  void main() { gl_Position = vec4(position, 1); }
+
+);
+
+DEF_SHADER(
+  FRAGMENT_SHADER,
+
+  out vec4 color;
+
+  void main() { color = vec4(1, 0, 0, 1); }
 
 );
 
@@ -217,7 +220,7 @@ Program::init(const ge::Event<ge::InitEvent> &ev)
             GL_QUERY_RESULT,
             &primitives_written);
 
-    sys::io::stderr() << "num written: " << primitives_written << sys::io::endl;
+    sys::io::stderr() << "num written: " << primitives_written << "\n";
 
     GL_CALL(glFinish);
 

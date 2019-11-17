@@ -19,7 +19,6 @@ namespace io {
 
 struct OutStream;
 struct InStream;
-struct StreamEndl;
 struct IOStream;
 
 HU_NODISCARD SYS_API InStream &
@@ -30,8 +29,6 @@ stdout();
 
 HU_NODISCARD SYS_API OutStream &
 stderr();
-
-extern SYS_API const StreamEndl endl;
 
 #define SYS_STREAM_RESULT_ENUM_DEF(T, V0, V)                                   \
     T(StreamResult, uint8_t, V0(OK) V(Blocked) V(EOF) V(Closed) V(Error))
@@ -242,14 +239,6 @@ write_repr(OutStream &out, unsigned char c)
     return write_repr(out, static_cast<char>(c));
 }
 
-inline StreamResult
-write_repr(OutStream &out, const StreamEndl & /*unused*/)
-{
-    auto ret1 = write_repr(out, '\n');
-    auto ret2 = out.flush();
-    return ret1 == StreamResult::OK ? ret2 : ret1;
-}
-
 #define DEF_OPAQUE_OUTSTREAM_OP(T)                                             \
     SYS_API StreamResult write_repr(OutStream &out, T x);                      \
     DEF_OUTSTREAM_OP(T)
@@ -259,7 +248,6 @@ DEF_OUTSTREAM_OP(signed char);
 DEF_OUTSTREAM_OP(unsigned char);
 DEF_OUTSTREAM_OP(const char *);
 DEF_OUTSTREAM_OP(std::string_view);
-DEF_OUTSTREAM_OP(const StreamEndl &);
 
 DEF_OPAQUE_OUTSTREAM_OP(short)
 DEF_OPAQUE_OUTSTREAM_OP(unsigned short)

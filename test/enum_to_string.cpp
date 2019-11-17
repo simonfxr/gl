@@ -8,9 +8,10 @@ main()
 {
     sys::moduleInit();
     auto &out = sys::io::stdout();
-    out << "Starting" << sys::io::endl;
-    out << sys::io::HandleError::EOF << sys::io::endl;
-    out << math::vec3(1, 2, 3) << sys::io::endl;
-    out << math::mat3() << sys::io::endl;
+    out << "Starting"
+        << "\n";
+    out << sys::io::HandleError::EOF << "\n";
+    out << math::vec3(1, 2, 3) << "\n";
+    out << math::mat3() << "\n";
     return 0;
 }

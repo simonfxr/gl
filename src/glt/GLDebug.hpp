@@ -1,18 +1,17 @@
 #ifndef GLT_GL_DEBUG_HPP
 #define GLT_GL_DEBUG_HPP
 
-#include "opengl.hpp"
-
+#include "err/err.hpp"
 #include "glt/conf.hpp"
 #include "glt/utils.hpp"
-
-#include "err/err.hpp"
+#include "opengl.hpp"
+#include "util/NonCopyable.hpp"
 
 #include <unordered_set>
 
 namespace glt {
 
-struct GLDebug
+struct GLDebug : NonCopyable
 {
     std::unordered_set<GLuint> ignored;
     OpenGLVendor vendor;
@@ -23,9 +22,6 @@ struct GLDebug
     virtual void printDebugMessages(const err::Location &) = 0;
     bool shouldIgnore(GLuint);
     void ignoreMessage(OpenGLVendor vendor, GLuint id);
-
-    GLDebug(const GLDebug &) = delete;
-    GLDebug &operator=(const GLDebug &) = delete;
 };
 
 struct NoDebug : public GLDebug

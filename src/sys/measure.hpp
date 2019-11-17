@@ -16,8 +16,8 @@
         double _T0_ = ::sys::queryTimer();                                     \
         __VA_ARGS__;                                                           \
         double _diff_ = ::sys::queryTimer() - _T0_;                            \
-        ::sys::io::stdout() << #__VA_ARGS__ << " took " << (_diff_ * 1000)     \
-                            << " ms." << ::sys::io::endl;                      \
+        ::sys::io::stdout()                                                    \
+          << #__VA_ARGS__ << " took " << (_diff_ * 1000) << " ms.\n";          \
     } while (0)
 
 #endif

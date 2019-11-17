@@ -163,7 +163,8 @@ if(COMP_CLANG)
               -Wno-padded
               -Wno-return-std-move-in-c++11
               -Wno-gnu-statement-expression
-              -Wno-assume)
+              -Wno-assume
+              -Wno-ctad-maybe-unsupported)
 endif()
 
 if(COMP_CLANG AND ENABLE_LIBCXX)

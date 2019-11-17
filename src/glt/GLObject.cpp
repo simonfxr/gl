@@ -126,9 +126,8 @@ release(ObjectType t, GLsizei n, const GLuint *names)
     GL_CALL(tab.kinds[idx].destructor, n, names);
     for (GLsizei i = 0; i < n; ++i) {
         if (names[i] != 0) {
-            DBG(sys::io::stdout()
-                << "releasing GLObject, stack: " << tab.stacktrace_map[names[i]]
-                << sys::io::endl);
+            DBG(sys::io::stdout() << "releasing GLObject, stack: "
+                                  << tab.stacktrace_map[names[i]] << "\n");
             --tab.instance_count[idx];
         }
     }
@@ -138,11 +137,11 @@ void
 printStats(sys::io::OutStream &out)
 {
     auto tab = Tables::get();
-    out << "Active OpenGL Objects:" << sys::io::endl;
+    out << "Active OpenGL Objects:\n";
     for (size_t i = 0; i < ObjectType::count; ++i)
         if (tab.instance_count[i] > 0)
             out << "  " << tab.kinds[i].kind << "s: " << tab.instance_count[i]
-                << sys::io::endl;
+                << "\n";
 }
 
 } // namespace glt

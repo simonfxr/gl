@@ -15,7 +15,7 @@ PP_DEF_ENUM_IMPL(GLT_SHADER_TYPE_ENUM_DEF);
 using ProgramMap =
   std::unordered_map<std::string, std::shared_ptr<ShaderProgram>>;
 
-struct ShaderManager::Data
+struct ShaderManager::Data : NonCopyable
 {
     ShaderManagerVerbosity verbosity;
     sys::io::OutStream *out;
@@ -40,10 +40,6 @@ struct ShaderManager::Data
       , shaderCompiler(me)
       , self(me)
     {}
-
-private:
-    Data(const Data &) = delete;
-    Data &operator=(const Data &) = delete;
 };
 
 ShaderManager::ShaderManager() : self(new Data(*this))
@@ -134,7 +130,7 @@ ShaderManager::reloadShaders()
             ++failed;
 
     out() << "all shaders reloaded (" << (n - failed) << " successful, "
-          << failed << " failed)" << sys::io::endl;
+          << failed << " failed)\n";
 }
 
 sys::io::OutStream &

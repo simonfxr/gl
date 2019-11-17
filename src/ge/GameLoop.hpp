@@ -11,7 +11,7 @@ namespace ge {
 struct GE_API GameLoop
 {
 
-    typedef double time;
+    using time = double;
 
     struct GE_API Game
     {

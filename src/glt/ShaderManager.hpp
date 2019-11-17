@@ -17,9 +17,9 @@ struct ShaderCompiler;
 struct ShaderProgram;
 struct ShaderCache;
 
-typedef std::unordered_map<std::string, std::string> PreprocessorDefinitions;
+using PreprocessorDefinitions = std::unordered_map<std::string, std::string>;
 
-typedef std::vector<std::string> ShaderDirectories;
+using ShaderDirectories = std::vector<std::string>;
 
 #define GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF(T, V0, V)                        \
     T(ShaderManagerVerbosity, uint8_t, V0(Quiet) V(OnlyErrors) V(Info))

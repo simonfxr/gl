@@ -409,8 +409,7 @@ initRays(Rays &rays, vec3_t dirs[])
     for (uint32_t i = 0; i < 6; ++i) {
         sys::io::stderr() << "side " << i << ": "
                           << "number of rays: " << rays.faceLengths[i]
-                          << " beginning at " << rays.faceOffsets[i]
-                          << sys::io::endl;
+                          << " beginning at " << rays.faceOffsets[i] << "\n";
     }
 
     const vec3_t center = vec3(N * 0.5f);
@@ -716,7 +715,7 @@ createWorld(Densities &ds)
                 //                sys::io::stderr() << i << " " << j << " " << k
                 //                << " -> wc:" << wc << " density: " <<
                 //                ds.ds[i][j][k] << " sign " << signAt(ds,
-                //                ivec3(i, j, k)) << sys::io::endl;
+                //                ivec3(i, j, k)) << "\n";
             }
 }
 
@@ -929,7 +928,7 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
     Rays &rays = *raysp;
     time_op(initRays(rays, sphere_points));
     sys::io::stderr() << "rays crossing planes: " << rays.sumcos.f[0] << ", "
-                      << rays.sumcos.f[1] << sys::io::endl;
+                      << rays.sumcos.f[1] << "\n";
 
     std::unique_ptr<World> visp;
     time_op(visp.reset(filterOccluded(world)));
@@ -989,10 +988,9 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
     occmap = nullptr;
 
     sys::io::stderr() << "blocks: " << stats.blocks
-                      << ", visible blocks: " << stats.visBlocks
-                      << sys::io::endl;
+                      << ", visible blocks: " << stats.visBlocks << "\n";
     sys::io::stderr() << "faces: " << stats.faces
-                      << ", visible faces: " << stats.visFaces << sys::io::endl;
+                      << ", visible faces: " << stats.visFaces << "\n";
 
     worldModel.send();
     worldModel.freeHost();
@@ -1026,7 +1024,7 @@ renderScene(State *state, const RenderEv &ev)
         double avg = INV(fs.avg);
         sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                           << fps << "; " << avg << "; " << min << "; " << max
-                          << sys::io::endl;
+                          << "\n";
     }
 }
 

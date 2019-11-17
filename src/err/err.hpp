@@ -107,7 +107,7 @@ reportError(sys::io::OutStream &out,
 
 #if HU_COMP_GNULIKE_P
 #    define ERROR_LOCATION_OP(op)                                              \
-        ({                                                                     \
+        __extension__({                                                        \
             static constexpr auto PP_CAT(err_loc, __LINE__) =                  \
               ERROR_LOCATION_OP_BASIC(op);                                     \
             &PP_CAT(err_loc, __LINE__);                                        \
