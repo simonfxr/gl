@@ -1,5 +1,7 @@
 #include "ge/Engine.hpp"
 
+#include <memory>
+
 #include "err/err.hpp"
 #include "ge/Tokenizer.hpp"
 #include "ge/ge.hpp"
@@ -165,7 +167,7 @@ Engine::now()
     return math::real(SELF->now());
 }
 
-const std::string
+const std::string &
 Engine::programName() const
 {
     return self->programName;
@@ -339,7 +341,7 @@ bool
 Engine::Data::init(const EngineOptions &eopts)
 {
     opts = &eopts;
-    window.reset(new GameWindow(eopts.window));
+    window = std::make_unique<GameWindow>(eopts.window);
     renderManager.setDefaultRenderTarget(&window->renderTarget());
     registerHandlers();
     initialized = true;
@@ -383,7 +385,9 @@ Engine::Data::registerHandlers()
     window->registerHandlers(events);
 
     window->events().windowClosed.reg(
-      [this](const Event<WindowEvent> &) { theEngine.gameLoop().exit(0); });
+      [this](const Event<WindowEvent> & /*unused*/) {
+          theEngine.gameLoop().exit(0);
+      });
 
     window->events().keyChanged.reg([this](const Event<KeyChanged> &ev) {
         keyHandler.keyEvent(ev.info.key);
@@ -404,7 +408,9 @@ Engine::Data::registerHandlers()
     });
 
     theEngine.events().handleInput.reg(
-      [this](const Event<InputEvent> &) { keyHandler.handleCommands(); });
+      [this](const Event<InputEvent> & /*unused*/) {
+          keyHandler.handleCommands();
+      });
 }
 
 void

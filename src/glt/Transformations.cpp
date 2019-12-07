@@ -27,7 +27,9 @@ perspectiveProjection(real radViewAngle,
 mat3_t
 rotationMatrix(real theta, const direction3_t &n)
 {
-    real s, c;
+    real s;
+
+    real c;
     sincos(-theta, s, c);
 
     return mat3(vec3(n[0] * n[0] * (1 - c) + c,

@@ -15,7 +15,7 @@ CommandEvent::CommandEvent(ge::Engine &e, CommandProcessor &proc)
 Command::Command(std::vector<CommandParamType> ps,
                  std::string name_,
                  std::string desc_)
-  : params(ps), namestr(std::move(name_)), descr(std::move(desc_))
+  : params(std::move(ps)), namestr(std::move(name_)), descr(std::move(desc_))
 {
     ASSERT(!namestr.empty());
 }
@@ -23,7 +23,7 @@ Command::Command(std::vector<CommandParamType> ps,
 void
 Command::handle(const Event<CommandEvent> &ev)
 {
-    if (params.size() == 0 ||
+    if (params.empty() ||
         (params.size() == 1 && params[0] == CommandParamType::List)) {
         interactive(ev, {});
     } else {
@@ -69,7 +69,7 @@ Command::interactiveDescription() const
         }
     }
 
-    if (parameters().size() == 0)
+    if (parameters().empty())
         desc << " none";
 
     desc << "\n"

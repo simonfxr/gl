@@ -42,7 +42,7 @@ struct GameWindow::Data
     {}
 
     void init(const WindowOptions &opts);
-    void handleInputEvents();
+    static void handleInputEvents();
     void setMouse(int16_t x, int16_t y);
 
     static GLFWwindow *makeWindow(const WindowOptions &opts);
@@ -492,15 +492,18 @@ GameWindow::events()
 void
 GameWindow::registerHandlers(EngineEvents &evnts)
 {
-    evnts.handleInput.reg([self = self.get()](const Event<InputEvent> &) {
-        self->handleInputEvents();
-    });
+    evnts.handleInput.reg(
+      [self = self.get()](const Event<InputEvent> & /*unused*/) {
+          self->handleInputEvents();
+      });
 }
 
 size_t
 GameWindow::windowWidth() const
 {
-    size_t w, h;
+    size_t w;
+
+    size_t h;
     windowSize(w, h);
     return w;
 }
@@ -508,7 +511,9 @@ GameWindow::windowWidth() const
 size_t
 GameWindow::windowHeight() const
 {
-    size_t w, h;
+    size_t w;
+
+    size_t h;
     windowSize(w, h);
     return h;
 }
@@ -516,7 +521,9 @@ GameWindow::windowHeight() const
 void
 GameWindow::windowSize(size_t &width, size_t &height) const
 {
-    int w, h;
+    int w;
+
+    int h;
     glfwGetWindowSize(self->win, &w, &h);
     width = w;
     height = h;

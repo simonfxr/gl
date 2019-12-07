@@ -7,8 +7,7 @@
 #include <optional>
 #include <vector>
 
-namespace sys {
-namespace io {
+namespace sys::io {
 
 PP_DEF_ENUM_IMPL(SYS_HANDLE_ERROR_ENUM_DEF)
 PP_DEF_ENUM_IMPL(SYS_SOCKET_ERROR_ENUM_DEF)
@@ -206,6 +205,7 @@ readFile(sys::io::OutStream &errout,
          std::string_view path,
          HandleError &err) noexcept
 {
+    inline constexpr auto BUF_SIZE = size_t(8192);
     auto opt_h = open(path, HM_READ, err);
     if (!opt_h)
         goto fail;
@@ -213,11 +213,11 @@ readFile(sys::io::OutStream &errout,
         auto h = std::move(opt_h).value();
         std::string str;
         for (;;) {
-            char buf[8192];
+            std::array<char, BUF_SIZE> buf{};
             auto size = sizeof buf;
-            err = read(h, size, buf);
+            err = read(h, size, buf.data());
             if (size > 0)
-                str.insert(str.end(), buf, buf + size);
+                str.insert(str.end(), buf.data(), buf.data() + size);
             if (err == HandleError::EOF) {
                 err = HandleError::OK;
                 return Array<char>(str.data(), str.size());
@@ -231,7 +231,6 @@ fail:
         errout << "unable to read file: " << path << "\n";
 
     return {};
-} // namespace io
+}
 
-} // namespace io
-} // namespace sys
+} // namespace sys::io

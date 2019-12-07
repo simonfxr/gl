@@ -17,5 +17,4 @@ toplevel()
 }
 
 } // namespace fiber
-
 } // namespace sys

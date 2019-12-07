@@ -226,7 +226,15 @@ GLMemInfoNV::info(GLMemInfoNV *mi)
     if (!G.nv_mem_info_available)
         return false;
 
-    GLint total, total_dedicated, current, evicted, num_evictions;
+    GLint total;
+
+    GLint total_dedicated;
+
+    GLint current;
+
+    GLint evicted;
+
+    GLint num_evictions;
     GL_CALL(
       glGetIntegerv, GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &total_dedicated);
     GL_CALL(

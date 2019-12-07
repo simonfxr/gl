@@ -34,7 +34,7 @@ template<typename T>
 void
 destructive_move(T *dest, T &&from)
 {
-    new (dest) T(std::move(from));
+    new (dest) T(std::forward<T>(from));
     from.~T();
 }
 
@@ -57,13 +57,13 @@ CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
         number = rhs.number;
         break;
     case CommandArgType::KeyCombo:
-        copy(&keyBinding, std::move(rhs.keyBinding));
+        copy(&keyBinding, rhs.keyBinding);
         break;
     case CommandArgType::CommandRef:
-        copy(&command, std::move(rhs.command));
+        copy(&command, rhs.command);
         break;
     case CommandArgType::VarRef:
-        copy(&var, std::move(rhs.var));
+        copy(&var, rhs.var);
         break;
     case CommandArgType::Nil:
         break;

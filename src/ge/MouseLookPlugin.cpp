@@ -23,14 +23,14 @@ DECLARE_PIMPL_DEL(MouseLookPlugin)
 
 MouseLookPlugin::Data::Data()
 {
-    _commands.grab =
-      makeCommand("mouseLook.grab", "", [this](const Event<CommandEvent> &) {
+    _commands.grab = makeCommand(
+      "mouseLook.grab", "", [this](const Event<CommandEvent> & /*unused*/) {
           if (_should_grab)
               setState(Grabbing);
       });
 
-    _commands.ungrab =
-      makeCommand("mouseLook.ungrab", "", [this](const Event<CommandEvent> &) {
+    _commands.ungrab = makeCommand(
+      "mouseLook.ungrab", "", [this](const Event<CommandEvent> & /*unused*/) {
           setState(Free);
       });
 }
@@ -46,7 +46,9 @@ MouseLookPlugin::Data::stateChanged(State new_state)
     case Grabbing: {
         if (_camera)
             _camera->mouseLook(true);
-        size_t w, h;
+        size_t w;
+
+        size_t h;
         win.windowSize(w, h);
         win.setMouse(int16_t(w) / 2, int16_t(h) / 2);
         win.showMouseCursor(false);
@@ -131,7 +133,9 @@ MouseLookPlugin::registerWith(Engine &e)
     win.events().mouseMoved.reg([this](const Event<MouseMoved> &ev) {
         auto &curwin = ev.info.window;
         if (self->_state == Grabbing) {
-            size_t w, h;
+            size_t w;
+
+            size_t h;
             curwin.windowSize(w, h);
             curwin.setMouse(int16_t(w / 2), int16_t(h / 2));
         }

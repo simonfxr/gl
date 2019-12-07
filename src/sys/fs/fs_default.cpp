@@ -4,8 +4,7 @@
 #include "sys/io/Stream.hpp"
 #include "util/string.hpp"
 
-namespace sys {
-namespace fs {
+namespace sys::fs {
 
 PP_DEF_ENUM_IMPL(SYS_OBJECT_TYPE_ENUM_DEF)
 
@@ -165,5 +164,4 @@ modificationTime(std::string_view path)
 }
 
 } // namespace def
-} // namespace fs
-} // namespace sys
+} // namespace sys::fs

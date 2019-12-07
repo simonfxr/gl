@@ -63,7 +63,7 @@ struct GE_API GameWindow
 
     bool focused() const;
 
-    bool init();
+    static bool init();
 
     WindowRenderTarget &renderTarget();
 

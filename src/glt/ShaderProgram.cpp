@@ -48,9 +48,7 @@ struct ShaderProgram::Data
 
     Data(ShaderProgram &owner, const Data &rhs)
       : self(owner)
-      , program()
       , sm(rhs.sm)
-      , shaders()
       , rootdeps(rhs.rootdeps)
       , attrs(rhs.attrs)
       , linked(false)
@@ -58,7 +56,7 @@ struct ShaderProgram::Data
 
     bool createProgram();
 
-    void printProgramLog(GLuint program, sys::io::OutStream &out);
+    static void printProgramLog(GLuint progh, sys::io::OutStream &out);
 
     void handleCompileError(ShaderCompilerError /*unused*/);
 

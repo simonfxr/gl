@@ -48,7 +48,8 @@ struct RenderManager::Data
 
     RenderManager &self;
 
-    Data(RenderManager &self_) : transformStateBOS(transform, 0, 0), self(self_)
+    explicit Data(RenderManager &self_)
+      : transformStateBOS(transform, 0, 0), self(self_)
     {}
 
     void beginStats();

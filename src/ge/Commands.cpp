@@ -140,16 +140,16 @@ COMMAND("reloadShaders", "reload ShaderPrograms")
         // std::cerr << "all shaders reloaded\n";
     } else {
         glt::ShaderManager &sm = e.info.engine.shaderManager();
-        for (size_t i = 0; i < args.size(); ++i) {
-            auto prog = sm.program(args[i].string);
+        for (const auto &arg : args) {
+            auto prog = sm.program(arg.string);
             if (!prog) {
                 WARN(e.info.engine.out(),
-                     "reloadShaders: " + args[i].string + " not defined");
+                     "reloadShaders: " + arg.string + " not defined");
             } else {
                 if (!prog->reload())
                     WARN(e.info.engine.out(),
                          "reloadShaders: failed to reload program " +
-                           args[i].string);
+                           arg.string);
             }
         }
     }
@@ -414,7 +414,7 @@ registerCommands(CommandProcessor &proc)
 {
     for (const auto &comm : predefinedCommands()) {
         assert(comm);
-        assert(comm->name().size() > 0);
+        assert(!comm->name().empty());
         proc.define(comm);
     }
 }

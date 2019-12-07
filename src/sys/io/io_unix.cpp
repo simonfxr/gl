@@ -11,8 +11,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-namespace sys {
-namespace io {
+namespace sys::io {
 
 namespace {
 
@@ -330,6 +329,7 @@ accept(Socket &s, SocketError &err)
       c = accept4(
         s._os.fd, reinterpret_cast<sockaddr *>(&client), &clen, SOCK_CLOEXEC));
     END_NO_WARN_DISABLED_MACRO_EXPANSION
+
     if (c == -1) {
         err = convertErrnoSock();
         return std::nullopt;
@@ -366,6 +366,4 @@ close(Socket &s)
     return SocketError::OK;
 }
 
-} // namespace io
-
-} // namespace sys
+} // namespace sys::io

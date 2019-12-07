@@ -12,8 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-namespace sys {
-namespace fs {
+namespace sys::fs {
 
 bool
 cwd(std::string_view dir)
@@ -28,14 +27,15 @@ cwd(std::string_view dir)
 std::string
 cwd()
 {
-    size_t size_t = 128;
+    const size_t MIN_SIZE = 128;
+    auto size = MIN_SIZE;
     std::string path;
 
 retry:
     for (;;) {
-        size_t *= 2;
-        path.resize(size_t, '\0');
-        while (!getcwd(path.data(), size_t)) {
+        size *= 2;
+        path.resize(size, '\0');
+        while (!getcwd(path.data(), size)) {
             if (errno == ERANGE)
                 goto retry;
             if (errno != EINTR) {
@@ -162,7 +162,8 @@ stat(std::string_view path)
 std::optional<FileTime>
 modificationTime(std::string_view path)
 {
-    struct stat st;
+    struct stat st
+    {};
     if (stat(std::string(path).c_str(), &st) != 0) {
         auto err = std::exchange(errno, 0);
         if (err != ENOENT)
@@ -181,7 +182,8 @@ lookup(ArrayView<const std::string> dirs, std::string_view name)
 std::optional<ObjectType>
 exists(std::string_view path)
 {
-    struct stat info;
+    struct stat info
+    {};
     if (stat(std::string(path).c_str(), &info) == -1) {
         auto err = std::exchange(errno, 0);
         if (err != ENOENT)
@@ -192,5 +194,4 @@ exists(std::string_view path)
     return { objtype == S_IFDIR ? ObjectType::Directory : ObjectType::File };
 }
 
-} // namespace fs
-} // namespace sys
+} // namespace sys::fs

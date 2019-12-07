@@ -11,6 +11,11 @@
 namespace sys {
 
 namespace {
+inline constexpr auto SECONDS_PER_NANOSECOND = 1e-9;
+inline constexpr auto NANOSECONDS_PER_SECOND = 1e9;
+} // namespace
+
+namespace {
 double
 getTime()
 {
@@ -25,7 +30,7 @@ getTime()
         }
     }
 
-    return double(tv.tv_sec) + double(tv.tv_nsec) * (1 / 1e9);
+    return double(tv.tv_sec) + double(tv.tv_nsec) * SECONDS_PER_NANOSECOND;
 }
 } // namespace
 
@@ -39,10 +44,12 @@ queryTimer() noexcept
 void
 sleep(double secs) noexcept
 {
-    timespec tv{}, rmtv{};
-    tv.tv_sec = time_t(secs);
-    tv.tv_nsec = long(secs * 1e9);
+    timespec tv{};
+    tv.tv_sec = static_cast<decltype(tv.tv_sec)>(secs);
+    tv.tv_nsec = static_cast<decltype(tv.tv_nsec)>((secs - tv.tv_sec) *
+                                                   NANOSECONDS_PER_SECOND);
 
+    timespec rmtv{};
     while (nanosleep(&tv, &rmtv) == -1) {
         if (errno == EINTR) {
             errno = 0;

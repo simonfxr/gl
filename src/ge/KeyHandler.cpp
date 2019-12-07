@@ -62,7 +62,7 @@ KeyHandler::Data::Data(CommandProcessor &proc) : processor(proc)
         state = State();
 }
 
-#define CHECK_KEYCODE(kc) ASSERT(kc.is_valid(), "invalid keycode")
+#define CHECK_KEYCODE(kc) ASSERT((kc).is_valid(), "invalid keycode")
 
 KeyHandler::KeyHandler(CommandProcessor &proc) : self(new Data(proc)) {}
 

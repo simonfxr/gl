@@ -42,7 +42,7 @@ struct GE_API Engine
     sys::io::OutStream &out();
     void out(sys::io::OutStream &);
 
-    const std::string programName() const;
+    const std::string &programName() const;
 
     math::real now();
 

@@ -1,9 +1,4 @@
-/.ccls-cache
-/.idea
-/.vs
-/.vscode
 /build
-/compile_commands.json
 
 /*.cam
 /*.mdl

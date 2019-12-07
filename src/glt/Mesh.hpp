@@ -143,7 +143,7 @@ public:
 private:
     void growVertexBuf();
     void enableAttributes();
-    void disableAttributes();
+    static void disableAttributes();
     void initVertexBuffer();
     void initVertexArray();
     void initVertexAttribs();

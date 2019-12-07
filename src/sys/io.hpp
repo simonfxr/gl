@@ -12,8 +12,7 @@
 #include <string>
 #include <string_view>
 
-namespace sys {
-namespace io {
+namespace sys::io {
 
 struct Handle;
 struct Socket;
@@ -107,27 +106,30 @@ struct OSHandle
 {
     int fd = -1;
     static inline constexpr OSHandle nil() { return {}; }
-    inline constexpr bool is_nil() const { return fd == -1; }
+    HU_NODISCARD inline constexpr bool is_nil() const { return fd == -1; }
 };
+
 struct OSSocket
 {
     int fd = -1;
     static inline constexpr OSSocket nil() { return {}; }
-    inline constexpr bool is_nil() const { return fd == -1; }
+    HU_NODISCARD inline constexpr bool is_nil() const { return fd == -1; }
 };
+
 #elif HU_OS_WINDOWS_P
 struct OSHandle
 {
     void *handle{};
     bool is_socket{};
     static inline constexpr OSHandle nil() { return {}; }
-    inline constexpr bool is_nil() const { return !handle; }
+    HU_NODISCARD inline constexpr bool is_nil() const { return !handle; }
 };
+
 struct OSSocket
 {
     void *socket{};
     static inline constexpr OSSocket nil() { return {}; }
-    inline constexpr bool is_nil() const { return !socket; }
+    HU_NODISCARD inline constexpr bool is_nil() const { return !socket; }
 };
 #else
 #    error "OS not supported"
@@ -139,7 +141,7 @@ struct Handle : NonCopyable
     OSHandle _os{};
 
     constexpr Handle() = default;
-    Handle(Handle &&h) { *this = std::move(h); }
+    Handle(Handle &&h) noexcept { *this = std::move(h); }
 
     ~Handle()
     {
@@ -147,7 +149,7 @@ struct Handle : NonCopyable
             close(*this);
     }
 
-    Handle &operator=(Handle &&h)
+    Handle &operator=(Handle &&h) noexcept
     {
         _mode = std::exchange(h._mode, 0);
         _os = std::exchange(h._os, OSHandle::nil());
@@ -162,7 +164,7 @@ struct Socket : NonCopyable
     OSSocket _os;
 
     constexpr Socket() = default;
-    Socket(Socket &&s) { *this = std::move(s); }
+    Socket(Socket &&s) noexcept { *this = std::move(s); }
 
     ~Socket()
     {
@@ -170,7 +172,7 @@ struct Socket : NonCopyable
             close(*this);
     }
 
-    Socket &operator=(Socket &&s)
+    Socket &operator=(Socket &&s) noexcept
     {
         _os = std::exchange(s._os, OSSocket::nil());
         return *this;
@@ -225,7 +227,6 @@ readFile(sys::io::OutStream &errout, std::string_view path) noexcept
     return readFile(errout, path, err);
 }
 
-} // namespace io
-} // namespace sys
+} // namespace sys::io
 
 #endif

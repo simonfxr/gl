@@ -20,7 +20,11 @@ TextureRenderTarget3D::TextureRenderTarget3D(
 void
 TextureRenderTarget3D::resize(const math::ivec3_t &s)
 {
-    size_t w = s[0], h = s[1], d = s[2];
+    size_t w = s[0];
+
+    size_t h = s[1];
+
+    size_t d = s[2];
     if (width() == w && height() == h) {
 
         if (depth() == d)

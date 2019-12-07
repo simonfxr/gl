@@ -3,11 +3,11 @@
 #include "err/err.hpp"
 #include "sys/module.hpp"
 
+#include <array>
 #include <cerrno>
 #include <cstring>
 
-namespace sys {
-namespace io {
+namespace sys::io {
 
 PP_DEF_ENUM_IMPL(SYS_STREAM_RESULT_ENUM_DEF)
 
@@ -25,14 +25,12 @@ StreamState::track(StreamFlags eof, StreamFlags &flags, StreamResult res)
 {
     switch (res.value) {
     case StreamResult::OK:
-        return res;
     case StreamResult::Blocked:
         return res;
     case StreamResult::EOF:
         flags |= eof;
         return res;
     case StreamResult::Closed:
-        return res;
     case StreamResult::Error:
         return res;
     }
@@ -172,9 +170,9 @@ stderr()
     {                                                                          \
         if (!out.writeable())                                                  \
             return StreamResult::OK;                                           \
-        char buf[bufsz];                                                       \
-        auto len = snprintf(buf, sizeof buf, "%" fmt, value);                  \
-        return write_repr(out, std::string_view{ buf, size_t(len) });          \
+        std::array<char, bufsz> buf{};                                         \
+        auto len = snprintf(buf.data(), sizeof buf, "%" fmt, value);           \
+        return write_repr(out, std::string_view{ buf.data(), size_t(len) });   \
     }
 
 DEF_PRINTF_WRITER(const void *, "p", 32)
@@ -305,5 +303,4 @@ CooperativeInStream::basic_read(size_t &s, char *buf)
     }
 }
 
-} // namespace io
-} // namespace sys
+} // namespace sys::io

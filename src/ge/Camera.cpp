@@ -35,12 +35,12 @@ struct Camera::Data
     void mouseMoved(int16_t dx, int16_t dy);
 
     // commands
-    void runMove(const Event<CommandEvent> &, int64_t dir);
+    void runMove(const Event<CommandEvent> & /*unused*/, int64_t dir);
     void runSaveFrame(const Event<CommandEvent> & /*unused*/,
                       ArrayView<const CommandArg> /*args*/);
     void runLoadFrame(const Event<CommandEvent> & /*unused*/,
                       ArrayView<const CommandArg> /*args*/);
-    void runSpeed(const Event<CommandEvent> & /*unused*/, double);
+    void runSpeed(const Event<CommandEvent> & /*unused*/, double /*s*/);
     void runSensitivity(const Event<CommandEvent> & /*unused*/,
                         ArrayView<const CommandArg> /*args*/);
 

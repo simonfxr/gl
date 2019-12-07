@@ -86,18 +86,18 @@ struct ShaderSource::Data
     const std::variant<StringSource, FileSource> source;
 
     static std::shared_ptr<ShaderObject> load(
-      const std::shared_ptr<ShaderSource> &,
-      const StringSource &,
-      ShaderCompilerQueue &);
+      const std::shared_ptr<ShaderSource> & /*src*/,
+      const StringSource & /*strsrc*/,
+      ShaderCompilerQueue & /*scq*/);
 
     static std::shared_ptr<ShaderObject> load(
-      const std::shared_ptr<ShaderSource> &,
-      const FileSource &,
-      ShaderCompilerQueue &);
+      const std::shared_ptr<ShaderSource> & /*src*/,
+      const FileSource & /*filesrc*/,
+      ShaderCompilerQueue & /*scq*/);
 
     static std::shared_ptr<ShaderObject> load(
-      const std::shared_ptr<ShaderSource> &,
-      ShaderCompilerQueue &);
+      const std::shared_ptr<ShaderSource> & /*src*/,
+      ShaderCompilerQueue & /*scq*/);
 };
 
 DECLARE_PIMPL_DEL(ShaderSource)
@@ -123,18 +123,18 @@ struct ShaderObject::Data
     {}
 
     std::pair<std::shared_ptr<ShaderObject>, ReloadState> reloadIfOutdated(
-      ShaderCompilerQueue &);
+      ShaderCompilerQueue & /*scq*/);
 
-    void linkCache(const std::shared_ptr<ShaderCache> &);
-    void unlinkCache(const std::shared_ptr<ShaderCache> &);
+    void linkCache(const std::shared_ptr<ShaderCache> & /*newcache*/);
+    void unlinkCache(const std::shared_ptr<ShaderCache> & /*newcache*/);
 
     static std::shared_ptr<ShaderObject> makeStringShaderObject(
-      std::shared_ptr<ShaderSource>,
-      const StringSource &);
+      std::shared_ptr<ShaderSource> /*src*/,
+      const StringSource & /*ssrc*/);
 
     static std::shared_ptr<ShaderObject> makeFileShaderObject(
-      std::shared_ptr<ShaderSource>,
-      const FileSource &,
+      std::shared_ptr<ShaderSource> /*src*/,
+      const FileSource & /*fsrc*/,
       sys::fs::FileTime mtime);
 };
 
@@ -145,9 +145,9 @@ struct ShaderCache::Data
     ShaderCacheEntries entries;
     ShaderCache &self;
     void checkValid();
-    bool remove(ShaderObject *);
+    bool remove(ShaderObject * /*so*/);
 
-    Data(ShaderCache &self_) : self(self_) {}
+    explicit Data(ShaderCache &self_) : self(self_) {}
 };
 
 DECLARE_PIMPL_DEL(ShaderCache)
@@ -158,7 +158,7 @@ struct ShaderCompiler::Data
     PreprocessorDefinitions defines;
     std::shared_ptr<ShaderCache> cache;
 
-    Data(ShaderManager &sm) : shaderManager(sm) {}
+    explicit Data(ShaderManager &sm) : shaderManager(sm) {}
     void initPreprocessor(GLSLPreprocessor & /*proc*/);
 };
 
@@ -180,8 +180,9 @@ struct ShaderCompilerQueue::Data
       : self(self_), compiler(comp), flags(flgs), compiled(_compiled)
     {}
 
-    void put(const std::shared_ptr<ShaderObject> &);
-    std::shared_ptr<ShaderObject> reload(const std::shared_ptr<ShaderObject> &);
+    void put(const std::shared_ptr<ShaderObject> & /*so*/);
+    std::shared_ptr<ShaderObject> reload(
+      const std::shared_ptr<ShaderObject> & /*so*/);
 };
 
 DECLARE_PIMPL_DEL(ShaderCompilerQueue)
@@ -721,9 +722,9 @@ ShaderCompiler::guessShaderType(std::string_view path, ShaderType *res)
 
     std::string ext = sys::fs::extension(path);
 
-    for (uint32_t i = 0; i < ARRAY_LENGTH(shaderTypeMappings); ++i) {
-        if (ext == shaderTypeMappings[i].fileExtension) {
-            *res = shaderTypeMappings[i].type;
+    for (auto shaderTypeMapping : shaderTypeMappings) {
+        if (ext == shaderTypeMapping.fileExtension) {
+            *res = shaderTypeMapping.type;
             return true;
         }
     }
@@ -861,7 +862,7 @@ ShaderCompilerQueue::Data::put(const std::shared_ptr<ShaderObject> &so)
     compiled.insert(std::make_pair(so->shaderSource()->key(), so));
 
     if (flags & SC_PUT_CACHE) {
-        std::shared_ptr<ShaderObject> so_mut(so);
+        const std::shared_ptr<ShaderObject> &so_mut(so);
         auto cache = compiler.shaderCache();
         if (cache)
             cache->put(so_mut);

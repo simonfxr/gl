@@ -32,7 +32,9 @@ GLPerfCounter::begin()
         _queries[_active_query].end.ensure();
         _last_query = -1.0;
     } else {
-        GLuint64 ns_t0, ns_t1;
+        GLuint64 ns_t0;
+
+        GLuint64 ns_t1;
         GL_CALL(glGetQueryObjectui64v,
                 *_queries[_active_query].begin,
                 GL_QUERY_RESULT,

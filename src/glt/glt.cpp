@@ -16,7 +16,7 @@ void
 moduleInit()
 {
     if (!module)
-        module.reset(new Module);
+        module = std::make_unique<Module>();
 }
 
 void

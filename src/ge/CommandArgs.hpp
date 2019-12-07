@@ -52,7 +52,7 @@ struct CommandValue : Comparable<CommandValue>
     struct NamedRef
     {};
 
-    CommandValue(std::shared_ptr<Command> ref);
+    CommandValue(std::shared_ptr<Command> com);
 
     CommandValue(std::string nm, NamedRef)
       : name(std::make_shared<const std::string>(std::move(nm)))

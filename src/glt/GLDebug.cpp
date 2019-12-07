@@ -79,7 +79,13 @@ void
 ARBDebug::printDebugMessages(const err::Location &loc)
 {
 
-    GLenum source, type, id, severity;
+    GLenum source;
+
+    GLenum type;
+
+    GLenum id;
+
+    GLenum severity;
     GLsizei length;
 
     while (glGetDebugMessageLogARB(1,
@@ -175,7 +181,9 @@ AMDDebug::printDebugMessages(const err::Location &loc)
 {
 
     GLenum category;
-    GLuint severity, id;
+    GLuint severity;
+
+    GLuint id;
     GLsizei length;
 
     while (glGetDebugMessageLogAMD(1,

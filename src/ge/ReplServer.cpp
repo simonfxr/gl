@@ -50,7 +50,7 @@ fiber_cleanup(Fiber *self, void *args)
 void
 run_parser_fiber(void *args)
 {
-    Client *c = reinterpret_cast<Client *>(args);
+    auto *c = reinterpret_cast<Client *>(args);
     while (c->state != ParsingState::Stop) {
         bool ok = tokenize(c->parser, c->statement);
         if (ok) {
@@ -116,7 +116,6 @@ Client::handleIO(Engine &e)
         statement.clear();
         break;
     case ParsingState::Yield:
-        break;
     case ParsingState::Stop:
         break;
     }

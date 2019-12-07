@@ -13,7 +13,7 @@ struct RenderTarget::Data
     size_t height;
     RenderTargetBuffers buffers;
     Viewport viewport;
-    color clearColor;
+    color clearColor{};
 
     bool viewport_changed;
 
@@ -27,7 +27,7 @@ struct RenderTarget::Data
 
     ~Data() { DEBUG_ASSERT(!active); }
 
-    Viewport effectiveViewport() const
+    [[nodiscard]] Viewport effectiveViewport() const
     {
         return viewport == Viewport() ? Viewport(width, height) : viewport;
     }

@@ -27,7 +27,6 @@ namespace {
 void
 debugInfo(sys::io::OutStream &out, const void *ip)
 {
-
     char *debuginfo_path = nullptr;
 
     Dwfl_Callbacks callbacks;

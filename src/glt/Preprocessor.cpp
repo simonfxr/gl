@@ -10,17 +10,17 @@ Preprocessor::DirectiveHandler::~DirectiveHandler() = default;
 
 void
 Preprocessor::DirectiveHandler::beginProcessing(
-  const Preprocessor::ContentContext &)
+  const Preprocessor::ContentContext & /*unused*/)
 {}
 
 void
 Preprocessor::DirectiveHandler::endProcessing(
-  const Preprocessor::ContentContext &)
+  const Preprocessor::ContentContext & /*unused*/)
 {}
 
 void
 Preprocessor::DirectiveHandler::directiveEncountered(
-  const Preprocessor::DirectiveContext &)
+  const Preprocessor::DirectiveContext & /*unused*/)
 {}
 
 struct Preprocessor::Data

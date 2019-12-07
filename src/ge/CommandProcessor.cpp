@@ -31,7 +31,7 @@ struct CommandProcessor::Data
     Engine &engine;
     CommandMap commands;
     std::vector<std::string> scriptDirs;
-    Data(Engine &e) : engine(e) {}
+    explicit Data(Engine &e) : engine(e) {}
 };
 
 DECLARE_PIMPL_DEL(CommandProcessor);
@@ -169,7 +169,7 @@ CommandProcessor::exec(CommandPtr &com, ArrayView<CommandArg> args)
 
     const auto &comname = com->name();
     const auto &params = com->parameters();
-    bool rest_args = params.size() > 0 && params[params.size() - 1] == PT::List;
+    bool rest_args = !params.empty() && params[params.size() - 1] == PT::List;
     size_t nparams = rest_args ? params.size() - 1 : params.size();
 
     if (nparams != args.size() && !(rest_args && args.size() > nparams)) {
