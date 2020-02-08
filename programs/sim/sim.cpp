@@ -269,7 +269,7 @@ World::spawnSphere(const Sphere &s, const SphereModel &m)
     // }
 }
 
-struct SphereDistance
+struct HU_ALIGN(8) SphereDistance
 {
     SphereRef sphere;
     float viewDist;
@@ -278,7 +278,7 @@ struct SphereDistance
     {
         return d1.viewDist < d2.viewDist;
     }
-} HU_ALIGN(8);
+};
 
 void
 World::render(Renderer &renderer, float dt)

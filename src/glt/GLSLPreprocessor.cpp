@@ -68,7 +68,7 @@ struct ProcessingState
 void
 ProcessingStateDeleter::operator()(ProcessingState *p) noexcept
 {
-    delete p;
+    delete p; // NOLINT
 }
 
 GLSLPreprocessor::GLSLPreprocessor(const IncludePath &incPath,
@@ -141,7 +141,8 @@ void
 DependencyHandler::directiveEncountered(
   const Preprocessor::DirectiveContext &ctx)
 {
-    auto &proc = static_cast<GLSLPreprocessor &>(ctx.content.processor);
+    auto &proc =
+      static_cast<GLSLPreprocessor &>(ctx.content.processor); // NOLINT
 
     const char *arg;
     uint32_t len;
@@ -185,10 +186,10 @@ DependencyHandler::directiveEncountered(
 void
 IncludeHandler::beginProcessing(const Preprocessor::ContentContext &ctx)
 {
-    auto &proc = static_cast<GLSLPreprocessor &>(ctx.processor);
+    auto &proc = static_cast<GLSLPreprocessor &>(ctx.processor); // NOLINT
 
-    if (proc.state == nullptr)
-        proc.state.reset(new ProcessingState);
+    if (!proc.state)
+        proc.state.reset(new ProcessingState); // NOLINT
 
     if (!ctx.name.empty())
         proc.state->visitingFiles.insert(ctx.name);
@@ -201,7 +202,8 @@ IncludeHandler::beginProcessing(const Preprocessor::ContentContext &ctx)
 void
 IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
 {
-    auto &proc = static_cast<GLSLPreprocessor &>(ctx.content.processor);
+    auto &proc =
+      static_cast<GLSLPreprocessor &>(ctx.content.processor); // NOLINT
 
     const char *arg;
     uint32_t len;
@@ -255,7 +257,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
 void
 IncludeHandler::endProcessing(const Preprocessor::ContentContext &ctx)
 {
-    auto &proc = static_cast<GLSLPreprocessor &>(ctx.processor);
+    auto &proc = static_cast<GLSLPreprocessor &>(ctx.processor); // NOLINT
 
     FileContext &frame = proc.state->stack.top();
     size_t seglen = ctx.data + ctx.size - frame.pos;

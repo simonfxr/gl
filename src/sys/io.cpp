@@ -205,7 +205,7 @@ readFile(sys::io::OutStream &errout,
          std::string_view path,
          HandleError &err) noexcept
 {
-    inline constexpr auto BUF_SIZE = size_t(8192);
+    static constexpr auto BUF_SIZE = size_t(8192);
     auto opt_h = open(path, HM_READ, err);
     if (!opt_h)
         goto fail;

@@ -51,13 +51,14 @@ debugInfo(sys::io::OutStream &out, const void *ip)
 
     out << (demangled != nullptr ? demangled : function_name) << "[";
     if (demangled != nullptr)
-        free(demangled);
+        free(demangled); // NOLINT(cppcoreguidelines-owning-memory,
+                         // cppcoreguidelines-no-malloc)
 
     Dwfl_Line *line = nullptr;
     for (int i = -0xF; i <= 0xF; ++i) {
 
         line = dwfl_getsrc(
-          dwfl, Dwarf_Addr(reinterpret_cast<const char *>(addr) + i));
+          dwfl, Dwarf_Addr(reinterpret_cast<const char *>(addr) + i)); // NOLINT
         if (line != nullptr)
             break;
     }
@@ -98,6 +99,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
 
         if (skip <= 0) {
             out << "    ";
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
             debugInfo(out, (reinterpret_cast<void **>(ip) - 1));
             out << "\n";
         } else {

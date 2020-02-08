@@ -20,18 +20,16 @@ struct ProcessingStateDeleter
 
 struct GLT_API IncludeHandler : public Preprocessor::DirectiveHandler
 {
-    virtual void beginProcessing(
-      const Preprocessor::ContentContext &) final override;
-    virtual void directiveEncountered(
-      const Preprocessor::DirectiveContext &) final override;
-    virtual void endProcessing(
-      const Preprocessor::ContentContext &) final override;
+    void beginProcessing(const Preprocessor::ContentContext & /*ctx*/) final;
+    void directiveEncountered(
+      const Preprocessor::DirectiveContext & /*ctx*/) final;
+    void endProcessing(const Preprocessor::ContentContext & /*ctx*/) final;
 };
 
 struct GLT_API DependencyHandler : public Preprocessor::DirectiveHandler
 {
-    virtual void directiveEncountered(
-      const Preprocessor::DirectiveContext &) final override;
+    void directiveEncountered(
+      const Preprocessor::DirectiveContext & /*ctx*/) final;
 };
 
 struct GLT_API GLSLPreprocessor : public Preprocessor

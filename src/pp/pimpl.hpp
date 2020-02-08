@@ -19,10 +19,13 @@
     void cl::DataDeleter::operator()(Data *p) noexcept                         \
     {                                                                          \
         static_assert(std::is_trivially_destructible_v<Data>);                 \
-        delete p;                                                              \
+        delete p; /* NOLINT(cppcoreguidelines-owning-memory) */                \
     }
 
 #define DECLARE_PIMPL_DEL(cl)                                                  \
-    void cl::DataDeleter::operator()(Data *p) noexcept { delete p; }
+    void cl::DataDeleter::operator()(Data *p) noexcept                         \
+    {                                                                          \
+        delete p; /* NOLINT(cppcoreguidelines-owning-memory) */                \
+    }
 
 #endif

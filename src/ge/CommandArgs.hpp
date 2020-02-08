@@ -125,7 +125,7 @@ struct GE_API CommandArg : Comparable<CommandArg>
     CommandArg &operator=(const CommandArg &);
     CommandArg &operator=(CommandArg &&);
 
-    HU_PURE constexpr CommandArgType type() const noexcept { return _type; }
+    HU_PURE_FN constexpr CommandArgType type() const noexcept { return _type; }
 
     void reset(); // reset to Nil
 

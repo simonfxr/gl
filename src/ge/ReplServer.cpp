@@ -44,13 +44,13 @@ void
 fiber_cleanup(Fiber *self, void *args)
 {
     ON_DEBUG(INFO("fiber_cleanup()"));
-    fiber_switch(self, reinterpret_cast<Fiber *>(args));
+    fiber_switch(self, static_cast<Fiber *>(args));
 }
 
 void
 run_parser_fiber(void *args)
 {
-    auto *c = reinterpret_cast<Client *>(args);
+    auto *c = static_cast<Client *>(args);
     while (c->state != ParsingState::Stop) {
         bool ok = tokenize(c->parser, c->statement);
         if (ok) {
@@ -74,12 +74,15 @@ Client::Client(int _id, Handle h)
   , parser(in_stream, "")
   , id(_id)
 {
-    fiber_alloc(&parser_fiber, 65536, fiber_cleanup, &client_fiber, true);
+    (void) fiber_alloc(
+      &parser_fiber, 65536, fiber_cleanup, &client_fiber, true);
     Client *parser_args = this;
-    fiber_push_return(&parser_fiber,
-                      run_parser_fiber,
-                      static_cast<void *>(&parser_args),
-                      sizeof parser_args);
+    fiber_push_return(
+      &parser_fiber,
+      run_parser_fiber,
+      static_cast<void *>(&parser_args),
+      // we really pass a pointer here
+      sizeof parser_args /* NOLINT(bugprone-sizeof-expression)*/);
     sys::io::ByteStream name;
     name << "<repl " << id << ">";
     parser.filename = name.str();

@@ -33,8 +33,8 @@ struct GeometryTransform::Data
 
     mat4_t inverseProjectionMatrix;
 
-    mat4_t modelMatrices[GEOMETRY_TRANSFORM_MAX_DEPTH]{};
-    uint64_t mods[GEOMETRY_TRANSFORM_MAX_DEPTH]{};
+    std::array<mat4_t, GEOMETRY_TRANSFORM_MAX_DEPTH> modelMatrices{};
+    std::array<uint64_t, GEOMETRY_TRANSFORM_MAX_DEPTH> mods{};
 
     Data()
       : viewMatrix(mat4())

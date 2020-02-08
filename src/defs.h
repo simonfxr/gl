@@ -1,8 +1,7 @@
 #ifndef DEFS_H_INCLUDED
 #define DEFS_H_INCLUDED
 
-#include <hu/macros.h>
-#include <hu/os.h>
+#include <hu.h>
 
 #ifdef HU_OS_WINDOWS
 #    define WIN32_LEAND_AND_MEAN 1
@@ -24,8 +23,8 @@
 #endif
 
 #if BUILD_SHARED_P
-#    define SHARED_IMPORT HU_LIB_IMPORT
-#    define SHARED_EXPORT HU_LIB_EXPORT
+#    define SHARED_IMPORT HU_DSO_IMPORT
+#    define SHARED_EXPORT HU_DSO_EXPORT
 #else
 #    define SHARED_IMPORT
 #    define SHARED_EXPORT

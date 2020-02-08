@@ -1,7 +1,8 @@
-#include "err/err.hpp"
 #include "sys/io.hpp"
 
+#include "err/err.hpp"
 #include "sys/fs.hpp"
+#include "util/bit_cast.hpp"
 
 #include <arpa/inet.h>
 #include <cerrno>
@@ -250,6 +251,7 @@ listen(SocketProto proto,
     int type;
     int ret;
 
+    // NOLINTNEXTLINE(hicpp-multiway-paths-covered)
     switch (proto) {
     case SP_TCP:
         type = SOCK_STREAM;
@@ -278,9 +280,9 @@ listen(SocketProto proto,
         server.sin_addr.s_addr = addr.addr4;
         server.sin_port = hton(port);
 
-        RETRY_INTR(
-          ret =
-            bind(sock, reinterpret_cast<sockaddr *>(&server), sizeof server));
+        auto server_so = bit_cast<sockaddr>(server);
+
+        RETRY_INTR(ret = bind(sock, &server_so, sizeof server));
         if (ret == -1)
             goto socket_err;
     }
@@ -319,15 +321,14 @@ accept(Socket &s, SocketError &err)
 {
     ASSERT(s);
 
-    sockaddr_in client{};
+    sockaddr client{};
     socklen_t clen = sizeof client;
 
     int c;
+
     // reason: #define SOCK_CLOEXEC SOCK_CLOEXEC
     BEGIN_NO_WARN_DISABLED_MACRO_EXPANSION
-    RETRY_INTR(
-      c = accept4(
-        s._os.fd, reinterpret_cast<sockaddr *>(&client), &clen, SOCK_CLOEXEC));
+    RETRY_INTR(c = accept4(s._os.fd, &client, &clen, SOCK_CLOEXEC));
     END_NO_WARN_DISABLED_MACRO_EXPANSION
 
     if (c == -1) {

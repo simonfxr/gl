@@ -14,7 +14,7 @@ namespace glt {
 struct GLDebug : NonCopyable
 {
     std::unordered_set<GLuint> ignored;
-    OpenGLVendor vendor;
+    OpenGLVendor vendor{};
 
     GLDebug();
     virtual ~GLDebug();
@@ -28,7 +28,7 @@ struct NoDebug : public GLDebug
 {
     NoDebug() = default;
     ~NoDebug() override;
-    virtual void printDebugMessages(const err::Location &) final override {}
+    void printDebugMessages(const err::Location & /*unused*/) final {}
 };
 
 struct ARBDebug : public GLDebug
@@ -40,7 +40,7 @@ struct ARBDebug : public GLDebug
     ~ARBDebug() override;
 
     static GLDebug *init();
-    virtual void printDebugMessages(const err::Location &loc) final override;
+    void printDebugMessages(const err::Location &loc) final;
 };
 
 struct AMDDebug : public GLDebug
@@ -52,7 +52,7 @@ struct AMDDebug : public GLDebug
     ~AMDDebug() override;
 
     static GLDebug *init();
-    virtual void printDebugMessages(const err::Location &loc) final override;
+    void printDebugMessages(const err::Location &loc) final;
 };
 
 } // namespace glt

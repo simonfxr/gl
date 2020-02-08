@@ -19,7 +19,8 @@ GLDebug::init()
         return;
     }
 
-    const char *vendor_str = reinterpret_cast<const char *>(gl_vendor_str);
+    const char *vendor_str =
+      reinterpret_cast<const char *>(gl_vendor_str); // NOLINT
     if (strcmp(vendor_str, "NVIDIA Corporation") == 0)
         vendor = OpenGLVendor::Nvidia;
     else if (strcmp(vendor_str, "ATI Technologies") == 0)
@@ -105,7 +106,7 @@ ARBDebug::printDebugMessages(const err::Location &loc)
         (v) = #c;                                                              \
         break
 
-        const char *ssrc = "unknown";
+        const char *ssrc;
         switch (source) {
             sym_case(ssrc, GL_DEBUG_SOURCE_API_ARB);
             sym_case(ssrc, GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB);
@@ -113,9 +114,11 @@ ARBDebug::printDebugMessages(const err::Location &loc)
             sym_case(ssrc, GL_DEBUG_SOURCE_THIRD_PARTY_ARB);
             sym_case(ssrc, GL_DEBUG_SOURCE_APPLICATION_ARB);
             sym_case(ssrc, GL_DEBUG_SOURCE_OTHER_ARB);
+        default:
+            ssrc = "unknown";
         }
 
-        const char *stype = "unknown";
+        const char *stype;
         switch (type) {
             sym_case(stype, GL_DEBUG_TYPE_ERROR_ARB);
             sym_case(stype, GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB);
@@ -123,13 +126,17 @@ ARBDebug::printDebugMessages(const err::Location &loc)
             sym_case(stype, GL_DEBUG_TYPE_PORTABILITY_ARB);
             sym_case(stype, GL_DEBUG_TYPE_PERFORMANCE_ARB);
             sym_case(stype, GL_DEBUG_TYPE_OTHER_ARB);
+        default:
+            stype = "unknown";
         }
 
-        const char *ssev = "unknown";
+        const char *ssev;
         switch (severity) {
             sym_case(ssev, GL_DEBUG_SEVERITY_HIGH_ARB);
             sym_case(ssev, GL_DEBUG_SEVERITY_MEDIUM_ARB);
             sym_case(ssev, GL_DEBUG_SEVERITY_LOW_ARB);
+        default:
+            ssev = "unknown";
         }
 
 #undef sym_case
@@ -202,7 +209,7 @@ AMDDebug::printDebugMessages(const err::Location &loc)
         (v) = #c;                                                              \
         break
 
-        const char *scat = "unknown";
+        const char *scat;
         switch (category) {
             sym_case(scat, GL_DEBUG_CATEGORY_API_ERROR_AMD);
             sym_case(scat, GL_DEBUG_CATEGORY_WINDOW_SYSTEM_AMD);
@@ -212,13 +219,17 @@ AMDDebug::printDebugMessages(const err::Location &loc)
             sym_case(scat, GL_DEBUG_CATEGORY_SHADER_COMPILER_AMD);
             sym_case(scat, GL_DEBUG_CATEGORY_APPLICATION_AMD);
             sym_case(scat, GL_DEBUG_CATEGORY_OTHER_AMD);
+        default:
+            scat = "unknown";
         }
 
-        const char *ssev = "unknown";
+        const char *ssev;
         switch (severity) {
             sym_case(ssev, GL_DEBUG_SEVERITY_HIGH_AMD);
             sym_case(ssev, GL_DEBUG_SEVERITY_MEDIUM_AMD);
             sym_case(ssev, GL_DEBUG_SEVERITY_LOW_AMD);
+        default:
+            ssev = "unknown";
         }
 
 #undef sym_case

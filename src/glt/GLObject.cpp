@@ -2,6 +2,7 @@
 
 #include "glt/utils.hpp"
 
+#include <array>
 #include <unordered_map>
 
 #if defined(DEBUG_GLOBJECT) || defined(DEBUG_ALL)
@@ -54,8 +55,8 @@ struct ObjectKind
 
 struct Tables
 {
-    size_t instance_count[ObjectType::count]{};
-    ObjectKind kinds[ObjectType::count];
+    std::array<size_t, ObjectType::count> instance_count{};
+    std::array<ObjectKind, ObjectType::count> kinds{};
     DBG(std::unordered_map<GLuint, std::string> stacktrace_map;)
     Tables();
 
@@ -109,11 +110,11 @@ generate(ObjectType t, GLsizei n, GLuint *names)
 }
 
 void
-generateShader(GLenum shader_type, GLuint *name)
+generateShader(GLenum shader_type, GLuint *shader)
 {
     auto tab = Tables::get();
-    GL_ASSIGN_CALL(*name, glCreateShader, shader_type);
-    if (*name != 0)
+    GL_ASSIGN_CALL(*shader, glCreateShader, shader_type);
+    if (*shader != 0)
         ++tab.instance_count[ObjectType::Shader];
 }
 

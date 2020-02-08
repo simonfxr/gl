@@ -1,6 +1,7 @@
 #include "ge/KeyHandler.hpp"
 #include "ge/Engine.hpp"
 
+#include <array>
 #include <cstring>
 #include <map>
 #include <utility>
@@ -48,7 +49,7 @@ struct KeyHandler::Data
     CommandProcessor &processor;
     uint32_t frame_id{ 1 };
     CommandBindings bindings;
-    State states[KeyCode::count];
+    std::array<State, KeyCode::count> states;
     EventSource<KeyPressed> keyPressedEvent;
 
     explicit Data(CommandProcessor &proc);
@@ -100,7 +101,7 @@ KeyHandler::keyEvent(Key key)
 void
 KeyHandler::clearStates()
 {
-    memset(self->states, 0, sizeof self->states);
+    std::fill(self->states.begin(), self->states.end(), State{});
     self->frame_id = 1;
 }
 

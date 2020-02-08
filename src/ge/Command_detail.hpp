@@ -26,7 +26,7 @@ struct command_param_mapping
     // type");
 };
 
-HU_PURE inline bool
+HU_PURE_FN inline bool
 has_type(CommandParamType pt, CommandArgType t) noexcept
 {
     switch (pt.value) {

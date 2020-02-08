@@ -8,7 +8,8 @@
 
 using namespace math;
 
-static void HU_NOINLINE
+HU_NOINLINE
+static void
 mul(vec4_t *RESTRICT rr,
     const mat4_t *RESTRICT m,
     const vec4_t *RESTRICT v,

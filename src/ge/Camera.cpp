@@ -3,6 +3,7 @@
 #include "math/real.hpp"
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
+#include "util/bit_cast.hpp"
 #include "util/string.hpp"
 
 using namespace math;
@@ -159,8 +160,10 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
         ERR("couldnt open file: " + *path);
         return;
     }
+    auto out_frame = frame;
+    out_frame.normalize();
     size_t s = sizeof frame;
-    opt_stream->write(s, reinterpret_cast<const char *>(&frame));
+    opt_stream->write(s, to_bytes(out_frame).data());
 }
 
 void
@@ -183,16 +186,17 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
         return;
     }
 
-    glt::Frame new_frame;
-    size_t s = sizeof new_frame;
-    auto ret = opt_stream->read(s, reinterpret_cast<char *>(&new_frame));
-    if (ret != sys::io::StreamResult::OK) {
+    std::array<char, sizeof frame> bytes;
+    size_t s = sizeof bytes;
+
+    auto ret = opt_stream->read(s, bytes.data());
+    if (ret != sys::io::StreamResult::OK || s != sizeof frame) {
         ERR(string_concat(
           "failed to read frame from file: ", *path, ", io error: ", ret));
         return;
     }
 
-    frame = new_frame;
+    memcpy(static_cast<void *>(&frame), bytes.data(), sizeof bytes);
     frame.normalize();
 }
 
