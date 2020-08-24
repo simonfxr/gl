@@ -1,7 +1,7 @@
 #ifndef DEFS_H_INCLUDED
 #define DEFS_H_INCLUDED
 
-#include <hu.h>
+#include <hu/hu.h>
 
 #ifdef HU_OS_WINDOWS
 #    define WIN32_LEAND_AND_MEAN 1
