@@ -1,3 +1,6 @@
+#define CL_HPP_ENABLE_SIZE_T_COMPATIBILITY 1
+#include <CL/opencl.hpp>
+
 #include "ge/Camera.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
@@ -19,9 +22,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include <CL/cl.h>
-#include <CL/cl.hpp>
 
 #ifdef HU_OS_POSIX
 #    include <GL/glx.h>
@@ -315,8 +315,8 @@ Anim::initCLKernels(bool *success)
         return;
     }
 
-    cl::Program::Sources source(
-      1, std::make_pair(source_code.data(), source_code.size()));
+    std::string source_str(source_code.data(), source_code.size());
+    cl::Program::Sources source{ source_str };
     cl_program = cl::Program(cl_ctx, source, &cl_err);
     CL_ERR("creating program failed");
 

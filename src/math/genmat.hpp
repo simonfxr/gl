@@ -217,7 +217,8 @@ template<typename T,
          typename U,
          size_t N,
          typename = std::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>
-inline constexpr auto operator*(const T &lhs, const genmat<U, N> &rhs)
+inline constexpr auto
+operator*(const T &lhs, const genmat<U, N> &rhs)
 {
     using V = std::decay_t<decltype(lhs * rhs[0][0])>;
     genmat<V, N> ret{};
@@ -228,7 +229,8 @@ inline constexpr auto operator*(const T &lhs, const genmat<U, N> &rhs)
 }
 
 template<typename T, typename U, size_t N>
-inline constexpr auto operator*(const genmat<T, N> &A, const genvec<U, N> &v)
+inline constexpr auto
+operator*(const genmat<T, N> &A, const genvec<U, N> &v)
 {
     using V = decltype(A[0][0] * v[0]);
     genvec<V, N> u{};
@@ -259,23 +261,24 @@ inline_mat_mul(const genmat<T, N> &A, const genmat<U, N> &B)
 }
 
 template<typename T, typename U, size_t N>
-inline constexpr auto operator*(const genmat<T, N> &A, const genmat<U, N> &B)
+inline constexpr auto
+operator*(const genmat<T, N> &A, const genmat<U, N> &B)
   -> genmat<decltype(A[0][0] * B[0][0]), N>
 {
     return inline_mat_mul(A, B);
 }
 
-extern template MATH_API genmat<float, 3> operator*(const genmat<float, 3> &,
-                                                    const genmat<float, 3> &);
+extern template MATH_API genmat<float, 3>
+operator*(const genmat<float, 3> &, const genmat<float, 3> &);
 
-extern template MATH_API genmat<double, 3> operator*(const genmat<double, 3> &,
-                                                     const genmat<double, 3> &);
+extern template MATH_API genmat<double, 3>
+operator*(const genmat<double, 3> &, const genmat<double, 3> &);
 
-extern template MATH_API genmat<float, 4> operator*(const genmat<float, 4> &,
-                                                    const genmat<float, 4> &);
+extern template MATH_API genmat<float, 4>
+operator*(const genmat<float, 4> &, const genmat<float, 4> &);
 
-extern template MATH_API genmat<double, 4> operator*(const genmat<double, 4> &,
-                                                     const genmat<double, 4> &);
+extern template MATH_API genmat<double, 4>
+operator*(const genmat<double, 4> &, const genmat<double, 4> &);
 
 template<typename T, typename U, size_t N>
 inline constexpr genmat<T, N> &
@@ -580,15 +583,6 @@ operator<<(OStream &out, const genmat<T, N> &A)
     return out << "]";
 }
 
-} // namespace math
-
-namespace std {
-BEGIN_NO_WARN_MISMATCHED_TAGS
-template<typename T, size_t N>
-struct tuple_size<math::genmat<T, N>> : public std::integral_constant<size_t, N>
-{};
-END_NO_WARN_MISMATCHED_TAGS
-
 template<size_t I, typename T, size_t N>
 HU_FORCE_INLINE inline const math::genvec<T, N> &
 get(const math::genmat<T, N> &A)
@@ -604,6 +598,22 @@ get(math::genmat<T, N> &A)
     static_assert(I < N);
     return A[I];
 }
+
+} // namespace math
+
+namespace std {
+BEGIN_NO_WARN_MISMATCHED_TAGS
+template<typename T, size_t N>
+struct tuple_size<math::genmat<T, N>> : public std::integral_constant<size_t, N>
+{};
+END_NO_WARN_MISMATCHED_TAGS
+
+template<size_t I, typename T, size_t N>
+struct tuple_element<I, math::genmat<T, N>>
+{
+    using type = math::genvec<T, N>;
+};
+
 } // namespace std
 
 #endif

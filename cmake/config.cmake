@@ -13,11 +13,7 @@ macro(replace_cmake_flags pat repl)
     foreach(pref "" _C_FLAGS _CXX_FLAGS)
       set(v "CMAKE${pref}${ty}")
       if(DEFINED "${v}")
-        string(REGEX
-               REPLACE "${pat}"
-                       "${repl}"
-                       "${v}"
-                       "${${v}}")
+        string(REGEX REPLACE "${pat}" "${repl}" "${v}" "${${v}}")
       endif()
     endforeach()
   endforeach()
@@ -40,11 +36,7 @@ if(BUILD_OPT)
   if(COMP_GCC OR COMP_CLANG)
     list(APPEND GLOBAL_FLAGS -march=native -Ofast)
   elseif(COMP_ICC)
-    list(APPEND GLOBAL_FLAGS
-                -xHOST
-                -O3
-                -ipo
-                -no-prec-div)
+    list(APPEND GLOBAL_FLAGS -xHOST -O3 -ipo -no-prec-div)
   endif()
 endif()
 
@@ -59,11 +51,11 @@ if(COMP_CLANG)
 endif()
 
 if(COMP_CLANG OR COMP_GCC)
-  set_option(ENABLE_ASAN True BOOL "enable -fsanitize=address")
   set(ubsan_default False)
   if(BUILD_DEBUG)
     set(ubsan_default True)
   endif()
+  set_option(ENABLE_ASAN ${ubsan_default} BOOL "enable -fsanitize=address")
   set_option(ENABLE_UBSAN ${ubsan_default} BOOL "enable -fsanitize=undefined")
 endif()
 
@@ -72,7 +64,8 @@ if(ENABLE_ASAN)
 endif()
 
 if(ENABLE_UBSAN)
-  list(APPEND GLOBAL_FLAGS_BOTH -fsanitize=undefined -fsanitize-undefined-trap-on-error)
+  list(APPEND GLOBAL_FLAGS_BOTH -fsanitize=undefined
+       -fsanitize-undefined-trap-on-error)
 endif()
 
 if(ENABLE_ASAN OR ENABLE_UBSAN)
@@ -87,84 +80,87 @@ if(COMP_GCCLIKE)
   list(APPEND GLOBAL_FLAGS -Werror=return-type)
   list(APPEND GLOBAL_CXX_FLAGS -fno-exceptions -fno-rtti)
 elseif(COMP_MSVC)
-  list(APPEND GLOBAL_FLAGS
-              /wd4201 # anon struct/union
-              /wd4251 # inconsistent dll linkage
-              /wd4204 # non-constant aggregate initializer
-       )
+  list(APPEND GLOBAL_FLAGS /wd4201 # anon struct/union
+       /wd4251 # inconsistent dll linkage
+       /wd4204 # non-constant aggregate initializer
+  )
   # list(APPEND GLOBAL_FLAGS "/EH-") list(APPEND GLOBAL_LINK_FLAGS "/EH-")
   # list(APPEND GLOBAL_FLAGS "/GR-")
 endif()
 
 if(COMP_GCC)
-  list(APPEND GLOBAL_FLAGS
-              -Wcast-align
-              -Wcast-qual
-              -Wchar-subscripts
-              -Wcomment
-              -Wdisabled-optimization
-              -Wformat
-              -Wformat-nonliteral
-              -Wformat-security
-              -Wformat-y2k
-              -Wformat=2
-              -Wimport
-              -Winit-self
-              -Winline
-              -Winvalid-pch
-              -Wmissing-field-initializers
-              -Wmissing-format-attribute
-              -Wmissing-include-dirs
-              -Wmissing-noreturn
-              -Wparentheses
-              -Wpointer-arith
-              -Wredundant-decls
-              -Wreturn-type
-              -Wsequence-point
-              -Wsign-compare
-              -Wstack-protector
-              -Wstrict-aliasing
-              -Wstrict-aliasing=2
-              -Wswitch
-              -Wswitch-enum
-              -Wtrigraphs
-              -Wuninitialized
-              -Wunknown-pragmas
-              -Wunreachable-code
-              -Wunsafe-loop-optimizations
-              -Wunused
-              -Wunused-function
-              -Wunused-label
-              -Wunused-parameter
-              -Wunused-value
-              -Wunused-variable
-              -Wvariadic-macros
-              -Wvolatile-register-var
-              -Wwrite-strings)
+  list(
+    APPEND
+    GLOBAL_FLAGS
+    -Wcast-align
+    -Wcast-qual
+    -Wchar-subscripts
+    -Wcomment
+    -Wdisabled-optimization
+    -Wformat
+    -Wformat-nonliteral
+    -Wformat-security
+    -Wformat-y2k
+    -Wformat=2
+    -Wimport
+    -Winit-self
+    -Winline
+    -Winvalid-pch
+    -Wmissing-field-initializers
+    -Wmissing-format-attribute
+    -Wmissing-include-dirs
+    -Wmissing-noreturn
+    -Wparentheses
+    -Wpointer-arith
+    -Wredundant-decls
+    -Wreturn-type
+    -Wsequence-point
+    -Wsign-compare
+    -Wstack-protector
+    -Wstrict-aliasing
+    -Wstrict-aliasing=2
+    -Wswitch
+    -Wswitch-enum
+    -Wtrigraphs
+    -Wuninitialized
+    -Wunknown-pragmas
+    -Wunreachable-code
+    -Wunsafe-loop-optimizations
+    -Wunused
+    -Wunused-function
+    -Wunused-label
+    -Wunused-parameter
+    -Wunused-value
+    -Wunused-variable
+    -Wvariadic-macros
+    -Wvolatile-register-var
+    -Wwrite-strings)
   list(APPEND GLOBAL_FLAGS -Wextra)
 endif()
 
 if(COMP_CLANG)
-  list(APPEND GLOBAL_FLAGS
-              -Weverything
-              -Wno-c++98-compat
-              -Wno-c++98-compat-pedantic
-              -Wno-conversion
-              -Wno-documentation
-              -Wno-documentation-unknown-command
-              -Wno-double-promotion
-              -Wno-float-equal
-              -Wno-gnu-anonymous-struct
-              -Wno-gnu-zero-variadic-macro-arguments
-              -Wno-missing-noreturn
-              -Wno-missing-prototypes
-              -Wno-nested-anon-types
-              -Wno-packed
-              -Wno-padded
-              -Wno-return-std-move-in-c++11
-              -Wno-gnu-statement-expression
-              -Wno-assume
-              -Wno-ctad-maybe-unsupported)
+  list(
+    APPEND
+    GLOBAL_FLAGS
+    -Weverything
+    -Wno-c++98-compat
+    -Wno-c++98-compat-pedantic
+    -Wno-conversion
+    -Wno-documentation
+    -Wno-documentation-unknown-command
+    -Wno-double-promotion
+    -Wno-float-equal
+    -Wno-gnu-anonymous-struct
+    -Wno-gnu-zero-variadic-macro-arguments
+    -Wno-missing-noreturn
+    -Wno-missing-prototypes
+    -Wno-nested-anon-types
+    -Wno-packed
+    -Wno-padded
+    -Wno-return-std-move-in-c++11
+    -Wno-gnu-statement-expression
+    -Wno-assume
+    -Wno-ctad-maybe-unsupported)
 endif()
 
 if(COMP_CLANG AND ENABLE_LIBCXX)
@@ -196,7 +192,6 @@ if(ENABLE_OPENMP)
     endif()
   endif()
 endif()
-
 
 set(gldebug_val 0)
 if(ENABLE_GLDEBUG)

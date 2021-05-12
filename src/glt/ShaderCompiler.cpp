@@ -862,10 +862,8 @@ ShaderCompilerQueue::Data::put(const std::shared_ptr<ShaderObject> &so)
     compiled.insert(std::make_pair(so->shaderSource()->key(), so));
 
     if (flags & SC_PUT_CACHE) {
-        const std::shared_ptr<ShaderObject> &so_mut(so);
-        auto cache = compiler.shaderCache();
-        if (cache)
-            cache->put(so_mut);
+        if (auto cache = compiler.shaderCache())
+            cache->put(so);
     }
 }
 
