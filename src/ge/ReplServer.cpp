@@ -21,8 +21,10 @@ enum class ParsingState : uint8_t
     Stop,
 };
 
-struct Client
+struct Client : private NonCopyMoveable
 {
+    DISABLE_COPY_MOVE_MEMBERS(Client);
+
     Fiber parser_fiber{};
     Fiber *client_fiber{};
     HandleStream hstream;
@@ -220,12 +222,12 @@ ReplServer::handleClients()
 {
     ASSERT(self->running);
 
-    for (size_t i = 0; i < self->clients.size();) {
-        if (!self->clients[i]->handle(self->engine)) {
+    for (auto it = self->clients.begin(); it != self->clients.end();) {
+        if (!(*it)->handle(self->engine)) {
             INFO("closing connection to client");
-            self->clients.erase(self->clients.begin() + i);
+            self->clients.erase(it);
         } else {
-            ++i;
+            ++it;
         }
     }
 }

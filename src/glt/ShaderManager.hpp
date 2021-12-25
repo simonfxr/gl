@@ -86,8 +86,7 @@ struct GLT_API ShaderManager
     static uint32_t glToShaderVersion(uint32_t maj, uint32_t min);
 
 private:
-    struct Data;
-    Data *const self;
+    DECLARE_PIMPL(GLT_API, self);
 };
 
 } // namespace glt

@@ -35,7 +35,7 @@ struct GLT_API TextureRenderTarget : public RenderTarget
         {}
     };
 
-    TextureRenderTarget(size_t w, size_t h, const Params &);
+    TextureRenderTarget(const Params &);
     virtual ~TextureRenderTarget() override;
 
     void resize(size_t width, size_t height);
@@ -46,9 +46,20 @@ struct GLT_API TextureRenderTarget : public RenderTarget
     TextureSampler::ClampMode clampMode() { return _clamp_mode; }
     void clampMode(TextureSampler::ClampMode m) { _clamp_mode = m; }
 
-    virtual void createTexture(bool delete_old = true);
+    virtual void createTexture(bool delete_old);
+
+    void createTexture() { createTexture(true); }
 
     static bool checkFramebufferStatus(GLFramebufferObject &fb, GLenum target);
+
+    static std::shared_ptr<TextureRenderTarget> make_shared(size_t w,
+                                                            size_t h,
+                                                            const Params &ps)
+    {
+        auto p = std::make_shared<TextureRenderTarget>(ps);
+        p->resize(w, h);
+        return p;
+    }
 
 protected:
     virtual void doDeactivate() override;

@@ -6,7 +6,7 @@
 #include "pp/enum.hpp"
 #include "sys/endian.hpp"
 #include "util/Array.hpp"
-#include "util/NonCopyable.hpp"
+#include "util/noncopymove.hpp"
 
 #include <optional>
 #include <string>
@@ -135,7 +135,7 @@ struct OSSocket
 #    error "OS not supported"
 #endif
 
-struct Handle : NonCopyable
+struct Handle : private NonCopyable
 {
     HandleMode _mode{};
     OSHandle _os{};

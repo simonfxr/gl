@@ -25,7 +25,7 @@ struct ParticleRenderer
     {
         math::vec2_t position;
         math::real radius;
-        math::real __padding;
+        math::real _internal_padding;
         math::vec4_t color;
     };
 

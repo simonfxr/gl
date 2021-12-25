@@ -175,7 +175,7 @@ GeometryTransform::save()
     uint64_t cookie = self->mods[self->depth];
     uint16_t depth = self->depth;
     dup();
-    return SavePointArgs(*this, cookie, depth);
+    return { *this, cookie, depth };
 }
 
 void

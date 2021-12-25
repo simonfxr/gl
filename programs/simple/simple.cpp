@@ -28,7 +28,7 @@ Anim::link()
 void
 Anim::renderScene(const ge::Event<ge::RenderEvent> & /*unused*/)
 {
-    glt::RenderTarget *rt = engine.renderManager().activeRenderTarget();
+    auto rt = engine.renderManager().activeRenderTarget();
     rt->clearColor(glt::color(vec4(real(1))));
     rt->clear();
 }

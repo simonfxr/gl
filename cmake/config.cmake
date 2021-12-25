@@ -59,17 +59,32 @@ if(COMP_CLANG OR COMP_GCC)
   set_option(ENABLE_UBSAN ${ubsan_default} BOOL "enable -fsanitize=undefined")
 endif()
 
+# Let's wait for c++ support
+# set(fanalyzer_default False)
+
+# if(COMP_GCC)
+#   set(fanalyzer_default True)
+# endif()
+
+# set_option(ENABLE_FANALYZER ${fanalyzer_default} BOOL "enable -fanalyzer")
+
 if(ENABLE_ASAN)
   list(APPEND GLOBAL_FLAGS_BOTH -fsanitize=address)
 endif()
 
 if(ENABLE_UBSAN)
-  list(APPEND GLOBAL_FLAGS_BOTH -fsanitize=undefined
-       -fsanitize-undefined-trap-on-error)
+  list(
+    APPEND GLOBAL_FLAGS_BOTH -fsanitize=undefined
+    -fsanitize-undefined-trap-on-error
+  )
 endif()
 
 if(ENABLE_ASAN OR ENABLE_UBSAN)
   list(APPEND GLOBAL_FLAGS -fno-omit-frame-pointer)
+endif()
+
+if(ENABLE_FANALYZER)
+  list(APPEND GLOBAL_FLAGS -fanalyzer)
 endif()
 
 if(COMP_GCCLIKE)
@@ -80,9 +95,10 @@ if(COMP_GCCLIKE)
   list(APPEND GLOBAL_FLAGS -Werror=return-type)
   list(APPEND GLOBAL_CXX_FLAGS -fno-exceptions -fno-rtti)
 elseif(COMP_MSVC)
-  list(APPEND GLOBAL_FLAGS /wd4201 # anon struct/union
-       /wd4251 # inconsistent dll linkage
-       /wd4204 # non-constant aggregate initializer
+  list(
+    APPEND GLOBAL_FLAGS /wd4201 # anon struct/union
+    /wd4251 # inconsistent dll linkage
+    /wd4204 # non-constant aggregate initializer
   )
   # list(APPEND GLOBAL_FLAGS "/EH-") list(APPEND GLOBAL_LINK_FLAGS "/EH-")
   # list(APPEND GLOBAL_FLAGS "/GR-")
@@ -134,7 +150,8 @@ if(COMP_GCC)
     -Wunused-variable
     -Wvariadic-macros
     -Wvolatile-register-var
-    -Wwrite-strings)
+    -Wwrite-strings
+  )
   list(APPEND GLOBAL_FLAGS -Wextra)
 endif()
 
@@ -157,10 +174,11 @@ if(COMP_CLANG)
     -Wno-nested-anon-types
     -Wno-packed
     -Wno-padded
-    -Wno-return-std-move-in-c++11
+    # -Wno-return-std-move-in-c++11
     -Wno-gnu-statement-expression
     -Wno-assume
-    -Wno-ctad-maybe-unsupported)
+    -Wno-ctad-maybe-unsupported
+  )
 endif()
 
 if(COMP_CLANG AND ENABLE_LIBCXX)
@@ -223,8 +241,7 @@ if(PKG_CONFIG_FOUND)
     pkg_check_modules(unwind IMPORTED_TARGET libunwind)
     pkg_check_modules(dw IMPORTED_TARGET libdw)
     if(NOT TARGET PkgConfig::unwind OR NOT TARGET PkgConfig::dw)
-      message(
-        WARNING "ENABLE_STACKTRACES set, but libunwind or libdw not found")
+      message(WARNING "ENABLE_STACKTRACES set, but libunwind or libdw not found")
       set(ENABLE_STACKTRACES False)
     endif()
   endif()
@@ -246,3 +263,4 @@ message(STATUS "ENABLE_LIBCXX=${ENABLE_LIBCXX}")
 message(STATUS "ENABLE_OPENMP=${ENABLE_OPENMP}")
 message(STATUS "ENABLE_STACKTRACES=${ENABLE_STACKTRACES}")
 message(STATUS "ENABLE_UBSAN=${ENABLE_UBSAN}")
+message(STATUS "ENABLE_FANALYZER=${ENABLE_FANALYZER}")

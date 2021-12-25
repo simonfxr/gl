@@ -8,7 +8,7 @@
 
 namespace glt {
 
-struct GLT_API TextureRenderTarget3D : public TextureRenderTarget
+struct GLT_API TextureRenderTarget3D final : public TextureRenderTarget
 {
 public:
     enum AttachmentType
@@ -45,7 +45,16 @@ public:
     Attachment targetAttachment() const { return _target_attachment; }
     void targetAttachment(const Attachment &);
 
-    virtual void createTexture(bool delete_old = true) override;
+    virtual void createTexture(bool delete_old) override;
+
+    std::shared_ptr<TextureRenderTarget3D> make_shared(
+      const math::ivec3_t &dims,
+      const Params &ps)
+    {
+        auto p = std::make_shared<TextureRenderTarget3D>(dims, ps);
+        p->resize(dims);
+        return p;
+    }
 };
 
 } // namespace glt

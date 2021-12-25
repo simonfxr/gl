@@ -48,7 +48,7 @@ CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
 {
     switch (_type.value) {
     case CommandArgType::String:
-        copy(&string, std::move(rhs.string));
+        copy(&string, rhs.string);
         break;
     case CommandArgType::Integer:
         integer = rhs.integer;
@@ -70,7 +70,7 @@ CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
     }
 }
 
-CommandArg::CommandArg(CommandArg &&rhs) : CommandArg()
+CommandArg::CommandArg(CommandArg &&rhs) noexcept : CommandArg()
 {
     *this = std::move(rhs);
 }
@@ -81,7 +81,7 @@ CommandArg::~CommandArg()
 }
 
 CommandArg &
-CommandArg::operator=(CommandArg &&rhs)
+CommandArg::operator=(CommandArg &&rhs) noexcept
 {
     if (this == &rhs)
         return *this;
@@ -127,7 +127,6 @@ CommandArg::reset()
         destroy(string);
         return;
     case CommandArgType::Integer:
-        return;
     case CommandArgType::Number:
         return;
     case CommandArgType::KeyCombo:

@@ -165,12 +165,12 @@ enum MemInfoField
 void
 queryMemFreeATI(GLMemInfoATI::GLMemFree *free)
 {
-    GLint info[FREE_COUNT];
-    GL_CALL(glGetIntegerv, GL_VBO_FREE_MEMORY_ATI, info);
+    std::array<GLint, FREE_COUNT> info{};
+    GL_CALL(glGetIntegerv, GL_VBO_FREE_MEMORY_ATI, info.data());
     free->freeVBO = info[FREE_TOTAL];
-    GL_CALL(glGetIntegerv, GL_TEXTURE_FREE_MEMORY_ATI, info);
+    GL_CALL(glGetIntegerv, GL_TEXTURE_FREE_MEMORY_ATI, info.data());
     free->freeTexture = info[FREE_TOTAL];
-    GL_CALL(glGetIntegerv, GL_RENDERBUFFER_FREE_MEMORY_ATI, info);
+    GL_CALL(glGetIntegerv, GL_RENDERBUFFER_FREE_MEMORY_ATI, info.data());
     free->freeRenderbuffer = info[FREE_TOTAL];
 }
 

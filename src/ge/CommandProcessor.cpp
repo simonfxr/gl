@@ -211,7 +211,6 @@ CommandProcessor::exec(CommandPtr &com, ArrayView<CommandArg> args)
                 val_type = AT::VarRef;
                 break;
             case PT::Any:
-                UNREACHABLE;
             case PT::List:
                 UNREACHABLE;
             }

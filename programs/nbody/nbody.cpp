@@ -113,7 +113,7 @@ Anim::animate(const ge::Event<ge::AnimationEvent> &)
 void
 Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 {
-    glt::RenderTarget *rt = engine.renderManager().activeRenderTarget();
+    auto rt = engine.renderManager().activeRenderTarget();
     rt->clearColor(glt::color(vec4(real(1))));
     rt->clear();
 

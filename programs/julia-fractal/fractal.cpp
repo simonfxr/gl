@@ -100,8 +100,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
         glt::TextureRenderTarget::Params ps;
         ps.samples = NUM_SAMPLES;
         ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
-        render_texture = std::make_shared<glt::TextureRenderTarget>(w, h, ps);
-        engine.renderManager().setDefaultRenderTarget(render_texture.get());
+        render_texture = glt::TextureRenderTarget::make_shared(w, h, ps);
+        engine.renderManager().setDefaultRenderTarget(render_texture);
 
         GL_CALL(glEnable, GL_MULTISAMPLE);
     }
@@ -135,7 +135,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
     glt::RenderManager &rm = engine.renderManager();
 
     if (MULTISAMPLING) {
-        rm.setActiveRenderTarget(render_texture.get());
+        rm.setActiveRenderTarget(render_texture);
         render_texture->clear();
     }
 
@@ -154,7 +154,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
     quadBatch.draw();
 
     if (MULTISAMPLING) {
-        rm.setActiveRenderTarget(&engine.window().renderTarget());
+        rm.setActiveRenderTarget(engine.window().renderTarget());
         auto postproc = e.shaderManager().program("postproc");
         ASSERT(postproc);
 
@@ -189,7 +189,7 @@ Anim::handleWindowResized(const ge::Event<ge::WindowResized> &ev)
         auto h = ev.info.window.windowHeight();
         engine.renderManager().setActiveRenderTarget(nullptr);
         render_texture->resize(w, h);
-        engine.renderManager().setDefaultRenderTarget(render_texture.get());
+        engine.renderManager().setDefaultRenderTarget(render_texture);
     }
 }
 

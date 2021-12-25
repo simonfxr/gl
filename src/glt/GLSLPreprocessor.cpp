@@ -65,12 +65,6 @@ struct ProcessingState
     std::stack<FileContext> stack;
 };
 
-void
-ProcessingStateDeleter::operator()(ProcessingState *p) noexcept
-{
-    delete p; // NOLINT
-}
-
 GLSLPreprocessor::GLSLPreprocessor(const IncludePath &incPath,
                                    ShaderIncludes &incs,
                                    ShaderDependencies &deps)

@@ -23,22 +23,18 @@ struct RenderManager::Data
 {
     ViewFrustum frustum;
     GeometryTransform transform;
-    bool inScene{ false };
     SavePointArgs transformStateBOS; // transform state in begin of scene
 
-    bool owning_def_rt{ false };
-    RenderTarget *def_rt{ nullptr };
+    std::shared_ptr<RenderTarget> def_rt;
 
     // always active
-    RenderTarget *current_rt{ nullptr };
+    std::shared_ptr<RenderTarget> current_rt;
 
     Projection projection;
-    bool projection_outdated{ true };
 
     uint64_t frame_id_current = 1;
     uint64_t frame_id_last = 0;
 
-    bool perf_initialized{ false };
     GLPerfCounter perf_counter;
 
     double sum_elapsed{};
@@ -47,6 +43,10 @@ struct RenderManager::Data
     FrameStatistics stats;
 
     RenderManager &self;
+
+    bool inScene{ false };
+    bool projection_outdated{ true };
+    bool perf_initialized{ false };
 
     explicit Data(RenderManager &self_)
       : transformStateBOS(transform, 0, 0), self(self_)
@@ -68,15 +68,12 @@ RenderManager::~RenderManager()
 void
 RenderManager::shutdown()
 {
-    if (self->current_rt != nullptr) {
+    if (self->current_rt) {
         self->current_rt->deactivate();
-        self->current_rt = nullptr;
+        self->current_rt.reset();
     }
 
-    if (self->owning_def_rt) {
-        delete self->def_rt;
-        self->def_rt = nullptr;
-    }
+    self->def_rt.reset();
 
     self->perf_counter.clear();
 }
@@ -129,28 +126,21 @@ RenderManager::updateProjection(math::real aspectRatio)
 }
 
 void
-RenderManager::setDefaultRenderTarget(RenderTarget *rt, bool delete_after)
+RenderManager::setDefaultRenderTarget(const std::shared_ptr<RenderTarget> &rt)
 {
     if (rt != self->def_rt) {
 
-        if (self->owning_def_rt && self->def_rt != nullptr) {
-
-            if (self->current_rt == self->def_rt) {
-                WARN("destroying active render target");
-                self->current_rt->deactivate();
-                self->current_rt = nullptr;
-            }
-
-            delete self->def_rt;
+        if (self->current_rt && self->current_rt == self->def_rt) {
+            WARN("destroying active render target");
+            self->current_rt->deactivate();
+            self->current_rt.reset();
         }
 
         self->def_rt = rt;
     }
-
-    self->owning_def_rt = delete_after;
 }
 
-RenderTarget *
+const std::shared_ptr<RenderTarget> &
 RenderManager::defaultRenderTarget() const
 {
     return self->def_rt;
@@ -164,20 +154,21 @@ RenderManager::setDefaultRenderTarget()
 }
 
 void
-RenderManager::setActiveRenderTarget(RenderTarget *rt)
+RenderManager::setActiveRenderTarget(const std::shared_ptr<RenderTarget> &rt)
 {
     if (rt != self->current_rt) {
-
-        if (self->current_rt != nullptr)
+        if (self->current_rt) {
             self->current_rt->deactivate();
+            self->current_rt.reset();
+        }
 
         self->current_rt = rt;
-        if (self->current_rt != nullptr)
+        if (self->current_rt)
             self->current_rt->activate();
     }
 }
 
-RenderTarget *
+const std::shared_ptr<RenderTarget> &
 RenderManager::activeRenderTarget() const
 {
     return self->current_rt;

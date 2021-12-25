@@ -22,7 +22,7 @@ struct color
         uint32_t rgba;
     };
 
-    color() = default;
+    constexpr color() noexcept = default;
 
     constexpr color(byte _r, byte _g, byte _b, byte _a)
       : r(_r), g(_g), b(_b), a(_a)
@@ -30,7 +30,8 @@ struct color
 
     constexpr color(byte _r, byte _g, byte _b) : r(_r), g(_g), b(_b), a(255) {}
 
-    constexpr color(const color &c) : r(c.r), g(c.g), b(c.b), a(c.a) {}
+    constexpr color(const color &c) noexcept = default;
+    constexpr color(color &&c) noexcept = default;
 
     constexpr explicit color(const math::vec4_t &v)
       : r(byte(255 * v[0]))
@@ -43,14 +44,8 @@ struct color
       : r(byte(255 * v[0])), g(byte(255 * v[1])), b(byte(255 * v[2])), a(255)
     {}
 
-    constexpr color &operator=(const color &c)
-    {
-        r = c.r;
-        g = c.g;
-        b = c.b;
-        a = c.a;
-        return *this;
-    }
+    constexpr color &operator=(const color &c) noexcept = default;
+    constexpr color &operator=(color &&c) noexcept = default;
 
     constexpr math::vec4_t vec4() const
     {

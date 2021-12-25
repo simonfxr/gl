@@ -299,20 +299,17 @@ static const uint32_t RAY_SAMPLES =
 struct Ray
 {
     Faces lightContrib{};
-    ivec3_t *offset;
-    Ray() { offset = new ivec3_t[RAY_SAMPLES]; }
-    ~Ray() { delete[] offset; }
+    std::unique_ptr<ivec3_t[]> offset =
+      std::make_unique<ivec3_t[]>(RAY_SAMPLES);
 };
 
 struct Rays
 {
     Faces sumcos{};
-    Ray *rays;
+    std::unique_ptr<Ray[]> rays = std::make_unique<Ray[]>(SPHERE_POINTS);
     uint32_t faceOffsets[6]{};
     uint32_t faceLengths[6]{};
     Faces lightContribFace[6]{};
-    Rays() { rays = new Ray[SPHERE_POINTS]; }
-    ~Rays() { delete[] rays; }
 };
 
 struct GlobalOcc
@@ -961,10 +958,10 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
             for (int32_t k = 0; k < N; ++k)
                 hull(i, j, k) = hasNeighbours(world, vis, ivec3(i, j, k));
 
-    GlobalOcc *occmap = nullptr;
+    std::unique_ptr<GlobalOcc> occmap;
     if (OCCLUSION) {
-        occmap = new GlobalOcc;
-        time_op(createOcclusionMap(occmap, hull, worldOrVis, rays));
+        occmap.reset(new GlobalOcc);
+        time_op(createOcclusionMap(occmap.get(), hull, worldOrVis, rays));
     }
 
     // time_op({
@@ -983,9 +980,8 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
     INFO("created verts");
 
     time_op(createModel(
-      worldModel, world, vis, occmap, verts, permut, stats, *densitiesp));
-    delete occmap;
-    occmap = nullptr;
+      worldModel, world, vis, occmap.get(), verts, permut, stats, *densitiesp));
+    occmap.reset();
 
     sys::io::stderr() << "blocks: " << stats.blocks
                       << ", visible blocks: " << stats.visBlocks << "\n";

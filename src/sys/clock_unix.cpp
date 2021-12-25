@@ -1,6 +1,7 @@
 #include "sys/clock.hpp"
 
 #include "err/err.hpp"
+#include "sys/strerror_unix.hpp"
 
 #include <cerrno>
 #include <cmath>
@@ -25,7 +26,7 @@ getTime()
         if (errno == EINTR) {
             errno = 0;
         } else {
-            ERR(std::string("clock_gettime failed") + strerror(errno));
+            ERR(std::string("clock_gettime failed") + strerror_errno().data());
             return NAN;
         }
     }
@@ -46,8 +47,8 @@ sleep(double secs) noexcept
 {
     timespec tv{};
     tv.tv_sec = static_cast<decltype(tv.tv_sec)>(secs);
-    tv.tv_nsec = static_cast<decltype(tv.tv_nsec)>((secs - tv.tv_sec) *
-                                                   NANOSECONDS_PER_SECOND);
+    tv.tv_nsec = static_cast<decltype(tv.tv_nsec)>(
+      (secs - static_cast<double>(tv.tv_sec)) * NANOSECONDS_PER_SECOND);
 
     timespec rmtv{};
     while (nanosleep(&tv, &rmtv) == -1) {
@@ -55,7 +56,7 @@ sleep(double secs) noexcept
             errno = 0;
             tv = rmtv;
         } else {
-            ERR(std::string("sleep failed: ") + strerror(errno));
+            ERR(std::string("sleep failed: ") + strerror_errno().data());
         }
     }
 }

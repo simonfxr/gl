@@ -2,8 +2,10 @@
 
 #include "err/err.hpp"
 #include "sys/fs.hpp"
+#include "sys/strerror_unix.hpp"
 #include "util/string.hpp"
 
+#include <array>
 #include <cerrno>
 #include <cstring>
 #include <ctime>
@@ -18,7 +20,7 @@ bool
 cwd(std::string_view dir)
 {
     if (chdir(std::string(dir).c_str()) < 0) {
-        ERR(strerror(std::exchange(errno, 0)));
+        ERR(strerror_errno(errno).data());
         return false;
     }
     return true;
@@ -39,8 +41,7 @@ retry:
             if (errno == ERANGE)
                 goto retry;
             if (errno != EINTR) {
-                ERR(string_concat("cwd() failed: ",
-                                  strerror(std::exchange(errno, 0))));
+                ERR(string_concat("cwd() failed: ", strerror_errno().data()));
                 return "";
             }
         }
@@ -165,9 +166,9 @@ modificationTime(std::string_view path)
     struct stat st
     {};
     if (stat(std::string(path).c_str(), &st) != 0) {
-        auto err = std::exchange(errno, 0);
+        auto err = errno;
         if (err != ENOENT)
-            ERR(strerror(err));
+            ERR(strerror_errno(err).data());
         return std::nullopt;
     }
     return FileTime{ st.st_mtime };
@@ -187,7 +188,7 @@ exists(std::string_view path)
     if (stat(std::string(path).c_str(), &info) == -1) {
         auto err = std::exchange(errno, 0);
         if (err != ENOENT)
-            ERR(strerror(err));
+            ERR(strerror_errno(err).data());
         return std::nullopt;
     }
     auto objtype = info.st_mode & S_IFMT;

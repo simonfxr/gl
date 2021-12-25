@@ -99,7 +99,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
 
         if (skip <= 0) {
             out << "    ";
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
             debugInfo(out, (reinterpret_cast<void **>(ip) - 1));
             out << "\n";
         } else {

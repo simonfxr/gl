@@ -11,6 +11,8 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 
+#include <memory>
+
 namespace glt {
 
 struct GLT_API FrameStatistics
@@ -86,15 +88,15 @@ struct GLT_API RenderManager
 
     void updateProjection(math::real aspectRatio);
 
-    void setDefaultRenderTarget(RenderTarget *rt, bool delete_after = false);
+    void setDefaultRenderTarget(const std::shared_ptr<RenderTarget> &);
 
-    RenderTarget *defaultRenderTarget() const;
+    const std::shared_ptr<RenderTarget> &defaultRenderTarget() const;
 
-    void setActiveRenderTarget(RenderTarget *rt);
+    void setActiveRenderTarget(const std::shared_ptr<RenderTarget> &rt);
 
     void setDefaultRenderTarget();
 
-    RenderTarget *activeRenderTarget() const;
+    const std::shared_ptr<RenderTarget> &activeRenderTarget() const;
 
     void beginScene();
 

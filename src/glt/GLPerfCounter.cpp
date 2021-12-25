@@ -57,7 +57,7 @@ GLPerfCounter::end()
 }
 
 double
-GLPerfCounter::query()
+GLPerfCounter::query() const
 {
     return _last_query;
 }

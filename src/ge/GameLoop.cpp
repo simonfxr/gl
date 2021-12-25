@@ -32,13 +32,13 @@ struct GameLoop::Data
     bool initialized{ false };
 
     Data();
-    time now();
+    HU_NODISCARD time now() const;
 };
 
 DECLARE_PIMPL_DEL_AUDIT(GameLoop)
 
 GameLoop::time
-GameLoop::Data::now()
+GameLoop::Data::now() const
 {
     return game->now() - clock_offset;
 }

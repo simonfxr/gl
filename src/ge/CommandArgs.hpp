@@ -119,11 +119,11 @@ struct GE_API CommandArg : Comparable<CommandArg>
         return CommandArg(CommandValue::makeNamedRef(std::move(comm)));
     }
 
-    CommandArg(CommandArg &&);
+    CommandArg(CommandArg &&) noexcept;
     CommandArg(const CommandArg &);
 
     CommandArg &operator=(const CommandArg &);
-    CommandArg &operator=(CommandArg &&);
+    CommandArg &operator=(CommandArg &&) noexcept;
 
     HU_PURE_FN constexpr CommandArgType type() const noexcept { return _type; }
 

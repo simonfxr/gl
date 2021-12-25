@@ -44,16 +44,16 @@ struct InitCommandHandler : public EventHandler<InitEvent>
 #define BEGIN_COMMANDS                                                         \
     ArrayView<const std::shared_ptr<Command>> predefinedCommands()             \
     {                                                                          \
-        BEGIN_NO_WARN_GLOBAL_DESTRUCTOR static const std::shared_ptr<Command>  \
-          predefinedCommandArray[] = {
+        BEGIN_NO_WARN_GLOBAL_DESTRUCTOR static const auto                      \
+          predefinedCommandArray = std::to_array<std::shared_ptr<Command>>({
 
 #define END_COMMANDS                                                           \
-    }                                                                          \
-    ;                                                                          \
+    });                                                                        \
     END_NO_WARN_GLOBAL_DESTRUCTOR return view_array(                           \
-      predefinedCommandArray, ARRAY_LENGTH(predefinedCommandArray));           \
+      predefinedCommandArray.begin(), predefinedCommandArray.size());          \
     }
 
+// NOLINTNEXTLINE(bugprone-macro-parentheses)
 #define COMMAND0(name, descr) CommandDecl{ name, descr } + []
 
 #define COMMAND(name, descr) , COMMAND0(name, descr)
@@ -365,8 +365,8 @@ COMMAND("perspectiveProjection", "set parameters for perspective projection")
 
     rm.setDefaultProjection(glt::Projection::mkPerspective(
       math::degToRad(math::real(fovDeg)), math::real(zn), math::real(zf)));
-    glt::RenderTarget *tgt = rm.activeRenderTarget();
-    if (tgt != nullptr)
+    auto tgt = rm.activeRenderTarget();
+    if (tgt)
         rm.updateProjection(math::real(tgt->width()) /
                             math::real(tgt->height()));
 }

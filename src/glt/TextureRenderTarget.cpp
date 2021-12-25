@@ -6,9 +6,7 @@
 
 namespace glt {
 
-TextureRenderTarget::TextureRenderTarget(size_t w,
-                                         size_t h,
-                                         const TextureRenderTarget::Params &ps)
+TextureRenderTarget::TextureRenderTarget(const TextureRenderTarget::Params &ps)
   : RenderTarget(0, 0, ps.buffers)
   , _sampler(std::make_shared<TextureData>(Texture2D, ps.samples))
   , _frame_buffer(0)
@@ -16,9 +14,7 @@ TextureRenderTarget::TextureRenderTarget(size_t w,
   , _samples(ps.samples)
   , _filter_mode(ps.filter_mode)
   , _clamp_mode(ps.clamp_mode)
-{
-    resize(w, h);
-}
+{}
 
 TextureRenderTarget::~TextureRenderTarget() = default;
 
@@ -138,19 +134,21 @@ TextureRenderTarget::checkFramebufferStatus(GLFramebufferObject &fb,
     case s:                                                                    \
         str_status = #s;                                                       \
         break
+    // clang-format off
     switch (status) {
-        CASE(GL_FRAMEBUFFER_UNDEFINED);
-        CASE(GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
-        CASE(GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
-        CASE(GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER);
-        CASE(GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER);
-        CASE(GL_FRAMEBUFFER_UNSUPPORTED);
-        CASE(GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE);
-        CASE(GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS);
+    CASE(GL_FRAMEBUFFER_UNDEFINED);
+    CASE(GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
+    CASE(GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
+    CASE(GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER);
+    CASE(GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER);
+    CASE(GL_FRAMEBUFFER_UNSUPPORTED);
+    CASE(GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE);
+    CASE(GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS);
+    default:
+        ERR(str_status);
     }
+    // clang-format on
 #undef CASE
-
-    ERR(str_status);
     return false;
 }
 

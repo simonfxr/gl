@@ -14,18 +14,13 @@ namespace glt {
 
 namespace {
 
-char *
-realloc_vertex_buf(char *buf, size_t vsize, size_t n)
+MeshBase::unique_vertex_ptr
+realloc_vertex_buf(MeshBase::unique_vertex_ptr buf, size_t vsize, size_t n)
 {
-    auto p = static_cast<char *>(realloc(buf, vsize * n));
+    auto p = static_cast<char *>(realloc(buf.release(), vsize * n)); // NOLINT
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     ASSERT(reinterpret_cast<uintptr_t>(p) % alignof(std::max_align_t) == 0);
-    return p;
-}
-
-void
-free_vertex_buf(char *buf)
-{
-    free(buf);
+    return MeshBase::unique_vertex_ptr{ static_cast<char *>(p) };
 }
 
 void
@@ -68,6 +63,13 @@ validateUsageHint(GLenum usageHint)
 }
 } // namespace
 
+void
+MeshBase::VertexDataFree::operator()(char *buf) noexcept
+{
+    if (buf)
+        ::free(buf); // NOLINT
+}
+
 MeshBase::MeshBase(const StructInfo &si,
                    size_t initial_nverts,
                    size_t initial_nelems,
@@ -84,8 +86,8 @@ MeshBase::MeshBase(const StructInfo &si,
         nverts *= 2;
 
     vertex_data = realloc_vertex_buf(nullptr, si.size, nverts);
-    vertex_data_end = vertex_data;
-    vertex_data_lim = vertex_data + si.size * nverts;
+    vertex_data_end = vertex_data.get();
+    vertex_data_lim = vertex_data.get() + si.size * nverts;
     for (auto i : irange(si.fields.size()))
         enableAttribute(i);
 }
@@ -178,7 +180,7 @@ MeshBase::send(GLenum usageHint)
     GL_CALL(glNamedBufferDataEXT,
             *vertex_buffer_name,
             vertex_count * struct_info.size,
-            vertex_data,
+            vertex_data.get(),
             usageHint);
     gpu_vertex_count = vertex_count;
     initVertexAttribs();
@@ -351,8 +353,8 @@ MeshBase::attributeEnabled(size_t i)
 void
 MeshBase::freeHost()
 {
-    free_vertex_buf(vertex_data);
-    vertex_data = vertex_data_end = vertex_data_lim = nullptr;
+    vertex_data.reset(nullptr);
+    vertex_data_end = vertex_data_lim = nullptr;
     vertex_count = 0;
     elements.clear();
 }
@@ -370,9 +372,10 @@ void
 MeshBase::growVertexBuf()
 {
     size_t new_size = vertex_count == 0 ? MIN_NUM_VERTICES : vertex_count * 2;
-    vertex_data = realloc_vertex_buf(vertex_data, struct_info.size, new_size);
-    vertex_data_end = vertex_data + struct_info.size * vertex_count;
-    vertex_data_lim = vertex_data + struct_info.size * new_size;
+    vertex_data =
+      realloc_vertex_buf(std::move(vertex_data), struct_info.size, new_size);
+    vertex_data_end = vertex_data.get() + struct_info.size * vertex_count;
+    vertex_data_lim = vertex_data.get() + struct_info.size * new_size;
 }
 
 } // namespace glt

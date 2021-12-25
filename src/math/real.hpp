@@ -244,6 +244,11 @@ mix(real a, real b, real t)
     return a + t * (b - a);
 }
 
+PRAGMA_DIAGNOSTIC_PUSH
+#ifdef __clang__
+#    pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 inline constexpr real operator"" _r(long double x)
 {
     return real(x);
@@ -253,6 +258,8 @@ inline constexpr real operator"" _r(unsigned long long x)
 {
     return real(x);
 }
+
+PRAGMA_DIAGNOSTIC_POP
 
 } // namespace math
 

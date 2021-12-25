@@ -8,8 +8,7 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "pp/pimpl.hpp"
-#include "util/NonCopyable.hpp"
-#include "util/NonMoveable.hpp"
+#include "util/noncopymove.hpp"
 
 #include <memory>
 
@@ -86,9 +85,7 @@ public:
     {}
 };
 
-struct GLT_API SavePoint
-  : NonCopyable
-  , NonMoveable
+struct GLT_API SavePoint : private NonCopyMoveable
 {
     const SavePointArgs args;
     SavePoint(const SavePointArgs &_args) : args(_args) {}

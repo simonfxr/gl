@@ -50,7 +50,7 @@ MouseLookPlugin::Data::stateChanged(State new_state)
 
         size_t h;
         win.windowSize(w, h);
-        win.setMouse(int16_t(w) / 2, int16_t(h) / 2);
+        win.setMouse(static_cast<int16_t>(w / 2), static_cast<int16_t>(h / 2));
         win.showMouseCursor(false);
     } break;
     case Free: {

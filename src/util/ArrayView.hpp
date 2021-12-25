@@ -3,7 +3,6 @@
 
 #include "defs.h"
 #include "err/err.hpp"
-#include "util/NonCopyable.hpp"
 
 #include <type_traits>
 

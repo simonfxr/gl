@@ -112,7 +112,7 @@ struct Game
         float spotAngle;
     } sphereUniforms{};
 
-    glt::TextureRenderTarget *textureRenderTarget{};
+    std::shared_ptr<glt::TextureRenderTarget> textureRenderTarget{};
     ge::Engine *engine{};
 
     float game_speed{};
@@ -129,7 +129,7 @@ struct Game
     {
         if (engine != nullptr)
             engine->renderManager().shutdown();
-        delete textureRenderTarget;
+        textureRenderTarget.reset();
     }
 
     void updateIndirectRendering(bool indirect);
@@ -327,7 +327,7 @@ Game::renderScene(const ge::Event<ge::RenderEvent> &ev)
     if (indirect_rendering) {
         GL_CALL(glDisable, GL_DEPTH_TEST);
 
-        renderManager.setActiveRenderTarget(&e.window().renderTarget());
+        renderManager.setActiveRenderTarget(e.window().renderTarget());
         auto postprocShader = e.shaderManager().program("postproc");
         ASSERT(postprocShader);
         postprocShader->use();
@@ -378,7 +378,7 @@ Renderer::camera()
 void
 Game::updateIndirectRendering(bool indirect)
 {
-    glt::RenderTarget *rt;
+    std::shared_ptr<glt::RenderTarget> rt;
 
     if (indirect) {
 
@@ -387,12 +387,14 @@ Game::updateIndirectRendering(bool indirect)
             auto h = engine->window().windowHeight();
             glt::TextureRenderTarget::Params ps;
             ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
-            textureRenderTarget = new glt::TextureRenderTarget(w, h, ps);
+            textureRenderTarget =
+              std::make_shared<glt::TextureRenderTarget>(ps);
+            textureRenderTarget->resize(w, h);
         }
 
         rt = textureRenderTarget;
     } else {
-        rt = &engine->window().renderTarget();
+        rt = engine->window().renderTarget();
     }
 
     indirect_rendering = indirect;

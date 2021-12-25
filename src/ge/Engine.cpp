@@ -19,6 +19,8 @@ struct Engine::Data : public GameLoop::Game
 {
     struct Modules
     {
+        DISABLE_COPY_MOVE_MEMBERS(Modules);
+
         Modules()
         {
             sys::moduleInit();
@@ -34,7 +36,7 @@ struct Engine::Data : public GameLoop::Game
         }
     };
 
-    Modules __modules;
+    Modules _modules;
 
     Engine &theEngine; // owning engine
     std::unique_ptr<GameWindow> window;
@@ -70,7 +72,7 @@ struct Engine::Data : public GameLoop::Game
     void tick() final;
     void render(double interpolation) final;
     void handleInputEvents() final;
-    GameLoop::time now() final;
+    HU_NODISCARD GameLoop::time now() const final;
     void sleep(GameLoop::time secs) final;
     void atExit(int32_t exit_code) final;
 
@@ -320,7 +322,7 @@ Engine::Data::handleInputEvents()
 }
 
 GameLoop::time
-Engine::Data::now()
+Engine::Data::now() const
 {
     return GameLoop::time(sys::queryTimer());
 }
@@ -342,7 +344,7 @@ Engine::Data::init(const EngineOptions &eopts)
 {
     opts = &eopts;
     window = std::make_unique<GameWindow>(eopts.window);
-    renderManager.setDefaultRenderTarget(&window->renderTarget());
+    renderManager.setDefaultRenderTarget(window->renderTarget());
     registerHandlers();
     initialized = true;
     return true;

@@ -131,7 +131,7 @@ enum class KeyState : uint8_t
      _(    MXButton1 ) \
      _(    MXButton2 ))
 
-// clang-format off
+// clang-format on
 
 PP_DEF_ENUM_WITH_API(GE_API, GE_KEY_CODE_ENUM_DEF);
 
@@ -153,7 +153,7 @@ compare(const Key &a, const Key &b)
 
 using KeyBinding = std::vector<Key>;
 
-HU_NODISCARD GE_API  std::optional<KeyCode>
+HU_NODISCARD GE_API std::optional<KeyCode>
 parseKeyCode(const std::string_view &str);
 
 GE_API int

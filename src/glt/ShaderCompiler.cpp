@@ -11,6 +11,7 @@
 #include "util/range.hpp"
 
 #include <algorithm>
+#include <array>
 #include <functional>
 #include <queue>
 #include <stack>
@@ -82,8 +83,8 @@ struct FileShaderObject
 struct ShaderSource::Data
 {
     const ShaderSourceKey key;
-    const ShaderType type;
     const std::variant<StringSource, FileSource> source;
+    const ShaderType type;
 
     static std::shared_ptr<ShaderObject> load(
       const std::shared_ptr<ShaderSource> & /*src*/,
@@ -168,16 +169,16 @@ struct ShaderCompilerQueue::Data
 {
     ShaderCompilerQueue &self;
     ShaderCompiler &compiler;
-    const ShaderCompileFlags flags;
     ShaderObjects &compiled;
     QueuedJobs inQueue;
     CompileJobs toCompile;
+    const ShaderCompileFlags flags;
 
     Data(ShaderCompilerQueue &self_,
          ShaderCompiler &comp,
          ShaderObjects &_compiled,
-         ShaderCompileFlags flgs)
-      : self(self_), compiler(comp), flags(flgs), compiled(_compiled)
+         ShaderCompileFlags _flags)
+      : self(self_), compiler(comp), compiled(_compiled), flags(_flags)
     {}
 
     void put(const std::shared_ptr<ShaderObject> & /*so*/);
@@ -206,13 +207,12 @@ struct ShaderTypeMapping
     GLenum glType;
 };
 
-const ShaderTypeMapping shaderTypeMappings[] = {
-    { "frag", ShaderType::FragmentShader, GL_FRAGMENT_SHADER },
+constexpr const auto shaderTypeMappings = std::to_array<ShaderTypeMapping>(
+  { { "frag", ShaderType::FragmentShader, GL_FRAGMENT_SHADER },
     { "vert", ShaderType::VertexShader, GL_VERTEX_SHADER },
     { "geom", ShaderType::GeometryShader, GL_GEOMETRY_SHADER },
     { "tctl", ShaderType::TesselationControl, GL_TESS_CONTROL_SHADER },
-    { "tevl", ShaderType::TesselationEvaluation, GL_TESS_EVALUATION_SHADER }
-};
+    { "tevl", ShaderType::TesselationEvaluation, GL_TESS_EVALUATION_SHADER } });
 
 bool
 compilePreprocessed(ShaderCompilerQueue & /*scq*/,
@@ -256,8 +256,9 @@ compilePreprocessed(ShaderCompilerQueue &scq,
 
     auto nsegments = GLsizei(proc.segments.size());
     const char **segments = &proc.segments[0];
-    const auto *segLengths =
-      reinterpret_cast<const GLint *>(&proc.segLengths[0]);
+    static_assert(sizeof(GLint) == sizeof(proc.segLengths[0]));
+    auto p0 = &proc.segLengths[0];
+    auto segLengths = reinterpret_cast<const GLint *>(p0); // NOLINT
 
     shader.ensure(shader_type);
     if (!shader.valid()) {
@@ -317,18 +318,18 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
     if (log_len > 0) {
 
         // log_len includes null terminator
-        auto log = std::make_unique<GLchar[]>(size_t(log_len));
-        GL_CALL(glGetShaderInfoLog, *shader, log_len, nullptr, log.get());
+        auto log = std::vector<GLchar>(size_t(log_len));
+        GL_CALL(glGetShaderInfoLog, *shader, log_len, nullptr, log.data());
 
-        GLchar *logBegin = log.get();
-        while (logBegin < log.get() + log_len - 1 && isspace(*logBegin))
+        GLchar *logBegin = log.data();
+        while (logBegin < &log[log_len - 1] && isspace(*logBegin))
             ++logBegin;
 
-        GLchar *end = log.get() + log_len - 1;
+        GLchar *end = &log[log_len - 1];
         while (end > logBegin && isspace(end[-1]))
             --end;
         *end = 0;
-        const char *log_msg = log.get();
+        const char *log_msg = log.data();
 
         if (logBegin == end) {
             out << "shader compile log empty\n";
@@ -376,7 +377,7 @@ ShaderSource::makeFileSource(ShaderType ty, std::string path)
 {
     ASSERT(sys::fs::fileExists(path));
     return std::make_shared<ShaderSource>(
-      Data{ path, ty, { FileSource{ std::move(path) } } });
+      Data{ path, { FileSource{ std::move(path) } }, ty });
 }
 
 std::shared_ptr<ShaderSource>
@@ -384,7 +385,7 @@ ShaderSource::makeStringSource(ShaderType ty, std::string source)
 {
     auto h = hash(source);
     return std::make_shared<ShaderSource>(
-      Data{ std::move(h), ty, { StringSource{ std::move(source) } } });
+      Data{ std::move(h), { StringSource{ std::move(source) } }, ty });
 }
 
 std::shared_ptr<ShaderObject>

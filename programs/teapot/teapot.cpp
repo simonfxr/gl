@@ -281,9 +281,8 @@ Anim::init(const Event<InitEvent> &ev)
         glt::TextureRenderTarget::Params ps;
         ps.samples = 4;
         ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
-        tex_render_target =
-          std::make_shared<glt::TextureRenderTarget>(w, h, ps);
-        engine.renderManager().setDefaultRenderTarget(tex_render_target.get());
+        tex_render_target = glt::TextureRenderTarget::make_shared(w, h, ps);
+        engine.renderManager().setDefaultRenderTarget(tex_render_target);
     }
 
     {
@@ -293,9 +292,9 @@ Anim::init(const Event<InitEvent> &ev)
         ps.buffers = glt::RT_COLOR_BUFFER;
         ps.filter_mode = glt::TextureSampler::FilterLinear;
         glow_render_target_src =
-          std::make_shared<glt::TextureRenderTarget>(w, h, ps);
+          glt::TextureRenderTarget::make_shared(w, h, ps);
         glow_render_target_dst =
-          std::make_shared<glt::TextureRenderTarget>(w, h, ps);
+          glt::TextureRenderTarget::make_shared(w, h, ps);
     }
 
     {
@@ -338,10 +337,10 @@ Anim::renderScene(const Event<RenderEvent> &e)
     real interpolation = e.info.interpolation;
     glt::RenderManager &rm = engine.renderManager();
 
-    glt::RenderTarget *render_target;
+    std::shared_ptr<glt::RenderTarget> render_target;
     real bg_alpha;
 #ifdef RENDER_NOGLOW
-    render_target = &engine.window().renderTarget();
+    render_target = engine.window().renderTarget();
     bg_alpha = 1.f;
 #else
     render_target = tex_render_target.get();
@@ -480,7 +479,7 @@ Anim::onWindowResized(const Event<WindowResized> &ev)
     auto h = ev.info.window.windowHeight();
     engine.renderManager().setActiveRenderTarget(nullptr);
     tex_render_target->resize(w, h);
-    engine.renderManager().setDefaultRenderTarget(tex_render_target.get());
+    engine.renderManager().setDefaultRenderTarget(tex_render_target);
 }
 
 void

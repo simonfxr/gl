@@ -30,7 +30,7 @@ struct GLT_API GLPerfCounter
     void init(size_t);
     void begin();
     void end();
-    double query();
+    double query() const;
 
     void clear();
 };

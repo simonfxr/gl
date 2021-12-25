@@ -17,28 +17,22 @@ using ProgramMap =
 
 struct ShaderManager::Data : NonCopyable
 {
-    ShaderManagerVerbosity verbosity;
     sys::io::OutStream *out;
     std::vector<std::string> shaderDirs;
     ProgramMap programs;
-    uint32_t shader_version;
-    ShaderProfile shader_profile;
-    bool cache_so;
-    bool dumpShaders{ false };
     std::shared_ptr<ShaderCache> globalShaderCache;
     PreprocessorDefinitions globalDefines;
     ShaderCompiler shaderCompiler;
-    ShaderManager &self;
+    uint32_t shader_version{};
+    ShaderProfile shader_profile{ ShaderProfile::Core };
+    ShaderManagerVerbosity verbosity{ ShaderManagerVerbosity::Info };
+    bool cache_so{ true };
+    bool dumpShaders{ false };
 
     explicit Data(ShaderManager &me)
-      : verbosity(ShaderManagerVerbosity::Info)
-      , out(&sys::io::stdout())
-      , shader_version(0)
-      , shader_profile(ShaderProfile::Core)
-      , cache_so(true)
+      : out(&sys::io::stdout())
       , globalShaderCache(std::make_shared<ShaderCache>())
       , shaderCompiler(me)
-      , self(me)
     {}
 };
 
@@ -47,11 +41,9 @@ ShaderManager::ShaderManager() : self(new Data(*this))
     self->shaderCompiler.init();
 }
 
-ShaderManager::~ShaderManager()
-{
-    shutdown();
-    delete self;
-}
+ShaderManager::~ShaderManager() = default;
+
+DECLARE_PIMPL_DEL(ShaderManager)
 
 void
 ShaderManager::shutdown()

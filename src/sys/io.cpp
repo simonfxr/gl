@@ -220,7 +220,7 @@ readFile(sys::io::OutStream &errout,
                 str.insert(str.end(), buf.data(), buf.data() + size);
             if (err == HandleError::EOF) {
                 err = HandleError::OK;
-                return Array<char>(str.data(), str.size());
+                return { str.data(), str.size() };
             }
             if (err != HandleError::OK)
                 goto fail;

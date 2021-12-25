@@ -14,7 +14,7 @@ struct Game : public ge::GameLoop::Game
     void tick() override;
     void render(double interpolation) override;
     void handleInputEvents() override;
-    ge::GameLoop::time now() override;
+    ge::GameLoop::time now() const override;
     void sleep(ge::GameLoop::time secs) override;
 };
 
@@ -38,7 +38,7 @@ Game::handleInputEvents()
 {}
 
 ge::GameLoop::time
-Game::now()
+Game::now() const
 {
     return ge::GameLoop::time(sys::queryTimer());
 }

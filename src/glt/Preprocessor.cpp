@@ -27,10 +27,10 @@ struct Preprocessor::Data
 {
     Preprocessor::DirectiveHandler nullHandler;
     Preprocessor::DirectiveHandler *defaultHandler;
-    bool errorState{ false };
     sys::io::OutStream *out;
     Preprocessor::Handlers handlers;
     std::string sourceName;
+    bool errorState{ false };
 
     Data() : defaultHandler(&nullHandler), out(&sys::io::stdout()) {}
 };

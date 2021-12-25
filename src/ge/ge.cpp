@@ -12,6 +12,7 @@
 namespace ge {
 
 BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 std::unique_ptr<Module> module;
 END_NO_WARN_GLOBAL_DESTRUCTOR
 

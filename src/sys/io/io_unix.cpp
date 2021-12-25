@@ -2,6 +2,7 @@
 
 #include "err/err.hpp"
 #include "sys/fs.hpp"
+#include "sys/strerror_unix.hpp"
 #include "util/bit_cast.hpp"
 
 #include <arpa/inet.h>
@@ -80,10 +81,10 @@ convertErrno()
     case ENOENT:
         return HandleError::UNKNOWN;
     case EBADF:
-        DEBUG_ERR(strerror(errid));
+        DEBUG_ERR(strerror_errno(errid).data());
         return HandleError::BAD_HANDLE;
     default:
-        DEBUG_ERR(strerror(errid));
+        DEBUG_ERR(strerror_errno(errid).data());
         return HandleError::UNKNOWN;
     }
 }
@@ -91,16 +92,15 @@ convertErrno()
 SocketError
 convertErrnoSock()
 {
-    int errid = errno;
-    errno = 0;
+    auto errid = std::exchange(errno, 0);
     switch (errid) {
     case EWOULDBLOCK:
         return SocketError::BLOCKED;
     case EBADF:
-        DEBUG_ERR(strerror(errid));
+        DEBUG_ERR(strerror_errno(errid).data());
         return SocketError::BAD_HANDLE;
     default:
-        DEBUG_ERR(strerror(errid));
+        DEBUG_ERR(strerror_errno(errid).data());
         return SocketError::UNKNOWN;
     }
 }

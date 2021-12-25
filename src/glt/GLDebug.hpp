@@ -5,13 +5,13 @@
 #include "glt/conf.hpp"
 #include "glt/utils.hpp"
 #include "opengl.hpp"
-#include "util/NonCopyable.hpp"
+#include "util/noncopymove.hpp"
 
 #include <unordered_set>
 
 namespace glt {
 
-struct GLDebug : NonCopyable
+struct GLDebug : private NonCopyable
 {
     std::unordered_set<GLuint> ignored;
     OpenGLVendor vendor{};

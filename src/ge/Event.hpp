@@ -3,8 +3,8 @@
 
 #include "ge/conf.hpp"
 #include "util/ArrayView.hpp"
-#include "util/NonCopyable.hpp"
 #include "util/functor_traits.hpp"
+#include "util/noncopymove.hpp"
 
 #include <memory>
 #include <vector>
@@ -69,13 +69,13 @@ makeEventHandler(T &o, void (T::*m)(const Event<E> &))
 }
 
 template<typename T>
-struct EventSource : NonCopyable
+struct EventSource : private NonCopyable
 {
     inline bool raise(const Event<T> &evnt);
     inline bool reg(std::shared_ptr<EventHandler<T>> handler);
 
     template<typename... Args>
-    bool reg(Args &&... args)
+    bool reg(Args &&...args)
     {
         return reg(makeEventHandler(std::forward<Args>(args)...));
     }

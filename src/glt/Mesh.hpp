@@ -12,6 +12,7 @@
 #include "math/vec4.hpp"
 #include "opengl.hpp"
 
+#include <memory>
 #include <vector>
 
 namespace glt {
@@ -28,8 +29,15 @@ enum DrawType : uint8_t
 
 struct GLT_API MeshBase
 {
+public:
+    struct VertexDataFree
+    {
+        void operator()(char *) noexcept;
+    };
+    using unique_vertex_ptr = std::unique_ptr<char, VertexDataFree>;
+
 private:
-    char *vertex_data{};
+    unique_vertex_ptr vertex_data{};
     char *vertex_data_end{};
     char *vertex_data_lim{};
     size_t vertex_count{};
@@ -50,12 +58,13 @@ private:
 protected:
     void *vertexRef(size_t i)
     {
-        return static_cast<void *>(vertex_data + i * struct_info.size);
+        return static_cast<void *>(vertex_data.get() + i * struct_info.size);
     }
 
     const void *vertexRef(size_t i) const
     {
-        return static_cast<const void *>(vertex_data + i * struct_info.size);
+        return static_cast<const void *>(vertex_data.get() +
+                                         i * struct_info.size);
     }
 
     void *pushVertex()

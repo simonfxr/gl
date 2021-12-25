@@ -19,26 +19,20 @@ struct GameWindow::Data
 {
     GameWindow &self;
 
-    const bool owning_win;
     GLFWwindow *win;
-
+    double mouse_x{};
+    double mouse_y{};
+    std::shared_ptr<WindowRenderTarget> renderTarget{};
+    WindowEvents events;
+    GLContextInfo context_info;
+    bool show_mouse_cursor{ true };
+    bool accum_mouse_moves{ false };
+    const bool owning_win;
     bool have_focus{ true };
     bool vsync{ false };
 
-    double mouse_x{};
-    double mouse_y{};
-
-    bool show_mouse_cursor{ true };
-    bool accum_mouse_moves{ false };
-
-    WindowRenderTarget *renderTarget{};
-
-    WindowEvents events;
-
-    GLContextInfo context_info;
-
     Data(GameWindow &_self, bool owns_win, GLFWwindow *rw)
-      : self(_self), owning_win(owns_win), win(rw)
+      : self(_self), win(rw), owning_win(owns_win)
     {}
 
     void init(const WindowOptions &opts);
@@ -83,7 +77,7 @@ glfw_error_callback(int error, const char *desc)
 void
 resizeRenderTarget(const Event<WindowResized> &e)
 {
-    e.info.window.renderTarget().resized();
+    e.info.window.renderTarget()->resized();
 }
 
 KeyCode
@@ -195,10 +189,13 @@ convertGLFWMouseButton(int button)
 GLFWwindow *
 GameWindow::Data::makeWindow(const WindowOptions &opts)
 {
-    glfwWindowHint(GLFW_SAMPLES, opts.settings.antialiasingLevel);
+    glfwWindowHint(GLFW_SAMPLES,
+                   static_cast<int>(opts.settings.antialiasingLevel));
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, opts.settings.majorVersion);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, opts.settings.minorVersion);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,
+                   static_cast<int>(opts.settings.majorVersion));
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,
+                   static_cast<int>(opts.settings.minorVersion));
 
     int profile;
     if (opts.settings.majorVersion > 3 ||
@@ -220,6 +217,7 @@ GameWindow::Data *
 GameWindow::Data::getUserPointer(GLFWwindow *w)
 {
     void *ptr = glfwGetWindowUserPointer(w);
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     return reinterpret_cast<Data *>(ptr);
 }
 
@@ -358,7 +356,7 @@ GameWindow::Data::init(const WindowOptions &opts)
 {
 
     ASSERT(renderTarget == nullptr);
-    renderTarget = new WindowRenderTarget(self);
+    renderTarget = std::make_shared<WindowRenderTarget>(self);
 
     glfwSetWindowUserPointer(win, this);
 
@@ -376,6 +374,7 @@ GameWindow::Data::init(const WindowOptions &opts)
 
     glfwMakeContextCurrent(win);
 
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
         FATAL_ERR("GLAD initialization failed");
     GL_CHECK_ERRORS();
@@ -420,11 +419,10 @@ GameWindow::GameWindow(const WindowOptions &opts)
 
 GameWindow::~GameWindow()
 {
-    delete self->renderTarget;
+    self->renderTarget.reset();
     glfwMakeContextCurrent(nullptr);
-    if (self->owning_win) {
+    if (self->owning_win)
         glfwDestroyWindow(self->win);
-    }
 }
 
 bool
@@ -477,10 +475,10 @@ GameWindow::focused() const
     return self->have_focus;
 }
 
-WindowRenderTarget &
-GameWindow::renderTarget()
+const std::shared_ptr<WindowRenderTarget> &
+GameWindow::renderTarget() const
 {
-    return *self->renderTarget;
+    return self->renderTarget;
 }
 
 WindowEvents &

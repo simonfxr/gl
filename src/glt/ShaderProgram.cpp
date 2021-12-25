@@ -35,23 +35,17 @@ using Attributes = std::unordered_map<std::string, GLuint>;
 struct ShaderProgram::Data
 {
     ShaderProgram &self;
-    GLProgramObject program;
     ShaderManager &sm;
     ShaderObjects shaders;
     ShaderRootDependencies rootdeps;
     Attributes attrs;
-    bool linked;
+    GLProgramObject program{ 0 };
+    bool linked{ false };
 
-    Data(ShaderProgram &owner, ShaderManager &_sm)
-      : self(owner), program(0), sm(_sm), linked(false)
-    {}
+    Data(ShaderProgram &owner, ShaderManager &_sm) : self(owner), sm(_sm) {}
 
     Data(ShaderProgram &owner, const Data &rhs)
-      : self(owner)
-      , sm(rhs.sm)
-      , rootdeps(rhs.rootdeps)
-      , attrs(rhs.attrs)
-      , linked(false)
+      : self(owner), sm(rhs.sm), rootdeps(rhs.rootdeps), attrs(rhs.attrs)
     {}
 
     bool createProgram();
@@ -163,16 +157,16 @@ ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
 
     if (log_len > 0) {
 
-        auto log = std::make_unique<GLchar[]>(size_t(log_len));
-        GL_CALL(glGetProgramInfoLog, progh, log_len, nullptr, log.get());
+        auto log = std::vector<char>(size_t(log_len));
+        GL_CALL(glGetProgramInfoLog, progh, log_len, nullptr, log.data());
 
-        auto logBegin = log.get();
-        while (logBegin < log.get() + log_len - 1 && isspace(*logBegin))
+        auto logBegin = log.data();
+        while (logBegin < &log[log_len - 1] && isspace(*logBegin))
             ++logBegin;
 
-        const char *logmsg = log.get();
+        auto logmsg = log.data();
 
-        if (logBegin == log.get() + log_len - 1) {
+        if (logBegin == &log[log_len - 1]) {
             out << "link log empty\n";
         } else {
             out << "link log:\n"

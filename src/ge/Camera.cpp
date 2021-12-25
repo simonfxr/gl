@@ -20,16 +20,17 @@ struct Handlers
 struct Camera::Data
 {
     Camera &self;
-    real speed = 0.1_r;
-    vec2_t mouse_sensitivity = vec2(0.00075_r);
     glt::Frame frame;
     Commands commands;
     Events events;
-    vec3_t step_accum = vec3(real(0));
     Handlers handlers;
-    bool mouse_look{ false };
     Engine *engine{};
     std::string frame_path;
+
+    real speed = 0.1_r;
+    vec2_t mouse_sensitivity = vec2(0.00075_r);
+    vec3_t step_accum = vec3(real(0));
+    bool mouse_look{ false };
 
     explicit Data(Camera & /*me*/);
 
@@ -55,42 +56,22 @@ DECLARE_PIMPL_DEL(Camera)
 
 namespace {
 
-const math::real the_dir_table[3 * 12] = { 0.5f,
-                                           0.f,
-                                           -0.8660254037844386f,
-                                           0.8660254037844387f,
-                                           0.f,
-                                           -0.5f,
-                                           1.f,
-                                           0.f,
-                                           0.f,
-                                           0.8660254037844384f,
-                                           0.f,
-                                           0.5f,
-                                           0.5f,
-                                           0.f,
-                                           0.8660254037844386f,
-                                           0.f,
-                                           0.f,
-                                           1.f,
-                                           -0.5f,
-                                           0.f,
-                                           0.8660254037844384f,
-                                           -0.8660254037844386f,
-                                           0.f,
-                                           0.5f,
-                                           -1.f,
-                                           0.f,
-                                           0.f,
-                                           -0.8660254037844387f,
-                                           0.f,
-                                           -0.5f,
-                                           -0.5f,
-                                           0.f,
-                                           -0.8660254037844387f,
-                                           0.f,
-                                           0.f,
-                                           -1.f };
+// clang-format off
+const std::array<math::real, 36 /* 3 * 12 */> the_dir_table = {
+    0.5f, 0.f, -0.8660254037844386f,
+    0.8660254037844387f, 0.f, -0.5f,
+    1.f, 0.f, 0.f,
+    0.8660254037844384f, 0.f, 0.5f,
+    0.5f, 0.f, 0.8660254037844386f,
+    0.f, 0.f, 1.f,
+    -0.5f, 0.f, 0.8660254037844384f,
+    -0.8660254037844386f, 0.f, 0.5f,
+    -1.f, 0.f, 0.f,
+    -0.8660254037844387f, 0.f, -0.5f,
+    -0.5f, 0.f, -0.8660254037844387f,
+    0.f, 0.f, -1.f
+};
+// clang-format on
 
 } // namespace
 
@@ -186,7 +167,7 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
         return;
     }
 
-    std::array<char, sizeof frame> bytes;
+    std::array<char, sizeof frame> bytes{};
     size_t s = sizeof bytes;
 
     auto ret = opt_stream->read(s, bytes.data());

@@ -65,7 +65,7 @@ struct GE_API GameWindow
 
     static bool init();
 
-    WindowRenderTarget &renderTarget();
+    const std::shared_ptr<WindowRenderTarget> &renderTarget() const;
 
     void swapBuffers();
 

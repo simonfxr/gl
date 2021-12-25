@@ -21,7 +21,7 @@ struct GameWindowInit
 
 struct Module
 {
-    GameWindowInit __game_window_init;
+    GameWindowInit _internal_game_window_init;
 };
 
 extern std::unique_ptr<Module> module;

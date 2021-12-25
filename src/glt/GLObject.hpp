@@ -5,7 +5,7 @@
 #include "opengl.hpp"
 #include "pp/enum.hpp"
 #include "sys/io/Stream.hpp"
-#include "util/NonCopyable.hpp"
+#include "util/noncopymove.hpp"
 
 namespace glt {
 
@@ -53,7 +53,7 @@ GLT_API void
 printStats(sys::io::OutStream &);
 
 template<ObjectType::enum_t T>
-struct GLObjectBase : NonCopyable
+struct GLObjectBase : private NonCopyable
 {
     static inline constexpr ObjectType type = T;
     GLuint _name;
