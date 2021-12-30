@@ -3,6 +3,7 @@
 #include "err/err.hpp"
 #include "sys/module.hpp"
 
+#include <array>
 #include <cstring>
 #include <optional>
 #include <vector>

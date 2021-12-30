@@ -5,6 +5,7 @@
 #include "glt/module.hpp"
 #include "opengl.hpp"
 
+#include <array>
 #include <cstring>
 
 #define G (module->utils)

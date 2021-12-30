@@ -1,12 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+
 set(OpenGL_GL_PREFERENCE GLVND)
 
 project(gl LANGUAGES C CXX)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect_env.cmake)
+include("${CMAKE_SOURCE_DIR}/cmake/cmake-utils/cmake-utils.cmake")
 
 macro(set_option var default type docstring)
   if(NOT DEFINED ${var})
@@ -20,7 +23,7 @@ macro(set_option var default type docstring)
 endmacro()
 
 set(build_shared_default True)
-if(SYS_WINDOWS AND COMP_MSVC)
+if(CMU_OS_WINDOWS AND CMU_COMP_MSVC)
   set(build_shared_default False)
 endif()
 
@@ -31,12 +34,13 @@ set_option(
 
 message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
 
-if(COMP_CLANG)
-  set_option(
-    ENABLE_LIBCXX False BOOL
-    "True to use libc++ when compiling with clang"
-  )
-endif()
+# FIXME
+# if(COMP_CLANG)
+#   set_option(
+#     ENABLE_LIBCXX False BOOL
+#     "True to use libc++ when compiling with clang"
+#   )
+# endif()
 
 set(gldebug_default True)
 if(build_type STREQUAL RELEASE)
@@ -54,6 +58,10 @@ set_option(
   "use opencl for the voxel-world program"
 )
 
+set_option(ENABLE_ASAN True BOOL "enable -fsanitize=address")
+set_option(ENABLE_UBSAN True BOOL "enable -fsanitize=undefined")
+set_option(ENABLE_LTO True BOOL "enable lto")
+
 if(UNIX)
   set_option(ENABLE_STACKTRACES True BOOL "print a stacktrace on errors")
 endif()
@@ -61,27 +69,29 @@ endif()
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macros.cmake)
 
+set(CMU_FP_MODE ASSOC)
+
+set(CMU_IPO ${ENABLE_LTO})
+set(CMU_OPT_NATIVE True)
+set(CMU_OPT_LEVEL 4)
+
+set(CMU_SANITIZERS)
+# if(ENABLE_ASAN)
+#   list(APPEND CMU_SANITIZERS asan lsan)
+# endif()
+# if(ENABLE_UBSAN)
+#   list(APPEND CMU_SANITIZERS ubsan)
+# endif()
+
+set(CMU_NO_EXCEPTIONS True)
+set(CMU_NO_RTTI True)
+cmu_configure()
+
 if(NOT TARGET glfw)
-  set(
-    GLFW_INSTALL
-    OFF
-    CACHE BOOL "" FORCE
-  )
-  set(
-    GLFW_BUILD_DOCS
-    OFF
-    CACHE BOOL "" FORCE
-  )
-  set(
-    GLFW_BUILD_TESTS
-    OFF
-    CACHE BOOL "" FORCE
-  )
-  set(
-    GLFW_BUILD_EXAMPLES
-    OFF
-    CACHE BOOL "" FORCE
-  )
+  set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+  set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+  set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+  set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
   add_subdirectory(deps/glfw)
   add_library(glfw::glfw ALIAS glfw)
 endif()
@@ -109,15 +119,15 @@ if(NOT TARGET glad)
   endif()
 
   set(glad_link_mode)
-  if(SYS_WINDOWS AND COMP_MSVC)
+  if(CMU_OS_WINDOWS AND CMU_COMP_MSVC)
     set(glad_link_mode STATIC)
   endif()
   add_library(glad ${glad_link_mode} "${GLAD_GEN_DIR}/src/glad.c")
+  if(CMU_OBJFMT_ELF)
+    target_link_libraries(glad PUBLIC dl)
+  endif()
   target_include_directories(glad SYSTEM PUBLIC "${GLAD_GEN_DIR}/include")
-endif()
-
-if(COMP_MSVC)
-  replace_cmake_flags("/W[0-4]" "/W4")
+  add_library(glad::glad ALIAS glad)
 endif()
 
 add_subdirectory(deps/cxx-header-utils)
