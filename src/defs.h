@@ -1,6 +1,12 @@
 #ifndef DEFS_H_INCLUDED
 #define DEFS_H_INCLUDED
 
+#ifndef _GNU_SOURCE
+#    ifndef _POSIX_C_SOURCE
+#        define _POSIX_C_SOURCE 200809L
+#    endif
+#endif
+
 #include <hu/hu.h>
 
 #ifdef HU_OS_WINDOWS

@@ -14,7 +14,23 @@ strerror_errno(int errnum)
 {
     errno = 0;
     std::array<char, 128> str{};
-    strerror_r(errnum, str.data(), str.size());
+    auto ret = strerror_r(errnum, str.data(), str.size());
+    auto okay = false;
+    if constexpr (std::is_pointer_v<decltype(ret)>) {
+        // GNU version: returns char *
+        okay = !!ret;
+        if (ret && ret != str.data()) {
+            strncpy(str.data(), ret, sizeof(str) - 1);
+            str[sizeof(str) - 1] = '\0';
+        }
+    } else {
+        // XSI version: returns an int, 0 means success
+        okay = !ret;
+    }
+    if (!okay) {
+        decltype(str) retstr = { "Unknown error" };
+        return retstr;
+    }
     return str;
 }
 

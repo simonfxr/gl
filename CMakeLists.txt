@@ -96,38 +96,17 @@ if(NOT TARGET glfw)
   add_library(glfw::glfw ALIAS glfw)
 endif()
 
-if(NOT TARGET glad)
-  find_package(PythonInterp 3 REQUIRED)
-  set(GLAD_DIR "${CMAKE_CURRENT_LIST_DIR}/deps/glad")
-  get_filename_component(
-    GLAD_GEN_DIR
-    "${CMAKE_CURRENT_BINARY_DIR}/glad-generated" ABSOLUTE
-  )
-
-  if(NOT EXISTS "${GLAD_GEN_DIR}/src/glad.c")
-    message(STATUS "invokding glad generator: ${GLAD_GEN_DIR}")
-    file(MAKE_DIRECTORY "${GLAD_GEN_DIR}")
-    execute_process(
-      COMMAND "${PYTHON_EXECUTABLE}" -m glad --out-path "${GLAD_GEN_DIR}"
-      --generator c
-      WORKING_DIRECTORY "${GLAD_DIR}"
-      RESULT_VARIABLE glad_ec
-    )
-    if(NOT glad_ec EQUAL "0")
-      message(FATAL_ERROR "glad generator failed with exit code: ${glad_ec}")
-    endif()
-  endif()
-
-  set(glad_link_mode)
-  if(CMU_OS_WINDOWS AND CMU_COMP_MSVC)
-    set(glad_link_mode STATIC)
-  endif()
-  add_library(glad ${glad_link_mode} "${GLAD_GEN_DIR}/src/glad.c")
+if(NOT TARGET glad::glad)
+  set(GLAD_PROFILE compatibility CACHE STRING "" FORCE)
+  set(GLAD_ALL_EXTENSIONS On CACHE BOOL "" FORCE)
+  set(GLAD_REPRODUCIBLE On CACHE BOOL "" FORCE)
+  add_subdirectory(deps/glad)
+  add_library(glad_dl INTERFACE)
+  target_link_libraries(glad_dl INTERFACE glad)
   if(CMU_OBJFMT_ELF)
-    target_link_libraries(glad PUBLIC dl)
+    target_link_libraries(glad_dl INTERFACE dl)
   endif()
-  target_include_directories(glad SYSTEM PUBLIC "${GLAD_GEN_DIR}/include")
-  add_library(glad::glad ALIAS glad)
+  add_library(glad::glad ALIAS glad_dl)
 endif()
 
 add_subdirectory(deps/cxx-header-utils)
