@@ -148,7 +148,7 @@ struct genmat
     }
 
     template<typename... Args>
-    static constexpr genmat make(Args &&... args)
+    static constexpr genmat make(Args &&...args)
     {
         static_assert(sizeof...(args) == N,
                       "can only initialize using exactly N elements");

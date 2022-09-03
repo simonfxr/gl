@@ -9,10 +9,10 @@
 #include "math/real.hpp"
 #include "pp/enum.hpp"
 #include "pp/map.h"
-#include "util/ArrayView.hpp"
 
 #include <array>
 #include <cstddef>
+#include <span>
 
 #if HU_COMP_GNULIKE_P
 #    define ti_offsetof(t, fld) __builtin_offsetof(t, fld)
@@ -169,11 +169,11 @@ struct StructInfo
     const char *name;
     uint16_t size;
     uint16_t align;
-    ArrayView<const FieldInfo> fields;
+    std::span<const FieldInfo> fields;
     constexpr StructInfo(const char *nm,
                          uint16_t sz,
                          uint16_t algn,
-                         ArrayView<const FieldInfo> fs)
+                         std::span<const FieldInfo> fs)
       : name(nm), size(sz), align(algn), fields(fs)
     {}
 };
@@ -225,18 +225,16 @@ struct StructInfo
     };                                                                         \
     struct sname::gl::struct_info                                              \
     {                                                                          \
-        static constexpr ::glt::FieldInfo _fields[] = { PP_MAP_WITH_ARG(       \
-          TI_DEF_FIELD_INFO,                                                   \
-          PP_COMMA,                                                            \
-          sname::gl,                                                           \
-          __VA_ARGS__) };                                                      \
+        static constexpr auto _fields =                                        \
+          std::array{ PP_MAP_WITH_ARG(TI_DEF_FIELD_INFO,                       \
+                                      PP_COMMA,                                \
+                                      sname::gl,                               \
+                                      __VA_ARGS__) };                          \
         static constexpr ::glt::StructInfo info =                              \
           ::glt::StructInfo(PP_TOSTR(sname),                                   \
                             sizeof(sname::gl),                                 \
                             alignof(sname::gl),                                \
-                            ::ArrayView<const ::glt::FieldInfo>(               \
-                              _fields,                                         \
-                              sizeof _fields / sizeof(::glt::FieldInfo)));     \
+                            ::std::span<const ::glt::FieldInfo>(_fields));     \
     };                                                                         \
     sname::sname(const sname::gl &TI_VAR(arg))                                 \
       : PP_MAP(TI_INIT_FIELD, PP_COMMA, __VA_ARGS__)                           \

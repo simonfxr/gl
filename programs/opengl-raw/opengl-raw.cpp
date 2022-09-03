@@ -8,7 +8,7 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 
-#include <glad/glad.h>
+#include "opengl.hpp"
 
 #include <GLFW/glfw3.h>
 

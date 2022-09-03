@@ -1,8 +1,10 @@
+#include "defs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <glad/glad.h>
+#include "opengl.hpp"
 
 void *
 file_contents(const char *filename, GLint *length);

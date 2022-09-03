@@ -86,9 +86,9 @@
         friend constexpr int compare(PP_ENUM_DEF_NAME(DEFN) x,                 \
                                      PP_ENUM_DEF_NAME(DEFN) y)                 \
         {                                                                      \
-            return underlying_t(x.value) < underlying_t(y.value)               \
-                     ? -1                                                      \
-                     : underlying_t(x.value) > underlying_t(y.value) ? 1 : 0;  \
+            return underlying_t(x.value) < underlying_t(y.value)   ? -1        \
+                   : underlying_t(x.value) > underlying_t(y.value) ? 1         \
+                                                                   : 0;        \
         }                                                                      \
     }
 

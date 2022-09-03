@@ -2,7 +2,7 @@
 
 #include <err/err.hpp>
 
-#include <Windows.h>
+#include <windows.h>
 
 namespace sys {
 namespace {

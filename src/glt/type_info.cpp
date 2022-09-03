@@ -2,6 +2,8 @@
 
 #include "opengl.hpp"
 
+#include "err/err.hpp"
+
 namespace glt {
 
 unsigned

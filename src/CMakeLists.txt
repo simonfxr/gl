@@ -54,7 +54,7 @@ endif()
 if(CMU_OS_WINDOWS)
   list(
     APPEND SYS_LIBS
-    Shlwapi
+    shlwapi
     wsock32
     ws2_32
   )

@@ -9,7 +9,7 @@
 
 template<typename... Args>
 inline std::string
-string_concat(Args &&... args)
+string_concat(Args &&...args)
 {
     sys::io::ByteStream sstream;
     (sstream << ... << std::forward<Args>(args));

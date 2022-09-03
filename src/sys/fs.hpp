@@ -56,7 +56,7 @@ extension(std::string_view path);
 
 template<typename... Args>
 HU_NODISCARD inline std::string
-join(std::string_view path, Args &&... args);
+join(std::string_view path, Args &&...args);
 
 HU_NODISCARD SYS_API std::string
 dropExtension(std::string_view path);
@@ -173,7 +173,7 @@ modificationTime(std::string_view path);
 
 template<typename... Args>
 HU_NODISCARD inline std::string
-join(std::string_view path, Args &&... args)
+join(std::string_view path, Args &&...args)
 {
     const char *parts[] = { std::forward<Args>(args)... };
     return def::join(path, parts, sizeof...(args));

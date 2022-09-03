@@ -3,9 +3,8 @@
 #    define _CRT_SECURE_NO_WARNINGS 1
 #endif
 
-#include "defs.h"
+#include "cutil.h"
 
-#include <glad/glad.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

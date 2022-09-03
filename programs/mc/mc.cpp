@@ -1,4 +1,6 @@
 #define CL_HPP_ENABLE_SIZE_T_COMPATIBILITY 1
+#define CL_HPP_TARGET_OPENCL_VERSION 300
+
 #include <CL/opencl.hpp>
 
 #include "ge/Camera.hpp"
@@ -152,14 +154,14 @@ createCLGLContext(cl::Platform &platform, cl_int *err)
         CL_WGL_HDC_KHR,
         cl_context_properties(wglGetCurrentDC()),
         CL_CONTEXT_PLATFORM,
-        cl_context_properties((platform)()),
+        cl_context_properties((platform) ()),
 #elif defined(HU_OS_POSIX)
         CL_GL_CONTEXT_KHR,
         cl_context_properties(glXGetCurrentContext()),
         CL_GLX_DISPLAY_KHR,
         cl_context_properties(glXGetCurrentDisplay()),
         CL_CONTEXT_PLATFORM,
-        cl_context_properties((platform)()),
+        cl_context_properties((platform) ()),
 #else
 #    error "unknown system"
 #endif

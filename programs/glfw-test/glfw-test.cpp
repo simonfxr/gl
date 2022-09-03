@@ -1,5 +1,7 @@
 #define GLFW_INCLUDE_NONE 1
-#include <glad/glad.h>
+
+#include "defs.h"
+#include "opengl.hpp"
 
 #include <GLFW/glfw3.h>
 

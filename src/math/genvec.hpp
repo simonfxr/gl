@@ -125,7 +125,7 @@ struct genvec
     }
 
     template<typename... Args>
-    static constexpr genvec make(Args &&... args)
+    static constexpr genvec make(Args &&...args)
     {
         static_assert(sizeof...(args) == N,
                       "can only initialize using exactly N elements");
@@ -181,7 +181,8 @@ template<typename T,
          typename U,
          size_t N,
          typename = std::enable_if_t<!is_genvec_v<T>>>
-inline constexpr auto operator*(const T &lhs, const genvec<U, N> &rhs)
+inline constexpr auto
+operator*(const T &lhs, const genvec<U, N> &rhs)
 {
     return rhs.map([&](const U &x) { return lhs * x; });
 }

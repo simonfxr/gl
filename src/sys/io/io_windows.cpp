@@ -4,12 +4,15 @@
 #include "sys/module.hpp"
 #include "sys/win_utf_conv.hpp"
 
-#include <WS2tcpip.h>
-#include <WinSock2.h>
-#include <Windows.h>
 #include <cassert>
 #include <cstdio>
 #include <exception>
+
+#include <ws2tcpip.h>
+
+#include <winsock2.h>
+
+#include <windows.h>
 
 namespace sys {
 namespace io {
@@ -84,7 +87,7 @@ convertSocketError(DWORD err)
         return SocketError::EOF;
     case WSAENOTSOCK:
     case WSAEBADF:
-        return SocketError::BAD_SOCKET;
+        return SocketError::BAD_HANDLE;
     default:
         return SocketError::UNKNOWN;
     }
@@ -175,6 +178,27 @@ mode(Handle &h)
     return h._mode;
 }
 
+namespace {
+constexpr HandleError
+socketToHandleError(SocketError err)
+{
+    switch (err.value) {
+    case SocketError::OK:
+        return HandleError::OK;
+    case SocketError::EOF:
+        return HandleError::EOF;
+    case SocketError::BAD_HANDLE:
+        return HandleError::BAD_HANDLE;
+    case SocketError::INVALID_PARAM:
+        return HandleError::INVALID_PARAM;
+    case SocketError::UNKNOWN:
+    case SocketError::BLOCKED:
+    default:
+        return HandleError::UNKNOWN;
+    }
+}
+} // namespace
+
 HandleError
 elevate(Handle &h, HandleMode hm)
 {
@@ -197,7 +221,7 @@ elevate(Handle &h, HandleMode hm)
     }
     if (do_shutdown) {
         if (shutdown(castToSocket(h._os.handle), sd_mode) == SOCKET_ERROR)
-            return HandleError(getLastSocketError());
+            return socketToHandleError(getLastSocketError());
     }
 
     h._mode &= ~(HM_READ | HM_WRITE);
@@ -207,7 +231,7 @@ elevate(Handle &h, HandleMode hm)
         unsigned long val = !!(hm & HM_NONBLOCKING);
         if (ioctlsocket(castToSocket(h._os.handle), FIONBIO, &val) ==
             SOCKET_ERROR)
-            return HandleError(getLastSocketError());
+            return socketToHandleError(getLastSocketError());
         h._mode &= ~HM_NONBLOCKING;
         h._mode |= hm & HM_NONBLOCKING;
     }
@@ -224,7 +248,7 @@ read(Handle &h, size_t &sz, char *data)
         auto ret = recv(castToSocket(h._os.handle), data, int(sz), 0);
         sz = 0;
         if (ret == SOCKET_ERROR)
-            return HandleError(getLastSocketError());
+            return socketToHandleError(getLastSocketError());
         if (ret == 0)
             return HandleError::EOF;
         sz = size_t(ret);
@@ -251,7 +275,7 @@ write(Handle &h, size_t &sz, const char *data)
         auto ret = send(castToSocket(h._os.handle), data, int(sz), 0);
         sz = 0;
         if (ret == SOCKET_ERROR)
-            return HandleError(getLastSocketError());
+            return socketToHandleError(getLastSocketError());
         sz = size_t(ret);
         return HandleError::OK;
     } else {

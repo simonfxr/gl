@@ -50,7 +50,7 @@ chained_compare()
 
 template<typename F, typename... Fs>
 int
-chained_compare(F &&f, Fs &&... fs)
+chained_compare(F &&f, Fs &&...fs)
 {
     int ret = std::forward<F>(f).operator()();
     if (ret != 0)

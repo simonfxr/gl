@@ -189,8 +189,8 @@ auto make_arg_seq(std::index_sequence<Is...>)
 
 template<typename FTraits>
 auto
-make_arg_seq() -> decltype(
-  make_arg_seq<FTraits>(std::make_index_sequence<FTraits::arity - 1>{}));
+make_arg_seq() -> decltype(make_arg_seq<FTraits>(
+  std::make_index_sequence<FTraits::arity - 1>{}));
 
 } // namespace detail
 

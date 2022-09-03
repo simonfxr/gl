@@ -23,6 +23,9 @@ struct Event
     {}
 };
 
+template<typename T>
+Event(T &&) -> Event<std::remove_reference_t<std::remove_cv_t<T>>>;
+
 template<typename Ev>
 using event_value_type = typename Ev::value_type;
 
@@ -31,13 +34,13 @@ struct EventHandler
 {
     EventHandler() = default;
     EventHandler(const EventHandler &) = default;
-    EventHandler(EventHandler &&) = default;
+    EventHandler(EventHandler &&) noexcept = default;
 
     EventHandler &operator=(const EventHandler &) = default;
-    EventHandler &operator=(EventHandler &&) = default;
+    EventHandler &operator=(EventHandler &&) noexcept = default;
 
     virtual ~EventHandler() = default;
-    virtual void handle(const Event<T> &ev) = 0;
+    virtual void handle(const Event<T> &) = 0;
 };
 
 template<typename F, typename T>
@@ -48,7 +51,7 @@ private:
 
 public:
     FunctorEventHandler(F f_) : f(std::move(f_)) {}
-    void handle(const Event<T> &ev) final override { f(ev); }
+    void handle(const Event<T> &ev) final { f(ev); }
 };
 
 template<typename F>

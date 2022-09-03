@@ -3,8 +3,8 @@
 #include "err/err.hpp"
 #include "sys/win_utf_conv.hpp"
 
-#include <Shlwapi.h>
-#include <Windows.h>
+#include <shlwapi.h>
+#include <windows.h>
 
 namespace sys {
 namespace fs {
@@ -130,9 +130,9 @@ absolutePath(std::string_view path)
 }
 
 std::string
-lookup(const std::vector<std::string> &dirs, std::string_view path)
+lookup(ArrayView<const std::string> dirs, std::string_view name)
 {
-    return def::lookup(dirs, path);
+    return def::lookup(dirs, name);
 }
 
 std::optional<ObjectType>

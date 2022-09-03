@@ -11,7 +11,7 @@
 #    include <libunwind.h>
 #    include <unistd.h>
 #elif defined(ENABLE_STACKTRACES) && defined(HU_OS_WINDOWS)
-#    include <Windows.h>
+#    include <windows.h>
 \\ keep newline to avoid sorting of includes
 #    include <DbgHelp.h>
 #endif

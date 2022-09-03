@@ -137,9 +137,9 @@ initDebug()
     bool initialized;
 
     if (dbg == nullptr) {
-        sys::io::stdout()
-          << "couldnt initialize Debug Output, no debug implementaion available"
-          << "\n";
+        sys::io::stdout() << "couldnt initialize Debug Output, no debug "
+                             "implementaion available"
+                          << "\n";
         dbg = new NoDebug();
         initialized = false;
     } else {
