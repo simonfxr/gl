@@ -1,7 +1,9 @@
-/build
 /.cache
+/.dir-locals-2.el
+/.direnv
+/build
+/result
 
 /*.cam
 /*.mdl
 /cmake-build*
-/.dir-locals-2.el
