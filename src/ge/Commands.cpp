@@ -42,14 +42,14 @@ struct InitCommandHandler : public EventHandler<InitEvent>
 };
 
 #define BEGIN_COMMANDS                                                         \
-    ArrayView<const std::shared_ptr<Command>> predefinedCommands()             \
+    std::span<const std::shared_ptr<Command>> predefinedCommands()             \
     {                                                                          \
         BEGIN_NO_WARN_GLOBAL_DESTRUCTOR static const auto                      \
           predefinedCommandArray = std::to_array<std::shared_ptr<Command>>({
 
 #define END_COMMANDS                                                           \
     });                                                                        \
-    END_NO_WARN_GLOBAL_DESTRUCTOR return view_array(                           \
+    END_NO_WARN_GLOBAL_DESTRUCTOR return std::span(                            \
       predefinedCommandArray.begin(), predefinedCommandArray.size());          \
     }
 
@@ -131,7 +131,7 @@ COMMAND("printGLInstanceStats",
 }
 
 COMMAND("reloadShaders", "reload ShaderPrograms")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, std::span<const CommandArg> args)
 {
 
     if (args.size() == 0) {
@@ -208,7 +208,7 @@ COMMAND("help", "help and command overview")(const Event<CommandEvent> &ev)
 }
 
 COMMAND("bindShader", "compile and linke a ShaderProgram and give it a name")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, std::span<const CommandArg> args)
 {
     if (args.size() == 0) {
         ERR(e.info.engine.out(), "bindShader: need at least one argument");
@@ -275,7 +275,7 @@ COMMAND("initGLDebug", "initialize OpenGL debug output")
 COMMAND("ignoreGLDebugMessage",
         "for opengl vendor <vendor> add the message <id> to the list of "
         "ignored messages")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, std::span<const CommandArg> args)
 {
     const std::string &vendor_str = args[0].string;
     auto id = static_cast<GLint>(args[1].integer);
@@ -298,7 +298,7 @@ COMMAND("ignoreGLDebugMessage",
 }
 
 COMMAND("describe", "print a description of its parameters")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, std::span<const CommandArg> args)
 {
 
     CommandProcessor &proc = e.info.engine.commandProcessor();
@@ -314,20 +314,20 @@ COMMAND("describe", "print a description of its parameters")
 }
 
 COMMAND("eval", "parse a string and execute it")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> /*unused*/)
+(const Event<CommandEvent> &e, std::span<const CommandArg> /*unused*/)
 {
     ERR(e.info.engine.out(), "not yet implemented");
 }
 
 COMMAND("load", "execute a script file")
-(const Event<CommandEvent> &ev, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &ev, std::span<const CommandArg> args)
 {
     for (const auto &arg : args)
         ev.info.engine.commandProcessor().loadScript(arg.string);
 }
 
 COMMAND("addShaderPath", "add directories to the shader path")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, std::span<const CommandArg> args)
 {
     for (const auto &arg : args)
         if (!e.info.engine.shaderManager().addShaderDirectory(arg.string, true))
@@ -335,7 +335,7 @@ COMMAND("addShaderPath", "add directories to the shader path")
 }
 
 COMMAND("prependShaderPath", "add directories to the front of the shader path")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, std::span<const CommandArg> args)
 {
     for (size_t i = args.size(); i > 0; --i) {
         if (!e.info.engine.shaderManager().prependShaderDirectory(
@@ -345,7 +345,7 @@ COMMAND("prependShaderPath", "add directories to the front of the shader path")
 }
 
 COMMAND("removeShaderPath", "remove directories from the shader path")
-(const Event<CommandEvent> &e, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &e, std::span<const CommandArg> args)
 {
     for (const auto &arg : args)
         e.info.engine.shaderManager().removeShaderDirectory(arg.string);
@@ -378,7 +378,7 @@ COMMAND("postInit", "execute its argument command in the postInit hook")
 }
 
 COMMAND("startReplServer", "start a REPL server on the given port")
-(const Event<CommandEvent> &ev, ArrayView<const CommandArg> args)
+(const Event<CommandEvent> &ev, std::span<const CommandArg> args)
 {
     Engine &e = ev.info.engine;
     ReplServer &serv = e.replServer();

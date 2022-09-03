@@ -6,10 +6,10 @@
 #include "pp/enum.hpp"
 #include "pp/pimpl.hpp"
 #include "sys/io/Stream.hpp"
-#include "util/ArrayView.hpp"
 #include "util/Comparable.hpp"
 
 #include <memory>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -158,7 +158,7 @@ struct GE_API CommandPrettyPrinter
 
     void print(const KeyBinding &bind);
     void print(const CommandArg &arg, bool first = false);
-    void print(ArrayView<const CommandArg>);
+    void print(std::span<const CommandArg>);
     void print(const Quotation &);
     void printSpaces(size_t);
 

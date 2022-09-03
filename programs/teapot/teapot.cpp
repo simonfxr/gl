@@ -419,7 +419,7 @@ Anim::renderScene(const Event<RenderEvent> &e)
     ASSERT(glow_pass1);
     glow_pass1->use();
 
-    ArrayView<const float> kernel = { glow_kernel.size(), &glow_kernel[0] };
+    std::span<const float> kernel = { glow_kernel.size(), &glow_kernel[0] };
     for (int pass = 0; pass < 3; ++pass) {
         engine.renderManager().setActiveRenderTarget(to.get());
         from->sampler().bind(0);

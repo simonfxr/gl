@@ -80,7 +80,7 @@ DEF_COMMAND_TYPE_MAPPING(std::shared_ptr<Command>,
 DEF_COMMAND_TYPE_MAPPING(KeyBinding, keyBinding, CommandParamType::KeyCombo);
 
 template<>
-struct command_param_mapping<ArrayView<const CommandArg>>
+struct command_param_mapping<std::span<const CommandArg>>
 {
     static inline constexpr CommandParamType param_type =
       CommandParamType::List;
@@ -122,7 +122,7 @@ struct Proxy
 
 auto is_var_arg(CommandArgSeq<>) -> std::false_type;
 
-auto is_var_arg(CommandArgSeq<ArrayView<const CommandArg>>) -> std::true_type;
+auto is_var_arg(CommandArgSeq<std::span<const CommandArg>>) -> std::true_type;
 
 template<typename T, typename... Ts>
 auto is_var_arg(CommandArgSeq<T, Ts...>)
@@ -134,7 +134,7 @@ invoke_indexed(F &&f,
                CommandArgSeq<Ts...>,
                std::integer_sequence<size_t, Is...>,
                const Event<CommandEvent> &ev,
-               ArrayView<const CommandArg> args)
+               std::span<const CommandArg> args)
 {
     static_assert(sizeof...(Ts) == sizeof...(Is));
     ASSERT(args.size() == sizeof...(Ts));
@@ -150,14 +150,14 @@ invoke_indexed_vararg(F &&f,
                       CommandArgSeq<Ts...>,
                       std::integer_sequence<size_t, Is...>,
                       const Event<CommandEvent> &ev,
-                      ArrayView<const CommandArg> args)
+                      std::span<const CommandArg> args)
 {
     static_assert(sizeof...(Ts) == sizeof...(Is) + 1);
     ASSERT(args.size() >= sizeof...(Is));
     f(ev,
       decayed_command_param_mapping<
         command_arg_seq_element<Is, CommandArgSeq<Ts...>>>::unwrap(args[Is])...,
-      args.drop(sizeof...(Is)));
+      args.subspan(sizeof...(Is)));
 }
 
 template<typename F, bool VarArg, typename... Ts>
@@ -166,7 +166,7 @@ invoke(F &&f,
        std::bool_constant<VarArg>,
        CommandArgSeq<Ts...> arg_seq,
        const Event<CommandEvent> &ev,
-       ArrayView<const CommandArg> args)
+       std::span<const CommandArg> args)
 {
     if constexpr (VarArg) {
         invoke_indexed_vararg(std::forward<F>(f),

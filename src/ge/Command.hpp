@@ -5,10 +5,10 @@
 #include "ge/Command_detail.hpp"
 #include "ge/EngineEvents.hpp"
 #include "ge/conf.hpp"
-#include "util/ArrayView.hpp"
 
 #include <functional>
 #include <memory>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -51,7 +51,7 @@ public:
     const std::string &description() const { return descr; }
     std::string interactiveDescription() const;
     virtual void interactive(const Event<CommandEvent> &ev,
-                             ArrayView<const CommandArg>) = 0;
+                             std::span<const CommandArg>) = 0;
     void handle(const Event<CommandEvent> &ev) final override;
     virtual QuotationCommand *castToQuotation() { return nullptr; }
 };
@@ -70,7 +70,7 @@ struct GE_API QuotationCommand
     ~QuotationCommand() override;
 
     virtual void interactive(const Event<CommandEvent> &ev,
-                             ArrayView<const CommandArg>) override;
+                             std::span<const CommandArg>) override;
     QuotationCommand *castToQuotation() override { return this; }
 };
 
@@ -84,7 +84,7 @@ struct FunctorCommand : public Command
     ~FunctorCommand() override = default;
 
     void interactive(const Event<CommandEvent> &ev,
-                     ArrayView<const CommandArg> args) final override
+                     std::span<const CommandArg> args) final override
     {
         invoke(_f, is_var_arg_t{}, arg_seq{}, ev, args);
     }

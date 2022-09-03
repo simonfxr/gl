@@ -70,10 +70,10 @@ CommandProcessor::addScriptDirectory(std::string dir, bool check_exists)
     return true;
 }
 
-ArrayView<const std::string>
+std::span<const std::string>
 CommandProcessor::scriptDirectories() const
 {
-    return view_array(self->scriptDirs);
+    return std::span(self->scriptDirs);
 }
 
 CommandPtr
@@ -114,7 +114,7 @@ CommandProcessor::define(CommandPtr comm, bool unique)
 }
 
 bool
-CommandProcessor::exec(std::string_view comname, ArrayView<CommandArg> args)
+CommandProcessor::exec(std::string_view comname, std::span<CommandArg> args)
 {
     CommandPtr com = command(comname);
     if (!com) {
@@ -125,7 +125,7 @@ CommandProcessor::exec(std::string_view comname, ArrayView<CommandArg> args)
 }
 
 bool
-CommandProcessor::exec(ArrayView<CommandArg> args)
+CommandProcessor::exec(std::span<CommandArg> args)
 {
     if (args.size() == 0)
         return true;
@@ -157,7 +157,7 @@ CommandProcessor::exec(ArrayView<CommandArg> args)
 }
 
 bool
-CommandProcessor::exec(CommandPtr &com, ArrayView<CommandArg> args)
+CommandProcessor::exec(CommandPtr &com, std::span<CommandArg> args)
 {
     if (!com) {
         ERR(engine().out(), "Command == 0");
@@ -314,7 +314,7 @@ CommandProcessor::loadStream(sys::io::InStream &inp, std::string_view inp_name)
             goto next;
         }
 
-        ok = execCommand(view_array(args));
+        ok = execCommand(std::span(args));
         if (!ok) {
             ERR(engine().out(), "executing command");
             done = true;
@@ -335,7 +335,7 @@ CommandProcessor::evalCommand(std::string_view cmd)
 }
 
 bool
-CommandProcessor::execCommand(ArrayView<CommandArg> args)
+CommandProcessor::execCommand(std::span<CommandArg> args)
 {
     if (args.size() == 0)
         return true;

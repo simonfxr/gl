@@ -39,12 +39,12 @@ struct Camera::Data
     // commands
     void runMove(const Event<CommandEvent> & /*unused*/, int64_t dir);
     void runSaveFrame(const Event<CommandEvent> & /*unused*/,
-                      ArrayView<const CommandArg> /*args*/);
+                      std::span<const CommandArg> /*args*/);
     void runLoadFrame(const Event<CommandEvent> & /*unused*/,
-                      ArrayView<const CommandArg> /*args*/);
+                      std::span<const CommandArg> /*args*/);
     void runSpeed(const Event<CommandEvent> & /*unused*/, double /*s*/);
     void runSensitivity(const Event<CommandEvent> & /*unused*/,
-                        ArrayView<const CommandArg> /*args*/);
+                        std::span<const CommandArg> /*args*/);
 
     // event handlers
     void handleMouseMoved(const Event<MouseMoved> & /*ev*/);
@@ -123,7 +123,7 @@ Camera::Data::runMove(const Event<CommandEvent> & /*unused*/, int64_t dir)
 
 void
 Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
-                           ArrayView<const CommandArg> args)
+                           std::span<const CommandArg> args)
 {
 
     const std::string *path;
@@ -149,7 +149,7 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
 
 void
 Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
-                           ArrayView<const CommandArg> args)
+                           std::span<const CommandArg> args)
 {
     const std::string *path;
     if (args.size() == 0)
@@ -189,7 +189,7 @@ Camera::Data::runSpeed(const Event<CommandEvent> & /*unused*/, double s)
 
 void
 Camera::Data::runSensitivity(const Event<CommandEvent> & /*unused*/,
-                             ArrayView<const CommandArg> args)
+                             std::span<const CommandArg> args)
 {
     if (args.size() == 1 && args[0].type() == CommandArgType::Number) {
         mouse_sensitivity = vec2(real(args[0].number));

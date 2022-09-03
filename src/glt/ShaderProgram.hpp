@@ -10,7 +10,8 @@
 #include "glt/type_info.hpp"
 #include "opengl.hpp"
 #include "pp/enum.hpp"
-#include "util/ArrayView.hpp"
+
+#include <span>
 
 namespace glt {
 
@@ -48,7 +49,7 @@ struct GLT_API ShaderProgram
 
     bool bindAttribute(const std::string &, GLuint position);
 
-    bool bindStreamOutVaryings(ArrayView<const std::string>);
+    bool bindStreamOutVaryings(std::span<const std::string>);
 
     bool bindAttributes(const StructInfo &);
 

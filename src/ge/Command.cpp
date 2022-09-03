@@ -118,10 +118,10 @@ QuotationCommand::~QuotationCommand() = default;
 
 void
 QuotationCommand::interactive(const Event<CommandEvent> &ev,
-                              ArrayView<const CommandArg> /*unused*/)
+                              std::span<const CommandArg> /*unused*/)
 {
     for (auto &args : *quotation)
-        ev.info.engine.commandProcessor().exec(view_array(args));
+        ev.info.engine.commandProcessor().exec(std::span(args));
 }
 
 } // namespace ge

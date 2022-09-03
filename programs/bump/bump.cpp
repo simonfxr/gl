@@ -71,7 +71,7 @@ const ::glt::StructInfo sname::gl::struct_info::info = ::glt::StructInfo(
   PP_TOSTR(sname),
   sizeof(sname::gl),
   alignof(sname::gl),
-  ::ArrayView<const ::glt::FieldInfo>(sname::gl::struct_info::_fields,
+  ::std::span<const ::glt::FieldInfo>(sname::gl::struct_info::_fields,
 								sizeof sname::gl::struct_info::_fields / sizeof(::glt::FieldInfo)));
 
 sname::sname(const sname::gl &TI_VAR(arg)): PP_MAP(TI_INIT_FIELD,PP_COMMA,(vec3_t, position),   (vec3_t, tangent),     (vec3_t, binormal),    (vec2_t, uv))

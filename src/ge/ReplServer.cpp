@@ -117,7 +117,7 @@ Client::handleIO(Engine &e)
     fiber_switch(client_fiber, &parser_fiber);
     switch (state) {
     case ParsingState::GotStatement:
-        e.commandProcessor().execCommand(view_array(statement));
+        e.commandProcessor().execCommand(std::span(statement));
         statement.clear();
         break;
     case ParsingState::Yield:

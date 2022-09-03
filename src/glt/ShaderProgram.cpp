@@ -213,7 +213,7 @@ ShaderProgram::addShaderFile(const std::string &file0,
     std::string file = file0;
 
     if (!absolute) {
-        file = sys::fs::lookup(view_array(self->sm.shaderDirectories()), file);
+        file = sys::fs::lookup(self->sm.shaderDirectories(), file);
         if (file.empty()) {
             RAISE_ERR(*this,
                       ShaderProgramError::FileNotInPath,
@@ -425,7 +425,7 @@ ShaderProgram::bindAttributes(const StructInfo &si)
 }
 
 bool
-ShaderProgram::bindStreamOutVaryings(ArrayView<const std::string> vars)
+ShaderProgram::bindStreamOutVaryings(std::span<const std::string> vars)
 {
 
     // FIXME: record vars to set stream out varyings again if relinked

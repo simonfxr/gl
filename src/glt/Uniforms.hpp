@@ -10,8 +10,8 @@
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
-#include "util/ArrayView.hpp"
 
+#include <span>
 #include <string>
 
 namespace glt {
@@ -58,7 +58,7 @@ private:
     void set(bool mandatory, const std::string &name, double value);
     void set(bool mandatory,
              const std::string &name,
-             ArrayView<const float> value);
+             std::span<const float> value);
     void set(bool mandatory,
              const std::string &name,
              const math::vec4_t &value);

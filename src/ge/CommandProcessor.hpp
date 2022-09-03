@@ -5,8 +5,8 @@
 #include "ge/CommandArgs.hpp"
 #include "pp/pimpl.hpp"
 #include "sys/io/Stream.hpp"
-#include "util/ArrayView.hpp"
 
+#include <span>
 #include <string>
 #include <vector>
 
@@ -20,7 +20,7 @@ struct GE_API CommandProcessor
     ~CommandProcessor() noexcept;
 
     bool addScriptDirectory(std::string dir, bool check_exists = true);
-    ArrayView<const std::string> scriptDirectories() const;
+    std::span<const std::string> scriptDirectories() const;
 
     Engine &engine();
 
@@ -28,13 +28,13 @@ struct GE_API CommandProcessor
 
     bool define(CommandPtr comm, bool unique = false);
 
-    bool exec(std::string_view comname, ArrayView<CommandArg> args);
+    bool exec(std::string_view comname, std::span<CommandArg> args);
 
-    bool exec(CommandPtr &com, ArrayView<CommandArg> args);
+    bool exec(CommandPtr &com, std::span<CommandArg> args);
 
-    bool exec(ArrayView<CommandArg> args);
+    bool exec(std::span<CommandArg> args);
 
-    bool execCommand(ArrayView<CommandArg> args);
+    bool execCommand(std::span<CommandArg> args);
 
     bool loadStream(sys::io::InStream &inp, std::string_view inp_name);
 

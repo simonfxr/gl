@@ -130,7 +130,7 @@ absolutePath(std::string_view path)
 }
 
 std::string
-lookup(ArrayView<const std::string> dirs, std::string_view name)
+lookup(std::span<const std::string> dirs, std::string_view name)
 {
     return def::lookup(dirs, name);
 }

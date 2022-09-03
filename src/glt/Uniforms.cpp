@@ -126,7 +126,7 @@ programUniform(GLuint program, GLint loc, float value)
 }
 
 void
-programUniform(GLuint program, GLint loc, ArrayView<const float> value)
+programUniform(GLuint program, GLint loc, std::span<const float> value)
 {
     GL_CALL(
       glProgramUniform1fv, program, loc, GLsizei(value.size()), value.data());
@@ -276,7 +276,7 @@ Uniforms::set(bool mandatory, const std::string &name, double value)
 void
 Uniforms::set(bool mandatory,
               const std::string &name,
-              ArrayView<const float> value)
+              std::span<const float> value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT, value);
 }

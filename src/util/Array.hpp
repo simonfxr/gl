@@ -1,9 +1,11 @@
 #ifndef UTIL_ARRAY_HPP
 #define UTIL_ARRAY_HPP
 
-#include "util/ArrayView.hpp"
+#include "defs.h"
 
 #include <new>
+#include <span>
+#include <string_view>
 #include <type_traits>
 
 #if HU_COMP_GNULIKE_P || hu_has_attribute(malloc)
@@ -116,7 +118,11 @@ struct Array : private std::vector<T>
     {}
 
     template<typename U = T>
-    Array(ArrayView<U> arr) : base(arr.begin(), arr.end())
+    Array(std::span<U> arr) : base(arr.begin(), arr.end())
+    {}
+
+    template<typename U = T>
+    Array(std::string_view arr) : base(arr.begin(), arr.end())
     {}
 
     template<typename U>
@@ -137,7 +143,7 @@ struct Array
     constexpr Array() noexcept = default;
 
     template<typename U>
-    Array(ArrayView<U> view)
+    Array(std::span<U> view)
     {
         *this = view;
     }
@@ -164,7 +170,7 @@ struct Array
     }
 
     template<typename U>
-    Array &operator=(ArrayView<U> view)
+    Array &operator=(std::span<U> view)
     {
         if (_size == view.size()) {
             copy_array_data(_data, view.data(), view.size());
@@ -193,13 +199,13 @@ struct Array
         return *this;
     }
 
-    ArrayView<const T> view() const { return ArrayView<T>{ _data, _size }; }
+    std::span<const T> view() const { return std::span<T>{ _data, _size }; }
 
-    ArrayView<T> view() { return ArrayView<T>{ _data, _size }; }
+    std::span<T> view() { return std::span<T>{ _data, _size }; }
 
-    operator ArrayView<const T>() const { return view(); }
+    operator std::span<const T>() const { return view(); }
 
-    operator ArrayView<T>() { return view(); }
+    operator std::span<T>() { return view(); }
 
     HU_FORCE_INLINE const T &operator[](size_t i) const { return _data[i]; }
 

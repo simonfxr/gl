@@ -310,7 +310,7 @@ CommandPrettyPrinter::print(const CommandArg &arg, bool first)
 }
 
 void
-CommandPrettyPrinter::print(ArrayView<const CommandArg> statement)
+CommandPrettyPrinter::print(std::span<const CommandArg> statement)
 {
 
     if (self->ignore_empty_statements && statement.size() == 0)
@@ -329,7 +329,7 @@ CommandPrettyPrinter::print(const Quotation &q)
     openQuotation();
 
     for (const auto &qi : q) {
-        print(view_array(qi));
+        print(std::span(qi));
         auto &pq = self->quotations.back();
         pq->statements.push_back(pq->out.str());
         pq->out.truncate(0);

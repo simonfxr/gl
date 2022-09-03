@@ -2,11 +2,11 @@
 #define GE_EVENT_HPP
 
 #include "ge/conf.hpp"
-#include "util/ArrayView.hpp"
 #include "util/functor_traits.hpp"
 #include "util/noncopymove.hpp"
 
 #include <memory>
+#include <span>
 #include <vector>
 
 namespace ge {
@@ -86,14 +86,14 @@ struct EventSource : private NonCopyable
     inline bool unreg(const std::shared_ptr<EventHandler<T>> &handler);
     inline void clear();
 
-    ArrayView<std::shared_ptr<EventHandler<T>>> handlers()
+    std::span<std::shared_ptr<EventHandler<T>>> handlers()
     {
-        return view_array(_handlers);
+        return std::span(_handlers);
     }
 
-    ArrayView<const std::shared_ptr<EventHandler<T>>> handlers() const
+    std::span<const std::shared_ptr<EventHandler<T>>> handlers() const
     {
-        return view_array(_handlers);
+        return std::span(_handlers);
     }
 
 private:

@@ -841,7 +841,7 @@ Game::link(ge::Engine &e)
       "incWorldSolveIterations",
       "",
       [this](const ge::Event<ge::CommandEvent> & /*unused*/,
-             ArrayView<const ge::CommandArg> args) {
+             std::span<const ge::CommandArg> args) {
           if (args[0].integer < 0 &&
               world.solve_iterations < size_t(-args[0].integer))
               world.solve_iterations = 0;

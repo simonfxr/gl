@@ -80,7 +80,7 @@ void
 GLSLPreprocessor::appendString(std::string_view str)
 {
     if (!str.empty()) {
-        auto &data = contents.emplace_back(view_array(str));
+        auto &data = contents.emplace_back(str);
         segments.push_back(data.data());
         segLengths.push_back(uint32_t(data.size()));
     }
@@ -151,7 +151,7 @@ DependencyHandler::directiveEncountered(
     }
 
     std::string file(arg, len);
-    std::string realPath = sys::fs::lookup(view_array(proc.includePath), file);
+    std::string realPath = sys::fs::lookup(proc.includePath, file);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
                    << ": #need-directive: cannot find file: " << file << "\n";
@@ -211,7 +211,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
     }
 
     std::string file(arg, len);
-    std::string realPath = sys::fs::lookup(view_array(proc.includePath), file);
+    std::string realPath = sys::fs::lookup(proc.includePath, file);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
                    << ": #include-directive: cannot find file: " << file
