@@ -1,5 +1,5 @@
-#define CL_HPP_ENABLE_SIZE_T_COMPATIBILITY 1
-#define CL_HPP_TARGET_OPENCL_VERSION 300
+#define CL_HPP_MINIMUM_OPENCL_VERSION 200
+#define CL_HPP_TARGET_OPENCL_VERSION 200
 
 #include <CL/opencl.hpp>
 
@@ -21,9 +21,13 @@
 
 #include "shaders/shader_constants.h"
 
+#include <array>
 #include <sstream>
 #include <string>
 #include <vector>
+
+template<size_t N>
+using cl_size = std::array<cl::size_type, N>;
 
 #ifdef HU_OS_POSIX
 #    include <GL/glx.h>
@@ -37,7 +41,7 @@
         }                                                                      \
     } while (0)
 
-static const size_t DEFAULT_N = 64;
+static const size_t DEFAULT_N = 128;
 
 using namespace math;
 
@@ -63,9 +67,9 @@ struct MCState
     cl::Event writeVBOJob;
 };
 
-#define MC_SIZE_X 4
-#define MC_SIZE_Y 4
-#define MC_SIZE_Z 4
+#define MC_SIZE_X 2
+#define MC_SIZE_Y 2
+#define MC_SIZE_Z 2
 #define NUM_MC (MC_SIZE_X * MC_SIZE_Y * MC_SIZE_Z)
 
 struct Anim
@@ -148,14 +152,14 @@ createCLGLContext(cl::Platform &platform, cl_int *err)
 {
 
     cl_context_properties props[] = {
-#ifdef HU_OS_WINDOWS
+#if HU_OS_WINDOWS_P
         CL_GL_CONTEXT_KHR,
         cl_context_properties(wglGetCurrentContext()),
         CL_WGL_HDC_KHR,
         cl_context_properties(wglGetCurrentDC()),
         CL_CONTEXT_PLATFORM,
         cl_context_properties((platform) ()),
-#elif defined(HU_OS_POSIX)
+#elif HU_OS_POSIX_P
         CL_GL_CONTEXT_KHR,
         cl_context_properties(glXGetCurrentContext()),
         CL_GLX_DISPLAY_KHR,
@@ -165,10 +169,11 @@ createCLGLContext(cl::Platform &platform, cl_int *err)
 #else
 #    error "unknown system"
 #endif
+        0,
         0
     };
 
-    return cl::Context(CL_DEVICE_TYPE_GPU, props, print_cl_error, nullptr, err);
+    return { CL_DEVICE_TYPE_GPU, props, print_cl_error, nullptr, err };
 }
 
 template<typename T>
@@ -489,10 +494,8 @@ Anim::computeHistogram(MCState &cur_mc)
 
     ASSERT(i + 1 == cur_mc.images.size());
 
-    cl::size_t<3> origin;
-    cl::size_t<3> cube;
-    origin[0] = origin[1] = origin[2] = 0;
-    cube[0] = cube[1] = cube[2] = 2;
+    auto origin = cl_size<3>{ 0, 0, 0 };
+    auto cube = cl_size<3>{ 2, 2, 2 };
     cl_q.enqueueReadImage(cur_mc.images[cur_mc.images.size() - 1],
                           CL_FALSE,
                           origin,
