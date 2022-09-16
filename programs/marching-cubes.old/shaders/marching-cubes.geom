@@ -25,7 +25,7 @@ float sampleVolume(vec3 uvw) {
 
     /* vec3 diff = wc - center; */
     /* return dot(diff, diff) - rad * rad; */
-    return texture(worldVolume, uvw, 0).r;
+    return texture(worldVolume, uvw).r;
 }
 
 layout(points) in;

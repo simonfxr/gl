@@ -53,6 +53,12 @@ struct GLT_API ShaderProgram
 
     bool bindAttributes(const StructInfo &);
 
+    template<typename VertexType>
+    bool bindAttributes()
+    {
+        return bindAttributes(VertexType::gl::struct_info::info);
+    }
+
     bool tryLink();
 
     bool link();

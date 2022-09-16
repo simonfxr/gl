@@ -1,6 +1,5 @@
 #include "ge/Camera.hpp"
 #include "ge/Command.hpp"
-#include "ge/CommandParams.hpp"
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
 #include "ge/Timer.hpp"
@@ -15,60 +14,39 @@
 #include "err/err.hpp"
 #include "sys/measure.hpp"
 
-#include "math/io.hpp"
 #include "math/ivec3.hpp"
 #include "math/vec4.hpp"
 
-#include "marching-cubes/tables.hpp"
-#include "marching-cubes/tables2.hpp"
+#include "./tables.hpp"
+#include "./tables2.hpp"
 
 using namespace math;
 
-static const vec3_t WORLD_BLOCK_SCALE = vec3(32);
+static const vec3_t WORLD_BLOCK_SCALE = vec3(16);
 
-static const ivec3_t SAMPLER_SIZE = ivec3(32);
+static const ivec3_t SAMPLER_SIZE = ivec3(140);
 
-struct WorldVertex
-{
-    vec3_t::gl position;
-};
-
-struct MCVertex
-{
-    vec3_t::gl position;
-};
-
-struct MCFeedbackVertex
-{
-    vec3_t::gl position;
-    vec3_t::gl normal;
-};
-
-DEFINE_VERTEX_DESC(WorldVertex, VERTEX_ATTR(WorldVertex, position));
-
-DEFINE_VERTEX_DESC(MCVertex, VERTEX_ATTR(MCVertex, position));
-
-DEFINE_VERTEX_DESC(MCFeedbackVertex,
-                   VERTEX_ATTR(MCFeedbackVertex, position),
-                   VERTEX_ATTR(MCFeedbackVertex, normal));
+DEF_GL_MAPPED_TYPE(WorldVertex, (vec3_t, position));
+DEF_GL_MAPPED_TYPE(MCVertex, (vec3_t, position));
+DEF_GL_MAPPED_TYPE(MCFeedbackVertex, (vec3_t, position), (vec3_t, normal))
 
 struct Anim
 {
     ge::Engine *engine;
     glt::Mesh<WorldVertex> unitRect; // a slice in the world volume
-    Ref<glt::TextureRenderTarget3D> worldVolume;
+    std::shared_ptr<glt::TextureRenderTarget3D> worldVolume;
     glt::Mesh<MCVertex> volumeCube;
 
     glt::TextureSampler caseToNumPolysData;
     glt::TextureSampler triangleTableData;
 
-    Ref<glt::ShaderProgram> worldProgram;
-    Ref<glt::ShaderProgram> marchingCubesProgram;
-    Ref<glt::ShaderProgram> feedbackProgram;
+    std::shared_ptr<glt::ShaderProgram> worldProgram;
+    std::shared_ptr<glt::ShaderProgram> marchingCubesProgram;
+    std::shared_ptr<glt::ShaderProgram> feedbackProgram;
 
     ge::Camera camera;
     ge::MouseLookPlugin mouse_look;
-    Ref<ge::Timer> fpsTimer;
+    std::shared_ptr<ge::Timer> fpsTimer;
 
     Anim() : engine(0) {}
 
@@ -86,17 +64,18 @@ void
 Anim::link(ge::Engine &e)
 {
     engine = &e;
-    e.events().animate.reg(makeEventHandler(this, &Anim::animate));
-    e.events().render.reg(makeEventHandler(this, &Anim::render));
+    e.events().animate.reg(makeEventHandler(*this, &Anim::animate));
+    e.events().render.reg(makeEventHandler(*this, &Anim::render));
 }
 
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-
     mouse_look.camera(&camera);
     engine->enablePlugin(camera);
     engine->enablePlugin(mouse_look);
+
+    GL_CALL(glEnable, GL_CULL_FACE);
 
     {
         WorldVertex v;
@@ -120,8 +99,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
         glt::TextureRenderTarget3D::Params ps;
         ps.filter_mode = glt::TextureSampler::FilterLinear;
         ps.color_format = GL_R32F;
-        worldVolume =
-          new glt::TextureRenderTarget3D(SAMPLER_SIZE + ivec3(1), ps);
+        worldVolume = std::make_shared<glt::TextureRenderTarget3D>(
+          SAMPLER_SIZE + ivec3(1), ps);
     }
 
     {
@@ -175,7 +154,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     if (!worldProgram)
         return;
 
-    marchingCubesProgram = new glt::ShaderProgram(engine->shaderManager());
+    marchingCubesProgram =
+      std::make_shared<glt::ShaderProgram>(engine->shaderManager());
     marchingCubesProgram->addShaderFile("marching-cubes.vert");
     marchingCubesProgram->addShaderFile("marching-cubes.geom");
     marchingCubesProgram->addShaderFile("marching-cubes.frag");
@@ -193,7 +173,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     if (!feedbackProgram)
         return;
 
-    fpsTimer = new ge::Timer(*engine);
+    fpsTimer = std::make_shared<ge::Timer>(*engine);
     fpsTimer->start(1.f, true);
 
     ev.info.success = true;
@@ -256,11 +236,11 @@ Anim::renderWorld()
     mat4_t scaleM = glt::scaleMatrix(tex_scale);
 
     float invDim = 1.f / float(worldVolume->depth() - 1);
-    for (index i = 0; i < worldVolume->depth(); ++i) {
+    for (auto i = 0; i < worldVolume->depth(); ++i) {
         worldVolume->targetAttachment(glt::TextureRenderTarget3D::Attachment(
           glt::TextureRenderTarget3D::AttachmentLayer, i));
 
-        rm.setActiveRenderTarget(worldVolume.ptr());
+        rm.setActiveRenderTarget(worldVolume);
         glt::Uniforms(*worldProgram)
           .mandatory("depth", float(i) * invDim)
           .mandatory("worldMatrix",
@@ -353,6 +333,7 @@ main(int argc, char *argv[])
     ge::Engine engine;
     Anim anim;
 
+    engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     anim.link(engine);
     ge::EngineOptions opts;
 
@@ -360,7 +341,7 @@ main(int argc, char *argv[])
     // opts.window.settings.MinorVersion = 1;
 
     opts.parse(&argc, &argv);
-    opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));
+    opts.inits.reg(ge::Init, ge::makeEventHandler(anim, &Anim::init));
 
     return engine.run(opts);
 }

@@ -1,7 +1,7 @@
 #include "ge/Camera.hpp"
 #include "ge/Command.hpp"
-#include "ge/CommandParams.hpp"
 #include "ge/Engine.hpp"
+#include "ge/MouseLookPlugin.hpp"
 #include "ge/Timer.hpp"
 
 #include "glt/CubeMesh.hpp"
@@ -13,12 +13,11 @@
 
 #include "sys/measure.hpp"
 
-#include "math/io.hpp"
 #include "math/ivec3.hpp"
 #include "math/vec4.hpp"
 
-#include "marching-cubes/tables.hpp"
-#include "marching-cubes/tables2.hpp"
+#include "./tables.hpp"
+#include "./tables2.hpp"
 
 using namespace math;
 
@@ -26,7 +25,7 @@ static const vec3_t WORLD_BLOCK_SCALE = vec3(32);
 
 static const ivec3_t SAMPLER_SIZE = ivec3(8);
 
-static const size BLOCK_DATA_SIZE =
+static const size_t BLOCK_DATA_SIZE =
   (SAMPLER_SIZE[0] * SAMPLER_SIZE[1] * SAMPLER_SIZE[2]) *
   2; // may not fit in worst case
 
@@ -56,22 +55,23 @@ struct Anim
 {
     ge::Engine *engine;
     glt::Mesh<WorldVertex> unitRect; // a slice in the world volume
-    Ref<glt::TextureRenderTarget3D> worldVolume;
+    std::shared_ptr<glt::TextureRenderTarget3D> worldVolume;
     glt::Mesh<MCVertex> volumeCube;
 
     glt::TextureSampler caseToNumPolysData;
     glt::TextureSampler triangleTableData;
 
-    Ref<glt::ShaderProgram> worldProgram;
-    Ref<glt::ShaderProgram> marchingCubesProgram;
-    Ref<glt::ShaderProgram> renderPolygonProgram;
+    std::shared_ptr<glt::ShaderProgram> worldProgram;
+    std::shared_ptr<glt::ShaderProgram> marchingCubesProgram;
+    std::shared_ptr<glt::ShaderProgram> renderPolygonProgram;
 
     ge::Camera camera;
-    Ref<ge::Timer> fpsTimer;
+    ge::MouseLookPlugin mouse_look;
+    std::shared_ptr<ge::Timer> fpsTimer;
 
     std::vector<Block> blocks;
 
-    Anim() : engine(0) {}
+    Anim() : engine(nullptr) {}
 
     void link(ge::Engine &);
     void init(const ge::Event<ge::InitEvent> &);
@@ -93,17 +93,22 @@ void
 Anim::link(ge::Engine &e)
 {
     engine = &e;
-    e.events().animate.reg(makeEventHandler(this, &Anim::animate));
-    e.events().render.reg(makeEventHandler(this, &Anim::render));
+    e.events().animate.reg(makeEventHandler(*this, &Anim::animate));
+    e.events().render.reg(makeEventHandler(*this, &Anim::render));
 }
 
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-    camera.registerWith(*engine);
-    camera.registerCommands(engine->commandProcessor());
+    // camera.registerWith(*engine);
+    // camera.registerCommands(engine->commandProcessor());
 
-    engine->window().grabMouse(true);
+    ev.info.engine.enablePlugin(mouse_look);
+    mouse_look.camera(&camera);
+    ev.info.engine.enablePlugin(camera);
+    camera.frame().origin = vec3(0.f);
+
+    //    engine->window().grabMouse(true);
     engine->window().showMouseCursor(false);
 
     {
@@ -128,8 +133,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
         glt::TextureRenderTarget3D::Params ps;
         ps.filter_mode = glt::TextureSampler::FilterLinear;
         ps.color_format = GL_R32F;
-        worldVolume =
-          new glt::TextureRenderTarget3D(SAMPLER_SIZE + ivec3(1), ps);
+        worldVolume = std::make_shared<glt::TextureRenderTarget3D>(
+          SAMPLER_SIZE + ivec3(1), ps);
     }
 
     caseToNumPolysData.data()->type(glt::Texture1D);
@@ -178,7 +183,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     if (!worldProgram)
         return;
 
-    marchingCubesProgram = new glt::ShaderProgram(engine->shaderManager());
+    marchingCubesProgram =
+      std::make_shared<glt::ShaderProgram>(engine->shaderManager());
     marchingCubesProgram->addShaderFile("marching-cubes.vert");
     marchingCubesProgram->addShaderFile("marching-cubes.geom");
     marchingCubesProgram->bindAttributes<MCVertex>();
@@ -192,7 +198,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     if (!renderPolygonProgram)
         return;
 
-    size num_blocks = BLOCKS[0] * BLOCKS[1] * BLOCKS[2];
+    auto num_blocks = BLOCKS[0] * BLOCKS[1] * BLOCKS[2];
     blocks.resize(num_blocks);
 
     int id = 0;
@@ -207,7 +213,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
         }
     }
 
-    fpsTimer = new ge::Timer(*engine);
+    fpsTimer = std::make_shared<ge::Timer>(*engine);
     fpsTimer->start(1.f, true);
 
     GL_CALL(glFinish);
@@ -302,19 +308,19 @@ Anim::makeSampleVolume()
     mat4_t scaleM = glt::scaleMatrix(tex_scale);
 
     float invDim = 1.f / float(worldVolume->depth() - 1);
-    for (index i = 0; i < worldVolume->depth(); ++i) {
+    for (auto i = 0; i < worldVolume->depth(); ++i) {
         worldVolume->targetAttachment(glt::TextureRenderTarget3D::Attachment(
           glt::TextureRenderTarget3D::AttachmentLayer, i));
 
-        rm.setActiveRenderTarget(worldVolume.ptr());
+        rm.setActiveRenderTarget(worldVolume);
         glt::Uniforms(*worldProgram)
           .mandatory("depth", float(i) * invDim)
           .mandatory("worldMatrix",
                      rm.geometryTransform().modelMatrix() * scaleM)
-          .optional("time", engine->gameLoop().gameTime());
+          .optional("time", engine->gameLoop().tickTime());
 
         unitRect.draw();
-        rm.setActiveRenderTarget(0);
+        rm.setActiveRenderTarget(nullptr);
     }
 
     rm.setDefaultRenderTarget();
@@ -369,7 +375,7 @@ Anim::renderPolygon(const Block &block)
     glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
     glt::SavePoint sp(gt.save());
 
-    const aligned_mat4_t model = gt.modelMatrix();
+    const mat4_t model = gt.modelMatrix();
     const mat4_t scaleM = glt::scaleMatrix(WORLD_BLOCK_SCALE);
     gt.loadModelMatrix(scaleM * model);
     gt.translate(block.aabb_min);
@@ -408,14 +414,14 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
     // * scale);
     //     }
 
-    for (index i = 0; i < SIZE(blocks.size()); ++i)
+    for (auto i = 0; i < blocks.size(); ++i)
         renderPolygon(blocks[i]);
 
     if (fpsTimer->fire()) {
         glt::FrameStatistics fs = engine->renderManager().frameStatistics();
         sys::io::stdout() << "Timings (FPS/Render Avg/Render Min/Render Max): "
-                          << fs.avg_fps << "; " << fs.rt_avg << "; "
-                          << fs.rt_min << "; " << fs.rt_max << "\n";
+                          << fs.avg << "; " << fs.avg << "; " << fs.min << "; "
+                          << fs.max << "\n";
     }
 }
 
@@ -433,7 +439,7 @@ main(int argc, char *argv[])
     // opts.window.settings.MinorVersion = 1;
 
     opts.parse(&argc, &argv);
-    opts.inits.reg(ge::Init, ge::makeEventHandler(&anim, &Anim::init));
+    opts.inits.reg(ge::Init, ge::makeEventHandler(anim, &Anim::init));
 
     return engine.run(opts);
 }

@@ -2,11 +2,11 @@
 uniform float time;
 uniform mat4 worldMatrix;
 
-const int ITER = 9;
+const int ITER = 11;
 
-const float RAD = 1;
+const float RAD = 0.9;
 
-const vec4 C0 = vec4(-1, 0.2, 0, 0);
+const vec4 C0 = 0.81 * normalize(vec4(-0.4, 0.4, 1.2, 1.1));
 
 const float W = 0.5;
 
@@ -40,10 +40,11 @@ float
 world(vec3 p)
 {
 
-    float w = sin(time * 0.10) * 0.62;
+    float w = sin(time * 0.3) * 0.6;
+    float u = cos(time * 0.3 + 1.5) * 0.6;
     vec4 c = C0;
     p *= 0.5;
-    vec4 point = vec4(p, w);
+    vec4 point = 2.1 * vec4(p, w);
     return (J(point, c) - RAD) / RAD;
 }
 

@@ -2,7 +2,7 @@
 uniform float time;
 uniform mat4 worldMatrix;
 
-const int ITER = 9;
+const int ITER = 5;
 
 const float RAD = 1;
 
@@ -39,11 +39,11 @@ J(vec4 z)
 float
 world(vec3 p)
 {
-
-    float w = sin(time * 0.5) * 0.5;
-    p *= 0.5;
-    vec4 point = vec4(p, w);
-    return (J(point) - RAD) / RAD;
+  return dot(p, p) - 2.0;
+    // float w = sin(time * 0.5) * 0.5;
+    // p *= 0.5;
+    // vec4 point = vec4(p, w);
+    // return (J(point) - RAD) / RAD;
 }
 
 void
