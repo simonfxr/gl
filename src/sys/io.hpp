@@ -95,11 +95,14 @@ close(Handle &);
 
 PP_DEF_ENUM_WITH_API(SYS_API, SYS_SOCKET_ERROR_ENUM_DEF);
 
-HU_NODISCARD SYS_API std::optional<Socket>
-listen(SocketProto, const IPAddr4 &, uint16_t, SocketMode, SocketError &);
+template<typename T>
+using SocketResult = util::expected<T, SocketError>;
 
-HU_NODISCARD SYS_API std::optional<Handle>
-accept(Socket &, SocketError &);
+HU_NODISCARD SYS_API SocketResult<Socket>
+listen(SocketProto, const IPAddr4 &, uint16_t, SocketMode);
+
+HU_NODISCARD SYS_API SocketResult<Handle>
+accept(Socket &);
 
 SYS_API SocketError
 close(Socket &);
@@ -108,15 +111,13 @@ close(Socket &);
 struct OSHandle
 {
     int fd = -1;
-    static inline constexpr OSHandle nil() { return {}; }
-    HU_NODISCARD inline constexpr bool is_nil() const { return fd == -1; }
+    friend auto operator<=>(const OSHandle &lhs, const OSHandle &rhs) = default;
 };
 
 struct OSSocket
 {
     int fd = -1;
-    static inline constexpr OSSocket nil() { return {}; }
-    HU_NODISCARD inline constexpr bool is_nil() const { return fd == -1; }
+    friend auto operator<=>(const OSSocket &lhs, const OSSocket &rhs) = default;
 };
 
 #elif HU_OS_WINDOWS_P
@@ -124,15 +125,13 @@ struct OSHandle
 {
     void *handle{};
     bool is_socket{};
-    static inline constexpr OSHandle nil() { return {}; }
-    HU_NODISCARD inline constexpr bool is_nil() const { return !handle; }
+    friend auto operator<=>(const OSHandle &lhs, const OSHandle &rhs) = default;
 };
 
 struct OSSocket
 {
     void *socket{};
-    static inline constexpr OSSocket nil() { return {}; }
-    HU_NODISCARD inline constexpr bool is_nil() const { return !socket; }
+    friend auto operator<=>(const OSSocket &lhs, const OSSocket &rhs) = default;
 };
 #else
 #    error "OS not supported"
@@ -144,7 +143,13 @@ struct Handle : private NonCopyable
     OSHandle _os{};
 
     constexpr Handle() = default;
-    Handle(Handle &&h) noexcept { *this = std::move(h); }
+    constexpr Handle(Handle &&rhs) noexcept { swap(*this, rhs); }
+    Handle &operator=(Handle &&rhs) noexcept
+    {
+        auto tmp = Handle{ std::move(rhs) };
+        swap(*this, tmp);
+        return *this;
+    }
 
     ~Handle()
     {
@@ -152,22 +157,28 @@ struct Handle : private NonCopyable
             close(*this);
     }
 
-    Handle &operator=(Handle &&h) noexcept
-    {
-        _mode = std::exchange(h._mode, 0);
-        _os = std::exchange(h._os, OSHandle::nil());
-        return *this;
-    }
+    constexpr explicit operator bool() const { return _os != OSHandle{}; }
 
-    constexpr explicit operator bool() const { return !_os.is_nil(); }
+    constexpr friend void swap(Handle &lhs, Handle &rhs) noexcept
+    {
+        using std::swap;
+        swap(lhs._mode, rhs._mode);
+        swap(lhs._os, rhs._os);
+    }
 };
 
-struct Socket : NonCopyable
+struct Socket : private NonCopyable
 {
-    OSSocket _os;
+    OSSocket _os{};
 
     constexpr Socket() = default;
-    Socket(Socket &&s) noexcept { *this = std::move(s); }
+    constexpr Socket(Socket &&rhs) noexcept { swap(*this, rhs); }
+    Socket &operator=(Socket &&rhs) noexcept
+    {
+        auto tmp = Socket{ std::move(rhs) };
+        swap(*this, tmp);
+        return *this;
+    }
 
     ~Socket()
     {
@@ -175,31 +186,32 @@ struct Socket : NonCopyable
             close(*this);
     }
 
-    Socket &operator=(Socket &&s) noexcept
+    constexpr explicit operator bool() const { return _os != OSSocket{}; }
+    constexpr friend void swap(Socket &lhs, Socket &rhs) noexcept
     {
-        _os = std::exchange(s._os, OSSocket::nil());
-        return *this;
+        using std::swap;
+        swap(lhs._os, rhs._os);
     }
-
-    constexpr explicit operator bool() const { return !_os.is_nil(); }
 };
 
 struct SYS_API HandleStream : public IOStream
 {
+private:
     Handle handle;
     char read_buffer[HANDLE_READ_BUFFER_SIZE]{};
     char write_buffer[HANDLE_WRITE_BUFFER_SIZE]{};
-    size_t read_cursor;
-    size_t write_cursor;
+    size_t read_cursor{};
+    size_t write_cursor{};
 
+public:
     HandleStream(HandleStream &&) = default;
 
-    HandleStream(Handle);
+    explicit HandleStream(Handle);
     ~HandleStream() override;
 
     HU_NODISCARD
     static HandleResult<HandleStream> open(std::string_view path,
-                                           HandleMode mode);
+                                           HandleMode mode = HM_READ);
 
 protected:
     StreamResult basic_close() final override;

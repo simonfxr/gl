@@ -17,11 +17,10 @@ struct Client
     bool reading{ true };
     char buffer[BUF_SIZE]{};
     size_t buf_pos{};
-    size_t buf_end;
+    size_t buf_end{ BUF_SIZE };
 
-    Client()
-      : stream(std::make_shared<io::HandleStream>(io::Handle()))
-      , buf_end(BUF_SIZE)
+    explicit Client(io::Handle h, int id)
+      : stream(std::make_shared<io::HandleStream>(std::move(h))), id(id)
     {}
 };
 
@@ -29,39 +28,34 @@ int
 main()
 {
     std::vector<Client> clients;
-    clients.emplace_back();
     int id = 0;
 
     sys::moduleInit();
 
-    io::SocketError sockerr;
-    auto opt_server =
-      io::listen(io::SP_TCP, io::IPA_LOCAL, 1337, io::SM_NONBLOCKING, sockerr);
-    if (!opt_server) {
+    auto server_sock =
+      io::listen(io::SP_TCP, io::IPA_LOCAL, 1337, io::SM_NONBLOCKING);
+    if (!server_sock) {
         ERR("failed to start server");
         return 1;
     }
-    auto server = std::move(opt_server).value();
+    auto server = std::move(server_sock).value();
 
     INFO("started server");
 
     for (;;) {
 
         for (;;) {
-            auto opt_handle = io::accept(server, sockerr);
-            if (!opt_handle)
+            auto res = io::accept(server);
+            if (!res)
                 break;
-            Client &c = clients[clients.size() - 1];
-            c.stream->handle = std::move(opt_handle).value();
-            c.id = id++;
-            sys::io::stdout() << "accepted client " << c.id << "\n";
+            auto handle = std::move(res).value();
             IGNORE_RESULT(
-              io::elevate(c.stream->handle,
-                          io::mode(c.stream->handle) | io::HM_NONBLOCKING));
-            clients.emplace_back();
+              io::elevate(handle, io::mode(handle) | io::HM_NONBLOCKING));
+            auto &c = clients.emplace_back(std::move(handle), id);
+            sys::io::stdout() << "accepted client " << c.id << "\n";
         }
 
-        for (size_t i = 0; i < clients.size() - 1; ++i) {
+        for (size_t i = 0; i < clients.size(); i++) {
             Client &c = clients[i];
             bool close = false;
 
@@ -107,6 +101,7 @@ main()
                   << "closing connection to client " << c.id << "\n";
                 c.stream->close();
                 clients.erase(clients.begin() + i);
+                --i; // may underflow, okay
             }
         }
     }

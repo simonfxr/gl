@@ -172,13 +172,13 @@ ReplServer::start(const IPAddr4 &listen_addr, uint16_t port)
         return false;
     }
 
-    sys::io::SocketError err;
-    auto opt_sock = listen(SP_TCP, listen_addr, port, SM_NONBLOCKING, err);
-    if (!opt_sock) {
-        ERR(string_concat("failed to open socket for listening: ", err));
+    auto sock = listen(SP_TCP, listen_addr, port, SM_NONBLOCKING);
+    if (!sock) {
+        ERR(
+          string_concat("failed to open socket for listening: ", sock.error()));
         return false;
     }
-    self->server = std::move(opt_sock).value();
+    self->server = std::move(sock).value();
     self->running = true;
     return true;
 }
@@ -201,8 +201,7 @@ ReplServer::acceptClients()
     ASSERT(self->running);
 
     for (;;) {
-        SocketError err;
-        auto opt_hndl = accept(self->server, err);
+        auto opt_hndl = accept(self->server);
         if (!opt_hndl)
             break;
         auto handle = std::move(opt_hndl).value();

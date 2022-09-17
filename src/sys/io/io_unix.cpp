@@ -154,7 +154,7 @@ open(std::string_view path, HandleMode mode)
 {
     int flags = convertMode(mode);
     if (flags == -1)
-        return util::unexpected<HandleError>{ HandleError::INVALID_PARAM };
+        return util::unexpected{ HandleError::INVALID_PARAM };
 
     int fd;
     auto strpath = std::string(path);
@@ -234,12 +234,8 @@ close(Handle &h)
     return HandleError::OK;
 }
 
-std::optional<Socket>
-listen(SocketProto proto,
-       const IPAddr4 &addr,
-       uint16_t port,
-       SocketMode mode,
-       SocketError &err)
+SocketResult<Socket>
+listen(SocketProto proto, const IPAddr4 &addr, uint16_t port, SocketMode mode)
 {
     const int BACKLOG = 16;
 
@@ -257,10 +253,8 @@ listen(SocketProto proto,
 
     int sock;
     RETRY_INTR(sock = socket(PF_INET, type, 0));
-    if (sock == -1) {
-        err = convertErrnoSock();
-        return std::nullopt;
-    }
+    if (sock == -1)
+        return util::unexpected{ convertErrnoSock() };
 
     int enable = 1;
     RETRY_INTR(
@@ -302,17 +296,15 @@ listen(SocketProto proto,
     {
         Socket s;
         s._os.fd = sock;
-        err = SocketError::OK;
         return { std::move(s) };
     }
 socket_err:
     ::close(sock);
-    err = convertErrnoSock();
-    return std::nullopt;
+    return util::unexpected{ convertErrnoSock() };
 }
 
-std::optional<Handle>
-accept(Socket &s, SocketError &err)
+SocketResult<Handle>
+accept(Socket &s)
 {
     ASSERT(s);
 
@@ -326,10 +318,8 @@ accept(Socket &s, SocketError &err)
     RETRY_INTR(c = accept4(s._os.fd, &client, &clen, SOCK_CLOEXEC));
     END_NO_WARN_DISABLED_MACRO_EXPANSION
 
-    if (c == -1) {
-        err = convertErrnoSock();
-        return std::nullopt;
-    }
+    if (c == -1)
+        return util::unexpected{ convertErrnoSock() };
 
     int flags;
     RETRY_INTR(flags = fcntl(c, F_GETFL));
@@ -337,7 +327,6 @@ accept(Socket &s, SocketError &err)
         goto client_err;
 
     {
-        err = SocketError::OK;
         Handle h;
         h._os.fd = c;
         h._mode = unconvertMode(flags);
@@ -346,8 +335,7 @@ accept(Socket &s, SocketError &err)
 
 client_err:
     ::close(c);
-    err = convertErrnoSock();
-    return std::nullopt;
+    return util::unexpected{ convertErrnoSock() };
 }
 
 SocketError

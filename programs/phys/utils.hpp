@@ -79,7 +79,7 @@ ParticleRenderer::init(ge::Engine *e, const ParticleRenderer::Opts &popts)
                                glt::ShaderType::VertexShader);
     this->shader->addShaderSrc(PARTICLE_FRAGMENT_SHADER,
                                glt::ShaderType::FragmentShader);
-    this->shader->bindAttributes(Vertex2D::gl::struct_info::info);
+    this->shader->bindAttributes<Vertex2D>();
 
     if (!this->shader->tryLink())
         return false;

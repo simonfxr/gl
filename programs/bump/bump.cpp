@@ -58,7 +58,7 @@ struct sname::gl::struct_info
 };
 
 const ::glt::FieldInfo sname::gl::struct_info::_fields[4] = { PP_MAP_WITH_ARG(
-																TI_DEF_FIELD_INFO,
+                                                                TI_DEF_FIELD_INFO,
                                                              PP_COMMA,
                                                              sname,
                                                              (vec3_t, position),
@@ -72,7 +72,7 @@ const ::glt::StructInfo sname::gl::struct_info::info = ::glt::StructInfo(
   sizeof(sname::gl),
   alignof(sname::gl),
   ::std::span<const ::glt::FieldInfo>(sname::gl::struct_info::_fields,
-								sizeof sname::gl::struct_info::_fields / sizeof(::glt::FieldInfo)));
+                                      sizeof sname::gl::struct_info::_fields / sizeof(::glt::FieldInfo)));
 
 sname::sname(const sname::gl &TI_VAR(arg)): PP_MAP(TI_INIT_FIELD,PP_COMMA,(vec3_t, position),   (vec3_t, tangent),     (vec3_t, binormal),    (vec2_t, uv))
 {}
@@ -130,7 +130,7 @@ void
 Anim::renderScene(const ge::Event<ge::RenderEvent> & /*unused*/)
 {
     auto rt = engine.renderManager().activeRenderTarget();
-    rt->clearColor(glt::color(vec4(real(1))));
+    rt->clearColor(glt::color(vec4(1)));
     rt->clear();
 
     auto program = engine.shaderManager().program("sphere");

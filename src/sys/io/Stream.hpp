@@ -37,33 +37,37 @@ PP_DEF_ENUM_WITH_API(SYS_API, SYS_STREAM_RESULT_ENUM_DEF);
 
 using StreamFlags = uint16_t;
 
-namespace {
-
 inline constexpr StreamFlags SF_IN_EOF = 1;
 inline constexpr StreamFlags SF_OUT_EOF = 2;
 inline constexpr StreamFlags SF_IN_CLOSED = 4;
 inline constexpr StreamFlags SF_OUT_CLOSED = 8;
 inline constexpr StreamFlags SF_CLOSABLE = 16;
-
-} // namespace
+inline constexpr StreamFlags SF_LINEBUF = 32;
 
 struct SYS_API InStream
 {
     InStream();
+    InStream(const InStream &) = default;
+    InStream(InStream &&) = default;
+    InStream &operator=(const InStream &) = default;
+    InStream &operator=(InStream &&) = default;
     virtual ~InStream();
 
     void close();
 
-    bool closed() const { return flags & SF_IN_CLOSED; }
-    bool readable() const { return (flags & (SF_IN_CLOSED | SF_IN_EOF)) == 0; }
-    bool closable() const { return flags & SF_CLOSABLE; }
+    bool closed() const { return rflags() & SF_IN_CLOSED; }
+    bool readable() const
+    {
+        return (rflags() & (SF_IN_CLOSED | SF_IN_EOF)) == 0;
+    }
+    bool closable() const { return rflags() & SF_CLOSABLE; }
 
     InStream &closable(bool yesno)
     {
         if (yesno)
-            flags |= SF_CLOSABLE;
+            rflags() |= SF_CLOSABLE;
         else
-            flags &= ~SF_CLOSABLE;
+            rflags() &= ~SF_CLOSABLE;
         return *this;
     }
 
@@ -72,34 +76,49 @@ struct SYS_API InStream
 protected:
     virtual StreamResult basic_read(size_t &s, char *buf) = 0;
     virtual StreamResult basic_close_in(bool flush_only) = 0;
-    InStream(StreamFlags &);
+    virtual const StreamFlags &rflags() const;
+    virtual StreamFlags &rflags();
 
-    StreamFlags &flags;
-    StreamFlags _flags_store;
+private:
+    StreamFlags _rflags{ SF_CLOSABLE };
 };
 
 struct SYS_API OutStream
 {
     OutStream();
+    OutStream(const OutStream &) = default;
+    OutStream(OutStream &&) = default;
+    OutStream &operator=(const OutStream &) = default;
+    OutStream &operator=(OutStream &&) = default;
     virtual ~OutStream();
 
     void close();
 
-    bool closed() const { return flags & SF_OUT_CLOSED; }
+    bool closed() const { return wflags & SF_OUT_CLOSED; }
 
     bool writeable() const
     {
-        return (flags & (SF_OUT_CLOSED | SF_OUT_EOF)) == 0;
+        return (wflags & (SF_OUT_CLOSED | SF_OUT_EOF)) == 0;
     }
 
-    bool closable() const { return flags & SF_CLOSABLE; }
+    bool closable() const { return wflags & SF_CLOSABLE; }
 
     OutStream &closable(bool yesno)
     {
         if (yesno)
-            flags |= SF_CLOSABLE;
+            wflags |= SF_CLOSABLE;
         else
-            flags &= ~SF_CLOSABLE;
+            wflags &= ~SF_CLOSABLE;
+        return *this;
+    }
+
+    bool line_buffered() const { return wflags & SF_LINEBUF; }
+    OutStream &line_buffered(bool yesno)
+    {
+        if (yesno)
+            wflags |= SF_LINEBUF;
+        else
+            wflags &= ~SF_LINEBUF;
         return *this;
     }
 
@@ -110,7 +129,7 @@ protected:
     virtual StreamResult basic_write(size_t &s, const char *buf) = 0;
     virtual StreamResult basic_flush() = 0;
     virtual StreamResult basic_close_out() = 0;
-    StreamFlags flags;
+    StreamFlags wflags{ SF_CLOSABLE };
 };
 
 struct SYS_API IOStream
@@ -118,7 +137,11 @@ struct SYS_API IOStream
   , public OutStream
 {
     IOStream();
-    virtual ~IOStream() override;
+    IOStream(const IOStream &) = default;
+    IOStream(IOStream &&) = default;
+    IOStream &operator=(const IOStream &) = default;
+    IOStream &operator=(IOStream &&) = default;
+    ~IOStream() override;
 
     using OutStream::close;
     using OutStream::closed;
@@ -130,12 +153,13 @@ struct SYS_API IOStream
     }
 
 protected:
-    StreamResult basic_close_out() final override;
-    StreamResult basic_close_in(bool flush_only) final override;
+    StreamResult basic_close_out() final;
+    StreamResult basic_close_in(bool flush_only) final;
 
     virtual StreamResult basic_close() = 0;
 
-    using OutStream::flags;
+    const StreamFlags &rflags() const final;
+    StreamFlags &rflags() final;
 };
 
 struct SYS_API NullStream : public IOStream
@@ -143,10 +167,10 @@ struct SYS_API NullStream : public IOStream
     NullStream();
 
 protected:
-    StreamResult basic_flush() final override;
-    StreamResult basic_close() final override;
-    StreamResult basic_read(size_t &, char *) final override;
-    StreamResult basic_write(size_t &, const char *) final override;
+    StreamResult basic_flush() final;
+    StreamResult basic_close() final;
+    StreamResult basic_read(size_t &, char *) final;
+    StreamResult basic_write(size_t &, const char *) final;
 };
 
 struct SYS_API ByteStream : public IOStream

@@ -38,11 +38,21 @@ StreamState::track(StreamFlags eof, StreamFlags &flags, StreamResult res)
 }
 } // namespace
 
-InStream::InStream() : flags(_flags_store), _flags_store(SF_CLOSABLE) {}
-
-InStream::InStream(StreamFlags &flags_) : flags(flags_), _flags_store(0) {}
+InStream::InStream() = default;
 
 InStream::~InStream() = default;
+
+const StreamFlags &
+InStream::rflags() const
+{
+    return _rflags;
+}
+
+StreamFlags &
+InStream::rflags()
+{
+    return _rflags;
+}
 
 void
 InStream::close()
@@ -52,12 +62,12 @@ InStream::close()
 
     StreamResult ret;
     if (closable()) {
-        flags |= SF_IN_CLOSED;
+        rflags() |= SF_IN_CLOSED;
         ret = basic_close_in(false);
     } else {
         ret = basic_close_in(true);
     }
-    StreamState::track(SF_IN_EOF | SF_OUT_EOF, flags, ret);
+    StreamState::track(SF_IN_EOF | SF_OUT_EOF, rflags(), ret);
 }
 
 StreamResult
@@ -71,10 +81,10 @@ InStream::read(size_t &s, char *buf)
         s = 0;
         return StreamResult::OK;
     }
-    return StreamState::track(SF_IN_EOF, flags, basic_read(s, buf));
+    return StreamState::track(SF_IN_EOF, rflags(), basic_read(s, buf));
 }
 
-OutStream::OutStream() : flags(SF_CLOSABLE) {}
+OutStream::OutStream() = default;
 
 OutStream::~OutStream() = default;
 
@@ -86,12 +96,12 @@ OutStream::close()
 
     StreamResult ret;
     if (closable()) {
-        flags |= SF_OUT_CLOSED;
+        wflags |= SF_OUT_CLOSED;
         ret = basic_close_out();
     } else {
         ret = basic_flush();
     }
-    StreamState::track(SF_IN_EOF | SF_OUT_EOF, flags, ret);
+    StreamState::track(SF_IN_EOF | SF_OUT_EOF, wflags, ret);
 }
 
 StreamResult
@@ -105,7 +115,12 @@ OutStream::write(size_t &s, const char *buf)
         s = 0;
         return StreamResult::OK;
     }
-    return StreamState::track(SF_OUT_EOF, flags, basic_write(s, buf));
+    auto insize = s;
+    auto err = StreamState::track(SF_OUT_EOF, wflags, basic_write(s, buf));
+    if (err != StreamResult::OK || !line_buffered() ||
+        !memchr(buf, '\n', insize))
+        return err;
+    return flush();
 }
 
 StreamResult
@@ -113,29 +128,43 @@ OutStream::flush()
 {
     if (closed())
         return StreamResult::Closed;
-    return StreamState::track(SF_OUT_EOF, flags, basic_flush());
+    return StreamState::track(SF_OUT_EOF, wflags, basic_flush());
 }
 
 BEGIN_NO_WARN_UNINITIALIZED
-IOStream::IOStream() : InStream(flags) {}
+IOStream::IOStream()
+{
+    closable(true);
+}
 END_NO_WARN_UNINITIALIZED
 
 IOStream::~IOStream() = default;
 
+const StreamFlags &
+IOStream::rflags() const
+{
+    return wflags;
+}
+
+StreamFlags &
+IOStream::rflags()
+{
+    return wflags;
+}
+
 StreamResult
 IOStream::basic_close_in(bool flush_only)
 {
-    if (flush_only) {
+    if (flush_only)
         return basic_flush();
-    }
-    flags |= SF_OUT_CLOSED;
+    wflags |= SF_OUT_CLOSED;
     return basic_close();
 }
 
 StreamResult
 IOStream::basic_close_out()
 {
-    flags |= SF_IN_CLOSED;
+    wflags |= SF_IN_CLOSED;
     return basic_close();
 }
 
@@ -143,8 +172,8 @@ Streams::Streams()
   : stdin(stdin_handle()), stdout(stdout_handle()), stderr(stderr_handle())
 {
     stdin.closable(false);
-    stdout.closable(false);
-    stderr.closable(false);
+    stdout.closable(false).line_buffered(true);
+    stderr.closable(false).line_buffered(true);
 }
 
 SYS_API InStream &

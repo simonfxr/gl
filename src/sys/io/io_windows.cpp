@@ -301,12 +301,8 @@ close(Handle &h)
         return HandleError::UNKNOWN;
 }
 
-std::optional<Socket>
-listen(SocketProto proto,
-       const IPAddr4 &addr,
-       uint16_t port,
-       SocketMode mode,
-       SocketError &err)
+SocketResult<Socket>
+listen(SocketProto proto, const IPAddr4 &addr, uint16_t port, SocketMode mode)
 {
     const int BACKLOG = 16;
 
@@ -321,10 +317,8 @@ listen(SocketProto proto,
 
     SOCKET sock;
     sock = socket(PF_INET, type, 0);
-    if (sock == INVALID_SOCKET) {
-        err = getLastSocketError();
-        return std::nullopt;
-    }
+    if (sock == INVALID_SOCKET)
+        return util::unexpected{ getLastSocketError() };
 
     int enable = 1;
     auto ret = setsockopt(sock,
@@ -361,18 +355,17 @@ listen(SocketProto proto,
     {
         Socket s;
         s._os.socket = castFromSocket(sock);
-        err = SocketError::OK;
         return { std::move(s) };
     }
 
 socket_err:
-    err = getLastSocketError();
+    auto err = getLastSocketError();
     closesocket(sock);
-    return std::nullopt;
+    return util::unexpected{ err };
 }
 
-std::optional<Handle>
-accept(Socket &s, SocketError &err)
+SocketResult<Handle>
+accept(Socket &s)
 {
     ASSERT(s);
 
@@ -382,16 +375,13 @@ accept(Socket &s, SocketError &err)
     auto c = ::accept(
       castToSocket(s._os.socket), reinterpret_cast<sockaddr *>(&client), &clen);
 
-    if (c == INVALID_SOCKET) {
-        err = getLastSocketError();
-        return std::nullopt;
-    }
+    if (c == INVALID_SOCKET)
+        return util::unexpected{ getLastSocketError() };
 
     Handle h;
     h._os.handle = castFromSocket(c);
     h._os.is_socket = true;
     h._mode = HM_READ | HM_WRITE;
-    err = SocketError::OK;
     return { std::move(h) };
 }
 

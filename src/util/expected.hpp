@@ -32,7 +32,15 @@ namespace util {
 template<typename E>
 struct unexpected
 {
-    E unexpected;
+    E _err;
+
+    constexpr decltype(auto) error() const &noexcept { return _err; }
+    constexpr decltype(auto) error() const && = delete;
+    constexpr decltype(auto) error() &noexcept { return _err; }
+    constexpr decltype(auto) error() &&noexcept { return std::move(_err); }
+
+    constexpr auto friend operator<=>(const unexpected &lhs,
+                                      const unexpected &rhs) = default;
 };
 
 template<class E>
@@ -66,12 +74,12 @@ public:
     template<class G>
     constexpr explicit(!std::is_convertible_v<const G &, E>)
       expected(const unexpected<G> &e)
-      : base_t{ e.unexpected }
+      : base_t{ unexpected<E>{ e.error() } }
     {}
 
     template<class G>
     constexpr explicit(!std::is_convertible_v<G, E>) expected(unexpected<G> &&e)
-      : base_t{ std::move(e) }
+      : base_t{ unexpected<E>{ std::move(e).error() } }
     {}
 
     constexpr explicit operator bool() const noexcept
@@ -97,18 +105,49 @@ public:
 
     constexpr decltype(auto) error() const &noexcept
     {
-        return std::get<1>(*this).unexpected;
+        return std::get<1>(*this).error();
     }
-    constexpr decltype(auto) error() const &&noexcept = delete;
+
+    constexpr decltype(auto) error() const &&noexcept
+    {
+        return std::get<1>(*this).error();
+    }
 
     constexpr decltype(auto) error() &noexcept
     {
-        return std::get<1>(*this).unexpected;
+        return std::get<1>(*this).error();
     }
 
     constexpr E error() &&noexcept
     {
-        return std::move(std::get<1>(std::move(*this)).unexpected);
+        return std::get<1>(std::move(*this)).error();
+    }
+
+    constexpr const T *operator->() const noexcept { return &value(); }
+    constexpr T *operator->() noexcept { return &value(); }
+
+    constexpr const T &operator*() const &noexcept { return value(); }
+    constexpr T &&operator*() &&noexcept { return std::move(*this).value(); }
+
+    constexpr bool has_value() const noexcept
+    {
+        return static_cast<bool>(*this);
+    }
+
+    template<class U>
+    constexpr T value_or(U &&default_value) const &
+    {
+        if (!*this)
+            return std::forward<U>(default_value);
+        return value();
+    }
+
+    template<class U>
+    constexpr T value_or(U &&default_value) &&
+    {
+        if (!*this)
+            return std::forward<U>(default_value);
+        return std::move(*this).value();
     }
 };
 

@@ -28,7 +28,7 @@ struct GLT_API ShaderProgram
   : public std::enable_shared_from_this<ShaderProgram>
   , public err::WithError<ShaderProgramError>
 {
-    ShaderProgram(ShaderManager &sm);
+    explicit ShaderProgram(ShaderManager &sm);
     ~ShaderProgram();
 
     ShaderManager &shaderManager();
