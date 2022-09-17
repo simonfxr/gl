@@ -136,15 +136,15 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
         return;
     }
 
-    auto opt_stream = sys::io::HandleStream::open(*path, sys::io::HM_WRITE);
-    if (!opt_stream) {
+    auto res = sys::io::HandleStream::open(*path, sys::io::HM_WRITE);
+    if (!res) {
         ERR("couldnt open file: " + *path);
         return;
     }
     auto out_frame = frame;
     out_frame.normalize();
     size_t s = sizeof frame;
-    opt_stream->write(s, to_bytes(out_frame).data());
+    std::move(res).value().write(s, to_bytes(out_frame).data());
 }
 
 void
@@ -161,8 +161,8 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
         return;
     }
 
-    auto opt_stream = sys::io::HandleStream::open(*path, sys::io::HM_READ);
-    if (!opt_stream) {
+    auto res = sys::io::HandleStream::open(*path, sys::io::HM_READ);
+    if (!res) {
         WARN("couldnt open file: " + *path);
         return;
     }
@@ -170,7 +170,7 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
     std::array<char, sizeof frame> bytes{};
     size_t s = sizeof bytes;
 
-    auto ret = opt_stream->read(s, bytes.data());
+    auto ret = std::move(res).value().read(s, bytes.data());
     if (ret != sys::io::StreamResult::OK || s != sizeof frame) {
         ERR(string_concat(
           "failed to read frame from file: ", *path, ", io error: ", ret));

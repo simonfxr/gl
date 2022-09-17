@@ -278,11 +278,11 @@ CommandProcessor::loadScript(std::string_view name, bool quiet)
         goto not_found;
 
     {
-        auto opt_stream = sys::io::HandleStream::open(file, sys::io::HM_READ);
-        if (!opt_stream)
+        auto res = sys::io::HandleStream::open(file, sys::io::HM_READ);
+        if (!res)
             goto not_found;
         sys::io::stdout() << "loading script: " << file << "\n";
-        return loadStream(*opt_stream, file);
+        return loadStream(res.value(), file);
     }
 
 not_found:

@@ -48,7 +48,7 @@ struct Anim
     ge::MouseLookPlugin mouse_look;
     std::shared_ptr<ge::Timer> fpsTimer;
 
-    Anim() : engine(0) {}
+    Anim() : engine(nullptr) {}
 
     void link(ge::Engine &);
     void init(const ge::Event<ge::InitEvent> &);
@@ -229,14 +229,14 @@ Anim::renderWorld()
     worldProgram->use();
     glt::RenderManager &rm = engine->renderManager();
 
-    rm.setActiveRenderTarget(0);
+    rm.setActiveRenderTarget(nullptr);
 
     vec3_t tex_scale =
       vec3(SAMPLER_SIZE - ivec3(1)) / vec3(SAMPLER_SIZE - ivec3(2));
     mat4_t scaleM = glt::scaleMatrix(tex_scale);
 
     float invDim = 1.f / float(worldVolume->depth() - 1);
-    for (auto i = 0; i < worldVolume->depth(); ++i) {
+    for (auto i = size_t{ 0 }; i < worldVolume->depth(); ++i) {
         worldVolume->targetAttachment(glt::TextureRenderTarget3D::Attachment(
           glt::TextureRenderTarget3D::AttachmentLayer, i));
 
@@ -248,7 +248,7 @@ Anim::renderWorld()
           .optional("time", engine->gameLoop().tickTime());
 
         unitRect.draw();
-        rm.setActiveRenderTarget(0);
+        rm.setActiveRenderTarget(nullptr);
     }
 
     rm.setDefaultRenderTarget();

@@ -144,8 +144,8 @@ stderr_handle()
     return h;
 }
 
-std::optional<Handle>
-open(std::string_view path, HandleMode mode, HandleError &err)
+HandleResult<Handle>
+open(std::string_view path, HandleMode mode)
 {
     auto wpath = utf8To16(path);
     auto access = handleModeToDWORD(mode);
@@ -159,15 +159,12 @@ open(std::string_view path, HandleMode mode, HandleError &err)
                             create,
                             FILE_ATTRIBUTE_NORMAL,
                             nullptr);
-    if (hndl == INVALID_HANDLE_VALUE) {
-        err = getLastHandleError();
-        return std::nullopt;
-    }
+    if (hndl == INVALID_HANDLE_VALUE)
+        return util::unexpected{ getLastHandleError() };
     Handle h;
     h._os.handle = castFromHandle(hndl);
     h._mode = mode;
     h._os.is_socket = false;
-    err = HandleError::OK;
     return { std::move(h) };
 }
 

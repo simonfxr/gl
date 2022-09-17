@@ -149,27 +149,22 @@ stderr_handle()
     return h;
 }
 
-std::optional<Handle>
-open(std::string_view path, HandleMode mode, HandleError &err)
+HandleResult<Handle>
+open(std::string_view path, HandleMode mode)
 {
     int flags = convertMode(mode);
-    if (flags == -1) {
-        err = HandleError::INVALID_PARAM;
-        return std::nullopt;
-    }
+    if (flags == -1)
+        return util::unexpected<HandleError>{ HandleError::INVALID_PARAM };
 
     int fd;
     auto strpath = std::string(path);
     RETRY_INTR(fd = ::open(strpath.c_str(), flags, 0777));
 
-    if (fd == -1) {
-        err = convertErrno();
-        return std::nullopt;
-    }
+    if (fd == -1)
+        return util::unexpected<HandleError>{ convertErrno() };
     Handle h;
     h._mode = mode;
     h._os.fd = fd;
-    err = HandleError::OK;
     return { std::move(h) };
 }
 

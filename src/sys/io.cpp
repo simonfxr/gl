@@ -192,26 +192,27 @@ HandleStream::flush_buffer()
     return toStreamResult(err);
 }
 
-std::optional<HandleStream>
-HandleStream::open(std::string_view path, HandleMode mode, HandleError &err)
+HandleResult<HandleStream>
+HandleStream::open(std::string_view path, HandleMode mode)
 {
-    auto opt_h = sys::io::open(path, mode, err);
-    if (!opt_h)
-        return std::nullopt;
-    return { std::move(opt_h).value() };
+    auto res = sys::io::open(path, mode);
+    if (!res)
+        return util::unexpected{ res.error() };
+    return { std::move(res).value() };
 }
 
-Array<char>
-readFile(sys::io::OutStream &errout,
-         std::string_view path,
-         HandleError &err) noexcept
+HandleResult<Array<char>>
+readFile(sys::io::OutStream &errout, std::string_view path) noexcept
 {
-    static constexpr auto BUF_SIZE = size_t(8192);
-    auto opt_h = open(path, HM_READ, err);
-    if (!opt_h)
+    static constexpr auto BUF_SIZE = size_t{ 8192 };
+    auto res = open(path, HM_READ);
+    auto err = HandleError{};
+    if (!res) {
+        err = res.error();
         goto fail;
+    }
     {
-        auto h = std::move(opt_h).value();
+        auto h = std::move(res).value();
         std::string str;
         for (;;) {
             std::array<char, BUF_SIZE> buf{};
@@ -221,7 +222,7 @@ readFile(sys::io::OutStream &errout,
                 str.insert(str.end(), buf.data(), buf.data() + size);
             if (err == HandleError::EOF) {
                 err = HandleError::OK;
-                return { str.data(), str.size() };
+                return { { str.data(), str.size() } };
             }
             if (err != HandleError::OK)
                 goto fail;
@@ -231,7 +232,7 @@ fail:
     if (errout.writeable())
         errout << "unable to read file: " << path << "\n";
 
-    return {};
+    return util::unexpected{ err };
 }
 
 } // namespace sys::io

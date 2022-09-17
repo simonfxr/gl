@@ -313,14 +313,14 @@ Anim::initCLKernels(bool *success)
 {
     cl_int cl_err;
 
-    sys::io::HandleError err;
-    auto source_code =
-      sys::io::readFile(engine.out(), "programs/mc/cl/program.cl", err);
+    auto res = sys::io::readFile(engine.out(), "programs/mc/cl/program.cl");
 
-    if (err != sys::io::HandleError::OK) {
+    if (!res) {
         ERR("failed reading CL program");
         return;
     }
+
+    auto source_code = std::move(res).value();
 
     std::string source_str(source_code.data(), source_code.size());
     cl::Program::Sources source{ source_str };

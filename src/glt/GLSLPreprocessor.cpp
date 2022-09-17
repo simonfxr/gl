@@ -118,14 +118,13 @@ GLSLPreprocessor::processFileRecursively(std::string &&file)
         return;
 
     ASSERT(sys::fs::isAbsolute(file));
-    sys::io::HandleError err;
-    auto data = sys::io::readFile(out(), file, err);
-    if (err != sys::io::HandleError::OK) {
+    auto data = sys::io::readFile(out(), file);
+    if (!data) {
         setError();
         return;
     }
 
-    auto &dref = contents.emplace_back(std::move(data));
+    auto &dref = contents.emplace_back(std::move(data).value());
 
     this->name(std::move(file));
     process(std::string_view(dref.data(), dref.size()));
@@ -235,14 +234,13 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
     if (proc.state->visitingFiles.count(filestat->absolute) == 0) {
         proc.includes.emplace_back(filestat->absolute, filestat->mtime);
 
-        sys::io::HandleError err;
-        auto contents = readFile(proc.out(), filestat->absolute, err);
-        if (err != sys::io::HandleError::OK) {
+        auto res = readFile(proc.out(), filestat->absolute);
+        if (!res) {
             proc.setError();
             return;
         }
 
-        auto &dref = proc.contents.emplace_back(std::move(contents));
+        auto &dref = proc.contents.emplace_back(std::move(res).value());
         proc.name(std::move(filestat->absolute));
         proc.process(std::string_view(dref.data(), dref.size()));
     }

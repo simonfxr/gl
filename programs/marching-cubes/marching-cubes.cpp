@@ -79,7 +79,7 @@ struct Anim
     void render(const ge::Event<ge::RenderEvent> &);
 
     void initBlock(Block *block);
-    void destroyBlock(Block *block);
+    static void destroyBlock(Block *block);
 
     void makeBlock(Block &block,
                    const vec3_t &aabb_min,
@@ -231,7 +231,7 @@ Anim::initBlock(Block *block)
     GL_CALL(glBufferData,
             GL_ARRAY_BUFFER,
             BLOCK_DATA_SIZE * sizeof(MCFeedbackVertex),
-            0,
+            nullptr,
             GL_STREAM_DRAW);
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
@@ -245,14 +245,14 @@ Anim::initBlock(Block *block)
             GL_FLOAT,
             GL_FALSE,
             sizeof(MCFeedbackVertex),
-            0);
+            nullptr);
     GL_CALL(glVertexAttribPointer,
             1,
             3,
             GL_FLOAT,
             GL_FALSE,
             sizeof(MCFeedbackVertex),
-            (void *) offsetof(MCFeedbackVertex, normal));
+            reinterpret_cast<void *>(offsetof(MCFeedbackVertex, normal)));
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
     GL_CALL(glEnableVertexAttribArray, 0);
@@ -308,7 +308,7 @@ Anim::makeSampleVolume()
     mat4_t scaleM = glt::scaleMatrix(tex_scale);
 
     float invDim = 1.f / float(worldVolume->depth() - 1);
-    for (auto i = 0; i < worldVolume->depth(); ++i) {
+    for (auto i = size_t{ 0 }; i < worldVolume->depth(); ++i) {
         worldVolume->targetAttachment(glt::TextureRenderTarget3D::Attachment(
           glt::TextureRenderTarget3D::AttachmentLayer, i));
 
@@ -331,7 +331,7 @@ void
 Anim::makePolygon(const Block &block)
 {
     glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
-    glt::SavePoint(gt.save());
+    auto _sp = glt::SavePoint(gt.save());
 
     GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
 
@@ -414,7 +414,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
     // * scale);
     //     }
 
-    for (auto i = 0; i < blocks.size(); ++i)
+    for (auto i = size_t{ 0 }; i < blocks.size(); ++i)
         renderPolygon(blocks[i]);
 
     if (fpsTimer->fire()) {

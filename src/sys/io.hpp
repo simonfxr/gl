@@ -6,6 +6,7 @@
 #include "pp/enum.hpp"
 #include "sys/endian.hpp"
 #include "util/Array.hpp"
+#include "util/expected.hpp"
 #include "util/noncopymove.hpp"
 
 #include <optional>
@@ -58,6 +59,9 @@ inline constexpr IPAddr4 IPA_LOCAL = { 127, 0, 0, 1 };
 
 PP_DEF_ENUM_WITH_API(SYS_API, SYS_HANDLE_ERROR_ENUM_DEF);
 
+template<typename T>
+using HandleResult = util::expected<T, HandleError>;
+
 HU_NODISCARD SYS_API Handle
 stdin_handle();
 
@@ -67,8 +71,7 @@ stdout_handle();
 HU_NODISCARD SYS_API Handle
 stderr_handle();
 
-HU_NODISCARD SYS_API std::optional<Handle>
-open(std::string_view, HandleMode, HandleError &);
+HU_NODISCARD SYS_API HandleResult<Handle> open(std::string_view, HandleMode);
 
 HU_NODISCARD SYS_API HandleMode
 mode(Handle &);
@@ -195,17 +198,8 @@ struct SYS_API HandleStream : public IOStream
     ~HandleStream() override;
 
     HU_NODISCARD
-    static std::optional<HandleStream> open(std::string_view path,
-                                            HandleMode mode,
-                                            HandleError &);
-
-    HU_NODISCARD
-    static std::optional<HandleStream> open(std::string_view path,
-                                            HandleMode mode)
-    {
-        HandleError err;
-        return open(path, mode, err);
-    }
+    static HandleResult<HandleStream> open(std::string_view path,
+                                           HandleMode mode);
 
 protected:
     StreamResult basic_close() final override;
@@ -215,17 +209,8 @@ protected:
     StreamResult flush_buffer();
 };
 
-HU_NODISCARD SYS_API Array<char>
-readFile(sys::io::OutStream &errout,
-         std::string_view path,
-         HandleError &err) noexcept;
-
-HU_NODISCARD inline Array<char>
-readFile(sys::io::OutStream &errout, std::string_view path) noexcept
-{
-    HandleError err;
-    return readFile(errout, path, err);
-}
+HU_NODISCARD SYS_API HandleResult<Array<char>>
+readFile(sys::io::OutStream &errout, std::string_view path) noexcept;
 
 } // namespace sys::io
 
