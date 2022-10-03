@@ -1028,7 +1028,7 @@ static void
 renderBlocks(State *state, ge::Engine &e)
 {
     glt::RenderManager &rm = e.renderManager();
-    glt::SavePoint sp(rm.geometryTransform().save());
+    auto sp = rm.geometryTransform().save();
 
     // real phi = gameTime_Op() * 0.1f;
 

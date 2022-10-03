@@ -235,55 +235,55 @@ elevate(Handle &h, HandleMode hm)
     return HandleError::OK;
 }
 
-HandleError
-read(Handle &h, size_t &sz, char *data)
+std::pair<size_t, HandleError>
+read(Handle &h, std::span<char> buf)
 {
     ASSERT(h);
-    if (sz == 0)
-        return HandleError::OK;
+    if (buf.empty())
+        return { 0, HandleError::OK };
     if (h._os.is_socket) {
-        auto ret = recv(castToSocket(h._os.handle), data, int(sz), 0);
-        sz = 0;
+        auto ret =
+          recv(castToSocket(h._os.handle), buf.data(), int(buf.size()), 0);
         if (ret == SOCKET_ERROR)
-            return socketToHandleError(getLastSocketError());
+            return { 0, socketToHandleError(getLastSocketError()) };
         if (ret == 0)
-            return HandleError::EOF;
-        sz = size_t(ret);
-        return HandleError::OK;
+            return { 0, HandleError::EOF };
+        return { size_t(ret), HandleError::OK };
     } else {
         DWORD nread;
-        auto ret = ReadFile(
-          castToHandle(h._os.handle), data, DWORD(sz), &nread, nullptr);
-        sz = 0;
+        auto ret = ReadFile(castToHandle(h._os.handle),
+                            buf.data(),
+                            DWORD(buf.size()),
+                            &nread,
+                            nullptr);
         if (ret == FALSE)
-            return getLastHandleError();
+            return { 0, getLastHandleError() };
         if (nread == 0)
-            return HandleError::EOF;
-        sz = size_t(nread);
-        return HandleError::OK;
+            return { 0, HandleError::EOF };
+        return { size_t(nread), HandleError::OK };
     }
 }
 
-HandleError
-write(Handle &h, size_t &sz, const char *data)
+std::pair<size_t, HandleError>
+write(Handle &h, std::span<const char> buf)
 {
     ASSERT(h);
     if (h._os.is_socket) {
-        auto ret = send(castToSocket(h._os.handle), data, int(sz), 0);
-        sz = 0;
+        auto ret =
+          send(castToSocket(h._os.handle), buf.data(), int(buf.size()), 0);
         if (ret == SOCKET_ERROR)
-            return socketToHandleError(getLastSocketError());
-        sz = size_t(ret);
-        return HandleError::OK;
+            return { 0, socketToHandleError(getLastSocketError()) };
+        return { size_t(ret), HandleError::OK };
     } else {
         DWORD nwrit;
-        auto ret = WriteFile(
-          castToHandle(h._os.handle), data, DWORD(sz), &nwrit, nullptr);
-        sz = 0;
+        auto ret = WriteFile(castToHandle(h._os.handle),
+                             buf.data(),
+                             DWORD(buf.size()),
+                             &nwrit,
+                             nullptr);
         if (ret == FALSE)
-            return getLastHandleError();
-        sz = size_t(nwrit);
-        return HandleError::OK;
+            return { 0, getLastHandleError() };
+        return { size_t(nwrit), HandleError::OK };
     }
 }
 

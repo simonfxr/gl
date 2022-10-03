@@ -6,6 +6,7 @@
 #include "sys/fiber.hpp"
 
 #include <cstring>
+#include <span>
 #include <string>
 #include <string_view>
 
@@ -71,7 +72,7 @@ struct SYS_API InStream
         return *this;
     }
 
-    StreamResult read(size_t &s, char *buf);
+    std::pair<size_t, StreamResult> read(std::span<char>);
 
 protected:
     virtual StreamResult basic_read(size_t &s, char *buf) = 0;
@@ -122,7 +123,7 @@ struct SYS_API OutStream
         return *this;
     }
 
-    StreamResult write(size_t &s, const char *buf);
+    std::pair<size_t, StreamResult> write(std::span<const char>);
     StreamResult flush();
 
 protected:
@@ -227,8 +228,8 @@ inline StreamResult
 write_repr(OutStream &out, std::string_view str)
 {
     if (out.writeable()) {
-        size_t s = str.size();
-        return out.write(s, str.data());
+        auto [_, r] = out.write(str);
+        return r;
     }
     return StreamResult::OK;
 }
@@ -238,17 +239,14 @@ write_repr(OutStream &out, const char *str)
 {
     if (!out.writeable() || !str)
         return StreamResult::OK;
-    size_t s = strlen(str);
-    return out.write(s, str);
+    auto [_, r] = out.write({ str, strlen(str) });
+    return r;
 }
 
 inline StreamResult
 write_repr(OutStream &out, char c)
 {
-    if (!out.writeable())
-        return StreamResult::OK;
-    size_t s = 1;
-    return out.write(s, &c);
+    return write_repr(out, std::string_view{ &c, 1 });
 }
 
 inline StreamResult

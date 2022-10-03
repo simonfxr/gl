@@ -143,8 +143,7 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
     }
     auto out_frame = frame;
     out_frame.normalize();
-    size_t s = sizeof frame;
-    std::move(res).value().write(s, to_bytes(out_frame).data());
+    std::move(res).value().write(to_bytes(out_frame));
 }
 
 void
@@ -168,16 +167,14 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
     }
 
     std::array<char, sizeof frame> bytes{};
-    size_t s = sizeof bytes;
-
-    auto ret = std::move(res).value().read(s, bytes.data());
+    auto [s, ret] = std::move(res).value().read(bytes);
     if (ret != sys::io::StreamResult::OK || s != sizeof frame) {
         ERR(string_concat(
           "failed to read frame from file: ", *path, ", io error: ", ret));
         return;
     }
 
-    memcpy(static_cast<void *>(&frame), bytes.data(), sizeof bytes);
+    frame = std::bit_cast<glt::Frame>(bytes);
     frame.normalize();
 }
 

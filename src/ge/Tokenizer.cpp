@@ -35,8 +35,7 @@ parse_err(const ParserState &s,
 sys::io::StreamResult
 next(sys::io::InStream &in, char &c)
 {
-    size_t s = 1;
-    sys::io::StreamResult res = in.read(s, &c);
+    auto [s, res] = in.read(std::span{ &c, size_t{ 1 } });
     ASSERT(res != sys::io::StreamResult::OK || s == 1);
     return res;
 }

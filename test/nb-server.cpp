@@ -62,7 +62,8 @@ main()
             if (c.reading) {
                 size_t size = c.buf_end - c.buf_pos;
                 io::StreamResult err;
-                err = c.stream->read(size, c.buffer + c.buf_pos);
+                std::tie(size, err) =
+                  c.stream->read(std::span{ c.buffer + c.buf_pos, size });
                 c.buf_pos += size;
                 if (c.buf_pos == c.buf_end) {
                     c.reading = false;
@@ -81,7 +82,8 @@ main()
             } else {
                 size_t size = c.buf_end - c.buf_pos;
                 io::StreamResult err;
-                err = c.stream->write(size, c.buffer + c.buf_pos);
+                std::tie(size, err) =
+                  c.stream->write(std::span{ c.buffer + c.buf_pos, size });
                 c.buf_pos += size;
 
                 if (c.buf_pos == c.buf_end) {

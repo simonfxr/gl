@@ -621,7 +621,7 @@ Game::render_sphere(const Sphere &s, const SphereModel &m)
         glt::GeometryTransform &gt =
           engine->renderManager().geometryTransform();
         const vec3_t &pos = s.center;
-        glt::SavePoint sp(gt.save());
+        auto sp = gt.save();
         gt.translate(pos);
         gt.scale(vec3(s.r));
 
@@ -665,7 +665,7 @@ Game::render_box(const glt::AABB &box)
 
     GL_CALL(glCullFace, GL_FRONT);
 
-    glt::SavePoint sp(gt.save());
+    auto sp = gt.save();
 
     point3_t center = box.center();
     vec3_t dim = 0.5f * box.dimensions();
@@ -721,7 +721,7 @@ Game::render_con(const point3_t &a, const point3_t &b)
 
     glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
 
-    glt::SavePoint sp(gt.save());
+    auto sp = gt.save();
 
     gt.translate(a);
     mat3_t trans = mat3(b - a, vec3(0.f, 1.f, 0.f), vec3(0.f, 0.f, 1.f));

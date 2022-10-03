@@ -169,23 +169,28 @@ GeometryTransform::pop()
         self->dirty_flags |= FLAG_MV | FLAG_MVP | FLAG_NORMAL;
 }
 
-SavePointArgs
+SavePoint
 GeometryTransform::save()
 {
-    uint64_t cookie = self->mods[self->depth];
-    uint16_t depth = self->depth;
+    auto cookie = self->mods[self->depth];
+    auto depth = self->depth;
     dup();
     return { *this, cookie, depth };
 }
 
 void
-GeometryTransform::restore(const SavePointArgs &sp)
+GeometryTransform::restore(SavePoint &sp)
 {
-    if (unlikely(self->mods[sp.depth] != sp.cookie || self->depth < sp.depth))
+    auto gt = std::exchange(sp.gt, nullptr);
+    auto depth = std::exchange(sp.depth, 0);
+    auto cookie = std::exchange(sp.cookie, 0);
+    if (unlikely(this != gt || self->mods[depth] != cookie ||
+                 self->depth < depth))
         FATAL_ERR(
           "cannot restore GeometryTransform: stack modified below safepoint");
-    self->depth = sp.depth;
-    if (self->mods[sp.depth] != self->mods[self->depth])
+
+    self->depth = depth;
+    if (self->mods[depth] != self->mods[self->depth])
         self->dirty_flags |= FLAG_MV | FLAG_MVP | FLAG_NORMAL;
 }
 

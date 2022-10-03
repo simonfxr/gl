@@ -95,13 +95,12 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
         unitRect.send();
     }
 
-    {
-        glt::TextureRenderTarget3D::Params ps;
-        ps.filter_mode = glt::TextureSampler::FilterLinear;
-        ps.color_format = GL_R32F;
-        worldVolume = std::make_shared<glt::TextureRenderTarget3D>(
-          SAMPLER_SIZE + ivec3(1), ps);
-    }
+    worldVolume = std::make_shared<glt::TextureRenderTarget3D>(
+      SAMPLER_SIZE + ivec3(1),
+      glt::TextureRenderTarget3D::Params{
+        .texture = { .filter_mode = glt::TextureSampler::FilterLinear },
+        .color_format = GL_R32F,
+      });
 
     {
         caseToNumPolysData.data()->type(glt::Texture1D);
@@ -183,7 +182,7 @@ void
 Anim::renderBlock(const vec3_t &aabb_min, const vec3_t &aabb_max)
 {
     glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
-    glt::SavePoint sp(gt.save());
+    auto sp = gt.save();
 
     // GL_CALL(glBindVertexArray, 0);
 
@@ -237,8 +236,8 @@ Anim::renderWorld()
 
     float invDim = 1.f / float(worldVolume->depth() - 1);
     for (auto i = size_t{ 0 }; i < worldVolume->depth(); ++i) {
-        worldVolume->targetAttachment(glt::TextureRenderTarget3D::Attachment(
-          glt::TextureRenderTarget3D::AttachmentLayer, i));
+        worldVolume->targetAttachment(glt::TextureRenderTarget3D::Attachment{
+          glt::TextureRenderTarget3D::AttachmentLayer, i });
 
         rm.setActiveRenderTarget(worldVolume);
         glt::Uniforms(*worldProgram)
@@ -259,7 +258,7 @@ void
 Anim::renderVolume()
 {
     glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
-    glt::SavePoint sp(gt.save());
+    auto sp = gt.save();
 
     marchingCubesProgram->use();
 

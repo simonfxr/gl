@@ -313,7 +313,7 @@ Anim::initCLKernels(bool *success)
 {
     cl_int cl_err;
 
-    auto res = sys::io::readFile(engine.out(), "programs/mc/cl/program.cl");
+    auto res = sys::io::readFile("programs/mc/cl/program.cl", engine.out());
 
     if (!res) {
         ERR("failed reading CL program");
@@ -566,26 +566,25 @@ Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3_t ecLight)
     if (cur_mc.num_tris == 0 || !cur_mc.init)
         return;
 
-    glt::RenderManager &rm = engine.renderManager();
-    glt::GeometryTransform &gt = rm.geometryTransform();
+    auto &rm = engine.renderManager();
+    auto &gt = rm.geometryTransform();
 
-    mat4_t M = mat4();
+    {
+        auto sp = gt.save();
 
-    M *= glt::translateTransform(cur_mc.cube_origin);
-    M *= glt::scaleTransform(cur_mc.cube_dim);
-    M *= glt::scaleTransform(real(1) / real(N - 2));
+        auto M = mat4();
+        gt.translate(cur_mc.cube_origin);
+        gt.scale(cur_mc.cube_dim);
+        gt.scale(1_r / static_cast<real>(N - 2));
 
-    gt.dup();
-    gt.concat(M);
-
-    glt::Uniforms(program)
-      .optional("mvpMatrix", gt.mvpMatrix())
-      .optional("mvMatrix", gt.mvMatrix())
-      .optional("normalMatrix", gt.normalMatrix())
-      .optional("ecLight", ecLight)
-      .optional("albedo", vec3(real(1)));
-
-    gt.pop();
+        gt.concat(M);
+        glt::Uniforms(program)
+          .optional("mvpMatrix", gt.mvpMatrix())
+          .optional("mvMatrix", gt.mvMatrix())
+          .optional("normalMatrix", gt.normalMatrix())
+          .optional("ecLight", ecLight)
+          .optional("albedo", vec3(1));
+    }
 
     auto struct_info = Vertex::gl::struct_info::info;
 
@@ -627,12 +626,12 @@ Anim::animate(const ge::Event<ge::AnimationEvent> & /*unused*/)
 void
 Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 {
-    ge::Engine &e = ev.info.engine;
-    real time = e.gameLoop().tickTime();
+    auto &e = ev.info.engine;
+    auto time = e.gameLoop().tickTime();
 
-    glt::RenderManager &rm = engine.renderManager();
+    auto &rm = engine.renderManager();
     rm.activeRenderTarget()->clear();
-    glt::GeometryTransform &gt = rm.geometryTransform();
+    auto &gt = rm.geometryTransform();
 
     auto program = engine.shaderManager().program("render");
     ASSERT(program);

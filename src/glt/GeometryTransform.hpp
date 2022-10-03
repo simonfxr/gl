@@ -17,7 +17,6 @@ namespace glt {
 inline constexpr uint32_t GEOMETRY_TRANSFORM_MAX_DEPTH = 16;
 
 struct SavePoint;
-struct SavePointArgs;
 
 struct GLT_API GeometryTransform
 {
@@ -43,11 +42,12 @@ struct GLT_API GeometryTransform
 
     void pop();
 
-    HU_NODISCARD SavePointArgs save();
+    HU_NODISCARD SavePoint save();
 
-    void restore(const SavePointArgs &sp);
+    void restore(SavePoint &sp);
 
     void scale(const math::vec3_t &dim);
+    void scale(math::real s) { scale(math::vec3(s)); }
 
     void translate(const math::vec3_t &origin);
 
@@ -69,27 +69,25 @@ private:
     DECLARE_PIMPL(GLT_API, self);
 };
 
-struct GLT_API SavePointArgs
+struct GLT_API SavePoint : private NonCopyMoveable
 {
-protected:
-    GeometryTransform *g;
+    friend struct GeometryTransform;
+
+private:
+    GeometryTransform *gt;
     uint64_t cookie;
     uint16_t depth;
 
-    friend struct GeometryTransform;
-    friend struct SavePoint;
+    SavePoint(GeometryTransform &gt, uint64_t cookie, uint16_t depth)
+      : gt{ &gt }, cookie{ cookie }, depth{ depth }
+    {}
 
 public:
-    SavePointArgs(GeometryTransform &_g, uint64_t _cookie, uint16_t _depth)
-      : g(&_g), cookie(_cookie), depth(_depth)
-    {}
-};
-
-struct GLT_API SavePoint : private NonCopyMoveable
-{
-    const SavePointArgs args;
-    SavePoint(const SavePointArgs &_args) : args(_args) {}
-    ~SavePoint() { args.g->restore(args); }
+    ~SavePoint()
+    {
+        if (gt)
+            gt->restore(*this);
+    }
 };
 
 } // namespace glt

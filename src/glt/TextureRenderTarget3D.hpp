@@ -20,10 +20,7 @@ public:
     struct Attachment
     {
         AttachmentType type;
-        size_t size;
-        Attachment(AttachmentType _type, size_t _index = 0)
-          : type(_type), size(_index)
-        {}
+        size_t size{};
     };
 
 protected:
@@ -32,10 +29,10 @@ protected:
     Attachment _target_attachment;
 
 public:
-    struct Params : public TextureRenderTarget::Params
+    struct Params
     {
-        GLenum color_format;
-        Params() : TextureRenderTarget::Params(), color_format(GL_RGB8) {}
+        TextureRenderTarget::Params texture;
+        GLenum color_format = GL_RGB8;
     };
 
     TextureRenderTarget3D(const math::ivec3_t &, const Params &);

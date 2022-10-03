@@ -374,7 +374,7 @@ Anim::renderScene(const Event<RenderEvent> &e)
 
     // { // render a shadow of the table
     //     glt::GeometryTransform& gt = rm.geometryTransform();
-    //     glt::SavePoint sp(rm.geometryTransform().save());
+    //     auto sp = rm.geometryTransform().save();
 
     //     const point3_t& s = light;
 
@@ -535,7 +535,7 @@ void
 Anim::renderLight()
 {
     glt::RenderManager &rm = engine.renderManager();
-    glt::SavePoint sp(rm.geometryTransform().save());
+    auto sp = rm.geometryTransform().save();
 
     rm.geometryTransform().translate(light);
     rm.geometryTransform().scale(vec3(0.66f));
@@ -550,7 +550,7 @@ void
 Anim::renderTeapot(const Teapot &teapot)
 {
     glt::RenderManager &rm = engine.renderManager();
-    glt::SavePoint sp(rm.geometryTransform().save());
+    auto sp = rm.geometryTransform().save();
 
     rm.geometryTransform().concat(transformationLocalToWorld(teapot.frame));
     rm.geometryTransform().scale(vec3(13.f));
@@ -563,7 +563,7 @@ void
 Anim::renderGround()
 {
     glt::RenderManager &rm = engine.renderManager();
-    glt::SavePoint sp(rm.geometryTransform().save());
+    auto sp = rm.geometryTransform().save();
 
     rm.geometryTransform().scale(vec3(50.f));
     rm.geometryTransform().translate(vec3(-0.5f, 0.f, -0.5f));
@@ -579,7 +579,7 @@ Anim::renderTable(const std::string &shader)
 {
     glt::RenderManager &rm = engine.renderManager();
     glt::GeometryTransform &gt = rm.geometryTransform();
-    glt::SavePoint sp(gt.save());
+    auto sp = gt.save();;
 
     gt.scale(vec3(10.f, 4.f, 16.f));
 

@@ -118,7 +118,7 @@ GLSLPreprocessor::processFileRecursively(std::string &&file)
         return;
 
     ASSERT(sys::fs::isAbsolute(file));
-    auto data = sys::io::readFile(out(), file);
+    auto data = sys::io::readFile(file, out());
     if (!data) {
         setError();
         return;
@@ -234,7 +234,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
     if (proc.state->visitingFiles.count(filestat->absolute) == 0) {
         proc.includes.emplace_back(filestat->absolute, filestat->mtime);
 
-        auto res = readFile(proc.out(), filestat->absolute);
+        auto res = readFile(filestat->absolute, proc.out());
         if (!res) {
             proc.setError();
             return;

@@ -79,11 +79,11 @@ mode(Handle &);
 HU_NODISCARD SYS_API HandleError
 elevate(Handle &, HandleMode);
 
-HU_NODISCARD SYS_API HandleError
-read(Handle &, size_t &, char *);
+HU_NODISCARD SYS_API std::pair<size_t, HandleError>
+read(Handle &, std::span<char>);
 
-HU_NODISCARD SYS_API HandleError
-write(Handle &, size_t &, const char *);
+HU_NODISCARD SYS_API std::pair<size_t, HandleError>
+write(Handle &, std::span<const char>);
 
 SYS_API HandleError
 close(Handle &);
@@ -222,7 +222,7 @@ protected:
 };
 
 HU_NODISCARD SYS_API HandleResult<Array<char>>
-readFile(sys::io::OutStream &errout, std::string_view path) noexcept;
+readFile(std::string_view path, sys::io::OutStream &errout = stderr()) noexcept;
 
 } // namespace sys::io
 

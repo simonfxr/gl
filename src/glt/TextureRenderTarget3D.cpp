@@ -9,10 +9,10 @@ namespace glt {
 TextureRenderTarget3D::TextureRenderTarget3D(
   const math::ivec3_t &s,
   const TextureRenderTarget3D::Params &ps)
-  : TextureRenderTarget(ps)
+  : TextureRenderTarget(ps.texture)
   , _depth(s[2])
   , _color_format(ps.color_format)
-  , _target_attachment(Attachment(AttachmentLayer, 0))
+  , _target_attachment(Attachment{ AttachmentLayer, 0 })
 {
     resize(s);
 }

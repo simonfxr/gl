@@ -87,12 +87,12 @@ HandleStream::basic_read(size_t &s, char *buf)
 
     if (s > HANDLE_READ_BUFFER_SIZE) {
         size_t k = s;
-        err = sys::io::read(handle, k, buf);
+        std::tie(k, err) = sys::io::read(handle, std::span{ buf, k });
         read_cursor = 0;
         n += k;
     } else {
         size_t k = HANDLE_READ_BUFFER_SIZE;
-        err = sys::io::read(handle, k, read_buffer);
+        std::tie(k, err) = sys::io::read(handle, std::span{ read_buffer, k });
         if (k > s) {
             n += s;
             read_cursor = k - s;
@@ -132,7 +132,7 @@ HandleStream::basic_write(size_t &s, const char *buf)
     if (write_cursor > 0) {
         memcpy(write_buffer + write_cursor, buf, rem);
         k = HANDLE_WRITE_BUFFER_SIZE;
-        err = sys::io::write(handle, k, write_buffer);
+        std::tie(k, err) = sys::io::write(handle, std::span{ write_buffer, k });
     }
 
     if (write_cursor == 0 ||
@@ -140,7 +140,7 @@ HandleStream::basic_write(size_t &s, const char *buf)
 
         n += rem;
         k = s - rem;
-        err = sys::io::write(handle, k, buf + rem);
+        std::tie(k, err) = sys::io::write(handle, std::span{ buf + rem, k });
         n += k;
         const char *unwritten = buf + n;
         size_t rest = s - n;
@@ -179,8 +179,8 @@ HandleStream::basic_write(size_t &s, const char *buf)
 StreamResult
 HandleStream::flush_buffer()
 {
-    size_t k = write_cursor;
-    HandleError err = sys::io::write(handle, k, write_buffer);
+    auto [k, err] =
+      sys::io::write(handle, std::span{ write_buffer, write_cursor });
 
     if (k > 0) {
         memmove(write_buffer, write_buffer + k, write_cursor - k);
@@ -200,7 +200,7 @@ HandleStream::open(std::string_view path, HandleMode mode)
 }
 
 HandleResult<Array<char>>
-readFile(sys::io::OutStream &errout, std::string_view path) noexcept
+readFile(std::string_view path, sys::io::OutStream &errout) noexcept
 {
     static constexpr auto BUF_SIZE = size_t{ 8192 };
     auto res = open(path, HM_READ);
@@ -215,7 +215,7 @@ readFile(sys::io::OutStream &errout, std::string_view path) noexcept
         for (;;) {
             std::array<char, BUF_SIZE> buf{};
             auto size = sizeof buf;
-            err = read(h, size, buf.data());
+            std::tie(size, err) = read(h, std::span{ buf.data(), size });
             if (size > 0)
                 str.insert(str.end(), buf.data(), buf.data() + size);
             if (err == HandleError::EOF) {

@@ -191,34 +191,27 @@ elevate(Handle &h, HandleMode mode)
     return HandleError::OK;
 }
 
-HandleError
-read(Handle &h, size_t &s, char *buf)
+std::pair<size_t, HandleError>
+read(Handle &h, std::span<char> buf)
 {
     ASSERT(h);
-    auto n = s;
+    auto n = buf.size();
     ssize_t k;
-    RETRY_INTR(k = ::read(h._os.fd, static_cast<void *>(buf), n));
-    if (k >= 0) {
-        s = k;
-        return k == 0 ? HandleError::EOF : HandleError::OK;
-    }
-    s = 0;
-    return convertErrno();
+    RETRY_INTR(k = ::read(h._os.fd, buf.data(), n));
+    if (k >= 0)
+        return { k, k == 0 ? HandleError::EOF : HandleError::OK };
+    return { 0, convertErrno() };
 }
 
-HandleError
-write(Handle &h, size_t &s, const char *buf)
+std::pair<size_t, HandleError>
+write(Handle &h, std::span<const char> buf)
 {
     ASSERT(h);
-    auto n = s;
     ssize_t k;
-    RETRY_INTR(k = ::write(h._os.fd, buf, n));
-    if (k >= 0) {
-        s = k;
-        return HandleError::OK;
-    }
-    s = 0;
-    return convertErrno();
+    RETRY_INTR(k = ::write(h._os.fd, buf.data(), buf.size()));
+    if (k >= 0)
+        return { k, HandleError::OK };
+    return { 0, convertErrno() };
 }
 
 HandleError

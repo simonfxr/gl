@@ -7,6 +7,8 @@
 #include "sys/io/Stream.hpp"
 #include "util/noncopymove.hpp"
 
+#include <compare>
+
 namespace glt {
 
 // clang-format off
@@ -47,70 +49,62 @@ GLT_API void
 release(ObjectType t, GLsizei n, const GLuint *names);
 
 GLT_API void
-generateShader(GLenum shader_type, GLuint *shader);
-
-GLT_API void
 printStats(sys::io::OutStream &);
 
+GLT_API void
+generateShader(GLenum shader_type, GLuint *shader);
+
 template<ObjectType::enum_t T>
-struct GLObjectBase : private NonCopyable
+struct GLObject : private NonCopyable
 {
     static inline constexpr ObjectType type = T;
-    GLuint _name;
+    GLuint _name{};
 
-    explicit constexpr GLObjectBase(GLuint name = 0) : _name(name) {}
+    constexpr GLObject() = default;
+    explicit constexpr GLObject(GLuint name) : _name(name) {}
 
-    constexpr GLObjectBase(GLObjectBase &&rhs)
-      : _name(std::exchange(rhs._name, 0))
-    {}
+    constexpr GLObject(GLObject &&rhs) noexcept { swap(rhs); }
 
-    constexpr GLObjectBase &operator=(GLObjectBase &&rhs)
+    constexpr GLObject &operator=(GLObject &&rhs) noexcept
     {
-        _name = std::exchange(rhs._name, 0);
+        GLObject<T>{ std::move(rhs) }.swap(*this);
         return *this;
     }
 
-    ~GLObjectBase() { release(); }
+    void swap(GLObject &rhs) noexcept { std::swap(_name, rhs._name); }
+
+    ~GLObject() { release(); }
 
     void release()
     {
-        if (_name != 0)
-            glt::release(type, 1, &_name);
-        _name = 0;
+        if (auto n = std::exchange(_name, 0); n)
+            glt::release(type, 1, &n);
     }
 
     bool valid() const { return _name != 0; }
 
+    explicit operator bool() const noexcept { return valid(); }
+
     GLuint operator*() const { return _name; }
     GLuint &operator*() { return _name; }
-};
 
-template<ObjectType::enum_t T>
-struct GLObject : public GLObjectBase<T>
-{
-    explicit GLObject(GLuint name = 0) : GLObjectBase<T>(name) {}
-    void generate() { glt::generate(T, 1, &this->_name); }
+    friend auto operator<=>(const GLObject &lhs, const GLObject &rhs) = default;
 
-    GLObject<T> &ensure()
+    void generate() requires(T != ObjectType::Shader)
     {
-        if (this->_name == 0)
-            generate();
-        return *this;
+        glt::generate(T, 1, &this->_name);
     }
-};
 
-template<>
-struct GLObject<ObjectType::Shader> : public GLObjectBase<ObjectType::Shader>
-{
-    explicit GLObject(GLuint name = 0) : GLObjectBase<ObjectType::Shader>(name)
-    {}
-
-    void generate(GLenum ty) { glt::generateShader(ty, &this->_name); }
-
-    GLObject<ObjectType::Shader> &ensure(GLenum ty)
+    void generate(GLenum ty) requires(T == ObjectType::Shader)
     {
-        if (this->_name == 0)
-            generate(ty);
+        generateShader(ty, &_name);
+    }
+
+    template<typename... Args>
+    GLObject<T> &ensure(Args &&...args)
+    {
+        if (!*this)
+            generate(std::forward<Args>(args)...);
         return *this;
     }
 };

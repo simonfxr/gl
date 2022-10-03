@@ -15,9 +15,14 @@ namespace {
 
 struct StreamState
 {
+    static std::pair<size_t, StreamResult> track(
+      StreamFlags eof,
+      StreamFlags &flags,
+      std::pair<size_t, StreamResult> res);
+
     static StreamResult track(StreamFlags eof,
-                              StreamFlags & /*flags*/,
-                              StreamResult r);
+                              StreamFlags &flags,
+                              StreamResult res);
 };
 
 StreamResult
@@ -36,6 +41,15 @@ StreamState::track(StreamFlags eof, StreamFlags &flags, StreamResult res)
     }
     UNREACHABLE;
 }
+
+std::pair<size_t, StreamResult>
+StreamState::track(StreamFlags eof,
+                   StreamFlags &flags,
+                   std::pair<size_t, StreamResult> res)
+{
+    return { res.first, track(eof, flags, res.second) };
+}
+
 } // namespace
 
 InStream::InStream() = default;
@@ -70,18 +84,17 @@ InStream::close()
     StreamState::track(SF_IN_EOF | SF_OUT_EOF, rflags(), ret);
 }
 
-StreamResult
-InStream::read(size_t &s, char *buf)
+std::pair<size_t, StreamResult>
+InStream::read(std::span<char> buf)
 {
-    if (!readable()) {
-        s = 0;
-        return closed() ? StreamResult::Closed : StreamResult::EOF;
-    }
-    if (s <= 0) {
-        s = 0;
-        return StreamResult::OK;
-    }
-    return StreamState::track(SF_IN_EOF, rflags(), basic_read(s, buf));
+    if (!readable())
+        return { 0, closed() ? StreamResult::Closed : StreamResult::EOF };
+    if (buf.empty())
+        return { 0, StreamResult::OK };
+    auto k = buf.size();
+    auto err =
+      StreamState::track(SF_IN_EOF, rflags(), basic_read(k, buf.data()));
+    return { k, err };
 }
 
 OutStream::OutStream() = default;
@@ -104,23 +117,21 @@ OutStream::close()
     StreamState::track(SF_IN_EOF | SF_OUT_EOF, wflags, ret);
 }
 
-StreamResult
-OutStream::write(size_t &s, const char *buf)
+std::pair<size_t, StreamResult>
+OutStream::write(std::span<const char> buf)
 {
-    if (!writeable()) {
-        s = 0;
-        return closed() ? StreamResult::Closed : StreamResult::EOF;
-    }
-    if (s <= 0) {
-        s = 0;
-        return StreamResult::OK;
-    }
-    auto insize = s;
-    auto err = StreamState::track(SF_OUT_EOF, wflags, basic_write(s, buf));
+    if (!writeable())
+        return { 0, closed() ? StreamResult::Closed : StreamResult::EOF };
+    if (buf.empty())
+        return { 0, StreamResult::OK };
+    auto insize = buf.size();
+    auto s = buf.size();
+    auto err =
+      StreamState::track(SF_OUT_EOF, wflags, basic_write(s, buf.data()));
     if (err != StreamResult::OK || !line_buffered() ||
-        !memchr(buf, '\n', insize))
-        return err;
-    return flush();
+        !memchr(buf.data(), '\n', insize))
+        return { s, err };
+    return { s, flush() };
 }
 
 StreamResult
@@ -255,8 +266,7 @@ ByteStream::ByteStream(size_t bufsize) : read_cursor(0)
 
 ByteStream::ByteStream(std::string_view str) : ByteStream(str.size())
 {
-    auto sz = str.size();
-    write(sz, str.data());
+    write(str);
 }
 
 ByteStream::~ByteStream() = default;
@@ -322,7 +332,8 @@ CooperativeInStream::basic_read(size_t &s, char *buf)
     size_t n = s;
     for (;;) {
         s = n;
-        StreamResult res = in->read(s, buf);
+        StreamResult res;
+        std::tie(s, res) = in->read(std::span{ buf, s });
         if (res == StreamResult::OK)
             return res;
         if (res == StreamResult::Blocked)

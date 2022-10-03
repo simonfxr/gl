@@ -14,16 +14,24 @@
 #include "sys/clock.hpp"
 
 #include <algorithm>
+#include <optional>
 
 namespace glt {
 
 using namespace math;
 
+struct SavePointHolder
+{
+    SavePoint sp;
+    explicit SavePointHolder(GeometryTransform &gt) : sp{ gt.save() } {}
+};
+
 struct RenderManager::Data
 {
     ViewFrustum frustum;
     GeometryTransform transform;
-    SavePointArgs transformStateBOS; // transform state in begin of scene
+    std::optional<SavePointHolder>
+      transformStateBOS; // transform state in begin of scene
 
     std::shared_ptr<RenderTarget> def_rt;
 
@@ -48,9 +56,7 @@ struct RenderManager::Data
     bool projection_outdated{ true };
     bool perf_initialized{ false };
 
-    explicit Data(RenderManager &self_)
-      : transformStateBOS(transform, 0, 0), self(self_)
-    {}
+    explicit Data(RenderManager &self_) : self(self_) {}
 
     void beginStats();
     void endStats();
@@ -194,7 +200,7 @@ RenderManager::beginScene()
         updateProjection(aspect_ratio);
     }
 
-    self->transformStateBOS = self->transform.save();
+    self->transformStateBOS.emplace(self->transform);
     self->frustum.update(self->transform.vpMatrix());
 }
 
@@ -203,8 +209,8 @@ RenderManager::endScene()
 {
     ASSERT(self->inScene, "cannot endScene() without beginScene()");
     self->inScene = false;
-    self->transform.restore(self->transformStateBOS);
-    self->endStats(); // dont count swap buffers
+    self->transformStateBOS = std::nullopt; // restore save point
+    self->endStats();                       // dont count swap buffers
     if (self->current_rt != nullptr)
         self->current_rt->draw();
 }

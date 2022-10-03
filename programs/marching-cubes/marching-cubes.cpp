@@ -75,7 +75,6 @@ struct Anim
 
     void link(ge::Engine &);
     void init(const ge::Event<ge::InitEvent> &);
-    void animate(const ge::Event<ge::AnimationEvent> &);
     void render(const ge::Event<ge::RenderEvent> &);
 
     void initBlock(Block *block);
@@ -93,7 +92,6 @@ void
 Anim::link(ge::Engine &e)
 {
     engine = &e;
-    e.events().animate.reg(makeEventHandler(*this, &Anim::animate));
     e.events().render.reg(makeEventHandler(*this, &Anim::render));
 }
 
@@ -129,13 +127,11 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
         unitRect.send();
     }
 
-    {
-        glt::TextureRenderTarget3D::Params ps;
-        ps.filter_mode = glt::TextureSampler::FilterLinear;
-        ps.color_format = GL_R32F;
-        worldVolume = std::make_shared<glt::TextureRenderTarget3D>(
-          SAMPLER_SIZE + ivec3(1), ps);
-    }
+    worldVolume = std::make_shared<glt::TextureRenderTarget3D>(
+      SAMPLER_SIZE + ivec3(1),
+      glt::TextureRenderTarget3D::Params{
+        .texture = { .filter_mode = glt::TextureSampler::FilterLinear },
+        .color_format = GL_R32F });
 
     caseToNumPolysData.data()->type(glt::Texture1D);
     caseToNumPolysData.data()->bind(0, false);
@@ -280,7 +276,7 @@ void
 Anim::makeBlock(Block &block, const vec3_t &aabb_min, const vec3_t &aabb_max)
 {
     glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
-    glt::SavePoint sp(gt.save());
+    auto sp = gt.save();
 
     vec3_t fuzz = vec3(0.f);
     vec3_t max = aabb_max + fuzz;
@@ -309,8 +305,8 @@ Anim::makeSampleVolume()
 
     float invDim = 1.f / float(worldVolume->depth() - 1);
     for (auto i = size_t{ 0 }; i < worldVolume->depth(); ++i) {
-        worldVolume->targetAttachment(glt::TextureRenderTarget3D::Attachment(
-          glt::TextureRenderTarget3D::AttachmentLayer, i));
+        worldVolume->targetAttachment(glt::TextureRenderTarget3D::Attachment{
+          glt::TextureRenderTarget3D::AttachmentLayer, i });
 
         rm.setActiveRenderTarget(worldVolume);
         glt::Uniforms(*worldProgram)
@@ -331,7 +327,7 @@ void
 Anim::makePolygon(const Block &block)
 {
     glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
-    auto _sp = glt::SavePoint(gt.save());
+    auto sp = gt.save();
 
     GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
 
@@ -373,7 +369,7 @@ void
 Anim::renderPolygon(const Block &block)
 {
     glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
-    glt::SavePoint sp(gt.save());
+    auto sp = gt.save();
 
     const mat4_t model = gt.modelMatrix();
     const mat4_t scaleM = glt::scaleMatrix(WORLD_BLOCK_SCALE);
@@ -394,10 +390,6 @@ Anim::renderPolygon(const Block &block)
     GL_CALL(glDrawTransformFeedback, GL_TRIANGLES, block.stream);
     GL_CALL(glBindVertexArray, 0);
 }
-
-void
-Anim::animate(const ge::Event<ge::AnimationEvent> &)
-{}
 
 void
 Anim::render(const ge::Event<ge::RenderEvent> &)

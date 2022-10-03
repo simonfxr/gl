@@ -22,20 +22,13 @@ struct GLT_API TextureRenderTarget : public RenderTarget
 
     struct Params
     {
-        RenderTargetBuffers buffers;
-        size_t samples;
-        TextureSampler::FilterMode filter_mode;
-        TextureSampler::ClampMode clamp_mode;
-
-        Params()
-          : buffers(RT_COLOR_BUFFER)
-          , samples(1)
-          , filter_mode(TextureSampler::FilterNearest)
-          , clamp_mode(TextureSampler::ClampToEdge)
-        {}
+        RenderTargetBuffers buffers = RT_COLOR_BUFFER;
+        size_t samples = 1;
+        TextureSampler::FilterMode filter_mode = TextureSampler::FilterNearest;
+        TextureSampler::ClampMode clamp_mode = TextureSampler::ClampToEdge;
     };
 
-    TextureRenderTarget(const Params &);
+    explicit TextureRenderTarget(const Params &);
     virtual ~TextureRenderTarget() override;
 
     void resize(size_t width, size_t height);

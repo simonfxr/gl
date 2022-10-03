@@ -130,7 +130,7 @@ ParticleRenderer::renderParticles(const ge::Event<ge::RenderEvent> &ev,
 
     glt::RenderManager &rm = ev.info.engine.renderManager();
     glt::GeometryTransform &gt = rm.geometryTransform();
-    glt::SavePoint sp(gt.save());
+    auto sp = gt.save();
 
     gt.scale(math::vec3(math::recip(this->opts.world_size[0]),
                         math::recip(this->opts.world_size[1]),
