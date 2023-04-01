@@ -3,6 +3,7 @@
 
 #include "math/real.hpp"
 #include <array>
+#include <tuple>
 
 #include <type_traits>
 
@@ -395,6 +396,30 @@ operator<<(OStream &out, const genvec<T, N> &v)
     return out << "]";
 }
 
+template<size_t I, typename T, size_t N>
+HU_FORCE_INLINE inline const T &
+get(const math::genvec<T, N> &v)
+{
+    static_assert(I < N);
+    return v.components[I];
+}
+
+template<size_t I, typename T, size_t N>
+HU_FORCE_INLINE inline T
+get(math::genvec<T, N> &&v)
+{
+    static_assert(I < N);
+    return std::move(v.components[I]);
+}
+
+template<size_t I, typename T, size_t N>
+HU_FORCE_INLINE inline T &
+get(math::genvec<T, N> &v)
+{
+    static_assert(I < N);
+    return v.components[I];
+}
+
 } // namespace math
 
 BEGIN_NO_WARN_MISMATCHED_TAGS
@@ -404,21 +429,11 @@ struct tuple_size<math::genvec<T, N>> : public std::integral_constant<size_t, N>
 {};
 END_NO_WARN_MISMATCHED_TAGS
 
-template<size_t I, typename T, size_t N>
-HU_FORCE_INLINE inline const T &
-get(const math::genvec<T, N> &v)
+template<std::size_t I, class T, std::size_t N>
+struct tuple_element<I, math::genvec<T, N>>
 {
-    static_assert(I < N);
-    return v[I];
-}
-
-template<size_t I, typename T, size_t N>
-HU_FORCE_INLINE inline T &
-get(math::genvec<T, N> &v)
-{
-    static_assert(I < N);
-    return v[I];
-}
+    using type = T;
+};
 
 } // namespace std
 

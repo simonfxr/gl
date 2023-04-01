@@ -103,7 +103,7 @@ private:
     struct InitArgs;
 
 public:
-    ShaderObject(InitArgs &&);
+    explicit ShaderObject(InitArgs &&);
 };
 
 struct GLT_API ShaderCache : std::enable_shared_from_this<ShaderCache>
@@ -138,14 +138,14 @@ PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_COMPILER_ERROR_ENUM_DEF);
 
 struct GLT_API ShaderCompiler
 {
-    ShaderCompiler(ShaderManager &);
+    explicit ShaderCompiler(ShaderManager &);
 
     ShaderManager &shaderManager();
     const std::shared_ptr<ShaderCache> &shaderCache();
 
     void init();
 
-    static bool guessShaderType(std::string_view path, ShaderType *res);
+    static std::optional<ShaderType> guessShaderType(std::string_view path);
 
 private:
     friend struct ShaderSource;

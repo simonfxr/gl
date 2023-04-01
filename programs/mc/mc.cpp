@@ -441,15 +441,15 @@ Anim::computeVolumeData(MCState &cur_mc, real time)
 
     M *= glt::translateTransform(cur_mc.cube_origin);
     M *= glt::scaleTransform(cur_mc.cube_dim);
-    M *= glt::scaleTransform(real(1) / real(N - 2));
+    M *= glt::scaleTransform(1_r / real(N - 2));
 
 #define fract(x) ((x) -math::floor(x))
 #define tri(t) math::abs(2 * fract((t) / (2 * math::PI)) - 1)
 
-    time *= real(0.5);
-    const vec4_t C = vec4(-1 * tri(math::cos(time) * 0.1),
-                          real(0.2) * math::cos(time * real(0.11)),
-                          math::sin(time * real(0.1)),
+    time *= 0.5_r;
+    const vec4_t C = vec4(-1 * tri(math::cos(time) * 0.1_r),
+                          0.2_r * math::cos(time * 0.11_r),
+                          math::sin(time * 0.1_r),
                           0);
 
     kernel_generateSphereVolume.setArg(0, cur_mc.volume);
@@ -639,7 +639,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
     program->use();
 
     point3_t wcLight = vec3(1, 1, 1);
-    point3_t ecLight = vec3(transform(gt.viewMatrix(), vec4(wcLight, real(1))));
+    point3_t ecLight = vec3(transform(gt.viewMatrix(), vec4(wcLight, 1_r)));
 
 #define TIME(...) __VA_ARGS__
     TIME(for (auto &i : mc) computeVolumeData(i, time));
@@ -671,7 +671,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 
     time = engine.gameLoop().realTime();
     if (time >= time_print_fps) {
-        time_print_fps = time + 1.f;
+        time_print_fps = static_cast<real>(time) + 1_r;
 
 #define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
         glt::FrameStatistics fs = engine.renderManager().frameStatistics();

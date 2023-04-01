@@ -3,10 +3,6 @@
 #include "glt/utils.hpp"
 #include "util/range.hpp"
 
-#ifdef HU_OS_POSIX
-#    include <cstdlib>
-#endif
-
 #include <cstdlib>
 #include <cstring>
 

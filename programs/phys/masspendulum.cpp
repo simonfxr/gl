@@ -76,8 +76,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
     p1.color = p2.color = vec4(1, 0, 0, 1);
     p1.position = vec2(simulation.x1, 0);
 
-    real sin_phi, cos_phi;
-    sincos(simulation.phi, sin_phi, cos_phi);
+    auto [cos_phi, sin_phi] = cossin(simulation.phi);
     p2.position =
       vec2(simulation.x1 + simulation.l * sin_phi, -simulation.l * cos_phi);
 
@@ -90,8 +89,7 @@ Sim::acc_x1(real x, real dx_dt, real alpha, real dalpha_dt)
 {
     UNUSED(x);
     UNUSED(dx_dt);
-    real sin_alpha, cos_alpha;
-    sincos(alpha, sin_alpha, cos_alpha);
+    auto [cos_alpha, sin_alpha] = cossin(alpha);
     return (l * m2 * sin_alpha * squared(dalpha_dt) +
             g * m2 * cos_alpha * sin_alpha) /
            (m2 * squared(sin_alpha) + m1);
@@ -102,8 +100,7 @@ Sim::acc_phi(real x, real dx_dt, real alpha, real dalpha_dt)
 {
     UNUSED(x);
     UNUSED(dx_dt);
-    real sin_alpha, cos_alpha;
-    sincos(alpha, sin_alpha, cos_alpha);
+    auto [cos_alpha, sin_alpha] = cossin(alpha);
     return -(l * m2 * cos_alpha * sin_alpha * squared(dalpha_dt) +
              g * (m1 + m2) * sin_alpha) /
            (l * m2 * squared(sin_alpha) + l * m1);

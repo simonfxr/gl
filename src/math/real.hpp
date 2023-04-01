@@ -88,13 +88,6 @@ atan2(real x, real y)
     return std::atan2(x, y);
 }
 
-inline void
-sincos(real rad, real &out_sin, real &out_cos)
-{
-    out_sin = sin(rad);
-    out_cos = cos(rad);
-}
-
 inline real
 cotan(real rad)
 {

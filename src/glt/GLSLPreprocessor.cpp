@@ -43,7 +43,7 @@ parseFileArg(const Preprocessor::DirectiveContext &ctx,
         ++begin;
 
     if (begin < end && arg <= begin) {
-        len = uint32_t(begin - arg);
+        len = static_cast<uint32_t>(begin - arg);
         return true;
     }
     arg = nullptr;
@@ -82,7 +82,7 @@ GLSLPreprocessor::appendString(std::string_view str)
     if (!str.empty()) {
         auto &data = contents.emplace_back(str);
         segments.push_back(data.data());
-        segLengths.push_back(uint32_t(data.size()));
+        segLengths.push_back(static_cast<uint32_t>(data.size()));
     }
 }
 
@@ -105,7 +105,7 @@ GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext &ctx)
 
     if (seglen > 0) {
         segments.push_back(frame.pos);
-        segLengths.push_back(uint32_t(seglen));
+        segLengths.push_back(static_cast<uint32_t>(seglen));
     }
 
     frame.pos = ctx.content.data + ctx.lineOffset + ctx.lineLength;
@@ -160,8 +160,8 @@ DependencyHandler::directiveEncountered(
 
     proc.advanceSegments(ctx);
 
-    ShaderType stype;
-    if (!ShaderCompiler::guessShaderType(file, &stype)) {
+    auto opt_stype = ShaderCompiler::guessShaderType(file);
+    if (!opt_stype) {
         proc.out()
           << ctx.content.name
           << ": #need-directive: cannot guess shader type based on name: "
@@ -169,6 +169,7 @@ DependencyHandler::directiveEncountered(
         proc.setError();
         return;
     }
+    auto stype = *opt_stype;
 
     std::string absPath = sys::fs::absolutePath(realPath);
     if (proc.state->deps.insert(absPath).second)
@@ -231,7 +232,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
     }
     proc.state->incs.insert(filestat->absolute);
 
-    if (proc.state->visitingFiles.count(filestat->absolute) == 0) {
+    if (!proc.state->visitingFiles.contains(filestat->absolute)) {
         proc.includes.emplace_back(filestat->absolute, filestat->mtime);
 
         auto res = readFile(filestat->absolute, proc.out());
@@ -256,7 +257,7 @@ IncludeHandler::endProcessing(const Preprocessor::ContentContext &ctx)
 
     if (seglen > 0) {
         proc.segments.push_back(frame.pos);
-        proc.segLengths.push_back(uint32_t(seglen));
+        proc.segLengths.push_back(static_cast<uint32_t>(seglen));
     }
 
     proc.state->stack.pop();

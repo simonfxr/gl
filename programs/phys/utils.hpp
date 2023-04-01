@@ -94,8 +94,7 @@ ParticleRenderer::init(ge::Engine *e, const ParticleRenderer::Opts &popts)
     const size_t N = 100;
     for (size_t i = 0; i < N; ++i) {
         math::real phi = math::real(i) / (N - 1) * 2 * math::PI;
-        math::real x, y;
-        math::sincos(phi, x, y);
+        auto [x, y] = math::cossin(phi);
         vertex.position = math::vec2(x, y);
         this->circle_mesh->addVertex(vertex);
     }

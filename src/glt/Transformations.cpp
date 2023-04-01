@@ -3,6 +3,7 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/real.hpp"
+#include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 
@@ -27,10 +28,7 @@ perspectiveProjection(real radViewAngle,
 mat3_t
 rotationMatrix(real theta, const direction3_t &n)
 {
-    real s;
-
-    real c;
-    sincos(-theta, s, c);
+    auto [c, s] = cossin(-theta);
 
     return mat3(vec3(n[0] * n[0] * (1 - c) + c,
                      n[0] * n[1] * (1 - c) - n[2] * s,

@@ -13,12 +13,15 @@
 #include <algorithm>
 #include <array>
 #include <functional>
+#include <iterator>
+#include <numeric>
 #include <queue>
 #include <stack>
 #include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <variant>
+#include <vector>
 
 namespace err {
 template<>
@@ -54,28 +57,28 @@ using CompileJobs = std::queue<CompileJob>;
 namespace {
 struct StringSource
 {
-    const std::string source;
+    std::string source;
 };
 } // namespace
 
 namespace {
 struct FileSource
 {
-    const std::string path;
+    std::string path;
 };
 } // namespace
 
 namespace {
 struct StringShaderObject
 {
-    const StringSource &source;
+    std::reference_wrapper<const StringSource> source;
 };
 } // namespace
 
 namespace {
 struct FileShaderObject
 {
-    const FileSource &source;
+    std::reference_wrapper<const FileSource> source;
     sys::fs::FileTime mtime;
 };
 } // namespace
@@ -224,10 +227,8 @@ compilePreprocessed(ShaderCompilerQueue & /*scq*/,
 void
 printShaderLog(GLShaderObject & /*shader*/, sys::io::OutStream &out);
 
-bool
-translateShaderType(ShaderType type,
-                    GLenum *gltype,
-                    const std::string &basename = "");
+std::optional<GLenum>
+translateShaderType(ShaderType type, const std::string &basename = "");
 
 ReloadState
 includesNeedReload(const ShaderIncludes & /*incs*/);
@@ -254,10 +255,10 @@ compilePreprocessed(ShaderCompilerQueue &scq,
                     GLShaderObject &shader)
 {
 
-    auto nsegments = GLsizei(proc.segments.size());
-    const char **segments = &proc.segments[0];
+    auto nsegments = static_cast<GLsizei>(proc.segments.size());
+    const char **segments = proc.segments.data();
     static_assert(sizeof(GLint) == sizeof(proc.segLengths[0]));
-    auto p0 = &proc.segLengths[0];
+    auto *p0 = proc.segLengths.data();
     auto segLengths = reinterpret_cast<const GLint *>(p0); // NOLINT
 
     shader.ensure(shader_type);
@@ -278,8 +279,9 @@ compilePreprocessed(ShaderCompilerQueue &scq,
             logmsg << "\n";
             logmsg << "BEGIN SHADER SOURCE[" << *shader << "]\n";
             for (const auto i : irange(nsegments))
-                logmsg << std::string_view{ segments[i],
-                                            size_t(segLengths[i]) };
+                logmsg << std::string_view{
+                    segments[i], static_cast<size_t>(segLengths[i])
+                };
             logmsg << "\n";
             logmsg << "END SHADER SOURCE\n";
         }
@@ -318,7 +320,7 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
     if (log_len > 0) {
 
         // log_len includes null terminator
-        auto log = std::vector<GLchar>(size_t(log_len));
+        auto log = std::vector<GLchar>(static_cast<size_t>(log_len));
         GL_CALL(glGetShaderInfoLog, *shader, log_len, nullptr, log.data());
 
         GLchar *logBegin = log.data();
@@ -341,24 +343,22 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
     }
 }
 
-bool
-translateShaderType(ShaderType type,
-                    GLenum *gltype,
-                    const std::string &basename)
+std::optional<GLenum>
+translateShaderType(ShaderType type, const std::string &basename)
 {
 
-    if (type == ShaderType::GuessShaderType &&
-        !ShaderCompiler::guessShaderType(basename, &type))
-        return false;
-
-    for (auto shaderTypeMapping : shaderTypeMappings) {
-        if (shaderTypeMapping.type == type) {
-            *gltype = shaderTypeMapping.glType;
-            return true;
-        }
+    if (type == ShaderType::GuessShaderType) {
+        auto guess = ShaderCompiler::guessShaderType(basename);
+        if (!guess)
+            return false;
+        type = *guess;
     }
 
-    return false;
+    for (auto shaderTypeMapping : shaderTypeMappings)
+        if (shaderTypeMapping.type == type)
+            return { shaderTypeMapping.glType };
+
+    return std::nullopt;
 }
 } // namespace
 
@@ -393,13 +393,14 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
                          const StringSource &strsrc,
                          ShaderCompilerQueue &scq)
 {
-    GLenum gltype;
+    auto opt_gltype = translateShaderType(src->self->type);
 
-    if (!translateShaderType(src->self->type, &gltype)) {
+    if (!opt_gltype) {
         COMPILER_ERR_MSG(
           scq, ShaderCompilerError::InvalidShaderType, "unknown ShaderType");
         return nullptr;
     }
+    auto gltype = *opt_gltype;
 
     auto so = ShaderObject::Data::makeStringShaderObject(src, strsrc);
     GLSLPreprocessor preproc(
@@ -424,14 +425,15 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
                          const FileSource &filesrc,
                          ShaderCompilerQueue &scq)
 {
-    GLenum gltype;
 
     const auto &path = filesrc.path;
-    if (!translateShaderType(src->self->type, &gltype, path)) {
+    auto opt_gltype = translateShaderType(src->self->type, path);
+    if (!opt_gltype) {
         COMPILER_ERR_MSG(
           scq, ShaderCompilerError::InvalidShaderType, "unknown ShaderType");
         return nullptr;
     }
+    auto gltype = *opt_gltype;
 
     auto mtime = sys::fs::modificationTime(filesrc.path);
     if (!mtime) {
@@ -508,7 +510,8 @@ ShaderObject::Data::reloadIfOutdated(ShaderCompilerQueue &scq)
           if constexpr (std::is_same_v<T, StringShaderObject>) {
               return includesNeedReload(includes);
           } else if constexpr (std::is_same_v<T, FileShaderObject>) {
-              auto current_mtime = sys::fs::modificationTime(arg.source.path);
+              auto current_mtime =
+                sys::fs::modificationTime(arg.source.get().path);
               if (!current_mtime)
                   return ReloadState::Failed;
               if (*current_mtime != arg.mtime || includesNeedReload(includes))
@@ -546,7 +549,7 @@ ShaderObject::Data::makeStringShaderObject(std::shared_ptr<ShaderSource> src,
                                            const StringSource &ssrc)
 {
     auto so = std::make_shared<ShaderObject>(
-      InitArgs{ std::move(src), { StringShaderObject{ ssrc } } });
+      InitArgs{ std::move(src), { StringShaderObject{ std::ref(ssrc) } } });
     return so;
 }
 
@@ -716,21 +719,16 @@ ShaderCompiler::init()
     self->cache = self->shaderManager.globalShaderCache();
 }
 
-bool
-ShaderCompiler::guessShaderType(std::string_view path, ShaderType *res)
+std::optional<ShaderType>
+ShaderCompiler::guessShaderType(std::string_view path)
 {
-    ASSERT(res);
-
     std::string ext = sys::fs::extension(path);
 
-    for (auto shaderTypeMapping : shaderTypeMappings) {
-        if (ext == shaderTypeMapping.fileExtension) {
-            *res = shaderTypeMapping.type;
-            return true;
-        }
-    }
+    for (auto shaderTypeMapping : shaderTypeMappings)
+        if (ext == shaderTypeMapping.fileExtension)
+            return { shaderTypeMapping.type };
 
-    return false;
+    return std::nullopt;
 }
 
 void
@@ -778,7 +776,7 @@ void
 ShaderCompilerQueue::enqueueReload(const std::shared_ptr<ShaderObject> &so)
 {
     ASSERT(so);
-    if (self->inQueue.count(so->shaderSource()->key()) > 0)
+    if (self->inQueue.contains(so->shaderSource()->key()))
         return;
     auto exec = [so, this]() -> std::shared_ptr<ShaderObject> {
         sys::io::stdout() << "reloadIfOutdated: " << so->shaderSource()->key()
@@ -804,7 +802,7 @@ void
 ShaderCompilerQueue::enqueueLoad(const std::shared_ptr<ShaderSource> &src)
 {
     ASSERT(src);
-    if (self->inQueue.count(src->key()) > 0)
+    if (self->inQueue.contains(src->key()))
         return;
     auto exec = [src, this]() -> std::shared_ptr<ShaderObject> {
         sys::io::stdout() << "load: " << src->key() << "\n";
@@ -823,9 +821,8 @@ ShaderCompilerQueue::compileAll()
         const ShaderSourceKey &key = job.source->key();
 
         auto it = self->compiled.find(key);
-        if (it != self->compiled.end()) {
+        if (it != self->compiled.end())
             continue;
-        }
 
         std::shared_ptr<ShaderObject> so;
         bool cache_hit = false;
@@ -843,14 +840,13 @@ ShaderCompilerQueue::compileAll()
         if (!cache_hit)
             so = job.exec();
 
-        if (!so) {
-            this->pushError(ShaderCompilerError::CompilationFailed);
-        } else {
-            self->put(so);
+        if (!so)
+            return this->pushError(ShaderCompilerError::CompilationFailed);
 
-            for (auto &dep : so->self->dependencies)
-                enqueueLoad(dep);
-        }
+        self->put(so);
+
+        for (auto &dep : so->self->dependencies)
+            enqueueLoad(dep);
     }
 }
 
@@ -858,14 +854,13 @@ void
 ShaderCompilerQueue::Data::put(const std::shared_ptr<ShaderObject> &so)
 {
     ASSERT(so);
-    ASSERT(compiled.count(so->shaderSource()->key()) == 0);
+    ASSERT(!compiled.contains(so->shaderSource()->key()));
 
     compiled.insert(std::make_pair(so->shaderSource()->key(), so));
 
-    if (flags & SC_PUT_CACHE) {
+    if (flags & SC_PUT_CACHE)
         if (auto cache = compiler.shaderCache())
             cache->put(so);
-    }
 }
 
 std::shared_ptr<ShaderObject>

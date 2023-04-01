@@ -32,6 +32,12 @@ vec2(const vec2_t::buffer b)
     return vec2_t::load(b);
 }
 
+inline vec2_t
+cossin(real rad)
+{
+    return { cos(rad), sin(rad) };
+}
+
 } // namespace math
 
 #endif

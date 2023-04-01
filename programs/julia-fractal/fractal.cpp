@@ -258,8 +258,7 @@ World::shift(const vec2_t &a)
 void
 World::julia_constant_rotate(real phi)
 {
-    real s, c;
-    math::sincos(phi, s, c);
+    auto [c, s] = math::cossin(phi);
     real x = julia_constant[0];
     real y = julia_constant[1];
     julia_constant[0] = c * x + s * y;

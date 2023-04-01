@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "math/mat4.hpp"
+#include "math/vec2.hpp"
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "sys/clock.hpp"
@@ -55,8 +56,7 @@ rodriguez(mat3_t &RESTRICT R, const vec3_t &RESTRICT a)
 
     auto theta = length(a);
     auto K = skew_sym(a * (1 / theta));
-    decltype(theta) s, c;
-    sincos(theta, s, c);
+    auto [c, s] = cossin(theta);
     R = K * s + K * K * (1 - c) + mat3();
 }
 
@@ -66,8 +66,7 @@ rot2(mat3_t &RESTRICT R, const vec3_t &RESTRICT a)
 {
     auto theta = length(a);
     auto n = a * (1 / theta);
-    decltype(theta) s, c;
-    sincos(-theta, s, c);
+    auto [c, s] = cossin(-theta);
 
     R = mat3(vec3(n[0] * n[0] * (1 - c) + c,
                   n[0] * n[1] * (1 - c) - n[2] * s,

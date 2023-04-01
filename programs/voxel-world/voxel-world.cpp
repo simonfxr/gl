@@ -1257,8 +1257,7 @@ pointsOnSphere(uint32_t n, vec3_t *ps)
         real y = k * off - 1 + (off / 2_r);
         real r = math::sqrt(1_r - y * y);
         real phi = k * inc;
-        real s, c;
-        sincos(phi, s, c);
+        auto [c, s] = cossin(phi);
         ps[k] = vec3(c * r, y, s * r);
     }
 }

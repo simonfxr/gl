@@ -179,10 +179,8 @@ sphere(glt::Mesh<Vertex> &mesh, real rad, int slices, int stacks)
 
     for (int i = 0; i < stacks; ++i) {
         real theta = real(i) * dtheta;
-        real stheta, ctheta;
-        sincos(theta, stheta, ctheta);
-        real stheta2, ctheta2;
-        sincos(theta + dtheta, stheta2, ctheta2);
+        auto [ctheta, stheta] = cossin(theta);
+        auto [ctheta2, stheta2] = cossin(theta + dtheta);
 
         vec3_t position[4];
         vec3_t normal[4];
@@ -192,12 +190,10 @@ sphere(glt::Mesh<Vertex> &mesh, real rad, int slices, int stacks)
 
         for (int j = 0; j < slices; ++j) {
             real phi = real(j) * dphi;
-            real sphi, cphi;
-            sincos(phi, sphi, cphi);
+            auto [cphi, sphi] = cossin(phi);
             sphi = -sphi;
 
-            real sphi2, cphi2;
-            sincos(phi + dphi, sphi2, cphi2);
+            auto [cphi2, sphi2] = cossin(phi + dphi);
             sphi2 = -sphi2;
 
 #define CALC(II, sa, ca, sb, cb)                                               \

@@ -579,7 +579,7 @@ Anim::renderTable(const std::string &shader)
 {
     glt::RenderManager &rm = engine.renderManager();
     glt::GeometryTransform &gt = rm.geometryTransform();
-    auto sp = gt.save();;
+    auto sp = gt.save();
 
     gt.scale(vec3(10.f, 4.f, 16.f));
 

@@ -42,14 +42,6 @@ StreamState::track(StreamFlags eof, StreamFlags &flags, StreamResult res)
     UNREACHABLE;
 }
 
-std::pair<size_t, StreamResult>
-StreamState::track(StreamFlags eof,
-                   StreamFlags &flags,
-                   std::pair<size_t, StreamResult> res)
-{
-    return { res.first, track(eof, flags, res.second) };
-}
-
 } // namespace
 
 InStream::InStream() = default;
