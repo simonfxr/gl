@@ -1,10 +1,8 @@
 #include "sim.hpp"
 
-#include "ge/Camera.hpp"
+#include "ge/Anim.hpp"
 #include "ge/Command.hpp"
-#include "ge/Engine.hpp"
 #include "ge/GameWindow.hpp"
-#include "ge/MouseLookPlugin.hpp"
 #include "glt/CubeMesh.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/TextureRenderTarget.hpp"
@@ -82,11 +80,8 @@ using CubeMesh = glt::CubeMesh<Vertex>;
 
 } // namespace
 
-struct Game
+struct Game final : ge::Anim3D<Game>
 {
-
-    ge::Camera camera;
-    ge::MouseLookPlugin mouse_look;
 
     CubeMesh wallBatch;
     Mesh sphereBatches[SPHERE_LOD_MAX];
@@ -113,7 +108,6 @@ struct Game
     } sphereUniforms{};
 
     std::shared_ptr<glt::TextureRenderTarget> textureRenderTarget{};
-    ge::Engine *engine{};
 
     float game_speed{};
 
@@ -125,22 +119,15 @@ struct Game
 
     Game();
 
-    ~Game()
-    {
-        if (engine != nullptr)
-            engine->renderManager().shutdown();
-        textureRenderTarget.reset();
-    }
-
     void updateIndirectRendering(bool indirect);
     void resizeRenderTargets();
 
     void init(const ge::Event<ge::InitEvent> & /*ev*/);
-    void link(ge::Engine &e);
+    void initCommands();
 
     void constrainCameraMovement(const ge::Event<ge::CameraMoved> & /*ev*/);
-    void animate(const ge::Event<ge::AnimationEvent> & /*ev*/);
-    void renderScene(const ge::Event<ge::RenderEvent> & /*ev*/);
+    void animate(const ge::Event<ge::AnimationEvent> & /*ev*/) override;
+    void render(const ge::Event<ge::RenderEvent> & /*ev*/) override;
     void renderWorld(float dt);
 
     void windowResized(const ge::Event<ge::WindowResized> & /*ev*/);
@@ -162,10 +149,10 @@ Game::Game() : renderer(*this) {}
 void
 Game::init(const ge::Event<ge::InitEvent> &ev)
 {
-    ge::Engine &e = ev.info.engine;
-    engine = &e;
+    initCommands();
 
-    link(e);
+    engine.window().events().windowResized.reg(*this, &Game::windowResized);
+    get<ge::Camera>().events().moved.reg(*this, &Game::constrainCameraMovement);
 
     textureRenderTarget = nullptr;
     indirect_rendering = true;
@@ -187,8 +174,8 @@ Game::init(const ge::Event<ge::InitEvent> &ev)
         rectBatch.send();
     }
 
-    e.gameLoop().ticks(200);
-    e.gameLoop().syncDraw(false);
+    engine.gameLoop().ticks(200);
+    engine.gameLoop().syncDraw(false);
 
     use_interpolation = true;
 
@@ -219,7 +206,7 @@ Game::init(const ge::Event<ge::InitEvent> &ev)
         sphereBatches[i].send();
     }
 
-    camera.frame().origin = vec3(0.f, 0.f, 0.f);
+    get<ge::Camera>().frame().origin = vec3(0.f, 0.f, 0.f);
 
     update_sphere_mass();
 
@@ -238,7 +225,8 @@ void
 Game::constrainCameraMovement(const ge::Event<ge::CameraMoved> &ev)
 {
     ev.info.allowed_step = ev.info.step;
-    if (!world.canMoveCamera(camera.frame().origin, ev.info.allowed_step))
+    if (!world.canMoveCamera(ev.info.camera.frame().origin,
+                             ev.info.allowed_step))
         ev.info.allowed_step = vec3(0.f);
 }
 
@@ -246,7 +234,7 @@ void
 Game::animate(const ge::Event<ge::AnimationEvent> &ev)
 {
     auto dt = game_speed * ev.info.engine.gameLoop().tickDuration();
-    world.simulate(real(dt));
+    world.simulate(static_cast<real>(dt));
 }
 
 void
@@ -290,7 +278,8 @@ randomColor()
 void
 Game::spawn_sphere()
 {
-    vec3_t direction = -camera.frame().localZ();
+    auto &camera = get<ge::Camera>();
+    auto direction = -camera.frame().localZ();
     sphere_proto.center =
       camera.frame().origin + direction * (sphere_proto.r + 1.1f);
     sphere_proto.v = direction * sphere_speed;
@@ -303,12 +292,10 @@ Game::spawn_sphere()
 }
 
 void
-Game::renderScene(const ge::Event<ge::RenderEvent> &ev)
+Game::render(const ge::Event<ge::RenderEvent> &ev)
 {
     float interpolation = ev.info.interpolation;
     ge::Engine &e = ev.info.engine;
-
-    engine = &e;
 
     glt::RenderManager &renderManager = e.renderManager();
 
@@ -320,7 +307,8 @@ Game::renderScene(const ge::Event<ge::RenderEvent> &ev)
 
     //    e.window().window().setActive();
 
-    auto dt = real(interpolation * game_speed * e.gameLoop().tickDuration());
+    auto dt = static_cast<real>(interpolation * game_speed *
+                                e.gameLoop().tickDuration());
 
     renderWorld(dt);
 
@@ -347,7 +335,7 @@ Game::renderScene(const ge::Event<ge::RenderEvent> &ev)
 void
 Game::renderWorld(float dt)
 {
-    glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
+    glt::GeometryTransform &gt = engine.renderManager().geometryTransform();
     const vec3_t eyeLightPos = gt.transformPoint(LIGHT_POS);
     const vec3_t spotDirection = normalize(vec3(0.f) - LIGHT_POS);
     const vec3_t ecSpotDirection = gt.transformVector(spotDirection);
@@ -366,13 +354,13 @@ Game::renderWorld(float dt)
 const glt::ViewFrustum &
 Renderer::frustum()
 {
-    return game.engine->renderManager().viewFrustum();
+    return game.engine.renderManager().viewFrustum();
 }
 
 const glt::Frame &
 Renderer::camera()
 {
-    return game.camera.frame();
+    return game.get<ge::Camera>().frame();
 }
 
 void
@@ -383,8 +371,8 @@ Game::updateIndirectRendering(bool indirect)
     if (indirect) {
 
         if (textureRenderTarget == nullptr) {
-            auto w = engine->window().windowWidth();
-            auto h = engine->window().windowHeight();
+            auto w = engine.window().windowWidth();
+            auto h = engine.window().windowHeight();
             glt::TextureRenderTarget::Params ps;
             ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
             textureRenderTarget =
@@ -394,21 +382,21 @@ Game::updateIndirectRendering(bool indirect)
 
         rt = textureRenderTarget;
     } else {
-        rt = engine->window().renderTarget();
+        rt = engine.window().renderTarget();
     }
 
     indirect_rendering = indirect;
 
-    engine->renderManager().setActiveRenderTarget(nullptr);
+    engine.renderManager().setActiveRenderTarget(nullptr);
     resizeRenderTargets();
-    engine->renderManager().setDefaultRenderTarget(rt);
+    engine.renderManager().setDefaultRenderTarget(rt);
 }
 
 void
 Game::resizeRenderTargets()
 {
-    auto width = engine->window().windowWidth();
-    auto height = engine->window().windowHeight();
+    auto width = engine.window().windowWidth();
+    auto height = engine.window().windowHeight();
 
     if (indirect_rendering) {
 
@@ -463,12 +451,12 @@ Game::end_render_spheres()
             sphere_instances[lod].clear();
 
             auto sphereInstancedShader =
-              engine->shaderManager().program("sphereInstanced");
+              engine.shaderManager().program("sphereInstanced");
             ASSERT(sphereInstancedShader);
             sphereInstancedShader->use();
 
             glt::GeometryTransform &gt =
-              engine->renderManager().geometryTransform();
+              engine.renderManager().geometryTransform();
             glt::Uniforms(*sphereInstancedShader)
               .optional("normalMatrix", gt.normalMatrix())
               .optional("vMatrix", gt.mvMatrix())
@@ -484,7 +472,7 @@ Game::end_render_spheres()
 #elif defined(SPHERE_INSTANCED_ARRAY)
 
             auto sphereInstanced2Shader =
-              engine->shaderManager().program("sphereInstanced2");
+              engine.shaderManager().program("sphereInstanced2");
             ASSERT(sphereInstanced2Shader);
             sphereInstanced2Shader->use();
 
@@ -537,7 +525,7 @@ Game::end_render_spheres()
             GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
             glt::GeometryTransform &gt =
-              engine->renderManager().geometryTransform();
+              engine.renderManager().geometryTransform();
             glt::Uniforms(*sphereInstanced2Shader)
               .optional("pMatrix", gt.projectionMatrix())
               .optional("ecLight", sphereUniforms.ecLightPos)
@@ -560,7 +548,7 @@ Game::end_render_spheres()
 SphereLOD
 Game::calc_sphere_lod(const Sphere &s)
 {
-    glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
+    glt::GeometryTransform &gt = engine.renderManager().geometryTransform();
     vec3_t ecCoord = gt.transformPoint(s.center);
 
     // near upper right corner of frustm (view coord)
@@ -582,7 +570,7 @@ Game::calc_sphere_lod(const Sphere &s)
     screen_rad *= 2;
 
     SphereLOD lod{};
-    lod.level = size_t(screen_rad * SPHERE_LOD_MAX);
+    lod.level = static_cast<size_t>(screen_rad * SPHERE_LOD_MAX);
     if (lod.level >= SPHERE_LOD_MAX)
         lod.level = SPHERE_LOD_MAX - 1;
 
@@ -610,7 +598,7 @@ Game::render_sphere(const Sphere &s, const SphereModel &m)
 #elif defined(SPHERE_INSTANCED_ARRAY)
 
         SphereInstance inst;
-        inst.mvMatrix = engine->renderManager().geometryTransform().mvMatrix();
+        inst.mvMatrix = engine.renderManager().geometryTransform().mvMatrix();
         inst.colorShininess = vec4(vec3(m.color.vec4()), m.shininess);
 
 #endif
@@ -618,20 +606,19 @@ Game::render_sphere(const Sphere &s, const SphereModel &m)
         sphere_instances[lod.level].push_back(inst);
 
     } else {
-        glt::GeometryTransform &gt =
-          engine->renderManager().geometryTransform();
+        glt::GeometryTransform &gt = engine.renderManager().geometryTransform();
         const vec3_t &pos = s.center;
         auto sp = gt.save();
         gt.translate(pos);
         gt.scale(vec3(s.r));
 
-        auto sphereShader = engine->shaderManager().program("sphere");
+        auto sphereShader = engine.shaderManager().program("sphere");
         ASSERT(sphereShader);
 
         sphereShader->use();
 
         vec3_t col3 = vec3(1.f);
-        col3 /= real(lod.level + 1);
+        col3 /= static_cast<real>(lod.level + 1);
         auto col = glt::color(col3);
 
         glt::Uniforms us(*sphereShader);
@@ -661,7 +648,7 @@ Renderer::renderBox(const glt::AABB &box)
 void
 Game::render_box(const glt::AABB &box)
 {
-    glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
+    glt::GeometryTransform &gt = engine.renderManager().geometryTransform();
 
     GL_CALL(glCullFace, GL_FRONT);
 
@@ -676,7 +663,7 @@ Game::render_box(const glt::AABB &box)
     gt.translate(center);
     gt.scale(dim);
 
-    auto wallShader = engine->shaderManager().program("wall");
+    auto wallShader = engine.shaderManager().program("wall");
     ASSERT(wallShader);
 
     wallShader->use();
@@ -719,7 +706,7 @@ Game::render_con(const point3_t &a, const point3_t &b)
     GL_CALL(glPolygonMode, GL_FRONT_AND_BACK, GL_LINE);
     GL_CALL(glLineWidth, 10.f);
 
-    glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
+    glt::GeometryTransform &gt = engine.renderManager().geometryTransform();
 
     auto sp = gt.save();
 
@@ -727,7 +714,7 @@ Game::render_con(const point3_t &a, const point3_t &b)
     mat3_t trans = mat3(b - a, vec3(0.f, 1.f, 0.f), vec3(0.f, 0.f, 1.f));
     gt.concat(trans);
 
-    auto identityShader = engine->shaderManager().program("identity");
+    auto identityShader = engine.shaderManager().program("identity");
 
     identityShader->use();
     glt::Uniforms us(*identityShader);
@@ -749,7 +736,7 @@ void
 Game::render_hud()
 {
     /*
-    const glt::FrameStatistics& fs = engine->renderManager().frameStatistics();
+    const glt::FrameStatistics& fs = engine.renderManager().frameStatistics();
 
     sf::Color c(0, 255, 255, 200);
 
@@ -802,29 +789,25 @@ Game::render_hud()
     txtRenderTime.SetColor(c);
     txtRenderTime.SetPosition(2, height);
 
-    // engine->window().window().SaveGLStates(); // FIXME
+    // engine.window().window().SaveGLStates(); // FIXME
 
-    engine->window().window().Draw(txtFps);
-    engine->window().window().Draw(txtSpeed);
-    engine->window().window().Draw(txtMass);
-    engine->window().window().Draw(txtRad);
-    engine->window().window().Draw(txtAnimSpeed);
-    engine->window().window().Draw(txtInter);
-    engine->window().window().Draw(txtNumBalls);
-    engine->window().window().Draw(txtRenderTime);
+    engine.window().window().Draw(txtFps);
+    engine.window().window().Draw(txtSpeed);
+    engine.window().window().Draw(txtMass);
+    engine.window().window().Draw(txtRad);
+    engine.window().window().Draw(txtAnimSpeed);
+    engine.window().window().Draw(txtInter);
+    engine.window().window().Draw(txtNumBalls);
+    engine.window().window().Draw(txtRenderTime);
 
-    // engine->window().window().RestoreGLStates(); // FIXME
+    // engine.window().window().RestoreGLStates(); // FIXME
     */
 }
 
 void
-Game::link(ge::Engine &e)
+Game::initCommands()
 {
-    e.events().animate.reg(*this, &Game::animate);
-    e.events().render.reg(*this, &Game::renderScene);
-    e.window().events().windowResized.reg(*this, &Game::windowResized);
-
-    ge::CommandProcessor &proc = e.commandProcessor();
+    auto &proc = engine.commandProcessor();
 
     proc.define(ge::makeCommand(
       "toggleUseInterpolation",
@@ -843,10 +826,10 @@ Game::link(ge::Engine &e)
       [this](const ge::Event<ge::CommandEvent> & /*unused*/,
              std::span<const ge::CommandArg> args) {
           if (args[0].integer < 0 &&
-              world.solve_iterations < size_t(-args[0].integer))
+              world.solve_iterations < static_cast<size_t>(-args[0].integer))
               world.solve_iterations = 0;
           else
-              world.solve_iterations += int32_t(args[0].integer);
+              world.solve_iterations += static_cast<int32_t>(args[0].integer);
           sys::io::stderr()
             << "number of contact-solver iterations: " << world.solve_iterations
             << "\n";
@@ -912,23 +895,12 @@ Game::link(ge::Engine &e)
       [this](const ge::Event<ge::CommandEvent> & /*unused*/, double inc) {
           game_speed = std::max(0_r, game_speed + static_cast<math::real>(inc));
       }));
-
-    mouse_look.camera(&camera);
-    e.enablePlugin(camera);
-    e.enablePlugin(mouse_look);
-    camera.events().moved.reg(*this, &Game::constrainCameraMovement);
 }
 
 int
 main(int argc, char *argv[])
 {
-    ge::Engine engine;
-    engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    ge::EngineOptions opts;
     Game game;
-
-    opts.parse(&argc, &argv);
-    opts.inits.reg(ge::Init, game, &Game::init);
-    int32_t ec = engine.run(opts);
-    return ec;
+    game.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    return game.main(argc, argv);
 }

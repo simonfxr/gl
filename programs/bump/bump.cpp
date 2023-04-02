@@ -1,6 +1,5 @@
-#include "ge/Camera.hpp"
+#include "ge/Anim.hpp"
 #include "ge/Engine.hpp"
-#include "ge/MouseLookPlugin.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/primitives.hpp"
@@ -21,62 +20,6 @@ DEF_GL_MAPPED_TYPE(Vertex,
                    (vec3_t, binormal),
                    (vec2_t, uv));
 
-#if 0
-#    define sname Vertex
-
-struct sname
-{
-    PP_MAP(TI_DEF_STRUCT_FIELD,
-           PP_SEMI,
-           (vec3_t, position),
-           (vec3_t, tangent),
-           (vec3_t, binormal),
-           (vec2_t, uv));
-    struct gl;
-    sname() = default;
-    inline sname(const gl &);
-};
-struct sname::gl
-{
-    struct struct_info;
-    PP_MAP(TI_DEF_GL_STRUCT_FIELD,
-           PP_SEMI,
-           (vec3_t, position),
-           (vec3_t, tangent),
-           (vec3_t, binormal),
-           (vec2_t, uv));
-    gl() = default;
-    explicit gl(const sname &TI_VAR(arg)): PP_MAP(TI_INIT_GL_FIELD, PP_COMMA, (vec3_t, position), (vec3_t, tangent),(vec3_t, binormal),(vec2_t, uv))
-    {}
-};
-
-struct sname::gl::struct_info
-{
-    static const ::glt::FieldInfo _fields[4];
-    static const ::glt::StructInfo info;
-
-};
-
-const ::glt::FieldInfo sname::gl::struct_info::_fields[4] = { PP_MAP_WITH_ARG(
-                                                                TI_DEF_FIELD_INFO,
-                                                             PP_COMMA,
-                                                             sname,
-                                                             (vec3_t, position),
-                                                             (vec3_t, tangent),
-                                                             (vec3_t, binormal),
-                                                             (vec2_t, uv)) };
-
-
-const ::glt::StructInfo sname::gl::struct_info::info = ::glt::StructInfo(
-  PP_TOSTR(sname),
-  sizeof(sname::gl),
-  alignof(sname::gl),
-  ::std::span<const ::glt::FieldInfo>(sname::gl::struct_info::_fields,
-                                      sizeof sname::gl::struct_info::_fields / sizeof(::glt::FieldInfo)));
-
-sname::sname(const sname::gl &TI_VAR(arg)): PP_MAP(TI_INIT_FIELD,PP_COMMA,(vec3_t, position),   (vec3_t, tangent),     (vec3_t, binormal),    (vec2_t, uv))
-{}
-#endif
 template<typename Vertex>
 void
 sphere(glt::Mesh<Vertex> &mesh, real radius, int slices, int stacks);
@@ -85,25 +28,20 @@ template<typename V>
 void
 icoSphere(glt::Mesh<V> &mesh, size_t subdivs);
 
-struct Anim
+struct Anim final : ge::Anim3D<Anim>
 {
-    ge::Engine engine;
     glt::Mesh<Vertex> sphere_model;
-    ge::Camera camera;
-    ge::MouseLookPlugin mouse_look;
 
     vec3_t light_position{};
 
-    void init(const ge::Event<ge::InitEvent> & /*ev*/);
-    void link();
+    void init(const ge::Event<ge::InitEvent> &);
 
-    void renderScene(const ge::Event<ge::RenderEvent> & /*unused*/);
+    void render(const ge::Event<ge::RenderEvent> &) override;
 };
 
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-
     //    icoSphere(sphere_model, 3);
     sphere(sphere_model, 1.f, 200, 100);
     sphere_model.send();
@@ -112,22 +50,11 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     GL_CALL(glEnable, GL_MULTISAMPLE);
     light_position = vec3(0.f, 0.f, -100.f);
 
-    ev.info.engine.enablePlugin(mouse_look);
-    mouse_look.camera(&camera);
-    ev.info.engine.enablePlugin(camera);
-    camera.frame().origin = vec3(0.f);
-
     ev.info.success = true;
 }
 
 void
-Anim::link()
-{
-    engine.events().render.reg(*this, &Anim::renderScene);
-}
-
-void
-Anim::renderScene(const ge::Event<ge::RenderEvent> & /*unused*/)
+Anim::render(const ge::Event<ge::RenderEvent> &)
 {
     auto rt = engine.renderManager().activeRenderTarget();
     rt->clearColor(glt::color(vec4(1)));
@@ -159,13 +86,9 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> & /*unused*/)
 int
 main(int argc, char *argv[])
 {
-    ge::EngineOptions opts;
     Anim anim;
     anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    anim.link();
-    opts.inits.reg(ge::Init, anim, &Anim::init);
-    opts.parse(&argc, &argv);
-    return anim.engine.run(opts);
+    return anim.main(argc, argv);
 }
 
 // based on the GLTools library (OpenGL Superbible gltMakeSphere())
@@ -268,7 +191,6 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
     struct Tri
     {
         uint32_t a, b, c;
-        Tri(uint32_t _a, uint32_t _b, uint32_t _c) : a(_a), b(_b), c(_c) {}
     };
 
     std::vector<vec3_t> vertices;

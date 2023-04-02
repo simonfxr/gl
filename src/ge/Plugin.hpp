@@ -3,6 +3,12 @@
 
 #include "ge/conf.hpp"
 
+#include "err/err.hpp"
+
+#include <span>
+#include <string_view>
+#include <unordered_map>
+
 namespace ge {
 
 struct Engine;
@@ -10,11 +16,117 @@ struct CommandProcessor;
 
 struct GE_API Plugin
 {
+    struct TypeInfo
+    {
+        std::string_view name;
+        size_t size;
+    };
+
     Plugin();
     virtual ~Plugin();
 
-    virtual void registerWith(Engine &) = 0;
-    virtual void registerCommands(CommandProcessor &) = 0;
+    virtual void registerWith(Engine &);
+    virtual void registerCommands(CommandProcessor &);
+    virtual const TypeInfo *typeInfo() noexcept = 0;
+
+    template<typename P>
+    static const TypeInfo *typeInfoFor() noexcept
+    {
+        static_assert(std::is_base_of_v<Plugin, P>);
+        static_assert(!std::is_abstract_v<P>);
+
+        static const constexpr Plugin::TypeInfo info = {
+            { __PRETTY_FUNCTION__,
+              []<size_t N>(const char(&)[N]) {
+                  return N - 1;
+              }(__PRETTY_FUNCTION__) },
+            sizeof(P)
+        };
+
+        return &info;
+    }
+};
+
+template<typename P>
+struct GE_API PluginImpl : Plugin
+{
+    PluginImpl() = default;
+    ~PluginImpl() override = default;
+    const Plugin::TypeInfo *typeInfo() noexcept override
+    {
+        return Plugin::typeInfoFor<P>();
+    }
+};
+
+struct GE_API PluginSet
+{
+    virtual ~PluginSet();
+    virtual Plugin *findPluginByType(const Plugin::TypeInfo *) = 0;
+    [[nodiscard]] virtual std::span<Plugin *> allPlugins() = 0;
+
+    template<typename P>
+    P *findPlugin()
+    {
+        auto p = findPluginByType(Plugin::typeInfoFor<P>());
+        if (!p)
+            return nullptr;
+        return static_cast<P *>(p);
+    }
+
+    template<typename P>
+    P *findPluginOrAbort()
+    {
+        auto p = findPlugin<P>();
+        ASSERT_ALWAYS(!!p);
+        return p;
+    }
+};
+
+template<typename... Plugins>
+struct GE_API FixedPluginSet final : PluginSet
+{
+    FixedPluginSet()
+    {
+        registerPlugins(std::make_index_sequence<sizeof...(Plugins)>{});
+        ASSERT(plugin_map.size() == sizeof...(Plugins));
+    }
+
+    template<typename P>
+    decltype(auto) get()
+    {
+        return std::get<P>(plugins);
+    }
+
+    Plugin *findPluginByType(const Plugin::TypeInfo *info) override
+    {
+        if (auto it = plugin_map.find(info); it != plugin_map.end())
+            return it->second;
+        return nullptr;
+    }
+
+    [[nodiscard]] std::span<Plugin *> allPlugins() override
+    {
+        return { erased_plugins.begin(), erased_plugins.size() };
+    }
+
+private:
+    std::tuple<Plugins...> plugins;
+    std::array<Plugin *, sizeof...(Plugins)> erased_plugins{};
+    std::unordered_map<const Plugin::TypeInfo *, Plugin *> plugin_map{};
+
+    template<size_t... Is>
+    void registerPlugins(std::index_sequence<Is...>)
+    {
+        (..., registerPlugin<Is>());
+    }
+
+    template<size_t I>
+    void registerPlugin()
+    {
+        auto &plugin = std::get<I>(plugins);
+        erased_plugins[I] = &plugin;
+        plugin_map[plugin.typeInfo()] = &plugin;
+    }
 };
 
 } // namespace ge

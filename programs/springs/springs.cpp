@@ -1,6 +1,4 @@
-#include "ge/Camera.hpp"
-#include "ge/Engine.hpp"
-#include "ge/MouseLookPlugin.hpp"
+#include "ge/Anim.hpp"
 #include "ge/Timer.hpp"
 #include "glt/GLPerfCounter.hpp"
 #include "glt/Mesh.hpp"
@@ -31,13 +29,8 @@ template<typename V>
 void
 icoSphere(glt::Mesh<V> &mesh, size_t subdivs);
 
-struct Anim
+struct Anim final : ge::Anim3D<Anim>
 {
-    ge::Engine engine;
-
-    ge::Camera camera;
-    ge::MouseLookPlugin mouse_look;
-
     glt::Mesh<Vertex> sphere_model;
 
     GLuint particle_vertex_array[2];
@@ -66,20 +59,13 @@ struct Anim
     Anim() : fpsTimer(engine) {}
 
     void init(const ge::Event<ge::InitEvent> &);
-    void link();
-
-    void renderScene(const ge::Event<ge::RenderEvent> &);
-    void animate(const ge::Event<ge::AnimationEvent> &);
+    void render(const ge::Event<ge::RenderEvent> &) override;
+    void animate(const ge::Event<ge::AnimationEvent> &) override;
 };
 
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-    engine.enablePlugin(mouse_look);
-    mouse_look.camera(&camera);
-    engine.enablePlugin(camera);
-    camera.frame().origin = vec3(0.f);
-
     engine.gameLoop().ticks(300);
     engine.gameLoop().pause(true);
 
@@ -224,17 +210,10 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 }
 
 void
-Anim::link()
-{
-    engine.events().render.reg(*this, &Anim::renderScene);
-    engine.events().animate.reg(*this, &Anim::animate);
-}
-
-void
-Anim::renderScene(const ge::Event<ge::RenderEvent> &)
+Anim::render(const ge::Event<ge::RenderEvent> &)
 {
     auto rt = engine.renderManager().activeRenderTarget();
-    rt->clearColor(glt::color(vec4(real(1))));
+    rt->clearColor(glt::color(vec4(1_r)));
     rt->clear();
 
     auto prog = engine.shaderManager().program("sphere");
@@ -250,7 +229,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &)
         glt::Uniforms(*prog)
           .optional("color", glt::color(0xFF, 0, 0))
           .optional("vpMatrix", gt.vpMatrix())
-          .optional("grid_size", real(N_SPRINGS))
+          .optional("grid_size", static_cast<real>(N_SPRINGS))
           .mandatory("particle_data1", glt::BoundTexture(GL_SAMPLER_BUFFER, 0));
     }
 
@@ -283,7 +262,7 @@ Anim::animate(const ge::Event<ge::AnimationEvent> &)
     GL_CALL(
       glBindTexture, GL_TEXTURE_BUFFER, particle_pos_mass_tex[particle_source]);
 
-    auto dt = real(engine.gameLoop().tickDuration());
+    auto dt = static_cast<real>(engine.gameLoop().tickDuration());
     auto damp_coeff = 0.99_r; // damping over the period of 1 sec;
                               //    real damping = pow(damp_coeff, dt);
     glt::Uniforms(*physics_prog)
@@ -318,11 +297,7 @@ Anim::animate(const ge::Event<ge::AnimationEvent> &)
 int
 main(int argc, char *argv[])
 {
-    ge::EngineOptions opts;
     Anim anim;
-    anim.link();
     anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    opts.inits.reg(ge::Init, anim, &Anim::init);
-    opts.parse(&argc, &argv);
-    return anim.engine.run(opts);
+    return anim.main(argc, argv);
 }

@@ -25,7 +25,9 @@ namespace ge {
 
 struct GE_API Engine
 {
+    explicit Engine(PluginSet &);
     Engine();
+
     ~Engine();
 
     GameWindow &window();
@@ -36,6 +38,8 @@ struct GE_API Engine
 
     glt::ShaderManager &shaderManager();
     glt::RenderManager &renderManager();
+
+    PluginSet &pluginSet();
 
     EngineEvents &events();
 

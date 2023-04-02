@@ -1,4 +1,4 @@
-#include "ge/Engine.hpp"
+#include "ge/Anim.hpp"
 #include "glt/CubeMesh.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/ShaderProgram.hpp"
@@ -13,23 +13,20 @@ using namespace math;
 
 DEF_GL_MAPPED_TYPE(Vertex, (vec2_t, position))
 
-struct Anim
+struct Anim final : ge::Anim<Anim>
 {
-    ge::Engine engine;
     glt::CubeMesh<Vertex> quadBatch;
 
     ge::GameLoop::time time_print_fps{};
 
     void init(const ge::Event<ge::InitEvent> & /*ev*/);
-    void link(ge::Engine &e);
-    void animate(const ge::Event<ge::AnimationEvent> & /*unused*/);
-    void renderScene(const ge::Event<ge::RenderEvent> & /*ev*/);
+    void animate(const ge::Event<ge::AnimationEvent> & /*unused*/) override;
+    void render(const ge::Event<ge::RenderEvent> & /*ev*/) override;
 };
 
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-    link(ev.info.engine);
 
     time_print_fps = 0;
 
@@ -58,20 +55,13 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 }
 
 void
-Anim::link(ge::Engine &e)
-{
-    e.events().animate.reg(*this, &Anim::animate);
-    e.events().render.reg(*this, &Anim::renderScene);
-}
-
-void
 Anim::animate(const ge::Event<ge::AnimationEvent> & /*unused*/)
 {
     // empty
 }
 
 void
-Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
+Anim::render(const ge::Event<ge::RenderEvent> &ev)
 {
     ge::Engine &e = ev.info.engine;
     auto time = e.gameLoop().tickTime() +
@@ -108,9 +98,6 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    ge::EngineOptions opts;
     anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    opts.parse(&argc, &argv);
-    opts.inits.reg(ge::Init, anim, &Anim::init);
-    return anim.engine.run(opts);
+    return anim.main(argc, argv);
 }

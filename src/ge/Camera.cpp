@@ -75,8 +75,10 @@ const std::array<math::real, 36 /* 3 * 12 */> the_dir_table = {
 
 } // namespace
 
-Camera::Data::Data(Camera &me) : self(me)
+Camera::Data::Data(Camera &self) : self(self)
 {
+    frame.origin = math::vec3(0.f);
+
     commands.move = makeCommand(
       "camera.move", "move the camera frame", *this, &Data::runMove);
 

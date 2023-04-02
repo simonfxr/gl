@@ -10,9 +10,7 @@
 
 #include "defs.h"
 
-#include "ge/Camera.hpp"
-#include "ge/Engine.hpp"
-#include "ge/MouseLookPlugin.hpp"
+#include "ge/Anim.hpp"
 #include "ge/Timer.hpp"
 #include "glt/Frame.hpp"
 #include "glt/Mesh.hpp"
@@ -58,7 +56,8 @@ using CubeMeshOf = glt::Mesh<T>;
 #endif
 
 using namespace math;
-using namespace ge;
+using ge::Event;
+using ge::InitEvent;
 
 DEF_GL_MAPPED_TYPE(Vertex,
                    (math::point3_t, position),
@@ -101,11 +100,8 @@ struct Teapot
     glt::color color;
 };
 
-struct Anim
+struct Anim final : ge::Anim3D<Anim>
 {
-    ge::Engine &engine;
-    ge::Camera camera;
-    ge::MouseLookPlugin mouse_look;
     std::vector<float> glow_kernel;
 
     CubeMeshOf<Vertex> groundModel;
@@ -139,18 +135,18 @@ struct Anim
     std::shared_ptr<glt::TextureRenderTarget> glow_render_target_src;
     std::shared_ptr<glt::TextureRenderTarget> glow_render_target_dst;
 
-    std::shared_ptr<Timer> fpsTimer;
+    std::shared_ptr<ge::Timer> fpsTimer;
 
     std::string data_dir;
 
-    explicit Anim(ge::Engine &e) : engine(e), glow_kernel(KERNEL_SIZE) {}
+    Anim() : glow_kernel(KERNEL_SIZE) {}
 
-    void init(const Event<InitEvent> & /*ev*/);
+    void init(const Event<InitEvent> &);
     void loadResources(const std::string &dir);
 
-    void link(const Event<InitEvent> & /*e*/);
-    void animate(const Event<AnimationEvent> & /*unused*/);
-    void renderScene(const Event<RenderEvent> & /*e*/);
+    void link();
+    void animate(const Event<ge::AnimationEvent> &) override;
+    void render(const Event<ge::RenderEvent> &) override;
     vec3_t lightPosition(real interpolation);
     void setupTeapotShader(const std::string &prog,
                            const vec4_t &surfaceColor,
@@ -160,22 +156,19 @@ struct Anim
     void renderLight();
     void renderTable(const std::string &shader);
 
-    void mouseMoved(const Event<MouseMoved> & /*e*/);
-    void keyPressed(const Event<KeyPressed> & /*e*/);
+    void mouseMoved(const Event<ge::MouseMoved> & /*e*/);
+    void keyPressed(const Event<ge::KeyPressed> & /*e*/);
 
-    void onWindowResized(const Event<WindowResized> & /*ev*/);
+    void onWindowResized(const Event<ge::WindowResized> & /*ev*/);
 };
 
 void
-Anim::link(const Event<InitEvent> &e)
+Anim::link()
 {
-    engine.events().animate.reg(*this, &Anim::animate);
-    engine.events().render.reg(*this, &Anim::renderScene);
-    GameWindow &win = engine.window();
+    auto &win = engine.window();
     win.events().mouseMoved.reg(*this, &Anim::mouseMoved);
     win.events().windowResized.reg(*this, &Anim::onWindowResized);
     engine.keyHandler().keyPressedEvent().reg(*this, &Anim::keyPressed);
-    e.info.success = true;
 }
 
 void
@@ -184,11 +177,7 @@ Anim::init(const Event<InitEvent> &ev)
     loadResources(sys::fs::join(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR), "data"));
     engine.out() << "in init()\n";
 
-    mouse_look.camera(&camera);
-    engine.enablePlugin(camera);
-    engine.enablePlugin(mouse_look);
-
-    fpsTimer = std::make_shared<Timer>(engine);
+    fpsTimer = std::make_shared<ge::Timer>(engine);
     fpsTimer->start(1.f, true);
 
     engine.gameLoop().ticks(100);
@@ -251,6 +240,7 @@ Anim::init(const Event<InitEvent> &ev)
         screenQuad.send();
     }
 
+    auto &camera = get<ge::Camera>();
     camera.frame().origin = vec3(6.36_r, 5.87_r, 1.97_r);
     camera.frame().setXZ(normalize(vec3(-0.29_r, 0_r, 0.95_r)),
                          normalize(vec3(-0.8_r, -0.54_r, -0.25_r)));
@@ -299,9 +289,9 @@ Anim::init(const Event<InitEvent> &ev)
 
     {
         const auto N = KERNEL_SIZE;
-        const auto N2 = float(N - 1) * 0.5f;
+        const auto N2 = static_cast<float>(N - 1) * 0.5f;
         for (size_t i = 0; i < glow_kernel.size(); ++i) {
-            float x = float(i) - N2;
+            float x = static_cast<float>(i) - N2;
 
             const float SIG = 0.84089642_r;
             const float SIG2 = SIG * SIG;
@@ -316,7 +306,7 @@ Anim::init(const Event<InitEvent> &ev)
 }
 
 void
-Anim::animate(const Event<AnimationEvent> & /*unused*/)
+Anim::animate(const Event<ge::AnimationEvent> & /*unused*/)
 {
     light_angular_position =
       wrapPi(light_angular_position + light_rotation_speed);
@@ -332,7 +322,7 @@ Anim::lightPosition(real interpolation)
 }
 
 void
-Anim::renderScene(const Event<RenderEvent> &e)
+Anim::render(const Event<ge::RenderEvent> &e)
 {
     real interpolation = e.info.interpolation;
     glt::RenderManager &rm = engine.renderManager();
@@ -473,7 +463,7 @@ Anim::renderScene(const Event<RenderEvent> &e)
 }
 
 void
-Anim::onWindowResized(const Event<WindowResized> &ev)
+Anim::onWindowResized(const Event<ge::WindowResized> &ev)
 {
     auto w = ev.info.window.windowWidth();
     auto h = ev.info.window.windowHeight();
@@ -624,14 +614,14 @@ Anim::renderTable(const std::string &shader)
 }
 
 void
-Anim::mouseMoved(const Event<MouseMoved> &e)
+Anim::mouseMoved(const Event<ge::MouseMoved> &e)
 {
     auto dx = e.info.dx;
     auto dy = e.info.dy;
 
     dx = -dx;
-
-    if (engine.keyHandler().keyState(ge::KeyCode::M) <= KeyState::Pressed) {
+    auto &camera = get<ge::Camera>();
+    if (engine.keyHandler().keyState(ge::KeyCode::M) <= ge::KeyState::Pressed) {
         teapot1.frame.rotateWorld(-dx * 0.001f, camera.frame().localY());
         teapot1.frame.rotateWorld(dy * 0.001f, camera.frame().localX());
         e.abort = true;
@@ -639,7 +629,7 @@ Anim::mouseMoved(const Event<MouseMoved> &e)
 }
 
 void
-Anim::keyPressed(const Event<KeyPressed> &e)
+Anim::keyPressed(const Event<ge::KeyPressed> &e)
 {
     using K = ge::KeyCode;
 
@@ -742,14 +732,9 @@ Anim::loadResources(const std::string &dir)
 int
 main(int argc, char *argv[])
 {
-    EngineOptions opts;
-    Engine engine;
-    engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    Anim anim(engine);
-    opts.parse(&argc, &argv);
-    opts.inits.init.reg(anim, &Anim::init);
-    opts.inits.init.reg(anim, &Anim::link);
-    return engine.run(opts);
+    Anim anim;
+    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    return anim.main(argc, argv);
 }
 
 int32_t

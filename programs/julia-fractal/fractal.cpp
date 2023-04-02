@@ -1,5 +1,5 @@
+#include "ge/Anim.hpp"
 #include "ge/Command.hpp"
-#include "ge/Engine.hpp"
 #include "ge/Event.hpp"
 #include "glt/CubeMesh.hpp"
 #include "glt/Mesh.hpp"
@@ -32,9 +32,8 @@ struct World
     void julia_constant_reset();
 };
 
-struct Commands : public ge::Plugin
+struct Commands final : public ge::PluginImpl<Commands>
 {
-
     ge::CommandPtr zoom;
     ge::CommandPtr shift_x;
     ge::CommandPtr shift_y;
@@ -45,15 +44,13 @@ struct Commands : public ge::Plugin
     ge::CommandPtr julia_constant_add_im;
     ge::CommandPtr julia_constant_reset;
 
-    explicit Commands(World & /*w*/);
+    explicit Commands(World &);
 
-    void registerWith(ge::Engine & /*unused*/) final;
-    void registerCommands(ge::CommandProcessor & /*coms*/) final;
+    void registerCommands(ge::CommandProcessor &) final;
 };
 
-struct Anim
+struct Anim final : ge::Anim<Anim>
 {
-    ge::Engine engine;
     glt::CubeMesh<Vertex> quadBatch;
     std::shared_ptr<glt::TextureRenderTarget> render_texture;
 
@@ -63,9 +60,7 @@ struct Anim
     ge::GameLoop::time time_print_fps{};
 
     void init(const ge::Event<ge::InitEvent> & /*ev*/);
-    void link(ge::Engine &e);
-    void animate(const ge::Event<ge::AnimationEvent> & /*unused*/);
-    void renderScene(const ge::Event<ge::RenderEvent> & /*ev*/);
+    void render(const ge::Event<ge::RenderEvent> & /*ev*/) override;
 
     void handleWindowResized(const ge::Event<ge::WindowResized> &ev);
 };
@@ -73,7 +68,8 @@ struct Anim
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-    link(ev.info.engine);
+    engine.window().events().windowResized.reg(*this,
+                                               &Anim::handleWindowResized);
 
     commands = std::make_shared<Commands>(world);
     engine.enablePlugin(*commands);
@@ -112,27 +108,13 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 }
 
 void
-Anim::link(ge::Engine &e)
+Anim::render(const ge::Event<ge::RenderEvent> &ev)
 {
-    e.events().animate.reg(*this, &Anim::animate);
-    e.events().render.reg(*this, &Anim::renderScene);
-    e.window().events().windowResized.reg(*this, &Anim::handleWindowResized);
-}
-
-void
-Anim::animate(const ge::Event<ge::AnimationEvent> & /*unused*/)
-{
-    // empty
-}
-
-void
-Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
-{
-    ge::Engine &e = ev.info.engine;
+    auto &e = ev.info.engine;
     auto time = e.gameLoop().tickTime() +
                 ev.info.interpolation * e.gameLoop().tickDuration();
 
-    glt::RenderManager &rm = engine.renderManager();
+    auto &rm = engine.renderManager();
 
     if (MULTISAMPLING) {
         rm.setActiveRenderTarget(render_texture);
@@ -218,12 +200,6 @@ Commands::Commands(World &w)
 {}
 
 void
-Commands::registerWith(ge::Engine & /*unused*/)
-{
-    // NOOP
-}
-
-void
 Commands::registerCommands(ge::CommandProcessor &coms)
 {
     coms.define(zoom);
@@ -287,9 +263,6 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    ge::EngineOptions opts;
     anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    opts.parse(&argc, &argv);
-    opts.inits.reg(ge::Init, anim, &Anim::init);
-    return anim.engine.run(opts);
+    return anim.main(argc, argv);
 }

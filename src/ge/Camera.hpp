@@ -37,9 +37,8 @@ struct GE_API CameraRotated
     {}
 };
 
-struct GE_API Camera : public Plugin
+struct GE_API Camera final : public PluginImpl<Camera>
 {
-
     struct Events
     {
         EventSource<CameraMoved> moved;

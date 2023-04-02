@@ -1,7 +1,5 @@
-#include "ge/Camera.hpp"
+#include "ge/Anim.hpp"
 #include "ge/Command.hpp"
-#include "ge/Engine.hpp"
-#include "ge/MouseLookPlugin.hpp"
 #include "ge/Timer.hpp"
 
 #include "glt/CubeMesh.hpp"
@@ -30,9 +28,8 @@ DEF_GL_MAPPED_TYPE(WorldVertex, (vec3_t, position));
 DEF_GL_MAPPED_TYPE(MCVertex, (vec3_t, position));
 DEF_GL_MAPPED_TYPE(MCFeedbackVertex, (vec3_t, position), (vec3_t, normal))
 
-struct Anim
+struct Anim final : ge::Anim3D<Anim>
 {
-    ge::Engine *engine{};
     glt::Mesh<WorldVertex> unitRect; // a slice in the world volume
     std::shared_ptr<glt::TextureRenderTarget3D> worldVolume;
     glt::Mesh<MCVertex> volumeCube;
@@ -44,14 +41,11 @@ struct Anim
     std::shared_ptr<glt::ShaderProgram> marchingCubesProgram;
     std::shared_ptr<glt::ShaderProgram> feedbackProgram;
 
-    ge::Camera camera;
-    ge::MouseLookPlugin mouse_look;
     std::shared_ptr<ge::Timer> fpsTimer;
 
-    void link(ge::Engine &);
     void init(const ge::Event<ge::InitEvent> &);
-    void animate(const ge::Event<ge::AnimationEvent> &);
-    void render(const ge::Event<ge::RenderEvent> &);
+    void animate(const ge::Event<ge::AnimationEvent> &) override;
+    void render(const ge::Event<ge::RenderEvent> &) override;
 
     void renderBlock(const vec3_t &aabb_min, const vec3_t &aabb_max);
     void renderWorld();
@@ -59,20 +53,8 @@ struct Anim
 };
 
 void
-Anim::link(ge::Engine &e)
-{
-    engine = &e;
-    e.events().animate.reg(makeEventHandler(*this, &Anim::animate));
-    e.events().render.reg(makeEventHandler(*this, &Anim::render));
-}
-
-void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-    mouse_look.camera(&camera);
-    engine->enablePlugin(camera);
-    engine->enablePlugin(mouse_look);
-
     GL_CALL(glEnable, GL_CULL_FACE);
 
     {
@@ -147,12 +129,12 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 
     volumeCube.send();
 
-    worldProgram = engine->shaderManager().program("world");
+    worldProgram = engine.shaderManager().program("world");
     if (!worldProgram)
         return;
 
     marchingCubesProgram =
-      std::make_shared<glt::ShaderProgram>(engine->shaderManager());
+      std::make_shared<glt::ShaderProgram>(engine.shaderManager());
     marchingCubesProgram->addShaderFile("marching-cubes.vert");
     marchingCubesProgram->addShaderFile("marching-cubes.geom");
     marchingCubesProgram->addShaderFile("marching-cubes.frag");
@@ -166,11 +148,11 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     if (!marchingCubesProgram->tryLink())
         return;
 
-    feedbackProgram = engine->shaderManager().program("feedback");
+    feedbackProgram = engine.shaderManager().program("feedback");
     if (!feedbackProgram)
         return;
 
-    fpsTimer = std::make_shared<ge::Timer>(*engine);
+    fpsTimer = std::make_shared<ge::Timer>(engine);
     fpsTimer->start(1.f, true);
 
     ev.info.success = true;
@@ -179,7 +161,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 void
 Anim::renderBlock(const vec3_t &aabb_min, const vec3_t &aabb_max)
 {
-    glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
+    glt::GeometryTransform &gt = engine.renderManager().geometryTransform();
     auto sp = gt.save();
 
     // GL_CALL(glBindVertexArray, 0);
@@ -224,7 +206,7 @@ Anim::renderWorld()
 {
     GL_CALL(glDisable, GL_DEPTH_TEST);
     worldProgram->use();
-    glt::RenderManager &rm = engine->renderManager();
+    glt::RenderManager &rm = engine.renderManager();
 
     rm.setActiveRenderTarget(nullptr);
 
@@ -242,7 +224,7 @@ Anim::renderWorld()
           .mandatory("depth", static_cast<float>(i) * invDim)
           .mandatory("worldMatrix",
                      rm.geometryTransform().modelMatrix() * scaleM)
-          .optional("time", engine->gameLoop().tickTime());
+          .optional("time", engine.gameLoop().tickTime());
 
         unitRect.draw();
         rm.setActiveRenderTarget(nullptr);
@@ -255,7 +237,7 @@ Anim::renderWorld()
 void
 Anim::renderVolume()
 {
-    auto &gt = engine->renderManager().geometryTransform();
+    auto &gt = engine.renderManager().geometryTransform();
     auto sp = gt.save();
 
     marchingCubesProgram->use();
@@ -297,12 +279,12 @@ Anim::animate(const ge::Event<ge::AnimationEvent> &)
 void
 Anim::render(const ge::Event<ge::RenderEvent> &)
 {
-    engine->renderManager().activeRenderTarget()->clearColor(
+    engine.renderManager().activeRenderTarget()->clearColor(
       glt::color(1.f, 1.f, 1.f));
-    engine->renderManager().activeRenderTarget()->clear();
+    engine.renderManager().activeRenderTarget()->clear();
 
     //    glt::GeometryTransform& gt =
-    //    engine->renderManager().geometryTransform();
+    //    engine.renderManager().geometryTransform();
     {
         auto scale = 1_r;
         renderBlock(vec3(-1_r) * scale, vec3(1_r) * scale);
@@ -312,7 +294,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
 
     if (fpsTimer->fire()) {
 #define INV(x) (((x) * (x)) == 0 ? -1. : 1.0 / (x))
-        auto fs = engine->renderManager().frameStatistics();
+        auto fs = engine.renderManager().frameStatistics();
         auto fps = INV(fs.avg);
         auto min = INV(fs.max);
         auto max = INV(fs.min);
@@ -327,18 +309,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
 int
 main(int argc, char *argv[])
 {
-    ge::Engine engine;
     Anim anim;
-
-    engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    anim.link(engine);
-    ge::EngineOptions opts;
-
-    // opts.window.settings.MajorVersion = 4;
-    // opts.window.settings.MinorVersion = 1;
-
-    opts.parse(&argc, &argv);
-    opts.inits.reg(ge::Init, ge::makeEventHandler(anim, &Anim::init));
-
-    return engine.run(opts);
+    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    return anim.main(argc, argv);
 }

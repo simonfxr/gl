@@ -58,13 +58,17 @@ struct Engine::Data : public GameLoop::Game
 
     EngineEvents events;
 
-    explicit Data(Engine &engine)
+    FixedPluginSet<> emptyPluginSet;
+    PluginSet &pluginSet;
+
+    explicit Data(Engine &engine, PluginSet *ps)
       : theEngine(engine)
       , gameLoop(60, 5, 120)
       , commandProcessor(engine)
       , keyHandler(commandProcessor)
       , replServer(engine)
       , out(&sys::io::stdout())
+      , pluginSet(ps ? *ps : emptyPluginSet)
     {}
 
     bool init(const EngineOptions &opts);
@@ -92,7 +96,9 @@ runInit(EventSource<InitEvent> &source, const Event<InitEvent> &e);
 // #define SELF ASSERT_EXPR(self != 0, self)
 #define SELF self
 
-Engine::Engine() : self(new Data(*this)) {}
+Engine::Engine(PluginSet &ps) : self(new Data(*this, &ps)) {}
+
+Engine::Engine() : self(new Data(*this, nullptr)) {}
 
 Engine::~Engine()
 {
@@ -154,6 +160,12 @@ sys::io::OutStream &
 Engine::out()
 {
     return *self->out;
+}
+
+PluginSet &
+Engine::pluginSet()
+{
+    return self->pluginSet;
 }
 
 void

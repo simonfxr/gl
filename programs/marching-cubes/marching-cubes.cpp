@@ -1,9 +1,7 @@
 #include <cstddef>
 
-#include "ge/Camera.hpp"
+#include "ge/Anim.hpp"
 #include "ge/Command.hpp"
-#include "ge/Engine.hpp"
-#include "ge/MouseLookPlugin.hpp"
 #include "ge/Timer.hpp"
 
 #include "glt/CubeMesh.hpp"
@@ -27,9 +25,9 @@ static const vec3_t WORLD_BLOCK_SCALE = vec3(32);
 
 static const ivec3_t SAMPLER_SIZE = ivec3(8);
 
-static const size_t BLOCK_DATA_SIZE = static_cast<const size_t>(
-  (SAMPLER_SIZE[0] * SAMPLER_SIZE[1] * SAMPLER_SIZE[2]) *
-  2); // may not fit in worst case
+static const size_t BLOCK_DATA_SIZE =
+  static_cast<size_t>((SAMPLER_SIZE[0] * SAMPLER_SIZE[1] * SAMPLER_SIZE[2]) *
+                      2); // may not fit in worst case
 
 static const ivec3_t BLOCKS = ivec3(10, 3, 10);
 static const ivec3_t ORIGIN = ivec3(0, 0, 0);
@@ -53,9 +51,8 @@ struct Block
     GLVertexArray array;
 };
 
-struct Anim
+struct Anim final : ge::Anim3D<Anim>
 {
-    ge::Engine *engine{};
     glt::Mesh<WorldVertex> unitRect; // a slice in the world volume
     std::shared_ptr<glt::TextureRenderTarget3D> worldVolume;
     glt::Mesh<MCVertex> volumeCube;
@@ -67,17 +64,12 @@ struct Anim
     std::shared_ptr<glt::ShaderProgram> marchingCubesProgram;
     std::shared_ptr<glt::ShaderProgram> renderPolygonProgram;
 
-    ge::Camera camera;
-    ge::MouseLookPlugin mouse_look;
     std::shared_ptr<ge::Timer> fpsTimer;
 
     std::vector<Block> blocks;
 
-    Anim() : engine(nullptr) {}
-
-    void link(ge::Engine &);
     void init(const ge::Event<ge::InitEvent> &);
-    void render(const ge::Event<ge::RenderEvent> &);
+    void render(const ge::Event<ge::RenderEvent> &) override;
 
     void initBlock(Block *block);
     static void destroyBlock(Block *block);
@@ -87,29 +79,19 @@ struct Anim
                    const vec3_t &aabb_max);
     void makeSampleVolume();
     void makePolygon(const Block &);
-    void renderPolygon(const Block &) const;
+    void renderPolygon(const Block &);
 };
-
-void
-Anim::link(ge::Engine &e)
-{
-    engine = &e;
-    e.events().render.reg(makeEventHandler(*this, &Anim::render));
-}
 
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
     // camera.registerWith(*engine);
-    // camera.registerCommands(engine->commandProcessor());
+    // camera.registerCommands(engine.commandProcessor());
 
-    ev.info.engine.enablePlugin(mouse_look);
-    mouse_look.camera(&camera);
-    ev.info.engine.enablePlugin(camera);
-    camera.frame().origin = vec3(0.f);
+    get<ge::Camera>().frame().origin = vec3(0.f);
 
-    //    engine->window().grabMouse(true);
-    engine->window().showMouseCursor(false);
+    //    engine.window().grabMouse(true);
+    engine.window().showMouseCursor(false);
 
     {
         auto v = WorldVertex{};
@@ -177,12 +159,12 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 
     volumeCube.send();
 
-    worldProgram = engine->shaderManager().program("world");
+    worldProgram = engine.shaderManager().program("world");
     if (!worldProgram)
         return;
 
     marchingCubesProgram =
-      std::make_shared<glt::ShaderProgram>(engine->shaderManager());
+      std::make_shared<glt::ShaderProgram>(engine.shaderManager());
     marchingCubesProgram->addShaderFile("marching-cubes.vert");
     marchingCubesProgram->addShaderFile("marching-cubes.geom");
     marchingCubesProgram->bindAttributes<MCVertex>();
@@ -192,7 +174,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     if (!marchingCubesProgram->tryLink())
         return;
 
-    renderPolygonProgram = engine->shaderManager().program("render-polygon");
+    renderPolygonProgram = engine.shaderManager().program("render-polygon");
     if (!renderPolygonProgram)
         return;
 
@@ -211,7 +193,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
         }
     }
 
-    fpsTimer = std::make_shared<ge::Timer>(*engine);
+    fpsTimer = std::make_shared<ge::Timer>(engine);
     fpsTimer->start(1.f, true);
 
     GL_CALL(glFinish);
@@ -278,7 +260,7 @@ Anim::destroyBlock(Block *block)
 void
 Anim::makeBlock(Block &block, const vec3_t &aabb_min, const vec3_t &aabb_max)
 {
-    auto &gt = engine->renderManager().geometryTransform();
+    auto &gt = engine.renderManager().geometryTransform();
     auto sp = gt.save();
 
     auto fuzz = vec3(0.f);
@@ -296,7 +278,7 @@ Anim::makeBlock(Block &block, const vec3_t &aabb_min, const vec3_t &aabb_max)
 void
 Anim::makeSampleVolume()
 {
-    glt::RenderManager &rm = engine->renderManager();
+    glt::RenderManager &rm = engine.renderManager();
 
     GL_CALL(glDisable, GL_DEPTH_TEST);
 
@@ -316,7 +298,7 @@ Anim::makeSampleVolume()
           .mandatory("depth", static_cast<real>(i) * invDim)
           .mandatory("worldMatrix",
                      rm.geometryTransform().modelMatrix() * scaleM)
-          .optional("time", engine->gameLoop().tickTime());
+          .optional("time", engine.gameLoop().tickTime());
 
         unitRect.draw();
         rm.setActiveRenderTarget(nullptr);
@@ -329,7 +311,7 @@ Anim::makeSampleVolume()
 void
 Anim::makePolygon(const Block &block)
 {
-    auto &gt = engine->renderManager().geometryTransform();
+    auto &gt = engine.renderManager().geometryTransform();
     auto sp = gt.save();
 
     GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
@@ -369,9 +351,9 @@ Anim::makePolygon(const Block &block)
 }
 
 void
-Anim::renderPolygon(const Block &block) const
+Anim::renderPolygon(const Block &block)
 {
-    auto &gt = engine->renderManager().geometryTransform();
+    auto &gt = engine.renderManager().geometryTransform();
     auto sp = gt.save();
 
     auto model = gt.modelMatrix();
@@ -398,10 +380,10 @@ void
 Anim::render(const ge::Event<ge::RenderEvent> &)
 {
     GL_CALL(glClearColor, 1.f, 1.f, 1.f, 1.f);
-    engine->renderManager().activeRenderTarget()->clear();
+    engine.renderManager().activeRenderTarget()->clear();
 
     //     glt::GeometryTransform& gt =
-    //     engine->renderManager().geometryTransform();
+    //     engine.renderManager().geometryTransform();
     //     {
     //         float scale = 1;
     //         renderBlock(vec3(-1.f) * scale, vec3(1.f) * scale);
@@ -413,7 +395,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
         renderPolygon(blocks[i]);
 
     if (fpsTimer->fire()) {
-        auto fs = engine->renderManager().frameStatistics();
+        auto fs = engine.renderManager().frameStatistics();
         sys::io::stdout() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                           << fs.avg << "; " << fs.avg << "; " << fs.min << "; "
                           << fs.max << "\n";
@@ -423,18 +405,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
 int
 main(int argc, char *argv[])
 {
-    ge::Engine engine;
     Anim anim;
-
-    engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    anim.link(engine);
-    ge::EngineOptions opts;
-
-    // opts.window.settings.MajorVersion = 4;
-    // opts.window.settings.MinorVersion = 1;
-
-    opts.parse(&argc, &argv);
-    opts.inits.reg(ge::Init, ge::makeEventHandler(anim, &Anim::init));
-
-    return engine.run(opts);
+    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    return anim.main(argc, argv);
 }

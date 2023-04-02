@@ -3,9 +3,7 @@
 
 #include <CL/opencl.hpp>
 
-#include "ge/Camera.hpp"
-#include "ge/Engine.hpp"
-#include "ge/MouseLookPlugin.hpp"
+#include "ge/Anim.hpp"
 #include "glt/CubeMesh.hpp"
 #include "glt/GLSLPreprocessor.hpp"
 #include "glt/Mesh.hpp"
@@ -72,13 +70,9 @@ struct MCState
 #define MC_SIZE_Z 2
 #define NUM_MC (MC_SIZE_X * MC_SIZE_Y * MC_SIZE_Z)
 
-struct Anim
+struct Anim final : ge::Anim3D<Anim>
 {
-    ge::Engine engine;
     real time_print_fps{};
-
-    ge::Camera camera;
-    ge::MouseLookPlugin mouse_look;
 
     size_t N{};
     cl::Context cl_ctx;
@@ -115,9 +109,8 @@ struct Anim
                   glt::ShaderProgram & /*program*/,
                   vec3_t ecLight);
 
-    void link(ge::Engine &e);
-    void animate(const ge::Event<ge::AnimationEvent> & /*unused*/);
-    void renderScene(const ge::Event<ge::RenderEvent> & /*ev*/);
+    void animate(const ge::Event<ge::AnimationEvent> & /*unused*/) override;
+    void render(const ge::Event<ge::RenderEvent> & /*ev*/) override;
 
     void handleWindowResized(const ge::Event<ge::WindowResized> &ev);
 };
@@ -125,7 +118,9 @@ struct Anim
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-    link(ev.info.engine);
+    engine.window().events().windowResized.reg(*this,
+                                               &Anim::handleWindowResized);
+
     time_print_fps = 0;
 
     engine.gameLoop().ticks(100);
@@ -135,7 +130,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     //    GL_CALL(glDisable, GL_CULL_FACE);
     GL_CALL(glEnable, GL_CULL_FACE);
 
-    ev.info.success = true;
+    initCL(ev);
 }
 
 static void CL_CALLBACK
@@ -193,12 +188,6 @@ log2(T x)
 void
 Anim::initCL(const ge::Event<ge::InitEvent> &ev)
 {
-
-    ev.info.engine.enablePlugin(mouse_look);
-    mouse_look.camera(&camera);
-    ev.info.engine.enablePlugin(camera);
-    camera.frame().origin = vec3(0.f);
-
     N = DEFAULT_N;
 
     std::vector<cl::Platform> platforms;
@@ -610,21 +599,13 @@ Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3_t ecLight)
 }
 
 void
-Anim::link(ge::Engine &e)
-{
-    e.events().animate.reg(*this, &Anim::animate);
-    e.events().render.reg(*this, &Anim::renderScene);
-    e.window().events().windowResized.reg(*this, &Anim::handleWindowResized);
-}
-
-void
 Anim::animate(const ge::Event<ge::AnimationEvent> & /*unused*/)
 {
     // empty
 }
 
 void
-Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
+Anim::render(const ge::Event<ge::RenderEvent> &ev)
 {
     auto &e = ev.info.engine;
     auto time = e.gameLoop().tickTime();
@@ -704,11 +685,6 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    ge::EngineOptions opts;
-
     anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    opts.parse(&argc, &argv);
-    opts.inits.reg(ge::Init, anim, &Anim::init);
-    opts.inits.reg(ge::Init, anim, &Anim::initCL);
-    return anim.engine.run(opts);
+    return anim.main(argc, argv);
 }

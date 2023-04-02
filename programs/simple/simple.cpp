@@ -1,15 +1,11 @@
-#include "ge/Engine.hpp"
+#include "ge/Anim.hpp"
 
 using namespace math;
 
-struct Anim
+struct Anim final : ge::Anim<Anim>
 {
-    ge::Engine engine;
-
     void init(const ge::Event<ge::InitEvent> & /*ev*/);
-    void link();
-
-    void renderScene(const ge::Event<ge::RenderEvent> & /*unused*/);
+    void render(const ge::Event<ge::RenderEvent> & /*unused*/) override;
 };
 
 void
@@ -20,13 +16,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 }
 
 void
-Anim::link()
-{
-    engine.events().render.reg(*this, &Anim::renderScene);
-}
-
-void
-Anim::renderScene(const ge::Event<ge::RenderEvent> & /*unused*/)
+Anim::render(const ge::Event<ge::RenderEvent> & /*unused*/)
 {
     auto rt = engine.renderManager().activeRenderTarget();
     rt->clearColor(glt::color(vec4(1_r)));
@@ -36,11 +26,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> & /*unused*/)
 int
 main(int argc, char *argv[])
 {
-    ge::EngineOptions opts;
     Anim anim;
     anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    anim.link();
-    opts.inits.reg(ge::Init, anim, &Anim::init);
-    opts.parse(&argc, &argv);
-    return anim.engine.run(opts);
+    return anim.main(argc, argv);
 }

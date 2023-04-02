@@ -1,7 +1,7 @@
 
 #include "cutil.h"
 
-#include "ge/Engine.hpp"
+#include "ge/Anim.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/utils.hpp"
 #include "math/vec2.hpp"
@@ -18,9 +18,8 @@ using namespace math;
 
 DEF_GL_MAPPED_TYPE(Vertex, (vec2_t, position))
 
-struct Anim
+struct Anim final : ge::Anim<Anim>
 {
-    ge::Engine engine;
     glt::ShaderProgramRef program;
 
     std::shared_ptr<glt::TextureSampler> texture0;
@@ -35,9 +34,8 @@ struct Anim
     GlobalResources g_resources{};
 
     void init(const ge::Event<ge::InitEvent> & /*ev*/);
-    void link();
 
-    void renderScene(const ge::Event<ge::RenderEvent> & /*ev*/);
+    void render(const ge::Event<ge::RenderEvent> & /*ev*/) override;
     static std::shared_ptr<glt::TextureSampler> make_texture(
       const char *filename);
     int make_resources();
@@ -129,13 +127,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 }
 
 void
-Anim::link()
-{
-    engine.events().render.reg(*this, &Anim::renderScene);
-}
-
-void
-Anim::renderScene(const ge::Event<ge::RenderEvent> &)
+Anim::render(const ge::Event<ge::RenderEvent> &)
 {
     auto rt = engine.renderManager().activeRenderTarget();
 
@@ -160,11 +152,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &)
 int
 main(int argc, char *argv[])
 {
-    ge::EngineOptions opts;
     Anim anim;
     anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    anim.link();
-    opts.parse(&argc, &argv);
-    opts.inits.reg(ge::Init, anim, &Anim::init);
-    return anim.engine.run(opts);
+    return anim.main(argc, argv);
 }

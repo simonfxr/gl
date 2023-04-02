@@ -40,11 +40,14 @@ public:
     MeshBase &operator=(MeshBase &&) = default;
 
 private:
-    using nop_deleter = decltype([](auto *) {});
+    struct GLT_API NopDeleter
+    {
+        void operator()(char *) const {}
+    };
 
     unique_vertex_ptr vertex_data{};
-    std::unique_ptr<char, nop_deleter> vertex_data_end{};
-    std::unique_ptr<char, nop_deleter> vertex_data_lim{};
+    std::unique_ptr<char, NopDeleter> vertex_data_end{};
+    std::unique_ptr<char, NopDeleter> vertex_data_lim{};
     size_t vertex_count{};
     std::vector<uint32_t> elements;
     const StructInfo *struct_info;

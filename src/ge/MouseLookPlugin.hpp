@@ -6,7 +6,7 @@
 
 namespace ge {
 
-struct GE_API MouseLookPlugin : public Plugin
+struct GE_API MouseLookPlugin final : public PluginImpl<MouseLookPlugin>
 {
     enum State : uint8_t
     {
@@ -29,13 +29,12 @@ struct GE_API MouseLookPlugin : public Plugin
     State state() const;
     void state(State state);
 
-    void camera(Camera *);
     Camera *camera();
 
     Commands &commands();
 
-    void registerWith(Engine &) final override;
-    void registerCommands(CommandProcessor &) final override;
+    void registerWith(Engine &) override;
+    void registerCommands(CommandProcessor &) override;
 
 private:
     DECLARE_PIMPL(GE_API, self);

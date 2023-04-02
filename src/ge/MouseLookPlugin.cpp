@@ -99,12 +99,6 @@ MouseLookPlugin::state() const
     return self->_state;
 }
 
-void
-MouseLookPlugin::camera(Camera *cam)
-{
-    self->_camera = cam;
-}
-
 Camera *
 MouseLookPlugin::camera()
 {
@@ -121,6 +115,7 @@ void
 MouseLookPlugin::registerWith(Engine &e)
 {
     self->_engine = &e;
+    self->_camera = e.pluginSet().findPluginOrAbort<Camera>();
     auto &win = e.window();
 
     win.events().mouseButton.reg([this](const Event<MouseButton> &ev) {

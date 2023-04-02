@@ -1,6 +1,4 @@
-#include "ge/Camera.hpp"
-#include "ge/Engine.hpp"
-#include "ge/MouseLookPlugin.hpp"
+#include "ge/Anim.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/primitives.hpp"
@@ -28,28 +26,22 @@ static const size_t SIMULATION_FPS = 50;
 
 DEF_GL_MAPPED_TYPE(Vertex, (vec3_t, position), (vec3_t, normal))
 
-struct Anim
+struct Anim final : ge::Anim3D<Anim>
 {
-    ge::Engine engine;
     glt::Mesh<Vertex> sphere_model;
     glt::CubeMesh<Vertex> ground_model;
-    ge::Camera camera;
-    ge::MouseLookPlugin mouse_look;
 
     vec3_t light_dir{};
     vec3_t ec_light_dir{};
 
     ge::GameLoop::time next_fps_counter_draw{};
 
-    Simulation sim;
-
-    Anim() : sim(1_r / static_cast<real>(SIMULATION_FPS)) {}
+    Simulation sim{ 1_r / static_cast<real>(SIMULATION_FPS) };
 
     void init(const ge::Event<ge::InitEvent> &);
-    void link();
 
-    void renderScene(const ge::Event<ge::RenderEvent> &);
-    void animate(const ge::Event<ge::AnimationEvent> &);
+    void render(const ge::Event<ge::RenderEvent> &) override;
+    void animate(const ge::Event<ge::AnimationEvent> &) override;
 
     void renderParticles(real interpolation);
 };
@@ -57,7 +49,6 @@ struct Anim
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-
     ev.info.engine.gameLoop().ticks(SIMULATION_FPS)
       //        .pause(true)
       ;
@@ -89,19 +80,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 
     light_dir = normalize(vec3(-1_r));
 
-    ev.info.engine.enablePlugin(mouse_look);
-    mouse_look.camera(&camera);
-    ev.info.engine.enablePlugin(camera);
-    camera.frame().origin = vec3(0_r);
-
     ev.info.success = true;
-}
-
-void
-Anim::link()
-{
-    engine.events().render.reg(*this, &Anim::renderScene);
-    engine.events().animate.reg(*this, &Anim::animate);
 }
 
 void
@@ -112,7 +91,7 @@ Anim::animate(const ge::Event<ge::AnimationEvent> &)
 }
 
 void
-Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
+Anim::render(const ge::Event<ge::RenderEvent> &ev)
 {
     auto rt = engine.renderManager().activeRenderTarget();
     rt->clearColor(glt::color(vec4(1_r)));
@@ -203,11 +182,6 @@ Anim::renderParticles(real interpolation)
 int
 main(int argc, char *argv[])
 {
-    ge::EngineOptions opts;
     Anim anim;
-    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    anim.link();
-    opts.inits.reg(ge::Init, anim, &Anim::init);
-    opts.parse(&argc, &argv);
-    return anim.engine.run(opts);
+    return anim.main(argc, argv);
 }

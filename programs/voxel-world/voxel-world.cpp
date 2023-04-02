@@ -1,6 +1,4 @@
-#include "ge/Camera.hpp"
-#include "ge/Engine.hpp"
-#include "ge/MouseLookPlugin.hpp"
+#include "ge/Anim.hpp"
 #include "ge/Timer.hpp"
 #include "glt/CubeMesh.hpp"
 #include "glt/Frame.hpp"
@@ -80,11 +78,8 @@ using CubeMesh = glt::CubeMesh<Vertex>;
 
 using InitEv = ge::Event<ge::InitEvent>;
 
-struct State
+struct Anim final : ge::Anim3D<Anim>
 {
-    ge::Camera camera;
-    ge::MouseLookPlugin mouse_look;
-
     CubeMesh worldModel;
 
     vec3_t sphere_points[SPHERE_POINTS]{};
@@ -101,12 +96,15 @@ struct State
 #ifdef HS_WORLD_GEN
     VoxelState *voxel_state{};
 #endif
+
+    void init(const ge::Event<ge::InitEvent> &);
+    void render(const ge::Event<ge::RenderEvent> &) override;
+    void parseArgs(int argc, char *argv[]) override;
 };
 
-using RenderEv = ge::Event<ge::RenderEvent>;
+using State = Anim;
 
-static void
-renderScene(State *state, const RenderEv &ev);
+using RenderEv = ge::Event<ge::RenderEvent>;
 
 static bool
 readModel(const std::string &file, CubeMesh &mdl);
@@ -118,9 +116,8 @@ static bool
 initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points);
 
 void
-initState(State *state, const InitEv &ev)
+Anim::init(const InitEv &ev)
 {
-
     //    glt::initDebug();
 
     ge::Engine &e = ev.info.engine;
@@ -132,60 +129,54 @@ initState(State *state, const InitEv &ev)
     e.commandProcessor().define(ge::makeCommand(
       "incGamma",
       "increase the value of gamma correction",
-      [state](const ge::Event<ge::CommandEvent> & /*unused*/, double inc) {
-          state->gamma_correction += static_cast<real>(inc);
-          if (state->gamma_correction < 0)
-              state->gamma_correction = 0.;
+      [this](const ge::Event<ge::CommandEvent> & /*unused*/, double inc) {
+          gamma_correction += static_cast<real>(inc);
+          if (gamma_correction < 0)
+              gamma_correction = 0.;
       }));
 
-    e.commandProcessor().define(ge::makeCommand(
-      "recreateWorld",
-      "recreate the entire world",
-      [state](const ge::Event<ge::CommandEvent> & /*unused*/) {
-          state->worldModel.freeGPU();
-          time_op(initWorld(state, state->worldModel, state->sphere_points));
-      }));
-
-    state->mouse_look.camera(&state->camera);
-    e.enablePlugin(state->camera);
-    e.enablePlugin(state->mouse_look);
-    e.events().render.reg(
-      [state](const RenderEv &rev) { renderScene(state, rev); });
+    e.commandProcessor().define(
+      ge::makeCommand("recreateWorld",
+                      "recreate the entire world",
+                      [this](const ge::Event<ge::CommandEvent> & /*unused*/) {
+                          worldModel.freeGPU();
+                          time_op(initWorld(this, worldModel, sphere_points));
+                      }));
 
     e.gameLoop().ticks(100);
     e.gameLoop().syncDraw(true);
 
-    state->gamma_correction = 1.8f;
+    gamma_correction = 1.8f;
 
-    state->fpsTimer = std::make_unique<ge::Timer>(e);
-    state->fpsTimer->start(FPS_UPDATE_INTERVAL, true);
+    fpsTimer = std::make_unique<ge::Timer>(e);
+    fpsTimer->start(FPS_UPDATE_INTERVAL, true);
 
     srand(0xDEADBEEF);
 
-    pointsOnSphere(SPHERE_POINTS, state->sphere_points);
+    pointsOnSphere(SPHERE_POINTS, sphere_points);
 
 #ifdef HS_WORLD_GEN
     int ret;
-    time_op(ret = hs_voxel_init(&state->voxel_state));
+    time_op(ret = hs_voxel_init(&voxel_state));
     if (ret != 0) {
         ERR("hs_voxel_begin() failed");
         return;
     }
 #endif
 
-    if (state->read_model) {
-        if (!readModel(WORLD_MODEL_FILE, state->worldModel)) {
+    if (read_model) {
+        if (!readModel(WORLD_MODEL_FILE, worldModel)) {
             ERR("couldnt read model file");
             return;
         }
     } else {
 
-        if (!initWorld(state, state->worldModel, state->sphere_points))
+        if (!initWorld(this, worldModel, sphere_points))
             return;
     }
 
-    if (state->write_model) {
-        if (!writeModel(WORLD_MODEL_FILE, state->worldModel))
+    if (write_model) {
+        if (!writeModel(WORLD_MODEL_FILE, worldModel))
             ERR("couldnt write model file");
     }
 
@@ -420,7 +411,7 @@ initRays(Rays &rays, vec3_t dirs[])
 
 #pragma omp parallel for reduction(+ : cos0, cos1, cos2, cos3, cos4, cos5)
     for (int32_t i = 0; i < SPHERE_POINTS; ++i) {
-        const direction3_t &d = dirs[i];
+        auto &d = dirs[i];
         auto p = static_cast<real>(N) * (d * 0.5_r + vec3(0.5_r));
         auto step = (p - center) / (10_r * static_cast<real>(N));
         auto sum1 = Faces{ { vec3(0.), vec3(0.) } };
@@ -997,8 +988,8 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
 static void
 renderBlocks(State *state, ge::Engine &e);
 
-static void
-renderScene(State *state, const RenderEv &ev)
+void
+Anim::render(const RenderEv &ev)
 {
     ge::Engine &e = ev.info.engine;
 
@@ -1006,12 +997,12 @@ renderScene(State *state, const RenderEv &ev)
     GL_CALL(glEnable, GL_DEPTH_TEST);
     GL_CALL(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    state->ecLightDir =
+    ecLightDir =
       e.renderManager().geometryTransform().transformVector(LIGHT_DIR);
 
-    renderBlocks(state, e);
+    renderBlocks(this, e);
 
-    if (state->fpsTimer->fire()) {
+    if (fpsTimer->fire()) {
 #define INV(x) (((x) * (x)) == 0 ? -1 : 1.0 / (x))
         glt::FrameStatistics fs = e.renderManager().frameStatistics();
         double fps = INV(fs.avg);
@@ -1088,42 +1079,37 @@ writeModel(const std::string &file, const CubeMesh &mdl)
     return false;
 }
 
+void
+Anim::parseArgs(int argc, char *argv[])
+{
+    auto read_mdl = false;
+    auto write_mdl = false;
+
+    for (int32_t i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--read") == 0)
+            read_mdl = true;
+        else if (strcmp(argv[i], "--no-read") == 0)
+            read_mdl = false;
+        else if (strcmp(argv[i], "--write") == 0)
+            write_mdl = true;
+        else if (strcmp(argv[i], "--no-write") == 0)
+            write_mdl = false;
+    }
+
+    read_model = read_mdl;
+    write_model = write_mdl;
+}
+
 int
 main(int argc, char *argv[])
 {
-    ge::Engine engine;
-    engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    {
-        ge::EngineOptions opts;
-        opts.parse(&argc, &argv);
-
-        bool read_mdl = false;
-        bool write_mdl = false;
-
-        for (int32_t i = 1; i < argc; ++i) {
-            if (strcmp(argv[i], "--read") == 0)
-                read_mdl = true;
-            else if (strcmp(argv[i], "--no-read") == 0)
-                read_mdl = false;
-            else if (strcmp(argv[i], "--write") == 0)
-                write_mdl = true;
-            else if (strcmp(argv[i], "--no-write") == 0)
-                write_mdl = false;
-        }
-
-        State state;
-
-        state.read_model = read_mdl;
-        state.write_model = write_mdl;
-        opts.inits.reg(ge::Init,
-                       [&](const InitEv &ev) { initState(&state, ev); });
-
-        engine.run(opts);
-
+    Anim anim;
+    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    auto ret = anim.main(argc, argv);
 #ifdef HS_WORLD_GEN
-        hs_voxel_destroy(state.voxel_state);
+    hs_voxel_destroy(anim.voxel_state);
 #endif
-    }
+    return ret;
 }
 
 namespace {

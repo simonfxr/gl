@@ -1,4 +1,4 @@
-#include "ge/Engine.hpp"
+#include "ge/Anim.hpp"
 
 #include "math/vec4.hpp"
 #include "utils.hpp"
@@ -30,23 +30,20 @@ struct Sim
     void integrate(real dt);
 };
 
-struct Anim
+struct Anim final : ge::Anim<Anim>
 {
-    ge::Engine engine;
     ParticleRenderer renderer;
     Sim simulation{};
 
     void init(const ge::Event<ge::InitEvent> &);
-    void link();
 
-    void renderScene(const ge::Event<ge::RenderEvent> &);
-    void simulate(const ge::Event<ge::AnimationEvent> &);
+    void render(const ge::Event<ge::RenderEvent> &) override;
+    void animate(const ge::Event<ge::AnimationEvent> &) override;
 };
 
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-
     engine.gameLoop().ticks(1000);
     engine.gameLoop().maxFPS(59);
 
@@ -63,14 +60,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 }
 
 void
-Anim::link()
-{
-    engine.events().render.reg(*this, &Anim::renderScene);
-    engine.events().animate.reg(*this, &Anim::simulate);
-}
-
-void
-Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
+Anim::render(const ge::Event<ge::RenderEvent> &ev)
 {
     auto rt = engine.renderManager().activeRenderTarget();
     rt->clearColor(glt::color(vec4(1_r)));
@@ -178,7 +168,7 @@ Sim::init()
 };
 
 void
-Anim::simulate(const ge::Event<ge::AnimationEvent> &ev)
+Anim::animate(const ge::Event<ge::AnimationEvent> &ev)
 {
     auto dt =
       0.15_r * static_cast<real>(ev.info.engine.gameLoop().tickDuration());
@@ -188,11 +178,7 @@ Anim::simulate(const ge::Event<ge::AnimationEvent> &ev)
 int
 main(int argc, char *argv[])
 {
-    ge::EngineOptions opts;
     Anim anim;
     anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
-    anim.link();
-    opts.inits.reg(ge::Init, anim, &Anim::init);
-    opts.parse(&argc, &argv);
-    return anim.engine.run(opts);
+    return anim.main(argc, argv);
 }
