@@ -63,15 +63,18 @@ struct GLObject : private NonCopyable
     constexpr GLObject() = default;
     explicit constexpr GLObject(GLuint name) : _name(name) {}
 
-    constexpr GLObject(GLObject &&rhs) noexcept { swap(rhs); }
+    constexpr GLObject(GLObject &&rhs) noexcept { swap(*this, rhs); }
 
     constexpr GLObject &operator=(GLObject &&rhs) noexcept
     {
-        GLObject<T>{ std::move(rhs) }.swap(*this);
+        swap(*this, GLObject<T>{ std::move(rhs) });
         return *this;
     }
 
-    void swap(GLObject &rhs) noexcept { std::swap(_name, rhs._name); }
+    friend void swap(GLObject &lhs, GLObject &rhs) noexcept
+    {
+        std::swap(lhs._name, rhs._name);
+    }
 
     ~GLObject() { release(); }
 
@@ -81,7 +84,7 @@ struct GLObject : private NonCopyable
             glt::release(type, 1, &n);
     }
 
-    bool valid() const { return _name != 0; }
+    [[nodiscard]] bool valid() const { return _name != 0; }
 
     explicit operator bool() const noexcept { return valid(); }
 
@@ -90,12 +93,14 @@ struct GLObject : private NonCopyable
 
     friend auto operator<=>(const GLObject &lhs, const GLObject &rhs) = default;
 
-    void generate() requires(T != ObjectType::Shader)
+    void generate()
+        requires(T != ObjectType::Shader)
     {
         glt::generate(T, 1, &this->_name);
     }
 
-    void generate(GLenum ty) requires(T == ObjectType::Shader)
+    void generate(GLenum ty)
+        requires(T == ObjectType::Shader)
     {
         generateShader(ty, &_name);
     }

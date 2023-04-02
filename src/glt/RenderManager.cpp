@@ -194,9 +194,10 @@ RenderManager::beginScene()
     setActiveRenderTarget(self->def_rt);
     self->current_rt->beginScene();
     if (self->projection_outdated) {
-        size_t w = self->current_rt->width();
-        size_t h = self->current_rt->height();
-        math::real aspect_ratio = math::real(w) / math::real(h);
+        auto w = self->current_rt->width();
+        auto h = self->current_rt->height();
+        using math::real;
+        auto aspect_ratio = static_cast<real>(w) / static_cast<real>(h);
         updateProjection(aspect_ratio);
     }
 
@@ -221,7 +222,8 @@ RenderManager::frameStatistics()
     self->stats.min = self->min_elapsed;
     self->stats.max = self->max_elapsed;
     self->stats.avg =
-      self->sum_elapsed / double(self->frame_id_current - self->frame_id_last);
+      self->sum_elapsed /
+      static_cast<double>(self->frame_id_current - self->frame_id_last);
 
     self->frame_id_last = self->frame_id_current;
     self->sum_elapsed = 0.0;

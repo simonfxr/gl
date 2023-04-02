@@ -82,7 +82,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 
     renderShader->use();
     glt::Uniforms(*renderShader)
-      .optional("gammaCorrection", real(2.2))
+      .optional("gammaCorrection", 2.2_r)
       .optional("time", time)
       .optional("transform", mat3());
 
@@ -93,11 +93,11 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
         time_print_fps = time + 1;
 
 #define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
-        glt::FrameStatistics fs = engine.renderManager().frameStatistics();
-        double fps = INV(fs.avg);
-        double min = INV(fs.max);
-        double max = INV(fs.min);
-        double avg = INV(fs.avg);
+        auto fs = engine.renderManager().frameStatistics();
+        auto fps = INV(fs.avg);
+        auto min = INV(fs.max);
+        auto max = INV(fs.min);
+        auto avg = INV(fs.avg);
         engine.out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                      << fps << "; " << avg << "; " << min << "; " << max
                      << "\n";

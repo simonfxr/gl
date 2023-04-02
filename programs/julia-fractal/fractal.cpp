@@ -95,8 +95,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     }
 
     if (MULTISAMPLING) {
-        size_t w = engine.window().windowWidth();
-        size_t h = engine.window().windowHeight();
+        auto w = engine.window().windowWidth();
+        auto h = engine.window().windowHeight();
         glt::TextureRenderTarget::Params ps;
         ps.samples = NUM_SAMPLES;
         ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
@@ -144,7 +144,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 
     renderShader->use();
     glt::Uniforms(*renderShader)
-      .optional("gammaCorrection", real(2.2))
+      .optional("gammaCorrection", 2.2_r)
       .optional("time", time)
       .optional("transform", mat3())
       .optional("julia_constant", world.julia_constant)
@@ -169,12 +169,12 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
     if (time >= time_print_fps) {
         time_print_fps = time + 1;
 
-#define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
-        glt::FrameStatistics fs = engine.renderManager().frameStatistics();
-        double fps = INV(fs.avg);
-        double min = INV(fs.max);
-        double max = INV(fs.min);
-        double avg = INV(fs.avg);
+#define INV(x) (((x) * (x)) <= 0 ? -1. : 1.0 / (x))
+        auto fs = engine.renderManager().frameStatistics();
+        auto fps = INV(fs.avg);
+        auto min = INV(fs.max);
+        auto max = INV(fs.min);
+        auto avg = INV(fs.avg);
         engine.out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                      << fps << "; " << avg << "; " << min << "; " << max
                      << "\n";
@@ -259,8 +259,8 @@ void
 World::julia_constant_rotate(real phi)
 {
     auto [c, s] = math::cossin(phi);
-    real x = julia_constant[0];
-    real y = julia_constant[1];
+    auto x = julia_constant[0];
+    auto y = julia_constant[1];
     julia_constant[0] = c * x + s * y;
     julia_constant[0] = -s * x + c * y;
 }

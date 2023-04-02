@@ -73,13 +73,13 @@ GameLoop::tickDuration() const
 size_t
 GameLoop::ticks() const
 {
-    return size_t(time(1) / self->frame_duration);
+    return static_cast<size_t>(time{ 1 } / self->frame_duration);
 }
 
 GameLoop &
 GameLoop::ticks(size_t n)
 {
-    self->tick_duration = time(1) / time(n);
+    self->tick_duration = time{ 1 } / static_cast<time>(n);
     return *this;
 }
 
@@ -99,13 +99,15 @@ GameLoop::maxFramesSkipped(size_t max_skip)
 size_t
 GameLoop::maxFPS() const
 {
-    return self->frame_duration == 0 ? 0 : size_t(1 / self->frame_duration);
+    return self->frame_duration == 0
+             ? 0
+             : static_cast<size_t>(1 / self->frame_duration);
 }
 
 GameLoop &
 GameLoop::maxFPS(size_t max_fps)
 {
-    self->frame_duration = (max_fps == 0 ? time(0) : time(1) / time(max_fps));
+    self->frame_duration = (max_fps == 0 ? 0 : 1 / static_cast<time>(max_fps));
     return *this;
 }
 
@@ -159,8 +161,8 @@ GameLoop::run(Game &logic)
 {
     self->game = &logic;
 
-    time start_time = self->game->now();
-    time next_tick = self->clock;
+    auto start_time = self->game->now();
+    auto next_tick = self->clock;
 
     if (!self->initialized) {
         self->initialized = true;
@@ -171,8 +173,7 @@ GameLoop::run(Game &logic)
 
     while (!self->stop) {
 
-        size_t lim =
-          self->sync_draw || self->max_skip == 0 ? 1 : self->max_skip;
+        auto lim = self->sync_draw || self->max_skip == 0 ? 1 : self->max_skip;
 
         for (const auto i : irange()) {
             self->clock = self->now();
@@ -207,19 +208,19 @@ GameLoop::run(Game &logic)
             interpolation = 0;
         else
             interpolation = std::max(
-              time(0), 1 - (next_tick - self->clock) / self->tick_duration);
+              time{ 0 }, 1 - (next_tick - self->clock) / self->tick_duration);
 
         ASSERT(interpolation >= 0);
         ASSERT(interpolation <= 1);
 
         self->game->render(interpolation);
         ++self->frame_id;
-        time next_draw =
+        auto next_draw =
           (self->sync_draw ? next_tick : self->clock + self->frame_duration);
 
         self->clock = self->now();
 
-        time diff =
+        auto diff =
           (next_tick < next_draw ? next_tick : next_draw) - self->clock;
         if (diff > 0)
             self->game->sleep(diff);

@@ -15,7 +15,7 @@ struct MouseLookPlugin::Data
     Camera *_camera{};
     Commands _commands;
 
-    void stateChanged(State new_state);
+    void stateChanged(State new_state) const;
     void setState(State new_state);
 };
 
@@ -36,7 +36,7 @@ MouseLookPlugin::Data::Data()
 }
 
 void
-MouseLookPlugin::Data::stateChanged(State new_state)
+MouseLookPlugin::Data::stateChanged(State new_state) const
 {
     if (_engine == nullptr)
         return;
@@ -137,7 +137,8 @@ MouseLookPlugin::registerWith(Engine &e)
 
             size_t h;
             curwin.windowSize(w, h);
-            curwin.setMouse(int16_t(w / 2), int16_t(h / 2));
+            curwin.setMouse(static_cast<int16_t>(w / 2),
+                            static_cast<int16_t>(h / 2));
         }
     });
 

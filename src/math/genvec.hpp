@@ -104,6 +104,12 @@ struct genvec
         return ret;
     }
 
+    template<typename U>
+    constexpr auto cast() const
+    {
+        return map([](auto &x) { return static_cast<U>(x); });
+    }
+
     constexpr genvec operator-() const
     {
         return map([](const T &x) { return -x; });

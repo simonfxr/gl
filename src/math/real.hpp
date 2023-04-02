@@ -16,7 +16,7 @@ using real = double;
 #    define R_FMT "lf"
 #endif
 
-inline constexpr real PI = real(3.1415926535897932384626433832);
+inline constexpr real PI = static_cast<real>(3.1415926535897932384626433832);
 
 inline constexpr real REAL_MAX = std::numeric_limits<real>::max();
 
@@ -244,12 +244,12 @@ PRAGMA_DIAGNOSTIC_PUSH
 
 inline constexpr real operator"" _r(long double x)
 {
-    return real(x);
+    return static_cast<real>(x);
 }
 
 inline constexpr real operator"" _r(unsigned long long x)
 {
-    return real(x);
+    return static_cast<real>(x);
 }
 
 PRAGMA_DIAGNOSTIC_POP

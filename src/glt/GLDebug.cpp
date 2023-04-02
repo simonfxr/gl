@@ -130,13 +130,32 @@ ARBDebug::printDebugMessages(const err::Location &loc)
             stype = "unknown";
         }
 
+        char other_severity_buf[32];
         const char *ssev;
         switch (severity) {
             sym_case(ssev, GL_DEBUG_SEVERITY_HIGH_ARB);
             sym_case(ssev, GL_DEBUG_SEVERITY_MEDIUM_ARB);
             sym_case(ssev, GL_DEBUG_SEVERITY_LOW_ARB);
         default:
-            ssev = "unknown";
+            switch (severity) {
+                sym_case(ssev, GL_DEBUG_SEVERITY_NOTIFICATION_KHR);
+                sym_case(ssev, GL_DEBUG_SEVERITY_HIGH_KHR);
+                sym_case(ssev, GL_DEBUG_SEVERITY_MEDIUM_KHR);
+                sym_case(ssev, GL_DEBUG_SEVERITY_LOW_KHR);
+            default:
+                switch (severity) {
+                    sym_case(ssev, GL_DEBUG_SEVERITY_HIGH);
+                    sym_case(ssev, GL_DEBUG_SEVERITY_MEDIUM);
+                    sym_case(ssev, GL_DEBUG_SEVERITY_LOW);
+                    sym_case(ssev, GL_DEBUG_SEVERITY_NOTIFICATION);
+                default:
+                    snprintf(other_severity_buf,
+                             sizeof other_severity_buf,
+                             "0x%x",
+                             severity);
+                    ssev = other_severity_buf;
+                }
+            }
         }
 
 #undef sym_case
@@ -150,7 +169,7 @@ ARBDebug::printDebugMessages(const err::Location &loc)
                          "OpenGL DEBUG",
                          loc,
                          err::LogLevel::Error,
-                         mesg.str().c_str());
+                         std::move(mesg).str().c_str());
     }
 }
 
@@ -242,7 +261,7 @@ AMDDebug::printDebugMessages(const err::Location &loc)
                          "OpenGL DEBUG",
                          loc,
                          err::LogLevel::Error,
-                         mesg.str().c_str());
+                         std::move(mesg).str().c_str());
     }
 }
 

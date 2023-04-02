@@ -20,11 +20,8 @@ TextureRenderTarget3D::TextureRenderTarget3D(
 void
 TextureRenderTarget3D::resize(const math::ivec3_t &s)
 {
-    size_t w = s[0];
+    auto [w, h, d] = s.cast<size_t>();
 
-    size_t h = s[1];
-
-    size_t d = s[2];
     if (width() == w && height() == h) {
 
         if (depth() == d)
@@ -65,7 +62,7 @@ TextureRenderTarget3D::createTexture(bool delete_old)
     _sampler.filterMode(this->filterMode());
     _sampler.clampMode(this->clampMode());
 
-    Attachment current = _target_attachment;
+    auto current = _target_attachment;
     AttachmentType other{};
 
     switch (current.type) {

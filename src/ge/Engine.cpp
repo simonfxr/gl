@@ -166,7 +166,7 @@ Engine::out(sys::io::OutStream &s)
 math::real
 Engine::now()
 {
-    return math::real(SELF->now());
+    return static_cast<math::real>(SELF->now());
 }
 
 const std::string &
@@ -238,7 +238,7 @@ Engine::run(const EngineOptions &opts)
         }
     }
 
-    Event<InitEvent> initEv = Event(InitEvent(*this));
+    auto initEv = Event(InitEvent(*this));
     if (!runInit(opts.inits.preInit0, initEv))
         return 1;
 
@@ -303,16 +303,17 @@ void
 Engine::Data::render(double interpolation)
 {
     events.beforeRender.raise(
-      Event(RenderEvent(theEngine, real(interpolation))));
+      Event(RenderEvent(theEngine, static_cast<real>(interpolation))));
     if (!skipRender) {
         GL_TRACE("BEGIN_SCENE");
         renderManager.beginScene();
-        events.render.raise(Event(RenderEvent(theEngine, real(interpolation))));
+        events.render.raise(
+          Event(RenderEvent(theEngine, static_cast<real>(interpolation))));
         renderManager.endScene();
         GL_TRACE("END_SCENE");
     }
     events.afterRender.raise(
-      Event(RenderEvent(theEngine, real(interpolation))));
+      Event(RenderEvent(theEngine, static_cast<real>(interpolation))));
 }
 
 void
@@ -324,7 +325,7 @@ Engine::Data::handleInputEvents()
 GameLoop::time
 Engine::Data::now() const
 {
-    return GameLoop::time(sys::queryTimer());
+    return static_cast<GameLoop::time>(sys::queryTimer());
 }
 
 void
@@ -405,8 +406,9 @@ Engine::Data::registerHandlers()
     });
 
     window->events().windowResized.reg([this](const Event<WindowResized> &ev) {
-        theEngine.renderManager().updateProjection(math::real(ev.info.width) /
-                                                   math::real(ev.info.height));
+        theEngine.renderManager().updateProjection(
+          static_cast<math::real>(ev.info.width) /
+          static_cast<math::real>(ev.info.height));
     });
 
     theEngine.events().handleInput.reg(

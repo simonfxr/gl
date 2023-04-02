@@ -16,8 +16,15 @@ struct Sim
     real phi;
     real dphi_dt;
 
-    real acc_x1(real x1, real dx1_dt, real phi, real dphi_dt);
-    real acc_phi(real x1, real dx1_dt, real phi, real dphi_dt);
+    [[nodiscard]] real acc_x1(real x1,
+                              real dx_dt,
+                              real alpha,
+                              real dalpha_dt) const;
+
+    [[nodiscard]] real acc_phi(real x1,
+                               real dx_dt,
+                               real alpha,
+                               real dalpha_dt) const;
 
     void init();
     void integrate(real dt);
@@ -27,7 +34,7 @@ struct Anim
 {
     ge::Engine engine;
     ParticleRenderer renderer;
-    Sim simulation;
+    Sim simulation{};
 
     void init(const ge::Event<ge::InitEvent> &);
     void link();
@@ -66,10 +73,10 @@ void
 Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 {
     auto rt = engine.renderManager().activeRenderTarget();
-    rt->clearColor(glt::color(vec4(real(1))));
+    rt->clearColor(glt::color(vec4(1_r)));
     rt->clear();
 
-    ParticleRenderer::Particle p1, p2;
+    ParticleRenderer::Particle p1{}, p2{};
     p1.radius = 0.05f;
     p2.radius = 0.05f;
 
@@ -85,7 +92,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 }
 
 real
-Sim::acc_x1(real x, real dx_dt, real alpha, real dalpha_dt)
+Sim::acc_x1(real x, real dx_dt, real alpha, real dalpha_dt) const
 {
     UNUSED(x);
     UNUSED(dx_dt);
@@ -96,7 +103,7 @@ Sim::acc_x1(real x, real dx_dt, real alpha, real dalpha_dt)
 }
 
 real
-Sim::acc_phi(real x, real dx_dt, real alpha, real dalpha_dt)
+Sim::acc_phi(real x, real dx_dt, real alpha, real dalpha_dt) const
 {
     UNUSED(x);
     UNUSED(dx_dt);
@@ -110,50 +117,50 @@ void
 Sim::integrate(real dt)
 {
 
-    real dt2 = dt * 0.5f;
+    auto dt2 = dt * 0.5_r;
 
-    real a1_x1 = acc_x1(x1, dx1_dt, phi, dphi_dt);
-    real a1_phi = acc_phi(x1, dx1_dt, phi, dphi_dt);
+    auto a1_x1 = acc_x1(x1, dx1_dt, phi, dphi_dt);
+    auto a1_phi = acc_phi(x1, dx1_dt, phi, dphi_dt);
 
-    real a2_x1 = acc_x1(x1 + dx1_dt * dt2,
+    auto a2_x1 = acc_x1(x1 + dx1_dt * dt2,
                         dx1_dt + a1_x1 * dt2,
                         phi + dphi_dt * dt2,
                         dphi_dt + a1_phi * dt2);
-    real a2_phi = acc_phi(x1 + dx1_dt * dt2,
+    auto a2_phi = acc_phi(x1 + dx1_dt * dt2,
                           dx1_dt + a1_x1 * dt2,
                           phi + dphi_dt * dt2,
                           dphi_dt + a1_phi * dt2);
 
-    real a3_x1 = acc_x1(x1 + dx1_dt * dt2,
+    auto a3_x1 = acc_x1(x1 + dx1_dt * dt2,
                         dx1_dt + a2_x1 * dt2,
                         phi + dphi_dt * dt2,
                         dphi_dt + a2_phi * dt2);
-    real a3_phi = acc_phi(x1 + dx1_dt * dt2,
+    auto a3_phi = acc_phi(x1 + dx1_dt * dt2,
                           dx1_dt + a2_x1 * dt2,
                           phi + dphi_dt * dt2,
                           dphi_dt + a2_phi * dt2);
 
-#define P2(a, b, c, dt) (a + (b + 0.5f * c * dt) * dt)
+    auto P2 = [](real a, real b, real c, real xdt) {
+        return a + (b + 0.5_r * c * xdt) * xdt;
+    };
 
-    real a4_x1 = acc_x1(P2(x1, dx1_dt, a3_x1, dt),
+    auto a4_x1 = acc_x1(P2(x1, dx1_dt, a3_x1, dt),
                         dx1_dt + a3_x1 * dt,
                         P2(phi, dphi_dt, a3_phi, dt),
                         dphi_dt + a3_phi * dt);
-    real a4_phi = acc_phi(P2(x1, dx1_dt, a3_x1, dt),
+    auto a4_phi = acc_phi(P2(x1, dx1_dt, a3_x1, dt),
                           dx1_dt + a3_x1 * dt,
                           P2(phi, dphi_dt, a3_phi, dt),
                           dphi_dt + a3_phi * dt);
 
-    real a_x1 = (a1_x1 + 2 * (a2_x1 + a3_x1) + a4_x1) / 6.f;
-    real a_phi = (a1_phi + 2 * (a2_phi + a3_phi) + a4_phi) / 6.f;
+    auto a_x1 = (a1_x1 + 2 * (a2_x1 + a3_x1) + a4_x1) / 6.f;
+    auto a_phi = (a1_phi + 2 * (a2_phi + a3_phi) + a4_phi) / 6.f;
 
     x1 = P2(x1, dx1_dt, a_x1, dt);
     dx1_dt += a_x1 * dt;
 
     phi = P2(phi, dphi_dt, a_phi, dt);
     dphi_dt += a_phi * dt;
-
-#undef P2
 }
 
 void
@@ -173,7 +180,8 @@ Sim::init()
 void
 Anim::simulate(const ge::Event<ge::AnimationEvent> &ev)
 {
-    real dt = 0.15_r * math::real(ev.info.engine.gameLoop().tickDuration());
+    auto dt =
+      0.15_r * static_cast<real>(ev.info.engine.gameLoop().tickDuration());
     simulation.integrate(dt);
 };
 

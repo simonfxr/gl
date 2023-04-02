@@ -181,14 +181,14 @@ Program::init(const ge::Event<ge::InitEvent> &ev)
             GL_FLOAT,
             GL_FALSE,
             sizeof(QuadStreamVertex),
-            0);
+            GLT_FIELD_OFFSET(QuadStreamVertex, position));
     GL_CALL(glVertexAttribPointer,
             1,
             3,
             GL_FLOAT,
             GL_FALSE,
             sizeof(QuadStreamVertex),
-            (void *) offsetof(QuadStreamVertex, normal));
+            GLT_FIELD_OFFSET(QuadStreamVertex, normal));
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
     GL_CALL(glEnableVertexAttribArray, 0);

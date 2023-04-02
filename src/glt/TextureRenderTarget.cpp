@@ -71,7 +71,7 @@ TextureRenderTarget::createTexture(bool delete_old)
         _sampler.data()->free();
 
     _sampler.data()->type(Texture2D, _samples);
-    GLenum ttype = _sampler.data()->glType();
+    auto ttype = _sampler.data()->glType();
 
     _sampler.filterMode(_filter_mode);
     _sampler.clampMode(_clamp_mode);

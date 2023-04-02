@@ -4,6 +4,7 @@
 #include "glt/conf.hpp"
 
 #include "glt/color.hpp"
+#include "glt/utils.hpp"
 #include "math/genmat.hpp"
 #include "math/genvec.hpp"
 #include "math/real.hpp"
@@ -13,14 +14,6 @@
 #include <array>
 #include <cstddef>
 #include <span>
-
-#if HU_COMP_GNULIKE_P
-#    define ti_offsetof(t, fld) __builtin_offsetof(t, fld)
-#elif defined(offsetof)
-#    define ti_offsetof offsetof
-#else
-#    error "NEITHER offsetof nor __builtin_offsetof available"
-#endif
 
 namespace glt {
 
@@ -183,7 +176,7 @@ struct StructInfo
     ::glt::FieldInfo(                                                          \
       PP_DEFER1(TI_DEF_FIELD_INFO0) type_and_name,                             \
       ::glt::type_info_traits<PP_DEFER1(PP_ARG1) type_and_name>::type_info,    \
-      ti_offsetof(struct_type, PP_DEFER1(PP_ARG2) type_and_name))
+      GLT_OFFSETOF(struct_type, PP_DEFER1(PP_ARG2) type_and_name))
 
 #define TI_DEF_STRUCT_FIELD0(t, nm) t nm
 #define TI_DEF_STRUCT_FIELD(type_and_name)                                     \
@@ -212,7 +205,7 @@ struct StructInfo
         PP_MAP(TI_DEF_STRUCT_FIELD, PP_SEMI, __VA_ARGS__);                     \
         struct gl;                                                             \
         sname() = default;                                                     \
-        inline sname(const gl &);                                              \
+        inline explicit sname(const gl &);                                     \
     };                                                                         \
     struct sname::gl                                                           \
     {                                                                          \

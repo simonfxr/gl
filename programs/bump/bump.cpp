@@ -135,16 +135,16 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> & /*unused*/)
 
     auto program = engine.shaderManager().program("sphere");
     ASSERT(program, "sphere program not found");
-    glt::RenderManager &rm = engine.renderManager();
+    auto &rm = engine.renderManager();
 
-    vec3_t ecLight =
+    auto ecLight =
       transformPoint(rm.geometryTransform().viewMatrix(), light_position);
 
-    real phi =
-      real(engine.gameLoop().tickID()) * inverse(real(100)) * real(1.3);
+    auto phi =
+      static_cast<real>(engine.gameLoop().tickID()) * inverse(100_r) * 1.3_r;
 
     rm.geometryTransform().dup();
-    rm.geometryTransform().scale(vec3(10.f)); // scale radius of sphere
+    rm.geometryTransform().scale(vec3(10_r)); // scale radius of sphere
     rm.geometryTransform().concat(glt::rotationMatrix(phi, vec3(0, 1, 0)));
     program->use();
     glt::Uniforms(*program)
@@ -174,11 +174,11 @@ void
 sphere(glt::Mesh<Vertex> &mesh, real rad, int slices, int stacks)
 {
 
-    real dtheta = PI / stacks;
-    real dphi = real(2) * PI / slices;
+    auto dtheta = PI / static_cast<real>(stacks);
+    auto dphi = 2_r * PI / static_cast<real>(slices);
 
     for (int i = 0; i < stacks; ++i) {
-        real theta = real(i) * dtheta;
+        auto theta = static_cast<real>(i) * dtheta;
         auto [ctheta, stheta] = cossin(theta);
         auto [ctheta2, stheta2] = cossin(theta + dtheta);
 
@@ -189,7 +189,7 @@ sphere(glt::Mesh<Vertex> &mesh, real rad, int slices, int stacks)
         vec2_t uv[4];
 
         for (int j = 0; j < slices; ++j) {
-            real phi = real(j) * dphi;
+            auto phi = static_cast<real>(j) * dphi;
             auto [cphi, sphi] = cossin(phi);
             sphi = -sphi;
 
@@ -228,7 +228,7 @@ sphere(glt::Mesh<Vertex> &mesh, real rad, int slices, int stacks)
         b[1] = TEST(uv, 1, > real(0.95));                                      \
                                                                                \
         for (int k = 0; k < 3; ++k) {                                          \
-            Vertex v;                                                          \
+            auto v = Vertex{};                                                 \
             glt::primitives::setPoint(v.position, position[k]);                \
             glt::primitives::setVec(v.tangent, tangent[k]);                    \
             glt::primitives::setVec(v.binormal, binormal[k]);                  \
@@ -315,15 +315,15 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
 
 #define SUBDIV(ab, a, b)                                                       \
     do {                                                                       \
-        uint64_t key =                                                         \
+        auto key =                                                             \
           (a) < (b) ? (uint64_t(a) << 32 | (b)) : (uint64_t(b) << 32 | (a));   \
-        VertexCache::const_iterator it = vertex_cache.find(key);               \
-        if (it != vertex_cache.end()) {                                        \
+                                                                               \
+        if (auto it = vertex_cache.find(key); it != vertex_cache.end()) {      \
             (ab) = it->second;                                                 \
         } else {                                                               \
-            vec3_t pa = vertices[a];                                           \
-            vec3_t pb = vertices[b];                                           \
-            vec3_t pab = normalize(real(.5) * (pa + pb));                      \
+            auto pa = vertices[a];                                             \
+            auto pb = vertices[b];                                             \
+            auto pab = normalize(.5_r * (pa + pb));                            \
             vertices.push_back(pab);                                           \
             (ab) = next_vert++;                                                \
             vertex_cache[key] = ab;                                            \
@@ -352,11 +352,9 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
     mesh.drawType(glt::DrawElements);
 
     V v;
-    for (size_t i = 0; i < vertices.size(); ++i) {
-        vec3_t normal = vertices[i];
-
-        real cos_theta = normal[2];
-        real sin_theta =
+    for (auto normal : vertices) {
+        auto cos_theta = normal[2];
+        auto sin_theta =
           math::sqrt(normal[0] * normal[0] + normal[1] + normal[1]);
 
         real cos_phi, sin_phi;
@@ -368,15 +366,15 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
             sin_phi = normal[1] / sin_theta;
         }
 
-        vec3_t tangent =
+        auto tangent =
           vec3(cos_theta * cos_phi, cos_theta * sin_phi, -sin_theta);
-        vec3_t binormal = cross(tangent, normal);
+        auto binormal = cross(tangent, normal);
         binormal = normalize(binormal - dot(binormal, tangent) * tangent);
-        vec2_t uv{};
-        uv[0] = real(.5) +
-                ::math::atan2(normal[2], normal[0]) * inverse(real(2) * PI);
-        uv[1] = real(.5) - ::math::asin(normal[1]) * inverse(PI);
-        uv[0] *= signum(dot(cross(tangent, binormal), normal));
+        auto uv = vec2_t{};
+        uv[0] = .5_r + ::math::atan2(normal[2], normal[0]) * inverse(2_r * PI);
+        uv[1] = .5_r - ::math::asin(normal[1]) * inverse(PI);
+        uv[0] *=
+          static_cast<real>(signum(dot(cross(tangent, binormal), normal)));
 
         glt::primitives::setPoint(v.position, normal);
         glt::primitives::setVec(v.tangent, tangent);

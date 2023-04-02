@@ -12,34 +12,35 @@
 namespace sys {
 
 namespace {
-inline constexpr auto SECONDS_PER_NANOSECOND = 1e-9;
-inline constexpr auto NANOSECONDS_PER_SECOND = 1e9;
-} // namespace
-
-namespace {
-double
+struct timespec
 getTime()
 {
-    timespec tv{};
-
-    while (clock_gettime(CLOCK_MONOTONIC_RAW, &tv) == -1) {
-        if (errno == EINTR) {
-            errno = 0;
-        } else {
-            ERR(std::string("clock_gettime failed") + strerror_errno().data());
-            return NAN;
-        }
+    struct timespec tv
+    {};
+    while (clock_gettime(CLOCK_MONOTONIC_RAW, &tv) < 0) {
+        auto e = std::exchange(errno, 0);
+        if (e == EINTR)
+            continue;
+        FATAL_ERR(std::string("clock_gettime failed") +
+                  strerror_errno().data());
     }
 
-    return double(tv.tv_sec) + double(tv.tv_nsec) * SECONDS_PER_NANOSECOND;
+    return tv;
 }
 } // namespace
 
 double
 queryTimer() noexcept
 {
-    static const double T0 = getTime();
-    return getTime() - T0;
+    static const timespec t0 = getTime();
+    auto t1 = getTime();
+    auto s = t1.tv_sec - t0.tv_sec;
+    auto n = t1.tv_nsec - t0.tv_nsec;
+    if (n < 0) {
+        n += 1'000'000'000;
+        s--;
+    }
+    return static_cast<double>(s) + static_cast<double>(n) * 1e-9;
 }
 
 void
@@ -48,16 +49,16 @@ sleep(double secs) noexcept
     timespec tv{};
     tv.tv_sec = static_cast<decltype(tv.tv_sec)>(secs);
     tv.tv_nsec = static_cast<decltype(tv.tv_nsec)>(
-      (secs - static_cast<double>(tv.tv_sec)) * NANOSECONDS_PER_SECOND);
+      (secs - static_cast<double>(tv.tv_sec)) * 1e9);
 
     timespec rmtv{};
-    while (nanosleep(&tv, &rmtv) == -1) {
-        if (errno == EINTR) {
-            errno = 0;
+    while (nanosleep(&tv, &rmtv) < 0) {
+        auto e = std::exchange(errno, 0);
+        if (e == EINTR) {
             tv = rmtv;
-        } else {
-            ERR(std::string("sleep failed: ") + strerror_errno().data());
+            continue;
         }
+        FATAL_ERR(std::string("sleep failed: ") + strerror_errno(e).data());
     }
 }
 

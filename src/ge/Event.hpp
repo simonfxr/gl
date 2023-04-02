@@ -64,9 +64,16 @@ makeEventHandler(F f)
       new FunctorEventHandler<F, T>(std::move(f))));
 }
 
-template<typename T, typename E>
+template<typename T, typename E, typename U>
 inline auto
-makeEventHandler(T &o, void (T::*m)(const Event<E> &))
+makeEventHandler(T &o, void (U::*m)(const Event<E> &) const)
+{
+    return makeEventHandler([=, &o](const Event<E> &ev) { return (o.*m)(ev); });
+}
+
+template<typename T, typename E, typename U>
+inline auto
+makeEventHandler(T &o, void (U::*m)(const Event<E> &))
 {
     return makeEventHandler([=, &o](const Event<E> &ev) { return (o.*m)(ev); });
 }

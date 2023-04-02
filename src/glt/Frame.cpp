@@ -56,7 +56,7 @@ Frame::setXZ(const direction3_t &x, const direction3_t &z)
 void
 Frame::lookingAt(const point3_t &p)
 {
-    direction3_t z = -directionFromTo(origin, p);
+    auto z = -directionFromTo(origin, p);
     setXZ(math::normalize(cross(localY(), z)), z);
 }
 
@@ -69,7 +69,7 @@ Frame::rotateLocal(real angleRad, const vec3_t &localAxis)
 void
 Frame::rotateWorld(real angleRad, const vec3_t &worldAxis)
 {
-    mat3_t rot = rotationMatrix(angleRad, worldAxis);
+    auto rot = rotationMatrix(angleRad, worldAxis);
     x_axis = rot * x_axis;
     z_axis = rot * z_axis;
 }
@@ -91,9 +91,9 @@ Frame::normalize()
 {
     using math::normalize;
     // gram-schmidt orthonormalization
-    vec3_t y = normalize(localY());
-    vec3_t x = x_axis - projectAlong(x_axis, y);
-    vec3_t z = z_axis - projectAlong(z_axis, y) - projectAlong(z_axis, x);
+    auto y = normalize(localY());
+    auto x = x_axis - projectAlong(x_axis, y);
+    auto z = z_axis - projectAlong(z_axis, y) - projectAlong(z_axis, x);
     x_axis = normalize(x);
     z_axis = normalize(z);
 }
@@ -140,7 +140,7 @@ transformationLocalToWorld(const Frame &fr)
 mat4_t
 transformationWorldToLocal(const Frame &fr)
 {
-    mat4_t m = mat4(rotationWorldToLocal(fr));
+    auto m = mat4(rotationWorldToLocal(fr));
     m[3] = m * vec4(-fr.origin, 1.f);
     return m;
 }

@@ -15,6 +15,7 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "sys/measure.hpp"
+#include "util/range.hpp"
 
 #include <algorithm>
 #include <bitset>
@@ -39,7 +40,7 @@ static const int32_t N = 196;                // 196;
 static const int32_t SPHERE_POINTS_FACE = 8; // 32;
 static const int32_t SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const bool OCCLUSION = false;
-static const char *WORLD_MODEL_FILE = "voxel-world.mdl";
+static const char *const WORLD_MODEL_FILE = "voxel-world.mdl";
 
 struct MaterialProperties
 {
@@ -132,7 +133,7 @@ initState(State *state, const InitEv &ev)
       "incGamma",
       "increase the value of gamma correction",
       [state](const ge::Event<ge::CommandEvent> & /*unused*/, double inc) {
-          state->gamma_correction += real(inc);
+          state->gamma_correction += static_cast<real>(inc);
           if (state->gamma_correction < 0)
               state->gamma_correction = 0.;
       }));
@@ -156,7 +157,7 @@ initState(State *state, const InitEv &ev)
 
     state->gamma_correction = 1.8f;
 
-    state->fpsTimer.reset(new ge::Timer(e));
+    state->fpsTimer = std::make_unique<ge::Timer>(e);
     state->fpsTimer->start(FPS_UPDATE_INTERVAL, true);
 
     srand(0xDEADBEEF);
@@ -232,7 +233,7 @@ struct Densities
 
 struct World
 {
-    using Word = unsigned long;
+    using Word = uint64_t;
 
     static const uint32_t WORD_BITS = sizeof(Word) * 8;
     static const uint32_t NBYTES = (N * N * N + WORD_BITS - 1) / WORD_BITS;
@@ -244,7 +245,7 @@ struct World
         uint32_t bitidx = i * N * N + j * N + k;
         uint32_t idx = bitidx / WORD_BITS;
         uint32_t bit = bitidx % WORD_BITS;
-        return (bits[idx] & (Word(1) << bit)) != 0;
+        return (bits[idx] & (Word{ 1 } << bit)) != 0;
     }
 
     struct Ref
@@ -254,7 +255,7 @@ struct World
         Ref(Word *_w, Word _b) : w(_w), bit(_b) {}
         Ref &operator=(bool x)
         {
-            Word mask = Word(1) << bit;
+            Word mask = Word{ 1 } << bit;
             *w = x ? *w | mask : *w & ~mask;
 
             // branching seems to be faster than blending
@@ -264,17 +265,20 @@ struct World
             return *this;
         }
 
-        explicit operator bool() { return (*w & (Word(1) << bit)) != 0; }
+        explicit operator bool() const
+        {
+            return (*w & (Word{ 1 } << bit)) != 0;
+        }
     };
 
     using reference = Ref;
 
     reference operator()(uint32_t i, uint32_t j, uint32_t k)
     {
-        uint32_t bitidx = i * N * N + j * N + k;
-        uint32_t idx = bitidx / WORD_BITS;
-        uint32_t bit = bitidx % WORD_BITS;
-        return Ref(&bits[idx], bit);
+        auto bitidx = i * N * N + j * N + k;
+        auto idx = bitidx / WORD_BITS;
+        auto bit = bitidx % WORD_BITS;
+        return { &bits[idx], bit };
     }
 
     void zero() { memset(bits, 0, sizeof bits); }
@@ -293,8 +297,8 @@ struct Faces
     vec3_t f[2]; // front, up, right, bot, down, left
 };
 
-static const uint32_t RAY_SAMPLES =
-  uint32_t(real(1.9) * (real(N) + 1)); // about sqrt(3) * N, maximum ray length
+static const uint32_t RAY_SAMPLES = static_cast<uint32_t>(
+  1.9_r * (static_cast<real>(N) + 1)); // about sqrt(3) * N, maximum ray length
 
 struct Ray
 {
@@ -417,9 +421,9 @@ initRays(Rays &rays, vec3_t dirs[])
 #pragma omp parallel for reduction(+ : cos0, cos1, cos2, cos3, cos4, cos5)
     for (int32_t i = 0; i < SPHERE_POINTS; ++i) {
         const direction3_t &d = dirs[i];
-        vec3_t p = real(N) * (d * 0.5f + vec3(0.5f));
-        vec3_t step = (p - center) / real(10. * N);
-        Faces sum1 = { { vec3(0.), vec3(0.) } };
+        auto p = static_cast<real>(N) * (d * 0.5_r + vec3(0.5_r));
+        auto step = (p - center) / (10_r * static_cast<real>(N));
+        auto sum1 = Faces{ { vec3(0.), vec3(0.) } };
         initRay(rays.rays[i], d, step, sum1);
         cos0 += sum1.f[0][0];
         cos1 += sum1.f[0][1];
@@ -498,12 +502,12 @@ visible(const World &w, const World &vis, int32_t i, int32_t j, int32_t k)
            (!w(i, j, k) && vis(i, j, k));
 }
 
-static World *
+static std::unique_ptr<World>
 filterOccluded(const World &w)
 {
 
-    auto *ret = new World;
-    World &vis = *ret;
+    auto ret = std::make_unique<World>();
+    auto &vis = *ret;
 
     memset(&vis, 0, sizeof vis);
 
@@ -596,7 +600,7 @@ trace(const World &w, const Rays &rs, const ivec3_t &p0)
     return diffContr;
 }
 
-static real VIRTUAL_DIM = 100.;
+static const real VIRTUAL_DIM = 100.;
 
 static bool
 visibleFace(const World &w,
@@ -706,7 +710,8 @@ createWorld(Densities &ds)
         for (int32_t j = 0; j < N; ++j)
             for (int32_t k = 0; k < N; ++k) {
                 vec3_t wc =
-                  (vec3(ivec3(i, j, k)) * real(1_r / real(N)) - vec3(0.5_r)) *
+                  (vec3(ivec3(i, j, k)) * (1_r / static_cast<real>(N)) -
+                   vec3(0.5_r)) *
                   VIRTUAL_DIM;
                 ds.ds[i][j][k] = density(wc);
                 //                sys::io::stderr() << i << " " << j << " " << k
@@ -763,10 +768,7 @@ orWorldNot(World &r, const World &a, const World &b)
 
 struct Vertices
 {
-    size_t size;
-    Vertex *verts;
-    explicit Vertices(size_t s) : size(s), verts(new Vertex[s]) {}
-    ~Vertices() { delete[] verts; }
+    Array<Vertex> verts;
 };
 
 const ivec3_t neighOffs[6] = { ivec3(0, 0, +1), ivec3(0, +1, 0),
@@ -779,8 +781,8 @@ hasNeighbours(const World &w, const World &vis, const ivec3_t &p)
     if (!w(p[0], p[1], p[2]))
         return false;
     for (auto neighOff : neighOffs) {
-        const ivec3_t p1 = p + neighOff;
-        bool onCubeSurf = 0 > p1[0] || p1[0] >= N || 0 > p1[1] || p1[1] >= N ||
+        auto p1 = p + neighOff;
+        auto onCubeSurf = 0 > p1[0] || p1[0] >= N || 0 > p1[1] || p1[1] >= N ||
                           0 > p1[2] || p1[2] >= N;
         if (onCubeSurf)
             return true;
@@ -803,7 +805,7 @@ createModel(CubeMesh &worldModel,
             const World &world,
             const World &vis,
             const GlobalOcc *occmap,
-            const Vertices &verts,
+            const Array<Vertex> &verts,
             const uint32_t *permut,
             Stats &stats,
             const Densities &ds)
@@ -834,15 +836,15 @@ createModel(CubeMesh &worldModel,
                 if (vis(ii, jj, kk) && world(ii, jj, kk)) {
                     ++stats.visBlocks;
 
-                    const Faces *diffContr;
+                    const Faces *diffContr{};
                     if (OCCLUSION)
                         diffContr = &occmap->lambertFactor[ii][jj][kk];
 
-                    real dens = ds.ds[ii][jj][kk];
+                    auto dens = ds.ds[ii][jj][kk];
 
-                    vec3_t blue = vec3(0_r, 0_r, 1_r);
-                    vec3_t yellow = vec3(0_r, 1_r, 1_r);
-                    vec3_t red = vec3(1_r, 0_r, 0_r);
+                    auto blue = vec3(0_r, 0_r, 1_r);
+                    auto yellow = vec3(0_r, 1_r, 1_r);
+                    auto red = vec3(1_r, 0_r, 0_r);
 
                     vec3_t col3{};
                     if (dens <= 0.5_r) {
@@ -856,9 +858,8 @@ createModel(CubeMesh &worldModel,
                     auto col = glt::color(col3);
                     //                    uint32_t col =
                     //                    glt::color(randColor()).rgba();
-                    vec3_t offset = BLOCK_DIM * vec3(ivec3(ii, jj, kk));
-                    for (uint32_t r = 0; r < verts.size; ++r) {
-                        Vertex v = verts.verts[r];
+                    auto offset = BLOCK_DIM * vec3(ivec3(ii, jj, kk));
+                    for (auto v : verts) {
                         ++stats.faces;
                         if (visibleFace(
                               world, vis, ii, jj, kk, vec3(v.normal))) {
@@ -922,14 +923,14 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
     time_op(createGeometry(world, *densitiesp));
 
     auto raysp = std::make_unique<Rays>();
-    Rays &rays = *raysp;
+    auto &rays = *raysp;
     time_op(initRays(rays, sphere_points));
     sys::io::stderr() << "rays crossing planes: " << rays.sumcos.f[0] << ", "
                       << rays.sumcos.f[1] << "\n";
 
     std::unique_ptr<World> visp;
-    time_op(visp.reset(filterOccluded(world)));
-    World &vis = *visp;
+    time_op(visp = filterOccluded(world));
+    auto &vis = *visp;
 
     uint32_t permut[N];
     for (int32_t i = 0; i < N; ++i)
@@ -960,7 +961,7 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
 
     std::unique_ptr<GlobalOcc> occmap;
     if (OCCLUSION) {
-        occmap.reset(new GlobalOcc);
+        occmap = std::make_unique<GlobalOcc>();
         time_op(createOcclusionMap(occmap.get(), hull, worldOrVis, rays));
     }
 
@@ -971,11 +972,10 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
 
     Stats stats{};
 
-    auto vertsp = std::make_unique<Vertices>(cubeModel.size());
-    Vertices &verts = *vertsp;
+    auto verts = Array<Vertex>(cubeModel.size());
 
-    for (uint32_t i = 0; i < verts.size; ++i)
-        verts.verts[i] = cubeModel.at(i);
+    for (auto [i, v] : enumerate(cubeModel.vertices()))
+        verts[i] = static_cast<Vertex>(v);
 
     INFO("created verts");
 
@@ -1056,7 +1056,8 @@ renderBlocks(State *state, ge::Engine &e)
                       BLOCK_MAT.shininess);
     us.optional("materialProperties", mat);
     us.optional("gammaCorrection", state->gamma_correction);
-    us.optional("sin_time", math::sin(real(e.gameLoop().tickTime())));
+    us.optional("sin_time",
+                math::sin(static_cast<real>(e.gameLoop().tickTime())));
 
     state->worldModel.drawElements();
 }
@@ -1178,21 +1179,22 @@ fade(real t)
 static real
 grad(int hash, real x, real y, real z)
 {
-    int h = hash & 15;
-    real u = h < 8 ? x : y;
-    real v = h < 4 ? y : h == 12 || h == 14 ? x : z;
+    auto h = hash & 15;
+    auto u = h < 8 ? x : y;
+    auto v = h < 4 ? y : h == 12 || h == 14 ? x : z;
     return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
 }
 
 static real
 sumNoise3D(const vec3_t &p, uint32_t octaves, real fmin, real phi, bool absval)
 {
-    real a = 1.;
-    real r = 0.;
-    real freq = fmin;
+    auto a = 1_r;
+    auto r = 0_r;
+    auto freq = fmin;
 
-    for (uint32_t i = 0; i < octaves; ++i) {
-        real x = noise3D(p * freq);
+    for (auto _i : irange(octaves)) {
+        UNUSED(_i);
+        auto x = noise3D(p * freq);
         if (absval)
             x = math::abs(x);
         r += a * x;
@@ -1212,24 +1214,21 @@ lerp2(real t, real a, real b)
 static real
 noise3D(const vec3_t &pnt)
 {
+    auto p = permutation;
 
-    const uint16_t *p = permutation;
+    auto [x, y, z] = pnt;
 
-    real x = pnt[0];
-    real y = pnt[1];
-    real z = pnt[2];
-
-    int X = static_cast<int>(math::floor(x)) & 255,
-        Y = static_cast<int>(math::floor(y)) & 255,
-        Z = static_cast<int>(math::floor(z)) & 255;
+    auto X = static_cast<int>(math::floor(x)) & 255;
+    auto Y = static_cast<int>(math::floor(y)) & 255;
+    auto Z = static_cast<int>(math::floor(z)) & 255;
 
     x -= math::floor(x);
     y -= math::floor(y);
     z -= math::floor(z);
 
-    real u = fade(x);
-    real v = fade(y);
-    real w = fade(z);
+    auto u = fade(x);
+    auto v = fade(y);
+    auto w = fade(z);
 
     int A = p[X] + Y, AA = p[A] + Z, AB = p[A + 1] + Z, B = p[X + 1] + Y,
         BA = p[B] + Z, BB = p[B + 1] + Z;
@@ -1251,12 +1250,12 @@ noise3D(const vec3_t &pnt)
 void
 pointsOnSphere(uint32_t n, vec3_t *ps)
 {
-    real inc = PI * (3_r - math::sqrt(5_r));
-    real off = 2_r / n;
-    for (uint32_t k = 0; k < n; ++k) {
-        real y = k * off - 1 + (off / 2_r);
-        real r = math::sqrt(1_r - y * y);
-        real phi = k * inc;
+    auto inc = PI * (3_r - math::sqrt(5_r));
+    auto off = 2_r / static_cast<real>(n);
+    for (auto k : irange(n)) {
+        auto y = static_cast<real>(k) * off - 1 + (off / 2_r);
+        auto r = math::sqrt(1_r - y * y);
+        auto phi = static_cast<real>(k) * inc;
         auto [c, s] = cossin(phi);
         ps[k] = vec3(c * r, y, s * r);
     }

@@ -1,3 +1,5 @@
+#include <cstddef>
+
 #include "ge/Camera.hpp"
 #include "ge/Command.hpp"
 #include "ge/Engine.hpp"
@@ -25,16 +27,16 @@ static const vec3_t WORLD_BLOCK_SCALE = vec3(32);
 
 static const ivec3_t SAMPLER_SIZE = ivec3(8);
 
-static const size_t BLOCK_DATA_SIZE =
+static const size_t BLOCK_DATA_SIZE = static_cast<const size_t>(
   (SAMPLER_SIZE[0] * SAMPLER_SIZE[1] * SAMPLER_SIZE[2]) *
-  2; // may not fit in worst case
+  2); // may not fit in worst case
 
 static const ivec3_t BLOCKS = ivec3(10, 3, 10);
 static const ivec3_t ORIGIN = ivec3(0, 0, 0);
 
-typedef GLuint GLTransformFeedback;
-typedef GLuint GLArrayBuffer;
-typedef GLuint GLVertexArray;
+using GLTransformFeedback = GLuint;
+using GLArrayBuffer = GLuint;
+using GLVertexArray = GLuint;
 
 DEF_GL_MAPPED_TYPE(WorldVertex, (vec3_t, position));
 
@@ -53,7 +55,7 @@ struct Block
 
 struct Anim
 {
-    ge::Engine *engine;
+    ge::Engine *engine{};
     glt::Mesh<WorldVertex> unitRect; // a slice in the world volume
     std::shared_ptr<glt::TextureRenderTarget3D> worldVolume;
     glt::Mesh<MCVertex> volumeCube;
@@ -85,7 +87,7 @@ struct Anim
                    const vec3_t &aabb_max);
     void makeSampleVolume();
     void makePolygon(const Block &);
-    void renderPolygon(const Block &);
+    void renderPolygon(const Block &) const;
 };
 
 void
@@ -110,7 +112,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     engine->window().showMouseCursor(false);
 
     {
-        WorldVertex v;
+        auto v = WorldVertex{};
         unitRect.primType(GL_TRIANGLES);
         v.position = vec3(0.f, 0.f, 0.f);
         unitRect.addVertex(v);
@@ -166,7 +168,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     for (int i = 0; i < SAMPLER_SIZE[0]; ++i) {
         for (int j = 0; j < SAMPLER_SIZE[1]; ++j) {
             for (int k = 0; k < SAMPLER_SIZE[2]; ++k) {
-                MCVertex v;
+                auto v = MCVertex{};
                 v.position = vec3(ivec3(i, j, k)) / vec3(SAMPLER_SIZE);
                 volumeCube.addVertex(v);
             }
@@ -220,6 +222,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 void
 Anim::initBlock(Block *block)
 {
+    UNUSED(this);
     ASSERT(block);
 
     GL_CALL(glGenBuffers, 1, &block->data);
@@ -248,7 +251,7 @@ Anim::initBlock(Block *block)
             GL_FLOAT,
             GL_FALSE,
             sizeof(MCFeedbackVertex),
-            reinterpret_cast<void *>(offsetof(MCFeedbackVertex, normal)));
+            GLT_FIELD_OFFSET(MCFeedbackVertex, normal));
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
     GL_CALL(glEnableVertexAttribArray, 0);
@@ -275,11 +278,11 @@ Anim::destroyBlock(Block *block)
 void
 Anim::makeBlock(Block &block, const vec3_t &aabb_min, const vec3_t &aabb_max)
 {
-    glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
+    auto &gt = engine->renderManager().geometryTransform();
     auto sp = gt.save();
 
-    vec3_t fuzz = vec3(0.f);
-    vec3_t max = aabb_max + fuzz;
+    auto fuzz = vec3(0.f);
+    auto max = aabb_max + fuzz;
 
     block.aabb_min = aabb_min;
     block.aabb_max = max;
@@ -299,18 +302,18 @@ Anim::makeSampleVolume()
 
     worldProgram->use();
 
-    vec3_t tex_scale =
+    auto tex_scale =
       vec3(SAMPLER_SIZE - ivec3(1)) / vec3(SAMPLER_SIZE - ivec3(2));
-    mat4_t scaleM = glt::scaleMatrix(tex_scale);
+    auto scaleM = glt::scaleMatrix(tex_scale);
 
-    float invDim = 1.f / float(worldVolume->depth() - 1);
+    auto invDim = 1_r / static_cast<real>(worldVolume->depth() - 1);
     for (auto i = size_t{ 0 }; i < worldVolume->depth(); ++i) {
         worldVolume->targetAttachment(glt::TextureRenderTarget3D::Attachment{
           glt::TextureRenderTarget3D::AttachmentLayer, i });
 
         rm.setActiveRenderTarget(worldVolume);
         glt::Uniforms(*worldProgram)
-          .mandatory("depth", float(i) * invDim)
+          .mandatory("depth", static_cast<real>(i) * invDim)
           .mandatory("worldMatrix",
                      rm.geometryTransform().modelMatrix() * scaleM)
           .optional("time", engine->gameLoop().tickTime());
@@ -326,7 +329,7 @@ Anim::makeSampleVolume()
 void
 Anim::makePolygon(const Block &block)
 {
-    glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
+    auto &gt = engine->renderManager().geometryTransform();
     auto sp = gt.save();
 
     GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
@@ -366,13 +369,13 @@ Anim::makePolygon(const Block &block)
 }
 
 void
-Anim::renderPolygon(const Block &block)
+Anim::renderPolygon(const Block &block) const
 {
-    glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
+    auto &gt = engine->renderManager().geometryTransform();
     auto sp = gt.save();
 
-    const mat4_t model = gt.modelMatrix();
-    const mat4_t scaleM = glt::scaleMatrix(WORLD_BLOCK_SCALE);
+    auto model = gt.modelMatrix();
+    auto scaleM = glt::scaleMatrix(WORLD_BLOCK_SCALE);
     gt.loadModelMatrix(scaleM * model);
     gt.translate(block.aabb_min);
     gt.scale(block.aabb_max - block.aabb_min);
@@ -410,7 +413,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
         renderPolygon(blocks[i]);
 
     if (fpsTimer->fire()) {
-        glt::FrameStatistics fs = engine->renderManager().frameStatistics();
+        auto fs = engine->renderManager().frameStatistics();
         sys::io::stdout() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                           << fs.avg << "; " << fs.avg << "; " << fs.min << "; "
                           << fs.max << "\n";

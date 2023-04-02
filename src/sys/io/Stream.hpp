@@ -177,15 +177,28 @@ protected:
 struct SYS_API ByteStream : public IOStream
 {
     explicit ByteStream(size_t bufsize = 32);
-    ByteStream(std::string_view);
+    explicit ByteStream(std::string_view);
+    ByteStream(const ByteStream &) = default;
+    ByteStream(ByteStream &&) noexcept = default;
 
     ~ByteStream() override;
+
+    ByteStream &operator=(const ByteStream &) = default;
+    ByteStream &operator=(ByteStream &&) noexcept = default;
 
     size_t size() const { return buffer.size(); }
     const char *data() const { return buffer.data(); }
     char *data() { return buffer.data(); }
-    std::string str() const & { return std::string(data(), size()); }
-    std::string str() const && { return std::move(buffer); }
+    [[nodiscard]] std::string str() const &
+    {
+        return std::string(data(), size());
+    }
+    std::string str() && { return std::move(buffer); }
+
+    void reserve(size_t additional)
+    {
+        buffer.reserve(buffer.size() + additional);
+    }
 
     operator std::string_view() const { return { data(), size() }; }
 

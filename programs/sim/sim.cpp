@@ -4,6 +4,7 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "sys/clock.hpp"
+#include "util/noncopymove.hpp"
 #include "util/range.hpp"
 
 #include <algorithm>
@@ -58,7 +59,7 @@ ParticleRef
 particleRef(size_t idx)
 {
     ParticleRef r{};
-    r.index = uint16_t(idx);
+    r.index = static_cast<uint16_t>(idx);
     return r;
 }
 
@@ -66,7 +67,7 @@ SphereRef
 sphereRef(size_t idx)
 {
     SphereRef r{};
-    r.index = uint16_t(idx);
+    r.index = static_cast<uint16_t>(idx);
     return r;
 }
 
@@ -156,6 +157,7 @@ struct World::Data
 void
 World::DataDeleter::operator()(Data *p) noexcept
 {
+    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
     delete p;
 }
 
@@ -220,13 +222,12 @@ World::simulate(math::real dt)
 bool
 World::canMoveCamera(const math::vec3_t &position, math::vec3_t &step)
 {
-    vec3_t out_coll = vec3(real(0));
-    vec3_t new_pos = position + step;
+    auto out_coll = vec3(0_r);
+    auto new_pos = position + step;
     auto hit = self->collidesWall(new_pos, CAMERA_SPHERE_RAD, out_coll);
 
     if (hit >= 0) {
-        vec3_t valid_pos =
-          out_coll + self->walls[hit].normal * CAMERA_SPHERE_RAD;
+        auto valid_pos = out_coll + self->walls[hit].normal * CAMERA_SPHERE_RAD;
         step = projectAlong(valid_pos - position, step);
     }
 
@@ -247,7 +248,7 @@ World::spawnSphere(const Sphere &s, const SphereModel &m)
     p.pos = s.center;
 
     SphereData sd{};
-    sd.particle.index = uint16_t(self->particles.size());
+    sd.particle.index = static_cast<uint16_t>(self->particles.size());
     sd.r = s.r;
 
     self->particles.push_back(p);
@@ -286,12 +287,12 @@ World::render(Renderer &renderer, float dt)
     const auto n = self->spheres.size();
 
     if (render_by_distance) {
-        const point3_t &cam = renderer.camera().origin;
+        auto &cam = renderer.camera().origin;
         std::vector<SphereDistance> spheres_ordered;
 
         for (const auto [i, s] : enumerate(self->spheres)) {
-            const Particle &p = self->deref(s.particle);
-            const point3_t pos = p.pos + p.vel * dt;
+            auto &p = self->deref(s.particle);
+            auto pos = p.pos + p.vel * dt;
 
             if (glt::clipped(testSphere(renderer.frustum(), pos, s.r))) {
                 continue;
@@ -305,14 +306,14 @@ World::render(Renderer &renderer, float dt)
         }
 
         for (const auto &d : spheres_ordered) {
-            Sphere s = self->makeSphere(d.sphere);
+            auto s = self->makeSphere(d.sphere);
             s.center += s.v * dt;
             renderer.renderSphere(s, self->sphereModels[d.sphere.index]);
         }
 
     } else {
         for (const auto i : irange(n)) {
-            Sphere s = self->makeSphere(sphereRef(i));
+            auto s = self->makeSphere(sphereRef(i));
             s.center += s.v * dt;
             renderer.renderSphere(s, self->sphereModels[i]);
         }
@@ -340,7 +341,7 @@ World::Data::collidesWall(const point3_t &center,
     int32_t hit = -1;
 
     for (auto i : irange(6)) {
-        real dist = distance(walls[i], center);
+        auto dist = distance(walls[i], center);
         if (dist < r && dist < dist_min) {
             dist_min = dist;
             hit = i;
@@ -398,11 +399,12 @@ struct BSP
             delete down[0].tree;
             delete down[1].tree;
         } else {
-            Node *node = down[1].list;
+            auto node = down[1].list;
             while (node != nullptr) {
-                Node *prev = node;
+                auto prev = node;
                 node = node->nxt;
                 prev->nxt = nullptr;
+                // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
                 delete prev;
             }
         }
@@ -413,17 +415,22 @@ BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
 static const BSP marker_leaf = { plane(), { { nullptr }, { nullptr } } };
 END_NO_WARN_GLOBAL_DESTRUCTOR
 
-static BSP *const leaf_marker = const_cast<BSP *>(&marker_leaf);
+static BSP *
+leaf_marker()
+{
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+    return const_cast<BSP *>(&marker_leaf);
+}
 
 bool
 isLeaf(const BSP *t)
 {
-    return t->down[0].tree == leaf_marker;
+    return t->down[0].tree == leaf_marker();
 }
 
-static direction3_t NORMALS[3] = { vec3(1.f, 0.f, 0.f),
-                                   vec3(0.f, 1.f, 0.f),
-                                   vec3(0.f, 0.f, 1.f) };
+static const direction3_t NORMALS[3] = { vec3(1.f, 0.f, 0.f),
+                                         vec3(0.f, 1.f, 0.f),
+                                         vec3(0.f, 0.f, 1.f) };
 
 plane3_t
 makePlane(int ni, const Box &vol)
@@ -468,12 +475,12 @@ World::Data::insertBSP(BSP *&p,
                        float r)
 {
 
-    if (p == nullptr) {
+    if (!p) {
         p = allocBSP();
         ++num_tree;
         //        ASSERT(node->nxt == 0);
         p->plane = makePlane(ni, volume);
-        p->down[0].tree = leaf_marker;
+        p->down[0].tree = leaf_marker();
         p->down[1].list = node;
         return;
     }
@@ -483,12 +490,12 @@ World::Data::insertBSP(BSP *&p,
             node->nxt = p->down[1].list;
             p->down[1].list = node;
         } else {
-            Node *other = p->down[1].list;
+            auto *other = p->down[1].list;
             // must have exactly one Node
             //            ASSERT(other->nxt == 0);
-            SphereRef s2 = other->sphere;
-            const SphereData &s2d = deref(s2);
-            const Particle &p2 = deref(s2d.particle);
+            auto s2 = other->sphere;
+            auto &s2d = deref(s2);
+            auto &p2 = deref(s2d.particle);
             p->down[0].tree = p->down[1].tree = nullptr;
             insertBSP(p, ni, volume, depth, other, p2.pos, s2d.r);
             insertBSP(p, ni, volume, depth, node, center, r);
@@ -496,9 +503,9 @@ World::Data::insertBSP(BSP *&p,
         return;
     }
 
-    float d = distance(p->plane, center);
-    float d0 = math::abs(d);
-    auto sign = float(signum(d));
+    auto d = distance(p->plane, center);
+    auto d0 = math::abs(d);
+    auto sign = static_cast<real>(signum(d));
     auto ni2 = (ni + 1) % 3;
     if (sign == 0.f)
         sign = 1.f;
@@ -580,12 +587,12 @@ World::Data::findCollisions(std::vector<Contact> &contacts,
         return;
     }
 
-    float d = distance(t->plane, center);
-    float d0 = math::abs(d);
-    auto sign = float(signum(d));
+    auto d = distance(t->plane, center);
+    auto d0 = math::abs(d);
+    auto sign = static_cast<real>(signum(d));
     auto ni2 = (ni + 1) % 3;
-    if (sign == 0.f)
-        sign = 1.f;
+    if (sign == 0_r)
+        sign = 1_r;
     auto face = sign > 0 ? 0 : 1;
 
     if (d0 > r) {
@@ -618,8 +625,8 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
             con.y = world;
             con.normal = walls[hit].normal;
             con.impulse = 0.f;
-            point3_t nearest = projectOnto(walls[hit], p1.pos);
-            float dist = distance(p1.pos, nearest);
+            auto nearest = projectOnto(walls[hit], p1.pos);
+            auto dist = distance(p1.pos, nearest);
             con.distance = dist - s1.r;
             contacts.push_back(con);
         }
@@ -667,8 +674,8 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
 
       for (const auto i
            : irange(n)) {
-          const SphereData &s1 = spheres[i];
-          const Particle &p1 = deref(s1.particle);
+          auto &s1 = spheres[i];
+          auto &p1 = deref(s1.particle);
           auto num_coll = contacts.size();
           findCollisions(
             contacts, root, 0, collided, sphereRef(i), p1.pos, s1.r);
@@ -705,10 +712,10 @@ World::Data::solveContacts(std::vector<Contact> &contacts, float dt)
             //     p2.vel -= p * p2.invMass * n;
             // }
 
-            const vec3_t &norm = con.normal;
+            auto &norm = con.normal;
 
-            Particle &p1 = deref(con.x);
-            Particle &p2 = deref(con.y);
+            auto &p1 = deref(con.x);
+            auto &p2 = deref(con.y);
 
             // get all of relative normal velocity
             auto relNv = dot(p2.vel - p1.vel, norm);
@@ -767,8 +774,8 @@ World::Data::integrate(float dt)
 
     auto n = particles.size();
     for (size_t i = 0; i < n; ++i) {
-        Particle &p = particles[i];
-        vec3_t a = potentialAccel(p.pos);
+        auto &p = particles[i];
+        auto a = potentialAccel(p.pos);
         p.pos += p.vel * dt;
         if (p.invMass != 0.f)
             p.vel += a * dt;
@@ -778,8 +785,8 @@ World::Data::integrate(float dt)
 Sphere
 World::Data::makeSphere(SphereRef ref)
 {
-    SphereData s = deref(ref);
-    Particle p = deref(s.particle);
+    auto s = deref(ref);
+    auto p = deref(s.particle);
     Sphere sp{};
     sp.center = p.pos;
     sp.v = p.vel;

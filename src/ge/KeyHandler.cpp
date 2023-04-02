@@ -110,7 +110,7 @@ KeyHandler::keyState(KeyCode code)
 {
     auto idx = code.numeric();
     CHECK_KEYCODE(code);
-    State state = self->states[idx];
+    auto state = self->states[idx];
 
     if (state.timestamp == self->frame_id)
         return state.down ? KeyState::Pressed : KeyState::Released;
@@ -152,11 +152,13 @@ KeyHandler::handleCommands()
         for (size_t i = 0; i < bind->size(); ++i) {
 
             auto key = (*bind)[i];
-            KeyCode code = key.code;
-            KeyState reqState = key.state;
-            KeyState curState = keyState(code);
+            auto code = key.code;
+            auto reqState = key.state;
+            auto curState = keyState(code);
 
-            bool match = (int(reqState) & int(curState)) == int(reqState);
+            auto match =
+              (static_cast<int>(reqState) & static_cast<int>(curState)) ==
+              static_cast<int>(reqState);
 
             // if (curState != Up)
             //     std::cerr << "checking key: " << prettyKeyCode(code) <<  "

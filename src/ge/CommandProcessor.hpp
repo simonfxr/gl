@@ -24,13 +24,13 @@ struct GE_API CommandProcessor
 
     Engine &engine();
 
-    CommandPtr command(std::string_view comname) const;
+    [[nodiscard]] CommandPtr command(std::string_view comname) const;
 
     bool define(CommandPtr comm, bool unique = false);
 
     bool exec(std::string_view comname, std::span<CommandArg> args);
 
-    bool exec(CommandPtr &com, std::span<CommandArg> args);
+    bool exec(const CommandPtr &com, std::span<CommandArg> args);
 
     bool exec(std::span<CommandArg> args);
 

@@ -29,7 +29,7 @@ struct Camera::Data
 
     real speed = 0.1_r;
     vec2_t mouse_sensitivity = vec2(0.00075_r);
-    vec3_t step_accum = vec3(real(0));
+    vec3_t step_accum = vec3(0_r);
     bool mouse_look{ false };
 
     explicit Data(Camera & /*me*/);
@@ -49,7 +49,7 @@ struct Camera::Data
     // event handlers
     void handleMouseMoved(const Event<MouseMoved> & /*ev*/);
     void handleInput(const Event<InputEvent> & /*unused*/);
-    void handleBeforeRender(const Event<RenderEvent> & /*e*/);
+    void handleBeforeRender(const Event<RenderEvent> & /*e*/) const;
 };
 
 DECLARE_PIMPL_DEL(Camera)
@@ -127,7 +127,7 @@ Camera::Data::runSaveFrame(const Event<CommandEvent> & /*unused*/,
 {
 
     const std::string *path;
-    if (args.size() == 0)
+    if (args.empty())
         path = &frame_path;
     else if (args.size() == 1 && args[0].type() == CommandArgType::String)
         path = &args[0].string;
@@ -151,7 +151,7 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
                            std::span<const CommandArg> args)
 {
     const std::string *path;
-    if (args.size() == 0)
+    if (args.empty())
         path = &frame_path;
     else if (args.size() == 1 && args[0].type() == CommandArgType::String)
         path = &args[0].string;
@@ -181,7 +181,7 @@ Camera::Data::runLoadFrame(const Event<CommandEvent> & /*unused*/,
 void
 Camera::Data::runSpeed(const Event<CommandEvent> & /*unused*/, double s)
 {
-    speed = math::real(s);
+    speed = static_cast<math::real>(s);
 }
 
 void
@@ -189,10 +189,11 @@ Camera::Data::runSensitivity(const Event<CommandEvent> & /*unused*/,
                              std::span<const CommandArg> args)
 {
     if (args.size() == 1 && args[0].type() == CommandArgType::Number) {
-        mouse_sensitivity = vec2(real(args[0].number));
+        mouse_sensitivity = vec2(static_cast<real>(args[0].number));
     } else if (args.size() == 2 && args[0].type() == CommandArgType::Number &&
                args[1].type() == CommandArgType::Number) {
-        mouse_sensitivity = vec2(real(args[0].number), real(args[1].number));
+        mouse_sensitivity = vec2(static_cast<real>(args[0].number),
+                                 static_cast<real>(args[1].number));
     } else {
         ERR("invalid arguments");
     }
@@ -207,11 +208,10 @@ Camera::Data::handleMouseMoved(const Event<MouseMoved> &ev)
 void
 Camera::Data::handleInput(const Event<InputEvent> & /*unused*/)
 {
-    real lenSq = quadrance(step_accum);
-    if (lenSq >= math::real(1e-4)) {
-        vec3_t local_step = speed * normalize(step_accum);
-        Event<CameraMoved> ev =
-          Event(CameraMoved(self, transformVector(frame, local_step)));
+    auto lenSq = quadrance(step_accum);
+    if (lenSq >= 1e-4_r) {
+        auto local_step = speed * normalize(step_accum);
+        auto ev = Event(CameraMoved(self, transformVector(frame, local_step)));
         if (events.moved.raise(ev))
             frame.translateWorld(ev.info.allowed_step);
     }
@@ -220,7 +220,7 @@ Camera::Data::handleInput(const Event<InputEvent> & /*unused*/)
 }
 
 void
-Camera::Data::handleBeforeRender(const Event<RenderEvent> &e)
+Camera::Data::handleBeforeRender(const Event<RenderEvent> &e) const
 {
     //    frame->normalize(); TODO: why dont we call that?
     e.info.engine.renderManager().geometryTransform().loadViewMatrix(

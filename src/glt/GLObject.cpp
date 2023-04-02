@@ -98,7 +98,7 @@ generate(ObjectType t, GLsizei n, GLuint *names)
 
     auto tab = Tables::get();
     ASSERT(t.is_valid());
-    auto idx = size_t(t.value);
+    auto idx = static_cast<size_t>(t.value);
     ASSERT(tab.kinds[idx].generator != nullptr);
     GL_CALL(tab.kinds[idx].generator, n, names);
     for (GLsizei i = 0; i < n; ++i) {
@@ -123,7 +123,7 @@ release(ObjectType t, GLsizei n, const GLuint *names)
 {
     auto tab = Tables::get();
     ASSERT(t.is_valid());
-    auto idx = size_t(t.value);
+    auto idx = static_cast<size_t>(t.value);
     GL_CALL(tab.kinds[idx].destructor, n, names);
     for (GLsizei i = 0; i < n; ++i) {
         if (names[i] != 0) {

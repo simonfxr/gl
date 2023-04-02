@@ -27,7 +27,7 @@ enum DrawType : uint8_t
     DrawElements
 };
 
-struct GLT_API MeshBase
+struct GLT_API MeshBase : private NonCopyable
 {
 public:
     struct VertexDataFree
@@ -36,13 +36,18 @@ public:
     };
     using unique_vertex_ptr = std::unique_ptr<char, VertexDataFree>;
 
+    MeshBase(MeshBase &&) = default;
+    MeshBase &operator=(MeshBase &&) = default;
+
 private:
+    using nop_deleter = decltype([](auto *) {});
+
     unique_vertex_ptr vertex_data{};
-    char *vertex_data_end{};
-    char *vertex_data_lim{};
+    std::unique_ptr<char, nop_deleter> vertex_data_end{};
+    std::unique_ptr<char, nop_deleter> vertex_data_lim{};
     size_t vertex_count{};
     std::vector<uint32_t> elements;
-    const StructInfo &struct_info;
+    const StructInfo *struct_info;
     std::vector<bool> enabled_attributes;
     size_t gpu_vertex_count = 0;
     size_t gpu_element_count = 0;
@@ -51,28 +56,28 @@ private:
     GLBufferObject vertex_buffer_name;
 
     GLenum usage_hint = GL_STATIC_DRAW;
-    GLenum prim_type;
+    GLenum prim_type{};
 
     DrawType draw_type = DrawArrays;
 
 protected:
     void *vertexRef(size_t i)
     {
-        return static_cast<void *>(vertex_data.get() + i * struct_info.size);
+        return static_cast<void *>(vertex_data.get() + i * struct_info->size);
     }
 
-    const void *vertexRef(size_t i) const
+    [[nodiscard]] const void *vertexRef(size_t i) const
     {
         return static_cast<const void *>(vertex_data.get() +
-                                         i * struct_info.size);
+                                         i * struct_info->size);
     }
 
     void *pushVertex()
     {
         if (hu_unlikely(vertex_data_end == vertex_data_lim))
             growVertexBuf();
-        auto end = vertex_data_end;
-        vertex_data_end += struct_info.size;
+        auto end = vertex_data_end.get();
+        vertex_data_end.reset(end + struct_info->size);
         ++vertex_count;
         return end;
     }
@@ -92,23 +97,23 @@ public:
              GLenum prim_ty);
     ~MeshBase();
 
-    GLenum primType() const { return prim_type; }
+    [[nodiscard]] GLenum primType() const { return prim_type; }
     void primType(GLenum primType);
 
-    GLenum usageHint() const { return usage_hint; }
+    [[nodiscard]] GLenum usageHint() const { return usage_hint; }
     void usageHint(GLenum usageHint);
 
-    size_t verticesSize() const { return vertex_count; }
-    size_t elementsSize() const { return elements.size(); }
+    [[nodiscard]] size_t verticesSize() const { return vertex_count; }
+    [[nodiscard]] size_t elementsSize() const { return elements.size(); }
 
-    size_t gpuVerticesSize() const { return gpu_vertex_count; }
-    size_t gpuElementsSize() const { return gpu_element_count; }
+    [[nodiscard]] size_t gpuVerticesSize() const { return gpu_vertex_count; }
+    [[nodiscard]] size_t gpuElementsSize() const { return gpu_element_count; }
 
-    DrawType drawType() const { return draw_type; }
+    [[nodiscard]] DrawType drawType() const { return draw_type; }
     void drawType(DrawType type);
 
     void enableAttribute(size_t i, bool enabled = true);
-    bool attributeEnabled(size_t i);
+    [[nodiscard]] bool attributeEnabled(size_t i) const;
 
     void freeHost();
 
@@ -142,10 +147,10 @@ public:
     void drawInstanced(size_t num, GLenum primType);
 
     void pushElement(uint32_t idx) { elements.push_back(idx); }
-    uint32_t element(size_t i) const { return elements[i]; }
+    [[nodiscard]] uint32_t element(size_t i) const { return elements[i]; }
     uint32_t &element(size_t i) { return elements[i]; }
 
-    GLuint attributePosition(size_t offset) const;
+    [[nodiscard]] GLuint attributePosition(size_t offset) const;
 
     void bind();
 
@@ -159,12 +164,18 @@ private:
     void free();
 };
 
+static_assert(std::is_move_constructible_v<MeshBase>);
+static_assert(std::is_move_assignable_v<MeshBase>);
+
 template<typename T>
 struct Mesh : public MeshBase
 {
     using gl_t = typename T::gl;
-    Mesh(GLenum primTy = GL_TRIANGLES,
-         size_t initial_nverts = MIN_NUM_VERTICES,
+    Mesh() : Mesh(GL_TRIANGLES) {}
+    explicit Mesh(GLenum) : Mesh(GL_TRIANGLES, MIN_NUM_VERTICES) {}
+
+    Mesh(GLenum primTy,
+         size_t initial_nverts,
          size_t initial_nelems = MIN_NUM_ELEMENTS)
       : MeshBase(gl_t::struct_info::info,
                  initial_nverts,
@@ -182,9 +193,15 @@ struct Mesh : public MeshBase
         *static_cast<gl_t *>(pushVertexElem()) = static_cast<gl_t>(vert);
     }
 
-    const T at(size_t i) const
+    T at(size_t i) const
     {
-        return *static_cast<const gl_t *>(vertexRef(i));
+        return T{ *static_cast<const gl_t *>(vertexRef(i)) };
+    }
+
+    std::span<const gl_t> vertices() const
+    {
+        return std::span{ static_cast<const gl_t *>(vertexRef(0)),
+                          verticesSize() };
     }
 };
 

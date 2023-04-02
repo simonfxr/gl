@@ -119,6 +119,11 @@ irange()
 template<typename Idx, typename It>
 struct Enumerated
 {
+    using iter_traits = std::iterator_traits<It>;
+    using iterator_tag = std::forward_iterator_tag;
+    using value_type = std::pair<Idx, typename iter_traits::value_type>;
+    using reference = std::pair<Idx, typename iter_traits::reference>;
+
     Idx _index;
     It _iter;
 
@@ -139,11 +144,7 @@ struct Enumerated
         return !operator==(rhs);
     }
 
-    constexpr std::pair<Idx, typename std::iterator_traits<It>::reference>
-    operator*()
-    {
-        return { _index, *_iter };
-    }
+    constexpr reference operator*() { return { _index, *_iter }; }
 };
 
 template<typename Idx, typename It>

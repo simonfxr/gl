@@ -139,7 +139,7 @@ absolutePath(std::string_view path)
     if (isAbsolute(path))
         return std::string{ path };
 
-    std::string dir = cwd();
+    auto dir = cwd();
     if (dir.empty())
         return "";
 

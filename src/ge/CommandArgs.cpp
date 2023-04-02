@@ -313,7 +313,7 @@ void
 CommandPrettyPrinter::print(std::span<const CommandArg> statement)
 {
 
-    if (self->ignore_empty_statements && statement.size() == 0)
+    if (self->ignore_empty_statements && statement.empty())
         return;
 
     auto first = true;
@@ -351,10 +351,10 @@ CommandPrettyPrinter::closeQuotation()
 {
     // FIXME: output is ugly
 
-    size_t depth = self->quotations.size();
-    size_t indent = self->block_indent * depth;
+    auto depth = self->quotations.size();
+    auto indent = self->block_indent * depth;
     auto &q = self->quotations.back();
-    size_t nln = q->statements.size();
+    auto nln = q->statements.size();
 
     self->current_out =
       depth == 1 ? self->out : &self->quotations[depth - 2]->out;

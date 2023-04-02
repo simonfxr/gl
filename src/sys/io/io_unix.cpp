@@ -22,10 +22,10 @@ namespace {
 int
 convertMode(HandleMode m)
 {
-    int flags = 0;
-    bool w = OPTION(m, HM_WRITE);
-    bool r = OPTION(m, HM_READ);
-    bool append = OPTION(m, HM_APPEND);
+    auto flags = 0;
+    auto w = OPTION(m, HM_WRITE);
+    auto r = OPTION(m, HM_READ);
+    auto append = OPTION(m, HM_APPEND);
 
     if (w && r)
         flags |= O_RDWR | O_CREAT;
@@ -45,7 +45,7 @@ convertMode(HandleMode m)
 HandleMode
 unconvertMode(int flags)
 {
-    HandleMode mode = 0;
+    auto mode = HandleMode{ 0 };
     if (OPTION(flags, O_RDWR))
         mode |= HM_READ | HM_WRITE;
     if (OPTION(flags, O_RDONLY))
@@ -112,7 +112,7 @@ handleFromFD(int fd, Handle *h)
     h->_os.fd = fd;
     h->_mode = 0;
     RETRY_INTR(flags = fcntl(fd, F_GETFL));
-    if (flags == -1)
+    if (flags < 0)
         return convertErrno();
     h->_mode = unconvertMode(flags);
     return HandleError::OK;
@@ -152,7 +152,7 @@ stderr_handle()
 HandleResult<Handle>
 open(std::string_view path, HandleMode mode)
 {
-    int flags = convertMode(mode);
+    auto flags = convertMode(mode);
     if (flags == -1)
         return util::unexpected{ HandleError::INVALID_PARAM };
 
@@ -179,7 +179,7 @@ HandleError
 elevate(Handle &h, HandleMode mode)
 {
     ASSERT(h);
-    int flags = convertMode(mode);
+    auto flags = convertMode(mode);
     if (flags == -1)
         return HandleError::INVALID_PARAM;
 

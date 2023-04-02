@@ -10,6 +10,8 @@
 #include <utility>
 #include <vector>
 
+using math::real;
+
 namespace ge {
 
 using namespace math;
@@ -86,16 +88,16 @@ COMMAND("printMemInfo",
         "on the GPU")
 (const Event<CommandEvent> &e)
 {
-    bool success = false;
-    glt::GLMemInfoATI info{};
+    auto success = false;
+    auto info = glt::GLMemInfoATI{};
     if (glt::GLMemInfoATI::info(&info)) {
         success = true;
-        math::real fracVBO =
-          math::real(info.current.freeVBO) / math::real(info.initial.freeVBO);
-        math::real fracTex = math::real(info.current.freeTexture) /
-                             math::real(info.initial.freeTexture);
-        math::real fracRBO = math::real(info.current.freeRenderbuffer) /
-                             math::real(info.initial.freeRenderbuffer);
+        auto fracVBO = static_cast<real>(info.current.freeVBO) /
+                       static_cast<real>(info.initial.freeVBO);
+        auto fracTex = static_cast<real>(info.current.freeTexture) /
+                       static_cast<real>(info.initial.freeTexture);
+        auto fracRBO = static_cast<real>(info.current.freeRenderbuffer) /
+                       static_cast<real>(info.initial.freeRenderbuffer);
         e.info.engine.out() << "OpenGL Free Memory:\n"
                             << "  VBO: " << info.current.freeVBO << " kbyte ("
                             << (fracVBO * 100) << "%)\n"
@@ -134,12 +136,12 @@ COMMAND("reloadShaders", "reload ShaderPrograms")
 (const Event<CommandEvent> &e, std::span<const CommandArg> args)
 {
 
-    if (args.size() == 0) {
+    if (args.empty()) {
         e.info.engine.out() << "reloading shaders\n";
         e.info.engine.shaderManager().reloadShaders();
         // std::cerr << "all shaders reloaded\n";
     } else {
-        glt::ShaderManager &sm = e.info.engine.shaderManager();
+        auto &sm = e.info.engine.shaderManager();
         for (const auto &arg : args) {
             auto prog = sm.program(arg.string);
             if (!prog) {
@@ -195,7 +197,7 @@ COMMAND("bindKey", "bind a command to a key combination")
 
 COMMAND("help", "help and command overview")(const Event<CommandEvent> &ev)
 {
-    ge::CommandProcessor &cp = ev.info.engine.commandProcessor();
+    auto &cp = ev.info.engine.commandProcessor();
     ev.info.engine.out() << "list of Commands:\n";
 
     for (const auto &com : cp.commands())
@@ -210,7 +212,7 @@ COMMAND("help", "help and command overview")(const Event<CommandEvent> &ev)
 COMMAND("bindShader", "compile and linke a ShaderProgram and give it a name")
 (const Event<CommandEvent> &e, std::span<const CommandArg> args)
 {
-    if (args.size() == 0) {
+    if (args.empty()) {
         ERR(e.info.engine.out(), "bindShader: need at least one argument");
         return;
     }
@@ -239,7 +241,8 @@ COMMAND("bindShader", "compile and linke a ShaderProgram and give it a name")
             ERR(e.info.engine.out(), "bindShader: negative size_t");
             return;
         }
-        if (!prog->bindAttribute(args[i + 1].string, GLuint(args[i].integer))) {
+        if (!prog->bindAttribute(args[i + 1].string,
+                                 static_cast<GLuint>(args[i].integer))) {
             ERR(e.info.engine.out(), "bindShader: couldnt bind attribute");
             return;
         }
@@ -277,9 +280,9 @@ COMMAND("ignoreGLDebugMessage",
         "ignored messages")
 (const Event<CommandEvent> &e, std::span<const CommandArg> args)
 {
-    const std::string &vendor_str = args[0].string;
+    auto &vendor_str = args[0].string;
     auto id = static_cast<GLint>(args[1].integer);
-    glt::OpenGLVendor vendor;
+    auto vendor = glt::OpenGLVendor{};
 
     if (vendor_str == "Nvidia")
         vendor = glt::OpenGLVendor::Nvidia;
@@ -300,17 +303,12 @@ COMMAND("ignoreGLDebugMessage",
 COMMAND("describe", "print a description of its parameters")
 (const Event<CommandEvent> &e, std::span<const CommandArg> args)
 {
-
-    CommandProcessor &proc = e.info.engine.commandProcessor();
-
-    for (const auto &arg : args) {
-        CommandPtr com = proc.command(arg.string);
-        if (!com) {
-            e.info.engine.out() << "unknown command: " << arg.string << "\n";
-        } else {
+    auto &proc = e.info.engine.commandProcessor();
+    for (const auto &arg : args)
+        if (auto com = proc.command(arg.string))
             e.info.engine.out() << com->interactiveDescription() << "\n";
-        }
-    }
+        else
+            e.info.engine.out() << "unknown command: " << arg.string << "\n";
 }
 
 COMMAND("eval", "parse a string and execute it")
@@ -337,11 +335,10 @@ COMMAND("addShaderPath", "add directories to the shader path")
 COMMAND("prependShaderPath", "add directories to the front of the shader path")
 (const Event<CommandEvent> &e, std::span<const CommandArg> args)
 {
-    for (size_t i = args.size(); i > 0; --i) {
+    for (size_t i = args.size(); i > 0; --i)
         if (!e.info.engine.shaderManager().prependShaderDirectory(
               args[i - 1].string, true))
             ERR(e.info.engine.out(), "not a directory: " + args[i - 1].string);
-    }
 }
 
 COMMAND("removeShaderPath", "remove directories from the shader path")
@@ -354,21 +351,23 @@ COMMAND("removeShaderPath", "remove directories from the shader path")
 COMMAND("togglePause", "toggle the pause state")
 (const Event<CommandEvent> &e)
 {
-    Engine &eng = e.info.engine;
+    auto &eng = e.info.engine;
     eng.gameLoop().pause(!eng.gameLoop().paused());
 }
 
 COMMAND("perspectiveProjection", "set parameters for perspective projection")
 (const Event<CommandEvent> &e, double fovDeg, double zn, double zf)
 {
-    glt::RenderManager &rm = e.info.engine.renderManager();
+    auto &rm = e.info.engine.renderManager();
 
-    rm.setDefaultProjection(glt::Projection::mkPerspective(
-      math::degToRad(math::real(fovDeg)), math::real(zn), math::real(zf)));
+    rm.setDefaultProjection(
+      glt::Projection::mkPerspective(math::degToRad(static_cast<real>(fovDeg)),
+                                     static_cast<real>(zn),
+                                     static_cast<real>(zf)));
     auto tgt = rm.activeRenderTarget();
     if (tgt)
-        rm.updateProjection(math::real(tgt->width()) /
-                            math::real(tgt->height()));
+        rm.updateProjection(static_cast<real>(tgt->width()) /
+                            static_cast<real>(tgt->height()));
 }
 
 COMMAND("postInit", "execute its argument command in the postInit hook")
@@ -380,8 +379,8 @@ COMMAND("postInit", "execute its argument command in the postInit hook")
 COMMAND("startReplServer", "start a REPL server on the given port")
 (const Event<CommandEvent> &ev, std::span<const CommandArg> args)
 {
-    Engine &e = ev.info.engine;
-    ReplServer &serv = e.replServer();
+    auto &e = ev.info.engine;
+    auto &serv = e.replServer();
 
     if (serv.running()) {
         ERR(ev.info.engine.out(), "REPL server already running");
@@ -389,7 +388,7 @@ COMMAND("startReplServer", "start a REPL server on the given port")
     }
 
     auto port = args[0].integer;
-    auto p16 = uint16_t(port);
+    auto p16 = static_cast<uint16_t>(port);
 
     if (port < 0 || p16 != port) {
         ERR(ev.info.engine.out(), "invalid port");

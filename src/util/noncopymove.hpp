@@ -10,6 +10,9 @@
 struct NonCopyable
 {
     constexpr NonCopyable() = default;
+    constexpr NonCopyable(NonCopyable &&) = default;
+    constexpr NonCopyable &operator=(NonCopyable &&) noexcept = default;
+    constexpr ~NonCopyable() = default;
     DISABLE_COPY_MEMBERS(NonCopyable);
 };
 
@@ -20,6 +23,9 @@ struct NonCopyable
 struct NonMoveable
 {
     constexpr NonMoveable() = default;
+    constexpr NonMoveable(const NonMoveable &) = default;
+    constexpr NonMoveable &operator=(const NonMoveable &) = default;
+    constexpr ~NonMoveable() = default;
     DISABLE_MOVE_MEMBERS(NonMoveable);
 };
 
@@ -32,6 +38,7 @@ struct NonCopyMoveable
   , private NonMoveable
 {
     constexpr NonCopyMoveable() = default;
+    constexpr ~NonCopyMoveable() = default;
     DISABLE_COPY_MOVE_MEMBERS(NonCopyMoveable);
 };
 

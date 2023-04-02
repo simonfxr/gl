@@ -36,14 +36,14 @@ struct Anim
     ge::Camera camera;
     ge::MouseLookPlugin mouse_look;
 
-    vec3_t light_dir;
-    vec3_t ec_light_dir;
+    vec3_t light_dir{};
+    vec3_t ec_light_dir{};
 
-    ge::GameLoop::time next_fps_counter_draw;
+    ge::GameLoop::time next_fps_counter_draw{};
 
     Simulation sim;
 
-    Anim() : sim(real(1) / real(SIMULATION_FPS)) {}
+    Anim() : sim(1_r / static_cast<real>(SIMULATION_FPS)) {}
 
     void init(const ge::Event<ge::InitEvent> &);
     void link();
@@ -64,15 +64,15 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 
     SIM_CALL(sim.init());
 
-    next_fps_counter_draw = real(0.3);
+    next_fps_counter_draw = 0.3_r;
 
     glt::primitives::sphere(sphere_model, 1.f, 36, 24);
     sphere_model.send();
 
     {
-        Vertex vert;
-        real d2 = real(.5);
-        vert.normal = vec3(real(0), real(1), real(0));
+        auto vert = Vertex{};
+        auto d2 = .5_r;
+        vert.normal = vec3(0, 1, 0);
         vert.position = vec3(-d2, 0, d2);
         ground_model.add(vert);
         vert.position = vec3(d2, 0, d2);
@@ -87,12 +87,12 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     GL_CALL(glEnable, GL_DEPTH_TEST);
     GL_CALL(glEnable, GL_MULTISAMPLE);
 
-    light_dir = normalize(vec3(real(-1)));
+    light_dir = normalize(vec3(-1_r));
 
     ev.info.engine.enablePlugin(mouse_look);
     mouse_look.camera(&camera);
     ev.info.engine.enablePlugin(camera);
-    camera.frame().origin = vec3(0.f);
+    camera.frame().origin = vec3(0_r);
 
     ev.info.success = true;
 }
@@ -107,6 +107,7 @@ Anim::link()
 void
 Anim::animate(const ge::Event<ge::AnimationEvent> &)
 {
+    UNUSED(this);
     SIM_CALL(sim.simulate_frame());
 }
 
@@ -114,7 +115,7 @@ void
 Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 {
     auto rt = engine.renderManager().activeRenderTarget();
-    rt->clearColor(glt::color(vec4(real(1))));
+    rt->clearColor(glt::color(vec4(1_r)));
     rt->clear();
 
     glt::RenderManager &rm = engine.renderManager();
@@ -126,7 +127,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
         ASSERT(program, "ground program not found");
 
         rm.geometryTransform().dup();
-        rm.geometryTransform().scale(vec3(real(20)));
+        rm.geometryTransform().scale(vec3(20_r));
 
         program->use();
 
@@ -135,7 +136,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
           //            .optional("mvMatrix", rm.geometryTransform().mvMatrix())
           .optional("normalMatrix", rm.geometryTransform().normalMatrix())
           .optional("ecLightDir", ec_light_dir)
-          .optional("albedo", vec3(real(0.5)));
+          .optional("albedo", vec3(0.5_r));
         ground_model.draw();
 
         rm.geometryTransform().pop();
@@ -144,14 +145,14 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
     renderParticles(ev.info.interpolation);
 
     if (engine.gameLoop().realTime() > next_fps_counter_draw) {
-        next_fps_counter_draw = engine.gameLoop().realTime() + real(3);
+        next_fps_counter_draw = engine.gameLoop().realTime() + 3_r;
 
-#define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
-        glt::FrameStatistics fs = engine.renderManager().frameStatistics();
-        double fps = INV(fs.avg);
-        double min = INV(fs.max);
-        double max = INV(fs.min);
-        double avg = INV(fs.avg);
+#define INV(x) (((x) * (x)) <= 0 ? -1. : 1.0 / (x))
+        auto fs = engine.renderManager().frameStatistics();
+        auto fps = INV(fs.avg);
+        auto min = INV(fs.max);
+        auto max = INV(fs.min);
+        auto avg = INV(fs.avg);
         sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                           << fps << "; " << avg << "; " << min << "; " << max
                           << "\n";
@@ -162,12 +163,11 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 void
 Anim::renderParticles(real interpolation)
 {
+    auto &rm = engine.renderManager();
 #ifndef USE_NO_SIM
-    glt::RenderManager &rm = engine.renderManager();
-    glt::GeometryTransform &gt = rm.geometryTransform();
+    auto &gt = rm.geometryTransform();
 
-    Ref<glt::ShaderProgram> program =
-      engine.shaderManager().program("particle");
+    auto program = engine.shaderManager().program("particle");
     ASSERT(program, "particle program not found");
 
     program->use();
@@ -196,6 +196,7 @@ Anim::renderParticles(real interpolation)
     gt.pop();
 #else
     UNUSED(interpolation);
+    UNUSED(rm);
 #endif
 }
 

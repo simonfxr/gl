@@ -45,8 +45,10 @@ struct GLT_API RenderTarget
                  const Viewport &vp = Viewport());
     virtual ~RenderTarget();
 
-    size_t width() const;
-    size_t height() const;
+    [[nodiscard]] size_t width() const { return size()[0]; }
+    [[nodiscard]] size_t height() const { return size()[1]; }
+    [[nodiscard]] math::genvec<size_t, 2> size() const;
+
     RenderTargetBuffers buffers() const;
     const Viewport &viewport() const;
     color clearColor() const;

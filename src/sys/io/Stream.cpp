@@ -15,11 +15,6 @@ namespace {
 
 struct StreamState
 {
-    static std::pair<size_t, StreamResult> track(
-      StreamFlags eof,
-      StreamFlags &flags,
-      std::pair<size_t, StreamResult> res);
-
     static StreamResult track(StreamFlags eof,
                               StreamFlags &flags,
                               StreamResult res);
@@ -321,10 +316,10 @@ CooperativeInStream::basic_close_in(bool /*flush_only*/)
 StreamResult
 CooperativeInStream::basic_read(size_t &s, char *buf)
 {
-    size_t n = s;
+    auto n = s;
     for (;;) {
         s = n;
-        StreamResult res;
+        auto res = StreamResult{};
         std::tie(s, res) = in->read(std::span{ buf, s });
         if (res == StreamResult::OK)
             return res;

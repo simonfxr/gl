@@ -1,6 +1,7 @@
 #include "defs.h"
 
 #include "glt/Transformations.hpp"
+#include "glt/utils.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/real.hpp"
@@ -77,7 +78,8 @@ opengl_error_callback(GLenum source,
     std::cerr << message << std::endl;
 }
 
-#define DEF_GL_SHADER(name, src) const char *const name = "#version 330\n" #src
+#define DEF_GL_SHADER(name, src)                                               \
+    const GLchar *const name = "#version 330\n" #src
 
 DEF_GL_SHADER(
   VERTEX_SHADER,
@@ -114,11 +116,11 @@ initProgram(State &s)
     auto vert_shader = glCreateShader(GL_VERTEX_SHADER);
     auto frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
 
-    auto vert_source = reinterpret_cast<const GLchar *>(VERTEX_SHADER);
+    auto vert_source = VERTEX_SHADER;
     glShaderSource(vert_shader, 1, &vert_source, nullptr);
     glCompileShader(vert_shader);
 
-    auto frag_source = reinterpret_cast<const GLchar *>(FRAGMENT_SHADER);
+    auto frag_source = FRAGMENT_SHADER;
     glShaderSource(frag_shader, 1, &frag_source, nullptr);
     glCompileShader(frag_shader);
 
@@ -152,8 +154,12 @@ initVertexArray(State &s)
     std::vector<Vertex> vertices;
 
     for (int i = 0; i < 20; ++i) {
-        Vertex v;
-        v.color = vec3(real(i / 5) * (1.f / 4), real(i % 5) * (1.f / 4), 0);
+        auto v = Vertex{};
+        auto col_r = i / 5;
+        auto col_g = i % 5;
+        v.color = vec3(static_cast<real>(col_r) * (1_r / 4_r),
+                       static_cast<real>(col_g) * (1_r / 4_r),
+                       0_r);
 
         for (int k = 0; k < 3; ++k) {
             v.position = vec3(VERTEX_DATA[ELEMENT_DATA[i][k]]);
@@ -165,8 +171,8 @@ initVertexArray(State &s)
 
     glBindBuffer(GL_ARRAY_BUFFER, s.vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(Vertex) * vertices.size(),
-                 &vertices[0],
+                 static_cast<GLsizeiptr>(sizeof(Vertex) * vertices.size()),
+                 vertices.data(),
                  GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -177,19 +183,18 @@ initVertexArray(State &s)
 
     glBindVertexArray(s.vertex_array);
     glBindBuffer(GL_ARRAY_BUFFER, s.vertex_buffer);
-    glVertexAttribPointer(
-      s.attrib_position,
-      3,
-      GL_FLOAT,
-      GL_FALSE,
-      sizeof(Vertex),
-      reinterpret_cast<GLvoid *>(offsetof(Vertex, position)));
+    glVertexAttribPointer(s.attrib_position,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(Vertex),
+                          GLT_FIELD_OFFSET(Vertex, position));
     glVertexAttribPointer(s.attrib_color,
                           3,
                           GL_FLOAT,
                           GL_FALSE,
                           sizeof(Vertex),
-                          reinterpret_cast<GLvoid *>(offsetof(Vertex, color)));
+                          GLT_FIELD_OFFSET(Vertex, color));
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glEnableVertexAttribArray(s.attrib_position);
     glEnableVertexAttribArray(s.attrib_color);
@@ -213,7 +218,7 @@ main()
     GLFWwindow *window = nullptr;
     int ret = EXIT_FAILURE;
     GLenum gl_err = GL_NO_ERROR;
-    State state;
+    auto state = State{};
 
     if (!glfwInit())
         goto err0;
@@ -231,6 +236,7 @@ main()
 
     glfwMakeContextCurrent(window);
 
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
         goto err2;
 
@@ -253,24 +259,27 @@ main()
         if (glfwWindowShouldClose(window))
             break;
 
-        int width, height;
+        int width{}, height{};
         glfwGetFramebufferSize(window, &width, &height);
 
         glViewport(0, 0, width, height);
-        glClearBufferfv(GL_COLOR, 0, &vec4(1.f, 1.f, 1.f, 1.f)[0]);
+        glClearBufferfv(GL_COLOR, 0, vec4(1.f, 1.f, 1.f, 1.f).data());
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        real time = real(glfwGetTime());
+        auto time = static_cast<real>(glfwGetTime());
 
-        mat4_t rotationMatrix = mat4(
-          glt::rotationMatrix(time * 0.2f, normalize(vec3(1.f, 1.f, 1.f))));
-        mat4_t projectionMatrix = glt::perspectiveProjection(
-          45.f, real(width) / real(height), 0.5f, 600.f);
-        mat4_t mvMatrix = mat4();
-        mvMatrix[3] = vec4(0.f, 0.f, -3.f, 1.f);
+        auto rotationMatrix = mat4(
+          glt::rotationMatrix(time * 0.2_r, normalize(vec3(1_r, 1_r, 1_r))));
+        auto projectionMatrix = glt::perspectiveProjection(
+          45_r,
+          static_cast<real>(width) / static_cast<real>(height),
+          0.5_r,
+          600_r);
+        auto mvMatrix = mat4();
+        mvMatrix[3] = vec4(0_r, 0_r, -3_r, 1_r);
         mvMatrix = mvMatrix * rotationMatrix;
 
-        mat4_t mvpMatrix = projectionMatrix * mvMatrix;
+        auto mvpMatrix = projectionMatrix * mvMatrix;
 
         glUseProgram(state.program);
         glUniformMatrix4fv(state.uniform_mvp, 1, GL_FALSE, &mvpMatrix(0, 0));

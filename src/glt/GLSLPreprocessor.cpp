@@ -31,7 +31,7 @@ parseFileArg(const Preprocessor::DirectiveContext &ctx,
     if (begin >= end)
         return false;
 
-    char term = *begin == '"' ? '"' : *begin == '<' ? '>' : '\0';
+    auto term = *begin == '"' ? '"' : *begin == '<' ? '>' : '\0';
 
     if (term == 0)
         return false;
@@ -149,8 +149,8 @@ DependencyHandler::directiveEncountered(
         return;
     }
 
-    std::string file(arg, len);
-    std::string realPath = sys::fs::lookup(proc.includePath, file);
+    auto file = std::string_view{ arg, arg + len };
+    auto realPath = sys::fs::lookup(proc.includePath, file);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
                    << ": #need-directive: cannot find file: " << file << "\n";
@@ -171,7 +171,7 @@ DependencyHandler::directiveEncountered(
     }
     auto stype = *opt_stype;
 
-    std::string absPath = sys::fs::absolutePath(realPath);
+    auto absPath = sys::fs::absolutePath(realPath);
     if (proc.state->deps.insert(absPath).second)
         proc.dependencies.push_back(
           ShaderSource::makeFileSource(stype, absPath));
@@ -210,8 +210,8 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
         return;
     }
 
-    std::string file(arg, len);
-    std::string realPath = sys::fs::lookup(proc.includePath, file);
+    auto file = std::string_view{ arg, arg + len };
+    auto realPath = sys::fs::lookup(proc.includePath, file);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
                    << ": #include-directive: cannot find file: " << file

@@ -29,7 +29,7 @@ void
 Anim::renderScene(const ge::Event<ge::RenderEvent> & /*unused*/)
 {
     auto rt = engine.renderManager().activeRenderTarget();
-    rt->clearColor(glt::color(vec4(real(1))));
+    rt->clearColor(glt::color(vec4(1_r)));
     rt->clear();
 }
 

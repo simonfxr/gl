@@ -116,7 +116,7 @@ CommandProcessor::define(CommandPtr comm, bool unique)
 bool
 CommandProcessor::exec(std::string_view comname, std::span<CommandArg> args)
 {
-    CommandPtr com = command(comname);
+    auto com = command(comname);
     if (!com) {
         ERR(engine().out(), string_concat("command not found: ", comname));
         return false;
@@ -127,7 +127,7 @@ CommandProcessor::exec(std::string_view comname, std::span<CommandArg> args)
 bool
 CommandProcessor::exec(std::span<CommandArg> args)
 {
-    if (args.size() == 0)
+    if (args.empty())
         return true;
     const std::string *com_name = nullptr;
     CommandPtr comm;
@@ -152,12 +152,12 @@ CommandProcessor::exec(std::span<CommandArg> args)
         }
     }
 
-    bool ok = exec(comm, { args.data() + 1, args.size() - 1 });
+    auto ok = exec(comm, { args.data() + 1, args.size() - 1 });
     return ok;
 }
 
 bool
-CommandProcessor::exec(CommandPtr &com, std::span<CommandArg> args)
+CommandProcessor::exec(const CommandPtr &com, std::span<CommandArg> args)
 {
     if (!com) {
         ERR(engine().out(), "Command == 0");
@@ -169,8 +169,8 @@ CommandProcessor::exec(CommandPtr &com, std::span<CommandArg> args)
 
     const auto &comname = com->name();
     const auto &params = com->parameters();
-    bool rest_args = !params.empty() && params[params.size() - 1] == PT::List;
-    size_t nparams = rest_args ? params.size() - 1 : params.size();
+    auto rest_args = !params.empty() && params[params.size() - 1] == PT::List;
+    auto nparams = rest_args ? params.size() - 1 : params.size();
 
     if (nparams != args.size() && !(rest_args && args.size() > nparams)) {
         sys::io::ByteStream err;
@@ -218,7 +218,7 @@ CommandProcessor::exec(CommandPtr &com, std::span<CommandArg> args)
             // perform some implicit conversion
             if (val_type != args[i].type()) {
                 if (val_type == AT::Number && args[i].type() == AT::Integer) {
-                    args[i] = CommandArg(double(args[i].integer));
+                    args[i] = CommandArg(static_cast<double>(args[i].integer));
                 } else if (val_type == AT::CommandRef &&
                            args[i].type() == AT::String) {
                     CommandPtr comArg = command(args[i].string);
@@ -273,7 +273,7 @@ CommandProcessor::exec(CommandPtr &com, std::span<CommandArg> args)
 bool
 CommandProcessor::loadScript(std::string_view name, bool quiet)
 {
-    std::string file = sys::fs::lookup(scriptDirectories(), name);
+    auto file = sys::fs::lookup(scriptDirectories(), name);
     if (file.empty())
         goto not_found;
 
@@ -299,10 +299,11 @@ not_found:
 bool
 CommandProcessor::loadStream(sys::io::InStream &inp, std::string_view inp_name)
 {
-    bool ok = true;
-    std::vector<CommandArg> args;
-    ParserState state(inp, inp_name);
-    bool done = false;
+    auto state = ParserState{ inp, inp_name };
+    auto args = std::vector<CommandArg>{};
+    auto ok = true;
+    auto done = false;
+
     while (!done) {
         ok = tokenize(state, args);
         if (!ok) {
@@ -337,10 +338,10 @@ CommandProcessor::evalCommand(std::string_view cmd)
 bool
 CommandProcessor::execCommand(std::span<CommandArg> args)
 {
-    if (args.size() == 0)
+    if (args.empty())
         return true;
 
-    bool ok = exec(args);
+    auto ok = exec(args);
 
     if (!ok) {
         sys::io::ByteStream err;

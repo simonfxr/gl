@@ -43,7 +43,7 @@ GLPerfCounter::begin()
                 *_queries[_active_query].end,
                 GL_QUERY_RESULT,
                 &ns_t1);
-        _last_query = double(ns_t1 - ns_t0) * 1e-9;
+        _last_query = static_cast<double>(ns_t1 - ns_t0) * 1e-9;
     }
 
     GL_CALL(glQueryCounter, *_queries[_active_query].begin, GL_TIMESTAMP);

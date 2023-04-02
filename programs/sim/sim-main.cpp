@@ -512,14 +512,14 @@ Game::end_render_spheres()
             ASSERT(attr_colorShininess >= 0);
 
             for (uint32 col = 0; col < 4; ++col) {
-                GL_CALL(glVertexAttribPointer,
-                        attr_mvMatrix + col,
-                        4,
-                        GL_FLOAT,
-                        GL_FALSE,
-                        sizeof(vec4_t),
-                        (void *) (offsetof(SphereInstance, mvMatrix) +
-                                  col * sizeof(vec4_t)));
+                GL_CALL(
+                  glVertexAttribPointer,
+                  attr_mvMatrix + col,
+                  4,
+                  GL_FLOAT,
+                  GL_FALSE,
+                  sizeof(vec4_t),
+                  GLT_FIELD_OFFSET(SphereInstance, mvMatrix.columns[col]));
                 GL_CALL(glVertexAttribDivisor, attr_mvMatrix + col, 1);
                 GL_CALL(glEnableVertexAttribArray, attr_mvMatrix + col);
             }
@@ -530,7 +530,7 @@ Game::end_render_spheres()
                     GL_FLOAT,
                     GL_FALSE,
                     sizeof(SphereInstance),
-                    (void *) offsetof(SphereInstance, colorShininess));
+                    GLT_FIELD_OFFST(SphereInstance, colorShininess));
             GL_CALL(glVertexAttribDivisor, attr_colorShininess, 1);
             GL_CALL(glEnableVertexAttribArray, attr_colorShininess);
 

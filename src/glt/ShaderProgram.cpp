@@ -157,7 +157,7 @@ ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
 
     if (log_len > 0) {
 
-        auto log = std::vector<char>(size_t(log_len));
+        auto log = std::vector<char>(static_cast<size_t>(log_len));
         GL_CALL(glGetProgramInfoLog, progh, log_len, nullptr, log.data());
 
         auto logBegin = log.data();
@@ -419,7 +419,7 @@ bool
 ShaderProgram::bindAttributes(const StructInfo &si)
 {
     for (const auto [i, a] : enumerate(si.fields))
-        if (!bindAttribute(a.name, GLuint(i)))
+        if (!bindAttribute(a.name, static_cast<GLuint>(i)))
             return false;
     return true;
 }
@@ -442,7 +442,7 @@ ShaderProgram::bindStreamOutVaryings(std::span<const std::string> vars)
     GL_CALL(glTransformFeedbackVaryings,
             *program(),
             GLsizei(vars.size()),
-            &cvars[0],
+            cvars.data(),
             GL_INTERLEAVED_ATTRIBS);
     return true;
 }

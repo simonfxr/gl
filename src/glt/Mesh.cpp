@@ -70,7 +70,7 @@ MeshBase::MeshBase(const StructInfo &si,
                    size_t initial_nverts,
                    size_t initial_nelems,
                    GLenum prim_ty)
-  : struct_info(si)
+  : struct_info(&si)
   , enabled_attributes(si.fields.size() * 2, false)
   , prim_type(prim_ty)
 {
@@ -82,8 +82,8 @@ MeshBase::MeshBase(const StructInfo &si,
         nverts *= 2;
 
     vertex_data = realloc_vertex_buf(nullptr, si.size, nverts);
-    vertex_data_end = vertex_data.get();
-    vertex_data_lim = vertex_data.get() + si.size * nverts;
+    vertex_data_end.reset(vertex_data.get());
+    vertex_data_lim.reset(vertex_data.get() + si.size * nverts);
     for (auto i : irange(si.fields.size()))
         enableAttribute(i);
 }
@@ -129,7 +129,7 @@ MeshBase::initVertexAttribs()
     ASSERT(vertex_buffer_name.valid());
     ASSERT(vertex_array_name.valid());
 
-    for (const auto [i, a] : enumerate(struct_info.fields)) {
+    for (const auto [i, a] : enumerate(struct_info->fields)) {
         GL_CALL(glVertexArrayVertexAttribOffsetEXT,
                 *vertex_array_name,
                 *vertex_buffer_name,
@@ -137,7 +137,7 @@ MeshBase::initVertexAttribs()
                 GLint(a.type_info.arity),
                 toGLScalarType(a.type_info.scalar_type),
                 gl_bool(a.type_info.normalized),
-                GLsizei(struct_info.size),
+                GLsizei(struct_info->size),
                 GLintptr(a.offset));
     }
 }
@@ -175,7 +175,7 @@ MeshBase::send(GLenum usageHint)
 
     GL_CALL(glNamedBufferDataEXT,
             *vertex_buffer_name,
-            vertex_count * struct_info.size,
+            vertex_count * struct_info->size,
             vertex_data.get(),
             usageHint);
     gpu_vertex_count = vertex_count;
@@ -210,7 +210,7 @@ MeshBase::enableAttributes()
     ASSERT(vertex_buffer_name.valid());
     ASSERT(vertex_array_name.valid());
 
-    for (const auto i : irange(struct_info.fields.size())) {
+    for (const auto i : irange(struct_info->fields.size())) {
         if (enabled_attributes[2 * i] != enabled_attributes[2 * i + 1]) {
             enabled_attributes[2 * i + 1] = enabled_attributes[2 * i];
 
@@ -319,7 +319,7 @@ GLuint
 MeshBase::attributePosition(size_t offset) const
 {
 
-    for (const auto [i, a] : enumerate(struct_info.fields))
+    for (const auto [i, a] : enumerate(struct_info->fields))
         if (a.offset == offset)
             return static_cast<GLuint>(i);
     FATAL_ERR("offset out of range");
@@ -328,7 +328,7 @@ MeshBase::attributePosition(size_t offset) const
 void
 MeshBase::enableAttribute(size_t i, bool enabled)
 {
-    if (i >= struct_info.fields.size()) {
+    if (i >= struct_info->fields.size()) {
         ERR("size_t out of range");
         return;
     }
@@ -336,9 +336,9 @@ MeshBase::enableAttribute(size_t i, bool enabled)
 }
 
 bool
-MeshBase::attributeEnabled(size_t i)
+MeshBase::attributeEnabled(size_t i) const
 {
-    if (i >= struct_info.fields.size()) {
+    if (i >= struct_info->fields.size()) {
         ERR("size_t out of range");
         return false;
     }
@@ -349,8 +349,9 @@ MeshBase::attributeEnabled(size_t i)
 void
 MeshBase::freeHost()
 {
-    vertex_data.reset(nullptr);
-    vertex_data_end = vertex_data_lim = nullptr;
+    vertex_data.reset();
+    vertex_data_end.reset();
+    vertex_data_lim.reset();
     vertex_count = 0;
     elements.clear();
 }
@@ -369,9 +370,9 @@ MeshBase::growVertexBuf()
 {
     size_t new_size = vertex_count == 0 ? MIN_NUM_VERTICES : vertex_count * 2;
     vertex_data =
-      realloc_vertex_buf(std::move(vertex_data), struct_info.size, new_size);
-    vertex_data_end = vertex_data.get() + struct_info.size * vertex_count;
-    vertex_data_lim = vertex_data.get() + struct_info.size * new_size;
+      realloc_vertex_buf(std::move(vertex_data), struct_info->size, new_size);
+    vertex_data_end.reset(vertex_data.get() + struct_info->size * vertex_count);
+    vertex_data_lim.reset(vertex_data.get() + struct_info->size * new_size);
 }
 
 } // namespace glt

@@ -170,8 +170,8 @@ State::option(OptionCase opt, const char *arg)
             CMDWARN("invalid OpenGL Version: " + std::string(arg));
             return false;
         }
-        options.window.settings.majorVersion = unsigned(maj);
-        options.window.settings.minorVersion = unsigned(min);
+        options.window.settings.majorVersion = static_cast<unsigned>(maj);
+        options.window.settings.minorVersion = static_cast<unsigned>(min);
         return true;
 
     case GLProfile:
@@ -251,22 +251,22 @@ EngineOptions &
 EngineOptions::parse(int *argcp, char ***argvp)
 {
 
-    char **argv = *argvp;
-    int argc = *argcp;
+    auto argv = *argvp;
+    auto argc = *argcp;
 
-    int dest = 1;
+    auto dest = 1;
 
-    State state(*this);
+    auto state = State{ *this };
     if (argc > 0) {
         binary = sys::fs::absolutePath(argv[0]);
         window.title = sys::fs::dropExtension(sys::fs::basename(binary));
     }
 
-    bool done = false;
+    auto done = false;
     int i;
     for (i = 1; i < argc && !done;) {
-        bool err = false;
-        int skip = 0;
+        auto err = false;
+        auto skip = 0;
 
         if (argv[i] != nullptr && argv[i][0] == '-') {
 
@@ -278,7 +278,7 @@ EngineOptions::parse(int *argcp, char ***argvp)
 
             for (const auto &opt : OPTIONS) {
                 if (str_eq(argv[i], opt.option)) {
-                    bool has_arg = opt.option_arg != nullptr;
+                    auto has_arg = opt.option_arg != nullptr;
 
                     if (!has_arg) {
                         skip = 1;
@@ -321,10 +321,10 @@ EngineOptions::printHelp()
 
     out << "Engine options:\n";
 
-    size_t max_col = 0;
+    auto max_col = size_t{ 0 };
 
     for (const auto &i : OPTIONS) {
-        size_t w = 2;
+        auto w = size_t{ 2 };
         w += strlen(i.option);
         if (i.option_arg != nullptr)
             w += 1 + strlen(i.option_arg);
@@ -333,7 +333,7 @@ EngineOptions::printHelp()
     }
 
     for (const auto &i : OPTIONS) {
-        size_t w = 2;
+        auto w = size_t{ 2 };
         out << "  " << i.option;
         w += strlen(i.option);
         if (i.option_arg != nullptr) {

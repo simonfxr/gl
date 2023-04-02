@@ -99,21 +99,24 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     for (const auto i : irange(N_SPRINGS)) {
         for (const auto j : irange(N_SPRINGS)) {
             // arrange in grid of N_SPRINGS by N_SPRINGS
-            vec3_t x = vec3(real(i * N_SPRINGS), 0, real(j * N_SPRINGS));
-            real inv_mass = real(N_SPRINGS * N_SPRINGS); // accumulated
-                                                         // mass is 1
+            auto x = vec3(static_cast<real>(i * N_SPRINGS),
+                          0,
+                          static_cast<real>(j * N_SPRINGS));
+            auto inv_mass =
+              static_cast<real>(N_SPRINGS * N_SPRINGS); // accumulated
+                                                        // mass is 1
             if ((i == 0 || i == N_SPRINGS - 1) ||
                 (j == 0 || j == N_SPRINGS - 1)) {
                 inv_mass = 0.f; // the edges have infinite mass;
             }
 
-            float d = length(x - vec3(real(N_SPRINGS) * real(0.5),
+            float d = length(x - vec3(static_cast<real>(N_SPRINGS) * 0.5_r,
                                       0,
-                                      real(N_SPRINGS) * real(0.5)));
-            x[1] += real(0.5) * d;
+                                      static_cast<real>(N_SPRINGS) * 0.5_r));
+            x[1] += 0.5_r * d;
 
             particle_pos_mass.push_back(vec4(x[0], x[1], x[2], inv_mass));
-            particle_vel.push_back(vec3(real(0)));
+            particle_vel.push_back(vec3(0_r));
 #define INDEX(i, j) GLint((i) *N_SPRINGS + (j))
             particle_conn.push_back(i > 0 ? INDEX(i - 1, j) : INDEX(i, j));
             particle_conn.push_back(i + 1 < N_SPRINGS ? INDEX(i + 1, j)
@@ -134,14 +137,14 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     GL_CALL(glBufferData,
             GL_ARRAY_BUFFER,
             sizeof(vec4_t) * particle_pos_mass.size(),
-            &particle_pos_mass[0],
+            particle_pos_mass.data(),
             GL_STREAM_DRAW);
 
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, particle_vel_handle[0]);
     GL_CALL(glBufferData,
             GL_ARRAY_BUFFER,
             sizeof(vec3_t) * particle_vel.size(),
-            &particle_vel[0],
+            particle_vel.data(),
             GL_STREAM_DRAW);
 
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, particle_pos_mass_handle[1]);

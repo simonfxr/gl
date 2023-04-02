@@ -49,7 +49,7 @@ HandleStream::basic_close()
 {
     if (!handle)
         return StreamResult::OK;
-    StreamResult ret1 = basic_flush();
+    auto ret1 = basic_flush();
     auto ret2 = sys::io::close(handle);
     return ret1 == StreamResult::OK ? toStreamResult(ret2) : ret1;
 }
@@ -117,7 +117,7 @@ HandleStream::basic_read(size_t &s, char *buf)
 StreamResult
 HandleStream::basic_write(size_t &s, const char *buf)
 {
-    size_t rem = HANDLE_WRITE_BUFFER_SIZE - write_cursor;
+    auto rem = HANDLE_WRITE_BUFFER_SIZE - write_cursor;
 
     if (s <= rem) {
         memcpy(write_buffer + write_cursor, buf, s);
@@ -142,12 +142,12 @@ HandleStream::basic_write(size_t &s, const char *buf)
         k = s - rem;
         std::tie(k, err) = sys::io::write(handle, std::span{ buf + rem, k });
         n += k;
-        const char *unwritten = buf + n;
-        size_t rest = s - n;
+        auto unwritten = buf + n;
+        auto rest = s - n;
         if (rest > 0) {
-            size_t into = rest <= HANDLE_WRITE_BUFFER_SIZE
-                            ? rest
-                            : HANDLE_WRITE_BUFFER_SIZE;
+            auto into = rest <= HANDLE_WRITE_BUFFER_SIZE
+                          ? rest
+                          : HANDLE_WRITE_BUFFER_SIZE;
             memcpy(write_buffer, unwritten, into);
             n += into;
             write_cursor = into;
@@ -156,9 +156,9 @@ HandleStream::basic_write(size_t &s, const char *buf)
         }
     } else {
         if (k > 0) {
-            size_t end = HANDLE_WRITE_BUFFER_SIZE - k;
-            size_t rest = k <= write_cursor ? s : s - (k - write_cursor);
-            size_t into = rest <= k ? rest : k;
+            auto end = HANDLE_WRITE_BUFFER_SIZE - k;
+            auto rest = k <= write_cursor ? s : s - (k - write_cursor);
+            auto into = rest <= k ? rest : k;
 
             memmove(write_buffer, write_buffer + k, end);
             memcpy(write_buffer + end, buf + rem, into);

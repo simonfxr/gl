@@ -85,13 +85,14 @@ convertGLFWKey(int key)
 {
 
     if (GLFW_KEY_A <= key && key <= GLFW_KEY_Z)
-        return KeyCode(key - GLFW_KEY_A + int(KeyCode::A));
+        return KeyCode(key - GLFW_KEY_A + static_cast<int>(KeyCode::A));
     if (GLFW_KEY_0 <= key && key <= GLFW_KEY_9)
-        return KeyCode(key - GLFW_KEY_0 + int(KeyCode::Num0));
+        return KeyCode(key - GLFW_KEY_0 + static_cast<int>(KeyCode::Num0));
     if (GLFW_KEY_KP_0 <= key && key <= GLFW_KEY_KP_9)
-        return KeyCode(key - GLFW_KEY_KP_0 + int(KeyCode::Numpad0));
+        return KeyCode(key - GLFW_KEY_KP_0 +
+                       static_cast<int>(KeyCode::Numpad0));
     if (GLFW_KEY_F1 <= key && key <= GLFW_KEY_F15)
-        return KeyCode(key - GLFW_KEY_F1 + int(KeyCode::F1));
+        return KeyCode(key - GLFW_KEY_F1 + static_cast<int>(KeyCode::F1));
     if (GLFW_KEY_F16 <= key && key <= GLFW_KEY_F25) {
         ERR("invalid function key > F15 pressed");
         return KeyCode::Space;
@@ -208,8 +209,11 @@ GameWindow::Data::makeWindow(const WindowOptions &opts)
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT,
                    opts.settings.debugContext ? GL_TRUE : GL_FALSE);
 
-    GLFWwindow *win = glfwCreateWindow(
-      int(opts.width), int(opts.height), opts.title.c_str(), nullptr, nullptr);
+    GLFWwindow *win = glfwCreateWindow(static_cast<int>(opts.width),
+                                       static_cast<int>(opts.height),
+                                       opts.title.c_str(),
+                                       nullptr,
+                                       nullptr);
     return win;
 }
 
@@ -296,15 +300,15 @@ GameWindow::Data::glfw_cursor_pos_callback(GLFWwindow *win, double x, double y)
 {
     GameWindow::Data *me = getUserPointer(win);
 
-    auto dx = int16_t(-(x - me->mouse_x));
-    auto dy = int16_t(y - me->mouse_y);
+    auto dx = static_cast<int16_t>(-(x - me->mouse_x));
+    auto dy = static_cast<int16_t>(y - me->mouse_y);
 
     me->mouse_x = x;
     me->mouse_y = y;
 
     if (dx != 0 || dy != 0)
-        me->events.mouseMoved.raise(
-          Event(MouseMoved(me->self, dx, dy, int16_t(x), int16_t(y))));
+        me->events.mouseMoved.raise(Event(MouseMoved(
+          me->self, dx, dy, static_cast<int16_t>(x), static_cast<int16_t>(y))));
 }
 
 void
@@ -336,8 +340,11 @@ GameWindow::Data::glfw_mouse_button_callback(GLFWwindow *win,
     GameWindow::Data *me = getUserPointer(win);
     auto b = Key(action == GLFW_PRESS ? KeyState::Pressed : KeyState::Released,
                  convertGLFWMouseButton(button));
-    me->events.mouseButton.raise(Event(
-      MouseButton(me->self, int16_t(me->mouse_x), int16_t(me->mouse_y), b)));
+    me->events.mouseButton.raise(
+      Event(MouseButton(me->self,
+                        static_cast<int16_t>(me->mouse_x),
+                        static_cast<int16_t>(me->mouse_y),
+                        b)));
 }
 
 void

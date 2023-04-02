@@ -54,7 +54,7 @@ run_parser_fiber(void *args)
 {
     auto *c = static_cast<Client *>(args);
     while (c->state != ParsingState::Stop) {
-        bool ok = tokenize(c->parser, c->statement);
+        auto ok = tokenize(c->parser, c->statement);
         if (ok) {
             c->state = ParsingState::GotStatement;
         } else {
@@ -104,9 +104,9 @@ Client::~Client()
 bool
 Client::handle(Engine &e)
 {
-    sys::io::OutStream &out = e.out();
+    auto &out = e.out();
     e.out(hstream);
-    bool ok = handleIO(e);
+    auto ok = handleIO(e);
     e.out(out);
     return ok;
 }
@@ -125,7 +125,7 @@ Client::handleIO(Engine &e)
         break;
     }
 
-    sys::io::StreamResult res = parser.in_state;
+    auto res = parser.in_state;
     return res == sys::io::StreamResult::Blocked ||
            res == sys::io::StreamResult::OK;
 }

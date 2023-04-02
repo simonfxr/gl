@@ -594,7 +594,7 @@ ShaderCache::lookup(const ShaderSourceKey &key)
     }
 
     std::shared_ptr<ShaderObject> so;
-    bool found = best_version >= 0;
+    auto found = best_version >= 0;
     if (found) {
         so = best_ref.lock();
         ASSERT(so);
@@ -722,7 +722,7 @@ ShaderCompiler::init()
 std::optional<ShaderType>
 ShaderCompiler::guessShaderType(std::string_view path)
 {
-    std::string ext = sys::fs::extension(path);
+    auto ext = sys::fs::extension(path);
 
     for (auto shaderTypeMapping : shaderTypeMappings)
         if (ext == shaderTypeMapping.fileExtension)
@@ -825,7 +825,7 @@ ShaderCompilerQueue::compileAll()
             continue;
 
         std::shared_ptr<ShaderObject> so;
-        bool cache_hit = false;
+        auto cache_hit = false;
         if (self->flags & SC_LOOKUP_CACHE) {
             if ((so = self->compiler.shaderCache()->lookup(key))) {
                 ASSERT(key == so->shaderSource()->key());

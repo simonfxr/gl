@@ -102,7 +102,8 @@ Preprocessor::process(std::string_view data)
         ctx.beginDirective = directiveBegin - begin;
         ctx.endDirective = directiveEnd - begin;
 
-        std::string key(directiveBegin, size_t(directiveEnd - directiveBegin));
+        auto key = std::string(
+          directiveBegin, static_cast<size_t>(directiveEnd - directiveBegin));
 
         auto it = self->handlers.find(key);
         if (it != self->handlers.end())
@@ -181,9 +182,7 @@ Preprocessor::wasError() const
 bool
 Preprocessor::clearError()
 {
-    bool s = self->errorState;
-    self->errorState = false;
-    return s;
+    return std::exchange(self->errorState, false);
 }
 
 const std::string &

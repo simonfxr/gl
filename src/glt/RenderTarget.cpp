@@ -18,12 +18,12 @@ struct RenderTarget::Data
     Viewport viewport;
     color clearColor{};
 
-    bool viewport_changed;
+    bool viewport_changed{};
 
     DEBUG_DECL(bool active)
 
     Data(size_t w, size_t h, RenderTargetBuffers bs, const Viewport &vp)
-      : width(w), height(h), buffers(bs), viewport(vp), viewport_changed(false)
+      : width(w), height(h), buffers(bs), viewport(vp)
     {
         ON_DEBUG(active = false);
     }
@@ -47,16 +47,10 @@ RenderTarget::RenderTarget(size_t w,
 
 RenderTarget::~RenderTarget() = default;
 
-size_t
-RenderTarget::width() const
+math::genvec<size_t, 2>
+RenderTarget::size() const
 {
-    return self->width;
-}
-
-size_t
-RenderTarget::height() const
-{
-    return self->height;
+    return { self->width, self->height };
 }
 
 RenderTargetBuffers

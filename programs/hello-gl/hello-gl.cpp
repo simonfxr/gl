@@ -9,8 +9,10 @@
 #include "sys/clock.hpp"
 
 #include <cmath>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 
 using namespace math;
 
@@ -36,7 +38,8 @@ struct Anim
     void link();
 
     void renderScene(const ge::Event<ge::RenderEvent> & /*ev*/);
-    std::shared_ptr<glt::TextureSampler> make_texture(const char *filename);
+    static std::shared_ptr<glt::TextureSampler> make_texture(
+      const char *filename);
     int make_resources();
 };
 
@@ -45,12 +48,15 @@ Anim::make_texture(const char *filename)
 {
     std::shared_ptr<glt::TextureSampler> tex;
     int width, height;
-    void *pixels = read_tga(filename, &width, &height);
+    auto pixel_del = [](auto p) { free(p); };
+    auto pixels = std::unique_ptr<void, decltype(pixel_del)>{
+        read_tga(filename, &width, &height), pixel_del
+    };
 
     if (!pixels)
         return tex;
 
-    tex.reset(new glt::TextureSampler);
+    tex = std::make_shared<glt::TextureSampler>();
     GL_CALL(glBindTexture, GL_TEXTURE_2D, *tex->data()->ensureHandle());
 
     GL_CALL(glTexImage2D,
@@ -62,9 +68,8 @@ Anim::make_texture(const char *filename)
             0, /* width, height, border */
             GL_BGR,
             GL_UNSIGNED_BYTE, /* external format, type */
-            pixels            /* pixels */
+            pixels.get()      /* pixels */
     );
-    free(pixels);
 
     tex->filterMode(glt::TextureSampler::FilterLinear);
     tex->clampMode(glt::TextureSampler::ClampToEdge);
@@ -95,16 +100,15 @@ Anim::make_resources()
     if (!program)
         return 0;
 
-    for (int i = 0; i < 4; ++i) {
+    for (size_t i = 0; i < 4; ++i) {
         Vertex v{};
-        vec2_t pos{};
-        pos[0] = g_vertex_buffer_data[i * 2];
-        pos[1] = g_vertex_buffer_data[i * 2 + 1];
+        auto pos =
+          vec2(g_vertex_buffer_data[i * 2], g_vertex_buffer_data[i * 2 + 1]);
         v.position = pos;
         mesh.addVertex(v);
     }
 
-    for (unsigned short i : g_element_buffer_data) {
+    for (auto i : g_element_buffer_data) {
         mesh.pushElement(i);
     }
 
@@ -135,7 +139,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &)
 {
     auto rt = engine.renderManager().activeRenderTarget();
 
-    rt->clearColor(glt::color(vec4(real(1))));
+    rt->clearColor(glt::color(vec4(1_r)));
     rt->clear();
 
     auto secs = static_cast<float>(sys::queryTimer());

@@ -12,7 +12,6 @@ namespace sys {
 static inline auto
 strerror_errno(int errnum)
 {
-    errno = 0;
     std::array<char, 128> str{};
     auto ret = strerror_r(errnum, str.data(), str.size());
     auto okay = false;
@@ -37,7 +36,7 @@ strerror_errno(int errnum)
 static inline auto
 strerror_errno()
 {
-    return strerror_errno(errno);
+    return strerror_errno(std::exchange(errno, 0));
 }
 } // namespace sys
 

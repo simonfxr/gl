@@ -54,47 +54,35 @@ struct GLT_API Uniforms
     Uniforms(ShaderProgram &_prog) : prog(_prog) {}
 
 private:
-    void set(bool mandatory, const std::string &name, float value);
-    void set(bool mandatory, const std::string &name, double value);
+    void set(bool mandatory, std::string_view name, float value);
+    void set(bool mandatory, std::string_view name, double value);
     void set(bool mandatory,
-             const std::string &name,
+             std::string_view name,
              std::span<const float> value);
+    void set(bool mandatory, std::string_view name, const math::vec4_t &value);
+    void set(bool mandatory, std::string_view name, const math::vec3_t &value);
+    void set(bool mandatory, std::string_view name, const math::vec2_t &value);
+    void set(bool mandatory, std::string_view name, const math::mat4_t &value);
+    void set(bool mandatory, std::string_view name, const math::mat3_t &value);
+    void set(bool mandatory, std::string_view name, const math::mat2_t &value);
+    void set(bool mandatory, std::string_view name, color value);
+    void set(bool mandatory, std::string_view name, GLint value);
+    void set(bool mandatory, std::string_view name, GLuint value);
     void set(bool mandatory,
-             const std::string &name,
-             const math::vec4_t &value);
-    void set(bool mandatory,
-             const std::string &name,
-             const math::vec3_t &value);
-    void set(bool mandatory,
-             const std::string &name,
-             const math::vec2_t &value);
-    void set(bool mandatory,
-             const std::string &name,
-             const math::mat4_t &value);
-    void set(bool mandatory,
-             const std::string &name,
-             const math::mat3_t &value);
-    void set(bool mandatory,
-             const std::string &name,
-             const math::mat2_t &value);
-    void set(bool mandatory, const std::string &name, color value);
-    void set(bool mandatory, const std::string &name, GLint value);
-    void set(bool mandatory, const std::string &name, GLuint value);
-    void set(bool mandatory,
-             const std::string &name,
+             std::string_view name,
              const BoundTexture &sampler);
-    void set(bool mandatory, const std::string &name, const Sampler &sampler);
+    void set(bool mandatory, std::string_view name, const Sampler &sampler);
 
 public:
     template<typename T>
-    Uniforms &optional(const std::string &name, const T &value)
+    Uniforms &optional(std::string_view name, const T &value)
     {
         set(false, name, value);
         return *this;
     }
 
     template<typename T>
-    Uniforms &mandatory(const std::string &name, const T &value)
+    Uniforms &mandatory(std::string_view name, const T &value)
     {
         set(true, name, value);
         return *this;

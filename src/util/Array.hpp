@@ -3,10 +3,12 @@
 
 #include "defs.h"
 
+#include <memory>
 #include <new>
 #include <span>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 
 #if HU_COMP_GNULIKE_P || hu_has_attribute(malloc)
 #    define ATTR_MALLOC __attribute__((malloc))
@@ -18,7 +20,7 @@ namespace detail {
 inline constexpr size_t
 sat_fma(size_t a, size_t b, size_t c)
 {
-    return a > size_t(-1) / b - c ? size_t(-1) : a * b + c;
+    return a > (size_t(-1) / 2 / b - c) ? size_t(-1) / 2 : a * b + c;
 }
 } // namespace detail
 
@@ -26,19 +28,11 @@ template<typename T>
 ATTR_MALLOC inline T *
 new_array_uninitialized(size_t n) noexcept
 {
-    if constexpr (std::is_trivially_destructible_v<T>) {
-        return static_cast<T *>(operator new[](
-          detail::sat_fma(n, sizeof(T), 0)));
-    } else {
-        static_assert(alignof(T) <= alignof(std::max_align_t));
-        constexpr size_t overhead =
-          (sizeof(n) + alignof(T) - 1) / alignof(T) * alignof(T);
-        char *p = static_cast<char *>(operator new[](
-          detail::sat_fma(n, sizeof(T), overhead)));
-        char *q = p + overhead;
-        *reinterpret_cast<size_t *>(p) = n;
-        return reinterpret_cast<T *>(q);
-    }
+    if (!n)
+        return nullptr;
+    return static_cast<T *>(operator new[](
+      detail::sat_fma(n, sizeof(T), 0),
+      static_cast<std::align_val_t>(alignof(T))));
 }
 
 template<typename T, typename Arg, typename... Args>
@@ -57,146 +51,154 @@ new_array(size_t n)
 {
     auto *p = new_array_uninitialized<T>(n);
     if constexpr (!std::is_trivially_default_constructible_v<T>) {
-        for (size_t i = 0; i < n; ++i)
-            new (p + i) T;
+        std::uninitialized_default_construct_n(p, n);
     }
     return p;
 }
 
 template<typename T>
 inline void
-delete_array(T *arr)
+delete_array(T *arr, size_t n)
 {
-    if constexpr (std::is_trivially_destructible_v<T>) {
-        operator delete[](static_cast<void *>(arr));
-    } else {
-        constexpr size_t overhead =
-          (sizeof(size_t) + alignof(T) - 1) / alignof(T) * alignof(T);
-        auto *q = reinterpret_cast<char *>(arr);
-        auto *p = q - overhead;
-        auto n = *reinterpret_cast<size_t *>(p);
-        for (size_t i = 0; i < n; ++i)
-            arr[i].~T();
-        operator delete[](static_cast<void *>(p));
+    if (!n)
+        return;
+
+    if constexpr (!std::is_trivially_destructible_v<T>) {
+        std::destroy_n(arr, n);
     }
+
+    operator delete[](static_cast<void *>(arr),
+                      n * sizeof(T),
+                      static_cast<std::align_val_t>(alignof(T)));
 }
 
 template<typename T, typename U>
 ATTR_MALLOC T *
-copy_array(const U *arr, size_t n)
+dup_array(const U *arr, size_t n)
 {
-    T *dst = new_array_uninitialized<T>(n);
-    for (size_t i = 0; i < n; ++i)
-        dst[i] = arr[i];
+    if (!n)
+        return nullptr;
+    auto dst = new_array_uninitialized<T>(n);
+    std::uninitialized_copy_n(arr, n, dst);
     return dst;
 }
 
-template<typename T, typename U>
-void
-copy_array_data(T *HU_RESTRICT dst, const U *HU_RESTRICT src, size_t n)
+template<typename T, typename Iter>
+ATTR_MALLOC T *
+dup_array(Iter it, Iter itend, size_t n)
 {
-    for (size_t i = 0; i < n; ++i)
-        dst[i] = src[i];
+    auto dst = new_array_uninitialized<T>(n);
+    std::uninitialized_copy(std::move(it), std::move(itend), dst);
+    return dst;
 }
 
-#include <vector>
-
-template<typename T>
-struct Array : private std::vector<T>
-{
-    using base = std::vector<T>;
-    using std::vector<T>::vector;
-    using base::begin;
-    using base::data;
-    using base::empty;
-    using base::end;
-    using base::size;
-    using base::operator[];
-
-    template<typename U = T>
-    Array(const U *arr, size_t n) : base(arr, arr + n)
-    {}
-
-    template<typename U = T>
-    Array(std::span<U> arr) : base(arr.begin(), arr.end())
-    {}
-
-    template<typename U = T>
-    Array(std::string_view arr) : base(arr.begin(), arr.end())
-    {}
-
-    template<typename U>
-    static Array<T> transfer_from(const U *data, size_t n)
-    {
-        return Array<T>(data, n);
-    }
-};
-
-#if 0
 template<typename T>
 struct Array
 {
-    explicit Array(size_t n)
-      : _data(n > 0 ? new_array<T>(n) : nullptr), _size(n)
-    {}
+    explicit Array(size_t n) : _data(new_array<T>(n)), _size(n) {}
 
     constexpr Array() noexcept = default;
 
-    template<typename U>
-    Array(std::span<U> view)
+    Array(T *data, size_t n) : Array(std::span{ data, n }) {}
+
+    template<typename U, size_t E>
+    Array(std::span<U, E> view)
     {
         *this = view;
     }
 
-    template<typename U>
-    Array(Array<U> &&rhs) noexcept
+    template<typename C, typename Traits>
+    Array(std::basic_string_view<C, Traits> view)
     {
-        *this = std::move(rhs);
+        *this = view;
     }
+
+    Array(Array &&rhs) noexcept { swap(*this, rhs); }
 
     template<typename U>
     Array(const Array<U> &rhs)
     {
-        *this = rhs;
+        *this = rhs.view();
     }
 
-    ~Array() { delete_array(_data); }
+    Array(const Array<T> &rhs) { *this = rhs.view(); }
+
+    ~Array() { clear(); }
 
     void clear()
     {
-        delete_array(_data);
-        _data = nullptr;
-        _size = 0;
+        delete_array(std::exchange(_data, nullptr), std::exchange(_size, 0));
     }
 
-    template<typename U>
-    Array &operator=(std::span<U> view)
+    template<typename Iter>
+    void assign(Iter it, Iter itend)
     {
-        if (_size == view.size()) {
-            copy_array_data(_data, view.data(), view.size());
-        } else {
-            clear();
-            if (view.size() != 0)
-                _data = copy_array<T>(view.data(), view.size());
+        auto n = std::distance(it, itend);
+        assign(std::move(it), std::move(itend), n);
+    }
+
+    template<typename Iter>
+    void assign(Iter it, Iter itend, size_t new_size)
+    {
+        auto n = static_cast<size_t>(std::distance(it, itend));
+        if (n > new_size) {
+            itend = it + new_size;
+            n = new_size;
         }
+        if (size() == new_size) {
+            std::copy(std::move(it), std::move(itend), begin());
+        } else {
+            auto old = std::move(*this);
+            _size = new_size;
+            _data = dup_array<T>(std::move(it), std::move(itend), new_size);
+            if constexpr (!std::is_trivially_default_constructible_v<T>)
+                if (new_size > n)
+                    std::uninitialized_default_construct(begin() + n, end());
+        }
+    }
+
+    template<typename U, size_t E>
+    Array &operator=(std::span<U, E> view)
+    {
+        assign(view.begin(), view.end());
+        return *this;
+    }
+
+    template<typename C, typename Traits>
+    Array &operator=(std::basic_string_view<C, Traits> view)
+    {
+        *this = std::span{ view.begin(), view.end() };
         return *this;
     }
 
     template<typename U>
     Array &operator=(const Array<U> &rhs)
     {
-        return *this = rhs.view();
+        *this = rhs.view();
+        return *this;
     }
 
-    template<typename U>
-    Array &operator=(Array<U> &&rhs)
+    Array &operator=(Array &&rhs) noexcept
     {
         clear();
-        _data = rhs._data;
-        _size = rhs._size;
-        rhs._data = nullptr;
-        rhs._size = 0;
+        swap(rhs, *this);
         return *this;
+    }
+
+    friend void swap(Array<T> &lhs, Array<T> &rhs)
+    {
+        using std::swap;
+        swap(lhs._size, rhs._size);
+        swap(lhs._data, rhs._data);
+    }
+
+    void resize(size_t n)
+    {
+        if (n == size())
+            return;
+        assign(std::make_move_iterator(begin()),
+               std::make_move_iterator(begin() + n),
+               n);
     }
 
     std::span<const T> view() const { return std::span<T>{ _data, _size }; }
@@ -215,6 +217,11 @@ struct Array
 
     HU_FORCE_INLINE constexpr size_t size() const { return _size; }
 
+    HU_FORCE_INLINE constexpr size_t size_bytes() const
+    {
+        return view().size_bytes();
+    }
+
     HU_FORCE_INLINE const T *data() const { return _data; }
     HU_FORCE_INLINE T *data() { return _data; }
 
@@ -224,16 +231,9 @@ struct Array
     HU_FORCE_INLINE T *begin() { return _data; }
     HU_FORCE_INLINE T *end() { return _data + _size; }
 
-    static Array<T> transfer_from(T *data, size_t n)
-    {
-        return Array<T>(data, n);
-    }
-
 private:
     T *_data{};
     size_t _size{};
-
-    Array(T *data, size_t n) : _data(data), _size(n) {}
 };
-#endif
+
 #endif

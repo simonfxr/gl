@@ -101,32 +101,59 @@ struct GLT_API GLMemInfoNV
 inline const GLubyte *
 gl_str(const char *str)
 {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     return reinterpret_cast<const GLubyte *>(str);
 }
 
 inline const char *
 gl_unstr(const GLubyte *glstr)
 {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     return reinterpret_cast<const char *>(glstr);
 }
 
 inline GLboolean
 gl_bool(bool b)
 {
-    return b ? GLboolean(GL_TRUE) : GLboolean(GL_FALSE);
+    return static_cast<GLboolean>(b ? GL_TRUE : GL_FALSE);
 }
 
 inline bool
 gl_unbool(GLboolean b)
 {
-    return b != GLboolean(GL_FALSE) ? true : false;
+    return b != static_cast<GLboolean>(GL_FALSE);
 }
 
 inline bool
 gl_unbool(GLint b)
 {
-    return b != GLint(GL_FALSE) ? true : false;
+    return b != static_cast<GLint>(GL_FALSE);
 }
+
+#if defined(offsetof)
+#    define GLT_OFFSETOF offsetof
+#elif HU_COMP_GNULIKE_P || hu_has_builtin(__builtin_offsetof)
+#    define GLT_OFFSETOF(t, fld) __builtin_offsetof(t, fld)
+#else
+#    error "NEITHER offsetof nor __builtin_offsetof available"
+#endif
+
+#define GLT_FIELD_OFFSET(type, field)                                          \
+    ::glt::detail::gl_field_offset<type>(GLT_OFFSETOF(type, field))
+
+namespace detail {
+
+template<typename T>
+constexpr GLvoid *
+gl_field_offset(intptr_t offset)
+{
+    ASSERT(offset >= 0);
+    ASSERT(static_cast<size_t>(offset) < sizeof(T));
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
+    return reinterpret_cast<GLvoid *>(offset);
+}
+
+} // namespace detail
 
 } // namespace glt
 

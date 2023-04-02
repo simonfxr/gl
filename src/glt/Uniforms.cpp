@@ -12,6 +12,7 @@
 #include "math/vec3.hpp"
 #include "math/vec4.hpp"
 #include "opengl.hpp"
+#include "util/string.hpp"
 
 namespace glt {
 
@@ -26,14 +27,25 @@ gltype(const T &x) -> gl_mapped_type_t<T>
     return x;
 }
 
+template<size_t N>
+constexpr std::string_view
+make_sv(const char (&x)[N])
+{
+    static_assert(N > 0);
+    return std::string_view{ x, x + (N - 1) };
+}
+
 #if ENABLE_GLDEBUG_P
-std::string
+std::string_view
 descGLType(GLenum ty)
 {
-
+    using namespace std::literals;
 #    define CASE(ty)                                                           \
     case ty:                                                                   \
-        return #ty
+        do {                                                                   \
+            constexpr auto retstr = make_sv(#ty);                              \
+            return retstr;                                                     \
+        } while (0)
 
     switch (ty) {
         CASE(GL_FLOAT);
@@ -112,7 +124,7 @@ descGLType(GLenum ty)
         CASE(GL_UNSIGNED_INT_SAMPLER_2D_RECT);
 
     default:
-        return "unknown OpenGL type";
+        return "unknown OpenGL type"sv;
     }
 
 #    undef CASE
@@ -211,20 +223,25 @@ template<typename T>
 void
 setUniform(bool mandatory,
            ShaderProgram &prog,
-           const std::string &name,
+           std::string_view name,
            GLenum type,
            const T &value)
 {
 
     UNUSED(type);
 
+    char name_buf[128];
+    ASSERT(name.size() < sizeof name_buf);
+    auto p = &name_buf[0];
+    std::copy(name.begin(), name.end(), p);
+    name_buf[name.size()] = 0;
+
     GLint locationi;
-    GL_ASSIGN_CALL(
-      locationi, glGetUniformLocation, *prog.program(), name.c_str());
+    GL_ASSIGN_CALL(locationi, glGetUniformLocation, *prog.program(), name_buf);
 
     if (locationi == -1) {
         if (mandatory)
-            ERR("unknown uniform: " + name);
+            ERR(string_concat("unknown uniform: ", name));
         return;
     }
 
@@ -233,7 +250,7 @@ setUniform(bool mandatory,
     GLint num_active;
     GL_CALL(glGetProgramiv, *prog.program(), GL_ACTIVE_UNIFORMS, &num_active);
     if (locationi < num_active) {
-        auto location = GLuint(locationi);
+        auto location = static_cast<GLuint>(locationi);
         GLint actual_typei = -1;
         GL_CALL(glGetActiveUniformsiv,
                 *prog.program(),
@@ -242,12 +259,15 @@ setUniform(bool mandatory,
                 GL_UNIFORM_TYPE,
                 &actual_typei);
         if (actual_typei != -1) {
-            auto actual_type = GLenum(actual_typei);
+            auto actual_type = static_cast<GLenum>(actual_typei);
             if (actual_type != type) {
-                std::string err =
-                  "uniform \"" + name +
-                  "\": types dont match, got: " + descGLType(type) +
-                  ", expected: " + descGLType(actual_type);
+                using namespace std::literals;
+                auto err = string_concat("uniform \""sv,
+                                         name,
+                                         "\": types dont match, got: "sv,
+                                         descGLType(type),
+                                         ", expected: "sv,
+                                         descGLType(actual_type));
                 ERR(err.c_str());
                 return;
             }
@@ -262,89 +282,89 @@ setUniform(bool mandatory,
 } // namespace
 
 void
-Uniforms::set(bool mandatory, const std::string &name, float value)
+Uniforms::set(bool mandatory, std::string_view name, float value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, double value)
+Uniforms::set(bool mandatory, std::string_view name, double value)
 {
-    setUniform(mandatory, prog, name, GL_FLOAT, float(value));
+    setUniform(mandatory, prog, name, GL_FLOAT, static_cast<float>(value));
 }
 
 void
 Uniforms::set(bool mandatory,
-              const std::string &name,
+              std::string_view name,
               std::span<const float> value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const vec4_t &value)
+Uniforms::set(bool mandatory, std::string_view name, const vec4_t &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_VEC4, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const vec3_t &value)
+Uniforms::set(bool mandatory, std::string_view name, const vec3_t &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_VEC3, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const vec2_t &value)
+Uniforms::set(bool mandatory, std::string_view name, const vec2_t &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_VEC2, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const mat4_t &value)
+Uniforms::set(bool mandatory, std::string_view name, const mat4_t &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_MAT4, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const mat3_t &value)
+Uniforms::set(bool mandatory, std::string_view name, const mat3_t &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_MAT3, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const mat2_t &value)
+Uniforms::set(bool mandatory, std::string_view name, const mat2_t &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_MAT2, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, color value)
+Uniforms::set(bool mandatory, std::string_view name, color value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_VEC4, value.vec4());
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, GLint value)
+Uniforms::set(bool mandatory, std::string_view name, GLint value)
 {
     setUniform(mandatory, prog, name, GL_INT, value);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, GLuint value)
+Uniforms::set(bool mandatory, std::string_view name, GLuint value)
 {
     setUniform(mandatory, prog, name, GL_UNSIGNED_INT, value);
 }
 
 void
 Uniforms::set(bool mandatory,
-              const std::string &name,
+              std::string_view name,
               const BoundTexture &sampler)
 {
     setUniform(mandatory, prog, name, sampler.type, sampler);
 }
 
 void
-Uniforms::set(bool mandatory, const std::string &name, const Sampler &sampler)
+Uniforms::set(bool mandatory, std::string_view name, const Sampler &sampler)
 {
     setUniform(mandatory, prog, name, sampler.type, sampler);
 }

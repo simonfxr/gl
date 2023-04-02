@@ -8,6 +8,8 @@ namespace sys::fs {
 
 PP_DEF_ENUM_IMPL(SYS_OBJECT_TYPE_ENUM_DEF)
 
+using namespace std::literals;
+
 namespace def {
 namespace {
 
@@ -119,7 +121,7 @@ dropExtension(std::string_view path)
 std::string
 dropTrailingSeparators(std::string_view path)
 {
-    size_t pos = dropTrailingSeps(path);
+    auto pos = dropTrailingSeps(path);
     if (pos == std::string::npos)
         return std::string(path);
     return view_substr(path, 0, pos);
@@ -136,15 +138,13 @@ exists(std::string_view path)
 std::string
 lookup(std::span<const std::string> dirs, std::string_view name)
 {
-    std::string suffix = string_concat("/", name);
+    auto suffix = string_concat("/", name);
 
-    for (const auto &dir : dirs) {
-        std::string filename = dir + suffix;
-        if (sys::fs::exists(filename))
+    for (const auto &dir : dirs)
+        if (auto filename = dir + suffix; sys::fs::exists(filename))
             return filename;
-    }
 
-    return "";
+    return ""s;
 }
 
 std::string

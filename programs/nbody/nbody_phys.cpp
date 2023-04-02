@@ -28,25 +28,17 @@ ParticleRef::ParticleRef(ParticleArray &a, uint32_t _i) : array(a), i(_i) {}
 ParticleArray::ParticleArray(size_t s)
   : _n(0)
   , _size(s)
-  , _position(new point3_t[s])
-  , _velocity(new vec3_t[s])
-  , _inv_mass(new real[s])
-  , _charge(new real[s])
-  , _radius(new real[s])
+  , _position(s)
+  , _velocity(s)
+  , _inv_mass(s)
+  , _charge(s)
+  , _radius(s)
 {}
 
-ParticleArray::~ParticleArray()
+Particle
+ParticleArray::operator[](size_t i) const
 {
-    delete[] _position;
-    delete[] _velocity;
-    delete[] _inv_mass;
-    delete[] _charge;
-    delete[] _radius;
-}
-
-Particle ParticleArray::operator[](size_t i) const
-{
-    Particle p;
+    auto p = Particle{};
     p.position = _position[i];
     p.velocity = _velocity[i];
     p.inv_mass = _inv_mass[i];
@@ -55,39 +47,24 @@ Particle ParticleArray::operator[](size_t i) const
     return p;
 }
 
-ParticleRef ParticleArray::operator[](size_t i)
+ParticleRef
+ParticleArray::operator[](size_t i)
 {
-    return ParticleRef(*this, uint32_t(i));
+    return { *this, static_cast<uint32_t>(i) };
 }
-
-namespace {
-
-template<typename T>
-T *
-resize(T *arr, size_t old_size, size_t new_size)
-{
-    auto brr = new T[new_size];
-    auto k = old_size < new_size ? old_size : new_size;
-    for (size_t i = 0; i < k; ++i)
-        brr[i] = arr[i];
-    delete[] arr;
-    return brr;
-}
-
-} // namespace
 
 void
 ParticleArray::push_back(const Particle &p)
 {
     if (_n >= _size) {
-        size_t old_size = _size;
+        auto old_size = _size;
         _size = old_size < 4 ? 8 : old_size * 2;
 
-        _position = resize(_position, old_size, _size);
-        _velocity = resize(_velocity, old_size, _size);
-        _inv_mass = resize(_inv_mass, old_size, _size);
-        _charge = resize(_charge, old_size, _size);
-        _radius = resize(_radius, old_size, _size);
+        _position.resize(_size);
+        _velocity.resize(_size);
+        _inv_mass.resize(_size);
+        _charge.resize(_size);
+        _radius.resize(_size);
     }
 
     _n++;
@@ -121,7 +98,7 @@ Simulation::Simulation(real _time_step)
   : time_step(_time_step / sec), particles(8)
 {}
 
-Simulation::~Simulation() {}
+Simulation::~Simulation() = default;
 
 void
 Simulation::init()
@@ -132,17 +109,17 @@ Simulation::init()
      * v = math::sqrt(e^2 / (4 pi epsi0 m_red) 1/r)
      */
 
-#define v(r) math::sqrt(real(e0 *e0 / (4.0 * math::PI * epsi0 * m_e)) * r)
+#define v(r) math::sqrt(real(e0 *e0 / (4.0 * math::PI * epsi0 * m_e)) * (r))
 
-    Particle e;
-    Particle p;
+    auto e = Particle{};
+    auto p = Particle{};
 
-    p.position = vec3(real(0), real(10e-15), real(0)) * real(m);
-    e.position = vec3(real(10e-15), real(10e-15), real(0)) * real(m);
+    p.position = vec3(0_r, 10e-15_r, 0_r) * m;
+    e.position = vec3(10e-15_r, 10e-15_r, 0_r) * m;
 
-    vec3_t r = e.position - p.position;
+    auto r = e.position - p.position;
 
-    real vv = v(length(r));
+    auto vv = v(length(r));
     //    INFO("c = " + std::to_string(c));
     //    INFO("epsi0 = " + std::to_string(epsi0 * 1e20));
     //    INFO("e0 = " + std::to_string(e0 * 1e20));
@@ -151,7 +128,7 @@ Simulation::init()
     INFO("vv = " + std::to_string(vv));
     INFO("time_step = " + std::to_string(time_step * 1e20));
 
-    e.velocity = vv * normalize(cross(normalize(r), vec3(real(1))));
+    e.velocity = vv * normalize(cross(normalize(r), vec3(1_r)));
 
 #undef v
 
@@ -160,7 +137,7 @@ Simulation::init()
     e.radius = r_e;
     particles.push_back(e);
 
-    p.velocity = vec3(real(0));
+    p.velocity = vec3(0_r);
     p.mass(m_p);
     p.charge = e0;
     p.radius = r_p;
@@ -174,18 +151,18 @@ Simulation::compute_acceleration(vec3_t *acceleration,
 {
 
     for (size_t i = 0; i < particles.size(); ++i) {
-        Particle a = particles[i];
-        vec3_t E = vec3(real(0));
-        vec3_t B = vec3(real(0));
+        const Particle a = particles[i];
+        auto E = vec3(0_r);
+        auto B = vec3(0_r);
 
         for (size_t j = 0; j < particles.size(); ++j) {
             if (i == j)
                 continue;
             const Particle b = particles[j];
 
-            vec3_t r = position[i] - position[j];
-            real r2 = dot(r, r);
-            vec3_t n = normalize(r);
+            auto r = position[i] - position[j];
+            auto r2 = dot(r, r);
+            auto n = normalize(r);
 
             E += inverse(4 * math::PI * epsi0 * r2) * b.charge * n;
             //            B += mu0 * b.charge * inverse(4 * math::PI * r2) *
@@ -200,50 +177,46 @@ void
 Simulation::simulate_frame()
 {
     const real dt = time_step;
-    const real dt2 = real(.5) * dt;
+    const real dt2 = .5_r * dt;
 
-    vec3_t *accel = new vec3_t[particles.size()];
-    vec3_t *accel1 = new vec3_t[particles.size()];
-    vec3_t *pos = new vec3_t[particles.size()];
-    vec3_t *vel = new vec3_t[particles.size()];
+    auto accel = Array<vec3_t>(particles.size());
+    auto accel1 = Array<vec3_t>(particles.size());
+    auto pos = Array<vec3_t>(particles.size());
+    auto vel = Array<vec3_t>(particles.size());
 
-    compute_acceleration(accel, particles._position, particles._velocity);
+    compute_acceleration(
+      accel.begin(), particles._position.begin(), particles._velocity.begin());
     for (size_t i = 0; i < particles.size(); ++i) {
         pos[i] = particles._position[i] + dt2 * particles._velocity[i];
         vel[i] = particles._velocity[i] + dt2 * accel[i];
-        accel[i] *= real(1) / real(6);
+        accel[i] *= 1_r / 6_r;
     }
 
-    compute_acceleration(accel1, pos, vel);
+    compute_acceleration(accel1.begin(), pos.begin(), vel.begin());
     for (size_t i = 0; i < particles.size(); ++i) {
         pos[i] = particles._position[i] + dt2 * vel[i];
         vel[i] = particles._velocity[i] + dt2 * accel1[i];
-        accel[i] += (real(2) / real(6)) * accel1[i];
+        accel[i] += (2_r / 6_r) * accel1[i];
     }
 
-    compute_acceleration(accel1, pos, vel);
+    compute_acceleration(accel1.begin(), pos.begin(), vel.begin());
     for (size_t i = 0; i < particles.size(); ++i) {
         pos[i] = particles._position[i] + dt * vel[i];
         vel[i] = particles._velocity[i] + dt * accel1[i];
-        accel[i] += (real(2) / real(6)) * accel1[i];
+        accel[i] += (2_r / 6_r) * accel1[i];
     }
 
-    compute_acceleration(accel1, pos, vel);
+    compute_acceleration(accel1.begin(), pos.begin(), vel.begin());
     for (size_t i = 0; i < particles.size(); ++i) {
-        vec3_t a = accel[i] + (real(1) / real(6)) * accel1[i];
+        auto a = accel[i] + (1_r / 6_r) * accel1[i];
         particles._position[i] +=
-          dt * particles._velocity[i] + real(.5) * dt * dt * a;
+          dt * particles._velocity[i] + .5_r * dt * dt * a;
         particles._velocity[i] += dt * a;
     }
-
-    delete[] accel;
-    delete[] accel1;
-    delete[] pos;
-    delete[] vel;
 }
 
 void
-Simulation::extrapolate_particle(Particle &p, math::real interpolation)
+Simulation::extrapolate_particle(Particle &p, math::real interpolation) const
 {
     p.position += interpolation * time_step * p.velocity;
 }

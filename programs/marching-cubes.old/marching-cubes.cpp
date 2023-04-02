@@ -32,7 +32,7 @@ DEF_GL_MAPPED_TYPE(MCFeedbackVertex, (vec3_t, position), (vec3_t, normal))
 
 struct Anim
 {
-    ge::Engine *engine;
+    ge::Engine *engine{};
     glt::Mesh<WorldVertex> unitRect; // a slice in the world volume
     std::shared_ptr<glt::TextureRenderTarget3D> worldVolume;
     glt::Mesh<MCVertex> volumeCube;
@@ -47,8 +47,6 @@ struct Anim
     ge::Camera camera;
     ge::MouseLookPlugin mouse_look;
     std::shared_ptr<ge::Timer> fpsTimer;
-
-    Anim() : engine(nullptr) {}
 
     void link(ge::Engine &);
     void init(const ge::Event<ge::InitEvent> &);
@@ -78,7 +76,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     GL_CALL(glEnable, GL_CULL_FACE);
 
     {
-        WorldVertex v;
+        WorldVertex v{};
         unitRect.primType(GL_TRIANGLES);
         v.position = vec3(0.f, 0.f, 0.f);
         unitRect.addVertex(v);
@@ -140,7 +138,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     for (int i = 0; i < SAMPLER_SIZE[0]; ++i) {
         for (int j = 0; j < SAMPLER_SIZE[1]; ++j) {
             for (int k = 0; k < SAMPLER_SIZE[2]; ++k) {
-                MCVertex v;
+                MCVertex v{};
                 v.position = vec3(ivec3(i, j, k)) / vec3(SAMPLER_SIZE);
                 volumeCube.addVertex(v);
             }
@@ -200,8 +198,8 @@ Anim::renderBlock(const vec3_t &aabb_min, const vec3_t &aabb_max)
     // GL_CALL(glBindBufferBase, GL_TRANSFORM_FEEDBACK_BUFFER, 0, feedback_buf);
     // GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, 0);
 
-    vec3_t fuzz = vec3(0.01f);
-    vec3_t max = aabb_max + fuzz;
+    auto fuzz = vec3(0.01_r);
+    auto max = aabb_max + fuzz;
 
     gt.translate(aabb_min);
     gt.scale(max - aabb_min);
@@ -230,18 +228,18 @@ Anim::renderWorld()
 
     rm.setActiveRenderTarget(nullptr);
 
-    vec3_t tex_scale =
+    auto tex_scale =
       vec3(SAMPLER_SIZE - ivec3(1)) / vec3(SAMPLER_SIZE - ivec3(2));
-    mat4_t scaleM = glt::scaleMatrix(tex_scale);
+    auto scaleM = glt::scaleMatrix(tex_scale);
 
-    float invDim = 1.f / float(worldVolume->depth() - 1);
+    auto invDim = 1.f / static_cast<float>(worldVolume->depth() - 1);
     for (auto i = size_t{ 0 }; i < worldVolume->depth(); ++i) {
         worldVolume->targetAttachment(glt::TextureRenderTarget3D::Attachment{
           glt::TextureRenderTarget3D::AttachmentLayer, i });
 
         rm.setActiveRenderTarget(worldVolume);
         glt::Uniforms(*worldProgram)
-          .mandatory("depth", float(i) * invDim)
+          .mandatory("depth", static_cast<float>(i) * invDim)
           .mandatory("worldMatrix",
                      rm.geometryTransform().modelMatrix() * scaleM)
           .optional("time", engine->gameLoop().tickTime());
@@ -257,7 +255,7 @@ Anim::renderWorld()
 void
 Anim::renderVolume()
 {
-    glt::GeometryTransform &gt = engine->renderManager().geometryTransform();
+    auto &gt = engine->renderManager().geometryTransform();
     auto sp = gt.save();
 
     marchingCubesProgram->use();
@@ -267,7 +265,7 @@ Anim::renderVolume()
     worldVolume->sampler().bind(2);
     worldVolume->clampMode(glt::TextureSampler::ClampToEdge);
 
-    mat4_t scaleM = glt::scaleMatrix(WORLD_BLOCK_SCALE);
+    auto scaleM = glt::scaleMatrix(WORLD_BLOCK_SCALE);
     // vec3_t inv_tex_scale = vec3(SAMPLER_SIZE - ivec3(1)) /
     // vec3(SAMPLER_SIZE);
 
@@ -306,19 +304,19 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
     //    glt::GeometryTransform& gt =
     //    engine->renderManager().geometryTransform();
     {
-        float scale = 1;
-        renderBlock(vec3(-1.f) * scale, vec3(1.f) * scale);
+        auto scale = 1_r;
+        renderBlock(vec3(-1_r) * scale, vec3(1_r) * scale);
         //        renderBlock(vec3(0.5f, 0.f, 0.f) * scale, vec3(1.f, 0.5f,
         //        0.5f) * scale);
     }
 
     if (fpsTimer->fire()) {
-#define INV(x) (((x) * (x)) == 0 ? -1 : 1.0 / (x))
-        glt::FrameStatistics fs = engine->renderManager().frameStatistics();
-        double fps = INV(fs.avg);
-        double min = INV(fs.max);
-        double max = INV(fs.min);
-        double avg = INV(fs.avg);
+#define INV(x) (((x) * (x)) == 0 ? -1. : 1.0 / (x))
+        auto fs = engine->renderManager().frameStatistics();
+        auto fps = INV(fs.avg);
+        auto min = INV(fs.max);
+        auto max = INV(fs.min);
+        auto avg = INV(fs.avg);
         sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                           << fps << "; " << avg << "; " << min << "; " << max
                           << "\n";

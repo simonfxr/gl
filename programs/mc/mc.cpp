@@ -515,7 +515,7 @@ Anim::constructVertices0(MCState &cur_mc)
     cur_mc.readHistoJob.wait();
 
     cur_mc.num_tris = 0;
-    for (int i : cur_mc.count)
+    for (auto i : cur_mc.count)
         cur_mc.num_tris += i;
 
     if (cur_mc.num_tris == 0)
@@ -638,8 +638,8 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 
     program->use();
 
-    point3_t wcLight = vec3(1, 1, 1);
-    point3_t ecLight = vec3(transform(gt.viewMatrix(), vec4(wcLight, 1_r)));
+    auto wcLight = vec3(1, 1, 1);
+    auto ecLight = vec3(transform(gt.viewMatrix(), vec4(wcLight, 1_r)));
 
 #define TIME(...) __VA_ARGS__
     TIME(for (auto &i : mc) computeVolumeData(i, time));
@@ -660,7 +660,7 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
 
     TIME(for (auto &i : mc) renderMC(i, *program, ecLight));
 
-    double ntris = 0;
+    auto ntris = 0.;
     for (auto &i : mc)
         ntris += i.num_tris;
 
@@ -673,12 +673,12 @@ Anim::renderScene(const ge::Event<ge::RenderEvent> &ev)
     if (time >= time_print_fps) {
         time_print_fps = static_cast<real>(time) + 1_r;
 
-#define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
-        glt::FrameStatistics fs = engine.renderManager().frameStatistics();
-        double fps = INV(fs.avg);
-        double min = INV(fs.max);
-        double max = INV(fs.min);
-        double avg = INV(fs.avg);
+#define INV(x) (((x) * (x)) <= 0 ? -1. : 1.0 / (x))
+        auto fs = engine.renderManager().frameStatistics();
+        auto fps = INV(fs.avg);
+        auto min = INV(fs.max);
+        auto max = INV(fs.min);
+        auto avg = INV(fs.avg);
         engine.out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                      << fps << "; " << avg << "; " << min << "; " << max
                      << "\n";

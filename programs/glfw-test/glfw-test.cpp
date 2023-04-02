@@ -1,3 +1,4 @@
+#include <memory>
 #define GLFW_INCLUDE_NONE 1
 
 #include "defs.h"
@@ -16,14 +17,20 @@ gl_arb_debug_callback(GLenum /* source */,
                       const char *message,
                       const void *userParam)
 {
-    FILE *log = reinterpret_cast<FILE *>(const_cast<void *>(userParam));
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+    auto log = static_cast<FILE *>(const_cast<void *>(userParam));
     fprintf(log, "GL message: %s\n", message);
 }
 
 int
 main()
 {
-    FILE *log = stdout;
+    auto del = [](FILE *p) {
+        // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+        fclose(p);
+    };
+    auto logp = std::unique_ptr<FILE, decltype(del)>(stdout, del);
+    auto log = logp.get();
     int ret = 0;
 
     // fprintf(log, "Program started\n");
@@ -54,6 +61,7 @@ main()
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
         fprintf(log, "GLAD init failed\n");
         ret = -1;
@@ -73,7 +81,8 @@ main()
     /* Loop until the user closes the window */
     while (glfwWindowShouldClose(window) == 0) {
         glfwGetFramebufferSize(window, &fb_width, &fb_height);
-        aspect_ratio = fb_width / static_cast<float>(fb_height);
+        aspect_ratio =
+          static_cast<float>(fb_width) / static_cast<float>(fb_height);
         glViewport(0, 0, fb_width, fb_height);
         glClear(GL_COLOR_BUFFER_BIT);
         glMatrixMode(GL_PROJECTION);
@@ -100,7 +109,5 @@ err_win:
     glfwTerminate();
 
 err_init:
-    fclose(log);
-
     return ret;
 }

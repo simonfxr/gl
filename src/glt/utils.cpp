@@ -64,7 +64,7 @@ isExtensionSupported(const char *extension)
 {
     GLint ni;
     glGetIntegerv(GL_NUM_EXTENSIONS, &ni);
-    auto n = GLuint(ni);
+    auto n = static_cast<GLuint>(ni);
 
     for (GLuint i = 0; i < n; i++)
         if (strcmp(extension, gl_unstr(glGetStringi(GL_EXTENSIONS, i))) == 0)
@@ -183,7 +183,7 @@ GLMemInfoATI::init()
     if (G.ati_mem_info_initialized)
         return G.ati_mem_info_available;
     G.ati_mem_info_initialized = true;
-    G.ati_mem_info_available = bool(GLAD_GL_ATI_meminfo);
+    G.ati_mem_info_available = !!GLAD_GL_ATI_meminfo;
     if (G.ati_mem_info_available)
         queryMemFreeATI(&G.initial_free);
     return G.ati_mem_info_available;
@@ -212,7 +212,7 @@ GLMemInfoNV::init()
     if (G.nv_mem_info_initialized)
         return G.nv_mem_info_available;
     G.nv_mem_info_initialized = true;
-    G.nv_mem_info_available = bool(GLAD_GL_NVX_gpu_memory_info);
+    G.nv_mem_info_available = !!GLAD_GL_NVX_gpu_memory_info;
     return G.nv_mem_info_available;
 }
 

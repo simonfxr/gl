@@ -43,7 +43,7 @@ next(sys::io::InStream &in, char &c)
 bool
 getchAny(ParserState &s)
 {
-    char lastC = s.rawC;
+    auto lastC = s.rawC;
 
     s.in_state = next(*s.in, s.c);
     s.rawC = s.c;
@@ -158,7 +158,7 @@ parseKeycombo(ParserState &s, CommandArg &tok)
             skipSpace(s);
         }
 
-        std::string sym = parseSym(s);
+        auto sym = parseSym(s);
 
         if (sym.empty()) {
             PARSE_ERROR(s, "expected a key symbol");
@@ -197,7 +197,7 @@ parseKeycombo(ParserState &s, CommandArg &tok)
 State
 parseString(ParserState &s, CommandArg &tok)
 {
-    char delim = s.c == '"' ? '"' : s.c == '\'' ? '\'' : ' ';
+    auto delim = s.c == '"' ? '"' : s.c == '\'' ? '\'' : ' ';
 
     sys::io::ByteStream buf;
     if (delim != ' ') {
@@ -304,14 +304,14 @@ parseQuot(ParserState &s, CommandArg &arg)
 {
     auto q = std::make_unique<Quotation>();
 
-    int line = s.line;
-    int col = s.col;
+    auto line = s.line;
+    auto col = s.col;
 
     for (;;) {
         getch(s);
         q->push_back(std::vector<CommandArg>());
         std::vector<CommandArg> &toks = (*q)[q->size() - 1];
-        State st = statement(s, toks, true);
+        auto st = statement(s, toks, true);
 
         if (st == Fail || toks.empty())
             q->pop_back();
@@ -386,8 +386,8 @@ parseNum(ParserState &s, CommandArg &tok)
     bool isNum = false;
 
     if (oneDigit && (s.c == 'e' || s.c == 'E')) {
-        int p = parsePow(s);
-        num = ::pow(double(k), p);
+        auto p = parsePow(s);
+        num = ::pow(static_cast<double>(k), p);
         isNum = true;
     } else if (s.c == '.') {
         getch(s);
@@ -404,7 +404,8 @@ parseNum(ParserState &s, CommandArg &tok)
         if (s.c == 'e' || s.c == 'E')
             p = parsePow(s);
 
-        num = (double(k) + double(fract) / div) * ::pow(10.0, p);
+        num = (static_cast<double>(k) + static_cast<double>(fract) / div) *
+              ::pow(10.0, p);
         isNum = true;
     }
 

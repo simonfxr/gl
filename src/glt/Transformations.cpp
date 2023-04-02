@@ -17,7 +17,7 @@ perspectiveProjection(real radViewAngle,
                       real z_near,
                       real z_far)
 {
-    real f = cotan(radViewAngle * real(0.5));
+    auto f = cotan(radViewAngle * 0.5_r);
 
     return mat4(vec4(f / aspectRatio, 0, 0, 0),
                 vec4(0, f, 0, 0),
@@ -26,9 +26,10 @@ perspectiveProjection(real radViewAngle,
 }
 
 mat3_t
-rotationMatrix(real theta, const direction3_t &n)
+rotationMatrix(real thetaRad, const direction3_t &axis)
 {
-    auto [c, s] = cossin(-theta);
+    auto &n = axis;
+    auto [c, s] = cossin(-thetaRad);
 
     return mat3(vec3(n[0] * n[0] * (1 - c) + c,
                      n[0] * n[1] * (1 - c) - n[2] * s,

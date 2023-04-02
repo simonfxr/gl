@@ -35,9 +35,10 @@ TextureSampler::filterMode(FilterMode mode, Filter filter)
         break;
     }
 
-    if ((int(filter) & FilterMin) != 0)
+    auto f = static_cast<int>(filter);
+    if (f & FilterMin)
         GL_CALL(glSamplerParameteri, *_sampler, GL_TEXTURE_MIN_FILTER, glmode);
-    if ((int(filter) & FilterMag) != 0)
+    if (f & FilterMag)
         GL_CALL(glSamplerParameteri, *_sampler, GL_TEXTURE_MAG_FILTER, glmode);
 }
 
@@ -56,13 +57,13 @@ TextureSampler::clampMode(ClampMode mode, Axis axis)
         break;
     }
 
-    axis = Axis(int(axis) & availableAxes(_data->type()));
+    auto mask = static_cast<int>(axis) & availableAxes(_data->type());
 
-    if ((int(axis) & S))
+    if (mask & S)
         GL_CALL(glSamplerParameteri, *_sampler, GL_TEXTURE_WRAP_S, glmode);
-    if ((int(axis) & T))
+    if (mask & T)
         GL_CALL(glSamplerParameteri, *_sampler, GL_TEXTURE_WRAP_T, glmode);
-    if ((int(axis) & R))
+    if (mask & R)
         GL_CALL(glSamplerParameteri, *_sampler, GL_TEXTURE_WRAP_R, glmode);
 }
 
