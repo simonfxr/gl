@@ -1,8 +1,10 @@
 #ifndef GLT_TEXTURE_DATA_HPP
 #define GLT_TEXTURE_DATA_HPP
 
-#include "glt/GLObject.hpp"
 #include "glt/conf.hpp"
+
+#include "glt/GLObject.hpp"
+#include "glt/Image.hpp"
 #include "opengl.hpp"
 #include "util/noncopymove.hpp"
 
@@ -34,6 +36,8 @@ struct GLT_API TextureData : private NonCopyable
     GLenum glType() const;
 
     void type(TextureType ty, size_t ss = 1);
+
+    void upload(const Image &);
 
 private:
     size_t _samples;

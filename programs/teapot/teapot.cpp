@@ -13,6 +13,7 @@
 #include "ge/Anim.hpp"
 #include "ge/Timer.hpp"
 #include "glt/Frame.hpp"
+#include "glt/Image.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/Uniforms.hpp"
@@ -144,7 +145,6 @@ struct Anim final : ge::Anim3D<Anim>
     void init(const Event<InitEvent> &);
     void loadResources(const std::string &dir);
 
-    void link();
     void animate(const Event<ge::AnimationEvent> &) override;
     void render(const Event<ge::RenderEvent> &) override;
     vec3_t lightPosition(real interpolation);
@@ -163,17 +163,13 @@ struct Anim final : ge::Anim3D<Anim>
 };
 
 void
-Anim::link()
+Anim::init(const Event<InitEvent> &ev)
 {
     auto &win = engine.window();
     win.events().mouseMoved.reg(*this, &Anim::mouseMoved);
     win.events().windowResized.reg(*this, &Anim::onWindowResized);
     engine.keyHandler().keyPressedEvent().reg(*this, &Anim::keyPressed);
-}
 
-void
-Anim::init(const Event<InitEvent> &ev)
-{
     loadResources(sys::fs::join(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR), "data"));
     engine.out() << "in init()\n";
 
@@ -700,18 +696,17 @@ Anim::loadResources(const std::string &dir)
         return;
     }
 
-    GL_CALL(glTextureImage2DEXT,
-            *woodTexture.data()->ensureHandle(),
-            GL_TEXTURE_2D,
-            0,
-            GL_RGB8,
-            GLint(w),
-            GLint(h),
-            0,
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-            wood_data);
-    free(wood_data);
+    auto deleter = [](std::byte *p) { free(p); };
+    auto img = glt::Image(
+      math::ivec2(w, h),
+      glt::ImageFormat::RGB,
+      std::unique_ptr<std::byte, decltype(deleter)>{
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        reinterpret_cast<std::byte *>(std::exchange(wood_data, nullptr)),
+        deleter });
+
+    woodTexture.data()->upload(img);
+
     woodTexture.filterMode(glt::TextureSampler::FilterLinear);
 
     auto nfaces = parse_sply((data_dir + "/teapot.sply").c_str(), teapotModel);

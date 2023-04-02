@@ -8,6 +8,7 @@
 #include "util/enum_flags.hpp"
 #include "util/noncopymove.hpp"
 #include <memory>
+#include <utility>
 
 namespace glt {
 
@@ -45,8 +46,8 @@ public:
 
     TextureSampler() : _data(new TextureData), _sampler(0) {}
 
-    explicit TextureSampler(const std::shared_ptr<TextureData> &data)
-      : _data(data), _sampler(0)
+    explicit TextureSampler(std::shared_ptr<TextureData> data)
+      : _data(std::move(data)), _sampler(0)
     {}
 
     ~TextureSampler();

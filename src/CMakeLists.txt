@@ -86,6 +86,7 @@ set(
   glt/GLPerfCounter.cpp
   glt/GLSLPreprocessor.cpp
   glt/GeometryTransform.cpp
+  glt/Image.cpp
   glt/Mesh.cpp
   glt/Preprocessor.cpp
   glt/RenderManager.cpp

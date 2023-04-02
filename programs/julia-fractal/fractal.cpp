@@ -238,7 +238,7 @@ World::julia_constant_rotate(real phi)
     auto x = julia_constant[0];
     auto y = julia_constant[1];
     julia_constant[0] = c * x + s * y;
-    julia_constant[0] = -s * x + c * y;
+    julia_constant[1] = -s * x + c * y;
 }
 
 void

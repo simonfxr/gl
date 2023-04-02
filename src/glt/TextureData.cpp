@@ -78,4 +78,33 @@ TextureData::type(TextureType ty, size_t ss)
     _samples = ss;
 }
 
+void
+TextureData::upload(const Image &img)
+{
+
+    GLenum format{};
+    GLenum type{};
+    switch (img.format()) {
+    case ImageFormat::RGB:
+        format = GL_RGB8;
+        type = GL_RGBA;
+        break;
+    case ImageFormat::RGBA:
+        format = GL_RGBA8;
+        type = GL_RGBA;
+    }
+
+    GL_CALL(glTextureImage2DEXT,
+            *ensureHandle(),
+            GL_TEXTURE_2D,
+            0,
+            format,
+            GLint(img.width()),
+            GLint(img.heigth()),
+            0,
+            type,
+            GL_UNSIGNED_BYTE,
+            img.data());
+}
+
 } // namespace glt
