@@ -28,8 +28,8 @@ struct FileTime
 
 inline constexpr FileTime MIN_FILE_TIME{};
 
-#define SYS_OBJECT_TYPE_ENUM_DEF(T, V0, V)                                     \
-    T(ObjectType, uint8_t, V0(File) V(Directory))
+#define SYS_OBJECT_TYPE_ENUM_DEF(T, V)                                         \
+    T(ObjectType, uint8_t, V(File) V(Directory))
 
 PP_DEF_ENUM_WITH_API(SYS_API, SYS_OBJECT_TYPE_ENUM_DEF);
 

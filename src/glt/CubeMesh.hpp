@@ -10,8 +10,13 @@ struct CubeMesh : public Mesh<T>
 {
     using gl_t = typename T::gl;
 
-    CubeMesh(size_t initial_nverts = MIN_NUM_VERTICES,
-             size_t initial_nelems = MIN_NUM_ELEMENTS)
+    CubeMesh() : CubeMesh(MIN_NUM_VERTICES) {}
+
+    explicit CubeMesh(size_t initial_nverts)
+      : CubeMesh(initial_nverts, MIN_NUM_ELEMENTS)
+    {}
+
+    CubeMesh(size_t initial_nverts, size_t initial_nelems)
       : Mesh<T>(GL_TRIANGLES, initial_nverts, initial_nelems)
     {
         this->drawType(DrawElements);

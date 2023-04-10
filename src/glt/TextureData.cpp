@@ -94,17 +94,35 @@ TextureData::upload(const Image &img)
         type = GL_RGBA;
     }
 
-    GL_CALL(glTextureImage2DEXT,
-            *ensureHandle(),
-            GL_TEXTURE_2D,
-            0,
-            format,
-            GLint(img.width()),
-            GLint(img.heigth()),
-            0,
-            type,
-            GL_UNSIGNED_BYTE,
-            img.data());
+    auto old_dim = std::exchange(_allocated_dim, img.dim());
+    auto old_format = std::exchange(_allocated_format, img.format());
+
+    if (_handle && (old_dim[0] * old_dim[1]) != 0 &&
+        old_format == _allocated_format && old_dim == _allocated_dim) {
+        GL_CALL(glTexSubImage2DEXT,
+                *ensureHandle(),
+                GL_TEXTURE_2D,
+                0,
+                0,
+                GLint(img.width()),
+                GLint(img.heigth()),
+                format,
+                type,
+                img.data());
+    } else {
+        _handle.release();
+        GL_CALL(glTextureImage2DEXT,
+                *ensureHandle(),
+                GL_TEXTURE_2D,
+                0,
+                format,
+                GLint(img.width()),
+                GLint(img.heigth()),
+                0,
+                type,
+                GL_UNSIGNED_BYTE,
+                img.data());
+    }
 }
 
 } // namespace glt

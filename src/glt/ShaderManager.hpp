@@ -21,16 +21,16 @@ using PreprocessorDefinitions = std::unordered_map<std::string, std::string>;
 
 using ShaderDirectories = std::vector<std::string>;
 
-#define GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF(T, V0, V)                        \
-    T(ShaderManagerVerbosity, uint8_t, V0(Quiet) V(OnlyErrors) V(Info))
+#define GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF(T, V)                            \
+    T(ShaderManagerVerbosity, uint8_t, V(Quiet) V(OnlyErrors) V(Info))
 
-#define GLT_SHADER_PROFILE_ENUM_DEF(T, V0, V)                                  \
-    T(ShaderProfile, uint8_t, V0(Core) V(Compatibility))
+#define GLT_SHADER_PROFILE_ENUM_DEF(T, V)                                      \
+    T(ShaderProfile, uint8_t, V(Core) V(Compatibility))
 
-#define GLT_SHADER_TYPE_ENUM_DEF(T, V0, V)                                     \
+#define GLT_SHADER_TYPE_ENUM_DEF(T, V)                                         \
     T(ShaderType,                                                              \
       uint8_t,                                                                 \
-      V0(GuessShaderType) V(VertexShader) V(FragmentShader) V(GeometryShader)  \
+      V(GuessShaderType) V(VertexShader) V(FragmentShader) V(GeometryShader)   \
         V(TesselationControl) V(TesselationEvaluation))
 
 PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF);

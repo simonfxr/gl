@@ -31,8 +31,8 @@ stdout();
 HU_NODISCARD SYS_API OutStream &
 stderr();
 
-#define SYS_STREAM_RESULT_ENUM_DEF(T, V0, V)                                   \
-    T(StreamResult, uint8_t, V0(OK) V(Blocked) V(EOF) V(Closed) V(Error))
+#define SYS_STREAM_RESULT_ENUM_DEF(T, V)                                       \
+    T(StreamResult, uint8_t, V(OK) V(Blocked) V(EOF) V(Closed) V(Error))
 
 PP_DEF_ENUM_WITH_API(SYS_API, SYS_STREAM_RESULT_ENUM_DEF);
 

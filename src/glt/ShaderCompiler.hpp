@@ -123,10 +123,10 @@ private:
 };
 
 // clang-format off
-#define GLT_SHADER_COMPILER_ERROR_ENUM_DEF(T, V0, V)                           \
+#define GLT_SHADER_COMPILER_ERROR_ENUM_DEF(T, V)                               \
     T(ShaderCompilerError,                                                     \
       uint8_t,                                                                 \
-      V0(NoError)                                                              \
+      V(NoError)                                                               \
       V(CouldntGuessShaderType)                                                \
       V(InvalidShaderType)                                                     \
       V(FileNotFound)                                                          \

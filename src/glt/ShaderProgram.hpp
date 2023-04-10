@@ -15,10 +15,10 @@
 
 namespace glt {
 
-#define GLT_SHADER_PROGRAM_ERROR_ENUM_DEF(T, V0, V)                            \
+#define GLT_SHADER_PROGRAM_ERROR_ENUM_DEF(T, V)                                \
     T(ShaderProgramError,                                                      \
       uint8_t,                                                                 \
-      V0(NoError) V(FileNotInPath) V(CompilationFailed) V(LinkageFailed)       \
+      V(NoError) V(FileNotInPath) V(CompilationFailed) V(LinkageFailed)        \
         V(AttributeNotBound) V(UniformNotKnown) V(ValidationFailed)            \
           V(APIError) V(OpenGLError))
 

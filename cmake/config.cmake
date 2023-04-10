@@ -26,6 +26,10 @@ endif()
 
 list(APPEND CMU_DEFINES "ENABLE_GLDEBUG_P=${gldebug_val}")
 
+if(CMU_COMP_CLANG)
+  list(APPEND CMU_FLAGS "-Wno-gnu-inline-cpp-without-extern")
+endif()
+
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 

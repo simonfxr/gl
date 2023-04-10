@@ -175,7 +175,7 @@ reportError(sys::io::OutStream &out,
 
 #ifdef NDEBUG
 #    define ASSERT(cond, ...) hu_assume(cond)
-#    define UNREACHABLE_MSG(msg) hu_assume_unreachable()
+#    define UNREACHABLE_MSG(msg) hu_unreachable()
 #    define DEBUG_ERR(...) ((void) 0)
 #    define DEBUG_ASSERT(...) ((void) 0)
 #    define TRACE(...)                                                         \

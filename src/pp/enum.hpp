@@ -4,21 +4,17 @@
 #include "pp/basic.h"
 #include "util/Comparable.hpp"
 
-#define PP_ENUM_DEF_VALLIST_V0(val) val
-#define PP_ENUM_DEF_VALLIST_V(val) , val
+#define PP_ENUM_DEF_VALLIST_V(val) val,
 
-#define PP_ENUM_DEF_VALLIST(DEFN)                                              \
-    DEFN(PP_ARG3, PP_ENUM_DEF_VALLIST_V0, PP_ENUM_DEF_VALLIST_V)
+#define PP_ENUM_DEF_VALLIST(DEFN) DEFN(PP_ARG3, PP_ENUM_DEF_VALLIST_V)
 
-#define PP_ENUM_DEF_NAME(DEFN) DEFN(PP_ARG1, PP_IGNORE, PP_IGNORE)
+#define PP_ENUM_DEF_NAME(DEFN) DEFN(PP_ARG1, PP_IGNORE)
 
-#define PP_ENUM_DEF_UNDERLYING(DEFN) DEFN(PP_ARG2, PP_IGNORE, PP_IGNORE)
+#define PP_ENUM_DEF_UNDERLYING(DEFN) DEFN(PP_ARG2, PP_IGNORE)
 
-#define PP_ENUM_DEF_VALUE_COUNT_V0(_) 1
 #define PP_ENUM_DEF_VALUE_COUNT_V(_) +1
 
-#define PP_ENUM_DEF_VALUE_COUNT(DEFN)                                          \
-    DEFN(PP_ARG3, PP_ENUM_DEF_VALUE_COUNT_V0, PP_ENUM_DEF_VALUE_COUNT_V)
+#define PP_ENUM_DEF_VALUE_COUNT(DEFN) DEFN(PP_ARG3, PP_ENUM_DEF_VALUE_COUNT_V)
 
 #define PP_DEF_ENUM_WITH_API(API, DEFN)                                        \
     struct API PP_ENUM_DEF_NAME(DEFN) : Comparable<PP_ENUM_DEF_NAME(DEFN)>     \
@@ -33,13 +29,17 @@
         static inline constexpr underlying_t count =                           \
           PP_ENUM_DEF_VALUE_COUNT(DEFN);                                       \
         constexpr PP_ENUM_DEF_NAME(DEFN)() = default;                          \
-        constexpr PP_ENUM_DEF_NAME(DEFN)(enum_t v) : value(v) {}               \
+        constexpr PP_ENUM_DEF_NAME(DEFN)(enum_t v) : value(v)                  \
+        {}                                                                     \
         constexpr explicit PP_ENUM_DEF_NAME(DEFN)(underlying_t v)              \
           : value(enum_t(v))                                                   \
         {}                                                                     \
         const char *to_string() const;                                         \
                                                                                \
-        constexpr underlying_t numeric() const { return underlying_t(value); } \
+        constexpr underlying_t numeric() const                                 \
+        {                                                                      \
+            return underlying_t(value);                                        \
+        }                                                                      \
                                                                                \
         template<typename OStream>                                             \
         friend OStream &operator<<(OStream &out,                               \
@@ -102,7 +102,7 @@ case c:                                                                        \
     const char *PP_ENUM_DEF_NAME(DEFN)::to_string() const                      \
     {                                                                          \
         switch (value) {                                                       \
-            DEFN(PP_ARG3, PP_DEF_ENUM_TO_STRING_V, PP_DEF_ENUM_TO_STRING_V)    \
+            DEFN(PP_ARG3, PP_DEF_ENUM_TO_STRING_V)                             \
         }                                                                      \
         UNREACHABLE;                                                           \
     }

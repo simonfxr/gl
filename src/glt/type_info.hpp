@@ -17,10 +17,10 @@
 
 namespace glt {
 
-#define SCALAR_TYPE_ENUM_DEF(T, V0, V)                                         \
+#define SCALAR_TYPE_ENUM_DEF(T, V)                                             \
     T(ScalarType,                                                              \
       uint8_t,                                                                 \
-      V0(I8) V(I16) V(I32) V(U8) V(U16) V(U32) V(F32) V(F64))
+      V(I8) V(I16) V(I32) V(U8) V(U16) V(U32) V(F32) V(F64))
 
 struct GLT_API ScalarType;
 

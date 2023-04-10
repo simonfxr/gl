@@ -33,6 +33,14 @@ struct color
     constexpr color(const color &c) noexcept = default;
     constexpr color(color &&c) noexcept = default;
 
+    constexpr explicit color(math::genvec<byte, 4> rgba)
+      : color(rgba[0], rgba[1], rgba[2], rgba[3])
+    {}
+
+    constexpr explicit color(math::genvec<byte, 3> rgb)
+      : color(rgb[0], rgb[1], rgb[2], 255)
+    {}
+
     constexpr explicit color(const math::vec4_t &v)
       : r(byte(255 * v[0]))
       , g(byte(255 * v[1]))
@@ -47,11 +55,16 @@ struct color
     constexpr color &operator=(const color &c) noexcept = default;
     constexpr color &operator=(color &&c) noexcept = default;
 
-    constexpr math::vec4_t vec4() const
+    [[nodiscard]] constexpr math::vec4_t vec4() const
     {
         using namespace math;
-        constexpr math::real Scale = real(1) / real(255);
+        constexpr math::real Scale = 1_r / 255_r;
         return math::vec4(r, g, b, a) * Scale;
+    }
+
+    [[nodiscard]] constexpr math::genvec<uint8_t, 4> u8vec4() const
+    {
+        return { r, g, b, a };
     }
 };
 

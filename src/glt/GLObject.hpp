@@ -12,9 +12,9 @@
 namespace glt {
 
 // clang-format off
-#define GLT_OBJECT_TYPE_ENUM_DEF(T, V0, V)                              \
+#define GLT_OBJECT_TYPE_ENUM_DEF(T, V)                                  \
     T(ObjectType, uint8_t,                                              \
-      V0(Program)                                                       \
+      V(Program)                                                        \
       V(Shader)                                                         \
       V(Buffer)                                                         \
       V(Framebuffer)                                                    \

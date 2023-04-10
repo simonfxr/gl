@@ -17,10 +17,10 @@ namespace ge {
 
 struct Command;
 
-#define GE_COMMAND_PARAM_TYPE_ENUM_DEF(T, V0, V)                               \
+#define GE_COMMAND_PARAM_TYPE_ENUM_DEF(T, V)                                   \
     T(CommandParamType,                                                        \
       uint8_t,                                                                 \
-      V0(String)  /* "abcd", 'foo' */                                          \
+      V(String)   /* "abcd", 'foo' */                                          \
       V(Integer)  /* 42, 12334, ... */                                         \
       V(Number)   /* 3.14159 */                                                \
       V(KeyCombo) /* keycombo: [LShift;+Up;-A], [!Mouse1] ... */               \
@@ -32,10 +32,10 @@ struct Command;
                           parameter */                                         \
     )
 
-#define GE_COMMAND_ARG_TYPE_ENUM_DEF(T, V0, V)                                 \
+#define GE_COMMAND_ARG_TYPE_ENUM_DEF(T, V)                                     \
     T(CommandArgType,                                                          \
       uint8_t,                                                                 \
-      V0(String) V(Integer) V(Number) V(KeyCombo) V(CommandRef) V(VarRef)      \
+      V(String) V(Integer) V(Number) V(KeyCombo) V(CommandRef) V(VarRef)       \
         V(Nil))
 
 PP_DEF_ENUM_WITH_API(GE_API, GE_COMMAND_PARAM_TYPE_ENUM_DEF);

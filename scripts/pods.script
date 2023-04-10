@@ -1,0 +1,11 @@
+load "default.script"
+
+bindShader "render" "render.vert" "render.frag" 0 "position"
+
+# bindKey [I] { zoom 1 }
+# bindKey [O] { zoom -1 }
+
+# bindKey [W] { shift_y 1 }
+# bindKey [S] { shift_y -1 }
+# bindKey [A] { shift_x -1 }
+# bindKey [D] { shift_x 1 }

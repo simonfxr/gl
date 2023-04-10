@@ -51,6 +51,35 @@
     DEF_GENVEC_SCALAR_OP(op)                                                   \
     DEF_GENVEC_SCALAR_MUT_OP(op)
 
+#define DEF_FIXED_VEC_TYPE(vtype, vname, etype, N)                             \
+    using vtype = ::math::genvec<etype, N>;                                    \
+                                                                               \
+    inline constexpr vtype vname()                                             \
+    {                                                                          \
+        return vtype::make(args);                                              \
+    }                                                                          \
+                                                                               \
+    inline constexpr vtype vname(const genvec<etype, N - 1> &l, etype r)       \
+    {                                                                          \
+        return vtype::make();                                                  \
+    }                                                                          \
+                                                                               \
+    template<typename T>                                                       \
+    inline constexpr vtype vname(const genvec<T, N> &v)                        \
+    {                                                                          \
+        return vtype::convert(v);                                              \
+    }                                                                          \
+                                                                               \
+    inline constexpr vtype vname(etype x)                                      \
+    {                                                                          \
+        return vtype::fill(x);                                                 \
+    }                                                                          \
+                                                                               \
+    inline constexpr vtype vname(const vtype::buffer b)                        \
+    {                                                                          \
+        return vtype::load(b);                                                 \
+    }
+
 namespace math {
 
 template<typename T, size_t N>
@@ -244,6 +273,13 @@ cross(const genvec<T, 3> &lhs, const genvec<U, 3> &rhs)
     ret[1] = y;
     ret[2] = z;
     return ret;
+}
+
+template<typename T, typename U>
+inline constexpr auto
+det(const genvec<T, 2> &lhs, const genvec<U, 2> &rhs)
+{
+    return lhs[0] * rhs[1] - lhs[1] * rhs[0];
 }
 
 template<typename T, size_t N>

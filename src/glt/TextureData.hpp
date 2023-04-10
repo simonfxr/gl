@@ -43,6 +43,8 @@ private:
     size_t _samples;
     GLTextureObject _handle;
     TextureType _type;
+    math::ivec2_t _allocated_dim{ 0, 0 };
+    ImageFormat _allocated_format{};
 };
 
 inline bool
