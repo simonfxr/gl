@@ -1,5 +1,6 @@
 #include "sim.hpp"
 
+#include "bl/rand.hpp"
 #include "ge/Anim.hpp"
 #include "ge/Command.hpp"
 #include "ge/GameWindow.hpp"
@@ -92,6 +93,8 @@ struct Game final : ge::Anim3D<Game>
     float sphere_speed{};
     Sphere sphere_proto{};
     Renderer renderer;
+
+    bl::rand::gen rng;
 
     struct
     {
@@ -262,17 +265,11 @@ Game::update_sphere_mass()
     sphere_proto.m = V * SPHERE_DENSITY;
 }
 
-static float
-rand1()
-{
-    return rand() * (1.f / RAND_MAX);
-}
-
 static glt::color
-randomColor()
+randomColor(auto &rng)
 {
-    return glt::color(
-      uint8_t(rand1() * 255), uint8_t(rand1() * 255), uint8_t(rand1() * 255));
+    auto x1 = [&]() { return rng.template sample<real>(); };
+    return glt::color{ vec3(x1(), x1(), x1()) };
 }
 
 void
@@ -284,9 +281,9 @@ Game::spawn_sphere()
       camera.frame().origin + direction * (sphere_proto.r + 1.1f);
     sphere_proto.v = direction * sphere_speed;
 
-    SphereModel model;
-    model.color = randomColor();
-    model.shininess = 10.f + rand1() * 60;
+    SphereModel model{};
+    model.color = randomColor(rng);
+    model.shininess = 10.f + rng.sample<real>() * 60;
 
     world.spawnSphere(sphere_proto, model);
 }
@@ -446,7 +443,7 @@ Game::end_render_spheres()
                     0,
                     GL_RGBA,
                     GL_FLOAT,
-                    &sphere_instances[lod][0]);
+                    sphere_instances[lod].data());
 
             sphere_instances[lod].clear();
 
@@ -699,7 +696,7 @@ Game::render_con(const point3_t &a, const point3_t &b)
     Sphere s{};
     s.center = (a + b) * 0.5f;
     s.r = 0.1f;
-    SphereModel m;
+    SphereModel m{};
     m.color = glt::color(0x00, 0xFF, 0x00);
     render_sphere(s, m);
 

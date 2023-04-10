@@ -1,3 +1,4 @@
+#include "bl/rand.hpp"
 #include "ge/Anim.hpp"
 #include "ge/Timer.hpp"
 #include "glt/CubeMesh.hpp"
@@ -17,9 +18,6 @@
 
 #include <algorithm>
 #include <bitset>
-#include <climits>
-#include <cstdlib>
-#include <cstring>
 #include <memory>
 
 #ifdef HS_WORLD_GEN
@@ -97,6 +95,8 @@ struct Anim final : ge::Anim3D<Anim>
     VoxelState *voxel_state{};
 #endif
 
+    bl::rand::gen rng;
+
     void init(const ge::Event<ge::InitEvent> &);
     void render(const ge::Event<ge::RenderEvent> &) override;
     void parseArgs(int argc, char *argv[]) override;
@@ -151,7 +151,7 @@ Anim::init(const InitEv &ev)
     fpsTimer = std::make_unique<ge::Timer>(e);
     fpsTimer->start(FPS_UPDATE_INTERVAL, true);
 
-    srand(0xDEADBEEF);
+    rng = bl::rand::seed(0xDEADBEEFu);
 
     pointsOnSphere(SPHERE_POINTS, sphere_points);
 
@@ -928,8 +928,8 @@ initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
         permut[i] = i;
 
     for (int32_t i = 0; i < N - 1; ++i) {
-        uint32_t j = rand() % (N - i);
-        uint32_t t = permut[i];
+        auto j = state->rng.range(static_cast<uint32_t>(N - i));
+        auto t = permut[i];
         permut[i] = permut[i + j];
         permut[i + j] = t;
     }

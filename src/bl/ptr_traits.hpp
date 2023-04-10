@@ -1,7 +1,7 @@
 #ifndef BL_PTR_TRAITS_HPP
 #define BL_PTR_TRAITS_HPP
 
-#include "bl/conf.hpp"
+#include <bl/conf.hpp>
 
 #include <type_traits>
 

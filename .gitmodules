@@ -13,3 +13,6 @@
 [submodule "cmake/cmake-utils"]
 	path = cmake/cmake-utils
 	url = https://github.com/simonfxr/cmake-utils
+[submodule "deps/bitops"]
+	path = deps/bitops
+	url = https://github.com/simonfxr/bitops
