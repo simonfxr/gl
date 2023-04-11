@@ -33,11 +33,13 @@ message(STATUS "BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}")
 # FIXME if(COMP_CLANG) set_option( ENABLE_LIBCXX False BOOL "True to use libc++
 # when compiling with clang" ) endif()
 
-set(gldebug_default True)
-if(build_type STREQUAL RELEASE)
-  set(gldebug_default False)
+string(TOUPPER "${CMAKE_BUILD_TYPE}" gl_build_type)
+
+set(is_devel True)
+if(CMU_BUILD_TYPE MATCHES "RELEASE|RELWITHDEBINFO|MINSIZEREL")
+  set(is_devel False)
 endif()
-set_option(ENABLE_GLDEBUG ${gldebug_default} BOOL
+set_option(ENABLE_GLDEBUG ${is_devel} BOOL
            "True to enable error checking after every opengl call")
 
 set_option(ENABLE_OPENMP True BOOL "enable openmp support")
@@ -45,8 +47,8 @@ set_option(ENABLE_OPENMP True BOOL "enable openmp support")
 set_option(ENABLE_VOXEL_OPENCL False BOOL
            "use opencl for the voxel-world program")
 
-set_option(ENABLE_ASAN True BOOL "enable -fsanitize=address")
-set_option(ENABLE_UBSAN True BOOL "enable -fsanitize=undefined")
+set_option(ENABLE_ASAN ${is_devel} BOOL "enable -fsanitize=address")
+set_option(ENABLE_UBSAN ${is_devel} BOOL "enable -fsanitize=undefined")
 set_option(ENABLE_LTO True BOOL "enable lto")
 
 if(UNIX)
@@ -63,8 +65,12 @@ set(CMU_OPT_NATIVE True)
 set(CMU_OPT_LEVEL 4)
 
 set(CMU_SANITIZERS)
-# if(ENABLE_ASAN) list(APPEND CMU_SANITIZERS asan lsan) endif() if(ENABLE_UBSAN)
-# list(APPEND CMU_SANITIZERS ubsan) endif()
+if(ENABLE_ASAN)
+  list(APPEND CMU_SANITIZERS asan lsan)
+endif()
+if(ENABLE_UBSAN)
+  list(APPEND CMU_SANITIZERS ubsan)
+endif()
 
 set(CMU_NO_EXCEPTIONS True)
 set(CMU_NO_RTTI True)
