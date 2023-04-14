@@ -7,12 +7,12 @@
 #include "glt/ShaderProgram.hpp"
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/utils.hpp"
+#include "math/fvec.hpp"
 #include "math/real.hpp"
-#include "math/vec2.hpp"
 
 using namespace math;
 
-DEF_GL_MAPPED_TYPE(Vertex, (vec2_t, position))
+DEF_GL_MAPPED_TYPE(Vertex, (vec2, position))
 
 static const uint32_t W = 64;
 static const uint32_t H = 64;

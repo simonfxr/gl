@@ -1,13 +1,13 @@
 #include "glt/TextureRenderTarget3D.hpp"
 #include "err/err.hpp"
 #include "glt/utils.hpp"
-#include "math/ivec3.hpp"
-#include "math/vec3.hpp"
+#include "math/fvec.hpp"
+#include "math/ivec.hpp"
 
 namespace glt {
 
 TextureRenderTarget3D::TextureRenderTarget3D(
-  const math::ivec3_t &s,
+  const math::ivec3 &s,
   const TextureRenderTarget3D::Params &ps)
   : TextureRenderTarget(ps.texture)
   , _depth(s[2])
@@ -18,7 +18,7 @@ TextureRenderTarget3D::TextureRenderTarget3D(
 }
 
 void
-TextureRenderTarget3D::resize(const math::ivec3_t &s)
+TextureRenderTarget3D::resize(const math::ivec3 &s)
 {
     auto [w, h, d] = s.cast<size_t>();
 

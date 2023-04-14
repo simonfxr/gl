@@ -2,12 +2,10 @@
 
 #include "glt/Transformations.hpp"
 #include "glt/utils.hpp"
+#include "math/fvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/real.hpp"
-#include "math/vec2.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 
 #include "opengl.hpp"
 
@@ -34,8 +32,8 @@ struct State
 
 struct Vertex
 {
-    vec3_t position;
-    vec3_t color;
+    vec3 position;
+    vec3 color;
 };
 
 #define X .525731112119133606f

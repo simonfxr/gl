@@ -13,39 +13,39 @@
 
 #include "sys/measure.hpp"
 
-#include "math/ivec3.hpp"
-#include "math/vec4.hpp"
+#include "math/fvec.hpp"
+#include "math/ivec.hpp"
 
 #include "./tables.hpp"
 #include "./tables2.hpp"
 
 using namespace math;
 
-static const vec3_t WORLD_BLOCK_SCALE = vec3(32);
+static const vec3 WORLD_BLOCK_SCALE = vec3(32);
 
-static const ivec3_t SAMPLER_SIZE = ivec3(8);
+static const ivec3 SAMPLER_SIZE = ivec3(8);
 
 static const size_t BLOCK_DATA_SIZE =
   static_cast<size_t>((SAMPLER_SIZE[0] * SAMPLER_SIZE[1] * SAMPLER_SIZE[2]) *
                       2); // may not fit in worst case
 
-static const ivec3_t BLOCKS = ivec3(10, 3, 10);
-static const ivec3_t ORIGIN = ivec3(0, 0, 0);
+static const ivec3 BLOCKS = ivec3(10, 3, 10);
+static const ivec3 ORIGIN = ivec3(0, 0, 0);
 
 using GLTransformFeedback = GLuint;
 using GLArrayBuffer = GLuint;
 using GLVertexArray = GLuint;
 
-DEF_GL_MAPPED_TYPE(WorldVertex, (vec3_t, position));
+DEF_GL_MAPPED_TYPE(WorldVertex, (vec3, position));
 
-DEF_GL_MAPPED_TYPE(MCVertex, (vec3_t, position));
+DEF_GL_MAPPED_TYPE(MCVertex, (vec3, position));
 
-DEF_GL_MAPPED_TYPE(MCFeedbackVertex, (vec3_t, position), (vec3_t, normal))
+DEF_GL_MAPPED_TYPE(MCFeedbackVertex, (vec3, position), (vec3, normal))
 
 struct Block
 {
-    vec3_t aabb_min;
-    vec3_t aabb_max;
+    vec3 aabb_min;
+    vec3 aabb_max;
     GLTransformFeedback stream;
     GLArrayBuffer data;
     GLVertexArray array;
@@ -74,9 +74,7 @@ struct Anim final : ge::Anim3D<Anim>
     void initBlock(Block *block);
     static void destroyBlock(Block *block);
 
-    void makeBlock(Block &block,
-                   const vec3_t &aabb_min,
-                   const vec3_t &aabb_max);
+    void makeBlock(Block &block, const vec3 &aabb_min, const vec3 &aabb_max);
     void makeSampleVolume();
     void makePolygon(const Block &);
     void renderPolygon(const Block &);
@@ -185,7 +183,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     for (int i = 0; i < BLOCKS[0]; ++i) {
         for (int j = 0; j < BLOCKS[1]; ++j) {
             for (int k = 0; k < BLOCKS[2]; ++k, ++id) {
-                ivec3_t idx = ivec3(i, j, k) + ORIGIN;
+                ivec3 idx = ivec3(i, j, k) + ORIGIN;
                 Block *block = &blocks[id];
                 initBlock(block);
                 makeBlock(*block, vec3(idx), vec3(idx + ivec3(1)));
@@ -258,7 +256,7 @@ Anim::destroyBlock(Block *block)
 }
 
 void
-Anim::makeBlock(Block &block, const vec3_t &aabb_min, const vec3_t &aabb_max)
+Anim::makeBlock(Block &block, const vec3 &aabb_min, const vec3 &aabb_max)
 {
     auto &gt = engine.renderManager().geometryTransform();
     auto sp = gt.save();

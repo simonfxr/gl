@@ -24,15 +24,15 @@ static const size_t SIMULATION_FPS = 50;
 #    define SIM_CALL(...) __VA_ARGS__
 #endif
 
-DEF_GL_MAPPED_TYPE(Vertex, (vec3_t, position), (vec3_t, normal))
+DEF_GL_MAPPED_TYPE(Vertex, (vec3, position), (vec3, normal))
 
 struct Anim final : ge::Anim3D<Anim>
 {
     glt::Mesh<Vertex> sphere_model;
     glt::CubeMesh<Vertex> ground_model;
 
-    vec3_t light_dir{};
-    vec3_t ec_light_dir{};
+    vec3 light_dir{};
+    vec3 ec_light_dir{};
 
     ge::GameLoop::time next_fps_counter_draw{};
 

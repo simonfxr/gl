@@ -6,9 +6,9 @@
 #include "glt/Uniforms.hpp"
 #include "glt/primitives.hpp"
 #include "glt/utils.hpp"
+#include "math/fvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-#include "math/vec3.hpp"
 #include "util/range.hpp"
 
 #include <algorithm>
@@ -19,7 +19,7 @@ const size_t N_SPRINGS = 20;
 
 using namespace math;
 
-DEF_GL_MAPPED_TYPE(Vertex, (vec3_t, position), (vec3_t, normal))
+DEF_GL_MAPPED_TYPE(Vertex, (vec3, position), (vec3, normal))
 
 template<typename Vertex>
 void
@@ -78,8 +78,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     physics_perf_counter.init(2);
 
     particle_source = 0;
-    std::vector<vec4_t> particle_pos_mass;
-    std::vector<vec3_t> particle_vel;
+    std::vector<vec4> particle_pos_mass;
+    std::vector<vec3> particle_vel;
     std::vector<GLint> particle_conn;
 
     for (const auto i : irange(N_SPRINGS)) {
@@ -122,28 +122,28 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, particle_pos_mass_handle[0]);
     GL_CALL(glBufferData,
             GL_ARRAY_BUFFER,
-            sizeof(vec4_t) * particle_pos_mass.size(),
+            sizeof(vec4) * particle_pos_mass.size(),
             particle_pos_mass.data(),
             GL_STREAM_DRAW);
 
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, particle_vel_handle[0]);
     GL_CALL(glBufferData,
             GL_ARRAY_BUFFER,
-            sizeof(vec3_t) * particle_vel.size(),
+            sizeof(vec3) * particle_vel.size(),
             particle_vel.data(),
             GL_STREAM_DRAW);
 
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, particle_pos_mass_handle[1]);
     GL_CALL(glBufferData,
             GL_ARRAY_BUFFER,
-            sizeof(vec4_t) * particle_pos_mass.size(),
+            sizeof(vec4) * particle_pos_mass.size(),
             nullptr,
             GL_STREAM_DRAW);
 
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, particle_vel_handle[1]);
     GL_CALL(glBufferData,
             GL_ARRAY_BUFFER,
-            sizeof(vec3_t) * particle_vel.size(),
+            sizeof(vec3) * particle_vel.size(),
             nullptr,
             GL_STREAM_DRAW);
 

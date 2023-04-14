@@ -4,7 +4,7 @@
 #include "glt/conf.hpp"
 
 #include "err/err.hpp"
-#include "math/ivec2.hpp"
+#include "math/ivec.hpp"
 #include "util/noncopymove.hpp"
 
 #include <functional>
@@ -22,18 +22,18 @@ struct GLT_API Image
 {
     Image() = default;
 
-    explicit Image(math::ivec2_t dim) : Image(dim, ImageFormat::RGBA) {}
+    explicit Image(math::ivec2 dim) : Image(dim, ImageFormat::RGBA) {}
 
-    Image(math::ivec2_t dim, ImageFormat format);
+    Image(math::ivec2 dim, ImageFormat format);
 
-    Image(math::ivec2_t dim,
+    Image(math::ivec2 dim,
           ImageFormat format,
           std::shared_ptr<std::byte[]> data);
 
-    Image(math::ivec2_t dim, ImageFormat format, std::byte *data);
+    Image(math::ivec2 dim, ImageFormat format, std::byte *data);
 
     template<typename Elem, typename Deleter>
-    Image(math::ivec2_t dim,
+    Image(math::ivec2 dim,
           ImageFormat format,
           std::unique_ptr<Elem, Deleter> data)
       : _dim(dim), _format(format)
@@ -70,7 +70,7 @@ struct GLT_API Image
 
     ~Image();
 
-    [[nodiscard]] constexpr math::ivec2_t dim() const { return _dim; }
+    [[nodiscard]] constexpr math::ivec2 dim() const { return _dim; }
 
     [[nodiscard]] constexpr bool empty() const { return !width() || !heigth(); }
 
@@ -111,7 +111,7 @@ private:
 
     void allocBytes(size_t n) { _data = std::make_shared<std::byte[]>(n); }
 
-    math::ivec2_t _dim{ 0, 0 };
+    math::ivec2 _dim{ 0, 0 };
     ImageFormat _format{};
     data_ptr _data;
 };

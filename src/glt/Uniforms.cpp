@@ -5,12 +5,10 @@
 #include "glt/color.hpp"
 #include "glt/type_info.hpp"
 #include "glt/utils.hpp"
+#include "math/fvec.hpp"
 #include "math/mat2.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-#include "math/vec2.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 #include "opengl.hpp"
 #include "util/string.hpp"
 
@@ -145,19 +143,19 @@ programUniform(GLuint program, GLint loc, std::span<const float> value)
 }
 
 void
-programUniform(GLuint program, GLint loc, const vec4_t &value)
+programUniform(GLuint program, GLint loc, const vec4 &value)
 {
     GL_CALL(glProgramUniform4fv, program, loc, 1, gltype(value).data());
 }
 
 void
-programUniform(GLuint program, GLint loc, const vec3_t &value)
+programUniform(GLuint program, GLint loc, const vec3 &value)
 {
     GL_CALL(glProgramUniform3fv, program, loc, 1, gltype(value).data());
 }
 
 void
-programUniform(GLuint program, GLint loc, const vec2_t &value)
+programUniform(GLuint program, GLint loc, const vec2 &value)
 {
     GL_CALL(glProgramUniform2fv, program, loc, 1, gltype(value).data());
 }
@@ -302,19 +300,19 @@ Uniforms::set(bool mandatory,
 }
 
 void
-Uniforms::set(bool mandatory, std::string_view name, const vec4_t &value)
+Uniforms::set(bool mandatory, std::string_view name, const vec4 &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_VEC4, value);
 }
 
 void
-Uniforms::set(bool mandatory, std::string_view name, const vec3_t &value)
+Uniforms::set(bool mandatory, std::string_view name, const vec3 &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_VEC3, value);
 }
 
 void
-Uniforms::set(bool mandatory, std::string_view name, const vec2_t &value)
+Uniforms::set(bool mandatory, std::string_view name, const vec2 &value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT_VEC2, value);
 }

@@ -1,7 +1,7 @@
 #ifndef NBODY_PHYS_HPP
 #define NBODY_PHYS_HPP
 
-#include "math/vec3.hpp"
+#include "math/fvec.hpp"
 #include "util/Array.hpp"
 
 struct Particle;
@@ -11,8 +11,8 @@ struct Simulation;
 
 struct Particle
 {
-    math::point3_t position;
-    math::vec3_t velocity;
+    math::point3 position;
+    math::vec3 velocity;
     math::real inv_mass; // allow for m = infinity -> m^-1 = 0
     math::real charge;
     math::real radius;
@@ -30,8 +30,8 @@ struct ParticleArray
     size_t _n;
     size_t _size;
 
-    Array<math::point3_t> _position;
-    Array<math::vec3_t> _velocity;
+    Array<math::point3> _position;
+    Array<math::vec3> _velocity;
     Array<math::real> _inv_mass;
     Array<math::real> _charge;
     Array<math::real> _radius;
@@ -72,9 +72,9 @@ struct Simulation
     void simulate_frame();
     void extrapolate_particle(Particle &p, math::real interpolation) const;
 
-    void compute_acceleration(math::vec3_t *acceleration,
-                              const math::vec3_t *position,
-                              const math::vec3_t *velocity);
+    void compute_acceleration(math::vec3 *acceleration,
+                              const math::vec3 *position,
+                              const math::vec3 *velocity);
 };
 
 #endif

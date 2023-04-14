@@ -36,10 +36,10 @@ struct ImageView2D
 {
     using reference = PixelRef<Format>;
 
-    math::ivec2_t _dim;
+    math::ivec2 _dim;
     std::byte *_data;
 
-    constexpr glt::color operator[](math::ivec2_t ij) const
+    constexpr glt::color operator[](math::ivec2 ij) const
     {
         return load(_data + offset(ij));
     }
@@ -49,7 +49,7 @@ struct ImageView2D
         return (*this)[math::ivec2(i, j)];
     }
 
-    constexpr reference operator[](math::ivec2_t ij)
+    constexpr reference operator[](math::ivec2 ij)
     {
         return { _data + offset(ij) };
     }
@@ -73,7 +73,7 @@ struct ImageView2D
 
     static constexpr color loadPixel(std::byte *p)
     {
-        math::genvec<std::byte, 4> rgba{};
+        math::vec<std::byte, 4> rgba{};
         if constexpr (Format == ImageFormat::RGB) {
             memcpy(rgba.data(), p, 3);
             rgba[3] = static_cast<std::byte>(0xFF);
@@ -85,7 +85,7 @@ struct ImageView2D
         return glt::color(rgba.cast<uint8_t>());
     }
 
-    [[nodiscard]] constexpr math::ivec2_t dim() const { return _dim; }
+    [[nodiscard]] constexpr math::ivec2 dim() const { return _dim; }
 
     [[nodiscard]] constexpr bool empty() const { return !width() || !heigth(); }
 
@@ -110,7 +110,7 @@ struct ImageView2D
     [[nodiscard]] std::byte *data() { return _data; }
 
 private:
-    [[nodiscard]] constexpr size_t offset(math::ivec2_t ij) const
+    [[nodiscard]] constexpr size_t offset(math::ivec2 ij) const
     {
         constexpr auto pixel_size = Image::pixelSize(Format);
         return (ij[0] * _dim[0] + ij[1]) * pixel_size;

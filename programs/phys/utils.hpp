@@ -4,29 +4,28 @@
 #include "ge/Engine.hpp"
 #include "glt/ShaderManager.hpp"
 #include "glt/color.hpp"
-#include "math/vec2.hpp"
-#include "math/vec4.hpp"
+#include "math/fvec.hpp"
 
 #include "glt/Mesh.hpp"
 #include "glt/utils.hpp"
 
-DEF_GL_MAPPED_TYPE(Vertex2D, (math::vec2_t, position))
+DEF_GL_MAPPED_TYPE(Vertex2D, (math::vec2, position))
 
 struct ParticleRenderer
 {
 
     struct Opts
     {
-        math::vec2_t world_size;
+        math::vec2 world_size;
         Opts() {}
     };
 
     struct Particle
     {
-        math::vec2_t position;
+        math::vec2 position;
         math::real radius;
         math::real _internal_padding;
-        math::vec4_t color;
+        math::vec4 color;
     };
 
     bool init(ge::Engine *, const Opts &);

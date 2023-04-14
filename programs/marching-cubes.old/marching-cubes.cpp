@@ -12,21 +12,21 @@
 #include "err/err.hpp"
 #include "sys/measure.hpp"
 
-#include "math/ivec3.hpp"
-#include "math/vec4.hpp"
+#include "math/fvec.hpp"
+#include "math/ivec.hpp"
 
 #include "./tables.hpp"
 #include "./tables2.hpp"
 
 using namespace math;
 
-static const vec3_t WORLD_BLOCK_SCALE = vec3(16);
+static const vec3 WORLD_BLOCK_SCALE = vec3(16);
 
-static const ivec3_t SAMPLER_SIZE = ivec3(140);
+static const ivec3 SAMPLER_SIZE = ivec3(140);
 
-DEF_GL_MAPPED_TYPE(WorldVertex, (vec3_t, position));
-DEF_GL_MAPPED_TYPE(MCVertex, (vec3_t, position));
-DEF_GL_MAPPED_TYPE(MCFeedbackVertex, (vec3_t, position), (vec3_t, normal))
+DEF_GL_MAPPED_TYPE(WorldVertex, (vec3, position));
+DEF_GL_MAPPED_TYPE(MCVertex, (vec3, position));
+DEF_GL_MAPPED_TYPE(MCFeedbackVertex, (vec3, position), (vec3, normal))
 
 struct Anim final : ge::Anim3D<Anim>
 {
@@ -47,7 +47,7 @@ struct Anim final : ge::Anim3D<Anim>
     void animate(const ge::Event<ge::AnimationEvent> &) override;
     void render(const ge::Event<ge::RenderEvent> &) override;
 
-    void renderBlock(const vec3_t &aabb_min, const vec3_t &aabb_max);
+    void renderBlock(const vec3 &aabb_min, const vec3 &aabb_max);
     void renderWorld();
     void renderVolume();
 };
@@ -159,7 +159,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 }
 
 void
-Anim::renderBlock(const vec3_t &aabb_min, const vec3_t &aabb_max)
+Anim::renderBlock(const vec3 &aabb_min, const vec3 &aabb_max)
 {
     glt::GeometryTransform &gt = engine.renderManager().geometryTransform();
     auto sp = gt.save();
@@ -248,7 +248,7 @@ Anim::renderVolume()
     worldVolume->clampMode(glt::TextureSampler::ClampToEdge);
 
     auto scaleM = glt::scaleMatrix(WORLD_BLOCK_SCALE);
-    // vec3_t inv_tex_scale = vec3(SAMPLER_SIZE - ivec3(1)) /
+    // vec3 inv_tex_scale = vec3(SAMPLER_SIZE - ivec3(1)) /
     // vec3(SAMPLER_SIZE);
 
     glt::Uniforms(*marchingCubesProgram)

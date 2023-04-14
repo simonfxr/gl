@@ -4,12 +4,10 @@
 #include "glt/conf.hpp"
 
 #include "glt/TextureSampler.hpp"
+#include "math/fvec.hpp"
 #include "math/mat2.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-#include "math/vec2.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 
 #include <span>
 #include <string>
@@ -59,9 +57,9 @@ private:
     void set(bool mandatory,
              std::string_view name,
              std::span<const float> value);
-    void set(bool mandatory, std::string_view name, const math::vec4_t &value);
-    void set(bool mandatory, std::string_view name, const math::vec3_t &value);
-    void set(bool mandatory, std::string_view name, const math::vec2_t &value);
+    void set(bool mandatory, std::string_view name, const math::vec4 &value);
+    void set(bool mandatory, std::string_view name, const math::vec3 &value);
+    void set(bool mandatory, std::string_view name, const math::vec2 &value);
     void set(bool mandatory, std::string_view name, const math::mat4_t &value);
     void set(bool mandatory, std::string_view name, const math::mat3_t &value);
     void set(bool mandatory, std::string_view name, const math::mat2_t &value);

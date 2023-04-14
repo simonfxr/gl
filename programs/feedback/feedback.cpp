@@ -1,4 +1,4 @@
-#include "math/vec3.hpp"
+#include "math/fvec.hpp"
 
 #include "glt/Mesh.hpp"
 #include "glt/utils.hpp"
@@ -8,12 +8,12 @@
 using namespace math;
 
 DEF_GL_MAPPED_TYPE(QuadVertex,
-                   (vec3_t, corner0),
-                   (vec3_t, corner1),
-                   (vec3_t, corner2),
-                   (vec3_t, corner3))
+                   (vec3, corner0),
+                   (vec3, corner1),
+                   (vec3, corner2),
+                   (vec3, corner3))
 
-DEF_GL_MAPPED_TYPE(QuadStreamVertex, (vec3_t, position), (vec3_t, normal))
+DEF_GL_MAPPED_TYPE(QuadStreamVertex, (vec3, position), (vec3, normal))
 
 #define DEF_SHADER(name, ...) const std::string name = AS_STRING(__VA_ARGS__);
 

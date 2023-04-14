@@ -5,11 +5,10 @@
 #include "glt/RenderTarget.hpp"
 #include "glt/ViewFrustum.hpp"
 
+#include "math/fvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/real.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 
 #include <memory>
 
@@ -110,24 +109,24 @@ private:
     DECLARE_PIMPL(GLT_API, self);
 };
 
-inline math::vec4_t
-project(const RenderManager &rm, const math::point3_t &localCoord)
+inline math::vec4
+project(const RenderManager &rm, const math::point3 &localCoord)
 {
     using math::transform;
     return transform(rm.geometryTransform().mvpMatrix(),
                      math::vec4(localCoord, 1.f));
 }
 
-inline math::vec4_t
-projectWorld(const RenderManager &rm, const math::point3_t &worldCoord)
+inline math::vec4
+projectWorld(const RenderManager &rm, const math::point3 &worldCoord)
 {
     using math::transform;
     return transform(rm.geometryTransform().vpMatrix(),
                      math::vec4(worldCoord, 1.f));
 }
 
-inline math::vec4_t
-projectView(const RenderManager &rm, const math::point3_t &eyeCoord)
+inline math::vec4
+projectView(const RenderManager &rm, const math::point3 &eyeCoord)
 {
     using math::transform;
     return transform(rm.geometryTransform().projectionMatrix(),
@@ -135,15 +134,13 @@ projectView(const RenderManager &rm, const math::point3_t &eyeCoord)
 }
 
 inline Outcode
-testSphere(const RenderManager &rm,
-           const math::point3_t &center,
-           math::real rad)
+testSphere(const RenderManager &rm, const math::point3 &center, math::real rad)
 {
     return testSphere(rm.viewFrustum(), center, rad);
 }
 
 inline Outcode
-testPoint(const RenderManager &rm, const math::point3_t &p)
+testPoint(const RenderManager &rm, const math::point3 &p)
 {
     return testPoint(rm.viewFrustum(), p);
 }

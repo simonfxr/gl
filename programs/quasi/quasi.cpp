@@ -4,14 +4,14 @@
 #include "glt/ShaderProgram.hpp"
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/utils.hpp"
+#include "math/fvec.hpp"
 #include "math/real.hpp"
-#include "math/vec2.hpp"
 
 #include "shaders/quasi_constants.h"
 
 using namespace math;
 
-DEF_GL_MAPPED_TYPE(Vertex, (vec2_t, position))
+DEF_GL_MAPPED_TYPE(Vertex, (vec2, position))
 
 struct Anim final : ge::Anim<Anim>
 {

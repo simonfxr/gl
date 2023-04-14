@@ -47,7 +47,7 @@ struct GLT_API RenderTarget
 
     [[nodiscard]] size_t width() const { return size()[0]; }
     [[nodiscard]] size_t height() const { return size()[1]; }
-    [[nodiscard]] math::genvec<size_t, 2> size() const;
+    [[nodiscard]] math::vec<size_t, 2> size() const;
 
     RenderTargetBuffers buffers() const;
     const Viewport &viewport() const;

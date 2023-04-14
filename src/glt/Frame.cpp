@@ -1,10 +1,9 @@
 #include "glt/Frame.hpp"
 #include "glt/Transformations.hpp"
 
+#include "math/fvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 
 namespace glt {
 
@@ -14,74 +13,74 @@ Frame::Frame()
   : origin(vec3(0., 0., 0.)), x_axis(vec3(1., 0., 0.)), z_axis(vec3(0., 0., 1.))
 {}
 
-direction3_t
+direction3
 Frame::localX() const
 {
     return x_axis;
 }
 
-direction3_t
+direction3
 Frame::localY() const
 {
     return cross(z_axis, x_axis);
 }
 
-direction3_t
+direction3
 Frame::localZ() const
 {
     return z_axis;
 }
 
 void
-Frame::setXY(const direction3_t &x, const direction3_t &y)
+Frame::setXY(const direction3 &x, const direction3 &y)
 {
     x_axis = x;
     z_axis = cross(x, y);
 }
 
 void
-Frame::setYZ(const direction3_t &y, const direction3_t &z)
+Frame::setYZ(const direction3 &y, const direction3 &z)
 {
     x_axis = cross(y, z);
     z_axis = z;
 }
 
 void
-Frame::setXZ(const direction3_t &x, const direction3_t &z)
+Frame::setXZ(const direction3 &x, const direction3 &z)
 {
     x_axis = x;
     z_axis = z;
 }
 
 void
-Frame::lookingAt(const point3_t &p)
+Frame::lookingAt(const point3 &p)
 {
     auto z = -directionFromTo(origin, p);
     setXZ(math::normalize(cross(localY(), z)), z);
 }
 
 void
-Frame::rotateLocal(real angleRad, const vec3_t &localAxis)
+Frame::rotateLocal(real angleRad, const vec3 &localAxis)
 {
     rotateWorld(angleRad, transformVector(*this, localAxis));
 }
 
 void
-Frame::rotateWorld(real angleRad, const vec3_t &worldAxis)
+Frame::rotateWorld(real angleRad, const vec3 &worldAxis)
 {
     auto rot = rotationMatrix(angleRad, worldAxis);
-    x_axis = rot * x_axis;
-    z_axis = rot * z_axis;
+    x_axis = rot(x_axis);
+    z_axis = rot(z_axis);
 }
 
 void
-Frame::translateLocal(const vec3_t &v)
+Frame::translateLocal(const vec3 &v)
 {
-    origin += rotationLocalToWorld(*this) * v;
+    origin += rotationLocalToWorld(*this)(v);
 }
 
 void
-Frame::translateWorld(const vec3_t &v)
+Frame::translateWorld(const vec3 &v)
 {
     origin += v;
 }
@@ -98,22 +97,22 @@ Frame::normalize()
     z_axis = normalize(z);
 }
 
-vec4_t
-transform(const Frame &fr, const vec4_t &v)
+vec4
+transform(const Frame &fr, const vec4 &v)
 {
-    return transformationLocalToWorld(fr) * v;
+    return transformationLocalToWorld(fr)(v);
 }
 
-point3_t
-transformPoint(const Frame &fr, const point3_t &p)
+point3
+transformPoint(const Frame &fr, const point3 &p)
 {
     return fr.origin + transformVector(fr, p);
 }
 
-vec3_t
-transformVector(const Frame &fr, const vec3_t &v)
+vec3
+transformVector(const Frame &fr, const vec3 &v)
 {
-    return rotationLocalToWorld(fr) * v;
+    return rotationLocalToWorld(fr)(v);
 }
 
 mat3_t
@@ -141,7 +140,7 @@ mat4_t
 transformationWorldToLocal(const Frame &fr)
 {
     auto m = mat4(rotationWorldToLocal(fr));
-    m[3] = m * vec4(-fr.origin, 1.f);
+    m[3] = m(vec4(-fr.origin, 1.f));
     return m;
 }
 

@@ -6,13 +6,11 @@
 #include "glt/color.hpp"
 #include "glt/primitives.hpp"
 #include "glt/utils.hpp"
-#include "math/ivec3.hpp"
+#include "math/fvec.hpp"
+#include "math/ivec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/real.hpp"
-#include "math/vec2.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 #include "sys/measure.hpp"
 #include "util/range.hpp"
 
@@ -29,8 +27,8 @@
 using namespace math;
 
 static const real FPS_UPDATE_INTERVAL = 3.;
-static const vec3_t BLOCK_DIM = vec3(1.);
-static const vec3_t LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
+static const vec3 BLOCK_DIM = vec3(1.);
+static const vec3 LIGHT_DIR = vec3(+0.21661215f, +0.81229556f, +0.5415304f);
 
 static const int32_t N = 196;                // 196;
 static const int32_t SPHERE_POINTS_FACE = 8; // 32;
@@ -57,20 +55,20 @@ struct MaterialProperties
 static const MaterialProperties BLOCK_MAT(0, 1., 0., 0.);
 
 static real
-noise3D(const vec3_t &p);
+noise3D(const vec3 &p);
 static real
-sumNoise3D(const vec3_t &p,
+sumNoise3D(const vec3 &p,
            uint32_t octaves,
            real fmin,
            real phi,
            bool abs = false);
 static void
-pointsOnSphere(uint32_t n, vec3_t *ps);
+pointsOnSphere(uint32_t n, vec3 *ps);
 
 DEF_GL_MAPPED_TYPE(Vertex,
-                   (vec3_t, position),
+                   (vec3, position),
                    (glt::color, color),
-                   (vec4_t, normal))
+                   (vec4, normal))
 
 using CubeMesh = glt::CubeMesh<Vertex>;
 
@@ -80,11 +78,11 @@ struct Anim final : ge::Anim3D<Anim>
 {
     CubeMesh worldModel;
 
-    vec3_t sphere_points[SPHERE_POINTS]{};
+    vec3 sphere_points[SPHERE_POINTS]{};
 
     real gamma_correction{};
 
-    vec3_t ecLightDir{};
+    vec3 ecLightDir{};
 
     std::unique_ptr<ge::Timer> fpsTimer;
 
@@ -113,7 +111,7 @@ static bool
 writeModel(const std::string &file, const CubeMesh &mdl);
 
 static bool
-initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points);
+initWorld(State *state, CubeMesh &worldModel, vec3 *sphere_points);
 
 void
 Anim::init(const InitEv &ev)
@@ -197,7 +195,7 @@ Anim::init(const InitEv &ev)
 //     return rand() * (1. / RAND_MAX);
 // }
 
-// static vec4_t randColor() {
+// static vec4 randColor() {
 //     return vec4(vec3(rand1(), rand1(), rand1()), 1.);
 // }
 
@@ -285,7 +283,7 @@ struct World
 
 struct Faces
 {
-    vec3_t f[2]; // front, up, right, bot, down, left
+    vec3 f[2]; // front, up, right, bot, down, left
 };
 
 static const uint32_t RAY_SAMPLES = static_cast<uint32_t>(
@@ -294,8 +292,7 @@ static const uint32_t RAY_SAMPLES = static_cast<uint32_t>(
 struct Ray
 {
     Faces lightContrib{};
-    std::unique_ptr<ivec3_t[]> offset =
-      std::make_unique<ivec3_t[]>(RAY_SAMPLES);
+    std::unique_ptr<ivec3[]> offset = std::make_unique<ivec3[]>(RAY_SAMPLES);
 };
 
 struct Rays
@@ -313,9 +310,9 @@ struct GlobalOcc
 };
 
 static int32_t
-faceIdx(const vec3_t &dir)
+faceIdx(const vec3 &dir)
 {
-    direction3_t as = abs(dir);
+    direction3 as = abs(dir);
     int32_t maxi;
     if (as[0] >= as[1] && as[0] >= as[2])
         maxi = 0;
@@ -329,9 +326,9 @@ faceIdx(const vec3_t &dir)
 }
 
 static Faces
-cosfaces(const direction3_t &dir, Faces &sumcos)
+cosfaces(const direction3 &dir, Faces &sumcos)
 {
-    direction3_t as = abs(dir);
+    direction3 as = abs(dir);
     int32_t i = faceIdx(dir);
     int32_t comp = i % 3;
     int32_t side = i / 3;
@@ -343,14 +340,14 @@ cosfaces(const direction3_t &dir, Faces &sumcos)
 }
 
 static void
-initRay(Ray &r, const direction3_t &d, const vec3_t &step, Faces &sumcos)
+initRay(Ray &r, const direction3 &d, const vec3 &step, Faces &sumcos)
 {
-    vec3_t p = vec3(0.);
-    ivec3_t lastidx = ivec3(p);
+    vec3 p = vec3(0.);
+    ivec3 lastidx = ivec3(p);
 
     uint32_t i = 0;
     while (i < RAY_SAMPLES) {
-        ivec3_t idx = ivec3(p);
+        ivec3 idx = ivec3(p);
         if (idx != lastidx) {
             lastidx = idx;
             r.offset[i++] = idx;
@@ -362,13 +359,13 @@ initRay(Ray &r, const direction3_t &d, const vec3_t &step, Faces &sumcos)
 }
 
 static bool
-faceIdxLessThan(const vec3_t &a, const vec3_t &b)
+faceIdxLessThan(const vec3 &a, const vec3 &b)
 {
     return faceIdx(a) < faceIdx(b);
 }
 
 static void
-initRays(Rays &rays, vec3_t dirs[])
+initRays(Rays &rays, vec3 dirs[])
 {
 
     for (int32_t i = 0; i < SPHERE_POINTS; ++i)
@@ -404,7 +401,7 @@ initRays(Rays &rays, vec3_t dirs[])
                           << " beginning at " << rays.faceOffsets[i] << "\n";
     }
 
-    const vec3_t center = vec3(N * 0.5f);
+    const vec3 center = vec3(N * 0.5f);
 
     real cos0 = 0., cos1 = 0., cos2 = 0.;
     real cos3 = 0., cos4 = 0., cos5 = 0.;
@@ -529,12 +526,12 @@ filterOccluded(const World &w)
 }
 
 static Faces
-trace(const World &w, const Rays &rs, const ivec3_t &p0)
+trace(const World &w, const Rays &rs, const ivec3 &p0)
 {
     Faces diffContr = { { vec3(0.), vec3(0.) } };
 
     // // front, up, right, bot, down, left
-    // ivec3_t faceNorms[6] = {
+    // ivec3 faceNorms[6] = {
     //     ivec3(0, 0, +1), ivec3(0, +1, 0), ivec3(+1, 0, 0),
     //     ivec3(0, 0, -1), ivec3(0, -1, 0), ivec3(-1, 0, 0)
     // };
@@ -544,8 +541,8 @@ trace(const World &w, const Rays &rs, const ivec3_t &p0)
         uint32_t off = rs.faceOffsets[side];
         uint32_t len = rs.faceLengths[side];
 
-        // const ivec3_t& norm = faceNorms[side];
-        // const ivec3_t p1 = p0 + norm;
+        // const ivec3& norm = faceNorms[side];
+        // const ivec3 p1 = p0 + norm;
 
         // bool onCubeSurface =  p1[0] < 0 || p1[0] >= N ||
         //     0 > p1[1] || p1[1] >= N ||
@@ -563,7 +560,7 @@ trace(const World &w, const Rays &rs, const ivec3_t &p0)
 
         for (uint32_t i = off; i < off + len; ++i) {
             const Ray &ray = rs.rays[i];
-            ivec3_t p = p0 + ray.offset[0];
+            ivec3 p = p0 + ray.offset[0];
             uint32_t j = 0;
             bool escaped = true;
             while (j + 1 < RAY_SAMPLES && p[0] >= 0 && p[0] < N && p[1] >= 0 &&
@@ -599,7 +596,7 @@ visibleFace(const World &w,
             int32_t i,
             int32_t j,
             int32_t k,
-            const vec3_t &normal)
+            const vec3 &normal)
 {
     i += static_cast<int32_t>(normal[0]);
     j += static_cast<int32_t>(normal[1]);
@@ -607,19 +604,19 @@ visibleFace(const World &w,
     return visible(w, vis, i, j, k);
 }
 
-// static real noise3D1(const vec3_t& p) {
+// static real noise3D1(const vec3& p) {
 //     return saturate((noise3D(p) + 1.) * 0.5f / 0.7f);
 // }
 
-// static real heightAt(const vec3_t& p, const vec3_t& warp, real freq) {
+// static real heightAt(const vec3& p, const vec3& warp, real freq) {
 //     // real y0 = p[1] / VIRTUAL_DIM;
 // //    real w = 1 - y0;
 //     real noise = noise3D(((vec3(p[0], p[2], 0.) + warp) * freq));
 //     return 1. + noise;
 // }
 
-static vec3_t
-noise3D3(const vec3_t &p)
+static vec3
+noise3D3(const vec3 &p)
 {
     return vec3(noise3D(p + vec3(89., -193., 521.)),
                 noise3D(p + vec3(-239., -181., 619.)),
@@ -627,7 +624,7 @@ noise3D3(const vec3_t &p)
 }
 
 real
-density(const vec3_t &p)
+density(const vec3 &p)
 {
     // real r = sumNoise3D(p, 4, 1.2, 0.5, true);
     // real distC = length(p - vec3(0.5f)) / length(vec3(0.5f));
@@ -650,14 +647,14 @@ density(const vec3_t &p)
     // real world = noise3D(2.3f * p);
     // return heightF * distC * cave * (fabs(world) - detail) > 0.13f;
 
-    //    vec3_t ws_orig = p;
-    vec3_t ws = p;
+    //    vec3 ws_orig = p;
+    vec3 ws = p;
     real density = 0.;
 
     real prewarp_stride = 25.;
     real prewarp_freq = 0.0221_r;
-    vec3_t warp = noise3D3(ws * prewarp_freq) * 0.64_r +
-                  noise3D3(ws * prewarp_freq * 0.5_r) * 0.32_r;
+    vec3 warp = noise3D3(ws * prewarp_freq) * 0.64_r +
+                noise3D3(ws * prewarp_freq * 0.5_r) * 0.32_r;
     ws += warp * prewarp_stride;
 
     density += -ws[1];
@@ -670,19 +667,19 @@ density(const vec3_t &p)
 }
 
 static int32_t
-signAt(const Densities &ds, const ivec3_t &i)
+signAt(const Densities &ds, const ivec3 &i)
 {
     return ds.ds[i[0]][i[1]][i[2]] >= 0 ? +1 : -1;
 }
 
 static bool
-blockAt(const Densities &ds, const ivec3_t &idx)
+blockAt(const Densities &ds, const ivec3 &idx)
 {
     int s = signAt(ds, idx);
     for (int i = -1; i < 2; i += 2) {
         for (int j = -1; j < 2; j += 2) {
             for (int k = -1; k < 2; k += 2) {
-                ivec3_t jdx = idx + ivec3(i, j, k);
+                ivec3 jdx = idx + ivec3(i, j, k);
                 if (jdx[0] >= 0 && jdx[0] < N && jdx[1] >= 0 && jdx[1] < N &&
                     jdx[2] >= 0 && jdx[2] < N && s != signAt(ds, jdx))
                     return true;
@@ -700,10 +697,9 @@ createWorld(Densities &ds)
     for (int32_t i = 0; i < N; ++i)
         for (int32_t j = 0; j < N; ++j)
             for (int32_t k = 0; k < N; ++k) {
-                vec3_t wc =
-                  (vec3(ivec3(i, j, k)) * (1_r / static_cast<real>(N)) -
-                   vec3(0.5_r)) *
-                  VIRTUAL_DIM;
+                vec3 wc = (vec3(ivec3(i, j, k)) * (1_r / static_cast<real>(N)) -
+                           vec3(0.5_r)) *
+                          VIRTUAL_DIM;
                 ds.ds[i][j][k] = density(wc);
                 //                sys::io::stderr() << i << " " << j << " " << k
                 //                << " -> wc:" << wc << " density: " <<
@@ -762,12 +758,13 @@ struct Vertices
     Array<Vertex> verts;
 };
 
-const ivec3_t neighOffs[6] = { ivec3(0, 0, +1), ivec3(0, +1, 0),
-                               ivec3(+1, 0, 0), ivec3(0, 0, -1),
-                               ivec3(0, -1, 0), ivec3(-1, 0, 0) };
+const ivec3 neighOffs[6] = {
+    ivec3(0, 0, +1), ivec3(0, +1, 0), ivec3(+1, 0, 0),
+    ivec3(0, 0, -1), ivec3(0, -1, 0), ivec3(-1, 0, 0)
+};
 
 static bool
-hasNeighbours(const World &w, const World &vis, const ivec3_t &p)
+hasNeighbours(const World &w, const World &vis, const ivec3 &p)
 {
     if (!w(p[0], p[1], p[2]))
         return false;
@@ -837,7 +834,7 @@ createModel(CubeMesh &worldModel,
                     auto yellow = vec3(0_r, 1_r, 1_r);
                     auto red = vec3(1_r, 0_r, 0_r);
 
-                    vec3_t col3{};
+                    vec3 col3{};
                     if (dens <= 0.5_r) {
                         real w = dens * 2;
                         col3 = (1 - w) * blue + w * yellow;
@@ -855,7 +852,7 @@ createModel(CubeMesh &worldModel,
                         if (visibleFace(
                               world, vis, ii, jj, kk, vec3(v.normal))) {
                             ++stats.visFaces;
-                            ivec3_t n = ivec3(vec3(v.normal));
+                            ivec3 n = ivec3(vec3(v.normal));
                             //                            sys::io::stderr() <<
                             //                            "n: " << vec3(n) <<
                             //                            sys::io::endl;
@@ -877,7 +874,7 @@ createModel(CubeMesh &worldModel,
 }
 
 static bool
-initWorld(State *state, CubeMesh &worldModel, vec3_t *sphere_points)
+initWorld(State *state, CubeMesh &worldModel, vec3 *sphere_points)
 {
     worldModel.freeHost();
 
@@ -1023,7 +1020,7 @@ renderBlocks(State *state, ge::Engine &e)
 
     // real phi = gameTime_Op() * 0.1f;
 
-    // vec3_t center = BLOCK_DIM * N * 0.5f;
+    // vec3 center = BLOCK_DIM * N * 0.5f;
 
     // rm.geometryTransform().translate(center);
     // rm.geometryTransform().concat(mat3(vec3(cos(phi), sin(phi), 0.),
@@ -1041,10 +1038,10 @@ renderBlocks(State *state, ge::Engine &e)
     us.optional("mvMatrix", rm.geometryTransform().mvMatrix());
     us.optional("normalMatrix", rm.geometryTransform().normalMatrix());
     us.optional("ecLightDir", state->ecLightDir);
-    vec4_t mat = vec4(BLOCK_MAT.ambientContribution,
-                      BLOCK_MAT.diffuseContribution,
-                      BLOCK_MAT.specularContribution,
-                      BLOCK_MAT.shininess);
+    vec4 mat = vec4(BLOCK_MAT.ambientContribution,
+                    BLOCK_MAT.diffuseContribution,
+                    BLOCK_MAT.specularContribution,
+                    BLOCK_MAT.shininess);
     us.optional("materialProperties", mat);
     us.optional("gammaCorrection", state->gamma_correction);
     us.optional("sin_time",
@@ -1172,7 +1169,7 @@ grad(int hash, real x, real y, real z)
 }
 
 static real
-sumNoise3D(const vec3_t &p, uint32_t octaves, real fmin, real phi, bool absval)
+sumNoise3D(const vec3 &p, uint32_t octaves, real fmin, real phi, bool absval)
 {
     auto a = 1_r;
     auto r = 0_r;
@@ -1198,7 +1195,7 @@ lerp2(real t, real a, real b)
 }
 
 static real
-noise3D(const vec3_t &pnt)
+noise3D(const vec3 &pnt)
 {
     auto p = permutation;
 
@@ -1234,7 +1231,7 @@ noise3D(const vec3_t &pnt)
 }
 
 void
-pointsOnSphere(uint32_t n, vec3_t *ps)
+pointsOnSphere(uint32_t n, vec3 *ps)
 {
     auto inc = PI * (3_r - math::sqrt(5_r));
     auto off = 2_r / static_cast<real>(n);

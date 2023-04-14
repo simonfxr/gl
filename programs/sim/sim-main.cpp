@@ -9,13 +9,11 @@
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/primitives.hpp"
 #include "glt/utils.hpp"
-#include "math/ivec3.hpp"
+#include "math/fvec.hpp"
+#include "math/ivec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/real.hpp"
-#include "math/vec2.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 
 #include <algorithm>
 #include <string>
@@ -25,9 +23,9 @@ using namespace math;
 
 inline constexpr real SPHERE_DENSITY = 999_r;
 
-// inline constexpr vec4_t SPHERE_COLOR = vec4(0.f, 0.f, 1.f, 1.f);
+// inline constexpr vec4 SPHERE_COLOR = vec4(0.f, 0.f, 1.f, 1.f);
 
-inline constexpr vec3_t LIGHT_POS = vec3(11.f, 18.f, 11.f);
+inline constexpr vec3 LIGHT_POS = vec3(11.f, 18.f, 11.f);
 
 // inline constexpr real FPS_RENDER_CYCLE = 1_r;
 
@@ -54,9 +52,9 @@ struct SphereLOD
 HU_BEGIN_PACKED
 struct SphereInstance
 {
-    vec3_t pos;
+    vec3 pos;
     float rad;
-    vec3_t col_rgb;
+    vec3 col_rgb;
     float shininess;
 } HU_PACKED;
 HU_END_PACKED
@@ -65,14 +63,14 @@ HU_BEGIN_PACKED
 struct SphereInstance
 {
     mat4_t mvMatrix;
-    vec4_t colorShininess;
+    vec4 colorShininess;
 } HU_PACKED;
 HU_END_PACKED
 #else
 #    error "no SPHERE_INSTANCED_* specified"
 #endif
 
-DEF_GL_MAPPED_TYPE(Vertex, (vec4_t, position), (vec3_t, normal))
+DEF_GL_MAPPED_TYPE(Vertex, (vec4, position), (vec3, normal))
 
 namespace {
 
@@ -98,15 +96,15 @@ struct Game final : ge::Anim3D<Game>
 
     struct
     {
-        vec3_t ecLightPos;
-        vec3_t ecSpotDir;
+        vec3 ecLightPos;
+        vec3 ecSpotDir;
         float spotAngle;
     } wallUniforms{};
 
     struct
     {
-        vec3_t ecLightPos;
-        vec3_t ecSpotDir;
+        vec3 ecLightPos;
+        vec3 ecSpotDir;
         float spotAngle;
     } sphereUniforms{};
 
@@ -141,7 +139,7 @@ struct Game final : ge::Anim3D<Game>
     void render_sphere(const Sphere &s, const SphereModel &m);
     void end_render_spheres();
     void render_box(const glt::AABB &box);
-    void render_con(const point3_t &a, const point3_t &b);
+    void render_con(const point3 &a, const point3 &b);
     void render_hud();
 
     void update_sphere_mass();
@@ -333,9 +331,9 @@ void
 Game::renderWorld(float dt)
 {
     glt::GeometryTransform &gt = engine.renderManager().geometryTransform();
-    const vec3_t eyeLightPos = gt.transformPoint(LIGHT_POS);
-    const vec3_t spotDirection = normalize(vec3(0.f) - LIGHT_POS);
-    const vec3_t ecSpotDirection = gt.transformVector(spotDirection);
+    const vec3 eyeLightPos = gt.transformPoint(LIGHT_POS);
+    const vec3 spotDirection = normalize(vec3(0.f) - LIGHT_POS);
+    const vec3 ecSpotDirection = gt.transformVector(spotDirection);
 
     wallUniforms.ecLightPos = eyeLightPos;
     wallUniforms.ecSpotDir = ecSpotDirection;
@@ -503,7 +501,7 @@ Game::end_render_spheres()
                   4,
                   GL_FLOAT,
                   GL_FALSE,
-                  sizeof(vec4_t),
+                  sizeof(vec4),
                   GLT_FIELD_OFFSET(SphereInstance, mvMatrix.columns[col]));
                 GL_CALL(glVertexAttribDivisor, attr_mvMatrix + col, 1);
                 GL_CALL(glEnableVertexAttribArray, attr_mvMatrix + col);
@@ -546,11 +544,10 @@ SphereLOD
 Game::calc_sphere_lod(const Sphere &s)
 {
     glt::GeometryTransform &gt = engine.renderManager().geometryTransform();
-    vec3_t ecCoord = gt.transformPoint(s.center);
+    vec3 ecCoord = gt.transformPoint(s.center);
 
     // near upper right corner of frustm (view coord)
-    vec4_t nur_corner =
-      gt.inverseProjectionMatrix() * vec4(-1.f, -1.f, -1.f, 1.f);
+    vec4 nur_corner = gt.inverseProjectionMatrix()(vec4(-1.f, -1.f, -1.f, 1.f));
 
     float x_max = math::abs(nur_corner[0]);
     float y_max = math::abs(nur_corner[1]);
@@ -604,7 +601,7 @@ Game::render_sphere(const Sphere &s, const SphereModel &m)
 
     } else {
         glt::GeometryTransform &gt = engine.renderManager().geometryTransform();
-        const vec3_t &pos = s.center;
+        const vec3 &pos = s.center;
         auto sp = gt.save();
         gt.translate(pos);
         gt.scale(vec3(s.r));
@@ -614,7 +611,7 @@ Game::render_sphere(const Sphere &s, const SphereModel &m)
 
         sphereShader->use();
 
-        vec3_t col3 = vec3(1.f);
+        vec3 col3 = vec3(1.f);
         col3 /= static_cast<real>(lod.level + 1);
         auto col = glt::color(col3);
 
@@ -651,8 +648,8 @@ Game::render_box(const glt::AABB &box)
 
     auto sp = gt.save();
 
-    point3_t center = box.center();
-    vec3_t dim = 0.5f * box.dimensions();
+    point3 center = box.center();
+    vec3 dim = 0.5f * box.dimensions();
 
     //    sys::io::stderr() << "render box: " << center << "dim: " << dim <<
     //    sys::io::endl;
@@ -684,13 +681,13 @@ Game::render_box(const glt::AABB &box)
 }
 
 void
-Renderer::renderConnection(const point3_t &a, const point3_t &b)
+Renderer::renderConnection(const point3 &a, const point3 &b)
 {
     game.render_con(a, b);
 }
 
 void
-Game::render_con(const point3_t &a, const point3_t &b)
+Game::render_con(const point3 &a, const point3 &b)
 {
 
     Sphere s{};

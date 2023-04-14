@@ -1,10 +1,9 @@
 #ifndef PLANE_HPP
 #define PLANE_HPP
 
+#include "math/fvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 
 namespace math {
 
@@ -15,18 +14,18 @@ struct plane3_t
     {
         struct
         {
-            direction3_t normal;
+            direction3 normal;
             real dist; // distance to origin
         };
 
-        vec4_t coeff;
+        vec4 coeff;
     };
 
     constexpr plane3_t() : normal{}, dist{} {}
 };
 
 inline constexpr plane3_t
-plane(const direction3_t &normal, real dist)
+plane(const direction3 &normal, real dist)
 {
     plane3_t P;
     P.normal = normal;
@@ -41,15 +40,15 @@ plane()
 }
 
 inline constexpr plane3_t
-plane(const vec4_t &coeff)
+plane(const vec4 &coeff)
 {
     return plane(vec3(coeff), coeff[3]);
 }
 
 inline plane3_t
-planeParametric(const point3_t &a, const vec3_t &u, const vec3_t &v)
+planeParametric(const point3 &a, const vec3 &u, const vec3 &v)
 {
-    direction3_t norm = normalize(cross(u, v));
+    direction3 norm = normalize(cross(u, v));
     return plane(norm, dot(norm, a));
 }
 
@@ -57,7 +56,7 @@ planeParametric(const point3_t &a, const vec3_t &u, const vec3_t &v)
 // winding goes ccw, the normal points in the direction of the viewer (same as
 // OpenGL)
 inline plane3_t
-plane(const point3_t &a, const point3_t &b, const point3_t &c)
+plane(const point3 &a, const point3 &b, const point3 &c)
 {
     return planeParametric(a, b - a, c - a);
 }
@@ -71,19 +70,19 @@ normalize(const plane3_t &P)
 
 // signed distance, positive on the side where the normal points
 inline constexpr real
-distance(const plane3_t &P, const point3_t &a)
+distance(const plane3_t &P, const point3 &a)
 {
     return dot(P.normal, a) - P.dist;
 }
 
-inline point3_t
-projectOnto(const plane3_t &P, const point3_t &a)
+inline point3
+projectOnto(const plane3_t &P, const point3 &a)
 {
     return (P.dist - dot(P.normal, a)) * P.normal + a;
 }
 
-inline direction3_t
-transformNormal(const mat3_t &A, const direction3_t &n)
+inline direction3
+transformNormal(const mat3_t &A, const direction3 &n)
 {
     // transforming the normal like a normal vector might break
     // orthogonality for non orthonormal transforms
@@ -100,16 +99,16 @@ transformNormal(const mat3_t &A, const direction3_t &n)
 inline plane3_t
 transform(const mat3_t &A, const plane3_t &P)
 {
-    direction3_t n = transformNormal(A, P.normal);
-    point3_t a = transform(A, P.normal * P.dist);
+    direction3 n = transformNormal(A, P.normal);
+    point3 a = transform(A, P.normal * P.dist);
     return plane(n, dot(a, n));
 }
 
 inline plane3_t
 transform(const mat4_t &A, const plane3_t &P)
 {
-    direction3_t n = transformNormal(mat3(A), P.normal);
-    point3_t a = transformPoint(A, P.normal * P.dist);
+    direction3 n = transformNormal(mat3(A), P.normal);
+    point3 a = transformPoint(A, P.normal * P.dist);
     return plane(n, dot(a, n));
 }
 

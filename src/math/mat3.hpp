@@ -26,9 +26,7 @@ mat3(const genmat<T, 3> &A)
 }
 
 constexpr mat3_t
-mat3(const genvec<real, 3> &c1,
-     const genvec<real, 3> &c2,
-     const genvec<real, 3> &c3)
+mat3(const vec<real, 3> &c1, const vec<real, 3> &c2, const vec<real, 3> &c3)
 {
     return { c1, c2, c3 };
 }

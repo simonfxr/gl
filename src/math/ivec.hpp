@@ -1,12 +1,13 @@
-#ifndef MATH_IVEC3_HPP
-#define MATH_IVEC3_HPP
+#ifndef MATH_IVEC_HPP
+#define MATH_IVEC_HPP
 
-#include "math/genvec.hpp"
+#include "math/vec.hpp"
 
 namespace math {
 
-using ivec3 = genvec<int32_t, 3>;
-using ivec3_t = ivec3;
+using ivec2 = vec<int32_t, 2>;
+using ivec3 = vec<int32_t, 3>;
+using ivec4 = vec<int32_t, 4>;
 
 } // namespace math
 

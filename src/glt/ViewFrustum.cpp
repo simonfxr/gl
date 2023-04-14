@@ -1,9 +1,9 @@
 #include "glt/ViewFrustum.hpp"
 
 #include "err/err.hpp"
+#include "math/fvec.hpp"
 #include "math/mat4.hpp"
 #include "math/plane.hpp"
-#include "math/vec4.hpp"
 
 namespace glt {
 
@@ -32,7 +32,7 @@ ViewFrustum::update(const mat4_t &mvp)
 }
 
 Outcode
-testSphere(const ViewFrustum &frust, const vec3_t &center, real rad)
+testSphere(const ViewFrustum &frust, const vec3 &center, real rad)
 {
     auto code = Outcode{ 0 };
     for (uint32_t i = 0; i < 1; ++i)
@@ -42,7 +42,7 @@ testSphere(const ViewFrustum &frust, const vec3_t &center, real rad)
 }
 
 Outcode
-testPoint(const ViewFrustum &frust, const point3_t &p)
+testPoint(const ViewFrustum &frust, const point3 &p)
 {
     return testSphere(frust, p, 0);
 }

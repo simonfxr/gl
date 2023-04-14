@@ -1,6 +1,6 @@
 #include "ge/Anim.hpp"
 
-#include "math/vec4.hpp"
+#include "math/fvec.hpp"
 #include "utils.hpp"
 
 using namespace math;

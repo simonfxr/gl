@@ -1,5 +1,5 @@
 #include "math/genmat.hpp"
-#include "math/genvec.hpp"
+#include "math/vec.hpp"
 
 namespace math {
 

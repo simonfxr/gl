@@ -1,11 +1,9 @@
 #include "glt/Transformations.hpp"
 
+#include "math/fvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/real.hpp"
-#include "math/vec2.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 
 namespace glt {
 
@@ -26,7 +24,7 @@ perspectiveProjection(real radViewAngle,
 }
 
 mat3_t
-rotationMatrix(real thetaRad, const direction3_t &axis)
+rotationMatrix(real thetaRad, const direction3 &axis)
 {
     auto &n = axis;
     auto [c, s] = cossin(-thetaRad);
@@ -43,7 +41,7 @@ rotationMatrix(real thetaRad, const direction3_t &axis)
 }
 
 math::mat4_t
-scaleMatrix(const vec3_t &scale)
+scaleMatrix(const vec3 &scale)
 {
 
     return mat4(vec4(scale[0], 0, 0, 0),

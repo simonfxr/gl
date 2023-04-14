@@ -7,7 +7,7 @@
 #include "ge/Engine.hpp"
 #include "ge/Event.hpp"
 #include "glt/Frame.hpp"
-#include "math/vec2.hpp"
+#include "math/fvec.hpp"
 
 #include <memory>
 
@@ -18,10 +18,10 @@ struct Camera;
 struct GE_API CameraMoved
 {
     Camera &camera;
-    math::vec3_t step;
-    mutable math::vec3_t allowed_step;
+    math::vec3 step;
+    mutable math::vec3 allowed_step;
 
-    CameraMoved(Camera &cam, const math::vec3_t &s)
+    CameraMoved(Camera &cam, const math::vec3 &s)
       : camera(cam), step(s), allowed_step(s)
     {}
 };
@@ -29,10 +29,10 @@ struct GE_API CameraMoved
 struct GE_API CameraRotated
 {
     Camera &camera;
-    math::vec2_t angle;
-    mutable math::vec2_t allowed_angle;
+    math::vec2 angle;
+    mutable math::vec2 allowed_angle;
 
-    CameraRotated(Camera &cam, const math::vec2_t &a)
+    CameraRotated(Camera &cam, const math::vec2 &a)
       : camera(cam), angle(a), allowed_angle(a)
     {}
 };
@@ -61,8 +61,8 @@ struct GE_API Camera final : public PluginImpl<Camera>
 
     Events &events();
 
-    math::vec2_t mouseSensitivity() const;
-    void mouseSensitivity(const math::vec2_t &);
+    math::vec2 mouseSensitivity() const;
+    void mouseSensitivity(const math::vec2 &);
 
     math::real speed() const;
     void speed(math::real);

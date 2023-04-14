@@ -3,10 +3,9 @@
 
 #include "err/err.hpp"
 #include "glt/conf.hpp"
+#include "math/fvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 #include "pp/pimpl.hpp"
 #include "util/noncopymove.hpp"
 
@@ -46,22 +45,22 @@ struct GLT_API GeometryTransform
 
     void restore(SavePoint &sp);
 
-    void scale(const math::vec3_t &dim);
+    void scale(const math::vec3 &dim);
     void scale(math::real s) { scale(math::vec3(s)); }
 
-    void translate(const math::vec3_t &origin);
+    void translate(const math::vec3 &origin);
 
-    void rotate(math::real phi, const math::direction3_t &axis);
+    void rotate(math::real phi, const math::direction3 &axis);
 
     void concat(const math::mat3_t &m);
 
     void concat(const math::mat4_t &m);
 
-    math::vec4_t transform(const math::vec4_t &v) const;
+    math::vec4 transform(const math::vec4 &v) const;
 
-    math::vec3_t transformPoint(const math::vec3_t &p) const;
+    math::vec3 transformPoint(const math::vec3 &p) const;
 
-    math::vec3_t transformVector(const math::vec3_t &v) const;
+    math::vec3 transformVector(const math::vec3 &v) const;
 
     size_t depth() const;
 

@@ -145,9 +145,9 @@ Simulation::init()
 }
 
 void
-Simulation::compute_acceleration(vec3_t *acceleration,
-                                 const vec3_t *position,
-                                 const vec3_t *velocity)
+Simulation::compute_acceleration(vec3 *acceleration,
+                                 const vec3 *position,
+                                 const vec3 *velocity)
 {
 
     for (size_t i = 0; i < particles.size(); ++i) {
@@ -179,10 +179,10 @@ Simulation::simulate_frame()
     const real dt = time_step;
     const real dt2 = .5_r * dt;
 
-    auto accel = Array<vec3_t>(particles.size());
-    auto accel1 = Array<vec3_t>(particles.size());
-    auto pos = Array<vec3_t>(particles.size());
-    auto vel = Array<vec3_t>(particles.size());
+    auto accel = Array<vec3>(particles.size());
+    auto accel1 = Array<vec3>(particles.size());
+    auto pos = Array<vec3>(particles.size());
+    auto vel = Array<vec3>(particles.size());
 
     compute_acceleration(
       accel.begin(), particles._position.begin(), particles._velocity.begin());

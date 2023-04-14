@@ -2,10 +2,9 @@
 #include "err/err.hpp"
 #include "glt/Transformations.hpp"
 
+#include "math/fvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 
 namespace glt {
 
@@ -195,7 +194,7 @@ GeometryTransform::restore(SavePoint &sp)
 }
 
 void
-GeometryTransform::scale(const vec3_t &dim)
+GeometryTransform::scale(const vec3 &dim)
 {
     self->modelMatrices[self->depth][0] *= dim[0];
     self->modelMatrices[self->depth][1] *= dim[1];
@@ -204,14 +203,14 @@ GeometryTransform::scale(const vec3_t &dim)
 }
 
 void
-GeometryTransform::translate(const vec3_t &origin)
+GeometryTransform::translate(const vec3 &origin)
 {
     self->modelMatrices[self->depth][3] += vec4(transformPoint(origin), 0.f);
     self->modelUpdated();
 }
 
 void
-GeometryTransform::rotate(real phi, const direction3_t &axis)
+GeometryTransform::rotate(real phi, const direction3 &axis)
 {
     concat(rotationMatrix(phi, axis));
 }
@@ -229,20 +228,20 @@ GeometryTransform::concat(const mat4_t &m)
     self->modelUpdated();
 }
 
-vec4_t
-GeometryTransform::transform(const vec4_t &v) const
+vec4
+GeometryTransform::transform(const vec4 &v) const
 {
-    return self->modelMatrices[self->depth] * v;
+    return self->modelMatrices[self->depth](v);
 }
 
-vec3_t
-GeometryTransform::transformPoint(const vec3_t &p) const
+vec3
+GeometryTransform::transformPoint(const vec3 &p) const
 {
     return vec3(transform(vec4(p, 1.f)));
 }
 
-vec3_t
-GeometryTransform::transformVector(const vec3_t &v) const
+vec3
+GeometryTransform::transformVector(const vec3 &v) const
 {
     return vec3(transform(vec4(v, 0.f)));
 }

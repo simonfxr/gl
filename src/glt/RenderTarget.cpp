@@ -47,7 +47,7 @@ RenderTarget::RenderTarget(size_t w,
 
 RenderTarget::~RenderTarget() = default;
 
-math::genvec<size_t, 2>
+math::vec<size_t, 2>
 RenderTarget::size() const
 {
     return { self->width, self->height };
@@ -147,7 +147,7 @@ RenderTarget::doClear(uint32_t buffers, color c)
     GLbitfield bits = 0;
 
     if ((buffers & RT_COLOR_BUFFER) != 0u) {
-        const gl_mapped_type_t<math::vec4_t> col4 = c.vec4();
+        const gl_mapped_type_t<math::vec4> col4 = c.vec4();
         GL_CALL(glClearBufferfv, GL_COLOR, 0, col4.data());
     }
 

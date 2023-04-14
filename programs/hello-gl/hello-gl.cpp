@@ -4,7 +4,7 @@
 #include "ge/Anim.hpp"
 #include "glt/Mesh.hpp"
 #include "glt/utils.hpp"
-#include "math/vec2.hpp"
+#include "math/fvec.hpp"
 #include "opengl.hpp"
 #include "sys/clock.hpp"
 
@@ -16,7 +16,7 @@
 
 using namespace math;
 
-DEF_GL_MAPPED_TYPE(Vertex, (vec2_t, position))
+DEF_GL_MAPPED_TYPE(Vertex, (vec2, position))
 
 struct Anim final : ge::Anim<Anim>
 {

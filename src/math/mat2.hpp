@@ -27,7 +27,7 @@ mat2(const genmat<T, 2> &A)
 }
 
 constexpr mat2_t
-mat2(const genvec<real, 2> &c1, const genvec<real, 2> &c2)
+mat2(const vec<real, 2> &c1, const vec<real, 2> &c2)
 {
     return mat2_t::make(c1, c2);
 }

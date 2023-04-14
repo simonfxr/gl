@@ -1,8 +1,7 @@
 #include "ge/Camera.hpp"
 
+#include "math/fvec.hpp"
 #include "math/real.hpp"
-#include "math/vec2.hpp"
-#include "math/vec3.hpp"
 #include "util/bit_cast.hpp"
 #include "util/string.hpp"
 
@@ -28,8 +27,8 @@ struct Camera::Data
     std::string frame_path;
 
     real speed = 0.1_r;
-    vec2_t mouse_sensitivity = vec2(0.00075_r);
-    vec3_t step_accum = vec3(0_r);
+    vec2 mouse_sensitivity = vec2(0.00075_r);
+    vec3 step_accum = vec3(0_r);
     bool mouse_look{ false };
 
     explicit Data(Camera & /*me*/);
@@ -233,7 +232,7 @@ Camera::Data::handleBeforeRender(const Event<RenderEvent> &e) const
 void
 Camera::Data::mouseMoved(int16_t dx, int16_t dy)
 {
-    vec2_t rot = vec2(dx, dy) * mouse_sensitivity;
+    vec2 rot = vec2(dx, dy) * mouse_sensitivity;
     Event<CameraRotated> re = Event(CameraRotated(self, vec2(-rot[1], rot[0])));
     if (events.rotated.raise(re)) {
         frame.rotateLocal(re.info.allowed_angle[0], vec3(1.f, 0.f, 0.f));
@@ -257,14 +256,14 @@ Camera::events()
     return self->events;
 }
 
-math::vec2_t
+math::vec2
 Camera::mouseSensitivity() const
 {
     return self->mouse_sensitivity;
 }
 
 void
-Camera::mouseSensitivity(const math::vec2_t &v)
+Camera::mouseSensitivity(const math::vec2 &v)
 {
     self->mouse_sensitivity = v;
 }

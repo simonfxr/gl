@@ -1,8 +1,7 @@
 #include "sim.hpp"
 
+#include "math/fvec.hpp"
 #include "math/plane.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 #include "sys/clock.hpp"
 #include "util/noncopymove.hpp"
 #include "util/range.hpp"
@@ -38,8 +37,8 @@ using namespace math;
 
 struct Particle
 {
-    point3_t pos;
-    vec3_t vel;
+    point3 pos;
+    vec3 vel;
     real invMass;
 };
 
@@ -81,7 +80,7 @@ struct SphereData
 
 struct Contact
 {
-    direction3_t normal;
+    direction3 normal;
     math::real distance;
     math::real restitution;
     math::real impulse;
@@ -95,15 +94,15 @@ struct Contact
 
 // struct Connection {
 //     SphereRef x;
-//     point3_t anchor;
+//     point3 anchor;
 //     Spring spring;
 // };
 
-static const vec3_t GRAVITY = vec3(0.f, -9.81f, 0.f);
+static const vec3 GRAVITY = vec3(0.f, -9.81f, 0.f);
 
 // static const float DAMPING = 0.97f;
 
-static const vec3_t ROOM_DIMENSIONS = vec3(40.f, 30.f, 40.f) * 2.f;
+static const vec3 ROOM_DIMENSIONS = vec3(40.f, 30.f, 40.f) * 2.f;
 
 // static float rand1() {
 //     return rand() * (1.f / RAND_MAX);
@@ -130,9 +129,7 @@ struct World::Data
     SphereData &deref(SphereRef ref);
     Sphere makeSphere(SphereRef ref);
 
-    int32_t collidesWall(const point3_t &center,
-                         float r,
-                         point3_t &out_collision);
+    int32_t collidesWall(const point3 &center, float r, point3 &out_collision);
 
     void generateContacts(std::vector<Contact> &contacts, float dt);
     void solveContacts(std::vector<Contact> &contacts, float dt);
@@ -143,14 +140,14 @@ struct World::Data
                    Box volume,
                    uint32_t d,
                    Node *node,
-                   const point3_t &center,
+                   const point3 &center,
                    float r);
     void findCollisions(std::vector<Contact> &contacts,
                         const BSP *t,
                         int ni,
                         std::vector<bool> &collided,
                         SphereRef s,
-                        const point3_t &center,
+                        const point3 &center,
                         float r);
 };
 
@@ -171,7 +168,7 @@ World::World()
 bool
 World::init()
 {
-    const vec3_t dim = ROOM_DIMENSIONS * 0.5f;
+    const vec3 dim = ROOM_DIMENSIONS * 0.5f;
 
     self->walls[0] =
       plane(vec3(+1.f, 0.f, 0.f), ROOM_DIMENSIONS[0] * -0.5f); // left
@@ -220,7 +217,7 @@ World::simulate(math::real dt)
 }
 
 bool
-World::canMoveCamera(const math::vec3_t &position, math::vec3_t &step)
+World::canMoveCamera(const math::vec3 &position, math::vec3 &step)
 {
     auto out_coll = vec3(0_r);
     auto new_pos = position + step;
@@ -261,7 +258,7 @@ World::spawnSphere(const Sphere &s, const SphereModel &m)
     //     Connection con;
     //     con.x = n - 1;
     //     con.spring = spring;
-    //     vec3_t sel = vec3(rand1(), 1.f, rand1()) - vec3(0.5f);
+    //     vec3 sel = vec3(rand1(), 1.f, rand1()) - vec3(0.5f);
     //     sel *= sel;
     //     sel *= sel;
     //     sel.y = 0.5f;
@@ -325,7 +322,7 @@ World::render(Renderer &renderer, float dt)
     // for (uint32 i = 0; i < ncon; ++i) {
     //     Connection& c = self->connected[i];
     //     Sphere& x = self->spheres[c.x];
-    //     direction3_t r = directionFromTo(x.center, c.anchor);
+    //     direction3 r = directionFromTo(x.center, c.anchor);
     //     renderer.renderConnection(x.center + x.r * r, c.anchor);
     // }
 
@@ -333,9 +330,7 @@ World::render(Renderer &renderer, float dt)
 }
 
 int32_t
-World::Data::collidesWall(const point3_t &center,
-                          real r,
-                          point3_t &out_collision)
+World::Data::collidesWall(const point3 &center, real r, point3 &out_collision)
 {
     real dist_min = r;
     int32_t hit = -1;
@@ -366,8 +361,8 @@ World::Data::deref(SphereRef ref)
 
 struct Box
 {
-    point3_t center;
-    vec3_t halfWidth;
+    point3 center;
+    vec3 halfWidth;
 };
 
 struct BSP;
@@ -428,14 +423,14 @@ isLeaf(const BSP *t)
     return t->down[0].tree == leaf_marker();
 }
 
-static const direction3_t NORMALS[3] = { vec3(1.f, 0.f, 0.f),
-                                         vec3(0.f, 1.f, 0.f),
-                                         vec3(0.f, 0.f, 1.f) };
+static const direction3 NORMALS[3] = { vec3(1.f, 0.f, 0.f),
+                                       vec3(0.f, 1.f, 0.f),
+                                       vec3(0.f, 0.f, 1.f) };
 
 plane3_t
 makePlane(int ni, const Box &vol)
 {
-    const vec3_t &n = NORMALS[ni];
+    const vec3 &n = NORMALS[ni];
     return plane(n, sum(vol.center * n));
 }
 
@@ -471,7 +466,7 @@ World::Data::insertBSP(BSP *&p,
                        Box volume,
                        uint32_t depth,
                        Node *node,
-                       const point3_t &center,
+                       const point3 &center,
                        float r)
 {
 
@@ -550,7 +545,7 @@ World::Data::findCollisions(std::vector<Contact> &contacts,
                             int ni,
                             std::vector<bool> &collided,
                             SphereRef s,
-                            const point3_t &center,
+                            const point3 &center,
                             float r)
 {
 
@@ -615,9 +610,9 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
     auto n = spheres.size();
     for (const auto &s1 : spheres) {
         const Particle &p1 = deref(s1.particle);
-        const point3_t pos1 = p1.pos;
+        const point3 pos1 = p1.pos;
 
-        point3_t coll_pos;
+        point3 coll_pos;
         auto hit = collidesWall(pos1, s1.r, coll_pos);
         if (hit >= 0) {
             Contact con{};
@@ -634,7 +629,7 @@ World::Data::generateContacts(std::vector<Contact> &contacts, float dt)
         // for (uint32 j = 0; j < i; ++j) {
         //     const SphereData s2 = spheres[j];
         //     const Particle& p2 = deref(s2.particle);
-        //     const point3_t pos2 = p2.pos;
+        //     const point3 pos2 = p2.pos;
 
         //     float dist2 = distanceSq(pos1, pos2);
         //     if (dist2 < squared(s1.r + s2.r)) {
@@ -701,7 +696,7 @@ World::Data::solveContacts(std::vector<Contact> &contacts, float dt)
             // Particle& p1 = deref(con.x);
             // Particle& p2 = deref(con.y);
 
-            // const direction3_t n = con.normal;
+            // const direction3 n = con.normal;
 
             // float relNv = dot(p2.vel - p1.vel, n);
             // float remove = relNv - con.distance / dt;
@@ -743,13 +738,13 @@ World::Data::solveContacts(std::vector<Contact> &contacts, float dt)
     }
 }
 
-static vec3_t
-potentialAccel(const point3_t &)
+static vec3
+potentialAccel(const point3 &)
 {
 
     return GRAVITY;
 
-    // vec3_t p = p0;
+    // vec3 p = p0;
 
     // our potential energy equation is: U = m * sqrt(x^2 + z^2)
     // so force is - m * (2 x, 0, 2 z)

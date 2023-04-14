@@ -6,8 +6,8 @@
 #include "glt/ShaderProgram.hpp"
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/utils.hpp"
+#include "math/fvec.hpp"
 #include "math/real.hpp"
-#include "math/vec2.hpp"
 
 #include "shaders/quasi_constants.h"
 
@@ -15,20 +15,20 @@ static const bool MULTISAMPLING = false; // via multisample texture
 
 using namespace math;
 
-DEF_GL_MAPPED_TYPE(Vertex, (vec2_t, position))
+DEF_GL_MAPPED_TYPE(Vertex, (vec2, position))
 
 struct World
 {
     real scale = 1;
-    vec2_t trans = vec2(0, 0);
-    vec2_t julia_constant = vec2(0.3_r, 0.5_r);
+    vec2 trans = vec2(0, 0);
+    vec2 julia_constant = vec2(0.3_r, 0.5_r);
 
     void zoom(real t);
-    void shift(const vec2_t & /*a*/);
+    void shift(const vec2 & /*a*/);
 
     void julia_constant_rotate(real phi);
     void julia_constant_scale(real t);
-    void julia_constant_add(const vec2_t & /*z*/);
+    void julia_constant_add(const vec2 & /*z*/);
     void julia_constant_reset();
 };
 
@@ -226,7 +226,7 @@ World::zoom(real t)
 }
 
 void
-World::shift(const vec2_t &a)
+World::shift(const vec2 &a)
 {
     trans += 0.005_r * a / scale;
 }
@@ -248,7 +248,7 @@ World::julia_constant_scale(real t)
 }
 
 void
-World::julia_constant_add(const vec2_t &z)
+World::julia_constant_add(const vec2 &z)
 {
     julia_constant += z;
 }

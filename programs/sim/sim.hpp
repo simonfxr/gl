@@ -5,7 +5,7 @@
 #include "glt/Frame.hpp"
 #include "glt/ViewFrustum.hpp"
 #include "glt/color.hpp"
-#include "math/vec3.hpp"
+#include "math/fvec.hpp"
 
 #include <memory>
 
@@ -26,9 +26,9 @@ struct SphereModel
 struct Sphere
 {
     SphereState state;
-    math::vec3_t v;
+    math::vec3 v;
     float r;
-    math::point3_t center;
+    math::point3 center;
     float m;
 };
 
@@ -46,7 +46,7 @@ struct Renderer
     void renderSphere(const Sphere &sphere, const SphereModel &model);
     void endRenderSpheres();
     void renderBox(const glt::AABB &box);
-    void renderConnection(const math::point3_t &a, const math::point3_t &b);
+    void renderConnection(const math::point3 &a, const math::point3 &b);
 };
 
 struct World
@@ -58,7 +58,7 @@ struct World
     bool render_by_distance{}; // try to render near object first
     size_t solve_iterations;
 
-    bool canMoveCamera(const math::vec3_t &position, math::vec3_t &step);
+    bool canMoveCamera(const math::vec3 &position, math::vec3 &step);
 
     void spawnSphere(const Sphere &sphere, const SphereModel &model);
     void simulate(math::real dt);

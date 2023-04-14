@@ -4,9 +4,8 @@
 #include "defs.h"
 #include "err/err.hpp"
 
-#include "math/ivec3.hpp"
-#include "math/vec2.hpp"
-#include "math/vec3.hpp"
+#include "math/fvec.hpp"
+#include "math/ivec.hpp"
 
 #include "glt/CubeMesh.hpp"
 
@@ -15,34 +14,32 @@ namespace glt {
 namespace primitives {
 
 constexpr void
-setPoint(math::vec3_t &a, const math::vec3_t &b)
+setPoint(math::vec3 &a, const math::vec3 &b)
 {
     a = b;
 }
 
 constexpr void
-setPoint(math::vec4_t &a, const math::vec3_t &b)
+setPoint(math::vec4 &a, const math::vec3 &b)
 {
     a = math::vec4(b, math::real(1));
 }
 
 constexpr void
-setVec(math::vec3_t &a, const math::vec3_t &b)
+setVec(math::vec3 &a, const math::vec3 &b)
 {
     a = b;
 }
 
 constexpr void
-setVec(math::vec4_t &a, const math::vec3_t &b)
+setVec(math::vec4 &a, const math::vec3 &b)
 {
     a = math::vec4(b, math::real(0));
 }
 
 template<typename V>
 void
-rectangle(CubeMesh<V> &model,
-          const math::point3_t &origin,
-          const math::vec2_t &dim)
+rectangle(CubeMesh<V> &model, const math::point3 &origin, const math::vec2 &dim)
 {
     using namespace math;
     V vertex;
@@ -59,13 +56,13 @@ rectangle(CubeMesh<V> &model,
 template<typename V>
 void
 cubeoid(CubeMesh<V> &model,
-        const math::point3_t &origin,
-        const math::vec3_t &dim,
+        const math::point3 &origin,
+        const math::vec3 &dim,
         bool evert = false)
 {
 
     // struct Face {
-    //     vec3_t normal;
+    //     vec3 normal;
     //     uint16 s0;
     //     uint16 s1;
     // };
@@ -79,10 +76,10 @@ cubeoid(CubeMesh<V> &model,
     //     { vec3(0.f, 0.f, -1.f), 1, 2 }
     // };
 
-    // const vec3_t dim2 = dim * 0.5f;
+    // const vec3 dim2 = dim * 0.5f;
 
     // for (uint32_t face = 0; face < 6; ++face) {
-    //     vec3_t n = faces[face].normal;
+    //     vec3 n = faces[face].normal;
     //     if (evert) n = -n;
 
     //     for (int j = -1; j < 2; j += 2) {
@@ -415,9 +412,9 @@ sphere(Mesh<Vertex> &sphereBatch, math::real fRadius, int iSlices, int iStacks)
         // for the caps of the sphere. This however introduces texturing
         // artifacts at the poles on some OpenGL implementations
 
-        vec3_t vVertex[4];
-        vec3_t vNormal[4];
-        //        vec2_t vTexture[4];
+        vec3 vVertex[4];
+        vec3 vNormal[4];
+        //        vec2 vTexture[4];
 
         for (j = 0; j < iSlices; j++) {
             auto theta = (j == iSlices) ? 0.0_r : static_cast<real>(j) * dtheta;

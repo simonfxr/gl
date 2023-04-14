@@ -1,9 +1,9 @@
 #ifndef GL_MATH_GENMAT_HPP
 #define GL_MATH_GENMAT_HPP
 
-#include "math/genvec.hpp"
 #include "math/math.hpp"
 #include "math/real.hpp"
+#include "math/vec.hpp"
 
 #include <array>
 
@@ -85,20 +85,20 @@ is_genmat_dim<T, N>;
 
 template<typename S, typename T, size_t N>
 concept is_genmat_scalar = !
-is_genmat_dim<S, N> && !genvec_of_dim<S, N>;
+is_genmat_dim<S, N> && !vec_of_dim<S, N>;
 
 template<typename T, size_t N>
-struct genmat : private genvec<genvec<T, N>, N>
+struct genmat : private vec<vec<T, N>, N>
 {
     static inline constexpr size_t column_size = N;
-    using column_type = genvec<T, N>;
+    using column_type = vec<T, N>;
     using component_type = T;
     static inline constexpr size_t dim = N;
     using buffer = T[N * N];
 
-    using Base = genvec<genvec<T, N>, N>;
+    using Base = vec<vec<T, N>, N>;
 
-    using genvec<genvec<T, N>, N>::genvec;
+    using vec<vec<T, N>, N>::vec;
     using Base::operator[];
     using Base::back;
     using Base::begin;
@@ -202,6 +202,11 @@ struct genmat : private genvec<genvec<T, N>, N>
                 ret[i][j] = T(A[i][j]);
         return ret;
     }
+
+    constexpr auto operator()(vec_of_dim<N> auto &&rhs) const
+    {
+        return transform(*this, rhs);
+    }
 };
 
 #undef DEF_GENMAT_OP
@@ -226,21 +231,14 @@ operator*(const T &lhs, const genmat<U, N> &rhs)
 
 template<typename T, typename U, size_t N>
 inline constexpr auto
-operator*(const genmat<T, N> &A, const genvec<U, N> &v)
+transform(const genmat<T, N> &A, const vec<U, N> &v)
 {
     using V = decltype(A[0][0] * v[0]);
-    genvec<V, N> u{};
+    vec<V, N> u{};
     for (size_t j = 0; j < N; ++j)
         for (size_t i = 0; i < N; ++i)
             u[i] += A[j][i] * v[j];
     return u;
-}
-
-template<typename T, typename U, size_t N>
-inline constexpr auto
-transform(const genmat<T, N> &A, const genvec<U, N> &v)
-{
-    return A * v;
 }
 
 template<typename T, typename U, size_t N>
@@ -314,10 +312,10 @@ operator!=(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
 }
 
 template<typename T, size_t N>
-inline constexpr genvec<T, N>
+inline constexpr vec<T, N>
 sum(const genmat<T, N> &v)
 {
-    genvec<T, N> ret{};
+    vec<T, N> ret{};
     for (size_t i = 0; i < N; ++i)
         ret += v[i];
     return ret;
@@ -540,18 +538,18 @@ orthonormalBasis(const genmat<T, 3> &A)
 
 template<typename T>
 inline constexpr genmat<T, 3>
-coordinateSystem(const genvec<T, 3> &a)
+coordinateSystem(const vec<T, 3> &a)
 {
     auto aa = abs(a);
-    using V = genvec<T, 3>;
+    using V = vec<T, 3>;
     V b{};
 
     if (aa[0] > aa[1] && aa[0] > aa[2])
-        b = V::make(-a[2], T{}, a[0]);
+        b = V(std::in_place_t{}, -a[2], T{}, a[0]);
     else if (aa[1] > aa[2])
-        b = V::make(a[1], -a[0], T{});
+        b = V(std::in_place_t{}, a[1], -a[0], T{});
     else
-        b = V::make(T{}, a[2], -a[1]);
+        b = V(std::in_place_t{}, T{}, a[2], -a[1]);
     return mat3(a, b, cross(a, b));
 }
 
@@ -577,7 +575,7 @@ operator<<(OStream &out, const genmat<T, N> &A)
 }
 
 template<size_t I, typename T, size_t N>
-HU_FORCE_INLINE inline const math::genvec<T, N> &
+HU_FORCE_INLINE inline const math::vec<T, N> &
 get(const math::genmat<T, N> &A)
 {
     static_assert(I < N);
@@ -585,7 +583,7 @@ get(const math::genmat<T, N> &A)
 }
 
 template<size_t I, typename T, size_t N>
-HU_FORCE_INLINE inline math::genvec<T, N> &
+HU_FORCE_INLINE inline math::vec<T, N> &
 get(math::genmat<T, N> &A)
 {
     static_assert(I < N);
@@ -604,7 +602,7 @@ END_NO_WARN_MISMATCHED_TAGS
 template<size_t I, typename T, size_t N>
 struct tuple_element<I, math::genmat<T, N>>
 {
-    using type = math::genvec<T, N>;
+    using type = math::vec<T, N>;
 };
 
 } // namespace std

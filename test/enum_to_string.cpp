@@ -1,5 +1,5 @@
+#include "math/fvec.hpp"
 #include "math/mat3.hpp"
-#include "math/vec3.hpp"
 #include "sys/io.hpp"
 #include "sys/sys.hpp"
 

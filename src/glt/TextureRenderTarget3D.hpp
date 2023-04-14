@@ -3,7 +3,7 @@
 
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/conf.hpp"
-#include "math/ivec3.hpp"
+#include "math/ivec.hpp"
 #include "opengl.hpp"
 
 namespace glt {
@@ -35,8 +35,8 @@ public:
         GLenum color_format = GL_RGB8;
     };
 
-    TextureRenderTarget3D(const math::ivec3_t &, const Params &);
-    void resize(const math::ivec3_t &);
+    TextureRenderTarget3D(const math::ivec3 &, const Params &);
+    void resize(const math::ivec3 &);
 
     size_t depth() const { return _depth; }
     Attachment targetAttachment() const { return _target_attachment; }
@@ -44,9 +44,8 @@ public:
 
     virtual void createTexture(bool delete_old) override;
 
-    std::shared_ptr<TextureRenderTarget3D> make_shared(
-      const math::ivec3_t &dims,
-      const Params &ps)
+    std::shared_ptr<TextureRenderTarget3D> make_shared(const math::ivec3 &dims,
+                                                       const Params &ps)
     {
         auto p = std::make_shared<TextureRenderTarget3D>(dims, ps);
         p->resize(dims);

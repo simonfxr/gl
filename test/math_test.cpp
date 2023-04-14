@@ -3,10 +3,8 @@
 #include <tuple>
 #include <utility>
 
+#include "math/fvec.hpp"
 #include "math/mat4.hpp"
-#include "math/vec2.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 #include "sys/clock.hpp"
 #include "sys/io/Stream.hpp"
 
@@ -16,20 +14,20 @@ using namespace math;
 
 HU_NOINLINE
 static void
-mul(vec4_t *RESTRICT rr,
+mul(vec4 *RESTRICT rr,
     const mat4_t *RESTRICT m,
-    const vec4_t *RESTRICT v,
+    const vec4 *RESTRICT v,
     size_t n)
 {
     mat4_t M = *m;
-    vec4_t r = vec4(0.f);
+    vec4 r = vec4(0.f);
     for (size_t i = 0; i < n; ++i)
-        r += M * v[i];
+        r += M(v[i]);
     *rr = r;
 }
 
 static mat3_t
-skew_sym(const vec3_t &RESTRICT v)
+skew_sym(const vec3 &RESTRICT v)
 {
     auto E = mat3();
     auto &[e1, e2, e3] = E;
@@ -38,7 +36,7 @@ skew_sym(const vec3_t &RESTRICT v)
 
 HU_NOINLINE
 void
-rodriguez(mat3_t &RESTRICT R, const vec3_t &RESTRICT a)
+rodriguez(mat3_t &RESTRICT R, const vec3 &RESTRICT a)
 {
 
     // a x (x_perp) = (a x (x_perp + x_par))
@@ -62,7 +60,7 @@ rodriguez(mat3_t &RESTRICT R, const vec3_t &RESTRICT a)
 
 HU_NOINLINE
 void
-rot2(mat3_t &RESTRICT R, const vec3_t &RESTRICT a)
+rot2(mat3_t &RESTRICT R, const vec3 &RESTRICT a)
 {
     auto theta = length(a);
     auto n = a * (1 / theta);

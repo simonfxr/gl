@@ -15,10 +15,10 @@
 using namespace math;
 
 DEF_GL_MAPPED_TYPE(Vertex,
-                   (vec3_t, position),
-                   (vec3_t, tangent),
-                   (vec3_t, binormal),
-                   (vec2_t, uv));
+                   (vec3, position),
+                   (vec3, tangent),
+                   (vec3, binormal),
+                   (vec2, uv));
 
 template<typename Vertex>
 void
@@ -32,7 +32,7 @@ struct Anim final : ge::Anim3D<Anim>
 {
     glt::Mesh<Vertex> sphere_model;
 
-    vec3_t light_position{};
+    vec3 light_position{};
 
     void init(const ge::Event<ge::InitEvent> &);
 
@@ -105,11 +105,11 @@ sphere(glt::Mesh<Vertex> &mesh, real rad, int slices, int stacks)
         auto [ctheta, stheta] = cossin(theta);
         auto [ctheta2, stheta2] = cossin(theta + dtheta);
 
-        vec3_t position[4];
-        vec3_t normal[4];
-        vec3_t tangent[4];
-        vec3_t binormal[4];
-        vec2_t uv[4];
+        vec3 position[4];
+        vec3 normal[4];
+        vec3 tangent[4];
+        vec3 binormal[4];
+        vec2 uv[4];
 
         for (int j = 0; j < slices; ++j) {
             auto phi = static_cast<real>(j) * dphi;
@@ -193,7 +193,7 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
         uint32_t a, b, c;
     };
 
-    std::vector<vec3_t> vertices;
+    std::vector<vec3> vertices;
     std::vector<Tri> tris;
 
     typedef std::unordered_map<uint64_t, uint32_t> VertexCache;
@@ -292,7 +292,7 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
           vec3(cos_theta * cos_phi, cos_theta * sin_phi, -sin_theta);
         auto binormal = cross(tangent, normal);
         binormal = normalize(binormal - dot(binormal, tangent) * tangent);
-        auto uv = vec2_t{};
+        auto uv = vec2{};
         uv[0] = .5_r + ::math::atan2(normal[2], normal[0]) * inverse(2_r * PI);
         uv[1] = .5_r - ::math::asin(normal[1]) * inverse(PI);
         uv[0] *=

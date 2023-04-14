@@ -1,19 +1,19 @@
 #ifndef GLT_AABB_HPP
 #define GLT_AABB_HPP
 
+#include "math/fvec.hpp"
 #include "math/real.hpp"
-#include "math/vec3.hpp"
 
 namespace glt {
 
 struct AABB
 {
-    math::point3_t corner_min{};
-    math::point3_t corner_max{};
+    math::point3 corner_min{};
+    math::point3 corner_max{};
 
     constexpr AABB() { clear(); }
 
-    constexpr void extend(const math::point3_t &p)
+    constexpr void extend(const math::point3 &p)
     {
         corner_min = math::min(p, corner_min);
         corner_max = math::max(p, corner_max);
@@ -25,13 +25,13 @@ struct AABB
         corner_max = math::vec3(math::REAL_MIN);
     }
 
-    constexpr math::point3_t center() const
+    constexpr math::point3 center() const
     {
         using namespace math;
         return 0.5f * (corner_min + corner_max);
     }
 
-    constexpr math::vec3_t dimensions() const
+    constexpr math::vec3 dimensions() const
     {
         using namespace math;
         return corner_max - corner_min;

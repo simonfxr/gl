@@ -20,13 +20,11 @@
 #include "glt/color.hpp"
 #include "glt/primitives.hpp"
 #include "glt/utils.hpp"
+#include "math/fvec.hpp"
 #include "math/mat2.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/real.hpp"
-#include "math/vec2.hpp"
-#include "math/vec3.hpp"
-#include "math/vec4.hpp"
 #include "sys/fs.hpp"
 #ifdef MESH_CUBEMESH
 #    include "glt/CubeMesh.hpp"
@@ -60,23 +58,19 @@ using namespace math;
 using ge::Event;
 using ge::InitEvent;
 
-DEF_GL_MAPPED_TYPE(Vertex,
-                   (math::point3_t, position),
-                   (math::direction3_t, normal))
+DEF_GL_MAPPED_TYPE(Vertex, (math::point3, position), (math::direction3, normal))
 
 DEF_GL_MAPPED_TYPE(Vertex2,
-                   (math::vec3_t, position),
-                   (math::vec3_t, normal),
-                   (math::vec2_t, texCoord))
+                   (math::vec3, position),
+                   (math::vec3, normal),
+                   (math::vec2, texCoord))
 
-DEF_GL_MAPPED_TYPE(ScreenVertex,
-                   (math::vec3_t, position),
-                   (math::vec3_t, normal))
+DEF_GL_MAPPED_TYPE(ScreenVertex, (math::vec3, position), (math::vec3, normal))
 
 int32_t
 parse_sply(const char *filename, CubeMeshOf<Vertex> &model);
 
-static const point3_t LIGHT_CENTER_OF_ROTATION = vec3(0.f, 15.f, 0.f);
+static const point3 LIGHT_CENTER_OF_ROTATION = vec3(0.f, 15.f, 0.f);
 static const float LIGHT_ROTATION_RAD = 15.f;
 
 static const uint32_t SHADE_MODE_AMBIENT = 1;
@@ -123,14 +117,14 @@ struct Anim final : ge::Anim3D<Anim>
 
     real gamma_correction{};
 
-    vec3_t light{};
-    vec3_t ecLight{};
+    vec3 light{};
+    vec3 ecLight{};
 
     uint32_t shade_mode{};
 
     bool use_spotlight{};
     bool spotlight_smooth{};
-    direction3_t ec_spotlight_dir{};
+    direction3 ec_spotlight_dir{};
 
     std::shared_ptr<glt::TextureRenderTarget> tex_render_target;
     std::shared_ptr<glt::TextureRenderTarget> glow_render_target_src;
@@ -147,9 +141,9 @@ struct Anim final : ge::Anim3D<Anim>
 
     void animate(const Event<ge::AnimationEvent> &) override;
     void render(const Event<ge::RenderEvent> &) override;
-    vec3_t lightPosition(real interpolation);
+    vec3 lightPosition(real interpolation);
     void setupTeapotShader(const std::string &prog,
-                           const vec4_t &surfaceColor,
+                           const vec4 &surfaceColor,
                            const MaterialProperties &mat);
     void renderTeapot(const Teapot &teapot);
     void renderGround();
@@ -308,12 +302,12 @@ Anim::animate(const Event<ge::AnimationEvent> & /*unused*/)
       wrapPi(light_angular_position + light_rotation_speed);
 }
 
-vec3_t
+vec3
 Anim::lightPosition(real interpolation)
 {
     real theta =
       wrapPi(light_angular_position + interpolation * light_rotation_speed);
-    vec3_t d = vec3(math::cos(theta), 0.f, math::sin(theta));
+    vec3 d = vec3(math::cos(theta), 0.f, math::sin(theta));
     return d * LIGHT_ROTATION_RAD + LIGHT_CENTER_OF_ROTATION;
 }
 
@@ -347,10 +341,10 @@ Anim::render(const Event<ge::RenderEvent> &e)
     ecLight = rm.geometryTransform().transformPoint(light);
 
     {
-        vec3_t spot_center = vec3(5.f, 2.f, 8.f);
-        vec3_t spotdir = spot_center - light;
+        vec3 spot_center = vec3(5.f, 2.f, 8.f);
+        vec3 spotdir = spot_center - light;
         spotdir = normalize(spotdir);
-        ec_spotlight_dir = rm.geometryTransform().normalMatrix() * spotdir;
+        ec_spotlight_dir = rm.geometryTransform().normalMatrix()(spotdir);
         ec_spotlight_dir = normalize(ec_spotlight_dir);
     }
 
@@ -362,7 +356,7 @@ Anim::render(const Event<ge::RenderEvent> &e)
     //     glt::GeometryTransform& gt = rm.geometryTransform();
     //     auto sp = rm.geometryTransform().save();
 
-    //     const point3_t& s = light;
+    //     const point3& s = light;
 
     //     mat4_t shadowProjection = mat4(vec4(-s.y, 0.f,  0.f,  0.f),
     //                                vec4( s.x, 0.f,  s.z,  1.f),
@@ -470,7 +464,7 @@ Anim::onWindowResized(const Event<ge::WindowResized> &ev)
 
 void
 Anim::setupTeapotShader(const std::string &progname,
-                        const vec4_t &surfaceColor,
+                        const vec4 &surfaceColor,
                         const MaterialProperties &mat)
 {
     glt::RenderManager &rm = engine.renderManager();
@@ -485,18 +479,18 @@ Anim::setupTeapotShader(const std::string &progname,
 
     prog->use();
 
-    vec4_t materialSelector = vec4((shade_mode & SHADE_MODE_AMBIENT) != 0,
-                                   (shade_mode & SHADE_MODE_DIFFUSE) != 0,
-                                   (shade_mode & SHADE_MODE_SPECULAR) != 0,
-                                   1.f);
+    vec4 materialSelector = vec4((shade_mode & SHADE_MODE_AMBIENT) != 0,
+                                 (shade_mode & SHADE_MODE_DIFFUSE) != 0,
+                                 (shade_mode & SHADE_MODE_SPECULAR) != 0,
+                                 1.f);
 
     real scale = 1 / (2.f * math::PI);
     real specular_factor =
       mat.specularContribution * (mat.shininess + 2) * scale;
-    vec4_t vm = vec4(mat.ambientContribution,
-                     mat.diffuseContribution,
-                     specular_factor,
-                     mat.shininess);
+    vec4 vm = vec4(mat.ambientContribution,
+                   mat.diffuseContribution,
+                   specular_factor,
+                   mat.shininess);
 
     glt::Uniforms us(*prog);
     us.optional("projectionMatrix", rm.geometryTransform().projectionMatrix());
@@ -555,7 +549,7 @@ Anim::renderGround()
     rm.geometryTransform().translate(vec3(-0.5f, 0.f, -0.5f));
 
     MaterialProperties mat = { 0.f, 1.f, 0.f, 30.f, 0 };
-    vec4_t color = glt::color(0xcd, 0xc9, 0xc9).vec4();
+    vec4 color = glt::color(0xcd, 0xc9, 0xc9).vec4();
     setupTeapotShader("teapot", color, mat);
     groundModel.draw();
 }
@@ -573,7 +567,7 @@ Anim::renderTable(const std::string &shader)
 
     woodTexture.bind(0);
 
-    vec4_t color = glt::color(0xcd, 0x85, 0x3f).vec4();
+    vec4 color = glt::color(0xcd, 0x85, 0x3f).vec4();
     MaterialProperties mat{};
     mat.ambientContribution = 0.55f;
     mat.diffuseContribution = 0.6f;
@@ -588,7 +582,7 @@ Anim::renderTable(const std::string &shader)
     real foot_x_dist = 1.f - foot_width;
     real foot_z_dist = 1.f - foot_depth;
 
-    vec3_t foot_dim = vec3(foot_width, foot_height, foot_depth);
+    vec3 foot_dim = vec3(foot_width, foot_height, foot_depth);
 
     gt.translate(vec3(0.f, foot_height, 0.f));
     gt.scale(vec3(1.f, table_thickness, 1.f));
@@ -750,8 +744,8 @@ parse_sply(const char *filename, CubeMeshOf<Vertex> &model)
 
     while (fgets(line, sizeof line, data.get()) != nullptr &&
            verts.size() < nverts) {
-        point3_t p;
-        direction3_t n;
+        point3 p;
+        direction3 n;
         int nparsed = sscanf(line,
                              "%" R_FMT " %" R_FMT " %" R_FMT " %" R_FMT
                              " %" R_FMT " %" R_FMT,

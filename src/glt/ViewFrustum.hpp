@@ -3,9 +3,9 @@
 
 #include "glt/conf.hpp"
 
+#include "math/fvec.hpp"
 #include "math/mat4.hpp"
 #include "math/plane.hpp"
-#include "math/vec3.hpp"
 
 namespace glt {
 
@@ -53,11 +53,11 @@ struct GLT_API ViewFrustum
 
 GLT_API Outcode
 testSphere(const ViewFrustum &frust,
-           const math::point3_t &center,
+           const math::point3 &center,
            math::real rad);
 
 GLT_API Outcode
-testPoint(const ViewFrustum &frust, const math::point3_t &p);
+testPoint(const ViewFrustum &frust, const math::point3 &p);
 
 inline bool
 clipped(Outcode code)

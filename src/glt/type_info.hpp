@@ -6,8 +6,8 @@
 #include "glt/color.hpp"
 #include "glt/utils.hpp"
 #include "math/genmat.hpp"
-#include "math/genvec.hpp"
 #include "math/real.hpp"
+#include "math/vec.hpp"
 #include "pp/enum.hpp"
 #include "pp/map.h"
 
@@ -95,22 +95,22 @@ struct type_info_traits
 };
 
 template<typename T, size_t N>
-struct type_info_traits<math::genvec<T, N>>
+struct type_info_traits<math::vec<T, N>>
 {
     static inline constexpr TypeInfo component_info =
       type_info_traits<T>::type_info;
     static inline constexpr TypeInfo type_info{
         component_info.normalized,
-        sizeof(math::genvec<T, N>),
+        sizeof(math::vec<T, N>),
         component_info.scalar_type,
         N *component_info.arity,
     };
 };
 
 template<typename T, size_t N>
-struct gl_mapped_type<math::genvec<T, N>>
+struct gl_mapped_type<math::vec<T, N>>
 {
-    using type = math::genvec<gl_mapped_type_t<T>, N>;
+    using type = math::vec<gl_mapped_type_t<T>, N>;
 };
 
 template<typename T, size_t N>

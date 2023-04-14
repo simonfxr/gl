@@ -11,9 +11,9 @@
 #include "glt/TextureRenderTarget.hpp"
 #include "glt/geometric.hpp"
 #include "glt/utils.hpp"
+#include "math/fvec.hpp"
 #include "math/mat4.hpp"
 #include "math/real.hpp"
-#include "math/vec4.hpp"
 #include "sys/measure.hpp"
 #include "util/range.hpp"
 
@@ -43,12 +43,12 @@ static const size_t DEFAULT_N = 128;
 
 using namespace math;
 
-DEF_GL_MAPPED_TYPE(Vertex, (vec3_t, position), (vec3_t, normal))
+DEF_GL_MAPPED_TYPE(Vertex, (vec3, position), (vec3, normal))
 
 struct MCState
 {
-    vec3_t cube_origin{}; // lower left corner on backside
-    vec3_t cube_dim{};
+    vec3 cube_origin{}; // lower left corner on backside
+    vec3 cube_dim{};
 
     bool init{};
 
@@ -98,16 +98,14 @@ struct Anim final : ge::Anim3D<Anim>
     void init(const ge::Event<ge::InitEvent> & /*ev*/);
     void initCL(const ge::Event<ge::InitEvent> & /*ev*/);
     void initCLKernels(bool *success);
-    void initMC(MCState &mc, vec3_t orig, vec3_t dim, bool *success);
+    void initMC(MCState &mc, vec3 orig, vec3 dim, bool *success);
 
     void computeVolumeData(MCState &mc, real time);
     void computeHistogram(MCState &mc);
     void constructVertices0(MCState &mc);
     void constructVertices1(MCState &mc);
 
-    void renderMC(MCState &mc,
-                  glt::ShaderProgram & /*program*/,
-                  vec3_t ecLight);
+    void renderMC(MCState &mc, glt::ShaderProgram & /*program*/, vec3 ecLight);
 
     void animate(const ge::Event<ge::AnimationEvent> & /*unused*/) override;
     void render(const ge::Event<ge::RenderEvent> & /*ev*/) override;
@@ -277,13 +275,13 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     if (!ok)
         return;
 
-    vec3_t dim =
+    vec3 dim =
       real(2) * recip(vec3(real(MC_SIZE_X), real(MC_SIZE_Y), real(MC_SIZE_Z)));
 
     for (int i = 0; i < MC_SIZE_X; ++i) {
         for (int j = 0; j < MC_SIZE_Y; ++j) {
             for (int k = 0; k < MC_SIZE_Z; ++k) {
-                vec3_t corner =
+                vec3 corner =
                   vec3(real(i), real(j), real(k)) * dim - vec3(real(1));
                 int idx = i * (MC_SIZE_Y * MC_SIZE_Z) + j * MC_SIZE_Z + k;
                 ok = false;
@@ -347,7 +345,7 @@ Anim::initCLKernels(bool *success)
 }
 
 void
-Anim::initMC(MCState &cur_mc, vec3_t orig, vec3_t dim, bool *success)
+Anim::initMC(MCState &cur_mc, vec3 orig, vec3 dim, bool *success)
 {
 #define IS_POWER_OF_2(x) ((((x) -1) & (x)) == 0)
     int cl_err;
@@ -436,10 +434,10 @@ Anim::computeVolumeData(MCState &cur_mc, real time)
 #define tri(t) math::abs(2 * fract((t) / (2 * math::PI)) - 1)
 
     time *= 0.5_r;
-    const vec4_t C = vec4(-1 * tri(math::cos(time) * 0.1_r),
-                          0.2_r * math::cos(time * 0.11_r),
-                          math::sin(time * 0.1_r),
-                          0);
+    const vec4 C = vec4(-1 * tri(math::cos(time) * 0.1_r),
+                        0.2_r * math::cos(time * 0.11_r),
+                        math::sin(time * 0.1_r),
+                        0);
 
     kernel_generateSphereVolume.setArg(0, cur_mc.volume);
     kernel_generateSphereVolume.setArg(1, M);
@@ -516,7 +514,7 @@ Anim::constructVertices0(MCState &cur_mc)
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, cur_mc.vbo);
     GL_CALL(glBufferData,
             GL_ARRAY_BUFFER,
-            cur_mc.num_tris * 3 * 2 * sizeof(vec3_t),
+            cur_mc.num_tris * 3 * 2 * sizeof(vec3),
             nullptr,
             GL_STREAM_DRAW);
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
@@ -549,7 +547,7 @@ Anim::constructVertices1(MCState &cur_mc)
 }
 
 void
-Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3_t ecLight)
+Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3 ecLight)
 {
 
     if (cur_mc.num_tris == 0 || !cur_mc.init)
