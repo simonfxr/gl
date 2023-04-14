@@ -85,7 +85,7 @@ is_genmat_dim<T, N>;
 
 template<typename S, typename T, size_t N>
 concept is_genmat_scalar = !
-is_genmat_dim<S, N> && !is_genvec_dim<S, N>;
+is_genmat_dim<S, N> && !genvec_of_dim<S, N>;
 
 template<typename T, size_t N>
 struct genmat : private genvec<genvec<T, N>, N>
@@ -160,6 +160,13 @@ struct genmat : private genvec<genvec<T, N>, N>
 
     constexpr T *data() noexcept { return Base::data()[0].data(); }
     constexpr const T *data() const noexcept { return Base::data()[0].data(); }
+
+    constexpr operator std::span<T, N * N>() noexcept { return { begin(), N }; }
+
+    constexpr operator std::span<const T, N * N>() const noexcept
+    {
+        return { begin(), N * N };
+    }
 
     static constexpr genmat broadcast(const T &x)
     {

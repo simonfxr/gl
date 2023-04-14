@@ -121,7 +121,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
         for (int j = 0; j < SAMPLER_SIZE[1]; ++j) {
             for (int k = 0; k < SAMPLER_SIZE[2]; ++k) {
                 MCVertex v{};
-                v.position = vec3(ivec3(i, j, k)) / vec3(SAMPLER_SIZE);
+                v.position = vec3(i, j, k) / vec3(SAMPLER_SIZE);
                 volumeCube.addVertex(v);
             }
         }

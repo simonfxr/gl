@@ -9,6 +9,8 @@
 #include <tuple>
 #include <type_traits>
 
+#define bl_fwd(lvalue) ::std::forward<decltype(lvalue)>(lvalue)
+
 #define DEF_GENVEC_OP(op)                                                      \
     template<typename U>                                                       \
     constexpr auto operator op(const genvec<U, N> &rhs) const                  \
@@ -19,7 +21,7 @@
     }
 
 #define DEF_GENVEC_SCALAR_OP(op)                                               \
-    template<is_genvec_scalar_dim<N> U>                                        \
+    template<genvec_scalar_of_dim<N> U>                                        \
     constexpr auto operator op(const U &rhs) const                             \
     {                                                                          \
         return genvec_map([&](auto &x) { return x op rhs; },                   \
@@ -37,7 +39,7 @@
     }
 
 #define DEF_GENVEC_SCALAR_MUT_OP(op)                                           \
-    template<is_genvec_scalar_dim<N> U>                                        \
+    template<genvec_scalar_of_dim<N> U>                                        \
     constexpr genvec &operator PP_CAT(op, =)(const U &rhs)                     \
     {                                                                          \
         genvec_for_each([&](auto &x) { x PP_CAT(op, =) rhs; },                 \
@@ -83,26 +85,38 @@ template<typename T, size_t N>
 struct genvec;
 
 template<typename T>
-struct is_genvec_helper : public std::false_type
-{};
+struct genvec_classify : public std::false_type
+{
+    static inline constexpr size_t vec_dim = 1;
+    using component_type = T;
+};
 
 template<typename T, size_t N>
-struct is_genvec_helper<genvec<T, N>> : public std::true_type
-{};
+struct genvec_classify<genvec<T, N>> : public std::true_type
+{
+    static inline constexpr size_t vec_dim = N;
+    using component_type = T;
+};
 
 template<typename T>
-concept is_genvec = is_genvec_helper<std::decay_t<T>>::value;
+concept is_genvec = genvec_classify<std::decay_t<T>>::value;
 
 template<typename T, size_t N>
-concept is_genvec_dim = is_genvec<T> && (std::decay_t<T>::dim == N);
+concept genvec_of_dim = is_genvec<T> && (std::decay_t<T>::dim == N);
 
 template<typename T>
-concept is_genvec_scalar = !
+concept genvec_scalar = !
 is_genvec<T>;
 
 template<typename T, size_t N>
-concept is_genvec_scalar_dim = !
-is_genvec_dim<T, N>;
+concept genvec_scalar_of_dim = !
+genvec_of_dim<T, N>;
+
+template<typename T>
+inline constexpr size_t genvec_dim = genvec_classify<std::decay_t<T>>::vec_dim;
+
+template<typename T, typename V>
+concept is_genvec_shape = genvec_of_dim<T, genvec_dim<V>>;
 
 void
 genvec_map() = delete;
@@ -110,9 +124,14 @@ genvec_map() = delete;
 void
 genvec_for_each() = delete;
 
+struct broadcast_t
+{};
+
 template<typename T, size_t N>
 struct genvec : private std::array<T, N>
 {
+    static_assert(!std::is_reference_v<T>);
+
     using Base = std::array<T, N>;
 
     static inline constexpr size_t dim = N;
@@ -120,7 +139,6 @@ struct genvec : private std::array<T, N>
 
     using buffer = T[N];
 
-    using Base::operator[];
     using Base::back;
     using Base::begin;
     using Base::cbegin;
@@ -138,22 +156,82 @@ struct genvec : private std::array<T, N>
 
     constexpr genvec() = default;
     constexpr genvec(const genvec &) = default;
-    constexpr genvec(genvec &&) = default;
+    constexpr genvec(genvec &&) noexcept(
+      std::is_nothrow_move_constructible_v<T>) = default;
     genvec &operator=(const genvec &) = default;
     genvec &operator=(genvec &&) noexcept(
       std::is_nothrow_move_assignable_v<T>) = default;
 
+    /**
+     * Construct from excactly N components.
+     */
     template<typename... Args>
-        requires(N > 0 && sizeof...(Args) == N &&
-                 ((std::same_as<std::decay_t<Args>, T> && ...)))
-    constexpr explicit(N == 1) genvec(Args &&...args)
-      : Base{ std::forward<Args>(args)... }
+        requires(N > 1 && sizeof...(Args) == N)
+    constexpr genvec(Args &&...args)
+      : Base{ static_cast<T>(std::forward<Args>(args))... }
     {}
 
+    /**
+     * Truncation: take the first N components from another vector.
+     */
+    template<is_genvec V>
+        requires(std::decay_t<V>::dim > N)
+    constexpr explicit genvec(V &&vec)
+      : Base{ ([&]<size_t... I>(std::index_sequence<I...>) {
+          return Base{ static_cast<T>(std::forward<V>(vec)[I])... };
+      }(std::make_index_sequence<N>{})) }
+    {}
+
+    template<genvec_scalar S>
+    constexpr explicit genvec(S &&arg)
+      : genvec{ broadcast_t{}, std::forward<S>(arg) }
+    {}
+
+    template<typename U>
+        requires(!std::is_same_v<std::decay_t<U>, T>)
+    constexpr explicit genvec(const genvec<U, N> &v)
+      : Base{ static_cast<Base>(v.template cast<T>()) }
+    {}
+
+    template<typename U, typename V>
+        requires(!std::is_same_v<std::decay_t<U>, std::in_place_t> &&
+                 !std::is_same_v<std::decay_t<U>, broadcast_t> &&
+                 (is_genvec<U> || is_genvec<V>) &&
+                 genvec_dim<U> + genvec_dim<V> == N)
+    constexpr explicit genvec(U &&part1, V &&part2)
+    {
+        size_t j = 0;
+        if constexpr (is_genvec<U>) {
+            for (auto &x : part1)
+                operator[](j++) = x;
+        } else {
+            operator[](j++) = std::forward<U>(part1);
+        }
+        if constexpr (is_genvec<V>) {
+            for (auto &x : part2)
+                operator[](j++) = x;
+        } else {
+            operator[](j++) = std::forward<V>(part2);
+        }
+    }
+
+    /**
+     * Construct from excactly N components
+     */
     template<typename... Args>
         requires(sizeof...(Args) == N)
     constexpr explicit(N == 0) genvec(std::in_place_t, Args &&...args)
-      : Base{ std::forward<Args>(args)... }
+      : Base{ static_cast<T>(std::forward<Args>(args))... }
+    {}
+
+    /**
+     * broadcast a single value into N components
+     */
+    template<typename S>
+    constexpr genvec(broadcast_t, S &&arg)
+      : Base{ ([&]<size_t... I>(std::index_sequence<I...>) {
+          return Base{ [&](auto) { return static_cast<T>(arg); }(I)... };
+      }(std::make_index_sequence<N>{})) }
     {}
 
     template<typename F>
@@ -168,13 +246,13 @@ struct genvec : private std::array<T, N>
         return genvec_map(std::forward<F>(f), *this);
     }
 
-    template<is_genvec_dim<N> U, typename F>
+    template<genvec_of_dim<N> U, typename F>
     constexpr auto map(U &&rhs, F &&f) const
     {
         return genvec_map(std::forward<F>(f), *this, std::forward<U>(rhs));
     }
 
-    template<is_genvec_dim<N> U, typename F>
+    template<genvec_of_dim<N> U, typename F>
     constexpr auto map(U &&rhs, F &&f)
     {
         return genvec_map(std::forward<F>(f), *this, std::forward<U>(rhs));
@@ -209,14 +287,7 @@ struct genvec : private std::array<T, N>
 
     static constexpr genvec broadcast(const T &x)
     {
-        genvec<bool, dim> shape{};
-        return shape.map([&](auto) { return x; });
-    }
-
-    template<typename U>
-    static constexpr genvec convert(const genvec<U, N> &v)
-    {
-        return v.map([](auto &x) { return T(x); });
+        return genvec<T, N>{ broadcast_t{}, x };
     }
 
     constexpr operator std::span<const T, N>() const noexcept
@@ -233,13 +304,36 @@ struct genvec : private std::array<T, N>
               using std::swap;
               swap(x, y);
           },
-          std::forward<decltype(lhs)>(lhs),
-          std::forward<decltype(rhs)>(rhs));
+          bl_fwd(lhs),
+          bl_fwd(rhs));
+    }
+
+    constexpr T &&operator[](size_t i) &&noexcept
+    {
+        return static_cast<T &&>(Base::operator[](i));
+    }
+
+    constexpr const T &operator[](size_t i) const &&noexcept
+    {
+        return Base::operator[](i);
+    }
+
+    constexpr T &operator[](size_t i) &noexcept { return Base::operator[](i); }
+
+    constexpr const T &operator[](size_t i) const &noexcept
+    {
+        return Base::operator[](i);
+    }
+
+    template<std::integral... I>
+        requires(sizeof...(I) != 1)
+    constexpr auto operator[](I... i) const noexcept
+    {
+        return genvec<T, sizeof...(I)>{
+            std::in_place_t{}, operator[](static_cast<size_t>(i))...
+        };
     }
 };
-
-template<class T, class... U>
-genvec(T, U...) -> genvec<T, 1 + sizeof...(U)>;
 
 #undef DEF_GENVEC_OP
 #undef DEF_GENVEC_MUT_OP
@@ -248,7 +342,10 @@ genvec(T, U...) -> genvec<T, 1 + sizeof...(U)>;
 #undef DEF_GENVEC_SCALAR_MUT_OP
 #undef DEF_GENVEC_SCALAR_OP_BOTH
 
-template<typename F, is_genvec V, is_genvec_dim<std::decay_t<V>::dim>... Vs>
+template<class T, class... U>
+genvec(T, U...) -> genvec<T, 1 + sizeof...(U)>;
+
+template<typename F, is_genvec V, genvec_of_dim<std::decay_t<V>::dim>... Vs>
 constexpr auto
 genvec_map(F &&f, V &&v0, Vs &&...vs)
 {
@@ -265,7 +362,7 @@ genvec_map(F &&f, V &&v0, Vs &&...vs)
     (std::make_index_sequence<N>{});
 }
 
-template<typename F, is_genvec V, is_genvec_dim<std::decay_t<V>::dim>... Vs>
+template<typename F, is_genvec V, genvec_of_dim<std::decay_t<V>::dim>... Vs>
 constexpr void
 genvec_for_each(F &&f, V &&v0, Vs &&...vs)
 {
@@ -277,7 +374,7 @@ genvec_for_each(F &&f, V &&v0, Vs &&...vs)
 }
 
 template<typename T, typename U, size_t N>
-    requires(is_genvec_scalar_dim<T, N>)
+    requires(genvec_scalar_of_dim<T, N>)
 inline constexpr auto
 operator*(const T &lhs, const genvec<U, N> &rhs)
 {
@@ -285,7 +382,7 @@ operator*(const T &lhs, const genvec<U, N> &rhs)
 }
 
 template<typename T, typename U, size_t N>
-    requires(is_genvec_scalar_dim<T, N>)
+    requires(genvec_scalar_of_dim<T, N>)
 inline constexpr auto
 operator/(const T &lhs, const genvec<U, N> &rhs)
 {
@@ -309,10 +406,37 @@ operator!=(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
     return !(lhs == rhs);
 }
 
-template<typename T, typename U, size_t N>
-inline constexpr auto
-dot(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
+template<is_genvec V, typename F>
+    requires(genvec_dim<V> > 1)
+constexpr auto fold(V &&v, F &&f)
 {
+    if constexpr (genvec_dim<V> == 1) {
+        return bl_fwd(v)[0];
+    } else if constexpr (genvec_dim<V> == 2) {
+        return bl_fwd(f)(bl_fwd(v)[0], bl_fwd(v)[1]);
+    } else {
+        auto acc = f(bl_fwd(v)[0], bl_fwd(v)[1]);
+        for (size_t i = 2; i < genvec_dim<V>; ++i)
+            acc = f(std::move(acc), bl_fwd(v)[i]);
+        return acc;
+    }
+}
+
+inline constexpr auto
+sum(is_genvec auto &&v)
+{
+    constexpr auto N = genvec_dim<decltype(v)>;
+    using S = typename std::decay_t<decltype(v)>::component_type;
+    if constexpr (N == 0)
+        return S{};
+    else
+        return fold(bl_fwd(v), std::plus<S>{});
+}
+
+inline constexpr auto
+dot(is_genvec auto &&lhs, is_genvec_shape<decltype(lhs)> auto &&rhs)
+{
+    constexpr auto N = genvec_dim<decltype(lhs)>;
     static_assert(N > 0, "N not > 0");
     auto ret = lhs[0] * rhs[0];
     for (size_t i = 1; i < N; ++i)
@@ -320,163 +444,128 @@ dot(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
     return ret;
 }
 
-template<typename T, typename U>
 inline constexpr auto
-cross(const genvec<T, 3> &lhs, const genvec<U, 3> &rhs)
+cross(genvec_of_dim<3> auto &&lhs, genvec_of_dim<3> auto &&rhs)
 {
-    auto x = lhs[1] * rhs[2] - lhs[2] * rhs[1];
-    auto y = lhs[2] * rhs[0] - lhs[0] * rhs[2];
-    auto z = lhs[0] * rhs[1] - lhs[1] * rhs[0];
-    genvec<decltype(x), 3> ret{};
-    ret[0] = x;
-    ret[1] = y;
-    ret[2] = z;
-    return ret;
+    return lhs[1, 2, 0] * rhs[2, 0, 1] - lhs[2, 0, 1] * rhs[1, 2, 0];
 }
 
-template<typename T, typename U>
 inline constexpr auto
-det(const genvec<T, 2> &lhs, const genvec<U, 2> &rhs)
+det(genvec_of_dim<2> auto &&lhs, genvec_of_dim<2> auto &&rhs)
 {
     return lhs[0] * rhs[1] - lhs[1] * rhs[0];
 }
 
-template<typename T, size_t N>
-inline constexpr T
-sum(const genvec<T, N> &v)
-{
-    T ret{};
-    for (size_t i = 0; i < N; ++i)
-        ret += v[i];
-    return ret;
-}
-
-template<typename T, size_t N>
-inline constexpr T
-quadrance(const genvec<T, N> &v)
+constexpr auto
+quadrance(const is_genvec auto &v)
 {
     return dot(v, v);
 }
 
-template<typename T, size_t N>
-inline constexpr real
-length(const genvec<T, N> &v)
+constexpr auto
+length(const is_genvec auto &v)
 {
     return sqrt(quadrance(v));
 }
 
-template<typename T, size_t N>
-inline constexpr real
-inverseLength(const genvec<T, N> &v)
+constexpr auto
+inverseLength(const is_genvec auto &v)
 {
     return rsqrt(quadrance(v));
 }
 
-template<typename T, size_t N>
-inline constexpr auto
-normalize(const genvec<T, N> &v)
+constexpr auto
+normalize(const is_genvec auto &v)
 {
     return v * inverseLength(v);
 }
 
-template<typename T, typename U, size_t N>
-inline constexpr auto
-distance(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
+constexpr auto
+distance(is_genvec auto &&lhs, is_genvec_shape<decltype(lhs)> auto &&rhs)
 {
-    return length(lhs - rhs);
+    return length(bl_fwd(lhs) - bl_fwd(rhs));
 }
 
-template<typename T, typename U, size_t N>
-inline constexpr auto
-inverseDistance(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
+constexpr auto
+inverseDistance(is_genvec auto &&lhs, is_genvec_shape<decltype(lhs)> auto &&rhs)
 {
-    return inverseLength(lhs - rhs);
+    return inverseLength(bl_fwd(lhs) - bl_fwd(rhs));
 }
 
-template<typename T, typename U, size_t N>
-inline constexpr auto
-distanceSq(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
+constexpr auto
+distanceSq(is_genvec auto &&lhs, is_genvec_shape<decltype(lhs)> auto &&rhs)
 {
-    return quadrance(lhs - rhs);
+    return quadrance(bl_fwd(lhs) - bl_fwd(rhs));
 }
 
-template<typename T, typename U, size_t N, typename V = int>
-inline constexpr auto
-reflect(const genvec<T, N> &a, const genvec<U, N> &n, const V &amp = 1)
+template<is_genvec T, is_genvec_shape<T> U, typename V = int>
+constexpr auto
+reflect(T &&a, U &&n, V &&amp = 1)
 {
-    return a - n * (2 * amp * dot(n, a));
+    return a - n * (2 * bl_fwd(amp) * dot(n, a));
 }
 
-template<typename T, typename U, size_t N>
-inline constexpr auto
-min(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
+constexpr auto
+min(is_genvec auto &&lhs, is_genvec_shape<decltype(lhs)> auto &&rhs)
 {
-    return lhs.map(rhs, [](const T &x, const U &y) {
+    return bl_fwd(lhs).map(bl_fwd(rhs), [](auto &&x, auto &&y) {
         using std::min;
-        return min(x, y);
+        return min(bl_fwd(x), bl_fwd(y));
     });
 }
 
-template<typename T, typename U, size_t N>
-inline constexpr auto
-max(const genvec<T, N> &lhs, const genvec<U, N> &rhs)
+constexpr auto
+max(is_genvec auto &&lhs, is_genvec_shape<decltype(lhs)> auto &&rhs)
 {
-    return lhs.map(rhs, [](const T &x, const U &y) {
+    return bl_fwd(lhs).map(bl_fwd(rhs), [](auto &&x, auto &&y) {
         using std::max;
-        return max(x, y);
+        return max(bl_fwd(x), bl_fwd(y));
     });
 }
 
-template<typename T, size_t N>
-inline constexpr auto
-abs(const genvec<T, N> &v)
+constexpr auto
+abs(is_genvec auto &&v)
 {
-    return v.map([](const T &x) {
+    return bl_fwd(v).map([](auto &&x) {
         using std::abs;
-        return abs(x);
+        return abs(bl_fwd(x));
     });
 }
 
-template<typename T, size_t N>
-inline constexpr auto
-recip(const genvec<T, N> &v)
+constexpr auto
+recip(is_genvec auto &&v)
 {
-    return v.map([](const T &x) { return recip(x); });
+    return bl_fwd(v).map([](auto &&x) { return recip(bl_fwd(x)); });
 }
 
-template<typename T, typename U, typename V, size_t N>
-inline constexpr auto
-lerp(const genvec<T, N> &a, const genvec<U, N> &b, const V &t)
+constexpr auto
+lerp(is_genvec auto &&a, is_genvec_shape<decltype(a)> auto &&b, auto &&t)
 {
-    return a + (b - a) * t;
+    return a + (bl_fwd(b) - a) * bl_fwd(t);
 }
 
-template<typename T, typename U, size_t N>
-inline constexpr auto
-directionFromTo(const genvec<T, N> &a, const genvec<U, N> &b)
+constexpr auto
+directionFromTo(is_genvec auto &&a, is_genvec_shape<decltype(a)> auto &&b)
 {
-    return normalize(b - a);
+    return normalize(bl_fwd(b) - bl_fwd(a));
 }
 
-template<typename T, typename U, size_t N>
-inline constexpr auto
-cos(const genvec<T, N> &a, const genvec<U, N> &b)
+constexpr auto
+cos(is_genvec auto &&a, is_genvec_shape<decltype(a)> auto &&b)
 {
     return dot(a, b) / (length(a) * length(b));
 }
 
-template<typename T, typename U, size_t N>
-inline constexpr auto
-projectAlong(const genvec<T, N> &a, const genvec<U, N> &x)
+constexpr auto
+projectAlong(is_genvec auto &&a, is_genvec_shape<decltype(a)> auto &&x)
 {
-    return dot(a, x) / quadrance(x) * x;
+    return dot(bl_fwd(a), x) / quadrance(x) * x;
 }
 
-template<typename T, size_t N, typename U>
-inline constexpr bool
-equal(const genvec<T, N> &a, const genvec<T, N> &b, const U &epsi)
+constexpr bool
+equal(is_genvec auto &&a, is_genvec_shape<decltype(a)> auto &&b, auto &&epsi)
 {
-    for (size_t i = 0; i < N; ++i)
+    for (size_t i = 0; i < genvec_dim<decltype(a)>; ++i)
         if (distance(a[i], b[i]) > epsi)
             return false;
     return true;
