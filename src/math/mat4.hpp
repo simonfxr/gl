@@ -17,13 +17,7 @@ mat4()
 constexpr mat4_t
 mat4(real x)
 {
-    return mat4_t::fill(x);
-}
-
-constexpr mat4_t
-mat4(mat4_t::buffer b)
-{
-    return mat4_t::load(b);
+    return mat4_t::broadcast(x);
 }
 
 template<typename T>

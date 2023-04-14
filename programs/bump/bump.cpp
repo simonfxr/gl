@@ -217,7 +217,7 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
 
     vertices.reserve(12);
     for (auto i : vertex_data)
-        vertices.push_back(vec3(i));
+        vertices.push_back(vec3(i[0], i[1], i[2]));
     for (auto element : elements)
         tris.push_back(Tri(element[0], element[1], element[2]));
 

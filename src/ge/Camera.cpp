@@ -120,7 +120,8 @@ Camera::Data::runMove(const Event<CommandEvent> & /*unused*/, int64_t dir)
         ERR("argument not >= 1 and <= 12");
         return;
     }
-    step_accum += vec3(&the_dir_table[3 * (dir - 1)]);
+    auto p = &the_dir_table[3 * (dir - 1)];
+    step_accum += vec3(p[0], p[1], p[2]);
 }
 
 void

@@ -15,7 +15,7 @@ mat3()
 constexpr mat3_t
 mat3(real x)
 {
-    return mat3_t::fill(x);
+    return mat3_t::broadcast(x);
 }
 
 template<typename T>
@@ -23,12 +23,6 @@ constexpr mat3_t
 mat3(const genmat<T, 3> &A)
 {
     return mat3_t::convert(A);
-}
-
-constexpr mat3_t
-mat3(mat3_t::buffer b)
-{
-    return mat3_t::load(b);
 }
 
 constexpr mat3_t

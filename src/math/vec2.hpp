@@ -23,13 +23,7 @@ vec2(const genvec<T, 2> &v)
 inline constexpr vec2_t
 vec2(real x)
 {
-    return vec2_t::fill(x);
-}
-
-inline constexpr vec2_t
-vec2(const vec2_t::buffer b)
-{
-    return vec2_t::load(b);
+    return vec2_t::broadcast(x);
 }
 
 inline vec2_t

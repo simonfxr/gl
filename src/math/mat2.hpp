@@ -16,7 +16,7 @@ mat2()
 constexpr mat2_t
 mat2(real x)
 {
-    return mat2_t::fill(x);
+    return mat2_t::broadcast(x);
 }
 
 template<typename T>
@@ -24,12 +24,6 @@ constexpr mat2_t
 mat2(const genmat<T, 2> &A)
 {
     return mat2_t::convert(A);
-}
-
-constexpr mat2_t
-mat2(mat2_t::buffer b)
-{
-    return mat2_t::load(b);
 }
 
 constexpr mat2_t

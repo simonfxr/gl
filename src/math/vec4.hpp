@@ -29,13 +29,7 @@ vec4(const genvec<T, 4> &v)
 inline constexpr vec4_t
 vec4(real x)
 {
-    return vec4_t::fill(x);
-}
-
-inline constexpr vec4_t
-vec4(const vec4_t::buffer b)
-{
-    return vec4_t::load(b);
+    return vec4_t::broadcast(x);
 }
 
 } // namespace math

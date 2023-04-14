@@ -13,24 +13,23 @@
     template<typename U>                                                       \
     constexpr auto operator op(const genmat<U, N> &rhs) const                  \
     {                                                                          \
-        using V = std::decay_t<decltype(columns[0][0] op rhs[0][0])>;          \
+        using V = std::decay_t<decltype(operator[](0)[0] op rhs[0][0])>;       \
         genmat<V, N> ret{};                                                    \
         for (size_t i = 0; i < N; ++i)                                         \
             for (size_t j = 0; j < N; ++j)                                     \
-                ret[i][j] = columns[i][j] op rhs[i][j];                        \
+                ret[i][j] = operator[](i)[j] op rhs[i][j];                     \
         return ret;                                                            \
     }
 
 #define DEF_GENMAT_SCALAR_OP(op)                                               \
-    template<typename U,                                                       \
-             typename = std::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>  \
+    template<is_genmat_scalar<T, N> U>                                         \
     constexpr auto operator op(const U &rhs) const                             \
     {                                                                          \
-        using V = std::decay_t<decltype(columns[0][0] op rhs)>;                \
+        using V = std::decay_t<decltype(operator[](0)[0] op rhs)>;             \
         genmat<V, N> ret{};                                                    \
         for (size_t i = 0; i < N; ++i)                                         \
             for (size_t j = 0; j < N; ++j)                                     \
-                ret[i][j] = columns[i][j] op rhs;                              \
+                ret[i][j] = operator[](i)[j] op rhs;                           \
         return ret;                                                            \
     }
 
@@ -42,8 +41,7 @@
     }
 
 #define DEF_GENMAT_SCALAR_MUT_OP(op)                                           \
-    template<typename U,                                                       \
-             typename = std::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>  \
+    template<is_genmat_scalar<T, N> U>                                         \
     constexpr genmat &operator PP_CAT(op, =)(const U &rhs)                     \
     {                                                                          \
         return *this = *this op rhs;                                           \
@@ -63,47 +61,69 @@ template<typename T, size_t N>
 struct genmat;
 
 template<typename T>
-struct is_genmat : public std::false_type
+struct is_genmat_helper : public std::false_type
 {};
 
 template<typename T, size_t N>
-struct is_genmat<genmat<T, N>> : public std::true_type
+struct is_genmat_helper<genmat<T, N>> : public std::true_type
 {};
 
 template<typename T>
-inline constexpr bool is_genmat_v = is_genmat<T>::value;
+concept is_genmat = is_genmat_helper<std::decay_t<T>>::value;
 
 template<typename T, size_t N>
-struct genmat
+concept is_genmat_dim = is_genmat<T> && std::decay_t<T>::dim ==
+N;
+
+template<typename T>
+concept is_non_genmat = !
+is_genmat<T>;
+
+template<typename T, size_t N>
+concept is_non_genmat_dim = !
+is_genmat_dim<T, N>;
+
+template<typename S, typename T, size_t N>
+concept is_genmat_scalar = !
+is_genmat_dim<S, N> && !is_genvec_dim<S, N>;
+
+template<typename T, size_t N>
+struct genmat : private genvec<genvec<T, N>, N>
 {
     static inline constexpr size_t column_size = N;
     using column_type = genvec<T, N>;
     using component_type = T;
-    static inline constexpr size_t size = N * N;
-    static inline constexpr size_t padded_size = N * column_type::padded_size;
-    using buffer = T[size];
+    static inline constexpr size_t dim = N;
+    using buffer = T[N * N];
 
-    column_type columns[N];
+    using Base = genvec<genvec<T, N>, N>;
 
-    HU_FORCE_INLINE constexpr column_type &operator[](size_t i)
-    {
-        return columns[i];
-    }
-
-    HU_FORCE_INLINE constexpr const column_type &operator[](size_t i) const
-    {
-        return columns[i];
-    }
+    using genvec<genvec<T, N>, N>::genvec;
+    using Base::operator[];
+    using Base::back;
+    using Base::begin;
+    using Base::cbegin;
+    using Base::cend;
+    using Base::crbegin;
+    using Base::crend;
+    using Base::empty;
+    using Base::end;
+    using Base::fill;
+    using Base::front;
+    using Base::rbegin;
+    using Base::rend;
+    using Base::size;
+    using Base::operator std::span<column_type, N>;
 
     HU_FORCE_INLINE constexpr inline const T &operator()(size_t i,
                                                          size_t j) const
     {
-        return columns[i][j];
+        return operator[](i)[j];
     }
 
     HU_FORCE_INLINE constexpr inline T &operator()(size_t i, size_t j)
     {
-        return columns[i][j];
+        return operator[](i)[j];
     }
 
     template<typename F>
@@ -112,7 +132,7 @@ struct genmat
         using U = std::decay_t<std::invoke_result_t<F, const column_type &>>;
         genmat<U, N> ret{};
         for (size_t i = 0; i < N; ++i)
-            ret[i] = f(columns[i]);
+            ret[i] = f(operator[](i));
         return ret;
     }
 
@@ -123,7 +143,7 @@ struct genmat
           std::invoke_result_t<F, const column_type &, const column_type &>>;
         genmat<V, N> ret{};
         for (size_t i = 0; i < N; ++i)
-            ret[i] = f(columns[i], rhs[i]);
+            ret[i] = f(operator[](i), rhs[i]);
         return ret;
     }
 
@@ -138,7 +158,10 @@ struct genmat
     DEF_GENMAT_SCALAR_OP_BOTH(/)
     DEF_GENMAT_SCALAR_OP_BOTH(*)
 
-    static constexpr genmat fill(const T &x)
+    constexpr T *data() noexcept { return Base::data()[0].data(); }
+    constexpr const T *data() const noexcept { return Base::data()[0].data(); }
+
+    static constexpr genmat broadcast(const T &x)
     {
         genmat ret{};
         for (size_t i = 0; i < N; ++i)
@@ -163,15 +186,6 @@ struct genmat
         return A;
     }
 
-    static constexpr genmat load(const buffer b)
-    {
-        genmat ret{};
-        for (size_t i = 0; i < N; ++i)
-            for (size_t j = 0; j < N; ++j)
-                ret[i][j] = b[i * N + j];
-        return ret;
-    }
-
     template<typename U>
     static constexpr genmat convert(const genmat<U, N> &A)
     {
@@ -181,20 +195,6 @@ struct genmat
                 ret[i][j] = T(A[i][j]);
         return ret;
     }
-
-    const T *data() const { return columns[0].data(); }
-
-    T *data() { return columns[0].data(); }
-
-    const column_type *begin() const { return columns; }
-    column_type *begin() { return columns; }
-
-    const column_type *end() const { return columns + N; }
-    column_type *end() { return columns + N; }
-
-    const column_type *cbegin() const { return columns; }
-
-    const column_type *cend() const { return columns + N; }
 };
 
 #undef DEF_GENMAT_OP
@@ -204,19 +204,8 @@ struct genmat
 #undef DEF_GENMAT_SCALAR_MUT_OP
 #undef DEF_GENMAT_SCALAR_OP_BOTH
 
-template<typename T, size_t N>
-inline constexpr void
-load(T *buffer, const genmat<T, N> &v)
-{
-    for (size_t i = 0; i < N; ++i)
-        for (size_t j = 0; j < N; ++j)
-            buffer[i * N + j] = v[i][j];
-}
-
-template<typename T,
-         typename U,
-         size_t N,
-         typename = std::enable_if_t<!is_genmat_v<U> && !is_genvec_v<U>>>
+template<typename T, typename U, size_t N>
+    requires is_genmat_scalar<T, U, N>
 inline constexpr auto
 operator*(const T &lhs, const genmat<U, N> &rhs)
 {
@@ -438,39 +427,36 @@ inline constexpr genmat<T, 3>
 inverse(const genmat<T, 3> &A)
 {
     const auto AT = transpose(A);
-    struct
-    {
-        typename genmat<T, 3>::buffer a;
-    } m{};
-    load(m.a, AT);
+    auto mm = AT.data();
 
-    auto t4 = m.a[0] * m.a[4];
-    auto t6 = m.a[0] * m.a[5];
-    auto t8 = m.a[1] * m.a[3];
-    auto t10 = m.a[2] * m.a[3];
-    auto t12 = m.a[1] * m.a[6];
-    auto t14 = m.a[2] * m.a[6];
+    auto t4 = mm[0] * mm[4];
+    auto t6 = mm[0] * mm[5];
+    auto t8 = mm[1] * mm[3];
+    auto t10 = mm[2] * mm[3];
+    auto t12 = mm[1] * mm[6];
+    auto t14 = mm[2] * mm[6];
     // determinant
-    auto t16 = (t4 * m.a[8] - t6 * m.a[7] - t8 * m.a[8] + t10 * m.a[7] +
-                t12 * m.a[5] - t14 * m.a[4]);
+    auto t16 = (t4 * mm[8] - t6 * mm[7] - t8 * mm[8] + t10 * mm[7] +
+                t12 * mm[5] - t14 * mm[4]);
 
     if (t16 == 0)
         return {};
     auto t17 = 1 / t16;
 
-    typename genmat<T, 3>::buffer a{};
+    genmat<T, 3> ret{};
+    auto a = ret.data();
 
-    a[0] = (m.a[4] * m.a[8] - m.a[5] * m.a[7]) * t17;
-    a[1] = -(m.a[1] * m.a[8] - m.a[2] * m.a[7]) * t17;
-    a[2] = (m.a[1] * m.a[5] - m.a[2] * m.a[4]) * t17;
-    a[3] = -(m.a[3] * m.a[8] - m.a[5] * m.a[6]) * t17;
-    a[4] = (m.a[0] * m.a[8] - t14) * t17;
+    a[0] = (mm[4] * mm[8] - mm[5] * mm[7]) * t17;
+    a[1] = -(mm[1] * mm[8] - mm[2] * mm[7]) * t17;
+    a[2] = (mm[1] * mm[5] - mm[2] * mm[4]) * t17;
+    a[3] = -(mm[3] * mm[8] - mm[5] * mm[6]) * t17;
+    a[4] = (mm[0] * mm[8] - t14) * t17;
     a[5] = -(t6 - t10) * t17;
-    a[6] = (m.a[3] * m.a[7] - m.a[4] * m.a[6]) * t17;
-    a[7] = -(m.a[0] * m.a[7] - t12) * t17;
+    a[6] = (mm[3] * mm[7] - mm[4] * mm[6]) * t17;
+    a[7] = -(mm[0] * mm[7] - t12) * t17;
     a[8] = (t4 - t8) * t17;
 
-    return transpose(genmat<T, 3>::load(a));
+    return transpose(ret);
 }
 
 extern template MATH_API genmat<float, 3>

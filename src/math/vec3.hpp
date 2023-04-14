@@ -23,13 +23,7 @@ vec3(const genvec<T, 3> &v)
 inline constexpr vec3_t
 vec3(real x)
 {
-    return vec3_t::fill(x);
-}
-
-inline constexpr vec3_t
-vec3(const vec3_t::buffer b)
-{
-    return vec3_t::load(b);
+    return vec3_t::broadcast(x);
 }
 
 template<typename T>
@@ -44,6 +38,10 @@ using point3_t = vec3_t;
 using direction3_t = vec3_t; // a unit vector
 
 using normal3_t = vec3_t; // a unit vector, perdendicular to some surface
+
+static_assert(std::is_trivially_default_constructible_v<vec3_t>);
+static_assert(std::is_trivially_copyable_v<vec3_t>);
+static_assert(std::is_trivially_destructible_v<vec3_t>);
 
 } // namespace math
 

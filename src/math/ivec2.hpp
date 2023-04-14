@@ -23,13 +23,7 @@ ivec2(const genvec<T, 2> &v)
 inline constexpr ivec2_t
 ivec2(int32_t x)
 {
-    return ivec2_t::fill(x);
-}
-
-inline constexpr ivec2_t
-ivec2(const ivec2_t::buffer b)
-{
-    return ivec2_t::load(b);
+    return ivec2_t::broadcast(x);
 }
 
 template<typename T>

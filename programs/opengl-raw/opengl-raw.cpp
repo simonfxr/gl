@@ -162,7 +162,8 @@ initVertexArray(State &s)
                        0_r);
 
         for (int k = 0; k < 3; ++k) {
-            v.position = vec3(VERTEX_DATA[ELEMENT_DATA[i][k]]);
+            auto p = VERTEX_DATA[ELEMENT_DATA[i][k]];
+            v.position = vec3(p[0], p[1], p[2]);
             vertices.push_back(v);
         }
     }
