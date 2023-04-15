@@ -14,4 +14,20 @@ def_program(
 def_program(math_test SOURCES math_test.cpp DEPEND sys)
 def_program(err_calls SOURCES err_calls.cpp DEPEND sys)
 
-def_program(vec_test SOURCES vec_test.cpp DEPEND sys ctest)
+def_program(
+  vec_test
+  SOURCES
+  vec_test.cpp
+  DEPEND
+  sys
+  ctest
+  bl)
+
+def_program(
+  rand_test
+  SOURCES
+  rand_test.cpp
+  DEPEND
+  sys
+  ctest
+  bl)

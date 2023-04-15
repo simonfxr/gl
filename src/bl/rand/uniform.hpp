@@ -15,9 +15,8 @@ template<typename T>
 struct uniform_bitrep
 {
     friend T invoke(sample_f, const uniform_bitrep<T> &, rng auto &&r)
-        requires(std::signed_integral<T>)
     {
-        std::array<std::byte, sizeof(T)> bits;
+        std::array<std::byte, sizeof(T)> bits{};
         seed_bytes(r, bits);
         return std::bit_cast<T>(bits);
     }
@@ -46,23 +45,23 @@ struct uniform_distribution
         using U = std::make_unsigned_t<T>;
         return d.lo +
                static_cast<T>(bl::rand::sample(
-                 uniform_distribution{ static_cast<U>(d.l) }, bl_fwd(g)));
+                 uniform_distribution<U>{ static_cast<U>(d.l) }, bl_fwd(g)));
     }
 
     friend T invoke(sample_f, const uniform_distribution<T> &d, rng auto &&g)
         requires(std::unsigned_integral<T>)
     {
-        auto &l = d.l;
+        auto &dl = d.l;
         using UU = bo::widen_int_t<T>;
         // https://lemire.me/blog/2016/06/30/fast-random-shuffling/
         auto r = bl::rand::sample(uniform_bitrep<T>{}, g);
-        auto multiresult = static_cast<UU>(r) * static_cast<UU>(l);
+        auto multiresult = static_cast<UU>(r) * static_cast<UU>(dl);
         auto leftover = static_cast<T>(multiresult);
-        if (leftover < l) {
-            auto threshold = -l % l;
+        if (leftover < dl) {
+            auto threshold = -dl % dl;
             while (leftover < threshold) {
                 r = bl::rand::sample(uniform_bitrep<T>{}, g);
-                multiresult = static_cast<UU>(r) * static_cast<UU>(l);
+                multiresult = static_cast<UU>(r) * static_cast<UU>(dl);
                 leftover = static_cast<T>(multiresult);
             }
         }

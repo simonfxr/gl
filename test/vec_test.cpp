@@ -1,30 +1,9 @@
 #include <math/ivec.hpp>
 #include <math/uvec.hpp>
-#include <sys/io.hpp>
-#include <sys/sys.hpp>
 
-PRAGMA_DIAGNOSTIC_PUSH
-#pragma clang diagnostic ignored "-Wold-style-cast"
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-
-#define CTEST_REPORT_NOT_EQUAL(expected, ...)                                  \
-    ::report_not_equal((expected), (__VA_ARGS__))
-
-#define CTEST_IMPLEMENTATION
-#include <ctest.h>
+#include "./testmain.hpp"
 
 using namespace math;
-
-static void
-report_not_equal(auto &&expected, auto &&rhs)
-{
-    static int sysinit = []() {
-        sys::moduleInit();
-        return 0;
-    }();
-    ((void) sysinit);
-    sys::io::stderr() << expected << " vs " << rhs << "\n";
-}
 
 CTEST_GROUP("vec3")
 {
@@ -59,5 +38,3 @@ CTEST_GROUP("vec3")
 }
 
 CTEST_MAIN()
-
-PRAGMA_DIAGNOSTIC_POP

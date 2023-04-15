@@ -5,6 +5,7 @@
 
 #include <bo/cxx.hpp>
 
+#include <algorithm>
 #include <array>
 #include <concepts>
 #include <span>
@@ -13,13 +14,14 @@
 namespace bl::rand {
 
 template<typename T>
-concept rng = requires(T &r) {
-                  typename T::result_type;
-                  requires std::unsigned_integral<typename T::result_type>;
-                  {
-                      r()
-                      } -> std::same_as<typename T::result_type>;
-              };
+concept rng =
+  requires(std::decay_t<T> r) {
+      typename decltype(r)::result_type;
+      requires std::unsigned_integral<typename decltype(r)::result_type>;
+      {
+          r()
+          } -> std::same_as<typename decltype(r)::result_type>;
+  };
 
 // *Really* minimal PCG32 code / (c) 2014 M.E. O'Neill / pcg-random.org
 // Licensed under Apache License 2.0 (NO WARRANTY, etc. see website)
@@ -74,7 +76,7 @@ struct gen64
 
 static_assert(rng<gen64>);
 
-using gen = gen64;
+using gen = gen32;
 
 struct BL_API random_device
 {
@@ -130,23 +132,21 @@ T
 seed_from(std::unsigned_integral auto seedbits) noexcept
 {
     using state_type = typename T::state_type;
-
     std::array<std::byte, sizeof(state_type)> seed;
 
     if constexpr (sizeof(state_type) <= sizeof seedbits) {
         auto sbytes =
           std::bit_cast<std::array<std::byte, sizeof(seedbits)>>(seedbits);
-        std::copy_n(sbytes, sizeof(state_type), seed);
+        std::copy_n(sbytes.begin(), sizeof(state_type), seed.begin());
+        T gen;
+        gen.seed(std::bit_cast<state_type>(seed));
+        return gen;
     } else {
         gen32 sd;
         sd.seed(static_cast<gen32::state_type>(seedbits));
         (void) sd();
-        seed_bytes(sd, seed);
+        return seed_from<T>(sd);
     }
-
-    T gen;
-    gen.seed(std::bit_cast<state_type>(seed));
-    return gen;
 }
 
 inline constexpr struct sample_f
