@@ -9,94 +9,28 @@
 
 #include <type_traits>
 
-#define DEF_GENMAT_OP(op)                                                      \
-    template<typename U>                                                       \
-    constexpr auto operator op(const genmat<U, N> &rhs) const                  \
-    {                                                                          \
-        using V = std::decay_t<decltype(operator[](0)[0] op rhs[0][0])>;       \
-        genmat<V, N> ret{};                                                    \
-        for (size_t i = 0; i < N; ++i)                                         \
-            for (size_t j = 0; j < N; ++j)                                     \
-                ret[i][j] = operator[](i)[j] op rhs[i][j];                     \
-        return ret;                                                            \
-    }
-
-#define DEF_GENMAT_SCALAR_OP(op)                                               \
-    template<is_genmat_scalar<T, N> U>                                         \
-    constexpr auto operator op(const U &rhs) const                             \
-    {                                                                          \
-        using V = std::decay_t<decltype(operator[](0)[0] op rhs)>;             \
-        genmat<V, N> ret{};                                                    \
-        for (size_t i = 0; i < N; ++i)                                         \
-            for (size_t j = 0; j < N; ++j)                                     \
-                ret[i][j] = operator[](i)[j] op rhs;                           \
-        return ret;                                                            \
-    }
-
-#define DEF_GENMAT_MUT_OP(op)                                                  \
-    template<typename U>                                                       \
-    constexpr genmat &operator PP_CAT(op, =)(const genmat<U, N> &rhs)          \
-    {                                                                          \
-        return *this = *this op rhs;                                           \
-    }
-
-#define DEF_GENMAT_SCALAR_MUT_OP(op)                                           \
-    template<is_genmat_scalar<T, N> U>                                         \
-    constexpr genmat &operator PP_CAT(op, =)(const U &rhs)                     \
-    {                                                                          \
-        return *this = *this op rhs;                                           \
-    }
-
-#define DEF_GENMAT_OP_BOTH(op)                                                 \
-    DEF_GENMAT_OP(op)                                                          \
-    DEF_GENMAT_MUT_OP(op)
-
-#define DEF_GENMAT_SCALAR_OP_BOTH(op)                                          \
-    DEF_GENMAT_SCALAR_OP(op)                                                   \
-    DEF_GENMAT_SCALAR_MUT_OP(op)
-
 namespace math {
 
 template<typename T, size_t N>
 struct genmat;
 
-template<typename T>
-struct is_genmat_helper : public std::false_type
+struct in_place_columns_t
 {};
 
-template<typename T, size_t N>
-struct is_genmat_helper<genmat<T, N>> : public std::true_type
-{};
-
-template<typename T>
-concept is_genmat = is_genmat_helper<std::decay_t<T>>::value;
-
-template<typename T, size_t N>
-concept is_genmat_dim = is_genmat<T> && std::decay_t<T>::dim ==
-N;
-
-template<typename T>
-concept is_non_genmat = !
-is_genmat<T>;
-
-template<typename T, size_t N>
-concept is_non_genmat_dim = !
-is_genmat_dim<T, N>;
-
-template<typename S, typename T, size_t N>
-concept is_genmat_scalar = !
-is_genmat_dim<S, N> && !vec_of_dim<S, N>;
+void
+mat_map() = delete;
 
 template<typename T, size_t N>
 struct genmat : private vec<vec<T, N>, N>
 {
     static inline constexpr size_t column_size = N;
     using column_type = vec<T, N>;
-    using component_type = T;
+    using scalar_type = T;
     static inline constexpr size_t dim = N;
     using buffer = T[N * N];
 
     using Base = vec<vec<T, N>, N>;
+    using Self = genmat<T, N>;
 
     using vec<vec<T, N>, N>::vec;
     using Base::operator[];
@@ -115,6 +49,21 @@ struct genmat : private vec<vec<T, N>, N>
     using Base::size;
     using Base::operator std::span<column_type, N>;
 
+    constexpr genmat() = default;
+    constexpr genmat(const genmat &) = default;
+    constexpr genmat(genmat &&) noexcept(
+      std::is_nothrow_move_constructible_v<Base>) = default;
+    genmat &operator=(const genmat &) = default;
+    genmat &operator=(genmat &&) noexcept(
+      std::is_nothrow_move_assignable_v<Base>) = default;
+
+    constexpr genmat(
+      in_place_columns_t,
+      std::same_as<Base> auto
+        &&val) noexcept(std::is_nothrow_constructible_v<Base, decltype(val)>)
+      : Base{ bl_fwd(val) }
+    {}
+
     HU_FORCE_INLINE constexpr inline const T &operator()(size_t i,
                                                          size_t j) const
     {
@@ -126,37 +75,45 @@ struct genmat : private vec<vec<T, N>, N>
         return operator[](i)[j];
     }
 
-    template<typename F>
-    constexpr auto map(F &&f) const
+    constexpr auto map(auto &&f) const { return bl::map(bl_fwd(f), *this); }
+
+    constexpr auto map(auto &&f) { return bl::map(bl_fwd(f), *this); }
+
+    constexpr auto map(same_shape<Self> auto &&rhs, auto &&f) const
     {
-        using U = std::decay_t<std::invoke_result_t<F, const column_type &>>;
-        genmat<U, N> ret{};
-        for (size_t i = 0; i < N; ++i)
-            ret[i] = f(operator[](i));
-        return ret;
+        return bl::map(bl_fwd(f), *this, bl_fwd(rhs));
     }
 
-    template<typename U, typename F>
-    constexpr auto map(const genmat<U, N> &rhs, F &&f) const
+    constexpr auto map(same_shape<Self> auto &&rhs, auto &&f)
     {
-        using V = std::decay_t<
-          std::invoke_result_t<F, const column_type &, const column_type &>>;
-        genmat<V, N> ret{};
-        for (size_t i = 0; i < N; ++i)
-            ret[i] = f(operator[](i), rhs[i]);
-        return ret;
+        return bl::map(bl_fwd(f), *this, bl_fwd(rhs));
     }
 
-    constexpr genmat operator-() const
+    template<typename U>
+    constexpr auto cast() const
     {
-        return map([](const T &x) { return -x; });
+        return map([](auto &x) { return static_cast<U>(x); });
     }
 
-    DEF_GENMAT_OP_BOTH(+)
-    DEF_GENMAT_OP_BOTH(-)
+    friend constexpr auto operator-(same_tensor<Self> auto &&lhs)
+    {
+        return bl::map([](auto &&x) { return -bl_fwd(x); }, bl_fwd(lhs));
+    }
 
-    DEF_GENMAT_SCALAR_OP_BOTH(/)
-    DEF_GENMAT_SCALAR_OP_BOTH(*)
+    friend constexpr auto operator~(same_tensor<Self> auto &&lhs)
+        requires(std::integral<T>)
+    {
+        return bl::map([](auto &&x) { return ~bl_fwd(x); }, bl_fwd(lhs));
+    }
+
+    MATH_DEF_TENSOR_OP_BOTH(+)
+    MATH_DEF_TENSOR_OP_BOTH(-)
+    MATH_DEF_TENSOR_SCALAR_OP_BOTH(*)
+    MATH_DEF_TENSOR_SCALAR_OP_BOTH(/)
+
+    MATH_DEF_TENSOR_OP_BOTH(&, requires(std::integral<T>))
+    MATH_DEF_TENSOR_OP_BOTH(|, requires(std::integral<T>))
+    MATH_DEF_TENSOR_OP_BOTH(^, requires(std::integral<T>))
 
     constexpr T *data() noexcept { return Base::data()[0].data(); }
     constexpr const T *data() const noexcept { return Base::data()[0].data(); }
@@ -207,33 +164,66 @@ struct genmat : private vec<vec<T, N>, N>
     {
         return transform(*this, rhs);
     }
+
+    constexpr Base &&columns() && { return static_cast<Base &&>(*this); }
+
+    constexpr Base &columns() & { return static_cast<Base &>(*this); }
+
+    constexpr const Base &&columns() const &&
+    {
+        return static_cast<const Base &&>(*this);
+    }
+
+    constexpr const Base &columns() const &
+    {
+        return static_cast<const Base &>(*this);
+    }
+
+    friend constexpr auto invoke(bl::map_f,
+                                 auto &&f,
+                                 same_tensor<Self> auto &&m0,
+                                 same_shape<Self> auto &&...ms)
+    {
+        return genmat{
+            in_place_columns_t{},
+            bl::map([&](auto &&...cols) { return bl::map(f, bl_fwd(cols)...); },
+                    bl_fwd(m0).columns(),
+                    bl_fwd(ms).columns()...)
+        };
+    }
+
+    friend constexpr void invoke(bl::for_each_f,
+                                 auto &&f,
+                                 same_tensor<Self> auto &&m0,
+                                 same_shape<Self> auto &&...ms)
+    {
+        bl::for_each(
+          [&](auto &&...cols) { return bl::for_each(f, bl_fwd(cols)...); },
+          bl_fwd(m0).columns(),
+          bl_fwd(ms).columns()...);
+    }
+
+    friend constexpr auto operator*(same_tensor<Self> auto &&A,
+                                    same_shape<Self> auto &&B)
+    {
+        using V = std::decay_t<decltype(A[0][0] * B[0][0])>;
+        genmat<V, N> C{};
+        for (size_t j = 0; j < N; ++j)
+            for (size_t i = 0; i < N; ++i)
+                for (size_t k = 0; k < N; ++k)
+                    C[j][i] += A[k][i] * B[j][k];
+        return C;
+    }
 };
 
-#undef DEF_GENMAT_OP
-#undef DEF_GENMAT_MUT_OP
-#undef DEF_GENMAT_OP_BOTH
-#undef DEF_GENMAT_SCALAR_OP
-#undef DEF_GENMAT_SCALAR_MUT_OP
-#undef DEF_GENMAT_SCALAR_OP_BOTH
-
-template<typename T, typename U, size_t N>
-    requires is_genmat_scalar<T, U, N>
-inline constexpr auto
-operator*(const T &lhs, const genmat<U, N> &rhs)
-{
-    using V = std::decay_t<decltype(lhs * rhs[0][0])>;
-    genmat<V, N> ret{};
-    for (size_t i = 0; i < N; ++i)
-        for (size_t j = 0; j < N; ++j)
-            ret[i][j] = lhs * rhs[i][j];
-    return ret;
-}
+template<a_vec T>
+genmat(in_place_columns_t, T) -> genmat<tensor_scalar_type<T>, tensor_dim<T>>;
 
 template<typename T, typename U, size_t N>
 inline constexpr auto
 transform(const genmat<T, N> &A, const vec<U, N> &v)
 {
-    using V = decltype(A[0][0] * v[0]);
+    using V = std::decay_t<decltype(A[0][0] * v[0])>;
     vec<V, N> u{};
     for (size_t j = 0; j < N; ++j)
         for (size_t i = 0; i < N; ++i)
@@ -242,43 +232,10 @@ transform(const genmat<T, N> &A, const vec<U, N> &v)
 }
 
 template<typename T, typename U, size_t N>
-HU_FORCE_INLINE inline constexpr auto
-inline_mat_mul(const genmat<T, N> &A, const genmat<U, N> &B)
-{
-    using V = decltype(A[0][0] * B[0][0]);
-    genmat<V, N> C{};
-    for (size_t j = 0; j < N; ++j)
-        for (size_t i = 0; i < N; ++i)
-            for (size_t k = 0; k < N; ++k)
-                C[j][i] += A[k][i] * B[j][k];
-    return C;
-}
-
-template<typename T, typename U, size_t N>
-inline constexpr auto
-operator*(const genmat<T, N> &A, const genmat<U, N> &B)
-  -> genmat<decltype(A[0][0] * B[0][0]), N>
-{
-    return inline_mat_mul(A, B);
-}
-
-extern template MATH_API genmat<float, 3>
-operator*(const genmat<float, 3> &, const genmat<float, 3> &);
-
-extern template MATH_API genmat<double, 3>
-operator*(const genmat<double, 3> &, const genmat<double, 3> &);
-
-extern template MATH_API genmat<float, 4>
-operator*(const genmat<float, 4> &, const genmat<float, 4> &);
-
-extern template MATH_API genmat<double, 4>
-operator*(const genmat<double, 4> &, const genmat<double, 4> &);
-
-template<typename T, typename U, size_t N>
 inline constexpr genmat<T, N> &
 operator*=(genmat<T, N> &A, const genmat<U, N> &B)
 {
-    return A = inline_mat_mul(A, B);
+    return A = A * B;
 }
 
 extern template MATH_API genmat<float, 3> &

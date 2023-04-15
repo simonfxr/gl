@@ -11,6 +11,9 @@
 #    define BL_API SHARED_IMPORT
 #endif
 
+#define BL_inline HU_FORCE_INLINE inline
+#define BL_wrapper HU_MACROLIKE
+
 namespace bl {}
 
 #endif // BL_CONF_HPP

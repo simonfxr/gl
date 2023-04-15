@@ -2,6 +2,9 @@
 #define GL_MATH_VEC_HPP
 
 #include "math/real.hpp"
+#include <bl/core.hpp>
+#include <bl/functor.hpp>
+#include <bl/swap.hpp>
 
 #include <array>
 #include <concepts>
@@ -9,60 +12,54 @@
 #include <tuple>
 #include <type_traits>
 
-#define bl_fwd(lvalue) ::std::forward<decltype(lvalue)>(lvalue)
-
-#define DEF_VEC_OP(op, ...)                                                    \
-    friend constexpr auto operator op(vec_type<vec<T, N>> auto &&lhs,          \
-                                      a_vec_shape<vec<T, N>> auto &&rhs)       \
-      __VA_ARGS__                                                              \
+#define MATH_DEF_TENSOR_OP(op, ...)                                            \
+    friend constexpr auto operator op(same_tensor<Self> auto &&lhs,            \
+                                      same_shape<Self> auto &&rhs) __VA_ARGS__ \
     {                                                                          \
-        return vec_map(                                                        \
+        return bl::map(                                                        \
           [](auto &x, auto &y) { return x op y; }, bl_fwd(lhs), bl_fwd(rhs));  \
     }
 
-#define DEF_VEC_SCALAR_OP(op, ...)                                             \
-    friend constexpr auto operator op(vec_type<vec<T, N>> auto &&lhs,          \
-                                      vec_scalar_shape<vec<T, N>> auto &&rhs)  \
+#define MATH_DEF_TENSOR_SCALAR_OP(op, ...)                                     \
+    friend constexpr auto operator op(same_tensor<Self> auto &&lhs,            \
+                                      tensor_scalar_for<Self> auto &&y)        \
       __VA_ARGS__                                                              \
     {                                                                          \
-        return vec_map([&](auto &&x) { return bl_fwd(x) op rhs; },             \
-                       bl_fwd(lhs));                                           \
+        return bl::map([&](auto &&x) { return bl_fwd(x) op y; }, bl_fwd(lhs)); \
     }                                                                          \
                                                                                \
-    friend constexpr auto operator op(vec_scalar_shape<vec<T, N>> auto &&lhs,  \
-                                      vec_type<vec<T, N>> auto &&rhs)          \
+    friend constexpr auto operator op(tensor_scalar_for<Self> auto &&x,        \
+                                      same_tensor<Self> auto &&rhs)            \
       __VA_ARGS__                                                              \
     {                                                                          \
-        return vec_map([&](auto &&x) { return lhs op bl_fwd(x); },             \
-                       bl_fwd(rhs));                                           \
+        return bl::map([&](auto &&y) { return x op bl_fwd(y); }, bl_fwd(rhs)); \
     }
 
-#define DEF_VEC_MUT_OP(op, ...)                                                \
-    template<typename U>                                                       \
-    constexpr vec &operator PP_CAT(op, =)(const vec<U, N> &rhs) __VA_ARGS__    \
+#define MATH_DEF_TENSOR_MUT_OP(op, ...)                                        \
+    friend constexpr Self &operator PP_CAT(op, =)(                             \
+      Self &lhs, same_shape<Self> auto &&rhs) __VA_ARGS__                      \
     {                                                                          \
-        vec_for_each([](auto &x, auto &y) { x PP_CAT(op, =) y; },              \
-                     bl_fwd(*this),                                            \
+        bl::for_each([](auto &x, auto &&y) { x PP_CAT(op, =) bl_fwd(y); },     \
+                     bl_fwd(lhs),                                              \
                      bl_fwd(rhs));                                             \
-        return *this;                                                          \
+        return lhs;                                                            \
     }
 
-#define DEF_VEC_SCALAR_MUT_OP(op, ...)                                         \
-    template<vec_scalar_of_dim<N> U>                                           \
-    constexpr vec &operator PP_CAT(op, =)(const U &rhs) __VA_ARGS__            \
+#define MATH_DEF_TENSOR_SCALAR_MUT_OP(op, ...)                                 \
+    friend constexpr Self &operator PP_CAT(op, =)(                             \
+      Self &lhs, tensor_scalar_for<Self> auto &&y) __VA_ARGS__                 \
     {                                                                          \
-        vec_for_each([&](auto &x) { x PP_CAT(op, =) rhs; }, bl_fwd(*this));    \
-        return *this;                                                          \
+        bl::for_each([&](auto &x) { x PP_CAT(op, =) y; }, bl_fwd(lhs));        \
+        return lhs;                                                            \
     }
 
-#define DEF_VEC_OP_BOTH(op, ...)                                               \
-    DEF_VEC_OP(op, __VA_ARGS__)                                                \
-    DEF_VEC_MUT_OP(op, __VA_ARGS__)
+#define MATH_DEF_TENSOR_OP_BOTH(op, ...)                                       \
+    MATH_DEF_TENSOR_OP(op, __VA_ARGS__)                                        \
+    MATH_DEF_TENSOR_MUT_OP(op, __VA_ARGS__)
 
-#define DEF_VEC_SCALAR_OP_BOTH(op, ...)                                        \
-    DEF_VEC_OP_BOTH(op, __VA_ARGS__)                                           \
-    DEF_VEC_SCALAR_OP(op, __VA_ARGS__)                                         \
-    DEF_VEC_SCALAR_MUT_OP(op, __VA_ARGS__)
+#define MATH_DEF_TENSOR_SCALAR_OP_BOTH(op, ...)                                \
+    MATH_DEF_TENSOR_SCALAR_OP(op, __VA_ARGS__)                                 \
+    MATH_DEF_TENSOR_SCALAR_MUT_OP(op, __VA_ARGS__)
 
 namespace math {
 
@@ -70,55 +67,76 @@ template<typename T, size_t N>
 struct vec;
 
 template<typename T, size_t N>
-struct mat;
+struct genmat;
 
 template<typename T>
-struct vec_classify : public std::false_type
+struct tensor_classify
 {
-    static inline constexpr size_t vec_dim = 1;
-    using component_type = T;
+    static inline constexpr size_t dim = 1;
+    static inline constexpr size_t rank = 0;
+    using scalar_type = T;
 };
 
 template<typename T, size_t N>
-struct vec_classify<vec<T, N>> : public std::true_type
+struct tensor_classify<vec<T, N>>
 {
-    static inline constexpr size_t vec_dim = N;
-    using component_type = T;
+    static inline constexpr size_t dim = N;
+    static inline constexpr size_t rank = 1;
+    using scalar_type = T;
+};
+
+template<typename T, size_t N>
+struct tensor_classify<genmat<T, N>>
+{
+    static inline constexpr size_t dim = N;
+    static inline constexpr size_t rank = 2;
+    using scalar_type = T;
 };
 
 template<typename T>
-concept a_vec = vec_classify<std::decay_t<T>>::value;
-
-template<typename T, size_t N>
-concept vec_of_dim = a_vec<T> && (std::decay_t<T>::dim == N);
+concept a_tensor = tensor_classify<std::decay_t<T>>::rank > 0;
 
 template<typename T>
-concept vec_scalar = !
-a_vec<T>;
-
-template<typename T, size_t N>
-concept vec_scalar_of_dim = !
-vec_of_dim<T, N>;
-
-template<typename V, typename U>
-concept vec_type =
-  a_vec<U> && a_vec<V> && std::same_as<std::decay_t<V>, std::decay_t<U>>;
-
-template<typename T, typename V>
-concept vec_scalar_shape = a_vec<V> && !
-vec_type<T, V>;
+concept a_vec = a_tensor<T> && tensor_classify<std::decay_t<T>>::rank == 1;
 
 template<typename T>
-inline constexpr size_t vec_dim = vec_classify<std::decay_t<T>>::vec_dim;
+concept a_mat = a_tensor<T> && tensor_classify<std::decay_t<T>>::rank == 2;
+
+template<typename T>
+using tensor_scalar_type =
+  typename tensor_classify<std::decay_t<T>>::scalar_type;
+
+template<typename T>
+inline constexpr size_t tensor_dim = tensor_classify<std::decay_t<T>>::dim;
+
+template<typename T>
+inline constexpr size_t tensor_rank = tensor_classify<std::decay_t<T>>::rank;
 
 template<typename T, typename V>
-concept a_vec_shape = vec_of_dim<T, vec_dim<V>>;
+concept tensor_scalar_for =
+  a_tensor<V> &&
+  (!a_tensor<T> ||
+   (a_tensor<T> &&
+    std::same_as<typename tensor_classify<T>::scalar_type, std::decay_t<T>>) );
 
-void
-vec_map() = delete;
+template<typename V, typename T>
+concept same_rank = a_tensor<V> && a_tensor<T> &&
+                    (tensor_rank<V> == tensor_rank<T>);
 
-void
-vec_for_each() = delete;
+template<typename V, typename T>
+concept same_shape = same_rank<V, T> && tensor_dim<V> ==
+tensor_dim<T>;
+
+template<typename V, typename T>
+concept same_vec_shape = same_shape<V, T> && a_vec<V> && a_vec<T>;
+
+template<typename V, typename T>
+concept same_tensor =
+  same_shape<V, T> && std::same_as<std::decay_t<V>, std::decay_t<T>>;
+
+template<typename V, size_t N>
+concept vec_of_dim = a_vec<V> && tensor_dim<V> ==
+N;
 
 struct broadcast_t
 {};
@@ -129,9 +147,10 @@ struct vec : private std::array<T, N>
     static_assert(!std::is_reference_v<T>);
 
     using Base = std::array<T, N>;
+    using Self = vec<T, N>;
 
     static inline constexpr size_t dim = N;
-    using component_type = T;
+    using scalar_type = T;
 
     using buffer = T[N];
 
@@ -177,7 +196,7 @@ struct vec : private std::array<T, N>
       }(std::make_index_sequence<N>{})) }
     {}
 
-    template<vec_scalar S>
+    template<tensor_scalar_for<Self> S>
     constexpr explicit vec(S &&arg) : vec{ broadcast_t{}, bl_fwd(arg) }
     {}
 
@@ -190,7 +209,7 @@ struct vec : private std::array<T, N>
     template<typename U, typename V>
         requires(!std::is_same_v<std::decay_t<U>, std::in_place_t> &&
                  !std::is_same_v<std::decay_t<U>, broadcast_t> &&
-                 (a_vec<U> || a_vec<V>) && vec_dim<U> + vec_dim<V> == N)
+                 (a_vec<U> || a_vec<V>) && tensor_dim<U> + tensor_dim<V> == N)
     constexpr explicit vec(U &&part1, V &&part2)
     {
         size_t j = 0;
@@ -227,28 +246,18 @@ struct vec : private std::array<T, N>
       }(std::make_index_sequence<N>{})) }
     {}
 
-    template<typename F>
-    constexpr auto map(F &&f) const
+    constexpr auto map(auto &&f) const { return bl::map(bl_fwd(f), *this); }
+
+    constexpr auto map(auto &&f) { return bl::map(bl_fwd(f), *this); }
+
+    constexpr auto map(same_shape<Self> auto &&rhs, auto &&f) const
     {
-        return vec_map(bl_fwd(f), *this);
+        return bl::map(bl_fwd(f), *this, bl_fwd(rhs));
     }
 
-    template<typename F>
-    constexpr auto map(F &&f)
+    constexpr auto map(same_shape<Self> auto &&rhs, auto &&f)
     {
-        return vec_map(bl_fwd(f), *this);
-    }
-
-    template<vec_of_dim<N> U, typename F>
-    constexpr auto map(U &&rhs, F &&f) const
-    {
-        return vec_map(bl_fwd(f), *this, bl_fwd(rhs));
-    }
-
-    template<vec_of_dim<N> U, typename F>
-    constexpr auto map(U &&rhs, F &&f)
-    {
-        return vec_map(bl_fwd(f), *this, bl_fwd(rhs));
+        return bl::map(bl_fwd(f), *this, bl_fwd(rhs));
     }
 
     template<typename U>
@@ -257,15 +266,27 @@ struct vec : private std::array<T, N>
         return map([](auto &x) { return static_cast<U>(x); });
     }
 
-    constexpr vec operator-() const
+    friend constexpr auto operator-(same_tensor<Self> auto &&lhs)
     {
-        return map([](const T &x) { return -x; });
+        return bl::map([](auto &&x) { return -bl_fwd(x); }, bl_fwd(lhs));
     }
 
-    DEF_VEC_OP_BOTH(+)
-    DEF_VEC_OP_BOTH(-)
-    DEF_VEC_SCALAR_OP_BOTH(*)
-    DEF_VEC_SCALAR_OP_BOTH(/)
+    friend constexpr auto operator~(same_tensor<Self> auto &&lhs)
+        requires(std::integral<T>)
+    {
+        return bl::map([](auto &&x) { return ~bl_fwd(x); }, bl_fwd(lhs));
+    }
+
+    MATH_DEF_TENSOR_OP_BOTH(+)
+    MATH_DEF_TENSOR_OP_BOTH(-)
+    MATH_DEF_TENSOR_OP_BOTH(*)
+    MATH_DEF_TENSOR_OP_BOTH(/)
+    MATH_DEF_TENSOR_SCALAR_OP_BOTH(*)
+    MATH_DEF_TENSOR_SCALAR_OP_BOTH(/)
+
+    MATH_DEF_TENSOR_OP_BOTH(&, requires(std::integral<T>))
+    MATH_DEF_TENSOR_OP_BOTH(|, requires(std::integral<T>))
+    MATH_DEF_TENSOR_OP_BOTH(^, requires(std::integral<T>))
 
     static constexpr vec broadcast(const T &x)
     {
@@ -281,13 +302,8 @@ struct vec : private std::array<T, N>
 
     friend void swap(vec<T, N> &lhs, vec<T, N> &rhs)
     {
-        vec_for_each(
-          [](auto &x, auto &y) {
-              using std::swap;
-              swap(x, y);
-          },
-          bl_fwd(lhs),
-          bl_fwd(rhs));
+        bl::for_each(
+          [](auto &x, auto &y) { bl::swap(x, y); }, bl_fwd(lhs), bl_fwd(rhs));
     }
 
     constexpr T &&operator[](size_t i) &&noexcept
@@ -315,84 +331,69 @@ struct vec : private std::array<T, N>
             std::in_place_t{}, operator[](static_cast<size_t>(i))...
         };
     }
+
+    friend constexpr auto invoke(bl::map_f,
+                                 auto &&f,
+                                 same_tensor<Self> auto &&v0,
+                                 same_shape<Self> auto &&...vs)
+    {
+        using R = std::decay_t<std::invoke_result_t<decltype(f),
+                                                    decltype(v0[0]),
+                                                    decltype(vs[0])...>>;
+        return [&]<size_t... I>(std::index_sequence<I...>)->vec<R, N>
+        {
+            return { std::in_place,
+                     [&](size_t i) { return f(v0[i], vs[i]...); }(I)... };
+        }
+        (std::make_index_sequence<N>{});
+    }
+
+    friend constexpr void invoke(bl::for_each_f,
+                                 auto &&f,
+                                 same_tensor<Self> auto &&v0,
+                                 same_shape<Self> auto &&...vs)
+    {
+        [&]<size_t... I>(std::index_sequence<I...>)
+        {
+            ([&](size_t i) { return f(v0[i], vs[i]...); }(I), ...);
+        }
+        (std::make_index_sequence<N>{});
+    }
+
+    friend constexpr bool operator==(const Self &lhs,
+                                     const Self &rhs) = default;
+
+    friend constexpr bool operator!=(const Self &lhs,
+                                     const Self &rhs) = default;
+
+    friend constexpr auto operator<=>(const Self &lhs,
+                                      const Self &rhs) = default;
 };
 
-#undef DEF_VEC_OP
-#undef DEF_VEC_MUT_OP
-#undef DEF_VEC_OP_BOTH
-#undef DEF_VEC_SCALAR_OP
-#undef DEF_VEC_SCALAR_MUT_OP
-#undef DEF_VEC_SCALAR_OP_BOTH
-
-template<class T, class... U>
+template<typename T, typename... U>
 vec(T, U...) -> vec<T, 1 + sizeof...(U)>;
 
-template<typename F, a_vec V, vec_of_dim<std::decay_t<V>::dim>... Vs>
-constexpr auto
-vec_map(F &&f, V &&v0, Vs &&...vs)
-{
-    constexpr size_t N = std::decay_t<V>::dim;
-    using R =
-      vec<std::decay_t<
-            std::invoke_result_t<F, decltype(v0[0]), decltype(vs[0])...>>,
-          N>;
-
-    return [&]<size_t... I>(std::index_sequence<I...>)->R
-    {
-        return R{ [&](size_t i) { return f(v0[i], vs[i]...); }(I)... };
-    }
-    (std::make_index_sequence<N>{});
-}
-
-template<typename F, a_vec V, vec_of_dim<std::decay_t<V>::dim>... Vs>
-constexpr void
-vec_for_each(F &&f, V &&v0, Vs &&...vs)
-{
-    return [&]<size_t... I>(std::index_sequence<I...>)->void
-    {
-        ([&](size_t i) { return f(v0[i], vs[i]...); }(I), ...);
-    }
-    (std::make_index_sequence<std::decay_t<V>::dim>{});
-}
-
-template<typename T, typename U, size_t N>
-inline constexpr bool
-operator==(const vec<T, N> &lhs, const vec<U, N> &rhs)
-{
-    for (size_t i = 0; i < N; ++i)
-        if (lhs[i] != rhs[i])
-            return false;
-    return true;
-}
-
-template<typename T, typename U, size_t N>
-inline constexpr bool
-operator!=(const vec<T, N> &lhs, const vec<U, N> &rhs)
-{
-    return !(lhs == rhs);
-}
-
-template<a_vec V, typename F>
-    requires(vec_dim<V> > 1)
+template<a_tensor V, typename F>
+    requires(tensor_dim<V> > 1)
 constexpr auto fold(V &&v, F &&f)
 {
-    if constexpr (vec_dim<V> == 1) {
+    if constexpr (tensor_dim<V> == 1) {
         return bl_fwd(v)[0];
-    } else if constexpr (vec_dim<V> == 2) {
+    } else if constexpr (tensor_dim<V> == 2) {
         return bl_fwd(f)(bl_fwd(v)[0], bl_fwd(v)[1]);
     } else {
         auto acc = f(bl_fwd(v)[0], bl_fwd(v)[1]);
-        for (size_t i = 2; i < vec_dim<V>; ++i)
-            acc = f(std::move(acc), bl_fwd(v)[i]);
+        for (size_t i = 2; i < tensor_dim<V>; ++i)
+            acc = f(bl::move(acc), bl_fwd(v)[i]);
         return acc;
     }
 }
 
 inline constexpr auto
-sum(a_vec auto &&v)
+sum(a_tensor auto &&v)
 {
-    constexpr auto N = vec_dim<decltype(v)>;
-    using S = typename std::decay_t<decltype(v)>::component_type;
+    constexpr auto N = tensor_dim<decltype(v)>;
+    using S = tensor_scalar_type<decltype(v)>;
     if constexpr (N == 0)
         return S{};
     else
@@ -400,9 +401,9 @@ sum(a_vec auto &&v)
 }
 
 inline constexpr auto
-dot(a_vec auto &&lhs, a_vec_shape<decltype(lhs)> auto &&rhs)
+dot(a_vec auto &&lhs, same_vec_shape<decltype(lhs)> auto &&rhs)
 {
-    constexpr auto N = vec_dim<decltype(lhs)>;
+    constexpr auto N = tensor_dim<decltype(lhs)>;
     static_assert(N > 0, "N not > 0");
     auto ret = lhs[0] * rhs[0];
     for (size_t i = 1; i < N; ++i)
@@ -447,24 +448,24 @@ normalize(const a_vec auto &v)
 }
 
 constexpr auto
-distance(a_vec auto &&lhs, a_vec_shape<decltype(lhs)> auto &&rhs)
+distance(a_vec auto &&lhs, same_vec_shape<decltype(lhs)> auto &&rhs)
 {
     return length(bl_fwd(lhs) - bl_fwd(rhs));
 }
 
 constexpr auto
-inverseDistance(a_vec auto &&lhs, a_vec_shape<decltype(lhs)> auto &&rhs)
+inverseDistance(a_vec auto &&lhs, same_vec_shape<decltype(lhs)> auto &&rhs)
 {
     return inverseLength(bl_fwd(lhs) - bl_fwd(rhs));
 }
 
 constexpr auto
-distanceSq(a_vec auto &&lhs, a_vec_shape<decltype(lhs)> auto &&rhs)
+distanceSq(a_vec auto &&lhs, same_vec_shape<decltype(lhs)> auto &&rhs)
 {
     return quadrance(bl_fwd(lhs) - bl_fwd(rhs));
 }
 
-template<a_vec T, a_vec_shape<T> U, typename V = int>
+template<a_vec T, same_vec_shape<T> U, typename V = int>
 constexpr auto
 reflect(T &&a, U &&n, V &&amp = 1)
 {
@@ -472,7 +473,7 @@ reflect(T &&a, U &&n, V &&amp = 1)
 }
 
 constexpr auto
-min(a_vec auto &&lhs, a_vec_shape<decltype(lhs)> auto &&rhs)
+min(a_vec auto &&lhs, same_vec_shape<decltype(lhs)> auto &&rhs)
 {
     return bl_fwd(lhs).map(bl_fwd(rhs), [](auto &&x, auto &&y) {
         using std::min;
@@ -481,7 +482,7 @@ min(a_vec auto &&lhs, a_vec_shape<decltype(lhs)> auto &&rhs)
 }
 
 constexpr auto
-max(a_vec auto &&lhs, a_vec_shape<decltype(lhs)> auto &&rhs)
+max(a_vec auto &&lhs, same_vec_shape<decltype(lhs)> auto &&rhs)
 {
     return bl_fwd(lhs).map(bl_fwd(rhs), [](auto &&x, auto &&y) {
         using std::max;
@@ -505,33 +506,33 @@ recip(a_vec auto &&v)
 }
 
 constexpr auto
-lerp(a_vec auto &&a, a_vec_shape<decltype(a)> auto &&b, auto &&t)
+lerp(a_vec auto &&a, same_vec_shape<decltype(a)> auto &&b, auto &&t)
 {
     return a + (bl_fwd(b) - a) * bl_fwd(t);
 }
 
 constexpr auto
-directionFromTo(a_vec auto &&a, a_vec_shape<decltype(a)> auto &&b)
+directionFromTo(a_vec auto &&a, same_vec_shape<decltype(a)> auto &&b)
 {
     return normalize(bl_fwd(b) - bl_fwd(a));
 }
 
 constexpr auto
-cos(a_vec auto &&a, a_vec_shape<decltype(a)> auto &&b)
+cos(a_vec auto &&a, same_vec_shape<decltype(a)> auto &&b)
 {
     return dot(a, b) / (length(a) * length(b));
 }
 
 constexpr auto
-projectAlong(a_vec auto &&a, a_vec_shape<decltype(a)> auto &&x)
+projectAlong(a_vec auto &&a, same_vec_shape<decltype(a)> auto &&x)
 {
     return dot(bl_fwd(a), x) / quadrance(x) * x;
 }
 
 constexpr bool
-equal(a_vec auto &&a, a_vec_shape<decltype(a)> auto &&b, auto &&epsi)
+equal(a_vec auto &&a, same_vec_shape<decltype(a)> auto &&b, auto &&epsi)
 {
-    for (size_t i = 0; i < vec_dim<decltype(a)>; ++i)
+    for (size_t i = 0; i < tensor_dim<decltype(a)>; ++i)
         if (distance(a[i], b[i]) > epsi)
             return false;
     return true;
@@ -553,7 +554,7 @@ operator<<(OStream &out, const vec<T, N> &v)
 }
 
 template<size_t I, a_vec V>
-    requires(I < vec_dim<V>)
+    requires(I < tensor_dim<V>)
 HU_FORCE_INLINE constexpr decltype(auto) get(V &&v)
 {
     return bl_fwd(v)[I];

@@ -40,7 +40,7 @@ rodriguez(mat3_t &RESTRICT R, const vec3 &RESTRICT a)
 {
 
     // a x (x_perp) = (a x (x_perp + x_par))
-    // rot(da, x_perp) = x_perp + xda cross x_perp
+    // rot(da, x_perp) = x_perp + xda x x_perp
     // with da = dtheta * a, |a| = 1
     // rot(da, x_perp) = (1 + dtheta K) x_perp
     // rot(theta * a, x_perp) = lim n->inf (1 + theta/n K)^n x_perp = exp(theta

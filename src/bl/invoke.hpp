@@ -2,6 +2,7 @@
 #define BL_INVOKE_HPP
 
 #include <bl/concepts.hpp>
+#include <bl/core.hpp>
 
 /**
  * tag_invoke implementation from P1895R0:
@@ -11,6 +12,12 @@
  * are not using the std namespace.
  */
 namespace bl {
+
+PRAGMA_DIAGNOSTIC_PUSH
+#if HU_COMP_CLANG_P
+#    pragma clang diagnostic ignored "-Wold-style-cast"
+#    pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
 
 namespace __invoke_f_ns {
 void
@@ -22,7 +29,7 @@ struct invoke_f
         requires requires(Tag tag, Args &&...args) {
                      invoke((Tag &&) tag, (Args &&) args...);
                  }
-    constexpr auto operator()(Tag tag, Args &&...args) const
+    BL_inline constexpr auto operator()(Tag tag, Args &&...args) const
       noexcept(noexcept(invoke((Tag &&) tag, (Args &&) args...)))
         -> decltype(invoke((Tag &&) tag, (Args &&) args...))
     {
@@ -36,18 +43,17 @@ inline constexpr __invoke_f_ns::invoke_f invoke = {};
 }
 
 template<typename Tag, typename... Args>
-concept tag_invocable = requires(Tag tag, Args... args) {
-                            bl::invoke((Tag &&) tag, (Args &&) args...);
-                        };
+concept invocable = requires(Tag tag, Args... args) {
+                        bl::invoke((Tag &&) tag, (Args &&) args...);
+                    };
 
 template<typename Tag, typename... Args>
-concept nothrow_tag_invocable =
-  tag_invocable<Tag, Args...> &&
-  requires(Tag tag, Args... args) {
-      {
-          bl::invoke((Tag &&) tag, (Args &&) args...)
-      } noexcept;
-  };
+concept nothrow_invocable =
+  invocable<Tag, Args...> && requires(Tag tag, Args... args) {
+                                 {
+                                     bl::invoke((Tag &&) tag, (Args &&) args...)
+                                 } noexcept;
+                             };
 
 template<typename Tag, typename... Args>
 using invoke_result = std::invoke_result<decltype(bl::invoke), Tag, Args...>;
@@ -60,5 +66,7 @@ template<auto &Tag>
 using tag_t = std::decay_t<decltype(Tag)>;
 
 } // namespace bl
+
+PRAGMA_DIAGNOSTIC_POP
 
 #endif // BL_INVOKE_HPP

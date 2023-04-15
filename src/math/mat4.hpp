@@ -51,7 +51,7 @@ constexpr auto
 transformPoint(const genmat<T, 4> &A, const vec<U, 3> &v)
 {
     auto u = A(vec<U, 4>(std::in_place_t{}, v[0], v[1], v[2], U(1)));
-    return vec<typename decltype(u)::component_type, 3>(
+    return vec<typename decltype(u)::scalar_type, 3>(
       std::in_place_t{}, u[0], u[1], u[2]);
 }
 
@@ -60,7 +60,7 @@ constexpr auto
 transformVector(const genmat<T, 4> &A, const vec<U, 3> &v)
 {
     auto u = A(vec<U, 4>(std::in_place_t{}, v[0], v[1], v[2], U(0)));
-    return vec<typename decltype(u)::component_type, 3>(
+    return vec<typename decltype(u)::scalar_type, 3>(
       std::in_place_t{}, u[0], u[1], u[2]);
 }
 
