@@ -1,5 +1,5 @@
-#ifndef GL_MATH_GENMAT_HPP
-#define GL_MATH_GENMAT_HPP
+#ifndef GL_MATH_MAT_HPP
+#define GL_MATH_MAT_HPP
 
 #include "math/math.hpp"
 #include "math/real.hpp"
@@ -12,16 +12,13 @@
 namespace math {
 
 template<typename T, size_t N>
-struct genmat;
+struct mat;
 
 struct in_place_columns_t
 {};
 
-void
-mat_map() = delete;
-
 template<typename T, size_t N>
-struct genmat : private vec<vec<T, N>, N>
+struct mat : private vec<vec<T, N>, N>
 {
     static inline constexpr size_t column_size = N;
     using column_type = vec<T, N>;
@@ -30,7 +27,7 @@ struct genmat : private vec<vec<T, N>, N>
     using buffer = T[N * N];
 
     using Base = vec<vec<T, N>, N>;
-    using Self = genmat<T, N>;
+    using Self = mat<T, N>;
 
     using vec<vec<T, N>, N>::vec;
     using Base::operator[];
@@ -49,18 +46,16 @@ struct genmat : private vec<vec<T, N>, N>
     using Base::size;
     using Base::operator std::span<column_type, N>;
 
-    constexpr genmat() = default;
-    constexpr genmat(const genmat &) = default;
-    constexpr genmat(genmat &&) noexcept(
-      std::is_nothrow_move_constructible_v<Base>) = default;
-    genmat &operator=(const genmat &) = default;
-    genmat &operator=(genmat &&) noexcept(
-      std::is_nothrow_move_assignable_v<Base>) = default;
+    constexpr mat() = default;
+    constexpr mat(const mat &) = default;
+    constexpr mat(mat &&) noexcept(std::is_nothrow_move_constructible_v<Base>) =
+      default;
+    mat &operator=(const mat &) = default;
+    mat &operator=(mat &&) noexcept(std::is_nothrow_move_assignable_v<Base>) =
+      default;
 
-    constexpr genmat(
-      in_place_columns_t,
-      std::same_as<Base> auto
-        &&val) noexcept(std::is_nothrow_constructible_v<Base, decltype(val)>)
+    constexpr mat(in_place_columns_t, std::same_as<Base> auto &&val) noexcept(
+      std::is_nothrow_constructible_v<Base, decltype(val)>)
       : Base{ bl_fwd(val) }
     {}
 
@@ -125,9 +120,9 @@ struct genmat : private vec<vec<T, N>, N>
         return { begin(), N * N };
     }
 
-    static constexpr genmat broadcast(const T &x)
+    static constexpr mat broadcast(const T &x)
     {
-        genmat ret{};
+        mat ret{};
         for (size_t i = 0; i < N; ++i)
             for (size_t j = 0; j < N; ++j)
                 ret[i][j] = x;
@@ -135,25 +130,25 @@ struct genmat : private vec<vec<T, N>, N>
     }
 
     template<typename... Args>
-    static constexpr genmat make(Args &&...args)
+    static constexpr mat make(Args &&...args)
     {
         static_assert(sizeof...(args) == N,
                       "can only initialize using exactly N elements");
         return { std::forward<Args>(args)... };
     }
 
-    static constexpr genmat identity()
+    static constexpr mat identity()
     {
-        genmat A{};
+        mat A{};
         for (size_t i = 0; i < N; ++i)
             A[i][i] = T(1);
         return A;
     }
 
     template<typename U>
-    static constexpr genmat convert(const genmat<U, N> &A)
+    static constexpr mat convert(const mat<U, N> &A)
     {
-        genmat ret{};
+        mat ret{};
         for (size_t i = 0; i < N; ++i)
             for (size_t j = 0; j < N; ++j)
                 ret[i][j] = T(A[i][j]);
@@ -184,7 +179,7 @@ struct genmat : private vec<vec<T, N>, N>
                                  same_tensor<Self> auto &&m0,
                                  same_shape<Self> auto &&...ms)
     {
-        return genmat{
+        return mat{
             in_place_columns_t{},
             bl::map([&](auto &&...cols) { return bl::map(f, bl_fwd(cols)...); },
                     bl_fwd(m0).columns(),
@@ -207,21 +202,27 @@ struct genmat : private vec<vec<T, N>, N>
                                     same_shape<Self> auto &&B)
     {
         using V = std::decay_t<decltype(A[0][0] * B[0][0])>;
-        genmat<V, N> C{};
+        mat<V, N> C{};
         for (size_t j = 0; j < N; ++j)
             for (size_t i = 0; i < N; ++i)
                 for (size_t k = 0; k < N; ++k)
                     C[j][i] += A[k][i] * B[j][k];
         return C;
     }
+
+    friend constexpr bool operator==(const Self &lhs,
+                                     const Self &rhs) = default;
+
+    friend constexpr auto operator<=>(const Self &lhs,
+                                      const Self &rhs) = default;
 };
 
 template<a_vec T>
-genmat(in_place_columns_t, T) -> genmat<tensor_scalar_type<T>, tensor_dim<T>>;
+mat(in_place_columns_t, T) -> mat<tensor_scalar_type<T>, tensor_dim<T>>;
 
 template<typename T, typename U, size_t N>
 inline constexpr auto
-transform(const genmat<T, N> &A, const vec<U, N> &v)
+transform(const mat<T, N> &A, const vec<U, N> &v)
 {
     using V = std::decay_t<decltype(A[0][0] * v[0])>;
     vec<V, N> u{};
@@ -232,104 +233,44 @@ transform(const genmat<T, N> &A, const vec<U, N> &v)
 }
 
 template<typename T, typename U, size_t N>
-inline constexpr genmat<T, N> &
-operator*=(genmat<T, N> &A, const genmat<U, N> &B)
+inline constexpr mat<T, N> &
+operator*=(mat<T, N> &A, const mat<U, N> &B)
 {
     return A = A * B;
 }
 
-extern template MATH_API genmat<float, 3> &
-operator*=(genmat<float, 3> &, const genmat<float, 3> &);
+extern template MATH_API mat<float, 3> &
+operator*=(mat<float, 3> &, const mat<float, 3> &);
 
-extern template MATH_API genmat<double, 3> &
-operator*=(genmat<double, 3> &, const genmat<double, 3> &);
+extern template MATH_API mat<double, 3> &
+operator*=(mat<double, 3> &, const mat<double, 3> &);
 
-extern template MATH_API genmat<float, 4> &
-operator*=(genmat<float, 4> &, const genmat<float, 4> &);
+extern template MATH_API mat<float, 4> &
+operator*=(mat<float, 4> &, const mat<float, 4> &);
 
-extern template MATH_API genmat<double, 4> &
-operator*=(genmat<double, 4> &, const genmat<double, 4> &);
+extern template MATH_API mat<double, 4> &
+operator*=(mat<double, 4> &, const mat<double, 4> &);
 
-template<typename T, typename U, size_t N>
-inline constexpr bool
-operator==(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
+constexpr auto
+lerp(a_mat auto &&a, same_shape<decltype(a)> auto &&b, auto &&t)
 {
-    for (size_t i = 0; i < N; ++i)
-        for (size_t j = 0; j < N; ++j)
-            if (lhs[i][j] != rhs[i][j])
-                return false;
-    return true;
+    return a + (bl_fwd(b) - a) * bl_fwd(t);
 }
 
-template<typename T, typename U, size_t N>
-inline constexpr bool
-operator!=(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
+constexpr bool
+equal(a_mat auto &&a, same_shape<decltype(a)> auto &&b, auto &&epsi)
 {
-    return !(lhs == rhs);
-}
-
-template<typename T, size_t N>
-inline constexpr vec<T, N>
-sum(const genmat<T, N> &v)
-{
-    vec<T, N> ret{};
-    for (size_t i = 0; i < N; ++i)
-        ret += v[i];
-    return ret;
-}
-
-template<typename T, typename U, size_t N>
-inline constexpr auto
-min(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
-{
-    return lhs.map(rhs, [](const T &x, const U &y) {
-        using std::min;
-        return min(x, y);
-    });
-}
-
-template<typename T, typename U, size_t N>
-inline constexpr auto
-max(const genmat<T, N> &lhs, const genmat<U, N> &rhs)
-{
-    return lhs.map(rhs, [](const T &x, const U &y) {
-        using std::max;
-        return max(x, y);
-    });
-}
-
-template<typename T, size_t N>
-inline constexpr auto
-abs(const genmat<T, N> &v)
-{
-    return v.map([](const T &x) {
-        using std::abs;
-        return abs(x);
-    });
-}
-
-template<typename T, typename U, typename V, size_t N>
-inline constexpr auto
-lerp(const genmat<T, N> &a, const genmat<U, N> &b, const V &t)
-{
-    return a + (b - a) * t;
-}
-
-template<typename T, size_t N, typename U>
-inline constexpr bool
-equal(const genmat<T, N> &a, const genmat<T, N> &b, const U &epsi)
-{
-    for (size_t i = 0; i < N; ++i)
+    for (size_t i = 0; i < tensor_dim<decltype(a)>; ++i)
         if (distance(a[i], b[i]) > epsi)
             return false;
     return true;
 }
 
 template<typename T, size_t N>
-inline constexpr genmat<T, N>
-transpose(const genmat<T, N> &A)
+inline constexpr mat<T, N>
+transpose(const mat<T, N> &A)
 {
-    genmat<T, N> B{};
+    mat<T, N> B{};
     for (size_t i = 0; i < N; ++i)
         for (size_t j = 0; j < N; ++j)
             B[j][i] = A[i][j];
@@ -338,14 +279,14 @@ transpose(const genmat<T, N> &A)
 
 template<typename T>
 inline constexpr T
-determinant(const genmat<T, 2> &A)
+determinant(const mat<T, 2> &A)
 {
     return A[0][0] * A[1][1] - A[0][1] * A[1][0];
 }
 
 template<typename T>
 inline constexpr T
-determinant(const genmat<T, 3> &A)
+determinant(const mat<T, 3> &A)
 {
     auto d = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]);
     d -= A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]);
@@ -355,7 +296,7 @@ determinant(const genmat<T, 3> &A)
 
 template<typename T>
 inline constexpr T
-determinant(const genmat<T, 4> &A)
+determinant(const mat<T, 4> &A)
 {
     auto d = A[0][0] * (A[1][1] * (A[2][2] * A[3][3] - A[2][3] * A[3][2]) -
                         A[1][2] * (A[2][1] * A[3][3] - A[2][3] * A[3][1]) +
@@ -373,10 +314,10 @@ determinant(const genmat<T, 4> &A)
 }
 
 template<typename T>
-inline constexpr genmat<T, 2>
-inverse(const genmat<T, 2> &A)
+inline constexpr mat<T, 2>
+inverse(const mat<T, 2> &A)
 {
-    genmat<T, 2> B{};
+    mat<T, 2> B{};
     B[0][0] = A[1][1];
     B[0][1] = -A[1][0];
     B[1][0] = -A[0][1];
@@ -385,8 +326,8 @@ inverse(const genmat<T, 2> &A)
 }
 
 template<typename T>
-inline constexpr genmat<T, 3>
-inverse(const genmat<T, 3> &A)
+inline constexpr mat<T, 3>
+inverse(const mat<T, 3> &A)
 {
     const auto AT = transpose(A);
     auto mm = AT.data();
@@ -405,7 +346,7 @@ inverse(const genmat<T, 3> &A)
         return {};
     auto t17 = 1 / t16;
 
-    genmat<T, 3> ret{};
+    mat<T, 3> ret{};
     auto a = ret.data();
 
     a[0] = (mm[4] * mm[8] - mm[5] * mm[7]) * t17;
@@ -421,18 +362,18 @@ inverse(const genmat<T, 3> &A)
     return transpose(ret);
 }
 
-extern template MATH_API genmat<float, 3>
-inverse(const genmat<float, 3> &A);
+extern template MATH_API mat<float, 3>
+inverse(const mat<float, 3> &A);
 
-extern template MATH_API genmat<double, 3>
-inverse(const genmat<double, 3> &);
+extern template MATH_API mat<double, 3>
+inverse(const mat<double, 3> &);
 
 template<typename T>
-inline constexpr genmat<T, 4>
-inverse(const genmat<T, 4> &A)
+inline constexpr mat<T, 4>
+inverse(const mat<T, 4> &A)
 {
     auto m = &A[0][0];
-    genmat<T, 4> Ainv{};
+    mat<T, 4> Ainv{};
     auto inv = &Ainv[0][0];
 
     // cramers rule on the transposed matrix, dear reader have trust :-)
@@ -478,15 +419,15 @@ inverse(const genmat<T, 4> &A)
     return Ainv * recip(det);
 }
 
-extern template MATH_API genmat<float, 4>
-inverse(const genmat<float, 4> &A);
+extern template MATH_API mat<float, 4>
+inverse(const mat<float, 4> &A);
 
-extern template MATH_API genmat<double, 4>
-inverse(const genmat<double, 4> &A);
+extern template MATH_API mat<double, 4>
+inverse(const mat<double, 4> &A);
 
 template<typename T>
-inline genmat<T, 3>
-orthonormalBasis(const genmat<T, 3> &A)
+inline mat<T, 3>
+orthonormalBasis(const mat<T, 3> &A)
 {
     auto u = normalize(A[0]);
     auto v = normalize(A[1] - projectAlong(A[1], u));
@@ -494,7 +435,7 @@ orthonormalBasis(const genmat<T, 3> &A)
 }
 
 template<typename T>
-inline constexpr genmat<T, 3>
+inline constexpr mat<T, 3>
 coordinateSystem(const vec<T, 3> &a)
 {
     auto aa = abs(a);
@@ -512,7 +453,7 @@ coordinateSystem(const vec<T, 3> &a)
 
 template<typename OStream, typename T, size_t N>
 inline OStream &
-operator<<(OStream &out, const genmat<T, N> &A)
+operator<<(OStream &out, const mat<T, N> &A)
 {
     out << "mat" << N << "[";
     bool sep = false;
@@ -531,20 +472,12 @@ operator<<(OStream &out, const genmat<T, N> &A)
     return out << "]";
 }
 
-template<size_t I, typename T, size_t N>
-HU_FORCE_INLINE inline const math::vec<T, N> &
-get(const math::genmat<T, N> &A)
+template<size_t I>
+HU_FORCE_INLINE constexpr decltype(auto)
+get(a_mat auto &&A)
 {
-    static_assert(I < N);
-    return A[I];
-}
-
-template<size_t I, typename T, size_t N>
-HU_FORCE_INLINE inline math::vec<T, N> &
-get(math::genmat<T, N> &A)
-{
-    static_assert(I < N);
-    return A[I];
+    static_assert(I < tensor_dim<decltype(A)>);
+    return bl_fwd(A)[I];
 }
 
 } // namespace math
@@ -552,12 +485,12 @@ get(math::genmat<T, N> &A)
 namespace std {
 BEGIN_NO_WARN_MISMATCHED_TAGS
 template<typename T, size_t N>
-struct tuple_size<math::genmat<T, N>> : public std::integral_constant<size_t, N>
+struct tuple_size<math::mat<T, N>> : public std::integral_constant<size_t, N>
 {};
 END_NO_WARN_MISMATCHED_TAGS
 
 template<size_t I, typename T, size_t N>
-struct tuple_element<I, math::genmat<T, N>>
+struct tuple_element<I, math::mat<T, N>>
 {
     using type = math::vec<T, N>;
 };

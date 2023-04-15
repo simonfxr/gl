@@ -31,7 +31,7 @@ sqrt(real x)
 inline constexpr real
 recip(real x)
 {
-    return real(1) / x;
+    return static_cast<real>(1) / x;
 }
 
 inline constexpr real

@@ -1,6 +1,7 @@
 #ifndef BL_PTR_TRAITS_HPP
 #define BL_PTR_TRAITS_HPP
 
+#include <bl/concepts.hpp>
 #include <bl/conf.hpp>
 
 #include <type_traits>
@@ -8,22 +9,38 @@
 namespace bl {
 
 template<typename T>
+    requires requires(T p) {
+                 typename T::element_type;
+                 {
+                     *p
+                     } -> std::same_as<typename T::element_type &>;
+                 {
+                     p.operator->()
+                     } -> std::same_as<
+                       std::add_pointer_t<typename T::element_type>>;
+             }
 struct ptr_traits
 {
-    using value_type = typename T::value_type;
-    using reference_type = typename T::reference_type;
+    using element_type = typename T::element_type;
     static inline constexpr bool nullable = T::nullable;
     static inline constexpr bool unique = T::unique;
+
+    template<typename U>
+    using rebind = typename T::template rebind<U>;
 };
 
 template<typename T>
 struct ptr_traits<T *>
 {
-    using value_type = T;
-    using reference_type = T &;
+    using element_type = T;
     static inline constexpr bool nullable = true;
     static inline constexpr bool unique = false;
+    template<typename U>
+    using rebind = U *;
 };
+
+template<typename T>
+concept a_ptr = requires(T p) { typename ptr_traits<T>::element_type; };
 
 } // namespace bl
 

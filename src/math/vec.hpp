@@ -67,7 +67,7 @@ template<typename T, size_t N>
 struct vec;
 
 template<typename T, size_t N>
-struct genmat;
+struct mat;
 
 template<typename T>
 struct tensor_classify
@@ -86,7 +86,7 @@ struct tensor_classify<vec<T, N>>
 };
 
 template<typename T, size_t N>
-struct tensor_classify<genmat<T, N>>
+struct tensor_classify<mat<T, N>>
 {
     static inline constexpr size_t dim = N;
     static inline constexpr size_t rank = 2;
@@ -281,12 +281,17 @@ struct vec : private std::array<T, N>
     MATH_DEF_TENSOR_OP_BOTH(-)
     MATH_DEF_TENSOR_OP_BOTH(*)
     MATH_DEF_TENSOR_OP_BOTH(/)
+    MATH_DEF_TENSOR_SCALAR_OP_BOTH(+)
+    MATH_DEF_TENSOR_SCALAR_OP_BOTH(-)
     MATH_DEF_TENSOR_SCALAR_OP_BOTH(*)
     MATH_DEF_TENSOR_SCALAR_OP_BOTH(/)
 
     MATH_DEF_TENSOR_OP_BOTH(&, requires(std::integral<T>))
     MATH_DEF_TENSOR_OP_BOTH(|, requires(std::integral<T>))
     MATH_DEF_TENSOR_OP_BOTH(^, requires(std::integral<T>))
+    MATH_DEF_TENSOR_SCALAR_OP_BOTH(&, requires(std::integral<T>))
+    MATH_DEF_TENSOR_SCALAR_OP_BOTH(|, requires(std::integral<T>))
+    MATH_DEF_TENSOR_SCALAR_OP_BOTH(^, requires(std::integral<T>))
 
     static constexpr vec broadcast(const T &x)
     {
@@ -361,9 +366,6 @@ struct vec : private std::array<T, N>
     }
 
     friend constexpr bool operator==(const Self &lhs,
-                                     const Self &rhs) = default;
-
-    friend constexpr bool operator!=(const Self &lhs,
                                      const Self &rhs) = default;
 
     friend constexpr auto operator<=>(const Self &lhs,

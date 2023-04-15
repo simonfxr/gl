@@ -43,7 +43,7 @@ crand_random_r(crand_rng *rng)
 inline crand_rng
 crand_derive(uint64_t seed, uint64_t tweak)
 {
-    crand_rng rng = {seed, 0x10070D7AEBFB045Bull};
+    crand_rng rng = { seed, 0x10070D7AEBFB045Bull };
     crand_random_r(&rng);
     rng.state ^= tweak;
     return rng;
@@ -58,7 +58,7 @@ crand_strhash(uint64_t h0, const char *s)
     for (; *s; h *= 0x100000001B3ull)
         h ^= (uint8_t) *s++;
     if (h0)
-        h ^= h0, h *= 0x567190B2E1A3A451ull;
+        (void) (h ^= h0), h *= 0x567190B2E1A3A451ull;
     return h;
 }
 
@@ -107,7 +107,7 @@ extern "C" {
 void
 crand_seed(crand_rng *rng)
 {
-    uintptr_t v[1] = {0};
+    uintptr_t v[1] = { 0 };
     uint64_t x0 = (uintptr_t) (void *) v;
 
 #ifdef __GNUC__

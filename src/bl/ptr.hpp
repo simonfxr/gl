@@ -2,12 +2,23 @@
 #define BL_PTR_HPP
 
 #include <bl/non_null.hpp>
+#include <bl/owned.hpp>
+#include <bl/raw_ptr.hpp>
 
 namespace bl {
 
 template<typename T>
-using ptr = non_null<T *>;
+using ptr = non_null<raw_ptr<T>>;
 
-}
+template<typename T>
+using nullable_ptr = raw_ptr<T>;
+
+template<typename T>
+using owned_ptr = owned<ptr<T>>;
+
+template<typename T>
+using nullable_owned_ptr = owned<nullable_ptr<T>>;
+
+} // namespace bl
 
 #endif // BL_PTR_HPP

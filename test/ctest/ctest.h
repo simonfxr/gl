@@ -21,6 +21,22 @@
 #    define CTEST_NOINLINE
 #endif
 
+#ifdef __cplusplus
+#    define CTEST_ATTR_UNUSED [[maybe_unused]]
+#elif defined(__GNUC__)
+#    define CTEST_ATTR_UNUSED __attribute__((unused))
+#else
+#    define CTEST_ATTR_UNUSED
+#endif
+
+#ifdef __cplusplus
+#    define ctest_cast(T, ...) static_cast<T>(__VA_ARGS__)
+#    define ctest_null nullptr
+#else
+#    define ctest_cast(T, ...) __VA_ARGS__
+#    define ctest_null NULL
+#endif
+
 #ifdef CTEST_IMPLEMENTATION
 #    include <stdio.h>
 #    include <stdlib.h>
@@ -152,7 +168,8 @@ ctest_glob_prefix_of_match(const char *pat, const char *str);
         void fname(ctest_group *, ctest_suite *);                              \
         static uint64_t xname =                                                \
           ctest_register_group(fname, (name), __FILE__, __LINE__);             \
-        void fname(ctest_group *CTEST_CURRENT_GROUP, ctest_suite *CTEST_SUITE)
+        void fname(CTEST_ATTR_UNUSED ctest_group *CTEST_CURRENT_GROUP,         \
+                   CTEST_ATTR_UNUSED ctest_suite *CTEST_SUITE)
 #elif defined __GNUC__
 #    define CTEST_GROUP_(fname, xname, name)                                   \
         void fname(ctest_group *, ctest_suite *);                              \
@@ -160,8 +177,8 @@ ctest_glob_prefix_of_match(const char *pat, const char *str);
         {                                                                      \
             ctest_register_group(fname, (name), __FILE__, __LINE__);           \
         }                                                                      \
-        void fname(__attribute__((unused)) ctest_group *CTEST_CURRENT_GROUP,   \
-                   __attribute__((unused)) ctest_suite *CTEST_SUITE)
+        void fname(CTEST_ATTR_UNUSED ctest_group *CTEST_CURRENT_GROUP,         \
+                   CTEST_ATTR_UNUSED ctest_suite *CTEST_SUITE)
 #else
 #    error                                                                     \
       "UNSUPPORTED PLATFORM: requires either c++ compiler or GNU __attribute__((constructor))"
@@ -176,31 +193,43 @@ ctest_glob_prefix_of_match(const char *pat, const char *str);
     (ctest_testcase_debug_break(&CTEST_CURRENT_TESTCASE) ? ctest_debug_break() \
                                                          : (void) 0)
 
-#define CTEST_ABORT_(reason, expr)                                             \
-    if ((CTEST_MAYBE_DEBUG_BREAK(),                                            \
-         !ctest_abort_testcase(                                                \
-           &CTEST_CURRENT_TESTCASE, reason, expr, __FILE__, __LINE__))) {      \
+#define CTEST_ABORT_(before, reason, expr)                                     \
+    if ((before,                                                               \
+         (CTEST_MAYBE_DEBUG_BREAK(),                                           \
+          !ctest_abort_testcase(                                               \
+            &CTEST_CURRENT_TESTCASE, reason, expr, __FILE__, __LINE__)))) {    \
     } else                                                                     \
         continue
 
-#define CTEST_ABORT() CTEST_ABORT_("abort", NULL)
+#define CTEST_NOP(...) ((void) 0)
+
+#define CTEST_ABORT() CTEST_ABORT_(CTEST_NOP(), "abort", ctest_null)
 
 #define CTEST_EVENT_(...) (CTEST_CURRENT_TESTCASE.events++, (__VA_ARGS__))
+
+#ifndef CTEST_REPORT_NOT_EQUAL
+#    define CTEST_REPORT_NOT_EQUAL(...) CTEST_NOP()
+#endif
+
+#define CTEST_ABORT_NOT_EQUAL(expected, ...)                                   \
+    CTEST_ABORT_(CTEST_REPORT_NOT_EQUAL(expected, __VA_ARGS__),                \
+                 "not equal",                                                  \
+                 #expected " == " #__VA_ARGS__)
 
 #define ctest_true(...)                                                        \
     if (CTEST_EVENT_(__VA_ARGS__)) {                                           \
     } else                                                                     \
-        CTEST_ABORT_("should be true, but wasn't", #__VA_ARGS__)
+        CTEST_ABORT_(CTEST_NOP(), "should be true, but wasn't", #__VA_ARGS__)
 
 #define ctest_false(...)                                                       \
     if (!CTEST_EVENT_(__VA_ARGS__)) {                                          \
     } else                                                                     \
-        CTEST_ABORT_("should be false, but wasn't", #__VA_ARGS__)
+        CTEST_ABORT_(CTEST_NOP(), "should be false, but wasn't", #__VA_ARGS__)
 
 #define ctest_equal(expected, ...)                                             \
     if (CTEST_EVENT_((expected) == (__VA_ARGS__))) {                           \
     } else                                                                     \
-        CTEST_ABORT_("not equal", #expected " == " #__VA_ARGS__)
+        CTEST_ABORT_NOT_EQUAL(expected, __VA_ARGS__)
 
 #define ctest_rng() (&(CTEST_CURRENT_TESTCASE).rng)
 
@@ -290,8 +319,9 @@ ctest_register_group(ctest_group_func f,
 
     if (suite->groups_cap == suite->groups_size) {
         suite->groups_cap = 2 * suite->groups_cap | 1;
-        suite->groups =
-          realloc(suite->groups, suite->groups_cap * sizeof *suite->groups);
+        suite->groups = ctest_cast(
+          ctest_group_registration *,
+          realloc(suite->groups, suite->groups_cap * sizeof *suite->groups));
     }
     suite->groups[suite->groups_size++] = r;
 
@@ -309,7 +339,8 @@ ctest_begin_testcase(ctest_group *group,
     const ctest_suite *suite = group->suite;
     if (suite->filters_size) {
         disable = 1;
-        char *fqn = malloc(strlen(group->reg->name) + strlen(name) + 2);
+        char *fqn = ctest_cast(
+          char *, malloc(strlen(group->reg->name) + strlen(name) + 2));
         sprintf(fqn, "%s.%s", group->reg->name, name);
         for (size_t i = 0; i < suite->filters_size; ++i) {
             if (ctest_glob_match(suite->filters[i], fqn)) {
@@ -372,7 +403,8 @@ ctest_begin_group(ctest_group *group)
 
     if (suite->filters_size) {
         disable = 1;
-        char *group_prefix = malloc(strlen(group->reg->name) + 2);
+        char *group_prefix =
+          ctest_cast(char *, malloc(strlen(group->reg->name) + 2));
         sprintf(group_prefix, "%s.", group->reg->name);
         for (size_t i = 0; i < suite->filters_size; ++i) {
             if (ctest_glob_prefix_of_match(suite->filters[i], group_prefix)) {
@@ -437,7 +469,7 @@ ctest_next_option(ctest_arg_parser *p, const ctest_arg_desc **arg, char **val)
 {
     int r = -1;
     int slurp = 0;
-    while ((*val = *p->argv) != NULL) {
+    while ((*val = *p->argv) != ctest_null) {
         p->argv++;
         if (**val != '-' || slurp) {
             *p->non_opt_argv++ = *val;
@@ -449,7 +481,7 @@ ctest_next_option(ctest_arg_parser *p, const ctest_arg_desc **arg, char **val)
         }
 
         char short_opt = 0;
-        const char *long_opt = NULL;
+        const char *long_opt = ctest_null;
 
         if (!strncmp("--", *val, 2))
             long_opt = *val + 2;
@@ -475,7 +507,7 @@ ctest_next_option(ctest_arg_parser *p, const ctest_arg_desc **arg, char **val)
     }
     r = 0;
 err:
-    *p->non_opt_argv = NULL;
+    *p->non_opt_argv = ctest_null;
     return r;
 }
 
@@ -489,10 +521,10 @@ enum cmd_arg
 
 // clang-format off
 static const ctest_arg_desc ARG_DESC[] = {
-    {ARG_DEBUG_BREAK, 'd', "debug-break", NULL,   "debug break on test failures"},
+    {ARG_DEBUG_BREAK, 'd', "debug-break", ctest_null,   "debug break on test failures"},
     {ARG_SEED,        's', "seed",        "SEED", "set RNG seed"},
     {ARG_LIST,        'l', "list",        "LIST", "instead of running test, only list defined groups"},
-    {ARG_HELP,        'h', "help",        NULL,   "print help text"},
+    {ARG_HELP,        'h', "help",        ctest_null,   "print help text"},
 };
 // clang-format on
 
@@ -504,7 +536,7 @@ ctest_parse_args(ctest_suite *suite, char **argvp)
     ctest_arg_parser_init(
       &p, argvp, ARG_DESC, sizeof(ARG_DESC) / sizeof(ARG_DESC[0]));
 
-    char *val = NULL;
+    char *val = ctest_null;
     const ctest_arg_desc *arg;
     int ret;
 
@@ -549,8 +581,10 @@ ctest_main(int argc, char *argv[])
     for (++argv; *argv; argv++) {
         if (suite->filters_size == suite->filters_cap) {
             suite->filters_cap = 2 * suite->filters_cap | 1;
-            suite->filters = realloc(
-              suite->filters, suite->filters_cap * sizeof *suite->filters);
+            suite->filters =
+              ctest_cast(char **,
+                         realloc(suite->filters,
+                                 suite->filters_cap * sizeof *suite->filters));
         }
         suite->filters[suite->filters_size++] = *argv;
     }

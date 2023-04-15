@@ -35,6 +35,17 @@ move(T &&x) noexcept
     return static_cast<std::remove_reference_t<T> &&>(x);
 }
 
+template<typename T, typename U = T>
+BL_wrapper constexpr T
+exchange(T &obj,
+         U &&new_value) noexcept(std::is_nothrow_move_constructible_v<T>
+                                   &&std::is_nothrow_assignable_v<T &, U>)
+{
+    T old_value = move(obj);
+    obj = bl_fwd(new_value);
+    return old_value;
+}
+
 } // namespace bl
 
 #endif // BL_CORE_HPP

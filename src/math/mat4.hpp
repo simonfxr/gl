@@ -1,12 +1,12 @@
 #ifndef MATH_MAT4_HPP
 #define MATH_MAT4_HPP
 
-#include "math/genmat.hpp"
+#include "math/mat.hpp"
 #include "math/mat3.hpp"
 
 namespace math {
 
-using mat4_t = genmat<real, 4>;
+using mat4_t = mat<real, 4>;
 
 constexpr mat4_t
 mat4()
@@ -22,7 +22,7 @@ mat4(real x)
 
 template<typename T>
 constexpr mat4_t
-mat4(const genmat<T, 4> &A)
+mat4(const mat<T, 4> &A)
 {
     return mat4_t::convert(A);
 }
@@ -37,7 +37,7 @@ mat4(const vec<real, 4> &c1,
 }
 
 constexpr mat4_t
-mat4(const genmat<real, 3> &A)
+mat4(const mat<real, 3> &A)
 {
     auto B = mat4();
     for (size_t i = 0; i < 3; ++i)
@@ -48,7 +48,7 @@ mat4(const genmat<real, 3> &A)
 
 template<typename T, typename U>
 constexpr auto
-transformPoint(const genmat<T, 4> &A, const vec<U, 3> &v)
+transformPoint(const mat<T, 4> &A, const vec<U, 3> &v)
 {
     auto u = A(vec<U, 4>(std::in_place_t{}, v[0], v[1], v[2], U(1)));
     return vec<typename decltype(u)::scalar_type, 3>(
@@ -57,7 +57,7 @@ transformPoint(const genmat<T, 4> &A, const vec<U, 3> &v)
 
 template<typename T, typename U>
 constexpr auto
-transformVector(const genmat<T, 4> &A, const vec<U, 3> &v)
+transformVector(const mat<T, 4> &A, const vec<U, 3> &v)
 {
     auto u = A(vec<U, 4>(std::in_place_t{}, v[0], v[1], v[2], U(0)));
     return vec<typename decltype(u)::scalar_type, 3>(

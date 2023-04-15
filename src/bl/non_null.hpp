@@ -1,65 +1,48 @@
 #ifndef BL_NON_NULL_HPP
 #define BL_NON_NULL_HPP
 
+#include <bl/ptr_ops.hpp>
 #include <bl/ptr_traits.hpp>
 
 namespace bl {
 
-template<typename T>
+template<a_ptr T>
 struct non_null
+  : public ptr_ops<non_null<T>,
+                   typename ptr_traits<T>::element_type,
+                   false,
+                   ptr_traits<T>::unique>
 {
     using _traits = ptr_traits<T>;
-    using value_type = typename _traits::value_type;
-    using reference_type = typename _traits::reference_type;
+    using element_type = typename _traits::element_type;
     static inline constexpr bool nullable = false;
-    static inline constexpr bool unique = _traits::aliasing;
+    static inline constexpr bool unique = _traits::unique;
+
+    template<typename U>
+    using rebind = non_null<typename _traits::template rebind<U>>;
 
     non_null() = delete;
     non_null(std::nullptr_t) = delete;
-    // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
-    HU_MACROLIKE HU_NONNULL_PARAMS() constexpr non_null(T p) : _p(p) {}
+    HU_NONNULL_PARAMS()
+    BL_wrapper explicit constexpr non_null(element_type *p) : _p(p)
+    {}
 
-    HU_MACROLIKE constexpr non_null(const non_null &) = default;
-    HU_MACROLIKE constexpr non_null(non_null &&) noexcept = default;
-    HU_MACROLIKE constexpr non_null &operator=(const non_null &) = default;
-    HU_MACROLIKE constexpr non_null &operator=(non_null &&) noexcept = default;
-    HU_MACROLIKE ~non_null() = default;
+    BL_wrapper constexpr non_null(const non_null &) = default;
+    BL_wrapper constexpr non_null(non_null &&) noexcept = default;
+    BL_wrapper constexpr non_null &operator=(const non_null &) = default;
+    BL_wrapper constexpr non_null &operator=(non_null &&) noexcept = default;
+    BL_wrapper constexpr ~non_null() = default;
 
-    HU_MACROLIKE HU_NONNULL_PARAMS() constexpr non_null &operator=(
-      T *p) noexcept
+    BL_wrapper constexpr element_type *get() const noexcept
     {
-        _p = p;
-        return *this;
-    }
-
-    non_null &operator=(std::nullptr_t) = delete;
-
-    HU_MACROLIKE HU_NONNULL_PARAMS() constexpr void reset(T *p) noexcept
-    {
-        *this = p;
-    }
-
-    void reset(std::nullptr_t) = delete;
-
-    HU_MACROLIKE constexpr T get() const noexcept
-    {
-        auto v = _p;
-        ASSUME(v);
+        element_type *v = _p.get();
+        hu_assume(v);
         return v;
     }
 
-    HU_MACROLIKE constexpr T operator*() const noexcept { return get(); }
-
-    HU_MACROLIKE constexpr T operator->() const noexcept { return get(); }
-
-    // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
-    HU_MACROLIKE constexpr operator T() noexcept { return get(); }
-
-    HU_MACROLIKE constexpr explicit operator bool() noexcept { return true; }
-
-    template<typename U, typename V>
-    HU_MACROLIKE friend bool operator==(const non_null<U> &lhs,
-                                        const non_null<V> rhs)
+    template<typename U>
+    BL_wrapper friend bool operator==(const non_null<T> &lhs,
+                                      const non_null<U> &rhs)
     {
         return lhs.get() == rhs.get();
     }

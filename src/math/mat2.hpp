@@ -1,11 +1,11 @@
 #ifndef MATH_MAT2_HPP
 #define MATH_MAT2_HPP
 
-#include "math/genmat.hpp"
+#include "math/mat.hpp"
 
 namespace math {
 
-using mat2_t = genmat<real, 2>;
+using mat2_t = mat<real, 2>;
 
 constexpr mat2_t
 mat2()
@@ -21,7 +21,7 @@ mat2(real x)
 
 template<typename T>
 constexpr mat2_t
-mat2(const genmat<T, 2> &A)
+mat2(const mat<T, 2> &A)
 {
     return mat2_t::convert(A);
 }
@@ -33,7 +33,7 @@ mat2(const vec<real, 2> &c1, const vec<real, 2> &c2)
 }
 
 constexpr mat2_t
-mat2(const genmat<real, 3> &A)
+mat2(const mat<real, 3> &A)
 {
     mat2_t B{};
     for (size_t i = 0; i < 2; ++i)

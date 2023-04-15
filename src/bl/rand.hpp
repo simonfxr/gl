@@ -1,80 +1,37 @@
 #ifndef BL_RAND_HPP
 #define BL_RAND_HPP
 
-#include <bl/conf.hpp>
+#include <bl/ptr.hpp>
+
+#include <bo/cxx.hpp>
 
 #include <array>
 #include <concepts>
 #include <span>
 #include <type_traits>
 
-#include <bo/cxx.hpp>
-
 namespace bl::rand {
 
 template<typename T>
-struct sampler
-{};
-
-template<typename R>
-struct rand_traits
-{
-    template<std::integral I>
-    constexpr I range(I lo, I hi)
-    {
-        using U = std::make_unsigned_t<I>;
-        return lo + static_cast<I>(range(static_cast<U>(hi - lo)));
-    }
-
-    template<std::signed_integral I>
-    constexpr I range(I hi)
-    {
-        using U = std::make_unsigned_t<I>;
-        return static_cast<I>(range(static_cast<U>(hi)));
-    }
-
-    template<std::unsigned_integral U>
-    constexpr U range(U hi)
-    {
-        using UU = bo::widen_int_t<U>;
-        // https://lemire.me/blog/2016/06/30/fast-random-shuffling/
-        auto r = sample<U>();
-        auto multiresult = static_cast<UU>(r) * static_cast<UU>(hi);
-        auto leftover = static_cast<U>(multiresult);
-        if (leftover < hi) {
-            auto threshold = -hi % hi;
-            while (leftover < threshold) {
-                r = sample<U>();
-                multiresult = static_cast<UU>(r) * static_cast<UU>(hi);
-                leftover = static_cast<U>(multiresult);
-            }
-        }
-        return static_cast<U>(multiresult >> (8 * sizeof(U)));
-    }
-
-    [[nodiscard]] constexpr auto operator()() noexcept
-    {
-        return self().generate();
-    }
-
-    template<typename T>
-    constexpr T sample();
-
-private:
-    constexpr R &self() noexcept { return static_cast<R &>(*this); }
-};
+concept rng = requires(T &r) {
+                  typename T::result_type;
+                  requires std::unsigned_integral<typename T::result_type>;
+                  {
+                      r()
+                      } -> std::same_as<typename T::result_type>;
+              };
 
 // *Really* minimal PCG32 code / (c) 2014 M.E. O'Neill / pcg-random.org
 // Licensed under Apache License 2.0 (NO WARRANTY, etc. see website)
 
-struct gen32 : rand_traits<gen32>
+struct gen32
 {
     using state_type = uint64_t;
     using result_type = uint32_t;
     state_type _state = 113ull;
     uint64_t _inc = 1442695040888963407ull;
 
-    constexpr inline result_type generate()
+    constexpr result_type operator()() noexcept
     {
         auto oldstate = _state;
         _state = oldstate * 6364136223846793005ull + (_inc | 1);
@@ -87,10 +44,12 @@ struct gen32 : rand_traits<gen32>
     constexpr void seed(const state_type &seed) { _state = seed; }
 };
 
+static_assert(rng<gen32>);
+
 #define bl_rand_int128_constant(hi, lo)                                        \
     ((static_cast<unsigned __int128>((hi)) << 64) | static_cast<uint64_t>((lo)))
 
-struct gen64 : rand_traits<gen64>
+struct gen64
 {
     using state_type = unsigned __int128;
     using result_type = uint64_t;
@@ -98,7 +57,7 @@ struct gen64 : rand_traits<gen64>
     unsigned __int128 _inc =
       bl_rand_int128_constant(6364136223846793005ull, 1442695040888963407ull);
 
-    constexpr inline result_type generate()
+    constexpr inline result_type operator()()
     {
         auto oldstate = _state;
         _state = oldstate * bl_rand_int128_constant(2549297995355413924ull,
@@ -113,17 +72,38 @@ struct gen64 : rand_traits<gen64>
     constexpr void seed(const state_type &seed) { _state = seed; }
 };
 
+static_assert(rng<gen64>);
+
 using gen = gen64;
 
-BL_API void seed_bytes(std::span<std::byte>) noexcept;
+struct BL_API random_device
+{
+    using result_type = uint64_t;
 
-template<typename T>
+    random_device() noexcept;
+    random_device(const random_device &) noexcept;
+    random_device(random_device &&) noexcept;
+    random_device &operator=(random_device &&) noexcept;
+    random_device &operator=(const random_device &) noexcept;
+    ~random_device();
+
+    result_type operator()() noexcept;
+
+    void seed_bytes(std::span<std::byte>) noexcept;
+
+private:
+    struct Impl;
+    owned_ptr<Impl> _p;
+};
+
+static_assert(rng<random_device>);
+
 constexpr void
-seed_bytes(T &rng, std::span<std::byte> bytes) noexcept
+seed_bytes(rng auto &r, std::span<std::byte> bytes) noexcept
 {
     auto dest = bytes.begin();
     for (auto rest = bytes.size(); rest > 0;) {
-        auto w = rng();
+        auto w = r();
         auto n = std::min(rest, sizeof(w));
         memcpy(&*dest, &w, n);
         std::advance(dest, n);
@@ -131,73 +111,55 @@ seed_bytes(T &rng, std::span<std::byte> bytes) noexcept
     }
 }
 
-template<typename T = gen>
+template<rng T = gen>
+    requires std::constructible_from<T>
 T
-seed() noexcept
+seed_from(rng auto &&seeder) noexcept
 {
     using state_type = typename T::state_type;
     std::array<std::byte, sizeof(state_type)> seed;
-    seed_bytes(seed);
+    seed_bytes(seeder, seed);
     T gen;
     gen.seed(std::bit_cast<state_type>(seed));
     return gen;
 }
 
-template<typename T = gen>
+template<rng T = gen>
+    requires std::constructible_from<T>
 T
-seed(uint32_t seed32) noexcept
+seed_from(std::unsigned_integral auto seedbits) noexcept
 {
-    gen32 sd;
-    sd.seed(seed32);
-    (void) sd();
-
     using state_type = typename T::state_type;
+
     std::array<std::byte, sizeof(state_type)> seed;
-    seed_bytes(sd, seed);
-    T gen;
-    gen.seed(std::bit_cast<state_type>(seed));
-    return gen;
-}
 
-template<typename T, typename R>
-T
-sample(R &rng)
-{
-    return sample(rng, sampler<T>{});
-}
-
-template<std::floating_point T>
-constexpr T
-sample(auto &rng, sampler<T>)
-{
-    auto x = rng();
-    return static_cast<T>(x) *
-           (T{ 1 } / static_cast<T>(static_cast<decltype(x)>(-1)));
-}
-
-template<std::unsigned_integral T>
-constexpr T
-sample(auto &rng, sampler<T>)
-{
-    using O = decltype(rng());
-    if constexpr (sizeof(T) <= sizeof(O)) {
-        return static_cast<T>(rng());
+    if constexpr (sizeof(state_type) <= sizeof seedbits) {
+        auto sbytes =
+          std::bit_cast<std::array<std::byte, sizeof(seedbits)>>(seedbits);
+        std::copy_n(sbytes, sizeof(state_type), seed);
     } else {
-        using U = bo::narrow_int_t<T>;
-        auto hi = sample<U>(rng);
-        auto lo = sample<U>(rng);
-        return (static_cast<T>(hi) << (8 * sizeof(U))) | static_cast<T>(lo);
+        gen32 sd;
+        sd.seed(static_cast<gen32::state_type>(seedbits));
+        (void) sd();
+        seed_bytes(sd, seed);
     }
+
+    T gen;
+    gen.seed(std::bit_cast<state_type>(seed));
+    return gen;
 }
 
-template<typename R>
-template<typename T>
-constexpr T
-rand_traits<R>::sample()
+inline constexpr struct sample_f
 {
-    using bl::rand::sample;
-    return sample(self(), sampler<T>{});
-}
+    template<typename R, typename... Ts>
+        requires invocable<sample_f, R, Ts...>
+    BL_inline constexpr auto operator()(R &&r, Ts &&...ts) const
+      noexcept(nothrow_invocable<sample_f, R, Ts...>)
+        -> bl::invoke_result_t<sample_f, R, Ts...>
+    {
+        return ::bl::invoke(*this, bl_fwd(r), bl_fwd(ts)...);
+    }
+} sample;
 
 } // namespace bl::rand
 

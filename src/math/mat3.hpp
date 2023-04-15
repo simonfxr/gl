@@ -1,10 +1,10 @@
 #ifndef MATH_MAT3_HPP
 #define MATH_MAT3_HPP
 
-#include "math/genmat.hpp"
+#include "math/mat.hpp"
 
 namespace math {
-using mat3_t = genmat<real, 3>;
+using mat3_t = mat<real, 3>;
 
 constexpr mat3_t
 mat3()
@@ -20,7 +20,7 @@ mat3(real x)
 
 template<typename T>
 constexpr mat3_t
-mat3(const genmat<T, 3> &A)
+mat3(const mat<T, 3> &A)
 {
     return mat3_t::convert(A);
 }
@@ -32,7 +32,7 @@ mat3(const vec<real, 3> &c1, const vec<real, 3> &c2, const vec<real, 3> &c3)
 }
 
 constexpr mat3_t
-mat3(const genmat<real, 4> &A)
+mat3(const mat<real, 4> &A)
 {
     mat3_t B{};
     for (size_t i = 0; i < 3; ++i)
