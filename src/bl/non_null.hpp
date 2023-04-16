@@ -32,11 +32,9 @@ struct non_null
     BL_wrapper constexpr non_null &operator=(non_null &&) noexcept = default;
     BL_wrapper constexpr ~non_null() = default;
 
-    BL_wrapper constexpr element_type *get() const noexcept
+    BL_wrapper constexpr element_type *get_or_null() const noexcept
     {
-        element_type *v = _p.get();
-        hu_assume(v);
-        return v;
+        return _p.get_or_null();
     }
 
     template<typename U>

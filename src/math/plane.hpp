@@ -10,18 +10,10 @@ namespace math {
 // every point x on the plane solves dot(normal, x - dist * normal) = 0
 struct plane3_t
 {
-    union
-    {
-        struct
-        {
-            direction3 normal;
-            real dist; // distance to origin
-        };
+    direction3 normal{};
+    real dist{};
 
-        vec4 coeff;
-    };
-
-    constexpr plane3_t() : normal{}, dist{} {}
+    [[nodiscard]] vec4 coeff() const { return vec4(normal, dist); }
 };
 
 inline constexpr plane3_t
@@ -65,7 +57,7 @@ inline plane3_t
 normalize(const plane3_t &P)
 {
     real l = inverseLength(P.normal);
-    return plane(P.coeff * l);
+    return plane(P.coeff() * l);
 }
 
 // signed distance, positive on the side where the normal points

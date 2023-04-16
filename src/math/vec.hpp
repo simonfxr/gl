@@ -308,7 +308,7 @@ struct vec : private std::array<T, N>
 
     constexpr operator std::span<T, N>() noexcept { return { begin(), N }; }
 
-    friend void swap(vec<T, N> &lhs, vec<T, N> &rhs)
+    friend void invoke(bl::swap_f, vec<T, N> &lhs, vec<T, N> &rhs)
     {
         bl::for_each(
           [](auto &x, auto &y) { bl::swap(x, y); }, bl_fwd(lhs), bl_fwd(rhs));

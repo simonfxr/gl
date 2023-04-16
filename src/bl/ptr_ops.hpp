@@ -70,31 +70,39 @@ struct ptr_ops
         requires(!is_nullable)
     = delete;
 
-    BL_wrapper element_type &operator*() const noexcept
+    BL_wrapper element_type *get() const noexcept
+        requires(is_nullable)
     {
-        return *self().get();
+        return self().get_or_null();
     }
 
-    BL_wrapper element_type *operator->() const noexcept
+    BL_wrapper element_type *get() const noexcept
+        requires(!is_nullable)
     {
-        return self().get();
+        auto p = self().get_or_null();
+        hu_assume(p);
+        return p;
     }
+
+    BL_wrapper element_type &operator*() const noexcept { return *get(); }
+
+    BL_wrapper element_type *operator->() const noexcept { return get(); }
 
     BL_wrapper explicit operator bool() const noexcept
     {
-        return !!self().get();
+        return get() != nullptr;
     }
 
     BL_wrapper explicit operator element_type &() const noexcept
         requires(!is_nullable)
     {
-        return *self().get();
+        return *get();
     }
 
     BL_wrapper explicit operator const element_type &() const noexcept
         requires(!is_nullable)
     {
-        return *self().get();
+        return *get();
     }
 
 private:

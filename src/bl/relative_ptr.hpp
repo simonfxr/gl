@@ -72,19 +72,7 @@ struct relative_ptr
 
     BL_wrapper ~relative_ptr() = default;
 
-    BL_wrapper T *get() const noexcept
-        requires(is_nullable)
-    {
-        return absolute(this, _p);
-    }
-
-    BL_wrapper T *get() const noexcept
-        requires(!is_nullable)
-    {
-        auto *p = absolute(this, _p);
-        hu_assume(p);
-        return p;
-    }
+    BL_wrapper T *get_or_null() const noexcept { return absolute(this, _p); }
 
     BL_wrapper constexpr T *release() noexcept
         requires(is_nullable)

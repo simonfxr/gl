@@ -13,11 +13,9 @@
  */
 namespace bl {
 
-PRAGMA_DIAGNOSTIC_PUSH
-#if HU_COMP_CLANG_P
-#    pragma clang diagnostic ignored "-Wold-style-cast"
-#    pragma clang diagnostic ignored "-Wreserved-identifier"
-#endif
+BL_DIAG_PUSH
+BL_DIAG_IGN_CLANG("-Wold-style-cast")
+BL_DIAG_IGN_CLANG("-Wreserved-identifier")
 
 namespace __invoke_f_ns {
 void
@@ -67,6 +65,6 @@ using tag_t = std::decay_t<decltype(Tag)>;
 
 } // namespace bl
 
-PRAGMA_DIAGNOSTIC_POP
+BL_DIAG_POP
 
 #endif // BL_INVOKE_HPP

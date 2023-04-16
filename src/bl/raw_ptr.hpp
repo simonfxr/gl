@@ -31,7 +31,7 @@ struct raw_ptr : ptr_ops<raw_ptr<T>, T, true, false>
 
     BL_wrapper constexpr T *release() noexcept { return exchange(_p, nullptr); }
 
-    BL_wrapper constexpr T *get() const noexcept { return _p; }
+    BL_wrapper constexpr T *get_or_null() const noexcept { return _p; }
 
     template<typename V>
     BL_wrapper friend constexpr bool operator==(const raw_ptr<T> &lhs,

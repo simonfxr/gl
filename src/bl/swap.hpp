@@ -3,6 +3,7 @@
 
 #include <bl/invoke.hpp>
 
+#include <type_traits>
 #include <utility>
 
 namespace bl {
@@ -14,16 +15,14 @@ inline constexpr struct swap_f
     BL_inline constexpr void operator()(T &&lhs, U &&rhs) const
       noexcept(nothrow_invocable<swap_f, T, U>)
     {
-        return ::bl::invoke(*this, bl_fwd(lhs), bl_fwd(rhs));
+        ::bl::invoke(*this, bl_fwd(lhs), bl_fwd(rhs));
     }
 
-    template<typename T, typename U>
-        requires std::swappable_with<T, U>
-    BL_inline friend constexpr void invoke(swap_f, T &&lhs, U &&rhs) noexcept(
-      std::is_nothrow_swappable_with<T, U>::value)
+    template<typename T>
+    BL_inline friend constexpr void invoke(swap_f, T &lhs, T &rhs) noexcept
     {
         using std::swap;
-        return swap(bl_fwd(lhs), bl_fwd(rhs));
+        swap(bl_fwd(lhs), bl_fwd(rhs));
     }
 } swap;
 

@@ -9,7 +9,7 @@ namespace bl {
 
 using nullptr_t = decltype(nullptr);
 
-using max_align_t = ::max_align_t;
+// using max_align_t = ::max_align_t;
 
 template<typename T>
 BL_wrapper constexpr T &&

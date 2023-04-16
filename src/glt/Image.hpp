@@ -47,7 +47,7 @@ struct GLT_API Image
                     [p = std::move(data)](std::byte *) mutable { p.reset(); } };
     }
 
-    Image(Image &&img) noexcept { swap(*this, img); }
+    Image(Image &&img) noexcept { bl::swap(*this, img); }
 
     Image(const Image &img) = delete;
 
@@ -56,16 +56,15 @@ struct GLT_API Image
     Image &operator=(Image &&img) noexcept
     {
         auto tmp = std::move(img);
-        swap(*this, tmp);
+        bl::swap(*this, tmp);
         return *this;
     }
 
-    friend void swap(Image &lhs, Image &rhs)
+    friend void invoke(bl::swap_f, Image &lhs, Image &rhs)
     {
-        using std::swap;
-        swap(lhs._dim, rhs._dim);
-        swap(lhs._format, rhs._format);
-        swap(lhs._data, rhs._data);
+        bl::swap(lhs._dim, rhs._dim);
+        bl::swap(lhs._format, rhs._format);
+        bl::swap(lhs._data, rhs._data);
     }
 
     ~Image();

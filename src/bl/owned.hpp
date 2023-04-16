@@ -75,11 +75,14 @@ struct owned
 
     ~owned()
     {
-        if (auto p = get())
+        if (auto p = this->get())
             _d(p);
     }
 
-    BL_wrapper constexpr element_type *get() const noexcept { return _p.get(); }
+    BL_wrapper constexpr element_type *get_or_null() const noexcept
+    {
+        return _p.get_or_null();
+    }
 
 private:
     T _p;
