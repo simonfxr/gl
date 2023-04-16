@@ -52,6 +52,8 @@
 #    define BL_DIAG_IGN_GNUC(...) BL_DIAG_IGN_GCC(__VA_ARGS__)
 #endif
 
+#define bl_declval(...) static_cast<__VA_ARGS__ (*)() noexcept>(nullptr)()
+
 namespace bl {}
 
 #endif // BL_CONF_HPP

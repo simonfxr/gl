@@ -21,9 +21,9 @@ enum class ParsingState : uint8_t
     Stop,
 };
 
-struct Client : private NonCopyMoveable
+struct Client
 {
-    DISABLE_COPY_MOVE_MEMBERS(Client);
+    BL_DISABLE_COPY_MOVE(Client);
 
     Fiber parser_fiber{};
     Fiber *client_fiber{};

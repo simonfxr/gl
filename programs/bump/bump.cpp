@@ -56,19 +56,19 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 void
 Anim::render(const ge::Event<ge::RenderEvent> &)
 {
-    auto rt = engine.renderManager().activeRenderTarget();
+    auto rt = engine->renderManager().activeRenderTarget();
     rt->clearColor(glt::color(vec4(1)));
     rt->clear();
 
-    auto program = engine.shaderManager().program("sphere");
+    auto program = engine->shaderManager().program("sphere");
     ASSERT(program, "sphere program not found");
-    auto &rm = engine.renderManager();
+    auto &rm = engine->renderManager();
 
     auto ecLight =
       transformPoint(rm.geometryTransform().viewMatrix(), light_position);
 
     auto phi =
-      static_cast<real>(engine.gameLoop().tickID()) * inverse(100_r) * 1.3_r;
+      static_cast<real>(engine->gameLoop().tickID()) * inverse(100_r) * 1.3_r;
 
     rm.geometryTransform().dup();
     rm.geometryTransform().scale(vec3(10_r)); // scale radius of sphere
@@ -87,7 +87,7 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     return anim.main(argc, argv);
 }
 

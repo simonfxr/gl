@@ -4,13 +4,14 @@
 #include "glt/type_info.hpp"
 #include "glt/utils.hpp"
 #include "opengl.hpp"
-#include "util/noncopymove.hpp"
+
+#include <bl/noncopymove.hpp>
 
 namespace glt {
 
 struct RenderTarget::Data
 {
-    DISABLE_COPY_MOVE_MEMBERS(Data);
+    BL_DISABLE_COPY_MOVE(Data);
 
     size_t width;
     size_t height;

@@ -5,7 +5,6 @@
 
 #include "err/err.hpp"
 #include "math/ivec.hpp"
-#include "util/noncopymove.hpp"
 
 #include <functional>
 #include <memory>
@@ -60,11 +59,12 @@ struct GLT_API Image
         return *this;
     }
 
-    friend void invoke(bl::swap_f, Image &lhs, Image &rhs)
+    friend void swap(Image &lhs, Image &rhs)
     {
-        bl::swap(lhs._dim, rhs._dim);
-        bl::swap(lhs._format, rhs._format);
-        bl::swap(lhs._data, rhs._data);
+        using std::swap;
+        swap(lhs._dim, rhs._dim);
+        swap(lhs._format, rhs._format);
+        swap(lhs._data, rhs._data);
     }
 
     ~Image();

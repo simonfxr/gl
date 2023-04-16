@@ -6,13 +6,15 @@
 #include "glt/conf.hpp"
 #include "opengl.hpp"
 #include "util/enum_flags.hpp"
-#include "util/noncopymove.hpp"
+
+#include <bl/noncopymove.hpp>
+
 #include <memory>
 #include <utility>
 
 namespace glt {
 
-struct GLT_API TextureSampler : private NonCopyable
+struct GLT_API TextureSampler : private bl::non_copyable
 {
 private:
     std::shared_ptr<TextureData> _data;

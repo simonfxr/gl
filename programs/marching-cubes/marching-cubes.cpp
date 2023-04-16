@@ -88,8 +88,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 
     get<ge::Camera>().frame().origin = vec3(0.f);
 
-    //    engine.window().grabMouse(true);
-    engine.window().showMouseCursor(false);
+    //    engine->window().grabMouse(true);
+    engine->window().showMouseCursor(false);
 
     {
         auto v = WorldVertex{};
@@ -157,12 +157,12 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 
     volumeCube.send();
 
-    worldProgram = engine.shaderManager().program("world");
+    worldProgram = engine->shaderManager().program("world");
     if (!worldProgram)
         return;
 
     marchingCubesProgram =
-      std::make_shared<glt::ShaderProgram>(engine.shaderManager());
+      std::make_shared<glt::ShaderProgram>(engine->shaderManager());
     marchingCubesProgram->addShaderFile("marching-cubes.vert");
     marchingCubesProgram->addShaderFile("marching-cubes.geom");
     marchingCubesProgram->bindAttributes<MCVertex>();
@@ -172,7 +172,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     if (!marchingCubesProgram->tryLink())
         return;
 
-    renderPolygonProgram = engine.shaderManager().program("render-polygon");
+    renderPolygonProgram = engine->shaderManager().program("render-polygon");
     if (!renderPolygonProgram)
         return;
 
@@ -191,7 +191,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
         }
     }
 
-    fpsTimer = std::make_shared<ge::Timer>(engine);
+    fpsTimer = std::make_shared<ge::Timer>(*engine);
     fpsTimer->start(1.f, true);
 
     GL_CALL(glFinish);
@@ -258,7 +258,7 @@ Anim::destroyBlock(Block *block)
 void
 Anim::makeBlock(Block &block, const vec3 &aabb_min, const vec3 &aabb_max)
 {
-    auto &gt = engine.renderManager().geometryTransform();
+    auto &gt = engine->renderManager().geometryTransform();
     auto sp = gt.save();
 
     auto fuzz = vec3(0.f);
@@ -276,7 +276,7 @@ Anim::makeBlock(Block &block, const vec3 &aabb_min, const vec3 &aabb_max)
 void
 Anim::makeSampleVolume()
 {
-    glt::RenderManager &rm = engine.renderManager();
+    glt::RenderManager &rm = engine->renderManager();
 
     GL_CALL(glDisable, GL_DEPTH_TEST);
 
@@ -296,7 +296,7 @@ Anim::makeSampleVolume()
           .mandatory("depth", static_cast<real>(i) * invDim)
           .mandatory("worldMatrix",
                      rm.geometryTransform().modelMatrix() * scaleM)
-          .optional("time", engine.gameLoop().tickTime());
+          .optional("time", engine->gameLoop().tickTime());
 
         unitRect.draw();
         rm.setActiveRenderTarget(nullptr);
@@ -309,7 +309,7 @@ Anim::makeSampleVolume()
 void
 Anim::makePolygon(const Block &block)
 {
-    auto &gt = engine.renderManager().geometryTransform();
+    auto &gt = engine->renderManager().geometryTransform();
     auto sp = gt.save();
 
     GL_CALL(glEnable, GL_RASTERIZER_DISCARD);
@@ -351,7 +351,7 @@ Anim::makePolygon(const Block &block)
 void
 Anim::renderPolygon(const Block &block)
 {
-    auto &gt = engine.renderManager().geometryTransform();
+    auto &gt = engine->renderManager().geometryTransform();
     auto sp = gt.save();
 
     auto model = gt.modelMatrix();
@@ -378,10 +378,10 @@ void
 Anim::render(const ge::Event<ge::RenderEvent> &)
 {
     GL_CALL(glClearColor, 1.f, 1.f, 1.f, 1.f);
-    engine.renderManager().activeRenderTarget()->clear();
+    engine->renderManager().activeRenderTarget()->clear();
 
     //     glt::GeometryTransform& gt =
-    //     engine.renderManager().geometryTransform();
+    //     engine->renderManager().geometryTransform();
     //     {
     //         float scale = 1;
     //         renderBlock(vec3(-1.f) * scale, vec3(1.f) * scale);
@@ -393,7 +393,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
         renderPolygon(blocks[i]);
 
     if (fpsTimer->fire()) {
-        auto fs = engine.renderManager().frameStatistics();
+        auto fs = engine->renderManager().frameStatistics();
         sys::io::stdout() << "Timings (FPS/Render Avg/Render Min/Render Max): "
                           << fs.avg << "; " << fs.avg << "; " << fs.min << "; "
                           << fs.max << "\n";
@@ -404,6 +404,6 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     return anim.main(argc, argv);
 }

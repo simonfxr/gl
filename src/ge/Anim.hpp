@@ -7,10 +7,12 @@
 #include "ge/Engine.hpp"
 #include "ge/MouseLookPlugin.hpp"
 
+#include <bl/box.hpp>
+
 namespace ge {
 
 template<typename Self, typename... Plugins>
-struct Anim : private NonCopyMoveable
+struct Anim : private bl::non_copyable
 {
 private:
     using self_t = Anim<Self, Plugins...>;
@@ -21,7 +23,7 @@ private:
     Self *self() { return static_cast<Self *>(this); }
 
 public:
-    Engine engine{ pluginSet };
+    bl::box<Engine> engine{ std::in_place, pluginSet };
 
     Anim() = default;
     virtual ~Anim() = default;
@@ -60,7 +62,7 @@ Anim<Self, Plugins...>::main(int argc, char *argv[])
     opts.inits.reg(Init, *self(), &Self::init);
     opts.parse(&argc, &argv);
     self()->parseArgs(argc, argv);
-    return engine.run(opts);
+    return engine->run(opts);
 }
 
 template<typename Self, typename... Plugins>
@@ -68,8 +70,8 @@ void
 Anim<Self, Plugins...>::link()
 {
     ASSERT(pluginSet.allPlugins().size() == sizeof...(Plugins));
-    engine.events().render.reg(*self(), &Self::render);
-    engine.events().animate.reg(*self(), &Self::animate);
+    engine->events().render.reg(*self(), &Self::render);
+    engine->events().animate.reg(*self(), &Self::animate);
 }
 
 template<typename Self, typename... Plugins>
@@ -78,7 +80,7 @@ Anim<Self, Plugins...>::init(const Event<InitEvent> &ev)
 {
     if (!std::exchange(_linked, true))
         for (auto p : pluginSet.allPlugins())
-            engine.enablePlugin(*p);
+            engine->enablePlugin(*p);
     ev.info.success = true;
 }
 

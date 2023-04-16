@@ -56,7 +56,7 @@ struct Anim final : ge::Anim3D<Anim>
 
     std::shared_ptr<glt::ShaderProgram> physics_prog;
 
-    Anim() : fpsTimer(engine) {}
+    Anim() : fpsTimer(*engine) {}
 
     void init(const ge::Event<ge::InitEvent> &);
     void render(const ge::Event<ge::RenderEvent> &) override;
@@ -66,8 +66,8 @@ struct Anim final : ge::Anim3D<Anim>
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-    engine.gameLoop().ticks(300);
-    engine.gameLoop().pause(true);
+    engine->gameLoop().ticks(300);
+    engine->gameLoop().pause(true);
 
     fpsTimer.start(1.f, true);
 
@@ -191,7 +191,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     GL_CALL(glBindTexture, GL_TEXTURE_BUFFER, particle_conn_tex);
     GL_CALL(glTexBuffer, GL_TEXTURE_BUFFER, GL_RGBA32I, particle_conn_handle);
 
-    physics_prog = std::make_shared<glt::ShaderProgram>(engine.shaderManager());
+    physics_prog =
+      std::make_shared<glt::ShaderProgram>(engine->shaderManager());
     physics_prog->addShaderFile("physics.vert");
     physics_prog->bindAttribute("position_mass", 0);
     physics_prog->bindAttribute("velocity", 1);
@@ -212,11 +213,11 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 void
 Anim::render(const ge::Event<ge::RenderEvent> &)
 {
-    auto rt = engine.renderManager().activeRenderTarget();
+    auto rt = engine->renderManager().activeRenderTarget();
     rt->clearColor(glt::color(vec4(1_r)));
     rt->clear();
 
-    auto prog = engine.shaderManager().program("sphere");
+    auto prog = engine->shaderManager().program("sphere");
     ASSERT(prog);
 
     GL_CALL(glActiveTexture, GL_TEXTURE0);
@@ -224,7 +225,8 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
       glBindTexture, GL_TEXTURE_BUFFER, particle_pos_mass_tex[particle_source]);
 
     {
-        glt::GeometryTransform &gt = engine.renderManager().geometryTransform();
+        glt::GeometryTransform &gt =
+          engine->renderManager().geometryTransform();
         prog->use();
         glt::Uniforms(*prog)
           .optional("color", glt::color(0xFF, 0, 0))
@@ -262,7 +264,7 @@ Anim::animate(const ge::Event<ge::AnimationEvent> &)
     GL_CALL(
       glBindTexture, GL_TEXTURE_BUFFER, particle_pos_mass_tex[particle_source]);
 
-    auto dt = static_cast<real>(engine.gameLoop().tickDuration());
+    auto dt = static_cast<real>(engine->gameLoop().tickDuration());
     auto damp_coeff = 0.99_r; // damping over the period of 1 sec;
                               //    real damping = pow(damp_coeff, dt);
     glt::Uniforms(*physics_prog)
@@ -298,6 +300,6 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     return anim.main(argc, argv);
 }

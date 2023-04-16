@@ -25,7 +25,7 @@ enum DrawType : uint8_t
     DrawElements
 };
 
-struct GLT_API MeshBase : private NonCopyable
+struct GLT_API MeshBase : private bl::non_copyable
 {
 public:
     struct VertexDataFree

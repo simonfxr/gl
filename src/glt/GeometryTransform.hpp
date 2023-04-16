@@ -7,7 +7,8 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "pp/pimpl.hpp"
-#include "util/noncopymove.hpp"
+
+#include <bl/noncopymove.hpp>
 
 #include <memory>
 
@@ -68,7 +69,7 @@ private:
     DECLARE_PIMPL(GLT_API, self);
 };
 
-struct GLT_API SavePoint : private NonCopyMoveable
+struct GLT_API SavePoint : private bl::non_copyable
 {
     friend struct GeometryTransform;
 

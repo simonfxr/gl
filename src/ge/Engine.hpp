@@ -19,16 +19,17 @@
 #include "glt/Uniforms.hpp"
 #include "sys/io/Stream.hpp"
 
+#include <bl/new.hpp>
+
 #include <memory>
 
 namespace ge {
 
-struct GE_API Engine
+struct GE_API Engine : private bl::runtime_sized_base
 {
-    explicit Engine(PluginSet &);
-    Engine();
-
-    ~Engine();
+    static Engine *construct_at(Engine *, PluginSet &) noexcept;
+    static Engine *construct_at(Engine *) noexcept;
+    static void destroy_at(Engine *) noexcept;
 
     GameWindow &window();
     GameLoop &gameLoop();
@@ -59,9 +60,15 @@ struct GE_API Engine
 
     void setDevelDataDir(const std::string &);
 
+    friend size_t invoke(bl::runtime_size_f, bl::type_proxy<Engine>) noexcept;
+
 private:
-    DECLARE_PIMPL(GE_API, self);
+    struct Data;
+    Data &m();
+    [[nodiscard]] const Data &m() const;
 };
+
+static_assert(bl::runtime_sized<Engine>);
 
 } // namespace ge
 

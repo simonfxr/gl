@@ -7,7 +7,8 @@
 #include "sys/endian.hpp"
 #include "util/Array.hpp"
 #include "util/expected.hpp"
-#include "util/noncopymove.hpp"
+
+#include <bl/noncopymove.hpp>
 
 #include <optional>
 #include <string>
@@ -137,7 +138,7 @@ struct OSSocket
 #    error "OS not supported"
 #endif
 
-struct Handle : private NonCopyable
+struct Handle : private bl::non_copyable
 {
     HandleMode _mode{};
     OSHandle _os{};
@@ -167,7 +168,7 @@ struct Handle : private NonCopyable
     }
 };
 
-struct Socket : private NonCopyable
+struct Socket : private bl::non_copyable
 {
     OSSocket _os{};
 

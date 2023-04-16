@@ -116,14 +116,14 @@ struct Anim final : ge::Anim3D<Anim>
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-    engine.window().events().windowResized.reg(*this,
-                                               &Anim::handleWindowResized);
+    engine->window().events().windowResized.reg(*this,
+                                                &Anim::handleWindowResized);
 
     time_print_fps = 0;
 
-    engine.gameLoop().ticks(100);
-    //    engine.gameLoop().syncDraw(true);
-    engine.gameLoop().pause();
+    engine->gameLoop().ticks(100);
+    //    engine->gameLoop().syncDraw(true);
+    engine->gameLoop().pause();
 
     //    GL_CALL(glDisable, GL_CULL_FACE);
     GL_CALL(glEnable, GL_CULL_FACE);
@@ -191,19 +191,19 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
 
-    engine.out() << "found " << platforms.size() << " CL platforms"
-                 << "\n";
+    engine->out() << "found " << platforms.size() << " CL platforms"
+                  << "\n";
     if (platforms.empty())
         return;
     platforms.resize(1);
 
     cl::Platform &platform = platforms[0];
     std::string info_value;
-    engine.out() << "selecting CL platform:\n";
+    engine->out() << "selecting CL platform:\n";
 
 #define PLAT_INFO(info)                                                        \
     platform.getInfo(info, &info_value);                                       \
-    engine.out() << "  " << #info << ": " << info_value << "\n"
+    engine->out() << "  " << #info << ": " << info_value << "\n"
 
     PLAT_INFO(CL_PLATFORM_NAME);
     PLAT_INFO(CL_PLATFORM_PROFILE);
@@ -211,14 +211,14 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     PLAT_INFO(CL_PLATFORM_VERSION);
 #undef PLAT_INFO
 
-    engine.out() << "  CL_PLATFORM_EXTENSIONS:\n";
+    engine->out() << "  CL_PLATFORM_EXTENSIONS:\n";
     platform.getInfo(CL_PLATFORM_EXTENSIONS, &info_value);
     std::istringstream exts(info_value);
     std::string ext;
     while (std::getline(exts, ext, ' '))
-        engine.out() << "    " << ext << "\n";
+        engine->out() << "    " << ext << "\n";
 
-    engine.out() << "  END EXTENSIONS\n";
+    engine->out() << "  END EXTENSIONS\n";
 
     cl_int cl_err;
     cl_ctx = createCLGLContext(platform, &cl_err);
@@ -227,18 +227,18 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
         return;
     }
 
-    engine.out() << "created CL context\n";
+    engine->out() << "created CL context\n";
 
     std::vector<cl::Device> devices = cl_ctx.getInfo<CL_CONTEXT_DEVICES>();
     if (devices.empty())
         return;
     devices.resize(1);
-    engine.out() << "selecting CL device:\n";
+    engine->out() << "selecting CL device:\n";
     cl_device = devices[0];
 
 #define DEV_INFO(info)                                                         \
     cl_device.getInfo(info, &info_value);                                      \
-    engine.out() << "  " << #info << ": " << info_value << "\n"
+    engine->out() << "  " << #info << ": " << info_value << "\n"
 
     DEV_INFO(CL_DEVICE_NAME);
     DEV_INFO(CL_DEVICE_OPENCL_C_VERSION);
@@ -247,19 +247,19 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     DEV_INFO(CL_DEVICE_VERSION);
     DEV_INFO(CL_DRIVER_VERSION);
 
-    engine.out() << "  CL_DEVICE_EXTENSIONS:\n";
+    engine->out() << "  CL_DEVICE_EXTENSIONS:\n";
     cl_device.getInfo(CL_DEVICE_EXTENSIONS, &info_value);
     std::istringstream dev_exts(info_value);
     std::string dev_ext;
 
     bool supports_3d_image_write = false;
     while (std::getline(dev_exts, dev_ext, ' ')) {
-        engine.out() << "    " << dev_ext << "\n";
+        engine->out() << "    " << dev_ext << "\n";
         if (dev_ext == "cl_khr_3d_image_writes")
             supports_3d_image_write = true;
     }
 
-    engine.out() << "  END EXTENSIONS\n";
+    engine->out() << "  END EXTENSIONS\n";
 
     if (!supports_3d_image_write) {
         ERR("cl_khr_3d_image_writes not supported");
@@ -300,7 +300,7 @@ Anim::initCLKernels(bool *success)
 {
     cl_int cl_err;
 
-    auto res = sys::io::readFile("programs/mc/cl/program.cl", engine.out());
+    auto res = sys::io::readFile("programs/mc/cl/program.cl", engine->out());
 
     if (!res) {
         ERR("failed reading CL program");
@@ -320,10 +320,11 @@ Anim::initCLKernels(bool *success)
     devices.push_back(cl_device);
     cl_err = cl_program.build(
       devices, (std::string("-I programs/mc/ -DSIZE=") + num.str()).c_str());
-    engine.out() << "building cl program: "
-                 << (cl_err == CL_SUCCESS ? "success" : "failed") << ", log:\n";
-    engine.out() << cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl_device)
-                 << "\n";
+    engine->out() << "building cl program: "
+                  << (cl_err == CL_SUCCESS ? "success" : "failed")
+                  << ", log:\n";
+    engine->out() << cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl_device)
+                  << "\n";
 
     if (cl_err != CL_SUCCESS)
         return;
@@ -394,7 +395,7 @@ Anim::initMC(MCState &cur_mc, vec3 orig, vec3 dim, bool *success)
     // apparently creating a 3d texture of size 1x1x1 fails
     // while (sz > 0) {
     while (sz > 1) {
-        engine.out() << "sz = " << sz << "\n";
+        engine->out() << "sz = " << sz << "\n";
         max_size *= 8;
         cl_channel_type type;
         if (max_size >= (1 << 16))
@@ -553,7 +554,7 @@ Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3 ecLight)
     if (cur_mc.num_tris == 0 || !cur_mc.init)
         return;
 
-    auto &rm = engine.renderManager();
+    auto &rm = engine->renderManager();
     auto &gt = rm.geometryTransform();
 
     {
@@ -608,11 +609,11 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
     auto &e = ev.info.engine;
     auto time = e.gameLoop().tickTime();
 
-    auto &rm = engine.renderManager();
+    auto &rm = engine->renderManager();
     rm.activeRenderTarget()->clear();
     auto &gt = rm.geometryTransform();
 
-    auto program = engine.shaderManager().program("render");
+    auto program = engine->shaderManager().program("render");
     ASSERT(program);
 
     program->use();
@@ -648,24 +649,24 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
     sum_tris += ntris;
     ++num_renders;
 
-    time = engine.gameLoop().realTime();
+    time = engine->gameLoop().realTime();
     if (time >= time_print_fps) {
         time_print_fps = static_cast<real>(time) + 1_r;
 
 #define INV(x) (((x) * (x)) <= 0 ? -1. : 1.0 / (x))
-        auto fs = engine.renderManager().frameStatistics();
+        auto fs = engine->renderManager().frameStatistics();
         auto fps = INV(fs.avg);
         auto min = INV(fs.max);
         auto max = INV(fs.min);
         auto avg = INV(fs.avg);
-        engine.out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
-                     << fps << "; " << avg << "; " << min << "; " << max
-                     << "\n";
+        engine->out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
+                      << fps << "; " << avg << "; " << min << "; " << max
+                      << "\n";
 
         double avg_tris = sum_tris / num_renders;
 
-        engine.out() << "Avg Tris: " << avg_tris << " Max Tris: " << max_tris
-                     << "\n";
+        engine->out() << "Avg Tris: " << avg_tris << " Max Tris: " << max_tris
+                      << "\n";
 
         max_tris = 0;
         num_renders = 0;
@@ -683,6 +684,6 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     return anim.main(argc, argv);
 }

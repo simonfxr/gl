@@ -15,7 +15,7 @@ PP_DEF_ENUM_IMPL(GLT_SHADER_TYPE_ENUM_DEF);
 using ProgramMap =
   std::unordered_map<std::string, std::shared_ptr<ShaderProgram>>;
 
-struct ShaderManager::Data : NonCopyable
+struct ShaderManager::Data : bl::non_copyable
 {
     sys::io::OutStream *out;
     std::vector<std::string> shaderDirs;

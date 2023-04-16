@@ -6,7 +6,8 @@
 #include "glt/GLObject.hpp"
 #include "glt/Image.hpp"
 #include "opengl.hpp"
-#include "util/noncopymove.hpp"
+
+#include <bl/noncopymove.hpp>
 
 namespace glt {
 
@@ -17,7 +18,7 @@ enum TextureType
     Texture3D
 };
 
-struct GLT_API TextureData : private NonCopyable
+struct GLT_API TextureData : private bl::non_copyable
 {
     TextureData() : _samples(1), _handle(0), _type(Texture2D) {}
     explicit TextureData(TextureType type, size_t samples = 1);

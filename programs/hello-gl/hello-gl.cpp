@@ -94,7 +94,7 @@ Anim::make_resources()
     if (!texture0 || !texture1)
         return 0;
 
-    program = engine.shaderManager().program("hello-gl");
+    program = engine->shaderManager().program("hello-gl");
     if (!program)
         return 0;
 
@@ -129,7 +129,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 void
 Anim::render(const ge::Event<ge::RenderEvent> &)
 {
-    auto rt = engine.renderManager().activeRenderTarget();
+    auto rt = engine->renderManager().activeRenderTarget();
 
     rt->clearColor(glt::color(vec4(1_r)));
     rt->clear();
@@ -153,6 +153,6 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     return anim.main(argc, argv);
 }

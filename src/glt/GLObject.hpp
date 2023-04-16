@@ -5,7 +5,8 @@
 #include "opengl.hpp"
 #include "pp/enum.hpp"
 #include "sys/io/Stream.hpp"
-#include "util/noncopymove.hpp"
+
+#include <bl/noncopymove.hpp>
 
 #include <compare>
 
@@ -55,7 +56,7 @@ GLT_API void
 generateShader(GLenum shader_type, GLuint *shader);
 
 template<ObjectType::enum_t T>
-struct GLObject : private NonCopyable
+struct GLObject : private bl::non_copyable
 {
     static inline constexpr ObjectType type = T;
     GLuint _name{};

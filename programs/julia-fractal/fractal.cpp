@@ -68,11 +68,11 @@ struct Anim final : ge::Anim<Anim>
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-    engine.window().events().windowResized.reg(*this,
-                                               &Anim::handleWindowResized);
+    engine->window().events().windowResized.reg(*this,
+                                                &Anim::handleWindowResized);
 
     commands = std::make_shared<Commands>(world);
-    engine.enablePlugin(*commands);
+    engine->enablePlugin(*commands);
 
     time_print_fps = 0;
 
@@ -91,13 +91,13 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     }
 
     if (MULTISAMPLING) {
-        auto w = engine.window().windowWidth();
-        auto h = engine.window().windowHeight();
+        auto w = engine->window().windowWidth();
+        auto h = engine->window().windowHeight();
         glt::TextureRenderTarget::Params ps;
         ps.samples = NUM_SAMPLES;
         ps.buffers = glt::RT_COLOR_BUFFER | glt::RT_DEPTH_BUFFER;
         render_texture = glt::TextureRenderTarget::make_shared(w, h, ps);
-        engine.renderManager().setDefaultRenderTarget(render_texture);
+        engine->renderManager().setDefaultRenderTarget(render_texture);
 
         GL_CALL(glEnable, GL_MULTISAMPLE);
     }
@@ -114,7 +114,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
     auto time = e.gameLoop().tickTime() +
                 ev.info.interpolation * e.gameLoop().tickDuration();
 
-    auto &rm = engine.renderManager();
+    auto &rm = engine->renderManager();
 
     if (MULTISAMPLING) {
         rm.setActiveRenderTarget(render_texture);
@@ -136,7 +136,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
     quadBatch.draw();
 
     if (MULTISAMPLING) {
-        rm.setActiveRenderTarget(engine.window().renderTarget());
+        rm.setActiveRenderTarget(engine->window().renderTarget());
         auto postproc = e.shaderManager().program("postproc");
         ASSERT(postproc);
 
@@ -152,14 +152,14 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
         time_print_fps = time + 1;
 
 #define INV(x) (((x) * (x)) <= 0 ? -1. : 1.0 / (x))
-        auto fs = engine.renderManager().frameStatistics();
+        auto fs = engine->renderManager().frameStatistics();
         auto fps = INV(fs.avg);
         auto min = INV(fs.max);
         auto max = INV(fs.min);
         auto avg = INV(fs.avg);
-        engine.out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
-                     << fps << "; " << avg << "; " << min << "; " << max
-                     << "\n";
+        engine->out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
+                      << fps << "; " << avg << "; " << min << "; " << max
+                      << "\n";
     }
 }
 
@@ -169,9 +169,9 @@ Anim::handleWindowResized(const ge::Event<ge::WindowResized> &ev)
     if (MULTISAMPLING) {
         auto w = ev.info.window.windowWidth();
         auto h = ev.info.window.windowHeight();
-        engine.renderManager().setActiveRenderTarget(nullptr);
+        engine->renderManager().setActiveRenderTarget(nullptr);
         render_texture->resize(w, h);
-        engine.renderManager().setDefaultRenderTarget(render_texture);
+        engine->renderManager().setDefaultRenderTarget(render_texture);
     }
 }
 
@@ -263,6 +263,6 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     return anim.main(argc, argv);
 }

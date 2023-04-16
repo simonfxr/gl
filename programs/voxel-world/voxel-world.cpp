@@ -1103,7 +1103,7 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     auto ret = anim.main(argc, argv);
 #ifdef HS_WORLD_GEN
     hs_voxel_destroy(anim.voxel_state);

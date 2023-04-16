@@ -1,6 +1,7 @@
 #ifndef BL_OWNED_HPP
 #define BL_OWNED_HPP
 
+#include <bl/new.hpp>
 #include <bl/ptr_ops.hpp>
 #include <bl/swap.hpp>
 
@@ -8,9 +9,7 @@
 
 namespace bl {
 
-template<a_ptr T,
-         typename Deleter =
-           std::default_delete<typename ptr_traits<T>::element_type>>
+template<a_ptr T, typename Deleter = default_deleter>
 struct owned
   : ptr_ops<owned<T, Deleter>,
             typename ptr_traits<T>::element_type,

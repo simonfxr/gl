@@ -3,7 +3,6 @@
 #include "math/fvec.hpp"
 #include "math/plane.hpp"
 #include "sys/clock.hpp"
-#include "util/noncopymove.hpp"
 #include "util/range.hpp"
 
 #include <algorithm>

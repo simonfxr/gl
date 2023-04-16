@@ -11,14 +11,14 @@ struct Anim final : ge::Anim<Anim>
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-    engine.window().showMouseCursor(true);
+    engine->window().showMouseCursor(true);
     ev.info.success = true;
 }
 
 void
 Anim::render(const ge::Event<ge::RenderEvent> & /*unused*/)
 {
-    auto rt = engine.renderManager().activeRenderTarget();
+    auto rt = engine->renderManager().activeRenderTarget();
     rt->clearColor(glt::color(vec4(1_r)));
     rt->clear();
 }
@@ -27,6 +27,6 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     return anim.main(argc, argv);
 }

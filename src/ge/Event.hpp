@@ -3,7 +3,8 @@
 
 #include "ge/conf.hpp"
 #include "util/functor_traits.hpp"
-#include "util/noncopymove.hpp"
+
+#include <bl/noncopymove.hpp>
 
 #include <memory>
 #include <span>
@@ -79,7 +80,7 @@ makeEventHandler(T &o, void (U::*m)(const Event<E> &))
 }
 
 template<typename T>
-struct EventSource : private NonCopyable
+struct EventSource : private bl::non_copyable
 {
     inline bool raise(const Event<T> &evnt);
     inline bool reg(std::shared_ptr<EventHandler<T>> handler);

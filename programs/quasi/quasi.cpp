@@ -44,9 +44,9 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
         quadBatch.send();
     }
 
-    if (engine.window().contextInfo().antialiasingLevel > 0) {
+    if (engine->window().contextInfo().antialiasingLevel > 0) {
         GL_CALL(glEnable, GL_MULTISAMPLE);
-        engine.out() << "enableing multisampling\n";
+        engine->out() << "enableing multisampling\n";
     }
 
     GL_CALL(glDisable, GL_DEPTH_TEST);
@@ -83,14 +83,14 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
         time_print_fps = time + 1;
 
 #define INV(x) (((x) * (x)) <= 0 ? -1 : 1.0 / (x))
-        auto fs = engine.renderManager().frameStatistics();
+        auto fs = engine->renderManager().frameStatistics();
         auto fps = INV(fs.avg);
         auto min = INV(fs.max);
         auto max = INV(fs.min);
         auto avg = INV(fs.avg);
-        engine.out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
-                     << fps << "; " << avg << "; " << min << "; " << max
-                     << "\n";
+        engine->out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
+                      << fps << "; " << avg << "; " << min << "; " << max
+                      << "\n";
     }
 }
 
@@ -98,6 +98,6 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     return anim.main(argc, argv);
 }

@@ -44,16 +44,16 @@ struct Anim final : ge::Anim<Anim>
 void
 Anim::init(const ge::Event<ge::InitEvent> &ev)
 {
-    engine.gameLoop().ticks(1000);
-    engine.gameLoop().maxFPS(59);
+    engine->gameLoop().ticks(1000);
+    engine->gameLoop().maxFPS(59);
 
-    engine.window().showMouseCursor(true);
+    engine->window().showMouseCursor(true);
 
     simulation.init();
 
     ParticleRenderer::Opts propts;
     propts.world_size = vec2(1, 1);
-    if (!renderer.init(&engine, propts))
+    if (!renderer.init(&*engine, propts))
         return;
 
     ev.info.success = true;
@@ -62,7 +62,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 void
 Anim::render(const ge::Event<ge::RenderEvent> &ev)
 {
-    auto rt = engine.renderManager().activeRenderTarget();
+    auto rt = engine->renderManager().activeRenderTarget();
     rt->clearColor(glt::color(vec4(1_r)));
     rt->clear();
 
@@ -179,6 +179,6 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine.setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
     return anim.main(argc, argv);
 }

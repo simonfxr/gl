@@ -58,7 +58,7 @@ public:
 
 struct GE_API QuotationCommand
   : Command
-  , NonCopyable
+  , bl::non_copyable
 {
     const std::unique_ptr<Quotation> quotation;
 

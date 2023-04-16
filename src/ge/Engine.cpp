@@ -19,7 +19,7 @@ struct Engine::Data : public GameLoop::Game
 {
     struct Modules
     {
-        DISABLE_COPY_MOVE_MEMBERS(Modules);
+        BL_DISABLE_COPY_MOVE(Modules);
 
         Modules()
         {
@@ -38,7 +38,6 @@ struct Engine::Data : public GameLoop::Game
 
     Modules _modules;
 
-    Engine &theEngine; // owning engine
     std::unique_ptr<GameWindow> window;
     GameLoop gameLoop;
     CommandProcessor commandProcessor;
@@ -61,12 +60,11 @@ struct Engine::Data : public GameLoop::Game
     FixedPluginSet<> emptyPluginSet;
     PluginSet &pluginSet;
 
-    explicit Data(Engine &engine, PluginSet *ps)
-      : theEngine(engine)
-      , gameLoop(60, 5, 120)
-      , commandProcessor(engine)
+    explicit Data(Engine *self, PluginSet *ps)
+      : gameLoop(60, 5, 120)
+      , commandProcessor(*self)
       , keyHandler(commandProcessor)
-      , replServer(engine)
+      , replServer(*self)
       , out(&sys::io::stdout())
       , pluginSet(ps ? *ps : emptyPluginSet)
     {}
@@ -82,9 +80,27 @@ struct Engine::Data : public GameLoop::Game
 
     void registerHandlers();
     bool execCommand(std::vector<CommandArg> &args);
+
+    Engine *self() { return reinterpret_cast<Engine *>(this); }
 };
 
-DECLARE_PIMPL_DEL(Engine)
+GE_API size_t
+invoke(bl::runtime_size_f, bl::type_proxy<Engine>) noexcept
+{
+    return sizeof(Engine::Data);
+}
+
+Engine::Data &
+Engine::m()
+{
+    return *reinterpret_cast<Engine::Data *>(this);
+}
+
+const Engine::Data &
+Engine::m() const
+{
+    return *reinterpret_cast<const Engine::Data *>(this);
+}
 
 namespace {
 
@@ -93,104 +109,110 @@ runInit(EventSource<InitEvent> &source, const Event<InitEvent> &e);
 
 } // namespace
 
-// #define SELF ASSERT_EXPR(self != 0, self)
-#define SELF self
-
-Engine::Engine(PluginSet &ps) : self(new Data(*this, &ps)) {}
-
-Engine::Engine() : self(new Data(*this, nullptr)) {}
-
-Engine::~Engine()
+Engine *
+Engine::construct_at(Engine *p, PluginSet &ps) noexcept
 {
-    self->renderManager.shutdown();
-    self->shaderManager.shutdown();
+    return reinterpret_cast<Engine *>(new (p) Data(p, &ps));
+}
+
+Engine *
+Engine::construct_at(Engine *p) noexcept
+{
+    return reinterpret_cast<Engine *>(new (p) Data(p, nullptr));
+}
+
+void
+Engine::destroy_at(Engine *p) noexcept
+{
+    p->renderManager().shutdown();
+    p->shaderManager().shutdown();
+    p->m().~Data();
 }
 
 GameWindow &
 Engine::window()
 {
-    ASSERT(SELF->window != nullptr,
-           "window not available, too early init phase");
-    return *SELF->window;
+    ASSERT(m().window != nullptr, "window not available, too early init phase");
+    return *m().window;
 }
 
 GameLoop &
 Engine::gameLoop()
 {
-    return SELF->gameLoop;
+    return m().gameLoop;
 }
 
 CommandProcessor &
 Engine::commandProcessor()
 {
-    return SELF->commandProcessor;
+    return m().commandProcessor;
 }
 
 KeyHandler &
 Engine::keyHandler()
 {
-    return SELF->keyHandler;
+    return m().keyHandler;
 }
 
 ReplServer &
 Engine::replServer()
 {
-    return SELF->replServer;
+    return m().replServer;
 }
 
 glt::ShaderManager &
 Engine::shaderManager()
 {
-    return SELF->shaderManager;
+    return m().shaderManager;
 }
 
 glt::RenderManager &
 Engine::renderManager()
 {
-    return SELF->renderManager;
+    return m().renderManager;
 }
 
 EngineEvents &
 Engine::events()
 {
-    return SELF->events;
+    return m().events;
 }
 
 sys::io::OutStream &
 Engine::out()
 {
-    return *self->out;
+    return *m().out;
 }
 
 PluginSet &
 Engine::pluginSet()
 {
-    return self->pluginSet;
+    return m().pluginSet;
 }
 
 void
 Engine::out(sys::io::OutStream &s)
 {
-    self->out = &s;
+    m().out = &s;
     shaderManager().out(s);
 }
 
 math::real
 Engine::now()
 {
-    return static_cast<math::real>(SELF->now());
+    return static_cast<math::real>(m().now());
 }
 
 const std::string &
 Engine::programName() const
 {
-    return self->programName;
+    return m().programName;
 }
 
 int32_t
 Engine::run(const EngineOptions &opts)
 {
-    if (self->initialized) {
+    if (m().initialized) {
         ERR("Engine already initialized: called run multiply times?");
         return 1;
     }
@@ -208,15 +230,15 @@ Engine::run(const EngineOptions &opts)
 #endif
     }
 
-    self->shaderManager.dumpShadersEnable(opts.dumpShaders);
+    m().shaderManager.dumpShadersEnable(opts.dumpShaders);
 
-    self->skipRender = opts.disableRender;
+    m().skipRender = opts.disableRender;
 
     std::string wd = opts.workingDirectory;
     if (opts.workingDirectory.empty() && opts.defaultCD)
         wd = sys::fs::dirname(opts.binary);
 
-    self->programName = sys::fs::dropExtension(sys::fs::basename(opts.binary));
+    m().programName = sys::fs::dropExtension(sys::fs::basename(opts.binary));
 
     if (!wd.empty()) {
         if (!sys::fs::cwd(wd)) {
@@ -225,15 +247,15 @@ Engine::run(const EngineOptions &opts)
         }
     }
 
-    if (!self->develDataDir.empty()) {
+    if (!m().develDataDir.empty()) {
         commandProcessor().addScriptDirectory(
-          sys::fs::join(self->develDataDir, "scripts"));
+          sys::fs::join(m().develDataDir, "scripts"));
         commandProcessor().addScriptDirectory(
-          sys::fs::join(self->develDataDir, "..", "..", "scripts"));
+          sys::fs::join(m().develDataDir, "..", "..", "scripts"));
         shaderManager().addShaderDirectory(
-          sys::fs::join(self->develDataDir, "shaders"));
+          sys::fs::join(m().develDataDir, "shaders"));
         shaderManager().addShaderDirectory(
-          sys::fs::join(self->develDataDir, "..", "..", "shaders"));
+          sys::fs::join(m().develDataDir, "..", "..", "shaders"));
     }
 
     for (const auto &scriptDir : opts.scriptDirs) {
@@ -254,7 +276,7 @@ Engine::run(const EngineOptions &opts)
     if (!runInit(opts.inits.preInit0, initEv))
         return 1;
 
-    if (!self->init(opts))
+    if (!m().init(opts))
         return 1;
 
     if (!runInit(opts.inits.preInit1, initEv))
@@ -300,38 +322,38 @@ Engine::run(const EngineOptions &opts)
     opts.inits.init.clear();
     opts.inits.postInit.clear();
 
-    self->opts = nullptr;
+    m().opts = nullptr;
 
-    return self->gameLoop.run(*self);
+    return m().gameLoop.run(m());
 }
 
 void
 Engine::Data::tick()
 {
-    events.animate.raise(Event(AnimationEvent(theEngine)));
+    events.animate.raise(Event(AnimationEvent(*self())));
 }
 
 void
 Engine::Data::render(double interpolation)
 {
     events.beforeRender.raise(
-      Event(RenderEvent(theEngine, static_cast<real>(interpolation))));
+      Event(RenderEvent(*self(), static_cast<real>(interpolation))));
     if (!skipRender) {
         GL_TRACE("BEGIN_SCENE");
         renderManager.beginScene();
         events.render.raise(
-          Event(RenderEvent(theEngine, static_cast<real>(interpolation))));
+          Event(RenderEvent(*self(), static_cast<real>(interpolation))));
         renderManager.endScene();
         GL_TRACE("END_SCENE");
     }
     events.afterRender.raise(
-      Event(RenderEvent(theEngine, static_cast<real>(interpolation))));
+      Event(RenderEvent(*self(), static_cast<real>(interpolation))));
 }
 
 void
 Engine::Data::handleInputEvents()
 {
-    events.handleInput.raise(Event(InputEvent(theEngine)));
+    events.handleInput.raise(Event(InputEvent(*self())));
 }
 
 GameLoop::time
@@ -349,7 +371,7 @@ Engine::Data::sleep(GameLoop::time secs)
 void
 Engine::Data::atExit(int32_t exit_code)
 {
-    events.exit.raise(Event(ExitEvent(theEngine, exit_code)));
+    events.exit.raise(Event(ExitEvent(*self(), exit_code)));
 }
 
 bool
@@ -368,12 +390,12 @@ Engine::addInit(RunLevel lvl,
                 const std::shared_ptr<EventHandler<InitEvent>> &comm)
 {
 
-    if (SELF->opts == nullptr) {
+    if (m().opts == nullptr) {
         ERR("cannot register init handler, already initialized");
         return;
     }
 
-    SELF->opts->inits.reg(lvl, comm);
+    m().opts->inits.reg(lvl, comm);
 }
 
 namespace {
@@ -401,7 +423,7 @@ Engine::Data::registerHandlers()
 
     window->events().windowClosed.reg(
       [this](const Event<WindowEvent> & /*unused*/) {
-          theEngine.gameLoop().exit(0);
+          self()->gameLoop().exit(0);
       });
 
     window->events().keyChanged.reg([this](const Event<KeyChanged> &ev) {
@@ -418,12 +440,12 @@ Engine::Data::registerHandlers()
     });
 
     window->events().windowResized.reg([this](const Event<WindowResized> &ev) {
-        theEngine.renderManager().updateProjection(
+        self()->renderManager().updateProjection(
           static_cast<math::real>(ev.info.width) /
           static_cast<math::real>(ev.info.height));
     });
 
-    theEngine.events().handleInput.reg(
+    self()->events().handleInput.reg(
       [this](const Event<InputEvent> & /*unused*/) {
           keyHandler.handleCommands();
       });
@@ -443,7 +465,7 @@ Engine::setDevelDataDir(const std::string &dir)
         WARN("not a directory");
         return;
     }
-    self->develDataDir = dir;
+    m().develDataDir = dir;
 }
 
 } // namespace ge

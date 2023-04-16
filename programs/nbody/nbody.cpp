@@ -93,16 +93,16 @@ Anim::animate(const ge::Event<ge::AnimationEvent> &)
 void
 Anim::render(const ge::Event<ge::RenderEvent> &ev)
 {
-    auto rt = engine.renderManager().activeRenderTarget();
+    auto rt = engine->renderManager().activeRenderTarget();
     rt->clearColor(glt::color(vec4(1_r)));
     rt->clear();
 
-    glt::RenderManager &rm = engine.renderManager();
+    glt::RenderManager &rm = engine->renderManager();
     ec_light_dir = normalize(
       transformVector(rm.geometryTransform().viewMatrix(), light_dir));
 
     {
-        auto program = engine.shaderManager().program("ground");
+        auto program = engine->shaderManager().program("ground");
         ASSERT(program, "ground program not found");
 
         rm.geometryTransform().dup();
@@ -123,11 +123,11 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
 
     renderParticles(ev.info.interpolation);
 
-    if (engine.gameLoop().realTime() > next_fps_counter_draw) {
-        next_fps_counter_draw = engine.gameLoop().realTime() + 3_r;
+    if (engine->gameLoop().realTime() > next_fps_counter_draw) {
+        next_fps_counter_draw = engine->gameLoop().realTime() + 3_r;
 
 #define INV(x) (((x) * (x)) <= 0 ? -1. : 1.0 / (x))
-        auto fs = engine.renderManager().frameStatistics();
+        auto fs = engine->renderManager().frameStatistics();
         auto fps = INV(fs.avg);
         auto min = INV(fs.max);
         auto max = INV(fs.min);
@@ -142,7 +142,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
 void
 Anim::renderParticles(real interpolation)
 {
-    auto &rm = engine.renderManager();
+    auto &rm = engine->renderManager();
 #ifndef USE_NO_SIM
     auto &gt = rm.geometryTransform();
 
