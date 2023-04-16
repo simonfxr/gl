@@ -12,40 +12,41 @@ struct relative_ptr
   : ptr_ops<relative_ptr<T, Rep>, T, std::is_same_v<Rep, std::intptr_t>, false>
 {
     using element_type = T;
-    static inline constexpr bool nullable = std::is_same_v<Rep, std::intptr_t>;
-    static inline constexpr bool unique = false;
+    static inline constexpr bool is_nullable =
+      std::is_same_v<Rep, std::intptr_t>;
+    static inline constexpr bool is_owned = false;
 
     template<typename U>
     using rebind = relative_ptr<U, Rep>;
 
     BL_wrapper relative_ptr()
-        requires(nullable)
+        requires(is_nullable)
       : relative_ptr(nullptr)
     {}
 
     relative_ptr()
-        requires(!nullable)
+        requires(!is_nullable)
     = delete;
 
     // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
     BL_wrapper relative_ptr(std::nullptr_t)
-        requires(nullable)
+        requires(is_nullable)
       : relative_ptr(static_cast<T *>(nullptr))
     {}
 
     relative_ptr(std::nullptr_t)
-        requires(!nullable)
+        requires(!is_nullable)
     = delete;
 
     // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
     BL_wrapper relative_ptr(T *p)
-        requires(nullable)
+        requires(is_nullable)
       : _p(relative_to(this, p))
     {}
 
     // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
     BL_wrapper HU_NONNULL_PARAMS() relative_ptr(T *p)
-        requires(!nullable)
+        requires(!is_nullable)
       : _p(relative_to(this, p))
     {}
 
@@ -72,13 +73,13 @@ struct relative_ptr
     BL_wrapper ~relative_ptr() = default;
 
     BL_wrapper T *get() const noexcept
-        requires(nullable)
+        requires(is_nullable)
     {
         return absolute(this, _p);
     }
 
     BL_wrapper T *get() const noexcept
-        requires(!nullable)
+        requires(!is_nullable)
     {
         auto *p = absolute(this, _p);
         hu_assume(p);
@@ -86,7 +87,7 @@ struct relative_ptr
     }
 
     BL_wrapper constexpr T *release() noexcept
-        requires(nullable)
+        requires(is_nullable)
     {
         return exchange(this, relative_ptr{}).get();
     }

@@ -3,48 +3,18 @@
 
 #include "defs.h"
 
-#include <hu/endian.h>
+#include <bl/core.hpp>
 
+#include <bo/cxx.hpp>
+#include <hu/endian.h>
 #include <type_traits>
 
 namespace sys {
 
-inline constexpr uint8_t
-bswap(uint8_t x)
+inline constexpr decltype(auto)
+bswap(auto &&x)
 {
-    return x;
-}
-
-inline constexpr uint16_t
-bswap(uint16_t x)
-{
-    return uint16_t((x << 8) | (x >> 8));
-}
-
-inline constexpr uint32_t
-bswap(uint32_t x)
-{
-    x = (x >> 16) | (x << 16);
-    x = ((x >> 8) & 0x00FF00FFu) | ((x << 8) & 0xFF00FF00u);
-    return x;
-}
-
-inline constexpr uint64_t
-bswap(uint64_t x)
-{
-    x = (x >> 32) | (x << 32);
-    x =
-      ((x >> 16) & 0x0000FFFF0000FFFFull) | ((x << 16) & 0xFFFF0000FFFF0000ull);
-    x = ((x >> 8) & 0x00FF00FF00FF00FFull) | ((x << 8) & 0xFF00FF00FF00FF00ull);
-    return x;
-}
-
-template<typename T, typename = std::enable_if_t<std::is_signed_v<T>>>
-inline constexpr T
-bswap(T x)
-{
-    using U = std::make_unsigned_t<std::decay_t<T>>;
-    return T(bswap(U(x)));
+    return bo::bswap(bl_fwd(x));
 }
 
 template<typename T>

@@ -1,4 +1,3 @@
-#include "bl/rand.hpp"
 #include "ge/Anim.hpp"
 #include "ge/Timer.hpp"
 #include "glt/CubeMesh.hpp"
@@ -16,6 +15,8 @@
 
 #include <algorithm>
 #include <bitset>
+#include <bl/rand.hpp>
+#include <bl/rand/uniform.hpp>
 #include <memory>
 
 #ifdef HS_WORLD_GEN
@@ -149,7 +150,7 @@ Anim::init(const InitEv &ev)
     fpsTimer = std::make_unique<ge::Timer>(e);
     fpsTimer->start(FPS_UPDATE_INTERVAL, true);
 
-    rng = bl::rand::seed(0xDEADBEEFu);
+    rng = bl::rand::seed_from(0xDEADBEEFu);
 
     pointsOnSphere(SPHERE_POINTS, sphere_points);
 
@@ -925,7 +926,8 @@ initWorld(State *state, CubeMesh &worldModel, vec3 *sphere_points)
         permut[i] = i;
 
     for (int32_t i = 0; i < N - 1; ++i) {
-        auto j = state->rng.range(static_cast<uint32_t>(N - i));
+        auto j = bl::rand::sample_uniform<uint32_t>(
+          state->rng, static_cast<uint32_t>(N - i));
         auto t = permut[i];
         permut[i] = permut[i + j];
         permut[i + j] = t;

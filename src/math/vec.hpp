@@ -2,8 +2,11 @@
 #define GL_MATH_VEC_HPP
 
 #include "math/real.hpp"
+
 #include <bl/core.hpp>
 #include <bl/functor.hpp>
+#include <bl/mp.hpp>
+#include <bl/rand.hpp>
 #include <bl/swap.hpp>
 
 #include <array>
@@ -370,7 +373,27 @@ struct vec : private std::array<T, N>
 
     friend constexpr auto operator<=>(const Self &lhs,
                                       const Self &rhs) = default;
+
+    friend auto invoke(bl::rand::sampler_f,
+                       const auto &sampler,
+                       bl::type_proxy<vec<T, N>>,
+                       auto &&...args)
+    {
+        auto s =
+          bl::rand::sampler(sampler, bl::type_proxy<T>{}, bl_fwd(args)...);
+        using Sampler = std::decay_t<decltype(s)>;
+        return vec<Sampler, N>{ broadcast_t{}, bl_fwd(s) };
+    }
 };
+
+auto
+invoke(bl::rand::sample_f, a_tensor auto &&ss, bl::rand::rng auto &&rng)
+    requires bl::rand::a_distribution<tensor_scalar_type<decltype(ss)>,
+                                      decltype(rng)>
+{
+    return bl::map([&](auto &&s) { return bl::rand::sample(bl_fwd(s), rng); },
+                   bl_fwd(ss));
+}
 
 template<typename T, typename... U>
 vec(T, U...) -> vec<T, 1 + sizeof...(U)>;

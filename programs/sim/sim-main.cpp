@@ -1,6 +1,5 @@
 #include "sim.hpp"
 
-#include "bl/rand.hpp"
 #include "ge/Anim.hpp"
 #include "ge/Command.hpp"
 #include "ge/GameWindow.hpp"
@@ -14,6 +13,9 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 #include "math/real.hpp"
+
+#include <bl/rand.hpp>
+#include <bl/rand/uniform.hpp>
 
 #include <algorithm>
 #include <string>
@@ -264,10 +266,9 @@ Game::update_sphere_mass()
 }
 
 static glt::color
-randomColor(auto &rng)
+randomColor(bl::rand::rng auto &&rng)
 {
-    auto x1 = [&]() { return rng.template sample<real>(); };
-    return glt::color{ vec3(x1(), x1(), x1()) };
+    return glt::color{ bl::rand::sample_uniform<vec3>(bl_fwd(rng)) };
 }
 
 void
@@ -281,7 +282,7 @@ Game::spawn_sphere()
 
     SphereModel model{};
     model.color = randomColor(rng);
-    model.shininess = 10.f + rng.sample<real>() * 60;
+    model.shininess = 10.f + bl::rand::sample_uniform<real>(rng) * 60;
 
     world.spawnSphere(sphere_proto, model);
 }

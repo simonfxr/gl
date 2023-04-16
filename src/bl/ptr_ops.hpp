@@ -5,11 +5,11 @@
 
 namespace bl {
 
-template<typename P, typename T, bool nullable_, bool unique_>
+template<typename P, typename T, bool is_nullable_, bool is_owned_>
 struct ptr_ops
 {
-    static inline constexpr bool nullable = nullable_;
-    static inline constexpr bool unique = unique_;
+    static inline constexpr bool is_nullable = is_nullable_;
+    static inline constexpr bool is_owned = is_owned_;
     using element_type = T;
 
     BL_wrapper ptr_ops() noexcept = default;
@@ -21,7 +21,7 @@ struct ptr_ops
 
     // NOLINTNEXTLINE(misc-unconventional-assign-operator,cppcoreguidelines-c-copy-assignment-signature)
     BL_wrapper constexpr P &operator=(element_type *p) noexcept
-        requires(nullable)
+        requires(is_nullable)
     {
         self() = P{ p };
         return *this;
@@ -30,44 +30,44 @@ struct ptr_ops
     // NOLINTNEXTLINE(misc-unconventional-assign-operator,cppcoreguidelines-c-copy-assignment-signature)
     HU_NONNULL_PARAMS()
     BL_wrapper constexpr P &operator=(element_type *p) noexcept
-        requires(!nullable)
+        requires(!is_nullable)
     {
         return self() = P{ p };
     }
 
     // NOLINTNEXTLINE(misc-unconventional-assign-operator,cppcoreguidelines-c-copy-assignment-signature)
     BL_wrapper P &operator=(std::nullptr_t)
-        requires(nullable)
+        requires(is_nullable)
     {
         self() = (static_cast<element_type *>(nullptr));
         return self();
     }
 
     P &operator=(std::nullptr_t)
-        requires(!nullable)
+        requires(!is_nullable)
     = delete;
 
     BL_wrapper void reset(element_type *p) noexcept
-        requires(nullable)
+        requires(is_nullable)
     {
         self() = p;
     }
 
     HU_NONNULL_PARAMS()
     BL_wrapper void reset(element_type *p) noexcept
-        requires(!nullable)
+        requires(!is_nullable)
     {
         self() = p;
     }
 
     BL_wrapper void reset(std::nullptr_t = nullptr) noexcept
-        requires(nullable)
+        requires(is_nullable)
     {
         reset();
     }
 
     void reset(std::nullptr_t)
-        requires(!nullable)
+        requires(!is_nullable)
     = delete;
 
     BL_wrapper element_type &operator*() const noexcept
@@ -86,13 +86,13 @@ struct ptr_ops
     }
 
     BL_wrapper explicit operator element_type &() const noexcept
-        requires(!nullable)
+        requires(!is_nullable)
     {
         return *self().get();
     }
 
     BL_wrapper explicit operator const element_type &() const noexcept
-        requires(!nullable)
+        requires(!is_nullable)
     {
         return *self().get();
     }

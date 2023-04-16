@@ -7,20 +7,18 @@
 
 using namespace bl::rand;
 
-#define mkrng() seed_from(ctest_rand(uint64_t))
-
 CTEST_GROUP("rand")
 {
     CTEST("init")
     {
-        auto x = mkrng();
+        auto x = test_rng();
         auto k = x();
         ctest_true(k > 65536);
     }
 
-    CTEST("uniform")
+    CTEST("uniform int")
     {
-        auto g = mkrng();
+        auto g = test_rng();
         auto dist = uniform_distribution{ 0, 3 };
         math::ivec3 hist{};
         for (size_t i = 0; i < 10000; ++i) {
@@ -32,6 +30,27 @@ CTEST_GROUP("rand")
 
         auto dens = hist / static_cast<float>(sum(hist));
         auto err = sum(abs(dens - 1.f / 3.f));
+        ctest_true(err < 0.02);
+    }
+
+    CTEST("uniform float")
+    {
+        auto g = test_rng();
+
+        sys::io::stdout() << sample_uniform<float>(g) << "\n";
+
+        auto dist = uniform_distribution<float>{};
+        math::ivec3 hist{};
+        for (size_t i = 0; i < 10000; ++i) {
+            auto x = static_cast<int32_t>(sample(dist, g) * 3);
+            ctest_true(0 <= x);
+            ctest_true(x < 3);
+            hist[x]++;
+        }
+
+        auto dens = hist / static_cast<float>(sum(hist));
+        auto err = sum(abs(dens - 1.f / 3.f));
+        sys::io::stdout() << err << "\n";
         ctest_true(err < 0.02);
     }
 }

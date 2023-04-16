@@ -215,6 +215,17 @@ struct mat : private vec<vec<T, N>, N>
 
     friend constexpr auto operator<=>(const Self &lhs,
                                       const Self &rhs) = default;
+
+    template<typename S>
+    friend void invoke(bl::rand::sample_f,
+                       same_shape<mat<T, N>> auto &&ss,
+                       bl::rand::rng auto &&rng)
+        requires bl::rand::
+          distribution_over<tensor_scalar_type<decltype(ss)>, decltype(rng), T>
+    {
+        return bl::map([&](auto &s) { return bl::rand::sample(s, rng); },
+                       bl_fwd(ss).samplers);
+    }
 };
 
 template<a_vec T>

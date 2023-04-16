@@ -22,8 +22,8 @@ template<typename T>
 struct ptr_traits
 {
     using element_type = typename T::element_type;
-    static inline constexpr bool nullable = T::nullable;
-    static inline constexpr bool unique = T::unique;
+    static inline constexpr bool is_nullable = T::is_nullable;
+    static inline constexpr bool is_owned = T::is_owned;
 
     template<typename U>
     using rebind = typename T::template rebind<U>;
@@ -33,8 +33,8 @@ template<typename T>
 struct ptr_traits<T *>
 {
     using element_type = T;
-    static inline constexpr bool nullable = true;
-    static inline constexpr bool unique = false;
+    static inline constexpr bool is_nullable = true;
+    static inline constexpr bool is_owned = false;
     template<typename U>
     using rebind = U *;
 };

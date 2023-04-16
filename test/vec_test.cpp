@@ -1,5 +1,8 @@
-#include <math/ivec.hpp>
-#include <math/uvec.hpp>
+#include <bl/rand/uniform.hpp>
+
+#include "math/fvec.hpp"
+#include "math/ivec.hpp"
+#include "math/uvec.hpp"
 
 #include "./testmain.hpp"
 
@@ -34,6 +37,27 @@ CTEST_GROUP("vec3")
 
         ctest_equal(-v, (-1) * v);
         ctest_equal(-v, z - v);
+    }
+
+    CTEST("vec dist")
+    {
+        auto g = test_rng();
+        auto s = bl::rand::uniform<real>();
+        {
+            auto vs = vec{ s, s, s };
+
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
+        }
+        {
+            auto vs = bl::rand::uniform<vec3>(-1_r, 1_r);
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
+        }
     }
 }
 

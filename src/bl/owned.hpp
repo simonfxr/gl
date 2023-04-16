@@ -14,44 +14,44 @@ template<a_ptr T,
 struct owned
   : ptr_ops<owned<T, Deleter>,
             typename ptr_traits<T>::element_type,
-            ptr_traits<T>::nullable,
+            ptr_traits<T>::is_nullable,
             true>
 {
     using _traits = ptr_traits<T>;
     using element_type = typename _traits::element_type;
-    static inline constexpr bool nullable = _traits::nullable;
-    static inline constexpr bool unique = true;
+    static inline constexpr bool is_nullable = _traits::is_nullable;
+    static inline constexpr bool is_owned = true;
 
     BL_wrapper owned()
-        requires(nullable)
+        requires(is_nullable)
       : _p(nullptr), _d{}
     {}
 
     // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
     BL_wrapper owned(std::nullptr_t)
-        requires(nullable)
+        requires(is_nullable)
       : _p(nullptr), _d{}
     {}
 
     BL_wrapper explicit owned(element_type *p)
-        requires(nullable)
+        requires(is_nullable)
       : _p(p), _d{}
     {}
 
     HU_NONNULL_PARAMS()
     BL_wrapper explicit owned(element_type *p)
-        requires(!nullable)
+        requires(!is_nullable)
       : _p(p), _d{}
     {}
 
     BL_wrapper owned(element_type *p, Deleter d)
-        requires(nullable)
+        requires(is_nullable)
       : _p(p), _d{ move(d) }
     {}
 
     HU_NONNULL_PARAMS(2)
     BL_wrapper owned(element_type *p, Deleter d)
-        requires(!nullable)
+        requires(!is_nullable)
       : _p(p), _d{ move(d) }
     {}
 
@@ -70,7 +70,7 @@ struct owned
     }
 
     BL_wrapper constexpr element_type *release() noexcept
-        requires(nullable)
+        requires(is_nullable)
     {}
 
     ~owned()

@@ -9,8 +9,8 @@ namespace bl {
 template<typename T>
 struct raw_ptr : ptr_ops<raw_ptr<T>, T, true, false>
 {
-    static inline constexpr bool nullable = true;
-    static inline constexpr bool unique = false;
+    static inline constexpr bool is_nullable = true;
+    static inline constexpr bool is_owned = false;
     template<typename U>
     using rebind = raw_ptr<U>;
 

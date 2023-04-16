@@ -7,7 +7,7 @@ namespace math {
 
 using vec2 = vec<real, 2>;
 
-constexpr inline vec2
+inline vec2
 cossin(real rad)
 {
     return { cos(rad), sin(rad) };

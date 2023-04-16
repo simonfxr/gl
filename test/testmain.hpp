@@ -1,11 +1,14 @@
 #ifndef TESTMAIN_HPP
 #define TESTMAIN_HPP
 
+#include <bl/rand.hpp>
 #include <sys/io.hpp>
 #include <sys/sys.hpp>
 
-#pragma clang diagnostic ignored "-Wold-style-cast"
-#pragma clang diagnostic ignored "-Wglobal-constructors"
+#if HU_COMP_CLANG_P
+#    pragma clang diagnostic ignored "-Wold-style-cast"
+#    pragma clang diagnostic ignored "-Wglobal-constructors"
+#endif
 
 #define CTEST_REPORT_NOT_EQUAL(expected, ...)                                  \
     ::report_not_equal((expected), (__VA_ARGS__))
@@ -24,5 +27,7 @@ report_not_equal(auto &&expected, auto &&rhs)
 {
     sys::io::stderr() << expected << " vs " << rhs << "\n";
 }
+
+#define test_rng() ::bl::rand::seed_from(ctest_rand(uint64_t))
 
 #endif // TESTMAIN_HPP

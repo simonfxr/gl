@@ -1,13 +1,13 @@
 #ifndef BL_RAND_HPP
 #define BL_RAND_HPP
 
+#include <bl/concepts.hpp>
 #include <bl/ptr.hpp>
 
 #include <bo/cxx.hpp>
 
 #include <algorithm>
 #include <array>
-#include <concepts>
 #include <span>
 #include <type_traits>
 
@@ -149,6 +149,9 @@ seed_from(std::unsigned_integral auto seedbits) noexcept
     }
 }
 
+struct basic_distribution
+{};
+
 inline constexpr struct sample_f
 {
     template<typename R, typename... Ts>
@@ -160,6 +163,32 @@ inline constexpr struct sample_f
         return ::bl::invoke(*this, bl_fwd(r), bl_fwd(ts)...);
     }
 } sample;
+
+template<typename D, typename R = gen>
+concept a_distribution = rng<R> && invocable<sample_f, D, R>;
+
+template<typename D, rng R = gen>
+    requires a_distribution<D, R>
+using sampled_t = invoke_result_t<sample_f, D, R>;
+
+template<typename D, typename T, typename R = gen>
+concept distribution_over =
+  a_distribution<D, R> && std::same_as<sampled_t<D, R>, T>;
+
+struct basic_sampler
+{};
+
+inline constexpr struct sampler_f
+{
+    template<typename R, typename... Ts>
+        requires invocable<sampler_f, R, Ts...>
+    BL_inline constexpr auto operator()(R &&r, Ts &&...ts) const
+      noexcept(nothrow_invocable<sampler_f, R, Ts...>)
+        -> bl::invoke_result_t<sampler_f, R, Ts...>
+    {
+        return ::bl::invoke(*this, bl_fwd(r), bl_fwd(ts)...);
+    }
+} sampler;
 
 } // namespace bl::rand
 
