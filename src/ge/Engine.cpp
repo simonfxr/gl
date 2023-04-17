@@ -15,7 +15,9 @@ namespace ge {
 
 using math::real;
 
-struct Engine::Data : public GameLoop::Game
+struct Engine::Impl
+  : bl::runtime_sized_impl<Engine, Engine::Impl>
+  , GameLoop::Game
 {
     struct Modules
     {
@@ -60,11 +62,11 @@ struct Engine::Data : public GameLoop::Game
     FixedPluginSet<> emptyPluginSet;
     PluginSet &pluginSet;
 
-    explicit Data(Engine *self, PluginSet *ps)
+    explicit Impl(PluginSet *ps)
       : gameLoop(60, 5, 120)
-      , commandProcessor(*self)
+      , commandProcessor(*this)
       , keyHandler(commandProcessor)
-      , replServer(*self)
+      , replServer(*this)
       , out(&sys::io::stdout())
       , pluginSet(ps ? *ps : emptyPluginSet)
     {}
@@ -81,52 +83,30 @@ struct Engine::Data : public GameLoop::Game
     void registerHandlers();
     bool execCommand(std::vector<CommandArg> &args);
 
-    Engine *self() { return reinterpret_cast<Engine *>(this); }
+    ~Impl() override
+    {
+        renderManager.shutdown();
+        shaderManager.shutdown();
+    }
 };
 
-GE_API size_t
-invoke(bl::runtime_size_f, bl::type_proxy<Engine>) noexcept
-{
-    return sizeof(Engine::Data);
-}
-
-Engine::Data &
-Engine::m()
-{
-    return *reinterpret_cast<Engine::Data *>(this);
-}
-
-const Engine::Data &
-Engine::m() const
-{
-    return *reinterpret_cast<const Engine::Data *>(this);
-}
+BL_DEFINE_RUNTIME_SIZED(Engine, Engine::Impl);
 
 namespace {
-
 bool
 runInit(EventSource<InitEvent> &source, const Event<InitEvent> &e);
-
 } // namespace
 
-Engine *
-Engine::construct_at(Engine *p, PluginSet &ps) noexcept
+Engine &
+Engine::construct_at(void *p, PluginSet &ps) noexcept
 {
-    return reinterpret_cast<Engine *>(new (p) Data(p, &ps));
+    return construct_impl(p, &ps);
 }
 
-Engine *
-Engine::construct_at(Engine *p) noexcept
+Engine &
+Engine::construct_at(void *p) noexcept
 {
-    return reinterpret_cast<Engine *>(new (p) Data(p, nullptr));
-}
-
-void
-Engine::destroy_at(Engine *p) noexcept
-{
-    p->renderManager().shutdown();
-    p->shaderManager().shutdown();
-    p->m().~Data();
+    return construct_impl(p, nullptr);
 }
 
 GameWindow &
@@ -328,54 +308,54 @@ Engine::run(const EngineOptions &opts)
 }
 
 void
-Engine::Data::tick()
+Engine::Impl::tick()
 {
-    events.animate.raise(Event(AnimationEvent(*self())));
+    events.animate.raise(Event(AnimationEvent(m())));
 }
 
 void
-Engine::Data::render(double interpolation)
+Engine::Impl::render(double interpolation)
 {
     events.beforeRender.raise(
-      Event(RenderEvent(*self(), static_cast<real>(interpolation))));
+      Event(RenderEvent(m(), static_cast<real>(interpolation))));
     if (!skipRender) {
         GL_TRACE("BEGIN_SCENE");
         renderManager.beginScene();
         events.render.raise(
-          Event(RenderEvent(*self(), static_cast<real>(interpolation))));
+          Event(RenderEvent(m(), static_cast<real>(interpolation))));
         renderManager.endScene();
         GL_TRACE("END_SCENE");
     }
     events.afterRender.raise(
-      Event(RenderEvent(*self(), static_cast<real>(interpolation))));
+      Event(RenderEvent(m(), static_cast<real>(interpolation))));
 }
 
 void
-Engine::Data::handleInputEvents()
+Engine::Impl::handleInputEvents()
 {
-    events.handleInput.raise(Event(InputEvent(*self())));
+    events.handleInput.raise(Event(InputEvent(m())));
 }
 
 GameLoop::time
-Engine::Data::now() const
+Engine::Impl::now() const
 {
     return static_cast<GameLoop::time>(sys::queryTimer());
 }
 
 void
-Engine::Data::sleep(GameLoop::time secs)
+Engine::Impl::sleep(GameLoop::time secs)
 {
     sys::sleep(secs);
 }
 
 void
-Engine::Data::atExit(int32_t exit_code)
+Engine::Impl::atExit(int32_t exit_code)
 {
-    events.exit.raise(Event(ExitEvent(*self(), exit_code)));
+    events.exit.raise(Event(ExitEvent(m(), exit_code)));
 }
 
 bool
-Engine::Data::init(const EngineOptions &eopts)
+Engine::Impl::init(const EngineOptions &eopts)
 {
     opts = &eopts;
     window = std::make_unique<GameWindow>(eopts.window);
@@ -389,7 +369,6 @@ void
 Engine::addInit(RunLevel lvl,
                 const std::shared_ptr<EventHandler<InitEvent>> &comm)
 {
-
     if (m().opts == nullptr) {
         ERR("cannot register init handler, already initialized");
         return;
@@ -399,7 +378,6 @@ Engine::addInit(RunLevel lvl,
 }
 
 namespace {
-
 bool
 runInit(EventSource<InitEvent> &source, const Event<InitEvent> &e)
 {
@@ -417,14 +395,12 @@ runInit(EventSource<InitEvent> &source, const Event<InitEvent> &e)
 } // namespace
 
 void
-Engine::Data::registerHandlers()
+Engine::Impl::registerHandlers()
 {
     window->registerHandlers(events);
 
     window->events().windowClosed.reg(
-      [this](const Event<WindowEvent> & /*unused*/) {
-          self()->gameLoop().exit(0);
-      });
+      [this](const Event<WindowEvent> & /*unused*/) { gameLoop.exit(0); });
 
     window->events().keyChanged.reg([this](const Event<KeyChanged> &ev) {
         keyHandler.keyEvent(ev.info.key);
@@ -440,15 +416,13 @@ Engine::Data::registerHandlers()
     });
 
     window->events().windowResized.reg([this](const Event<WindowResized> &ev) {
-        self()->renderManager().updateProjection(
-          static_cast<math::real>(ev.info.width) /
-          static_cast<math::real>(ev.info.height));
+        renderManager.updateProjection(static_cast<math::real>(ev.info.width) /
+                                       static_cast<math::real>(ev.info.height));
     });
 
-    self()->events().handleInput.reg(
-      [this](const Event<InputEvent> & /*unused*/) {
-          keyHandler.handleCommands();
-      });
+    events.handleInput.reg([this](const Event<InputEvent> & /*unused*/) {
+        keyHandler.handleCommands();
+    });
 }
 
 void

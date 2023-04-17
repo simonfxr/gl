@@ -22,18 +22,110 @@ inline constexpr struct runtime_size_f
     }
 } runtime_size;
 
-struct runtime_sized_base : private non_copy_moveable
+inline constexpr struct runtime_size_impl_type_f
+{
+    template<typename T>
+        requires nothrow_invocable<runtime_size_impl_type_f, type_proxy<T>>
+    BL_inline constexpr auto operator()(type_proxy<T>) const noexcept
+    {
+        return ::bl::invoke(*this, type_proxy<T>{});
+    }
+} runtime_size_impl_type;
+
+struct runtime_sized_tag
+{
+    runtime_sized_tag(const runtime_sized_tag &) = delete;
+    runtime_sized_tag(runtime_sized_tag &&) = delete;
+
+    friend bool operator==(const runtime_sized_tag &,
+                           const runtime_sized_tag &) = delete;
+    friend bool operator<=>(const runtime_sized_tag &,
+                            const runtime_sized_tag &) = delete;
+
+protected:
+    runtime_sized_tag();
+    ~runtime_sized_tag();
+};
+
+template<typename ApiT, typename Defer>
+struct runtime_sized_impl_type_defer
+{
+    using type = typename bl::invoke_result_t<runtime_size_impl_type_f,
+                                              type_proxy<ApiT>>::type;
+};
+
+template<typename ApiT, typename Defer = void>
+using runtime_sized_impl_t =
+  typename runtime_sized_impl_type_defer<ApiT, Defer>::type;
+
+template<typename ApiT>
+struct alignas(std::max_align_t) runtime_sized_base : private runtime_sized_tag
 {
     BL_DISABLE_COPY_MOVE(runtime_sized_base);
-    runtime_sized_base() = delete;
-    ~runtime_sized_base() = delete;
+
+    template<typename Defer = void>
+    BL_wrapper friend size_t invoke(bl::runtime_size_f,
+                                    bl::type_proxy<ApiT>) noexcept
+    {
+        return ApiT::impl_size;
+    }
+
+protected:
+    constexpr runtime_sized_base() = default;
+    ~runtime_sized_base() = default;
+
+    using runtime_sized_base_api_t = ApiT;
+
+    template<typename Defer = void>
+    BL_wrapper const runtime_sized_impl_t<ApiT, Defer> &m() const
+    {
+        return *static_cast<const runtime_sized_impl_t<ApiT, Defer> *>(
+          static_cast<const ApiT *>(this));
+    }
+
+    template<typename Defer = void>
+    BL_wrapper runtime_sized_impl_t<ApiT, Defer> &m()
+    {
+        return *static_cast<runtime_sized_impl_t<ApiT, Defer> *>(
+          static_cast<ApiT *>(this));
+    }
+
+    template<typename Defer = void>
+    BL_wrapper static runtime_sized_impl_t<ApiT, Defer>
+      &construct_impl(void *p, auto &&...args) noexcept(
+        noexcept(*new(p) runtime_sized_impl_t<ApiT, Defer>(bl_fwd(args)...)))
+    {
+        return *new (p) runtime_sized_impl_t<ApiT, Defer>(bl_fwd(args)...);
+    }
 };
+
+#define BL_DECLARE_RUNTIME_SIZED(ImplT)                                        \
+public:                                                                        \
+    struct ImplT;                                                              \
+    static const size_t impl_size;                                             \
+    static void destruct_at(                                                   \
+      runtime_sized_base::runtime_sized_base_api_t &) noexcept
+
+#define BL_DEFINE_RUNTIME_SIZED(ApiT, ImplT)                                   \
+    bl::type_proxy<ImplT> invoke(bl::runtime_size_impl_type_f,                 \
+                                 bl::type_proxy<ApiT>) noexcept                \
+    {                                                                          \
+        return bl::type_proxy<ImplT>{};                                        \
+    }                                                                          \
+    void ApiT::destruct_at(ApiT &p) noexcept                                   \
+    {                                                                          \
+        std::destroy_at(std::addressof(p.m()));                                \
+    }                                                                          \
+    const size_t ApiT::impl_size = sizeof(::bl::runtime_sized_impl_t<ApiT>)
+
+template<typename ApiT, typename ImplT>
+struct runtime_sized_impl : ApiT
+{};
 
 template<typename T>
 concept runtime_sized = !
 std::is_reference_v<T> && !std::move_constructible<T> &&
-  !std::default_initializable<T> && !std::copy_constructible<T> &&
-  !std::destructible<T> && invocable<runtime_size_f, type_proxy<T>>;
+  !std::copy_constructible<T> && invocable<runtime_size_f, type_proxy<T>>;
 
 template<typename T, typename... Args>
     requires(!runtime_sized<T>)
@@ -53,8 +145,8 @@ new_obj(Args &&...args) noexcept(noexcept(T::construct_at(bl_declval(T *),
     auto p = ::operator new(
       sz, static_cast<std::align_val_t>(alignof(std::max_align_t)));
     decltype(auto) obj = T::construct_at(static_cast<T *>(p), bl_fwd(args)...);
-    static_assert(std::is_same_v<T *, decltype(obj)>);
-    return obj;
+    static_assert(std::is_same_v<T &, decltype(obj)>);
+    return std::addressof(obj);
 }
 
 template<typename T>
@@ -68,12 +160,12 @@ void delete_obj(T *p) noexcept(std::is_nothrow_destructible_v<T>)
 template<typename T>
     requires runtime_sized<T>
 void
-delete_obj(T *p) noexcept(noexcept(T::destroy_at(p)))
+delete_obj(T *p) noexcept(noexcept(T::destruct_at(*p)))
 {
     auto sz = runtime_size(type_proxy<T>{});
     if (!p)
         return;
-    T::destroy_at(p);
+    T::destruct_at(*p);
     ::operator delete(static_cast<void *>(p),
                       sz,
                       static_cast<std::align_val_t>(alignof(std::max_align_t)));

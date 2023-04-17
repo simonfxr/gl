@@ -21,15 +21,12 @@
 
 #include <bl/new.hpp>
 
-#include <memory>
-
 namespace ge {
 
-struct GE_API Engine : private bl::runtime_sized_base
+struct GE_API Engine : bl::runtime_sized_base<Engine>
 {
-    static Engine *construct_at(Engine *, PluginSet &) noexcept;
-    static Engine *construct_at(Engine *) noexcept;
-    static void destroy_at(Engine *) noexcept;
+    static Engine &construct_at(void *, PluginSet &) noexcept;
+    static Engine &construct_at(void *) noexcept;
 
     GameWindow &window();
     GameLoop &gameLoop();
@@ -47,7 +44,7 @@ struct GE_API Engine : private bl::runtime_sized_base
     sys::io::OutStream &out();
     void out(sys::io::OutStream &);
 
-    const std::string &programName() const;
+    [[nodiscard]] const std::string &programName() const;
 
     math::real now();
 
@@ -60,12 +57,7 @@ struct GE_API Engine : private bl::runtime_sized_base
 
     void setDevelDataDir(const std::string &);
 
-    friend size_t invoke(bl::runtime_size_f, bl::type_proxy<Engine>) noexcept;
-
-private:
-    struct Data;
-    Data &m();
-    [[nodiscard]] const Data &m() const;
+    BL_DECLARE_RUNTIME_SIZED(Impl);
 };
 
 static_assert(bl::runtime_sized<Engine>);
