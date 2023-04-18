@@ -4,10 +4,16 @@
 #include "ge/Camera.hpp"
 #include "ge/Plugin.hpp"
 
+#include <bl/new.hpp>
+
 namespace ge {
 
-struct GE_API MouseLookPlugin final : public PluginImpl<MouseLookPlugin>
+struct GE_API MouseLookPlugin
+  : private bl::runtime_sized_base<MouseLookPlugin>
+  , public PluginImpl<MouseLookPlugin>
 {
+    static MouseLookPlugin &construct_at(void *) noexcept;
+
     enum State : uint8_t
     {
         Grabbing,
@@ -19,9 +25,6 @@ struct GE_API MouseLookPlugin final : public PluginImpl<MouseLookPlugin>
         CommandPtr grab;
         CommandPtr ungrab;
     };
-
-    MouseLookPlugin();
-    ~MouseLookPlugin() override;
 
     void shouldGrabMouse(bool grab);
     bool shouldGrabMouse() const;
@@ -36,8 +39,7 @@ struct GE_API MouseLookPlugin final : public PluginImpl<MouseLookPlugin>
     void registerWith(Engine &) override;
     void registerCommands(CommandProcessor &) override;
 
-private:
-    DECLARE_PIMPL(GE_API, self);
+    BL_DECLARE_RUNTIME_SIZED(MouseLookPlugin, Impl);
 };
 
 } // namespace ge

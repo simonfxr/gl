@@ -49,7 +49,8 @@ public:
 };
 
 template<typename Self, typename... Plugins>
-using Anim3D = Anim<Self, Camera, MouseLookPlugin, Plugins...>;
+using Anim3D =
+  Anim<Self, bl::box<Camera>, bl::box<MouseLookPlugin>, Plugins...>;
 
 template<typename Self, typename... Plugins>
 int

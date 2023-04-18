@@ -9,7 +9,7 @@
 #include "glt/Frame.hpp"
 #include "math/fvec.hpp"
 
-#include <memory>
+#include <bl/new.hpp>
 
 namespace ge {
 
@@ -37,7 +37,9 @@ struct GE_API CameraRotated
     {}
 };
 
-struct GE_API Camera final : public PluginImpl<Camera>
+struct GE_API Camera
+  : private bl::runtime_sized_base<Camera>
+  , public PluginImpl<Camera>
 {
     struct Events
     {
@@ -54,34 +56,32 @@ struct GE_API Camera final : public PluginImpl<Camera>
         CommandPtr sensitivity;
     };
 
-    Camera();
-    ~Camera() override;
+    static Camera &construct_at(void *) noexcept;
 
     Commands &commands();
 
     Events &events();
 
-    math::vec2 mouseSensitivity() const;
+    [[nodiscard]] math::vec2 mouseSensitivity() const;
     void mouseSensitivity(const math::vec2 &);
 
-    math::real speed() const;
+    [[nodiscard]] math::real speed() const;
     void speed(math::real);
 
     glt::Frame &frame();
     void frame(const glt::Frame &);
 
-    const std::string &framePath() const;
+    [[nodiscard]] const std::string &framePath() const;
     void framePath(const std::string &);
 
     void mouseMoved(int16_t dx, int16_t dy);
 
     void mouseLook(bool enable);
 
-    void registerWith(Engine &e) final override;
-    void registerCommands(CommandProcessor &proc) final override;
+    void registerWith(Engine &e) final;
+    void registerCommands(CommandProcessor &proc) final;
 
-private:
-    DECLARE_PIMPL(GE_API, self);
+    BL_DECLARE_RUNTIME_SIZED(Camera, Impl);
 };
 
 } // namespace ge

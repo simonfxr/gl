@@ -11,7 +11,6 @@
 
 #include <bl/new.hpp>
 
-#include <memory>
 #include <string>
 
 namespace ge {

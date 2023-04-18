@@ -3,8 +3,6 @@
 
 #include "ge/EngineEvents.hpp"
 
-#include <memory>
-
 namespace ge {
 
 enum RunLevel

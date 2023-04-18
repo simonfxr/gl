@@ -4,13 +4,11 @@
 #include "ge/KeyBinding.hpp"
 #include "ge/conf.hpp"
 #include "pp/enum.hpp"
-#include "pp/pimpl.hpp"
 #include "sys/io/Stream.hpp"
 #include "util/Comparable.hpp"
 
 #include <bl/new.hpp>
 
-#include <memory>
 #include <span>
 #include <string>
 #include <vector>

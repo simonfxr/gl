@@ -3,7 +3,6 @@
 
 #include "ge/Command.hpp"
 #include "ge/CommandArgs.hpp"
-#include "pp/pimpl.hpp"
 #include "sys/io/Stream.hpp"
 
 #include <bl/new.hpp>

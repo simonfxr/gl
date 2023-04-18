@@ -5,8 +5,6 @@
 #include "ge/KeyBinding.hpp"
 #include "ge/conf.hpp"
 
-#include <memory>
-
 namespace ge {
 
 struct KeyHandler;

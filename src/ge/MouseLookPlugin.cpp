@@ -5,9 +5,9 @@
 
 namespace ge {
 
-struct MouseLookPlugin::Data
+struct MouseLookPlugin::Impl : public MouseLookPlugin
 {
-    Data();
+    Impl();
 
     Engine *_engine{};
     bool _should_grab{ true };
@@ -19,9 +19,9 @@ struct MouseLookPlugin::Data
     void setState(State new_state);
 };
 
-DECLARE_PIMPL_DEL(MouseLookPlugin)
+BL_DEFINE_RUNTIME_SIZED(MouseLookPlugin, MouseLookPlugin::Impl);
 
-MouseLookPlugin::Data::Data()
+MouseLookPlugin::Impl::Impl()
 {
     _commands.grab = makeCommand(
       "mouseLook.grab", "", [this](const Event<CommandEvent> & /*unused*/) {
@@ -36,7 +36,7 @@ MouseLookPlugin::Data::Data()
 }
 
 void
-MouseLookPlugin::Data::stateChanged(State new_state) const
+MouseLookPlugin::Impl::stateChanged(State new_state) const
 {
     if (_engine == nullptr)
         return;
@@ -62,7 +62,7 @@ MouseLookPlugin::Data::stateChanged(State new_state) const
 }
 
 void
-MouseLookPlugin::Data::setState(State new_state)
+MouseLookPlugin::Impl::setState(State new_state)
 {
     if (_state != new_state) {
         _state = new_state;
@@ -70,64 +70,66 @@ MouseLookPlugin::Data::setState(State new_state)
     }
 }
 
-MouseLookPlugin::MouseLookPlugin() : self(new Data) {}
-
-MouseLookPlugin::~MouseLookPlugin() = default;
+MouseLookPlugin &
+MouseLookPlugin::construct_at(void *p) noexcept
+{
+    return construct_impl(p);
+}
 
 void
 MouseLookPlugin::shouldGrabMouse(bool grab)
 {
-    self->_should_grab = grab;
-    self->setState(grab ? Grabbing : Free);
+    m()._should_grab = grab;
+    m().setState(grab ? Grabbing : Free);
 }
 
 bool
 MouseLookPlugin::shouldGrabMouse() const
 {
-    return self->_should_grab;
+    return m()._should_grab;
 }
 
 void
 MouseLookPlugin::state(MouseLookPlugin::State state)
 {
-    self->setState(state);
+    m().setState(state);
 }
 
 MouseLookPlugin::State
 MouseLookPlugin::state() const
 {
-    return self->_state;
+    return m()._state;
 }
 
 Camera *
 MouseLookPlugin::camera()
 {
-    return self->_camera;
+    return m()._camera;
 }
 
 MouseLookPlugin::Commands &
 MouseLookPlugin::commands()
 {
-    return self->_commands;
+    return m()._commands;
 }
 
 void
 MouseLookPlugin::registerWith(Engine &e)
 {
-    self->_engine = &e;
-    self->_camera = e.pluginSet().findPluginOrAbort<Camera>();
+    m()._engine = &e;
+    m()._camera = e.pluginSet().findPluginOrAbort<Camera>();
     auto &win = e.window();
 
     win.events().mouseButton.reg([this](const Event<MouseButton> &ev) {
-        if (self->_should_grab && self->_state == Free) {
-            self->setState(Grabbing);
+        if (m()._should_grab && m()._state == Free) {
+            m().setState(Grabbing);
             ev.abort = true;
         }
     });
 
     win.events().mouseMoved.reg([this](const Event<MouseMoved> &ev) {
         auto &curwin = ev.info.window;
-        if (self->_state == Grabbing) {
+        if (m()._state == Grabbing) {
             size_t w;
 
             size_t h;
@@ -138,14 +140,14 @@ MouseLookPlugin::registerWith(Engine &e)
     });
 
     win.events().focusChanged.reg(
-      [this](const Event<FocusChanged> & /*unused*/) { self->setState(Free); });
+      [this](const Event<FocusChanged> & /*unused*/) { m().setState(Free); });
 }
 
 void
 MouseLookPlugin::registerCommands(CommandProcessor &proc)
 {
-    proc.define(self->_commands.grab);
-    proc.define(self->_commands.ungrab);
+    proc.define(m()._commands.grab);
+    proc.define(m()._commands.ungrab);
 }
 
 } // namespace ge

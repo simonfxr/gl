@@ -1,6 +1,8 @@
 #ifndef GE_PLUGIN_HPP
 #define GE_PLUGIN_HPP
 
+#include "bl/box.hpp"
+#include "bl/mp.hpp"
 #include "ge/conf.hpp"
 
 #include "err/err.hpp"
@@ -94,6 +96,16 @@ struct GE_API FixedPluginSet final : PluginSet
     template<typename P>
     decltype(auto) get()
     {
+        if constexpr (requires(P & p) { std::get<P>(plugins); }) {
+            return std::get<P>(plugins);
+        } else {
+            return *std::get<bl::box<P>>(plugins);
+        }
+    }
+
+    template<typename P>
+    decltype(auto) get_of(bl::type_proxy<P>)
+    {
         return std::get<P>(plugins);
     }
 
@@ -120,12 +132,25 @@ private:
         (..., registerPlugin<Is>());
     }
 
+    template<typename T>
+    decltype(auto) unwrap_plugin(bl::box<T> &p)
+    {
+        return *p;
+    }
+
+    decltype(auto) unwrap_plugin(auto &p)
+    {
+        (void) static_cast<Plugin &>(p);
+        return p;
+    }
+
     template<size_t I>
     void registerPlugin()
     {
         auto &plugin = std::get<I>(plugins);
-        erased_plugins[I] = &plugin;
-        plugin_map[plugin.typeInfo()] = &plugin;
+        auto &up = unwrap_plugin(plugin);
+        erased_plugins[I] = &up;
+        plugin_map[up.typeInfo()] = &up;
     }
 };
 
