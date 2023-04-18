@@ -9,6 +9,8 @@
 #include "ge/KeyBinding.hpp"
 #include "ge/WindowRenderTarget.hpp"
 
+#include <bl/new.hpp>
+
 #include <memory>
 #include <string>
 
@@ -50,10 +52,11 @@ struct GE_API WindowOptions
     {}
 };
 
-struct GE_API GameWindow
+struct GE_API GameWindow : private bl::runtime_sized_base<GameWindow>
 {
-    GameWindow(const WindowOptions &opts = WindowOptions());
-    ~GameWindow();
+    static GameWindow &construct_at(
+      void *p,
+      const WindowOptions &opts = WindowOptions()) noexcept;
 
     void showMouseCursor(bool show);
     bool showMouseCursor() const;
@@ -83,8 +86,7 @@ struct GE_API GameWindow
 
     void registerHandlers(EngineEvents &evnts);
 
-private:
-    DECLARE_PIMPL(GE_API, self);
+    BL_DECLARE_RUNTIME_SIZED(GameWindow, Impl);
 };
 
 struct WindowEvent;

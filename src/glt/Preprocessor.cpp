@@ -23,7 +23,7 @@ Preprocessor::DirectiveHandler::directiveEncountered(
   const Preprocessor::DirectiveContext & /*unused*/)
 {}
 
-struct Preprocessor::Data
+struct Preprocessor::Impl : Preprocessor
 {
     Preprocessor::DirectiveHandler nullHandler;
     Preprocessor::DirectiveHandler *defaultHandler;
@@ -32,12 +32,16 @@ struct Preprocessor::Data
     std::string sourceName;
     bool errorState{ false };
 
-    Data() : defaultHandler(&nullHandler), out(&sys::io::stdout()) {}
+    Impl() : defaultHandler(&nullHandler), out(&sys::io::stdout()) {}
 };
 
-DECLARE_PIMPL_DEL(Preprocessor)
+BL_DEFINE_RUNTIME_SIZED(Preprocessor, Preprocessor::Impl);
 
-Preprocessor::Preprocessor() : self(new Data) {}
+Preprocessor &
+Preprocessor::construct_at(void *p) noexcept
+{
+    return construct_impl(p);
+}
 
 namespace {
 bool
@@ -55,16 +59,16 @@ Preprocessor::process(std::string_view data)
 
     const char *const begin = data.data();
     const size_t size = data.size();
-    DirectiveContext ctx(*this, std::string(self->sourceName));
+    DirectiveContext ctx(*this, std::string(m().sourceName));
 
     ctx.content.data = begin;
     ctx.content.size = size;
 
-    for (auto &handler : self->handlers) {
+    for (auto &handler : m().handlers) {
         handler.second->beginProcessing(ctx.content);
     }
 
-    self->defaultHandler->beginProcessing(ctx.content);
+    m().defaultHandler->beginProcessing(ctx.content);
 
     const char *const end = begin + size;
     const char *str = begin;
@@ -105,37 +109,37 @@ Preprocessor::process(std::string_view data)
         auto key = std::string(
           directiveBegin, static_cast<size_t>(directiveEnd - directiveBegin));
 
-        auto it = self->handlers.find(key);
-        if (it != self->handlers.end())
+        auto it = m().handlers.find(key);
+        if (it != m().handlers.end())
             it->second->directiveEncountered(ctx);
         else
-            self->defaultHandler->directiveEncountered(ctx);
+            m().defaultHandler->directiveEncountered(ctx);
     }
 
-    for (auto &handler : self->handlers)
+    for (auto &handler : m().handlers)
         handler.second->endProcessing(ctx.content);
 
-    self->defaultHandler->endProcessing(ctx.content);
+    m().defaultHandler->endProcessing(ctx.content);
 }
 
 Preprocessor::DirectiveHandler &
 Preprocessor::defaultHandler(Preprocessor::DirectiveHandler &handler)
 {
-    DirectiveHandler &old = *self->defaultHandler;
-    self->defaultHandler = &handler;
+    DirectiveHandler &old = *m().defaultHandler;
+    m().defaultHandler = &handler;
     return old;
 }
 
 Preprocessor::DirectiveHandler &
 Preprocessor::defaultHandler() const
 {
-    return *self->defaultHandler;
+    return *m().defaultHandler;
 }
 
 Preprocessor::Handlers &
-Preprocessor::handlers() const
+Preprocessor::handlers()
 {
-    return self->handlers;
+    return m().handlers;
 }
 
 Preprocessor::DirectiveHandler *
@@ -143,58 +147,58 @@ Preprocessor::installHandler(const std::string &directive,
                              DirectiveHandler &handler)
 {
     DirectiveHandler *old = nullptr;
-    auto it = self->handlers.find(directive);
-    if (it != self->handlers.end()) {
+    auto it = m().handlers.find(directive);
+    if (it != m().handlers.end()) {
         old = it->second;
     }
 
-    self->handlers.insert(HandlerEntry(directive, &handler));
+    m().handlers.insert(HandlerEntry(directive, &handler));
     return old;
 }
 
 sys::io::OutStream &
 Preprocessor::out()
 {
-    return *self->out;
+    return *m().out;
 }
 
 void
 Preprocessor::out(sys::io::OutStream &out)
 {
-    self->out = &out;
+    m().out = &out;
 }
 
 bool
 Preprocessor::setError()
 {
     WARN("setting error");
-    return std::exchange(self->errorState, true);
+    return std::exchange(m().errorState, true);
 }
 
 bool
 Preprocessor::wasError() const
 {
-    if (self->errorState)
+    if (m().errorState)
         WARN("in Error state");
-    return self->errorState;
+    return m().errorState;
 }
 
 bool
 Preprocessor::clearError()
 {
-    return std::exchange(self->errorState, false);
+    return std::exchange(m().errorState, false);
 }
 
 const std::string &
 Preprocessor::name() const
 {
-    return self->sourceName;
+    return m().sourceName;
 }
 
 void
 Preprocessor::name(std::string &&name)
 {
-    self->sourceName = std::move(name);
+    m().sourceName = std::move(name);
 }
 
 // Preprocessor::DirectiveHandler &Preprocessor::nullHandler() {

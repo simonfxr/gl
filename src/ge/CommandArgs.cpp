@@ -18,24 +18,9 @@ namespace {
 
 template<typename T>
 void
-destroy(T &x)
-{
-    x.~T();
-}
-
-template<typename T>
-void
 copy(T *dest, const T &x)
 {
     new (dest) T(x);
-}
-
-template<typename T>
-void
-destructive_move(T *dest, T &&from)
-{
-    new (dest) T(std::forward<T>(from));
-    from.~T();
 }
 
 } // namespace
@@ -90,7 +75,7 @@ CommandArg::operator=(CommandArg &&rhs) noexcept
     rhs._type = CommandArgType::Nil;
     switch (_type.value) {
     case CommandArgType::String:
-        destructive_move(&string, std::move(rhs.string));
+        bl::relocate_at(&rhs.string, &string);
         return *this;
     case CommandArgType::Integer:
         integer = rhs.integer;
@@ -99,13 +84,13 @@ CommandArg::operator=(CommandArg &&rhs) noexcept
         number = rhs.number;
         return *this;
     case CommandArgType::KeyCombo:
-        destructive_move(&keyBinding, std::move(rhs.keyBinding));
+        bl::relocate_at(&rhs.keyBinding, &keyBinding);
         return *this;
     case CommandArgType::CommandRef:
-        destructive_move(&command, std::move(rhs.command));
+        bl::relocate_at(&rhs.command, &command);
         return *this;
     case CommandArgType::VarRef:
-        destructive_move(&var, std::move(rhs.var));
+        bl::relocate_at(&rhs.var, &var);
         return *this;
     case CommandArgType::Nil:
         return *this;
@@ -124,19 +109,19 @@ CommandArg::reset()
 {
     switch (std::exchange(_type.value, CommandArgType::Nil)) {
     case CommandArgType::String:
-        destroy(string);
+        bl::destroy_at(&string);
         return;
     case CommandArgType::Integer:
     case CommandArgType::Number:
         return;
     case CommandArgType::KeyCombo:
-        destroy(keyBinding);
+        bl::destroy_at(&keyBinding);
         return;
     case CommandArgType::CommandRef:
-        destroy(command);
+        bl::destroy_at(&command);
         return;
     case CommandArgType::VarRef:
-        destroy(var);
+        bl::destroy_at(&var);
         return;
     case CommandArgType::Nil:
         return;
@@ -185,7 +170,7 @@ struct PrettyQuotation
     size_t len{};
 };
 
-struct CommandPrettyPrinter::Data
+struct CommandPrettyPrinter::Impl : public CommandPrettyPrinter
 {
     sys::io::OutStream *out;
     sys::io::OutStream *current_out;
@@ -196,42 +181,42 @@ struct CommandPrettyPrinter::Data
 
     std::vector<std::shared_ptr<PrettyQuotation>> quotations;
 
-    Data() : out(&sys::io::stdout()), current_out(out) {}
+    Impl() : out(&sys::io::stdout()), current_out(out) {}
+    ~Impl() { flush(); }
 };
 
-DECLARE_PIMPL_DEL(CommandPrettyPrinter)
+BL_DEFINE_RUNTIME_SIZED(CommandPrettyPrinter, CommandPrettyPrinter::Impl);
 
-CommandPrettyPrinter::CommandPrettyPrinter() : self(new Data) {}
-
-CommandPrettyPrinter::~CommandPrettyPrinter()
+CommandPrettyPrinter &
+CommandPrettyPrinter::construct_at(void *p) noexcept
 {
-    flush();
+    return construct_impl(p);
 }
 
 void
 CommandPrettyPrinter::out(sys::io::OutStream &_out)
 {
-    self->out = &_out;
-    if (self->quotations.empty())
-        self->current_out = self->out;
+    m().out = &_out;
+    if (m().quotations.empty())
+        m().current_out = m().out;
 }
 
 void
 CommandPrettyPrinter::lineLength(size_t len)
 {
-    self->line_len = len;
+    m().line_len = len;
 }
 
 void
 CommandPrettyPrinter::blockIndent(size_t indent)
 {
-    self->block_indent = indent;
+    m().block_indent = indent;
 }
 
 void
 CommandPrettyPrinter::ignoreEmptyStatements(bool ignore)
 {
-    self->ignore_empty_statements = ignore;
+    m().ignore_empty_statements = ignore;
 }
 
 void
@@ -240,7 +225,7 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
     const char *sep = "[";
 
     for (const auto &k : bind) {
-        *self->current_out << sep;
+        *m().current_out << sep;
         sep = ", ";
         char pre = 0;
         switch (k.state) {
@@ -259,17 +244,17 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
         }
 
         if (pre != 0)
-            *self->current_out << pre;
+            *m().current_out << pre;
 
         auto sym = to_string(k.code);
         if (!sym)
-            *self->current_out << "<unknown key code: " << k.code.numeric()
-                               << ">";
+            *m().current_out << "<unknown key code: " << k.code.numeric()
+                             << ">";
         else
-            *self->current_out << sym;
+            *m().current_out << sym;
     }
 
-    *self->current_out << "]";
+    *m().current_out << "]";
 }
 
 void
@@ -277,21 +262,21 @@ CommandPrettyPrinter::print(const CommandArg &arg, bool first)
 {
     switch (arg.type().value) {
     case CommandArgType::String:
-        *self->current_out << '"' << arg.string << '"';
+        *m().current_out << '"' << arg.string << '"';
         return;
     case CommandArgType::Integer:
-        *self->current_out << arg.integer;
+        *m().current_out << arg.integer;
         return;
     case CommandArgType::Number:
-        *self->current_out << arg.number;
+        *m().current_out << arg.number;
         return;
     case CommandArgType::KeyCombo:
         print(arg.keyBinding);
         return;
     case CommandArgType::CommandRef: {
         if (!first)
-            *self->current_out << '&';
-        *self->current_out << *arg.command.name;
+            *m().current_out << '&';
+        *m().current_out << *arg.command.name;
         if (!arg.command.ref)
             return;
         auto q = arg.command.ref->castToQuotation();
@@ -300,10 +285,10 @@ CommandPrettyPrinter::print(const CommandArg &arg, bool first)
         return;
     }
     case CommandArgType::VarRef:
-        *self->current_out << '$' << arg.var;
+        *m().current_out << '$' << arg.var;
         return;
     case CommandArgType::Nil:
-        *self->current_out << "nil type not allowed: " << arg.type();
+        *m().current_out << "nil type not allowed: " << arg.type();
         return;
     }
     UNREACHABLE;
@@ -313,12 +298,12 @@ void
 CommandPrettyPrinter::print(std::span<const CommandArg> statement)
 {
 
-    if (self->ignore_empty_statements && statement.empty())
+    if (m().ignore_empty_statements && statement.empty())
         return;
 
     auto first = true;
     for (auto &stmt : statement) {
-        *self->current_out << (first ? "" : " ");
+        *m().current_out << (first ? "" : " ");
         print(stmt, first);
     }
 }
@@ -330,7 +315,7 @@ CommandPrettyPrinter::print(const Quotation &q)
 
     for (const auto &qi : q) {
         print(std::span(qi));
-        auto &pq = self->quotations.back();
+        auto &pq = m().quotations.back();
         pq->statements.push_back(pq->out.str());
         pq->out.truncate(0);
         pq->len += pq->statements.back().length();
@@ -342,8 +327,8 @@ CommandPrettyPrinter::print(const Quotation &q)
 void
 CommandPrettyPrinter::openQuotation()
 {
-    self->quotations.push_back(std::make_shared<PrettyQuotation>());
-    self->current_out = &self->quotations.back()->out;
+    m().quotations.push_back(std::make_shared<PrettyQuotation>());
+    m().current_out = &m().quotations.back()->out;
 }
 
 void
@@ -351,27 +336,26 @@ CommandPrettyPrinter::closeQuotation()
 {
     // FIXME: output is ugly
 
-    auto depth = self->quotations.size();
-    auto indent = self->block_indent * depth;
-    auto &q = self->quotations.back();
+    auto depth = m().quotations.size();
+    auto indent = m().block_indent * depth;
+    auto &q = m().quotations.back();
     auto nln = q->statements.size();
 
-    self->current_out =
-      depth == 1 ? self->out : &self->quotations[depth - 2]->out;
+    m().current_out = depth == 1 ? m().out : &m().quotations[depth - 2]->out;
 
     if (nln == 0) {
         printSpaces(indent);
-        *self->current_out << "{}";
+        *m().current_out << "{}";
     } else {
-        *self->current_out << "{";
+        *m().current_out << "{";
         for (const auto &qi : q->statements) {
             printSpaces(indent);
-            *self->current_out << qi << "\n";
+            *m().current_out << qi << "\n";
         }
-        *self->current_out << "}";
+        *m().current_out << "}";
     }
 
-    self->quotations.pop_back();
+    m().quotations.pop_back();
 }
 
 void
@@ -379,7 +363,7 @@ CommandPrettyPrinter::printSpaces(size_t n)
 {
     for (auto i : irange(n)) {
         UNUSED(i);
-        *self->current_out << " ";
+        *m().current_out << " ";
     }
 }
 

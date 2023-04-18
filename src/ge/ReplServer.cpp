@@ -132,9 +132,8 @@ Client::handleIO(Engine &e)
 
 } // namespace
 
-struct ReplServer::Data
+struct ReplServer::Impl : public ReplServer
 {
-    ReplServer &self;
     Socket server;
     std::vector<std::shared_ptr<Client>> clients;
     bool running{ false };
@@ -142,32 +141,31 @@ struct ReplServer::Data
     Engine &engine;
     std::shared_ptr<EventHandler<InputEvent>> io_handler;
 
-    Data(ReplServer &self_,
-         Engine &e,
-         std::shared_ptr<EventHandler<InputEvent>> _handler)
-      : self(self_), engine(e), io_handler(std::move(_handler))
+    Impl(Engine &e)
+      : engine(e)
+      , io_handler(makeEventHandler(*this, &ReplServer::handleInputEvent))
     {}
+
+    ~Impl()
+    {
+        if (running)
+            shutdown();
+    }
 };
 
-DECLARE_PIMPL_DEL(ReplServer)
+BL_DEFINE_RUNTIME_SIZED(ReplServer, ReplServer::Impl);
 
-ReplServer::ReplServer(Engine &e)
-  : self(new Data(*this,
-                  e,
-                  makeEventHandler(*this, &ReplServer::handleInputEvent)))
-{}
-
-ReplServer::~ReplServer()
+ReplServer &
+ReplServer::construct_at(void *p, Engine &e) noexcept
 {
-    if (self->running)
-        shutdown();
+    return construct_impl(p, e);
 }
 
 bool
 ReplServer::start(const IPAddr4 &listen_addr, uint16_t port)
 {
 
-    if (self->running) {
+    if (m().running) {
         ERR("already running");
         return false;
     }
@@ -178,30 +176,30 @@ ReplServer::start(const IPAddr4 &listen_addr, uint16_t port)
           string_concat("failed to open socket for listening: ", sock.error()));
         return false;
     }
-    self->server = std::move(sock).value();
-    self->running = true;
+    m().server = std::move(sock).value();
+    m().running = true;
     return true;
 }
 
 bool
 ReplServer::running()
 {
-    return self->running;
+    return m().running;
 }
 
 const std::shared_ptr<EventHandler<InputEvent>> &
 ReplServer::ioHandler()
 {
-    return self->io_handler;
+    return m().io_handler;
 }
 
 void
 ReplServer::acceptClients()
 {
-    ASSERT(self->running);
+    ASSERT(m().running);
 
     for (;;) {
-        auto opt_hndl = accept(self->server);
+        auto opt_hndl = accept(m().server);
         if (!opt_hndl)
             break;
         auto handle = std::move(opt_hndl).value();
@@ -210,8 +208,8 @@ ReplServer::acceptClients()
             ERR("couldnt set nonblocking handle mode, closing connection");
             sys::io::close(handle);
         } else {
-            self->clients.push_back(
-              std::make_shared<Client>(self->next_id++, std::move(handle)));
+            m().clients.push_back(
+              std::make_shared<Client>(m().next_id++, std::move(handle)));
         }
     }
 }
@@ -219,12 +217,12 @@ ReplServer::acceptClients()
 void
 ReplServer::handleClients()
 {
-    ASSERT(self->running);
+    ASSERT(m().running);
 
-    for (auto it = self->clients.begin(); it != self->clients.end();) {
-        if (!(*it)->handle(self->engine)) {
+    for (auto it = m().clients.begin(); it != m().clients.end();) {
+        if (!(*it)->handle(m().engine)) {
             INFO("closing connection to client");
-            self->clients.erase(it);
+            m().clients.erase(it);
         } else {
             ++it;
         }
@@ -247,10 +245,10 @@ ReplServer::handleInputEvent(const Event<InputEvent> & /*unused*/)
 void
 ReplServer::shutdown()
 {
-    ASSERT(self->running);
+    ASSERT(m().running);
 
-    self->clients.clear();
-    close(self->server);
+    m().clients.clear();
+    close(m().server);
 }
 
 } // namespace ge

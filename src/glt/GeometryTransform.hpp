@@ -6,8 +6,8 @@
 #include "math/fvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-#include "pp/pimpl.hpp"
 
+#include <bl/box.hpp>
 #include <bl/noncopymove.hpp>
 
 #include <memory>
@@ -19,8 +19,9 @@ inline constexpr uint32_t GEOMETRY_TRANSFORM_MAX_DEPTH = 16;
 struct SavePoint;
 
 struct GLT_API GeometryTransform
+  : private bl::runtime_sized_base<GeometryTransform>
 {
-    GeometryTransform();
+    static GeometryTransform &construct_at(void *) noexcept;
 
     const math::mat4_t &modelMatrix() const;
     const math::mat4_t &viewMatrix() const;
@@ -65,8 +66,7 @@ struct GLT_API GeometryTransform
 
     size_t depth() const;
 
-private:
-    DECLARE_PIMPL(GLT_API, self);
+    BL_DECLARE_RUNTIME_SIZED(GeometryTransform, Impl);
 };
 
 struct GLT_API SavePoint : private bl::non_copyable

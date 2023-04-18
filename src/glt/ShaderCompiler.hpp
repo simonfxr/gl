@@ -9,7 +9,10 @@
 #include "glt/ShaderManager.hpp"
 #include "opengl.hpp"
 #include "pp/enum.hpp"
+#include "pp/pimpl.hpp"
 #include "sys/fs.hpp"
+
+#include <bl/new.hpp>
 
 #include <memory>
 #include <string>
@@ -136,9 +139,9 @@ private:
 // clang-format on
 PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_COMPILER_ERROR_ENUM_DEF);
 
-struct GLT_API ShaderCompiler
+struct GLT_API ShaderCompiler : private bl::runtime_sized_base<ShaderCompiler>
 {
-    explicit ShaderCompiler(ShaderManager &);
+    static ShaderCompiler &construct_at(void *, ShaderManager &) noexcept;
 
     ShaderManager &shaderManager();
     const std::shared_ptr<ShaderCache> &shaderCache();
@@ -149,14 +152,19 @@ struct GLT_API ShaderCompiler
 
 private:
     friend struct ShaderSource;
-    DECLARE_PIMPL(GLT_API, self);
+
+    BL_DECLARE_RUNTIME_SIZED(ShaderCompiler, Impl);
 };
 
-struct GLT_API ShaderCompilerQueue : public err::WithError<ShaderCompilerError>
+struct GLT_API ShaderCompilerQueue
+  : private bl::runtime_sized_base<ShaderCompilerQueue>
+  , public err::WithError<ShaderCompilerError>
 {
-    ShaderCompilerQueue(ShaderCompiler &comp,
-                        ShaderObjects &_compiled,
-                        ShaderCompileFlags flgs = SC_DEFAULT_FLAGS);
+    static ShaderCompilerQueue &construct_at(
+      void *,
+      ShaderCompiler &comp,
+      ShaderObjects &_compiled,
+      ShaderCompileFlags flgs = SC_DEFAULT_FLAGS) noexcept;
 
     ShaderCompiler &shaderCompiler();
 
@@ -164,8 +172,7 @@ struct GLT_API ShaderCompilerQueue : public err::WithError<ShaderCompilerError>
     void enqueueReload(const std::shared_ptr<ShaderObject> &);
     void compileAll();
 
-private:
-    DECLARE_PIMPL(GLT_API, self);
+    BL_DECLARE_RUNTIME_SIZED(ShaderCompilerQueue, Impl);
 };
 
 } // namespace glt

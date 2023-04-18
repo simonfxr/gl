@@ -5,16 +5,16 @@
 
 #include "ge/EngineEvents.hpp"
 #include "ge/Event.hpp"
-#include "pp/pimpl.hpp"
+
+#include <bl/new.hpp>
 
 namespace ge {
 
 struct Engine;
 
-struct GE_API ReplServer
+struct GE_API ReplServer : bl::runtime_sized_base<ReplServer>
 {
-    ReplServer(Engine &);
-    ~ReplServer();
+    static ReplServer &construct_at(void *, Engine &) noexcept;
 
     bool start(const sys::io::IPAddr4 &, uint16_t);
     bool running();
@@ -28,8 +28,7 @@ struct GE_API ReplServer
 
     const std::shared_ptr<EventHandler<InputEvent>> &ioHandler();
 
-private:
-    DECLARE_PIMPL(GE_API, self);
+    BL_DECLARE_RUNTIME_SIZED(ReplServer, Impl);
 };
 
 } // namespace ge

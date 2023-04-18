@@ -16,6 +16,10 @@ struct owned
             ptr_traits<T>::is_nullable,
             true>
 {
+    using Base = ptr_ops<owned<T, Deleter>,
+                         typename ptr_traits<T>::element_type,
+                         ptr_traits<T>::is_nullable,
+                         true>;
     using _traits = ptr_traits<T>;
     using element_type = typename _traits::element_type;
     static inline constexpr bool is_nullable = _traits::is_nullable;
@@ -57,6 +61,8 @@ struct owned
     owned(const owned &rhs) = delete;
 
     BL_wrapper owned(owned &&rhs) noexcept = default;
+
+    using Base::operator=;
 
     owned &operator=(const owned &) = delete;
 

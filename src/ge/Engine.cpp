@@ -11,12 +11,14 @@
 #include "sys/fs.hpp"
 #include "sys/sys.hpp"
 
+#include <bl/box.hpp>
+
 namespace ge {
 
 using math::real;
 
 struct Engine::Impl
-  : bl::runtime_sized_impl<Engine, Engine::Impl>
+  : Engine
   , GameLoop::Game
 {
     struct Modules
@@ -40,11 +42,11 @@ struct Engine::Impl
 
     Modules _modules;
 
-    std::unique_ptr<GameWindow> window;
+    bl::nullable_owned_ptr<GameWindow> window;
     GameLoop gameLoop;
-    CommandProcessor commandProcessor;
-    KeyHandler keyHandler;
-    ReplServer replServer;
+    bl::box<CommandProcessor> commandProcessor;
+    bl::box<KeyHandler> keyHandler;
+    bl::box<ReplServer> replServer;
     bool skipRender{ false };
     std::string programName;
     std::string develDataDir;
@@ -54,8 +56,8 @@ struct Engine::Impl
     bool initialized{ false };
     const EngineOptions *opts{}; // only during init
 
-    glt::ShaderManager shaderManager;
-    glt::RenderManager renderManager;
+    bl::box<glt::ShaderManager> shaderManager;
+    bl::box<glt::RenderManager> renderManager;
 
     EngineEvents events;
 
@@ -64,9 +66,9 @@ struct Engine::Impl
 
     explicit Impl(PluginSet *ps)
       : gameLoop(60, 5, 120)
-      , commandProcessor(*this)
-      , keyHandler(commandProcessor)
-      , replServer(*this)
+      , commandProcessor(std::in_place, *this)
+      , keyHandler(std::in_place, *commandProcessor)
+      , replServer(std::in_place, *this)
       , out(&sys::io::stdout())
       , pluginSet(ps ? *ps : emptyPluginSet)
     {}
@@ -85,8 +87,8 @@ struct Engine::Impl
 
     ~Impl() override
     {
-        renderManager.shutdown();
-        shaderManager.shutdown();
+        renderManager->shutdown();
+        shaderManager->shutdown();
     }
 };
 
@@ -112,7 +114,7 @@ Engine::construct_at(void *p) noexcept
 GameWindow &
 Engine::window()
 {
-    ASSERT(m().window != nullptr, "window not available, too early init phase");
+    ASSERT(m().window, "window not available, too early init phase");
     return *m().window;
 }
 
@@ -125,31 +127,31 @@ Engine::gameLoop()
 CommandProcessor &
 Engine::commandProcessor()
 {
-    return m().commandProcessor;
+    return *m().commandProcessor;
 }
 
 KeyHandler &
 Engine::keyHandler()
 {
-    return m().keyHandler;
+    return *m().keyHandler;
 }
 
 ReplServer &
 Engine::replServer()
 {
-    return m().replServer;
+    return *m().replServer;
 }
 
 glt::ShaderManager &
 Engine::shaderManager()
 {
-    return m().shaderManager;
+    return *m().shaderManager;
 }
 
 glt::RenderManager &
 Engine::renderManager()
 {
-    return m().renderManager;
+    return *m().renderManager;
 }
 
 EngineEvents &
@@ -210,7 +212,7 @@ Engine::run(const EngineOptions &opts)
 #endif
     }
 
-    m().shaderManager.dumpShadersEnable(opts.dumpShaders);
+    m().shaderManager->dumpShadersEnable(opts.dumpShaders);
 
     m().skipRender = opts.disableRender;
 
@@ -320,10 +322,10 @@ Engine::Impl::render(double interpolation)
       Event(RenderEvent(m(), static_cast<real>(interpolation))));
     if (!skipRender) {
         GL_TRACE("BEGIN_SCENE");
-        renderManager.beginScene();
+        renderManager->beginScene();
         events.render.raise(
           Event(RenderEvent(m(), static_cast<real>(interpolation))));
-        renderManager.endScene();
+        renderManager->endScene();
         GL_TRACE("END_SCENE");
     }
     events.afterRender.raise(
@@ -358,8 +360,8 @@ bool
 Engine::Impl::init(const EngineOptions &eopts)
 {
     opts = &eopts;
-    window = std::make_unique<GameWindow>(eopts.window);
-    renderManager.setDefaultRenderTarget(window->renderTarget());
+    window = bl::new_obj<GameWindow>(eopts.window);
+    renderManager->setDefaultRenderTarget(window->renderTarget());
     registerHandlers();
     initialized = true;
     return true;
@@ -403,25 +405,26 @@ Engine::Impl::registerHandlers()
       [this](const Event<WindowEvent> & /*unused*/) { gameLoop.exit(0); });
 
     window->events().keyChanged.reg([this](const Event<KeyChanged> &ev) {
-        keyHandler.keyEvent(ev.info.key);
+        keyHandler->keyEvent(ev.info.key);
     });
 
     window->events().focusChanged.reg([this](const Event<FocusChanged> &ev) {
         if (!ev.info.focused)
-            keyHandler.clearStates();
+            keyHandler->clearStates();
     });
 
     window->events().mouseButton.reg([this](const Event<MouseButton> &ev) {
-        keyHandler.keyEvent(ev.info.button);
+        keyHandler->keyEvent(ev.info.button);
     });
 
     window->events().windowResized.reg([this](const Event<WindowResized> &ev) {
-        renderManager.updateProjection(static_cast<math::real>(ev.info.width) /
-                                       static_cast<math::real>(ev.info.height));
+        renderManager->updateProjection(
+          static_cast<math::real>(ev.info.width) /
+          static_cast<math::real>(ev.info.height));
     });
 
     events.handleInput.reg([this](const Event<InputEvent> & /*unused*/) {
-        keyHandler.handleCommands();
+        keyHandler->handleCommands();
     });
 }
 

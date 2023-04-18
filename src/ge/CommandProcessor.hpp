@@ -6,6 +6,8 @@
 #include "pp/pimpl.hpp"
 #include "sys/io/Stream.hpp"
 
+#include <bl/new.hpp>
+
 #include <span>
 #include <string>
 #include <vector>
@@ -15,9 +17,9 @@ namespace ge {
 struct Engine;
 
 struct GE_API CommandProcessor
+  : private bl::runtime_sized_base<CommandProcessor>
 {
-    CommandProcessor(Engine &e);
-    ~CommandProcessor() noexcept;
+    static CommandProcessor &construct_at(void *p, Engine &e) noexcept;
 
     bool addScriptDirectory(std::string dir, bool check_exists = true);
     std::span<const std::string> scriptDirectories() const;
@@ -46,8 +48,7 @@ struct GE_API CommandProcessor
 
     static CommandParamType commandParamType(CommandArgType type);
 
-private:
-    DECLARE_PIMPL(GE_API, self);
+    BL_DECLARE_RUNTIME_SIZED(CommandProcessor, Impl);
 };
 
 } // namespace ge

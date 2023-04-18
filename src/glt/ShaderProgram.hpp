@@ -10,6 +10,7 @@
 #include "glt/type_info.hpp"
 #include "opengl.hpp"
 #include "pp/enum.hpp"
+#include "pp/pimpl.hpp"
 
 #include <span>
 

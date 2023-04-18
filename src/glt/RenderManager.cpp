@@ -25,10 +25,10 @@ struct SavePointHolder
     explicit SavePointHolder(GeometryTransform &gt) : sp{ gt.save() } {}
 };
 
-struct RenderManager::Data
+struct RenderManager::Impl : public RenderManager
 {
     ViewFrustum frustum;
-    GeometryTransform transform;
+    bl::box<GeometryTransform> transform;
     std::optional<SavePointHolder>
       transformStateBOS; // transform state in begin of scene
 
@@ -49,69 +49,64 @@ struct RenderManager::Data
     double max_elapsed{};
     FrameStatistics stats;
 
-    RenderManager &self;
-
     bool inScene{ false };
     bool projection_outdated{ true };
     bool perf_initialized{ false };
-
-    explicit Data(RenderManager &self_) : self(self_) {}
 
     void beginStats();
     void endStats();
 };
 
-DECLARE_PIMPL_DEL(RenderManager)
+BL_DEFINE_RUNTIME_SIZED(RenderManager, RenderManager::Impl);
 
-RenderManager::RenderManager() : self(new Data(*this)) {}
-
-RenderManager::~RenderManager()
+RenderManager &
+RenderManager::construct_at(void *p) noexcept
 {
-    shutdown();
+    return construct_impl(p);
 }
 
 void
 RenderManager::shutdown()
 {
-    if (self->current_rt) {
-        self->current_rt->deactivate();
-        self->current_rt.reset();
+    if (m().current_rt) {
+        m().current_rt->deactivate();
+        m().current_rt.reset();
     }
 
-    self->def_rt.reset();
+    m().def_rt.reset();
 
-    self->perf_counter.clear();
+    m().perf_counter.clear();
 }
 
 const ViewFrustum &
 RenderManager::viewFrustum() const
 {
-    return self->frustum;
+    return m().frustum;
 }
 
 const GeometryTransform &
 RenderManager::geometryTransform() const
 {
-    return self->transform;
+    return *m().transform;
 }
 
 GeometryTransform &
 RenderManager::geometryTransform()
 {
-    return self->transform;
+    return *m().transform;
 }
 
 void
 RenderManager::setDefaultProjection(const Projection &proj)
 {
-    self->projection = proj;
-    self->projection_outdated = true;
+    m().projection = proj;
+    m().projection_outdated = true;
 }
 
 void
 RenderManager::updateProjection(math::real aspectRatio)
 {
-    switch (self->projection.type) {
+    switch (m().projection.type) {
     case Projection::Identity:
         geometryTransform().loadProjectionMatrix(
           mat4(vec4(1.f, 0.f, 0.f, 0.f),
@@ -121,119 +116,118 @@ RenderManager::updateProjection(math::real aspectRatio)
         break;
     case Projection::Perspective:
         geometryTransform().loadProjectionMatrix(
-          perspectiveProjection(self->projection.perspective.fieldOfViewRad,
+          perspectiveProjection(m().projection.perspective.fieldOfViewRad,
                                 aspectRatio,
-                                self->projection.perspective.z_near,
-                                self->projection.perspective.z_far));
+                                m().projection.perspective.z_near,
+                                m().projection.perspective.z_far));
         break;
     }
-    self->projection_outdated = false;
+    m().projection_outdated = false;
 }
 
 void
 RenderManager::setDefaultRenderTarget(const std::shared_ptr<RenderTarget> &rt)
 {
-    if (rt != self->def_rt) {
+    if (rt != m().def_rt) {
 
-        if (self->current_rt && self->current_rt == self->def_rt) {
+        if (m().current_rt && m().current_rt == m().def_rt) {
             WARN("destroying active render target");
-            self->current_rt->deactivate();
-            self->current_rt.reset();
+            m().current_rt->deactivate();
+            m().current_rt.reset();
         }
 
-        self->def_rt = rt;
+        m().def_rt = rt;
     }
 }
 
 const std::shared_ptr<RenderTarget> &
 RenderManager::defaultRenderTarget() const
 {
-    return self->def_rt;
+    return m().def_rt;
 }
 
 void
 RenderManager::setDefaultRenderTarget()
 {
-    ASSERT(self->def_rt);
-    setActiveRenderTarget(self->def_rt);
+    ASSERT(m().def_rt);
+    setActiveRenderTarget(m().def_rt);
 }
 
 void
 RenderManager::setActiveRenderTarget(const std::shared_ptr<RenderTarget> &rt)
 {
-    if (rt != self->current_rt) {
-        if (self->current_rt) {
-            self->current_rt->deactivate();
-            self->current_rt.reset();
+    if (rt != m().current_rt) {
+        if (m().current_rt) {
+            m().current_rt->deactivate();
+            m().current_rt.reset();
         }
 
-        self->current_rt = rt;
-        if (self->current_rt)
-            self->current_rt->activate();
+        m().current_rt = rt;
+        if (m().current_rt)
+            m().current_rt->activate();
     }
 }
 
 const std::shared_ptr<RenderTarget> &
 RenderManager::activeRenderTarget() const
 {
-    return self->current_rt;
+    return m().current_rt;
 }
 
 void
 RenderManager::beginScene()
 {
-    ASSERT(!self->inScene, "nested beginScene()");
-    ASSERT(self->current_rt != nullptr || self->def_rt != nullptr,
+    ASSERT(!m().inScene, "nested beginScene()");
+    ASSERT(m().current_rt != nullptr || m().def_rt != nullptr,
            "no RenderTarget specified");
 
-    self->beginStats();
+    m().beginStats();
 
-    self->inScene = true;
+    m().inScene = true;
 
-    setActiveRenderTarget(self->def_rt);
-    self->current_rt->beginScene();
-    if (self->projection_outdated) {
-        auto w = self->current_rt->width();
-        auto h = self->current_rt->height();
+    setActiveRenderTarget(m().def_rt);
+    m().current_rt->beginScene();
+    if (m().projection_outdated) {
+        auto w = m().current_rt->width();
+        auto h = m().current_rt->height();
         using math::real;
         auto aspect_ratio = static_cast<real>(w) / static_cast<real>(h);
         updateProjection(aspect_ratio);
     }
 
-    self->transformStateBOS.emplace(self->transform);
-    self->frustum.update(self->transform.vpMatrix());
+    m().transformStateBOS.emplace(*m().transform);
+    m().frustum.update(m().transform->vpMatrix());
 }
 
 void
 RenderManager::endScene()
 {
-    ASSERT(self->inScene, "cannot endScene() without beginScene()");
-    self->inScene = false;
-    self->transformStateBOS = std::nullopt; // restore save point
-    self->endStats();                       // dont count swap buffers
-    if (self->current_rt != nullptr)
-        self->current_rt->draw();
+    ASSERT(m().inScene, "cannot endScene() without beginScene()");
+    m().inScene = false;
+    m().transformStateBOS = std::nullopt; // restore save point
+    m().endStats();                       // dont count swap buffers
+    if (m().current_rt != nullptr)
+        m().current_rt->draw();
 }
 
 FrameStatistics
 RenderManager::frameStatistics()
 {
-    self->stats.min = self->min_elapsed;
-    self->stats.max = self->max_elapsed;
-    self->stats.avg =
-      self->sum_elapsed /
-      static_cast<double>(self->frame_id_current - self->frame_id_last);
+    m().stats.min = m().min_elapsed;
+    m().stats.max = m().max_elapsed;
+    m().stats.avg = m().sum_elapsed / static_cast<double>(m().frame_id_current -
+                                                          m().frame_id_last);
 
-    self->frame_id_last = self->frame_id_current;
-    self->sum_elapsed = 0.0;
-    self->min_elapsed = std::numeric_limits<double>::infinity();
-    self->max_elapsed = 0.0;
+    m().frame_id_last = m().frame_id_current;
+    m().sum_elapsed = 0.0;
+    m().min_elapsed = std::numeric_limits<double>::infinity();
+    m().max_elapsed = 0.0;
 
-    return self->stats;
+    return m().stats;
 }
 
 void
-RenderManager::Data::beginStats()
+RenderManager::Impl::beginStats()
 {
     if (!perf_initialized) {
         perf_initialized = true;
@@ -258,7 +252,7 @@ RenderManager::Data::beginStats()
 }
 
 void
-RenderManager::Data::endStats()
+RenderManager::Impl::endStats()
 {
     perf_counter.end();
     ++frame_id_current;

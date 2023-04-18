@@ -3,8 +3,9 @@
 
 #include "glt/conf.hpp"
 #include "pp/enum.hpp"
-#include "pp/pimpl.hpp"
 #include "sys/io/Stream.hpp"
+
+#include <bl/new.hpp>
 
 #include <memory>
 #include <string>
@@ -37,10 +38,9 @@ PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF);
 PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_PROFILE_ENUM_DEF);
 PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_TYPE_ENUM_DEF);
 
-struct GLT_API ShaderManager
+struct GLT_API ShaderManager : private bl::runtime_sized_base<ShaderManager>
 {
-    ShaderManager();
-    ~ShaderManager();
+    static ShaderManager &construct_at(void *) noexcept;
 
     std::shared_ptr<ShaderProgram> program(const std::string &name) const;
     void addProgram(const std::string &name,
@@ -85,8 +85,7 @@ struct GLT_API ShaderManager
 
     static uint32_t glToShaderVersion(uint32_t maj, uint32_t min);
 
-private:
-    DECLARE_PIMPL(GLT_API, self);
+    BL_DECLARE_RUNTIME_SIZED(ShaderManager, Impl);
 };
 
 } // namespace glt

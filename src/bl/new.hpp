@@ -62,33 +62,14 @@ template<typename ApiT>
 struct alignas(std::max_align_t) runtime_sized_base : private runtime_sized_tag
 {
     BL_DISABLE_COPY_MOVE(runtime_sized_base);
-
-    template<typename Defer = void>
-    BL_wrapper friend size_t invoke(bl::runtime_size_f,
-                                    bl::type_proxy<ApiT>) noexcept
-    {
-        return ApiT::impl_size;
-    }
+    runtime_sized_base() = delete;
 
 protected:
-    constexpr runtime_sized_base() = default;
+    constexpr runtime_sized_base(std::in_place_t) noexcept {}
     ~runtime_sized_base() = default;
 
     using runtime_sized_base_api_t = ApiT;
-
-    template<typename Defer = void>
-    BL_wrapper const runtime_sized_impl_t<ApiT, Defer> &m() const
-    {
-        return *static_cast<const runtime_sized_impl_t<ApiT, Defer> *>(
-          static_cast<const ApiT *>(this));
-    }
-
-    template<typename Defer = void>
-    BL_wrapper runtime_sized_impl_t<ApiT, Defer> &m()
-    {
-        return *static_cast<runtime_sized_impl_t<ApiT, Defer> *>(
-          static_cast<ApiT *>(this));
-    }
+    using runtime_sized_instantiation_t = runtime_sized_base<ApiT>;
 
     template<typename Defer = void>
     BL_wrapper static runtime_sized_impl_t<ApiT, Defer>
@@ -99,12 +80,39 @@ protected:
     }
 };
 
-#define BL_DECLARE_RUNTIME_SIZED(ImplT)                                        \
+#define BL_DECLARE_RUNTIME_SIZED(ApiT, ImplT)                                  \
+protected:                                                                     \
+    ApiT() : runtime_sized_instantiation_t{ ::std::in_place }                  \
+    {}                                                                         \
+    ~ApiT() = default;                                                         \
+                                                                               \
 public:                                                                        \
     struct ImplT;                                                              \
+                                                                               \
     static const size_t impl_size;                                             \
-    static void destruct_at(                                                   \
-      runtime_sized_base::runtime_sized_base_api_t &) noexcept
+                                                                               \
+    template<typename Defer = void>                                            \
+    BL_wrapper friend size_t invoke(::bl::runtime_size_f,                      \
+                                    ::bl::type_proxy<ApiT>) noexcept           \
+    {                                                                          \
+        return ApiT::impl_size;                                                \
+    }                                                                          \
+                                                                               \
+    template<typename Defer = void>                                            \
+    BL_wrapper decltype(auto) m() const                                        \
+    {                                                                          \
+        return *static_cast<const ::bl::runtime_sized_impl_t<ApiT, Defer> *>(  \
+          static_cast<const ApiT *>(this));                                    \
+    }                                                                          \
+                                                                               \
+    template<typename Defer = void>                                            \
+    BL_wrapper decltype(auto) m()                                              \
+    {                                                                          \
+        return *static_cast<::bl::runtime_sized_impl_t<ApiT, Defer> *>(        \
+          static_cast<ApiT *>(this));                                          \
+    }                                                                          \
+                                                                               \
+    static void destruct_at(ApiT &) noexcept
 
 #define BL_DEFINE_RUNTIME_SIZED(ApiT, ImplT)                                   \
     bl::type_proxy<ImplT> invoke(bl::runtime_size_impl_type_f,                 \
@@ -117,10 +125,6 @@ public:                                                                        \
         std::destroy_at(std::addressof(p.m()));                                \
     }                                                                          \
     const size_t ApiT::impl_size = sizeof(::bl::runtime_sized_impl_t<ApiT>)
-
-template<typename ApiT, typename ImplT>
-struct runtime_sized_impl : ApiT
-{};
 
 template<typename T>
 concept runtime_sized = !

@@ -26,26 +26,28 @@ coerceKeyCombo(CommandArg &arg)
 }
 } // namespace
 
-struct CommandProcessor::Data
+struct CommandProcessor::Impl : public CommandProcessor
 {
     Engine &engine;
     CommandMap commands;
     std::vector<std::string> scriptDirs;
-    explicit Data(Engine &e) : engine(e) {}
+    explicit Impl(Engine &e) : engine(e) {}
 };
 
-DECLARE_PIMPL_DEL(CommandProcessor);
+BL_DEFINE_RUNTIME_SIZED(CommandProcessor, CommandProcessor::Impl);
 
-CommandProcessor::CommandProcessor(Engine &e) : self(new Data(e)) {}
-
-CommandProcessor::~CommandProcessor() = default;
+CommandProcessor &
+CommandProcessor::construct_at(void *p, Engine &e) noexcept
+{
+    return construct_impl(p, e);
+}
 
 std::vector<CommandPtr>
 CommandProcessor::commands() const
 {
     std::vector<CommandPtr> coms;
-    coms.reserve(self->commands.size());
-    for (const auto &ent : self->commands)
+    coms.reserve(m().commands.size());
+    for (const auto &ent : m().commands)
         coms.push_back(ent.second);
     return coms;
 }
@@ -53,34 +55,34 @@ CommandProcessor::commands() const
 Engine &
 CommandProcessor::engine()
 {
-    return self->engine;
+    return m().engine;
 }
 
 bool
 CommandProcessor::addScriptDirectory(std::string dir, bool check_exists)
 {
-    for (const auto &scriptDir : self->scriptDirs)
+    for (const auto &scriptDir : m().scriptDirs)
         if (dir == scriptDir)
             return true;
 
     if (check_exists && !sys::fs::directoryExists(dir))
         return false;
 
-    self->scriptDirs.emplace_back(std::move(dir));
+    m().scriptDirs.emplace_back(std::move(dir));
     return true;
 }
 
 std::span<const std::string>
 CommandProcessor::scriptDirectories() const
 {
-    return std::span(self->scriptDirs);
+    return std::span(m().scriptDirs);
 }
 
 CommandPtr
 CommandProcessor::command(std::string_view comname) const
 {
-    auto it = self->commands.find(comname);
-    if (it != self->commands.end())
+    auto it = m().commands.find(comname);
+    if (it != m().commands.end())
         return it->second;
     return nullptr;
 }
@@ -99,8 +101,8 @@ CommandProcessor::define(CommandPtr comm, bool unique)
         return false;
     }
 
-    auto it = self->commands.find(comname);
-    auto dup = it != self->commands.end();
+    auto it = m().commands.find(comname);
+    auto dup = it != m().commands.end();
     if (dup && unique) {
         ERR(engine().out(), string_concat("duplicate command name: ", comname));
         return false;
@@ -109,7 +111,7 @@ CommandProcessor::define(CommandPtr comm, bool unique)
     if (dup)
         it->second = std::move(comm);
     else
-        self->commands[comname] = std::move(comm);
+        m().commands[comname] = std::move(comm);
     return dup;
 }
 
@@ -348,9 +350,9 @@ CommandProcessor::execCommand(std::span<CommandArg> args)
         err << "executing command failed: ";
 
         {
-            CommandPrettyPrinter printer;
-            printer.out(err);
-            printer.print(args);
+            auto printer = bl::box<CommandPrettyPrinter>{};
+            printer->out(err);
+            printer->print(args);
         }
 
         ERR(engine().out(), err.str());

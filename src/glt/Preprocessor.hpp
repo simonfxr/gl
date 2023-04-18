@@ -2,15 +2,16 @@
 #define PREPROCESSOR_HPP
 
 #include "glt/conf.hpp"
-#include "pp/pimpl.hpp"
 #include "sys/io/Stream.hpp"
+
+#include <bl/new.hpp>
 
 #include <memory>
 #include <unordered_map>
 
 namespace glt {
 
-struct GLT_API Preprocessor
+struct GLT_API Preprocessor : bl::runtime_sized_base<Preprocessor>
 {
 
     struct ContentContext
@@ -51,7 +52,7 @@ struct GLT_API Preprocessor
     using Handlers = std::unordered_map<std::string, DirectiveHandler *>;
     using HandlerEntry = std::pair<std::string, DirectiveHandler *>;
 
-    Preprocessor();
+    Preprocessor &construct_at(void *) noexcept;
 
     const std::string &name() const;
     void name(std::string &&name);
@@ -63,7 +64,7 @@ struct GLT_API Preprocessor
     DirectiveHandler &defaultHandler(DirectiveHandler &handler);
     DirectiveHandler &defaultHandler() const;
 
-    Handlers &handlers() const;
+    Handlers &handlers();
 
     DirectiveHandler *installHandler(const std::string &directive,
                                      DirectiveHandler &handler);
@@ -77,8 +78,7 @@ struct GLT_API Preprocessor
 
     //    static DirectiveHandler& nullHandler();
 
-private:
-    DECLARE_PIMPL(GLT_API, self);
+    BL_DECLARE_RUNTIME_SIZED(Preprocessor, Impl);
 };
 
 } // namespace glt

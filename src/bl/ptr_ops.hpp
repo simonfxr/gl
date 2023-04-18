@@ -23,8 +23,7 @@ struct ptr_ops
     BL_wrapper constexpr P &operator=(element_type *p) noexcept
         requires(is_nullable)
     {
-        self() = P{ p };
-        return *this;
+        return self() = P{ p };
     }
 
     // NOLINTNEXTLINE(misc-unconventional-assign-operator,cppcoreguidelines-c-copy-assignment-signature)

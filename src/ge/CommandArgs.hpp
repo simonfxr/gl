@@ -8,6 +8,8 @@
 #include "sys/io/Stream.hpp"
 #include "util/Comparable.hpp"
 
+#include <bl/new.hpp>
+
 #include <memory>
 #include <span>
 #include <string>
@@ -147,9 +149,9 @@ int
 compare(const CommandArg &, const CommandArg &);
 
 struct GE_API CommandPrettyPrinter
+  : private bl::runtime_sized_base<CommandPrettyPrinter>
 {
-    CommandPrettyPrinter();
-    ~CommandPrettyPrinter();
+    static CommandPrettyPrinter &construct_at(void *) noexcept;
 
     void out(sys::io::OutStream &_out);
     void lineLength(size_t len);
@@ -167,8 +169,7 @@ struct GE_API CommandPrettyPrinter
 
     void flush();
 
-private:
-    DECLARE_PIMPL(GE_API, self);
+    BL_DECLARE_RUNTIME_SIZED(CommandPrettyPrinter, Impl);
 };
 
 } // namespace ge

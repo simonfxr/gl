@@ -10,6 +10,8 @@
 #include "math/mat4.hpp"
 #include "math/real.hpp"
 
+#include <bl/new.hpp>
+
 #include <memory>
 
 namespace glt {
@@ -72,14 +74,13 @@ struct GLT_API Projection
     static Projection identity() { return Projection(Identity); }
 };
 
-struct GLT_API RenderManager
+struct GLT_API RenderManager : private bl::runtime_sized_base<RenderManager>
 {
-    RenderManager();
-    ~RenderManager();
+    static RenderManager &construct_at(void *) noexcept;
 
-    const ViewFrustum &viewFrustum() const;
+    [[nodiscard]] const ViewFrustum &viewFrustum() const;
 
-    const GeometryTransform &geometryTransform() const;
+    [[nodiscard]] const GeometryTransform &geometryTransform() const;
 
     GeometryTransform &geometryTransform();
 
@@ -105,8 +106,7 @@ struct GLT_API RenderManager
 
     FrameStatistics frameStatistics();
 
-private:
-    DECLARE_PIMPL(GLT_API, self);
+    BL_DECLARE_RUNTIME_SIZED(RenderManager, Impl);
 };
 
 inline math::vec4

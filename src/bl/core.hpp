@@ -3,6 +3,7 @@
 
 #include <bl/conf.hpp>
 
+#include <memory>
 #include <type_traits>
 
 namespace bl {
@@ -44,6 +45,22 @@ exchange(T &obj,
     T old_value = move(obj);
     obj = bl_fwd(new_value);
     return old_value;
+}
+
+template<typename T>
+    requires(!std::is_array_v<T>)
+BL_inline constexpr void destroy_at(T *loc)
+{
+    loc->~T();
+}
+
+template<typename T>
+    requires(!std::is_array_v<T>)
+BL_inline constexpr T *relocate_at(T *source, T *dest)
+{
+    std::uninitialized_move(dest, dest + 1, source);
+    destroy_at(source);
+    return std::launder(dest);
 }
 
 } // namespace bl

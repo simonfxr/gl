@@ -11,6 +11,8 @@
 #include "util/range.hpp"
 #include "util/string.hpp"
 
+#include <bl/box.hpp>
+
 #include <unordered_map>
 
 #define RAISE_ERR(sender, ec, msg) LOG_RAISE_ERROR(sender, ec, msg)
@@ -93,13 +95,14 @@ bool
 ShaderProgram::reload()
 {
     ShaderObjects newshaders;
-    auto scq = ShaderCompilerQueue(self->sm.shaderCompiler(), newshaders);
+    auto scq = bl::box<ShaderCompilerQueue>(
+      std::in_place, self->sm.shaderCompiler(), newshaders);
 
     for (const auto &ent : self->rootdeps)
-        scq.enqueueReload(self->shaders[ent.first]);
+        scq->enqueueReload(self->shaders[ent.first]);
 
-    scq.compileAll();
-    if (scq.wasError())
+    scq->compileAll();
+    if (scq->wasError())
         return false;
 
     auto unchanged = newshaders.size() == self->shaders.size();
@@ -186,18 +189,19 @@ ShaderProgram::Data::handleCompileError(ShaderCompilerError err)
 bool
 ShaderProgram::addShaderSrc(const std::string &src, ShaderType type)
 {
-    auto scq = ShaderCompilerQueue(self->sm.shaderCompiler(), self->shaders);
+    auto scq = bl::box<ShaderCompilerQueue>(
+      std::in_place, self->sm.shaderCompiler(), self->shaders);
     auto source = ShaderSource::makeStringSource(type, src);
 
     {
         self->rootdeps.insert(std::make_pair(source->key(), source));
-        scq.enqueueLoad(source);
+        scq->enqueueLoad(source);
     }
 
-    scq.compileAll();
+    scq->compileAll();
 
-    if (scq.wasError()) {
-        self->handleCompileError(scq.getError());
+    if (scq->wasError()) {
+        self->handleCompileError(scq->getError());
         self->rootdeps.erase(source->key());
         return false;
     }
@@ -225,18 +229,19 @@ ShaderProgram::addShaderFile(const std::string &file0,
     file = sys::fs::absolutePath(file);
     ASSERT(!file.empty());
 
-    auto scq = ShaderCompilerQueue(self->sm.shaderCompiler(), self->shaders);
+    auto scq = bl::box<ShaderCompilerQueue>(
+      std::in_place, self->sm.shaderCompiler(), self->shaders);
     auto source = ShaderSource::makeFileSource(type, file);
 
     {
         self->rootdeps.insert(std::make_pair(source->key(), source));
-        scq.enqueueLoad(source);
+        scq->enqueueLoad(source);
     }
 
-    scq.compileAll();
+    scq->compileAll();
 
-    if (scq.wasError()) {
-        self->handleCompileError(scq.getError());
+    if (scq->wasError()) {
+        self->handleCompileError(scq->getError());
         self->rootdeps.erase(source->key());
         return false;
     }

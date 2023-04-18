@@ -15,10 +15,8 @@
 
 namespace ge {
 
-struct GameWindow::Data
+struct GameWindow::Impl : GameWindow
 {
-    GameWindow &self;
-
     GLFWwindow *win;
     double mouse_x{};
     double mouse_y{};
@@ -31,16 +29,14 @@ struct GameWindow::Data
     bool have_focus{ true };
     bool vsync{ false };
 
-    Data(GameWindow &_self, bool owns_win, GLFWwindow *rw)
-      : self(_self), win(rw), owning_win(owns_win)
-    {}
+    Impl(bool owns_win, GLFWwindow *rw) : win(rw), owning_win(owns_win) {}
 
     void init(const WindowOptions &opts);
     static void handleInputEvents();
     void setMouse(int16_t x, int16_t y);
 
     static GLFWwindow *makeWindow(const WindowOptions &opts);
-    static Data *getUserPointer(GLFWwindow * /*w*/);
+    static Impl *getUserPointer(GLFWwindow * /*w*/);
     static void glfw_window_size_callback(GLFWwindow *win, int w, int h);
     static void glfw_window_close_callback(GLFWwindow *win);
     static void glfw_window_refresh_callback(GLFWwindow *win);
@@ -61,9 +57,17 @@ struct GameWindow::Data
     static void glfw_mouse_scroll_callback(GLFWwindow *win,
                                            double xoffset,
                                            double yoffset);
+
+    ~Impl()
+    {
+        renderTarget.reset();
+        glfwMakeContextCurrent(nullptr);
+        if (owning_win)
+            glfwDestroyWindow(win);
+    }
 };
 
-DECLARE_PIMPL_DEL(GameWindow)
+BL_DEFINE_RUNTIME_SIZED(GameWindow, GameWindow::Impl);
 
 namespace {
 
@@ -188,7 +192,7 @@ convertGLFWMouseButton(int button)
 } // namespace
 
 GLFWwindow *
-GameWindow::Data::makeWindow(const WindowOptions &opts)
+GameWindow::Impl::makeWindow(const WindowOptions &opts)
 {
     glfwWindowHint(GLFW_SAMPLES,
                    static_cast<int>(opts.settings.antialiasingLevel));
@@ -217,51 +221,49 @@ GameWindow::Data::makeWindow(const WindowOptions &opts)
     return win;
 }
 
-GameWindow::Data *
-GameWindow::Data::getUserPointer(GLFWwindow *w)
+GameWindow::Impl *
+GameWindow::Impl::getUserPointer(GLFWwindow *w)
 {
-    void *ptr = glfwGetWindowUserPointer(w);
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    return reinterpret_cast<Data *>(ptr);
+    return static_cast<Impl *>(glfwGetWindowUserPointer(w));
 }
 
 void
-GameWindow::Data::glfw_window_size_callback(GLFWwindow *win, int w, int h)
+GameWindow::Impl::glfw_window_size_callback(GLFWwindow *win, int w, int h)
 {
-    GameWindow::Data *me = getUserPointer(win);
-    me->events.windowResized.raise(Event(WindowResized(me->self, w, h)));
+    auto *me = getUserPointer(win);
+    me->events.windowResized.raise(Event(WindowResized(*me, w, h)));
 }
 
 void
-GameWindow::Data::glfw_window_close_callback(GLFWwindow *win)
+GameWindow::Impl::glfw_window_close_callback(GLFWwindow *win)
 {
-    GameWindow::Data *me = getUserPointer(win);
-    me->events.windowClosed.raise(Event(WindowEvent(me->self)));
+    auto *me = getUserPointer(win);
+    me->events.windowClosed.raise(Event(WindowEvent(*me)));
 }
 
 void
-GameWindow::Data::glfw_window_refresh_callback(GLFWwindow *win)
+GameWindow::Impl::glfw_window_refresh_callback(GLFWwindow *win)
 {
     UNUSED(win);
     // NOOP
 }
 
 void
-GameWindow::Data::glfw_window_focus_callback(GLFWwindow *win, int focus_gained)
+GameWindow::Impl::glfw_window_focus_callback(GLFWwindow *win, int focus_gained)
 {
-    GameWindow::Data *me = getUserPointer(win);
+    auto *me = getUserPointer(win);
 
     if (focus_gained == GL_TRUE && !me->have_focus) {
         me->have_focus = true;
-        me->events.focusChanged.raise(Event(FocusChanged(me->self, true)));
+        me->events.focusChanged.raise(Event(FocusChanged(*me, true)));
     } else if (focus_gained == GL_FALSE && me->have_focus) {
         me->have_focus = false;
-        me->events.focusChanged.raise(Event(FocusChanged(me->self, false)));
+        me->events.focusChanged.raise(Event(FocusChanged(*me, false)));
     }
 }
 
 void
-GameWindow::Data::glfw_window_pos_callback(GLFWwindow *win, int x, int y)
+GameWindow::Impl::glfw_window_pos_callback(GLFWwindow *win, int x, int y)
 {
     UNUSED(win);
     UNUSED(x);
@@ -270,7 +272,7 @@ GameWindow::Data::glfw_window_pos_callback(GLFWwindow *win, int x, int y)
 }
 
 void
-GameWindow::Data::glfw_window_iconify_callback(GLFWwindow *win, int iconified)
+GameWindow::Impl::glfw_window_iconify_callback(GLFWwindow *win, int iconified)
 {
     UNUSED(win);
     UNUSED(iconified);
@@ -278,27 +280,26 @@ GameWindow::Data::glfw_window_iconify_callback(GLFWwindow *win, int iconified)
 }
 
 void
-GameWindow::Data::glfw_framebuffer_size_callback(GLFWwindow *win, int w, int h)
+GameWindow::Impl::glfw_framebuffer_size_callback(GLFWwindow *win, int w, int h)
 {
-    GameWindow::Data *me = getUserPointer(win);
-    me->events.framebufferResized.raise(
-      Event(FramebufferResized(me->self, w, h)));
+    auto *me = getUserPointer(win);
+    me->events.framebufferResized.raise(Event(FramebufferResized(*me, w, h)));
 }
 
-// static void GameWindow::Data::glfw_char_callback(GLFWwindow *win, unsigned
+// static void GameWindow::Impl::glfw_char_callback(GLFWwindow *win, unsigned
 // int codepoint) {
 
 // }
 
-// static void GameWindow::Data::glfw_cursor_enter_callback(GLFWwindow *win, int
+// static void GameWindow::Impl::glfw_cursor_enter_callback(GLFWwindow *win, int
 // entered) {
 
 // }
 
 void
-GameWindow::Data::glfw_cursor_pos_callback(GLFWwindow *win, double x, double y)
+GameWindow::Impl::glfw_cursor_pos_callback(GLFWwindow *win, double x, double y)
 {
-    GameWindow::Data *me = getUserPointer(win);
+    auto *me = getUserPointer(win);
 
     auto dx = static_cast<int16_t>(-(x - me->mouse_x));
     auto dy = static_cast<int16_t>(y - me->mouse_y);
@@ -308,11 +309,11 @@ GameWindow::Data::glfw_cursor_pos_callback(GLFWwindow *win, double x, double y)
 
     if (dx != 0 || dy != 0)
         me->events.mouseMoved.raise(Event(MouseMoved(
-          me->self, dx, dy, static_cast<int16_t>(x), static_cast<int16_t>(y))));
+          *me, dx, dy, static_cast<int16_t>(x), static_cast<int16_t>(y))));
 }
 
 void
-GameWindow::Data::glfw_key_callback(GLFWwindow *win,
+GameWindow::Impl::glfw_key_callback(GLFWwindow *win,
                                     int key,
                                     int scancode,
                                     int action,
@@ -324,31 +325,31 @@ GameWindow::Data::glfw_key_callback(GLFWwindow *win,
     if (action == GLFW_REPEAT)
         return;
 
-    GameWindow::Data *me = getUserPointer(win);
+    auto *me = getUserPointer(win);
     auto k = Key(action == GLFW_PRESS ? KeyState::Pressed : KeyState::Released,
                  convertGLFWKey(key));
-    me->events.keyChanged.raise(Event(KeyChanged(me->self, k)));
+    me->events.keyChanged.raise(Event(KeyChanged(*me, k)));
 }
 
 void
-GameWindow::Data::glfw_mouse_button_callback(GLFWwindow *win,
+GameWindow::Impl::glfw_mouse_button_callback(GLFWwindow *win,
                                              int button,
                                              int action,
                                              int mods)
 {
     UNUSED(mods);
-    GameWindow::Data *me = getUserPointer(win);
+    auto *me = getUserPointer(win);
     auto b = Key(action == GLFW_PRESS ? KeyState::Pressed : KeyState::Released,
                  convertGLFWMouseButton(button));
     me->events.mouseButton.raise(
-      Event(MouseButton(me->self,
+      Event(MouseButton(*me,
                         static_cast<int16_t>(me->mouse_x),
                         static_cast<int16_t>(me->mouse_y),
                         b)));
 }
 
 void
-GameWindow::Data::glfw_mouse_scroll_callback(GLFWwindow *win,
+GameWindow::Impl::glfw_mouse_scroll_callback(GLFWwindow *win,
                                              double xoffset,
                                              double yoffset)
 {
@@ -359,11 +360,11 @@ GameWindow::Data::glfw_mouse_scroll_callback(GLFWwindow *win,
 }
 
 void
-GameWindow::Data::init(const WindowOptions &opts)
+GameWindow::Impl::init(const WindowOptions &opts)
 {
 
     ASSERT(renderTarget == nullptr);
-    renderTarget = std::make_shared<WindowRenderTarget>(self);
+    renderTarget = std::make_shared<WindowRenderTarget>(*this);
 
     glfwSetWindowUserPointer(win, this);
 
@@ -411,25 +412,19 @@ GameWindow::Data::init(const WindowOptions &opts)
 }
 
 void
-GameWindow::Data::setMouse(int16_t x, int16_t y)
+GameWindow::Impl::setMouse(int16_t x, int16_t y)
 {
     glfwSetCursorPos(win, x, y);
     mouse_x = x;
     mouse_y = y;
 }
 
-GameWindow::GameWindow(const WindowOptions &opts)
-  : self(new Data(*this, true, Data::makeWindow(opts)))
+GameWindow &
+GameWindow::construct_at(void *p, const WindowOptions &opts) noexcept
 {
-    self->init(opts);
-}
-
-GameWindow::~GameWindow()
-{
-    self->renderTarget.reset();
-    glfwMakeContextCurrent(nullptr);
-    if (self->owning_win)
-        glfwDestroyWindow(self->win);
+    auto &it = construct_impl(p, true, Impl::makeWindow(opts));
+    it.init(opts);
+    return it;
 }
 
 bool
@@ -439,7 +434,7 @@ GameWindow::init()
 }
 
 void
-GameWindow::Data::handleInputEvents()
+GameWindow::Impl::handleInputEvents()
 {
     glfwPollEvents();
 }
@@ -447,25 +442,24 @@ GameWindow::Data::handleInputEvents()
 void
 GameWindow::showMouseCursor(bool show)
 {
-    if (show != self->show_mouse_cursor) {
-        self->show_mouse_cursor = show;
-        glfwSetInputMode(self->win,
-                         GLFW_CURSOR,
-                         show ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
+    if (show != m().show_mouse_cursor) {
+        m().show_mouse_cursor = show;
+        glfwSetInputMode(
+          m().win, GLFW_CURSOR, show ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
     }
 }
 
 bool
 GameWindow::showMouseCursor() const
 {
-    return self->show_mouse_cursor;
+    return m().show_mouse_cursor;
 }
 
 void
 GameWindow::vsync(bool enable)
 {
-    if (self->vsync != enable) {
-        self->vsync = enable;
+    if (m().vsync != enable) {
+        m().vsync = enable;
         ERR("VSYNC not implemented");
     }
 }
@@ -473,34 +467,33 @@ GameWindow::vsync(bool enable)
 bool
 GameWindow::vsync()
 {
-    return self->vsync;
+    return m().vsync;
 }
 
 bool
 GameWindow::focused() const
 {
-    return self->have_focus;
+    return m().have_focus;
 }
 
 const std::shared_ptr<WindowRenderTarget> &
 GameWindow::renderTarget() const
 {
-    return self->renderTarget;
+    return m().renderTarget;
 }
 
 WindowEvents &
 GameWindow::events()
 {
-    return self->events;
+    return m().events;
 }
 
 void
 GameWindow::registerHandlers(EngineEvents &evnts)
 {
-    evnts.handleInput.reg(
-      [self = self.get()](const Event<InputEvent> & /*unused*/) {
-          self->handleInputEvents();
-      });
+    evnts.handleInput.reg([this](const Event<InputEvent> & /*unused*/) {
+        m().handleInputEvents();
+    });
 }
 
 size_t
@@ -529,7 +522,7 @@ GameWindow::windowSize(size_t &width, size_t &height) const
     int w;
 
     int h;
-    glfwGetWindowSize(self->win, &w, &h);
+    glfwGetWindowSize(m().win, &w, &h);
     width = w;
     height = h;
 }
@@ -537,19 +530,19 @@ GameWindow::windowSize(size_t &width, size_t &height) const
 void
 GameWindow::setMouse(int16_t x, int16_t y)
 {
-    self->setMouse(x, y);
+    m().setMouse(x, y);
 }
 
 void
 GameWindow::swapBuffers()
 {
-    glfwSwapBuffers(self->win);
+    glfwSwapBuffers(m().win);
 }
 
 GLContextInfo
 GameWindow::contextInfo() const
 {
-    return self->context_info;
+    return m().context_info;
 }
 
 GameWindowInit::GameWindowInit()

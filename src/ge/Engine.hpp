@@ -23,7 +23,7 @@
 
 namespace ge {
 
-struct GE_API Engine : bl::runtime_sized_base<Engine>
+struct GE_API Engine : private bl::runtime_sized_base<Engine>
 {
     static Engine &construct_at(void *, PluginSet &) noexcept;
     static Engine &construct_at(void *) noexcept;
@@ -57,7 +57,7 @@ struct GE_API Engine : bl::runtime_sized_base<Engine>
 
     void setDevelDataDir(const std::string &);
 
-    BL_DECLARE_RUNTIME_SIZED(Impl);
+    BL_DECLARE_RUNTIME_SIZED(Engine, Impl);
 };
 
 static_assert(bl::runtime_sized<Engine>);

@@ -3,6 +3,8 @@
 #include "glt/ShaderCompiler.hpp"
 #include "glt/ShaderProgram.hpp"
 
+#include <bl/box.hpp>
+
 #include <algorithm>
 #include <unordered_map>
 
@@ -15,41 +17,40 @@ PP_DEF_ENUM_IMPL(GLT_SHADER_TYPE_ENUM_DEF);
 using ProgramMap =
   std::unordered_map<std::string, std::shared_ptr<ShaderProgram>>;
 
-struct ShaderManager::Data : bl::non_copyable
+struct ShaderManager::Impl : public ShaderManager
 {
     sys::io::OutStream *out;
     std::vector<std::string> shaderDirs;
     ProgramMap programs;
     std::shared_ptr<ShaderCache> globalShaderCache;
     PreprocessorDefinitions globalDefines;
-    ShaderCompiler shaderCompiler;
+    bl::box<ShaderCompiler> shaderCompiler;
     uint32_t shader_version{};
     ShaderProfile shader_profile{ ShaderProfile::Core };
     ShaderManagerVerbosity verbosity{ ShaderManagerVerbosity::Info };
     bool cache_so{ true };
     bool dumpShaders{ false };
 
-    explicit Data(ShaderManager &me)
+    explicit Impl()
       : out(&sys::io::stdout())
       , globalShaderCache(std::make_shared<ShaderCache>())
-      , shaderCompiler(me)
+      , shaderCompiler(std::in_place, *this)
     {}
 };
 
-ShaderManager::ShaderManager() : self(new Data(*this))
+BL_DEFINE_RUNTIME_SIZED(ShaderManager, ShaderManager::Impl);
+
+ShaderManager &
+ShaderManager::construct_at(void *p) noexcept
 {
-    self->shaderCompiler.init();
+    return construct_impl(p);
 }
-
-ShaderManager::~ShaderManager() = default;
-
-DECLARE_PIMPL_DEL(ShaderManager)
 
 void
 ShaderManager::shutdown()
 {
-    self->programs.clear();
-    self->globalShaderCache->flush();
+    m().programs.clear();
+    m().globalShaderCache->flush();
 }
 
 void
@@ -58,39 +59,39 @@ ShaderManager::setShaderVersion(uint32_t vers, ShaderProfile prof)
     ShaderProfile newprof = ShaderProfile::Core;
     if (prof == ShaderProfile::Compatibility)
         newprof = prof;
-    self->shader_version = vers;
-    self->shader_profile = newprof;
+    m().shader_version = vers;
+    m().shader_profile = newprof;
 }
 
 uint32_t
 ShaderManager::shaderVersion() const
 {
-    return self->shader_version;
+    return m().shader_version;
 }
 
 ShaderProfile
 ShaderManager::shaderProfile() const
 {
-    return self->shader_profile;
+    return m().shader_profile;
 }
 
 ShaderManagerVerbosity
 ShaderManager::verbosity() const
 {
-    return self->verbosity;
+    return m().verbosity;
 }
 
 void
 ShaderManager::verbosity(ShaderManagerVerbosity v)
 {
-    self->verbosity = v;
+    m().verbosity = v;
 }
 
 std::shared_ptr<ShaderProgram>
 ShaderManager::program(const std::string &name) const
 {
-    auto it = self->programs.find(name);
-    if (it != self->programs.end())
+    auto it = m().programs.find(name);
+    if (it != m().programs.end())
         return it->second;
     ERR(("program not found: " + name).c_str());
     return {};
@@ -101,23 +102,23 @@ ShaderManager::addProgram(const std::string &name,
                           std::shared_ptr<ShaderProgram> &program)
 {
     ASSERT(program);
-    self->programs[name] = program;
+    m().programs[name] = program;
 }
 
 std::shared_ptr<ShaderProgram>
 ShaderManager::declareProgram(const std::string &name)
 {
     auto prog = std::make_shared<ShaderProgram>(*this);
-    self->programs[name] = prog;
+    m().programs[name] = prog;
     return prog;
 }
 
 void
 ShaderManager::reloadShaders()
 {
-    const auto n = self->programs.size();
+    const auto n = m().programs.size();
     auto failed = size_t{ 0 };
-    for (auto &ent : self->programs)
+    for (auto &ent : m().programs)
         if (!ent.second->reload())
             ++failed;
 
@@ -128,13 +129,13 @@ ShaderManager::reloadShaders()
 sys::io::OutStream &
 ShaderManager::out() const
 {
-    return *self->out;
+    return *m().out;
 }
 
 void
 ShaderManager::out(sys::io::OutStream &out)
 {
-    self->out = &out;
+    m().out = &out;
 }
 
 bool
@@ -145,7 +146,7 @@ ShaderManager::prependShaderDirectory(const std::string &dir, bool check_exists)
     if (check_exists && !sys::fs::directoryExists(dir))
         return false;
 
-    self->shaderDirs.insert(self->shaderDirs.begin(), dir);
+    m().shaderDirs.insert(m().shaderDirs.begin(), dir);
     return true;
 }
 
@@ -157,14 +158,14 @@ ShaderManager::addShaderDirectory(const std::string &dir, bool check_exists)
     if (check_exists && !sys::fs::directoryExists(dir))
         return false;
 
-    self->shaderDirs.push_back(dir);
+    m().shaderDirs.push_back(dir);
     return true;
 }
 
 bool
 ShaderManager::removeShaderDirectory(const std::string &dir)
 {
-    ShaderDirectories &dirs = self->shaderDirs;
+    ShaderDirectories &dirs = m().shaderDirs;
     auto it = find(dirs.begin(), dirs.end(), dir);
     if (it == dirs.end())
         return false;
@@ -175,59 +176,59 @@ ShaderManager::removeShaderDirectory(const std::string &dir)
 const std::vector<std::string> &
 ShaderManager::shaderDirectories() const
 {
-    return self->shaderDirs;
+    return m().shaderDirs;
 }
 
 bool
 ShaderManager::cacheShaderObjects() const
 {
-    return self->cache_so;
+    return m().cache_so;
 }
 
 void
 ShaderManager::cacheShaderObjects(bool docache)
 {
-    if (docache != self->cache_so) {
-        self->cache_so = docache;
+    if (docache != m().cache_so) {
+        m().cache_so = docache;
         if (!docache)
-            self->globalShaderCache->flush();
+            m().globalShaderCache->flush();
     }
 }
 
 bool
 ShaderManager::dumpShadersEnabled() const
 {
-    return self->dumpShaders;
+    return m().dumpShaders;
 }
 
 void
 ShaderManager::dumpShadersEnable(bool enable)
 {
-    self->dumpShaders = enable;
+    m().dumpShaders = enable;
 }
 
 const std::shared_ptr<ShaderCache> &
 ShaderManager::globalShaderCache()
 {
-    return self->globalShaderCache;
+    return m().globalShaderCache;
 }
 
 ShaderCompiler &
 ShaderManager::shaderCompiler()
 {
-    return self->shaderCompiler;
+    return *m().shaderCompiler;
 }
 
 PreprocessorDefinitions &
 ShaderManager::globalDefines()
 {
-    return self->globalDefines;
+    return m().globalDefines;
 }
 
 const PreprocessorDefinitions &
 ShaderManager::globalDefines() const
 {
-    return self->globalDefines;
+    return m().globalDefines;
 }
 
 uint32_t

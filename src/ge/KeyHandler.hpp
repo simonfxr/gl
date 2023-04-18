@@ -19,9 +19,9 @@ struct GE_API KeyPressed
     KeyPressed(KeyHandler &h, KeyCode k) : handler(h), key(k) {}
 };
 
-struct GE_API KeyHandler
+struct GE_API KeyHandler : private bl::runtime_sized_base<KeyHandler>
 {
-    explicit KeyHandler(CommandProcessor &proc);
+    static KeyHandler &construct_at(void *p, CommandProcessor &proc) noexcept;
 
     void keyPressed(KeyCode code);
 
@@ -44,8 +44,7 @@ struct GE_API KeyHandler
 
     void handleListBindings(const Event<CommandEvent> &);
 
-private:
-    DECLARE_PIMPL(GE_API, self);
+    BL_DECLARE_RUNTIME_SIZED(KeyHandler, Impl);
 };
 
 } // namespace ge
