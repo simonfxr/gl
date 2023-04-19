@@ -5,7 +5,6 @@
 #include "ge/conf.hpp"
 #include "pp/enum.hpp"
 #include "sys/io/Stream.hpp"
-#include "util/Comparable.hpp"
 
 #include <bl/new.hpp>
 

@@ -4,7 +4,6 @@
 #include "ge/conf.hpp"
 
 #include "pp/enum.hpp"
-#include "util/Comparable.hpp"
 
 #include <compare>
 #include <optional>

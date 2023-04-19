@@ -103,17 +103,13 @@ struct GE_API FixedPluginSet final : PluginSet
     template<typename P>
     decltype(auto) get()
     {
-        if constexpr (requires() { get_ref(bl::type_proxy<P>{}); }) {
+        if constexpr (decltype(tuple_has_type(
+                        bl::type_proxy<std::tuple<Plugins...>>{},
+                        bl::type_proxy<P>{}))::value) {
             return std::get<P>(plugins);
         } else {
             return *std::get<bl::box<P>>(plugins);
         }
-    }
-
-    template<typename P>
-    decltype(auto) get_of(bl::type_proxy<P>)
-    {
-        return std::get<P>(plugins);
     }
 
     Plugin *findPluginByType(const Plugin::TypeInfo *info) override
@@ -158,6 +154,17 @@ private:
         auto &up = unwrap_plugin(plugin);
         erased_plugins[I] = &up;
         plugin_map[up.typeInfo()] = &up;
+    }
+
+    template<typename U, typename... Ts>
+    constexpr auto tuple_has_type(bl::type_proxy<std::tuple<Ts...>>,
+                                  bl::type_proxy<U>)
+    {
+        if constexpr ((std::is_same_v<U, Ts> || ...)) {
+            return std::true_type{};
+        } else {
+            return std::false_type{};
+        }
     }
 };
 
