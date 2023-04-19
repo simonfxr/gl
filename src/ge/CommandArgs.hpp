@@ -43,7 +43,7 @@ PP_DEF_ENUM_WITH_API(GE_API, GE_COMMAND_ARG_TYPE_ENUM_DEF);
 
 struct CommandArg;
 
-struct CommandValue : Comparable<CommandValue>
+struct CommandValue
 {
     std::shared_ptr<const std::string> name;
     std::shared_ptr<Command> ref;
@@ -62,14 +62,14 @@ struct CommandValue : Comparable<CommandValue>
     {
         return CommandValue(std::move(nm), NamedRef{});
     }
-};
 
-int
-compare(const CommandValue &, const CommandValue &);
+    friend std::weak_ordering operator<=>(const CommandValue &,
+                                          const CommandValue &) noexcept;
+};
 
 using Quotation = std::vector<std::vector<CommandArg>>;
 
-struct GE_API CommandArg : Comparable<CommandArg>
+struct GE_API CommandArg
 {
     // marker type for overload disambiguation
     struct CommandArgVar
@@ -139,12 +139,12 @@ struct GE_API CommandArg : Comparable<CommandArg>
         KeyBinding keyBinding;
     };
 
+    friend std::weak_ordering operator<=>(const CommandArg &,
+                                          const CommandArg &) noexcept;
+
 private:
     CommandArgType _type;
 };
-
-int
-compare(const CommandArg &, const CommandArg &);
 
 struct GE_API CommandPrettyPrinter
   : private bl::runtime_sized_base<CommandPrettyPrinter>

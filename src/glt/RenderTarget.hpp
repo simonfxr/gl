@@ -23,8 +23,7 @@ struct GLT_API Viewport
     Viewport(size_t w, size_t h) : offsetX(0), offsetY(0), width(w), height(h)
     {}
 
-    bool operator==(const Viewport &vp) const;
-    bool operator!=(const Viewport &vp) const;
+    friend auto operator<=>(const Viewport &lhs, const Viewport &rhs) = default;
 };
 
 using RenderTargetBuffers = uint32_t;
@@ -73,19 +72,6 @@ protected:
 private:
     DECLARE_PIMPL(GLT_API, self);
 };
-
-inline bool
-Viewport::operator==(const Viewport &vp) const
-{
-    return this->offsetX == vp.offsetX && this->offsetY == vp.offsetY &&
-           this->width == vp.width && this->height == vp.height;
-}
-
-inline bool
-Viewport::operator!=(const Viewport &vp) const
-{
-    return !(*this == vp);
-}
 
 } // namespace glt
 

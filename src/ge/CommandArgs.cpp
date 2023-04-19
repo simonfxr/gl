@@ -129,36 +129,33 @@ CommandArg::reset()
     UNREACHABLE;
 }
 
-int
-compare(const CommandValue &a, const CommandValue &b)
+std::weak_ordering
+operator<=>(const CommandValue &a, const CommandValue &b) noexcept
 {
-    return a.name->compare(*b.name);
+    int cmp = a.name->compare(*b.name);
+    return cmp <=> 0;
 }
 
-int
-compare(const CommandArg &a, const CommandArg &b)
+std::weak_ordering
+operator<=>(const CommandArg &a, const CommandArg &b) noexcept
 {
-    using ::compare;
     if (a.type() != b.type())
-        return compare(a.type(), b.type());
+        return a.type() <=> b.type();
     switch (a.type().value) {
     case CommandArgType::String:
-        return a.string.compare(b.string);
+        return a.string.compare(b.string) <=> 0;
     case CommandArgType::Integer:
-        return compare(a.integer, b.integer);
+        return a.integer <=> b.integer;
     case CommandArgType::Number:
-        return compare(a.number, b.number);
+        return (a.number < b.number ? -1 : a.number > b.number ? 1 : 0) <=> 0;
     case CommandArgType::KeyCombo:
-        return std::lexicographical_compare(a.keyBinding.begin(),
-                                            a.keyBinding.end(),
-                                            b.keyBinding.begin(),
-                                            b.keyBinding.end());
+        return a.keyBinding <=> b.keyBinding;
     case CommandArgType::CommandRef:
-        return compare(a.command, b.command);
+        return a.command <=> b.command;
     case CommandArgType::VarRef:
-        return a.var.compare(b.var);
+        return a.var.compare(b.var) <=> 0;
     case CommandArgType::Nil:
-        return 0;
+        return 0 <=> 0;
     }
     UNREACHABLE;
 }

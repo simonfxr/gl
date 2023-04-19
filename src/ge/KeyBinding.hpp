@@ -6,6 +6,7 @@
 #include "pp/enum.hpp"
 #include "util/Comparable.hpp"
 
+#include <compare>
 #include <optional>
 #include <string>
 #include <vector>
@@ -135,29 +136,22 @@ enum class KeyState : uint8_t
 
 PP_DEF_ENUM_WITH_API(GE_API, GE_KEY_CODE_ENUM_DEF);
 
-struct Key : Comparable<Key>
+struct Key
 {
     KeyCode code{};
     KeyState state{};
     constexpr Key() = default;
     constexpr Key(KeyState st, KeyCode c) : code(c), state(st) {}
+    friend constexpr auto operator<=>(const Key &, const Key &) = default;
 };
-
-inline int
-compare(const Key &a, const Key &b)
-{
-    using ::compare;
-    return chained_compare([&]() { return compare(a.code, b.code); },
-                           [&]() { return compare(a.state, b.state); });
-}
 
 using KeyBinding = std::vector<Key>;
 
 HU_NODISCARD GE_API std::optional<KeyCode>
 parseKeyCode(const std::string_view &str);
 
-GE_API int
-compareKeyBinding(const KeyBinding &x, const KeyBinding &y);
+GE_API std::strong_ordering
+operator<=>(const KeyBinding &x, const KeyBinding &y) noexcept;
 
 } // namespace ge
 

@@ -37,16 +37,17 @@ parseKeyCode(const std::string_view &str)
     return std::nullopt;
 }
 
-int
-compareKeyBinding(const KeyBinding &x, const KeyBinding &y)
+std::strong_ordering
+operator<=>(const KeyBinding &x, const KeyBinding &y) noexcept
 {
     for (const auto i : irange(std::min(x.size(), y.size()))) {
         auto a = y[i].code;
         auto b = x[i].code;
-        if (a != b)
-            return compare(a, b);
+        auto r = a <=> b;
+        if (r != 0)
+            return r;
     }
-    return x.size() < y.size() ? -1 : x.size() > y.size() ? 1 : 0;
+    return x.size() <=> y.size();
 }
 
 } // namespace ge

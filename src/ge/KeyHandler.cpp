@@ -16,9 +16,11 @@ struct State
     State() = default;
     State(bool dn, uint32_t t) : down(dn), timestamp(t) {}
 
-    bool operator==(const State &ks) const { return timestamp == ks.timestamp; }
-
-    bool operator!=(const State &ks) const { return !(*this == ks); }
+    friend std::weak_ordering operator<=>(const State &lhs,
+                                          const State &rhs) noexcept
+    {
+        return lhs.timestamp <=> rhs.timestamp;
+    }
 };
 
 struct Binding
@@ -29,17 +31,10 @@ struct Binding
       : binding(std::move(bind))
     {}
 
-    bool operator<(const Binding &other) const
+    friend auto operator<=>(const Binding &lhs, const Binding &rhs) noexcept
     {
-        return compareKeyBinding(*binding, *other.binding) < 0;
+        return *lhs.binding <=> *rhs.binding;
     }
-
-    bool operator==(const Binding &other) const
-    {
-        return compareKeyBinding(*binding, *other.binding) == 0;
-    }
-
-    bool operator!=(const Binding &other) const { return !(*this == other); }
 };
 
 using CommandBindings = std::map<Binding, CommandPtr>;

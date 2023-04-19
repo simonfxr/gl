@@ -2,7 +2,6 @@
 #define PP_ENUM_HPP
 
 #include "pp/basic.h"
-#include "util/Comparable.hpp"
 
 #define PP_ENUM_DEF_VALLIST_V(val) val,
 
@@ -17,7 +16,7 @@
 #define PP_ENUM_DEF_VALUE_COUNT(DEFN) DEFN(PP_ARG3, PP_ENUM_DEF_VALUE_COUNT_V)
 
 #define PP_DEF_ENUM_WITH_API(API, DEFN)                                        \
-    struct API PP_ENUM_DEF_NAME(DEFN) : Comparable<PP_ENUM_DEF_NAME(DEFN)>     \
+    struct API PP_ENUM_DEF_NAME(DEFN)                                          \
     {                                                                          \
         using underlying_t = PP_ENUM_DEF_UNDERLYING(DEFN);                     \
         using enum_tag_t = void; /* tag used by std::enable_if<...> */         \
@@ -83,13 +82,8 @@
             return x.value != y.value;                                         \
         }                                                                      \
                                                                                \
-        friend constexpr int compare(PP_ENUM_DEF_NAME(DEFN) x,                 \
-                                     PP_ENUM_DEF_NAME(DEFN) y)                 \
-        {                                                                      \
-            return underlying_t(x.value) < underlying_t(y.value)   ? -1        \
-                   : underlying_t(x.value) > underlying_t(y.value) ? 1         \
-                                                                   : 0;        \
-        }                                                                      \
+        friend auto operator<=>(PP_ENUM_DEF_NAME(DEFN) x,                      \
+                                PP_ENUM_DEF_NAME(DEFN) y) = default;           \
     }
 
 #define PP_DEF_ENUM(DEFN) PP_DEF_ENUM_WITH_API(PP_NIL, DEFN)

@@ -94,9 +94,16 @@ struct GE_API FixedPluginSet final : PluginSet
     }
 
     template<typename P>
+    P &get_ref(bl::type_proxy<P>)
+    {
+        auto &ref = std::get<P>(plugins);
+        return ref;
+    }
+
+    template<typename P>
     decltype(auto) get()
     {
-        if constexpr (requires(P & p) { std::get<P>(plugins); }) {
+        if constexpr (requires() { get_ref(bl::type_proxy<P>{}); }) {
             return std::get<P>(plugins);
         } else {
             return *std::get<bl::box<P>>(plugins);

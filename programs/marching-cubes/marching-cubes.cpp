@@ -86,7 +86,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     // camera.registerWith(*engine);
     // camera.registerCommands(engine.commandProcessor());
 
-    get<ge::Camera>().frame().origin = vec3(0.f);
+    get<bl::box<ge::Camera>>()->frame().origin = vec3(0.f);
 
     //    engine->window().grabMouse(true);
     engine->window().showMouseCursor(false);

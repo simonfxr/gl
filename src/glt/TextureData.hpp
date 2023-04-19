@@ -40,6 +40,12 @@ struct GLT_API TextureData : private bl::non_copyable
 
     void upload(const Image &);
 
+    friend std::weak_ordering operator<=>(const TextureData &lhs,
+                                          const TextureData &rhs) noexcept
+    {
+        return lhs._handle._name <=> rhs._handle._name;
+    }
+
 private:
     size_t _samples;
     GLTextureObject _handle;
@@ -47,18 +53,6 @@ private:
     math::ivec2 _allocated_dim{ 0, 0 };
     ImageFormat _allocated_format{};
 };
-
-inline bool
-operator==(const TextureData &t1, const TextureData &t2)
-{
-    return t1.handle()._name == t2.handle()._name;
-}
-
-inline bool
-operator!=(const TextureData &t1, const TextureData &t2)
-{
-    return !(t1 == t2);
-}
 
 } // namespace glt
 

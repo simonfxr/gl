@@ -230,7 +230,7 @@ Anim::init(const Event<InitEvent> &ev)
         screenQuad.send();
     }
 
-    auto &camera = get<ge::Camera>();
+    auto &camera = *get<bl::box<ge::Camera>>();
     camera.frame().origin = vec3(6.36_r, 5.87_r, 1.97_r);
     camera.frame().setXZ(normalize(vec3(-0.29_r, 0_r, 0.95_r)),
                          normalize(vec3(-0.8_r, -0.54_r, -0.25_r)));
@@ -610,7 +610,7 @@ Anim::mouseMoved(const Event<ge::MouseMoved> &e)
     auto dy = e.info.dy;
 
     dx = -dx;
-    auto &camera = get<ge::Camera>();
+    auto &camera = *get<bl::box<ge::Camera>>();
     if (engine->keyHandler().keyState(ge::KeyCode::M) <=
         ge::KeyState::Pressed) {
         teapot1.frame.rotateWorld(-dx * 0.001f, camera.frame().localY());
