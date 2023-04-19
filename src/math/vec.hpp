@@ -368,11 +368,9 @@ struct vec : private std::array<T, N>
         (std::make_index_sequence<N>{});
     }
 
-    friend constexpr bool operator==(const Self &lhs,
-                                     const Self &rhs) = default;
+    friend constexpr bool operator==(const Self &, const Self &) = default;
 
-    friend constexpr auto operator<=>(const Self &lhs,
-                                      const Self &rhs) = default;
+    friend constexpr auto operator<=>(const Self &, const Self &) = default;
 
     friend auto invoke(bl::rand::sampler_f,
                        const auto &sampler,

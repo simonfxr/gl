@@ -184,9 +184,9 @@ GeometryTransform::save()
 void
 GeometryTransform::restore(SavePoint &sp)
 {
-    auto gt = std::exchange(sp.gt, nullptr);
-    auto depth = std::exchange(sp.depth, 0);
-    auto cookie = std::exchange(sp.cookie, 0);
+    auto gt = bl::exchange(sp.gt, nullptr);
+    auto depth = bl::exchange(sp.depth, 0);
+    auto cookie = bl::exchange(sp.cookie, 0);
     if (unlikely(this != gt || m().mods[depth] != cookie || m().depth < depth))
         FATAL_ERR(
           "cannot restore GeometryTransform: stack modified below safepoint");

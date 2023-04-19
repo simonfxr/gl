@@ -94,8 +94,8 @@ TextureData::upload(const Image &img)
         type = GL_RGBA;
     }
 
-    auto old_dim = std::exchange(_allocated_dim, img.dim());
-    auto old_format = std::exchange(_allocated_format, img.format());
+    auto old_dim = bl::exchange(_allocated_dim, img.dim());
+    auto old_format = bl::exchange(_allocated_format, img.format());
 
     if (_handle && (old_dim[0] * old_dim[1]) != 0 &&
         old_format == _allocated_format && old_dim == _allocated_dim) {

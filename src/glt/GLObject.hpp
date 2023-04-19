@@ -6,6 +6,7 @@
 #include "pp/enum.hpp"
 #include "sys/io/Stream.hpp"
 
+#include <bl/core.hpp>
 #include <bl/noncopymove.hpp>
 
 #include <compare>
@@ -81,7 +82,7 @@ struct GLObject : private bl::non_copyable
 
     void release()
     {
-        if (auto n = std::exchange(_name, 0); n)
+        if (auto n = bl::exchange(_name, 0); n)
             glt::release(type, 1, &n);
     }
 

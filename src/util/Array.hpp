@@ -67,9 +67,14 @@ delete_array(T *arr, size_t n)
         std::destroy_n(arr, n);
     }
 
+#if defined(__cpp_sized_deallocation) && __cpp_sized_deallocation
     operator delete[](static_cast<void *>(arr),
                       n * sizeof(T),
                       static_cast<std::align_val_t>(alignof(T)));
+#else
+    operator delete[](static_cast<void *>(arr),
+                      static_cast<std::align_val_t>(alignof(T)));
+#endif
 }
 
 template<typename T, typename U>
@@ -127,7 +132,7 @@ struct Array
 
     void clear()
     {
-        delete_array(std::exchange(_data, nullptr), std::exchange(_size, 0));
+        delete_array(bl::exchange(_data, nullptr), bl::exchange(_size, 0));
     }
 
     template<typename Iter>

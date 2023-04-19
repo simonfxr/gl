@@ -70,7 +70,7 @@ unconvertMode(int flags)
 HandleError
 convertErrno()
 {
-    auto errid = std::exchange(errno, 0);
+    auto errid = bl::exchange(errno, 0);
 
     if (errid == EAGAIN || errid == EWOULDBLOCK)
         return HandleError::BLOCKED;
@@ -92,7 +92,7 @@ convertErrno()
 SocketError
 convertErrnoSock()
 {
-    auto errid = std::exchange(errno, 0);
+    auto errid = bl::exchange(errno, 0);
     switch (errid) {
     case EWOULDBLOCK:
         return SocketError::BLOCKED;

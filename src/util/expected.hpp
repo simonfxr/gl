@@ -9,7 +9,8 @@
 
 #define USE_STD_EXPECTED 1
 
-#if defined(USE_STD_EXPECTED) && hu_has_include(<expected>)
+#if __cplusplus > 202002L && __cpp_concepts >= 202002L &&                      \
+  defined(USE_STD_EXPECTED) && hu_has_include(<expected>)
 
 #    include <expected>
 namespace util {

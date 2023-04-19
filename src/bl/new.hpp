@@ -8,6 +8,7 @@
 #include <bl/mp.hpp>
 #include <bl/noncopymove.hpp>
 
+#include <cstddef>
 #include <new>
 
 namespace bl {
@@ -170,9 +171,15 @@ delete_obj(T *p) noexcept(noexcept(T::destruct_at(*p)))
     if (!p)
         return;
     T::destruct_at(*p);
+#if defined(__cpp_sized_deallocation) && __cpp_sized_deallocation
     ::operator delete(static_cast<void *>(p),
                       sz,
                       static_cast<std::align_val_t>(alignof(std::max_align_t)));
+#else
+    (void) sz;
+    ::operator delete(static_cast<void *>(p),
+                      static_cast<std::align_val_t>(alignof(std::max_align_t)));
+#endif
 }
 
 struct default_deleter

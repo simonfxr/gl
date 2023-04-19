@@ -3,6 +3,8 @@
 #include "err/err.hpp"
 #include "sys/strerror_unix.hpp"
 
+#include <bl/core.hpp>
+
 #include <cerrno>
 #include <cmath>
 #include <cstring>
@@ -18,7 +20,7 @@ getTime()
     struct timespec tv
     {};
     while (clock_gettime(CLOCK_MONOTONIC_RAW, &tv) < 0) {
-        auto e = std::exchange(errno, 0);
+        auto e = bl::exchange(errno, 0);
         if (e == EINTR)
             continue;
         FATAL_ERR(std::string("clock_gettime failed") +
@@ -53,7 +55,7 @@ sleep(double secs) noexcept
 
     timespec rmtv{};
     while (nanosleep(&tv, &rmtv) < 0) {
-        auto e = std::exchange(errno, 0);
+        auto e = bl::exchange(errno, 0);
         if (e == EINTR) {
             tv = rmtv;
             continue;

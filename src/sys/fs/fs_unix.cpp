@@ -5,6 +5,8 @@
 #include "sys/strerror_unix.hpp"
 #include "util/string.hpp"
 
+#include <bl/core.hpp>
+
 #include <array>
 #include <cerrno>
 #include <cstring>
@@ -186,7 +188,7 @@ exists(std::string_view path)
     struct stat info
     {};
     if (stat(std::string(path).c_str(), &info) == -1) {
-        auto err = std::exchange(errno, 0);
+        auto err = bl::exchange(errno, 0);
         if (err != ENOENT)
             ERR(strerror_errno(err).data());
         return std::nullopt;

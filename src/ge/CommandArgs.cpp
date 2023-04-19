@@ -107,7 +107,7 @@ CommandArg::operator=(const CommandArg &rhs)
 void
 CommandArg::reset()
 {
-    switch (std::exchange(_type.value, CommandArgType::Nil)) {
+    switch (bl::exchange(_type.value, CommandArgType::Nil)) {
     case CommandArgType::String:
         bl::destroy_at(&string);
         return;

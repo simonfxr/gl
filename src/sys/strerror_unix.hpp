@@ -3,6 +3,8 @@
 
 #include "defs.h"
 
+#include <bl/core.hpp>
+
 #include <array>
 #include <cerrno>
 #include <cstring>
@@ -36,7 +38,7 @@ strerror_errno(int errnum)
 static inline auto
 strerror_errno()
 {
-    return strerror_errno(std::exchange(errno, 0));
+    return strerror_errno(bl::exchange(errno, 0));
 }
 } // namespace sys
 

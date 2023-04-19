@@ -79,7 +79,7 @@ template<typename Self, typename... Plugins>
 void
 Anim<Self, Plugins...>::init(const Event<InitEvent> &ev)
 {
-    if (!std::exchange(_linked, true))
+    if (!bl::exchange(_linked, true))
         for (auto p : pluginSet.allPlugins())
             engine->enablePlugin(*p);
     ev.info.success = true;

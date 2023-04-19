@@ -172,7 +172,7 @@ bool
 Preprocessor::setError()
 {
     WARN("setting error");
-    return std::exchange(m().errorState, true);
+    return bl::exchange(m().errorState, true);
 }
 
 bool
@@ -186,7 +186,7 @@ Preprocessor::wasError() const
 bool
 Preprocessor::clearError()
 {
-    return std::exchange(m().errorState, false);
+    return bl::exchange(m().errorState, false);
 }
 
 const std::string &
