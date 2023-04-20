@@ -190,7 +190,7 @@ parseKeycombo(ParserState &s, CommandArg &tok)
         return Fail;
     }
 
-    tok = CommandArg(std::move(keys));
+    tok = CommandArg(bl::move(keys));
     return EndToken;
 }
 
@@ -268,7 +268,7 @@ parseCommandRef(ParserState &s, CommandArg &arg)
         // //            WARN(("unknown command name: " + sym));
         //         }
 
-        arg = CommandArg::namedCommandRef(std::move(sym));
+        arg = CommandArg::namedCommandRef(bl::move(sym));
         return EndToken;
     }
 
@@ -287,7 +287,7 @@ parseVarRef(ParserState &s, CommandArg &arg)
         if (sym.empty())
             goto fail;
 
-        arg = CommandArg::varRef(std::move(sym));
+        arg = CommandArg::varRef(bl::move(sym));
         return EndToken;
     }
 
@@ -332,7 +332,7 @@ parseQuot(ParserState &s, CommandArg &arg)
     }
 
     arg = CommandArg(std::make_shared<QuotationCommand>(
-      s.filename, line, col, "", std::move(q)));
+      s.filename, line, col, "", bl::move(q)));
 
     return EndToken;
 }

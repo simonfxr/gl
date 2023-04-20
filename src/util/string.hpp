@@ -27,7 +27,7 @@ string_concat(Args &&...args)
     sys::io::ByteStream sstream;
     sstream.reserve((0 + ... + string_length_at_least(args)));
     (sstream << ... << std::forward<Args>(args));
-    return std::move(sstream).str();
+    return bl::move(sstream).str();
 }
 
 inline std::string

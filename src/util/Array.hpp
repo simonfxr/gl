@@ -93,7 +93,7 @@ ATTR_MALLOC T *
 dup_array(Iter it, Iter itend, size_t n)
 {
     auto dst = new_array_uninitialized<T>(n);
-    std::uninitialized_copy(std::move(it), std::move(itend), dst);
+    std::uninitialized_copy(bl::move(it), bl::move(itend), dst);
     return dst;
 }
 
@@ -139,7 +139,7 @@ struct Array
     void assign(Iter it, Iter itend)
     {
         auto n = std::distance(it, itend);
-        assign(std::move(it), std::move(itend), n);
+        assign(bl::move(it), bl::move(itend), n);
     }
 
     template<typename Iter>
@@ -151,11 +151,11 @@ struct Array
             n = new_size;
         }
         if (size() == new_size) {
-            std::copy(std::move(it), std::move(itend), begin());
+            std::copy(bl::move(it), bl::move(itend), begin());
         } else {
-            auto old = std::move(*this);
+            auto old = bl::move(*this);
             _size = new_size;
-            _data = dup_array<T>(std::move(it), std::move(itend), new_size);
+            _data = dup_array<T>(bl::move(it), bl::move(itend), new_size);
             if constexpr (!std::is_trivially_default_constructible_v<T>)
                 if (new_size > n)
                     std::uninitialized_default_construct(begin() + n, end());

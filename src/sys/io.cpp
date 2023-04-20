@@ -15,7 +15,7 @@ PP_DEF_ENUM_IMPL(SYS_SOCKET_ERROR_ENUM_DEF)
 
 IO::IO() : ipa_any(0), ipa_local(127, 0, 0, 1) {}
 
-HandleStream::HandleStream(Handle h) : handle(std::move(h)) {}
+HandleStream::HandleStream(Handle h) : handle(bl::move(h)) {}
 
 HandleStream::~HandleStream()
 {
@@ -196,7 +196,7 @@ HandleStream::open(std::string_view path, HandleMode mode)
     auto res = sys::io::open(path, mode);
     if (!res)
         return util::unexpected{ res.error() };
-    return { HandleStream{ std::move(res).value() } };
+    return { HandleStream{ bl::move(res).value() } };
 }
 
 HandleResult<Array<char>>
@@ -210,7 +210,7 @@ readFile(std::string_view path, sys::io::OutStream &errout) noexcept
         goto fail;
     }
     {
-        auto h = std::move(res).value();
+        auto h = bl::move(res).value();
         std::string str;
         for (;;) {
             std::array<char, BUF_SIZE> buf{};

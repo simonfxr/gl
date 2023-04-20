@@ -124,9 +124,9 @@ GLSLPreprocessor::processFileRecursively(std::string &&file)
         return;
     }
 
-    auto &dref = contents.emplace_back(std::move(data).value());
+    auto &dref = contents.emplace_back(bl::move(data).value());
 
-    this->name(std::move(file));
+    this->name(bl::move(file));
     process(std::string_view(dref.data(), dref.size()));
 }
 
@@ -241,8 +241,8 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
             return;
         }
 
-        auto &dref = proc.contents.emplace_back(std::move(res).value());
-        proc.name(std::move(filestat->absolute));
+        auto &dref = proc.contents.emplace_back(bl::move(res).value());
+        proc.name(bl::move(filestat->absolute));
         proc.process(std::string_view(dref.data(), dref.size()));
     }
 }

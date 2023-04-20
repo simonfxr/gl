@@ -370,7 +370,7 @@ MeshBase::growVertexBuf()
 {
     size_t new_size = vertex_count == 0 ? MIN_NUM_VERTICES : vertex_count * 2;
     vertex_data =
-      realloc_vertex_buf(std::move(vertex_data), struct_info->size, new_size);
+      realloc_vertex_buf(bl::move(vertex_data), struct_info->size, new_size);
     vertex_data_end.reset(vertex_data.get() + struct_info->size * vertex_count);
     vertex_data_lim.reset(vertex_data.get() + struct_info->size * new_size);
 }

@@ -123,7 +123,7 @@ struct ShaderObject::Data
     std::variant<StringShaderObject, FileShaderObject> object;
 
     Data(ShaderObject &self_, InitArgs &&args)
-      : self(self_), source(std::move(args.source)), object(std::move(args.obj))
+      : self(self_), source(bl::move(args.source)), object(bl::move(args.obj))
     {}
 
     std::pair<std::shared_ptr<ShaderObject>, ReloadState> reloadIfOutdated(
@@ -361,7 +361,7 @@ translateShaderType(ShaderType type, const std::string &basename)
 } // namespace
 
 ShaderSource::ShaderSource(ShaderSource::Data &&args)
-  : self(new Data(std::move(args)))
+  : self(new Data(bl::move(args)))
 {}
 
 const ShaderSourceKey &
@@ -375,7 +375,7 @@ ShaderSource::makeFileSource(ShaderType ty, std::string path)
 {
     ASSERT(sys::fs::fileExists(path));
     return std::make_shared<ShaderSource>(
-      Data{ path, { FileSource{ std::move(path) } }, ty });
+      Data{ path, { FileSource{ bl::move(path) } }, ty });
 }
 
 std::shared_ptr<ShaderSource>
@@ -383,7 +383,7 @@ ShaderSource::makeStringSource(ShaderType ty, std::string source)
 {
     auto h = hash(source);
     return std::make_shared<ShaderSource>(
-      Data{ std::move(h), { StringSource{ std::move(source) } }, ty });
+      Data{ bl::move(h), { StringSource{ bl::move(source) } }, ty });
 }
 
 std::shared_ptr<ShaderObject>
@@ -468,7 +468,7 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
 }
 
 ShaderObject::ShaderObject(InitArgs &&args)
-  : self(new Data(*this, std::move(args)))
+  : self(new Data(*this, bl::move(args)))
 {}
 
 ShaderObject::~ShaderObject()
@@ -530,7 +530,7 @@ ShaderObject::Data::reloadIfOutdated(ShaderCompilerQueue &scq)
         auto new_so = ShaderSource::Data::load(source, scq);
         if (!new_so)
             return { nullptr, ReloadState::Failed };
-        return { std::move(new_so), ReloadState::Outdated };
+        return { bl::move(new_so), ReloadState::Outdated };
     }
     UNREACHABLE;
 }
@@ -547,7 +547,7 @@ ShaderObject::Data::makeStringShaderObject(std::shared_ptr<ShaderSource> src,
                                            const StringSource &ssrc)
 {
     auto so = std::make_shared<ShaderObject>(
-      InitArgs{ std::move(src), { StringShaderObject{ std::ref(ssrc) } } });
+      InitArgs{ bl::move(src), { StringShaderObject{ std::ref(ssrc) } } });
     return so;
 }
 
@@ -558,7 +558,7 @@ ShaderObject::Data::makeFileShaderObject(std::shared_ptr<ShaderSource> src,
 {
     ASSERT(sys::fs::fileExists(fsrc.path));
     auto so = std::make_shared<ShaderObject>(
-      InitArgs{ std::move(src), { FileShaderObject{ fsrc, mtime } } });
+      InitArgs{ bl::move(src), { FileShaderObject{ fsrc, mtime } } });
     return so;
 }
 
@@ -793,14 +793,14 @@ ShaderCompilerQueue::enqueueReload(const std::shared_ptr<ShaderObject> &so)
             return so;
         case ReloadState::Outdated:
             ASSERT(new_so);
-            return { std::move(new_so) };
+            return { bl::move(new_so) };
         case ReloadState::Failed:
             ASSERT(!new_so);
             return so;
         }
         UNREACHABLE;
     };
-    m().toCompile.push({ so->shaderSource(), std::move(exec) });
+    m().toCompile.push({ so->shaderSource(), bl::move(exec) });
 }
 
 void
@@ -813,7 +813,7 @@ ShaderCompilerQueue::enqueueLoad(const std::shared_ptr<ShaderSource> &src)
         sys::io::stdout() << "load: " << src->key() << "\n";
         return ShaderSource::Data::load(src, *this);
     };
-    m().toCompile.push({ src, std::move(exec) });
+    m().toCompile.push({ src, bl::move(exec) });
 }
 
 void
@@ -821,7 +821,7 @@ ShaderCompilerQueue::compileAll()
 {
     for (; !wasError() && !m().toCompile.empty();) {
 
-        auto job = std::move(m().toCompile.front());
+        auto job = bl::move(m().toCompile.front());
         m().toCompile.pop();
         const ShaderSourceKey &key = job.source->key();
 

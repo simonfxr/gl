@@ -77,8 +77,8 @@ template<typename F>
 struct FunctorCommand : public Command
 {
     FunctorCommand(std::string name, std::string descr, F f_)
-      : Command(make_params(arg_seq{}), std::move(name), std::move(descr))
-      , _f(std::move(f_))
+      : Command(make_params(arg_seq{}), bl::move(name), bl::move(descr))
+      , _f(bl::move(f_))
     {}
     ~FunctorCommand() override = default;
 
@@ -114,7 +114,7 @@ makeCommand(std::string name, std::string descr, F &&f)
     // avoid excessive std::shared_ptr<XX> template instantiations
     return std::shared_ptr<Command>{ static_cast<Command *>(
       new FunctorCommand<std::decay_t<F>>(
-        std::move(name), std::move(descr), std::forward<F>(f))) };
+        bl::move(name), bl::move(descr), std::forward<F>(f))) };
 }
 
 template<typename T, typename... Args>
@@ -125,8 +125,8 @@ makeCommand(std::string name,
             void (T::*m)(const Event<CommandEvent> &, Args...))
 {
     return makeCommand(
-      std::move(name),
-      std::move(descr),
+      bl::move(name),
+      bl::move(descr),
       [&receiver, m](const Event<CommandEvent> &ev, Args... args) {
           (receiver.*m)(ev, args...);
       });

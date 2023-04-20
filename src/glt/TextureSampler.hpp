@@ -49,7 +49,7 @@ public:
     TextureSampler() : _data(new TextureData), _sampler(0) {}
 
     explicit TextureSampler(std::shared_ptr<TextureData> data)
-      : _data(std::move(data)), _sampler(0)
+      : _data(bl::move(data)), _sampler(0)
     {}
 
     ~TextureSampler();

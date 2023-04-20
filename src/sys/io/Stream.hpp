@@ -10,6 +10,8 @@
 #include <string>
 #include <string_view>
 
+#include <bl/core.hpp>
+
 #undef stdin
 #undef stdout
 #undef stderr
@@ -193,7 +195,7 @@ struct SYS_API ByteStream : public IOStream
     {
         return std::string(data(), size());
     }
-    std::string str() && { return std::move(buffer); }
+    std::string str() && { return bl::move(buffer); }
 
     void reserve(size_t additional)
     {

@@ -10,7 +10,7 @@ Image::Image(math::ivec2 dim, ImageFormat format) : _dim(dim), _format(format)
 Image::Image(math::ivec2 dim,
              ImageFormat format,
              std::shared_ptr<std::byte[]> data)
-  : _dim(dim), _format(format), _data(std::move(data))
+  : _dim(dim), _format(format), _data(bl::move(data))
 {
     if (empty())
         *this = Image{};

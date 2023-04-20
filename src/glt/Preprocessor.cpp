@@ -198,7 +198,7 @@ Preprocessor::name() const
 void
 Preprocessor::name(std::string &&name)
 {
-    m().sourceName = std::move(name);
+    m().sourceName = bl::move(name);
 }
 
 // Preprocessor::DirectiveHandler &Preprocessor::nullHandler() {

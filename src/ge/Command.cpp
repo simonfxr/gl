@@ -15,7 +15,7 @@ CommandEvent::CommandEvent(ge::Engine &e, CommandProcessor &proc)
 Command::Command(std::vector<CommandParamType> ps,
                  std::string name_,
                  std::string desc_)
-  : params(std::move(ps)), namestr(std::move(name_)), descr(std::move(desc_))
+  : params(bl::move(ps)), namestr(bl::move(name_)), descr(bl::move(desc_))
 {
     ASSERT(!namestr.empty());
 }
@@ -111,7 +111,7 @@ QuotationCommand::QuotationCommand(std::string_view source,
   : Command({},
             nameOfQuotation(source, line, column),
             describeQuotation(source, line, column, desc))
-  , quotation(std::move(quot))
+  , quotation(bl::move(quot))
 {}
 
 QuotationCommand::~QuotationCommand() = default;

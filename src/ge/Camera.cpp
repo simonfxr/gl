@@ -144,7 +144,7 @@ Camera::Impl::runSaveFrame(const Event<CommandEvent> & /*unused*/,
     }
     auto out_frame = frame;
     out_frame.normalize();
-    std::move(res).value().write(to_bytes(out_frame));
+    bl::move(res).value().write(to_bytes(out_frame));
 }
 
 void
@@ -168,7 +168,7 @@ Camera::Impl::runLoadFrame(const Event<CommandEvent> & /*unused*/,
     }
 
     std::array<char, sizeof frame> bytes{};
-    auto [s, ret] = std::move(res).value().read(bytes);
+    auto [s, ret] = bl::move(res).value().read(bytes);
     if (ret != sys::io::StreamResult::OK || s != sizeof frame) {
         ERR(string_concat(
           "failed to read frame from file: ", *path, ", io error: ", ret));

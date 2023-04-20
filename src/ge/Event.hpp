@@ -4,6 +4,7 @@
 #include "ge/conf.hpp"
 #include "util/functor_traits.hpp"
 
+#include <bl/core.hpp>
 #include <bl/noncopymove.hpp>
 
 #include <memory>
@@ -20,7 +21,7 @@ struct Event
     mutable bool abort;
     bool canAbort;
     Event() : info(), abort(false), canAbort(true) {}
-    explicit Event(T &&nfo) : info(std::move(nfo)), abort(false), canAbort(true)
+    explicit Event(T &&nfo) : info(bl::move(nfo)), abort(false), canAbort(true)
     {}
 };
 
@@ -51,7 +52,7 @@ private:
     F f;
 
 public:
-    FunctorEventHandler(F f_) : f(std::move(f_)) {}
+    FunctorEventHandler(F f_) : f(bl::move(f_)) {}
     void handle(const Event<T> &ev) final { f(ev); }
 };
 
@@ -62,7 +63,7 @@ makeEventHandler(F f)
     using T = event_value_type<std::decay_t<functor_arg_type<F, 0>>>;
     // avoid excessive std::shared_ptr<XX> template instantiations
     return std::shared_ptr<EventHandler<T>>(static_cast<EventHandler<T> *>(
-      new FunctorEventHandler<F, T>(std::move(f))));
+      new FunctorEventHandler<F, T>(bl::move(f))));
 }
 
 template<typename T, typename E, typename U>
@@ -130,7 +131,7 @@ EventSource<T>::reg(std::shared_ptr<EventHandler<T>> handler)
     for (auto &h : _handlers)
         if (h == handler)
             return false;
-    _handlers.push_back(std::move(handler));
+    _handlers.push_back(bl::move(handler));
     return true;
 }
 

@@ -38,7 +38,7 @@ struct unexpected
     constexpr decltype(auto) error() const &noexcept { return _err; }
     constexpr decltype(auto) error() const && = delete;
     constexpr decltype(auto) error() &noexcept { return _err; }
-    constexpr decltype(auto) error() &&noexcept { return std::move(_err); }
+    constexpr decltype(auto) error() &&noexcept { return bl::move(_err); }
 
     constexpr auto friend operator<=>(const unexpected &lhs,
                                       const unexpected &rhs) = default;
@@ -80,7 +80,7 @@ public:
 
     template<class G>
     constexpr explicit(!std::is_convertible_v<G, E>) expected(unexpected<G> &&e)
-      : base_t{ unexpected<E>{ std::move(e).error() } }
+      : base_t{ unexpected<E>{ bl::move(e).error() } }
     {}
 
     constexpr explicit operator bool() const noexcept
@@ -101,7 +101,7 @@ public:
     constexpr decltype(auto) value() &noexcept { return std::get<0>(*this); }
     constexpr decltype(auto) value() &&noexcept
     {
-        return std::get<0>(std::move(*this));
+        return std::get<0>(bl::move(*this));
     }
 
     constexpr decltype(auto) error() const &noexcept
@@ -121,14 +121,14 @@ public:
 
     constexpr E error() &&noexcept
     {
-        return std::get<1>(std::move(*this)).error();
+        return std::get<1>(bl::move(*this)).error();
     }
 
     constexpr const T *operator->() const noexcept { return &value(); }
     constexpr T *operator->() noexcept { return &value(); }
 
     constexpr const T &operator*() const &noexcept { return value(); }
-    constexpr T &&operator*() &&noexcept { return std::move(*this).value(); }
+    constexpr T &&operator*() &&noexcept { return bl::move(*this).value(); }
 
     constexpr bool has_value() const noexcept
     {
@@ -148,7 +148,7 @@ public:
     {
         if (!*this)
             return std::forward<U>(default_value);
-        return std::move(*this).value();
+        return bl::move(*this).value();
     }
 };
 

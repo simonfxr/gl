@@ -147,7 +147,7 @@ struct Handle : private bl::non_copyable
     constexpr Handle(Handle &&rhs) noexcept { swap(*this, rhs); }
     Handle &operator=(Handle &&rhs) noexcept
     {
-        auto tmp = Handle{ std::move(rhs) };
+        auto tmp = Handle{ bl::move(rhs) };
         swap(*this, tmp);
         return *this;
     }
@@ -176,7 +176,7 @@ struct Socket : private bl::non_copyable
     constexpr Socket(Socket &&rhs) noexcept { swap(*this, rhs); }
     Socket &operator=(Socket &&rhs) noexcept
     {
-        auto tmp = Socket{ std::move(rhs) };
+        auto tmp = Socket{ bl::move(rhs) };
         swap(*this, tmp);
         return *this;
     }

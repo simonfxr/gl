@@ -69,7 +69,7 @@ struct GLObject : private bl::non_copyable
 
     constexpr GLObject &operator=(GLObject &&rhs) noexcept
     {
-        swap(*this, GLObject<T>{ std::move(rhs) });
+        swap(*this, GLObject<T>{ bl::move(rhs) });
         return *this;
     }
 

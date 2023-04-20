@@ -22,7 +22,7 @@ struct GLT_API Preprocessor : bl::runtime_sized_base<Preprocessor>
         size_t size;
 
         ContentContext(Preprocessor &proc, std::string &&nam)
-          : processor(proc), name(std::move(nam))
+          : processor(proc), name(bl::move(nam))
         {}
     };
 
@@ -37,7 +37,7 @@ struct GLT_API Preprocessor : bl::runtime_sized_base<Preprocessor>
                              // of directive = endDirective - beginDirective
 
         DirectiveContext(Preprocessor &proc, std::string &&name)
-          : content(proc, std::move(name))
+          : content(proc, bl::move(name))
         {}
     };
 

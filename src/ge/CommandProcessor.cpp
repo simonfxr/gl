@@ -68,7 +68,7 @@ CommandProcessor::addScriptDirectory(std::string dir, bool check_exists)
     if (check_exists && !sys::fs::directoryExists(dir))
         return false;
 
-    m().scriptDirs.emplace_back(std::move(dir));
+    m().scriptDirs.emplace_back(bl::move(dir));
     return true;
 }
 
@@ -109,9 +109,9 @@ CommandProcessor::define(CommandPtr comm, bool unique)
     }
 
     if (dup)
-        it->second = std::move(comm);
+        it->second = bl::move(comm);
     else
-        m().commands[comname] = std::move(comm);
+        m().commands[comname] = bl::move(comm);
     return dup;
 }
 
@@ -235,7 +235,7 @@ CommandProcessor::exec(const CommandPtr &com, std::span<CommandArg> args)
                         return false;
                     }
                     keepAlive.push_back(comArg);
-                    args[i] = CommandArg(std::move(comArg));
+                    args[i] = CommandArg(bl::move(comArg));
                 } else if (val_type == AT::KeyCombo &&
                            args[i].type() == AT::String) {
                     if (!coerceKeyCombo(args[i])) {

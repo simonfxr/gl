@@ -27,8 +27,7 @@ struct Binding
 {
     std::shared_ptr<KeyBinding> binding;
 
-    explicit Binding(std::shared_ptr<KeyBinding> bind)
-      : binding(std::move(bind))
+    explicit Binding(std::shared_ptr<KeyBinding> bind) : binding(bl::move(bind))
     {}
 
     friend auto operator<=>(const Binding &lhs, const Binding &rhs) noexcept

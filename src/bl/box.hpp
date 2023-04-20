@@ -31,7 +31,7 @@ struct box : private owned<non_null<Rep<T>>>
     box(const box &rhs) : Base(new_obj<T>(*rhs.get())) {}
     box(box &&rhs) noexcept = default;
     box &operator=(const box &rhs) { *Base::get() = *rhs.get(); }
-    box &operator=(box &&rhs) noexcept { *Base::get() = std::move(*rhs.get()); }
+    box &operator=(box &&rhs) noexcept { *Base::get() = bl::move(*rhs.get()); }
     ~box() = default;
 
     box(std::in_place_t, auto &&...args)

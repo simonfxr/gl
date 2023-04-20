@@ -43,7 +43,7 @@ struct GLT_API Image
         }
         _data =
           data_ptr{ data.get(),
-                    [p = std::move(data)](std::byte *) mutable { p.reset(); } };
+                    [p = bl::move(data)](std::byte *) mutable { p.reset(); } };
     }
 
     Image(Image &&img) noexcept { bl::swap(*this, img); }
@@ -54,7 +54,7 @@ struct GLT_API Image
 
     Image &operator=(Image &&img) noexcept
     {
-        auto tmp = std::move(img);
+        auto tmp = bl::move(img);
         bl::swap(*this, tmp);
         return *this;
     }

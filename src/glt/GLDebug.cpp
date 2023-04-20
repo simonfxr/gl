@@ -169,7 +169,7 @@ ARBDebug::printDebugMessages(const err::Location &loc)
                          "OpenGL DEBUG",
                          loc,
                          err::LogLevel::Error,
-                         std::move(mesg).str().c_str());
+                         bl::move(mesg).str().c_str());
     }
 }
 
@@ -261,7 +261,7 @@ AMDDebug::printDebugMessages(const err::Location &loc)
                          "OpenGL DEBUG",
                          loc,
                          err::LogLevel::Error,
-                         std::move(mesg).str().c_str());
+                         bl::move(mesg).str().c_str());
     }
 }
 

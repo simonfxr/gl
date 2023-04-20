@@ -697,7 +697,7 @@ Anim::loadResources(const std::string &dir)
       glt::ImageFormat::RGB,
       std::unique_ptr<std::byte, decltype(deleter)>{
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        reinterpret_cast<std::byte *>(std::exchange(wood_data, nullptr)),
+        reinterpret_cast<std::byte *>(bl::exchange(wood_data, nullptr)),
         deleter });
 
     woodTexture.data()->upload(img);

@@ -165,7 +165,7 @@ open(std::string_view path, HandleMode mode)
     Handle h;
     h._mode = mode;
     h._os.fd = fd;
-    return { std::move(h) };
+    return { bl::move(h) };
 }
 
 HandleMode
@@ -289,7 +289,7 @@ listen(SocketProto proto, const IPAddr4 &addr, uint16_t port, SocketMode mode)
     {
         Socket s;
         s._os.fd = sock;
-        return { std::move(s) };
+        return { bl::move(s) };
     }
 socket_err:
     ::close(sock);
@@ -323,7 +323,7 @@ accept(Socket &s)
         Handle h;
         h._os.fd = c;
         h._mode = unconvertMode(flags);
-        return { std::move(h) };
+        return { bl::move(h) };
     }
 
 client_err:

@@ -54,12 +54,12 @@ struct CommandValue
     CommandValue(std::shared_ptr<Command> com);
 
     CommandValue(std::string nm, NamedRef)
-      : name(std::make_shared<const std::string>(std::move(nm)))
+      : name(std::make_shared<const std::string>(bl::move(nm)))
     {}
 
     static CommandValue makeNamedRef(std::string nm)
     {
-        return CommandValue(std::move(nm), NamedRef{});
+        return CommandValue(bl::move(nm), NamedRef{});
     }
 
     friend std::weak_ordering operator<=>(const CommandValue &,
@@ -83,39 +83,39 @@ struct GE_API CommandArg
     {}
 
     explicit CommandArg(std::string x)
-      : string(std::move(x)), _type(CommandArgType::String)
+      : string(bl::move(x)), _type(CommandArgType::String)
     {}
 
     explicit CommandArg(double x)
-      : number(std::move(x)), _type(CommandArgType::Number)
+      : number(bl::move(x)), _type(CommandArgType::Number)
     {}
 
     explicit CommandArg(std::shared_ptr<Command> comm)
-      : command(std::move(comm)), _type(CommandArgType::CommandRef)
+      : command(bl::move(comm)), _type(CommandArgType::CommandRef)
     {}
 
     explicit CommandArg(KeyBinding kb)
-      : keyBinding(std::move(kb)), _type(CommandArgType::KeyCombo)
+      : keyBinding(bl::move(kb)), _type(CommandArgType::KeyCombo)
     {}
 
     explicit CommandArg(CommandValue comm)
-      : command(std::move(comm)), _type(CommandArgType::CommandRef)
+      : command(bl::move(comm)), _type(CommandArgType::CommandRef)
     {}
 
     explicit CommandArg(std::string var, CommandArgVar)
-      : var(std::move(var)), _type(CommandArgType::VarRef)
+      : var(bl::move(var)), _type(CommandArgType::VarRef)
     {}
 
     ~CommandArg();
 
     static CommandArg varRef(std::string var)
     {
-        return CommandArg(std::move(var), CommandArgVar{});
+        return CommandArg(bl::move(var), CommandArgVar{});
     }
 
     static CommandArg namedCommandRef(std::string comm)
     {
-        return CommandArg(CommandValue::makeNamedRef(std::move(comm)));
+        return CommandArg(CommandValue::makeNamedRef(bl::move(comm)));
     }
 
     CommandArg(CommandArg &&) noexcept;

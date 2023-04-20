@@ -165,7 +165,7 @@ open(std::string_view path, HandleMode mode)
     h._os.handle = castFromHandle(hndl);
     h._mode = mode;
     h._os.is_socket = false;
-    return { std::move(h) };
+    return { bl::move(h) };
 }
 
 HandleMode
@@ -355,7 +355,7 @@ listen(SocketProto proto, const IPAddr4 &addr, uint16_t port, SocketMode mode)
     {
         Socket s;
         s._os.socket = castFromSocket(sock);
-        return { std::move(s) };
+        return { bl::move(s) };
     }
 
 socket_err:
@@ -382,7 +382,7 @@ accept(Socket &s)
     h._os.handle = castFromSocket(c);
     h._os.is_socket = true;
     h._mode = HM_READ | HM_WRITE;
-    return { std::move(h) };
+    return { bl::move(h) };
 }
 
 SocketError

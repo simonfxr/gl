@@ -26,7 +26,7 @@ copy(T *dest, const T &x)
 } // namespace
 
 CommandValue::CommandValue(std::shared_ptr<Command> com)
-  : name(com, &com->name()), ref(std::move(com))
+  : name(com, &com->name()), ref(bl::move(com))
 {}
 
 CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
@@ -57,7 +57,7 @@ CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
 
 CommandArg::CommandArg(CommandArg &&rhs) noexcept : CommandArg()
 {
-    *this = std::move(rhs);
+    *this = bl::move(rhs);
 }
 
 CommandArg::~CommandArg()
