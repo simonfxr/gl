@@ -10,9 +10,6 @@
 
 namespace sys::io {
 
-PP_DEF_ENUM_IMPL(SYS_HANDLE_ERROR_ENUM_DEF)
-PP_DEF_ENUM_IMPL(SYS_SOCKET_ERROR_ENUM_DEF)
-
 IO::IO() : ipa_any(0), ipa_local(127, 0, 0, 1) {}
 
 HandleStream::HandleStream(Handle h) : handle(bl::move(h)) {}
@@ -26,7 +23,7 @@ namespace {
 StreamResult
 toStreamResult(HandleError e)
 {
-    switch (e.value) {
+    switch (e) {
     case HandleError::OK:
         return StreamResult::OK;
     case HandleError::EOF:

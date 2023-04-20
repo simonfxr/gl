@@ -31,6 +31,7 @@ struct Camera::Impl : public Camera
     bool mouse_look{ false };
 
     Impl();
+    ~Impl() override;
 
     void mouseMoved(int16_t dx, int16_t dy);
 
@@ -51,6 +52,8 @@ struct Camera::Impl : public Camera
 };
 
 BL_DEFINE_RUNTIME_SIZED(Camera, Camera::Impl);
+
+Camera::Impl::~Impl() = default;
 
 namespace {
 

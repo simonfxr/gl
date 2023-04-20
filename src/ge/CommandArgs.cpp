@@ -10,10 +10,6 @@
 
 namespace ge {
 
-PP_DEF_ENUM_IMPL(GE_COMMAND_PARAM_TYPE_ENUM_DEF)
-
-PP_DEF_ENUM_IMPL(GE_COMMAND_ARG_TYPE_ENUM_DEF)
-
 namespace {
 
 template<typename T>
@@ -31,7 +27,7 @@ CommandValue::CommandValue(std::shared_ptr<Command> com)
 
 CommandArg::CommandArg(const CommandArg &rhs) : integer(), _type(rhs._type)
 {
-    switch (_type.value) {
+    switch (_type) {
     case CommandArgType::String:
         copy(&string, rhs.string);
         break;
@@ -73,7 +69,7 @@ CommandArg::operator=(CommandArg &&rhs) noexcept
     reset();
     _type = rhs._type;
     rhs._type = CommandArgType::Nil;
-    switch (_type.value) {
+    switch (_type) {
     case CommandArgType::String:
         bl::relocate_at(&rhs.string, &string);
         return *this;
@@ -107,7 +103,7 @@ CommandArg::operator=(const CommandArg &rhs)
 void
 CommandArg::reset()
 {
-    switch (bl::exchange(_type.value, CommandArgType::Nil)) {
+    switch (bl::exchange(_type, CommandArgType::Nil)) {
     case CommandArgType::String:
         bl::destroy_at(&string);
         return;
@@ -141,7 +137,7 @@ operator<=>(const CommandArg &a, const CommandArg &b) noexcept
 {
     if (a.type() != b.type())
         return a.type() <=> b.type();
-    switch (a.type().value) {
+    switch (a.type()) {
     case CommandArgType::String:
         return a.string.compare(b.string) <=> 0;
     case CommandArgType::Integer:
@@ -244,11 +240,7 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
             *m().current_out << pre;
 
         auto sym = to_string(k.code);
-        if (!sym)
-            *m().current_out << "<unknown key code: " << k.code.numeric()
-                             << ">";
-        else
-            *m().current_out << sym;
+        *m().current_out << sym;
     }
 
     *m().current_out << "]";
@@ -257,7 +249,7 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
 void
 CommandPrettyPrinter::print(const CommandArg &arg, bool first)
 {
-    switch (arg.type().value) {
+    switch (arg.type()) {
     case CommandArgType::String:
         *m().current_out << '"' << arg.string << '"';
         return;

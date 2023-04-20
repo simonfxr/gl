@@ -9,7 +9,7 @@ namespace glt {
 unsigned
 toGLScalarType(ScalarType t)
 {
-    switch (t.value) {
+    switch (t) {
     case ScalarType::I8:
         return GL_BYTE;
     case ScalarType::I16:

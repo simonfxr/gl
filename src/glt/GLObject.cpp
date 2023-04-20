@@ -13,8 +13,6 @@
 
 namespace glt {
 
-PP_DEF_ENUM_IMPL(GLT_OBJECT_TYPE_ENUM_DEF)
-
 namespace {
 
 using Generator = PFNGLGENBUFFERSPROC;
@@ -53,10 +51,13 @@ struct ObjectKind
     {}
 };
 
+void
+count(int) = delete;
+
 struct Tables
 {
-    std::array<size_t, ObjectType::count> instance_count{};
-    std::array<ObjectKind, ObjectType::count> kinds{};
+    std::array<size_t, count(ObjectType{})> instance_count{};
+    std::array<ObjectKind, count(ObjectType{})> kinds{};
     DBG(std::unordered_map<GLuint, std::string> stacktrace_map;)
     Tables();
 
@@ -83,7 +84,7 @@ Tables::Tables()
     KIND(glGenVertexArrays, glDeleteVertexArrays, VertexArray);
     KIND(glGenQueries, glDeleteQueries, Query);
 #undef KIND
-    ASSERT(i == ObjectType::count);
+    ASSERT(i == count(ObjectType{}));
 }
 } // namespace
 
@@ -97,8 +98,7 @@ generate(ObjectType t, GLsizei n, GLuint *names)
     });
 
     auto tab = Tables::get();
-    ASSERT(t.is_valid());
-    auto idx = static_cast<size_t>(t.value);
+    auto idx = static_cast<size_t>(t);
     ASSERT(tab.kinds[idx].generator != nullptr);
     GL_CALL(tab.kinds[idx].generator, n, names);
     for (GLsizei i = 0; i < n; ++i) {
@@ -122,8 +122,7 @@ void
 release(ObjectType t, GLsizei n, const GLuint *names)
 {
     auto tab = Tables::get();
-    ASSERT(t.is_valid());
-    auto idx = static_cast<size_t>(t.value);
+    auto idx = static_cast<size_t>(t);
     GL_CALL(tab.kinds[idx].destructor, n, names);
     for (GLsizei i = 0; i < n; ++i) {
         if (names[i] != 0) {
@@ -139,7 +138,7 @@ printStats(sys::io::OutStream &out)
 {
     auto tab = Tables::get();
     out << "Active OpenGL Objects:\n";
-    for (size_t i = 0; i < ObjectType::count; ++i)
+    for (size_t i = 0; i < count(ObjectType{}); ++i)
         if (tab.instance_count[i] > 0)
             out << "  " << tab.kinds[i].kind << "s: " << tab.instance_count[i]
                 << "\n";

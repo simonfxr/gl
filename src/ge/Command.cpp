@@ -41,7 +41,7 @@ Command::interactiveDescription() const
     for (const auto &param : parameters()) {
         desc << delim;
         delim = ", ";
-        switch (param.value) {
+        switch (param) {
         case CommandParamType::String:
             desc << "string";
             break;

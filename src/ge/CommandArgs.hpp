@@ -16,29 +16,29 @@ namespace ge {
 
 struct Command;
 
-#define GE_COMMAND_PARAM_TYPE_ENUM_DEF(T, V)                                   \
-    T(CommandParamType,                                                        \
-      uint8_t,                                                                 \
-      V(String)   /* "abcd", 'foo' */                                          \
-      V(Integer)  /* 42, 12334, ... */                                         \
-      V(Number)   /* 3.14159 */                                                \
-      V(KeyCombo) /* keycombo: [LShift;+Up;-A], [!Mouse1] ... */               \
-      V(Command)  /* commandref: &comname or quotation: { com1 arg1 arg2 ;     \
-                          com2 arg3 ... } */                                   \
-      V(VarRef)   /* $var */                                                   \
-      V(Any)      /* some parameter of any type */                             \
-      V(List)     /* all remaining params, can only appear as the last         \
-                          parameter */                                         \
-    )
+PP_DEF_ENUM(CommandParamType,
+            uint8_t,
+            String,   /* "abcd", 'foo' */
+            Integer,  /* 42, 12334, ... */
+            Number,   /* 3.14159 */
+            KeyCombo, /* keycombo: [LShift;+Up;-A], [!Mouse1] ... */
+            Command, /* commandref: &comname or quotation: { com1 arg1 arg2 ;  \
+                               com2 arg3 ... } */
+            VarRef,  /* $var */
+            Any,     /* some parameter of any type */
+            List /* all remaining params, can only appear as the last         \
+                            parameter */
+);
 
-#define GE_COMMAND_ARG_TYPE_ENUM_DEF(T, V)                                     \
-    T(CommandArgType,                                                          \
-      uint8_t,                                                                 \
-      V(String) V(Integer) V(Number) V(KeyCombo) V(CommandRef) V(VarRef)       \
-        V(Nil))
-
-PP_DEF_ENUM_WITH_API(GE_API, GE_COMMAND_PARAM_TYPE_ENUM_DEF);
-PP_DEF_ENUM_WITH_API(GE_API, GE_COMMAND_ARG_TYPE_ENUM_DEF);
+PP_DEF_ENUM(CommandArgType,
+            uint8_t,
+            String,
+            Integer,
+            Number,
+            KeyCombo,
+            CommandRef,
+            VarRef,
+            Nil);
 
 struct CommandArg;
 

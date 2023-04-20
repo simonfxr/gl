@@ -1,104 +1,50 @@
-#ifndef PP_ENUM_HPP
-#define PP_ENUM_HPP
+#ifndef PP_ENUM_SIMPLE_HPP
+#define PP_ENUM_SIMPLE_HPP
 
 #include "pp/basic.h"
+#include "pp/map.h"
 
-#define PP_ENUM_DEF_VALLIST_V(val) val,
+#define PP_ENUM_DEF_CONST1(...) 1
 
-#define PP_ENUM_DEF_VALLIST(DEFN) DEFN(PP_ARG3, PP_ENUM_DEF_VALLIST_V)
+#define PP_ENUM_DEF_PLUS(...) +
 
-#define PP_ENUM_DEF_NAME(DEFN) DEFN(PP_ARG1, PP_IGNORE)
+#define PP_ENUM_DEF_TOSTR2(tag, str)                                           \
+case tag:                                                                      \
+    return ::std::string_view(str, sizeof(str) - 1);
 
-#define PP_ENUM_DEF_UNDERLYING(DEFN) DEFN(PP_ARG2, PP_IGNORE)
+#define PP_ENUM_DEF_TOSTR1(tag) PP_ENUM_DEF_TOSTR2(tag, PP_TOSTR(tag))
 
-#define PP_ENUM_DEF_VALUE_COUNT_V(_) +1
+#define PP_ENUM_DEF_WRAPPER(name) PP_CAT(name, _wrapper_type)
 
-#define PP_ENUM_DEF_VALUE_COUNT(DEFN) DEFN(PP_ARG3, PP_ENUM_DEF_VALUE_COUNT_V)
-
-#define PP_DEF_ENUM_WITH_API(API, DEFN)                                        \
-    struct API PP_ENUM_DEF_NAME(DEFN)                                          \
+#define PP_DEF_ENUM(NAME, UNDERLYING, ...)                                     \
+    struct PP_ENUM_DEF_WRAPPER(NAME)                                           \
     {                                                                          \
-        using underlying_t = PP_ENUM_DEF_UNDERLYING(DEFN);                     \
-        using enum_tag_t = void; /* tag used by std::enable_if<...> */         \
-        enum enum_t : underlying_t                                             \
+        using underlying_t = UNDERLYING;                                       \
+        enum NAME : UNDERLYING                                                 \
         {                                                                      \
-            PP_ENUM_DEF_VALLIST(DEFN)                                          \
+            __VA_ARGS__                                                        \
         };                                                                     \
-        enum_t value{};                                                        \
-        static inline constexpr underlying_t count =                           \
-          PP_ENUM_DEF_VALUE_COUNT(DEFN);                                       \
-        constexpr PP_ENUM_DEF_NAME(DEFN)() = default;                          \
-        constexpr PP_ENUM_DEF_NAME(DEFN)(enum_t v) : value(v)                  \
-        {}                                                                     \
-        constexpr explicit PP_ENUM_DEF_NAME(DEFN)(underlying_t v)              \
-          : value(enum_t(v))                                                   \
-        {}                                                                     \
-        const char *to_string() const;                                         \
-                                                                               \
-        constexpr underlying_t numeric() const                                 \
+        static inline constexpr underlying_t count_value =                     \
+          PP_MAP(PP_ENUM_DEF_CONST1, PP_ENUM_DEF_PLUS, __VA_ARGS__);           \
+        friend constexpr auto count(NAME)                                      \
         {                                                                      \
-            return underlying_t(value);                                        \
+            return count_value;                                                \
+        }                                                                      \
+        friend constexpr ::std::string_view to_string(NAME _enum_value_)       \
+        {                                                                      \
+            switch (_enum_value_) {                                            \
+                PP_MAP(PP_ENUM_DEF_TOSTR1, PP_SEMI, __VA_ARGS__)               \
+            }                                                                  \
+            hu_unreachable();                                                  \
         }                                                                      \
                                                                                \
         template<typename OStream>                                             \
-        friend OStream &operator<<(OStream &out,                               \
-                                   PP_ENUM_DEF_NAME(DEFN) enum_val)            \
+        friend constexpr decltype(auto) operator<<(OStream &out,               \
+                                                   NAME _enum_value_)          \
         {                                                                      \
-            return out << enum_val.to_string();                                \
+            return out << to_string(_enum_value_);                             \
         }                                                                      \
-                                                                               \
-        template<typename OStream>                                             \
-        friend OStream &operator<<(OStream &out, enum_t enum_val)              \
-        {                                                                      \
-            return out << PP_ENUM_DEF_NAME(DEFN)(enum_val);                    \
-        }                                                                      \
-                                                                               \
-        friend inline const char *to_string(PP_ENUM_DEF_NAME(DEFN) enum_val)   \
-        {                                                                      \
-            return enum_val.to_string();                                       \
-        }                                                                      \
-                                                                               \
-        friend inline const char *to_string(                                   \
-          PP_ENUM_DEF_NAME(DEFN)::enum_t enum_val)                             \
-        {                                                                      \
-            return PP_ENUM_DEF_NAME(DEFN)(enum_val).to_string();               \
-        }                                                                      \
-                                                                               \
-        constexpr bool is_valid()                                              \
-        {                                                                      \
-            return underlying_t{} <= underlying_t(value) &&                    \
-                   size_t(underlying_t(value)) < count;                        \
-        }                                                                      \
-                                                                               \
-        friend constexpr bool operator==(PP_ENUM_DEF_NAME(DEFN) x,             \
-                                         PP_ENUM_DEF_NAME(DEFN) y)             \
-        {                                                                      \
-            return x.value == y.value;                                         \
-        }                                                                      \
-                                                                               \
-        friend constexpr bool operator!=(PP_ENUM_DEF_NAME(DEFN) x,             \
-                                         PP_ENUM_DEF_NAME(DEFN) y)             \
-        {                                                                      \
-            return x.value != y.value;                                         \
-        }                                                                      \
-                                                                               \
-        friend auto operator<=>(PP_ENUM_DEF_NAME(DEFN) x,                      \
-                                PP_ENUM_DEF_NAME(DEFN) y) = default;           \
-    }
+    };                                                                         \
+    using NAME = PP_ENUM_DEF_WRAPPER(NAME)::NAME
 
-#define PP_DEF_ENUM(DEFN) PP_DEF_ENUM_WITH_API(PP_NIL, DEFN)
-
-#define PP_DEF_ENUM_TO_STRING_V(c)                                             \
-case c:                                                                        \
-    return PP_TOSTR(c);
-
-#define PP_DEF_ENUM_IMPL(DEFN)                                                 \
-    const char *PP_ENUM_DEF_NAME(DEFN)::to_string() const                      \
-    {                                                                          \
-        switch (value) {                                                       \
-            DEFN(PP_ARG3, PP_DEF_ENUM_TO_STRING_V)                             \
-        }                                                                      \
-        UNREACHABLE;                                                           \
-    }
-
-#endif
+#endif // PP_ENUM_SIMPLE_HPP

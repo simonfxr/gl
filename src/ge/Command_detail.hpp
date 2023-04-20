@@ -29,7 +29,7 @@ struct command_param_mapping
 HU_PURE_FN inline bool
 has_type(CommandParamType pt, CommandArgType t) noexcept
 {
-    switch (pt.value) {
+    switch (pt) {
     case CommandParamType::String:
         return t == CommandArgType::String;
     case CommandParamType::Integer:

@@ -6,8 +6,6 @@
 
 namespace sys::fs {
 
-PP_DEF_ENUM_IMPL(SYS_OBJECT_TYPE_ENUM_DEF)
-
 using namespace std::literals;
 
 namespace def {

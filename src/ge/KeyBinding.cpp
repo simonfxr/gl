@@ -9,17 +9,17 @@
 
 namespace ge {
 
-PP_DEF_ENUM_IMPL(GE_KEY_CODE_ENUM_DEF)
+void
+count() = delete;
 
 namespace {
 std::unordered_map<std::string_view, KeyCode>
 make_table()
 {
     std::unordered_map<std::string_view, KeyCode> table;
-    for (auto i : irange(KeyCode::count)) {
-        auto val = KeyCode(i);
-        auto str = to_string(val);
-        table[std::string_view(str, strlen(str))] = val;
+    for (auto i : irange(count(KeyCode{}))) {
+        auto val = static_cast<KeyCode>(i);
+        table[to_string(val)] = val;
     }
     return table;
 }
@@ -44,7 +44,7 @@ operator<=>(const KeyBinding &x, const KeyBinding &y) noexcept
         auto a = y[i].code;
         auto b = x[i].code;
         auto r = a <=> b;
-        if (r != 0)
+        if (!std::is_eq(r))
             return r;
     }
     return x.size() <=> y.size();

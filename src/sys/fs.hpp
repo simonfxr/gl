@@ -1,8 +1,9 @@
 #ifndef FS_HPP
 #define FS_HPP
 
-#include "pp/enum.hpp"
 #include "sys/conf.hpp"
+
+#include "pp/enum.hpp"
 
 #include <span>
 
@@ -28,10 +29,7 @@ struct FileTime
 
 inline constexpr FileTime MIN_FILE_TIME{};
 
-#define SYS_OBJECT_TYPE_ENUM_DEF(T, V)                                         \
-    T(ObjectType, uint8_t, V(File) V(Directory))
-
-PP_DEF_ENUM_WITH_API(SYS_API, SYS_OBJECT_TYPE_ENUM_DEF);
+PP_DEF_ENUM(ObjectType, uint8_t, File, Directory);
 
 struct Stat
 {

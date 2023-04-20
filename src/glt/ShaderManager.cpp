@@ -10,10 +10,6 @@
 
 namespace glt {
 
-PP_DEF_ENUM_IMPL(GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF);
-PP_DEF_ENUM_IMPL(GLT_SHADER_PROFILE_ENUM_DEF);
-PP_DEF_ENUM_IMPL(GLT_SHADER_TYPE_ENUM_DEF);
-
 using ProgramMap =
   std::unordered_map<std::string, std::shared_ptr<ShaderProgram>>;
 

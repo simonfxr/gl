@@ -16,14 +16,17 @@
 
 namespace glt {
 
-#define GLT_SHADER_PROGRAM_ERROR_ENUM_DEF(T, V)                                \
-    T(ShaderProgramError,                                                      \
-      uint8_t,                                                                 \
-      V(NoError) V(FileNotInPath) V(CompilationFailed) V(LinkageFailed)        \
-        V(AttributeNotBound) V(UniformNotKnown) V(ValidationFailed)            \
-          V(APIError) V(OpenGLError))
-
-PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_PROGRAM_ERROR_ENUM_DEF);
+PP_DEF_ENUM(ShaderProgramError,
+            uint8_t,
+            NoError,
+            FileNotInPath,
+            CompilationFailed,
+            LinkageFailed,
+            AttributeNotBound,
+            UniformNotKnown,
+            ValidationFailed,
+            APIError,
+            OpenGLError);
 
 struct GLT_API ShaderProgram
   : public std::enable_shared_from_this<ShaderProgram>

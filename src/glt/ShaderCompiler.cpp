@@ -38,8 +38,6 @@ struct LogTraits<glt::ShaderCompilerQueue>
 
 namespace glt {
 
-PP_DEF_ENUM_IMPL(GLT_SHADER_COMPILER_ERROR_ENUM_DEF)
-
 namespace {
 struct CompileJob
 {

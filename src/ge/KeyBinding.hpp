@@ -21,119 +21,115 @@ enum class KeyState : uint8_t
 };
 
 // clang-format off
-#define GE_KEY_CODE_ENUM_DEF(TY, _) \
-  TY(KeyCode, uint8_t,  \
-     _(    A         ) \
-     _(    B         ) \
-     _(    C         ) \
-     _(    D         ) \
-     _(    E         ) \
-     _(    F         ) \
-     _(    G         ) \
-     _(    H         ) \
-     _(    I         ) \
-     _(    J         ) \
-     _(    K         ) \
-     _(    L         ) \
-     _(    M         ) \
-     _(    N         ) \
-     _(    O         ) \
-     _(    P         ) \
-     _(    Q         ) \
-     _(    R         ) \
-     _(    S         ) \
-     _(    T         ) \
-     _(    U         ) \
-     _(    V         ) \
-     _(    W         ) \
-     _(    X         ) \
-     _(    Y         ) \
-     _(    Z         ) \
-     _(    Num0      ) \
-     _(    Num1      ) \
-     _(    Num2      ) \
-     _(    Num3      ) \
-     _(    Num4      ) \
-     _(    Num5      ) \
-     _(    Num6      ) \
-     _(    Num7      ) \
-     _(    Num8      ) \
-     _(    Num9      ) \
-     _(    Escape    ) \
-     _(    LControl  ) \
-     _(    LShift    ) \
-     _(    LAlt      ) \
-     _(    LSystem   ) \
-     _(    RControl  ) \
-     _(    RShift    ) \
-     _(    RAlt      ) \
-     _(    RSystem   ) \
-     _(    Menu      ) \
-     _(    LBracket  ) \
-     _(    RBracket  ) \
-     _(    SemiColon ) \
-     _(    Comma     ) \
-     _(    Period    ) \
-     _(    Quote     ) \
-     _(    Slash     ) \
-     _(    BackSlash ) \
-     _(    Tilde     ) \
-     _(    Equal     ) \
-     _(    Dash      ) \
-     _(    Space     ) \
-     _(    Return    ) \
-     _(    Back      ) \
-     _(    Tab       ) \
-     _(    PageUp    ) \
-     _(    PageDown  ) \
-     _(    End       ) \
-     _(    Home      ) \
-     _(    Insert    ) \
-     _(    Delete    ) \
-     _(    Add       ) \
-     _(    Subtract  ) \
-     _(    Multiply  ) \
-     _(    Divide    ) \
-     _(    Left      ) \
-     _(    Right     ) \
-     _(    Up        ) \
-     _(    Down      ) \
-     _(    Numpad0   ) \
-     _(    Numpad1   ) \
-     _(    Numpad2   ) \
-     _(    Numpad3   ) \
-     _(    Numpad4   ) \
-     _(    Numpad5   ) \
-     _(    Numpad6   ) \
-     _(    Numpad7   ) \
-     _(    Numpad8   ) \
-     _(    Numpad9   ) \
-     _(    F1        ) \
-     _(    F2        ) \
-     _(    F3        ) \
-     _(    F4        ) \
-     _(    F5        ) \
-     _(    F6        ) \
-     _(    F7        ) \
-     _(    F8        ) \
-     _(    F9        ) \
-     _(    F10       ) \
-     _(    F11       ) \
-     _(    F12       ) \
-     _(    F13       ) \
-     _(    F14       ) \
-     _(    F15       ) \
-     _(    Pause     ) \
-     _(    KeyCount  ) \
-     _(    MLeft     ) \
-     _(    MRight    ) \
-     _(    MMiddle   ) \
-     _(    MXButton1 ) \
-     _(    MXButton2 ))
-
+PP_DEF_ENUM(KeyCode, uint8_t,  \
+       A         ,
+       B         ,
+       C         ,
+       D         ,
+       E         ,
+       F         ,
+       G         ,
+       H         ,
+       I         ,
+       J         ,
+       K         ,
+       L         ,
+       M         ,
+       N         ,
+       O         ,
+       P         ,
+       Q         ,
+       R         ,
+       S         ,
+       T         ,
+       U         ,
+       V         ,
+       W         ,
+       X         ,
+       Y         ,
+       Z         ,
+       Num0      ,
+       Num1      ,
+       Num2      ,
+       Num3      ,
+       Num4      ,
+       Num5      ,
+       Num6      ,
+       Num7      ,
+       Num8      ,
+       Num9      ,
+       Escape    ,
+       LControl  ,
+       LShift    ,
+       LAlt      ,
+       LSystem   ,
+       RControl  ,
+       RShift    ,
+       RAlt      ,
+       RSystem   ,
+       Menu      ,
+       LBracket  ,
+       RBracket  ,
+       SemiColon ,
+       Comma     ,
+       Period    ,
+       Quote     ,
+       Slash     ,
+       BackSlash ,
+       Tilde     ,
+       Equal     ,
+       Dash      ,
+       Space     ,
+       Return    ,
+       Back      ,
+       Tab       ,
+       PageUp    ,
+       PageDown  ,
+       End       ,
+       Home      ,
+       Insert    ,
+       Delete    ,
+       Add       ,
+       Subtract  ,
+       Multiply  ,
+       Divide    ,
+       Left      ,
+       Right     ,
+       Up        ,
+       Down      ,
+       Numpad0   ,
+       Numpad1   ,
+       Numpad2   ,
+       Numpad3   ,
+       Numpad4   ,
+       Numpad5   ,
+       Numpad6   ,
+       Numpad7   ,
+       Numpad8   ,
+       Numpad9   ,
+       F1        ,
+       F2        ,
+       F3        ,
+       F4        ,
+       F5        ,
+       F6        ,
+       F7        ,
+       F8        ,
+       F9        ,
+       F10       ,
+       F11       ,
+       F12       ,
+       F13       ,
+       F14       ,
+       F15       ,
+       Pause     ,
+       KeyCount  ,
+       MLeft     ,
+       MRight    ,
+       MMiddle   ,
+       MXButton1 ,
+       MXButton2 );
 // clang-format on
-
-PP_DEF_ENUM_WITH_API(GE_API, GE_KEY_CODE_ENUM_DEF);
 
 struct Key
 {

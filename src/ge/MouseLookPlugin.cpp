@@ -8,6 +8,7 @@ namespace ge {
 struct MouseLookPlugin::Impl : public MouseLookPlugin
 {
     Impl();
+    ~Impl() override;
 
     Engine *_engine{};
     bool _should_grab{ true };
@@ -18,6 +19,8 @@ struct MouseLookPlugin::Impl : public MouseLookPlugin
     void stateChanged(State new_state) const;
     void setState(State new_state);
 };
+
+MouseLookPlugin::Impl::~Impl() = default;
 
 BL_DEFINE_RUNTIME_SIZED(MouseLookPlugin, MouseLookPlugin::Impl);
 

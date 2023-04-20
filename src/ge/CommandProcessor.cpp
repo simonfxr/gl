@@ -193,7 +193,7 @@ CommandProcessor::exec(const CommandPtr &com, std::span<CommandArg> args)
         const auto &param = params[i];
         if (param != PT::Any) {
             AT val_type = AT::String;
-            switch (param.value) {
+            switch (param) {
             case PT::String:
                 val_type = AT::String;
                 break;
@@ -364,7 +364,7 @@ CommandProcessor::execCommand(std::span<CommandArg> args)
 CommandParamType
 CommandProcessor::commandParamType(CommandArgType type)
 {
-    switch (type.value) {
+    switch (type) {
     case CommandArgType::String:
         return CommandParamType::String;
     case CommandArgType::Integer:

@@ -38,12 +38,15 @@ struct Binding
 
 using CommandBindings = std::map<Binding, CommandPtr>;
 
+void
+count() = delete;
+
 struct KeyHandler::Impl : public KeyHandler
 {
     CommandProcessor &processor;
     uint32_t frame_id{ 1 };
     CommandBindings bindings;
-    std::array<State, KeyCode::count> states;
+    std::array<State, count(KeyCode{})> states;
     EventSource<KeyPressed> keyPressedEvent;
 
     explicit Impl(CommandProcessor &proc);
@@ -57,8 +60,6 @@ KeyHandler::Impl::Impl(CommandProcessor &proc) : processor(proc)
         state = State();
 }
 
-#define CHECK_KEYCODE(kc) ASSERT((kc).is_valid(), "invalid keycode")
-
 KeyHandler &
 KeyHandler::construct_at(void *p, CommandProcessor &proc) noexcept
 {
@@ -70,8 +71,7 @@ KeyHandler::keyPressed(KeyCode code)
 {
     // std::cerr << "key pressed: " << m().frame_id << " " <<
     // prettyKeyCode(code) << std::endl;
-    auto idx = code.numeric();
-    CHECK_KEYCODE(code);
+    auto idx = static_cast<size_t>(code);
     m().states[idx] = State(true, m().frame_id);
     m().keyPressedEvent.raise(Event(KeyPressed(*this, code)));
 }
@@ -81,8 +81,7 @@ KeyHandler::keyReleased(KeyCode code)
 {
     // std::cerr << "key released: " << m().frame_id << " " <<
     // prettyKeyCode(code) << std::endl;
-    auto idx = code.numeric();
-    CHECK_KEYCODE(code);
+    auto idx = static_cast<size_t>(code);
     if (m().states[idx].down)
         m().states[idx] = State(false, m().frame_id);
 }
@@ -106,8 +105,7 @@ KeyHandler::clearStates()
 KeyState
 KeyHandler::keyState(KeyCode code)
 {
-    auto idx = code.numeric();
-    CHECK_KEYCODE(code);
+    auto idx = static_cast<size_t>(code);
     auto state = m().states[idx];
 
     if (state.timestamp == m().frame_id)

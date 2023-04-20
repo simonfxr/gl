@@ -13,24 +13,20 @@
 
 namespace glt {
 
-// clang-format off
-#define GLT_OBJECT_TYPE_ENUM_DEF(T, V)                                  \
-    T(ObjectType, uint8_t,                                              \
-      V(Program)                                                        \
-      V(Shader)                                                         \
-      V(Buffer)                                                         \
-      V(Framebuffer)                                                    \
-      V(Renderbuffer)                                                   \
-      V(Sampler)                                                        \
-      V(Texture)                                                        \
-      V(TransformFeedback)                                              \
-      V(VertexArray)                                                    \
-      V(Query))
-// clang-format on
+PP_DEF_ENUM(ObjectType,
+            uint8_t,
+            Program,
+            Shader,
+            Buffer,
+            Framebuffer,
+            Renderbuffer,
+            Sampler,
+            Texture,
+            TransformFeedback,
+            VertexArray,
+            Query);
 
-PP_DEF_ENUM_WITH_API(GLT_API, GLT_OBJECT_TYPE_ENUM_DEF);
-
-template<ObjectType::enum_t>
+template<ObjectType>
 struct GLObject;
 
 using GLProgramObject = GLObject<ObjectType::Program>;
@@ -56,7 +52,7 @@ printStats(sys::io::OutStream &);
 GLT_API void
 generateShader(GLenum shader_type, GLuint *shader);
 
-template<ObjectType::enum_t T>
+template<ObjectType T>
 struct GLObject : private bl::non_copyable
 {
     static inline constexpr ObjectType type = T;

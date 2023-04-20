@@ -625,7 +625,7 @@ Anim::keyPressed(const Event<ge::KeyPressed> &e)
     using K = ge::KeyCode;
 
     BEGIN_NO_WARN_SWITCH
-    switch (e.info.key.value) {
+    switch (e.info.key) {
     case K::F:
         wireframe_mode = !wireframe_mode;
         GL_CALL(

@@ -82,6 +82,9 @@ protected:
 };
 
 #define BL_DECLARE_RUNTIME_SIZED(ApiT, ImplT)                                  \
+    BL_DIAG_PUSH                                                               \
+    BL_DIAG_IGN_CLANG("-Wsuggest-destructor-override")                         \
+    BL_DIAG_IGN_CLANG("-Winconsistent-missing-destructor-override")            \
 protected:                                                                     \
     ApiT() : runtime_sized_instantiation_t{ ::std::in_place }                  \
     {}                                                                         \
@@ -113,6 +116,7 @@ public:                                                                        \
           static_cast<ApiT *>(this));                                          \
     }                                                                          \
                                                                                \
+    BL_DIAG_POP                                                                \
     static void destruct_at(ApiT &) noexcept
 
 #define BL_DEFINE_RUNTIME_SIZED(ApiT, ImplT)                                   \

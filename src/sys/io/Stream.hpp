@@ -33,10 +33,7 @@ stdout();
 HU_NODISCARD SYS_API OutStream &
 stderr();
 
-#define SYS_STREAM_RESULT_ENUM_DEF(T, V)                                       \
-    T(StreamResult, uint8_t, V(OK) V(Blocked) V(EOF) V(Closed) V(Error))
-
-PP_DEF_ENUM_WITH_API(SYS_API, SYS_STREAM_RESULT_ENUM_DEF);
+PP_DEF_ENUM(StreamResult, uint8_t, OK, Blocked, EOF, Closed, Error);
 
 using StreamFlags = uint16_t;
 

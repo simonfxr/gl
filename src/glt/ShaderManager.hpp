@@ -22,21 +22,18 @@ using PreprocessorDefinitions = std::unordered_map<std::string, std::string>;
 
 using ShaderDirectories = std::vector<std::string>;
 
-#define GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF(T, V)                            \
-    T(ShaderManagerVerbosity, uint8_t, V(Quiet) V(OnlyErrors) V(Info))
+PP_DEF_ENUM(ShaderManagerVerbosity, uint8_t, Quiet, OnlyErrors, Info);
 
-#define GLT_SHADER_PROFILE_ENUM_DEF(T, V)                                      \
-    T(ShaderProfile, uint8_t, V(Core) V(Compatibility))
+PP_DEF_ENUM(ShaderProfile, uint8_t, Core, Compatibility);
 
-#define GLT_SHADER_TYPE_ENUM_DEF(T, V)                                         \
-    T(ShaderType,                                                              \
-      uint8_t,                                                                 \
-      V(GuessShaderType) V(VertexShader) V(FragmentShader) V(GeometryShader)   \
-        V(TesselationControl) V(TesselationEvaluation))
-
-PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_MANAGER_VERBOSITY_ENUM_DEF);
-PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_PROFILE_ENUM_DEF);
-PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_TYPE_ENUM_DEF);
+PP_DEF_ENUM(ShaderType,
+            uint8_t,
+            GuessShaderType,
+            VertexShader,
+            FragmentShader,
+            GeometryShader,
+            TesselationControl,
+            TesselationEvaluation);
 
 struct GLT_API ShaderManager : private bl::runtime_sized_base<ShaderManager>
 {

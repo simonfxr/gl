@@ -125,19 +125,15 @@ private:
     DECLARE_PIMPL(GLT_API, self);
 };
 
-// clang-format off
-#define GLT_SHADER_COMPILER_ERROR_ENUM_DEF(T, V)                               \
-    T(ShaderCompilerError,                                                     \
-      uint8_t,                                                                 \
-      V(NoError)                                                               \
-      V(CouldntGuessShaderType)                                                \
-      V(InvalidShaderType)                                                     \
-      V(FileNotFound)                                                          \
-      V(FileNotInShaderPath)                                                   \
-      V(CompilationFailed)                                                     \
-      V(OpenGLError))
-// clang-format on
-PP_DEF_ENUM_WITH_API(GLT_API, GLT_SHADER_COMPILER_ERROR_ENUM_DEF);
+PP_DEF_ENUM(ShaderCompilerError,
+            uint8_t,
+            NoError,
+            CouldntGuessShaderType,
+            InvalidShaderType,
+            FileNotFound,
+            FileNotInShaderPath,
+            CompilationFailed,
+            OpenGLError);
 
 struct GLT_API ShaderCompiler : private bl::runtime_sized_base<ShaderCompiler>
 {

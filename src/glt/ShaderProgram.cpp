@@ -30,8 +30,6 @@ struct LogTraits<glt::ShaderProgram>
 
 namespace glt {
 
-PP_DEF_ENUM_IMPL(GLT_SHADER_PROGRAM_ERROR_ENUM_DEF);
-
 using Attributes = std::unordered_map<std::string, GLuint>;
 
 struct ShaderProgram::Data

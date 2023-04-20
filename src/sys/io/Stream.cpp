@@ -9,8 +9,6 @@
 
 namespace sys::io {
 
-PP_DEF_ENUM_IMPL(SYS_STREAM_RESULT_ENUM_DEF)
-
 namespace {
 
 struct StreamState
@@ -23,7 +21,7 @@ struct StreamState
 StreamResult
 StreamState::track(StreamFlags eof, StreamFlags &flags, StreamResult res)
 {
-    switch (res.value) {
+    switch (res) {
     case StreamResult::OK:
     case StreamResult::Blocked:
         return res;
