@@ -3,9 +3,8 @@
 
 #include "sys/conf.hpp"
 
-#include "pp/enum.hpp"
-
-#include <span>
+#include <bl/enum.hpp>
+#include <pp/enum.hpp>
 
 #if HU_OS_POSIX_P
 #    include "sys/fs/fs_unix.hpp"
@@ -16,11 +15,11 @@
 #endif
 
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 
-namespace sys {
-namespace fs {
+namespace sys::fs {
 
 struct FileTime
 {
@@ -178,7 +177,6 @@ join(std::string_view path, Args &&...args)
     return def::join(path, parts, sizeof...(args));
 }
 
-} // namespace fs
-} // namespace sys
+} // namespace sys::fs
 
 #endif

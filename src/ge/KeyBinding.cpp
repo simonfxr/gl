@@ -9,15 +9,12 @@
 
 namespace ge {
 
-void
-count() = delete;
-
 namespace {
 std::unordered_map<std::string_view, KeyCode>
 make_table()
 {
     std::unordered_map<std::string_view, KeyCode> table;
-    for (auto i : irange(count(KeyCode{}))) {
+    for (auto i : irange(bl::enum_count_of<KeyCode>())) {
         auto val = static_cast<KeyCode>(i);
         table[to_string(val)] = val;
     }

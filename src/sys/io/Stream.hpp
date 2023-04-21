@@ -5,12 +5,12 @@
 #include "sys/conf.hpp"
 #include "sys/fiber.hpp"
 
+#include <bl/enum.hpp>
+
 #include <cstring>
 #include <span>
 #include <string>
 #include <string_view>
-
-#include <bl/core.hpp>
 
 #undef stdin
 #undef stdout

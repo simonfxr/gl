@@ -51,13 +51,10 @@ struct ObjectKind
     {}
 };
 
-void
-count(int) = delete;
-
 struct Tables
 {
-    std::array<size_t, count(ObjectType{})> instance_count{};
-    std::array<ObjectKind, count(ObjectType{})> kinds{};
+    std::array<size_t, bl::enum_count_of<ObjectType>()> instance_count{};
+    std::array<ObjectKind, bl::enum_count_of<ObjectType>()> kinds{};
     DBG(std::unordered_map<GLuint, std::string> stacktrace_map;)
     Tables();
 
@@ -84,7 +81,7 @@ Tables::Tables()
     KIND(glGenVertexArrays, glDeleteVertexArrays, VertexArray);
     KIND(glGenQueries, glDeleteQueries, Query);
 #undef KIND
-    ASSERT(i == count(ObjectType{}));
+    ASSERT(i == bl::enum_count_of<ObjectType>());
 }
 } // namespace
 
@@ -138,7 +135,7 @@ printStats(sys::io::OutStream &out)
 {
     auto tab = Tables::get();
     out << "Active OpenGL Objects:\n";
-    for (size_t i = 0; i < count(ObjectType{}); ++i)
+    for (size_t i = 0; i < bl::enum_count_of<ObjectType>(); ++i)
         if (tab.instance_count[i] > 0)
             out << "  " << tab.kinds[i].kind << "s: " << tab.instance_count[i]
                 << "\n";

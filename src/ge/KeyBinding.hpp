@@ -3,7 +3,8 @@
 
 #include "ge/conf.hpp"
 
-#include "pp/enum.hpp"
+#include <bl/enum.hpp>
+#include <pp/enum.hpp>
 
 #include <compare>
 #include <optional>

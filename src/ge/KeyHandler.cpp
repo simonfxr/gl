@@ -38,15 +38,12 @@ struct Binding
 
 using CommandBindings = std::map<Binding, CommandPtr>;
 
-void
-count() = delete;
-
 struct KeyHandler::Impl : public KeyHandler
 {
     CommandProcessor &processor;
     uint32_t frame_id{ 1 };
     CommandBindings bindings;
-    std::array<State, count(KeyCode{})> states;
+    std::array<State, bl::enum_count_of<KeyCode>()> states;
     EventSource<KeyPressed> keyPressedEvent;
 
     explicit Impl(CommandProcessor &proc);
