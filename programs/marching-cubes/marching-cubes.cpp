@@ -166,9 +166,9 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     marchingCubesProgram->addShaderFile("marching-cubes.vert");
     marchingCubesProgram->addShaderFile("marching-cubes.geom");
     marchingCubesProgram->bindAttributes<MCVertex>();
-    std::string vars[] = { "gPosition", "gNormal" };
+    bl::string vars[] = { "gPosition", "gNormal" };
     marchingCubesProgram->bindStreamOutVaryings(
-      Array<std::string>(vars, ARRAY_LENGTH(vars)));
+      Array<bl::string>(vars, ARRAY_LENGTH(vars)));
     if (!marchingCubesProgram->tryLink())
         return;
 

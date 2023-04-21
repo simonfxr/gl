@@ -22,7 +22,7 @@ enum State
 void
 parse_err(const ParserState &s,
           const err::Location *loc,
-          const std::string &mesg)
+          const bl::string &mesg)
 {
     if (s.in_state != sys::io::StreamResult::Blocked) {
         sys::io::ByteStream buf;
@@ -117,7 +117,7 @@ symChar(char c)
     return symFirst(c) || (c >= '0' && c <= '9') || (c == '.');
 }
 
-std::string
+bl::string
 parseSym(ParserState &s)
 {
     sys::io::ByteStream buf;
@@ -260,7 +260,7 @@ parseCommandRef(ParserState &s, CommandArg &arg)
     if (s.c == 0)
         goto fail;
     {
-        std::string sym = parseSym(s);
+        bl::string sym = parseSym(s);
         if (sym.empty())
             goto fail;
         //         CommandPtr comref = s.proc.command(sym);
@@ -283,7 +283,7 @@ parseVarRef(ParserState &s, CommandArg &arg)
     if (s.c == 0)
         goto fail;
     {
-        std::string sym = parseSym(s);
+        bl::string sym = parseSym(s);
         if (sym.empty())
             goto fail;
 

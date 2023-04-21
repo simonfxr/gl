@@ -13,7 +13,7 @@ struct GE_API ParserState
 {
     char c{};
     char rawC{};
-    std::string filename;
+    bl::string filename;
 
     sys::io::StreamResult in_state;
     sys::io::InStream *in;
@@ -21,7 +21,7 @@ struct GE_API ParserState
     int line = 1;
     int col = 0;
 
-    ParserState(sys::io::InStream &_in, std::string_view fn)
+    ParserState(sys::io::InStream &_in, bl::string_view fn)
       : filename(fn), in_state(sys::io::StreamResult::OK), in(&_in)
     {}
 };

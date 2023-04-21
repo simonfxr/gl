@@ -22,13 +22,13 @@ struct GE_API EngineOptions
         Animate
     };
 
-    std::vector<std::pair<CommandType, std::string>> commands;
-    std::string workingDirectory;
+    std::vector<std::pair<CommandType, bl::string>> commands;
+    bl::string workingDirectory;
     bool inhibitInitScript;
-    std::string binary;
+    bl::string binary;
     bool defaultCD;
-    std::vector<std::string> shaderDirs;
-    std::vector<std::string> scriptDirs;
+    std::vector<bl::string> shaderDirs;
+    std::vector<bl::string> scriptDirs;
     WindowOptions window;
     Mode mode;
     bool traceOpenGL;

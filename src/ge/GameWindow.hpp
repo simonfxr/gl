@@ -11,7 +11,7 @@
 
 #include <bl/new.hpp>
 
-#include <string>
+#include <bl/string.hpp>
 
 namespace ge {
 
@@ -42,7 +42,7 @@ struct GE_API WindowOptions
 {
     size_t width;
     size_t height;
-    std::string title;
+    bl::string title;
     GLContextInfo settings;
     bool vsync;
 

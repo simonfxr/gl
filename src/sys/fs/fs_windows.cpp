@@ -27,13 +27,13 @@ filetimeToUnixTimestap(const FILETIME *ft)
 } // namespace
 
 bool
-cwd(std::string_view dir)
+cwd(bl::string_view dir)
 {
-    auto dirstr = std::string(dir);
+    auto dirstr = bl::string(dir);
     return SetCurrentDirectory(dirstr.c_str()) == TRUE;
 }
 
-std::string
+bl::string
 cwd()
 {
     std::wstring dir(MAX_PATH, '\0');
@@ -45,51 +45,51 @@ cwd()
     return absolutePath(utf16To8({ dir.data(), size_t(len) }));
 }
 
-std::string
-dirname(std::string_view path)
+bl::string
+dirname(bl::string_view path)
 {
     return def::dirname(path);
 }
 
-std::string
-basename(std::string_view path)
+bl::string
+basename(bl::string_view path)
 {
     return def::basename(path);
 }
 
-std::string
-extension(std::string_view path)
+bl::string
+extension(bl::string_view path)
 {
     return def::extension(path);
 }
 
-std::string
-dropExtension(std::string_view path)
+bl::string
+dropExtension(bl::string_view path)
 {
     return def::dropExtension(path);
 }
 
-std::string
-dropTrailingSeparators(std::string_view path)
+bl::string
+dropTrailingSeparators(bl::string_view path)
 {
     return def::dropTrailingSeparators(path);
 }
 
 bool
-isAbsolute(std::string_view path)
+isAbsolute(bl::string_view path)
 {
     auto wstr = utf8To16(path);
     return PathIsRelativeW(wstr.c_str()) != TRUE;
 }
 
 std::optional<FileTime>
-modificationTime(std::string_view path)
+modificationTime(bl::string_view path)
 {
     return def::modificationTime(path);
 }
 
 std::optional<Stat>
-stat(std::string_view path)
+stat(bl::string_view path)
 {
     auto wpath = utf8To16(path);
     WIN32_FILE_ATTRIBUTE_DATA attrs;
@@ -110,8 +110,8 @@ stat(std::string_view path)
     return stat;
 }
 
-std::string
-absolutePath(std::string_view path)
+bl::string
+absolutePath(bl::string_view path)
 {
     auto wpath = utf8To16(path);
     std::wstring abs(MAX_PATH, '\0');
@@ -129,14 +129,14 @@ absolutePath(std::string_view path)
     return utf16To8({ abs.data(), len });
 }
 
-std::string
-lookup(std::span<const std::string> dirs, std::string_view name)
+bl::string
+lookup(std::span<const bl::string> dirs, bl::string_view name)
 {
     return def::lookup(dirs, name);
 }
 
 std::optional<ObjectType>
-exists(std::string_view path)
+exists(bl::string_view path)
 {
     return def::exists(path);
 }

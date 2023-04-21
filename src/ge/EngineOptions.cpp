@@ -97,7 +97,7 @@ struct State
     bool option(OptionCase opt, const char *arg);
 };
 
-#define CMDWARN(msg) WARN(std::string("parsing options: ") + (msg))
+#define CMDWARN(msg) WARN(bl::string("parsing options: ") + (msg))
 
 bool
 str_eq(const char *a, const char *b)
@@ -155,10 +155,10 @@ State::option(OptionCase opt, const char *arg)
         }
         return true;
     case Eval:
-        options.commands.emplace_back(EngineOptions::Command, std::string(arg));
+        options.commands.emplace_back(EngineOptions::Command, bl::string(arg));
         return true;
     case Script:
-        options.commands.emplace_back(EngineOptions::Script, std::string(arg));
+        options.commands.emplace_back(EngineOptions::Script, bl::string(arg));
         return true;
     case CWD:
         options.workingDirectory = arg;
@@ -167,7 +167,7 @@ State::option(OptionCase opt, const char *arg)
         int maj, min;
         if (sscanf(arg, "%d.%d", &maj, &min) != 2 || maj < 0 || min < 0 ||
             maj > 9 || min > 9) {
-            CMDWARN("invalid OpenGL Version: " + std::string(arg));
+            CMDWARN("invalid OpenGL Version: " + bl::string(arg));
             return false;
         }
         options.window.settings.majorVersion = static_cast<unsigned>(maj);
@@ -181,7 +181,7 @@ State::option(OptionCase opt, const char *arg)
             options.window.settings.coreProfile = false;
         } else {
             CMDWARN("--gl-profile: invalid OpenGL Profile type: " +
-                    std::string(arg));
+                    bl::string(arg));
             return false;
         }
         return true;
@@ -285,7 +285,7 @@ EngineOptions::parse(int *argcp, char ***argvp)
                         err = !state.option(opt.option_case, nullptr);
                     } else if (i + 1 >= argc) {
                         skip = 1;
-                        CMDWARN(std::string(opt.option) + " missing argument");
+                        CMDWARN(bl::string(opt.option) + " missing argument");
                     } else {
                         skip = 2;
                         err = !state.option(opt.option_case, argv[i + 1]);

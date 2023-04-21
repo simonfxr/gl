@@ -1,7 +1,7 @@
 #ifndef GLT_GLSLPREPROCESSOR_HPP
 #define GLT_GLSLPREPROCESSOR_HPP
 
-#include <string>
+#include <bl/string.hpp>
 #include <vector>
 
 #include "glt/Preprocessor.hpp"
@@ -47,11 +47,11 @@ struct GLT_API GLSLPreprocessor : public Preprocessor
                      ShaderDependencies &);
     ~GLSLPreprocessor();
 
-    void appendString(std::string_view);
+    void appendString(bl::string_view);
 
     void addDefines(const PreprocessorDefinitions &);
 
-    void processFileRecursively(std::string &&);
+    void processFileRecursively(bl::string &&);
 
     // internal use only
     void advanceSegments(const Preprocessor::DirectiveContext &);

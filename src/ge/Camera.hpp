@@ -71,8 +71,8 @@ struct GE_API Camera
     glt::Frame &frame();
     void frame(const glt::Frame &);
 
-    [[nodiscard]] const std::string &framePath() const;
-    void framePath(const std::string &);
+    [[nodiscard]] const bl::string &framePath() const;
+    void framePath(const bl::string &);
 
     void mouseMoved(int16_t dx, int16_t dy);
 

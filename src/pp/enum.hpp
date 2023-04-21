@@ -10,7 +10,7 @@
 
 #define PP_ENUM_DEF_TOSTR2(tag, str)                                           \
 case tag:                                                                      \
-    return ::std::string_view(str, sizeof(str) - 1);
+    return ::bl::string_view(str, sizeof(str) - 1);
 
 #define PP_ENUM_DEF_TOSTR1(tag) PP_ENUM_DEF_TOSTR2(tag, PP_TOSTR(tag))
 
@@ -24,14 +24,14 @@ case tag:                                                                      \
         {                                                                      \
             __VA_ARGS__                                                        \
         };                                                                     \
-        static inline constexpr underlying_t count_value =                     \
+        static inline constexpr underlying_t _count_value_ =                   \
           PP_MAP(PP_ENUM_DEF_CONST1, PP_ENUM_DEF_PLUS, __VA_ARGS__);           \
         friend constexpr auto invoke(::bl::enum_count_f,                       \
                                      ::bl::type_proxy<NAME>)                   \
         {                                                                      \
-            return count_value;                                                \
+            return _count_value_;                                              \
         }                                                                      \
-        friend constexpr ::std::string_view to_string(NAME _enum_value_)       \
+        friend constexpr ::bl::string_view to_string(NAME _enum_value_)        \
         {                                                                      \
             switch (_enum_value_) {                                            \
                 PP_MAP(PP_ENUM_DEF_TOSTR1, PP_SEMI, __VA_ARGS__)               \

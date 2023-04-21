@@ -73,7 +73,7 @@ has_type(CommandParamType pt, CommandArgType t) noexcept
 
 DEF_COMMAND_TYPE_MAPPING(int64_t, integer, CommandParamType::Integer);
 DEF_COMMAND_TYPE_MAPPING(double, number, CommandParamType::Number);
-DEF_COMMAND_TYPE_MAPPING(std::string, string, CommandParamType::String);
+DEF_COMMAND_TYPE_MAPPING(bl::string, string, CommandParamType::String);
 DEF_COMMAND_TYPE_MAPPING(std::shared_ptr<Command>,
                          command.ref,
                          CommandParamType::Command);

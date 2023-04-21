@@ -150,14 +150,14 @@ stderr_handle()
 }
 
 HandleResult<Handle>
-open(std::string_view path, HandleMode mode)
+open(bl::string_view path, HandleMode mode)
 {
     auto flags = convertMode(mode);
     if (flags == -1)
         return util::unexpected{ HandleError::INVALID_PARAM };
 
     int fd;
-    auto strpath = std::string(path);
+    auto strpath = bl::string(path);
     RETRY_INTR(fd = ::open(strpath.c_str(), flags, 0777));
 
     if (fd == -1)

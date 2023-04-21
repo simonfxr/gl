@@ -197,7 +197,7 @@ stderr()
             return StreamResult::OK;                                           \
         std::array<char, bufsz> buf{};                                         \
         auto len = snprintf(buf.data(), sizeof buf, "%" fmt, value);           \
-        return write_repr(out, std::string_view{ buf.data(), size_t(len) });   \
+        return write_repr(out, bl::string_view{ buf.data(), size_t(len) });    \
     }
 
 DEF_PRINTF_WRITER(const void *, "p", 32)
@@ -249,7 +249,7 @@ ByteStream::ByteStream(size_t bufsize) : read_cursor(0)
     buffer.reserve(bufsize);
 }
 
-ByteStream::ByteStream(std::string_view str) : ByteStream(str.size())
+ByteStream::ByteStream(bl::string_view str) : ByteStream(str.size())
 {
     write(str);
 }

@@ -24,7 +24,7 @@ printOpenGLCalls(bool yesno)
     G.print_opengl_calls = yesno;
 }
 
-std::string
+bl::string
 getGLErrorString(GLenum err)
 {
     switch (err) {

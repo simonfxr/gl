@@ -30,7 +30,7 @@ struct LogTraits<glt::ShaderProgram>
 
 namespace glt {
 
-using Attributes = std::unordered_map<std::string, GLuint>;
+using Attributes = std::unordered_map<bl::string, GLuint>;
 
 struct ShaderProgram::Data
 {
@@ -185,7 +185,7 @@ ShaderProgram::Data::handleCompileError(ShaderCompilerError err)
 }
 
 bool
-ShaderProgram::addShaderSrc(const std::string &src, ShaderType type)
+ShaderProgram::addShaderSrc(const bl::string &src, ShaderType type)
 {
     auto scq = bl::box<ShaderCompilerQueue>(
       std::in_place, self->sm.shaderCompiler(), self->shaders);
@@ -208,11 +208,11 @@ ShaderProgram::addShaderSrc(const std::string &src, ShaderType type)
 }
 
 bool
-ShaderProgram::addShaderFile(const std::string &file0,
+ShaderProgram::addShaderFile(const bl::string &file0,
                              ShaderType type,
                              bool absolute)
 {
-    std::string file = file0;
+    bl::string file = file0;
 
     if (!absolute) {
         file = sys::fs::lookup(self->sm.shaderDirectories(), file);
@@ -248,8 +248,8 @@ ShaderProgram::addShaderFile(const std::string &file0,
 }
 
 bool
-ShaderProgram::addShaderFilePair(const std::string &vert_file,
-                                 const std::string &frag_file,
+ShaderProgram::addShaderFilePair(const bl::string &vert_file,
+                                 const bl::string &frag_file,
                                  bool absolute)
 {
     return addShaderFile(vert_file, ShaderType::VertexShader, absolute) &&
@@ -257,7 +257,7 @@ ShaderProgram::addShaderFilePair(const std::string &vert_file,
 }
 
 bool
-ShaderProgram::addShaderFilePair(const std::string &basename, bool absolute)
+ShaderProgram::addShaderFilePair(const bl::string &basename, bool absolute)
 {
     return addShaderFilePair(basename + ".vert", basename + ".frag", absolute);
 }
@@ -332,7 +332,7 @@ ShaderProgram::link()
 }
 
 bool
-ShaderProgram::bindAttribute(const std::string &s, GLuint position)
+ShaderProgram::bindAttribute(const bl::string &s, GLuint position)
 {
     if (self->linked) {
         RAISE_ERR(
@@ -382,7 +382,7 @@ ShaderProgram::replaceWith(ShaderProgram &new_prog)
 }
 
 GLint
-ShaderProgram::uniformLocation(const std::string &name)
+ShaderProgram::uniformLocation(const bl::string &name)
 {
     GLint loc;
     GL_ASSIGN_CALL(loc, glGetUniformLocation, *self->program, name.c_str());
@@ -428,7 +428,7 @@ ShaderProgram::bindAttributes(const StructInfo &si)
 }
 
 bool
-ShaderProgram::bindStreamOutVaryings(std::span<const std::string> vars)
+ShaderProgram::bindStreamOutVaryings(std::span<const bl::string> vars)
 {
 
     // FIXME: record vars to set stream out varyings again if relinked

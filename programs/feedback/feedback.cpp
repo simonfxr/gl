@@ -15,7 +15,7 @@ DEF_GL_MAPPED_TYPE(QuadVertex,
 
 DEF_GL_MAPPED_TYPE(QuadStreamVertex, (vec3, position), (vec3, normal))
 
-#define DEF_SHADER(name, ...) const std::string name = AS_STRING(__VA_ARGS__);
+#define DEF_SHADER(name, ...) const bl::string name = AS_STRING(__VA_ARGS__);
 
 DEF_SHADER(
   QUAD_VERTEX_SHADER,
@@ -134,9 +134,9 @@ Program::init(const ge::Event<ge::InitEvent> &ev)
                               glt::ShaderManager::VertexShader);
     quadProgram->addShaderSrc(QUAD_GEOMETRY_SHADER,
                               glt::ShaderManager::GeometryShader);
-    std::string vars[] = { "position", "normal" };
+    bl::string vars[] = { "position", "normal" };
     quadProgram->bindStreamOutVaryings(
-      Array<std::string>(vars, ARRAY_LENGTH(vars)));
+      Array<bl::string>(vars, ARRAY_LENGTH(vars)));
     quadProgram->bindAttributes<QuadVertex>();
 
     if (!quadProgram->tryLink())

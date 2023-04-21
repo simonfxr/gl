@@ -7,8 +7,8 @@
 
 #include "err/err.hpp"
 
+#include <bl/string_view.hpp>
 #include <span>
-#include <string_view>
 #include <unordered_map>
 
 namespace ge {
@@ -20,7 +20,7 @@ struct GE_API Plugin
 {
     struct TypeInfo
     {
-        std::string_view name;
+        bl::string_view name;
         size_t size;
     };
 

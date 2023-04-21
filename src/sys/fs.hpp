@@ -14,10 +14,10 @@
 #    error "no Filesystem implementation available"
 #endif
 
+#include <bl/string.hpp>
+#include <bl/string_view.hpp>
 #include <optional>
 #include <span>
-#include <string>
-#include <string_view>
 
 namespace sys::fs {
 
@@ -33,68 +33,68 @@ PP_DEF_ENUM(ObjectType, uint8_t, File, Directory);
 struct Stat
 {
     ObjectType type{};
-    std::string absolute;
+    bl::string absolute;
     FileTime mtime{};
 };
 
 HU_NODISCARD SYS_API bool
-cwd(std::string_view dir);
+cwd(bl::string_view dir);
 
-HU_NODISCARD SYS_API std::string
+HU_NODISCARD SYS_API bl::string
 cwd();
 
-HU_NODISCARD SYS_API std::string
-dirname(std::string_view path);
+HU_NODISCARD SYS_API bl::string
+dirname(bl::string_view path);
 
-HU_NODISCARD SYS_API std::string
-basename(std::string_view path);
+HU_NODISCARD SYS_API bl::string
+basename(bl::string_view path);
 
-HU_NODISCARD SYS_API std::string
-extension(std::string_view path);
+HU_NODISCARD SYS_API bl::string
+extension(bl::string_view path);
 
 template<typename... Args>
-HU_NODISCARD inline std::string
-join(std::string_view path, Args &&...args);
+HU_NODISCARD inline bl::string
+join(bl::string_view path, Args &&...args);
 
-HU_NODISCARD SYS_API std::string
-dropExtension(std::string_view path);
+HU_NODISCARD SYS_API bl::string
+dropExtension(bl::string_view path);
 
-HU_NODISCARD SYS_API std::string
-dropTrailingSeparators(std::string_view path);
+HU_NODISCARD SYS_API bl::string
+dropTrailingSeparators(bl::string_view path);
 
 HU_NODISCARD SYS_API bool
-isAbsolute(std::string_view path);
+isAbsolute(bl::string_view path);
 
 HU_NODISCARD SYS_API std::optional<FileTime>
-modificationTime(std::string_view path);
+modificationTime(bl::string_view path);
 
 SYS_API std::optional<Stat>
-stat(std::string_view path);
+stat(bl::string_view path);
 
-HU_NODISCARD SYS_API std::string
-absolutePath(std::string_view path);
+HU_NODISCARD SYS_API bl::string
+absolutePath(bl::string_view path);
 
-HU_NODISCARD SYS_API std::string
-lookup(std::span<const std::string>, std::string_view path);
+HU_NODISCARD SYS_API bl::string
+lookup(std::span<const bl::string>, bl::string_view path);
 
 HU_NODISCARD SYS_API std::optional<ObjectType>
-exists(std::string_view path);
+exists(bl::string_view path);
 
 HU_NODISCARD inline bool
-exists(std::string_view path, ObjectType ty)
+exists(bl::string_view path, ObjectType ty)
 {
     auto ret = exists(path);
     return ret && *ret == ty;
 }
 
 HU_NODISCARD inline bool
-fileExists(std::string_view path)
+fileExists(bl::string_view path)
 {
     return exists(path, ObjectType::File);
 }
 
 HU_NODISCARD inline bool
-directoryExists(std::string_view path)
+directoryExists(bl::string_view path)
 {
     return exists(path, ObjectType::Directory);
 }
@@ -138,40 +138,40 @@ operator>(const FileTime &a, const FileTime &b)
 // default implementations
 namespace def {
 
-HU_NODISCARD SYS_API std::string
-join(std::string_view path, const char **, size_t n);
+HU_NODISCARD SYS_API bl::string
+join(bl::string_view path, const char **, size_t n);
 
-HU_NODISCARD SYS_API std::string
-dirname(std::string_view path);
+HU_NODISCARD SYS_API bl::string
+dirname(bl::string_view path);
 
-HU_NODISCARD SYS_API std::string
-basename(std::string_view path);
+HU_NODISCARD SYS_API bl::string
+basename(bl::string_view path);
 
-HU_NODISCARD SYS_API std::string
-extension(std::string_view path);
+HU_NODISCARD SYS_API bl::string
+extension(bl::string_view path);
 
-HU_NODISCARD SYS_API std::string
-dropExtension(std::string_view path);
+HU_NODISCARD SYS_API bl::string
+dropExtension(bl::string_view path);
 
-HU_NODISCARD SYS_API std::string
-dropTrailingSeparators(std::string_view path);
+HU_NODISCARD SYS_API bl::string
+dropTrailingSeparators(bl::string_view path);
 
 HU_NODISCARD SYS_API std::optional<ObjectType>
-exists(std::string_view path);
+exists(bl::string_view path);
 
-HU_NODISCARD SYS_API std::string
-lookup(std::span<const std::string> dirs, std::string_view name);
+HU_NODISCARD SYS_API bl::string
+lookup(std::span<const bl::string> dirs, bl::string_view name);
 
-HU_NODISCARD SYS_API std::string absolutePath(std::string_view);
+HU_NODISCARD SYS_API bl::string absolutePath(bl::string_view);
 
 HU_NODISCARD SYS_API std::optional<FileTime>
-modificationTime(std::string_view path);
+modificationTime(bl::string_view path);
 
 } // namespace def
 
 template<typename... Args>
-HU_NODISCARD inline std::string
-join(std::string_view path, Args &&...args)
+HU_NODISCARD inline bl::string
+join(bl::string_view path, Args &&...args)
 {
     const char *parts[] = { std::forward<Args>(args)... };
     return def::join(path, parts, sizeof...(args));

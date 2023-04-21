@@ -7,8 +7,8 @@
 
 #include <bl/new.hpp>
 
+#include <bl/string.hpp>
 #include <memory>
-#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -18,9 +18,9 @@ struct ShaderCompiler;
 struct ShaderProgram;
 struct ShaderCache;
 
-using PreprocessorDefinitions = std::unordered_map<std::string, std::string>;
+using PreprocessorDefinitions = std::unordered_map<bl::string, bl::string>;
 
-using ShaderDirectories = std::vector<std::string>;
+using ShaderDirectories = std::vector<bl::string>;
 
 PP_DEF_ENUM(ShaderManagerVerbosity, uint8_t, Quiet, OnlyErrors, Info);
 
@@ -39,10 +39,10 @@ struct GLT_API ShaderManager : private bl::runtime_sized_base<ShaderManager>
 {
     static ShaderManager &construct_at(void *) noexcept;
 
-    std::shared_ptr<ShaderProgram> program(const std::string &name) const;
-    void addProgram(const std::string &name,
+    std::shared_ptr<ShaderProgram> program(const bl::string &name) const;
+    void addProgram(const bl::string &name,
                     std::shared_ptr<ShaderProgram> &program);
-    std::shared_ptr<ShaderProgram> declareProgram(const std::string &name);
+    std::shared_ptr<ShaderProgram> declareProgram(const bl::string &name);
 
     void reloadShaders();
 
@@ -52,11 +52,11 @@ struct GLT_API ShaderManager : private bl::runtime_sized_base<ShaderManager>
     sys::io::OutStream &out() const;
     void out(sys::io::OutStream &out);
 
-    bool prependShaderDirectory(const std::string &directory,
+    bool prependShaderDirectory(const bl::string &directory,
                                 bool check_exists = true);
-    bool addShaderDirectory(const std::string &directory,
+    bool addShaderDirectory(const bl::string &directory,
                             bool check_exists = true);
-    bool removeShaderDirectory(const std::string &dir);
+    bool removeShaderDirectory(const bl::string &dir);
     const ShaderDirectories &shaderDirectories() const;
 
     void setShaderVersion(uint32_t vers /* e.g. 330 */,

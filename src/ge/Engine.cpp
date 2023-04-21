@@ -48,8 +48,8 @@ struct Engine::Impl
     bl::box<KeyHandler> keyHandler;
     bl::box<ReplServer> replServer;
     bool skipRender{ false };
-    std::string programName;
-    std::string develDataDir;
+    bl::string programName;
+    bl::string develDataDir;
 
     sys::io::OutStream *out;
 
@@ -185,7 +185,7 @@ Engine::now()
     return static_cast<math::real>(m().now());
 }
 
-const std::string &
+const bl::string &
 Engine::programName() const
 {
     return m().programName;
@@ -216,7 +216,7 @@ Engine::run(const EngineOptions &opts)
 
     m().skipRender = opts.disableRender;
 
-    std::string wd = opts.workingDirectory;
+    bl::string wd = opts.workingDirectory;
     if (opts.workingDirectory.empty() && opts.defaultCD)
         wd = sys::fs::dirname(opts.binary);
 
@@ -265,7 +265,7 @@ Engine::run(const EngineOptions &opts)
         return 1;
 
     if (!opts.inhibitInitScript) {
-        std::string script = sys::fs::basename(opts.binary);
+        bl::string script = sys::fs::basename(opts.binary);
         if (!script.empty())
             script = sys::fs::dropExtension(script);
 
@@ -276,7 +276,7 @@ Engine::run(const EngineOptions &opts)
 
     for (const auto &i : opts.commands) {
         bool ok;
-        std::string command;
+        bl::string command;
         if (i.first == EngineOptions::Script) {
             ok = commandProcessor().loadScript(i.second);
             if (!ok)
@@ -436,7 +436,7 @@ Engine::enablePlugin(Plugin &p)
 }
 
 void
-Engine::setDevelDataDir(const std::string &dir)
+Engine::setDevelDataDir(const bl::string &dir)
 {
     if (!sys::fs::directoryExists(dir)) {
         WARN("not a directory");

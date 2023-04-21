@@ -132,23 +132,23 @@ struct Anim final : ge::Anim3D<Anim>
 
     std::shared_ptr<ge::Timer> fpsTimer;
 
-    std::string data_dir;
+    bl::string data_dir;
 
     Anim() : glow_kernel(KERNEL_SIZE) {}
 
     void init(const Event<InitEvent> &);
-    void loadResources(const std::string &dir);
+    void loadResources(const bl::string &dir);
 
     void animate(const Event<ge::AnimationEvent> &) override;
     void render(const Event<ge::RenderEvent> &) override;
     vec3 lightPosition(real interpolation);
-    void setupTeapotShader(const std::string &prog,
+    void setupTeapotShader(const bl::string &prog,
                            const vec4 &surfaceColor,
                            const MaterialProperties &mat);
     void renderTeapot(const Teapot &teapot);
     void renderGround();
     void renderLight();
-    void renderTable(const std::string &shader);
+    void renderTable(const bl::string &shader);
 
     void mouseMoved(const Event<ge::MouseMoved> & /*e*/);
     void keyPressed(const Event<ge::KeyPressed> & /*e*/);
@@ -463,7 +463,7 @@ Anim::onWindowResized(const Event<ge::WindowResized> &ev)
 }
 
 void
-Anim::setupTeapotShader(const std::string &progname,
+Anim::setupTeapotShader(const bl::string &progname,
                         const vec4 &surfaceColor,
                         const MaterialProperties &mat)
 {
@@ -555,7 +555,7 @@ Anim::renderGround()
 }
 
 void
-Anim::renderTable(const std::string &shader)
+Anim::renderTable(const bl::string &shader)
 {
     glt::RenderManager &rm = engine->renderManager();
     glt::GeometryTransform &gt = rm.geometryTransform();
@@ -675,7 +675,7 @@ struct FileDeleter
 using unique_file = std::unique_ptr<FILE, FileDeleter>;
 
 void
-Anim::loadResources(const std::string &dir)
+Anim::loadResources(const bl::string &dir)
 {
     data_dir = dir;
 

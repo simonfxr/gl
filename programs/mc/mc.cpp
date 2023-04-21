@@ -19,9 +19,10 @@
 
 #include "shaders/shader_constants.h"
 
+#include <bl/string.hpp>
+
 #include <array>
 #include <sstream>
-#include <string>
 #include <vector>
 
 template<size_t N>
@@ -198,7 +199,7 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     platforms.resize(1);
 
     cl::Platform &platform = platforms[0];
-    std::string info_value;
+    bl::string info_value;
     engine->out() << "selecting CL platform:\n";
 
 #define PLAT_INFO(info)                                                        \
@@ -214,7 +215,7 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     engine->out() << "  CL_PLATFORM_EXTENSIONS:\n";
     platform.getInfo(CL_PLATFORM_EXTENSIONS, &info_value);
     std::istringstream exts(info_value);
-    std::string ext;
+    bl::string ext;
     while (std::getline(exts, ext, ' '))
         engine->out() << "    " << ext << "\n";
 
@@ -250,7 +251,7 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     engine->out() << "  CL_DEVICE_EXTENSIONS:\n";
     cl_device.getInfo(CL_DEVICE_EXTENSIONS, &info_value);
     std::istringstream dev_exts(info_value);
-    std::string dev_ext;
+    bl::string dev_ext;
 
     bool supports_3d_image_write = false;
     while (std::getline(dev_exts, dev_ext, ' ')) {
@@ -309,7 +310,7 @@ Anim::initCLKernels(bool *success)
 
     auto source_code = std::move(res).value();
 
-    std::string source_str(source_code.data(), source_code.size());
+    bl::string source_str(source_code.data(), source_code.size());
     cl::Program::Sources source{ source_str };
     cl_program = cl::Program(cl_ctx, source, &cl_err);
     CL_ERR("creating program failed");
@@ -319,7 +320,7 @@ Anim::initCLKernels(bool *success)
     std::vector<cl::Device> devices;
     devices.push_back(cl_device);
     cl_err = cl_program.build(
-      devices, (std::string("-I programs/mc/ -DSIZE=") + num.str()).c_str());
+      devices, (bl::string("-I programs/mc/ -DSIZE=") + num.str()).c_str());
     engine->out() << "building cl program: "
                   << (cl_err == CL_SUCCESS ? "success" : "failed")
                   << ", log:\n";

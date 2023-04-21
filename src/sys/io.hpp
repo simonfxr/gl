@@ -10,9 +10,9 @@
 
 #include <bl/noncopymove.hpp>
 
+#include <bl/string.hpp>
+#include <bl/string_view.hpp>
 #include <optional>
-#include <string>
-#include <string_view>
 
 namespace sys::io {
 
@@ -74,7 +74,7 @@ stdout_handle();
 HU_NODISCARD SYS_API Handle
 stderr_handle();
 
-HU_NODISCARD SYS_API HandleResult<Handle> open(std::string_view, HandleMode);
+HU_NODISCARD SYS_API HandleResult<Handle> open(bl::string_view, HandleMode);
 
 HU_NODISCARD SYS_API HandleMode
 mode(Handle &);
@@ -215,7 +215,7 @@ public:
     ~HandleStream() override;
 
     HU_NODISCARD
-    static HandleResult<HandleStream> open(std::string_view path,
+    static HandleResult<HandleStream> open(bl::string_view path,
                                            HandleMode mode = HM_READ);
 
 protected:
@@ -227,7 +227,7 @@ protected:
 };
 
 HU_NODISCARD SYS_API HandleResult<Array<char>>
-readFile(std::string_view path, sys::io::OutStream &errout = stderr()) noexcept;
+readFile(bl::string_view path, sys::io::OutStream &errout = stderr()) noexcept;
 
 } // namespace sys::io
 

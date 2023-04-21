@@ -6,9 +6,10 @@
 #include "ge/EngineEvents.hpp"
 #include "ge/conf.hpp"
 
+#include <bl/string.hpp>
+
 #include <functional>
 #include <span>
-#include <string>
 #include <vector>
 
 namespace ge {
@@ -28,27 +29,25 @@ struct GE_API Command : public EventHandler<CommandEvent>
 {
 private:
     const std::vector<CommandParamType> params;
-    std::string namestr;
-    std::string descr;
+    bl::string namestr;
+    bl::string descr;
 
 public:
-    Command(std::vector<CommandParamType> ps,
-            std::string name,
-            std::string desc);
+    Command(std::vector<CommandParamType> ps, bl::string name, bl::string desc);
 
     Command(const Command &) = default;
     Command(Command &&) = default;
 
     virtual ~Command() override;
     std::vector<CommandParamType> parameters() const { return params; }
-    const std::string &name() const { return namestr; }
-    void name(const std::string &new_name)
+    const bl::string &name() const { return namestr; }
+    void name(const bl::string &new_name)
     {
         ASSERT(!new_name.empty());
         namestr = new_name;
     }
-    const std::string &description() const { return descr; }
-    std::string interactiveDescription() const;
+    const bl::string &description() const { return descr; }
+    bl::string interactiveDescription() const;
     virtual void interactive(const Event<CommandEvent> &ev,
                              std::span<const CommandArg>) = 0;
     void handle(const Event<CommandEvent> &ev) final override;
@@ -61,10 +60,10 @@ struct GE_API QuotationCommand
 {
     const std::unique_ptr<Quotation> quotation;
 
-    QuotationCommand(std::string_view source,
+    QuotationCommand(bl::string_view source,
                      int line,
                      int column,
-                     std::string_view desc,
+                     bl::string_view desc,
                      std::unique_ptr<Quotation> quot);
     ~QuotationCommand() override;
 
@@ -76,7 +75,7 @@ struct GE_API QuotationCommand
 template<typename F>
 struct FunctorCommand : public Command
 {
-    FunctorCommand(std::string name, std::string descr, F f_)
+    FunctorCommand(bl::string name, bl::string descr, F f_)
       : Command(make_params(arg_seq{}), bl::move(name), bl::move(descr))
       , _f(bl::move(f_))
     {}
@@ -109,7 +108,7 @@ private:
 
 template<typename F>
 inline std::shared_ptr<Command>
-makeCommand(std::string name, std::string descr, F &&f)
+makeCommand(bl::string name, bl::string descr, F &&f)
 {
     // avoid excessive std::shared_ptr<XX> template instantiations
     return std::shared_ptr<Command>{ static_cast<Command *>(
@@ -119,8 +118,8 @@ makeCommand(std::string name, std::string descr, F &&f)
 
 template<typename T, typename... Args>
 inline std::shared_ptr<Command>
-makeCommand(std::string name,
-            std::string descr,
+makeCommand(bl::string name,
+            bl::string descr,
             T &receiver,
             void (T::*m)(const Event<CommandEvent> &, Args...))
 {

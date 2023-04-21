@@ -1,7 +1,7 @@
 #ifndef GLT_SHADER_PROGRAM_HPP
 #define GLT_SHADER_PROGRAM_HPP
 
-#include <string>
+#include <bl/string.hpp>
 
 #include "err/WithError.hpp"
 #include "glt/GLObject.hpp"
@@ -39,21 +39,21 @@ struct GLT_API ShaderProgram
 
     GLProgramObject &program();
 
-    bool addShaderSrc(const std::string &src, ShaderType type);
+    bool addShaderSrc(const bl::string &src, ShaderType type);
 
-    bool addShaderFile(const std::string &file,
+    bool addShaderFile(const bl::string &file,
                        ShaderType type = ShaderType::GuessShaderType,
                        bool absolute = false);
 
-    bool addShaderFilePair(const std::string &vert_file,
-                           const std::string &frag_file,
+    bool addShaderFilePair(const bl::string &vert_file,
+                           const bl::string &frag_file,
                            bool absolute = false);
 
-    bool addShaderFilePair(const std::string &basename, bool absolute = false);
+    bool addShaderFilePair(const bl::string &basename, bool absolute = false);
 
-    bool bindAttribute(const std::string &, GLuint position);
+    bool bindAttribute(const bl::string &, GLuint position);
 
-    bool bindStreamOutVaryings(std::span<const std::string>);
+    bool bindStreamOutVaryings(std::span<const bl::string>);
 
     bool bindAttributes(const StructInfo &);
 
@@ -75,7 +75,7 @@ struct GLT_API ShaderProgram
 
     bool replaceWith(ShaderProgram &new_program);
 
-    GLint uniformLocation(const std::string &name);
+    GLint uniformLocation(const bl::string &name);
 
     bool validate(bool printLogOnError = true);
 

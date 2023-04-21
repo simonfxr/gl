@@ -13,8 +13,8 @@ CommandEvent::CommandEvent(ge::Engine &e, CommandProcessor &proc)
 {}
 
 Command::Command(std::vector<CommandParamType> ps,
-                 std::string name_,
-                 std::string desc_)
+                 bl::string name_,
+                 bl::string desc_)
   : params(bl::move(ps)), namestr(bl::move(name_)), descr(bl::move(desc_))
 {
     ASSERT(!namestr.empty());
@@ -31,7 +31,7 @@ Command::handle(const Event<CommandEvent> &ev)
     }
 }
 
-std::string
+bl::string
 Command::interactiveDescription() const
 {
     sys::io::ByteStream desc;
@@ -79,11 +79,11 @@ Command::interactiveDescription() const
 }
 
 namespace {
-std::string
-describeQuotation(std::string_view &source,
+bl::string
+describeQuotation(bl::string_view &source,
                   int line,
                   int column,
-                  std::string_view &desc)
+                  bl::string_view &desc)
 {
     sys::io::ByteStream str;
     str << "<quotation " << source << "@" << line << ":" << column;
@@ -94,8 +94,8 @@ describeQuotation(std::string_view &source,
 } // namespace
 
 namespace {
-std::string
-nameOfQuotation(std::string_view filename, int line, int col)
+bl::string
+nameOfQuotation(bl::string_view filename, int line, int col)
 {
     sys::io::ByteStream buf;
     buf << "<quotation: " << filename << "@" << line << ":" << col << ">";
@@ -103,10 +103,10 @@ nameOfQuotation(std::string_view filename, int line, int col)
 }
 } // namespace
 
-QuotationCommand::QuotationCommand(std::string_view source,
+QuotationCommand::QuotationCommand(bl::string_view source,
                                    int line,
                                    int column,
-                                   std::string_view desc,
+                                   bl::string_view desc,
                                    std::unique_ptr<Quotation> quot)
   : Command({},
             nameOfQuotation(source, line, column),

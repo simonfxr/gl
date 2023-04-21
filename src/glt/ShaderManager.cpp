@@ -11,12 +11,12 @@
 namespace glt {
 
 using ProgramMap =
-  std::unordered_map<std::string, std::shared_ptr<ShaderProgram>>;
+  std::unordered_map<bl::string, std::shared_ptr<ShaderProgram>>;
 
 struct ShaderManager::Impl : public ShaderManager
 {
     sys::io::OutStream *out;
-    std::vector<std::string> shaderDirs;
+    std::vector<bl::string> shaderDirs;
     ProgramMap programs;
     std::shared_ptr<ShaderCache> globalShaderCache;
     PreprocessorDefinitions globalDefines;
@@ -84,7 +84,7 @@ ShaderManager::verbosity(ShaderManagerVerbosity v)
 }
 
 std::shared_ptr<ShaderProgram>
-ShaderManager::program(const std::string &name) const
+ShaderManager::program(const bl::string &name) const
 {
     auto it = m().programs.find(name);
     if (it != m().programs.end())
@@ -94,7 +94,7 @@ ShaderManager::program(const std::string &name) const
 }
 
 void
-ShaderManager::addProgram(const std::string &name,
+ShaderManager::addProgram(const bl::string &name,
                           std::shared_ptr<ShaderProgram> &program)
 {
     ASSERT(program);
@@ -102,7 +102,7 @@ ShaderManager::addProgram(const std::string &name,
 }
 
 std::shared_ptr<ShaderProgram>
-ShaderManager::declareProgram(const std::string &name)
+ShaderManager::declareProgram(const bl::string &name)
 {
     auto prog = std::make_shared<ShaderProgram>(*this);
     m().programs[name] = prog;
@@ -135,7 +135,7 @@ ShaderManager::out(sys::io::OutStream &out)
 }
 
 bool
-ShaderManager::prependShaderDirectory(const std::string &dir, bool check_exists)
+ShaderManager::prependShaderDirectory(const bl::string &dir, bool check_exists)
 {
     removeShaderDirectory(dir);
 
@@ -147,7 +147,7 @@ ShaderManager::prependShaderDirectory(const std::string &dir, bool check_exists)
 }
 
 bool
-ShaderManager::addShaderDirectory(const std::string &dir, bool check_exists)
+ShaderManager::addShaderDirectory(const bl::string &dir, bool check_exists)
 {
     removeShaderDirectory(dir);
 
@@ -159,7 +159,7 @@ ShaderManager::addShaderDirectory(const std::string &dir, bool check_exists)
 }
 
 bool
-ShaderManager::removeShaderDirectory(const std::string &dir)
+ShaderManager::removeShaderDirectory(const bl::string &dir)
 {
     ShaderDirectories &dirs = m().shaderDirs;
     auto it = find(dirs.begin(), dirs.end(), dir);
@@ -169,7 +169,7 @@ ShaderManager::removeShaderDirectory(const std::string &dir)
     return true;
 }
 
-const std::vector<std::string> &
+const std::vector<bl::string> &
 ShaderManager::shaderDirectories() const
 {
     return m().shaderDirs;

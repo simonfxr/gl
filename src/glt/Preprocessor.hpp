@@ -17,11 +17,11 @@ struct GLT_API Preprocessor : bl::runtime_sized_base<Preprocessor>
     struct ContentContext
     {
         Preprocessor &processor;
-        const std::string name;
+        const bl::string name;
         const char *data;
         size_t size;
 
-        ContentContext(Preprocessor &proc, std::string &&nam)
+        ContentContext(Preprocessor &proc, bl::string &&nam)
           : processor(proc), name(bl::move(nam))
         {}
     };
@@ -36,7 +36,7 @@ struct GLT_API Preprocessor : bl::runtime_sized_base<Preprocessor>
         size_t endDirective; // size_t of first char behind directive, so length
                              // of directive = endDirective - beginDirective
 
-        DirectiveContext(Preprocessor &proc, std::string &&name)
+        DirectiveContext(Preprocessor &proc, bl::string &&name)
           : content(proc, bl::move(name))
         {}
     };
@@ -49,24 +49,24 @@ struct GLT_API Preprocessor : bl::runtime_sized_base<Preprocessor>
         virtual void directiveEncountered(const DirectiveContext &ctx);
     };
 
-    using Handlers = std::unordered_map<std::string, DirectiveHandler *>;
-    using HandlerEntry = std::pair<std::string, DirectiveHandler *>;
+    using Handlers = std::unordered_map<bl::string, DirectiveHandler *>;
+    using HandlerEntry = std::pair<bl::string, DirectiveHandler *>;
 
     Preprocessor &construct_at(void *) noexcept;
 
-    const std::string &name() const;
-    void name(std::string &&name);
+    const bl::string &name() const;
+    void name(bl::string &&name);
 
-    void process(std::string_view);
+    void process(bl::string_view);
 
-    void process(const char *contents) { process(std::string_view(contents)); }
+    void process(const char *contents) { process(bl::string_view(contents)); }
 
     DirectiveHandler &defaultHandler(DirectiveHandler &handler);
     DirectiveHandler &defaultHandler() const;
 
     Handlers &handlers();
 
-    DirectiveHandler *installHandler(const std::string &directive,
+    DirectiveHandler *installHandler(const bl::string &directive,
                                      DirectiveHandler &handler);
 
     sys::io::OutStream &out();

@@ -59,9 +59,9 @@ struct FileContext
 
 struct ProcessingState
 {
-    std::unordered_set<std::string> visitingFiles;
-    std::unordered_set<std::string> deps;
-    std::unordered_set<std::string> incs;
+    std::unordered_set<bl::string> visitingFiles;
+    std::unordered_set<bl::string> deps;
+    std::unordered_set<bl::string> incs;
     std::stack<FileContext> stack;
 };
 
@@ -77,7 +77,7 @@ GLSLPreprocessor::GLSLPreprocessor(const IncludePath &incPath,
 GLSLPreprocessor::~GLSLPreprocessor() = default;
 
 void
-GLSLPreprocessor::appendString(std::string_view str)
+GLSLPreprocessor::appendString(bl::string_view str)
 {
     if (!str.empty()) {
         auto &data = contents.emplace_back(str);
@@ -112,7 +112,7 @@ GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext &ctx)
 }
 
 void
-GLSLPreprocessor::processFileRecursively(std::string &&file)
+GLSLPreprocessor::processFileRecursively(bl::string &&file)
 {
     if (wasError())
         return;
@@ -127,7 +127,7 @@ GLSLPreprocessor::processFileRecursively(std::string &&file)
     auto &dref = contents.emplace_back(bl::move(data).value());
 
     this->name(bl::move(file));
-    process(std::string_view(dref.data(), dref.size()));
+    process(bl::string_view(dref.data(), dref.size()));
 }
 
 void
@@ -149,7 +149,7 @@ DependencyHandler::directiveEncountered(
         return;
     }
 
-    auto file = std::string_view{ arg, arg + len };
+    auto file = bl::string_view{ arg, arg + len };
     auto realPath = sys::fs::lookup(proc.includePath, file);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
@@ -210,7 +210,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
         return;
     }
 
-    auto file = std::string_view{ arg, arg + len };
+    auto file = bl::string_view{ arg, arg + len };
     auto realPath = sys::fs::lookup(proc.includePath, file);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
@@ -243,7 +243,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
 
         auto &dref = proc.contents.emplace_back(bl::move(res).value());
         proc.name(bl::move(filestat->absolute));
-        proc.process(std::string_view(dref.data(), dref.size()));
+        proc.process(bl::string_view(dref.data(), dref.size()));
     }
 }
 

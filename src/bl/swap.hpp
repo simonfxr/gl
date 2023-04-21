@@ -2,8 +2,8 @@
 #define BL_SWAP_HPP
 
 #include <bl/invoke.hpp>
+#include <bl/type_traits.hpp>
 
-#include <type_traits>
 #include <utility>
 
 namespace bl {

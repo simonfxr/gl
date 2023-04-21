@@ -3,13 +3,13 @@
 
 #include <bl/concepts.hpp>
 #include <bl/ptr.hpp>
+#include <bl/type_traits.hpp>
 
 #include <bo/cxx.hpp>
 
 #include <algorithm>
 #include <array>
 #include <span>
-#include <type_traits>
 
 namespace bl::rand {
 

@@ -75,7 +75,7 @@ void
 glfw_error_callback(int error, const char *desc)
 {
     UNUSED(error);
-    ERR("GLFW error: " + std::string(desc));
+    ERR("GLFW error: " + bl::string(desc));
 }
 
 void

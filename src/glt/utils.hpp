@@ -48,7 +48,7 @@ printOpenGLCalls(bool);
 GLT_API void
 printGLTrace(const err::Location *loc);
 
-GLT_API std::string
+GLT_API bl::string
 getGLErrorString(GLenum err);
 
 GLT_API bool

@@ -23,7 +23,7 @@ struct Camera::Impl : public Camera
     Events events;
     Handlers handlers;
     Engine *engine{};
-    std::string frame_path;
+    bl::string frame_path;
 
     real speed = 0.1_r;
     vec2 mouse_sensitivity = vec2(0.00075_r);
@@ -130,7 +130,7 @@ Camera::Impl::runSaveFrame(const Event<CommandEvent> & /*unused*/,
                            std::span<const CommandArg> args)
 {
 
-    const std::string *path;
+    const bl::string *path;
     if (args.empty())
         path = &frame_path;
     else if (args.size() == 1 && args[0].type() == CommandArgType::String)
@@ -154,7 +154,7 @@ void
 Camera::Impl::runLoadFrame(const Event<CommandEvent> & /*unused*/,
                            std::span<const CommandArg> args)
 {
-    const std::string *path;
+    const bl::string *path;
     if (args.empty())
         path = &frame_path;
     else if (args.size() == 1 && args[0].type() == CommandArgType::String)
@@ -297,14 +297,14 @@ Camera::frame(const glt::Frame &frame)
     m().frame = frame;
 }
 
-const std::string &
+const bl::string &
 Camera::framePath() const
 {
     return m().frame_path;
 }
 
 void
-Camera::framePath(const std::string &path)
+Camera::framePath(const bl::string &path)
 {
     m().frame_path = path;
 }

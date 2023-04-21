@@ -158,7 +158,7 @@ operator<=>(const CommandArg &a, const CommandArg &b) noexcept
 
 struct PrettyQuotation
 {
-    std::vector<std::string> statements;
+    std::vector<bl::string> statements;
     sys::io::ByteStream out;
     size_t len{};
 };

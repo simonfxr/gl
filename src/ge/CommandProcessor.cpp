@@ -13,7 +13,7 @@
 
 namespace ge {
 
-using CommandMap = std::unordered_map<std::string_view, CommandPtr>;
+using CommandMap = std::unordered_map<bl::string_view, CommandPtr>;
 
 namespace {
 bool
@@ -30,7 +30,7 @@ struct CommandProcessor::Impl : public CommandProcessor
 {
     Engine &engine;
     CommandMap commands;
-    std::vector<std::string> scriptDirs;
+    std::vector<bl::string> scriptDirs;
     explicit Impl(Engine &e) : engine(e) {}
 };
 
@@ -59,7 +59,7 @@ CommandProcessor::engine()
 }
 
 bool
-CommandProcessor::addScriptDirectory(std::string dir, bool check_exists)
+CommandProcessor::addScriptDirectory(bl::string dir, bool check_exists)
 {
     for (const auto &scriptDir : m().scriptDirs)
         if (dir == scriptDir)
@@ -72,14 +72,14 @@ CommandProcessor::addScriptDirectory(std::string dir, bool check_exists)
     return true;
 }
 
-std::span<const std::string>
+std::span<const bl::string>
 CommandProcessor::scriptDirectories() const
 {
     return std::span(m().scriptDirs);
 }
 
 CommandPtr
-CommandProcessor::command(std::string_view comname) const
+CommandProcessor::command(bl::string_view comname) const
 {
     auto it = m().commands.find(comname);
     if (it != m().commands.end())
@@ -116,7 +116,7 @@ CommandProcessor::define(CommandPtr comm, bool unique)
 }
 
 bool
-CommandProcessor::exec(std::string_view comname, std::span<CommandArg> args)
+CommandProcessor::exec(bl::string_view comname, std::span<CommandArg> args)
 {
     auto com = command(comname);
     if (!com) {
@@ -131,7 +131,7 @@ CommandProcessor::exec(std::span<CommandArg> args)
 {
     if (args.empty())
         return true;
-    const std::string *com_name = nullptr;
+    const bl::string *com_name = nullptr;
     CommandPtr comm;
     if (args[0].type() == CommandArgType::String) {
         com_name = &args[0].string;
@@ -273,7 +273,7 @@ CommandProcessor::exec(const CommandPtr &com, std::span<CommandArg> args)
 }
 
 bool
-CommandProcessor::loadScript(std::string_view name, bool quiet)
+CommandProcessor::loadScript(bl::string_view name, bool quiet)
 {
     auto file = sys::fs::lookup(scriptDirectories(), name);
     if (file.empty())
@@ -299,7 +299,7 @@ not_found:
 }
 
 bool
-CommandProcessor::loadStream(sys::io::InStream &inp, std::string_view inp_name)
+CommandProcessor::loadStream(sys::io::InStream &inp, bl::string_view inp_name)
 {
     auto state = ParserState{ inp, inp_name };
     auto args = std::vector<CommandArg>{};
@@ -331,7 +331,7 @@ CommandProcessor::loadStream(sys::io::InStream &inp, std::string_view inp_name)
 }
 
 bool
-CommandProcessor::evalCommand(std::string_view cmd)
+CommandProcessor::evalCommand(bl::string_view cmd)
 {
     sys::io::ByteStream inp(cmd);
     return loadStream(inp, "<eval string>");

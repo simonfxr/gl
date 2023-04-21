@@ -222,7 +222,7 @@ print_stacktrace(sys::io::OutStream &out, int)
 #endif
 
 void
-error(const Location *loc, LogLevel lvl, std::string_view msg)
+error(const Location *loc, LogLevel lvl, bl::string_view msg)
 {
     error(loc, lvl, sys::io::stdout(), msg);
 }
@@ -231,7 +231,7 @@ void
 error(const Location *loc,
       LogLevel lvl,
       sys::io::OutStream &out,
-      std::string_view msg)
+      bl::string_view msg)
 {
     reportError(out, nullptr, *loc, lvl, msg);
     if (lvl >= LogLevel::FatalError)
@@ -245,7 +245,7 @@ error(const ErrorStaticCallSite *args)
 }
 
 void
-fatalError(const Location *loc, LogLevel lvl, std::string_view msg)
+fatalError(const Location *loc, LogLevel lvl, bl::string_view msg)
 {
     fatalError(loc, lvl, sys::io::stderr(), msg);
 }
@@ -254,7 +254,7 @@ void
 fatalError(const Location *loc,
            LogLevel lvl,
            sys::io::OutStream &out,
-           std::string_view msg)
+           bl::string_view msg)
 {
     error(loc, lvl, out, msg);
     std::abort(); // keep control flow analyser happy
@@ -271,7 +271,7 @@ reportError(sys::io::OutStream &out,
             const char *type,
             const Location &loc,
             LogLevel lvl,
-            std::string_view mesg)
+            bl::string_view mesg)
 {
     const char *prefix = type;
     bool st = false;
@@ -383,7 +383,7 @@ logBegin(const Location *loc, const LogDestination &dest, LogLevel lvl)
 }
 
 sys::io::OutStream &
-logWrite(std::string_view msg)
+logWrite(bl::string_view msg)
 {
     if (checkLogState())
         *log_state->out << msg;
@@ -391,7 +391,7 @@ logWrite(std::string_view msg)
 }
 
 sys::io::OutStream &
-logWriteErr(std::string_view err, std::string_view msg)
+logWriteErr(bl::string_view err, bl::string_view msg)
 {
     if (checkLogState())
         error(
@@ -422,8 +422,8 @@ void
 logRaiseError(const Location *loc,
               const LogDestination &dest,
               LogLevel lvl,
-              std::string_view err,
-              std::string_view msg)
+              bl::string_view err,
+              bl::string_view msg)
 {
     if (lvl < dest.minimumLevel)
         return;

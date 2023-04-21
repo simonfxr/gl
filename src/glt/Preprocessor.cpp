@@ -29,7 +29,7 @@ struct Preprocessor::Impl : Preprocessor
     Preprocessor::DirectiveHandler *defaultHandler;
     sys::io::OutStream *out;
     Preprocessor::Handlers handlers;
-    std::string sourceName;
+    bl::string sourceName;
     bool errorState{ false };
 
     Impl() : defaultHandler(&nullHandler), out(&sys::io::stdout()) {}
@@ -52,14 +52,14 @@ is_newline(char c)
 } // namespace
 
 void
-Preprocessor::process(std::string_view data)
+Preprocessor::process(bl::string_view data)
 {
     if (wasError())
         return;
 
     const char *const begin = data.data();
     const size_t size = data.size();
-    DirectiveContext ctx(*this, std::string(m().sourceName));
+    DirectiveContext ctx(*this, bl::string(m().sourceName));
 
     ctx.content.data = begin;
     ctx.content.size = size;
@@ -106,7 +106,7 @@ Preprocessor::process(std::string_view data)
         ctx.beginDirective = directiveBegin - begin;
         ctx.endDirective = directiveEnd - begin;
 
-        auto key = std::string(
+        auto key = bl::string(
           directiveBegin, static_cast<size_t>(directiveEnd - directiveBegin));
 
         auto it = m().handlers.find(key);
@@ -143,7 +143,7 @@ Preprocessor::handlers()
 }
 
 Preprocessor::DirectiveHandler *
-Preprocessor::installHandler(const std::string &directive,
+Preprocessor::installHandler(const bl::string &directive,
                              DirectiveHandler &handler)
 {
     DirectiveHandler *old = nullptr;
@@ -189,14 +189,14 @@ Preprocessor::clearError()
     return bl::exchange(m().errorState, false);
 }
 
-const std::string &
+const bl::string &
 Preprocessor::name() const
 {
     return m().sourceName;
 }
 
 void
-Preprocessor::name(std::string &&name)
+Preprocessor::name(bl::string &&name)
 {
     m().sourceName = bl::move(name);
 }

@@ -3,8 +3,7 @@
 
 #include <bl/concepts.hpp>
 #include <bl/conf.hpp>
-
-#include <type_traits>
+#include <bl/type_traits.hpp>
 
 namespace bl {
 

@@ -2,9 +2,9 @@
 #define BL_CORE_HPP
 
 #include <bl/conf.hpp>
+#include <bl/type_traits.hpp>
 
 #include <memory>
-#include <type_traits>
 
 namespace bl {
 
@@ -34,6 +34,17 @@ BL_wrapper constexpr std::remove_reference_t<T> &&
 move(T &&x) noexcept
 {
     return static_cast<std::remove_reference_t<T> &&>(x);
+}
+
+template<class T>
+BL_wrapper T *
+addressof(T &x) noexcept
+{
+#if hu_has_builtin(__builtin_addressof)
+    return __builtin_addressof(x);
+#else
+    return std::addressoff(x);
+#endif
 }
 
 template<typename T, typename U = T>

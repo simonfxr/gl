@@ -7,8 +7,8 @@
 
 #include <bl/new.hpp>
 
+#include <bl/string.hpp>
 #include <span>
-#include <string>
 #include <vector>
 
 namespace ge {
@@ -20,16 +20,16 @@ struct GE_API CommandProcessor
 {
     static CommandProcessor &construct_at(void *p, Engine &e) noexcept;
 
-    bool addScriptDirectory(std::string dir, bool check_exists = true);
-    std::span<const std::string> scriptDirectories() const;
+    bool addScriptDirectory(bl::string dir, bool check_exists = true);
+    std::span<const bl::string> scriptDirectories() const;
 
     Engine &engine();
 
-    [[nodiscard]] CommandPtr command(std::string_view comname) const;
+    [[nodiscard]] CommandPtr command(bl::string_view comname) const;
 
     bool define(CommandPtr comm, bool unique = false);
 
-    bool exec(std::string_view comname, std::span<CommandArg> args);
+    bool exec(bl::string_view comname, std::span<CommandArg> args);
 
     bool exec(const CommandPtr &com, std::span<CommandArg> args);
 
@@ -37,11 +37,11 @@ struct GE_API CommandProcessor
 
     bool execCommand(std::span<CommandArg> args);
 
-    bool loadStream(sys::io::InStream &inp, std::string_view inp_name);
+    bool loadStream(sys::io::InStream &inp, bl::string_view inp_name);
 
-    bool loadScript(std::string_view name, bool quiet = false);
+    bool loadScript(bl::string_view name, bool quiet = false);
 
-    bool evalCommand(std::string_view cmd);
+    bool evalCommand(bl::string_view cmd);
 
     std::vector<CommandPtr> commands() const;
 

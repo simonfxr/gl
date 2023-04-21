@@ -3,12 +3,13 @@
 
 #include "defs.h"
 
+#include <bl/core.hpp>
+#include <bl/span.hpp>
+#include <bl/string_view.hpp>
+#include <bl/type_traits.hpp>
+
 #include <memory>
 #include <new>
-#include <span>
-#include <string_view>
-#include <type_traits>
-#include <utility>
 
 #if HU_COMP_GNULIKE_P || hu_has_attribute(malloc)
 #    define ATTR_MALLOC __attribute__((malloc))
@@ -104,16 +105,16 @@ struct Array
 
     constexpr Array() noexcept = default;
 
-    Array(T *data, size_t n) : Array(std::span{ data, n }) {}
+    Array(T *data, size_t n) : Array(bl::span<T>{ data, n }) {}
 
     template<typename U, size_t E>
-    Array(std::span<U, E> view)
+    Array(bl::span<U, E> view)
     {
         *this = view;
     }
 
     template<typename C, typename Traits>
-    Array(std::basic_string_view<C, Traits> view)
+    Array(bl::basic_string_view<C, Traits> view)
     {
         *this = view;
     }
@@ -163,16 +164,16 @@ struct Array
     }
 
     template<typename U, size_t E>
-    Array &operator=(std::span<U, E> view)
+    Array &operator=(bl::span<U, E> view)
     {
         assign(view.begin(), view.end());
         return *this;
     }
 
     template<typename C, typename Traits>
-    Array &operator=(std::basic_string_view<C, Traits> view)
+    Array &operator=(bl::basic_string_view<C, Traits> view)
     {
-        *this = std::span{ view.begin(), view.end() };
+        *this = bl::span<const C>{ view.begin(), view.end() };
         return *this;
     }
 
@@ -206,13 +207,16 @@ struct Array
                n);
     }
 
-    std::span<const T> view() const { return std::span<T>{ _data, _size }; }
+    std::span<const T> view() const
+    {
+        return bl::span<const T>{ _data, _size };
+    }
 
-    std::span<T> view() { return std::span<T>{ _data, _size }; }
+    std::span<T> view() { return bl::span<T>{ _data, _size }; }
 
-    operator std::span<const T>() const { return view(); }
+    operator bl::span<const T>() const { return view(); }
 
-    operator std::span<T>() { return view(); }
+    operator bl::span<T>() { return view(); }
 
     HU_FORCE_INLINE const T &operator[](size_t i) const { return _data[i]; }
 

@@ -10,10 +10,10 @@
 namespace ge {
 
 namespace {
-std::unordered_map<std::string_view, KeyCode>
+std::unordered_map<bl::string_view, KeyCode>
 make_table()
 {
-    std::unordered_map<std::string_view, KeyCode> table;
+    std::unordered_map<bl::string_view, KeyCode> table;
     for (auto i : irange(bl::enum_count_of<KeyCode>())) {
         auto val = static_cast<KeyCode>(i);
         table[to_string(val)] = val;
@@ -23,7 +23,7 @@ make_table()
 } // namespace
 
 std::optional<KeyCode>
-parseKeyCode(const std::string_view &str)
+parseKeyCode(const bl::string_view &str)
 {
     BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
     static auto table = make_table();

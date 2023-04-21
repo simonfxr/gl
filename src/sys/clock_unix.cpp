@@ -5,11 +5,11 @@
 
 #include <bl/core.hpp>
 
+#include <bl/string.hpp>
 #include <cerrno>
 #include <cmath>
 #include <cstring>
 #include <ctime>
-#include <string>
 
 namespace sys {
 
@@ -23,8 +23,7 @@ getTime()
         auto e = bl::exchange(errno, 0);
         if (e == EINTR)
             continue;
-        FATAL_ERR(std::string("clock_gettime failed") +
-                  strerror_errno().data());
+        FATAL_ERR(bl::string("clock_gettime failed") + strerror_errno().data());
     }
 
     return tv;
@@ -60,7 +59,7 @@ sleep(double secs) noexcept
             tv = rmtv;
             continue;
         }
-        FATAL_ERR(std::string("sleep failed: ") + strerror_errno(e).data());
+        FATAL_ERR(bl::string("sleep failed: ") + strerror_errno(e).data());
     }
 }
 

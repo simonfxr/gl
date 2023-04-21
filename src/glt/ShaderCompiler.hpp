@@ -14,9 +14,9 @@
 
 #include <bl/new.hpp>
 
+#include <bl/string.hpp>
+#include <bl/string_view.hpp>
 #include <memory>
-#include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -28,7 +28,7 @@ struct ShaderCache;
 struct ShaderCompiler;
 struct ShaderCompilerQueue;
 
-using ShaderSourceKey = std::string;
+using ShaderSourceKey = bl::string;
 
 using ShaderObjects =
   std::unordered_map<ShaderSourceKey, std::shared_ptr<ShaderObject>>;
@@ -36,9 +36,9 @@ using ShaderObjects =
 using ShaderRootDependencies =
   std::unordered_map<ShaderSourceKey, std::shared_ptr<ShaderSource>>;
 
-using IncludePath = std::vector<std::string>;
+using IncludePath = std::vector<bl::string>;
 
-using ShaderInclude = std::pair<std::string, sys::fs::FileTime>;
+using ShaderInclude = std::pair<bl::string, sys::fs::FileTime>;
 
 using ShaderIncludes = std::vector<ShaderInclude>;
 
@@ -71,10 +71,10 @@ enum ReloadState : uint8_t
 struct GLT_API ShaderSource : std::enable_shared_from_this<ShaderSource>
 {
     static std::shared_ptr<ShaderSource> makeStringSource(ShaderType ty,
-                                                          std::string source);
+                                                          bl::string source);
 
     static std::shared_ptr<ShaderSource> makeFileSource(ShaderType ty,
-                                                        std::string path);
+                                                        bl::string path);
 
     const ShaderSourceKey &key() const;
 
@@ -144,7 +144,7 @@ struct GLT_API ShaderCompiler : private bl::runtime_sized_base<ShaderCompiler>
 
     void init();
 
-    static std::optional<ShaderType> guessShaderType(std::string_view path);
+    static std::optional<ShaderType> guessShaderType(bl::string_view path);
 
 private:
     friend struct ShaderSource;

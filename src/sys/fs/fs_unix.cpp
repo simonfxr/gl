@@ -8,10 +8,10 @@
 #include <bl/core.hpp>
 
 #include <array>
+#include <bl/string.hpp>
 #include <cerrno>
 #include <cstring>
 #include <ctime>
-#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -19,21 +19,21 @@
 namespace sys::fs {
 
 bool
-cwd(std::string_view dir)
+cwd(bl::string_view dir)
 {
-    if (chdir(std::string(dir).c_str()) < 0) {
+    if (chdir(bl::string(dir).c_str()) < 0) {
         ERR(strerror_errno(errno).data());
         return false;
     }
     return true;
 }
 
-std::string
+bl::string
 cwd()
 {
     const size_t MIN_SIZE = 128;
     auto size = MIN_SIZE;
-    std::string path;
+    bl::string path;
 
 retry:
     for (;;) {
@@ -55,10 +55,10 @@ retry:
 }
 
 static size_t
-dropTrailingSlashes(std::string_view path)
+dropTrailingSlashes(bl::string_view path)
 {
     if (path.empty())
-        return std::string::npos;
+        return bl::string::npos;
     size_t pos = path.length() - 1;
 
     while (pos > 0 && path[pos] == '/')
@@ -67,15 +67,15 @@ dropTrailingSlashes(std::string_view path)
     return pos;
 }
 
-std::string
-dirname(std::string_view path)
+bl::string
+dirname(bl::string_view path)
 {
     if (path.empty())
         return ".";
 
     size_t pos = path.rfind('/', dropTrailingSlashes(path));
 
-    if (pos != std::string::npos) {
+    if (pos != bl::string::npos) {
         while (pos > 1 && path[pos - 1] == '/')
             --pos;
     } else {
@@ -88,58 +88,58 @@ dirname(std::string_view path)
     return view_substr(path, 0, pos);
 }
 
-std::string
-basename(std::string_view path)
+bl::string
+basename(bl::string_view path)
 {
 
     if (path.empty())
         return "";
 
     size_t pos = path.rfind('/', dropTrailingSlashes(path));
-    size_t end = std::string::npos;
+    size_t end = bl::string::npos;
 
-    if (pos != std::string::npos) {
+    if (pos != bl::string::npos) {
         pos += 1;
         end = path.find('/', pos + 1);
     } else {
         pos = 0;
     }
 
-    if (end == std::string::npos)
+    if (end == bl::string::npos)
         end = path.length();
 
     return view_substr(path, pos, end - pos);
 }
 
-std::string
-dropExtension(std::string_view path)
+bl::string
+dropExtension(bl::string_view path)
 {
     return def::dropExtension(path);
 }
 
-std::string
-extension(std::string_view path)
+bl::string
+extension(bl::string_view path)
 {
     size_t pos = path.rfind('/');
-    if (pos == std::string::npos)
+    if (pos == bl::string::npos)
         pos = 0;
     pos = path.find('.', pos);
-    if (pos == std::string::npos)
+    if (pos == bl::string::npos)
         return "";
     return view_substr(path, pos + 1);
 }
 
 bool
-isAbsolute(std::string_view path)
+isAbsolute(bl::string_view path)
 {
     return !path.empty() && path[0] == '/';
 }
 
-std::string
-absolutePath(std::string_view path)
+bl::string
+absolutePath(bl::string_view path)
 {
     if (isAbsolute(path))
-        return std::string{ path };
+        return bl::string{ path };
 
     auto dir = cwd();
     if (dir.empty())
@@ -149,7 +149,7 @@ absolutePath(std::string_view path)
 }
 
 std::optional<Stat>
-stat(std::string_view path)
+stat(bl::string_view path)
 {
     Stat stat;
     stat.absolute = absolutePath(path);
@@ -163,11 +163,11 @@ stat(std::string_view path)
 }
 
 std::optional<FileTime>
-modificationTime(std::string_view path)
+modificationTime(bl::string_view path)
 {
     struct stat st
     {};
-    if (stat(std::string(path).c_str(), &st) != 0) {
+    if (stat(bl::string(path).c_str(), &st) != 0) {
         auto err = errno;
         if (err != ENOENT)
             ERR(strerror_errno(err).data());
@@ -176,18 +176,18 @@ modificationTime(std::string_view path)
     return FileTime{ st.st_mtime };
 }
 
-std::string
-lookup(std::span<const std::string> dirs, std::string_view name)
+bl::string
+lookup(std::span<const bl::string> dirs, bl::string_view name)
 {
     return def::lookup(dirs, name);
 }
 
 std::optional<ObjectType>
-exists(std::string_view path)
+exists(bl::string_view path)
 {
     struct stat info
     {};
-    if (stat(std::string(path).c_str(), &info) == -1) {
+    if (stat(bl::string(path).c_str(), &info) == -1) {
         auto err = bl::exchange(errno, 0);
         if (err != ENOENT)
             ERR(strerror_errno(err).data());

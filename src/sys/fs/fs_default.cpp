@@ -22,10 +22,10 @@ is_pathsep(char c)
 }
 
 size_t
-dropTrailingSeps(std::string_view path)
+dropTrailingSeps(bl::string_view path)
 {
     if (path.empty())
-        return std::string::npos;
+        return bl::string::npos;
     size_t pos = path.length() - 1;
 
     while (pos > 0 && is_pathsep(path[pos]))
@@ -35,8 +35,8 @@ dropTrailingSeps(std::string_view path)
 }
 } // namespace
 
-std::string
-join(std::string_view path, const char **parts, size_t n)
+bl::string
+join(bl::string_view path, const char **parts, size_t n)
 {
     sys::io::ByteStream out;
     out << path;
@@ -45,8 +45,8 @@ join(std::string_view path, const char **parts, size_t n)
     return bl::move(out).str();
 }
 
-std::string
-dirname(std::string_view path)
+bl::string
+dirname(bl::string_view path)
 {
     if (path.empty())
         return ".";
@@ -69,72 +69,72 @@ dirname(std::string_view path)
     return view_substr(path, 0, len);
 }
 
-std::string
-basename(std::string_view path)
+bl::string
+basename(bl::string_view path)
 {
 
     if (path.empty())
         return "";
 
     size_t pos = path.rfind(SEPARATOR, dropTrailingSeps(path));
-    size_t end = std::string::npos;
+    size_t end = bl::string::npos;
 
-    if (pos != std::string::npos) {
+    if (pos != bl::string::npos) {
         pos += 1;
         end = path.find(SEPARATOR, pos + 1);
     } else {
         pos = 0;
     }
 
-    if (end == std::string::npos)
+    if (end == bl::string::npos)
         end = path.length();
 
     return view_substr(path, pos, end - pos);
 }
 
-std::string
-extension(std::string_view path)
+bl::string
+extension(bl::string_view path)
 {
     size_t pos = path.rfind(SEPARATOR);
-    if (pos == std::string::npos)
+    if (pos == bl::string::npos)
         pos = 0;
     pos = path.find('.', pos);
-    if (pos == std::string::npos)
+    if (pos == bl::string::npos)
         return "";
     return view_substr(path, pos + 1);
 }
 
-std::string
-dropExtension(std::string_view path)
+bl::string
+dropExtension(bl::string_view path)
 {
     size_t pos = path.rfind(SEPARATOR);
-    if (pos == std::string::npos)
+    if (pos == bl::string::npos)
         pos = 0;
     pos = path.find('.', pos);
-    if (pos == std::string::npos)
-        return std::string(path);
+    if (pos == bl::string::npos)
+        return bl::string(path);
     return view_substr(path, 0, pos);
 }
 
-std::string
-dropTrailingSeparators(std::string_view path)
+bl::string
+dropTrailingSeparators(bl::string_view path)
 {
     auto pos = dropTrailingSeps(path);
-    if (pos == std::string::npos)
-        return std::string(path);
+    if (pos == bl::string::npos)
+        return bl::string(path);
     return view_substr(path, 0, pos);
 }
 
 std::optional<ObjectType>
-exists(std::string_view path)
+exists(bl::string_view path)
 {
     if (auto st = stat(path))
         return st->type;
     return std::nullopt;
 }
 
-std::string
-lookup(std::span<const std::string> dirs, std::string_view name)
+bl::string
+lookup(std::span<const bl::string> dirs, bl::string_view name)
 {
     auto suffix = string_concat("/", name);
 
@@ -145,8 +145,8 @@ lookup(std::span<const std::string> dirs, std::string_view name)
     return ""s;
 }
 
-std::string
-absolutePath(std::string_view path)
+bl::string
+absolutePath(bl::string_view path)
 {
     if (auto st = stat(path))
         return st->absolute;
@@ -154,7 +154,7 @@ absolutePath(std::string_view path)
 }
 
 std::optional<FileTime>
-modificationTime(std::string_view path)
+modificationTime(bl::string_view path)
 {
     if (auto st = stat(path))
         return st->mtime;

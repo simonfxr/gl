@@ -127,7 +127,7 @@ public:                                                                        \
     }                                                                          \
     void ApiT::destruct_at(ApiT &p) noexcept                                   \
     {                                                                          \
-        std::destroy_at(std::addressof(p.m()));                                \
+        std::destroy_at(bl::addressof(p.m()));                                 \
     }                                                                          \
     const size_t ApiT::impl_size = sizeof(::bl::runtime_sized_impl_t<ApiT>)
 
@@ -155,7 +155,7 @@ new_obj(Args &&...args) noexcept(noexcept(T::construct_at(bl_declval(T *),
       sz, static_cast<std::align_val_t>(alignof(std::max_align_t)));
     decltype(auto) obj = T::construct_at(static_cast<T *>(p), bl_fwd(args)...);
     static_assert(std::is_same_v<T &, decltype(obj)>);
-    return std::addressof(obj);
+    return bl::addressof(obj);
 }
 
 template<typename T>

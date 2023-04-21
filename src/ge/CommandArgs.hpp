@@ -8,8 +8,8 @@
 
 #include <bl/new.hpp>
 
-#include <span>
-#include <string>
+#include <bl/span.hpp>
+#include <bl/string.hpp>
 #include <vector>
 
 namespace ge {
@@ -44,7 +44,7 @@ struct CommandArg;
 
 struct CommandValue
 {
-    std::shared_ptr<const std::string> name;
+    std::shared_ptr<const bl::string> name;
     std::shared_ptr<Command> ref;
 
     // marker type for overload disambiguation
@@ -53,11 +53,11 @@ struct CommandValue
 
     CommandValue(std::shared_ptr<Command> com);
 
-    CommandValue(std::string nm, NamedRef)
-      : name(std::make_shared<const std::string>(bl::move(nm)))
+    CommandValue(bl::string nm, NamedRef)
+      : name(std::make_shared<const bl::string>(bl::move(nm)))
     {}
 
-    static CommandValue makeNamedRef(std::string nm)
+    static CommandValue makeNamedRef(bl::string nm)
     {
         return CommandValue(bl::move(nm), NamedRef{});
     }
@@ -82,7 +82,7 @@ struct GE_API CommandArg
     explicit CommandArg(int64_t x) : integer(x), _type(CommandArgType::Integer)
     {}
 
-    explicit CommandArg(std::string x)
+    explicit CommandArg(bl::string x)
       : string(bl::move(x)), _type(CommandArgType::String)
     {}
 
@@ -102,18 +102,18 @@ struct GE_API CommandArg
       : command(bl::move(comm)), _type(CommandArgType::CommandRef)
     {}
 
-    explicit CommandArg(std::string var, CommandArgVar)
+    explicit CommandArg(bl::string var, CommandArgVar)
       : var(bl::move(var)), _type(CommandArgType::VarRef)
     {}
 
     ~CommandArg();
 
-    static CommandArg varRef(std::string var)
+    static CommandArg varRef(bl::string var)
     {
         return CommandArg(bl::move(var), CommandArgVar{});
     }
 
-    static CommandArg namedCommandRef(std::string comm)
+    static CommandArg namedCommandRef(bl::string comm)
     {
         return CommandArg(CommandValue::makeNamedRef(bl::move(comm)));
     }
@@ -130,11 +130,11 @@ struct GE_API CommandArg
 
     union
     {
-        std::string string;
+        bl::string string;
         int64_t integer;
         double number;
         CommandValue command;
-        std::string var;
+        bl::string var;
         KeyBinding keyBinding;
     };
 

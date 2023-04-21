@@ -188,7 +188,7 @@ HandleStream::flush_buffer()
 }
 
 HandleResult<HandleStream>
-HandleStream::open(std::string_view path, HandleMode mode)
+HandleStream::open(bl::string_view path, HandleMode mode)
 {
     auto res = sys::io::open(path, mode);
     if (!res)
@@ -197,7 +197,7 @@ HandleStream::open(std::string_view path, HandleMode mode)
 }
 
 HandleResult<Array<char>>
-readFile(std::string_view path, sys::io::OutStream &errout) noexcept
+readFile(bl::string_view path, sys::io::OutStream &errout) noexcept
 {
     static constexpr auto BUF_SIZE = size_t{ 8192 };
     auto res = open(path, HM_READ);
@@ -208,7 +208,7 @@ readFile(std::string_view path, sys::io::OutStream &errout) noexcept
     }
     {
         auto h = bl::move(res).value();
-        std::string str;
+        bl::string str;
         for (;;) {
             std::array<char, BUF_SIZE> buf{};
             auto size = sizeof buf;

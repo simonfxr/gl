@@ -44,7 +44,7 @@ struct GE_API Engine : private bl::runtime_sized_base<Engine>
     sys::io::OutStream &out();
     void out(sys::io::OutStream &);
 
-    [[nodiscard]] const std::string &programName() const;
+    [[nodiscard]] const bl::string &programName() const;
 
     math::real now();
 
@@ -55,7 +55,7 @@ struct GE_API Engine : private bl::runtime_sized_base<Engine>
 
     void enablePlugin(Plugin &);
 
-    void setDevelDataDir(const std::string &);
+    void setDevelDataDir(const bl::string &);
 
     BL_DECLARE_RUNTIME_SIZED(Engine, Impl);
 };

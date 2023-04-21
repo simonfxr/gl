@@ -145,7 +145,7 @@ stderr_handle()
 }
 
 HandleResult<Handle>
-open(std::string_view path, HandleMode mode)
+open(bl::string_view path, HandleMode mode)
 {
     auto wpath = utf8To16(path);
     auto access = handleModeToDWORD(mode);

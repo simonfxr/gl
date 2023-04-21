@@ -7,10 +7,10 @@
 
 #include <bl/enum.hpp>
 
+#include <bl/string.hpp>
+#include <bl/string_view.hpp>
 #include <cstring>
 #include <span>
-#include <string>
-#include <string_view>
 
 #undef stdin
 #undef stdout
@@ -176,7 +176,7 @@ protected:
 struct SYS_API ByteStream : public IOStream
 {
     explicit ByteStream(size_t bufsize = 32);
-    explicit ByteStream(std::string_view);
+    explicit ByteStream(bl::string_view);
     ByteStream(const ByteStream &) = default;
     ByteStream(ByteStream &&) noexcept = default;
 
@@ -188,18 +188,18 @@ struct SYS_API ByteStream : public IOStream
     size_t size() const { return buffer.size(); }
     const char *data() const { return buffer.data(); }
     char *data() { return buffer.data(); }
-    [[nodiscard]] std::string str() const &
+    [[nodiscard]] bl::string str() const &
     {
-        return std::string(data(), size());
+        return bl::string(data(), size());
     }
-    std::string str() && { return bl::move(buffer); }
+    bl::string str() && { return bl::move(buffer); }
 
     void reserve(size_t additional)
     {
         buffer.reserve(buffer.size() + additional);
     }
 
-    operator std::string_view() const { return { data(), size() }; }
+    operator bl::string_view() const { return { data(), size() }; }
 
     void truncate(size_t);
 
@@ -210,7 +210,7 @@ protected:
     StreamResult basic_write(size_t &, const char *) final override;
 
 private:
-    std::string buffer;
+    bl::string buffer;
     size_t read_cursor;
 };
 
@@ -237,7 +237,7 @@ protected:
     }
 
 inline StreamResult
-write_repr(OutStream &out, std::string_view str)
+write_repr(OutStream &out, bl::string_view str)
 {
     if (out.writeable()) {
         auto [_, r] = out.write(str);
@@ -258,7 +258,7 @@ write_repr(OutStream &out, const char *str)
 inline StreamResult
 write_repr(OutStream &out, char c)
 {
-    return write_repr(out, std::string_view{ &c, 1 });
+    return write_repr(out, bl::string_view{ &c, 1 });
 }
 
 inline StreamResult
@@ -281,7 +281,7 @@ DEF_OUTSTREAM_OP(char);
 DEF_OUTSTREAM_OP(signed char);
 DEF_OUTSTREAM_OP(unsigned char);
 DEF_OUTSTREAM_OP(const char *);
-DEF_OUTSTREAM_OP(std::string_view);
+DEF_OUTSTREAM_OP(bl::string_view);
 
 DEF_OPAQUE_OUTSTREAM_OP(short)
 DEF_OPAQUE_OUTSTREAM_OP(unsigned short)
@@ -309,9 +309,9 @@ operator<<(OStream &out, bool x)
 
 template<typename OStream>
 std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
-operator<<(OStream &out, const std::string &str)
+operator<<(OStream &out, const bl::string &str)
 {
-    return out << std::string_view(str);
+    return out << bl::string_view(str);
 }
 
 template<typename OStream>

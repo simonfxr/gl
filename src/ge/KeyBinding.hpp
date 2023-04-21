@@ -4,11 +4,12 @@
 #include "ge/conf.hpp"
 
 #include <bl/enum.hpp>
+#include <bl/string.hpp>
+#include <bl/string_view.hpp>
 #include <pp/enum.hpp>
 
 #include <compare>
 #include <optional>
-#include <string>
 #include <vector>
 
 namespace ge {
@@ -144,7 +145,7 @@ struct Key
 using KeyBinding = std::vector<Key>;
 
 HU_NODISCARD GE_API std::optional<KeyCode>
-parseKeyCode(const std::string_view &str);
+parseKeyCode(const bl::string_view &str);
 
 GE_API std::strong_ordering
 operator<=>(const KeyBinding &x, const KeyBinding &y) noexcept;

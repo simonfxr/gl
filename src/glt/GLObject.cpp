@@ -55,7 +55,7 @@ struct Tables
 {
     std::array<size_t, bl::enum_count_of<ObjectType>()> instance_count{};
     std::array<ObjectKind, bl::enum_count_of<ObjectType>()> kinds{};
-    DBG(std::unordered_map<GLuint, std::string> stacktrace_map;)
+    DBG(std::unordered_map<GLuint, bl::string> stacktrace_map;)
     Tables();
 
     static Tables &get() noexcept
@@ -91,7 +91,7 @@ generate(ObjectType t, GLsizei n, GLuint *names)
     DBG({
         ByteStream out;
         err::print_stacktrace(out);
-        std::string call_stack_str = out.str();
+        bl::string call_stack_str = out.str();
     });
 
     auto tab = Tables::get();

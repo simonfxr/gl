@@ -12,12 +12,12 @@
 
 #include <algorithm>
 #include <array>
+#include <bl/string_view.hpp>
 #include <functional>
 #include <iterator>
 #include <numeric>
 #include <queue>
 #include <stack>
-#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <variant>
@@ -48,21 +48,21 @@ struct CompileJob
 
 using QueuedJobs = std::unordered_set<ShaderSourceKey>;
 
-using ShaderSourceFilePath = std::string; // absolute path
+using ShaderSourceFilePath = bl::string; // absolute path
 
 using CompileJobs = std::queue<CompileJob>;
 
 namespace {
 struct StringSource
 {
-    std::string source;
+    bl::string source;
 };
 } // namespace
 
 namespace {
 struct FileSource
 {
-    std::string path;
+    bl::string path;
 };
 } // namespace
 
@@ -193,10 +193,10 @@ template<class T>
 struct always_false : std::false_type
 {};
 
-std::string
-hash(std::string_view source)
+bl::string
+hash(bl::string_view source)
 {
-    return "h" + std::to_string(std::hash<std::string_view>{}(source));
+    return "h" + std::to_string(std::hash<bl::string_view>{}(source));
 }
 
 struct ShaderTypeMapping
@@ -216,7 +216,7 @@ constexpr const auto shaderTypeMappings = std::to_array<ShaderTypeMapping>(
 bool
 compilePreprocessed(ShaderCompilerQueue & /*scq*/,
                     GLenum /*shader_type*/,
-                    const std::string & /*name*/,
+                    const bl::string & /*name*/,
                     GLSLPreprocessor & /*proc*/,
                     GLShaderObject & /*shader*/);
 
@@ -224,7 +224,7 @@ void
 printShaderLog(GLShaderObject & /*shader*/, sys::io::OutStream &out);
 
 std::optional<GLenum>
-translateShaderType(ShaderType type, const std::string &basename = "");
+translateShaderType(ShaderType type, const bl::string &basename = "");
 
 ReloadState
 includesNeedReload(const ShaderIncludes & /*incs*/);
@@ -246,7 +246,7 @@ includesNeedReload(const ShaderIncludes &incs)
 bool
 compilePreprocessed(ShaderCompilerQueue &scq,
                     GLenum shader_type,
-                    const std::string &name,
+                    const bl::string &name,
                     GLSLPreprocessor &proc,
                     GLShaderObject &shader)
 {
@@ -275,9 +275,8 @@ compilePreprocessed(ShaderCompilerQueue &scq,
             logmsg << "\n";
             logmsg << "BEGIN SHADER SOURCE[" << *shader << "]\n";
             for (const auto i : irange(nsegments))
-                logmsg << std::string_view{
-                    segments[i], static_cast<size_t>(segLengths[i])
-                };
+                logmsg << bl::string_view{ segments[i],
+                                           static_cast<size_t>(segLengths[i]) };
             logmsg << "\n";
             logmsg << "END SHADER SOURCE\n";
         }
@@ -340,7 +339,7 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
 }
 
 std::optional<GLenum>
-translateShaderType(ShaderType type, const std::string &basename)
+translateShaderType(ShaderType type, const bl::string &basename)
 {
 
     if (type == ShaderType::GuessShaderType) {
@@ -369,7 +368,7 @@ ShaderSource::key() const
 }
 
 std::shared_ptr<ShaderSource>
-ShaderSource::makeFileSource(ShaderType ty, std::string path)
+ShaderSource::makeFileSource(ShaderType ty, bl::string path)
 {
     ASSERT(sys::fs::fileExists(path));
     return std::make_shared<ShaderSource>(
@@ -377,7 +376,7 @@ ShaderSource::makeFileSource(ShaderType ty, std::string path)
 }
 
 std::shared_ptr<ShaderSource>
-ShaderSource::makeStringSource(ShaderType ty, std::string source)
+ShaderSource::makeStringSource(ShaderType ty, bl::string source)
 {
     auto h = hash(source);
     return std::make_shared<ShaderSource>(
@@ -446,7 +445,7 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
       so->self->dependencies);
     scq.shaderCompiler().m().initPreprocessor(preproc);
 
-    preproc.processFileRecursively(std::string(path));
+    preproc.processFileRecursively(bl::string(path));
     if (preproc.wasError())
         return nullptr;
 
@@ -720,7 +719,7 @@ ShaderCompiler::init()
 }
 
 std::optional<ShaderType>
-ShaderCompiler::guessShaderType(std::string_view path)
+ShaderCompiler::guessShaderType(bl::string_view path)
 {
     auto ext = sys::fs::extension(path);
 

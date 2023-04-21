@@ -106,10 +106,10 @@ using State = Anim;
 using RenderEv = ge::Event<ge::RenderEvent>;
 
 static bool
-readModel(const std::string &file, CubeMesh &mdl);
+readModel(const bl::string &file, CubeMesh &mdl);
 
 static bool
-writeModel(const std::string &file, const CubeMesh &mdl);
+writeModel(const bl::string &file, const CubeMesh &mdl);
 
 static bool
 initWorld(State *state, CubeMesh &worldModel, vec3 *sphere_points);
@@ -1061,7 +1061,7 @@ renderBlocks(State *state, ge::Engine &e)
 // }
 
 static bool
-readModel(const std::string &file, CubeMesh &mdl)
+readModel(const bl::string &file, CubeMesh &mdl)
 {
     UNUSED(file);
     UNUSED(mdl);
@@ -1070,7 +1070,7 @@ readModel(const std::string &file, CubeMesh &mdl)
 }
 
 static bool
-writeModel(const std::string &file, const CubeMesh &mdl)
+writeModel(const bl::string &file, const CubeMesh &mdl)
 {
     UNUSED(file);
     UNUSED(mdl);

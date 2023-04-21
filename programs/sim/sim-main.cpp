@@ -16,9 +16,9 @@
 
 #include <bl/rand.hpp>
 #include <bl/rand/uniform.hpp>
+#include <bl/string.hpp>
 
 #include <algorithm>
-#include <string>
 #include <vector>
 
 using namespace math;
@@ -767,18 +767,18 @@ Game::render_hud()
     txtAnimSpeed.SetPosition(2, height);
 
     height += uint32(txtAnimSpeed.GetGlobalBounds().Height) + 2;
-    sf::Text txtInter(std::string("Interpolation: ") + (use_interpolation ? "on"
+    sf::Text txtInter(bl::string("Interpolation: ") + (use_interpolation ? "on"
     : "off")); txtInter.SetCharacterSize(12); txtInter.SetColor(c);
     txtInter.SetPosition(2, height);
 
     height += uint32(txtInter.GetGlobalBounds().Height) + 2;
-    sf::Text txtNumBalls(std::string("NO Spheres: ") +
+    sf::Text txtNumBalls(bl::string("NO Spheres: ") +
     to_string(world.numSpheres())); txtNumBalls.SetCharacterSize(12);
     txtNumBalls.SetColor(c);
     txtNumBalls.SetPosition(2, height);
 
     height += uint32(txtNumBalls.GetGlobalBounds().Height) + 2;
-    std::string render_stat = "FPS(Rendering): " + to_string(fs.rt_avg) + " " +
+    bl::string render_stat = "FPS(Rendering): " + to_string(fs.rt_avg) + " " +
         to_string(fs.rt_current) + " " + to_string(fs.rt_min) + " " +
     to_string(fs.rt_max); sf::Text txtRenderTime(render_stat);
     txtRenderTime.SetCharacterSize(12);
