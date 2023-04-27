@@ -8,6 +8,8 @@
 
 namespace ge {
 
+using namespace bl::literals;
+
 EngineInitializers::EngineInitializers(bool default_init)
 {
     if (default_init) {
@@ -50,7 +52,7 @@ initInitStats(EngineInitializers &inits)
     inits.reg(PostInit, [=](const Event<InitEvent> &e) {
         e.info.success = true;
         auto ms = static_cast<uint32_t>((e.info.engine.now() - *initT0) * 1000);
-        e.info.engine.out() << "initialized in " << ms << " ms\n";
+        e.info.engine.out() << "initialized in "_k << ms << " ms\n"_k;
     });
 }
 

@@ -10,6 +10,8 @@
 
 namespace sys::io {
 
+using namespace bl::literals;
+
 IO::IO() : ipa_any(0), ipa_local(127, 0, 0, 1) {}
 
 HandleStream::HandleStream(Handle h) : handle(bl::move(h)) {}
@@ -61,7 +63,7 @@ HandleStream::basic_flush()
 }
 
 StreamResult
-HandleStream::basic_read(size_t &s, char *buf)
+HandleStream::basic_read(size_t &s, bl::byte *buf)
 {
     if (s == 0)
         return StreamResult::OK;
@@ -84,12 +86,12 @@ HandleStream::basic_read(size_t &s, char *buf)
 
     if (s > HANDLE_READ_BUFFER_SIZE) {
         size_t k = s;
-        std::tie(k, err) = sys::io::read(handle, std::span{ buf, k });
+        std::tie(k, err) = sys::io::read(handle, bl::span{ buf, k });
         read_cursor = 0;
         n += k;
     } else {
         size_t k = HANDLE_READ_BUFFER_SIZE;
-        std::tie(k, err) = sys::io::read(handle, std::span{ read_buffer, k });
+        std::tie(k, err) = sys::io::read(handle, bl::span{ read_buffer, k });
         if (k > s) {
             n += s;
             read_cursor = k - s;
@@ -112,7 +114,7 @@ HandleStream::basic_read(size_t &s, char *buf)
 }
 
 StreamResult
-HandleStream::basic_write(size_t &s, const char *buf)
+HandleStream::basic_write(size_t &s, const bl::byte *buf)
 {
     auto rem = HANDLE_WRITE_BUFFER_SIZE - write_cursor;
 
@@ -129,7 +131,7 @@ HandleStream::basic_write(size_t &s, const char *buf)
     if (write_cursor > 0) {
         memcpy(write_buffer + write_cursor, buf, rem);
         k = HANDLE_WRITE_BUFFER_SIZE;
-        std::tie(k, err) = sys::io::write(handle, std::span{ write_buffer, k });
+        std::tie(k, err) = sys::io::write(handle, bl::span{ write_buffer, k });
     }
 
     if (write_cursor == 0 ||
@@ -137,7 +139,7 @@ HandleStream::basic_write(size_t &s, const char *buf)
 
         n += rem;
         k = s - rem;
-        std::tie(k, err) = sys::io::write(handle, std::span{ buf + rem, k });
+        std::tie(k, err) = sys::io::write(handle, bl::span{ buf + rem, k });
         n += k;
         auto unwritten = buf + n;
         auto rest = s - n;
@@ -177,7 +179,7 @@ StreamResult
 HandleStream::flush_buffer()
 {
     auto [k, err] =
-      sys::io::write(handle, std::span{ write_buffer, write_cursor });
+      sys::io::write(handle, bl::span{ write_buffer, write_cursor });
 
     if (k > 0) {
         memmove(write_buffer, write_buffer + k, write_cursor - k);
@@ -196,7 +198,7 @@ HandleStream::open(bl::string_view path, HandleMode mode)
     return { HandleStream{ bl::move(res).value() } };
 }
 
-HandleResult<Array<char>>
+HandleResult<Array<bl::string_byte>>
 readFile(bl::string_view path, sys::io::OutStream &errout) noexcept
 {
     static constexpr auto BUF_SIZE = size_t{ 8192 };
@@ -208,13 +210,13 @@ readFile(bl::string_view path, sys::io::OutStream &errout) noexcept
     }
     {
         auto h = bl::move(res).value();
-        bl::string str;
+        ByteStream str;
         for (;;) {
-            std::array<char, BUF_SIZE> buf{};
+            std::array<bl::byte, BUF_SIZE> buf{};
             auto size = sizeof buf;
-            std::tie(size, err) = read(h, std::span{ buf.data(), size });
+            std::tie(size, err) = read(h, bl::span{ buf.data(), size });
             if (size > 0)
-                str.insert(str.end(), buf.data(), buf.data() + size);
+                str.write(bl::span{ buf.data(), buf.data() + size });
             if (err == HandleError::EOF) {
                 err = HandleError::OK;
                 return { { str.data(), str.size() } };
@@ -225,7 +227,7 @@ readFile(bl::string_view path, sys::io::OutStream &errout) noexcept
     }
 fail:
     if (errout.writeable())
-        errout << "unable to read file: " << path << "\n";
+        errout << "unable to read file: "_k << path << "\n"_k;
 
     return util::unexpected{ err };
 }

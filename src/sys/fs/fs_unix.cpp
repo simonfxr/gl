@@ -6,9 +6,11 @@
 #include "util/string.hpp"
 
 #include <bl/core.hpp>
+#include <bl/cstring.hpp>
+#include <bl/string.hpp>
+#include <bl/string_view.hpp>
 
 #include <array>
-#include <bl/string.hpp>
 #include <cerrno>
 #include <cstring>
 #include <ctime>
@@ -18,11 +20,14 @@
 
 namespace sys::fs {
 
+using namespace bl::literals;
+
 bool
 cwd(bl::string_view dir)
 {
-    if (chdir(bl::string(dir).c_str()) < 0) {
-        ERR(strerror_errno(errno).data());
+    auto cstr = bl::cstring_view{ dir };
+    if (chdir(cstr.c_str()) < 0) {
+        ERR(strerror_errno(errno));
         return false;
     }
     return true;
@@ -31,6 +36,7 @@ cwd(bl::string_view dir)
 bl::string
 cwd()
 {
+    using namespace bl::literals;
     const size_t MIN_SIZE = 128;
     auto size = MIN_SIZE;
     bl::string path;
@@ -43,7 +49,7 @@ retry:
             if (errno == ERANGE)
                 goto retry;
             if (errno != EINTR) {
-                ERR(string_concat("cwd() failed: ", strerror_errno().data()));
+                ERR(scat("cwd() failed: "_sv, strerror_errno()));
                 return "";
             }
         }
@@ -59,7 +65,7 @@ dropTrailingSlashes(bl::string_view path)
 {
     if (path.empty())
         return bl::string::npos;
-    size_t pos = path.length() - 1;
+    size_t pos = path.size() - 1;
 
     while (pos > 0 && path[pos] == '/')
         --pos;
@@ -106,7 +112,7 @@ basename(bl::string_view path)
     }
 
     if (end == bl::string::npos)
-        end = path.length();
+        end = path.size();
 
     return view_substr(path, pos, end - pos);
 }
@@ -143,9 +149,9 @@ absolutePath(bl::string_view path)
 
     auto dir = cwd();
     if (dir.empty())
-        return "";
+        return ""_s;
 
-    return string_concat(dir, "/", path);
+    return join(dir, path);
 }
 
 std::optional<Stat>
@@ -170,31 +176,33 @@ modificationTime(bl::string_view path)
     if (stat(bl::string(path).c_str(), &st) != 0) {
         auto err = errno;
         if (err != ENOENT)
-            ERR(strerror_errno(err).data());
+            ERR(strerror_errno(err));
         return std::nullopt;
     }
     return FileTime{ st.st_mtime };
 }
 
 bl::string
-lookup(std::span<const bl::string> dirs, bl::string_view name)
+lookup(bl::span<const bl::string> dirs, bl::string_view name, ObjectType type)
 {
-    return def::lookup(dirs, name);
+    return def::lookup(dirs, name, type);
 }
 
 std::optional<ObjectType>
 exists(bl::string_view path)
 {
-    struct stat info
-    {};
-    if (stat(bl::string(path).c_str(), &info) == -1) {
+    using stat = struct stat;
+    stat info{};
+    auto str = bl::string(path);
+    if (::stat(str.c_str(), &info) < 0) {
         auto err = bl::exchange(errno, 0);
         if (err != ENOENT)
-            ERR(strerror_errno(err).data());
+            ERR(strerror_errno(err));
         return std::nullopt;
     }
-    auto objtype = info.st_mode & S_IFMT;
-    return { objtype == S_IFDIR ? ObjectType::Directory : ObjectType::File };
+    auto type =
+      S_ISDIR(info.st_mode) ? ObjectType::Directory : ObjectType::File;
+    return { type };
 }
 
 } // namespace sys::fs

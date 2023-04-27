@@ -214,8 +214,8 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
 
     engine->out() << "  CL_PLATFORM_EXTENSIONS:\n";
     platform.getInfo(CL_PLATFORM_EXTENSIONS, &info_value);
-    std::istringstream exts(info_value);
-    bl::string ext;
+    std::istringstream exts(info_value.c_str());
+    std::string ext;
     while (std::getline(exts, ext, ' '))
         engine->out() << "    " << ext << "\n";
 
@@ -250,8 +250,8 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
 
     engine->out() << "  CL_DEVICE_EXTENSIONS:\n";
     cl_device.getInfo(CL_DEVICE_EXTENSIONS, &info_value);
-    std::istringstream dev_exts(info_value);
-    bl::string dev_ext;
+    std::istringstream dev_exts(info_value.c_str());
+    std::string dev_ext;
 
     bool supports_3d_image_write = false;
     while (std::getline(dev_exts, dev_ext, ' ')) {
@@ -310,7 +310,7 @@ Anim::initCLKernels(bool *success)
 
     auto source_code = std::move(res).value();
 
-    bl::string source_str(source_code.data(), source_code.size());
+    std::string source_str(source_code.data(), source_code.size());
     cl::Program::Sources source{ source_str };
     cl_program = cl::Program(cl_ctx, source, &cl_err);
     CL_ERR("creating program failed");
@@ -320,7 +320,7 @@ Anim::initCLKernels(bool *success)
     std::vector<cl::Device> devices;
     devices.push_back(cl_device);
     cl_err = cl_program.build(
-      devices, (bl::string("-I programs/mc/ -DSIZE=") + num.str()).c_str());
+      devices, (std::string("-I programs/mc/ -DSIZE=") + num.str()).c_str());
     engine->out() << "building cl program: "
                   << (cl_err == CL_SUCCESS ? "success" : "failed")
                   << ", log:\n";

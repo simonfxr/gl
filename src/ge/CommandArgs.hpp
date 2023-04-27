@@ -157,7 +157,7 @@ struct GE_API CommandPrettyPrinter
 
     void print(const KeyBinding &bind);
     void print(const CommandArg &arg, bool first = false);
-    void print(std::span<const CommandArg>);
+    void print(bl::span<const CommandArg>);
     void print(const Quotation &);
     void printSpaces(size_t);
 

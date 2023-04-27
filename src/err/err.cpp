@@ -18,6 +18,8 @@
 
 namespace err {
 
+using namespace bl::literals;
+
 using LL = LogLevel;
 
 #if defined(ENABLE_STACKTRACES) && HU_OS_POSIX_P
@@ -49,7 +51,8 @@ debugInfo(sys::io::OutStream &out, const void *ip)
     char *demangled =
       abi::__cxa_demangle(function_name, nullptr, nullptr, &status);
 
-    out << (demangled != nullptr ? demangled : function_name) << "[";
+    out << bl::string(demangled != nullptr ? demangled : function_name)
+        << "["_k;
     if (demangled != nullptr)
         free(demangled); // NOLINT(cppcoreguidelines-owning-memory,
                          // cppcoreguidelines-no-malloc)
@@ -68,9 +71,9 @@ debugInfo(sys::io::OutStream &out, const void *ip)
         Dwarf_Addr faddr;
         const char *filename =
           dwfl_lineinfo(line, &faddr, &nline, nullptr, nullptr, nullptr);
-        out << filename << ":" << nline;
+        out << filename << ":"_k << nline;
     } else {
-        out << "ip: " << ip;
+        out << "ip: "_k << ::sys::io::ptr{ ip };
     }
 
     out << ']';
@@ -87,7 +90,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
     unw_cursor_t cursor;
     unw_init_local(&cursor, &uc);
 
-    out << "  stacktrace: (most recent call first)\n";
+    out << "  stacktrace: (most recent call first)\n"_k;
 
     while (unw_step(&cursor) > 0) {
         unw_word_t ip;
@@ -98,16 +101,16 @@ print_stacktrace(sys::io::OutStream &out, int skip)
         // unw_get_proc_name(&cursor, name,sizeof(name), &offset);
 
         if (skip <= 0) {
-            out << "    ";
+            out << "    "_k;
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
             debugInfo(out, (reinterpret_cast<void **>(ip) - 1));
-            out << "\n";
+            out << "\n"_k;
         } else {
             skip--;
         }
     }
 
-    out << "  end of stacktrace\n";
+    out << "  end of stacktrace\n"_k;
 }
 
 #elif defined(ENABLE_STACKTRACES) && HU_OS_WINDOWS_P
@@ -241,7 +244,9 @@ error(const Location *loc,
 void
 error(const ErrorStaticCallSite *args)
 {
-    error(&args->location, args->level, args->message);
+    error(&args->location,
+          args->level,
+          bl::string_view{ args->message, strlen(args->message) });
 }
 
 void
@@ -263,7 +268,9 @@ fatalError(const Location *loc,
 void
 fatalError(const ErrorStaticCallSite *args)
 {
-    fatalError(&args->location, args->level, args->message);
+    fatalError(&args->location,
+               args->level,
+               bl::string_view{ args->message, strlen(args->message) });
 }
 
 void
@@ -303,17 +310,17 @@ reportError(sys::io::OutStream &out,
         }
     }
 
-    out << "[" << prefix << "]"
-        << " in " << loc.function << "\n"
-        << "  at " << loc.file << ":" << loc.line << "\n";
+    out << "["_k << prefix << "]"_k
+        << " in "_k << loc.function << "\n"_k
+        << "  at "_k << loc.file << ":"_k << loc.line << "\n"_k;
 
     if (loc.operation) {
         if (lvl == LL::Assertion)
-            out << "  assertion: " << mesg << "\n";
+            out << "  assertion: "_k << mesg << "\n"_k;
         else
-            out << "  operation: " << loc.operation << "\n";
+            out << "  operation: "_k << loc.operation << "\n"_k;
     }
-    out << "  message: " << mesg << "\n";
+    out << "  message: "_k << mesg << "\n"_k;
 
     if (st)
         print_stacktrace(out);

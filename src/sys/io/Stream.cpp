@@ -70,7 +70,7 @@ InStream::close()
 }
 
 std::pair<size_t, StreamResult>
-InStream::read(std::span<char> buf)
+InStream::read(bl::span<bl::byte> buf)
 {
     if (!readable())
         return { 0, closed() ? StreamResult::Closed : StreamResult::EOF };
@@ -103,7 +103,7 @@ OutStream::close()
 }
 
 std::pair<size_t, StreamResult>
-OutStream::write(std::span<const char> buf)
+OutStream::write(bl::span<const bl::byte> buf)
 {
     if (!writeable())
         return { 0, closed() ? StreamResult::Closed : StreamResult::EOF };
@@ -225,14 +225,14 @@ NullStream::basic_flush()
 }
 
 StreamResult
-NullStream::basic_read(size_t &s, char * /*buf*/)
+NullStream::basic_read(size_t &s, bl::byte * /*buf*/)
 {
     s = 0;
     return StreamResult::EOF;
 }
 
 StreamResult
-NullStream::basic_write(size_t &s, const char * /*buf*/)
+NullStream::basic_write(size_t &s, const bl::byte * /*buf*/)
 {
     s = 0;
     return StreamResult::EOF;
@@ -251,7 +251,7 @@ ByteStream::ByteStream(size_t bufsize) : read_cursor(0)
 
 ByteStream::ByteStream(bl::string_view str) : ByteStream(str.size())
 {
-    write(str);
+    write(bl::as_bytes(str));
 }
 
 ByteStream::~ByteStream() = default;
@@ -277,7 +277,7 @@ ByteStream::basic_close()
 }
 
 StreamResult
-ByteStream::basic_read(size_t &s, char *buf)
+ByteStream::basic_read(size_t &s, bl::byte *buf)
 {
     size_t lim = read_cursor + s;
     if (lim > size())
@@ -293,9 +293,10 @@ ByteStream::basic_read(size_t &s, char *buf)
 }
 
 StreamResult
-ByteStream::basic_write(size_t &s, const char *buf)
+ByteStream::basic_write(size_t &s, const bl::byte *buf)
 {
-    buffer.append(buf, s);
+    auto rng = bl::span{ buf, s };
+    buffer.append(rng.begin(), rng.end());
     return StreamResult::OK;
 }
 
@@ -312,13 +313,13 @@ CooperativeInStream::basic_close_in(bool /*flush_only*/)
 }
 
 StreamResult
-CooperativeInStream::basic_read(size_t &s, char *buf)
+CooperativeInStream::basic_read(size_t &s, bl::byte *buf)
 {
     auto n = s;
     for (;;) {
         s = n;
         auto res = StreamResult{};
-        std::tie(s, res) = in->read(std::span{ buf, s });
+        std::tie(s, res) = in->read(bl::span{ buf, s });
         if (res == StreamResult::OK)
             return res;
         if (res == StreamResult::Blocked)

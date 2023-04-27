@@ -14,6 +14,7 @@
 
 namespace glt {
 
+using namespace bl::literals;
 using namespace math;
 
 namespace {
@@ -136,7 +137,7 @@ programUniform(GLuint program, GLint loc, float value)
 }
 
 void
-programUniform(GLuint program, GLint loc, std::span<const float> value)
+programUniform(GLuint program, GLint loc, bl::span<const float> value)
 {
     GL_CALL(
       glProgramUniform1fv, program, loc, GLsizei(value.size()), value.data());
@@ -239,7 +240,7 @@ setUniform(bool mandatory,
 
     if (locationi == -1) {
         if (mandatory)
-            ERR(string_concat("unknown uniform: ", name));
+            ERR(scat("unknown uniform: "_sv, name));
         return;
     }
 
@@ -260,13 +261,12 @@ setUniform(bool mandatory,
             auto actual_type = static_cast<GLenum>(actual_typei);
             if (actual_type != type) {
                 using namespace std::literals;
-                auto err = string_concat("uniform \""sv,
-                                         name,
-                                         "\": types dont match, got: "sv,
-                                         descGLType(type),
-                                         ", expected: "sv,
-                                         descGLType(actual_type));
-                ERR(err.c_str());
+                ERR(scat("uniform \""_sv,
+                         name,
+                         "\": types dont match, got: "_sv,
+                         descGLType(type),
+                         ", expected: "_sv,
+                         descGLType(actual_type)));
                 return;
             }
         }
@@ -292,9 +292,7 @@ Uniforms::set(bool mandatory, bl::string_view name, double value)
 }
 
 void
-Uniforms::set(bool mandatory,
-              bl::string_view name,
-              std::span<const float> value)
+Uniforms::set(bool mandatory, bl::string_view name, bl::span<const float> value)
 {
     setUniform(mandatory, prog, name, GL_FLOAT, value);
 }

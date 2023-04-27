@@ -199,9 +199,9 @@ struct Mesh : public MeshBase
         return T{ *static_cast<const gl_t *>(vertexRef(i)) };
     }
 
-    std::span<const gl_t> vertices() const
+    bl::span<const gl_t> vertices() const
     {
-        return std::span{ static_cast<const gl_t *>(vertexRef(0)),
+        return bl::span{ static_cast<const gl_t *>(vertexRef(0)),
                           verticesSize() };
     }
 };

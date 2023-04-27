@@ -69,8 +69,8 @@ template<typename T>
     requires(!std::is_array_v<T>)
 BL_inline constexpr T *relocate_at(T *source, T *dest)
 {
-    std::uninitialized_move(dest, dest + 1, source);
-    destroy_at(source);
+    std::uninitialized_move(source, source + 1, dest);
+    ::bl::destroy_at(source);
     return std::launder(dest);
 }
 

@@ -12,6 +12,8 @@
 
 namespace glt {
 
+using namespace bl::literals;
+
 bool
 printOpenGLCalls()
 {
@@ -43,7 +45,7 @@ getGLErrorString(GLenum err)
 #undef err_case
     default:
         sys::io::ByteStream rep;
-        rep << "Unknown OpenGL error [code = " << err << "]";
+        rep << "Unknown OpenGL error [code = "_k << err << "]"_k;
         return rep.str();
     }
 }
@@ -54,7 +56,7 @@ printGLErrors(sys::io::OutStream &out)
     bool was_error = false;
 
     for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
-        out << "OpenGL error occurred: " << getGLErrorString(err) << "\n";
+        out << "OpenGL error occurred: "_k << getGLErrorString(err) << "\n"_k;
 
     return was_error;
 }
@@ -86,15 +88,15 @@ printGLError(const err::Location *loc, GLenum err)
                      "OpenGL Error",
                      *loc,
                      err::LogLevel::Error,
-                     getGLErrorString(err).c_str());
+                     getGLErrorString(err));
 }
 
 void
 printGLTrace(const err::Location *loc)
 {
     if (G.print_opengl_calls)
-        sys::io::stdout() << "OPENGL " << loc->operation << " " << loc->file
-                          << ":" << loc->line << "\n";
+        sys::io::stdout() << "OPENGL "_k << loc->operation << " "_k << loc->file
+                          << ":"_k << loc->line << "\n"_k;
 }
 
 bool
@@ -124,13 +126,13 @@ initDebug()
 
     if (dbg == nullptr && GLAD_GL_ARB_debug_output) {
         debug_impl = "GL_ARB_debug_output";
-        sys::io::stdout() << "trying ARB debug\n";
+        sys::io::stdout() << "trying ARB debug\n"_k;
         dbg = ARBDebug::init();
     }
 
     if (dbg == nullptr && GLAD_GL_AMD_debug_output) {
         debug_impl = "GL_AMD_debug_output";
-        sys::io::stdout() << "trying AMD debug\n";
+        sys::io::stdout() << "trying AMD debug\n"_k;
         dbg = AMDDebug::init();
     }
 
@@ -138,13 +140,13 @@ initDebug()
 
     if (dbg == nullptr) {
         sys::io::stdout() << "couldnt initialize Debug Output, no debug "
-                             "implementaion available"
-                          << "\n";
+                             "implementaion available"_k
+                          << "\n"_k;
         dbg = new NoDebug();
         initialized = false;
     } else {
-        sys::io::stdout() << "initialized Debug Output using " << debug_impl
-                          << "\n";
+        sys::io::stdout() << "initialized Debug Output using "_k << debug_impl
+                          << "\n"_k;
         initialized = true;
     }
 

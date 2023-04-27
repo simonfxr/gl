@@ -4,6 +4,7 @@
 #include "defs.h"
 
 #include <bl/core.hpp>
+#include <bl/string_view.hpp>
 
 #include <array>
 #include <cerrno>
@@ -11,28 +12,35 @@
 
 namespace sys {
 
+struct strerror_buf
+{
+    std::array<char, 128> d{};
+
+    operator bl::string_view() { return { d.data(), strlen(d.data()) }; }
+};
+
 static inline auto
 strerror_errno(int errnum)
 {
-    std::array<char, 128> str{};
-    auto ret = strerror_r(errnum, str.data(), str.size());
+    strerror_buf s;
+    auto ret = strerror_r(errnum, s.d.data(), s.d.size());
     auto okay = false;
     if constexpr (std::is_pointer_v<decltype(ret)>) {
         // GNU version: returns char *
         okay = !!ret;
-        if (ret && ret != str.data()) {
-            strncpy(str.data(), ret, sizeof(str) - 1);
-            str[sizeof(str) - 1] = '\0';
+        if (ret && ret != s.d.data()) {
+            strncpy(s.d.data(), ret, sizeof(s.d) - 1);
+            s.d[sizeof(s.d) - 1] = '\0';
         }
     } else {
         // XSI version: returns an int, 0 means success
         okay = !ret;
     }
     if (!okay) {
-        decltype(str) retstr = { "Unknown error" };
-        return retstr;
+        decltype(s.d) retstr = { "Unknown error" };
+        return strerror_buf{ retstr };
     }
-    return str;
+    return s;
 }
 
 static inline auto

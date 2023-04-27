@@ -26,7 +26,7 @@ baz(int x)
 void
 bazzz(int x)
 {
-    ASSERT_ALWAYS(x > 0, string_concat("value: ", x));
+    ASSERT_ALWAYS(x > 0, scat("value: ", x));
 }
 
 int

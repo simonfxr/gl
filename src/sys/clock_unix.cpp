@@ -2,16 +2,19 @@
 
 #include "err/err.hpp"
 #include "sys/strerror_unix.hpp"
+#include "util/string.hpp"
 
 #include <bl/core.hpp>
-
 #include <bl/string.hpp>
+
 #include <cerrno>
 #include <cmath>
 #include <cstring>
 #include <ctime>
 
 namespace sys {
+
+using namespace bl::literals;
 
 namespace {
 struct timespec
@@ -23,7 +26,7 @@ getTime()
         auto e = bl::exchange(errno, 0);
         if (e == EINTR)
             continue;
-        FATAL_ERR(bl::string("clock_gettime failed") + strerror_errno().data());
+        FATAL_ERR(scat("clock_gettime failed"_sv, strerror_errno()));
     }
 
     return tv;
@@ -59,7 +62,7 @@ sleep(double secs) noexcept
             tv = rmtv;
             continue;
         }
-        FATAL_ERR(bl::string("sleep failed: ") + strerror_errno(e).data());
+        FATAL_ERR(scat("sleep failed: "_sv, strerror_errno(e)));
     }
 }
 

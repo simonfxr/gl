@@ -8,6 +8,8 @@
 
 namespace ge {
 
+using namespace bl::literals;
+
 struct State
 {
     bool down{ false };
@@ -179,25 +181,25 @@ KeyHandler::handleListBindings(const Event<CommandEvent> &e)
     auto it = m().bindings.begin();
     for (; it != m().bindings.end(); ++it) {
         auto &bind = it->first.binding;
-        out << "  ";
+        out << "  "_k;
         {
             auto printer = bl::box<CommandPrettyPrinter>{};
             printer->out(out);
             printer->print(*bind);
         }
-        out << " -> ";
+        out << " -> "_k;
         QuotationCommand *quot = it->second->castToQuotation();
         if (quot == nullptr) {
             out << it->second->name();
-            out << "\n";
+            out << "\n"_k;
         } else {
-            out << "\n";
+            out << "\n"_k;
             {
                 auto printer = bl::box<CommandPrettyPrinter>{};
                 printer->out(out);
                 printer->print(*quot->quotation);
             }
-            out << "\n";
+            out << "\n"_k;
         }
     }
 }

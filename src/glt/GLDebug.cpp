@@ -6,6 +6,8 @@
 
 namespace glt {
 
+using namespace bl::literals;
+
 GLDebug::GLDebug() = default;
 
 GLDebug::~GLDebug() = default;
@@ -161,15 +163,14 @@ ARBDebug::printDebugMessages(const err::Location &loc)
 #undef sym_case
 
         sys::io::ByteStream mesg;
-        mesg << "source: " << ssrc << ", severity: " << ssev
-             << ", type: " << stype << ", id: " << id
-             << "  message: " << message_buffer;
+        mesg << "source: "_k << ssrc << ", severity: "_k << ssev << ", type: "_k
+             << stype << ", id: "_k << id << "  message: "_k << message_buffer;
 
         err::reportError(sys::io::stdout(),
                          "OpenGL DEBUG",
                          loc,
                          err::LogLevel::Error,
-                         bl::move(mesg).str().c_str());
+                         bl::move(mesg).str());
     }
 }
 
@@ -254,14 +255,14 @@ AMDDebug::printDebugMessages(const err::Location &loc)
 #undef sym_case
 
         sys::io::ByteStream mesg;
-        mesg << "category: " << scat << ", severity: " << ssev << ", id: " << id
-             << "  message: " << message_buffer;
+        mesg << "category: "_k << scat << ", severity: "_k << ssev << ", id: "_k
+             << id << "  message: "_k << message_buffer;
 
         err::reportError(sys::io::stdout(),
                          "OpenGL DEBUG",
                          loc,
                          err::LogLevel::Error,
-                         bl::move(mesg).str().c_str());
+                         bl::move(mesg).str());
     }
 }
 

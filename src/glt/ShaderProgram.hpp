@@ -12,7 +12,7 @@
 #include "pp/enum.hpp"
 #include "pp/pimpl.hpp"
 
-#include <span>
+#include <bl/span.hpp>
 
 namespace glt {
 
@@ -53,7 +53,7 @@ struct GLT_API ShaderProgram
 
     bool bindAttribute(const bl::string &, GLuint position);
 
-    bool bindStreamOutVaryings(std::span<const bl::string>);
+    bool bindStreamOutVaryings(bl::span<const bl::string>);
 
     bool bindAttributes(const StructInfo &);
 

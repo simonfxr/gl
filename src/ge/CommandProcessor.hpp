@@ -8,7 +8,7 @@
 #include <bl/new.hpp>
 
 #include <bl/string.hpp>
-#include <span>
+#include <bl/span.hpp>
 #include <vector>
 
 namespace ge {
@@ -21,7 +21,7 @@ struct GE_API CommandProcessor
     static CommandProcessor &construct_at(void *p, Engine &e) noexcept;
 
     bool addScriptDirectory(bl::string dir, bool check_exists = true);
-    std::span<const bl::string> scriptDirectories() const;
+    bl::span<const bl::string> scriptDirectories() const;
 
     Engine &engine();
 
@@ -29,13 +29,13 @@ struct GE_API CommandProcessor
 
     bool define(CommandPtr comm, bool unique = false);
 
-    bool exec(bl::string_view comname, std::span<CommandArg> args);
+    bool exec(bl::string_view comname, bl::span<CommandArg> args);
 
-    bool exec(const CommandPtr &com, std::span<CommandArg> args);
+    bool exec(const CommandPtr &com, bl::span<CommandArg> args);
 
-    bool exec(std::span<CommandArg> args);
+    bool exec(bl::span<CommandArg> args);
 
-    bool execCommand(std::span<CommandArg> args);
+    bool execCommand(bl::span<CommandArg> args);
 
     bool loadStream(sys::io::InStream &inp, bl::string_view inp_name);
 

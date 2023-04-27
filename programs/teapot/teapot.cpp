@@ -26,6 +26,7 @@
 #include "math/mat4.hpp"
 #include "math/real.hpp"
 #include "sys/fs.hpp"
+#include "util/string.hpp"
 #ifdef MESH_CUBEMESH
 #    include "glt/CubeMesh.hpp"
 #endif
@@ -55,6 +56,7 @@ using CubeMeshOf = glt::Mesh<T>;
 #endif
 
 using namespace math;
+using namespace bl::literals;
 using ge::Event;
 using ge::InitEvent;
 
@@ -399,7 +401,7 @@ Anim::render(const Event<ge::RenderEvent> &e)
     ASSERT(glow_pass1);
     glow_pass1->use();
 
-    std::span<const float> kernel = { glow_kernel.size(), &glow_kernel[0] };
+    bl::span<const float> kernel = { glow_kernel.size(), &glow_kernel[0] };
     for (int pass = 0; pass < 3; ++pass) {
         engine->renderManager().setActiveRenderTarget(to.get());
         from->sampler().bind(0);
@@ -470,7 +472,7 @@ Anim::setupTeapotShader(const bl::string &progname,
     glt::RenderManager &rm = engine->renderManager();
     auto prog = engine->shaderManager().program(progname);
     if (!prog) {
-        ASSERT(prog, "undefined program: " + progname);
+        ASSERT(prog, scat("undefined program: "_sv, progname));
         return;
     }
 
@@ -681,7 +683,8 @@ Anim::loadResources(const bl::string &dir)
 
     int w, h;
     uint32_t *wood_data;
-    auto file = unique_file(fopen((data_dir + "/wood.bmp").c_str(), "rb"));
+    auto file =
+      unique_file(fopen(scat(data_dir, "/wood.bmp"_sv).c_str(), "rb"));
     if (!file) {
         ERR("couldnt open data/wood.bmp");
         return;
@@ -704,7 +707,8 @@ Anim::loadResources(const bl::string &dir)
 
     woodTexture.filterMode(glt::TextureSampler::FilterLinear);
 
-    auto nfaces = parse_sply((data_dir + "/teapot.sply").c_str(), teapotModel);
+    auto nfaces =
+      parse_sply(scat(data_dir, "/teapot.sply"_sv).c_str(), teapotModel);
     if (nfaces < 0) {
         ERR("couldnt parse teapot model");
         return;

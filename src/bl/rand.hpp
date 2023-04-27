@@ -9,7 +9,7 @@
 
 #include <algorithm>
 #include <array>
-#include <span>
+#include <bl/span.hpp>
 
 namespace bl::rand {
 
@@ -91,7 +91,7 @@ struct BL_API random_device
 
     result_type operator()() noexcept;
 
-    void seed_bytes(std::span<std::byte>) noexcept;
+    void seed_bytes(bl::span<std::byte>) noexcept;
 
 private:
     struct Impl;
@@ -101,7 +101,7 @@ private:
 static_assert(rng<random_device>);
 
 constexpr void
-seed_bytes(rng auto &r, std::span<std::byte> bytes) noexcept
+seed_bytes(rng auto &r, bl::span<std::byte> bytes) noexcept
 {
     auto dest = bytes.begin();
     for (auto rest = bytes.size(); rest > 0;) {

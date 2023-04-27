@@ -12,21 +12,22 @@
 #include "util/string.hpp"
 
 #include <bl/box.hpp>
+#include <bl/string_view.hpp>
 
 #include <unordered_map>
 
 #define RAISE_ERR(sender, ec, msg) LOG_RAISE_ERROR(sender, ec, msg)
 
-namespace err {
+using namespace bl::literals;
+
 template<>
-struct LogTraits<glt::ShaderProgram>
+struct err::LogTraits<glt::ShaderProgram>
 {
     static auto getDestination(glt::ShaderProgram &x)
     {
         return makeLogSettings(x.shaderManager().out());
     }
 };
-} // namespace err
 
 namespace glt {
 
@@ -144,7 +145,7 @@ ShaderProgram::Data::createProgram()
     program.ensure();
     if (!program.valid()) {
         RAISE_ERR(
-          self, ShaderProgramError::OpenGLError, "couldnt create program");
+          self, ShaderProgramError::OpenGLError, "couldnt create program"_k);
         return false;
     }
     return true;
@@ -168,11 +169,10 @@ ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
         auto logmsg = log.data();
 
         if (logBegin == &log[log_len - 1]) {
-            out << "link log empty\n";
+            out << "link log empty\n"_k;
         } else {
-            out << "link log:\n"
-                << logmsg << "\n"
-                << "end link log\n";
+            out << "link log:\n"_k << logmsg << "\n"_k
+                << "end link log\n"_k;
         }
     }
 }
@@ -180,7 +180,7 @@ ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
 void
 ShaderProgram::Data::handleCompileError(ShaderCompilerError err)
 {
-    ERR(string_concat("compile error occurred: ", err)); // FIXME
+    ERR(scat("compile error occurred: "_sv, err));
     self.pushError(ShaderProgramError::CompilationFailed);
 }
 
@@ -215,11 +215,13 @@ ShaderProgram::addShaderFile(const bl::string &file0,
     bl::string file = file0;
 
     if (!absolute) {
-        file = sys::fs::lookup(self->sm.shaderDirectories(), file);
+        file = sys::fs::lookup(
+          self->sm.shaderDirectories(), file, sys::fs::ObjectType::File);
         if (file.empty()) {
-            RAISE_ERR(*this,
-                      ShaderProgramError::FileNotInPath,
-                      "couldnt find file in shader directories: " + file);
+            RAISE_ERR(
+              *this,
+              ShaderProgramError::FileNotInPath,
+              scat("couldnt find file in shader directories: "_sv, file));
             return false;
         }
     }
@@ -259,7 +261,8 @@ ShaderProgram::addShaderFilePair(const bl::string &vert_file,
 bool
 ShaderProgram::addShaderFilePair(const bl::string &basename, bool absolute)
 {
-    return addShaderFilePair(basename + ".vert", basename + ".frag", absolute);
+    return addShaderFilePair(
+      scat(basename, ".vert"_sv), scat(basename, ".frag"_sv), absolute);
 }
 
 bool
@@ -275,7 +278,7 @@ ShaderProgram::link()
     if (self->shaders.empty()) {
         RAISE_ERR(*this,
                   ShaderProgramError::LinkageFailed,
-                  "no shader objects to link");
+                  "no shader objects to link"_k);
         return false;
     }
 
@@ -300,7 +303,7 @@ ShaderProgram::link()
     bool ok{};
     {
         auto logmsg = err::beginLog(*this, err::LogLevel::Info);
-        logmsg << "linking ... ";
+        logmsg << "linking ... "_k;
 
         double wct;
         measure_time(wct, glLinkProgram(*self->program));
@@ -309,8 +312,9 @@ ShaderProgram::link()
         GLint success;
         GL_CALL(glGetProgramiv, *self->program, GL_LINK_STATUS, &success);
         ok = gl_unbool(success);
-        logmsg << (ok ? "success" : "failed") << " (" << (wct * 1000) << " ms)"
-               << "\n";
+        logmsg << (ok ? "success"_k : "failed"_k) << " ("_k << (wct * 1000)
+               << " ms)"_k
+               << "\n"_k;
 
         if (!ok) {
             pushError(ShaderProgramError::LinkageFailed);
@@ -336,7 +340,7 @@ ShaderProgram::bindAttribute(const bl::string &s, GLuint position)
 {
     if (self->linked) {
         RAISE_ERR(
-          *this, ShaderProgramError::APIError, "program already linked");
+          *this, ShaderProgramError::APIError, "program already linked"_k);
         return false;
     }
 
@@ -348,15 +352,15 @@ void
 ShaderProgram::use()
 {
     if (!self->program.valid() || !self->linked) {
-        RAISE_ERR(*this, ShaderProgramError::APIError, "program not linked");
+        RAISE_ERR(*this, ShaderProgramError::APIError, "program not linked"_k);
         return;
     }
 
     if (wasError()) {
         auto logmsg = err::beginLog(*this);
-        (logmsg << "trying to use program inspite of an error: ")
+        (logmsg << "trying to use program inspite of an error: "_k)
             .append(getError())
-          << "\n";
+          << "\n"_k;
     }
 
     GL_CALL(glUseProgram, *self->program);
@@ -376,7 +380,7 @@ ShaderProgram::replaceWith(ShaderProgram &new_prog)
     }
 
     auto logmsg = err::beginLog(*this, err::LogLevel::Error);
-    (logmsg << "replaceWith failed, the replaceing program has errors: ")
+    (logmsg << "replaceWith failed, the replaceing program has errors: "_k)
       .append(new_prog.getError());
     return false;
 }
@@ -428,13 +432,14 @@ ShaderProgram::bindAttributes(const StructInfo &si)
 }
 
 bool
-ShaderProgram::bindStreamOutVaryings(std::span<const bl::string> vars)
+ShaderProgram::bindStreamOutVaryings(bl::span<const bl::string> vars)
 {
 
     // FIXME: record vars to set stream out varyings again if relinked
 
     if (self->linked) {
-        RAISE_ERR(*this, ShaderProgramError::APIError, "program alredy linked");
+        RAISE_ERR(
+          *this, ShaderProgramError::APIError, "program alredy linked"_k);
         return false;
     }
 

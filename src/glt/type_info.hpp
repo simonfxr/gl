@@ -13,7 +13,7 @@
 
 #include <array>
 #include <cstddef>
-#include <span>
+#include <bl/span.hpp>
 
 namespace glt {
 
@@ -155,11 +155,11 @@ struct StructInfo
     const char *name;
     uint16_t size;
     uint16_t align;
-    std::span<const FieldInfo> fields;
+    bl::span<const FieldInfo> fields;
     constexpr StructInfo(const char *nm,
                          uint16_t sz,
                          uint16_t algn,
-                         std::span<const FieldInfo> fs)
+                         bl::span<const FieldInfo> fs)
       : name(nm), size(sz), align(algn), fields(fs)
     {}
 };
@@ -220,7 +220,7 @@ struct StructInfo
           ::glt::StructInfo(PP_TOSTR(sname),                                   \
                             sizeof(sname::gl),                                 \
                             alignof(sname::gl),                                \
-                            ::std::span<const ::glt::FieldInfo>(_fields));     \
+                            ::bl::span<const ::glt::FieldInfo>(_fields));     \
     };                                                                         \
     sname::sname(const sname::gl &TI_VAR(arg))                                 \
       : PP_MAP(TI_INIT_FIELD, PP_COMMA, __VA_ARGS__)                           \

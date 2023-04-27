@@ -3,15 +3,103 @@
 
 #include <bl/conf.hpp>
 
+#include <bl/string_view.hpp>
+
+#include <cstdint>
 #include <string>
 
 namespace bl {
 
-template<class CharT, class Traits, class Allocator>
-using basic_string = std::basic_string<CharT, Traits, Allocator>;
+template<class CharT, typename Allocator = std::allocator<CharT>>
+struct basic_string
+  : private std::basic_string<CharT, std::char_traits<CharT>, Allocator>
+{
+    using Base = std::basic_string<CharT, std::char_traits<CharT>, Allocator>;
 
-using string = basic_string<char, std::char_traits<char>, std::allocator<char>>;
+    using typename Base::value_type;
+
+    using Base::append;
+    using std::basic_string<CharT, std::char_traits<CharT>, Allocator>::
+      basic_string;
+    using Base::begin;
+    using Base::c_str;
+    using Base::data;
+    using Base::empty;
+    using Base::end;
+    using Base::find;
+    using Base::npos;
+    using Base::rbegin;
+    using Base::rend;
+    using Base::reserve;
+    using Base::resize;
+    using Base::rfind;
+    using Base::size;
+    using Base::operator[];
+
+    constexpr basic_string(const basic_string_view<CharT> &rhs)
+      : basic_string(rhs.begin(), rhs.end())
+    {}
+
+    /* implicit */ constexpr operator basic_string_view<CharT>() noexcept
+    {
+        return { data(), size() };
+    }
+
+    friend constexpr bool operator==(
+      const basic_string<CharT, Allocator> &lhs,
+      const basic_string<CharT, Allocator> &rhs) noexcept
+    {
+        return static_cast<basic_string_view<CharT>>(lhs) ==
+               static_cast<basic_string_view<CharT>>(rhs);
+    }
+
+    friend constexpr bool operator==(
+      const basic_string<CharT, Allocator> &lhs,
+      const basic_string_view<CharT> &rhs) noexcept
+    {
+        return static_cast<basic_string_view<CharT>>(lhs) == rhs;
+    }
+
+    friend constexpr bool operator==(
+      const basic_string_view<CharT> &lhs,
+      const basic_string<CharT, Allocator> &rhs) noexcept
+    {
+        return lhs == static_cast<basic_string_view<CharT>>(rhs);
+    }
+
+    friend constexpr auto operator<=>(const basic_string &lhs,
+                                      const basic_string &rhs) noexcept
+    {
+        return static_cast<basic_string_view<CharT>>(lhs) <=>
+               static_cast<basic_string_view<CharT>>(rhs);
+    }
+};
+
+using string = basic_string<string_view::value_type>;
+
+using bytes = basic_string<uint8_t, std::allocator<uint8_t>>;
+
+namespace literals {
+
+constexpr string operator""_s(const string::value_type *s,
+                              std::size_t n) noexcept
+{
+    return string{ s, s + n };
+}
+
+} // namespace literals
 
 } // namespace bl
+
+template<typename CharT, typename Allocator>
+struct std::hash<bl::basic_string<CharT, Allocator>>
+{
+    constexpr std::size_t operator()(
+      const bl::basic_string<CharT, Allocator> &s) const noexcept
+    {
+        using SV = std::basic_string_view<CharT, std::char_traits<CharT>>;
+        return std::hash<SV>{}(SV{ s.data(), s.size() });
+    }
+};
 
 #endif // BL_STRING_HPP

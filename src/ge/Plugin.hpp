@@ -8,7 +8,7 @@
 #include "err/err.hpp"
 
 #include <bl/string_view.hpp>
-#include <span>
+#include <bl/span.hpp>
 #include <unordered_map>
 
 namespace ge {
@@ -64,7 +64,7 @@ struct GE_API PluginSet
 {
     virtual ~PluginSet();
     virtual Plugin *findPluginByType(const Plugin::TypeInfo *) = 0;
-    [[nodiscard]] virtual std::span<Plugin *> allPlugins() = 0;
+    [[nodiscard]] virtual bl::span<Plugin *> allPlugins() = 0;
 
     template<typename P>
     P *findPlugin()
@@ -119,7 +119,7 @@ struct GE_API FixedPluginSet final : PluginSet
         return nullptr;
     }
 
-    [[nodiscard]] std::span<Plugin *> allPlugins() override
+    [[nodiscard]] bl::span<Plugin *> allPlugins() override
     {
         return { erased_plugins.begin(), erased_plugins.size() };
     }

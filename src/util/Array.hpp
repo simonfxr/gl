@@ -113,12 +113,6 @@ struct Array
         *this = view;
     }
 
-    template<typename C, typename Traits>
-    Array(bl::basic_string_view<C, Traits> view)
-    {
-        *this = view;
-    }
-
     Array(Array &&rhs) noexcept { swap(*this, rhs); }
 
     template<typename U>
@@ -170,13 +164,6 @@ struct Array
         return *this;
     }
 
-    template<typename C, typename Traits>
-    Array &operator=(bl::basic_string_view<C, Traits> view)
-    {
-        *this = bl::span<const C>{ view.begin(), view.end() };
-        return *this;
-    }
-
     template<typename U>
     Array &operator=(const Array<U> &rhs)
     {
@@ -207,12 +194,9 @@ struct Array
                n);
     }
 
-    std::span<const T> view() const
-    {
-        return bl::span<const T>{ _data, _size };
-    }
+    bl::span<const T> view() const { return bl::span<const T>{ _data, _size }; }
 
-    std::span<T> view() { return bl::span<T>{ _data, _size }; }
+    bl::span<T> view() { return bl::span<T>{ _data, _size }; }
 
     operator bl::span<const T>() const { return view(); }
 

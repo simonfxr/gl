@@ -11,6 +11,8 @@
 
 namespace glt {
 
+using namespace bl::literals;
+
 namespace {
 
 bool
@@ -91,7 +93,8 @@ GLSLPreprocessor::addDefines(const PreprocessorDefinitions &defines)
 {
     for (const auto &define : defines) {
         sys::io::ByteStream defn;
-        defn << "#define " << define.first << " " << define.second << "\n";
+        defn << "#define "_k << define.first << " "_k << define.second
+             << "\n"_k;
         appendString(defn.str());
     }
 }
@@ -143,17 +146,20 @@ DependencyHandler::directiveEncountered(
     // FIXME: add an option to specify ShaderType explicitly
 
     if (!parseFileArg(ctx, arg, len)) {
-        proc.out() << ctx.content.name << ": #need-directive: invalid parameter"
-                   << "\n";
+        proc.out() << ctx.content.name
+                   << ": #need-directive: invalid parameter"_k
+                   << "\n"_k;
         proc.setError();
         return;
     }
 
     auto file = bl::string_view{ arg, arg + len };
-    auto realPath = sys::fs::lookup(proc.includePath, file);
+    auto realPath =
+      sys::fs::lookup(proc.includePath, file, sys::fs::ObjectType::File);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
-                   << ": #need-directive: cannot find file: " << file << "\n";
+                   << ": #need-directive: cannot find file: "_k << file
+                   << "\n"_k;
         proc.setError();
         return;
     }
@@ -164,8 +170,8 @@ DependencyHandler::directiveEncountered(
     if (!opt_stype) {
         proc.out()
           << ctx.content.name
-          << ": #need-directive: cannot guess shader type based on name: "
-          << file << "\n";
+          << ": #need-directive: cannot guess shader type based on name: "_k
+          << file << "\n"_k;
         proc.setError();
         return;
     }
@@ -204,18 +210,19 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
 
     if (!parseFileArg(ctx, arg, len) || len == 0) {
         proc.out() << ctx.content.name
-                   << ": #include-directive: invalid parameter"
-                   << "\n";
+                   << ": #include-directive: invalid parameter"_k
+                   << "\n"_k;
         proc.setError();
         return;
     }
 
     auto file = bl::string_view{ arg, arg + len };
-    auto realPath = sys::fs::lookup(proc.includePath, file);
+    auto realPath =
+      sys::fs::lookup(proc.includePath, file, sys::fs::ObjectType::File);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
-                   << ": #include-directive: cannot find file: " << file
-                   << "\n";
+                   << ": #include-directive: cannot find file: "_k << file
+                   << "\n"_k;
         proc.setError();
         return;
     }
@@ -225,8 +232,8 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
     auto filestat = sys::fs::stat(realPath);
     if (!filestat) {
         proc.out() << ctx.content.name
-                   << ": #include-directive: cannot open file: " << realPath
-                   << "\n";
+                   << ": #include-directive: cannot open file: "_k << realPath
+                   << "\n"_k;
         proc.setError();
         return;
     }

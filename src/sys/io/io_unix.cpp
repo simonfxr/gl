@@ -3,7 +3,8 @@
 #include "err/err.hpp"
 #include "sys/fs.hpp"
 #include "sys/strerror_unix.hpp"
-#include "util/bit_cast.hpp"
+
+#include <bl/bit.hpp>
 
 #include <arpa/inet.h>
 #include <cerrno>
@@ -81,10 +82,10 @@ convertErrno()
     case ENOENT:
         return HandleError::UNKNOWN;
     case EBADF:
-        DEBUG_ERR(strerror_errno(errid).data());
+        DEBUG_ERR(strerror_errno(errid));
         return HandleError::BAD_HANDLE;
     default:
-        DEBUG_ERR(strerror_errno(errid).data());
+        DEBUG_ERR(strerror_errno(errid));
         return HandleError::UNKNOWN;
     }
 }
@@ -97,10 +98,10 @@ convertErrnoSock()
     case EWOULDBLOCK:
         return SocketError::BLOCKED;
     case EBADF:
-        DEBUG_ERR(strerror_errno(errid).data());
+        DEBUG_ERR(strerror_errno(errid));
         return SocketError::BAD_HANDLE;
     default:
-        DEBUG_ERR(strerror_errno(errid).data());
+        DEBUG_ERR(strerror_errno(errid));
         return SocketError::UNKNOWN;
     }
 }
@@ -192,7 +193,7 @@ elevate(Handle &h, HandleMode mode)
 }
 
 std::pair<size_t, HandleError>
-read(Handle &h, std::span<char> buf)
+read(Handle &h, bl::span<bl::byte> buf)
 {
     ASSERT(h);
     auto n = buf.size();
@@ -204,7 +205,7 @@ read(Handle &h, std::span<char> buf)
 }
 
 std::pair<size_t, HandleError>
-write(Handle &h, std::span<const char> buf)
+write(Handle &h, bl::span<const bl::byte> buf)
 {
     ASSERT(h);
     ssize_t k;
@@ -262,7 +263,7 @@ listen(SocketProto proto, const IPAddr4 &addr, uint16_t port, SocketMode mode)
         server.sin_addr.s_addr = addr.addr4;
         server.sin_port = hton(port);
 
-        auto server_so = bit_cast<sockaddr>(server);
+        auto server_so = bl::bit_cast<sockaddr>(server);
 
         RETRY_INTR(ret = bind(sock, &server_so, sizeof server));
         if (ret == -1)

@@ -10,6 +10,8 @@
 
 namespace ge {
 
+using namespace bl::literals;
+
 namespace {
 
 template<typename T>
@@ -128,8 +130,7 @@ CommandArg::reset()
 std::weak_ordering
 operator<=>(const CommandValue &a, const CommandValue &b) noexcept
 {
-    int cmp = a.name->compare(*b.name);
-    return cmp <=> 0;
+    return *a.name <=> *b.name;
 }
 
 std::weak_ordering
@@ -139,7 +140,7 @@ operator<=>(const CommandArg &a, const CommandArg &b) noexcept
         return a.type() <=> b.type();
     switch (a.type()) {
     case CommandArgType::String:
-        return a.string.compare(b.string) <=> 0;
+        return a.string <=> b.string;
     case CommandArgType::Integer:
         return a.integer <=> b.integer;
     case CommandArgType::Number:
@@ -149,7 +150,7 @@ operator<=>(const CommandArg &a, const CommandArg &b) noexcept
     case CommandArgType::CommandRef:
         return a.command <=> b.command;
     case CommandArgType::VarRef:
-        return a.var.compare(b.var) <=> 0;
+        return a.var <=> b.var;
     case CommandArgType::Nil:
         return 0 <=> 0;
     }
@@ -215,11 +216,11 @@ CommandPrettyPrinter::ignoreEmptyStatements(bool ignore)
 void
 CommandPrettyPrinter::print(const KeyBinding &bind)
 {
-    const char *sep = "[";
+    auto sep = "["_k;
 
     for (const auto &k : bind) {
         *m().current_out << sep;
-        sep = ", ";
+        sep = ", "_k;
         char pre = 0;
         switch (k.state) {
         case KeyState::Up:
@@ -243,7 +244,7 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
         *m().current_out << sym;
     }
 
-    *m().current_out << "]";
+    *m().current_out << "]"_k;
 }
 
 void
@@ -277,14 +278,14 @@ CommandPrettyPrinter::print(const CommandArg &arg, bool first)
         *m().current_out << '$' << arg.var;
         return;
     case CommandArgType::Nil:
-        *m().current_out << "nil type not allowed: " << arg.type();
+        *m().current_out << "nil type not allowed: "_k << arg.type();
         return;
     }
     UNREACHABLE;
 }
 
 void
-CommandPrettyPrinter::print(std::span<const CommandArg> statement)
+CommandPrettyPrinter::print(bl::span<const CommandArg> statement)
 {
 
     if (m().ignore_empty_statements && statement.empty())
@@ -292,7 +293,7 @@ CommandPrettyPrinter::print(std::span<const CommandArg> statement)
 
     auto first = true;
     for (auto &stmt : statement) {
-        *m().current_out << (first ? "" : " ");
+        *m().current_out << (first ? ""_k : " "_k);
         print(stmt, first);
     }
 }
@@ -303,11 +304,11 @@ CommandPrettyPrinter::print(const Quotation &q)
     openQuotation();
 
     for (const auto &qi : q) {
-        print(std::span(qi));
+        print(bl::span(qi));
         auto &pq = m().quotations.back();
         pq->statements.push_back(pq->out.str());
         pq->out.truncate(0);
-        pq->len += pq->statements.back().length();
+        pq->len += pq->statements.back().size();
     }
 
     closeQuotation();
@@ -334,14 +335,14 @@ CommandPrettyPrinter::closeQuotation()
 
     if (nln == 0) {
         printSpaces(indent);
-        *m().current_out << "{}";
+        *m().current_out << "{}"_k;
     } else {
-        *m().current_out << "{";
+        *m().current_out << "{"_k;
         for (const auto &qi : q->statements) {
             printSpaces(indent);
-            *m().current_out << qi << "\n";
+            *m().current_out << qi << "\n"_k;
         }
-        *m().current_out << "}";
+        *m().current_out << "}"_k;
     }
 
     m().quotations.pop_back();
@@ -352,7 +353,7 @@ CommandPrettyPrinter::printSpaces(size_t n)
 {
     for (auto i : irange(n)) {
         UNUSED(i);
-        *m().current_out << " ";
+        *m().current_out << " "_k;
     }
 }
 

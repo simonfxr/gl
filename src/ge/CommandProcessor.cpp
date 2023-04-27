@@ -11,6 +11,8 @@
 #include <unordered_map>
 #include <vector>
 
+using namespace bl::literals;
+
 namespace ge {
 
 using CommandMap = std::unordered_map<bl::string_view, CommandPtr>;
@@ -72,10 +74,10 @@ CommandProcessor::addScriptDirectory(bl::string dir, bool check_exists)
     return true;
 }
 
-std::span<const bl::string>
+bl::span<const bl::string>
 CommandProcessor::scriptDirectories() const
 {
-    return std::span(m().scriptDirs);
+    return m().scriptDirs;
 }
 
 CommandPtr
@@ -101,10 +103,13 @@ CommandProcessor::define(CommandPtr comm, bool unique)
         return false;
     }
 
+    INFO(scat("DEFINE "_k, comname));
+    ASSERT(comname.size() == strlen(comname.c_str()));
+
     auto it = m().commands.find(comname);
     auto dup = it != m().commands.end();
     if (dup && unique) {
-        ERR(engine().out(), string_concat("duplicate command name: ", comname));
+        ERR(engine().out(), scat("duplicate command name: "_k, comname));
         return false;
     }
 
@@ -112,22 +117,25 @@ CommandProcessor::define(CommandPtr comm, bool unique)
         it->second = bl::move(comm);
     else
         m().commands[comname] = bl::move(comm);
+
+    ASSERT(std::as_const(m().commands).at(comname));
+
     return dup;
 }
 
 bool
-CommandProcessor::exec(bl::string_view comname, std::span<CommandArg> args)
+CommandProcessor::exec(bl::string_view comname, bl::span<CommandArg> args)
 {
     auto com = command(comname);
     if (!com) {
-        ERR(engine().out(), string_concat("command not found: ", comname));
+        ERR(engine().out(), scat("command not found: "_k, comname));
         return false;
     }
     return exec(com, args);
 }
 
 bool
-CommandProcessor::exec(std::span<CommandArg> args)
+CommandProcessor::exec(bl::span<CommandArg> args)
 {
     if (args.empty())
         return true;
@@ -149,7 +157,7 @@ CommandProcessor::exec(std::span<CommandArg> args)
     if (!comm) {
         comm = command(*com_name);
         if (!comm) {
-            ERR(engine().out(), "unknown command: " + *com_name);
+            ERR(engine().out(), scat("unknown command: "_sv, *com_name));
             return false;
         }
     }
@@ -159,7 +167,7 @@ CommandProcessor::exec(std::span<CommandArg> args)
 }
 
 bool
-CommandProcessor::exec(const CommandPtr &com, std::span<CommandArg> args)
+CommandProcessor::exec(const CommandPtr &com, bl::span<CommandArg> args)
 {
     if (!com) {
         ERR(engine().out(), "Command == 0");
@@ -177,14 +185,15 @@ CommandProcessor::exec(const CommandPtr &com, std::span<CommandArg> args)
     if (nparams != args.size() && !(rest_args && args.size() > nparams)) {
         sys::io::ByteStream err;
         if (!comname.empty())
-            err << "executing Command " << comname << ": ";
+            err << "executing Command "_k << comname << ": "_k;
         else
-            err << "executing unknown Command: ";
-        err << "expected " << nparams;
+            err << "executing unknown Command: "_k;
+        err << "expected "_k << nparams;
         if (rest_args)
-            err << " or more";
-        err << " got " << args.size();
-        err << " (rest_args=" << rest_args << ", nparams=" << nparams << ")";
+            err << " or more"_k;
+        err << " got "_k << args.size();
+        err << " (rest_args="_k << rest_args << ", nparams="_k << nparams
+            << ")"_k;
         ERR(engine().out(), err.str());
     }
 
@@ -227,10 +236,10 @@ CommandProcessor::exec(const CommandPtr &com, std::span<CommandArg> args)
                     if (!comArg) {
                         sys::io::ByteStream err;
                         if (!comname.empty())
-                            err << "executing Command " << comname << ": ";
+                            err << "executing Command "_k << comname << ": "_k;
                         else
-                            err << "executing unknown Command: ";
-                        err << " command not found: " << args[i].string;
+                            err << "executing unknown Command: "_k;
+                        err << " command not found: "_k << args[i].string;
                         ERR(engine().out(), err.str());
                         return false;
                     }
@@ -241,22 +250,22 @@ CommandProcessor::exec(const CommandPtr &com, std::span<CommandArg> args)
                     if (!coerceKeyCombo(args[i])) {
                         sys::io::ByteStream err;
                         if (!comname.empty())
-                            err << "executing Command " << comname << ": ";
+                            err << "executing Command "_k << comname << ": "_k;
                         else
-                            err << "executing unknown Command: ";
-                        err << " invalid KeyCombo, position: " << (i + 1);
+                            err << "executing unknown Command: "_k;
+                        err << " invalid KeyCombo, position: "_k << (i + 1);
                         ERR(engine().out(), err.str());
                         return false;
                     }
                 } else {
                     sys::io::ByteStream err;
                     if (!comname.empty())
-                        err << "executing Command " << comname << ": ";
+                        err << "executing Command "_k << comname << ": "_k;
                     else
-                        err << "executing unknown Command: ";
-                    err << " type mismatch, position: " << (i + 1);
-                    err << ", expected: " << val_type;
-                    err << ", got: " << args[i].type();
+                        err << "executing unknown Command: "_k;
+                    err << " type mismatch, position: "_k << (i + 1);
+                    err << ", expected: "_k << val_type;
+                    err << ", got: "_k << args[i].type();
                     ERR(engine().out(), err.str());
                     return false;
                 }
@@ -275,7 +284,8 @@ CommandProcessor::exec(const CommandPtr &com, std::span<CommandArg> args)
 bool
 CommandProcessor::loadScript(bl::string_view name, bool quiet)
 {
-    auto file = sys::fs::lookup(scriptDirectories(), name);
+    auto file =
+      sys::fs::lookup(scriptDirectories(), name, sys::fs::ObjectType::File);
     if (file.empty())
         goto not_found;
 
@@ -283,17 +293,17 @@ CommandProcessor::loadScript(bl::string_view name, bool quiet)
         auto res = sys::io::HandleStream::open(file, sys::io::HM_READ);
         if (!res)
             goto not_found;
-        sys::io::stdout() << "loading script: " << file << "\n";
+        sys::io::stdout() << "loading script: "_k << file << "\n"_k;
         return loadStream(res.value(), file);
     }
 
 not_found:
 
-    sys::io::stdout() << "loading script: " << name << " -> not found"
-                      << "\n";
+    sys::io::stdout() << "loading script: "_k << name << " -> not found"_k
+                      << "\n"_k;
 
     if (!quiet)
-        ERR(engine().out(), string_concat("opening script: ", name));
+        ERR(engine().out(), scat("opening script: "_sv, name));
 
     return false;
 }
@@ -310,16 +320,17 @@ CommandProcessor::loadStream(sys::io::InStream &inp, bl::string_view inp_name)
         ok = tokenize(state, args);
         if (!ok) {
             if (state.in_state != sys::io::StreamResult::EOF)
-                ERR(engine().out(), "parsing failed: " + state.filename);
+                ERR(engine().out(),
+                    scat("parsing failed: "_sv, state.filename));
             else
                 ok = true;
             done = true;
             goto next;
         }
 
-        ok = execCommand(std::span(args));
+        ok = execCommand(bl::span(args));
         if (!ok) {
-            ERR(engine().out(), "executing command");
+            ERR(engine().out(), "executing command"_k);
             done = true;
             goto next;
         }
@@ -338,7 +349,7 @@ CommandProcessor::evalCommand(bl::string_view cmd)
 }
 
 bool
-CommandProcessor::execCommand(std::span<CommandArg> args)
+CommandProcessor::execCommand(bl::span<CommandArg> args)
 {
     if (args.empty())
         return true;
@@ -347,7 +358,7 @@ CommandProcessor::execCommand(std::span<CommandArg> args)
 
     if (!ok) {
         sys::io::ByteStream err;
-        err << "executing command failed: ";
+        err << "executing command failed: "_k;
 
         {
             auto printer = bl::box<CommandPrettyPrinter>{};

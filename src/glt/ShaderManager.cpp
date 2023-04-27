@@ -2,6 +2,7 @@
 
 #include "glt/ShaderCompiler.hpp"
 #include "glt/ShaderProgram.hpp"
+#include "util/string.hpp"
 
 #include <bl/box.hpp>
 
@@ -9,6 +10,8 @@
 #include <unordered_map>
 
 namespace glt {
+
+using namespace bl::literals;
 
 using ProgramMap =
   std::unordered_map<bl::string, std::shared_ptr<ShaderProgram>>;
@@ -89,7 +92,7 @@ ShaderManager::program(const bl::string &name) const
     auto it = m().programs.find(name);
     if (it != m().programs.end())
         return it->second;
-    ERR(("program not found: " + name).c_str());
+    ERR(scat("program not found: "_sv, name));
     return {};
 }
 
@@ -118,8 +121,8 @@ ShaderManager::reloadShaders()
         if (!ent.second->reload())
             ++failed;
 
-    out() << "all shaders reloaded (" << (n - failed) << " successful, "
-          << failed << " failed)\n";
+    out() << "all shaders reloaded ("_k << (n - failed) << " successful, "_k
+          << failed << " failed)\n"_k;
 }
 
 sys::io::OutStream &

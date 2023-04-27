@@ -4,7 +4,12 @@
 #include "sys/conf.hpp"
 
 #include <bl/enum.hpp>
+#include <bl/span.hpp>
+#include <bl/string.hpp>
+#include <bl/string_view.hpp>
 #include <pp/enum.hpp>
+
+#include <optional>
 
 #if HU_OS_POSIX_P
 #    include "sys/fs/fs_unix.hpp"
@@ -14,16 +19,19 @@
 #    error "no Filesystem implementation available"
 #endif
 
-#include <bl/string.hpp>
-#include <bl/string_view.hpp>
-#include <optional>
-#include <span>
-
 namespace sys::fs {
+
+using namespace bl::literals;
+
+const bl::string_byte UNIX_SEPARATOR_CHAR = '/';
+constexpr inline bl::string_view UNIX_SEPARATOR = "/"_sv;
 
 struct FileTime
 {
     int64_t seconds{};
+
+    friend constexpr bool operator==(FileTime, FileTime) noexcept = default;
+    friend constexpr auto operator<=>(FileTime, FileTime) noexcept = default;
 };
 
 inline constexpr FileTime MIN_FILE_TIME{};
@@ -52,10 +60,6 @@ basename(bl::string_view path);
 HU_NODISCARD SYS_API bl::string
 extension(bl::string_view path);
 
-template<typename... Args>
-HU_NODISCARD inline bl::string
-join(bl::string_view path, Args &&...args);
-
 HU_NODISCARD SYS_API bl::string
 dropExtension(bl::string_view path);
 
@@ -75,7 +79,7 @@ HU_NODISCARD SYS_API bl::string
 absolutePath(bl::string_view path);
 
 HU_NODISCARD SYS_API bl::string
-lookup(std::span<const bl::string>, bl::string_view path);
+lookup(bl::span<const bl::string>, bl::string_view path, ObjectType type);
 
 HU_NODISCARD SYS_API std::optional<ObjectType>
 exists(bl::string_view path);
@@ -99,47 +103,14 @@ directoryExists(bl::string_view path)
     return exists(path, ObjectType::Directory);
 }
 
-HU_NODISCARD inline constexpr bool
-operator==(const FileTime &a, const FileTime &b)
-{
-    return a.seconds == b.seconds;
-}
-
-HU_NODISCARD inline constexpr bool
-operator<(const FileTime &a, const FileTime &b)
-{
-    return a.seconds < b.seconds;
-}
-
-HU_NODISCARD inline constexpr bool
-operator!=(const FileTime &a, const FileTime &b)
-{
-    return !(a == b);
-}
-
-HU_NODISCARD inline constexpr bool
-operator<=(const FileTime &a, const FileTime &b)
-{
-    return a < b || a == b;
-}
-
-HU_NODISCARD inline constexpr bool
-operator>=(const FileTime &a, const FileTime &b)
-{
-    return !(a < b);
-}
-
-HU_NODISCARD inline constexpr bool
-operator>(const FileTime &a, const FileTime &b)
-{
-    return !(a <= b);
-}
-
 // default implementations
 namespace def {
 
 HU_NODISCARD SYS_API bl::string
-join(bl::string_view path, const char **, size_t n);
+join(bl::string_view path, bl::span<const bl::string_view>);
+
+HU_NODISCARD SYS_API bl::string
+join(bl::string_view path, bl::string_view subpath);
 
 HU_NODISCARD SYS_API bl::string
 dirname(bl::string_view path);
@@ -160,7 +131,7 @@ HU_NODISCARD SYS_API std::optional<ObjectType>
 exists(bl::string_view path);
 
 HU_NODISCARD SYS_API bl::string
-lookup(std::span<const bl::string> dirs, bl::string_view name);
+lookup(bl::span<const bl::string> dirs, bl::string_view name, ObjectType type);
 
 HU_NODISCARD SYS_API bl::string absolutePath(bl::string_view);
 
@@ -172,9 +143,18 @@ modificationTime(bl::string_view path);
 template<typename... Args>
 HU_NODISCARD inline bl::string
 join(bl::string_view path, Args &&...args)
+    requires(std::same_as<std::decay_t<Args>, bl::string_view> && ...)
 {
-    const char *parts[] = { std::forward<Args>(args)... };
-    return def::join(path, parts, sizeof...(args));
+    auto paths =
+      std::array{ static_cast<bl::string_view>(std::forward<Args>(args))... };
+    return def::join(path, paths);
+}
+
+template<typename... Args>
+HU_NODISCARD inline bl::string
+join(bl::string_view path, bl::string_view subpath)
+{
+    return def::join(path, subpath);
 }
 
 } // namespace sys::fs

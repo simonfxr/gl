@@ -10,8 +10,11 @@
 #include "sys/clock.hpp"
 #include "sys/fs.hpp"
 #include "sys/sys.hpp"
+#include "util/string.hpp"
 
 #include <bl/box.hpp>
+
+using namespace bl::literals;
 
 namespace ge {
 
@@ -224,32 +227,32 @@ Engine::run(const EngineOptions &opts)
 
     if (!wd.empty()) {
         if (!sys::fs::cwd(wd)) {
-            ERR("couldnt change into directory: " + wd);
+            ERR(scat("couldnt change into directory: "_sv, wd));
             return 1;
         }
     }
 
     if (!m().develDataDir.empty()) {
         commandProcessor().addScriptDirectory(
-          sys::fs::join(m().develDataDir, "scripts"));
+          sys::fs::join(m().develDataDir, "scripts"_sv));
         commandProcessor().addScriptDirectory(
-          sys::fs::join(m().develDataDir, "..", "..", "scripts"));
+          sys::fs::join(m().develDataDir, ".."_sv, ".."_sv, "scripts"_sv));
         shaderManager().addShaderDirectory(
-          sys::fs::join(m().develDataDir, "shaders"));
+          sys::fs::join(m().develDataDir, "shaders"_sv));
         shaderManager().addShaderDirectory(
-          sys::fs::join(m().develDataDir, "..", "..", "shaders"));
+          sys::fs::join(m().develDataDir, ".."_sv, ".."_sv, "shaders"_sv));
     }
 
     for (const auto &scriptDir : opts.scriptDirs) {
         if (!commandProcessor().addScriptDirectory(scriptDir)) {
-            ERR("script directory not found: " + scriptDir);
+            ERR(scat("script directory not found: "_sv, scriptDir));
             //            return 1;
         }
     }
 
     for (const auto &shaderDir : opts.shaderDirs) {
         if (!shaderManager().addShaderDirectory(shaderDir)) {
-            ERR("shader directory not found: " + shaderDir);
+            ERR(scat("shader directory not found: "_sv, shaderDir));
             //            return 1;
         }
     }
@@ -270,7 +273,7 @@ Engine::run(const EngineOptions &opts)
             script = sys::fs::dropExtension(script);
 
         if (script.empty() ||
-            !commandProcessor().loadScript(script + ".script"))
+            !commandProcessor().loadScript(scat(script, ".script"_sv)))
             return 1;
     }
 
@@ -288,7 +291,7 @@ Engine::run(const EngineOptions &opts)
         }
 
         if (!ok) {
-            ERR(command + " failed: " + i.second);
+            ERR(scat(command, " failed: "_sv, i.second));
             return 1;
         }
     }

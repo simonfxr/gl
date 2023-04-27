@@ -10,6 +10,7 @@
 
 namespace ge {
 
+using namespace bl::literals;
 using namespace sys::io;
 
 namespace {
@@ -86,7 +87,7 @@ Client::Client(int _id, Handle h)
       // we really pass a pointer here
       sizeof parser_args /* NOLINT(bugprone-sizeof-expression)*/);
     sys::io::ByteStream name;
-    name << "<repl " << id << ">";
+    name << "<repl "_k << id << ">"_k;
     parser.filename = name.str();
 }
 
@@ -117,7 +118,7 @@ Client::handleIO(Engine &e)
     fiber_switch(client_fiber, &parser_fiber);
     switch (state) {
     case ParsingState::GotStatement:
-        e.commandProcessor().execCommand(std::span(statement));
+        e.commandProcessor().execCommand(bl::span(statement));
         statement.clear();
         break;
     case ParsingState::Yield:
@@ -172,8 +173,7 @@ ReplServer::start(const IPAddr4 &listen_addr, uint16_t port)
 
     auto sock = listen(SP_TCP, listen_addr, port, SM_NONBLOCKING);
     if (!sock) {
-        ERR(
-          string_concat("failed to open socket for listening: ", sock.error()));
+        ERR(scat("failed to open socket for listening: "_k, sock.error()));
         return false;
     }
     m().server = bl::move(sock).value();

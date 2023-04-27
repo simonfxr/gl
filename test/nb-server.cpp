@@ -15,7 +15,7 @@ struct Client
     std::shared_ptr<io::HandleStream> stream;
     int id{};
     bool reading{ true };
-    char buffer[BUF_SIZE]{};
+    bl::byte buffer[BUF_SIZE]{};
     size_t buf_pos{};
     size_t buf_end{ BUF_SIZE };
 
@@ -63,7 +63,7 @@ main()
                 size_t size = c.buf_end - c.buf_pos;
                 io::StreamResult err;
                 std::tie(size, err) =
-                  c.stream->read(std::span{ c.buffer + c.buf_pos, size });
+                  c.stream->read(bl::span{ c.buffer + c.buf_pos, size });
                 c.buf_pos += size;
                 if (c.buf_pos == c.buf_end) {
                     c.reading = false;
@@ -83,7 +83,7 @@ main()
                 size_t size = c.buf_end - c.buf_pos;
                 io::StreamResult err;
                 std::tie(size, err) =
-                  c.stream->write(std::span{ c.buffer + c.buf_pos, size });
+                  c.stream->write(bl::span{ c.buffer + c.buf_pos, size });
                 c.buf_pos += size;
 
                 if (c.buf_pos == c.buf_end) {

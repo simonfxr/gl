@@ -5,6 +5,7 @@
 #include "glt/ShaderCompiler.hpp"
 #include "glt/ShaderProgram.hpp"
 #include "glt/utils.hpp"
+#include "util/string.hpp"
 
 #include <cassert>
 #include <utility>
@@ -15,13 +16,14 @@ using math::real;
 namespace ge {
 
 using namespace math;
+using namespace bl::literals;
 
 namespace {
 
 struct CommandDecl
 {
-    const char *name;
-    const char *descr;
+    bl::string_view name;
+    bl::string_view descr;
 };
 
 template<typename F>
@@ -44,19 +46,20 @@ struct InitCommandHandler : public EventHandler<InitEvent>
 };
 
 #define BEGIN_COMMANDS                                                         \
-    std::span<const std::shared_ptr<Command>> predefinedCommands()             \
+    bl::span<const std::shared_ptr<Command>> predefinedCommands()              \
     {                                                                          \
         BEGIN_NO_WARN_GLOBAL_DESTRUCTOR static const auto                      \
           predefinedCommandArray = std::to_array<std::shared_ptr<Command>>({
 
 #define END_COMMANDS                                                           \
     });                                                                        \
-    END_NO_WARN_GLOBAL_DESTRUCTOR return std::span(                            \
+    END_NO_WARN_GLOBAL_DESTRUCTOR return bl::span(                             \
       predefinedCommandArray.begin(), predefinedCommandArray.size());          \
     }
 
 // NOLINTNEXTLINE(bugprone-macro-parentheses)
-#define COMMAND0(name, descr) CommandDecl{ name, descr } + []
+#define COMMAND0(name, descr)                                                  \
+    CommandDecl{ PP_CAT(name, _k), PP_CAT(descr, _k) } + []
 
 #define COMMAND(name, descr) , COMMAND0(name, descr)
 
@@ -67,20 +70,21 @@ COMMAND0("printContextInfo",
 (const Event<CommandEvent> &e)
 {
     auto c = e.info.engine.window().contextInfo();
-    e.info.engine.out() << "OpenGL Context Information\n"
-                        << "  Version:\t" << c.majorVersion << "."
-                        << c.minorVersion << "\n"
-                        << "  DepthBits:\t" << c.depthBits << "\n"
-                        << "  StencilBits:\t" << c.stencilBits << "\n"
-                        << "  Antialiasing:\t" << c.antialiasingLevel << "\n"
-                        << "  CoreProfile:\t" << (c.coreProfile ? "yes" : "no")
-                        << "\n"
-                        << "  DebugContext:\t"
-                        << (c.debugContext ? "yes" : "no") << "\n"
-                        << "  VSync:\t"
-                        << (e.info.engine.window().vsync() ? "yes" : "no")
-                        << "\n"
-                        << "\n";
+    e.info.engine.out() << "OpenGL Context Information\n"_k
+                        << "  Version:\t"_k << c.majorVersion << "."_k
+                        << c.minorVersion << "\n"_k
+                        << "  DepthBits:\t"_k << c.depthBits << "\n"_k
+                        << "  StencilBits:\t"_k << c.stencilBits << "\n"_k
+                        << "  Antialiasing:\t"_k << c.antialiasingLevel
+                        << "\n"_k
+                        << "  CoreProfile:\t"_k
+                        << (c.coreProfile ? "yes"_k : "no"_k) << "\n"_k
+                        << "  DebugContext:\t"_k
+                        << (c.debugContext ? "yes"_k : "no"_k) << "\n"_k
+                        << "  VSync:\t"_k
+                        << (e.info.engine.window().vsync() ? "yes"_k : "no"_k)
+                        << "\n"_k
+                        << "\n"_k;
 } // namespace
 
 COMMAND("printMemInfo",
@@ -98,13 +102,13 @@ COMMAND("printMemInfo",
                        static_cast<real>(info.initial.freeTexture);
         auto fracRBO = static_cast<real>(info.current.freeRenderbuffer) /
                        static_cast<real>(info.initial.freeRenderbuffer);
-        e.info.engine.out() << "OpenGL Free Memory:\n"
-                            << "  VBO: " << info.current.freeVBO << " kbyte ("
-                            << (fracVBO * 100) << "%)\n"
-                            << "  Texture: " << info.current.freeVBO
-                            << " kbyte (" << (fracTex * 100) << "%)\n"
-                            << "  Renderbuffer: " << info.current.freeVBO
-                            << " kbyte (" << (fracRBO * 100) << "%)\n";
+        e.info.engine.out() << "OpenGL Free Memory:\n"_k
+                            << "  VBO: "_k << info.current.freeVBO
+                            << " kbyte ("_k << (fracVBO * 100) << "%)\n"_k
+                            << "  Texture: "_k << info.current.freeVBO
+                            << " kbyte ("_k << (fracTex * 100) << "%)\n"_k
+                            << "  Renderbuffer: "_k << info.current.freeVBO
+                            << " kbyte ("_k << (fracRBO * 100) << "%)\n"_k;
     }
 
     glt::GLMemInfoNV info_nv{};
@@ -112,13 +116,13 @@ COMMAND("printMemInfo",
         success = true;
 
         e.info.engine.out()
-          << "OpenGL Memory Information:\n"
-          << "  total: " << info_nv.total
-          << " kbyte, dedicated: " << info_nv.total_dedicated << " kbyte"
-          << "\n"
-          << "  current: " << info_nv.current << " kbyte\n"
-          << "  evicted: " << info_nv.evicted << " kbyte, "
-          << info_nv.num_evictions << " evictions\n";
+          << "OpenGL Memory Information:\n"_k
+          << "  total: "_k << info_nv.total << " kbyte, dedicated: "_k
+          << info_nv.total_dedicated << " kbyte"_k
+          << "\n"_k
+          << "  current: "_k << info_nv.current << " kbyte\n"_k
+          << "  evicted: "_k << info_nv.evicted << " kbyte, "_k
+          << info_nv.num_evictions << " evictions\n"_k;
     }
 
     if (!success)
@@ -133,11 +137,11 @@ COMMAND("printGLInstanceStats",
 }
 
 COMMAND("reloadShaders", "reload ShaderPrograms")
-(const Event<CommandEvent> &e, std::span<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::span<const CommandArg> args)
 {
 
     if (args.empty()) {
-        e.info.engine.out() << "reloading shaders\n";
+        e.info.engine.out() << "reloading shaders\n"_k;
         e.info.engine.shaderManager().reloadShaders();
         // std::cerr << "all shaders reloaded\n";
     } else {
@@ -146,12 +150,12 @@ COMMAND("reloadShaders", "reload ShaderPrograms")
             auto prog = sm.program(arg.string);
             if (!prog) {
                 WARN(e.info.engine.out(),
-                     "reloadShaders: " + arg.string + " not defined");
+                     scat("reloadShaders: "_sv, arg.string, " not defined"_sv));
             } else {
                 if (!prog->reload())
                     WARN(e.info.engine.out(),
-                         "reloadShaders: failed to reload program " +
-                           arg.string);
+                         scat("reloadShaders: failed to reload program "_sv,
+                              arg.string));
             }
         }
     }
@@ -163,17 +167,17 @@ COMMAND("listCachedShaders", "list all shader cache entries")
     auto cache = e.info.engine.shaderManager().globalShaderCache();
 
     if (!cache) {
-        e.info.engine.out() << "no shader cache available\n";
+        e.info.engine.out() << "no shader cache available\n"_k;
         return;
     }
 
     uint32_t n = 0;
     for (auto &entrie : cache->cacheEntries()) {
-        e.info.engine.out() << "cached shader: " << entrie.first << "\n";
+        e.info.engine.out() << "cached shader: "_k << entrie.first << "\n"_k;
         ++n;
     }
 
-    e.info.engine.out() << n << " shaders cached\n";
+    e.info.engine.out() << n << " shaders cached\n"_k;
 }
 
 COMMAND("listBindings", "list all key bindings")
@@ -198,19 +202,19 @@ COMMAND("bindKey", "bind a command to a key combination")
 COMMAND("help", "help and command overview")(const Event<CommandEvent> &ev)
 {
     auto &cp = ev.info.engine.commandProcessor();
-    ev.info.engine.out() << "list of Commands:\n";
+    ev.info.engine.out() << "list of Commands:\n"_k;
 
     for (const auto &com : cp.commands())
-        ev.info.engine.out() << "    " << com->name() << "\n";
+        ev.info.engine.out() << "    "_k << com->name() << "\n"_k;
 
-    ev.info.engine.out() << "\n"
-                         << "use describe <command name> to get more "
-                            "information about a specific command"
-                         << "\n";
+    ev.info.engine.out() << "\n"_k
+                         << "use describe <command name> to get more "_k
+                            "information about a specific command"_k
+                         << "\n"_k;
 }
 
 COMMAND("bindShader", "compile and linke a ShaderProgram and give it a name")
-(const Event<CommandEvent> &e, std::span<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::span<const CommandArg> args)
 {
     if (args.empty()) {
         ERR(e.info.engine.out(), "bindShader: need at least one argument");
@@ -258,7 +262,7 @@ COMMAND("bindShader", "compile and linke a ShaderProgram and give it a name")
         return;
     }
 
-    e.info.engine.out() << "bound program: " << args[0].string << "\n";
+    e.info.engine.out() << "bound program: "_k << args[0].string << "\n"_k;
 
     e.info.engine.shaderManager().addProgram(args[0].string, prog);
 }
@@ -270,25 +274,25 @@ COMMAND("initGLDebug", "initialize OpenGL debug output")
         glt::initDebug();
     } else {
         e.info.engine.out()
-          << "cannot initialize OpenGL debug output: no debug context"
-          << "\n";
+          << "cannot initialize OpenGL debug output: no debug context"_k
+          << "\n"_k;
     }
 }
 
 COMMAND("ignoreGLDebugMessage",
         "for opengl vendor <vendor> add the message <id> to the list of "
         "ignored messages")
-(const Event<CommandEvent> &e, std::span<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::span<const CommandArg> args)
 {
     auto &vendor_str = args[0].string;
     auto id = static_cast<GLint>(args[1].integer);
     auto vendor = glt::OpenGLVendor{};
 
-    if (vendor_str == "Nvidia")
+    if (vendor_str == "Nvidia"_sv)
         vendor = glt::OpenGLVendor::Nvidia;
-    else if (vendor_str == "ATI")
+    else if (vendor_str == "ATI"_sv)
         vendor = glt::OpenGLVendor::ATI;
-    else if (vendor_str == "Intel")
+    else if (vendor_str == "Intel"_sv)
         vendor = glt::OpenGLVendor::Intel;
     else
         vendor = glt::OpenGLVendor::Unknown;
@@ -296,53 +300,55 @@ COMMAND("ignoreGLDebugMessage",
     if (vendor != glt::OpenGLVendor::Unknown) {
         glt::ignoreDebugMessage(vendor, id);
     } else {
-        e.info.engine.out() << "invalid opengl vendor: " << vendor_str;
+        e.info.engine.out() << "invalid opengl vendor: "_k << vendor_str;
     }
 }
 
 COMMAND("describe", "print a description of its parameters")
-(const Event<CommandEvent> &e, std::span<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::span<const CommandArg> args)
 {
     auto &proc = e.info.engine.commandProcessor();
     for (const auto &arg : args)
         if (auto com = proc.command(arg.string))
-            e.info.engine.out() << com->interactiveDescription() << "\n";
+            e.info.engine.out() << com->interactiveDescription() << "\n"_k;
         else
-            e.info.engine.out() << "unknown command: " << arg.string << "\n";
+            e.info.engine.out()
+              << "unknown command: "_k << arg.string << "\n"_k;
 }
 
 COMMAND("eval", "parse a string and execute it")
-(const Event<CommandEvent> &e, std::span<const CommandArg> /*unused*/)
+(const Event<CommandEvent> &e, bl::span<const CommandArg> /*unused*/)
 {
     ERR(e.info.engine.out(), "not yet implemented");
 }
 
 COMMAND("load", "execute a script file")
-(const Event<CommandEvent> &ev, std::span<const CommandArg> args)
+(const Event<CommandEvent> &ev, bl::span<const CommandArg> args)
 {
     for (const auto &arg : args)
         ev.info.engine.commandProcessor().loadScript(arg.string);
 }
 
 COMMAND("addShaderPath", "add directories to the shader path")
-(const Event<CommandEvent> &e, std::span<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::span<const CommandArg> args)
 {
     for (const auto &arg : args)
         if (!e.info.engine.shaderManager().addShaderDirectory(arg.string, true))
-            ERR(e.info.engine.out(), "not a directory: " + arg.string);
+            ERR(e.info.engine.out(), scat("not a directory: "_sv, arg.string));
 }
 
 COMMAND("prependShaderPath", "add directories to the front of the shader path")
-(const Event<CommandEvent> &e, std::span<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::span<const CommandArg> args)
 {
     for (size_t i = args.size(); i > 0; --i)
         if (!e.info.engine.shaderManager().prependShaderDirectory(
               args[i - 1].string, true))
-            ERR(e.info.engine.out(), "not a directory: " + args[i - 1].string);
+            ERR(e.info.engine.out(),
+                scat("not a directory: "_sv, args[i - 1].string));
 }
 
 COMMAND("removeShaderPath", "remove directories from the shader path")
-(const Event<CommandEvent> &e, std::span<const CommandArg> args)
+(const Event<CommandEvent> &e, bl::span<const CommandArg> args)
 {
     for (const auto &arg : args)
         e.info.engine.shaderManager().removeShaderDirectory(arg.string);
@@ -377,7 +383,7 @@ COMMAND("postInit", "execute its argument command in the postInit hook")
 }
 
 COMMAND("startReplServer", "start a REPL server on the given port")
-(const Event<CommandEvent> &ev, std::span<const CommandArg> args)
+(const Event<CommandEvent> &ev, bl::span<const CommandArg> args)
 {
     auto &e = ev.info.engine;
     auto &serv = e.replServer();

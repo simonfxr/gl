@@ -10,7 +10,7 @@ namespace err {
 template<typename E>
 struct WithError
 {
-    E lastError;
+    E lastError{};
 
     E getError() const { return lastError; }
 

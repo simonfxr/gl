@@ -13,6 +13,8 @@
 
 namespace glt {
 
+using namespace bl::literals;
+
 namespace {
 
 using Generator = PFNGLGENBUFFERSPROC;
@@ -134,11 +136,11 @@ void
 printStats(sys::io::OutStream &out)
 {
     auto tab = Tables::get();
-    out << "Active OpenGL Objects:\n";
+    out << "Active OpenGL Objects:\n"_k;
     for (size_t i = 0; i < bl::enum_count_of<ObjectType>(); ++i)
         if (tab.instance_count[i] > 0)
-            out << "  " << tab.kinds[i].kind << "s: " << tab.instance_count[i]
-                << "\n";
+            out << "  "_k << tab.kinds[i].kind << "s: "_k
+                << tab.instance_count[i] << "\n"_k;
 }
 
 } // namespace glt

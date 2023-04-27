@@ -236,7 +236,7 @@ elevate(Handle &h, HandleMode hm)
 }
 
 std::pair<size_t, HandleError>
-read(Handle &h, std::span<char> buf)
+read(Handle &h, bl::span<bl::byte> buf)
 {
     ASSERT(h);
     if (buf.empty())
@@ -265,7 +265,7 @@ read(Handle &h, std::span<char> buf)
 }
 
 std::pair<size_t, HandleError>
-write(Handle &h, std::span<const char> buf)
+write(Handle &h, bl::span<const bl::byte> buf)
 {
     ASSERT(h);
     if (h._os.is_socket) {

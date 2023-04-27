@@ -3,12 +3,15 @@
 
 #include "sys/conf.hpp"
 
-namespace sys {
-namespace fs {
+#include <bl/string_view.hpp>
 
-const char SEPARATOR = '\\';
+namespace sys::fs {
 
-} // namespace fs
-} // namespace sys
+using namespace bl::literals;
+
+const bl::string_byte SEPARATOR_CHAR = '\\';
+constexpr inline bl::string_view SEPARATOR = "\\"_sv;
+
+} // namespace sys::fs
 
 #endif

@@ -1,12 +1,17 @@
 #include "ge/Tokenizer.hpp"
+
 #include "ge/Command.hpp"
+#include "math/real.hpp"
+#include "util/string.hpp"
 
 #include <cctype>
 #include <cmath>
 
-#include "math/real.hpp"
+using namespace bl::literals;
 
 namespace ge {
+
+using namespace bl::literals;
 
 namespace {
 
@@ -26,8 +31,8 @@ parse_err(const ParserState &s,
 {
     if (s.in_state != sys::io::StreamResult::Blocked) {
         sys::io::ByteStream buf;
-        buf << "parsing " << s.filename << "@" << s.line << ":" << s.col;
-        buf << " parse-error: " << mesg;
+        buf << "parsing "_k << s.filename << "@"_k << s.line << ":"_k << s.col;
+        buf << " parse-error: "_k << mesg;
         err::error(loc, err::LogLevel::Error, buf);
     }
 }
@@ -35,8 +40,10 @@ parse_err(const ParserState &s,
 sys::io::StreamResult
 next(sys::io::InStream &in, char &c)
 {
-    auto [s, res] = in.read(std::span{ &c, size_t{ 1 } });
+    bl::byte b{};
+    auto [s, res] = in.read(bl::span{ &b, size_t{ 1 } });
     ASSERT(res != sys::io::StreamResult::OK || s == 1);
+    c = static_cast<char>(b);
     return res;
 }
 
@@ -168,7 +175,7 @@ parseKeycombo(ParserState &s, CommandArg &tok)
         if (auto opt_kcode = parseKeyCode(sym)) {
             k.code = *opt_kcode;
         } else {
-            PARSE_ERROR(s, "invalid key-symbol: " + sym);
+            PARSE_ERROR(s, scat("invalid key-symbol: "_sv, sym));
             return Fail;
         }
 

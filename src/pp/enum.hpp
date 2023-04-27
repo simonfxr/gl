@@ -10,7 +10,7 @@
 
 #define PP_ENUM_DEF_TOSTR2(tag, str)                                           \
 case tag:                                                                      \
-    return ::bl::string_view(str, sizeof(str) - 1);
+    return PP_CAT(str, _sv);
 
 #define PP_ENUM_DEF_TOSTR1(tag) PP_ENUM_DEF_TOSTR2(tag, PP_TOSTR(tag))
 
@@ -33,6 +33,7 @@ case tag:                                                                      \
         }                                                                      \
         friend constexpr ::bl::string_view to_string(NAME _enum_value_)        \
         {                                                                      \
+            using namespace bl::literals;                                      \
             switch (_enum_value_) {                                            \
                 PP_MAP(PP_ENUM_DEF_TOSTR1, PP_SEMI, __VA_ARGS__)               \
             }                                                                  \

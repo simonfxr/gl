@@ -9,7 +9,7 @@
 #include <bl/string.hpp>
 
 #include <functional>
-#include <span>
+#include <bl/span.hpp>
 #include <vector>
 
 namespace ge {
@@ -49,7 +49,7 @@ public:
     const bl::string &description() const { return descr; }
     bl::string interactiveDescription() const;
     virtual void interactive(const Event<CommandEvent> &ev,
-                             std::span<const CommandArg>) = 0;
+                             bl::span<const CommandArg>) = 0;
     void handle(const Event<CommandEvent> &ev) final override;
     virtual QuotationCommand *castToQuotation() { return nullptr; }
 };
@@ -68,7 +68,7 @@ struct GE_API QuotationCommand
     ~QuotationCommand() override;
 
     virtual void interactive(const Event<CommandEvent> &ev,
-                             std::span<const CommandArg>) override;
+                             bl::span<const CommandArg>) override;
     QuotationCommand *castToQuotation() override { return this; }
 };
 
@@ -82,7 +82,7 @@ struct FunctorCommand : public Command
     ~FunctorCommand() override = default;
 
     void interactive(const Event<CommandEvent> &ev,
-                     std::span<const CommandArg> args) final override
+                     bl::span<const CommandArg> args) final override
     {
         invoke(_f, is_var_arg_t{}, arg_seq{}, ev, args);
     }

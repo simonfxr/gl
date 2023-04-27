@@ -142,8 +142,6 @@ struct GLT_API ShaderCompiler : private bl::runtime_sized_base<ShaderCompiler>
     ShaderManager &shaderManager();
     const std::shared_ptr<ShaderCache> &shaderCache();
 
-    void init();
-
     static std::optional<ShaderType> guessShaderType(bl::string_view path);
 
 private:

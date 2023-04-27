@@ -1,8 +1,11 @@
 #include "ge/Command.hpp"
 
 #include "ge/Engine.hpp"
+#include "util/string.hpp"
 
 #include <utility>
+
+using namespace bl::literals;
 
 namespace ge {
 
@@ -27,7 +30,7 @@ Command::handle(const Event<CommandEvent> &ev)
         (params.size() == 1 && params[0] == CommandParamType::List)) {
         interactive(ev, {});
     } else {
-        ERR("cannot execute command without arguments: " + name());
+        ERR(scat("cannot execute command without arguments: "_sv, name()));
     }
 }
 
@@ -35,45 +38,45 @@ bl::string
 Command::interactiveDescription() const
 {
     sys::io::ByteStream desc;
-    desc << "command " << name() << "\n  params:";
+    desc << "command "_k << name() << "\n  params:"_k;
 
-    const char *delim = " ";
+    auto delim = " "_k;
     for (const auto &param : parameters()) {
         desc << delim;
-        delim = ", ";
+        delim = ", "_k;
         switch (param) {
         case CommandParamType::String:
-            desc << "string";
+            desc << "string"_k;
             break;
         case CommandParamType::Integer:
-            desc << "int";
+            desc << "int"_k;
             break;
         case CommandParamType::Number:
-            desc << "num";
+            desc << "num"_k;
             break;
         case CommandParamType::KeyCombo:
-            desc << "key";
+            desc << "key"_k;
             break;
         case CommandParamType::Command:
-            desc << "command";
+            desc << "command"_k;
             break;
         case CommandParamType::VarRef:
-            desc << "var";
+            desc << "var"_k;
             break;
         case CommandParamType::Any:
-            desc << "?";
+            desc << "?"_k;
             break;
         case CommandParamType::List:
-            desc << "*";
+            desc << "*"_k;
             break;
         }
     }
 
     if (parameters().empty())
-        desc << " none";
+        desc << " none"_k;
 
-    desc << "\n"
-         << "  description: " << description() << "\n";
+    desc << "\n"_k
+         << "  description: "_k << description() << "\n"_k;
 
     return desc.str();
 }
@@ -86,9 +89,9 @@ describeQuotation(bl::string_view &source,
                   bl::string_view &desc)
 {
     sys::io::ByteStream str;
-    str << "<quotation " << source << "@" << line << ":" << column;
+    str << "<quotation "_k << source << "@"_k << line << ":"_k << column;
     if (!desc.empty())
-        str << " " << desc << ">";
+        str << " "_k << desc << ">"_k;
     return str.str();
 }
 } // namespace
@@ -98,7 +101,8 @@ bl::string
 nameOfQuotation(bl::string_view filename, int line, int col)
 {
     sys::io::ByteStream buf;
-    buf << "<quotation: " << filename << "@" << line << ":" << col << ">";
+    buf << "<quotation: "_k << filename << "@"_k << line << ":"_k << col
+        << ">"_k;
     return buf.str();
 }
 } // namespace
@@ -118,10 +122,10 @@ QuotationCommand::~QuotationCommand() = default;
 
 void
 QuotationCommand::interactive(const Event<CommandEvent> &ev,
-                              std::span<const CommandArg> /*unused*/)
+                              bl::span<const CommandArg> /*unused*/)
 {
     for (auto &args : *quotation)
-        ev.info.engine.commandProcessor().exec(std::span(args));
+        ev.info.engine.commandProcessor().exec(bl::span(args));
 }
 
 } // namespace ge

@@ -6,11 +6,11 @@
 #include "sys/fiber.hpp"
 
 #include <bl/enum.hpp>
-
+#include <bl/span.hpp>
 #include <bl/string.hpp>
 #include <bl/string_view.hpp>
+
 #include <cstring>
-#include <span>
 
 #undef stdin
 #undef stdout
@@ -71,10 +71,10 @@ struct SYS_API InStream
         return *this;
     }
 
-    std::pair<size_t, StreamResult> read(std::span<char>);
+    std::pair<size_t, StreamResult> read(bl::span<bl::byte>);
 
 protected:
-    virtual StreamResult basic_read(size_t &s, char *buf) = 0;
+    virtual StreamResult basic_read(size_t &s, bl::byte *buf) = 0;
     virtual StreamResult basic_close_in(bool flush_only) = 0;
     virtual const StreamFlags &rflags() const;
     virtual StreamFlags &rflags();
@@ -122,11 +122,11 @@ struct SYS_API OutStream
         return *this;
     }
 
-    std::pair<size_t, StreamResult> write(std::span<const char>);
+    std::pair<size_t, StreamResult> write(bl::span<const bl::byte>);
     StreamResult flush();
 
 protected:
-    virtual StreamResult basic_write(size_t &s, const char *buf) = 0;
+    virtual StreamResult basic_write(size_t &s, const bl::byte *buf) = 0;
     virtual StreamResult basic_flush() = 0;
     virtual StreamResult basic_close_out() = 0;
     StreamFlags wflags{ SF_CLOSABLE };
@@ -169,14 +169,15 @@ struct SYS_API NullStream : public IOStream
 protected:
     StreamResult basic_flush() final;
     StreamResult basic_close() final;
-    StreamResult basic_read(size_t &, char *) final;
-    StreamResult basic_write(size_t &, const char *) final;
+    StreamResult basic_read(size_t &, bl::byte *) final;
+    StreamResult basic_write(size_t &, const bl::byte *) final;
 };
 
 struct SYS_API ByteStream : public IOStream
 {
+    using C = bl::string_byte;
     explicit ByteStream(size_t bufsize = 32);
-    explicit ByteStream(bl::string_view);
+    explicit ByteStream(bl::basic_string_view<C> view);
     ByteStream(const ByteStream &) = default;
     ByteStream(ByteStream &&) noexcept = default;
 
@@ -186,31 +187,31 @@ struct SYS_API ByteStream : public IOStream
     ByteStream &operator=(ByteStream &&) noexcept = default;
 
     size_t size() const { return buffer.size(); }
-    const char *data() const { return buffer.data(); }
-    char *data() { return buffer.data(); }
-    [[nodiscard]] bl::string str() const &
+    auto data() const { return buffer.data(); }
+    auto data() { return buffer.data(); }
+    [[nodiscard]] bl::basic_string<C> str() const &
     {
-        return bl::string(data(), size());
+        return bl::basic_string<C>(data(), size());
     }
-    bl::string str() && { return bl::move(buffer); }
+    bl::basic_string<C> str() && { return bl::move(buffer); }
 
     void reserve(size_t additional)
     {
         buffer.reserve(buffer.size() + additional);
     }
 
-    operator bl::string_view() const { return { data(), size() }; }
+    operator bl::basic_string_view<C>() const { return { data(), size() }; }
 
     void truncate(size_t);
 
 protected:
     StreamResult basic_flush() final override;
     StreamResult basic_close() final override;
-    StreamResult basic_read(size_t &, char *) final override;
-    StreamResult basic_write(size_t &, const char *) final override;
+    StreamResult basic_read(size_t &, bl::byte *) final override;
+    StreamResult basic_write(size_t &, const bl::byte *) final override;
 
 private:
-    bl::string buffer;
+    bl::basic_string<C> buffer;
     size_t read_cursor;
 };
 
@@ -224,7 +225,7 @@ struct SYS_API CooperativeInStream : public InStream
 
 protected:
     virtual StreamResult basic_close_in(bool flush_only) final override;
-    virtual StreamResult basic_read(size_t &, char *) final override;
+    virtual StreamResult basic_read(size_t &, bl::byte *) final override;
 };
 
 #define DEF_OUTSTREAM_OP(T)                                                    \
@@ -240,19 +241,11 @@ inline StreamResult
 write_repr(OutStream &out, bl::string_view str)
 {
     if (out.writeable()) {
-        auto [_, r] = out.write(str);
+        auto [_, r] = out.write(bl::span<const bl::byte>{
+          reinterpret_cast<const bl::byte *>(str.data()), str.size() });
         return r;
     }
     return StreamResult::OK;
-}
-
-inline StreamResult
-write_repr(OutStream &out, const char *str)
-{
-    if (!out.writeable() || !str)
-        return StreamResult::OK;
-    auto [_, r] = out.write({ str, strlen(str) });
-    return r;
 }
 
 inline StreamResult
@@ -261,26 +254,23 @@ write_repr(OutStream &out, char c)
     return write_repr(out, bl::string_view{ &c, 1 });
 }
 
-inline StreamResult
-write_repr(OutStream &out, signed char c)
-{
-    return write_repr(out, static_cast<char>(c));
-}
+// inline StreamResult
+// write_repr(OutStream &out, signed char c)
+// {
+//     return write_repr(out, static_cast<char>(c));
+// }
 
-inline StreamResult
-write_repr(OutStream &out, unsigned char c)
-{
-    return write_repr(out, static_cast<char>(c));
-}
+// inline StreamResult
+// write_repr(OutStream &out, unsigned char c)
+// {
+//     return write_repr(out, static_cast<char>(c));
+// }
 
 #define DEF_OPAQUE_OUTSTREAM_OP(T)                                             \
     SYS_API StreamResult write_repr(OutStream &out, T x);                      \
     DEF_OUTSTREAM_OP(T)
 
 DEF_OUTSTREAM_OP(char);
-DEF_OUTSTREAM_OP(signed char);
-DEF_OUTSTREAM_OP(unsigned char);
-DEF_OUTSTREAM_OP(const char *);
 DEF_OUTSTREAM_OP(bl::string_view);
 
 DEF_OPAQUE_OUTSTREAM_OP(short)
@@ -295,37 +285,39 @@ DEF_OPAQUE_OUTSTREAM_OP(unsigned long long)
 DEF_OPAQUE_OUTSTREAM_OP(float);
 DEF_OPAQUE_OUTSTREAM_OP(double);
 DEF_OPAQUE_OUTSTREAM_OP(long double);
-DEF_OPAQUE_OUTSTREAM_OP(const void *);
+
+SYS_API StreamResult
+write_repr(OutStream &out, const void *x);
 
 #undef DEF_OPAQUE_OUTSTREAM_OP
 #undef DEF_OUTSTREAM_OP
 
-template<typename OStream>
+template<typename OStream, std::same_as<bool> T>
 std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
-operator<<(OStream &out, bool x)
+operator<<(OStream &out, T x)
 {
-    return out << (x ? "true" : "false");
+    using namespace bl::literals;
+    return out << (x ? BL_STRING_VIEW("true") : BL_STRING_VIEW("false"));
 }
 
 template<typename OStream>
 std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
 operator<<(OStream &out, const bl::string &str)
 {
-    return out << bl::string_view(str);
+    return out << bl::string_view{ str };
 }
+
+struct ptr
+{
+    const void *p;
+};
 
 template<typename OStream>
 std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
-operator<<(OStream &out, char *str)
+operator<<(OStream &out, const ptr &p)
 {
-    return out << static_cast<const char *>(str);
-}
-
-template<typename OStream, typename T>
-std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
-operator<<(OStream &out, const T *ptr)
-{
-    return out << static_cast<const void *>(ptr);
+    write_repr(out, p.p);
+    return out;
 }
 
 } // namespace io

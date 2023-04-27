@@ -44,8 +44,8 @@ struct runtime_sized_tag
                             const runtime_sized_tag &) = delete;
 
 protected:
-    runtime_sized_tag();
-    ~runtime_sized_tag();
+    constexpr runtime_sized_tag() = default;
+    ~runtime_sized_tag() = default;
 };
 
 template<typename ApiT, typename Defer>

@@ -820,7 +820,7 @@ Game::initCommands()
       "incWorldSolveIterations",
       "",
       [this](const ge::Event<ge::CommandEvent> & /*unused*/,
-             std::span<const ge::CommandArg> args) {
+             bl::span<const ge::CommandArg> args) {
           if (args[0].integer < 0 &&
               world.solve_iterations < static_cast<size_t>(-args[0].integer))
               world.solve_iterations = 0;

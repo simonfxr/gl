@@ -44,7 +44,7 @@ struct mat : private vec<vec<T, N>, N>
     using Base::rbegin;
     using Base::rend;
     using Base::size;
-    using Base::operator std::span<column_type, N>;
+    using Base::operator bl::span<column_type, N>;
 
     constexpr mat() = default;
     constexpr mat(const mat &) = default;
@@ -113,9 +113,9 @@ struct mat : private vec<vec<T, N>, N>
     constexpr T *data() noexcept { return Base::data()[0].data(); }
     constexpr const T *data() const noexcept { return Base::data()[0].data(); }
 
-    constexpr operator std::span<T, N * N>() noexcept { return { begin(), N }; }
+    constexpr operator bl::span<T, N * N>() noexcept { return { begin(), N }; }
 
-    constexpr operator std::span<const T, N * N>() const noexcept
+    constexpr operator bl::span<const T, N * N>() const noexcept
     {
         return { begin(), N * N };
     }

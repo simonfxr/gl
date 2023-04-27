@@ -23,7 +23,7 @@ string_length_at_least(const T &s)
 
 template<typename... Args>
 inline bl::string
-string_concat(Args &&...args)
+scat(Args &&...args)
 {
     sys::io::ByteStream sstream;
     sstream.reserve((0 + ... + string_length_at_least(args)));
@@ -31,17 +31,17 @@ string_concat(Args &&...args)
     return bl::move(sstream).str();
 }
 
-inline bl::string
+inline bl::string_view
 view_substr(bl::string_view s, size_t begin)
 {
     ASSERT(begin <= s.size());
     return { s.data() + begin, s.size() - begin };
 }
 
-inline bl::string
+inline bl::string_view
 view_substr(bl::string_view s, size_t begin, size_t len)
 {
-    ASSERT(begin < s.size() && begin + len <= s.size());
+    ASSERT(begin <= s.size() && begin + len <= s.size());
     return { s.data() + begin, len };
 }
 

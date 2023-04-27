@@ -6,6 +6,8 @@
 
 namespace glt {
 
+using namespace bl::literals;
+
 TextureRenderTarget::TextureRenderTarget(const TextureRenderTarget::Params &ps)
   : RenderTarget(0, 0, ps.buffers)
   , _sampler(std::make_shared<TextureData>(Texture2D, ps.samples))
@@ -129,10 +131,10 @@ TextureRenderTarget::checkFramebufferStatus(GLFramebufferObject &fb,
     if (status == GL_FRAMEBUFFER_COMPLETE)
         return true;
 
-    const char *str_status = "unknown framebuffer status";
+    auto str_status = "unknown framebuffer status"_sv;
 #define CASE(s)                                                                \
     case s:                                                                    \
-        str_status = #s;                                                       \
+        str_status = PP_CAT(#s, _sv);                                          \
         break
     // clang-format off
     switch (status) {

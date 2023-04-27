@@ -130,9 +130,9 @@ absolutePath(bl::string_view path)
 }
 
 bl::string
-lookup(std::span<const bl::string> dirs, bl::string_view name)
+lookup(bl::span<const bl::string> dirs, bl::string_view name, ObjectType type)
 {
-    return def::lookup(dirs, name);
+    return def::lookup(dirs, name, type);
 }
 
 std::optional<ObjectType>

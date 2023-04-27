@@ -1,4 +1,5 @@
 #include "ge/GameWindow.hpp"
+#include "util/string.hpp"
 
 #define GLFW_INCLUDE_NONE 1
 
@@ -12,6 +13,8 @@
 #include <GLFW/glfw3.h>
 #include <limits>
 #include <vector>
+
+using namespace bl::literals;
 
 namespace ge {
 
@@ -75,7 +78,7 @@ void
 glfw_error_callback(int error, const char *desc)
 {
     UNUSED(error);
-    ERR("GLFW error: " + bl::string(desc));
+    ERR(scat("GLFW error: "_sv, desc));
 }
 
 void

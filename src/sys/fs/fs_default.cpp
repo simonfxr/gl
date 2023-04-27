@@ -4,20 +4,29 @@
 #include "sys/io/Stream.hpp"
 #include "util/string.hpp"
 
-namespace sys::fs {
+namespace sys::fs::def {
 
-using namespace std::literals;
+using namespace bl::literals;
 
-namespace def {
 namespace {
 
 bool
-is_pathsep(char c)
+is_pathsep(bl::string_byte c)
 {
 #ifdef HU_OS_WINDOWS
-    return c == '\\' || c == '/';
+    return c == SEPARATOR_CHAR || c == UNIX_SEPARATOR_CHAR;
 #else
-    return c == SEPARATOR;
+    return c == SEPARATOR_CHAR;
+#endif
+}
+
+bool
+is_pathsep(bl::string_view s)
+{
+#ifdef HU_OS_WINDOWS
+    return c == SEPARATOR || c == UNIX_SEPARATOR;
+#else
+    return s == SEPARATOR;
 #endif
 }
 
@@ -26,7 +35,7 @@ dropTrailingSeps(bl::string_view path)
 {
     if (path.empty())
         return bl::string::npos;
-    size_t pos = path.length() - 1;
+    auto pos = path.size() - 1;
 
     while (pos > 0 && is_pathsep(path[pos]))
         --pos;
@@ -36,13 +45,19 @@ dropTrailingSeps(bl::string_view path)
 } // namespace
 
 bl::string
-join(bl::string_view path, const char **parts, size_t n)
+join(bl::string_view path, bl::span<const bl::string_view> parts)
 {
     sys::io::ByteStream out;
     out << path;
-    for (auto i = size_t{ 0 }; i < n; ++i)
-        out << SEPARATOR << parts[i];
+    for (auto subpath : parts)
+        out << SEPARATOR << subpath;
     return bl::move(out).str();
+}
+
+bl::string
+join(bl::string_view path, bl::string_view subpath)
+{
+    return scat(path, SEPARATOR, subpath);
 }
 
 bl::string
@@ -76,18 +91,18 @@ basename(bl::string_view path)
     if (path.empty())
         return "";
 
-    size_t pos = path.rfind(SEPARATOR, dropTrailingSeps(path));
+    size_t pos = path.rfind(SEPARATOR_CHAR, dropTrailingSeps(path));
     size_t end = bl::string::npos;
 
     if (pos != bl::string::npos) {
         pos += 1;
-        end = path.find(SEPARATOR, pos + 1);
+        end = path.find(SEPARATOR_CHAR, pos + 1);
     } else {
         pos = 0;
     }
 
     if (end == bl::string::npos)
-        end = path.length();
+        end = path.size();
 
     return view_substr(path, pos, end - pos);
 }
@@ -95,7 +110,7 @@ basename(bl::string_view path)
 bl::string
 extension(bl::string_view path)
 {
-    size_t pos = path.rfind(SEPARATOR);
+    size_t pos = path.rfind(SEPARATOR_CHAR);
     if (pos == bl::string::npos)
         pos = 0;
     pos = path.find('.', pos);
@@ -107,7 +122,7 @@ extension(bl::string_view path)
 bl::string
 dropExtension(bl::string_view path)
 {
-    size_t pos = path.rfind(SEPARATOR);
+    size_t pos = path.rfind(SEPARATOR_CHAR);
     if (pos == bl::string::npos)
         pos = 0;
     pos = path.find('.', pos);
@@ -134,15 +149,15 @@ exists(bl::string_view path)
 }
 
 bl::string
-lookup(std::span<const bl::string> dirs, bl::string_view name)
+lookup(bl::span<const bl::string> dirs, bl::string_view name, ObjectType type)
 {
-    auto suffix = string_concat("/", name);
-
-    for (const auto &dir : dirs)
-        if (auto filename = dir + suffix; sys::fs::exists(filename))
+    auto nm = bl::string{ name };
+    for (const auto &dir : dirs) {
+        auto filename = absolutePath(join(dir, name));
+        if (sys::fs::exists(filename, type))
             return filename;
-
-    return ""s;
+    }
+    return ""_s;
 }
 
 bl::string
@@ -161,5 +176,4 @@ modificationTime(bl::string_view path)
     return std::nullopt;
 }
 
-} // namespace def
-} // namespace sys::fs
+} // namespace sys::fs::def

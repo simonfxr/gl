@@ -83,10 +83,10 @@ HU_NODISCARD SYS_API HandleError
 elevate(Handle &, HandleMode);
 
 HU_NODISCARD SYS_API std::pair<size_t, HandleError>
-read(Handle &, std::span<char>);
+read(Handle &, bl::span<uint8_t>);
 
 HU_NODISCARD SYS_API std::pair<size_t, HandleError>
-write(Handle &, std::span<const char>);
+write(Handle &, bl::span<const uint8_t>);
 
 SYS_API HandleError
 close(Handle &);
@@ -203,8 +203,8 @@ struct SYS_API HandleStream : public IOStream
 {
 private:
     Handle handle;
-    char read_buffer[HANDLE_READ_BUFFER_SIZE]{};
-    char write_buffer[HANDLE_WRITE_BUFFER_SIZE]{};
+    uint8_t read_buffer[HANDLE_READ_BUFFER_SIZE]{};
+    uint8_t write_buffer[HANDLE_WRITE_BUFFER_SIZE]{};
     size_t read_cursor{};
     size_t write_cursor{};
 
@@ -221,12 +221,12 @@ public:
 protected:
     StreamResult basic_close() final override;
     StreamResult basic_flush() final override;
-    StreamResult basic_read(size_t &, char *) final override;
-    StreamResult basic_write(size_t &, const char *) final override;
+    StreamResult basic_read(size_t &, uint8_t *) final override;
+    StreamResult basic_write(size_t &, const uint8_t *) final override;
     StreamResult flush_buffer();
 };
 
-HU_NODISCARD SYS_API HandleResult<Array<char>>
+[[nodiscard]] SYS_API HandleResult<Array<bl::string_byte>>
 readFile(bl::string_view path, sys::io::OutStream &errout = stderr()) noexcept;
 
 } // namespace sys::io

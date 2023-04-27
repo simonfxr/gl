@@ -11,7 +11,7 @@
 
 #include <array>
 #include <concepts>
-#include <span>
+#include <bl/span.hpp>
 #include <tuple>
 #include <type_traits>
 
@@ -301,12 +301,12 @@ struct vec : private std::array<T, N>
         return vec<T, N>{ broadcast_t{}, x };
     }
 
-    constexpr operator std::span<const T, N>() const noexcept
+    constexpr operator bl::span<const T, N>() const noexcept
     {
         return { begin(), N };
     }
 
-    constexpr operator std::span<T, N>() noexcept { return { begin(), N }; }
+    constexpr operator bl::span<T, N>() noexcept { return { begin(), N }; }
 
     friend void invoke(bl::swap_f, vec<T, N> &lhs, vec<T, N> &rhs)
     {

@@ -3,14 +3,15 @@
 
 #include "sys/conf.hpp"
 
-namespace sys {
+#include <bl/string_view.hpp>
 
-namespace fs {
+namespace sys::fs {
 
-const char SEPARATOR = '/';
+using namespace bl::literals;
 
-} // namespace fs
+const bl::string_byte SEPARATOR_CHAR = '/';
+constexpr inline bl::string_view SEPARATOR = "/"_sv;
 
-} // namespace sys
+} // namespace sys::fs
 
 #endif

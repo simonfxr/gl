@@ -9,6 +9,7 @@
 #include "sys/io/Stream.hpp"
 #include "sys/measure.hpp"
 #include "util/range.hpp"
+#include "util/string.hpp"
 
 #include <algorithm>
 #include <array>
@@ -23,16 +24,16 @@
 #include <variant>
 #include <vector>
 
-namespace err {
+using namespace bl::literals;
+
 template<>
-struct LogTraits<glt::ShaderCompilerQueue>
+struct err::LogTraits<glt::ShaderCompilerQueue>
 {
     static auto getDestination(glt::ShaderCompilerQueue &x)
     {
         return makeLogSettings(x.shaderCompiler().shaderManager().out());
     }
 };
-} // namespace err
 
 #define COMPILER_ERR_MSG(comp, ec, msg) LOG_RAISE_ERROR(comp, ec, msg)
 
@@ -160,7 +161,9 @@ struct ShaderCompiler::Impl : public ShaderCompiler
     PreprocessorDefinitions defines;
     std::shared_ptr<ShaderCache> cache;
 
-    explicit Impl(ShaderManager &sm) : shaderManager(sm) {}
+    explicit Impl(ShaderManager &sm)
+      : shaderManager(sm), cache(shaderManager.globalShaderCache())
+    {}
     void initPreprocessor(GLSLPreprocessor & /*proc*/);
 };
 
@@ -196,22 +199,24 @@ struct always_false : std::false_type
 bl::string
 hash(bl::string_view source)
 {
-    return "h" + std::to_string(std::hash<bl::string_view>{}(source));
+    return scat("h"_k, std::hash<bl::string_view>{}(source));
 }
 
 struct ShaderTypeMapping
 {
-    const char *fileExtension;
+    const bl::string_view fileExtension;
     ShaderType type;
     GLenum glType;
 };
 
+// clang-format off
 constexpr const auto shaderTypeMappings = std::to_array<ShaderTypeMapping>(
-  { { "frag", ShaderType::FragmentShader, GL_FRAGMENT_SHADER },
-    { "vert", ShaderType::VertexShader, GL_VERTEX_SHADER },
-    { "geom", ShaderType::GeometryShader, GL_GEOMETRY_SHADER },
-    { "tctl", ShaderType::TesselationControl, GL_TESS_CONTROL_SHADER },
-    { "tevl", ShaderType::TesselationEvaluation, GL_TESS_EVALUATION_SHADER } });
+  { { "frag"_sv, ShaderType::FragmentShader, GL_FRAGMENT_SHADER },
+    { "vert"_sv, ShaderType::VertexShader, GL_VERTEX_SHADER },
+    { "geom"_sv, ShaderType::GeometryShader, GL_GEOMETRY_SHADER },
+    { "tctl"_sv, ShaderType::TesselationControl, GL_TESS_CONTROL_SHADER },
+    { "tevl"_sv, ShaderType::TesselationEvaluation, GL_TESS_EVALUATION_SHADER } });
+// clang-format on
 
 bool
 compilePreprocessed(ShaderCompilerQueue & /*scq*/,
@@ -260,25 +265,27 @@ compilePreprocessed(ShaderCompilerQueue &scq,
     shader.ensure(shader_type);
     if (!shader.valid()) {
         COMPILER_ERR_MSG(
-          scq, ShaderCompilerError::OpenGLError, "couldnt create shader");
+          scq, ShaderCompilerError::OpenGLError, "couldnt create shader"_k);
         return false;
     }
 
     bool ok{};
     {
         auto logmsg = err::beginLog(scq);
-        logmsg << "compiling " << (name.empty() ? " <embedded code> " : name)
-               << " ... ";
+        logmsg << "compiling "_k
+               << (name.empty() ? " <embedded code> "_k
+                                : bl::string_view(bl::string(name)))
+               << " ... "_k;
 
         if (logmsg &&
             scq.shaderCompiler().shaderManager().dumpShadersEnabled()) {
-            logmsg << "\n";
-            logmsg << "BEGIN SHADER SOURCE[" << *shader << "]\n";
+            logmsg << "\n"_k;
+            logmsg << "BEGIN SHADER SOURCE["_k << *shader << "]\n"_k;
             for (const auto i : irange(nsegments))
                 logmsg << bl::string_view{ segments[i],
                                            static_cast<size_t>(segLengths[i]) };
-            logmsg << "\n";
-            logmsg << "END SHADER SOURCE\n";
+            logmsg << "\n"_k;
+            logmsg << "END SHADER SOURCE\n"_k;
         }
 
         GL_CALL(glShaderSource, *shader, nsegments, segments, segLengths);
@@ -289,8 +296,9 @@ compilePreprocessed(ShaderCompilerQueue &scq,
         GLint success;
         GL_CALL(glGetShaderiv, *shader, GL_COMPILE_STATUS, &success);
         ok = success == GL_TRUE;
-        logmsg << (ok ? "success" : "failed") << " (" << (wct * 1000) << " ms)"
-               << "\n";
+        logmsg << (ok ? "success"_k : "failed"_k) << " ("_k << (wct * 1000)
+               << " ms)"_k
+               << "\n"_k;
     }
 
     auto logmsg =
@@ -329,11 +337,10 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
         const char *log_msg = log.data();
 
         if (logBegin == end) {
-            out << "shader compile log empty\n";
+            out << "shader compile log empty\n"_k;
         } else {
-            out << "shader compile log:\n"
-                << log_msg << "\n"
-                << "end compile log\n";
+            out << "shader compile log:\n"_k << log_msg << "\n"_k
+                << "end compile log\n"_k;
         }
     }
 }
@@ -392,7 +399,7 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
 
     if (!opt_gltype) {
         COMPILER_ERR_MSG(
-          scq, ShaderCompilerError::InvalidShaderType, "unknown ShaderType");
+          scq, ShaderCompilerError::InvalidShaderType, "unknown ShaderType"_k);
         return nullptr;
     }
     auto gltype = *opt_gltype;
@@ -425,7 +432,7 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
     auto opt_gltype = translateShaderType(src->self->type, path);
     if (!opt_gltype) {
         COMPILER_ERR_MSG(
-          scq, ShaderCompilerError::InvalidShaderType, "unknown ShaderType");
+          scq, ShaderCompilerError::InvalidShaderType, "unknown ShaderType"_k);
         return nullptr;
     }
     auto gltype = *opt_gltype;
@@ -433,7 +440,7 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
     auto mtime = sys::fs::modificationTime(filesrc.path);
     if (!mtime) {
         COMPILER_ERR_MSG(
-          scq, ShaderCompilerError::FileNotFound, "couldnt query mtime");
+          scq, ShaderCompilerError::FileNotFound, "couldnt query mtime"_k);
         return nullptr;
     }
 
@@ -712,12 +719,6 @@ ShaderCompiler::shaderCache()
     return m().cache;
 }
 
-void
-ShaderCompiler::init()
-{
-    m().cache = m().shaderManager.globalShaderCache();
-}
-
 std::optional<ShaderType>
 ShaderCompiler::guessShaderType(bl::string_view path)
 {
@@ -739,18 +740,18 @@ ShaderCompiler::Impl::initPreprocessor(GLSLPreprocessor &proc)
     if (m.shaderVersion() != 0) {
         sys::io::ByteStream glversdef;
         auto vers = m.shaderVersion();
-        glversdef << "#version " << vers;
+        glversdef << "#version "_k << vers;
         if (vers > 150)
             glversdef << (m.shaderProfile() == ShaderProfile::Core
-                            ? " core"
-                            : " compatibility");
-        glversdef << "\n";
+                            ? " core"_k
+                            : " compatibility"_k);
+        glversdef << "\n"_k;
         if (vers <= 150) {
-            glversdef << "#define SL_in attribute\n";
-            glversdef << "#define SL_out varying\n";
+            glversdef << "#define SL_in attribute\n"_k;
+            glversdef << "#define SL_out varying\n"_k;
         } else {
-            glversdef << "#define SL_in in\n";
-            glversdef << "#define SL_out out\n";
+            glversdef << "#define SL_in in\n"_k;
+            glversdef << "#define SL_out out\n"_k;
         }
         proc.appendString(glversdef.str());
     }
@@ -781,8 +782,8 @@ ShaderCompilerQueue::enqueueReload(const std::shared_ptr<ShaderObject> &so)
     if (m().inQueue.contains(so->shaderSource()->key()))
         return;
     auto exec = [so, this]() -> std::shared_ptr<ShaderObject> {
-        sys::io::stdout() << "reloadIfOutdated: " << so->shaderSource()->key()
-                          << "\n";
+        sys::io::stdout() << "reloadIfOutdated: "_k << so->shaderSource()->key()
+                          << "\n"_k;
         auto [new_so, state] = so->self->reloadIfOutdated(*this);
         switch (state) {
         case ReloadState::Uptodate:
@@ -807,7 +808,7 @@ ShaderCompilerQueue::enqueueLoad(const std::shared_ptr<ShaderSource> &src)
     if (m().inQueue.contains(src->key()))
         return;
     auto exec = [src, this]() -> std::shared_ptr<ShaderObject> {
-        sys::io::stdout() << "load: " << src->key() << "\n";
+        sys::io::stdout() << "load: "_k << src->key() << "\n"_k;
         return ShaderSource::Data::load(src, *this);
     };
     m().toCompile.push({ src, bl::move(exec) });

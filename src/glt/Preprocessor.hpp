@@ -59,7 +59,8 @@ struct GLT_API Preprocessor : bl::runtime_sized_base<Preprocessor>
 
     void process(bl::string_view);
 
-    void process(const char *contents) { process(bl::string_view(contents)); }
+    // void process(const char *contents) { process(bl::string_view(contents));
+    // }
 
     DirectiveHandler &defaultHandler(DirectiveHandler &handler);
     DirectiveHandler &defaultHandler() const;

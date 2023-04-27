@@ -22,8 +22,7 @@ struct always_false : std::false_type
 template<typename T>
 struct command_param_mapping
 {
-    // static_assert(always_false<T>::value, "cannot instantiate with this
-    // type");
+    static_assert(always_false<T>::value, "cannot instantiate with this type");
 };
 
 HU_PURE_FN inline bool
@@ -80,7 +79,7 @@ DEF_COMMAND_TYPE_MAPPING(std::shared_ptr<Command>,
 DEF_COMMAND_TYPE_MAPPING(KeyBinding, keyBinding, CommandParamType::KeyCombo);
 
 template<>
-struct command_param_mapping<std::span<const CommandArg>>
+struct command_param_mapping<bl::span<const CommandArg>>
 {
     static inline constexpr CommandParamType param_type =
       CommandParamType::List;
@@ -122,7 +121,7 @@ struct Proxy
 
 auto is_var_arg(CommandArgSeq<>) -> std::false_type;
 
-auto is_var_arg(CommandArgSeq<std::span<const CommandArg>>) -> std::true_type;
+auto is_var_arg(CommandArgSeq<bl::span<const CommandArg>>) -> std::true_type;
 
 template<typename T, typename... Ts>
 auto is_var_arg(CommandArgSeq<T, Ts...>)
@@ -134,7 +133,7 @@ invoke_indexed(F &&f,
                CommandArgSeq<Ts...>,
                std::integer_sequence<size_t, Is...>,
                const Event<CommandEvent> &ev,
-               std::span<const CommandArg> args)
+               bl::span<const CommandArg> args)
 {
     static_assert(sizeof...(Ts) == sizeof...(Is));
     ASSERT(args.size() == sizeof...(Ts));
@@ -150,7 +149,7 @@ invoke_indexed_vararg(F &&f,
                       CommandArgSeq<Ts...>,
                       std::integer_sequence<size_t, Is...>,
                       const Event<CommandEvent> &ev,
-                      std::span<const CommandArg> args)
+                      bl::span<const CommandArg> args)
 {
     static_assert(sizeof...(Ts) == sizeof...(Is) + 1);
     ASSERT(args.size() >= sizeof...(Is));
@@ -166,7 +165,7 @@ invoke(F &&f,
        std::bool_constant<VarArg>,
        CommandArgSeq<Ts...> arg_seq,
        const Event<CommandEvent> &ev,
-       std::span<const CommandArg> args)
+       bl::span<const CommandArg> args)
 {
     if constexpr (VarArg) {
         invoke_indexed_vararg(std::forward<F>(f),

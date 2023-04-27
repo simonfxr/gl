@@ -2,10 +2,10 @@
 
 #include "math/fvec.hpp"
 #include "math/real.hpp"
-#include "util/bit_cast.hpp"
 #include "util/string.hpp"
 
 using namespace math;
+using namespace bl::literals;
 
 namespace ge {
 
@@ -38,12 +38,12 @@ struct Camera::Impl : public Camera
     // commands
     void runMove(const Event<CommandEvent> & /*unused*/, int64_t dir);
     void runSaveFrame(const Event<CommandEvent> & /*unused*/,
-                      std::span<const CommandArg> /*args*/);
+                      bl::span<const CommandArg> /*args*/);
     void runLoadFrame(const Event<CommandEvent> & /*unused*/,
-                      std::span<const CommandArg> /*args*/);
+                      bl::span<const CommandArg> /*args*/);
     void runSpeed(const Event<CommandEvent> & /*unused*/, double /*s*/);
     void runSensitivity(const Event<CommandEvent> & /*unused*/,
-                        std::span<const CommandArg> /*args*/);
+                        bl::span<const CommandArg> /*args*/);
 
     // event handlers
     void handleMouseMoved(const Event<MouseMoved> & /*ev*/);
@@ -127,7 +127,7 @@ Camera::Impl::runMove(const Event<CommandEvent> & /*unused*/, int64_t dir)
 
 void
 Camera::Impl::runSaveFrame(const Event<CommandEvent> & /*unused*/,
-                           std::span<const CommandArg> args)
+                           bl::span<const CommandArg> args)
 {
 
     const bl::string *path;
@@ -142,17 +142,17 @@ Camera::Impl::runSaveFrame(const Event<CommandEvent> & /*unused*/,
 
     auto res = sys::io::HandleStream::open(*path, sys::io::HM_WRITE);
     if (!res) {
-        ERR("couldnt open file: " + *path);
+        ERR(scat("couldnt open file: "_sv, *path));
         return;
     }
     auto out_frame = frame;
     out_frame.normalize();
-    bl::move(res).value().write(to_bytes(out_frame));
+    bl::move(res).value().write(bl::as_bytes(bl::span{ &out_frame, 1 }));
 }
 
 void
 Camera::Impl::runLoadFrame(const Event<CommandEvent> & /*unused*/,
-                           std::span<const CommandArg> args)
+                           bl::span<const CommandArg> args)
 {
     const bl::string *path;
     if (args.empty())
@@ -166,15 +166,17 @@ Camera::Impl::runLoadFrame(const Event<CommandEvent> & /*unused*/,
 
     auto res = sys::io::HandleStream::open(*path, sys::io::HM_READ);
     if (!res) {
-        WARN("couldnt open file: " + *path);
+        WARN(scat("couldnt open file: "_sv, *path));
         return;
     }
 
-    std::array<char, sizeof frame> bytes{};
+    std::array<bl::byte, sizeof frame> bytes{};
     auto [s, ret] = bl::move(res).value().read(bytes);
     if (ret != sys::io::StreamResult::OK || s != sizeof frame) {
-        ERR(string_concat(
-          "failed to read frame from file: ", *path, ", io error: ", ret));
+        ERR(scat("failed to read frame from file: "_sv,
+                 *path,
+                 ", io error: "_sv,
+                 ret));
         return;
     }
 
@@ -190,7 +192,7 @@ Camera::Impl::runSpeed(const Event<CommandEvent> & /*unused*/, double s)
 
 void
 Camera::Impl::runSensitivity(const Event<CommandEvent> & /*unused*/,
-                             std::span<const CommandArg> args)
+                             bl::span<const CommandArg> args)
 {
     if (args.size() == 1 && args[0].type() == CommandArgType::Number) {
         mouse_sensitivity = vec2(static_cast<real>(args[0].number));
@@ -338,7 +340,7 @@ Camera::registerWith(Engine &e)
 {
     m().engine = &e;
     if (m().frame_path.empty())
-        m().frame_path = e.programName() + ".cam";
+        m().frame_path = scat(e.programName(), ".cam"_sv);
     e.events().beforeRender.reg(m().handlers.beforeRender);
     m().engine->events().handleInput.reg(m().handlers.handleInput);
     if (m().mouse_look) {

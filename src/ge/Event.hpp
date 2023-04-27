@@ -8,7 +8,7 @@
 #include <bl/noncopymove.hpp>
 
 #include <memory>
-#include <span>
+#include <bl/span.hpp>
 #include <vector>
 
 namespace ge {
@@ -95,14 +95,14 @@ struct EventSource : private bl::non_copyable
     inline bool unreg(const std::shared_ptr<EventHandler<T>> &handler);
     inline void clear();
 
-    std::span<std::shared_ptr<EventHandler<T>>> handlers()
+    bl::span<std::shared_ptr<EventHandler<T>>> handlers()
     {
-        return std::span(_handlers);
+        return bl::span(_handlers);
     }
 
-    std::span<const std::shared_ptr<EventHandler<T>>> handlers() const
+    bl::span<const std::shared_ptr<EventHandler<T>>> handlers() const
     {
-        return std::span(_handlers);
+        return bl::span(_handlers);
     }
 
 private:

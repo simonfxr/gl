@@ -9,9 +9,12 @@
 #include "pp/basic.h"
 #include "sys/fs.hpp"
 #include "sys/io/Stream.hpp"
+#include "util/string.hpp"
 
 #include <cctype>
 #include <cstring>
+
+using namespace bl::literals;
 
 namespace ge {
 
@@ -39,54 +42,32 @@ enum OptionCase
 
 struct Option
 {
-    const char *option;
-    const char *option_arg;
+    bl::string_view option;
+    bl::string_view option_arg;
     OptionCase option_case;
-    const char *description;
+    bl::string_view description;
 };
 
+// clang-format off
 const constexpr auto OPTIONS = std::to_array<Option>({
-  { "--help", nullptr, Help, "print a description of all options and exit" },
-  { "--no-init-script",
-    nullptr,
-    NoInitScript,
-    "inhibit loading of default script file (<program-name>.script)" },
-  { "--script-dir",
-    "DIR",
-    ScriptDir,
-    "add DIR to the list of searched script directories" },
-  { "--shader-dir",
-    "DIR",
-    ShaderDir,
-    "add DIR to the list of searched shader directories" },
-  { "--cd",
-    "BOOL",
-    CD,
-    "change into the base directory of the program binary: yes|no" },
-  { "--eval", "COMMAND", Eval, "execute COMMAND as a script command" },
-  { "--script", "FILE", Script, "load FILE and execute it as a script" },
-  { "--cwd", "DIR", CWD, "change into directory DIR" },
-  { "--gl-version",
-    "VERSION",
-    GLVersion,
-    "set the OpenGL context version: MAJOR.MINOR" },
-  { "--gl-profile",
-    "TYPE",
-    GLProfile,
-    "set the OpenGL profile type: core|compatibility" },
-  { "--gl-debug", "BOOL", GLDebug, "create a OpenGL debug context: yes|no" },
-  { "--gl-trace", "BOOL", GLTrace, "print every OpenGL call: yes|no" },
-  { "--aa-samples", "NUM", AASamples, "set the number of FSAA Samples" },
-  { "--vsync", "BOOL", VSync, "enable vertical sync: yes|no" },
-  { "--disable-render",
-    "BOOL",
-    DisableRender,
-    "disable calling the renderfunction" },
-  { "--dump-shaders",
-    "BOOL",
-    DumpShaders,
-    "dump shader source after preprocessing" },
+  { "--help"_sv, ""_sv, Help, "print a description of all options and exit"_sv },
+  { "--no-init-script", ""_sv, NoInitScript, "inhibit loading of default script file (<program-name>.script)"_sv },
+  { "--script-dir"_sv, "DIR"_sv, ScriptDir, "add DIR to the list of searched script directories"_sv },
+  { "--shader-dir"_sv, "DIR"_sv, ShaderDir, "add DIR to the list of searched shader directories"_sv },
+  { "--cd"_sv, "BOOL"_sv, CD, "change into the base directory of the program binary: yes|no"_sv },
+  { "--eval"_sv, "COMMAND"_sv, Eval, "execute COMMAND as a script command"_sv },
+  { "--script"_sv, "FILE"_sv, Script, "load FILE and execute it as a script"_sv },
+  { "--cwd"_sv, "DIR"_sv, CWD, "change into directory DIR"_sv },
+  { "--gl-version"_sv, "VERSION"_sv, GLVersion, "set the OpenGL context version: MAJOR.MINOR"_sv },
+  { "--gl-profile"_sv, "TYPE"_sv, GLProfile, "set the OpenGL profile type: core|compatibility"_sv },
+  { "--gl-debug"_sv, "BOOL"_sv, GLDebug, "create a OpenGL debug context: yes|no"_sv },
+  { "--gl-trace"_sv, "BOOL"_sv, GLTrace, "print every OpenGL call: yes|no"_sv },
+  { "--aa-samples"_sv, "NUM"_sv, AASamples, "set the number of FSAA Samples"_sv },
+  { "--vsync"_sv, "BOOL"_sv, VSync, "enable vertical sync: yes|no"_sv },
+  { "--disable-render"_sv, "BOOL"_sv, DisableRender, "disable calling the renderfunction"_sv },
+  { "--dump-shaders"_sv, "BOOL"_sv, DumpShaders, "dump shader source after preprocessing"_sv },
 });
+// clang-format on
 
 struct State
 {
@@ -97,7 +78,7 @@ struct State
     bool option(OptionCase opt, const char *arg);
 };
 
-#define CMDWARN(msg) WARN(bl::string("parsing options: ") + (msg))
+#define CMDWARN(...) WARN(scat("parsing options: "_sv, __VA_ARGS__))
 
 bool
 str_eq(const char *a, const char *b)
@@ -150,7 +131,7 @@ State::option(OptionCase opt, const char *arg)
         return true;
     case CD:
         if (!parse_bool(arg, options.defaultCD)) {
-            CMDWARN("--cd: not a boolean option");
+            CMDWARN("--cd: not a boolean option"_sv);
             return false;
         }
         return true;
@@ -167,7 +148,7 @@ State::option(OptionCase opt, const char *arg)
         int maj, min;
         if (sscanf(arg, "%d.%d", &maj, &min) != 2 || maj < 0 || min < 0 ||
             maj > 9 || min > 9) {
-            CMDWARN("invalid OpenGL Version: " + bl::string(arg));
+            CMDWARN("invalid OpenGL Version: "_sv, arg);
             return false;
         }
         options.window.settings.majorVersion = static_cast<unsigned>(maj);
@@ -180,27 +161,26 @@ State::option(OptionCase opt, const char *arg)
         } else if (str_eq(arg, "compat") || str_eq(arg, "compatibility")) {
             options.window.settings.coreProfile = false;
         } else {
-            CMDWARN("--gl-profile: invalid OpenGL Profile type: " +
-                    bl::string(arg));
+            CMDWARN("--gl-profile: invalid OpenGL Profile type: "_sv, arg);
             return false;
         }
         return true;
     case GLDebug:
         if (!parse_bool(arg, options.window.settings.debugContext)) {
-            CMDWARN("--gl-debug: not a boolean option");
+            CMDWARN("--gl-debug: not a boolean option"_sv);
             return false;
         }
         return true;
     case GLTrace:
         if (!parse_bool(arg, options.traceOpenGL)) {
-            CMDWARN("--gl-trace: not a boolean option");
+            CMDWARN("--gl-trace: not a boolean option"_sv);
             return false;
         }
         return true;
     case AASamples:
         unsigned samples;
         if (sscanf(arg, "%u", &samples) != 1) {
-            CMDWARN("--aa-samples: not an integer");
+            CMDWARN("--aa-samples: not an integer"_sv);
             return false;
         }
 
@@ -208,20 +188,20 @@ State::option(OptionCase opt, const char *arg)
         return true;
     case VSync: {
         if (!parse_bool(arg, options.window.vsync)) {
-            CMDWARN("--vsync: not a boolean option");
+            CMDWARN("--vsync: not a boolean option"_sv);
             return false;
         }
         return true;
     }
     case DisableRender:
         if (!parse_bool(arg, options.disableRender)) {
-            CMDWARN("--disable-render: not a boolean option");
+            CMDWARN("--disable-render: not a boolean option"_sv);
             return false;
         }
         return true;
     case DumpShaders:
         if (!parse_bool(arg, options.dumpShaders)) {
-            CMDWARN("--dump-shaders: not a boolean option");
+            CMDWARN("--dump-shaders: not a boolean option"_sv);
             return false;
         }
         return true;
@@ -256,36 +236,43 @@ EngineOptions::parse(int *argcp, char ***argvp)
 
     auto dest = 1;
 
+    auto str_view = [](auto s) {
+        if (s)
+            return bl::string_view{ s, strlen(s) };
+        return ""_sv;
+    };
+
     auto state = State{ *this };
     if (argc > 0) {
-        binary = sys::fs::absolutePath(argv[0]);
+        binary = sys::fs::absolutePath(str_view(argv[0]));
         window.title = sys::fs::dropExtension(sys::fs::basename(binary));
     }
 
     auto done = false;
     int i;
     for (i = 1; i < argc && !done;) {
+        auto arg = str_view(argv[i]);
         auto err = false;
         auto skip = 0;
 
-        if (argv[i] != nullptr && argv[i][0] == '-') {
+        if (arg == "-"_sv) {
 
-            if (str_eq(argv[i], "--")) {
+            if (arg == "--"_sv) {
                 skip = 1;
                 done = true;
                 goto skip_args;
             }
 
             for (const auto &opt : OPTIONS) {
-                if (str_eq(argv[i], opt.option)) {
-                    auto has_arg = opt.option_arg != nullptr;
+                if (arg == opt.option) {
+                    auto has_arg = !opt.option_arg.empty();
 
                     if (!has_arg) {
                         skip = 1;
                         err = !state.option(opt.option_case, nullptr);
                     } else if (i + 1 >= argc) {
                         skip = 1;
-                        CMDWARN(bl::string(opt.option) + " missing argument");
+                        CMDWARN(opt.option, " missing argument"_sv);
                     } else {
                         skip = 2;
                         err = !state.option(opt.option_case, argv[i + 1]);
@@ -319,35 +306,35 @@ EngineOptions::printHelp()
 {
     sys::io::OutStream &out = sys::io::stderr();
 
-    out << "Engine options:\n";
+    out << "Engine options:\n"_k;
 
     auto max_col = size_t{ 0 };
 
     for (const auto &i : OPTIONS) {
         auto w = size_t{ 2 };
-        w += strlen(i.option);
-        if (i.option_arg != nullptr)
-            w += 1 + strlen(i.option_arg);
+        w += i.option.size();
+        if (!i.option_arg.empty())
+            w += 1 + i.option_arg.size();
         if (w > max_col)
             max_col = w;
     }
 
     for (const auto &i : OPTIONS) {
         auto w = size_t{ 2 };
-        out << "  " << i.option;
-        w += strlen(i.option);
-        if (i.option_arg != nullptr) {
-            out << " " << i.option_arg;
-            w += 1 + strlen(i.option_arg);
+        out << "  "_k << i.option;
+        w += i.option.size();
+        if (!i.option_arg.empty()) {
+            out << " "_k << i.option_arg;
+            w += 1 + i.option_arg.size();
         }
 
         while (w++ < max_col + 3)
             out << ' ';
 
-        out << i.description << "\n";
+        out << i.description << "\n"_k;
     }
 
-    out << "\n";
+    out << "\n"_k;
 }
 
 } // namespace ge
