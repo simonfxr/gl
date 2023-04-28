@@ -74,7 +74,7 @@ Client::Client(int _id, Handle h)
   : client_fiber(sys::fiber::toplevel())
   , hstream(bl::move(h))
   , in_stream(&hstream, client_fiber, &parser_fiber)
-  , parser(in_stream, "")
+  , parser(in_stream, ""_k)
   , id(_id)
 {
     (void) fiber_alloc(

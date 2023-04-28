@@ -33,7 +33,7 @@ parse_err(const ParserState &s,
         sys::io::ByteStream buf;
         buf << "parsing "_k << s.filename << "@"_k << s.line << ":"_k << s.col;
         buf << " parse-error: "_k << mesg;
-        err::error(loc, err::LogLevel::Error, buf);
+        err::internal::error_f::apply(loc, err::LogLevel::Error, buf);
     }
 }
 
@@ -339,7 +339,7 @@ parseQuot(ParserState &s, CommandArg &arg)
     }
 
     arg = CommandArg(std::make_shared<QuotationCommand>(
-      s.filename, line, col, "", bl::move(q)));
+      s.filename, line, col, ""_k, bl::move(q)));
 
     return EndToken;
 }

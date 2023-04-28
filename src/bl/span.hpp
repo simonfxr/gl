@@ -39,6 +39,9 @@ struct span : private std::span<T, Extent>
     using Base::span;
     using Base::operator[];
 
+    template<size_t N>
+    span(T (&)[N]) = delete;
+
     template<size_t Count>
     constexpr span<element_type, Count> first() const
     {
@@ -134,7 +137,7 @@ private:
     {
         return { s.data(), s.size() };
     }
-};
+}; // namespace bl
 
 template<typename It, typename EndOrSize>
 span(It, EndOrSize) -> span<std::remove_reference_t<std::iter_reference_t<It>>>;

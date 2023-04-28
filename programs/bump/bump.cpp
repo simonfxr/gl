@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <vector>
 
+using namespace bl::literals;
 using namespace math;
 
 DEF_GL_MAPPED_TYPE(Vertex,
@@ -75,10 +76,10 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
     rm.geometryTransform().concat(glt::rotationMatrix(phi, vec3(0, 1, 0)));
     program->use();
     glt::Uniforms(*program)
-      .optional("mvpMatrix", rm.geometryTransform().mvpMatrix())
-      .optional("mvMatrix", rm.geometryTransform().mvMatrix())
-      .optional("normalMatrix", rm.geometryTransform().normalMatrix())
-      .optional("ecLight", ecLight);
+      .optional("mvpMatrix"_k, rm.geometryTransform().mvpMatrix())
+      .optional("mvMatrix"_k, rm.geometryTransform().mvMatrix())
+      .optional("normalMatrix"_k, rm.geometryTransform().normalMatrix())
+      .optional("ecLight"_k, ecLight);
     sphere_model.draw();
     rm.geometryTransform().pop();
 }

@@ -224,55 +224,53 @@ print_stacktrace(sys::io::OutStream &out, int)
 
 #endif
 
+namespace internal {
 void
-error(const Location *loc, LogLevel lvl, bl::string_view msg)
+error_f::apply(const Location *loc, LogLevel lvl, string_arg msg) noexcept
 {
-    error(loc, lvl, sys::io::stdout(), msg);
+    apply(loc, lvl, sys::io::stdout(), msg);
 }
 
 void
-error(const Location *loc,
-      LogLevel lvl,
-      sys::io::OutStream &out,
-      bl::string_view msg)
+error_f::apply(const Location *loc,
+               LogLevel lvl,
+               sys::io::OutStream &out,
+               string_arg msg) noexcept
 {
-    reportError(out, nullptr, *loc, lvl, msg);
+    reportError(out, nullptr, *loc, lvl, msg.str);
     if (lvl >= LogLevel::FatalError)
         std::abort();
 }
 
 void
-error(const ErrorStaticCallSite *args)
+error_f::apply(const ErrorStaticCallSite *args) noexcept
 {
-    error(&args->location,
-          args->level,
-          bl::string_view{ args->message, strlen(args->message) });
+    apply(&args->location, args->level, args->message);
 }
 
 void
-fatalError(const Location *loc, LogLevel lvl, bl::string_view msg)
+fatalError_f::apply(const Location *loc, LogLevel lvl, string_arg msg) noexcept
 {
-    fatalError(loc, lvl, sys::io::stderr(), msg);
+    apply(loc, lvl, sys::io::stderr(), msg);
 }
 
 void
-fatalError(const Location *loc,
-           LogLevel lvl,
-           sys::io::OutStream &out,
-           bl::string_view msg)
+fatalError_f::apply(const Location *loc,
+                    LogLevel lvl,
+                    sys::io::OutStream &out,
+                    string_arg msg) noexcept
 {
-    error(loc, lvl, out, msg);
+    error.apply(loc, lvl, out, msg);
     std::abort(); // keep control flow analyser happy
 }
 
 void
-fatalError(const ErrorStaticCallSite *args)
+fatalError_f::apply(const ErrorStaticCallSite *args) noexcept
 {
-    fatalError(&args->location,
-               args->level,
-               bl::string_view{ args->message, strlen(args->message) });
+    apply(&args->location, args->level, args->message);
 }
 
+} // namespace internal
 void
 reportError(sys::io::OutStream &out,
             const char *type,
@@ -314,7 +312,7 @@ reportError(sys::io::OutStream &out,
         << " in "_k << loc.function << "\n"_k
         << "  at "_k << loc.file << ":"_k << loc.line << "\n"_k;
 
-    if (loc.operation) {
+    if (!loc.operation.empty()) {
         if (lvl == LL::Assertion)
             out << "  assertion: "_k << mesg << "\n"_k;
         else

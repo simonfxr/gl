@@ -4,6 +4,7 @@
 #include <bl/string.hpp>
 #include <vector>
 
+#include "bl/box.hpp"
 #include "glt/Preprocessor.hpp"
 #include "glt/ShaderCompiler.hpp"
 #include "sys/fs.hpp"
@@ -12,9 +13,11 @@
 namespace glt {
 
 struct ProcessingState;
+struct GLSLPreprocessor;
 
 struct GLT_API IncludeHandler : public Preprocessor::DirectiveHandler
 {
+    GLSLPreprocessor *glslPreprocessor;
     void beginProcessing(const Preprocessor::ContentContext & /*ctx*/) final;
     void directiveEncountered(
       const Preprocessor::DirectiveContext & /*ctx*/) final;
@@ -23,11 +26,12 @@ struct GLT_API IncludeHandler : public Preprocessor::DirectiveHandler
 
 struct GLT_API DependencyHandler : public Preprocessor::DirectiveHandler
 {
+    GLSLPreprocessor *glslPreprocessor;
     void directiveEncountered(
       const Preprocessor::DirectiveContext & /*ctx*/) final;
 };
 
-struct GLT_API GLSLPreprocessor : public Preprocessor
+struct GLT_API GLSLPreprocessor
 {
     const IncludePath &includePath;
     ShaderIncludes &includes;
@@ -36,6 +40,7 @@ struct GLT_API GLSLPreprocessor : public Preprocessor
     std::vector<uint32_t> segLengths;
     std::vector<const char *> segments;
     std::vector<Array<char>> contents;
+    bl::box<Preprocessor> preprocessor;
 
     std::unique_ptr<ProcessingState> state;
 

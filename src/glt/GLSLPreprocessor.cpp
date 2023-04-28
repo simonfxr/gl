@@ -70,10 +70,16 @@ struct ProcessingState
 GLSLPreprocessor::GLSLPreprocessor(const IncludePath &incPath,
                                    ShaderIncludes &incs,
                                    ShaderDependencies &deps)
-  : includePath(incPath), includes(incs), dependencies(deps)
+  : includePath(incPath)
+  , includes(incs)
+  , dependencies(deps)
+  , includeHandler()
+  , dependencyHandler()
 {
-    this->installHandler("include", includeHandler);
-    this->installHandler("need", dependencyHandler);
+    includeHandler.glslPreprocessor = this;
+    dependencyHandler.glslPreprocessor = this;
+    preprocessor->installHandler("include", includeHandler);
+    preprocessor->installHandler("need", dependencyHandler);
 }
 
 GLSLPreprocessor::~GLSLPreprocessor() = default;
@@ -117,28 +123,27 @@ GLSLPreprocessor::advanceSegments(const Preprocessor::DirectiveContext &ctx)
 void
 GLSLPreprocessor::processFileRecursively(bl::string &&file)
 {
-    if (wasError())
+    if (preprocessor->wasError())
         return;
 
     ASSERT(sys::fs::isAbsolute(file));
-    auto data = sys::io::readFile(file, out());
+    auto data = sys::io::readFile(file, preprocessor->out());
     if (!data) {
-        setError();
+        preprocessor->setError();
         return;
     }
 
     auto &dref = contents.emplace_back(bl::move(data).value());
 
-    this->name(bl::move(file));
-    process(bl::string_view(dref.data(), dref.size()));
+    preprocessor->name(bl::move(file));
+    preprocessor->process(bl::string_view(dref.data(), dref.size()));
 }
 
 void
 DependencyHandler::directiveEncountered(
   const Preprocessor::DirectiveContext &ctx)
 {
-    auto &proc =
-      static_cast<GLSLPreprocessor &>(ctx.content.processor); // NOLINT
+    auto &proc = *glslPreprocessor->preprocessor;
 
     const char *arg;
     uint32_t len;
@@ -154,8 +159,8 @@ DependencyHandler::directiveEncountered(
     }
 
     auto file = bl::string_view{ arg, arg + len };
-    auto realPath =
-      sys::fs::lookup(proc.includePath, file, sys::fs::ObjectType::File);
+    auto realPath = sys::fs::lookup(
+      glslPreprocessor->includePath, file, sys::fs::ObjectType::File);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
                    << ": #need-directive: cannot find file: "_k << file
@@ -164,7 +169,7 @@ DependencyHandler::directiveEncountered(
         return;
     }
 
-    proc.advanceSegments(ctx);
+    glslPreprocessor->advanceSegments(ctx);
 
     auto opt_stype = ShaderCompiler::guessShaderType(file);
     if (!opt_stype) {
@@ -178,32 +183,29 @@ DependencyHandler::directiveEncountered(
     auto stype = *opt_stype;
 
     auto absPath = sys::fs::absolutePath(realPath);
-    if (proc.state->deps.insert(absPath).second)
-        proc.dependencies.push_back(
+    if (glslPreprocessor->state->deps.insert(absPath).second)
+        glslPreprocessor->dependencies.push_back(
           ShaderSource::makeFileSource(stype, absPath));
 }
 
 void
 IncludeHandler::beginProcessing(const Preprocessor::ContentContext &ctx)
 {
-    auto &proc = static_cast<GLSLPreprocessor &>(ctx.processor); // NOLINT
-
-    if (!proc.state)
-        proc.state.reset(new ProcessingState); // NOLINT
+    if (!glslPreprocessor->state)
+        glslPreprocessor->state.reset(new ProcessingState); // NOLINT
 
     if (!ctx.name.empty())
-        proc.state->visitingFiles.insert(ctx.name);
+        glslPreprocessor->state->visitingFiles.insert(ctx.name);
 
     FileContext frame{};
     frame.pos = ctx.data;
-    proc.state->stack.push(frame);
+    glslPreprocessor->state->stack.push(frame);
 }
 
 void
 IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
 {
-    auto &proc =
-      static_cast<GLSLPreprocessor &>(ctx.content.processor); // NOLINT
+    auto &proc = *glslPreprocessor->preprocessor;
 
     const char *arg;
     uint32_t len;
@@ -217,8 +219,8 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
     }
 
     auto file = bl::string_view{ arg, arg + len };
-    auto realPath =
-      sys::fs::lookup(proc.includePath, file, sys::fs::ObjectType::File);
+    auto realPath = sys::fs::lookup(
+      glslPreprocessor->includePath, file, sys::fs::ObjectType::File);
     if (realPath.empty()) {
         proc.out() << ctx.content.name
                    << ": #include-directive: cannot find file: "_k << file
@@ -227,7 +229,7 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
         return;
     }
 
-    proc.advanceSegments(ctx);
+    glslPreprocessor->advanceSegments(ctx);
 
     auto filestat = sys::fs::stat(realPath);
     if (!filestat) {
@@ -237,10 +239,11 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
         proc.setError();
         return;
     }
-    proc.state->incs.insert(filestat->absolute);
+    glslPreprocessor->state->incs.insert(filestat->absolute);
 
-    if (!proc.state->visitingFiles.contains(filestat->absolute)) {
-        proc.includes.emplace_back(filestat->absolute, filestat->mtime);
+    if (!glslPreprocessor->state->visitingFiles.contains(filestat->absolute)) {
+        glslPreprocessor->includes.emplace_back(filestat->absolute,
+                                                filestat->mtime);
 
         auto res = readFile(filestat->absolute, proc.out());
         if (!res) {
@@ -248,7 +251,8 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
             return;
         }
 
-        auto &dref = proc.contents.emplace_back(bl::move(res).value());
+        auto &dref =
+          glslPreprocessor->contents.emplace_back(bl::move(res).value());
         proc.name(bl::move(filestat->absolute));
         proc.process(bl::string_view(dref.data(), dref.size()));
     }
@@ -257,24 +261,21 @@ IncludeHandler::directiveEncountered(const Preprocessor::DirectiveContext &ctx)
 void
 IncludeHandler::endProcessing(const Preprocessor::ContentContext &ctx)
 {
-    auto &proc = static_cast<GLSLPreprocessor &>(ctx.processor); // NOLINT
-
-    FileContext &frame = proc.state->stack.top();
-    size_t seglen = ctx.data + ctx.size - frame.pos;
+    auto &frame = glslPreprocessor->state->stack.top();
+    auto seglen = ctx.data + ctx.size - frame.pos;
 
     if (seglen > 0) {
-        proc.segments.push_back(frame.pos);
-        proc.segLengths.push_back(static_cast<uint32_t>(seglen));
+        glslPreprocessor->segments.push_back(frame.pos);
+        glslPreprocessor->segLengths.push_back(static_cast<uint32_t>(seglen));
     }
 
-    proc.state->stack.pop();
+    glslPreprocessor->state->stack.pop();
 
     if (!ctx.name.empty())
-        proc.state->visitingFiles.erase(ctx.name);
+        glslPreprocessor->state->visitingFiles.erase(ctx.name);
 
-    if (proc.state->stack.empty()) {
-        proc.state.reset();
-    }
+    if (glslPreprocessor->state->stack.empty())
+        glslPreprocessor->state.reset();
 }
 
 } // namespace glt

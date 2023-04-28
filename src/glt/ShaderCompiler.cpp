@@ -409,12 +409,12 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
       scq.shaderCompiler().shaderManager().shaderDirectories(),
       so->self->includes,
       so->self->dependencies);
-    preproc.name("");
+    preproc.preprocessor->name("");
     scq.shaderCompiler().m().initPreprocessor(preproc);
 
-    preproc.process(strsrc.source);
+    preproc.preprocessor->process(strsrc.source);
 
-    if (preproc.wasError())
+    if (preproc.preprocessor->wasError())
         return nullptr;
 
     if (!compilePreprocessed(scq, gltype, "", preproc, so->self->handle))
@@ -453,7 +453,7 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
     scq.shaderCompiler().m().initPreprocessor(preproc);
 
     preproc.processFileRecursively(bl::string(path));
-    if (preproc.wasError())
+    if (preproc.preprocessor->wasError())
         return nullptr;
 
     if (!compilePreprocessed(
@@ -735,7 +735,7 @@ void
 ShaderCompiler::Impl::initPreprocessor(GLSLPreprocessor &proc)
 {
     auto &m = shaderManager;
-    proc.out(m.out());
+    proc.preprocessor->out(m.out());
 
     if (m.shaderVersion() != 0) {
         sys::io::ByteStream glversdef;

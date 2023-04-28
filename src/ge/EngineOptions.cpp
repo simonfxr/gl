@@ -51,7 +51,7 @@ struct Option
 // clang-format off
 const constexpr auto OPTIONS = std::to_array<Option>({
   { "--help"_sv, ""_sv, Help, "print a description of all options and exit"_sv },
-  { "--no-init-script", ""_sv, NoInitScript, "inhibit loading of default script file (<program-name>.script)"_sv },
+  { "--no-init-script"_sv, ""_sv, NoInitScript, "inhibit loading of default script file (<program-name>.script)"_sv },
   { "--script-dir"_sv, "DIR"_sv, ScriptDir, "add DIR to the list of searched script directories"_sv },
   { "--shader-dir"_sv, "DIR"_sv, ShaderDir, "add DIR to the list of searched shader directories"_sv },
   { "--cd"_sv, "BOOL"_sv, CD, "change into the base directory of the program binary: yes|no"_sv },

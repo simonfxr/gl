@@ -103,9 +103,6 @@ CommandProcessor::define(CommandPtr comm, bool unique)
         return false;
     }
 
-    INFO(scat("DEFINE "_k, comname));
-    ASSERT(comname.size() == strlen(comname.c_str()));
-
     auto it = m().commands.find(comname);
     auto dup = it != m().commands.end();
     if (dup && unique) {
@@ -345,7 +342,7 @@ bool
 CommandProcessor::evalCommand(bl::string_view cmd)
 {
     sys::io::ByteStream inp(cmd);
-    return loadStream(inp, "<eval string>");
+    return loadStream(inp, "<eval string>"_k);
 }
 
 bool

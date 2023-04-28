@@ -52,15 +52,12 @@ struct GLT_API Preprocessor : bl::runtime_sized_base<Preprocessor>
     using Handlers = std::unordered_map<bl::string, DirectiveHandler *>;
     using HandlerEntry = std::pair<bl::string, DirectiveHandler *>;
 
-    Preprocessor &construct_at(void *) noexcept;
+    static Preprocessor &construct_at(void *) noexcept;
 
     const bl::string &name() const;
     void name(bl::string &&name);
 
     void process(bl::string_view);
-
-    // void process(const char *contents) { process(bl::string_view(contents));
-    // }
 
     DirectiveHandler &defaultHandler(DirectiveHandler &handler);
     DirectiveHandler &defaultHandler() const;
@@ -76,8 +73,6 @@ struct GLT_API Preprocessor : bl::runtime_sized_base<Preprocessor>
     bool setError();
     bool wasError() const;
     bool clearError();
-
-    //    static DirectiveHandler& nullHandler();
 
     BL_DECLARE_RUNTIME_SIZED(Preprocessor, Impl);
 };

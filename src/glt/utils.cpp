@@ -103,7 +103,7 @@ bool
 checkForGLError(const err::Location *loc)
 {
 
-    if (G.print_opengl_calls && loc->operation) {
+    if (G.print_opengl_calls && !loc->operation.empty()) {
         printGLTrace(loc);
     }
 
