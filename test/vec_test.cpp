@@ -7,6 +7,7 @@
 #include "./testmain.hpp"
 
 using namespace math;
+using namespace bl::literals;
 
 CTEST_GROUP("vec3")
 {
@@ -46,17 +47,17 @@ CTEST_GROUP("vec3")
         {
             auto vs = vec{ s, s, s };
 
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
         }
         {
             auto vs = bl::rand::uniform<vec3>(-1_r, 1_r);
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n";
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
+            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
         }
     }
 }

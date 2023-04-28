@@ -3,6 +3,8 @@
 #include "ge/GameWindow.hpp"
 #include "ge/KeyHandler.hpp"
 
+using namespace bl::literals;
+
 namespace ge {
 
 struct MouseLookPlugin::Impl : public MouseLookPlugin
@@ -27,15 +29,15 @@ BL_DEFINE_RUNTIME_SIZED(MouseLookPlugin, MouseLookPlugin::Impl);
 MouseLookPlugin::Impl::Impl()
 {
     _commands.grab = makeCommand(
-      "mouseLook.grab", "", [this](const Event<CommandEvent> & /*unused*/) {
+      "mouseLook.grab"_k, ""_k, [this](const Event<CommandEvent> & /*unused*/) {
           if (_should_grab)
               setState(Grabbing);
       });
 
     _commands.ungrab = makeCommand(
-      "mouseLook.ungrab", "", [this](const Event<CommandEvent> & /*unused*/) {
-          setState(Free);
-      });
+      "mouseLook.ungrab"_k,
+      ""_k,
+      [this](const Event<CommandEvent> & /*unused*/) { setState(Free); });
 }
 
 void

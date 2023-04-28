@@ -22,6 +22,7 @@
 #include <vector>
 
 using namespace math;
+using namespace bl::literals;
 
 inline constexpr real SPHERE_DENSITY = 999_r;
 
@@ -252,8 +253,8 @@ Game::windowResized(const ge::Event<ge::WindowResized> &ev)
     // ASSERT(e.renderManager().renderTarget().width() == width);
     // ASSERT(e.renderManager().renderTarget().height() == height);
 
-    sys::io::stderr() << "new window dimensions: " << width << "x" << height
-                      << "\n";
+    sys::io::stderr() << "new window dimensions: "_k << width << "x"_k << height
+                      << "\n"_k;
 
     resizeRenderTargets();
 }
@@ -312,7 +313,7 @@ Game::render(const ge::Event<ge::RenderEvent> &ev)
         GL_CALL(glDisable, GL_DEPTH_TEST);
 
         renderManager.setActiveRenderTarget(e.window().renderTarget());
-        auto postprocShader = e.shaderManager().program("postproc");
+        auto postprocShader = e.shaderManager().program("postproc"_k);
         ASSERT(postprocShader);
         postprocShader->use();
 
@@ -447,7 +448,7 @@ Game::end_render_spheres()
             sphere_instances[lod].clear();
 
             auto sphereInstancedShader =
-              engine->shaderManager().program("sphereInstanced");
+              engine->shaderManager().program("sphereInstanced"_k);
             ASSERT(sphereInstancedShader);
             sphereInstancedShader->use();
 
@@ -468,7 +469,7 @@ Game::end_render_spheres()
 #elif defined(SPHERE_INSTANCED_ARRAY)
 
             auto sphereInstanced2Shader =
-              engine->shaderManager().program("sphereInstanced2");
+              engine->shaderManager().program("sphereInstanced2"_k);
             ASSERT(sphereInstanced2Shader);
             sphereInstanced2Shader->use();
 
@@ -486,13 +487,13 @@ Game::end_render_spheres()
             GL_ASSIGN_CALL(attr_mvMatrix,
                            glGetAttribLocation,
                            sphereInstanced2Shader->program(),
-                           "mvMatrix");
+                           "mvMatrix"_k);
             ASSERT(attr_mvMatrix >= 0);
             GLint attr_colorShininess;
             GL_ASSIGN_CALL(attr_colorShininess,
                            glGetAttribLocation,
                            sphereInstanced2Shader->program(),
-                           "colorShininess");
+                           "colorShininess"_k);
             ASSERT(attr_colorShininess >= 0);
 
             for (uint32 col = 0; col < 4; ++col) {
@@ -523,9 +524,9 @@ Game::end_render_spheres()
             glt::GeometryTransform &gt =
               engine->renderManager().geometryTransform();
             glt::Uniforms(*sphereInstanced2Shader)
-              .optional("pMatrix", gt.projectionMatrix())
-              .optional("ecLight", sphereUniforms.ecLightPos)
-              .optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
+              .optional("pMatrix"_k, gt.projectionMatrix())
+              .optional("ecLight"_k, sphereUniforms.ecLightPos)
+              .optional("gammaCorrection"_k, indirect_rendering ? 1.f : GAMMA);
 
             sphereBatches[lod].drawInstanced(num);
             sphereBatches[lod].bind();
@@ -608,7 +609,7 @@ Game::render_sphere(const Sphere &s, const SphereModel &m)
         gt.translate(pos);
         gt.scale(vec3(s.r));
 
-        auto sphereShader = engine->shaderManager().program("sphere");
+        auto sphereShader = engine->shaderManager().program("sphere"_k);
         ASSERT(sphereShader);
 
         sphereShader->use();
@@ -659,7 +660,7 @@ Game::render_box(const glt::AABB &box)
     gt.translate(center);
     gt.scale(dim);
 
-    auto wallShader = engine->shaderManager().program("wall");
+    auto wallShader = engine->shaderManager().program("wall"_k);
     ASSERT(wallShader);
 
     wallShader->use();
@@ -710,7 +711,7 @@ Game::render_con(const point3 &a, const point3 &b)
     mat3_t trans = mat3(b - a, vec3(0.f, 1.f, 0.f), vec3(0.f, 0.f, 1.f));
     gt.concat(trans);
 
-    auto identityShader = engine->shaderManager().program("identity");
+    auto identityShader = engine->shaderManager().program("identity"_k);
 
     identityShader->use();
     glt::Uniforms us(*identityShader);
@@ -806,19 +807,18 @@ Game::initCommands()
     auto &proc = engine->commandProcessor();
 
     proc.define(ge::makeCommand(
-      "toggleUseInterpolation",
-      "",
+      "toggleUseInterpolation"_k,
+      ""_k,
       [this](const ge::Event<ge::CommandEvent> & /*unused*/
       ) {
           use_interpolation = !use_interpolation;
-          sys::io::stderr()
-            << "use interpolation: " << (use_interpolation ? "yes" : "no")
-            << "\n";
+          sys::io::stderr() << "use interpolation: "_k
+                            << (use_interpolation ? "yes"_k : "no"_k) << "\n"_k;
       }));
 
     proc.define(ge::makeCommand(
-      "incWorldSolveIterations",
-      "",
+      "incWorldSolveIterations"_k,
+      ""_k,
       [this](const ge::Event<ge::CommandEvent> & /*unused*/,
              bl::span<const ge::CommandArg> args) {
           if (args[0].integer < 0 &&
@@ -826,51 +826,50 @@ Game::initCommands()
               world.solve_iterations = 0;
           else
               world.solve_iterations += static_cast<int32_t>(args[0].integer);
-          sys::io::stderr()
-            << "number of contact-solver iterations: " << world.solve_iterations
-            << "\n";
+          sys::io::stderr() << "number of contact-solver iterations: "_k
+                            << world.solve_iterations << "\n"_k;
       }));
 
     proc.define(ge::makeCommand(
-      "toggleRenderByDistance",
-      "",
+      "toggleRenderByDistance"_k,
+      ""_k,
       [this](const ge::Event<ge::CommandEvent> & /*unused*/) {
           world.render_by_distance = !world.render_by_distance;
           sys::io::stderr()
-            << "render by distance: "
-            << (world.render_by_distance ? "yes" : "no") << "\n";
+            << "render by distance: "_k
+            << (world.render_by_distance ? "yes"_k : "no"_k) << "\n"_k;
       }));
 
     proc.define(ge::makeCommand(
-      "toggleRenderSpheresInstanced",
-      "",
+      "toggleRenderSpheresInstanced"_k,
+      ""_k,
       [this](const ge::Event<ge::CommandEvent> & /*unused*/) {
           render_spheres_instanced = !render_spheres_instanced;
           sys::io::stderr()
-            << "instanced rendering: "
-            << (render_spheres_instanced ? "yes" : "no") << "\n";
+            << "instanced rendering: "_k
+            << (render_spheres_instanced ? "yes"_k : "no"_k) << "\n"_k;
       }));
 
     proc.define(ge::makeCommand(
-      "toggleIndirectRendering",
-      "",
+      "toggleIndirectRendering"_k,
+      ""_k,
       [this](const ge::Event<ge::CommandEvent> & /*unused*/) {
           updateIndirectRendering(!indirect_rendering);
           sys::io::stderr()
-            << "indirect rendering: " << (indirect_rendering ? "yes" : "no")
-            << "\n";
+            << "indirect rendering: "_k
+            << (indirect_rendering ? "yes"_k : "no"_k) << "\n"_k;
       }));
 
     proc.define(
-      ge::makeCommand("spawnSphere",
-                      "",
+      ge::makeCommand("spawnSphere"_k,
+                      ""_k,
                       [this](const ge::Event<ge::CommandEvent> & /*unused*/) {
                           spawn_sphere();
                       }));
 
     proc.define(ge::makeCommand(
-      "incSphereRadius",
-      "",
+      "incSphereRadius"_k,
+      ""_k,
       [this](const ge::Event<ge::CommandEvent> & /*unused*/, double rad) {
           sphere_proto.r =
             std::max(0.05_r, sphere_proto.r + static_cast<math::real>(rad));
@@ -878,16 +877,16 @@ Game::initCommands()
       }));
 
     proc.define(ge::makeCommand(
-      "incSphereSpeed",
-      "",
+      "incSphereSpeed"_k,
+      ""_k,
       [this](const ge::Event<ge::CommandEvent> & /*unused*/, double inc) {
           sphere_speed =
             std::max(0.25_r, sphere_speed + static_cast<math::real>(inc));
       }));
 
     proc.define(ge::makeCommand(
-      "incGameSpeed",
-      "",
+      "incGameSpeed"_k,
+      ""_k,
       [this](const ge::Event<ge::CommandEvent> & /*unused*/, double inc) {
           game_speed = std::max(0_r, game_speed + static_cast<math::real>(inc));
       }));
@@ -897,6 +896,7 @@ int
 main(int argc, char *argv[])
 {
     Game game;
-    game.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    game.engine->setDevelDataDir(
+      bl::string_view_literal(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR)));
     return game.main(argc, argv);
 }

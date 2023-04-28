@@ -229,7 +229,7 @@ void
 printShaderLog(GLShaderObject & /*shader*/, sys::io::OutStream &out);
 
 std::optional<GLenum>
-translateShaderType(ShaderType type, const bl::string &basename = "");
+translateShaderType(ShaderType type, const bl::string &basename = ""_s);
 
 ReloadState
 includesNeedReload(const ShaderIncludes & /*incs*/);
@@ -409,7 +409,7 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
       scq.shaderCompiler().shaderManager().shaderDirectories(),
       so->self->includes,
       so->self->dependencies);
-    preproc.preprocessor->name("");
+    preproc.preprocessor->name(""_s);
     scq.shaderCompiler().m().initPreprocessor(preproc);
 
     preproc.preprocessor->process(strsrc.source);
@@ -417,7 +417,7 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
     if (preproc.preprocessor->wasError())
         return nullptr;
 
-    if (!compilePreprocessed(scq, gltype, "", preproc, so->self->handle))
+    if (!compilePreprocessed(scq, gltype, ""_s, preproc, so->self->handle))
         return nullptr;
     return so;
 }

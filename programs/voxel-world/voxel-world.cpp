@@ -26,6 +26,7 @@
 #define USE_PERMUT 1
 
 using namespace math;
+using namespace bl::literals;
 
 static const real FPS_UPDATE_INTERVAL = 3.;
 static const vec3 BLOCK_DIM = vec3(1.);
@@ -126,8 +127,8 @@ Anim::init(const InitEv &ev)
     e.shaderManager().verbosity(glt::ShaderManagerVerbosity::Info);
 
     e.commandProcessor().define(ge::makeCommand(
-      "incGamma",
-      "increase the value of gamma correction",
+      "incGamma"_k,
+      "increase the value of gamma correction"_k,
       [this](const ge::Event<ge::CommandEvent> & /*unused*/, double inc) {
           gamma_correction += static_cast<real>(inc);
           if (gamma_correction < 0)
@@ -135,8 +136,8 @@ Anim::init(const InitEv &ev)
       }));
 
     e.commandProcessor().define(
-      ge::makeCommand("recreateWorld",
-                      "recreate the entire world",
+      ge::makeCommand("recreateWorld"_k,
+                      "recreate the entire world"_k,
                       [this](const ge::Event<ge::CommandEvent> & /*unused*/) {
                           worldModel.freeGPU();
                           time_op(initWorld(this, worldModel, sphere_points));
@@ -397,9 +398,10 @@ initRays(Rays &rays, vec3 dirs[])
     }
 
     for (uint32_t i = 0; i < 6; ++i) {
-        sys::io::stderr() << "side " << i << ": "
-                          << "number of rays: " << rays.faceLengths[i]
-                          << " beginning at " << rays.faceOffsets[i] << "\n";
+        sys::io::stderr() << "side "_k << i << ": "_k
+                          << "number of rays: "_k << rays.faceLengths[i]
+                          << " beginning at "_k << rays.faceOffsets[i]
+                          << "\n"_k;
     }
 
     const vec3 center = vec3(N * 0.5f);
@@ -914,8 +916,8 @@ initWorld(State *state, CubeMesh &worldModel, vec3 *sphere_points)
     auto raysp = std::make_unique<Rays>();
     auto &rays = *raysp;
     time_op(initRays(rays, sphere_points));
-    sys::io::stderr() << "rays crossing planes: " << rays.sumcos.f[0] << ", "
-                      << rays.sumcos.f[1] << "\n";
+    sys::io::stderr() << "rays crossing planes: "_k << rays.sumcos.f[0]
+                      << ", "_k << rays.sumcos.f[1] << "\n"_k;
 
     std::unique_ptr<World> visp;
     time_op(visp = filterOccluded(world));
@@ -973,10 +975,10 @@ initWorld(State *state, CubeMesh &worldModel, vec3 *sphere_points)
       worldModel, world, vis, occmap.get(), verts, permut, stats, *densitiesp));
     occmap.reset();
 
-    sys::io::stderr() << "blocks: " << stats.blocks
-                      << ", visible blocks: " << stats.visBlocks << "\n";
-    sys::io::stderr() << "faces: " << stats.faces
-                      << ", visible faces: " << stats.visFaces << "\n";
+    sys::io::stderr() << "blocks: "_k << stats.blocks << ", visible blocks: "_k
+                      << stats.visBlocks << "\n"_k;
+    sys::io::stderr() << "faces: "_k << stats.faces << ", visible faces: "_k
+                      << stats.visFaces << "\n"_k;
 
     worldModel.send();
     worldModel.freeHost();
@@ -1008,9 +1010,9 @@ Anim::render(const RenderEv &ev)
         double min = INV(fs.max);
         double max = INV(fs.min);
         double avg = INV(fs.avg);
-        sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): "
-                          << fps << "; " << avg << "; " << min << "; " << max
-                          << "\n";
+        sys::io::stderr()
+          << "Timings (FPS/Render Avg/Render Min/Render Max): "_k << fps
+          << "; "_k << avg << "; "_k << min << "; "_k << max << "\n"_k;
     }
 }
 
@@ -1030,7 +1032,7 @@ renderBlocks(State *state, ge::Engine &e)
     //                                    vec3(0., 0., 1.)));
     // rm.geometryTransform().translate(-center);
 
-    auto voxelShader = e.shaderManager().program("voxel");
+    auto voxelShader = e.shaderManager().program("voxel"_k);
     ASSERT(voxelShader);
 
     voxelShader->use();
@@ -1103,7 +1105,8 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(
+      bl::string_view_literal(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR)));
     auto ret = anim.main(argc, argv);
 #ifdef HS_WORLD_GEN
     hs_voxel_destroy(anim.voxel_state);

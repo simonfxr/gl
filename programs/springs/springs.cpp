@@ -15,9 +15,10 @@
 #include <map>
 #include <vector>
 
-const size_t N_SPRINGS = 20;
-
 using namespace math;
+using namespace bl::literals;
+
+const size_t N_SPRINGS = 20;
 
 DEF_GL_MAPPED_TYPE(Vertex, (vec3, position), (vec3, normal))
 
@@ -193,10 +194,10 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 
     physics_prog =
       std::make_shared<glt::ShaderProgram>(engine->shaderManager());
-    physics_prog->addShaderFile("physics.vert");
-    physics_prog->bindAttribute("position_mass", 0);
-    physics_prog->bindAttribute("velocity", 1);
-    physics_prog->bindAttribute("connection", 2);
+    physics_prog->addShaderFile("physics.vert"_k);
+    physics_prog->bindAttribute("position_mass"_k, 0);
+    physics_prog->bindAttribute("velocity"_k, 1);
+    physics_prog->bindAttribute("connection"_k, 2);
     const char *stream_vars[] = { "Out1.position_mass", "Out2.velocity" };
 
     GL_CALL(glTransformFeedbackVaryings,
@@ -217,7 +218,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
     rt->clearColor(glt::color(vec4(1_r)));
     rt->clear();
 
-    auto prog = engine->shaderManager().program("sphere");
+    auto prog = engine->shaderManager().program("sphere"_k);
     ASSERT(prog);
 
     GL_CALL(glActiveTexture, GL_TEXTURE0);
@@ -241,9 +242,9 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
     pc_sum += physics_perf_counter.query();
 
     if (fpsTimer.fire()) {
-        sys::io::stdout() << "simulation fps: "
-                          << (1 / physics_perf_counter.query())
-                          << ", avg: " << (pc_count / pc_sum) << "\n";
+        sys::io::stdout() << "simulation fps: "_k
+                          << (1 / physics_perf_counter.query()) << ", avg: "_k
+                          << (pc_count / pc_sum) << "\n"_k;
         pc_sum = 0.0;
         pc_count = 0;
     }
@@ -300,6 +301,7 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(
+      bl::string_view_literal(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR)));
     return anim.main(argc, argv);
 }

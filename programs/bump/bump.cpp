@@ -61,8 +61,8 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
     rt->clearColor(glt::color(vec4(1)));
     rt->clear();
 
-    auto program = engine->shaderManager().program("sphere");
-    ASSERT(program, "sphere program not found");
+    auto program = engine->shaderManager().program("sphere"_k);
+    ASSERT(program, "sphere program not found"_k);
     auto &rm = engine->renderManager();
 
     auto ecLight =
@@ -88,7 +88,8 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(
+      bl::string_view_literal(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR)));
     return anim.main(argc, argv);
 }
 

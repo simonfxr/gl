@@ -1,6 +1,8 @@
 #include "err/err.hpp"
 #include "util/string.hpp"
 
+using namespace bl::literals;
+
 HU_NOINLINE int
 foo()
 {
@@ -26,7 +28,7 @@ baz(int x)
 void
 bazzz(int x)
 {
-    ASSERT_ALWAYS(x > 0, scat("value: ", x));
+    ASSERT_ALWAYS(x > 0, scat("value: "_k, x));
 }
 
 int

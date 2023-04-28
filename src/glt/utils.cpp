@@ -32,7 +32,7 @@ getGLErrorString(GLenum err)
     switch (err) {
 #define err_case(e)                                                            \
     case e:                                                                    \
-        return #e
+        return bl::string_view_literal(#e)
         err_case(GL_NO_ERROR);
         err_case(GL_INVALID_ENUM);
         err_case(GL_INVALID_VALUE);
@@ -61,15 +61,23 @@ printGLErrors(sys::io::OutStream &out)
     return was_error;
 }
 
+bl::string_view
+gl_unstr(const GLubyte *glstr) noexcept
+{
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    auto p = reinterpret_cast<const char *>(glstr);
+    return { p, strlen(p) };
+}
+
 bool
-isExtensionSupported(const char *extension)
+isExtensionSupported(bl::string_view extension)
 {
     GLint ni;
     glGetIntegerv(GL_NUM_EXTENSIONS, &ni);
     auto n = static_cast<GLuint>(ni);
 
     for (GLuint i = 0; i < n; i++)
-        if (strcmp(extension, gl_unstr(glGetStringi(GL_EXTENSIONS, i))) == 0)
+        if (extension == gl_unstr(glGetStringi(GL_EXTENSIONS, i)))
             return true;
 
     return false;

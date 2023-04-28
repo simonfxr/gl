@@ -78,8 +78,8 @@ GLSLPreprocessor::GLSLPreprocessor(const IncludePath &incPath,
 {
     includeHandler.glslPreprocessor = this;
     dependencyHandler.glslPreprocessor = this;
-    preprocessor->installHandler("include", includeHandler);
-    preprocessor->installHandler("need", dependencyHandler);
+    preprocessor->installHandler("include"_s, includeHandler);
+    preprocessor->installHandler("need"_s, dependencyHandler);
 }
 
 GLSLPreprocessor::~GLSLPreprocessor() = default;

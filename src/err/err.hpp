@@ -24,7 +24,7 @@ struct string_arg
     template<size_t N>
         requires(N > 0)
     consteval /* implicit */ string_arg(const char (&arg)[N])
-      : str(bl::string_literal(arg))
+      : str(bl::string_view_literal(arg))
     {}
 
     constexpr string_arg() = default;
@@ -204,7 +204,7 @@ reportError(sys::io::OutStream &out,
     (unlikely(!(PP_ARG1(__VA_ARGS__)))                                         \
        ? (void) FATAL_ERROR_WITH_LEVEL_AND_OP(                                 \
            ::err::LogLevel::Assertion,                                         \
-           ::bl::string_literal(PP_TOSTR(PP_ARG1(__VA_ARGS__))),               \
+           ::bl::string_view_literal(PP_TOSTR(PP_ARG1(__VA_ARGS__))),          \
            PP_ARG2(__VA_ARGS__, "assertion failed"))                           \
        : (void) 0)
 

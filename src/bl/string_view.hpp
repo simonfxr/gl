@@ -16,7 +16,7 @@ using string_view = basic_string_view<string_byte>;
 
 template<size_t N>
     requires(N > 0)
-consteval string_view string_literal(const char (&literal)[N]) noexcept
+consteval string_view string_view_literal(const char (&literal)[N]) noexcept
 {
     return string_view{ literal, N - 1 };
 }

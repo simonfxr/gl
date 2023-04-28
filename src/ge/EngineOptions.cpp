@@ -212,7 +212,7 @@ State::option(OptionCase opt, const char *arg)
 } // namespace
 
 EngineOptions::EngineOptions()
-  : workingDirectory(PP_TOSTR(SOURCE_DIR))
+  : workingDirectory(bl::string_view_literal(PP_TOSTR(SOURCE_DIR)))
   , inhibitInitScript(false)
   , defaultCD(false)
   , mode(Animate)

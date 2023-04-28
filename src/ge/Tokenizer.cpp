@@ -130,7 +130,7 @@ parseSym(ParserState &s)
     sys::io::ByteStream buf;
 
     if (!symFirst(s.c))
-        return "";
+        return ""_s;
 
     do {
         buf << s.c;
@@ -168,7 +168,7 @@ parseKeycombo(ParserState &s, CommandArg &tok)
         auto sym = parseSym(s);
 
         if (sym.empty()) {
-            PARSE_ERROR(s, "expected a key symbol");
+            PARSE_ERROR(s, "expected a key symbol"_k);
             return Fail;
         }
 
@@ -191,9 +191,9 @@ parseKeycombo(ParserState &s, CommandArg &tok)
 
     if (s.c == 0) {
         if (needOne)
-            PARSE_ERROR(s, "expected a key symbol");
+            PARSE_ERROR(s, "expected a key symbol"_k);
         else
-            PARSE_ERROR(s, "exptected ]");
+            PARSE_ERROR(s, "exptected ]"_k);
         return Fail;
     }
 
@@ -235,7 +235,8 @@ parseString(ParserState &s, CommandArg &tok)
                     esc = s.rawC;
                     break;
                 default:
-                    PARSE_ERROR(s, "invalid escape sequence in string literal");
+                    PARSE_ERROR(s,
+                                "invalid escape sequence in string literal"_k);
                     return Fail;
                 }
 
@@ -280,7 +281,7 @@ parseCommandRef(ParserState &s, CommandArg &arg)
     }
 
 fail:
-    PARSE_ERROR(s, "expected a command name");
+    PARSE_ERROR(s, "expected a command name"_k);
     return Fail;
 }
 
@@ -299,7 +300,7 @@ parseVarRef(ParserState &s, CommandArg &arg)
     }
 
 fail:
-    PARSE_ERROR(s, "expected a variable name");
+    PARSE_ERROR(s, "expected a variable name"_k);
     return Fail;
 }
 
@@ -334,7 +335,7 @@ parseQuot(ParserState &s, CommandArg &arg)
     }
 
     if (s.c != '}') {
-        PARSE_ERROR(s, "expected }");
+        PARSE_ERROR(s, "expected }"_k);
         return Fail;
     }
 
@@ -417,7 +418,7 @@ parseNum(ParserState &s, CommandArg &tok)
     }
 
     if (!oneDigit) {
-        PARSE_ERROR(s, "expected a number");
+        PARSE_ERROR(s, "expected a number"_k);
         return Fail;
     }
 

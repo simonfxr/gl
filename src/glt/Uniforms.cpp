@@ -26,14 +26,6 @@ gltype(const T &x) -> gl_mapped_type_t<T>
     return x;
 }
 
-template<size_t N>
-constexpr bl::string_view
-make_sv(const char (&x)[N])
-{
-    static_assert(N > 0);
-    return bl::string_view{ x, x + (N - 1) };
-}
-
 #if ENABLE_GLDEBUG_P
 bl::string_view
 descGLType(GLenum ty)
@@ -42,7 +34,7 @@ descGLType(GLenum ty)
 #    define CASE(ty)                                                           \
     case ty:                                                                   \
         do {                                                                   \
-            constexpr auto retstr = make_sv(#ty);                              \
+            constexpr auto retstr = ::bl::string_view_literal(#ty);            \
             return retstr;                                                     \
         } while (0)
 

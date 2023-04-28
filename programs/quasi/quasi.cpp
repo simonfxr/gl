@@ -10,6 +10,7 @@
 #include "shaders/quasi_constants.h"
 
 using namespace math;
+using namespace bl::literals;
 
 DEF_GL_MAPPED_TYPE(Vertex, (vec2, position))
 
@@ -46,7 +47,7 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 
     if (engine->window().contextInfo().antialiasingLevel > 0) {
         GL_CALL(glEnable, GL_MULTISAMPLE);
-        engine->out() << "enableing multisampling\n";
+        engine->out() << "enableing multisampling\n"_k;
     }
 
     GL_CALL(glDisable, GL_DEPTH_TEST);
@@ -67,7 +68,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
     auto time = e.gameLoop().tickTime() +
                 ev.info.interpolation * e.gameLoop().tickDuration();
 
-    auto renderShader = e.shaderManager().program("render");
+    auto renderShader = e.shaderManager().program("render"_k);
     ASSERT(renderShader);
 
     renderShader->use();
@@ -88,9 +89,9 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
         auto min = INV(fs.max);
         auto max = INV(fs.min);
         auto avg = INV(fs.avg);
-        engine->out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
-                      << fps << "; " << avg << "; " << min << "; " << max
-                      << "\n";
+        engine->out() << "Timings (FPS/Render Avg/Render Min/Render Max): "_k
+                      << fps << "; "_k << avg << "; "_k << min << "; "_k << max
+                      << "\n"_k;
     }
 }
 
@@ -98,6 +99,7 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(
+      bl::string_view_literal(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR)));
     return anim.main(argc, argv);
 }

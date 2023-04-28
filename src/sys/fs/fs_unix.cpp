@@ -50,7 +50,7 @@ retry:
                 goto retry;
             if (errno != EINTR) {
                 ERR(scat("cwd() failed: "_sv, strerror_errno()));
-                return "";
+                return ""_s;
             }
         }
 
@@ -77,7 +77,7 @@ bl::string
 dirname(bl::string_view path)
 {
     if (path.empty())
-        return ".";
+        return "."_s;
 
     size_t pos = path.rfind('/', dropTrailingSlashes(path));
 
@@ -89,7 +89,7 @@ dirname(bl::string_view path)
     }
 
     if (pos == 0)
-        return "/";
+        return "/"_s;
 
     return view_substr(path, 0, pos);
 }
@@ -99,7 +99,7 @@ basename(bl::string_view path)
 {
 
     if (path.empty())
-        return "";
+        return ""_s;
 
     size_t pos = path.rfind('/', dropTrailingSlashes(path));
     size_t end = bl::string::npos;
@@ -131,7 +131,7 @@ extension(bl::string_view path)
         pos = 0;
     pos = path.find('.', pos);
     if (pos == bl::string::npos)
-        return "";
+        return ""_s;
     return view_substr(path, pos + 1);
 }
 

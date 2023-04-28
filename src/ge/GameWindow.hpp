@@ -19,36 +19,22 @@ struct WindowEvents;
 
 struct GE_API GLContextInfo
 {
-    unsigned int depthBits;
-    unsigned int stencilBits;
-    unsigned int antialiasingLevel;
-    unsigned int majorVersion;
-    unsigned int minorVersion;
-    bool debugContext;
-    bool coreProfile;
-
-    GLContextInfo()
-      : depthBits(8)
-      , stencilBits(0)
-      , antialiasingLevel(0)
-      , majorVersion(3)
-      , minorVersion(3)
-      , debugContext(true)
-      , coreProfile(false)
-    {}
+    unsigned int depthBits{ 8 };
+    unsigned int stencilBits{};
+    unsigned int antialiasingLevel{};
+    unsigned int majorVersion{ 3 };
+    unsigned int minorVersion{ 3 };
+    bool debugContext{ true };
+    bool coreProfile{};
 };
 
 struct GE_API WindowOptions
 {
-    size_t width;
-    size_t height;
+    size_t width{ 800 };
+    size_t height{ 600 };
     bl::string title;
     GLContextInfo settings;
-    bool vsync;
-
-    WindowOptions()
-      : width(800), height(600), title(""), settings(), vsync(false)
-    {}
+    bool vsync{};
 };
 
 struct GE_API GameWindow : private bl::runtime_sized_base<GameWindow>

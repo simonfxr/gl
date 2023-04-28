@@ -18,8 +18,8 @@
         double name = ::sys::queryTimer();                                     \
         __VA_ARGS__;                                                           \
         double _diff_ = ::sys::queryTimer() - name;                            \
-        ::sys::io::stdout()                                                    \
-          << #__VA_ARGS__ << " took " << (_diff_ * 1000) << " ms.\n";          \
+        ::sys::io::stdout() << ::bl::string_view_literal(#__VA_ARGS__)         \
+                            << " took "_k << (_diff_ * 1000) << " ms.\n"_k;    \
     } while (0)
 
 #define time_op(...) time_op_name(HU_COUNTER, __VA_ARGS__)

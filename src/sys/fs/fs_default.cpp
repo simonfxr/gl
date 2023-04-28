@@ -64,7 +64,7 @@ bl::string
 dirname(bl::string_view path)
 {
     if (path.empty())
-        return ".";
+        return "."_s;
 
     auto len = path.size();
     while (len > 0 && !is_pathsep(path[len - 1]))
@@ -79,7 +79,7 @@ dirname(bl::string_view path)
     }
 
     if (len == 0)
-        return "/";
+        return "/"_s;
 
     return view_substr(path, 0, len);
 }
@@ -89,7 +89,7 @@ basename(bl::string_view path)
 {
 
     if (path.empty())
-        return "";
+        return ""_s;
 
     size_t pos = path.rfind(SEPARATOR_CHAR, dropTrailingSeps(path));
     size_t end = bl::string::npos;
@@ -115,7 +115,7 @@ extension(bl::string_view path)
         pos = 0;
     pos = path.find('.', pos);
     if (pos == bl::string::npos)
-        return "";
+        return ""_s;
     return view_substr(path, pos + 1);
 }
 
@@ -127,7 +127,7 @@ dropExtension(bl::string_view path)
         pos = 0;
     pos = path.find('.', pos);
     if (pos == bl::string::npos)
-        return bl::string(path);
+        return path;
     return view_substr(path, 0, pos);
 }
 
@@ -165,7 +165,7 @@ absolutePath(bl::string_view path)
 {
     if (auto st = stat(path))
         return st->absolute;
-    return "";
+    return ""_s;
 }
 
 std::optional<FileTime>

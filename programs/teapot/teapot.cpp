@@ -167,7 +167,7 @@ Anim::init(const Event<InitEvent> &ev)
     engine->keyHandler().keyPressedEvent().reg(*this, &Anim::keyPressed);
 
     loadResources(sys::fs::join(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR), "data"));
-    engine->out() << "in init()\n";
+    engine->out() << "in init()\n"_k;
 
     fpsTimer = std::make_shared<ge::Timer>(*engine);
     fpsTimer->start(1.f, true);
@@ -352,7 +352,7 @@ Anim::render(const Event<ge::RenderEvent> &e)
 
     renderLight();
 
-    renderTable("teapotTextured");
+    renderTable("teapotTextured"_k);
 
     // { // render a shadow of the table
     //     glt::GeometryTransform& gt = rm.geometryTransform();
@@ -448,9 +448,9 @@ Anim::render(const Event<ge::RenderEvent> &e)
         double min = INV(fs.max);
         double max = INV(fs.min);
         double avg = INV(fs.avg);
-        sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): "
-                          << fps << "; " << avg << "; " << min << "; " << max
-                          << "\n";
+        sys::io::stderr()
+          << "Timings (FPS/Render Avg/Render Min/Render Max): "_k << fps
+          << "; "_k << avg << "; "_k << min << "; "_k << max << "\n"_k;
     }
 }
 
@@ -472,7 +472,7 @@ Anim::setupTeapotShader(const bl::string &progname,
     glt::RenderManager &rm = engine->renderManager();
     auto prog = engine->shaderManager().program(progname);
     if (!prog) {
-        ASSERT(prog, scat("undefined program: "_sv, progname));
+        ASSERT(prog, scat("undefined program: "_k, progname));
         return;
     }
 
@@ -524,7 +524,7 @@ Anim::renderLight()
 
     MaterialProperties mat = { 0.8f, 0.2f, 1.f, 120.f, 0.8f };
 
-    setupTeapotShader("teapot", vec4(1.f, 1.f, 0.f, 1.f), mat);
+    setupTeapotShader("teapot"_k, vec4(1.f, 1.f, 0.f, 1.f), mat);
     sphereModel.draw();
 }
 
@@ -537,7 +537,7 @@ Anim::renderTeapot(const Teapot &teapot)
     rm.geometryTransform().concat(transformationLocalToWorld(teapot.frame));
     rm.geometryTransform().scale(vec3(13.f));
 
-    setupTeapotShader("teapot", teapot.color.vec4(), teapot.material);
+    setupTeapotShader("teapot"_k, teapot.color.vec4(), teapot.material);
     teapotModel.draw();
 }
 
@@ -552,7 +552,7 @@ Anim::renderGround()
 
     MaterialProperties mat = { 0.f, 1.f, 0.f, 30.f, 0 };
     vec4 color = glt::color(0xcd, 0xc9, 0xc9).vec4();
-    setupTeapotShader("teapot", color, mat);
+    setupTeapotShader("teapot"_k, color, mat);
     groundModel.draw();
 }
 
@@ -683,8 +683,7 @@ Anim::loadResources(const bl::string &dir)
 
     int w, h;
     uint32_t *wood_data;
-    auto file =
-      unique_file(fopen(scat(data_dir, "/wood.bmp"_sv).c_str(), "rb"));
+    auto file = unique_file(fopen(scat(data_dir, "/wood.bmp"_k).c_str(), "rb"));
     if (!file) {
         ERR("couldnt open data/wood.bmp");
         return;
@@ -708,13 +707,13 @@ Anim::loadResources(const bl::string &dir)
     woodTexture.filterMode(glt::TextureSampler::FilterLinear);
 
     auto nfaces =
-      parse_sply(scat(data_dir, "/teapot.sply"_sv).c_str(), teapotModel);
+      parse_sply(sys::fs::join(data_dir, "teapot.sply"_k).c_str(), teapotModel);
     if (nfaces < 0) {
         ERR("couldnt parse teapot model");
         return;
     }
-    sys::io::stdout() << "parsed teapot model: " << nfaces << " vertices"
-                      << "\n";
+    sys::io::stdout() << "parsed teapot model: "_k << nfaces << " vertices"_k
+                      << "\n"_k;
 
 #ifdef MESH_MESH
     teapotModel.primType(GL_QUADS);
@@ -727,7 +726,8 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(
+      bl::string_view_literal(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR)));
     return anim.main(argc, argv);
 }
 

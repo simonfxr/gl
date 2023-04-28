@@ -11,6 +11,7 @@
 #include "math/real.hpp"
 
 using namespace math;
+using namespace bl::literals;
 
 DEF_GL_MAPPED_TYPE(Vertex, (vec2, position))
 
@@ -68,7 +69,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
     auto time = e.gameLoop().tickTime() +
                 ev.info.interpolation * e.gameLoop().tickDuration();
 
-    auto renderShader = e.shaderManager().program("render");
+    auto renderShader = e.shaderManager().program("render"_k);
     ASSERT(renderShader);
 
     worldTexture.bind(0);
@@ -87,6 +88,7 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(
+      bl::string_view_literal(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR)));
     return anim.main(argc, argv);
 }

@@ -25,7 +25,8 @@ static int sysinit = []() {
 CTEST_ATTR_UNUSED static void
 report_not_equal(auto &&expected, auto &&rhs)
 {
-    sys::io::stderr() << expected << " vs " << rhs << "\n";
+    using namespace bl::literals;
+    sys::io::stderr() << expected << " vs "_k << rhs << "\n"_k;
 }
 
 #define test_rng() ::bl::rand::seed_from(ctest_rand(uint64_t))

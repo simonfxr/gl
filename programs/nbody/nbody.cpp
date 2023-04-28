@@ -13,6 +13,7 @@
 #include "nbody/nbody_phys.hpp"
 
 using namespace math;
+using namespace bl::literals;
 
 static const size_t SIMULATION_FPS = 50;
 
@@ -102,7 +103,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
       transformVector(rm.geometryTransform().viewMatrix(), light_dir));
 
     {
-        auto program = engine->shaderManager().program("ground");
+        auto program = engine->shaderManager().program("ground"_k);
         ASSERT(program, "ground program not found");
 
         rm.geometryTransform().dup();
@@ -132,9 +133,9 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
         auto min = INV(fs.max);
         auto max = INV(fs.min);
         auto avg = INV(fs.avg);
-        sys::io::stderr() << "Timings (FPS/Render Avg/Render Min/Render Max): "
-                          << fps << "; " << avg << "; " << min << "; " << max
-                          << "\n";
+        sys::io::stderr()
+          << "Timings (FPS/Render Avg/Render Min/Render Max): "_k << fps
+          << "; "_k << avg << "; "_k << min << "; "_k << max << "\n"_k;
 #undef INV
     }
 }

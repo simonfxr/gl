@@ -36,6 +36,9 @@ struct basic_string
     using Base::size;
     using Base::operator[];
 
+    template<typename Elem, size_t N>
+    basic_string(Elem (&)[N]) = delete;
+
     constexpr basic_string(const basic_string_view<CharT> &rhs)
       : basic_string(rhs.begin(), rhs.end())
     {}
@@ -79,17 +82,9 @@ using string = basic_string<string_view::value_type>;
 
 using bytes = basic_string<uint8_t, std::allocator<uint8_t>>;
 
-namespace literals {
-
-constexpr string operator""_s(const string::value_type *s,
-                              std::size_t n) noexcept
-{
-    return string{ s, s + n };
-}
-
-} // namespace literals
-
 } // namespace bl
+
+#include <bl/_string_literals.hpp>
 
 template<typename CharT, typename Allocator>
 struct std::hash<bl::basic_string<CharT, Allocator>>

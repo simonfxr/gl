@@ -7,6 +7,7 @@
 #include <vector>
 
 using namespace sys;
+using namespace bl::literals;
 
 static const size_t BUF_SIZE = 4096;
 
@@ -52,7 +53,7 @@ main()
             IGNORE_RESULT(
               io::elevate(handle, io::mode(handle) | io::HM_NONBLOCKING));
             auto &c = clients.emplace_back(std::move(handle), id);
-            sys::io::stdout() << "accepted client " << c.id << "\n";
+            sys::io::stdout() << "accepted client "_k << c.id << "\n"_k;
         }
 
         for (size_t i = 0; i < clients.size(); i++) {
@@ -100,7 +101,7 @@ main()
 
             if (close) {
                 sys::io::stdout()
-                  << "closing connection to client " << c.id << "\n";
+                  << "closing connection to client "_k << c.id << "\n"_k;
                 c.stream->close();
                 clients.erase(clients.begin() + i);
                 --i; // may underflow, okay

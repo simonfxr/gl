@@ -25,6 +25,8 @@
 #include <sstream>
 #include <vector>
 
+using namespace bl::literals;
+
 template<size_t N>
 using cl_size = std::array<cl::size_type, N>;
 
@@ -138,7 +140,7 @@ print_cl_error(const char *msg,
                ::size_t /*unused*/,
                void * /*unused*/)
 {
-    sys::io::stdout() << msg << "\n";
+    sys::io::stdout() << msg << "\n"_k;
 }
 
 static cl::Context
@@ -192,19 +194,20 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
 
-    engine->out() << "found " << platforms.size() << " CL platforms"
-                  << "\n";
+    engine->out() << "found "_k << platforms.size() << " CL platforms"_k
+                  << "\n"_k;
     if (platforms.empty())
         return;
     platforms.resize(1);
 
     cl::Platform &platform = platforms[0];
     bl::string info_value;
-    engine->out() << "selecting CL platform:\n";
+    engine->out() << "selecting CL platform:\n"_k;
 
 #define PLAT_INFO(info)                                                        \
     platform.getInfo(info, &info_value);                                       \
-    engine->out() << "  " << #info << ": " << info_value << "\n"
+    engine->out() << "  "_k << bl::string_view_literal(#info) << ": "_k        \
+                  << info_value << "\n"_k
 
     PLAT_INFO(CL_PLATFORM_NAME);
     PLAT_INFO(CL_PLATFORM_PROFILE);
@@ -212,14 +215,14 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     PLAT_INFO(CL_PLATFORM_VERSION);
 #undef PLAT_INFO
 
-    engine->out() << "  CL_PLATFORM_EXTENSIONS:\n";
+    engine->out() << "  CL_PLATFORM_EXTENSIONS:\n"_k;
     platform.getInfo(CL_PLATFORM_EXTENSIONS, &info_value);
     std::istringstream exts(info_value.c_str());
     std::string ext;
     while (std::getline(exts, ext, ' '))
-        engine->out() << "    " << ext << "\n";
+        engine->out() << "    "_k << ext << "\n"_k;
 
-    engine->out() << "  END EXTENSIONS\n";
+    engine->out() << "  END EXTENSIONS\n"_k;
 
     cl_int cl_err;
     cl_ctx = createCLGLContext(platform, &cl_err);
@@ -228,18 +231,19 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
         return;
     }
 
-    engine->out() << "created CL context\n";
+    engine->out() << "created CL context\n"_k;
 
     std::vector<cl::Device> devices = cl_ctx.getInfo<CL_CONTEXT_DEVICES>();
     if (devices.empty())
         return;
     devices.resize(1);
-    engine->out() << "selecting CL device:\n";
+    engine->out() << "selecting CL device:\n"_k;
     cl_device = devices[0];
 
 #define DEV_INFO(info)                                                         \
     cl_device.getInfo(info, &info_value);                                      \
-    engine->out() << "  " << #info << ": " << info_value << "\n"
+    engine->out() << "  "_k << bl::string_view_literal(#info) << ": "_k        \
+                  << info_value << "\n"_k
 
     DEV_INFO(CL_DEVICE_NAME);
     DEV_INFO(CL_DEVICE_OPENCL_C_VERSION);
@@ -248,19 +252,19 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     DEV_INFO(CL_DEVICE_VERSION);
     DEV_INFO(CL_DRIVER_VERSION);
 
-    engine->out() << "  CL_DEVICE_EXTENSIONS:\n";
+    engine->out() << "  CL_DEVICE_EXTENSIONS:\n"_k;
     cl_device.getInfo(CL_DEVICE_EXTENSIONS, &info_value);
     std::istringstream dev_exts(info_value.c_str());
     std::string dev_ext;
 
     bool supports_3d_image_write = false;
     while (std::getline(dev_exts, dev_ext, ' ')) {
-        engine->out() << "    " << dev_ext << "\n";
+        engine->out() << "    "_k << dev_ext << "\n"_k;
         if (dev_ext == "cl_khr_3d_image_writes")
             supports_3d_image_write = true;
     }
 
-    engine->out() << "  END EXTENSIONS\n";
+    engine->out() << "  END EXTENSIONS\n"_k;
 
     if (!supports_3d_image_write) {
         ERR("cl_khr_3d_image_writes not supported");
@@ -321,11 +325,11 @@ Anim::initCLKernels(bool *success)
     devices.push_back(cl_device);
     cl_err = cl_program.build(
       devices, (std::string("-I programs/mc/ -DSIZE=") + num.str()).c_str());
-    engine->out() << "building cl program: "
-                  << (cl_err == CL_SUCCESS ? "success" : "failed")
-                  << ", log:\n";
+    engine->out() << "building cl program: "_k
+                  << (cl_err == CL_SUCCESS ? "success"_k : "failed"_k)
+                  << ", log:\n"_k;
     engine->out() << cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl_device)
-                  << "\n";
+                  << "\n"_k;
 
     if (cl_err != CL_SUCCESS)
         return;
@@ -396,7 +400,7 @@ Anim::initMC(MCState &cur_mc, vec3 orig, vec3 dim, bool *success)
     // apparently creating a 3d texture of size 1x1x1 fails
     // while (sz > 0) {
     while (sz > 1) {
-        engine->out() << "sz = " << sz << "\n";
+        engine->out() << "sz = "_k << sz << "\n"_k;
         max_size *= 8;
         cl_channel_type type;
         if (max_size >= (1 << 16))
@@ -614,7 +618,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
     rm.activeRenderTarget()->clear();
     auto &gt = rm.geometryTransform();
 
-    auto program = engine->shaderManager().program("render");
+    auto program = engine->shaderManager().program("render"_k);
     ASSERT(program);
 
     program->use();
@@ -660,14 +664,14 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
         auto min = INV(fs.max);
         auto max = INV(fs.min);
         auto avg = INV(fs.avg);
-        engine->out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
-                      << fps << "; " << avg << "; " << min << "; " << max
-                      << "\n";
+        engine->out() << "Timings (FPS/Render Avg/Render Min/Render Max): "_k
+                      << fps << "; "_k << avg << "; "_k << min << "; "_k << max
+                      << "\n"_k;
 
         double avg_tris = sum_tris / num_renders;
 
-        engine->out() << "Avg Tris: " << avg_tris << " Max Tris: " << max_tris
-                      << "\n";
+        engine->out() << "Avg Tris: "_k << avg_tris << " Max Tris: "_k
+                      << max_tris << "\n"_k;
 
         max_tris = 0;
         num_renders = 0;
@@ -685,6 +689,7 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(
+      bl::string_view_literal(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR)));
     return anim.main(argc, argv);
 }

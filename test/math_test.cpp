@@ -8,12 +8,10 @@
 #include "sys/clock.hpp"
 #include "sys/io/Stream.hpp"
 
-#include <iostream>
-
 using namespace math;
+using namespace bl::literals;
 
-HU_NOINLINE
-static void
+HU_NOINLINE static void
 mul(vec4 *RESTRICT rr,
     const mat4_t *RESTRICT m,
     const vec4 *RESTRICT v,
@@ -122,46 +120,51 @@ main(void)
     // frame.translateLocal(vec3(3, 4, 5));
     // // frame.rotateWorld(3.f, vec3(1.f, 0.f, 0.f));
 
-    // std::cerr << "x-axis: " << frame.localX() << std::endl;
-    // std::cerr << "y-axis: " << frame.localY() << std::endl;
-    // std::cerr << "z-axis: " << frame.localZ() << std::endl;
-    // std::cerr << std::endl;
-    // std::cerr << std::endl;
+    // sys::io::stderr() << "x-axis: " << frame.localX() << std::endl;
+    // sys::io::stderr() << "y-axis: " << frame.localY() << std::endl;
+    // sys::io::stderr() << "z-axis: " << frame.localZ() << std::endl;
+    // sys::io::stderr() << std::endl;
+    // sys::io::stderr() << std::endl;
 
-    // std::cerr << "Orientation_World->Local: " <<
-    // mat4(rotationWorldToLocal(frame)); std::cerr << std::endl; std::cerr <<
-    // std::endl;
+    // sys::io::stderr() << "Orientation_World->Local: " <<
+    // mat4(rotationWorldToLocal(frame)); sys::io::stderr() << std::endl;
+    // sys::io::stderr() << std::endl;
 
-    // std::cerr << "Frame_World->Local: " << transformationWorldToLocal(frame);
-    // std::cerr << std::endl;
-    // std::cerr << std::endl;
+    // sys::io::stderr() << "Frame_World->Local: " <<
+    // transformationWorldToLocal(frame); sys::io::stderr() << std::endl;
+    // sys::io::stderr() << std::endl;
 
-    // std::cerr << "Frame_Local->World: " << transformationLocalToWorld(frame);
-    // std::cerr << std::endl;
-    // std::cerr << std::endl;
+    // sys::io::stderr() << "Frame_Local->World: " <<
+    // transformationLocalToWorld(frame); sys::io::stderr() << std::endl;
+    // sys::io::stderr() << std::endl;
 
-    // std::cerr << "Frame_Local->Local: " << transformationLocalToWorld(frame)
-    // * transformationWorldToLocal(frame); std::cerr << std::endl; std::cerr <<
-    // std::endl;
+    // sys::io::stderr() << "Frame_Local->Local: " <<
+    // transformationLocalToWorld(frame)
+    // * transformationWorldToLocal(frame); sys::io::stderr() << std::endl;
+    // sys::io::stderr() << std::endl;
 
-    std::cerr << "multiplying mat4 with " << N_VERTS << " vec4's" << std::endl;
-    std::cerr << test(N_VERTS, mat4(), vec4(1.f)) << " seconds" << std::endl;
-    std::cerr << std::endl;
+    sys::io::stderr() << "multiplying mat4 with "_k << N_VERTS << " vec4's"_k
+                      << "\n"_k;
+    sys::io::stderr() << test(N_VERTS, mat4(), vec4(1.f)) << " seconds"_k
+                      << "\n"_k;
+    sys::io::stderr() << "\n"_k;
 
-    std::cerr << "multiplying mat4 with " << N_MATS << " mat4's" << std::endl;
-    std::cerr << test(N_MATS, mat4(), mat4()) << " seconds" << std::endl;
-    std::cerr << std::endl;
+    sys::io::stderr() << "multiplying mat4 with "_k << N_MATS << " mat4's"_k
+                      << "\n"_k;
+    sys::io::stderr() << test(N_MATS, mat4(), mat4()) << " seconds"_k
+                      << "\n"_k;
+    sys::io::stderr() << "\n"_k;
 
     mat3_t out;
     rodriguez(out, vec3(1, 2, 3));
-    std::cerr << "rodriguez: " << out << std::endl;
+    sys::io::stderr() << "rodriguez: "_k << out << "\n"_k;
 
     mat3_t out2;
     rot2(out2, vec3(1, 2, 3));
-    std::cerr << "rot2: " << out2 << std::endl;
+    sys::io::stderr() << "rot2: "_k << out2 << "\n"_k;
 
     auto delta = out - out2;
-    std::cerr << "delta: " << delta << std::endl;
+    sys::io::stderr() << "delta: "_k << delta << "\n"_k;
 
     return 0;
 }

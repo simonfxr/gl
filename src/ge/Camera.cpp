@@ -81,31 +81,32 @@ Camera::Impl::Impl()
     frame.origin = math::vec3(0.f);
 
     commands.move = makeCommand(
-      "camera.move", "move the camera frame", *this, &Impl::runMove);
+      "camera.move"_k, "move the camera frame"_k, *this, &Impl::runMove);
 
     commands.saveFrame =
-      makeCommand("camera.saveFrame",
-                  "save the orientation and position of the camera in a file",
+      makeCommand("camera.saveFrame"_k,
+                  "save the orientation and position of the camera in a file"_k,
                   *this,
                   &Impl::runSaveFrame);
 
-    commands.loadFrame =
-      makeCommand("camera.loadFrame",
-                  "load the orientation and position of the camera from a file",
-                  *this,
-                  &Impl::runLoadFrame);
+    commands.loadFrame = makeCommand(
+      "camera.loadFrame"_k,
+      "load the orientation and position of the camera from a file"_k,
+      *this,
+      &Impl::runLoadFrame);
 
     commands.speed =
-      makeCommand("camera.speed",
-                  "set the length the camera is allowed to move in one frame",
+      makeCommand("camera.speed"_k,
+                  "set the length the camera is allowed to move in one frame"_k,
                   *this,
                   &Impl::runSpeed);
 
     commands.sensitivity =
-      makeCommand("camera.sensitivity",
-                  "specify the camera sensitivity: "
-                  "either as a pair of numbers (x- and y-sensitvity)"
-                  "or as a single number (x- = y-sensitvity)",
+      makeCommand("camera.sensitivity"_k,
+                  bl::string_view_literal(
+                    "specify the camera sensitivity: "
+                    "either as a pair of numbers (x- and y-sensitvity)"
+                    "or as a single number (x- = y-sensitvity)"),
                   *this,
                   &Impl::runSensitivity);
 

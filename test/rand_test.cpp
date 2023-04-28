@@ -6,6 +6,7 @@
 #include "./testmain.hpp"
 
 using namespace bl::rand;
+using namespace bl::literals;
 
 CTEST_GROUP("rand")
 {
@@ -37,7 +38,7 @@ CTEST_GROUP("rand")
     {
         auto g = test_rng();
 
-        sys::io::stdout() << sample_uniform<float>(g) << "\n";
+        sys::io::stdout() << sample_uniform<float>(g) << "\n"_k;
 
         auto dist = uniform_distribution<float>{};
         math::ivec3 hist{};
@@ -50,7 +51,7 @@ CTEST_GROUP("rand")
 
         auto dens = hist / static_cast<float>(sum(hist));
         auto err = sum(abs(dens - 1.f / 3.f));
-        sys::io::stdout() << err << "\n";
+        sys::io::stdout() << err << "\n"_k;
         ctest_true(err < 0.02);
     }
 }

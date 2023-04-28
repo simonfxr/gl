@@ -20,6 +20,7 @@
 #include "./tables2.hpp"
 
 using namespace math;
+using namespace bl::literals;
 
 static const vec3 WORLD_BLOCK_SCALE = vec3(32);
 
@@ -157,22 +158,22 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 
     volumeCube.send();
 
-    worldProgram = engine->shaderManager().program("world");
+    worldProgram = engine->shaderManager().program("world"_k);
     if (!worldProgram)
         return;
 
     marchingCubesProgram =
       std::make_shared<glt::ShaderProgram>(engine->shaderManager());
-    marchingCubesProgram->addShaderFile("marching-cubes.vert");
-    marchingCubesProgram->addShaderFile("marching-cubes.geom");
+    marchingCubesProgram->addShaderFile("marching-cubes.vert"_k);
+    marchingCubesProgram->addShaderFile("marching-cubes.geom"_k);
     marchingCubesProgram->bindAttributes<MCVertex>();
-    bl::string vars[] = { "gPosition", "gNormal" };
+    bl::string vars[] = { "gPosition"_k, "gNormal"_k };
     marchingCubesProgram->bindStreamOutVaryings(
       Array<bl::string>(vars, ARRAY_LENGTH(vars)));
     if (!marchingCubesProgram->tryLink())
         return;
 
-    renderPolygonProgram = engine->shaderManager().program("render-polygon");
+    renderPolygonProgram = engine->shaderManager().program("render-polygon"_k);
     if (!renderPolygonProgram)
         return;
 
@@ -394,9 +395,9 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
 
     if (fpsTimer->fire()) {
         auto fs = engine->renderManager().frameStatistics();
-        sys::io::stdout() << "Timings (FPS/Render Avg/Render Min/Render Max): "
-                          << fs.avg << "; " << fs.avg << "; " << fs.min << "; "
-                          << fs.max << "\n";
+        sys::io::stdout()
+          << "Timings (FPS/Render Avg/Render Min/Render Max): "_k << fs.avg
+          << "; "_k << fs.avg << "; "_k << fs.min << "; "_k << fs.max << "\n"_k;
     }
 }
 
@@ -404,6 +405,7 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(
+      bl::string_view_literal(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR)));
     return anim.main(argc, argv);
 }

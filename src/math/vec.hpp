@@ -7,11 +7,12 @@
 #include <bl/functor.hpp>
 #include <bl/mp.hpp>
 #include <bl/rand.hpp>
+#include <bl/string_view.hpp>
 #include <bl/swap.hpp>
 
 #include <array>
-#include <concepts>
 #include <bl/span.hpp>
+#include <concepts>
 #include <tuple>
 #include <type_traits>
 
@@ -565,15 +566,16 @@ template<typename OStream, typename T, size_t N>
 inline OStream &
 operator<<(OStream &out, const vec<T, N> &v)
 {
-    out << "vec" << N << "[";
+    using namespace bl::literals;
+    out << "vec"_k << N << "["_k;
     bool sep = false;
     for (const auto &x : v) {
         if (sep)
-            out << ",";
+            out << ","_k;
         out << x;
         sep = true;
     }
-    return out << "]";
+    return out << "]"_k;
 }
 
 template<size_t I, a_vec V>

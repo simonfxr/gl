@@ -61,7 +61,7 @@ GLT_API bool
 checkForGLError(const err::Location *loc);
 
 GLT_API bool
-isExtensionSupported(const char *extension);
+isExtensionSupported(bl::string_view extension);
 
 GLT_API bool
 initDebug();
@@ -105,12 +105,8 @@ gl_str(const char *str)
     return reinterpret_cast<const GLubyte *>(str);
 }
 
-inline const char *
-gl_unstr(const GLubyte *glstr)
-{
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    return reinterpret_cast<const char *>(glstr);
-}
+bl::string_view
+gl_unstr(const GLubyte *glstr) noexcept;
 
 inline GLboolean
 gl_bool(bool b)

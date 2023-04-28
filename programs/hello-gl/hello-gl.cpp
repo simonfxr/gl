@@ -15,6 +15,7 @@
 #include <memory>
 
 using namespace math;
+using namespace bl::literals;
 
 DEF_GL_MAPPED_TYPE(Vertex, (vec2, position))
 
@@ -94,7 +95,7 @@ Anim::make_resources()
     if (!texture0 || !texture1)
         return 0;
 
-    program = engine->shaderManager().program("hello-gl");
+    program = engine->shaderManager().program("hello-gl"_k);
     if (!program)
         return 0;
 
@@ -153,6 +154,7 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(
+      bl::string_view_literal(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR)));
     return anim.main(argc, argv);
 }

@@ -466,21 +466,22 @@ template<typename OStream, typename T, size_t N>
 inline OStream &
 operator<<(OStream &out, const mat<T, N> &A)
 {
-    out << "mat" << N << "[";
+    using namespace bl::literals;
+    out << "mat"_k << N << "["_k;
     bool sep = false;
     for (size_t i = 0; i < N; ++i) {
         if (sep)
-            out << "; ";
+            out << "; "_k;
         sep = true;
         bool esep = false;
         for (size_t j = 0; j < N; ++j) {
             if (esep)
-                out << " ";
+                out << " "_k;
             esep = true;
             out << A[j][i];
         }
     }
-    return out << "]";
+    return out << "]"_k;
 }
 
 template<size_t I>

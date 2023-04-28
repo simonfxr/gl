@@ -39,8 +39,8 @@ struct span : private std::span<T, Extent>
     using Base::span;
     using Base::operator[];
 
-    template<size_t N>
-    span(T (&)[N]) = delete;
+    template<typename Elem, size_t N>
+    span(Elem (&)[N]) = delete;
 
     template<size_t Count>
     constexpr span<element_type, Count> first() const

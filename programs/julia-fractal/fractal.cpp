@@ -14,6 +14,7 @@
 static const bool MULTISAMPLING = false; // via multisample texture
 
 using namespace math;
+using namespace bl::literals;
 
 DEF_GL_MAPPED_TYPE(Vertex, (vec2, position))
 
@@ -121,7 +122,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
         render_texture->clear();
     }
 
-    auto renderShader = e.shaderManager().program("render");
+    auto renderShader = e.shaderManager().program("render"_k);
     ASSERT(renderShader);
 
     renderShader->use();
@@ -137,7 +138,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
 
     if (MULTISAMPLING) {
         rm.setActiveRenderTarget(engine->window().renderTarget());
-        auto postproc = e.shaderManager().program("postproc");
+        auto postproc = e.shaderManager().program("postproc"_k);
         ASSERT(postproc);
 
         postproc->use();
@@ -157,9 +158,9 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
         auto min = INV(fs.max);
         auto max = INV(fs.min);
         auto avg = INV(fs.avg);
-        engine->out() << "Timings (FPS/Render Avg/Render Min/Render Max): "
-                      << fps << "; " << avg << "; " << min << "; " << max
-                      << "\n";
+        engine->out() << "Timings (FPS/Render Avg/Render Min/Render Max): "_k
+                      << fps << "; "_k << avg << "; "_k << min << "; "_k << max
+                      << "\n"_k;
     }
 }
 
@@ -178,8 +179,9 @@ Anim::handleWindowResized(const ge::Event<ge::WindowResized> &ev)
 using ComEv = ge::Event<ge::CommandEvent>;
 
 #define DEF_NUM_COMMAND(nm, code)                                              \
-    nm(ge::makeCommand(                                                        \
-      PP_TOSTR(nm), "", [&w](const ComEv &, double x) { code; }))
+    nm(ge::makeCommand(bl::string_view_literal(PP_TOSTR(nm)),                  \
+                       ""_k,                                                   \
+                       [&w](const ComEv &, double x) { code; }))
 
 Commands::Commands(World &w)
   : DEF_NUM_COMMAND(zoom, w.zoom(real(x)))
@@ -194,7 +196,7 @@ Commands::Commands(World &w)
   , DEF_NUM_COMMAND(julia_constant_add_im,
                     w.julia_constant_add(vec2(0, real(x))))
   , julia_constant_reset(
-      ge::makeCommand("julia_constant_reset", "", [&w](const ComEv &) {
+      ge::makeCommand("julia_constant_reset"_k, ""_k, [&w](const ComEv &) {
           w.julia_constant_reset();
       }))
 {}
@@ -263,6 +265,7 @@ int
 main(int argc, char *argv[])
 {
     Anim anim;
-    anim.engine->setDevelDataDir(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR));
+    anim.engine->setDevelDataDir(
+      bl::string_view_literal(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR)));
     return anim.main(argc, argv);
 }

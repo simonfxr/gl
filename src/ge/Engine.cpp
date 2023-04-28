@@ -227,32 +227,32 @@ Engine::run(const EngineOptions &opts)
 
     if (!wd.empty()) {
         if (!sys::fs::cwd(wd)) {
-            ERR(scat("couldnt change into directory: "_sv, wd));
+            ERR(scat("couldnt change into directory: "_k, wd));
             return 1;
         }
     }
 
     if (!m().develDataDir.empty()) {
         commandProcessor().addScriptDirectory(
-          sys::fs::join(m().develDataDir, "scripts"_sv));
+          sys::fs::join(m().develDataDir, "scripts"_k));
         commandProcessor().addScriptDirectory(
-          sys::fs::join(m().develDataDir, ".."_sv, ".."_sv, "scripts"_sv));
+          sys::fs::join(m().develDataDir, ".."_k, ".."_k, "scripts"_k));
         shaderManager().addShaderDirectory(
-          sys::fs::join(m().develDataDir, "shaders"_sv));
+          sys::fs::join(m().develDataDir, "shaders"_k));
         shaderManager().addShaderDirectory(
-          sys::fs::join(m().develDataDir, ".."_sv, ".."_sv, "shaders"_sv));
+          sys::fs::join(m().develDataDir, ".."_k, ".."_k, "shaders"_k));
     }
 
     for (const auto &scriptDir : opts.scriptDirs) {
         if (!commandProcessor().addScriptDirectory(scriptDir)) {
-            ERR(scat("script directory not found: "_sv, scriptDir));
+            ERR(scat("script directory not found: "_k, scriptDir));
             //            return 1;
         }
     }
 
     for (const auto &shaderDir : opts.shaderDirs) {
         if (!shaderManager().addShaderDirectory(shaderDir)) {
-            ERR(scat("shader directory not found: "_sv, shaderDir));
+            ERR(scat("shader directory not found: "_k, shaderDir));
             //            return 1;
         }
     }
@@ -273,7 +273,7 @@ Engine::run(const EngineOptions &opts)
             script = sys::fs::dropExtension(script);
 
         if (script.empty() ||
-            !commandProcessor().loadScript(scat(script, ".script"_sv)))
+            !commandProcessor().loadScript(scat(script, ".script"_k)))
             return 1;
     }
 
@@ -283,15 +283,15 @@ Engine::run(const EngineOptions &opts)
         if (i.first == EngineOptions::Script) {
             ok = commandProcessor().loadScript(i.second);
             if (!ok)
-                command = "script";
+                command = "script"_k;
         } else {
             ok = commandProcessor().evalCommand(i.second);
             if (!ok)
-                command = "command";
+                command = "command"_k;
         }
 
         if (!ok) {
-            ERR(scat(command, " failed: "_sv, i.second));
+            ERR(scat(command, " failed: "_k, i.second));
             return 1;
         }
     }
