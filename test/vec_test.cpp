@@ -1,8 +1,11 @@
 #include <bl/rand/uniform.hpp>
 
+#include "err/err.hpp"
 #include "math/fvec.hpp"
 #include "math/ivec.hpp"
 #include "math/uvec.hpp"
+
+#include "math/mat.hpp"
 
 #include "./testmain.hpp"
 
@@ -59,6 +62,12 @@ CTEST_GROUP("vec3")
             sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
             sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
         }
+    }
+
+    CTEST("vec cast")
+    {
+        auto v = ivec3(1, 2, 3);
+        auto [w, h, d] = std::as_const(v).cast<size_t>();
     }
 }
 

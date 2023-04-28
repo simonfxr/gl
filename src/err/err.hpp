@@ -23,7 +23,7 @@ struct string_arg
 
     template<size_t N>
         requires(N > 0)
-    consteval /* implicit */ string_arg(const char (&arg)[N])
+    BL_consteval /* implicit */ string_arg(const char (&arg)[N])
       : str(bl::string_view_literal(arg))
     {}
 
@@ -37,10 +37,10 @@ struct Location
     bl::string_view operation;
     int line;
 
-    consteval Location(const char *fl,
-                       int ln,
-                       const char *fn,
-                       string_arg op = {}) noexcept
+    BL_consteval Location(const char *fl,
+                          int ln,
+                          const char *fn,
+                          string_arg op = {}) noexcept
       : file(fl), function(fn), operation(op.str), line(ln)
     {}
 };
@@ -166,11 +166,17 @@ reportError(sys::io::OutStream &out,
 
 #if HU_HAVE_constant_p && HU_COMP_GNULIKE_P && !HU_COMP_INTEL_P
 
+#    if hu_has_builtin(__builtin_choose_expr)
+#        define ERR_CHOOSE_EXPR __builtin_choose_expr
+#    else
+#        define ERR_CHOOSE_EXPR(p, a, b) ((p) ? (a) : (b))
+#    endif
+
 #    define CALL_ERROR_WITH_LEVEL_CHECK_CONSTANT(a, b, ...)                    \
         hu_constant_p(a) && hu_constant_p(b)
 
 #    define CALL_ERROR_WITH_LEVEL(errfun, lvl, op, ...)                        \
-        (__builtin_choose_expr(                                                \
+        ERR_CHOOSE_EXPR(                                                       \
           hu_constant_p(lvl) &&                                                \
             CALL_ERROR_WITH_LEVEL_CHECK_CONSTANT(__VA_ARGS__, 0),              \
           CALL_ERROR_WITH_LEVEL_STATIC(HU_CAT_COUNTER(_error_static_callsite), \
@@ -178,7 +184,7 @@ reportError(sys::io::OutStream &out,
                                        lvl,                                    \
                                        op,                                     \
                                        __VA_ARGS__),                           \
-          CALL_ERROR_WITH_LEVEL_BASIC(errfun, lvl, op, __VA_ARGS__)))
+          CALL_ERROR_WITH_LEVEL_BASIC(errfun, lvl, op, __VA_ARGS__))
 
 #else
 #    define CALL_ERROR_WITH_LEVEL(errfun, lvl, op, ...)                        \

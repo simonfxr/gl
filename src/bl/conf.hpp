@@ -54,6 +54,9 @@
 
 #define bl_declval(...) static_cast<__VA_ARGS__ (*)() noexcept>(nullptr)()
 
+// FIXME: currently clang (llvm 15) consteval is still buggy and may segfault
+#define BL_consteval constexpr
+
 namespace bl {}
 
 #endif // BL_CONF_HPP

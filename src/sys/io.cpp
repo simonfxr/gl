@@ -6,7 +6,6 @@
 #include <array>
 #include <cstring>
 #include <optional>
-#include <vector>
 
 namespace sys::io {
 

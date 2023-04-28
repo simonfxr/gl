@@ -2,7 +2,6 @@
 #define GLT_TEXTURE_RENDER_TARGET_3D_HPP
 
 #include "glt/TextureRenderTarget.hpp"
-#include "glt/conf.hpp"
 #include "math/ivec.hpp"
 #include "opengl.hpp"
 
