@@ -81,10 +81,10 @@ mode(Handle &);
 HU_NODISCARD SYS_API HandleError
 elevate(Handle &, HandleMode);
 
-HU_NODISCARD SYS_API std::pair<size_t, HandleError>
+HU_NODISCARD SYS_API bl::pair<size_t, HandleError>
 read(Handle &, bl::span<uint8_t>);
 
-HU_NODISCARD SYS_API std::pair<size_t, HandleError>
+HU_NODISCARD SYS_API bl::pair<size_t, HandleError>
 write(Handle &, bl::span<const uint8_t>);
 
 SYS_API HandleError

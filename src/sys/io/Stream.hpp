@@ -6,6 +6,7 @@
 #include "sys/fiber.hpp"
 
 #include <bl/enum.hpp>
+#include <bl/pair.hpp>
 #include <bl/span.hpp>
 #include <bl/string.hpp>
 #include <bl/string_view.hpp>
@@ -71,7 +72,7 @@ struct SYS_API InStream
         return *this;
     }
 
-    std::pair<size_t, StreamResult> read(bl::span<bl::byte>);
+    bl::pair<size_t, StreamResult> read(bl::span<bl::byte>);
 
 protected:
     virtual StreamResult basic_read(size_t &s, bl::byte *buf) = 0;
@@ -122,7 +123,7 @@ struct SYS_API OutStream
         return *this;
     }
 
-    std::pair<size_t, StreamResult> write(bl::span<const bl::byte>);
+    bl::pair<size_t, StreamResult> write(bl::span<const bl::byte>);
     StreamResult flush();
 
 protected:

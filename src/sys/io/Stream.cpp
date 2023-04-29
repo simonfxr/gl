@@ -3,6 +3,8 @@
 #include "err/err.hpp"
 #include "sys/module.hpp"
 
+#include <bl/tuple.hpp>
+
 #include <array>
 #include <cerrno>
 #include <cstring>
@@ -69,7 +71,7 @@ InStream::close()
     StreamState::track(SF_IN_EOF | SF_OUT_EOF, rflags(), ret);
 }
 
-std::pair<size_t, StreamResult>
+bl::pair<size_t, StreamResult>
 InStream::read(bl::span<bl::byte> buf)
 {
     if (!readable())
@@ -102,7 +104,7 @@ OutStream::close()
     StreamState::track(SF_IN_EOF | SF_OUT_EOF, wflags, ret);
 }
 
-std::pair<size_t, StreamResult>
+bl::pair<size_t, StreamResult>
 OutStream::write(bl::span<const bl::byte> buf)
 {
     if (!writeable())
@@ -319,7 +321,7 @@ CooperativeInStream::basic_read(size_t &s, bl::byte *buf)
     for (;;) {
         s = n;
         auto res = StreamResult{};
-        std::tie(s, res) = in->read(bl::span{ buf, s });
+        bl::tie(s, res) = in->read(bl::span{ buf, s });
         if (res == StreamResult::OK)
             return res;
         if (res == StreamResult::Blocked)

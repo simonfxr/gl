@@ -235,7 +235,7 @@ elevate(Handle &h, HandleMode hm)
     return HandleError::OK;
 }
 
-std::pair<size_t, HandleError>
+bl::pair<size_t, HandleError>
 read(Handle &h, bl::span<bl::byte> buf)
 {
     ASSERT(h);
@@ -264,7 +264,7 @@ read(Handle &h, bl::span<bl::byte> buf)
     }
 }
 
-std::pair<size_t, HandleError>
+bl::pair<size_t, HandleError>
 write(Handle &h, bl::span<const bl::byte> buf)
 {
     ASSERT(h);

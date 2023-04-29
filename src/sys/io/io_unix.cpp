@@ -192,7 +192,7 @@ elevate(Handle &h, HandleMode mode)
     return HandleError::OK;
 }
 
-std::pair<size_t, HandleError>
+bl::pair<size_t, HandleError>
 read(Handle &h, bl::span<bl::byte> buf)
 {
     ASSERT(h);
@@ -200,11 +200,12 @@ read(Handle &h, bl::span<bl::byte> buf)
     ssize_t k;
     RETRY_INTR(k = ::read(h._os.fd, buf.data(), n));
     if (k >= 0)
-        return { k, k == 0 ? HandleError::EOF : HandleError::OK };
+        return { static_cast<size_t>(k),
+                 k == 0 ? HandleError::EOF : HandleError::OK };
     return { 0, convertErrno() };
 }
 
-std::pair<size_t, HandleError>
+bl::pair<size_t, HandleError>
 write(Handle &h, bl::span<const bl::byte> buf)
 {
     ASSERT(h);
