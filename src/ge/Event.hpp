@@ -89,7 +89,7 @@ struct EventSource : private bl::non_copyable
     template<typename... Args>
     bool reg(Args &&...args)
     {
-        return reg(makeEventHandler(std::forward<Args>(args)...));
+        return reg(makeEventHandler(bl_fwd(args)...));
     }
 
     inline bool unreg(const std::shared_ptr<EventHandler<T>> &handler);

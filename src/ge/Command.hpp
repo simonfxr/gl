@@ -112,7 +112,7 @@ makeCommand(bl::string name, bl::string descr, F &&f)
     // avoid excessive std::shared_ptr<XX> template instantiations
     return std::shared_ptr<Command>{ static_cast<Command *>(
       new FunctorCommand<std::decay_t<F>>(
-        bl::move(name), bl::move(descr), std::forward<F>(f))) };
+        bl::move(name), bl::move(descr), bl_fwd(f))) };
 }
 
 template<typename T, typename... Args>

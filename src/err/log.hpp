@@ -50,14 +50,14 @@ struct LogMessage
     LogMessage &append(T &&arg)
     {
         if (_writeable)
-            _destination << std::forward<T>(arg);
+            _destination << bl_fwd(arg);
         return *this;
     }
 
     template<typename T>
     friend LogMessage &operator<<(LogMessage &log, T &&arg)
     {
-        return log.append(std::forward<T>(arg));
+        return log.append(bl_fwd(arg));
     }
 
     OStream &out() { return _destination; }

@@ -134,7 +134,7 @@ struct mat : private vec<vec<T, N>, N>
     {
         static_assert(sizeof...(args) == N,
                       "can only initialize using exactly N elements");
-        return { std::forward<Args>(args)... };
+        return { bl_fwd(args)... };
     }
 
     static constexpr mat identity()

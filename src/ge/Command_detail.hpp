@@ -168,17 +168,14 @@ invoke(F &&f,
        bl::span<const CommandArg> args)
 {
     if constexpr (VarArg) {
-        invoke_indexed_vararg(std::forward<F>(f),
+        invoke_indexed_vararg(bl_fwd(f),
                               arg_seq,
                               std::make_index_sequence<sizeof...(Ts) - 1>{},
                               ev,
                               args);
     } else {
-        invoke_indexed(std::forward<F>(f),
-                       arg_seq,
-                       std::index_sequence_for<Ts...>{},
-                       ev,
-                       args);
+        invoke_indexed(
+          bl_fwd(f), arg_seq, std::index_sequence_for<Ts...>{}, ev, args);
     }
 }
 

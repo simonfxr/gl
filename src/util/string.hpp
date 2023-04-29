@@ -27,7 +27,7 @@ scat(Args &&...args)
 {
     sys::io::ByteStream sstream;
     sstream.reserve((0 + ... + string_length_at_least(args)));
-    (sstream << ... << std::forward<Args>(args));
+    (sstream << ... << bl_fwd(args));
     return bl::move(sstream).str();
 }
 

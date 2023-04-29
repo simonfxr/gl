@@ -107,7 +107,7 @@ struct GLObject : private bl::non_copyable
     GLObject<T> &ensure(Args &&...args)
     {
         if (!*this)
-            generate(std::forward<Args>(args)...);
+            generate(bl_fwd(args)...);
         return *this;
     }
 };

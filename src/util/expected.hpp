@@ -69,7 +69,7 @@ public:
 
     template<class U = T>
     constexpr explicit(!std::is_convertible_v<U, T>) expected(U &&v)
-      : base_t{ std::forward<U>(v) }
+      : base_t{ bl_fwd(v) }
     {}
 
     template<class G>
@@ -90,7 +90,7 @@ public:
 
     template<class... Args>
     constexpr explicit expected(unexpect_t, Args &&...args)
-      : base_t{ unexpected{ std::forward<Args>(args)... } }
+      : base_t{ unexpected{ bl_fwd(args)... } }
     {}
 
     constexpr decltype(auto) value() const &noexcept
@@ -139,7 +139,7 @@ public:
     constexpr T value_or(U &&default_value) const &
     {
         if (!*this)
-            return std::forward<U>(default_value);
+            return bl_fwd(default_value);
         return value();
     }
 
@@ -147,7 +147,7 @@ public:
     constexpr T value_or(U &&default_value) &&
     {
         if (!*this)
-            return std::forward<U>(default_value);
+            return bl_fwd(default_value);
         return bl::move(*this).value();
     }
 };

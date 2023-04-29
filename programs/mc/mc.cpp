@@ -312,7 +312,7 @@ Anim::initCLKernels(bool *success)
         return;
     }
 
-    auto source_code = std::move(res).value();
+    auto source_code = bl::move(res).value();
 
     std::string source_str(source_code.data(), source_code.size());
     cl::Program::Sources source{ source_str };

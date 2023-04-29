@@ -28,7 +28,7 @@ struct GE_API EngineInitializers
     template<typename... Args>
     void reg(RunLevel lvl, Args &&...args)
     {
-        reg(lvl, makeEventHandler(std::forward<Args>(args)...));
+        reg(lvl, makeEventHandler(bl_fwd(args)...));
     }
 };
 

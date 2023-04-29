@@ -3,6 +3,7 @@
 #include "sys/io/Stream.hpp"
 #include "sys/sys.hpp"
 
+#include <bl/tuple.hpp>
 #include <bl/vec.hpp>
 
 #include <memory>
@@ -22,7 +23,7 @@ struct Client
     size_t buf_end{ BUF_SIZE };
 
     explicit Client(io::Handle h, int id)
-      : stream(std::make_shared<io::HandleStream>(std::move(h))), id(id)
+      : stream(std::make_shared<io::HandleStream>(bl::move(h))), id(id)
     {}
 };
 
@@ -40,7 +41,7 @@ main()
         ERR("failed to start server");
         return 1;
     }
-    auto server = std::move(server_sock).value();
+    auto server = bl::move(server_sock).value();
 
     INFO("started server");
 
@@ -50,10 +51,10 @@ main()
             auto res = io::accept(server);
             if (!res)
                 break;
-            auto handle = std::move(res).value();
+            auto handle = bl::move(res).value();
             IGNORE_RESULT(
               io::elevate(handle, io::mode(handle) | io::HM_NONBLOCKING));
-            auto &c = clients.emplace_back(std::move(handle), id);
+            auto &c = clients.emplace_back(bl::move(handle), id);
             sys::io::stdout() << "accepted client "_k << c.id << "\n"_k;
         }
 
@@ -64,7 +65,7 @@ main()
             if (c.reading) {
                 size_t size = c.buf_end - c.buf_pos;
                 io::StreamResult err;
-                std::tie(size, err) =
+                bl::tie(size, err) =
                   c.stream->read(bl::span{ c.buffer + c.buf_pos, size });
                 c.buf_pos += size;
                 if (c.buf_pos == c.buf_end) {
@@ -84,7 +85,7 @@ main()
             } else {
                 size_t size = c.buf_end - c.buf_pos;
                 io::StreamResult err;
-                std::tie(size, err) =
+                bl::tie(size, err) =
                   c.stream->write(bl::span{ c.buffer + c.buf_pos, size });
                 c.buf_pos += size;
 
