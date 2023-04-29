@@ -107,7 +107,7 @@ ParticleRenderer::renderParticles(const ge::Event<ge::RenderEvent> &ev,
                                   size_t n,
                                   const ParticleRenderer::Particle *ps)
 {
-
+    using namespace bl::literals;
     glt::TextureSampler particle_sampler(
       std::make_shared<glt::TextureData>(glt::Texture1D));
 
@@ -135,8 +135,8 @@ ParticleRenderer::renderParticles(const ge::Event<ge::RenderEvent> &ev,
                         math::real(1)));
 
     glt::Uniforms us(*this->shader);
-    us.optional("mvpMatrix", gt.mvpMatrix());
-    us.optional("instanceData", glt::Sampler(particle_sampler, 0));
+    us.optional("mvpMatrix"_k, gt.mvpMatrix());
+    us.optional("instanceData"_k, glt::Sampler(particle_sampler, 0));
 
     this->circle_mesh->drawInstanced(n);
 }

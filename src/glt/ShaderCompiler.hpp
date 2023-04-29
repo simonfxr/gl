@@ -18,7 +18,6 @@
 #include <bl/string_view.hpp>
 #include <memory>
 #include <unordered_map>
-#include <vector>
 
 namespace glt {
 
@@ -36,13 +35,13 @@ using ShaderObjects =
 using ShaderRootDependencies =
   std::unordered_map<ShaderSourceKey, std::shared_ptr<ShaderSource>>;
 
-using IncludePath = std::vector<bl::string>;
+using IncludePath = bl::vec<bl::string>;
 
 using ShaderInclude = std::pair<bl::string, sys::fs::FileTime>;
 
-using ShaderIncludes = std::vector<ShaderInclude>;
+using ShaderIncludes = bl::vec<ShaderInclude>;
 
-using ShaderDependencies = std::vector<std::shared_ptr<ShaderSource>>;
+using ShaderDependencies = bl::vec<std::shared_ptr<ShaderSource>>;
 
 using ShaderCompileFlags = uint32_t;
 

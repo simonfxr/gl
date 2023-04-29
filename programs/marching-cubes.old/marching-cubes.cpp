@@ -222,10 +222,10 @@ Anim::renderWorld()
 
         rm.setActiveRenderTarget(worldVolume);
         glt::Uniforms(*worldProgram)
-          .mandatory("depth", static_cast<float>(i) * invDim)
-          .mandatory("worldMatrix",
+          .mandatory("depth"_k, static_cast<float>(i) * invDim)
+          .mandatory("worldMatrix"_k,
                      rm.geometryTransform().modelMatrix() * scaleM)
-          .optional("time", engine->gameLoop().tickTime());
+          .optional("time"_k, engine->gameLoop().tickTime());
 
         unitRect.draw();
         rm.setActiveRenderTarget(nullptr);
@@ -254,16 +254,16 @@ Anim::renderVolume()
 
     glt::Uniforms(*marchingCubesProgram)
       .mandatory(
-        "caseToNumPolysData",
+        "caseToNumPolysData"_k,
         glt::Sampler(caseToNumPolysData, 0, GL_UNSIGNED_INT_SAMPLER_1D))
-      .mandatory("triangleTableData",
+      .mandatory("triangleTableData"_k,
                  glt::Sampler(triangleTableData, 1, GL_UNSIGNED_INT_SAMPLER_1D))
-      .mandatory("worldVolume",
+      .mandatory("worldVolume"_k,
                  glt::Sampler(worldVolume->sampler(), 2, GL_SAMPLER_3D))
-      .mandatory("texEdgeDim", vec3(1) / vec3(SAMPLER_SIZE))
-      .mandatory("mvMatrix", gt.viewMatrix() * (scaleM * gt.modelMatrix()))
-      .mandatory("projectionMatrix", gt.projectionMatrix())
-      .mandatory("normalMatrix", gt.normalMatrix());
+      .mandatory("texEdgeDim"_k, vec3(1) / vec3(SAMPLER_SIZE))
+      .mandatory("mvMatrix"_k, gt.viewMatrix() * (scaleM * gt.modelMatrix()))
+      .mandatory("projectionMatrix"_k, gt.projectionMatrix())
+      .mandatory("normalMatrix"_k, gt.normalMatrix());
 
     // GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, feedback);
     // GL_CALL(glEnable, GL_RASTERIZER_DISCARD);

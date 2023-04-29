@@ -19,7 +19,7 @@ using ProgramMap =
 struct ShaderManager::Impl : public ShaderManager
 {
     sys::io::OutStream *out;
-    std::vector<bl::string> shaderDirs;
+    ShaderDirectories shaderDirs;
     ProgramMap programs;
     std::shared_ptr<ShaderCache> globalShaderCache;
     PreprocessorDefinitions globalDefines;
@@ -164,7 +164,7 @@ ShaderManager::addShaderDirectory(const bl::string &dir, bool check_exists)
 bool
 ShaderManager::removeShaderDirectory(const bl::string &dir)
 {
-    ShaderDirectories &dirs = m().shaderDirs;
+    auto &dirs = m().shaderDirs;
     auto it = find(dirs.begin(), dirs.end(), dir);
     if (it == dirs.end())
         return false;
@@ -172,7 +172,7 @@ ShaderManager::removeShaderDirectory(const bl::string &dir)
     return true;
 }
 
-const std::vector<bl::string> &
+const ShaderDirectories &
 ShaderManager::shaderDirectories() const
 {
     return m().shaderDirs;

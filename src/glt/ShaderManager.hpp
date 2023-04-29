@@ -6,11 +6,11 @@
 #include "sys/io/Stream.hpp"
 
 #include <bl/new.hpp>
+#include <bl/vec.hpp>
 
 #include <bl/string.hpp>
 #include <memory>
 #include <unordered_map>
-#include <vector>
 
 namespace glt {
 
@@ -20,7 +20,7 @@ struct ShaderCache;
 
 using PreprocessorDefinitions = std::unordered_map<bl::string, bl::string>;
 
-using ShaderDirectories = std::vector<bl::string>;
+using ShaderDirectories = bl::vec<bl::string>;
 
 PP_DEF_ENUM(ShaderManagerVerbosity, uint8_t, Quiet, OnlyErrors, Info);
 

@@ -73,9 +73,9 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
 
     renderShader->use();
     glt::Uniforms(*renderShader)
-      .optional("gammaCorrection", 2.2_r)
-      .optional("time", time)
-      .optional("transform", mat3());
+      .optional("gammaCorrection"_k, 2.2_r)
+      .optional("time"_k, time)
+      .optional("transform"_k, mat3());
 
     quadBatch.draw();
 

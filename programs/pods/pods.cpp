@@ -76,8 +76,8 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
 
     renderShader->use();
     glt::Uniforms(*renderShader)
-      .optional("world", glt::BoundTexture(GL_SAMPLER_2D, 0))
-      .optional("time", time);
+      .optional("world"_k, glt::BoundTexture(GL_SAMPLER_2D, 0))
+      .optional("time"_k, time);
 
     quadBatch.draw();
 

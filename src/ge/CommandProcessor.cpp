@@ -8,8 +8,9 @@
 #include "util/range.hpp"
 #include "util/string.hpp"
 
+#include <bl/vec.hpp>
+
 #include <unordered_map>
-#include <vector>
 
 using namespace bl::literals;
 
@@ -32,7 +33,7 @@ struct CommandProcessor::Impl : public CommandProcessor
 {
     Engine &engine;
     CommandMap commands;
-    std::vector<bl::string> scriptDirs;
+    bl::vec<bl::string> scriptDirs;
     explicit Impl(Engine &e) : engine(e) {}
 };
 
@@ -44,10 +45,10 @@ CommandProcessor::construct_at(void *p, Engine &e) noexcept
     return construct_impl(p, e);
 }
 
-std::vector<CommandPtr>
+bl::vec<CommandPtr>
 CommandProcessor::commands() const
 {
-    std::vector<CommandPtr> coms;
+    bl::vec<CommandPtr> coms;
     coms.reserve(m().commands.size());
     for (const auto &ent : m().commands)
         coms.push_back(ent.second);
@@ -194,7 +195,7 @@ CommandProcessor::exec(const CommandPtr &com, bl::span<CommandArg> args)
         ERR(engine().out(), err.str());
     }
 
-    std::vector<CommandPtr> keepAlive;
+    bl::vec<CommandPtr> keepAlive;
     for (const auto i : irange(params.size() - (rest_args ? 1 : 0))) {
         const auto &param = params[i];
         if (param != PT::Any) {
@@ -309,7 +310,7 @@ bool
 CommandProcessor::loadStream(sys::io::InStream &inp, bl::string_view inp_name)
 {
     auto state = ParserState{ inp, inp_name };
-    auto args = std::vector<CommandArg>{};
+    auto args = bl::vec<CommandArg>{};
     auto ok = true;
     auto done = false;
 

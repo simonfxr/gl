@@ -22,8 +22,8 @@
 #include <bl/string.hpp>
 
 #include <array>
+#include <bl/vec.hpp>
 #include <sstream>
-#include <vector>
 
 using namespace bl::literals;
 
@@ -63,7 +63,7 @@ struct MCState
     cl::BufferGL vbo_buf;
 
     cl::Image3D volume;
-    std::vector<cl::Image3D> images;
+    bl::vec<cl::Image3D> images;
     cl::Event readHistoJob;
     cl::Event writeVBOJob;
 };
@@ -201,7 +201,7 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
     platforms.resize(1);
 
     cl::Platform &platform = platforms[0];
-    bl::string info_value;
+    std::string info_value;
     engine->out() << "selecting CL platform:\n"_k;
 
 #define PLAT_INFO(info)                                                        \
@@ -305,7 +305,7 @@ Anim::initCLKernels(bool *success)
 {
     cl_int cl_err;
 
-    auto res = sys::io::readFile("programs/mc/cl/program.cl", engine->out());
+    auto res = sys::io::readFile("programs/mc/cl/program.cl"_k, engine->out());
 
     if (!res) {
         ERR("failed reading CL program");
@@ -572,11 +572,11 @@ Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3 ecLight)
 
         gt.concat(M);
         glt::Uniforms(program)
-          .optional("mvpMatrix", gt.mvpMatrix())
-          .optional("mvMatrix", gt.mvMatrix())
-          .optional("normalMatrix", gt.normalMatrix())
-          .optional("ecLight", ecLight)
-          .optional("albedo", vec3(1));
+          .optional("mvpMatrix"_k, gt.mvpMatrix())
+          .optional("mvMatrix"_k, gt.mvMatrix())
+          .optional("normalMatrix"_k, gt.normalMatrix())
+          .optional("ecLight"_k, ecLight)
+          .optional("albedo"_k, vec3(1));
     }
 
     auto struct_info = Vertex::gl::struct_info::info;

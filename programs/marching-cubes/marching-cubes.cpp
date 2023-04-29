@@ -67,7 +67,7 @@ struct Anim final : ge::Anim3D<Anim>
 
     std::shared_ptr<ge::Timer> fpsTimer;
 
-    std::vector<Block> blocks;
+    bl::vec<Block> blocks;
 
     void init(const ge::Event<ge::InitEvent> &);
     void render(const ge::Event<ge::RenderEvent> &) override;
@@ -294,10 +294,10 @@ Anim::makeSampleVolume()
 
         rm.setActiveRenderTarget(worldVolume);
         glt::Uniforms(*worldProgram)
-          .mandatory("depth", static_cast<real>(i) * invDim)
-          .mandatory("worldMatrix",
+          .mandatory("depth"_k, static_cast<real>(i) * invDim)
+          .mandatory("worldMatrix"_k,
                      rm.geometryTransform().modelMatrix() * scaleM)
-          .optional("time", engine->gameLoop().tickTime());
+          .optional("time"_k, engine->gameLoop().tickTime());
 
         unitRect.draw();
         rm.setActiveRenderTarget(nullptr);
@@ -330,15 +330,15 @@ Anim::makePolygon(const Block &block)
 
     glt::Uniforms(*marchingCubesProgram)
       .mandatory(
-        "caseToNumPolysData",
+        "caseToNumPolysData"_k,
         glt::Sampler(caseToNumPolysData, 0, GL_UNSIGNED_INT_SAMPLER_1D))
-      .mandatory("triangleTableData",
+      .mandatory("triangleTableData"_k,
                  glt::Sampler(triangleTableData, 1, GL_UNSIGNED_INT_SAMPLER_1D))
-      .optional("worldVolume",
+      .optional("worldVolume"_k,
                 glt::Sampler(worldVolume->sampler(), 2, GL_SAMPLER_3D))
-      .mandatory("texEdgeDim", vec3(1) / vec3(SAMPLER_SIZE))
-      .optional("worldMatrix", gt.modelMatrix())
-      //        .mandatory("projectionMatrix", gt.projectionMatrix())
+      .mandatory("texEdgeDim"_k, vec3(1) / vec3(SAMPLER_SIZE))
+      .optional("worldMatrix"_k, gt.modelMatrix())
+      //        .mandatory("projectionMatrix"_k, gt.projectionMatrix())
       ;
 
     GL_CALL(glBindTransformFeedback, GL_TRANSFORM_FEEDBACK, block.stream);
@@ -366,9 +366,9 @@ Anim::renderPolygon(const Block &block)
     renderPolygonProgram->use();
 
     glt::Uniforms(*renderPolygonProgram)
-      .mandatory("mvMatrix", gt.mvMatrix())
-      .mandatory("projectionMatrix", gt.projectionMatrix())
-      .mandatory("normalMatrix", gt.normalMatrix());
+      .mandatory("mvMatrix"_k, gt.mvMatrix())
+      .mandatory("projectionMatrix"_k, gt.projectionMatrix())
+      .mandatory("normalMatrix"_k, gt.normalMatrix());
 
     GL_CALL(glBindVertexArray, block.array);
     GL_CALL(glDrawTransformFeedback, GL_TRIANGLES, block.stream);

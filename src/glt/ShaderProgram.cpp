@@ -159,7 +159,7 @@ ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
 
     if (log_len > 0) {
 
-        auto log = std::vector<char>(static_cast<size_t>(log_len));
+        auto log = bl::vec<char>(static_cast<size_t>(log_len));
         GL_CALL(glGetProgramInfoLog, progh, log_len, nullptr, log.data());
 
         auto logBegin = log.data();
@@ -294,7 +294,7 @@ ShaderProgram::link()
         // FIXME: check wether attrib was added correctly
     }
 
-    std::vector<GLuint> added;
+    bl::vec<GLuint> added;
     for (auto it = self->shaders.begin(); it != self->shaders.end(); ++it) {
         GL_CALL(glAttachShader, *self->program, *it->second->handle());
         added.push_back(*it->second->handle());
@@ -443,7 +443,7 @@ ShaderProgram::bindStreamOutVaryings(bl::span<const bl::string> vars)
         return false;
     }
 
-    std::vector<const char *> cvars;
+    bl::vec<const char *> cvars;
     cvars.reserve(vars.size());
     for (const auto &var : vars)
         cvars.push_back(var.c_str());

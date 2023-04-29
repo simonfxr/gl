@@ -6,10 +6,9 @@
 #include "sys/io/Stream.hpp"
 
 #include <bl/new.hpp>
-
-#include <bl/string.hpp>
 #include <bl/span.hpp>
-#include <vector>
+#include <bl/string.hpp>
+#include <bl/vec.hpp>
 
 namespace ge {
 
@@ -43,7 +42,7 @@ struct GE_API CommandProcessor
 
     bool evalCommand(bl::string_view cmd);
 
-    std::vector<CommandPtr> commands() const;
+    bl::vec<CommandPtr> commands() const;
 
     static CommandParamType commandParamType(CommandArgType type);
 

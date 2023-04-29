@@ -1038,17 +1038,17 @@ renderBlocks(State *state, ge::Engine &e)
     voxelShader->use();
 
     glt::Uniforms us(*voxelShader);
-    us.optional("mvpMatrix", rm.geometryTransform().mvpMatrix());
-    us.optional("mvMatrix", rm.geometryTransform().mvMatrix());
-    us.optional("normalMatrix", rm.geometryTransform().normalMatrix());
-    us.optional("ecLightDir", state->ecLightDir);
+    us.optional("mvpMatrix"_k, rm.geometryTransform().mvpMatrix());
+    us.optional("mvMatrix"_k, rm.geometryTransform().mvMatrix());
+    us.optional("normalMatrix"_k, rm.geometryTransform().normalMatrix());
+    us.optional("ecLightDir"_k, state->ecLightDir);
     vec4 mat = vec4(BLOCK_MAT.ambientContribution,
                     BLOCK_MAT.diffuseContribution,
                     BLOCK_MAT.specularContribution,
                     BLOCK_MAT.shininess);
-    us.optional("materialProperties", mat);
-    us.optional("gammaCorrection", state->gamma_correction);
-    us.optional("sin_time",
+    us.optional("materialProperties"_k, mat);
+    us.optional("gammaCorrection"_k, state->gamma_correction);
+    us.optional("sin_time"_k,
                 math::sin(static_cast<real>(e.gameLoop().tickTime())));
 
     state->worldModel.drawElements();

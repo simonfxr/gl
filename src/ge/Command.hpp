@@ -6,11 +6,11 @@
 #include "ge/EngineEvents.hpp"
 #include "ge/conf.hpp"
 
+#include <bl/span.hpp>
 #include <bl/string.hpp>
+#include <bl/vec.hpp>
 
 #include <functional>
-#include <bl/span.hpp>
-#include <vector>
 
 namespace ge {
 
@@ -28,18 +28,18 @@ struct GE_API CommandEvent : public EngineEvent
 struct GE_API Command : public EventHandler<CommandEvent>
 {
 private:
-    const std::vector<CommandParamType> params;
+    const bl::vec<CommandParamType> params;
     bl::string namestr;
     bl::string descr;
 
 public:
-    Command(std::vector<CommandParamType> ps, bl::string name, bl::string desc);
+    Command(bl::vec<CommandParamType> ps, bl::string name, bl::string desc);
 
     Command(const Command &) = default;
     Command(Command &&) = default;
 
     virtual ~Command() override;
-    std::vector<CommandParamType> parameters() const { return params; }
+    bl::vec<CommandParamType> parameters() const { return params; }
     const bl::string &name() const { return namestr; }
     void name(const bl::string &new_name)
     {
@@ -99,8 +99,7 @@ private:
     F _f;
 
     template<typename... Ts>
-    static std::vector<CommandParamType> make_params(
-      detail::CommandArgSeq<Ts...>)
+    static bl::vec<CommandParamType> make_params(detail::CommandArgSeq<Ts...>)
     {
         return { detail::decayed_command_param_mapping<Ts>::param_type... };
     }

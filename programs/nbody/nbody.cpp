@@ -6,9 +6,10 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 
+#include <bl/vec.hpp>
+
 #include <algorithm>
 #include <map>
-#include <vector>
 
 #include "nbody/nbody_phys.hpp"
 
@@ -112,11 +113,12 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
         program->use();
 
         glt::Uniforms(*program)
-          .optional("mvpMatrix", rm.geometryTransform().mvpMatrix())
-          //            .optional("mvMatrix", rm.geometryTransform().mvMatrix())
-          .optional("normalMatrix", rm.geometryTransform().normalMatrix())
-          .optional("ecLightDir", ec_light_dir)
-          .optional("albedo", vec3(0.5_r));
+          .optional("mvpMatrix"_k, rm.geometryTransform().mvpMatrix())
+          //            .optional("mvMatrix"_k,
+          //            rm.geometryTransform().mvMatrix())
+          .optional("normalMatrix"_k, rm.geometryTransform().normalMatrix())
+          .optional("ecLightDir"_k, ec_light_dir)
+          .optional("albedo"_k, vec3(0.5_r));
         ground_model.draw();
 
         rm.geometryTransform().pop();
@@ -163,10 +165,10 @@ Anim::renderParticles(real interpolation)
         gt.scale(vec3(real(p.radius)));
 
         glt::Uniforms(*program)
-          .optional("mvpMatrix", gt.mvpMatrix())
-          .optional("normalMatrix", gt.normalMatrix())
-          .optional("ecLightDir", ec_light_dir)
-          .optional("albedo", vec3(real(1), real(0), real(0)));
+          .optional("mvpMatrix"_k, gt.mvpMatrix())
+          .optional("normalMatrix"_k, gt.normalMatrix())
+          .optional("ecLightDir"_k, ec_light_dir)
+          .optional("albedo"_k, vec3(real(1), real(0), real(0)));
 
         gt.pop();
 

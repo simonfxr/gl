@@ -22,7 +22,6 @@
 #include <unordered_set>
 #include <utility>
 #include <variant>
-#include <vector>
 
 using namespace bl::literals;
 
@@ -323,7 +322,7 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
     if (log_len > 0) {
 
         // log_len includes null terminator
-        auto log = std::vector<GLchar>(static_cast<size_t>(log_len));
+        auto log = bl::vec<GLchar>(static_cast<size_t>(log_len));
         GL_CALL(glGetShaderInfoLog, *shader, log_len, nullptr, log.data());
 
         GLchar *logBegin = log.data();

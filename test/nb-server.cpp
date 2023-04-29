@@ -3,8 +3,9 @@
 #include "sys/io/Stream.hpp"
 #include "sys/sys.hpp"
 
+#include <bl/vec.hpp>
+
 #include <memory>
-#include <vector>
 
 using namespace sys;
 using namespace bl::literals;
@@ -28,7 +29,7 @@ struct Client
 int
 main()
 {
-    std::vector<Client> clients;
+    bl::vec<Client> clients;
     int id = 0;
 
     sys::moduleInit();

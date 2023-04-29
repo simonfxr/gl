@@ -9,8 +9,8 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 
-#include <bl/string.hpp>
 #include <bl/span.hpp>
+#include <bl/string.hpp>
 
 namespace glt {
 
@@ -54,9 +54,7 @@ struct GLT_API Uniforms
 private:
     void set(bool mandatory, bl::string_view name, float value);
     void set(bool mandatory, bl::string_view name, double value);
-    void set(bool mandatory,
-             bl::string_view name,
-             bl::span<const float> value);
+    void set(bool mandatory, bl::string_view name, bl::span<const float> value);
     void set(bool mandatory, bl::string_view name, const math::vec4 &value);
     void set(bool mandatory, bl::string_view name, const math::vec3 &value);
     void set(bool mandatory, bl::string_view name, const math::vec2 &value);

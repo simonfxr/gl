@@ -10,8 +10,9 @@
 #include "math/fvec.hpp"
 #include "opengl.hpp"
 
+#include <bl/vec.hpp>
+
 #include <memory>
-#include <vector>
 
 namespace glt {
 
@@ -47,9 +48,9 @@ private:
     std::unique_ptr<char, NopDeleter> vertex_data_end{};
     std::unique_ptr<char, NopDeleter> vertex_data_lim{};
     size_t vertex_count{};
-    std::vector<uint32_t> elements;
+    bl::vec<uint32_t> elements;
     const StructInfo *struct_info;
-    std::vector<bool> enabled_attributes;
+    bl::vec<bool> enabled_attributes;
     size_t gpu_vertex_count = 0;
     size_t gpu_element_count = 0;
     GLVertexArrayObject vertex_array_name;
@@ -202,7 +203,7 @@ struct Mesh : public MeshBase
     bl::span<const gl_t> vertices() const
     {
         return bl::span{ static_cast<const gl_t *>(vertexRef(0)),
-                          verticesSize() };
+                         verticesSize() };
     }
 };
 

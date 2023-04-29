@@ -159,7 +159,7 @@ operator<=>(const CommandArg &a, const CommandArg &b) noexcept
 
 struct PrettyQuotation
 {
-    std::vector<bl::string> statements;
+    bl::vec<bl::string> statements;
     sys::io::ByteStream out;
     size_t len{};
 };
@@ -173,7 +173,7 @@ struct CommandPrettyPrinter::Impl : public CommandPrettyPrinter
     size_t block_indent{ 4 };
     bool ignore_empty_statements{ true };
 
-    std::vector<std::shared_ptr<PrettyQuotation>> quotations;
+    bl::vec<std::shared_ptr<PrettyQuotation>> quotations;
 
     Impl() : out(&sys::io::stdout()), current_out(out) {}
     ~Impl() { flush(); }

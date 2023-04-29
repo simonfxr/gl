@@ -1,5 +1,4 @@
 #include "ge/GameWindow.hpp"
-#include "util/string.hpp"
 
 #define GLFW_INCLUDE_NONE 1
 
@@ -9,10 +8,12 @@
 #include "glt/utils.hpp"
 #include "math/real.hpp"
 #include "opengl.hpp"
+#include "util/string.hpp"
+
+#include <bl/vec.hpp>
 
 #include <GLFW/glfw3.h>
 #include <limits>
-#include <vector>
 
 using namespace bl::literals;
 

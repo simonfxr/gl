@@ -86,7 +86,7 @@ struct Engine::Impl
     void atExit(int32_t exit_code) final;
 
     void registerHandlers();
-    bool execCommand(std::vector<CommandArg> &args);
+    bool execCommand(bl::vec<CommandArg> &args);
 
     ~Impl() override
     {

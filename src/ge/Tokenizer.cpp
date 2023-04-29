@@ -143,7 +143,7 @@ parseSym(ParserState &s)
 State
 parseKeycombo(ParserState &s, CommandArg &tok)
 {
-    std::vector<Key> keys;
+    bl::vec<Key> keys;
 
     bool needOne = true;
 
@@ -305,7 +305,7 @@ fail:
 }
 
 State
-statement(ParserState &s, std::vector<CommandArg> &toks, bool quot);
+statement(ParserState &s, bl::vec<CommandArg> &toks, bool quot);
 
 State
 parseQuot(ParserState &s, CommandArg &arg)
@@ -317,8 +317,8 @@ parseQuot(ParserState &s, CommandArg &arg)
 
     for (;;) {
         getch(s);
-        q->push_back(std::vector<CommandArg>());
-        std::vector<CommandArg> &toks = (*q)[q->size() - 1];
+        q->push_back(bl::vec<CommandArg>());
+        bl::vec<CommandArg> &toks = (*q)[q->size() - 1];
         auto st = statement(s, toks, true);
 
         if (st == Fail || toks.empty())
@@ -472,7 +472,7 @@ token(ParserState &s, CommandArg &tok, bool first)
 }
 
 State
-statement(ParserState &s, std::vector<CommandArg> &toks, bool quot)
+statement(ParserState &s, bl::vec<CommandArg> &toks, bool quot)
 {
     State st;
     bool first = true;
@@ -516,7 +516,7 @@ skipStatement(ParserState &s)
 }
 
 bool
-tokenize(ParserState &s, std::vector<CommandArg> &args)
+tokenize(ParserState &s, bl::vec<CommandArg> &args)
 {
     getch(s);
     if (s.in_state != sys::io::StreamResult::OK)

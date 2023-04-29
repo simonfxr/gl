@@ -8,9 +8,10 @@
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
 
+#include <bl/vec.hpp>
+
 #include <algorithm>
 #include <unordered_map>
-#include <vector>
 
 using namespace bl::literals;
 using namespace math;
@@ -195,8 +196,8 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
         uint32_t a, b, c;
     };
 
-    std::vector<vec3> vertices;
-    std::vector<Tri> tris;
+    bl::vec<vec3> vertices;
+    bl::vec<Tri> tris;
 
     typedef std::unordered_map<uint64_t, uint32_t> VertexCache;
     VertexCache vertex_cache;
@@ -223,8 +224,8 @@ icoSphere(glt::Mesh<V> &mesh, size_t subdivs)
     for (auto element : elements)
         tris.push_back(Tri(element[0], element[1], element[2]));
 
-    std::vector<Tri> tris2;
-    std::vector<Tri> *from, *to;
+    bl::vec<Tri> tris2;
+    bl::vec<Tri> *from, *to;
     from = &tris;
     to = &tris2;
 

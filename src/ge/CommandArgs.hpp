@@ -7,10 +7,9 @@
 #include "sys/io/Stream.hpp"
 
 #include <bl/new.hpp>
-
 #include <bl/span.hpp>
 #include <bl/string.hpp>
-#include <vector>
+#include <bl/vec.hpp>
 
 namespace ge {
 
@@ -66,7 +65,7 @@ struct CommandValue
                                           const CommandValue &) noexcept;
 };
 
-using Quotation = std::vector<std::vector<CommandArg>>;
+using Quotation = bl::vec<bl::vec<CommandArg>>;
 
 struct GE_API CommandArg
 {

@@ -143,9 +143,9 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
 
     program->use();
     glt::Uniforms(*program)
-      .optional("fade_factor", g_resources.fade_factor)
-      .optional("texture0", glt::Sampler(*texture0, 0))
-      .optional("texture1", glt::Sampler(*texture1, 1));
+      .optional("fade_factor"_k, g_resources.fade_factor)
+      .optional("texture0"_k, glt::Sampler(*texture0, 0))
+      .optional("texture1"_k, glt::Sampler(*texture1, 1));
 
     mesh.draw();
 }

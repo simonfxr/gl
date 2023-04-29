@@ -15,7 +15,7 @@ CommandEvent::CommandEvent(ge::Engine &e, CommandProcessor &proc)
   : EngineEvent(e), processor(proc)
 {}
 
-Command::Command(std::vector<CommandParamType> ps,
+Command::Command(bl::vec<CommandParamType> ps,
                  bl::string name_,
                  bl::string desc_)
   : params(bl::move(ps)), namestr(bl::move(name_)), descr(bl::move(desc_))

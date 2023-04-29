@@ -6,10 +6,10 @@
 
 #include <bl/core.hpp>
 #include <bl/noncopymove.hpp>
+#include <bl/span.hpp>
+#include <bl/vec.hpp>
 
 #include <memory>
-#include <bl/span.hpp>
-#include <vector>
 
 namespace ge {
 
@@ -106,7 +106,7 @@ struct EventSource : private bl::non_copyable
     }
 
 private:
-    std::vector<std::shared_ptr<EventHandler<T>>> _handlers;
+    bl::vec<std::shared_ptr<EventHandler<T>>> _handlers;
 };
 
 template<typename T>

@@ -12,8 +12,8 @@
 #include "pp/map.h"
 
 #include <array>
-#include <cstddef>
 #include <bl/span.hpp>
+#include <cstddef>
 
 namespace glt {
 
@@ -220,7 +220,7 @@ struct StructInfo
           ::glt::StructInfo(PP_TOSTR(sname),                                   \
                             sizeof(sname::gl),                                 \
                             alignof(sname::gl),                                \
-                            ::bl::span<const ::glt::FieldInfo>(_fields));     \
+                            ::bl::span<const ::glt::FieldInfo>(_fields));      \
     };                                                                         \
     sname::sname(const sname::gl &TI_VAR(arg))                                 \
       : PP_MAP(TI_INIT_FIELD, PP_COMMA, __VA_ARGS__)                           \

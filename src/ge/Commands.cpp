@@ -7,9 +7,10 @@
 #include "glt/utils.hpp"
 #include "util/string.hpp"
 
+#include <bl/vec.hpp>
+
 #include <cassert>
 #include <utility>
-#include <vector>
 
 using math::real;
 

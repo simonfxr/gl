@@ -33,7 +33,7 @@
 
 #include "dump_bmp.h"
 
-#include <vector>
+#include <bl/vec.hpp>
 
 #ifdef MESH_CUBEMESH
 template<typename T>
@@ -99,7 +99,7 @@ struct Teapot
 
 struct Anim final : ge::Anim3D<Anim>
 {
-    std::vector<float> glow_kernel;
+    bl::vec<float> glow_kernel;
 
     CubeMeshOf<Vertex> groundModel;
     CubeMeshOf<Vertex> teapotModel;
@@ -166,7 +166,8 @@ Anim::init(const Event<InitEvent> &ev)
     win.events().windowResized.reg(*this, &Anim::onWindowResized);
     engine->keyHandler().keyPressedEvent().reg(*this, &Anim::keyPressed);
 
-    loadResources(sys::fs::join(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR), "data"));
+    loadResources(sys::fs::join(
+      bl::string_view_literal(PP_TOSTR(CMAKE_CURRENT_SOURCE_DIR)), "data"_k));
     engine->out() << "in init()\n"_k;
 
     fpsTimer = std::make_shared<ge::Timer>(*engine);
@@ -495,21 +496,22 @@ Anim::setupTeapotShader(const bl::string &progname,
                    mat.shininess);
 
     glt::Uniforms us(*prog);
-    us.optional("projectionMatrix", rm.geometryTransform().projectionMatrix());
-    us.optional("mvMatrix", rm.geometryTransform().mvMatrix());
-    us.optional("normalMatrix", rm.geometryTransform().normalMatrix());
-    us.optional("surfaceColor", surfaceColor);
-    us.optional("materialProperties", vm * materialSelector);
-    us.optional("ecLight", ecLight);
-    us.optional("gammaCorrection", gamma_correction);
-    us.optional("spotDirection", ec_spotlight_dir);
-    us.optional("useSpot", 1.f * use_spotlight);
-    us.optional("spotSmooth", 1.f * spotlight_smooth);
-    us.optional("texData", glt::BoundTexture(GL_SAMPLER_2D, 0));
+    us.optional("projectionMatrix"_k,
+                rm.geometryTransform().projectionMatrix());
+    us.optional("mvMatrix"_k, rm.geometryTransform().mvMatrix());
+    us.optional("normalMatrix"_k, rm.geometryTransform().normalMatrix());
+    us.optional("surfaceColor"_k, surfaceColor);
+    us.optional("materialProperties"_k, vm * materialSelector);
+    us.optional("ecLight"_k, ecLight);
+    us.optional("gammaCorrection"_k, gamma_correction);
+    us.optional("spotDirection"_k, ec_spotlight_dir);
+    us.optional("useSpot"_k, 1.f * use_spotlight);
+    us.optional("spotSmooth"_k, 1.f * spotlight_smooth);
+    us.optional("texData"_k, glt::BoundTexture(GL_SAMPLER_2D, 0));
 #ifdef RENDER_NOGLOW
-    us.optional("glow", real(1));
+    us.optional("glow"_k, real(1));
 #else
-    us.optional("glow", mat.glow /* real(0.8) */);
+    us.optional("glow"_k, mat.glow /* real(0.8) */);
 #endif
 }
 
@@ -685,11 +687,11 @@ Anim::loadResources(const bl::string &dir)
     uint32_t *wood_data;
     auto file = unique_file(fopen(scat(data_dir, "/wood.bmp"_k).c_str(), "rb"));
     if (!file) {
-        ERR("couldnt open data/wood.bmp");
+        FATAL_ERR("couldnt open data/wood.bmp");
         return;
     }
     if (bmp_read(file.get(), &w, &h, &wood_data) != BMP_OK) {
-        ERR("couldnt load data/wood.bmp");
+        FATAL_ERR("couldnt load data/wood.bmp");
         return;
     }
 
@@ -740,7 +742,7 @@ parse_sply(const char *filename, CubeMeshOf<Vertex> &model)
 
     char line[512];
 
-    std::vector<Vertex> verts;
+    bl::vec<Vertex> verts;
     uint32_t nverts = 0;
     uint32_t nfaces = 0;
 

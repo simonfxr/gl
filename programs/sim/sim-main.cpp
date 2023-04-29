@@ -19,7 +19,7 @@
 #include <bl/string.hpp>
 
 #include <algorithm>
-#include <vector>
+#include <bl/vec.hpp>
 
 using namespace math;
 using namespace bl::literals;
@@ -119,7 +119,7 @@ struct Game final : ge::Anim3D<Game>
     bool render_spheres_instanced{};
     bool indirect_rendering{};
 
-    std::vector<SphereInstance> sphere_instances[SPHERE_LOD_MAX];
+    bl::vec<SphereInstance> sphere_instances[SPHERE_LOD_MAX];
 
     Game();
 
@@ -319,8 +319,8 @@ Game::render(const ge::Event<ge::RenderEvent> &ev)
 
         textureRenderTarget->sampler().bind(0);
         glt::Uniforms(*postprocShader)
-          .optional("gammaCorrection", GAMMA)
-          .mandatory("textures",
+          .optional("gammaCorrection"_k, GAMMA)
+          .mandatory("textures"_k,
                      glt::Sampler(textureRenderTarget->sampler(), 0));
         rectBatch.draw();
         textureRenderTarget->sampler().unbind(0);
@@ -455,12 +455,12 @@ Game::end_render_spheres()
             glt::GeometryTransform &gt =
               engine->renderManager().geometryTransform();
             glt::Uniforms(*sphereInstancedShader)
-              .optional("normalMatrix", gt.normalMatrix())
-              .optional("vMatrix", gt.mvMatrix())
-              .optional("pMatrix", gt.projectionMatrix())
-              .optional("ecLight", sphereUniforms.ecLightPos)
-              .optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA)
-              .mandatory("instanceData", glt::Sampler(sphereMap, 0));
+              .optional("normalMatrix"_k, gt.normalMatrix())
+              .optional("vMatrix"_k, gt.mvMatrix())
+              .optional("pMatrix"_k, gt.projectionMatrix())
+              .optional("ecLight"_k, sphereUniforms.ecLightPos)
+              .optional("gammaCorrection"_k, indirect_rendering ? 1.f : GAMMA)
+              .mandatory("instanceData"_k, glt::Sampler(sphereMap, 0));
 
             sphereBatches[lod].drawInstanced(num);
             sphereMap.unbind(0);
@@ -619,15 +619,15 @@ Game::render_sphere(const Sphere &s, const SphereModel &m)
         auto col = glt::color(col3);
 
         glt::Uniforms us(*sphereShader);
-        us.optional("mvpMatrix", gt.mvpMatrix());
-        us.optional("mvMatrix", gt.mvMatrix());
-        us.optional("normalMatrix", gt.normalMatrix());
-        us.optional("ecLight", sphereUniforms.ecLightPos);
-        us.optional("ecSpotDirection", sphereUniforms.ecSpotDir);
-        us.optional("spotAngle", sphereUniforms.spotAngle);
-        us.optional("color", col);
-        us.optional("shininess", m.shininess);
-        us.optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
+        us.optional("mvpMatrix"_k, gt.mvpMatrix());
+        us.optional("mvMatrix"_k, gt.mvMatrix());
+        us.optional("normalMatrix"_k, gt.normalMatrix());
+        us.optional("ecLight"_k, sphereUniforms.ecLightPos);
+        us.optional("ecSpotDirection"_k, sphereUniforms.ecSpotDir);
+        us.optional("spotAngle"_k, sphereUniforms.spotAngle);
+        us.optional("color"_k, col);
+        us.optional("shininess"_k, m.shininess);
+        us.optional("gammaCorrection"_k, indirect_rendering ? 1.f : GAMMA);
 
 #if ENABLE_GLDEBUG_P
         sphereShader->validate();
@@ -666,13 +666,13 @@ Game::render_box(const glt::AABB &box)
     wallShader->use();
 
     glt::Uniforms us(*wallShader);
-    us.optional("mvpMatrix", gt.mvpMatrix());
-    us.optional("mvMatrix", gt.mvMatrix());
-    us.optional("normalMatrix", gt.normalMatrix());
-    us.optional("ecLight", wallUniforms.ecLightPos);
-    us.optional("ecSpotDirection", wallUniforms.ecSpotDir);
-    us.optional("spotAngle", wallUniforms.spotAngle);
-    us.optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
+    us.optional("mvpMatrix"_k, gt.mvpMatrix());
+    us.optional("mvMatrix"_k, gt.mvMatrix());
+    us.optional("normalMatrix"_k, gt.normalMatrix());
+    us.optional("ecLight"_k, wallUniforms.ecLightPos);
+    us.optional("ecSpotDirection"_k, wallUniforms.ecSpotDir);
+    us.optional("spotAngle"_k, wallUniforms.spotAngle);
+    us.optional("gammaCorrection"_k, indirect_rendering ? 1.f : GAMMA);
 
 #if ENABLE_GLDEBUG_P
     wallShader->validate(true);
@@ -715,13 +715,13 @@ Game::render_con(const point3 &a, const point3 &b)
 
     identityShader->use();
     glt::Uniforms us(*identityShader);
-    us.optional("mvpMatrix", gt.mvpMatrix());
-    us.optional("color", CONNECTION_COLOR);
-    us.optional("gammaCorrection", indirect_rendering ? 1.f : GAMMA);
+    us.optional("mvpMatrix"_k, gt.mvpMatrix());
+    us.optional("color"_k, CONNECTION_COLOR);
+    us.optional("gammaCorrection"_k, indirect_rendering ? 1.f : GAMMA);
 
-    // sys::io::stderr() << "con: a = " << va << ", b = " << vb << "\n"
+    // sys::io::stderr() << "con: a = " << va << "_k, b = " << vb << "\n"
     //           << "  a' = " << gt.transformPoint(vec3(0.f))
-    //           << ", b' = " << gt.transformPoint(vec3(1.f, 0.f, 0.f))
+    //           << , b' = " << gt.transformPoint(vec3(1.f, 0.f, 0.f))
     //           << "\n";
 
     lineBatch.draw();

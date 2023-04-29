@@ -127,12 +127,12 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
 
     renderShader->use();
     glt::Uniforms(*renderShader)
-      .optional("gammaCorrection", 2.2_r)
-      .optional("time", time)
-      .optional("transform", mat3())
-      .optional("julia_constant", world.julia_constant)
-      .optional("world_shift", world.trans)
-      .optional("world_zoom", world.scale);
+      .optional("gammaCorrection"_k, 2.2_r)
+      .optional("time"_k, time)
+      .optional("transform"_k, mat3())
+      .optional("julia_constant"_k, world.julia_constant)
+      .optional("world_shift"_k, world.trans)
+      .optional("world_zoom"_k, world.scale);
 
     quadBatch.draw();
 
@@ -145,7 +145,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
 
         render_texture->sampler().bind(0);
         glt::Uniforms(*postproc).optional(
-          "texture0", glt::Sampler(render_texture->sampler(), 0));
+          "texture0"_k, glt::Sampler(render_texture->sampler(), 0));
         quadBatch.draw();
     }
 

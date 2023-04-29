@@ -5,8 +5,9 @@
 #include "sys/fiber.hpp"
 #include "util/string.hpp"
 
+#include <bl/vec.hpp>
+
 #include <utility>
-#include <vector>
 
 namespace ge {
 
@@ -34,7 +35,7 @@ struct Client
     ParsingState state = ParsingState::Yield;
     int id;
 
-    std::vector<CommandArg> statement;
+    bl::vec<CommandArg> statement;
 
     Client(int _id, Handle h);
     ~Client();
@@ -136,7 +137,7 @@ Client::handleIO(Engine &e)
 struct ReplServer::Impl : public ReplServer
 {
     Socket server;
-    std::vector<std::shared_ptr<Client>> clients;
+    bl::vec<std::shared_ptr<Client>> clients;
     bool running{ false };
     int next_id{};
     Engine &engine;

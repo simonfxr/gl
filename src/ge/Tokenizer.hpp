@@ -2,10 +2,9 @@
 #define GE_TOKENIZER_HPP
 
 #include "ge/CommandArgs.hpp"
-
 #include "sys/io/Stream.hpp"
 
-#include <vector>
+#include <bl/vec.hpp>
 
 namespace ge {
 
@@ -30,7 +29,7 @@ GE_API bool
 skipStatement(ParserState &state);
 
 GE_API bool
-tokenize(ParserState &state, std::vector<CommandArg> &args);
+tokenize(ParserState &state, bl::vec<CommandArg> &args);
 
 } // namespace ge
 

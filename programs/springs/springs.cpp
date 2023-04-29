@@ -11,9 +11,10 @@
 #include "math/mat4.hpp"
 #include "util/range.hpp"
 
+#include <bl/vec.hpp>
+
 #include <algorithm>
 #include <map>
-#include <vector>
 
 using namespace math;
 using namespace bl::literals;
@@ -79,9 +80,9 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     physics_perf_counter.init(2);
 
     particle_source = 0;
-    std::vector<vec4> particle_pos_mass;
-    std::vector<vec3> particle_vel;
-    std::vector<GLint> particle_conn;
+    bl::vec<vec4> particle_pos_mass;
+    bl::vec<vec3> particle_vel;
+    bl::vec<GLint> particle_conn;
 
     for (const auto i : irange(N_SPRINGS)) {
         for (const auto j : irange(N_SPRINGS)) {
@@ -230,10 +231,11 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
           engine->renderManager().geometryTransform();
         prog->use();
         glt::Uniforms(*prog)
-          .optional("color", glt::color(0xFF, 0, 0))
-          .optional("vpMatrix", gt.vpMatrix())
-          .optional("grid_size", static_cast<real>(N_SPRINGS))
-          .mandatory("particle_data1", glt::BoundTexture(GL_SAMPLER_BUFFER, 0));
+          .optional("color"_k, glt::color(0xFF, 0, 0))
+          .optional("vpMatrix"_k, gt.vpMatrix())
+          .optional("grid_size"_k, static_cast<real>(N_SPRINGS))
+          .mandatory("particle_data1"_k,
+                     glt::BoundTexture(GL_SAMPLER_BUFFER, 0));
     }
 
     sphere_model.drawInstanced(N_SPRINGS * N_SPRINGS);
@@ -243,7 +245,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &)
 
     if (fpsTimer.fire()) {
         sys::io::stdout() << "simulation fps: "_k
-                          << (1 / physics_perf_counter.query()) << ", avg: "_k
+                          << (1 / physics_perf_counter.query()) << "_k, avg: "_k
                           << (pc_count / pc_sum) << "\n"_k;
         pc_sum = 0.0;
         pc_count = 0;
@@ -269,10 +271,10 @@ Anim::animate(const ge::Event<ge::AnimationEvent> &)
     auto damp_coeff = 0.99_r; // damping over the period of 1 sec;
                               //    real damping = pow(damp_coeff, dt);
     glt::Uniforms(*physics_prog)
-      .optional("dt", dt)
-      .optional("D", 1.f)
-      .optional("damping", damp_coeff)
-      .mandatory("position_mass_sampler",
+      .optional("dt"_k, dt)
+      .optional("D"_k, 1.f)
+      .optional("damping"_k, damp_coeff)
+      .mandatory("position_mass_sampler"_k,
                  glt::BoundTexture(GL_SAMPLER_BUFFER, 0));
 
     GL_CALL(glBindBufferBase,

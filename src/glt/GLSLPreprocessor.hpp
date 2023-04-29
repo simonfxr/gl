@@ -2,7 +2,7 @@
 #define GLT_GLSLPREPROCESSOR_HPP
 
 #include <bl/string.hpp>
-#include <vector>
+#include <bl/vec.hpp>
 
 #include "bl/box.hpp"
 #include "glt/Preprocessor.hpp"
@@ -37,9 +37,9 @@ struct GLT_API GLSLPreprocessor
     ShaderIncludes &includes;
     ShaderDependencies &dependencies;
 
-    std::vector<uint32_t> segLengths;
-    std::vector<const char *> segments;
-    std::vector<Array<char>> contents;
+    bl::vec<uint32_t> segLengths;
+    bl::vec<const char *> segments;
+    bl::vec<Array<char>> contents;
     bl::box<Preprocessor> preprocessor;
 
     std::unique_ptr<ProcessingState> state;
