@@ -9,9 +9,12 @@
 namespace sys {
 namespace win {
 
-std::wstring utf8To16(bl::string_view) noexcept;
+using platform_string = bl::basic_string<wchar_t>;
+using platform_string_view = bl::basic_string_view<wchar_t>;
 
-bl::string utf16To8(std::wstring_view) noexcept;
+platform_string utf8To16(bl::string_view) noexcept;
+
+bl::string utf16To8(platform_string_view) noexcept;
 
 } // namespace win
 } // namespace sys

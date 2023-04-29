@@ -7,7 +7,7 @@
 namespace sys {
 namespace win {
 
-std::wstring
+platform_string
 utf8To16(bl::string_view str) noexcept
 {
     if (str.empty())
@@ -16,7 +16,7 @@ utf8To16(bl::string_view str) noexcept
       MultiByteToWideChar(CP_UTF8, 0, str.data(), int(str.size()), nullptr, 0);
     if (!len)
         FATAL_ERR("MultiByteToWideChar failed (size)");
-    std::wstring ret(size_t(len), wchar_t{});
+    platform_string ret(size_t(len), char16_t{});
     len = MultiByteToWideChar(
       CP_UTF8, 0, str.data(), int(str.size()), ret.data(), len);
     if (!len)
@@ -25,7 +25,7 @@ utf8To16(bl::string_view str) noexcept
 }
 
 bl::string
-utf16To8(std::wstring_view str) noexcept
+utf16To8(platform_string_view str) noexcept
 {
     if (str.empty())
         return {};

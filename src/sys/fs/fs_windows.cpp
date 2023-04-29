@@ -36,7 +36,7 @@ cwd(bl::string_view dir)
 bl::string
 cwd()
 {
-    std::wstring dir(MAX_PATH, '\0');
+    win::platform_string dir(MAX_PATH, '\0');
     auto len = GetCurrentDirectoryW(DWORD(dir.size()), dir.data());
     if (!len) {
         WARN("GetCurrentDirectory() failed");
@@ -101,7 +101,7 @@ stat(bl::string_view path)
     stat.type = (attrs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
                   ? ObjectType::Directory
                   : ObjectType::File;
-    std::wstring wabs(MAX_PATH, 0);
+    win::platform_string wabs(MAX_PATH, 0);
     auto len =
       GetFullPathNameW(wpath.c_str(), DWORD(wabs.size()), wabs.data(), nullptr);
     if (!len)
@@ -114,7 +114,7 @@ bl::string
 absolutePath(bl::string_view path)
 {
     auto wpath = utf8To16(path);
-    std::wstring abs(MAX_PATH, '\0');
+    win::platform_string abs(MAX_PATH, '\0');
     auto len =
       GetFullPathNameW(wpath.c_str(), DWORD(abs.size()), abs.data(), NULL);
     if (!len)
