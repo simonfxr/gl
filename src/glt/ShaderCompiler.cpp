@@ -227,7 +227,7 @@ compilePreprocessed(ShaderCompilerQueue & /*scq*/,
 void
 printShaderLog(GLShaderObject & /*shader*/, sys::io::OutStream &out);
 
-std::optional<GLenum>
+bl::optional<GLenum>
 translateShaderType(ShaderType type, const bl::string &basename = ""_s);
 
 ReloadState
@@ -344,7 +344,7 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
     }
 }
 
-std::optional<GLenum>
+bl::optional<GLenum>
 translateShaderType(ShaderType type, const bl::string &basename)
 {
 
@@ -359,7 +359,7 @@ translateShaderType(ShaderType type, const bl::string &basename)
         if (shaderTypeMapping.type == type)
             return { shaderTypeMapping.glType };
 
-    return std::nullopt;
+    return bl::nullopt;
 }
 } // namespace
 
@@ -718,7 +718,7 @@ ShaderCompiler::shaderCache()
     return m().cache;
 }
 
-std::optional<ShaderType>
+bl::optional<ShaderType>
 ShaderCompiler::guessShaderType(bl::string_view path)
 {
     auto ext = sys::fs::extension(path);
@@ -727,7 +727,7 @@ ShaderCompiler::guessShaderType(bl::string_view path)
         if (ext == shaderTypeMapping.fileExtension)
             return { shaderTypeMapping.type };
 
-    return std::nullopt;
+    return bl::nullopt;
 }
 
 void

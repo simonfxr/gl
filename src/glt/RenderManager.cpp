@@ -4,16 +4,15 @@
 #include "glt/GLPerfCounter.hpp"
 #include "glt/Transformations.hpp"
 #include "glt/utils.hpp"
-#include "opengl.hpp"
-
 #include "math/fvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
-
+#include "opengl.hpp"
 #include "sys/clock.hpp"
 
+#include <bl/optional.hpp>
+
 #include <algorithm>
-#include <optional>
 
 namespace glt {
 
@@ -29,7 +28,7 @@ struct RenderManager::Impl : public RenderManager
 {
     ViewFrustum frustum;
     bl::box<GeometryTransform> transform;
-    std::optional<SavePointHolder>
+    bl::optional<SavePointHolder>
       transformStateBOS; // transform state in begin of scene
 
     std::shared_ptr<RenderTarget> def_rt;
@@ -204,8 +203,8 @@ RenderManager::endScene()
 {
     ASSERT(m().inScene, "cannot endScene() without beginScene()");
     m().inScene = false;
-    m().transformStateBOS = std::nullopt; // restore save point
-    m().endStats();                       // dont count swap buffers
+    m().transformStateBOS = bl::nullopt; // restore save point
+    m().endStats();                      // dont count swap buffers
     if (m().current_rt != nullptr)
         m().current_rt->draw();
 }

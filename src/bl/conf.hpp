@@ -17,6 +17,14 @@
 #    define BL_API
 #endif
 
+#ifndef BL_DEBUG
+#    ifndef NDEBUG
+#        define BL_DEBUG 1
+#    else
+#        define BL_DEBUG 0
+#    endif
+#endif
+
 #define BL_inline HU_FORCE_INLINE inline
 #define BL_wrapper HU_MACROLIKE
 #define bl_likely hu_likely

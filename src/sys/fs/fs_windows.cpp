@@ -82,19 +82,19 @@ isAbsolute(bl::string_view path)
     return PathIsRelativeW(wstr.c_str()) != TRUE;
 }
 
-std::optional<FileTime>
+bl::optional<FileTime>
 modificationTime(bl::string_view path)
 {
     return def::modificationTime(path);
 }
 
-std::optional<Stat>
+bl::optional<Stat>
 stat(bl::string_view path)
 {
     auto wpath = utf8To16(path);
     WIN32_FILE_ATTRIBUTE_DATA attrs;
     if (GetFileAttributesExW(wpath.c_str(), GetFileExInfoStandard, &attrs) == 0)
-        return std::nullopt;
+        return bl::nullopt;
 
     Stat stat;
     stat.mtime.seconds = filetimeToUnixTimestap(&attrs.ftLastWriteTime);
@@ -105,7 +105,7 @@ stat(bl::string_view path)
     auto len =
       GetFullPathNameW(wpath.c_str(), DWORD(wabs.size()), wabs.data(), nullptr);
     if (!len)
-        return std::nullopt;
+        return bl::nullopt;
     stat.absolute = utf16To8({ wabs.data(), len });
     return stat;
 }
@@ -135,7 +135,7 @@ lookup(bl::span<const bl::string> dirs, bl::string_view name, ObjectType type)
     return def::lookup(dirs, name, type);
 }
 
-std::optional<ObjectType>
+bl::optional<ObjectType>
 exists(bl::string_view path)
 {
     return def::exists(path);

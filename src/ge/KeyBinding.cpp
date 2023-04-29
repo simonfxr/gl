@@ -22,7 +22,7 @@ make_table()
 }
 } // namespace
 
-std::optional<KeyCode>
+bl::optional<KeyCode>
 parseKeyCode(const bl::string_view &str)
 {
     BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
@@ -31,7 +31,7 @@ parseKeyCode(const bl::string_view &str)
     auto it = table.find(str);
     if (it != table.end())
         return { it->second };
-    return std::nullopt;
+    return bl::nullopt;
 }
 
 std::strong_ordering

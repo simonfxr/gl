@@ -140,12 +140,12 @@ dropTrailingSeparators(bl::string_view path)
     return view_substr(path, 0, pos);
 }
 
-std::optional<ObjectType>
+bl::optional<ObjectType>
 exists(bl::string_view path)
 {
     if (auto st = stat(path))
         return st->type;
-    return std::nullopt;
+    return bl::nullopt;
 }
 
 bl::string
@@ -168,12 +168,12 @@ absolutePath(bl::string_view path)
     return ""_s;
 }
 
-std::optional<FileTime>
+bl::optional<FileTime>
 modificationTime(bl::string_view path)
 {
     if (auto st = stat(path))
         return st->mtime;
-    return std::nullopt;
+    return bl::nullopt;
 }
 
 } // namespace sys::fs::def

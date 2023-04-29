@@ -3,9 +3,10 @@
 #include "err/err.hpp"
 #include "sys/module.hpp"
 
+#include <bl/optional.hpp>
+
 #include <array>
 #include <cstring>
-#include <optional>
 
 namespace sys::io {
 

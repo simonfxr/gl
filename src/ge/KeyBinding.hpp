@@ -4,13 +4,13 @@
 #include "ge/conf.hpp"
 
 #include <bl/enum.hpp>
+#include <bl/optional.hpp>
 #include <bl/string.hpp>
 #include <bl/string_view.hpp>
 #include <bl/vec.hpp>
 #include <pp/enum.hpp>
 
 #include <compare>
-#include <optional>
 
 namespace ge {
 
@@ -144,7 +144,7 @@ struct Key
 
 using KeyBinding = bl::vec<Key>;
 
-HU_NODISCARD GE_API std::optional<KeyCode>
+HU_NODISCARD GE_API bl::optional<KeyCode>
 parseKeyCode(const bl::string_view &str);
 
 GE_API std::strong_ordering

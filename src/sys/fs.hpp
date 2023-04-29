@@ -4,12 +4,11 @@
 #include "sys/conf.hpp"
 
 #include <bl/enum.hpp>
+#include <bl/optional.hpp>
 #include <bl/span.hpp>
 #include <bl/string.hpp>
 #include <bl/string_view.hpp>
 #include <pp/enum.hpp>
-
-#include <optional>
 
 #if HU_OS_POSIX_P
 #    include "sys/fs/fs_unix.hpp"
@@ -69,10 +68,10 @@ dropTrailingSeparators(bl::string_view path);
 HU_NODISCARD SYS_API bool
 isAbsolute(bl::string_view path);
 
-HU_NODISCARD SYS_API std::optional<FileTime>
+HU_NODISCARD SYS_API bl::optional<FileTime>
 modificationTime(bl::string_view path);
 
-SYS_API std::optional<Stat>
+SYS_API bl::optional<Stat>
 stat(bl::string_view path);
 
 HU_NODISCARD SYS_API bl::string
@@ -81,7 +80,7 @@ absolutePath(bl::string_view path);
 HU_NODISCARD SYS_API bl::string
 lookup(bl::span<const bl::string>, bl::string_view path, ObjectType type);
 
-HU_NODISCARD SYS_API std::optional<ObjectType>
+HU_NODISCARD SYS_API bl::optional<ObjectType>
 exists(bl::string_view path);
 
 HU_NODISCARD inline bool
@@ -127,7 +126,7 @@ dropExtension(bl::string_view path);
 HU_NODISCARD SYS_API bl::string
 dropTrailingSeparators(bl::string_view path);
 
-HU_NODISCARD SYS_API std::optional<ObjectType>
+HU_NODISCARD SYS_API bl::optional<ObjectType>
 exists(bl::string_view path);
 
 HU_NODISCARD SYS_API bl::string
@@ -135,7 +134,7 @@ lookup(bl::span<const bl::string> dirs, bl::string_view name, ObjectType type);
 
 HU_NODISCARD SYS_API bl::string absolutePath(bl::string_view);
 
-HU_NODISCARD SYS_API std::optional<FileTime>
+HU_NODISCARD SYS_API bl::optional<FileTime>
 modificationTime(bl::string_view path);
 
 } // namespace def

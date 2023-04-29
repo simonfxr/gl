@@ -154,21 +154,21 @@ absolutePath(bl::string_view path)
     return join(dir, path);
 }
 
-std::optional<Stat>
+bl::optional<Stat>
 stat(bl::string_view path)
 {
     Stat stat;
     stat.absolute = absolutePath(path);
     if (stat.absolute.empty())
-        return std::nullopt;
+        return bl::nullopt;
     if (auto mtime = modificationTime(stat.absolute)) {
         stat.mtime = *mtime;
         return stat;
     }
-    return std::nullopt;
+    return bl::nullopt;
 }
 
-std::optional<FileTime>
+bl::optional<FileTime>
 modificationTime(bl::string_view path)
 {
     struct stat st
@@ -177,7 +177,7 @@ modificationTime(bl::string_view path)
         auto err = errno;
         if (err != ENOENT)
             ERR(strerror_errno(err));
-        return std::nullopt;
+        return bl::nullopt;
     }
     return FileTime{ st.st_mtime };
 }
@@ -188,7 +188,7 @@ lookup(bl::span<const bl::string> dirs, bl::string_view name, ObjectType type)
     return def::lookup(dirs, name, type);
 }
 
-std::optional<ObjectType>
+bl::optional<ObjectType>
 exists(bl::string_view path)
 {
     using stat = struct stat;
@@ -198,7 +198,7 @@ exists(bl::string_view path)
         auto err = bl::exchange(errno, 0);
         if (err != ENOENT)
             ERR(strerror_errno(err));
-        return std::nullopt;
+        return bl::nullopt;
     }
     auto type =
       S_ISDIR(info.st_mode) ? ObjectType::Directory : ObjectType::File;
