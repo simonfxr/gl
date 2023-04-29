@@ -142,21 +142,21 @@ struct gl_mapped_type<color>
 
 struct FieldInfo
 {
-    const char *name;
+    bl::string_view name;
     TypeInfo type_info;
     uint16_t offset;
-    constexpr FieldInfo(const char *nm, TypeInfo ti, uint16_t off)
+    constexpr FieldInfo(bl::string_view nm, TypeInfo ti, uint16_t off)
       : name(nm), type_info(ti), offset(off)
     {}
 };
 
 struct StructInfo
 {
-    const char *name;
+    bl::string_view name;
     uint16_t size;
     uint16_t align;
     bl::span<const FieldInfo> fields;
-    constexpr StructInfo(const char *nm,
+    constexpr StructInfo(bl::string_view nm,
                          uint16_t sz,
                          uint16_t algn,
                          bl::span<const FieldInfo> fs)
@@ -164,7 +164,8 @@ struct StructInfo
     {}
 };
 
-#define TI_DEF_FIELD_INFO0(type, field_name) PP_TOSTR(field_name)
+#define TI_DEF_FIELD_INFO0(type, field_name)                                   \
+    ::bl::string_view_literal(PP_TOSTR(field_name))
 #define TI_DEF_FIELD_INFO(struct_type, type_and_name)                          \
     ::glt::FieldInfo(                                                          \
       PP_DEFER1(TI_DEF_FIELD_INFO0) type_and_name,                             \
@@ -217,7 +218,7 @@ struct StructInfo
                                       sname::gl,                               \
                                       __VA_ARGS__) };                          \
         static constexpr ::glt::StructInfo info =                              \
-          ::glt::StructInfo(PP_TOSTR(sname),                                   \
+          ::glt::StructInfo(::bl::string_view_literal(PP_TOSTR(sname)),        \
                             sizeof(sname::gl),                                 \
                             alignof(sname::gl),                                \
                             ::bl::span<const ::glt::FieldInfo>(_fields));      \

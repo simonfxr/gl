@@ -36,7 +36,7 @@ static const int32_t N = 196;                // 196;
 static const int32_t SPHERE_POINTS_FACE = 8; // 32;
 static const int32_t SPHERE_POINTS = SPHERE_POINTS_FACE * 6;
 static const bool OCCLUSION = false;
-static const char *const WORLD_MODEL_FILE = "voxel-world.mdl";
+static inline constexpr bl::string_view WORLD_MODEL_FILE = "voxel-world.mdl"_k;
 
 struct MaterialProperties
 {

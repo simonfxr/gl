@@ -228,10 +228,12 @@ protected:
     virtual StreamResult basic_read(size_t &, bl::byte *) final override;
 };
 
+template<typename OStream>
+concept AOutStream =
+  std::derived_from<std::decay_t<OStream>, sys::io::OutStream>;
+
 #define DEF_OUTSTREAM_OP(T)                                                    \
-    template<typename OStream>                                                 \
-    std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream>  \
-      &operator<<(OStream &out, T value)                                       \
+    decltype(auto) operator<<(AOutStream auto &out, T value)                   \
     {                                                                          \
         write_repr(static_cast<OutStream &>(out), value);                      \
         return out;                                                            \
@@ -292,17 +294,16 @@ write_repr(OutStream &out, const void *x);
 #undef DEF_OPAQUE_OUTSTREAM_OP
 #undef DEF_OUTSTREAM_OP
 
-template<typename OStream, std::same_as<bool> T>
-std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
-operator<<(OStream &out, T x)
+template<std::same_as<bool> T>
+decltype(auto)
+operator<<(AOutStream auto &out, T x)
 {
     using namespace bl::literals;
     return out << (x ? BL_STRING_VIEW("true") : BL_STRING_VIEW("false"));
 }
 
-template<typename OStream>
-std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
-operator<<(OStream &out, const bl::string &str)
+decltype(auto)
+operator<<(AOutStream auto &out, const bl::string &str)
 {
     return out << bl::string_view{ str };
 }
@@ -312,9 +313,8 @@ struct ptr
     const void *p;
 };
 
-template<typename OStream>
-std::enable_if_t<std::is_base_of_v<sys::io::OutStream, OStream>, OStream> &
-operator<<(OStream &out, const ptr &p)
+decltype(auto)
+operator<<(AOutStream auto &out, const ptr &p)
 {
     write_repr(out, p.p);
     return out;

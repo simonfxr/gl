@@ -51,7 +51,7 @@ debugInfo(sys::io::OutStream &out, const void *ip)
     char *demangled =
       abi::__cxa_demangle(function_name, nullptr, nullptr, &status);
 
-    out << bl::string(demangled != nullptr ? demangled : function_name)
+    out << bl::from_cstring(demangled != nullptr ? demangled : function_name)
         << "["_k;
     if (demangled != nullptr)
         free(demangled); // NOLINT(cppcoreguidelines-owning-memory,
@@ -71,7 +71,7 @@ debugInfo(sys::io::OutStream &out, const void *ip)
         Dwarf_Addr faddr;
         const char *filename =
           dwfl_lineinfo(line, &faddr, &nline, nullptr, nullptr, nullptr);
-        out << filename << ":"_k << nline;
+        out << bl::from_cstring(filename) << ":"_k << nline;
     } else {
         out << "ip: "_k << ::sys::io::ptr{ ip };
     }
@@ -308,9 +308,10 @@ reportError(sys::io::OutStream &out,
         }
     }
 
-    out << "["_k << prefix << "]"_k
-        << " in "_k << loc.function << "\n"_k
-        << "  at "_k << loc.file << ":"_k << loc.line << "\n"_k;
+    out << "["_k << bl::from_cstring(prefix) << "]"_k
+        << " in "_k << bl::from_cstring(loc.function) << "\n"_k
+        << "  at "_k << bl::from_cstring(loc.file) << ":"_k << loc.line
+        << "\n"_k;
 
     if (!loc.operation.empty()) {
         if (lvl == LL::Assertion)

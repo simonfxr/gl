@@ -51,7 +51,7 @@ struct GLT_API ShaderProgram
 
     bool addShaderFilePair(const bl::string &basename, bool absolute = false);
 
-    bool bindAttribute(const bl::string &, GLuint position);
+    bool bindAttribute(bl::string_view, GLuint position);
 
     bool bindStreamOutVaryings(bl::span<const bl::string>);
 

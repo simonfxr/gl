@@ -103,8 +103,9 @@ void
 printGLTrace(const err::Location *loc)
 {
     if (G.print_opengl_calls)
-        sys::io::stdout() << "OPENGL "_k << loc->operation << " "_k << loc->file
-                          << ":"_k << loc->line << "\n"_k;
+        sys::io::stdout() << "OPENGL "_k << loc->operation << " "_k
+                          << bl::from_cstring(loc->file) << ":"_k << loc->line
+                          << "\n"_k;
 }
 
 bool
@@ -130,16 +131,16 @@ initDebug()
 {
 
     GLDebug *dbg = nullptr;
-    const char *debug_impl = nullptr;
+    bl::string_view debug_impl{};
 
     if (dbg == nullptr && GLAD_GL_ARB_debug_output) {
-        debug_impl = "GL_ARB_debug_output";
+        debug_impl = "GL_ARB_debug_output"_k;
         sys::io::stdout() << "trying ARB debug\n"_k;
         dbg = ARBDebug::init();
     }
 
     if (dbg == nullptr && GLAD_GL_AMD_debug_output) {
-        debug_impl = "GL_AMD_debug_output";
+        debug_impl = "GL_AMD_debug_output"_k;
         sys::io::stdout() << "trying AMD debug\n"_k;
         dbg = AMDDebug::init();
     }

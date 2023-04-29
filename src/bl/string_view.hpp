@@ -21,6 +21,12 @@ BL_consteval string_view string_view_literal(const char (&literal)[N]) noexcept
     return string_view{ literal, N - 1 };
 }
 
+constexpr string_view
+from_cstring(const char *s) noexcept
+{
+    return !s ? string_view{} : string_view{ s, std::strlen(s) };
+}
+
 using bytes_view = basic_string_view<byte>;
 
 } // namespace bl

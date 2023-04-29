@@ -338,7 +338,8 @@ printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
         if (logBegin == end) {
             out << "shader compile log empty\n"_k;
         } else {
-            out << "shader compile log:\n"_k << log_msg << "\n"_k
+            out << "shader compile log:\n"_k << bl::from_cstring(log_msg)
+                << "\n"_k
                 << "end compile log\n"_k;
         }
     }

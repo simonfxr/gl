@@ -10,6 +10,10 @@
 
 namespace bl {
 
+inline constexpr struct explicit_arg_t
+{
+} explicit_arg;
+
 template<class CharT, typename Allocator = std::allocator<CharT>>
 struct basic_string
   : private std::basic_string<CharT, std::char_traits<CharT>, Allocator>
@@ -38,6 +42,15 @@ struct basic_string
 
     template<typename Elem, size_t N>
     basic_string(Elem (&)[N]) = delete;
+
+    template<size_t N>
+    basic_string(CharT (&)[N]) = delete;
+
+    explicit constexpr basic_string(explicit_arg_t, const CharT *p) : Base(p) {}
+    explicit constexpr basic_string(explicit_arg_t, CharT *p) : Base(p) {}
+
+    basic_string(const CharT *p) = delete;
+    basic_string(CharT *p) = delete;
 
     constexpr basic_string(const basic_string_view<CharT> &rhs)
       : basic_string(rhs.begin(), rhs.end())

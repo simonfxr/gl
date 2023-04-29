@@ -40,7 +40,9 @@ private:
     std::shared_ptr<glt::ShaderProgram> shader;
 };
 
-#define DEF_SHADER(name, ...) const char *const name = PP_TOSTR(__VA_ARGS__);
+#define DEF_SHADER(name, ...)                                                  \
+    inline constexpr auto name =                                               \
+      ::bl::string_view_literal(PP_TOSTR(__VA_ARGS__));
 
 DEF_SHADER(
   PARTICLE_VERTEX_SHADER, uniform mat4 mvpMatrix;

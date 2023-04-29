@@ -171,7 +171,7 @@ ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
         if (logBegin == &log[log_len - 1]) {
             out << "link log empty\n"_k;
         } else {
-            out << "link log:\n"_k << logmsg << "\n"_k
+            out << "link log:\n"_k << bl::from_cstring(logmsg) << "\n"_k
                 << "end link log\n"_k;
         }
     }
@@ -336,7 +336,7 @@ ShaderProgram::link()
 }
 
 bool
-ShaderProgram::bindAttribute(const bl::string &s, GLuint position)
+ShaderProgram::bindAttribute(bl::string_view s, GLuint position)
 {
     if (self->linked) {
         RAISE_ERR(

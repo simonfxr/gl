@@ -163,8 +163,10 @@ ARBDebug::printDebugMessages(const err::Location &loc)
 #undef sym_case
 
         sys::io::ByteStream mesg;
-        mesg << "source: "_k << ssrc << ", severity: "_k << ssev << ", type: "_k
-             << stype << ", id: "_k << id << "  message: "_k << message_buffer;
+        mesg << "source: "_k << bl::from_cstring(ssrc) << ", severity: "_k
+             << bl::from_cstring(ssev) << ", type: "_k
+             << bl::from_cstring(stype) << ", id: "_k << id << "  message: "_k
+             << bl::from_cstring(message_buffer);
 
         err::reportError(sys::io::stdout(),
                          "OpenGL DEBUG",
@@ -255,8 +257,9 @@ AMDDebug::printDebugMessages(const err::Location &loc)
 #undef sym_case
 
         sys::io::ByteStream mesg;
-        mesg << "category: "_k << scat << ", severity: "_k << ssev << ", id: "_k
-             << id << "  message: "_k << message_buffer;
+        mesg << "category: "_k << bl::from_cstring(scat) << ", severity: "_k
+             << bl::from_cstring(ssev) << ", id: "_k << id << "  message: "_k
+             << bl::from_cstring(message_buffer);
 
         err::reportError(sys::io::stdout(),
                          "OpenGL DEBUG",

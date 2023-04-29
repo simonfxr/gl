@@ -139,7 +139,7 @@ printStats(sys::io::OutStream &out)
     out << "Active OpenGL Objects:\n"_k;
     for (size_t i = 0; i < bl::enum_count_of<ObjectType>(); ++i)
         if (tab.instance_count[i] > 0)
-            out << "  "_k << tab.kinds[i].kind << "s: "_k
+            out << "  "_k << bl::from_cstring(tab.kinds[i].kind) << "s: "_k
                 << tab.instance_count[i] << "\n"_k;
 }
 

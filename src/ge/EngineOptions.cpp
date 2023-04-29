@@ -50,22 +50,22 @@ struct Option
 
 // clang-format off
 const constexpr auto OPTIONS = std::to_array<Option>({
-  { "--help"_sv, ""_sv, Help, "print a description of all options and exit"_sv },
-  { "--no-init-script"_sv, ""_sv, NoInitScript, "inhibit loading of default script file (<program-name>.script)"_sv },
-  { "--script-dir"_sv, "DIR"_sv, ScriptDir, "add DIR to the list of searched script directories"_sv },
-  { "--shader-dir"_sv, "DIR"_sv, ShaderDir, "add DIR to the list of searched shader directories"_sv },
-  { "--cd"_sv, "BOOL"_sv, CD, "change into the base directory of the program binary: yes|no"_sv },
-  { "--eval"_sv, "COMMAND"_sv, Eval, "execute COMMAND as a script command"_sv },
-  { "--script"_sv, "FILE"_sv, Script, "load FILE and execute it as a script"_sv },
-  { "--cwd"_sv, "DIR"_sv, CWD, "change into directory DIR"_sv },
-  { "--gl-version"_sv, "VERSION"_sv, GLVersion, "set the OpenGL context version: MAJOR.MINOR"_sv },
-  { "--gl-profile"_sv, "TYPE"_sv, GLProfile, "set the OpenGL profile type: core|compatibility"_sv },
-  { "--gl-debug"_sv, "BOOL"_sv, GLDebug, "create a OpenGL debug context: yes|no"_sv },
-  { "--gl-trace"_sv, "BOOL"_sv, GLTrace, "print every OpenGL call: yes|no"_sv },
-  { "--aa-samples"_sv, "NUM"_sv, AASamples, "set the number of FSAA Samples"_sv },
-  { "--vsync"_sv, "BOOL"_sv, VSync, "enable vertical sync: yes|no"_sv },
-  { "--disable-render"_sv, "BOOL"_sv, DisableRender, "disable calling the renderfunction"_sv },
-  { "--dump-shaders"_sv, "BOOL"_sv, DumpShaders, "dump shader source after preprocessing"_sv },
+  { "--help"_k, ""_k, Help, "print a description of all options and exit"_k },
+  { "--no-init-script"_k, ""_k, NoInitScript, "inhibit loading of default script file (<program-name>.script)"_k },
+  { "--script-dir"_k, "DIR"_k, ScriptDir, "add DIR to the list of searched script directories"_k },
+  { "--shader-dir"_k, "DIR"_k, ShaderDir, "add DIR to the list of searched shader directories"_k },
+  { "--cd"_k, "BOOL"_k, CD, "change into the base directory of the program binary: yes|no"_k },
+  { "--eval"_k, "COMMAND"_k, Eval, "execute COMMAND as a script command"_k },
+  { "--script"_k, "FILE"_k, Script, "load FILE and execute it as a script"_k },
+  { "--cwd"_k, "DIR"_k, CWD, "change into directory DIR"_k },
+  { "--gl-version"_k, "VERSION"_k, GLVersion, "set the OpenGL context version: MAJOR.MINOR"_k },
+  { "--gl-profile"_k, "TYPE"_k, GLProfile, "set the OpenGL profile type: core|compatibility"_k },
+  { "--gl-debug"_k, "BOOL"_k, GLDebug, "create a OpenGL debug context: yes|no"_k },
+  { "--gl-trace"_k, "BOOL"_k, GLTrace, "print every OpenGL call: yes|no"_k },
+  { "--aa-samples"_k, "NUM"_k, AASamples, "set the number of FSAA Samples"_k },
+  { "--vsync"_k, "BOOL"_k, VSync, "enable vertical sync: yes|no"_k },
+  { "--disable-render"_k, "BOOL"_k, DisableRender, "disable calling the renderfunction"_k },
+  { "--dump-shaders"_k, "BOOL"_k, DumpShaders, "dump shader source after preprocessing"_k },
 });
 // clang-format on
 
@@ -78,7 +78,7 @@ struct State
     bool option(OptionCase opt, const char *arg);
 };
 
-#define CMDWARN(...) WARN(scat("parsing options: "_sv, __VA_ARGS__))
+#define CMDWARN(...) WARN(scat("parsing options: "_k, __VA_ARGS__))
 
 bool
 str_eq(const char *a, const char *b)
@@ -124,31 +124,33 @@ State::option(OptionCase opt, const char *arg)
         options.inhibitInitScript = true;
         return true;
     case ScriptDir:
-        options.scriptDirs.emplace_back(arg);
+        options.scriptDirs.emplace_back(bl::from_cstring(arg));
         return true;
     case ShaderDir:
-        options.shaderDirs.emplace_back(arg);
+        options.shaderDirs.emplace_back(bl::from_cstring(arg));
         return true;
     case CD:
         if (!parse_bool(arg, options.defaultCD)) {
-            CMDWARN("--cd: not a boolean option"_sv);
+            CMDWARN("--cd: not a boolean option"_k);
             return false;
         }
         return true;
     case Eval:
-        options.commands.emplace_back(EngineOptions::Command, bl::string(arg));
+        options.commands.emplace_back(EngineOptions::Command,
+                                      bl::from_cstring(arg));
         return true;
     case Script:
-        options.commands.emplace_back(EngineOptions::Script, bl::string(arg));
+        options.commands.emplace_back(EngineOptions::Script,
+                                      bl::from_cstring(arg));
         return true;
     case CWD:
-        options.workingDirectory = arg;
+        options.workingDirectory = bl::from_cstring(arg);
         return true;
     case GLVersion:
         int maj, min;
         if (sscanf(arg, "%d.%d", &maj, &min) != 2 || maj < 0 || min < 0 ||
             maj > 9 || min > 9) {
-            CMDWARN("invalid OpenGL Version: "_sv, arg);
+            CMDWARN("invalid OpenGL Version: "_k, bl::from_cstring(arg));
             return false;
         }
         options.window.settings.majorVersion = static_cast<unsigned>(maj);
@@ -161,26 +163,27 @@ State::option(OptionCase opt, const char *arg)
         } else if (str_eq(arg, "compat") || str_eq(arg, "compatibility")) {
             options.window.settings.coreProfile = false;
         } else {
-            CMDWARN("--gl-profile: invalid OpenGL Profile type: "_sv, arg);
+            CMDWARN("--gl-profile: invalid OpenGL Profile type: "_k,
+                    bl::from_cstring(arg));
             return false;
         }
         return true;
     case GLDebug:
         if (!parse_bool(arg, options.window.settings.debugContext)) {
-            CMDWARN("--gl-debug: not a boolean option"_sv);
+            CMDWARN("--gl-debug: not a boolean option"_k);
             return false;
         }
         return true;
     case GLTrace:
         if (!parse_bool(arg, options.traceOpenGL)) {
-            CMDWARN("--gl-trace: not a boolean option"_sv);
+            CMDWARN("--gl-trace: not a boolean option"_k);
             return false;
         }
         return true;
     case AASamples:
         unsigned samples;
         if (sscanf(arg, "%u", &samples) != 1) {
-            CMDWARN("--aa-samples: not an integer"_sv);
+            CMDWARN("--aa-samples: not an integer"_k);
             return false;
         }
 
@@ -188,20 +191,20 @@ State::option(OptionCase opt, const char *arg)
         return true;
     case VSync: {
         if (!parse_bool(arg, options.window.vsync)) {
-            CMDWARN("--vsync: not a boolean option"_sv);
+            CMDWARN("--vsync: not a boolean option"_k);
             return false;
         }
         return true;
     }
     case DisableRender:
         if (!parse_bool(arg, options.disableRender)) {
-            CMDWARN("--disable-render: not a boolean option"_sv);
+            CMDWARN("--disable-render: not a boolean option"_k);
             return false;
         }
         return true;
     case DumpShaders:
         if (!parse_bool(arg, options.dumpShaders)) {
-            CMDWARN("--dump-shaders: not a boolean option"_sv);
+            CMDWARN("--dump-shaders: not a boolean option"_k);
             return false;
         }
         return true;
@@ -239,7 +242,7 @@ EngineOptions::parse(int *argcp, char ***argvp)
     auto str_view = [](auto s) {
         if (s)
             return bl::string_view{ s, strlen(s) };
-        return ""_sv;
+        return ""_k;
     };
 
     auto state = State{ *this };
@@ -255,9 +258,9 @@ EngineOptions::parse(int *argcp, char ***argvp)
         auto err = false;
         auto skip = 0;
 
-        if (arg == "-"_sv) {
+        if (arg == "-"_k) {
 
-            if (arg == "--"_sv) {
+            if (arg == "--"_k) {
                 skip = 1;
                 done = true;
                 goto skip_args;
@@ -272,7 +275,7 @@ EngineOptions::parse(int *argcp, char ***argvp)
                         err = !state.option(opt.option_case, nullptr);
                     } else if (i + 1 >= argc) {
                         skip = 1;
-                        CMDWARN(opt.option, " missing argument"_sv);
+                        CMDWARN(opt.option, " missing argument"_k);
                     } else {
                         skip = 2;
                         err = !state.option(opt.option_case, argv[i + 1]);

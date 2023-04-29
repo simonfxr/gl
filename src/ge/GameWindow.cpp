@@ -79,7 +79,7 @@ void
 glfw_error_callback(int error, const char *desc)
 {
     UNUSED(error);
-    ERR(scat("GLFW error: "_sv, desc));
+    ERR(scat("GLFW error: "_sv, bl::from_cstring(desc)));
 }
 
 void

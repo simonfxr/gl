@@ -140,7 +140,7 @@ print_cl_error(const char *msg,
                ::size_t /*unused*/,
                void * /*unused*/)
 {
-    sys::io::stdout() << msg << "\n"_k;
+    sys::io::stdout() << bl::from_cstring(msg) << "\n"_k;
 }
 
 static cl::Context
