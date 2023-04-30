@@ -43,7 +43,7 @@ struct vec : private std::vector<T, Allocator>
     using Base::size;
     using Base::operator[];
 
-    template<typename Elem, size_t N>
+    template<typename Elem, usize N>
     vec(Elem (&)[N]) = delete;
 
     constexpr vec(const span<T> &rhs) : vec(rhs.begin(), rhs.end()) {}

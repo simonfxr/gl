@@ -10,6 +10,7 @@ struct ptr_ops
 {
     static inline constexpr bool is_nullable = is_nullable_;
     static inline constexpr bool is_owned = is_owned_;
+    static inline constexpr bool _const = std::is_const_v<T>;
     using element_type = T;
 
     BL_wrapper ptr_ops() noexcept = default;
@@ -99,7 +100,7 @@ struct ptr_ops
     }
 
     BL_wrapper explicit operator const element_type &() const noexcept
-        requires(!is_nullable)
+        requires(!is_nullable && !_const)
     {
         return *get();
     }

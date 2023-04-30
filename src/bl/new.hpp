@@ -1,9 +1,8 @@
 #ifndef BL_NEW_HPP
 #define BL_NEW_HPP
 
-#include <bl/conf.hpp>
-
 #include <bl/concepts.hpp>
+#include <bl/core.hpp>
 #include <bl/invoke.hpp>
 #include <bl/mp.hpp>
 #include <bl/noncopymove.hpp>
@@ -17,7 +16,7 @@ inline constexpr struct runtime_size_f
 {
     template<typename T>
         requires nothrow_invocable<runtime_size_f, type_proxy<T>>
-    BL_inline constexpr size_t operator()(type_proxy<T>) const noexcept
+    BL_inline constexpr usize operator()(type_proxy<T>) const noexcept
     {
         return ::bl::invoke(*this, type_proxy<T>{});
     }
@@ -93,11 +92,11 @@ protected:                                                                     \
 public:                                                                        \
     struct ImplT;                                                              \
                                                                                \
-    static const size_t impl_size;                                             \
+    static const ::bl::usize impl_size;                                        \
                                                                                \
     template<typename Defer = void>                                            \
-    BL_wrapper friend size_t invoke(::bl::runtime_size_f,                      \
-                                    ::bl::type_proxy<ApiT>) noexcept           \
+    BL_wrapper friend ::bl::usize invoke(::bl::runtime_size_f,                 \
+                                         ::bl::type_proxy<ApiT>) noexcept      \
     {                                                                          \
         return ApiT::impl_size;                                                \
     }                                                                          \
@@ -129,7 +128,7 @@ public:                                                                        \
     {                                                                          \
         std::destroy_at(bl::addressof(p.m()));                                 \
     }                                                                          \
-    const size_t ApiT::impl_size = sizeof(::bl::runtime_sized_impl_t<ApiT>)
+    const ::bl::usize ApiT::impl_size = sizeof(::bl::runtime_sized_impl_t<ApiT>)
 
 template<typename T>
 concept runtime_sized = !
@@ -138,7 +137,8 @@ std::is_reference_v<T> && !std::move_constructible<T> &&
 
 template<typename T, typename... Args>
     requires(!runtime_sized<T>)
-T *new_obj(Args &&...args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
+HU_RETURNS_NONNULL HU_RETURNS_NOALIAS T *new_obj(Args &&...args) noexcept(
+  std::is_nothrow_constructible_v<T, Args...>)
 {
     // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
     return new T(bl_fwd(args)...);
@@ -146,11 +146,11 @@ T *new_obj(Args &&...args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
 
 template<typename T, typename... Args>
     requires runtime_sized<T>
-T *
+HU_RETURNS_NONNULL HU_RETURNS_NOALIAS T *
 new_obj(Args &&...args) noexcept(noexcept(T::construct_at(bl_declval(T *),
                                                           bl_fwd(args)...)))
 {
-    size_t sz = runtime_size(type_proxy<T>{});
+    usize sz = runtime_size(type_proxy<T>{});
     auto p = ::operator new(
       sz, static_cast<std::align_val_t>(alignof(std::max_align_t)));
     decltype(auto) obj = T::construct_at(static_cast<T *>(p), bl_fwd(args)...);

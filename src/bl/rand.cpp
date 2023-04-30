@@ -36,13 +36,13 @@ random_device::operator()() noexcept
         using result_type = decltype(rd());
         result_type operator()() noexcept { return rd(); }
     } g{ _p->rd };
-    std::array<std::byte, sizeof(random_device::result_type)> sbytes{};
+    std::array<byte, sizeof(random_device::result_type)> sbytes{};
     bl::rand::seed_bytes(g, sbytes);
     return bit_cast<random_device::result_type>(sbytes);
 }
 
 void
-random_device::seed_bytes(bl::span<std::byte> bytes) noexcept
+random_device::seed_bytes(bl::span<byte> bytes) noexcept
 {
     bl::rand::seed_bytes(*this, bytes);
 }

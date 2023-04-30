@@ -8,7 +8,6 @@
 #include <bl/string.hpp>
 
 #include <cerrno>
-#include <cmath>
 #include <cstring>
 #include <ctime>
 

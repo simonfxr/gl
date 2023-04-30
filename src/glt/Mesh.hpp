@@ -12,13 +12,11 @@
 
 #include <bl/vec.hpp>
 
-#include <memory>
-
 namespace glt {
 
 inline constexpr uint32_t ALIGNMENT_DEFAULT = 0;
-inline constexpr size_t MIN_NUM_VERTICES = 8;
-inline constexpr size_t MIN_NUM_ELEMENTS = 8;
+inline constexpr bl::usize MIN_NUM_VERTICES = 8;
+inline constexpr bl::usize MIN_NUM_ELEMENTS = 8;
 
 enum DrawType : uint8_t
 {
@@ -33,7 +31,7 @@ public:
     {
         void operator()(char *) noexcept;
     };
-    using unique_vertex_ptr = std::unique_ptr<char, VertexDataFree>;
+    using unique_vertex_ptr = bl::owned_ptr<char, VertexDataFree>;
 
     MeshBase(MeshBase &&) = default;
     MeshBase &operator=(MeshBase &&) = default;
@@ -44,15 +42,13 @@ private:
         void operator()(char *) const {}
     };
 
-    unique_vertex_ptr vertex_data{};
-    std::unique_ptr<char, NopDeleter> vertex_data_end{};
-    std::unique_ptr<char, NopDeleter> vertex_data_lim{};
-    size_t vertex_count{};
+    bl::vec<char> vertex_data;
+    bl::usize vertex_count{};
     bl::vec<uint32_t> elements;
-    const StructInfo *struct_info;
+    bl::ptr<const StructInfo> struct_info;
     bl::vec<bool> enabled_attributes;
-    size_t gpu_vertex_count = 0;
-    size_t gpu_element_count = 0;
+    bl::usize gpu_vertex_count = 0;
+    bl::usize gpu_element_count = 0;
     GLVertexArrayObject vertex_array_name;
     GLBufferObject element_buffer_name;
     GLBufferObject vertex_buffer_name;
@@ -63,25 +59,23 @@ private:
     DrawType draw_type = DrawArrays;
 
 protected:
-    void *vertexRef(size_t i)
+    void *vertexRef(bl::usize i)
     {
-        return static_cast<void *>(vertex_data.get() + i * struct_info->size);
+        return static_cast<void *>(vertex_data.data() + i * struct_info->size);
     }
 
-    [[nodiscard]] const void *vertexRef(size_t i) const
+    [[nodiscard]] const void *vertexRef(bl::usize i) const
     {
-        return static_cast<const void *>(vertex_data.get() +
+        return static_cast<const void *>(vertex_data.data() +
                                          i * struct_info->size);
     }
 
     void *pushVertex()
     {
-        if (hu_unlikely(vertex_data_end == vertex_data_lim))
-            growVertexBuf();
-        auto end = vertex_data_end.get();
-        vertex_data_end.reset(end + struct_info->size);
+        auto end = vertex_data.size();
+        vertex_data.resize(end + struct_info->size);
         ++vertex_count;
-        return end;
+        return static_cast<void *>(&vertex_data[end]);
     }
 
     void *pushVertexElem()
@@ -94,8 +88,8 @@ protected:
 
 public:
     MeshBase(const StructInfo &,
-             size_t initial_nverts,
-             size_t initial_nelems,
+             bl::usize initial_nverts,
+             bl::usize initial_nelems,
              GLenum prim_ty);
     ~MeshBase();
 
@@ -105,17 +99,20 @@ public:
     [[nodiscard]] GLenum usageHint() const { return usage_hint; }
     void usageHint(GLenum usageHint);
 
-    [[nodiscard]] size_t verticesSize() const { return vertex_count; }
-    [[nodiscard]] size_t elementsSize() const { return elements.size(); }
+    [[nodiscard]] bl::usize verticesSize() const { return vertex_count; }
+    [[nodiscard]] bl::usize elementsSize() const { return elements.size(); }
 
-    [[nodiscard]] size_t gpuVerticesSize() const { return gpu_vertex_count; }
-    [[nodiscard]] size_t gpuElementsSize() const { return gpu_element_count; }
+    [[nodiscard]] bl::usize gpuVerticesSize() const { return gpu_vertex_count; }
+    [[nodiscard]] bl::usize gpuElementsSize() const
+    {
+        return gpu_element_count;
+    }
 
     [[nodiscard]] DrawType drawType() const { return draw_type; }
     void drawType(DrawType type);
 
-    void enableAttribute(size_t i, bool enabled = true);
-    [[nodiscard]] bool attributeEnabled(size_t i) const;
+    void enableAttribute(bl::usize i, bool enabled = true);
+    [[nodiscard]] bool attributeEnabled(bl::usize i) const;
 
     void freeHost();
 
@@ -127,37 +124,36 @@ public:
     void drawElements() { drawElements(prim_type); }
     void drawElements(GLenum primType);
 
-    void drawElementsInstanced(size_t instances)
+    void drawElementsInstanced(bl::usize instances)
     {
         drawElementsInstanced(instances, prim_type);
     }
-    void drawElementsInstanced(size_t num, GLenum type);
+    void drawElementsInstanced(bl::usize num, GLenum type);
 
     void drawArrays() { drawArrays(prim_type); }
     void drawArrays(GLenum primType);
 
-    void drawArraysInstanced(size_t num)
+    void drawArraysInstanced(bl::usize num)
     {
         drawArraysInstanced(num, prim_type);
     }
-    void drawArraysInstanced(size_t num, GLenum primType);
+    void drawArraysInstanced(bl::usize num, GLenum primType);
 
     void draw() { draw(prim_type); }
     void draw(GLenum primType);
 
-    void drawInstanced(size_t num) { drawInstanced(num, prim_type); }
-    void drawInstanced(size_t num, GLenum primType);
+    void drawInstanced(bl::usize num) { drawInstanced(num, prim_type); }
+    void drawInstanced(bl::usize num, GLenum primType);
 
     void pushElement(uint32_t idx) { elements.push_back(idx); }
-    [[nodiscard]] uint32_t element(size_t i) const { return elements[i]; }
-    uint32_t &element(size_t i) { return elements[i]; }
+    [[nodiscard]] uint32_t element(bl::usize i) const { return elements[i]; }
+    uint32_t &element(bl::usize i) { return elements[i]; }
 
-    [[nodiscard]] GLuint attributePosition(size_t offset) const;
+    [[nodiscard]] GLuint attributePosition(bl::usize offset) const;
 
     void bind();
 
 private:
-    void growVertexBuf();
     void enableAttributes();
     static void disableAttributes();
     void initVertexBuffer();
@@ -177,8 +173,8 @@ struct Mesh : public MeshBase
     explicit Mesh(GLenum) : Mesh(GL_TRIANGLES, MIN_NUM_VERTICES) {}
 
     Mesh(GLenum primTy,
-         size_t initial_nverts,
-         size_t initial_nelems = MIN_NUM_ELEMENTS)
+         bl::usize initial_nverts,
+         bl::usize initial_nelems = MIN_NUM_ELEMENTS)
       : MeshBase(gl_t::struct_info::info,
                  initial_nverts,
                  initial_nelems,
@@ -195,7 +191,7 @@ struct Mesh : public MeshBase
         *static_cast<gl_t *>(pushVertexElem()) = static_cast<gl_t>(vert);
     }
 
-    T at(size_t i) const
+    T at(bl::usize i) const
     {
         return T{ *static_cast<const gl_t *>(vertexRef(i)) };
     }

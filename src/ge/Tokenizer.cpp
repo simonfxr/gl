@@ -310,7 +310,7 @@ statement(ParserState &s, bl::vec<CommandArg> &toks, bool quot);
 State
 parseQuot(ParserState &s, CommandArg &arg)
 {
-    auto q = std::make_unique<Quotation>();
+    auto q = bl::box<Quotation>();
 
     auto line = s.line;
     auto col = s.col;

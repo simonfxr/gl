@@ -10,15 +10,6 @@ namespace glt {
 
 namespace {
 
-MeshBase::unique_vertex_ptr
-realloc_vertex_buf(MeshBase::unique_vertex_ptr buf, size_t vsize, size_t n)
-{
-    auto p = static_cast<char *>(realloc(buf.release(), vsize * n)); // NOLINT
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    ASSERT(reinterpret_cast<uintptr_t>(p) % alignof(std::max_align_t) == 0);
-    return MeshBase::unique_vertex_ptr{ static_cast<char *>(p) };
-}
-
 void
 validatePrimType(GLenum primType)
 {
@@ -67,8 +58,8 @@ MeshBase::VertexDataFree::operator()(char *buf) noexcept
 }
 
 MeshBase::MeshBase(const StructInfo &si,
-                   size_t initial_nverts,
-                   size_t initial_nelems,
+                   bl::usize initial_nverts,
+                   bl::usize initial_nelems,
                    GLenum prim_ty)
   : struct_info(&si)
   , enabled_attributes(si.fields.size() * 2, false)
@@ -81,9 +72,6 @@ MeshBase::MeshBase(const StructInfo &si,
     while (nverts < initial_nverts)
         nverts *= 2;
 
-    vertex_data = realloc_vertex_buf(nullptr, si.size, nverts);
-    vertex_data_end.reset(vertex_data.get());
-    vertex_data_lim.reset(vertex_data.get() + si.size * nverts);
     for (auto i : irange(si.fields.size()))
         enableAttribute(i);
 }
@@ -176,7 +164,7 @@ MeshBase::send(GLenum usageHint)
     GL_CALL(glNamedBufferDataEXT,
             *vertex_buffer_name,
             vertex_count * struct_info->size,
-            vertex_data.get(),
+            vertex_data.data(),
             usageHint);
     gpu_vertex_count = vertex_count;
     initVertexAttribs();
@@ -233,7 +221,7 @@ MeshBase::disableAttributes()
 }
 
 void
-MeshBase::drawElementsInstanced(size_t num, GLenum primType)
+MeshBase::drawElementsInstanced(bl::usize num, GLenum primType)
 {
     validatePrimType(primType);
     if (gpu_element_count == 0)
@@ -275,7 +263,7 @@ MeshBase::drawArrays(GLenum primType)
 }
 
 void
-MeshBase::drawArraysInstanced(size_t num, GLenum primType)
+MeshBase::drawArraysInstanced(bl::usize num, GLenum primType)
 {
     if (gpu_vertex_count == 0)
         return;
@@ -303,7 +291,7 @@ MeshBase::draw(GLenum primType)
 }
 
 void
-MeshBase::drawInstanced(size_t num, GLenum primType)
+MeshBase::drawInstanced(bl::usize num, GLenum primType)
 {
     switch (draw_type) {
     case DrawArrays:
@@ -316,7 +304,7 @@ MeshBase::drawInstanced(size_t num, GLenum primType)
 }
 
 GLuint
-MeshBase::attributePosition(size_t offset) const
+MeshBase::attributePosition(bl::usize offset) const
 {
 
     for (const auto [i, a] : enumerate(struct_info->fields))
@@ -326,20 +314,20 @@ MeshBase::attributePosition(size_t offset) const
 }
 
 void
-MeshBase::enableAttribute(size_t i, bool enabled)
+MeshBase::enableAttribute(bl::usize i, bool enabled)
 {
     if (i >= struct_info->fields.size()) {
-        ERR("size_t out of range");
+        ERR("bl::usize out of range");
         return;
     }
     enabled_attributes[i * 2] = enabled;
 }
 
 bool
-MeshBase::attributeEnabled(size_t i) const
+MeshBase::attributeEnabled(bl::usize i) const
 {
     if (i >= struct_info->fields.size()) {
-        ERR("size_t out of range");
+        ERR("bl::usize out of range");
         return false;
     }
 
@@ -349,11 +337,9 @@ MeshBase::attributeEnabled(size_t i) const
 void
 MeshBase::freeHost()
 {
-    vertex_data.reset();
-    vertex_data_end.reset();
-    vertex_data_lim.reset();
+    bl::exchange(vertex_data);
     vertex_count = 0;
-    elements.clear();
+    bl::exchange(elements);
 }
 
 void
@@ -363,16 +349,6 @@ MeshBase::freeGPU()
     gpu_vertex_count = 0;
     element_buffer_name.release();
     gpu_element_count = 0;
-}
-
-void
-MeshBase::growVertexBuf()
-{
-    size_t new_size = vertex_count == 0 ? MIN_NUM_VERTICES : vertex_count * 2;
-    vertex_data =
-      realloc_vertex_buf(bl::move(vertex_data), struct_info->size, new_size);
-    vertex_data_end.reset(vertex_data.get() + struct_info->size * vertex_count);
-    vertex_data_lim.reset(vertex_data.get() + struct_info->size * new_size);
 }
 
 } // namespace glt

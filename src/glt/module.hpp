@@ -4,13 +4,7 @@
 #include "glt/GLDebug.hpp"
 #include "glt/utils.hpp"
 
-#include <memory>
-
-#ifdef DEFINE_GLT_MODULE
-#    define GLT_MODULE_ACCESS
-#else
-#    define GLT_MODULE_ACCESS const
-#endif
+#include <bl/box.hpp>
 
 namespace glt {
 
@@ -35,10 +29,8 @@ struct Module
     Utils utils;
 };
 
-extern std::unique_ptr<Module> module;
+extern bl::box<Module> mod;
 
 } // namespace glt
-
-#undef GLT_MODULE_ACCESS
 
 #endif

@@ -2,7 +2,8 @@
 
 #include "glt/utils.hpp"
 
-#include <array>
+#include <bl/array.hpp>
+
 #include <unordered_map>
 
 #if defined(DEBUG_GLOBJECT) || defined(DEBUG_ALL)
@@ -55,8 +56,8 @@ struct ObjectKind
 
 struct Tables
 {
-    std::array<size_t, bl::enum_count_of<ObjectType>()> instance_count{};
-    std::array<ObjectKind, bl::enum_count_of<ObjectType>()> kinds{};
+    bl::array<size_t, bl::enum_count_of<ObjectType>()> instance_count{};
+    bl::array<ObjectKind, bl::enum_count_of<ObjectType>()> kinds{};
     DBG(std::unordered_map<GLuint, bl::string> stacktrace_map;)
     Tables();
 

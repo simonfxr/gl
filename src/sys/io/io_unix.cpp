@@ -14,6 +14,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+using namespace bl::literals;
+
 namespace sys::io {
 
 namespace {
@@ -192,24 +194,24 @@ elevate(Handle &h, HandleMode mode)
     return HandleError::OK;
 }
 
-bl::pair<size_t, HandleError>
+bl::pair<bl::usize, HandleError>
 read(Handle &h, bl::span<bl::byte> buf)
 {
     ASSERT(h);
     auto n = buf.size();
-    ssize_t k;
+    auto k = 0_iz;
     RETRY_INTR(k = ::read(h._os.fd, buf.data(), n));
     if (k >= 0)
-        return { static_cast<size_t>(k),
+        return { static_cast<bl::usize>(k),
                  k == 0 ? HandleError::EOF : HandleError::OK };
     return { 0, convertErrno() };
 }
 
-bl::pair<size_t, HandleError>
+bl::pair<bl::usize, HandleError>
 write(Handle &h, bl::span<const bl::byte> buf)
 {
     ASSERT(h);
-    ssize_t k;
+    auto k = 0_iz;
     RETRY_INTR(k = ::write(h._os.fd, buf.data(), buf.size()));
     if (k >= 0)
         return { k, HandleError::OK };

@@ -42,7 +42,7 @@ struct GLT_API GLSLPreprocessor
     bl::vec<Array<char>> contents;
     bl::box<Preprocessor> preprocessor;
 
-    std::unique_ptr<ProcessingState> state;
+    bl::box<ProcessingState> state;
 
     IncludeHandler includeHandler;
     DependencyHandler dependencyHandler;

@@ -5,10 +5,11 @@
 #include "glt/module.hpp"
 #include "opengl.hpp"
 
-#include <array>
+#include <bl/array.hpp>
+
 #include <cstring>
 
-#define G (module->utils)
+#define G (mod->utils)
 
 namespace glt {
 
@@ -177,7 +178,7 @@ enum MemInfoField
 void
 queryMemFreeATI(GLMemInfoATI::GLMemFree *free)
 {
-    std::array<GLint, FREE_COUNT> info{};
+    bl::array<GLint, FREE_COUNT> info{};
     GL_CALL(glGetIntegerv, GL_VBO_FREE_MEMORY_ATI, info.data());
     free->freeVBO = info[FREE_TOTAL];
     GL_CALL(glGetIntegerv, GL_TEXTURE_FREE_MEMORY_ATI, info.data());

@@ -6,6 +6,7 @@
 #include "ge/EngineEvents.hpp"
 #include "ge/conf.hpp"
 
+#include <bl/box.hpp>
 #include <bl/span.hpp>
 #include <bl/string.hpp>
 #include <bl/vec.hpp>
@@ -58,13 +59,13 @@ struct GE_API QuotationCommand
   : Command
   , bl::non_copyable
 {
-    const std::unique_ptr<Quotation> quotation;
+    bl::box<Quotation> quotation;
 
     QuotationCommand(bl::string_view source,
                      int line,
                      int column,
                      bl::string_view desc,
-                     std::unique_ptr<Quotation> quot);
+                     bl::box<Quotation> quot);
     ~QuotationCommand() override;
 
     virtual void interactive(const Event<CommandEvent> &ev,

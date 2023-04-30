@@ -32,6 +32,12 @@ struct non_null
     BL_wrapper constexpr non_null &operator=(non_null &&) noexcept = default;
     BL_wrapper constexpr ~non_null() = default;
 
+    BL_wrapper constexpr element_type *release() &&noexcept
+    {
+        auto tmp = bl_mov(*this);
+        return bl_mov(tmp._p).release();
+    }
+
     BL_wrapper constexpr element_type *get_or_null() const noexcept
     {
         return _p.get_or_null();

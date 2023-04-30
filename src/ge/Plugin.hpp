@@ -5,6 +5,7 @@
 
 #include "err/err.hpp"
 
+#include <bl/array.hpp>
 #include <bl/box.hpp>
 #include <bl/mp.hpp>
 #include <bl/span.hpp>
@@ -127,7 +128,7 @@ struct GE_API FixedPluginSet final : PluginSet
 
 private:
     std::tuple<Plugins...> plugins;
-    std::array<Plugin *, sizeof...(Plugins)> erased_plugins{};
+    bl::array<Plugin *, sizeof...(Plugins)> erased_plugins{};
     std::unordered_map<const Plugin::TypeInfo *, Plugin *> plugin_map{};
 
     template<size_t... Is>

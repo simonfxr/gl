@@ -695,13 +695,13 @@ Anim::loadResources(const bl::string &dir)
         return;
     }
 
-    auto deleter = [](std::byte *p) { free(p); };
+    auto deleter = [](bl::byte *p) { free(p); };
     auto img = glt::Image(
       math::ivec2(w, h),
       glt::ImageFormat::RGB,
-      std::unique_ptr<std::byte, decltype(deleter)>{
+      bl::owned_ptr<bl::byte, decltype(deleter)>{
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        reinterpret_cast<std::byte *>(bl::exchange(wood_data, nullptr)),
+        reinterpret_cast<bl::byte *>(bl::exchange(wood_data, nullptr)),
         deleter });
 
     woodTexture.data()->upload(img);

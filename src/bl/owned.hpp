@@ -74,19 +74,25 @@ struct owned
         return *this;
     }
 
-    BL_wrapper constexpr element_type *release() noexcept
+    BL_wrapper constexpr element_type *release() &noexcept
         requires(is_nullable)
     {}
 
-    ~owned()
+    BL_wrapper constexpr element_type *release() &&noexcept
     {
-        if (auto p = this->get())
-            _d(p);
+        auto tmp = bl_mov(*this);
+        return bl_mov(tmp._p).release();
     }
 
     BL_wrapper constexpr element_type *get_or_null() const noexcept
     {
         return _p.get_or_null();
+    }
+
+    ~owned()
+    {
+        if (auto p = this->get_or_null())
+            _d(p);
     }
 
 private:

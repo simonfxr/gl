@@ -19,7 +19,7 @@ template<ImageFormat Format>
 struct PixelRef
 {
     using view = ImageView2D<Format>;
-    std::byte *location;
+    bl::byte *location;
 
     // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
     inline constexpr explicit(false) operator color() const noexcept;
@@ -37,7 +37,7 @@ struct ImageView2D
     using reference = PixelRef<Format>;
 
     math::ivec2 _dim;
-    std::byte *_data;
+    bl::byte *_data;
 
     constexpr glt::color operator[](math::ivec2 ij) const
     {
@@ -59,9 +59,9 @@ struct ImageView2D
         return (*this)[math::ivec2(i, j)];
     }
 
-    static constexpr void storePixel(std::byte *p, color col)
+    static constexpr void storePixel(bl::byte *p, color col)
     {
-        auto rgba = col.u8vec4().cast<std::byte>();
+        auto rgba = col.u8vec4().cast<bl::byte>();
         if constexpr (Format == ImageFormat::RGB) {
             memcpy(p, rgba.data(), 3);
         } else if constexpr (Format == ImageFormat::RGBA) {
@@ -71,12 +71,12 @@ struct ImageView2D
         }
     }
 
-    static constexpr color loadPixel(std::byte *p)
+    static constexpr color loadPixel(bl::byte *p)
     {
-        math::vec<std::byte, 4> rgba{};
+        math::vec<bl::byte, 4> rgba{};
         if constexpr (Format == ImageFormat::RGB) {
             memcpy(rgba.data(), p, 3);
-            rgba[3] = static_cast<std::byte>(0xFF);
+            rgba[3] = static_cast<bl::byte>(0xFF);
         } else if constexpr (Format == ImageFormat::RGBA) {
             memcpy(rgba.data(), p, 4);
         } else {
@@ -105,9 +105,9 @@ struct ImageView2D
 
     [[nodiscard]] constexpr ImageFormat format() const { return Format; }
 
-    [[nodiscard]] const std::byte *data() const { return _data; }
+    [[nodiscard]] const bl::byte *data() const { return _data; }
 
-    [[nodiscard]] std::byte *data() { return _data; }
+    [[nodiscard]] bl::byte *data() { return _data; }
 
 private:
     [[nodiscard]] constexpr size_t offset(math::ivec2 ij) const

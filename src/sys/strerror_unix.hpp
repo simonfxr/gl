@@ -3,10 +3,10 @@
 
 #include "defs.h"
 
+#include <bl/array.hpp>
 #include <bl/core.hpp>
 #include <bl/string_view.hpp>
 
-#include <array>
 #include <cerrno>
 #include <cstring>
 
@@ -14,7 +14,7 @@ namespace sys {
 
 struct strerror_buf
 {
-    std::array<char, 128> d{};
+    bl::array<char, 128> d{};
 
     operator bl::string_view() { return { d.data(), strlen(d.data()) }; }
 };

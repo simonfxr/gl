@@ -30,7 +30,7 @@ is_pathsep(bl::string_view s)
 #endif
 }
 
-size_t
+bl::usize
 dropTrailingSeps(bl::string_view path)
 {
     if (path.empty())
@@ -91,8 +91,8 @@ basename(bl::string_view path)
     if (path.empty())
         return ""_s;
 
-    size_t pos = path.rfind(SEPARATOR_CHAR, dropTrailingSeps(path));
-    size_t end = bl::string::npos;
+    auto pos = path.rfind(SEPARATOR_CHAR, dropTrailingSeps(path));
+    auto end = bl::string::npos;
 
     if (pos != bl::string::npos) {
         pos += 1;
@@ -110,7 +110,7 @@ basename(bl::string_view path)
 bl::string
 extension(bl::string_view path)
 {
-    size_t pos = path.rfind(SEPARATOR_CHAR);
+    auto pos = path.rfind(SEPARATOR_CHAR);
     if (pos == bl::string::npos)
         pos = 0;
     pos = path.find('.', pos);
@@ -122,7 +122,7 @@ extension(bl::string_view path)
 bl::string
 dropExtension(bl::string_view path)
 {
-    size_t pos = path.rfind(SEPARATOR_CHAR);
+    auto pos = path.rfind(SEPARATOR_CHAR);
     if (pos == bl::string::npos)
         pos = 0;
     pos = path.find('.', pos);

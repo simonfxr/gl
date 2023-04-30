@@ -1,8 +1,7 @@
 #ifndef BL_STRING_HPP
 #define BL_STRING_HPP
 
-#include <bl/conf.hpp>
-
+#include <bl/core.hpp>
 #include <bl/string_view.hpp>
 
 #include <cstdint>
@@ -40,10 +39,10 @@ struct basic_string
     using Base::size;
     using Base::operator[];
 
-    template<typename Elem, size_t N>
+    template<typename Elem, usize N>
     basic_string(Elem (&)[N]) = delete;
 
-    template<size_t N>
+    template<usize N>
     basic_string(CharT (&)[N]) = delete;
 
     explicit constexpr basic_string(explicit_arg_t, const CharT *p) : Base(p) {}
@@ -91,9 +90,9 @@ struct basic_string
     }
 };
 
-using string = basic_string<string_view::value_type>;
+using string = basic_string<cbyte>;
 
-using bytes = basic_string<uint8_t, std::allocator<uint8_t>>;
+using bytes = basic_string<byte>;
 
 } // namespace bl
 
@@ -102,7 +101,7 @@ using bytes = basic_string<uint8_t, std::allocator<uint8_t>>;
 template<typename CharT, typename Allocator>
 struct std::hash<bl::basic_string<CharT, Allocator>>
 {
-    constexpr std::size_t operator()(
+    constexpr bl::usize operator()(
       const bl::basic_string<CharT, Allocator> &s) const noexcept
     {
         using SV = std::basic_string_view<CharT, std::char_traits<CharT>>;

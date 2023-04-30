@@ -12,6 +12,7 @@
 #include <bl/optional.hpp>
 #include <bl/string.hpp>
 #include <bl/string_view.hpp>
+#include <bl/swap.hpp>
 
 namespace sys::io {
 
@@ -20,8 +21,8 @@ struct Socket;
 struct IPAddr4;
 struct HandleStream;
 
-inline constexpr size_t HANDLE_READ_BUFFER_SIZE = 1024;
-inline constexpr size_t HANDLE_WRITE_BUFFER_SIZE = 1024;
+inline constexpr bl::usize HANDLE_READ_BUFFER_SIZE = 1024;
+inline constexpr bl::usize HANDLE_WRITE_BUFFER_SIZE = 1024;
 
 using HandleMode = uint32_t;
 
@@ -81,10 +82,10 @@ mode(Handle &);
 HU_NODISCARD SYS_API HandleError
 elevate(Handle &, HandleMode);
 
-HU_NODISCARD SYS_API bl::pair<size_t, HandleError>
+HU_NODISCARD SYS_API bl::pair<bl::usize, HandleError>
 read(Handle &, bl::span<uint8_t>);
 
-HU_NODISCARD SYS_API bl::pair<size_t, HandleError>
+HU_NODISCARD SYS_API bl::pair<bl::usize, HandleError>
 write(Handle &, bl::span<const uint8_t>);
 
 SYS_API HandleError
@@ -165,9 +166,8 @@ struct Handle : private bl::non_copyable
 
     constexpr friend void swap(Handle &lhs, Handle &rhs) noexcept
     {
-        using std::swap;
-        swap(lhs._mode, rhs._mode);
-        swap(lhs._os, rhs._os);
+        bl::swap(lhs._mode, rhs._mode);
+        bl::swap(lhs._os, rhs._os);
     }
 };
 
@@ -204,8 +204,8 @@ private:
     Handle handle;
     uint8_t read_buffer[HANDLE_READ_BUFFER_SIZE]{};
     uint8_t write_buffer[HANDLE_WRITE_BUFFER_SIZE]{};
-    size_t read_cursor{};
-    size_t write_cursor{};
+    bl::usize read_cursor{};
+    bl::usize write_cursor{};
 
 public:
     HandleStream(HandleStream &&) = default;
@@ -220,8 +220,8 @@ public:
 protected:
     StreamResult basic_close() final override;
     StreamResult basic_flush() final override;
-    StreamResult basic_read(size_t &, uint8_t *) final override;
-    StreamResult basic_write(size_t &, const uint8_t *) final override;
+    StreamResult basic_read(bl::usize &, uint8_t *) final override;
+    StreamResult basic_write(bl::usize &, const uint8_t *) final override;
     StreamResult flush_buffer();
 };
 

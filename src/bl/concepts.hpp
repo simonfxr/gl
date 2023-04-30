@@ -1,7 +1,7 @@
 #ifndef BL_CONCEPTS_HPP
 #define BL_CONCEPTS_HPP
 
-#include <bl/conf.hpp>
+#include <bl/core.hpp>
 
 #include <array>
 #include <bit>
@@ -10,7 +10,7 @@
 namespace bl {
 
 template<typename T>
-concept bitcastable = requires(const std::array<std::byte, sizeof(T)> &bytes) {
+concept bitcastable = requires(const std::array<byte, sizeof(T)> &bytes) {
                           std::bit_cast<T>(bytes);
                       };
 

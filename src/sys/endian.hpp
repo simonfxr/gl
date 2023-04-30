@@ -4,10 +4,10 @@
 #include "defs.h"
 
 #include <bl/core.hpp>
+#include <bl/type_traits.hpp>
 
 #include <bo/cxx.hpp>
 #include <hu/endian.h>
-#include <type_traits>
 
 namespace sys {
 

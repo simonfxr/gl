@@ -3,8 +3,7 @@
 
 namespace bl::literals {
 
-constexpr string operator""_s(const string::value_type *s,
-                              std::size_t n) noexcept
+constexpr string operator""_s(const string::value_type *s, usize n) noexcept
 {
     return string{ s, s + n };
 }

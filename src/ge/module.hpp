@@ -3,13 +3,7 @@
 
 #include "defs.h"
 
-#include <memory>
-
-#ifdef DEFINE_GE_MODULE
-#    define GE_MODULE_ACCESS
-#else
-#    define GE_MODULE_ACCESS const
-#endif
+#include <bl/box.hpp>
 
 namespace ge {
 
@@ -24,10 +18,8 @@ struct Module
     GameWindowInit _internal_game_window_init;
 };
 
-extern std::unique_ptr<Module> module;
+extern bl::box<Module> mod;
 
 } // namespace ge
-
-#undef GE_MODULE_ACCESS
 
 #endif

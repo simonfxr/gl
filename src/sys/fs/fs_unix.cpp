@@ -10,7 +10,6 @@
 #include <bl/string.hpp>
 #include <bl/string_view.hpp>
 
-#include <array>
 #include <cerrno>
 #include <cstring>
 #include <ctime>
@@ -37,7 +36,7 @@ bl::string
 cwd()
 {
     using namespace bl::literals;
-    const size_t MIN_SIZE = 128;
+    const bl::usize MIN_SIZE = 128;
     auto size = MIN_SIZE;
     bl::string path;
 
@@ -60,12 +59,12 @@ retry:
     }
 }
 
-static size_t
+static bl::usize
 dropTrailingSlashes(bl::string_view path)
 {
     if (path.empty())
         return bl::string::npos;
-    size_t pos = path.size() - 1;
+    auto pos = path.size() - 1;
 
     while (pos > 0 && path[pos] == '/')
         --pos;
@@ -79,7 +78,7 @@ dirname(bl::string_view path)
     if (path.empty())
         return "."_s;
 
-    size_t pos = path.rfind('/', dropTrailingSlashes(path));
+    auto pos = path.rfind('/', dropTrailingSlashes(path));
 
     if (pos != bl::string::npos) {
         while (pos > 1 && path[pos - 1] == '/')
@@ -101,8 +100,8 @@ basename(bl::string_view path)
     if (path.empty())
         return ""_s;
 
-    size_t pos = path.rfind('/', dropTrailingSlashes(path));
-    size_t end = bl::string::npos;
+    auto pos = path.rfind('/', dropTrailingSlashes(path));
+    auto end = bl::string::npos;
 
     if (pos != bl::string::npos) {
         pos += 1;
@@ -126,7 +125,7 @@ dropExtension(bl::string_view path)
 bl::string
 extension(bl::string_view path)
 {
-    size_t pos = path.rfind('/');
+    auto pos = path.rfind('/');
     if (pos == bl::string::npos)
         pos = 0;
     pos = path.find('.', pos);

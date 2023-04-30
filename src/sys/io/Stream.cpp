@@ -3,9 +3,9 @@
 #include "err/err.hpp"
 #include "sys/module.hpp"
 
+#include <bl/array.hpp>
 #include <bl/tuple.hpp>
 
-#include <array>
 #include <cerrno>
 #include <cstring>
 
@@ -71,7 +71,7 @@ InStream::close()
     StreamState::track(SF_IN_EOF | SF_OUT_EOF, rflags(), ret);
 }
 
-bl::pair<size_t, StreamResult>
+bl::pair<bl::usize, StreamResult>
 InStream::read(bl::span<bl::byte> buf)
 {
     if (!readable())
@@ -104,7 +104,7 @@ OutStream::close()
     StreamState::track(SF_IN_EOF | SF_OUT_EOF, wflags, ret);
 }
 
-bl::pair<size_t, StreamResult>
+bl::pair<bl::usize, StreamResult>
 OutStream::write(bl::span<const bl::byte> buf)
 {
     if (!writeable())
@@ -177,19 +177,19 @@ Streams::Streams()
 SYS_API InStream &
 stdin()
 {
-    return module->io_streams.stdin;
+    return mod->io_streams.stdin;
 }
 
 OutStream &
 stdout()
 {
-    return module->io_streams.stdout;
+    return mod->io_streams.stdout;
 }
 
 OutStream &
 stderr()
 {
-    return module->io_streams.stderr;
+    return mod->io_streams.stderr;
 }
 
 #define DEF_PRINTF_WRITER(T, fmt, bufsz)                                       \
@@ -197,9 +197,9 @@ stderr()
     {                                                                          \
         if (!out.writeable())                                                  \
             return StreamResult::OK;                                           \
-        std::array<char, bufsz> buf{};                                         \
+        bl::array<char, bufsz> buf{};                                          \
         auto len = snprintf(buf.data(), sizeof buf, "%" fmt, value);           \
-        return write_repr(out, bl::string_view{ buf.data(), size_t(len) });    \
+        return write_repr(out, bl::string_view{ buf.data(), bl::usize(len) }); \
     }
 
 DEF_PRINTF_WRITER(const void *, "p", 32)
@@ -227,14 +227,14 @@ NullStream::basic_flush()
 }
 
 StreamResult
-NullStream::basic_read(size_t &s, bl::byte * /*buf*/)
+NullStream::basic_read(bl::usize &s, bl::byte * /*buf*/)
 {
     s = 0;
     return StreamResult::EOF;
 }
 
 StreamResult
-NullStream::basic_write(size_t &s, const bl::byte * /*buf*/)
+NullStream::basic_write(bl::usize &s, const bl::byte * /*buf*/)
 {
     s = 0;
     return StreamResult::EOF;
@@ -246,7 +246,7 @@ NullStream::basic_close()
     return StreamResult::OK;
 }
 
-ByteStream::ByteStream(size_t bufsize) : read_cursor(0)
+ByteStream::ByteStream(bl::usize bufsize) : read_cursor(0)
 {
     buffer.reserve(bufsize);
 }
@@ -259,7 +259,7 @@ ByteStream::ByteStream(bl::string_view str) : ByteStream(str.size())
 ByteStream::~ByteStream() = default;
 
 void
-ByteStream::truncate(size_t sz)
+ByteStream::truncate(bl::usize sz)
 {
     buffer.resize(sz, 0);
     if (read_cursor > sz)
@@ -279,11 +279,11 @@ ByteStream::basic_close()
 }
 
 StreamResult
-ByteStream::basic_read(size_t &s, bl::byte *buf)
+ByteStream::basic_read(bl::usize &s, bl::byte *buf)
 {
-    size_t lim = read_cursor + s;
+    auto lim = read_cursor + s;
     if (lim > size())
-        lim = size_t();
+        lim = bl::usize();
     if (read_cursor >= lim) {
         s = 0;
         return StreamResult::EOF;
@@ -295,7 +295,7 @@ ByteStream::basic_read(size_t &s, bl::byte *buf)
 }
 
 StreamResult
-ByteStream::basic_write(size_t &s, const bl::byte *buf)
+ByteStream::basic_write(bl::usize &s, const bl::byte *buf)
 {
     auto rng = bl::span{ buf, s };
     buffer.append(rng.begin(), rng.end());
@@ -315,7 +315,7 @@ CooperativeInStream::basic_close_in(bool /*flush_only*/)
 }
 
 StreamResult
-CooperativeInStream::basic_read(size_t &s, bl::byte *buf)
+CooperativeInStream::basic_read(bl::usize &s, bl::byte *buf)
 {
     auto n = s;
     for (;;) {

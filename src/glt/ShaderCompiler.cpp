@@ -11,9 +11,10 @@
 #include "util/range.hpp"
 #include "util/string.hpp"
 
-#include <algorithm>
-#include <array>
+#include <bl/array.hpp>
 #include <bl/string_view.hpp>
+
+#include <algorithm>
 #include <functional>
 #include <iterator>
 #include <numeric>

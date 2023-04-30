@@ -1,6 +1,7 @@
 #ifndef BL_STRING_VIEW_HPP
 #define BL_STRING_VIEW_HPP
 
+#include <bl/core.hpp>
 #include <bl/span.hpp>
 
 #include <string_view>
@@ -12,9 +13,9 @@ namespace bl {
 template<typename CharT>
 using basic_string_view = bl::span<const CharT>;
 
-using string_view = basic_string_view<string_byte>;
+using string_view = basic_string_view<cbyte>;
 
-template<size_t N>
+template<usize N>
     requires(N > 0)
 BL_consteval string_view string_view_literal(const char (&literal)[N]) noexcept
 {

@@ -191,9 +191,6 @@ DependencyHandler::directiveEncountered(
 void
 IncludeHandler::beginProcessing(const Preprocessor::ContentContext &ctx)
 {
-    if (!glslPreprocessor->state)
-        glslPreprocessor->state.reset(new ProcessingState); // NOLINT
-
     if (!ctx.name.empty())
         glslPreprocessor->state->visitingFiles.insert(ctx.name);
 
@@ -275,7 +272,7 @@ IncludeHandler::endProcessing(const Preprocessor::ContentContext &ctx)
         glslPreprocessor->state->visitingFiles.erase(ctx.name);
 
     if (glslPreprocessor->state->stack.empty())
-        glslPreprocessor->state.reset();
+        *glslPreprocessor->state = ProcessingState{};
 }
 
 } // namespace glt

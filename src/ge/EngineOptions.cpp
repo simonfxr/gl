@@ -49,7 +49,7 @@ struct Option
 };
 
 // clang-format off
-const constexpr auto OPTIONS = std::to_array<Option>({
+const constexpr auto OPTIONS = bl::to_array<Option>({
   { "--help"_k, ""_k, Help, "print a description of all options and exit"_k },
   { "--no-init-script"_k, ""_k, NoInitScript, "inhibit loading of default script file (<program-name>.script)"_k },
   { "--script-dir"_k, "DIR"_k, ScriptDir, "add DIR to the list of searched script directories"_k },

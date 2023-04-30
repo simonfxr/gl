@@ -1,6 +1,7 @@
 #ifndef BL_RAW_PTR_HPP
 #define BL_RAW_PTR_HPP
 
+#include <bl/core.hpp>
 #include <bl/ptr_ops.hpp>
 #include <bl/ptr_traits.hpp>
 
@@ -29,7 +30,10 @@ struct raw_ptr : ptr_ops<raw_ptr<T>, T, true, false>
     }
     BL_wrapper ~raw_ptr() = default;
 
-    BL_wrapper constexpr T *release() noexcept { return exchange(_p, nullptr); }
+    BL_wrapper constexpr T *release() noexcept
+    {
+        return ::bl::exchange(_p, nullptr);
+    }
 
     BL_wrapper constexpr T *get_or_null() const noexcept { return _p; }
 

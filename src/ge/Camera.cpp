@@ -58,7 +58,7 @@ Camera::Impl::~Impl() = default;
 namespace {
 
 // clang-format off
-const std::array<math::real, 36 /* 3 * 12 */> the_dir_table = {
+const bl::array<math::real, 36 /* 3 * 12 */> the_dir_table = {
     0.5f, 0.f, -0.8660254037844386f,
     0.8660254037844387f, 0.f, -0.5f,
     1.f, 0.f, 0.f,
@@ -171,7 +171,7 @@ Camera::Impl::runLoadFrame(const Event<CommandEvent> & /*unused*/,
         return;
     }
 
-    std::array<bl::byte, sizeof frame> bytes{};
+    bl::array<bl::byte, sizeof frame> bytes{};
     auto [s, ret] = bl::move(res).value().read(bytes);
     if (ret != sys::io::StreamResult::OK || s != sizeof frame) {
         ERR(scat("failed to read frame from file: "_sv,

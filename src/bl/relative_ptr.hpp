@@ -2,6 +2,7 @@
 #define BL_RELATIVE_PTR_HPP
 
 #include <bl/concepts.hpp>
+#include <bl/core.hpp>
 #include <bl/ptr_ops.hpp>
 #include <bl/ptr_traits.hpp>
 
@@ -77,7 +78,7 @@ struct relative_ptr
     BL_wrapper constexpr T *release() noexcept
         requires(is_nullable)
     {
-        return exchange(this, relative_ptr{}).get();
+        return ::bl::exchange(this, relative_ptr{}).get();
     }
 
     template<typename U>

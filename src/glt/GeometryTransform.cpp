@@ -1,10 +1,12 @@
 #include "glt/GeometryTransform.hpp"
+
 #include "err/err.hpp"
 #include "glt/Transformations.hpp"
-
 #include "math/fvec.hpp"
 #include "math/mat3.hpp"
 #include "math/mat4.hpp"
+
+#include <bl/array.hpp>
 
 namespace glt {
 
@@ -32,8 +34,8 @@ struct GeometryTransform::Impl : GeometryTransform
 
     mutable mat4_t inverseProjectionMatrix;
 
-    std::array<mat4_t, GEOMETRY_TRANSFORM_MAX_DEPTH> modelMatrices{};
-    std::array<uint64_t, GEOMETRY_TRANSFORM_MAX_DEPTH> mods{};
+    bl::array<mat4_t, GEOMETRY_TRANSFORM_MAX_DEPTH> modelMatrices{};
+    bl::array<uint64_t, GEOMETRY_TRANSFORM_MAX_DEPTH> mods{};
 
     Impl()
       : viewMatrix(mat4())

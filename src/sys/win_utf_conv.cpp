@@ -16,7 +16,7 @@ utf8To16(bl::string_view str) noexcept
       MultiByteToWideChar(CP_UTF8, 0, str.data(), int(str.size()), nullptr, 0);
     if (!len)
         FATAL_ERR("MultiByteToWideChar failed (size)");
-    platform_string ret(size_t(len), char16_t{});
+    platform_string ret(bl::usize(len), char16_t{});
     len = MultiByteToWideChar(
       CP_UTF8, 0, str.data(), int(str.size()), ret.data(), len);
     if (!len)
@@ -33,7 +33,7 @@ utf16To8(platform_string_view str) noexcept
       CP_UTF8, 0, str.data(), int(str.size()), nullptr, 0, nullptr, nullptr);
     if (!len)
         FATAL_ERR("WideCharToMultiByte failed (size)");
-    bl::string ret(size_t(len), char16_t{});
+    bl::string ret(bl::usize(len), char16_t{});
     len = WideCharToMultiByte(CP_UTF8,
                               0,
                               str.data(),

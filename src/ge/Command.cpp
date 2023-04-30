@@ -111,7 +111,7 @@ QuotationCommand::QuotationCommand(bl::string_view source,
                                    int line,
                                    int column,
                                    bl::string_view desc,
-                                   std::unique_ptr<Quotation> quot)
+                                   bl::box<Quotation> quot)
   : Command({},
             nameOfQuotation(source, line, column),
             describeQuotation(source, line, column, desc))

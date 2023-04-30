@@ -17,7 +17,7 @@ struct uniform_bitrep : basic_uniform_distribution
 {
     friend T invoke(sample_f, const uniform_bitrep<T> &, rng auto &&r)
     {
-        std::array<std::byte, sizeof(T)> bits{};
+        std::array<byte, sizeof(T)> bits{};
         seed_bytes(r, bits);
         return std::bit_cast<T>(bits);
     }

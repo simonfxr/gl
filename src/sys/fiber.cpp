@@ -13,7 +13,7 @@ namespace fiber {
 Fiber *
 toplevel()
 {
-    return &module->fibers.toplevel;
+    return &mod->fibers.toplevel;
 }
 
 } // namespace fiber

@@ -3,10 +3,10 @@
 #include "err/err.hpp"
 #include "sys/module.hpp"
 
+#include <bl/array.hpp>
 #include <bl/optional.hpp>
 #include <bl/tuple.hpp>
 
-#include <array>
 #include <cstring>
 
 namespace sys::io {
@@ -64,7 +64,7 @@ HandleStream::basic_flush()
 }
 
 StreamResult
-HandleStream::basic_read(size_t &s, bl::byte *buf)
+HandleStream::basic_read(bl::usize &s, bl::byte *buf)
 {
     if (s == 0)
         return StreamResult::OK;
@@ -79,19 +79,19 @@ HandleStream::basic_read(size_t &s, bl::byte *buf)
         return StreamResult::OK;
     }
 
-    size_t n = read_cursor;
+    auto n = read_cursor;
     memcpy(buf, read_buffer, read_cursor);
     s -= read_cursor;
     buf += read_cursor;
     HandleError err;
 
     if (s > HANDLE_READ_BUFFER_SIZE) {
-        size_t k = s;
+        auto k = s;
         bl::tie(k, err) = sys::io::read(handle, bl::span{ buf, k });
         read_cursor = 0;
         n += k;
     } else {
-        size_t k = HANDLE_READ_BUFFER_SIZE;
+        auto k = HANDLE_READ_BUFFER_SIZE;
         bl::tie(k, err) = sys::io::read(handle, bl::span{ read_buffer, k });
         if (k > s) {
             n += s;
@@ -115,7 +115,7 @@ HandleStream::basic_read(size_t &s, bl::byte *buf)
 }
 
 StreamResult
-HandleStream::basic_write(size_t &s, const bl::byte *buf)
+HandleStream::basic_write(bl::usize &s, const bl::byte *buf)
 {
     auto rem = HANDLE_WRITE_BUFFER_SIZE - write_cursor;
 
@@ -125,8 +125,8 @@ HandleStream::basic_write(size_t &s, const bl::byte *buf)
         return StreamResult::OK;
     }
 
-    size_t n = 0;
-    size_t k = 0;
+    auto n = 0_z;
+    auto k = 0_z;
     HandleError err = HandleError::OK;
 
     if (write_cursor > 0) {
@@ -202,7 +202,7 @@ HandleStream::open(bl::string_view path, HandleMode mode)
 HandleResult<Array<bl::string_byte>>
 readFile(bl::string_view path, sys::io::OutStream &errout) noexcept
 {
-    static constexpr auto BUF_SIZE = size_t{ 8192 };
+    static constexpr auto BUF_SIZE = 8_KiB;
     auto res = open(path, HM_READ);
     auto err = HandleError{};
     if (!res) {
@@ -213,7 +213,7 @@ readFile(bl::string_view path, sys::io::OutStream &errout) noexcept
         auto h = bl::move(res).value();
         ByteStream str;
         for (;;) {
-            std::array<bl::byte, BUF_SIZE> buf{};
+            bl::array<bl::byte, BUF_SIZE> buf{};
             auto size = sizeof buf;
             bl::tie(size, err) = read(h, bl::span{ buf.data(), size });
             if (size > 0)

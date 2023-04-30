@@ -6,13 +6,7 @@
 #include "sys/io.hpp"
 #include "sys/io/Stream.hpp"
 
-#include <memory>
-
-#ifdef DEFINE_SYS_MODULE
-#    define SYS_MODULE_ACCESS
-#else
-#    define SYS_MODULE_ACCESS const
-#endif
+#include <bl/box.hpp>
 
 namespace sys {
 
@@ -61,9 +55,8 @@ struct Module
     Fibers fibers;
 };
 
-extern std::unique_ptr<Module> module;
-
-#undef SYS_MODULE_ACCESS
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+extern bl::box<Module> mod;
 
 } // namespace sys
 

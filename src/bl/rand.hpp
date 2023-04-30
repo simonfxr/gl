@@ -91,7 +91,7 @@ struct BL_API random_device
 
     result_type operator()() noexcept;
 
-    void seed_bytes(bl::span<std::byte>) noexcept;
+    void seed_bytes(bl::span<byte>) noexcept;
 
 private:
     struct Impl;
@@ -101,7 +101,7 @@ private:
 static_assert(rng<random_device>);
 
 constexpr void
-seed_bytes(rng auto &r, bl::span<std::byte> bytes) noexcept
+seed_bytes(rng auto &r, bl::span<byte> bytes) noexcept
 {
     auto dest = bytes.begin();
     for (auto rest = bytes.size(); rest > 0;) {
@@ -119,7 +119,7 @@ T
 seed_from(rng auto &&seeder) noexcept
 {
     using state_type = typename T::state_type;
-    std::array<std::byte, sizeof(state_type)> seed;
+    std::array<byte, sizeof(state_type)> seed;
     seed_bytes(seeder, seed);
     T gen;
     gen.seed(std::bit_cast<state_type>(seed));
@@ -132,11 +132,11 @@ T
 seed_from(std::unsigned_integral auto seedbits) noexcept
 {
     using state_type = typename T::state_type;
-    std::array<std::byte, sizeof(state_type)> seed;
+    std::array<byte, sizeof(state_type)> seed;
 
     if constexpr (sizeof(state_type) <= sizeof seedbits) {
         auto sbytes =
-          std::bit_cast<std::array<std::byte, sizeof(seedbits)>>(seedbits);
+          std::bit_cast<std::array<byte, sizeof(seedbits)>>(seedbits);
         std::copy_n(sbytes.begin(), sizeof(state_type), seed.begin());
         T gen;
         gen.seed(std::bit_cast<state_type>(seed));

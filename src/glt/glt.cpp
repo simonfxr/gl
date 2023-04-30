@@ -1,29 +1,20 @@
-#define DEFINE_GLT_MODULE
-
 #include "glt/glt.hpp"
-#include "glt/module.hpp"
 
-#include <cassert>
-#include <memory>
+#include "glt/module.hpp"
 
 namespace glt {
 
 BEGIN_NO_WARN_GLOBAL_DESTRUCTOR
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
-std::unique_ptr<Module> module;
+bl::box<Module> mod;
 END_NO_WARN_GLOBAL_DESTRUCTOR
 
 void
 moduleInit()
-{
-    if (!module)
-        module = std::make_unique<Module>();
-}
+{}
 
 void
 moduleExit()
-{
-    module.reset();
-}
+{}
 
 } // namespace glt

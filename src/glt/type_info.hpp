@@ -11,8 +11,9 @@
 #include "pp/enum.hpp"
 #include "pp/map.h"
 
-#include <array>
+#include <bl/array.hpp>
 #include <bl/span.hpp>
+
 #include <cstddef>
 
 namespace glt {
@@ -213,10 +214,10 @@ struct StructInfo
     struct sname::gl::struct_info                                              \
     {                                                                          \
         static constexpr auto _fields =                                        \
-          std::array{ PP_MAP_WITH_ARG(TI_DEF_FIELD_INFO,                       \
-                                      PP_COMMA,                                \
-                                      sname::gl,                               \
-                                      __VA_ARGS__) };                          \
+          bl::array{ PP_MAP_WITH_ARG(TI_DEF_FIELD_INFO,                        \
+                                     PP_COMMA,                                 \
+                                     sname::gl,                                \
+                                     __VA_ARGS__) };                           \
         static constexpr ::glt::StructInfo info =                              \
           ::glt::StructInfo(::bl::string_view_literal(PP_TOSTR(sname)),        \
                             sizeof(sname::gl),                                 \

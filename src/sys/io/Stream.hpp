@@ -72,10 +72,10 @@ struct SYS_API InStream
         return *this;
     }
 
-    bl::pair<size_t, StreamResult> read(bl::span<bl::byte>);
+    bl::pair<bl::usize, StreamResult> read(bl::span<bl::byte>);
 
 protected:
-    virtual StreamResult basic_read(size_t &s, bl::byte *buf) = 0;
+    virtual StreamResult basic_read(bl::usize &s, bl::byte *buf) = 0;
     virtual StreamResult basic_close_in(bool flush_only) = 0;
     virtual const StreamFlags &rflags() const;
     virtual StreamFlags &rflags();
@@ -123,11 +123,11 @@ struct SYS_API OutStream
         return *this;
     }
 
-    bl::pair<size_t, StreamResult> write(bl::span<const bl::byte>);
+    bl::pair<bl::usize, StreamResult> write(bl::span<const bl::byte>);
     StreamResult flush();
 
 protected:
-    virtual StreamResult basic_write(size_t &s, const bl::byte *buf) = 0;
+    virtual StreamResult basic_write(bl::usize &s, const bl::byte *buf) = 0;
     virtual StreamResult basic_flush() = 0;
     virtual StreamResult basic_close_out() = 0;
     StreamFlags wflags{ SF_CLOSABLE };
@@ -170,14 +170,14 @@ struct SYS_API NullStream : public IOStream
 protected:
     StreamResult basic_flush() final;
     StreamResult basic_close() final;
-    StreamResult basic_read(size_t &, bl::byte *) final;
-    StreamResult basic_write(size_t &, const bl::byte *) final;
+    StreamResult basic_read(bl::usize &, bl::byte *) final;
+    StreamResult basic_write(bl::usize &, const bl::byte *) final;
 };
 
 struct SYS_API ByteStream : public IOStream
 {
     using C = bl::string_byte;
-    explicit ByteStream(size_t bufsize = 32);
+    explicit ByteStream(bl::usize bufsize = 32);
     explicit ByteStream(bl::basic_string_view<C> view);
     ByteStream(const ByteStream &) = default;
     ByteStream(ByteStream &&) noexcept = default;
@@ -187,7 +187,7 @@ struct SYS_API ByteStream : public IOStream
     ByteStream &operator=(const ByteStream &) = default;
     ByteStream &operator=(ByteStream &&) noexcept = default;
 
-    size_t size() const { return buffer.size(); }
+    bl::usize size() const { return buffer.size(); }
     auto data() const { return buffer.data(); }
     auto data() { return buffer.data(); }
     [[nodiscard]] bl::basic_string<C> str() const &
@@ -196,24 +196,24 @@ struct SYS_API ByteStream : public IOStream
     }
     bl::basic_string<C> str() && { return bl::move(buffer); }
 
-    void reserve(size_t additional)
+    void reserve(bl::usize additional)
     {
         buffer.reserve(buffer.size() + additional);
     }
 
     operator bl::basic_string_view<C>() const { return { data(), size() }; }
 
-    void truncate(size_t);
+    void truncate(bl::usize);
 
 protected:
     StreamResult basic_flush() final override;
     StreamResult basic_close() final override;
-    StreamResult basic_read(size_t &, bl::byte *) final override;
-    StreamResult basic_write(size_t &, const bl::byte *) final override;
+    StreamResult basic_read(bl::usize &, bl::byte *) final override;
+    StreamResult basic_write(bl::usize &, const bl::byte *) final override;
 
 private:
     bl::basic_string<C> buffer;
-    size_t read_cursor;
+    bl::usize read_cursor;
 };
 
 struct SYS_API CooperativeInStream : public InStream
@@ -226,7 +226,7 @@ struct SYS_API CooperativeInStream : public InStream
 
 protected:
     virtual StreamResult basic_close_in(bool flush_only) final override;
-    virtual StreamResult basic_read(size_t &, bl::byte *) final override;
+    virtual StreamResult basic_read(bl::usize &, bl::byte *) final override;
 };
 
 template<typename OStream>

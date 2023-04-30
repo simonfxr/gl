@@ -3,6 +3,7 @@
 
 #include "sys/conf.hpp"
 
+#include <bl/array.hpp>
 #include <bl/enum.hpp>
 #include <bl/optional.hpp>
 #include <bl/span.hpp>
@@ -144,7 +145,7 @@ HU_NODISCARD inline bl::string
 join(bl::string_view path, Args &&...args)
     requires(std::same_as<std::decay_t<Args>, bl::string_view> && ...)
 {
-    auto paths = std::array{ static_cast<bl::string_view>(bl_fwd(args))... };
+    auto paths = bl::array{ static_cast<bl::string_view>(bl_fwd(args))... };
     return def::join(path, paths);
 }
 

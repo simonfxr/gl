@@ -8,7 +8,7 @@
 
 namespace bl {
 
-template<size_t SmallBuffer = 256, typename CharT = char>
+template<usize SmallBuffer = 256, typename CharT = char>
 struct basic_cstring_view
 {
     static_assert(sizeof(CharT) == 1);

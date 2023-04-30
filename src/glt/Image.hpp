@@ -6,6 +6,8 @@
 #include "err/err.hpp"
 #include "math/ivec.hpp"
 
+#include <bl/ptr.hpp>
+
 #include <functional>
 #include <memory>
 
@@ -27,23 +29,24 @@ struct GLT_API Image
 
     Image(math::ivec2 dim,
           ImageFormat format,
-          std::shared_ptr<std::byte[]> data);
+          std::shared_ptr<bl::byte[]> data);
 
-    Image(math::ivec2 dim, ImageFormat format, std::byte *data);
+    Image(math::ivec2 dim, ImageFormat format, bl::byte *data);
 
     template<typename Elem, typename Deleter>
     Image(math::ivec2 dim,
           ImageFormat format,
-          std::unique_ptr<Elem, Deleter> data)
+          bl::owned_ptr<Elem, Deleter> data)
       : _dim(dim), _format(format)
     {
         if (empty()) {
             *this = Image{};
             return;
         }
-        _data =
-          data_ptr{ data.get(),
-                    [p = bl::move(data)](std::byte *) mutable { p.reset(); } };
+        _data = data_ptr{ data.get(), [p = bl::move(data)](bl::byte *) mutable {
+                             auto drop = bl_mov(p);
+                             (void) drop;
+                         } };
     }
 
     Image(Image &&img) noexcept { bl::swap(*this, img); }
@@ -89,9 +92,9 @@ struct GLT_API Image
 
     [[nodiscard]] constexpr ImageFormat format() const { return _format; }
 
-    [[nodiscard]] const std::byte *data() const { return _data.get(); }
+    [[nodiscard]] const bl::byte *data() const { return _data.get(); }
 
-    [[nodiscard]] std::byte *data() { return _data.get(); }
+    [[nodiscard]] bl::byte *data() { return _data.get(); }
 
     static constexpr size_t pixelSize(ImageFormat format)
     {
@@ -105,10 +108,10 @@ struct GLT_API Image
     }
 
 private:
-    using data_ptr = std::shared_ptr<std::byte[]>;
-    using noop_deleter = decltype([](std::byte *) { /* noop */ });
+    using data_ptr = std::shared_ptr<bl::byte[]>;
+    using noop_deleter = decltype([](bl::byte *) { /* noop */ });
 
-    void allocBytes(size_t n) { _data = std::make_shared<std::byte[]>(n); }
+    void allocBytes(size_t n) { _data = std::make_shared<bl::byte[]>(n); }
 
     math::ivec2 _dim{ 0, 0 };
     ImageFormat _format{};

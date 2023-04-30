@@ -42,7 +42,7 @@ cwd()
         WARN("GetCurrentDirectory() failed");
         return "";
     }
-    return absolutePath(utf16To8({ dir.data(), size_t(len) }));
+    return absolutePath(utf16To8({ dir.data(), bl::usize(len) }));
 }
 
 bl::string

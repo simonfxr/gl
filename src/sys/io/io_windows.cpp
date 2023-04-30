@@ -235,7 +235,7 @@ elevate(Handle &h, HandleMode hm)
     return HandleError::OK;
 }
 
-bl::pair<size_t, HandleError>
+bl::pair<bl::usize, HandleError>
 read(Handle &h, bl::span<bl::byte> buf)
 {
     ASSERT(h);
@@ -248,7 +248,7 @@ read(Handle &h, bl::span<bl::byte> buf)
             return { 0, socketToHandleError(getLastSocketError()) };
         if (ret == 0)
             return { 0, HandleError::EOF };
-        return { size_t(ret), HandleError::OK };
+        return { bl::usize(ret), HandleError::OK };
     } else {
         DWORD nread;
         auto ret = ReadFile(castToHandle(h._os.handle),
@@ -260,11 +260,11 @@ read(Handle &h, bl::span<bl::byte> buf)
             return { 0, getLastHandleError() };
         if (nread == 0)
             return { 0, HandleError::EOF };
-        return { size_t(nread), HandleError::OK };
+        return { bl::usize(nread), HandleError::OK };
     }
 }
 
-bl::pair<size_t, HandleError>
+bl::pair<bl::usize, HandleError>
 write(Handle &h, bl::span<const bl::byte> buf)
 {
     ASSERT(h);
@@ -273,7 +273,7 @@ write(Handle &h, bl::span<const bl::byte> buf)
           send(castToSocket(h._os.handle), buf.data(), int(buf.size()), 0);
         if (ret == SOCKET_ERROR)
             return { 0, socketToHandleError(getLastSocketError()) };
-        return { size_t(ret), HandleError::OK };
+        return { bl::usize(ret), HandleError::OK };
     } else {
         DWORD nwrit;
         auto ret = WriteFile(castToHandle(h._os.handle),
@@ -283,7 +283,7 @@ write(Handle &h, bl::span<const bl::byte> buf)
                              nullptr);
         if (ret == FALSE)
             return { 0, getLastHandleError() };
-        return { size_t(nwrit), HandleError::OK };
+        return { bl::usize(nwrit), HandleError::OK };
     }
 }
 
