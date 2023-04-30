@@ -86,25 +86,11 @@ convertErrno()
     case EBADF:
         DEBUG_ERR(strerror_errno(errid));
         return HandleError::BAD_HANDLE;
+    case EWOULDBLOCK:
+        return HandleError::BLOCKED;
     default:
         DEBUG_ERR(strerror_errno(errid));
         return HandleError::UNKNOWN;
-    }
-}
-
-SocketError
-convertErrnoSock()
-{
-    auto errid = bl::exchange(errno, 0);
-    switch (errid) {
-    case EWOULDBLOCK:
-        return SocketError::BLOCKED;
-    case EBADF:
-        DEBUG_ERR(strerror_errno(errid));
-        return SocketError::BAD_HANDLE;
-    default:
-        DEBUG_ERR(strerror_errno(errid));
-        return SocketError::UNKNOWN;
     }
 }
 
@@ -112,12 +98,12 @@ HandleError
 handleFromFD(int fd, Handle *h)
 {
     int flags;
-    h->_os.fd = fd;
-    h->_mode = 0;
     RETRY_INTR(flags = fcntl(fd, F_GETFL));
-    if (flags < 0)
+    if (flags < 0) {
+        *h = Handle::fromNative(fd);
         return convertErrno();
-    h->_mode = unconvertMode(flags);
+    }
+    *h = Handle::fromNative(fd, unconvertMode(flags));
     return HandleError::OK;
 }
 } // namespace
@@ -165,17 +151,7 @@ open(bl::string_view path, HandleMode mode)
 
     if (fd == -1)
         return util::unexpected<HandleError>{ convertErrno() };
-    Handle h;
-    h._mode = mode;
-    h._os.fd = fd;
-    return { bl::move(h) };
-}
-
-HandleMode
-mode(Handle &h)
-{
-    ASSERT(h);
-    return h._mode;
+    return { Handle::fromNative(fd, mode) };
 }
 
 HandleError
@@ -187,10 +163,10 @@ elevate(Handle &h, HandleMode mode)
         return HandleError::INVALID_PARAM;
 
     int ret;
-    RETRY_INTR(ret = fcntl(h._os.fd, F_SETFL, flags));
+    RETRY_INTR(ret = fcntl(h.native(), F_SETFL, flags));
     if (ret == -1)
         return convertErrno();
-    h._mode = unconvertMode(flags);
+    h = Handle::fromNative(bl::move(h).takeNative(), mode);
     return HandleError::OK;
 }
 
@@ -200,7 +176,7 @@ read(Handle &h, bl::span<bl::byte> buf)
     ASSERT(h);
     auto n = buf.size();
     auto k = 0_iz;
-    RETRY_INTR(k = ::read(h._os.fd, buf.data(), n));
+    RETRY_INTR(k = ::read(h.native(), buf.data(), n));
     if (k >= 0)
         return { static_cast<bl::usize>(k),
                  k == 0 ? HandleError::EOF : HandleError::OK };
@@ -212,7 +188,7 @@ write(Handle &h, bl::span<const bl::byte> buf)
 {
     ASSERT(h);
     auto k = 0_iz;
-    RETRY_INTR(k = ::write(h._os.fd, buf.data(), buf.size()));
+    RETRY_INTR(k = ::write(h.native(), buf.data(), buf.size()));
     if (k >= 0)
         return { k, HandleError::OK };
     return { 0, convertErrno() };
@@ -222,16 +198,15 @@ HandleError
 close(Handle &h)
 {
     ASSERT(h);
-    int ret;
-    RETRY_INTR(ret = ::close(h._os.fd));
-    h._os = {};
-    h._mode = {};
+    auto fd = bl::move(h).takeNative();
+    int ret{};
+    RETRY_INTR(ret = ::close(fd));
     if (ret == -1)
         return convertErrno();
     return HandleError::OK;
 }
 
-SocketResult<Socket>
+HandleResult<Handle>
 listen(SocketProto proto, const IPAddr4 &addr, uint16_t port, SocketMode mode)
 {
     const int BACKLOG = 16;
@@ -251,7 +226,7 @@ listen(SocketProto proto, const IPAddr4 &addr, uint16_t port, SocketMode mode)
     int sock;
     RETRY_INTR(sock = socket(PF_INET, type, 0));
     if (sock == -1)
-        return util::unexpected{ convertErrnoSock() };
+        return util::unexpected{ convertErrno() };
 
     int enable = 1;
     RETRY_INTR(
@@ -290,18 +265,14 @@ listen(SocketProto proto, const IPAddr4 &addr, uint16_t port, SocketMode mode)
             goto socket_err;
     }
 
-    {
-        Socket s;
-        s._os.fd = sock;
-        return { bl::move(s) };
-    }
+    return { Handle::fromNative(sock) };
 socket_err:
     ::close(sock);
-    return util::unexpected{ convertErrnoSock() };
+    return util::unexpected{ convertErrno() };
 }
 
-SocketResult<Handle>
-accept(Socket &s)
+HandleResult<Handle>
+accept(Handle &s)
 {
     ASSERT(s);
 
@@ -312,39 +283,21 @@ accept(Socket &s)
 
     // reason: #define SOCK_CLOEXEC SOCK_CLOEXEC
     BEGIN_NO_WARN_DISABLED_MACRO_EXPANSION
-    RETRY_INTR(c = accept4(s._os.fd, &client, &clen, SOCK_CLOEXEC));
+    RETRY_INTR(c = accept4(s.native(), &client, &clen, SOCK_CLOEXEC));
     END_NO_WARN_DISABLED_MACRO_EXPANSION
 
     if (c == -1)
-        return util::unexpected{ convertErrnoSock() };
+        return util::unexpected{ convertErrno() };
 
     int flags;
     RETRY_INTR(flags = fcntl(c, F_GETFL));
-    if (flags == -1)
-        goto client_err;
-
-    {
-        Handle h;
-        h._os.fd = c;
-        h._mode = unconvertMode(flags);
-        return { bl::move(h) };
+    if (flags == -1) {
+        auto err = convertErrno();
+        ::close(c);
+        return util::unexpected{ err };
     }
 
-client_err:
-    ::close(c);
-    return util::unexpected{ convertErrnoSock() };
-}
-
-SocketError
-close(Socket &s)
-{
-    ASSERT(s);
-    int ret;
-    RETRY_INTR(ret = ::close(s._os.fd));
-    s._os = {};
-    if (ret == -1)
-        return convertErrnoSock();
-    return SocketError::OK;
+    return { Handle::fromNative(c, unconvertMode(flags)) };
 }
 
 } // namespace sys::io

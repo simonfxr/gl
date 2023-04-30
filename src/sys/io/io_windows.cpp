@@ -39,28 +39,16 @@ handleModeToDWORD(HandleMode mode)
     return m;
 }
 
-void *
+NativeHandle
 castFromHandle(HANDLE h)
 {
     return reinterpret_cast<void *>(h);
 }
 
 HANDLE
-castToHandle(void *h)
+castToHandle(NativeHandle)
 {
     return reinterpret_cast<HANDLE>(h);
-}
-
-void *
-castFromSocket(SOCKET s)
-{
-    return reinterpret_cast<void *>(s);
-}
-
-SOCKET
-castToSocket(void *s)
-{
-    return reinterpret_cast<SOCKET>(s);
 }
 
 HandleError
@@ -77,23 +65,23 @@ getLastHandleError()
     }
 }
 
-SocketError
+HandleError
 convertSocketError(DWORD err)
 {
     switch (err) {
     case WSAEWOULDBLOCK:
-        return SocketError::BLOCKED;
+        return HandleError::BLOCKED;
     case WSAECONNRESET:
-        return SocketError::EOF;
+        return HandleError::EOF;
     case WSAENOTSOCK:
     case WSAEBADF:
-        return SocketError::BAD_HANDLE;
+        return HandleError::BAD_HANDLE;
     default:
-        return SocketError::UNKNOWN;
+        return HandleError::UNKNOWN;
     }
 }
 
-SocketError
+HandleError
 getLastSocketError()
 {
     return convertSocketError(WSAGetLastError());
@@ -121,27 +109,19 @@ WS32Init::~WS32Init()
 }
 
 SYS_API Handle
-stdin_handle()
-{
-    Handle h;
-    h._os.handle = castFromHandle(GetStdHandle(STD_INPUT_HANDLE));
-    return h;
+stdin_handle(){
+    return Handle::fromNative(castFromHandle(GetStdHandle(STD_INPUT_HANDLE)))
 }
 
-SYS_API Handle
-stdout_handle()
+SYS_API Handle stdout_handle()
 {
-    Handle h;
-    h._os.handle = castFromHandle(GetStdHandle(STD_OUTPUT_HANDLE));
-    return h;
+    return Handle::fromNative(castFromHandle(GetStdHandle(STD_OUTPUT_HANDLE)));
 }
 
 SYS_API Handle
 stderr_handle()
 {
-    Handle h;
-    h._os.handle = castFromHandle(GetStdHandle(STD_ERROR_HANDLE));
-    return h;
+    return Handle::fromNative(castFromHandle(GetStdHandle(STD_ERROR_HANDLE)));
 }
 
 HandleResult<Handle>
@@ -161,77 +141,47 @@ open(bl::string_view path, HandleMode mode)
                             nullptr);
     if (hndl == INVALID_HANDLE_VALUE)
         return util::unexpected{ getLastHandleError() };
-    Handle h;
-    h._os.handle = castFromHandle(hndl);
-    h._mode = mode;
-    h._os.is_socket = false;
+    return Handle::fromNative(castFromHandle(hndl), mode);
     return { bl::move(h) };
 }
-
-HandleMode
-mode(Handle &h)
-{
-    ASSERT(h);
-    return h._mode;
-}
-
-namespace {
-constexpr HandleError
-socketToHandleError(SocketError err)
-{
-    switch (err.value) {
-    case SocketError::OK:
-        return HandleError::OK;
-    case SocketError::EOF:
-        return HandleError::EOF;
-    case SocketError::BAD_HANDLE:
-        return HandleError::BAD_HANDLE;
-    case SocketError::INVALID_PARAM:
-        return HandleError::INVALID_PARAM;
-    case SocketError::UNKNOWN:
-    case SocketError::BLOCKED:
-    default:
-        return HandleError::UNKNOWN;
-    }
-}
-} // namespace
 
 HandleError
 elevate(Handle &h, HandleMode hm)
 {
     ASSERT(h);
-    if (!h._os.is_socket)
-        return HandleError::UNKNOWN;
     auto do_shutdown = false;
+    auto mode = h.mode();
     int sd_mode = 0;
-    if ((h._mode & HM_READ) != (hm & HM_READ)) {
+    if ((mode & HM_READ) != (hm & HM_READ)) {
         if (hm & HM_READ)
             return HandleError::UNKNOWN;
         do_shutdown = true;
         sd_mode = SD_RECEIVE;
     }
-    if ((h._mode & HM_WRITE) != (hm & HM_WRITE)) {
+    if ((mode & HM_WRITE) != (hm & HM_WRITE)) {
         if (hm & HM_WRITE)
             return HandleError::UNKNOWN;
         sd_mode = do_shutdown && sd_mode == SD_RECEIVE ? SD_BOTH : SD_SEND;
         do_shutdown = true;
     }
     if (do_shutdown) {
-        if (shutdown(castToSocket(h._os.handle), sd_mode) == SOCKET_ERROR)
-            return socketToHandleError(getLastSocketError());
+        if (shutdown(castToSocket(h.native()), sd_mode) == SOCKET_ERROR) {
+            return getLastSocketError();
+        }
     }
 
-    h._mode &= ~(HM_READ | HM_WRITE);
-    h._mode |= (hm & (HM_READ | HM_WRITE));
+    mode &= ~(HM_READ | HM_WRITE);
+    mode |= (hm & (HM_READ | HM_WRITE));
 
-    if ((h._mode & HM_NONBLOCKING) != (hm & HM_NONBLOCKING)) {
+    if ((mode & HM_NONBLOCKING) != (hm & HM_NONBLOCKING)) {
         unsigned long val = !!(hm & HM_NONBLOCKING);
-        if (ioctlsocket(castToSocket(h._os.handle), FIONBIO, &val) ==
+        if (ioctlsocket(castToSocket(h.native()), FIONBIO, &val) ==
             SOCKET_ERROR)
-            return socketToHandleError(getLastSocketError());
-        h._mode &= ~HM_NONBLOCKING;
-        h._mode |= hm & HM_NONBLOCKING;
+            return getLastSocketError();
+        mode &= ~HM_NONBLOCKING;
+        mode |= hm & HM_NONBLOCKING;
     }
+    h = Handle::fromNative(bl::move(h).takeNative(), mode);
     return HandleError::OK;
 }
 
@@ -241,67 +191,40 @@ read(Handle &h, bl::span<bl::byte> buf)
     ASSERT(h);
     if (buf.empty())
         return { 0, HandleError::OK };
-    if (h._os.is_socket) {
-        auto ret =
-          recv(castToSocket(h._os.handle), buf.data(), int(buf.size()), 0);
-        if (ret == SOCKET_ERROR)
-            return { 0, socketToHandleError(getLastSocketError()) };
-        if (ret == 0)
-            return { 0, HandleError::EOF };
-        return { bl::usize(ret), HandleError::OK };
-    } else {
-        DWORD nread;
-        auto ret = ReadFile(castToHandle(h._os.handle),
-                            buf.data(),
-                            DWORD(buf.size()),
-                            &nread,
-                            nullptr);
-        if (ret == FALSE)
-            return { 0, getLastHandleError() };
-        if (nread == 0)
-            return { 0, HandleError::EOF };
-        return { bl::usize(nread), HandleError::OK };
-    }
+    DWORD nread;
+    auto ret = ReadFile(
+      castToHandle(h.native()), buf.data(), DWORD(buf.size()), &nread, nullptr);
+    if (ret == FALSE)
+        return { 0, getLastHandleError() };
+    if (nread == 0)
+        return { 0, HandleError::EOF };
+    return { bl::usize(nread), HandleError::OK };
 }
 
 bl::pair<bl::usize, HandleError>
 write(Handle &h, bl::span<const bl::byte> buf)
 {
     ASSERT(h);
-    if (h._os.is_socket) {
-        auto ret =
-          send(castToSocket(h._os.handle), buf.data(), int(buf.size()), 0);
-        if (ret == SOCKET_ERROR)
-            return { 0, socketToHandleError(getLastSocketError()) };
-        return { bl::usize(ret), HandleError::OK };
-    } else {
-        DWORD nwrit;
-        auto ret = WriteFile(castToHandle(h._os.handle),
-                             buf.data(),
-                             DWORD(buf.size()),
-                             &nwrit,
-                             nullptr);
-        if (ret == FALSE)
-            return { 0, getLastHandleError() };
-        return { bl::usize(nwrit), HandleError::OK };
-    }
+    DWORD nwrit;
+    auto ret = WriteFile(
+      castToHandle(h.native()), buf.data(), DWORD(buf.size()), &nwrit, nullptr);
+    if (ret == FALSE)
+        return { 0, getLastHandleError() };
+    return { bl::usize(nwrit), HandleError::OK };
 }
 
 HandleError
 close(Handle &h)
 {
     ASSERT(h);
-    auto hndl = castToHandle(h._os.handle);
-    h._os.handle = nullptr;
-    h._mode = {};
-    h._os.is_socket = false;
+    auto hndl = castToHandle(bl::move(h.takeNative()));
     if (CloseHandle(hndl) != FALSE)
         return HandleError::OK;
     else
         return HandleError::UNKNOWN;
 }
 
-SocketResult<Socket>
+HandleResult<Handle>
 listen(SocketProto proto, const IPAddr4 &addr, uint16_t port, SocketMode mode)
 {
     const int BACKLOG = 16;
@@ -352,11 +275,7 @@ listen(SocketProto proto, const IPAddr4 &addr, uint16_t port, SocketMode mode)
             goto socket_err;
     }
 
-    {
-        Socket s;
-        s._os.socket = castFromSocket(sock);
-        return { bl::move(s) };
-    }
+    return { Handle::fromNative(castFromSocket(sock)) };
 
 socket_err:
     auto err = getLastSocketError();
@@ -364,8 +283,8 @@ socket_err:
     return util::unexpected{ err };
 }
 
-SocketResult<Handle>
-accept(Socket &s)
+HandleResult<Handle>
+accept(Handle &s)
 {
     ASSERT(s);
 
@@ -373,28 +292,12 @@ accept(Socket &s)
     socklen_t clen = sizeof client;
 
     auto c = ::accept(
-      castToSocket(s._os.socket), reinterpret_cast<sockaddr *>(&client), &clen);
+      castToSocket(s.native()), reinterpret_cast<sockaddr *>(&client), &clen);
 
     if (c == INVALID_SOCKET)
         return util::unexpected{ getLastSocketError() };
 
-    Handle h;
-    h._os.handle = castFromSocket(c);
-    h._os.is_socket = true;
-    h._mode = HM_READ | HM_WRITE;
-    return { bl::move(h) };
-}
-
-SocketError
-close(Socket &sock)
-{
-    ASSERT(sock);
-    auto hndl = castToHandle(sock._os.socket);
-    sock._os.socket = nullptr;
-    if (CloseHandle(hndl) != FALSE)
-        return SocketError::OK;
-    else
-        return SocketError::UNKNOWN;
+    return { Handle::fromNative(castFromSocket(c), HM_READ | HM_WRITE) };
 }
 
 } // namespace io

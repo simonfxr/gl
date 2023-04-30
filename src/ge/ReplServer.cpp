@@ -136,7 +136,7 @@ Client::handleIO(Engine &e)
 
 struct ReplServer::Impl : public ReplServer
 {
-    Socket server;
+    Handle server;
     bl::vec<std::shared_ptr<Client>> clients;
     bool running{ false };
     int next_id{};
@@ -205,7 +205,8 @@ ReplServer::acceptClients()
             break;
         auto handle = bl::move(opt_hndl).value();
         INFO("accepted client");
-        if (elevate(handle, mode(handle) | HM_NONBLOCKING) != HandleError::OK) {
+        if (elevate(handle, handle.mode() | HM_NONBLOCKING) !=
+            HandleError::OK) {
             ERR("couldnt set nonblocking handle mode, closing connection");
             sys::io::close(handle);
         } else {

@@ -17,7 +17,6 @@
 namespace sys::io {
 
 struct Handle;
-struct Socket;
 struct IPAddr4;
 struct HandleStream;
 
@@ -76,9 +75,6 @@ stderr_handle();
 
 HU_NODISCARD SYS_API HandleResult<Handle> open(bl::string_view, HandleMode);
 
-HU_NODISCARD SYS_API HandleMode
-mode(Handle &);
-
 HU_NODISCARD SYS_API HandleError
 elevate(Handle &, HandleMode);
 
@@ -91,64 +87,27 @@ write(Handle &, bl::span<const uint8_t>);
 SYS_API HandleError
 close(Handle &);
 
-PP_DEF_ENUM(SocketError,
-            uint8_t,
-            OK,
-            BLOCKED,
-            EOF,
-            BAD_HANDLE,
-            INVALID_PARAM,
-            UNKNOWN);
-
-template<typename T>
-using SocketResult = util::expected<T, SocketError>;
-
-HU_NODISCARD SYS_API SocketResult<Socket>
+HU_NODISCARD SYS_API HandleResult<Handle>
 listen(SocketProto, const IPAddr4 &, uint16_t, SocketMode);
 
-HU_NODISCARD SYS_API SocketResult<Handle>
-accept(Socket &);
-
-SYS_API SocketError
-close(Socket &);
+HU_NODISCARD SYS_API HandleResult<Handle>
+accept(Handle &);
 
 #if HU_OS_POSIX_P
-struct OSHandle
-{
-    int fd = -1;
-    friend auto operator<=>(const OSHandle &lhs, const OSHandle &rhs) = default;
-};
-
-struct OSSocket
-{
-    int fd = -1;
-    friend auto operator<=>(const OSSocket &lhs, const OSSocket &rhs) = default;
-};
-
+using NativeHandle = int;
+static inline constexpr NativeHandle INVALID_NATIVE_HANDLE = -1;
 #elif HU_OS_WINDOWS_P
-struct OSHandle
-{
-    void *handle{};
-    bool is_socket{};
-    friend auto operator<=>(const OSHandle &lhs, const OSHandle &rhs) = default;
-};
-
-struct OSSocket
-{
-    void *socket{};
-    friend auto operator<=>(const OSSocket &lhs, const OSSocket &rhs) = default;
-};
+using NativeHandle = void *;
+static inline constexpr NativeHandle INVALID_NATIVE_HANDLE = nullptr;
 #else
 #    error "OS not supported"
 #endif
 
 struct Handle : private bl::non_copyable
 {
-    HandleMode _mode{};
-    OSHandle _os{};
-
     constexpr Handle() = default;
     constexpr Handle(Handle &&rhs) noexcept { swap(*this, rhs); }
+
     Handle &operator=(Handle &&rhs) noexcept
     {
         auto tmp = Handle{ bl::move(rhs) };
@@ -162,40 +121,40 @@ struct Handle : private bl::non_copyable
             close(*this);
     }
 
-    constexpr explicit operator bool() const { return _os != OSHandle{}; }
+    constexpr explicit operator bool() const
+    {
+        return _native != INVALID_NATIVE_HANDLE;
+    }
 
     constexpr friend void swap(Handle &lhs, Handle &rhs) noexcept
     {
         bl::swap(lhs._mode, rhs._mode);
-        bl::swap(lhs._os, rhs._os);
+        bl::swap(lhs._native, rhs._native);
     }
-};
 
-struct Socket : private bl::non_copyable
-{
-    OSSocket _os{};
-
-    constexpr Socket() = default;
-    constexpr Socket(Socket &&rhs) noexcept { swap(*this, rhs); }
-    Socket &operator=(Socket &&rhs) noexcept
+    static Handle fromNative(NativeHandle h, HandleMode mode = {})
     {
-        auto tmp = Socket{ bl::move(rhs) };
-        swap(*this, tmp);
-        return *this;
+        return Handle{ h, mode };
     }
 
-    ~Socket()
+    [[nodiscard]] constexpr HandleMode mode() const noexcept { return _mode; }
+
+    [[nodiscard]] constexpr NativeHandle native() const noexcept
     {
-        if (*this)
-            close(*this);
+        return _native;
     }
 
-    constexpr explicit operator bool() const { return _os != OSSocket{}; }
-    constexpr friend void swap(Socket &lhs, Socket &rhs) noexcept
+    [[nodiscard]] constexpr NativeHandle takeNative() &&noexcept
     {
-        using std::swap;
-        swap(lhs._os, rhs._os);
+        auto h = bl::exchange(_native, INVALID_NATIVE_HANDLE);
+        bl::exchange(_mode);
+        return h;
     }
+
+private:
+    constexpr Handle(NativeHandle h, HandleMode m) : _native(h), _mode(m) {}
+    NativeHandle _native{ INVALID_NATIVE_HANDLE };
+    HandleMode _mode{};
 };
 
 struct SYS_API HandleStream : public IOStream

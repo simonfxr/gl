@@ -53,7 +53,7 @@ main()
                 break;
             auto handle = bl::move(res).value();
             IGNORE_RESULT(
-              io::elevate(handle, io::mode(handle) | io::HM_NONBLOCKING));
+              io::elevate(handle, handle.mode() | io::HM_NONBLOCKING));
             auto &c = clients.emplace_back(bl::move(handle), id);
             sys::io::stdout() << "accepted client "_k << c.id << "\n"_k;
         }
