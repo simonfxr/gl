@@ -26,8 +26,8 @@ case tag:                                                                      \
         };                                                                     \
         static inline constexpr underlying_t _count_value_ =                   \
           PP_MAP(PP_ENUM_DEF_CONST1, PP_ENUM_DEF_PLUS, __VA_ARGS__);           \
-        friend constexpr auto invoke(::bl::enum_count_f,                       \
-                                     ::bl::type_proxy<NAME>)                   \
+        friend constexpr auto tag_invoke(::bl::enum_count_f,                   \
+                                         ::bl::type_proxy<NAME>)               \
         {                                                                      \
             return _count_value_;                                              \
         }                                                                      \

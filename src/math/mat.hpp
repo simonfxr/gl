@@ -174,10 +174,10 @@ struct mat : private vec<vec<T, N>, N>
         return static_cast<const Base &>(*this);
     }
 
-    friend constexpr auto invoke(bl::map_f,
-                                 auto &&f,
-                                 same_tensor<Self> auto &&m0,
-                                 same_shape<Self> auto &&...ms)
+    friend constexpr auto tag_invoke(bl::map_f,
+                                     auto &&f,
+                                     same_tensor<Self> auto &&m0,
+                                     same_shape<Self> auto &&...ms)
     {
         return mat{
             in_place_columns_t{},
@@ -187,10 +187,10 @@ struct mat : private vec<vec<T, N>, N>
         };
     }
 
-    friend constexpr void invoke(bl::for_each_f,
-                                 auto &&f,
-                                 same_tensor<Self> auto &&m0,
-                                 same_shape<Self> auto &&...ms)
+    friend constexpr void tag_invoke(bl::for_each_f,
+                                     auto &&f,
+                                     same_tensor<Self> auto &&m0,
+                                     same_shape<Self> auto &&...ms)
     {
         bl::for_each(
           [&](auto &&...cols) { return bl::for_each(f, bl_fwd(cols)...); },
@@ -217,9 +217,9 @@ struct mat : private vec<vec<T, N>, N>
                                       const Self &rhs) = default;
 
     template<typename S>
-    friend void invoke(bl::rand::sample_f,
-                       same_shape<mat<T, N>> auto &&ss,
-                       bl::rand::rng auto &&rng)
+    friend void tag_invoke(bl::rand::sample_f,
+                           same_shape<mat<T, N>> auto &&ss,
+                           bl::rand::rng auto &&rng)
         requires bl::rand::
           distribution_over<tensor_scalar_type<decltype(ss)>, decltype(rng), T>
     {

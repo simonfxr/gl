@@ -309,7 +309,7 @@ struct vec : private std::array<T, N>
 
     constexpr operator bl::span<T, N>() noexcept { return { begin(), N }; }
 
-    friend void invoke(bl::swap_f, vec<T, N> &lhs, vec<T, N> &rhs)
+    friend void tag_invoke(bl::swap_f, vec<T, N> &lhs, vec<T, N> &rhs)
     {
         bl::for_each(
           [](auto &x, auto &y) { bl::swap(x, y); }, bl_fwd(lhs), bl_fwd(rhs));
@@ -341,10 +341,10 @@ struct vec : private std::array<T, N>
         };
     }
 
-    friend constexpr auto invoke(bl::map_f,
-                                 auto &&f,
-                                 same_tensor<Self> auto &&v0,
-                                 same_shape<Self> auto &&...vs)
+    friend constexpr auto tag_invoke(bl::map_f,
+                                     auto &&f,
+                                     same_tensor<Self> auto &&v0,
+                                     same_shape<Self> auto &&...vs)
     {
         using R = std::decay_t<std::invoke_result_t<decltype(f),
                                                     decltype(v0[0]),
@@ -357,10 +357,10 @@ struct vec : private std::array<T, N>
         (std::make_index_sequence<N>{});
     }
 
-    friend constexpr void invoke(bl::for_each_f,
-                                 auto &&f,
-                                 same_tensor<Self> auto &&v0,
-                                 same_shape<Self> auto &&...vs)
+    friend constexpr void tag_invoke(bl::for_each_f,
+                                     auto &&f,
+                                     same_tensor<Self> auto &&v0,
+                                     same_shape<Self> auto &&...vs)
     {
         [&]<size_t... I>(std::index_sequence<I...>)
         {
@@ -373,10 +373,10 @@ struct vec : private std::array<T, N>
 
     friend constexpr auto operator<=>(const Self &, const Self &) = default;
 
-    friend auto invoke(bl::rand::sampler_f,
-                       const auto &sampler,
-                       bl::type_proxy<vec<T, N>>,
-                       auto &&...args)
+    friend auto tag_invoke(bl::rand::sampler_f,
+                           const auto &sampler,
+                           bl::type_proxy<vec<T, N>>,
+                           auto &&...args)
     {
         auto s =
           bl::rand::sampler(sampler, bl::type_proxy<T>{}, bl_fwd(args)...);
@@ -386,7 +386,7 @@ struct vec : private std::array<T, N>
 };
 
 auto
-invoke(bl::rand::sample_f, a_tensor auto &&ss, bl::rand::rng auto &&rng)
+tag_invoke(bl::rand::sample_f, a_tensor auto &&ss, bl::rand::rng auto &&rng)
     requires bl::rand::a_distribution<tensor_scalar_type<decltype(ss)>,
                                       decltype(rng)>
 {

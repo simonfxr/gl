@@ -155,21 +155,21 @@ struct basic_distribution
 inline constexpr struct sample_f
 {
     template<typename R, typename... Ts>
-        requires invocable<sample_f, R, Ts...>
+        requires tag_invocable<sample_f, R, Ts...>
     BL_inline constexpr auto operator()(R &&r, Ts &&...ts) const
-      noexcept(nothrow_invocable<sample_f, R, Ts...>)
-        -> bl::invoke_result_t<sample_f, R, Ts...>
+      noexcept(nothrow_tag_invocable<sample_f, R, Ts...>)
+        -> bl::tag_invoke_result_t<sample_f, R, Ts...>
     {
-        return ::bl::invoke(*this, bl_fwd(r), bl_fwd(ts)...);
+        return ::bl::tag_invoke(*this, bl_fwd(r), bl_fwd(ts)...);
     }
 } sample;
 
 template<typename D, typename R = gen>
-concept a_distribution = rng<R> && invocable<sample_f, D, R>;
+concept a_distribution = rng<R> && tag_invocable<sample_f, D, R>;
 
 template<typename D, rng R = gen>
     requires a_distribution<D, R>
-using sampled_t = invoke_result_t<sample_f, D, R>;
+using sampled_t = tag_invoke_result_t<sample_f, D, R>;
 
 template<typename D, typename T, typename R = gen>
 concept distribution_over =
@@ -181,12 +181,12 @@ struct basic_sampler
 inline constexpr struct sampler_f
 {
     template<typename R, typename... Ts>
-        requires invocable<sampler_f, R, Ts...>
+        requires tag_invocable<sampler_f, R, Ts...>
     BL_inline constexpr auto operator()(R &&r, Ts &&...ts) const
-      noexcept(nothrow_invocable<sampler_f, R, Ts...>)
-        -> bl::invoke_result_t<sampler_f, R, Ts...>
+      noexcept(nothrow_tag_invocable<sampler_f, R, Ts...>)
+        -> bl::tag_invoke_result_t<sampler_f, R, Ts...>
     {
-        return ::bl::invoke(*this, bl_fwd(r), bl_fwd(ts)...);
+        return ::bl::tag_invoke(*this, bl_fwd(r), bl_fwd(ts)...);
     }
 } sampler;
 

@@ -3,9 +3,9 @@
 
 #include <bl/concepts.hpp>
 #include <bl/core.hpp>
-#include <bl/invoke.hpp>
 #include <bl/mp.hpp>
 #include <bl/noncopymove.hpp>
+#include <bl/tag_invoke.hpp>
 
 #include <cstddef>
 #include <new>
@@ -15,20 +15,20 @@ namespace bl {
 inline constexpr struct runtime_size_f
 {
     template<typename T>
-        requires nothrow_invocable<runtime_size_f, type_proxy<T>>
+        requires nothrow_tag_invocable<runtime_size_f, type_proxy<T>>
     BL_inline constexpr usize operator()(type_proxy<T>) const noexcept
     {
-        return ::bl::invoke(*this, type_proxy<T>{});
+        return ::bl::tag_invoke(*this, type_proxy<T>{});
     }
 } runtime_size;
 
 inline constexpr struct runtime_size_impl_type_f
 {
     template<typename T>
-        requires nothrow_invocable<runtime_size_impl_type_f, type_proxy<T>>
+        requires nothrow_tag_invocable<runtime_size_impl_type_f, type_proxy<T>>
     BL_inline constexpr auto operator()(type_proxy<T>) const noexcept
     {
-        return ::bl::invoke(*this, type_proxy<T>{});
+        return ::bl::tag_invoke(*this, type_proxy<T>{});
     }
 } runtime_size_impl_type;
 
@@ -50,8 +50,8 @@ protected:
 template<typename ApiT, typename Defer>
 struct runtime_sized_impl_type_defer
 {
-    using type = typename bl::invoke_result_t<runtime_size_impl_type_f,
-                                              type_proxy<ApiT>>::type;
+    using type = typename bl::tag_invoke_result_t<runtime_size_impl_type_f,
+                                                  type_proxy<ApiT>>::type;
 };
 
 template<typename ApiT, typename Defer = void>
@@ -95,8 +95,8 @@ public:                                                                        \
     static const ::bl::usize impl_size;                                        \
                                                                                \
     template<typename Defer = void>                                            \
-    BL_wrapper friend ::bl::usize invoke(::bl::runtime_size_f,                 \
-                                         ::bl::type_proxy<ApiT>) noexcept      \
+    BL_wrapper friend ::bl::usize tag_invoke(::bl::runtime_size_f,             \
+                                             ::bl::type_proxy<ApiT>) noexcept  \
     {                                                                          \
         return ApiT::impl_size;                                                \
     }                                                                          \
@@ -119,8 +119,8 @@ public:                                                                        \
     static void destruct_at(ApiT &) noexcept
 
 #define BL_DEFINE_RUNTIME_SIZED(ApiT, ImplT)                                   \
-    bl::type_proxy<ImplT> invoke(bl::runtime_size_impl_type_f,                 \
-                                 bl::type_proxy<ApiT>) noexcept                \
+    bl::type_proxy<ImplT> tag_invoke(bl::runtime_size_impl_type_f,             \
+                                     bl::type_proxy<ApiT>) noexcept            \
     {                                                                          \
         return bl::type_proxy<ImplT>{};                                        \
     }                                                                          \
@@ -133,7 +133,7 @@ public:                                                                        \
 template<typename T>
 concept runtime_sized = !
 std::is_reference_v<T> && !std::move_constructible<T> &&
-  !std::copy_constructible<T> && invocable<runtime_size_f, type_proxy<T>>;
+  !std::copy_constructible<T> && tag_invocable<runtime_size_f, type_proxy<T>>;
 
 template<typename T, typename... Args>
     requires(!runtime_sized<T>)
