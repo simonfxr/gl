@@ -9,7 +9,7 @@ namespace sys::fs {
 
 using namespace bl::literals;
 
-const bl::string_byte SEPARATOR_CHAR = '/';
+const bl::cbyte SEPARATOR_CHAR = '/';
 constexpr inline bl::string_view SEPARATOR = "/"_sv;
 
 } // namespace sys::fs

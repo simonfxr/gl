@@ -41,7 +41,7 @@ sys::io::StreamResult
 next(sys::io::InStream &in, char &c)
 {
     bl::byte b{};
-    auto [s, res] = in.read(bl::span{ &b, size_t{ 1 } });
+    auto [s, res] = sys::io::read(in, bl::span{ &b, size_t{ 1 } });
     ASSERT(res != sys::io::StreamResult::OK || s == 1);
     c = static_cast<char>(b);
     return res;

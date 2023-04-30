@@ -1,15 +1,18 @@
 #ifndef SYS_IO_STREAM_HPP
 #define SYS_IO_STREAM_HPP
 
-#include "pp/enum.hpp"
 #include "sys/conf.hpp"
+
+#include "pp/enum.hpp"
 #include "sys/fiber.hpp"
+#include "sys/io_operators.hpp"
 
 #include <bl/enum.hpp>
 #include <bl/pair.hpp>
 #include <bl/span.hpp>
 #include <bl/string.hpp>
 #include <bl/string_view.hpp>
+#include <bl/tag_invoke.hpp>
 
 #include <cstring>
 
@@ -18,8 +21,7 @@
 #undef stderr
 #undef EOF
 
-namespace sys {
-namespace io {
+namespace sys::io {
 
 struct OutStream;
 struct InStream;
@@ -38,82 +40,50 @@ PP_DEF_ENUM(StreamResult, uint8_t, OK, Blocked, EOF, Closed, Error);
 
 using StreamFlags = uint16_t;
 
-inline constexpr StreamFlags SF_IN_EOF = 1;
-inline constexpr StreamFlags SF_OUT_EOF = 2;
-inline constexpr StreamFlags SF_IN_CLOSED = 4;
-inline constexpr StreamFlags SF_OUT_CLOSED = 8;
-inline constexpr StreamFlags SF_CLOSABLE = 16;
-inline constexpr StreamFlags SF_LINEBUF = 32;
+inline constexpr StreamFlags SF_LINEBUF = 1;
 
 struct SYS_API InStream
 {
-    InStream();
+    InStream() = default;
     InStream(const InStream &) = default;
     InStream(InStream &&) = default;
     InStream &operator=(const InStream &) = default;
     InStream &operator=(InStream &&) = default;
+
     virtual ~InStream();
 
-    void close();
-
-    bool closed() const { return rflags() & SF_IN_CLOSED; }
-    bool readable() const
+    friend StreamResult tag_invoke(close_f, InStream &s)
     {
-        return (rflags() & (SF_IN_CLOSED | SF_IN_EOF)) == 0;
-    }
-    bool closable() const { return rflags() & SF_CLOSABLE; }
-
-    InStream &closable(bool yesno)
-    {
-        if (yesno)
-            rflags() |= SF_CLOSABLE;
-        else
-            rflags() &= ~SF_CLOSABLE;
-        return *this;
+        return s.basic_close_in();
     }
 
-    bl::pair<bl::usize, StreamResult> read(bl::span<bl::byte>);
+    friend bl::pair<bl::usize, StreamResult> tag_invoke(read_f,
+                                                        InStream &s,
+                                                        bl::span<bl::byte> buf)
+    {
+        if (buf.empty())
+            return { 0, StreamResult::OK };
+        auto k = buf.size();
+        auto err = s.basic_read(k, buf.data());
+        return { k, err };
+    }
 
 protected:
     virtual StreamResult basic_read(bl::usize &s, bl::byte *buf) = 0;
-    virtual StreamResult basic_close_in(bool flush_only) = 0;
-    virtual const StreamFlags &rflags() const;
-    virtual StreamFlags &rflags();
-
-private:
-    StreamFlags _rflags{ SF_CLOSABLE };
+    virtual StreamResult basic_close_in() = 0;
 };
 
 struct SYS_API OutStream
 {
-    OutStream();
+    OutStream() = default;
     OutStream(const OutStream &) = default;
     OutStream(OutStream &&) = default;
     OutStream &operator=(const OutStream &) = default;
     OutStream &operator=(OutStream &&) = default;
+
     virtual ~OutStream();
 
-    void close();
-
-    bool closed() const { return wflags & SF_OUT_CLOSED; }
-
-    bool writeable() const
-    {
-        return (wflags & (SF_OUT_CLOSED | SF_OUT_EOF)) == 0;
-    }
-
-    bool closable() const { return wflags & SF_CLOSABLE; }
-
-    OutStream &closable(bool yesno)
-    {
-        if (yesno)
-            wflags |= SF_CLOSABLE;
-        else
-            wflags &= ~SF_CLOSABLE;
-        return *this;
-    }
-
-    bool line_buffered() const { return wflags & SF_LINEBUF; }
+    [[nodiscard]] bool line_buffered() const { return wflags & SF_LINEBUF; }
     OutStream &line_buffered(bool yesno)
     {
         if (yesno)
@@ -123,44 +93,48 @@ struct SYS_API OutStream
         return *this;
     }
 
-    bl::pair<bl::usize, StreamResult> write(bl::span<const bl::byte>);
-    StreamResult flush();
+    SYS_API friend bl::pair<bl::usize, StreamResult>
+    tag_invoke(write_f, OutStream &o, bl::span<const bl::byte> buf);
+
+    friend StreamResult tag_invoke(close_f, OutStream &o)
+    {
+        return o.basic_close_out();
+    }
+
+    friend StreamResult tag_invoke(flush_f, OutStream &o)
+    {
+        return o.basic_flush();
+    }
 
 protected:
     virtual StreamResult basic_write(bl::usize &s, const bl::byte *buf) = 0;
     virtual StreamResult basic_flush() = 0;
     virtual StreamResult basic_close_out() = 0;
-    StreamFlags wflags{ SF_CLOSABLE };
+    StreamFlags wflags{};
 };
 
 struct SYS_API IOStream
   : public InStream
   , public OutStream
 {
-    IOStream();
+    IOStream() = default;
     IOStream(const IOStream &) = default;
     IOStream(IOStream &&) = default;
     IOStream &operator=(const IOStream &) = default;
     IOStream &operator=(IOStream &&) = default;
+
     ~IOStream() override;
 
-    using OutStream::close;
-    using OutStream::closed;
-
-    IOStream &closable(bool yesno)
+    friend StreamResult tag_invoke(close_f, IOStream &io)
     {
-        OutStream::closable(yesno);
-        return *this;
+        return close(static_cast<OutStream &>(io));
     }
 
 protected:
     StreamResult basic_close_out() final;
-    StreamResult basic_close_in(bool flush_only) final;
+    StreamResult basic_close_in() final;
 
     virtual StreamResult basic_close() = 0;
-
-    const StreamFlags &rflags() const final;
-    StreamFlags &rflags() final;
 };
 
 struct SYS_API NullStream : public IOStream
@@ -176,7 +150,7 @@ protected:
 
 struct SYS_API ByteStream : public IOStream
 {
-    using C = bl::string_byte;
+    using C = bl::cbyte;
     explicit ByteStream(bl::usize bufsize = 32);
     explicit ByteStream(bl::basic_string_view<C> view);
     ByteStream(const ByteStream &) = default;
@@ -225,7 +199,7 @@ struct SYS_API CooperativeInStream : public InStream
     CooperativeInStream(InStream *in, Fiber *ioh, Fiber *su);
 
 protected:
-    virtual StreamResult basic_close_in(bool flush_only) final override;
+    virtual StreamResult basic_close_in() final override;
     virtual StreamResult basic_read(bl::usize &, bl::byte *) final override;
 };
 
@@ -243,12 +217,11 @@ concept AOutStream =
 inline StreamResult
 write_repr(OutStream &out, bl::string_view str)
 {
-    if (out.writeable()) {
-        auto [_, r] = out.write(bl::span<const bl::byte>{
-          reinterpret_cast<const bl::byte *>(str.data()), str.size() });
-        return r;
-    }
-    return StreamResult::OK;
+    auto [_, r] =
+      write(out,
+            bl::span<const bl::byte>{
+              reinterpret_cast<const bl::byte *>(str.data()), str.size() });
+    return r;
 }
 
 inline StreamResult
@@ -256,18 +229,6 @@ write_repr(OutStream &out, char c)
 {
     return write_repr(out, bl::string_view{ &c, 1 });
 }
-
-// inline StreamResult
-// write_repr(OutStream &out, signed char c)
-// {
-//     return write_repr(out, static_cast<char>(c));
-// }
-
-// inline StreamResult
-// write_repr(OutStream &out, unsigned char c)
-// {
-//     return write_repr(out, static_cast<char>(c));
-// }
 
 #define DEF_OPAQUE_OUTSTREAM_OP(T)                                             \
     SYS_API StreamResult write_repr(OutStream &out, T x);                      \
@@ -321,6 +282,6 @@ operator<<(AOutStream auto &out, const ptr &p)
     return out;
 }
 
-} // namespace io
-} // namespace sys
+} // namespace sys::io
+
 #endif

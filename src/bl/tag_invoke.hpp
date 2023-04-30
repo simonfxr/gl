@@ -109,4 +109,14 @@ concept tag_invocable = (sizeof(_tag_invoke::try_tag_invoke<CPO, Args...>(0)) ==
 
 BL_DIAG_POP
 
+#define BL_DEF_TAG_CPO_OPERATOR(CPO_f)                                         \
+    template<typename R, typename... Ts>                                       \
+        requires ::bl::tag_invocable<CPO_f, R, Ts...>                          \
+    BL_inline constexpr auto operator()(R &&r, Ts &&...ts)                     \
+      const noexcept(::bl::nothrow_tag_invocable<CPO_f, R, Ts...>)             \
+        ->::bl::tag_invoke_result_t<CPO_f, R, Ts...>                           \
+    {                                                                          \
+        return ::bl::tag_invoke(*this, bl_fwd(r), bl_fwd(ts)...);              \
+    }
+
 #endif // BL_TAG_INVOKE_HPP

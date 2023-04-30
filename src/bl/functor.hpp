@@ -7,26 +7,12 @@
 namespace bl {
 inline constexpr struct map_f
 {
-    template<typename R, typename... Ts>
-        requires tag_invocable<map_f, R, Ts...>
-    BL_inline constexpr auto operator()(R &&r, Ts &&...ts) const
-      noexcept(nothrow_tag_invocable<map_f, R, Ts...>)
-        -> bl::tag_invoke_result_t<map_f, R, Ts...>
-    {
-        return ::bl::tag_invoke(*this, bl_fwd(r), bl_fwd(ts)...);
-    }
+    BL_DEF_TAG_CPO_OPERATOR(map_f)
 } map;
 
 inline constexpr struct for_each_f
 {
-    template<typename R, typename... Ts>
-        requires tag_invocable<for_each_f, R, Ts...>
-    BL_inline constexpr auto operator()(R &&r, Ts &&...ts) const
-      noexcept(nothrow_tag_invocable<for_each_f, R, Ts...>)
-        -> bl::tag_invoke_result_t<for_each_f, R, Ts...>
-    {
-        return ::bl::tag_invoke(*this, bl_fwd(r), bl_fwd(ts)...);
-    }
+    BL_DEF_TAG_CPO_OPERATOR(for_each_f)
 } for_each;
 
 } // namespace bl

@@ -65,8 +65,8 @@ main()
             if (c.reading) {
                 size_t size = c.buf_end - c.buf_pos;
                 io::StreamResult err;
-                bl::tie(size, err) =
-                  c.stream->read(bl::span{ c.buffer + c.buf_pos, size });
+                bl::tie(size, err) = sys::io::read(
+                  *c.stream, bl::span{ c.buffer + c.buf_pos, size });
                 c.buf_pos += size;
                 if (c.buf_pos == c.buf_end) {
                     c.reading = false;
@@ -85,15 +85,15 @@ main()
             } else {
                 size_t size = c.buf_end - c.buf_pos;
                 io::StreamResult err;
-                bl::tie(size, err) =
-                  c.stream->write(bl::span{ c.buffer + c.buf_pos, size });
+                bl::tie(size, err) = sys::io::write(
+                  *c.stream, bl::span{ c.buffer + c.buf_pos, size });
                 c.buf_pos += size;
 
                 if (c.buf_pos == c.buf_end) {
                     c.reading = true;
                     c.buf_pos = 0;
                     c.buf_end = BUF_SIZE;
-                    err = c.stream->flush();
+                    err = sys::io::flush(*c.stream);
                 }
 
                 if (err == io::StreamResult::EOF ||
@@ -104,7 +104,7 @@ main()
             if (close) {
                 sys::io::stdout()
                   << "closing connection to client "_k << c.id << "\n"_k;
-                c.stream->close();
+                sys::io::close(*c.stream);
                 clients.erase(clients.begin() + i);
                 --i; // may underflow, okay
             }

@@ -78,15 +78,6 @@ HU_NODISCARD SYS_API HandleResult<Handle> open(bl::string_view, HandleMode);
 HU_NODISCARD SYS_API HandleError
 elevate(Handle &, HandleMode);
 
-HU_NODISCARD SYS_API bl::pair<bl::usize, HandleError>
-read(Handle &, bl::span<uint8_t>);
-
-HU_NODISCARD SYS_API bl::pair<bl::usize, HandleError>
-write(Handle &, bl::span<const uint8_t>);
-
-SYS_API HandleError
-close(Handle &);
-
 HU_NODISCARD SYS_API HandleResult<Handle>
 listen(SocketProto, const IPAddr4 &, uint16_t, SocketMode);
 
@@ -113,12 +104,6 @@ struct Handle : private bl::non_copyable
         auto tmp = Handle{ bl::move(rhs) };
         swap(*this, tmp);
         return *this;
-    }
-
-    ~Handle()
-    {
-        if (*this)
-            close(*this);
     }
 
     constexpr explicit operator bool() const
@@ -151,18 +136,34 @@ struct Handle : private bl::non_copyable
         return h;
     }
 
+    SYS_API friend bl::pair<bl::usize, HandleError>
+    tag_invoke(read_f, Handle &, bl::span<bl::byte>);
+
+    SYS_API friend bl::pair<bl::usize, HandleError>
+    tag_invoke(write_f, Handle &, bl::span<const bl::byte>);
+
+    SYS_API friend HandleError tag_invoke(close_f, Handle &);
+
+    inline ~Handle();
+
 private:
     constexpr Handle(NativeHandle h, HandleMode m) : _native(h), _mode(m) {}
     NativeHandle _native{ INVALID_NATIVE_HANDLE };
     HandleMode _mode{};
 };
 
+Handle::~Handle()
+{
+    if (*this)
+        close(*this);
+}
+
 struct SYS_API HandleStream : public IOStream
 {
 private:
     Handle handle;
-    uint8_t read_buffer[HANDLE_READ_BUFFER_SIZE]{};
-    uint8_t write_buffer[HANDLE_WRITE_BUFFER_SIZE]{};
+    bl::byte read_buffer[HANDLE_READ_BUFFER_SIZE]{};
+    bl::byte write_buffer[HANDLE_WRITE_BUFFER_SIZE]{};
     bl::usize read_cursor{};
     bl::usize write_cursor{};
 
@@ -179,12 +180,12 @@ public:
 protected:
     StreamResult basic_close() final override;
     StreamResult basic_flush() final override;
-    StreamResult basic_read(bl::usize &, uint8_t *) final override;
-    StreamResult basic_write(bl::usize &, const uint8_t *) final override;
+    StreamResult basic_read(bl::usize &, bl::byte *) final override;
+    StreamResult basic_write(bl::usize &, const bl::byte *) final override;
     StreamResult flush_buffer();
 };
 
-[[nodiscard]] SYS_API HandleResult<Array<bl::string_byte>>
+[[nodiscard]] SYS_API HandleResult<Array<bl::cbyte>>
 readFile(bl::string_view path, sys::io::OutStream &errout = stderr()) noexcept;
 
 } // namespace sys::io

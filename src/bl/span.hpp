@@ -13,9 +13,6 @@ namespace bl {
 
 inline constexpr size_t dynamic_extent = std::numeric_limits<size_t>::max();
 
-using string_byte = char;
-using byte = uint8_t;
-
 template<typename T, size_t Extent = dynamic_extent>
 struct span : private std::span<T, Extent>
 {

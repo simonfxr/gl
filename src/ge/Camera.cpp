@@ -148,7 +148,7 @@ Camera::Impl::runSaveFrame(const Event<CommandEvent> & /*unused*/,
     }
     auto out_frame = frame;
     out_frame.normalize();
-    bl::move(res).value().write(bl::as_bytes(bl::span{ &out_frame, 1 }));
+    sys::io::write(res.value(), bl::as_bytes(bl::span{ &out_frame, 1 }));
 }
 
 void
@@ -172,7 +172,7 @@ Camera::Impl::runLoadFrame(const Event<CommandEvent> & /*unused*/,
     }
 
     bl::array<bl::byte, sizeof frame> bytes{};
-    auto [s, ret] = bl::move(res).value().read(bytes);
+    auto [s, ret] = sys::io::read(res.value(), bytes);
     if (ret != sys::io::StreamResult::OK || s != sizeof frame) {
         ERR(scat("failed to read frame from file: "_sv,
                  *path,

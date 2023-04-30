@@ -23,7 +23,7 @@ namespace sys::fs {
 
 using namespace bl::literals;
 
-const bl::string_byte UNIX_SEPARATOR_CHAR = '/';
+const bl::cbyte UNIX_SEPARATOR_CHAR = '/';
 constexpr inline bl::string_view UNIX_SEPARATOR = "/"_sv;
 
 struct FileTime

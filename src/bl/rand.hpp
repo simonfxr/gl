@@ -3,13 +3,14 @@
 
 #include <bl/concepts.hpp>
 #include <bl/ptr.hpp>
+#include <bl/span.hpp>
 #include <bl/type_traits.hpp>
 
 #include <bo/cxx.hpp>
 
 #include <algorithm>
 #include <array>
-#include <bl/span.hpp>
+#include <cstring>
 
 namespace bl::rand {
 
@@ -154,14 +155,7 @@ struct basic_distribution
 
 inline constexpr struct sample_f
 {
-    template<typename R, typename... Ts>
-        requires tag_invocable<sample_f, R, Ts...>
-    BL_inline constexpr auto operator()(R &&r, Ts &&...ts) const
-      noexcept(nothrow_tag_invocable<sample_f, R, Ts...>)
-        -> bl::tag_invoke_result_t<sample_f, R, Ts...>
-    {
-        return ::bl::tag_invoke(*this, bl_fwd(r), bl_fwd(ts)...);
-    }
+    BL_DEF_TAG_CPO_OPERATOR(sample_f)
 } sample;
 
 template<typename D, typename R = gen>
@@ -180,14 +174,7 @@ struct basic_sampler
 
 inline constexpr struct sampler_f
 {
-    template<typename R, typename... Ts>
-        requires tag_invocable<sampler_f, R, Ts...>
-    BL_inline constexpr auto operator()(R &&r, Ts &&...ts) const
-      noexcept(nothrow_tag_invocable<sampler_f, R, Ts...>)
-        -> bl::tag_invoke_result_t<sampler_f, R, Ts...>
-    {
-        return ::bl::tag_invoke(*this, bl_fwd(r), bl_fwd(ts)...);
-    }
+    BL_DEF_TAG_CPO_OPERATOR(sampler_f)
 } sampler;
 
 } // namespace bl::rand

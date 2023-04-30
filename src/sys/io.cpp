@@ -19,7 +19,7 @@ HandleStream::HandleStream(Handle h) : handle(bl::move(h)) {}
 
 HandleStream::~HandleStream()
 {
-    close();
+    close(*this);
 }
 
 namespace {
@@ -199,7 +199,7 @@ HandleStream::open(bl::string_view path, HandleMode mode)
     return { HandleStream{ bl::move(res).value() } };
 }
 
-HandleResult<Array<bl::string_byte>>
+HandleResult<Array<bl::cbyte>>
 readFile(bl::string_view path, sys::io::OutStream &errout) noexcept
 {
     static constexpr auto BUF_SIZE = 8_KiB;
@@ -217,7 +217,7 @@ readFile(bl::string_view path, sys::io::OutStream &errout) noexcept
             auto size = sizeof buf;
             bl::tie(size, err) = read(h, bl::span{ buf.data(), size });
             if (size > 0)
-                str.write(bl::span{ buf.data(), buf.data() + size });
+                write(str, bl::span{ buf.data(), buf.data() + size });
             if (err == HandleError::EOF) {
                 err = HandleError::OK;
                 return { { str.data(), str.size() } };
@@ -227,8 +227,7 @@ readFile(bl::string_view path, sys::io::OutStream &errout) noexcept
         }
     }
 fail:
-    if (errout.writeable())
-        errout << "unable to read file: "_k << path << "\n"_k;
+    errout << "unable to read file: "_k << path << "\n"_k;
 
     return util::unexpected{ err };
 }

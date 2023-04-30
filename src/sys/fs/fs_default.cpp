@@ -11,7 +11,7 @@ using namespace bl::literals;
 namespace {
 
 bool
-is_pathsep(bl::string_byte c)
+is_pathsep(bl::cbyte c)
 {
 #ifdef HU_OS_WINDOWS
     return c == SEPARATOR_CHAR || c == UNIX_SEPARATOR_CHAR;

@@ -186,7 +186,7 @@ elevate(Handle &h, HandleMode hm)
 }
 
 bl::pair<bl::usize, HandleError>
-read(Handle &h, bl::span<bl::byte> buf)
+tag_invoke(read_f, Handle &h, bl::span<bl::byte> buf)
 {
     ASSERT(h);
     if (buf.empty())
@@ -202,7 +202,7 @@ read(Handle &h, bl::span<bl::byte> buf)
 }
 
 bl::pair<bl::usize, HandleError>
-write(Handle &h, bl::span<const bl::byte> buf)
+tag_invoke(write_f, Handle &h, bl::span<const bl::byte> buf)
 {
     ASSERT(h);
     DWORD nwrit;
@@ -214,7 +214,7 @@ write(Handle &h, bl::span<const bl::byte> buf)
 }
 
 HandleError
-close(Handle &h)
+tag_invoke(close_f, Handle &h)
 {
     ASSERT(h);
     auto hndl = castToHandle(bl::move(h.takeNative()));

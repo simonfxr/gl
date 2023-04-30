@@ -4,6 +4,7 @@
 #include <bl/core.hpp>
 #include <bl/span.hpp>
 
+#include <cstring>
 #include <string_view>
 
 #define BL_STRING_VIEW(...) "" __VA_ARGS__ ""_sv
@@ -25,7 +26,16 @@ BL_consteval string_view string_view_literal(const char (&literal)[N]) noexcept
 constexpr string_view
 from_cstring(const char *s) noexcept
 {
-    return !s ? string_view{} : string_view{ s, std::strlen(s) };
+    if (!s)
+        return string_view{};
+    if (std::is_constant_evaluated()) {
+        usize l = 0;
+        for (auto p = s; *p; ++p)
+            ++l;
+        return string_view{ s, l };
+    } else {
+        return string_view{ s, std::strlen(s) };
+    }
 }
 
 using bytes_view = basic_string_view<byte>;

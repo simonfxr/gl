@@ -11,167 +11,43 @@
 
 namespace sys::io {
 
-namespace {
-
-struct StreamState
-{
-    static StreamResult track(StreamFlags eof,
-                              StreamFlags &flags,
-                              StreamResult res);
-};
-
-StreamResult
-StreamState::track(StreamFlags eof, StreamFlags &flags, StreamResult res)
-{
-    switch (res) {
-    case StreamResult::OK:
-    case StreamResult::Blocked:
-        return res;
-    case StreamResult::EOF:
-        flags |= eof;
-        return res;
-    case StreamResult::Closed:
-    case StreamResult::Error:
-        return res;
-    }
-    UNREACHABLE;
-}
-
-} // namespace
-
-InStream::InStream() = default;
-
 InStream::~InStream() = default;
-
-const StreamFlags &
-InStream::rflags() const
-{
-    return _rflags;
-}
-
-StreamFlags &
-InStream::rflags()
-{
-    return _rflags;
-}
-
-void
-InStream::close()
-{
-    if (closed())
-        return;
-
-    StreamResult ret;
-    if (closable()) {
-        rflags() |= SF_IN_CLOSED;
-        ret = basic_close_in(false);
-    } else {
-        ret = basic_close_in(true);
-    }
-    StreamState::track(SF_IN_EOF | SF_OUT_EOF, rflags(), ret);
-}
-
-bl::pair<bl::usize, StreamResult>
-InStream::read(bl::span<bl::byte> buf)
-{
-    if (!readable())
-        return { 0, closed() ? StreamResult::Closed : StreamResult::EOF };
-    if (buf.empty())
-        return { 0, StreamResult::OK };
-    auto k = buf.size();
-    auto err =
-      StreamState::track(SF_IN_EOF, rflags(), basic_read(k, buf.data()));
-    return { k, err };
-}
-
-OutStream::OutStream() = default;
 
 OutStream::~OutStream() = default;
 
-void
-OutStream::close()
-{
-    if (closed())
-        return;
-
-    StreamResult ret;
-    if (closable()) {
-        wflags |= SF_OUT_CLOSED;
-        ret = basic_close_out();
-    } else {
-        ret = basic_flush();
-    }
-    StreamState::track(SF_IN_EOF | SF_OUT_EOF, wflags, ret);
-}
-
 bl::pair<bl::usize, StreamResult>
-OutStream::write(bl::span<const bl::byte> buf)
+tag_invoke(write_f, OutStream &o, bl::span<const bl::byte> buf)
 {
-    if (!writeable())
-        return { 0, closed() ? StreamResult::Closed : StreamResult::EOF };
     if (buf.empty())
         return { 0, StreamResult::OK };
     auto insize = buf.size();
     auto s = buf.size();
-    auto err =
-      StreamState::track(SF_OUT_EOF, wflags, basic_write(s, buf.data()));
-    if (err != StreamResult::OK || !line_buffered() ||
+    auto err = o.basic_write(s, buf.data());
+    if (err != StreamResult::OK || !o.line_buffered() ||
         !memchr(buf.data(), '\n', insize))
         return { s, err };
-    return { s, flush() };
+    return { s, flush(o) };
 }
-
-StreamResult
-OutStream::flush()
-{
-    if (closed())
-        return StreamResult::Closed;
-    return StreamState::track(SF_OUT_EOF, wflags, basic_flush());
-}
-
-BEGIN_NO_WARN_UNINITIALIZED
-IOStream::IOStream()
-{
-    closable(true);
-}
-END_NO_WARN_UNINITIALIZED
 
 IOStream::~IOStream() = default;
 
-const StreamFlags &
-IOStream::rflags() const
-{
-    return wflags;
-}
-
-StreamFlags &
-IOStream::rflags()
-{
-    return wflags;
-}
-
 StreamResult
-IOStream::basic_close_in(bool flush_only)
+IOStream::basic_close_in()
 {
-    if (flush_only)
-        return basic_flush();
-    wflags |= SF_OUT_CLOSED;
     return basic_close();
 }
 
 StreamResult
 IOStream::basic_close_out()
 {
-    wflags |= SF_IN_CLOSED;
     return basic_close();
 }
 
 Streams::Streams()
   : stdin(stdin_handle()), stdout(stdout_handle()), stderr(stderr_handle())
 {
-    stdin.closable(false);
-    stdout.closable(false).line_buffered(true);
-    stderr.closable(false).line_buffered(true);
+    stdout.line_buffered(true);
+    stderr.line_buffered(true);
 }
 
 SYS_API InStream &
@@ -195,8 +71,6 @@ stderr()
 #define DEF_PRINTF_WRITER(T, fmt, bufsz)                                       \
     StreamResult write_repr(OutStream &out, T value)                           \
     {                                                                          \
-        if (!out.writeable())                                                  \
-            return StreamResult::OK;                                           \
         bl::array<char, bufsz> buf{};                                          \
         auto len = snprintf(buf.data(), sizeof buf, "%" fmt, value);           \
         return write_repr(out, bl::string_view{ buf.data(), bl::usize(len) }); \
@@ -217,7 +91,7 @@ DEF_PRINTF_WRITER(long double, ".6Lg", 32)
 
 NullStream::NullStream()
 {
-    close();
+    close(*this);
 }
 
 StreamResult
@@ -253,7 +127,7 @@ ByteStream::ByteStream(bl::usize bufsize) : read_cursor(0)
 
 ByteStream::ByteStream(bl::string_view str) : ByteStream(str.size())
 {
-    write(bl::as_bytes(str));
+    write(*this, bl::as_bytes(str));
 }
 
 ByteStream::~ByteStream() = default;
@@ -307,9 +181,9 @@ CooperativeInStream::CooperativeInStream(InStream *in_, Fiber *ioh, Fiber *su)
 {}
 
 StreamResult
-CooperativeInStream::basic_close_in(bool /*flush_only*/)
+CooperativeInStream::basic_close_in()
 {
-    in->close();
+    close(*in);
     // FIXME: return real value
     return StreamResult::OK;
 }
@@ -321,7 +195,7 @@ CooperativeInStream::basic_read(bl::usize &s, bl::byte *buf)
     for (;;) {
         s = n;
         auto res = StreamResult{};
-        bl::tie(s, res) = in->read(bl::span{ buf, s });
+        bl::tie(s, res) = read(*in, bl::span{ buf, s });
         if (res == StreamResult::OK)
             return res;
         if (res == StreamResult::Blocked)
