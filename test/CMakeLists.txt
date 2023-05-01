@@ -31,3 +31,12 @@ def_program(
   sys
   ctest
   bl)
+
+def_program(
+  any_test
+  SOURCES
+  any_test.cpp
+  DEPEND
+  ctest
+  bl
+  sys)

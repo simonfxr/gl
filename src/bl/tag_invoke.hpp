@@ -17,6 +17,7 @@ namespace bl {
 BL_DIAG_PUSH
 BL_DIAG_IGN_CLANG("-Wold-style-cast")
 BL_DIAG_IGN_CLANG("-Wreserved-identifier")
+// NOLINTBEGIN(google-readability-casting)
 
 namespace _tag_invoke {
 void
@@ -107,6 +108,7 @@ concept tag_invocable = (sizeof(_tag_invoke::try_tag_invoke<CPO, Args...>(0)) ==
 
 } // namespace bl
 
+// NOLINTEND(google-readability-casting)
 BL_DIAG_POP
 
 #define BL_DEF_TAG_CPO_OPERATOR(CPO_f)                                         \
