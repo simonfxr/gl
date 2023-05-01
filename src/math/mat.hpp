@@ -463,8 +463,8 @@ coordinateSystem(const vec<T, 3> &a)
 }
 
 template<typename OStream, typename T, size_t N>
-inline OStream &
-operator<<(OStream &out, const mat<T, N> &A)
+inline decltype(auto)
+operator<<(OStream &&out, const mat<T, N> &A)
 {
     using namespace bl::literals;
     out << "mat"_k << N << "["_k;

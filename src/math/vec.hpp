@@ -563,8 +563,8 @@ equal(a_vec auto &&a, same_vec_shape<decltype(a)> auto &&b, auto &&epsi)
 }
 
 template<typename OStream, typename T, size_t N>
-inline OStream &
-operator<<(OStream &out, const vec<T, N> &v)
+inline decltype(auto)
+operator<<(OStream &&out, const vec<T, N> &v)
 {
     using namespace bl::literals;
     out << "vec"_k << N << "["_k;

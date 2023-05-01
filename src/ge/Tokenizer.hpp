@@ -14,14 +14,14 @@ struct GE_API ParserState
     char rawC{};
     bl::string filename;
 
-    sys::io::StreamResult in_state;
-    sys::io::InStream *in;
+    sys::io::IOError in_state;
+    sys::io::InStream in;
 
     int line = 1;
     int col = 0;
 
-    ParserState(sys::io::InStream &_in, bl::string_view fn)
-      : filename(fn), in_state(sys::io::StreamResult::OK), in(&_in)
+    ParserState(sys::io::InStream _in, bl::string_view fn)
+      : filename(fn), in_state(sys::io::IOError::OK), in(_in)
     {}
 };
 

@@ -177,7 +177,7 @@ KeyHandler::handleCommands()
 void
 KeyHandler::handleListBindings(const Event<CommandEvent> &e)
 {
-    sys::io::OutStream &out = e.info.engine.out();
+    auto out = e.info.engine.out();
     auto it = m().bindings.begin();
     for (; it != m().bindings.end(); ++it) {
         auto &bind = it->first.binding;

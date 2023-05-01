@@ -222,7 +222,7 @@ compilePreprocessed(ShaderCompilerQueue & /*scq*/,
                     GLShaderObject & /*shader*/);
 
 void
-printShaderLog(GLShaderObject & /*shader*/, sys::io::OutStream &out);
+printShaderLog(GLShaderObject & /*shader*/, sys::io::OutStream out);
 
 bl::optional<GLenum>
 translateShaderType(ShaderType type, const bl::string &basename = ""_s);
@@ -311,7 +311,7 @@ compilePreprocessed(ShaderCompilerQueue &scq,
 }
 
 void
-printShaderLog(GLShaderObject &shader, sys::io::OutStream &out)
+printShaderLog(GLShaderObject &shader, sys::io::OutStream out)
 {
     GLint log_len;
     GL_CALL(glGetShaderiv, *shader, GL_INFO_LOG_LENGTH, &log_len);

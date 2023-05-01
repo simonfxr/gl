@@ -3,6 +3,8 @@
 
 #include <bl/conf.hpp>
 
+#include <bl/core.hpp>
+
 #include <algorithm>
 #include <cstdint>
 #include <limits>
@@ -138,6 +140,9 @@ private:
         return { s.data(), s.size() };
     }
 }; // namespace bl
+
+using byte_span = span<const byte>;
+using mut_byte_span = span<byte>;
 
 template<typename It, typename EndOrSize>
 span(It, EndOrSize) -> span<std::remove_reference_t<std::iter_reference_t<It>>>;

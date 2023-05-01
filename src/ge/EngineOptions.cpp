@@ -307,7 +307,7 @@ EngineOptions::parse(int *argcp, char ***argvp)
 void
 EngineOptions::printHelp()
 {
-    sys::io::OutStream &out = sys::io::stderr();
+    auto out = sys::io::stderr();
 
     out << "Engine options:\n"_k;
 

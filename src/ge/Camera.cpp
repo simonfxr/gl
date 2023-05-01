@@ -141,7 +141,7 @@ Camera::Impl::runSaveFrame(const Event<CommandEvent> & /*unused*/,
         return;
     }
 
-    auto res = sys::io::HandleStream::open(*path, sys::io::HM_WRITE);
+    auto res = sys::io::open(*path, sys::io::HM_WRITE);
     if (!res) {
         ERR(scat("couldnt open file: "_sv, *path));
         return;
@@ -165,7 +165,7 @@ Camera::Impl::runLoadFrame(const Event<CommandEvent> & /*unused*/,
         return;
     }
 
-    auto res = sys::io::HandleStream::open(*path, sys::io::HM_READ);
+    auto res = sys::io::open(*path, sys::io::HM_READ);
     if (!res) {
         WARN(scat("couldnt open file: "_sv, *path));
         return;
@@ -173,7 +173,7 @@ Camera::Impl::runLoadFrame(const Event<CommandEvent> & /*unused*/,
 
     bl::array<bl::byte, sizeof frame> bytes{};
     auto [s, ret] = sys::io::read(res.value(), bytes);
-    if (ret != sys::io::StreamResult::OK || s != sizeof frame) {
+    if (ret != sys::io::IOError::OK || s != sizeof frame) {
         ERR(scat("failed to read frame from file: "_sv,
                  *path,
                  ", io error: "_sv,

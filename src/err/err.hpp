@@ -9,7 +9,7 @@
 namespace err {
 
 ERR_API void
-print_stacktrace(sys::io::OutStream &, int skip = 0);
+print_stacktrace(sys::io::OutStream, int skip = 0);
 
 struct string_arg
 {
@@ -71,7 +71,7 @@ struct ErrorStaticCallSite
     // builtin_choose_expr machinery work.
     ErrorStaticCallSite(const Location &loc,
                         LogLevel lvl,
-                        sys::io::OutStream &,
+                        sys::io::OutStream,
                         string_arg msg) noexcept;
 };
 
@@ -91,7 +91,7 @@ static inline constexpr struct error_f
 
     ERR_API static void apply(const Location *loc,
                               LogLevel lvl,
-                              sys::io::OutStream &,
+                              sys::io::OutStream,
                               string_arg) noexcept;
 
     ERR_API static void apply(const ErrorStaticCallSite *) noexcept;
@@ -107,7 +107,7 @@ static inline constexpr struct fatalError_f
 
     HU_NORETURN ERR_API static void apply(const Location *loc,
                                           LogLevel lvl,
-                                          sys::io::OutStream &,
+                                          sys::io::OutStream,
                                           string_arg) noexcept;
 
     HU_NORETURN ERR_API static void apply(const ErrorStaticCallSite *) noexcept;
@@ -117,7 +117,7 @@ static inline constexpr struct fatalError_f
 } // namespace internal
 
 ERR_API void
-reportError(sys::io::OutStream &out,
+reportError(sys::io::OutStream out,
             const char *type,
             const Location &loc,
             LogLevel lvl,

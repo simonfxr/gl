@@ -134,7 +134,7 @@ release(ObjectType t, GLsizei n, const GLuint *names)
 }
 
 void
-printStats(sys::io::OutStream &out)
+printStats(sys::io::OutStream out)
 {
     auto tab = Tables::get();
     out << "Active OpenGL Objects:\n"_k;

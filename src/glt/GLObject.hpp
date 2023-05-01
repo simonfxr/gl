@@ -46,8 +46,7 @@ generate(ObjectType t, GLsizei n, GLuint *names);
 GLT_API void
 release(ObjectType t, GLsizei n, const GLuint *names);
 
-GLT_API void
-printStats(sys::io::OutStream &);
+GLT_API void printStats(sys::io::OutStream);
 
 GLT_API void
 generateShader(GLenum shader_type, GLuint *shader);

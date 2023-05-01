@@ -82,7 +82,7 @@ debugInfo(sys::io::OutStream &out, const void *ip)
 } // namespace
 
 void
-print_stacktrace(sys::io::OutStream &out, int skip)
+print_stacktrace(sys::io::OutStream out, int skip)
 {
     unw_context_t uc;
     unw_getcontext(&uc);
@@ -126,7 +126,7 @@ print_stacktrace(sys::io::OutStream &out, int skip)
         }
     };
 
-    void print_stacktrace(sys::io::OutStream & out, int skip)
+    void print_stacktrace(sys::io::OutStream out, int skip)
     {
         static ProcessContext proc_context;
         auto process = proc_context.process;
@@ -234,7 +234,7 @@ error_f::apply(const Location *loc, LogLevel lvl, string_arg msg) noexcept
 void
 error_f::apply(const Location *loc,
                LogLevel lvl,
-               sys::io::OutStream &out,
+               sys::io::OutStream out,
                string_arg msg) noexcept
 {
     reportError(out, nullptr, *loc, lvl, msg.str);
@@ -257,7 +257,7 @@ fatalError_f::apply(const Location *loc, LogLevel lvl, string_arg msg) noexcept
 void
 fatalError_f::apply(const Location *loc,
                     LogLevel lvl,
-                    sys::io::OutStream &out,
+                    sys::io::OutStream out,
                     string_arg msg) noexcept
 {
     error.apply(loc, lvl, out, msg);
@@ -272,7 +272,7 @@ fatalError_f::apply(const ErrorStaticCallSite *args) noexcept
 
 } // namespace internal
 void
-reportError(sys::io::OutStream &out,
+reportError(sys::io::OutStream out,
             const char *type,
             const Location &loc,
             LogLevel lvl,
@@ -315,7 +315,7 @@ reportError(sys::io::OutStream &out,
 
     if (!loc.operation.empty()) {
         if (lvl == LL::Assertion)
-            out << "  assertion: "_k << mesg << "\n"_k;
+            out << "  assertion: "_k << loc.operation << "\n"_k;
         else
             out << "  operation: "_k << loc.operation << "\n"_k;
     }
@@ -370,7 +370,7 @@ checkLogState()
 
 } // namespace
 
-sys::io::OutStream &
+sys::io::OutStream
 logBegin(const Location *loc, const LogDestination &dest, LogLevel lvl)
 {
     initLogState();

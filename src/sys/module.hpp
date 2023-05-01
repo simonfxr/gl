@@ -22,9 +22,9 @@ struct WS32Init
 
 struct Streams
 {
-    HandleStream stdin;
-    HandleStream stdout;
-    HandleStream stderr;
+    BufferedInStream<Handle> stdin;
+    BufferedOutStream<Handle> stdout;
+    BufferedOutStream<Handle> stderr;
 
     Streams();
 };

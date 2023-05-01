@@ -105,6 +105,20 @@ BL_inline constexpr T *relocate_at(T *source, T *dest)
     return std::launder(dest);
 }
 
+template<typename T, typename U = T>
+BL_wrapper constexpr auto
+min(T &&x, U &&y)
+{
+    return !(y < x) ? y : x;
+}
+
+template<typename T, typename U = T>
+BL_wrapper constexpr auto
+max(T &&x, U &&y)
+{
+    return !(y < x) ? x : y;
+}
+
 namespace literals {
 
 BL_consteval usize operator""_z(unsigned long long x) noexcept

@@ -305,7 +305,7 @@ Anim::initCLKernels(bool *success)
 {
     cl_int cl_err;
 
-    auto res = sys::io::readFile("programs/mc/cl/program.cl"_k, engine->out());
+    auto res = sys::io::readFile("programs/mc/cl/program.cl"_k);
 
     if (!res) {
         ERR("failed reading CL program");

@@ -36,7 +36,7 @@ struct GE_API CommandProcessor
 
     bool execCommand(bl::span<CommandArg> args);
 
-    bool loadStream(sys::io::InStream &inp, bl::string_view inp_name);
+    bool loadStream(sys::io::InStream inp, bl::string_view inp_name);
 
     bool loadScript(bl::string_view name, bool quiet = false);
 

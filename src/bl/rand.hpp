@@ -92,7 +92,7 @@ struct BL_API random_device
 
     result_type operator()() noexcept;
 
-    void seed_bytes(bl::span<byte>) noexcept;
+    void seed_bytes(bl::mut_byte_span) noexcept;
 
 private:
     struct Impl;
@@ -102,7 +102,7 @@ private:
 static_assert(rng<random_device>);
 
 constexpr void
-seed_bytes(rng auto &r, bl::span<byte> bytes) noexcept
+seed_bytes(rng auto &r, bl::mut_byte_span bytes) noexcept
 {
     auto dest = bytes.begin();
     for (auto rest = bytes.size(); rest > 0;) {

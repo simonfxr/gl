@@ -54,7 +54,7 @@ struct Engine::Impl
     bl::string programName;
     bl::string develDataDir;
 
-    sys::io::OutStream *out;
+    sys::io::OutStream out;
 
     bool initialized{ false };
     const EngineOptions *opts{}; // only during init
@@ -72,7 +72,7 @@ struct Engine::Impl
       , commandProcessor(std::in_place, *this)
       , keyHandler(std::in_place, *commandProcessor)
       , replServer(std::in_place, *this)
-      , out(&sys::io::stdout())
+      , out(sys::io::stdout())
       , pluginSet(ps ? *ps : emptyPluginSet)
     {}
 
@@ -163,10 +163,10 @@ Engine::events()
     return m().events;
 }
 
-sys::io::OutStream &
+sys::io::OutStream
 Engine::out()
 {
-    return *m().out;
+    return m().out;
 }
 
 PluginSet &
@@ -176,9 +176,9 @@ Engine::pluginSet()
 }
 
 void
-Engine::out(sys::io::OutStream &s)
+Engine::out(sys::io::OutStream s)
 {
-    m().out = &s;
+    m().out = s;
     shaderManager().out(s);
 }
 

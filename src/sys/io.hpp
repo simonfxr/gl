@@ -3,7 +3,6 @@
 
 #include "sys/io/Stream.hpp"
 
-#include "pp/enum.hpp"
 #include "sys/endian.hpp"
 #include "util/Array.hpp"
 #include "util/expected.hpp"
@@ -18,10 +17,6 @@ namespace sys::io {
 
 struct Handle;
 struct IPAddr4;
-struct HandleStream;
-
-inline constexpr bl::usize HANDLE_READ_BUFFER_SIZE = 1024;
-inline constexpr bl::usize HANDLE_WRITE_BUFFER_SIZE = 1024;
 
 using HandleMode = uint32_t;
 
@@ -52,17 +47,8 @@ struct SYS_API IPAddr4
 inline constexpr IPAddr4 IPA_ANY = { 0, 0, 0, 0 };
 inline constexpr IPAddr4 IPA_LOCAL = { 127, 0, 0, 1 };
 
-PP_DEF_ENUM(HandleError,
-            uint8_t,
-            OK,
-            BLOCKED,
-            EOF,
-            BAD_HANDLE,
-            INVALID_PARAM,
-            UNKNOWN);
-
 template<typename T>
-using HandleResult = util::expected<T, HandleError>;
+using IOResult = util::expected<T, IOError>;
 
 HU_NODISCARD SYS_API Handle
 stdin_handle();
@@ -73,15 +59,15 @@ stdout_handle();
 HU_NODISCARD SYS_API Handle
 stderr_handle();
 
-HU_NODISCARD SYS_API HandleResult<Handle> open(bl::string_view, HandleMode);
+HU_NODISCARD SYS_API IOResult<Handle> open(bl::string_view, HandleMode);
 
-HU_NODISCARD SYS_API HandleError
+HU_NODISCARD SYS_API IOError
 elevate(Handle &, HandleMode);
 
-HU_NODISCARD SYS_API HandleResult<Handle>
+HU_NODISCARD SYS_API IOResult<Handle>
 listen(SocketProto, const IPAddr4 &, uint16_t, SocketMode);
 
-HU_NODISCARD SYS_API HandleResult<Handle>
+HU_NODISCARD SYS_API IOResult<Handle>
 accept(Handle &);
 
 #if HU_OS_POSIX_P
@@ -94,10 +80,11 @@ static inline constexpr NativeHandle INVALID_NATIVE_HANDLE = nullptr;
 #    error "OS not supported"
 #endif
 
-struct Handle : private bl::non_copyable
+struct Handle final : private bl::non_copyable
 {
     constexpr Handle() = default;
     constexpr Handle(Handle &&rhs) noexcept { swap(*this, rhs); }
+    constexpr Handle(const Handle &) = delete;
 
     Handle &operator=(Handle &&rhs) noexcept
     {
@@ -105,6 +92,8 @@ struct Handle : private bl::non_copyable
         swap(*this, tmp);
         return *this;
     }
+
+    Handle &operator=(const Handle &) = delete;
 
     constexpr explicit operator bool() const
     {
@@ -136,13 +125,15 @@ struct Handle : private bl::non_copyable
         return h;
     }
 
-    SYS_API friend bl::pair<bl::usize, HandleError>
-    tag_invoke(read_f, Handle &, bl::span<bl::byte>);
+    SYS_API friend bl::pair<bl::usize, IOError> tag_invoke(read_f,
+                                                           Handle &,
+                                                           bl::mut_byte_span);
 
-    SYS_API friend bl::pair<bl::usize, HandleError>
-    tag_invoke(write_f, Handle &, bl::span<const bl::byte>);
+    SYS_API friend bl::pair<bl::usize, IOError> tag_invoke(write_f,
+                                                           Handle &,
+                                                           bl::byte_span);
 
-    SYS_API friend HandleError tag_invoke(close_f, Handle &);
+    SYS_API friend IOError tag_invoke(close_f, Handle &);
 
     inline ~Handle();
 
@@ -158,35 +149,8 @@ Handle::~Handle()
         close(*this);
 }
 
-struct SYS_API HandleStream : public IOStream
-{
-private:
-    Handle handle;
-    bl::byte read_buffer[HANDLE_READ_BUFFER_SIZE]{};
-    bl::byte write_buffer[HANDLE_WRITE_BUFFER_SIZE]{};
-    bl::usize read_cursor{};
-    bl::usize write_cursor{};
-
-public:
-    HandleStream(HandleStream &&) = default;
-
-    explicit HandleStream(Handle);
-    ~HandleStream() override;
-
-    HU_NODISCARD
-    static HandleResult<HandleStream> open(bl::string_view path,
-                                           HandleMode mode = HM_READ);
-
-protected:
-    StreamResult basic_close() final override;
-    StreamResult basic_flush() final override;
-    StreamResult basic_read(bl::usize &, bl::byte *) final override;
-    StreamResult basic_write(bl::usize &, const bl::byte *) final override;
-    StreamResult flush_buffer();
-};
-
-[[nodiscard]] SYS_API HandleResult<Array<bl::cbyte>>
-readFile(bl::string_view path, sys::io::OutStream &errout = stderr()) noexcept;
+[[nodiscard]] SYS_API IOResult<Array<bl::cbyte>>
+readFile(bl::string_view path) noexcept;
 
 } // namespace sys::io
 

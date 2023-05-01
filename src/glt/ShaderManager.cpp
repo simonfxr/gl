@@ -18,7 +18,7 @@ using ProgramMap =
 
 struct ShaderManager::Impl : public ShaderManager
 {
-    sys::io::OutStream *out;
+    sys::io::OutStream out;
     ShaderDirectories shaderDirs;
     ProgramMap programs;
     std::shared_ptr<ShaderCache> globalShaderCache;
@@ -31,7 +31,7 @@ struct ShaderManager::Impl : public ShaderManager
     bool dumpShaders{ false };
 
     explicit Impl()
-      : out(&sys::io::stdout())
+      : out(sys::io::stdout())
       , globalShaderCache(std::make_shared<ShaderCache>())
       , shaderCompiler(std::in_place, *this)
     {}
@@ -125,16 +125,16 @@ ShaderManager::reloadShaders()
           << failed << " failed)\n"_k;
 }
 
-sys::io::OutStream &
+sys::io::OutStream
 ShaderManager::out() const
 {
-    return *m().out;
+    return m().out;
 }
 
 void
-ShaderManager::out(sys::io::OutStream &out)
+ShaderManager::out(sys::io::OutStream out)
 {
-    m().out = &out;
+    m().out = out;
 }
 
 bool

@@ -149,7 +149,7 @@ struct GE_API CommandPrettyPrinter
 {
     static CommandPrettyPrinter &construct_at(void *) noexcept;
 
-    void out(sys::io::OutStream &_out);
+    void out(sys::io::OutStream _out);
     void lineLength(size_t len);
     void blockIndent(size_t indent);
     void ignoreEmptyStatements(bool);

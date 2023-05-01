@@ -29,7 +29,7 @@ parse_err(const ParserState &s,
           const err::Location *loc,
           const bl::string &mesg)
 {
-    if (s.in_state != sys::io::StreamResult::Blocked) {
+    if (s.in_state != sys::io::IOError::BLOCKED) {
         sys::io::ByteStream buf;
         buf << "parsing "_k << s.filename << "@"_k << s.line << ":"_k << s.col;
         buf << " parse-error: "_k << mesg;
@@ -37,12 +37,12 @@ parse_err(const ParserState &s,
     }
 }
 
-sys::io::StreamResult
+sys::io::IOError
 next(sys::io::InStream &in, char &c)
 {
     bl::byte b{};
     auto [s, res] = sys::io::read(in, bl::span{ &b, size_t{ 1 } });
-    ASSERT(res != sys::io::StreamResult::OK || s == 1);
+    ASSERT(res != sys::io::IOError::OK || s == 1);
     c = static_cast<char>(b);
     return res;
 }
@@ -52,9 +52,9 @@ getchAny(ParserState &s)
 {
     auto lastC = s.rawC;
 
-    s.in_state = next(*s.in, s.c);
+    s.in_state = next(s.in, s.c);
     s.rawC = s.c;
-    if (s.in_state != sys::io::StreamResult::OK) {
+    if (s.in_state != sys::io::IOError::OK) {
         s.c = s.rawC = 0;
         return false;
     }
@@ -499,7 +499,7 @@ statement(ParserState &s, bl::vec<CommandArg> &toks, bool quot)
             break;
     }
 
-    if (s.c == 0 && s.in_state != sys::io::StreamResult::EOF)
+    if (s.c == 0 && s.in_state != sys::io::IOError::EOF)
         return Fail;
 
     return EndStatement;
@@ -519,7 +519,7 @@ bool
 tokenize(ParserState &s, bl::vec<CommandArg> &args)
 {
     getch(s);
-    if (s.in_state != sys::io::StreamResult::OK)
+    if (s.in_state != sys::io::IOError::OK)
         return false;
     return statement(s, args, false) != Fail;
 }

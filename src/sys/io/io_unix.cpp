@@ -70,31 +70,31 @@ unconvertMode(int flags)
         }                                                                      \
     } while (0)
 
-HandleError
+IOError
 convertErrno()
 {
     auto errid = bl::exchange(errno, 0);
 
     if (errid == EAGAIN || errid == EWOULDBLOCK)
-        return HandleError::BLOCKED;
+        return IOError::BLOCKED;
 
     switch (errid) {
     case ECONNRESET:
-        return HandleError::EOF;
+        return IOError::EOF;
     case ENOENT:
-        return HandleError::UNKNOWN;
+        return IOError::UNKNOWN;
     case EBADF:
         DEBUG_ERR(strerror_errno(errid));
-        return HandleError::BAD_HANDLE;
+        return IOError::BAD_HANDLE;
     case EWOULDBLOCK:
-        return HandleError::BLOCKED;
+        return IOError::BLOCKED;
     default:
         DEBUG_ERR(strerror_errno(errid));
-        return HandleError::UNKNOWN;
+        return IOError::UNKNOWN;
     }
 }
 
-HandleError
+IOError
 handleFromFD(int fd, Handle *h)
 {
     int flags;
@@ -104,7 +104,7 @@ handleFromFD(int fd, Handle *h)
         return convertErrno();
     }
     *h = Handle::fromNative(fd, unconvertMode(flags));
-    return HandleError::OK;
+    return IOError::OK;
 }
 } // namespace
 
@@ -113,7 +113,7 @@ stdin_handle()
 {
     Handle h;
     auto err = handleFromFD(0, &h);
-    if (err != HandleError::OK)
+    if (err != IOError::OK)
         ERR("error in fcntl");
     return h;
 }
@@ -123,7 +123,7 @@ stdout_handle()
 {
     Handle h;
     auto err = handleFromFD(1, &h);
-    if (err != HandleError::OK)
+    if (err != IOError::OK)
         ERR("error in fcntl");
     return h;
 }
@@ -133,45 +133,45 @@ stderr_handle()
 {
     Handle h;
     auto err = handleFromFD(2, &h);
-    if (err != HandleError::OK)
+    if (err != IOError::OK)
         ERR("error in fcntl");
     return h;
 }
 
-HandleResult<Handle>
+IOResult<Handle>
 open(bl::string_view path, HandleMode mode)
 {
     auto flags = convertMode(mode);
     if (flags == -1)
-        return util::unexpected{ HandleError::INVALID_PARAM };
+        return util::unexpected{ IOError::INVALID_PARAM };
 
     int fd;
     auto strpath = bl::string(path);
     RETRY_INTR(fd = ::open(strpath.c_str(), flags, 0777));
 
     if (fd == -1)
-        return util::unexpected<HandleError>{ convertErrno() };
+        return util::unexpected<IOError>{ convertErrno() };
     return { Handle::fromNative(fd, mode) };
 }
 
-HandleError
+IOError
 elevate(Handle &h, HandleMode mode)
 {
     ASSERT(h);
     auto flags = convertMode(mode);
     if (flags == -1)
-        return HandleError::INVALID_PARAM;
+        return IOError::INVALID_PARAM;
 
     int ret;
     RETRY_INTR(ret = fcntl(h.native(), F_SETFL, flags));
     if (ret == -1)
         return convertErrno();
     h = Handle::fromNative(bl::move(h).takeNative(), mode);
-    return HandleError::OK;
+    return IOError::OK;
 }
 
-bl::pair<bl::usize, HandleError>
-tag_invoke(read_f, Handle &h, bl::span<bl::byte> buf)
+bl::pair<bl::usize, IOError>
+tag_invoke(read_f, Handle &h, bl::mut_byte_span buf)
 {
     ASSERT(h);
     auto n = buf.size();
@@ -179,22 +179,22 @@ tag_invoke(read_f, Handle &h, bl::span<bl::byte> buf)
     RETRY_INTR(k = ::read(h.native(), buf.data(), n));
     if (k >= 0)
         return { static_cast<bl::usize>(k),
-                 k == 0 ? HandleError::EOF : HandleError::OK };
+                 k == 0 ? IOError::EOF : IOError::OK };
     return { 0, convertErrno() };
 }
 
-bl::pair<bl::usize, HandleError>
-tag_invoke(write_f, Handle &h, bl::span<const bl::byte> buf)
+bl::pair<bl::usize, IOError>
+tag_invoke(write_f, Handle &h, bl::byte_span buf)
 {
     ASSERT(h);
     auto k = 0_iz;
     RETRY_INTR(k = ::write(h.native(), buf.data(), buf.size()));
     if (k >= 0)
-        return { k, HandleError::OK };
+        return { k, IOError::OK };
     return { 0, convertErrno() };
 }
 
-HandleError
+IOError
 tag_invoke(close_f, Handle &h)
 {
     ASSERT(h);
@@ -203,10 +203,10 @@ tag_invoke(close_f, Handle &h)
     RETRY_INTR(ret = ::close(fd));
     if (ret == -1)
         return convertErrno();
-    return HandleError::OK;
+    return IOError::OK;
 }
 
-HandleResult<Handle>
+IOResult<Handle>
 listen(SocketProto proto, const IPAddr4 &addr, uint16_t port, SocketMode mode)
 {
     const int BACKLOG = 16;
@@ -271,7 +271,7 @@ socket_err:
     return util::unexpected{ convertErrno() };
 }
 
-HandleResult<Handle>
+IOResult<Handle>
 accept(Handle &s)
 {
     ASSERT(s);

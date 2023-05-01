@@ -15,196 +15,12 @@ using namespace bl::literals;
 
 IO::IO() : ipa_any(0), ipa_local(127, 0, 0, 1) {}
 
-HandleStream::HandleStream(Handle h) : handle(bl::move(h)) {}
-
-HandleStream::~HandleStream()
-{
-    close(*this);
-}
-
-namespace {
-StreamResult
-toStreamResult(HandleError e)
-{
-    switch (e) {
-    case HandleError::OK:
-        return StreamResult::OK;
-    case HandleError::EOF:
-        return StreamResult::EOF;
-    case HandleError::BLOCKED:
-        return StreamResult::Blocked;
-    case HandleError::BAD_HANDLE:
-        return StreamResult::Closed;
-    case HandleError::INVALID_PARAM:
-        [[fallthrough]];
-    case HandleError::UNKNOWN:
-        return StreamResult::Error;
-    }
-    UNREACHABLE;
-}
-} // namespace
-
-StreamResult
-HandleStream::basic_close()
-{
-    if (!handle)
-        return StreamResult::OK;
-    auto ret1 = basic_flush();
-    auto ret2 = sys::io::close(handle);
-    return ret1 == StreamResult::OK ? toStreamResult(ret2) : ret1;
-}
-
-StreamResult
-HandleStream::basic_flush()
-{
-    if (write_cursor > 0)
-        return flush_buffer();
-
-    return StreamResult::OK;
-}
-
-StreamResult
-HandleStream::basic_read(bl::usize &s, bl::byte *buf)
-{
-    if (s == 0)
-        return StreamResult::OK;
-
-    if (s <= read_cursor) {
-        memcpy(buf, read_buffer, s);
-        read_cursor -= s;
-        if (read_cursor > 0)
-            memmove(read_buffer, read_buffer + s, read_cursor);
-
-        ASSERT(s > 0);
-        return StreamResult::OK;
-    }
-
-    auto n = read_cursor;
-    memcpy(buf, read_buffer, read_cursor);
-    s -= read_cursor;
-    buf += read_cursor;
-    HandleError err;
-
-    if (s > HANDLE_READ_BUFFER_SIZE) {
-        auto k = s;
-        bl::tie(k, err) = sys::io::read(handle, bl::span{ buf, k });
-        read_cursor = 0;
-        n += k;
-    } else {
-        auto k = HANDLE_READ_BUFFER_SIZE;
-        bl::tie(k, err) = sys::io::read(handle, bl::span{ read_buffer, k });
-        if (k > s) {
-            n += s;
-            read_cursor = k - s;
-            memcpy(buf, read_buffer, s);
-            memmove(read_buffer, read_buffer + s, k - s);
-
-            if (err == HandleError::BLOCKED || err == HandleError::EOF)
-                err = HandleError::OK;
-        } else {
-            read_cursor = 0;
-            n += k;
-            memcpy(buf, read_buffer, k);
-        }
-    }
-
-    s = n;
-    auto res = toStreamResult(err);
-    ASSERT(res != StreamResult::OK || s > 0);
-    return res;
-}
-
-StreamResult
-HandleStream::basic_write(bl::usize &s, const bl::byte *buf)
-{
-    auto rem = HANDLE_WRITE_BUFFER_SIZE - write_cursor;
-
-    if (s <= rem) {
-        memcpy(write_buffer + write_cursor, buf, s);
-        write_cursor += s;
-        return StreamResult::OK;
-    }
-
-    auto n = 0_z;
-    auto k = 0_z;
-    HandleError err = HandleError::OK;
-
-    if (write_cursor > 0) {
-        memcpy(write_buffer + write_cursor, buf, rem);
-        k = HANDLE_WRITE_BUFFER_SIZE;
-        bl::tie(k, err) = sys::io::write(handle, bl::span{ write_buffer, k });
-    }
-
-    if (write_cursor == 0 ||
-        (k == HANDLE_WRITE_BUFFER_SIZE && err == HandleError::OK)) {
-
-        n += rem;
-        k = s - rem;
-        bl::tie(k, err) = sys::io::write(handle, bl::span{ buf + rem, k });
-        n += k;
-        auto unwritten = buf + n;
-        auto rest = s - n;
-        if (rest > 0) {
-            auto into = rest <= HANDLE_WRITE_BUFFER_SIZE
-                          ? rest
-                          : HANDLE_WRITE_BUFFER_SIZE;
-            memcpy(write_buffer, unwritten, into);
-            n += into;
-            write_cursor = into;
-        } else {
-            write_cursor = 0;
-        }
-    } else {
-        if (k > 0) {
-            auto end = HANDLE_WRITE_BUFFER_SIZE - k;
-            auto rest = k <= write_cursor ? s : s - (k - write_cursor);
-            auto into = rest <= k ? rest : k;
-
-            memmove(write_buffer, write_buffer + k, end);
-            memcpy(write_buffer + end, buf + rem, into);
-            n += rem + into;
-            write_cursor = end + into;
-        } else {
-            write_cursor = HANDLE_WRITE_BUFFER_SIZE;
-        }
-    }
-
-    if (n == s && (err == HandleError::BLOCKED || err == HandleError::EOF))
-        err = HandleError::OK;
-
-    s = n;
-    return toStreamResult(err);
-}
-
-StreamResult
-HandleStream::flush_buffer()
-{
-    auto [k, err] =
-      sys::io::write(handle, bl::span{ write_buffer, write_cursor });
-
-    if (k > 0) {
-        memmove(write_buffer, write_buffer + k, write_cursor - k);
-        write_cursor -= k;
-    }
-
-    return toStreamResult(err);
-}
-
-HandleResult<HandleStream>
-HandleStream::open(bl::string_view path, HandleMode mode)
-{
-    auto res = sys::io::open(path, mode);
-    if (!res)
-        return util::unexpected{ res.error() };
-    return { HandleStream{ bl::move(res).value() } };
-}
-
-HandleResult<Array<bl::cbyte>>
-readFile(bl::string_view path, sys::io::OutStream &errout) noexcept
+IOResult<Array<bl::cbyte>>
+readFile(bl::string_view path) noexcept
 {
     static constexpr auto BUF_SIZE = 8_KiB;
     auto res = open(path, HM_READ);
-    auto err = HandleError{};
+    auto err = IOError{};
     if (!res) {
         err = res.error();
         goto fail;
@@ -218,16 +34,16 @@ readFile(bl::string_view path, sys::io::OutStream &errout) noexcept
             bl::tie(size, err) = read(h, bl::span{ buf.data(), size });
             if (size > 0)
                 write(str, bl::span{ buf.data(), buf.data() + size });
-            if (err == HandleError::EOF) {
-                err = HandleError::OK;
+            if (err == IOError::EOF) {
+                err = IOError::OK;
                 return { { str.data(), str.size() } };
             }
-            if (err != HandleError::OK)
+            if (err != IOError::OK)
                 goto fail;
         }
     }
 fail:
-    errout << "unable to read file: "_k << path << "\n"_k;
+    stderr() << "unable to read file: "_k << path << "\n"_k;
 
     return util::unexpected{ err };
 }

@@ -22,13 +22,13 @@ namespace err {
 template<typename OStream>
 struct LogSettings
 {
-    OStream &out;
+    OStream out;
     LogLevel min_level;
 };
 
 template<typename OStream>
 LogSettings<OStream>
-makeLogSettings(OStream &out, LogLevel min_level = LogLevel::Info)
+makeLogSettings(OStream out, LogLevel min_level = LogLevel::Info)
 {
     return LogSettings<OStream>{ out, min_level };
 }
@@ -42,7 +42,7 @@ struct LogTraits
 template<typename OStream>
 struct LogMessage
 {
-    OStream &_destination;
+    OStream _destination;
     bool _writeable;
     explicit operator bool() const { return _writeable; }
 
@@ -60,7 +60,7 @@ struct LogMessage
         return log.append(bl_fwd(arg));
     }
 
-    OStream &out() { return _destination; }
+    OStream out() { return _destination; }
 };
 
 template<typename T>

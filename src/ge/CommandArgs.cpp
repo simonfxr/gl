@@ -166,8 +166,8 @@ struct PrettyQuotation
 
 struct CommandPrettyPrinter::Impl : public CommandPrettyPrinter
 {
-    sys::io::OutStream *out;
-    sys::io::OutStream *current_out;
+    sys::io::OutStream out;
+    sys::io::OutStream current_out;
 
     size_t line_len{ 80 };
     size_t block_indent{ 4 };
@@ -175,7 +175,7 @@ struct CommandPrettyPrinter::Impl : public CommandPrettyPrinter
 
     bl::vec<std::shared_ptr<PrettyQuotation>> quotations;
 
-    Impl() : out(&sys::io::stdout()), current_out(out) {}
+    Impl() : out(sys::io::stdout()), current_out(out) {}
     ~Impl() { flush(); }
 };
 
@@ -188,9 +188,9 @@ CommandPrettyPrinter::construct_at(void *p) noexcept
 }
 
 void
-CommandPrettyPrinter::out(sys::io::OutStream &_out)
+CommandPrettyPrinter::out(sys::io::OutStream _out)
 {
-    m().out = &_out;
+    m().out = _out;
     if (m().quotations.empty())
         m().current_out = m().out;
 }
@@ -219,7 +219,7 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
     auto sep = "["_k;
 
     for (const auto &k : bind) {
-        *m().current_out << sep;
+        m().current_out << sep;
         sep = ", "_k;
         char pre = 0;
         switch (k.state) {
@@ -238,13 +238,13 @@ CommandPrettyPrinter::print(const KeyBinding &bind)
         }
 
         if (pre != 0)
-            *m().current_out << pre;
+            m().current_out << pre;
 
         auto sym = to_string(k.code);
-        *m().current_out << sym;
+        m().current_out << sym;
     }
 
-    *m().current_out << "]"_k;
+    m().current_out << "]"_k;
 }
 
 void
@@ -252,21 +252,21 @@ CommandPrettyPrinter::print(const CommandArg &arg, bool first)
 {
     switch (arg.type()) {
     case CommandArgType::String:
-        *m().current_out << '"' << arg.string << '"';
+        m().current_out << '"' << arg.string << '"';
         return;
     case CommandArgType::Integer:
-        *m().current_out << arg.integer;
+        m().current_out << arg.integer;
         return;
     case CommandArgType::Number:
-        *m().current_out << arg.number;
+        m().current_out << arg.number;
         return;
     case CommandArgType::KeyCombo:
         print(arg.keyBinding);
         return;
     case CommandArgType::CommandRef: {
         if (!first)
-            *m().current_out << '&';
-        *m().current_out << *arg.command.name;
+            m().current_out << '&';
+        m().current_out << *arg.command.name;
         if (!arg.command.ref)
             return;
         auto q = arg.command.ref->castToQuotation();
@@ -275,10 +275,10 @@ CommandPrettyPrinter::print(const CommandArg &arg, bool first)
         return;
     }
     case CommandArgType::VarRef:
-        *m().current_out << '$' << arg.var;
+        m().current_out << '$' << arg.var;
         return;
     case CommandArgType::Nil:
-        *m().current_out << "nil type not allowed: "_k << arg.type();
+        m().current_out << "nil type not allowed: "_k << arg.type();
         return;
     }
     UNREACHABLE;
@@ -293,7 +293,7 @@ CommandPrettyPrinter::print(bl::span<const CommandArg> statement)
 
     auto first = true;
     for (auto &stmt : statement) {
-        *m().current_out << (first ? ""_k : " "_k);
+        m().current_out << (first ? ""_k : " "_k);
         print(stmt, first);
     }
 }
@@ -318,7 +318,7 @@ void
 CommandPrettyPrinter::openQuotation()
 {
     m().quotations.push_back(std::make_shared<PrettyQuotation>());
-    m().current_out = &m().quotations.back()->out;
+    m().current_out = m().quotations.back()->out;
 }
 
 void
@@ -331,18 +331,18 @@ CommandPrettyPrinter::closeQuotation()
     auto &q = m().quotations.back();
     auto nln = q->statements.size();
 
-    m().current_out = depth == 1 ? m().out : &m().quotations[depth - 2]->out;
+    m().current_out = depth == 1 ? m().out : m().quotations[depth - 2]->out;
 
     if (nln == 0) {
         printSpaces(indent);
-        *m().current_out << "{}"_k;
+        m().current_out << "{}"_k;
     } else {
-        *m().current_out << "{"_k;
+        m().current_out << "{"_k;
         for (const auto &qi : q->statements) {
             printSpaces(indent);
-            *m().current_out << qi << "\n"_k;
+            m().current_out << qi << "\n"_k;
         }
-        *m().current_out << "}"_k;
+        m().current_out << "}"_k;
     }
 
     m().quotations.pop_back();
@@ -353,7 +353,7 @@ CommandPrettyPrinter::printSpaces(size_t n)
 {
     for (auto i : irange(n)) {
         UNUSED(i);
-        *m().current_out << " "_k;
+        m().current_out << " "_k;
     }
 }
 

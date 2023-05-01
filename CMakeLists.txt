@@ -63,6 +63,7 @@ set(CMU_FP_MODE ASSOC)
 set(CMU_IPO ${ENABLE_LTO})
 set(CMU_OPT_NATIVE True)
 set(CMU_OPT_LEVEL 4)
+list(APPEND CMU_CXX_FLAGS "-Wno-non-template-friend")
 
 set(CMU_SANITIZERS)
 if(ENABLE_ASAN)

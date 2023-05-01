@@ -27,12 +27,12 @@ struct Preprocessor::Impl : Preprocessor
 {
     Preprocessor::DirectiveHandler nullHandler;
     Preprocessor::DirectiveHandler *defaultHandler;
-    sys::io::OutStream *out;
+    sys::io::OutStream out;
     Preprocessor::Handlers handlers;
     bl::string sourceName;
     bool errorState{ false };
 
-    Impl() : defaultHandler(&nullHandler), out(&sys::io::stdout()) {}
+    Impl() : defaultHandler(&nullHandler), out(sys::io::stdout()) {}
 };
 
 BL_DEFINE_RUNTIME_SIZED(Preprocessor, Preprocessor::Impl);
@@ -156,16 +156,16 @@ Preprocessor::installHandler(const bl::string &directive,
     return old;
 }
 
-sys::io::OutStream &
+sys::io::OutStream
 Preprocessor::out()
 {
-    return *m().out;
+    return m().out;
 }
 
 void
-Preprocessor::out(sys::io::OutStream &out)
+Preprocessor::out(sys::io::OutStream out)
 {
-    m().out = &out;
+    m().out = out;
 }
 
 bool

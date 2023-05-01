@@ -3,6 +3,8 @@
 
 #include "sys/conf.hpp"
 
+#include "pp/enum.hpp"
+
 #include <bl/tag_invoke.hpp>
 
 namespace sys::io {

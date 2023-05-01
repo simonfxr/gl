@@ -41,8 +41,8 @@ struct GE_API Engine : private bl::runtime_sized_base<Engine>
 
     EngineEvents &events();
 
-    sys::io::OutStream &out();
-    void out(sys::io::OutStream &);
+    sys::io::OutStream out();
+    void out(sys::io::OutStream);
 
     [[nodiscard]] const bl::string &programName() const;
 

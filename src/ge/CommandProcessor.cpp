@@ -288,11 +288,13 @@ CommandProcessor::loadScript(bl::string_view name, bool quiet)
         goto not_found;
 
     {
-        auto res = sys::io::HandleStream::open(file, sys::io::HM_READ);
-        if (!res)
+        auto hres = sys::io::open(file, sys::io::HM_READ);
+        if (!hres)
             goto not_found;
+        auto stream =
+          sys::io::BufferedInStream<sys::io::InStream>{ hres.value() };
         sys::io::stdout() << "loading script: "_k << file << "\n"_k;
-        return loadStream(res.value(), file);
+        return loadStream(stream, file);
     }
 
 not_found:
@@ -307,7 +309,7 @@ not_found:
 }
 
 bool
-CommandProcessor::loadStream(sys::io::InStream &inp, bl::string_view inp_name)
+CommandProcessor::loadStream(sys::io::InStream inp, bl::string_view inp_name)
 {
     auto state = ParserState{ inp, inp_name };
     auto args = bl::vec<CommandArg>{};
@@ -317,7 +319,7 @@ CommandProcessor::loadStream(sys::io::InStream &inp, bl::string_view inp_name)
     while (!done) {
         ok = tokenize(state, args);
         if (!ok) {
-            if (state.in_state != sys::io::StreamResult::EOF)
+            if (state.in_state != sys::io::IOError::EOF)
                 ERR(engine().out(),
                     scat("parsing failed: "_sv, state.filename));
             else

@@ -537,6 +537,18 @@ public:
       , vtable_(other.vtable_)
     {}
 
+    any_ref(const any_ref &rhs) = default;
+
+    any_ref &operator=(const any_ref &rhs) = default;
+
+    any_ref &operator=(any_ref &&rhs) noexcept
+    {
+        impl_data_ =
+          bl::exchange(rhs.impl_data_, concrete_impl_base{ nullptr });
+        vtable_ = rhs.vtable_;
+        return *this;
+    }
+
     ~any_ref() = default;
 
 private:

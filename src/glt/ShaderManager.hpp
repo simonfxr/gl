@@ -49,8 +49,8 @@ struct GLT_API ShaderManager : private bl::runtime_sized_base<ShaderManager>
     ShaderManagerVerbosity verbosity() const;
     void verbosity(ShaderManagerVerbosity v);
 
-    sys::io::OutStream &out() const;
-    void out(sys::io::OutStream &out);
+    sys::io::OutStream out() const;
+    void out(sys::io::OutStream out);
 
     bool prependShaderDirectory(const bl::string &directory,
                                 bool check_exists = true);

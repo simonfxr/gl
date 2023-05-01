@@ -67,8 +67,8 @@ struct GLT_API Preprocessor : bl::runtime_sized_base<Preprocessor>
     DirectiveHandler *installHandler(const bl::string &directive,
                                      DirectiveHandler &handler);
 
-    sys::io::OutStream &out();
-    void out(sys::io::OutStream &out);
+    sys::io::OutStream out();
+    void out(sys::io::OutStream out);
 
     bool setError();
     bool wasError() const;

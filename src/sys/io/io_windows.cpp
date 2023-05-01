@@ -51,37 +51,37 @@ castToHandle(NativeHandle)
     return reinterpret_cast<HANDLE>(h);
 }
 
-HandleError
-getLastHandleError()
+IOError
+getLastIOError()
 {
     auto err = GetLastError();
     switch (err) {
     case ERROR_HANDLE_EOF:
-        return HandleError::EOF;
+        return IOError::EOF;
     case ERROR_INVALID_HANDLE:
-        return HandleError::BAD_HANDLE;
+        return IOError::BAD_HANDLE;
     default:
-        return HandleError::UNKNOWN;
+        return IOError::UNKNOWN;
     }
 }
 
-HandleError
+IOError
 convertSocketError(DWORD err)
 {
     switch (err) {
     case WSAEWOULDBLOCK:
-        return HandleError::BLOCKED;
+        return IOError::BLOCKED;
     case WSAECONNRESET:
-        return HandleError::EOF;
+        return IOError::EOF;
     case WSAENOTSOCK:
     case WSAEBADF:
-        return HandleError::BAD_HANDLE;
+        return IOError::BAD_HANDLE;
     default:
-        return HandleError::UNKNOWN;
+        return IOError::UNKNOWN;
     }
 }
 
-HandleError
+IOError
 getLastSocketError()
 {
     return convertSocketError(WSAGetLastError());
@@ -124,7 +124,7 @@ stderr_handle()
     return Handle::fromNative(castFromHandle(GetStdHandle(STD_ERROR_HANDLE)));
 }
 
-HandleResult<Handle>
+IOResult<Handle>
 open(bl::string_view path, HandleMode mode)
 {
     auto wpath = utf8To16(path);
@@ -140,12 +140,12 @@ open(bl::string_view path, HandleMode mode)
                             FILE_ATTRIBUTE_NORMAL,
                             nullptr);
     if (hndl == INVALID_HANDLE_VALUE)
-        return util::unexpected{ getLastHandleError() };
+        return util::unexpected{ getLastIOError() };
     return Handle::fromNative(castFromHandle(hndl), mode);
     return { bl::move(h) };
 }
 
-HandleError
+IOError
 elevate(Handle &h, HandleMode hm)
 {
     ASSERT(h);
@@ -154,13 +154,13 @@ elevate(Handle &h, HandleMode hm)
     int sd_mode = 0;
     if ((mode & HM_READ) != (hm & HM_READ)) {
         if (hm & HM_READ)
-            return HandleError::UNKNOWN;
+            return IOError::UNKNOWN;
         do_shutdown = true;
         sd_mode = SD_RECEIVE;
     }
     if ((mode & HM_WRITE) != (hm & HM_WRITE)) {
         if (hm & HM_WRITE)
-            return HandleError::UNKNOWN;
+            return IOError::UNKNOWN;
         sd_mode = do_shutdown && sd_mode == SD_RECEIVE ? SD_BOTH : SD_SEND;
         do_shutdown = true;
     }
@@ -182,49 +182,49 @@ elevate(Handle &h, HandleMode hm)
         mode |= hm & HM_NONBLOCKING;
     }
     h = Handle::fromNative(bl::move(h).takeNative(), mode);
-    return HandleError::OK;
+    return IOError::OK;
 }
 
-bl::pair<bl::usize, HandleError>
-tag_invoke(read_f, Handle &h, bl::span<bl::byte> buf)
+bl::pair<bl::usize, IOError>
+tag_invoke(read_f, Handle &h, bl::mut_byte_span buf)
 {
     ASSERT(h);
     if (buf.empty())
-        return { 0, HandleError::OK };
+        return { 0, IOError::OK };
     DWORD nread;
     auto ret = ReadFile(
       castToHandle(h.native()), buf.data(), DWORD(buf.size()), &nread, nullptr);
     if (ret == FALSE)
-        return { 0, getLastHandleError() };
+        return { 0, getLastIOError() };
     if (nread == 0)
-        return { 0, HandleError::EOF };
-    return { bl::usize(nread), HandleError::OK };
+        return { 0, IOError::EOF };
+    return { bl::usize(nread), IOError::OK };
 }
 
-bl::pair<bl::usize, HandleError>
-tag_invoke(write_f, Handle &h, bl::span<const bl::byte> buf)
+bl::pair<bl::usize, IOError>
+tag_invoke(write_f, Handle &h, bl::byte_span buf)
 {
     ASSERT(h);
     DWORD nwrit;
     auto ret = WriteFile(
       castToHandle(h.native()), buf.data(), DWORD(buf.size()), &nwrit, nullptr);
     if (ret == FALSE)
-        return { 0, getLastHandleError() };
-    return { bl::usize(nwrit), HandleError::OK };
+        return { 0, getLastIOError() };
+    return { bl::usize(nwrit), IOError::OK };
 }
 
-HandleError
+IOError
 tag_invoke(close_f, Handle &h)
 {
     ASSERT(h);
     auto hndl = castToHandle(bl::move(h.takeNative()));
     if (CloseHandle(hndl) != FALSE)
-        return HandleError::OK;
+        return IOError::OK;
     else
-        return HandleError::UNKNOWN;
+        return IOError::UNKNOWN;
 }
 
-HandleResult<Handle>
+IOResult<Handle>
 listen(SocketProto proto, const IPAddr4 &addr, uint16_t port, SocketMode mode)
 {
     const int BACKLOG = 16;
@@ -283,7 +283,7 @@ socket_err:
     return util::unexpected{ err };
 }
 
-HandleResult<Handle>
+IOResult<Handle>
 accept(Handle &s)
 {
     ASSERT(s);

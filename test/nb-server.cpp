@@ -15,7 +15,7 @@ static const size_t BUF_SIZE = 4096;
 
 struct Client
 {
-    std::shared_ptr<io::HandleStream> stream;
+    std::shared_ptr<io::Handle> stream;
     int id{};
     bool reading{ true };
     bl::byte buffer[BUF_SIZE]{};
@@ -23,7 +23,7 @@ struct Client
     size_t buf_end{ BUF_SIZE };
 
     explicit Client(io::Handle h, int id)
-      : stream(std::make_shared<io::HandleStream>(bl::move(h))), id(id)
+      : stream(std::make_shared<io::Handle>(bl::move(h))), id(id)
     {}
 };
 
@@ -64,7 +64,7 @@ main()
 
             if (c.reading) {
                 size_t size = c.buf_end - c.buf_pos;
-                io::StreamResult err;
+                io::IOError err;
                 bl::tie(size, err) = sys::io::read(
                   *c.stream, bl::span{ c.buffer + c.buf_pos, size });
                 c.buf_pos += size;
@@ -73,18 +73,16 @@ main()
                     c.buf_pos = 0;
                 }
 
-                if (err == io::StreamResult::EOF ||
-                    err == io::StreamResult::Error) {
-                    close = true;
-                } else if (err == io::StreamResult::Blocked && c.buf_pos > 0) {
+                if (err == io::IOError::BLOCKED && c.buf_pos > 0) {
                     c.reading = false;
                     c.buf_end = c.buf_pos;
                     c.buf_pos = 0;
+                } else if (err != io::IOError::OK) {
+                    close = true;
                 }
-
             } else {
                 size_t size = c.buf_end - c.buf_pos;
-                io::StreamResult err;
+                io::IOError err;
                 bl::tie(size, err) = sys::io::write(
                   *c.stream, bl::span{ c.buffer + c.buf_pos, size });
                 c.buf_pos += size;
@@ -93,11 +91,10 @@ main()
                     c.reading = true;
                     c.buf_pos = 0;
                     c.buf_end = BUF_SIZE;
-                    err = sys::io::flush(*c.stream);
+                    // err = sys::io::flush(*c.stream);
                 }
 
-                if (err == io::StreamResult::EOF ||
-                    err == io::StreamResult::Error)
+                if (err != io::IOError::OK && err != io::IOError::BLOCKED)
                     close = true;
             }
 

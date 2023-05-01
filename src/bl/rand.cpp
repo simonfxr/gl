@@ -42,7 +42,7 @@ random_device::operator()() noexcept
 }
 
 void
-random_device::seed_bytes(bl::span<byte> bytes) noexcept
+random_device::seed_bytes(bl::mut_byte_span bytes) noexcept
 {
     bl::rand::seed_bytes(*this, bytes);
 }

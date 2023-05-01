@@ -4,13 +4,17 @@
 #include "pp/basic.h"
 #include "pp/map.h"
 
+#include <bl/enum.hpp>
+#include <bl/mp.hpp>
+#include <bl/string_view.hpp>
+
 #define PP_ENUM_DEF_CONST1(...) 1
 
 #define PP_ENUM_DEF_PLUS(...) +
 
 #define PP_ENUM_DEF_TOSTR2(tag, str)                                           \
 case tag:                                                                      \
-    return PP_CAT(str, _sv);
+    return ::bl::string_view_literal(str);
 
 #define PP_ENUM_DEF_TOSTR1(tag) PP_ENUM_DEF_TOSTR2(tag, PP_TOSTR(tag))
 

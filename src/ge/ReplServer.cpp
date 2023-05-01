@@ -29,7 +29,8 @@ struct Client
 
     Fiber parser_fiber{};
     Fiber *client_fiber{};
-    HandleStream hstream;
+    BufferedOutStream<Handle> hstream_out;
+    BufferedInStream<ClosableInStream> hstream_in;
     CooperativeInStream in_stream;
     ParserState parser;
     ParsingState state = ParsingState::Yield;
@@ -73,8 +74,9 @@ run_parser_fiber(void *args)
 
 Client::Client(int _id, Handle h)
   : client_fiber(sys::fiber::toplevel())
-  , hstream(bl::move(h))
-  , in_stream(&hstream, client_fiber, &parser_fiber)
+  , hstream_out(bl::move(h))
+  , hstream_in(ClosableInStream{ hstream_out.unbuffered() })
+  , in_stream(hstream_in, client_fiber, &parser_fiber)
   , parser(in_stream, ""_k)
   , id(_id)
 {
@@ -106,8 +108,8 @@ Client::~Client()
 bool
 Client::handle(Engine &e)
 {
-    auto &out = e.out();
-    e.out(hstream);
+    auto out = e.out();
+    e.out(hstream_out);
     auto ok = handleIO(e);
     e.out(out);
     return ok;
@@ -128,8 +130,7 @@ Client::handleIO(Engine &e)
     }
 
     auto res = parser.in_state;
-    return res == sys::io::StreamResult::Blocked ||
-           res == sys::io::StreamResult::OK;
+    return res == sys::io::IOError::BLOCKED || res == sys::io::IOError::OK;
 }
 
 } // namespace
@@ -205,8 +206,7 @@ ReplServer::acceptClients()
             break;
         auto handle = bl::move(opt_hndl).value();
         INFO("accepted client");
-        if (elevate(handle, handle.mode() | HM_NONBLOCKING) !=
-            HandleError::OK) {
+        if (elevate(handle, handle.mode() | HM_NONBLOCKING) != IOError::OK) {
             ERR("couldnt set nonblocking handle mode, closing connection");
             sys::io::close(handle);
         } else {

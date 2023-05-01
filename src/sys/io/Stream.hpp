@@ -7,6 +7,8 @@
 #include "sys/fiber.hpp"
 #include "sys/io_operators.hpp"
 
+#include <bl/any_unique.hpp>
+#include <bl/array.hpp>
 #include <bl/enum.hpp>
 #include <bl/pair.hpp>
 #include <bl/span.hpp>
@@ -23,132 +25,62 @@
 
 namespace sys::io {
 
-struct OutStream;
-struct InStream;
-struct IOStream;
+PP_DEF_ENUM(IOError,
+            uint8_t,
+            OK,
+            BLOCKED,
+            EOF,
+            BAD_HANDLE,
+            INVALID_PARAM,
+            UNKNOWN);
 
-HU_NODISCARD SYS_API InStream &
+template<typename T>
+concept SomeInStream = bl::tag_invocable<read_f, T &, bl::mut_byte_span>;
+
+using InStream = bl::any_ref_t<bl::overload<
+  bl::pair<bl::usize, IOError>(bl::self &, bl::mut_byte_span)>(read)>;
+
+using ClosableInStream = bl::any_ref_t<
+  bl::overload<bl::pair<bl::usize, IOError>(bl::self &, bl::mut_byte_span)>(
+    read),
+  bl::overload<IOError(bl::self &)>(close)>;
+
+template<typename T>
+concept SomeOutStream = bl::tag_invocable<write_f, T &, bl::byte_span>;
+
+using OutStream = bl::any_ref_t<
+  bl::overload<bl::pair<bl::usize, IOError>(bl::self &, bl::byte_span)>(write)>;
+
+template<typename T>
+concept ClosableStream = bl::tag_invocable<close_f, T &>;
+
+template<typename T>
+concept FlushableStream = bl::tag_invocable<flush_f, T &>;
+
+HU_NODISCARD SYS_API InStream
 stdin();
 
-HU_NODISCARD SYS_API OutStream &
+HU_NODISCARD SYS_API OutStream
 stdout();
 
-HU_NODISCARD SYS_API OutStream &
+HU_NODISCARD SYS_API OutStream
 stderr();
 
-PP_DEF_ENUM(StreamResult, uint8_t, OK, Blocked, EOF, Closed, Error);
-
-using StreamFlags = uint16_t;
-
-inline constexpr StreamFlags SF_LINEBUF = 1;
-
-struct SYS_API InStream
-{
-    InStream() = default;
-    InStream(const InStream &) = default;
-    InStream(InStream &&) = default;
-    InStream &operator=(const InStream &) = default;
-    InStream &operator=(InStream &&) = default;
-
-    virtual ~InStream();
-
-    friend StreamResult tag_invoke(close_f, InStream &s)
-    {
-        return s.basic_close_in();
-    }
-
-    friend bl::pair<bl::usize, StreamResult> tag_invoke(read_f,
-                                                        InStream &s,
-                                                        bl::span<bl::byte> buf)
-    {
-        if (buf.empty())
-            return { 0, StreamResult::OK };
-        auto k = buf.size();
-        auto err = s.basic_read(k, buf.data());
-        return { k, err };
-    }
-
-protected:
-    virtual StreamResult basic_read(bl::usize &s, bl::byte *buf) = 0;
-    virtual StreamResult basic_close_in() = 0;
-};
-
-struct SYS_API OutStream
-{
-    OutStream() = default;
-    OutStream(const OutStream &) = default;
-    OutStream(OutStream &&) = default;
-    OutStream &operator=(const OutStream &) = default;
-    OutStream &operator=(OutStream &&) = default;
-
-    virtual ~OutStream();
-
-    [[nodiscard]] bool line_buffered() const { return wflags & SF_LINEBUF; }
-    OutStream &line_buffered(bool yesno)
-    {
-        if (yesno)
-            wflags |= SF_LINEBUF;
-        else
-            wflags &= ~SF_LINEBUF;
-        return *this;
-    }
-
-    SYS_API friend bl::pair<bl::usize, StreamResult>
-    tag_invoke(write_f, OutStream &o, bl::span<const bl::byte> buf);
-
-    friend StreamResult tag_invoke(close_f, OutStream &o)
-    {
-        return o.basic_close_out();
-    }
-
-    friend StreamResult tag_invoke(flush_f, OutStream &o)
-    {
-        return o.basic_flush();
-    }
-
-protected:
-    virtual StreamResult basic_write(bl::usize &s, const bl::byte *buf) = 0;
-    virtual StreamResult basic_flush() = 0;
-    virtual StreamResult basic_close_out() = 0;
-    StreamFlags wflags{};
-};
-
-struct SYS_API IOStream
-  : public InStream
-  , public OutStream
-{
-    IOStream() = default;
-    IOStream(const IOStream &) = default;
-    IOStream(IOStream &&) = default;
-    IOStream &operator=(const IOStream &) = default;
-    IOStream &operator=(IOStream &&) = default;
-
-    ~IOStream() override;
-
-    friend StreamResult tag_invoke(close_f, IOStream &io)
-    {
-        return close(static_cast<OutStream &>(io));
-    }
-
-protected:
-    StreamResult basic_close_out() final;
-    StreamResult basic_close_in() final;
-
-    virtual StreamResult basic_close() = 0;
-};
-
-struct SYS_API NullStream : public IOStream
+struct SYS_API NullStream final
 {
     NullStream();
 
-protected:
-    StreamResult basic_flush() final;
-    StreamResult basic_close() final;
-    StreamResult basic_read(bl::usize &, bl::byte *) final;
-    StreamResult basic_write(bl::usize &, const bl::byte *) final;
+    SYS_API friend bl::pair<bl::usize, IOError>
+    tag_invoke(read_f, NullStream &, bl::mut_byte_span) noexcept;
+
+    SYS_API friend bl::pair<bl::usize, IOError>
+    tag_invoke(write_f, NullStream &, bl::byte_span) noexcept;
 };
 
-struct SYS_API ByteStream : public IOStream
+static_assert(std::convertible_to<NullStream &, OutStream>);
+static_assert(std::convertible_to<NullStream &, InStream>);
+
+struct SYS_API ByteStream final
 {
     using C = bl::cbyte;
     explicit ByteStream(bl::usize bufsize = 32);
@@ -156,7 +88,7 @@ struct SYS_API ByteStream : public IOStream
     ByteStream(const ByteStream &) = default;
     ByteStream(ByteStream &&) noexcept = default;
 
-    ~ByteStream() override;
+    ~ByteStream();
 
     ByteStream &operator=(const ByteStream &) = default;
     ByteStream &operator=(ByteStream &&) noexcept = default;
@@ -179,59 +111,58 @@ struct SYS_API ByteStream : public IOStream
 
     void truncate(bl::usize);
 
-protected:
-    StreamResult basic_flush() final override;
-    StreamResult basic_close() final override;
-    StreamResult basic_read(bl::usize &, bl::byte *) final override;
-    StreamResult basic_write(bl::usize &, const bl::byte *) final override;
+    SYS_API friend bl::pair<bl::usize, IOError>
+    tag_invoke(read_f, ByteStream &, bl::mut_byte_span) noexcept;
+
+    SYS_API friend bl::pair<bl::usize, IOError>
+    tag_invoke(write_f, ByteStream &, bl::byte_span) noexcept;
 
 private:
     bl::basic_string<C> buffer;
     bl::usize read_cursor;
 };
 
-struct SYS_API CooperativeInStream : public InStream
+static_assert(std::convertible_to<ByteStream &, OutStream>);
+static_assert(std::convertible_to<ByteStream &, InStream>);
+
+struct SYS_API CooperativeInStream final
 {
-    InStream *in;
+    ClosableInStream in;
     Fiber *io_handler; // switched to on blocking reads
     Fiber *stream_user;
 
-    CooperativeInStream(InStream *in, Fiber *ioh, Fiber *su);
+    CooperativeInStream(ClosableInStream in, Fiber *ioh, Fiber *su);
 
-protected:
-    virtual StreamResult basic_close_in() final override;
-    virtual StreamResult basic_read(bl::usize &, bl::byte *) final override;
+    SYS_API friend IOError tag_invoke(close_f, CooperativeInStream &) noexcept;
+
+    SYS_API friend bl::pair<bl::usize, IOError>
+    tag_invoke(read_f, CooperativeInStream &, bl::mut_byte_span) noexcept;
 };
 
-template<typename OStream>
-concept AOutStream =
-  std::derived_from<std::decay_t<OStream>, sys::io::OutStream>;
+static_assert(std::convertible_to<CooperativeInStream &, InStream>);
 
 #define DEF_OUTSTREAM_OP(T)                                                    \
-    decltype(auto) operator<<(AOutStream auto &out, T value)                   \
+    decltype(auto) operator<<(SomeOutStream auto &&out, T value)               \
     {                                                                          \
-        write_repr(static_cast<OutStream &>(out), value);                      \
+        write_repr(out, value);                                                \
         return out;                                                            \
     }
 
-inline StreamResult
-write_repr(OutStream &out, bl::string_view str)
+inline IOError
+write_repr(OutStream out, bl::string_view str)
 {
-    auto [_, r] =
-      write(out,
-            bl::span<const bl::byte>{
-              reinterpret_cast<const bl::byte *>(str.data()), str.size() });
+    auto [_, r] = write(out, bl::as_bytes(str));
     return r;
 }
 
-inline StreamResult
-write_repr(OutStream &out, char c)
+inline IOError
+write_repr(OutStream out, char c)
 {
     return write_repr(out, bl::string_view{ &c, 1 });
 }
 
 #define DEF_OPAQUE_OUTSTREAM_OP(T)                                             \
-    SYS_API StreamResult write_repr(OutStream &out, T x);                      \
+    SYS_API IOError write_repr(OutStream out, T x);                            \
     DEF_OUTSTREAM_OP(T)
 
 DEF_OUTSTREAM_OP(char);
@@ -250,22 +181,22 @@ DEF_OPAQUE_OUTSTREAM_OP(float);
 DEF_OPAQUE_OUTSTREAM_OP(double);
 DEF_OPAQUE_OUTSTREAM_OP(long double);
 
-SYS_API StreamResult
-write_repr(OutStream &out, const void *x);
+SYS_API IOError
+write_repr(OutStream out, const void *x);
 
 #undef DEF_OPAQUE_OUTSTREAM_OP
 #undef DEF_OUTSTREAM_OP
 
 template<std::same_as<bool> T>
 decltype(auto)
-operator<<(AOutStream auto &out, T x)
+operator<<(SomeOutStream auto &&out, T x)
 {
     using namespace bl::literals;
     return out << (x ? BL_STRING_VIEW("true") : BL_STRING_VIEW("false"));
 }
 
 decltype(auto)
-operator<<(AOutStream auto &out, const bl::string &str)
+operator<<(SomeOutStream auto &&out, const bl::string &str)
 {
     return out << bl::string_view{ str };
 }
@@ -276,11 +207,112 @@ struct ptr
 };
 
 decltype(auto)
-operator<<(AOutStream auto &out, const ptr &p)
+operator<<(SomeOutStream auto &&out, const ptr &p)
 {
     write_repr(out, p.p);
     return out;
 }
+
+struct SYS_API BufferedStreamBase final
+{
+    static bl::pair<bl::usize, IOError> read_from(bl::mut_byte_span,
+                                                  bl::usize &,
+                                                  InStream,
+                                                  bl::mut_byte_span) noexcept;
+
+    static bl::pair<bl::usize, IOError> write_to(bl::mut_byte_span,
+                                                 bl::usize &,
+                                                 bool line_buffered,
+                                                 OutStream,
+                                                 bl::byte_span) noexcept;
+
+    static IOError flush_to(bl::mut_byte_span, bl::usize &, OutStream) noexcept;
+};
+
+template<SomeInStream Stream, typename Buffer = bl::array<bl::byte, 4096>>
+struct SYS_API BufferedInStream final
+{
+    BufferedInStream(Stream &&s, Buffer buf) : _s(bl_fwd(s)), _buf(bl_fwd(buf))
+    {}
+
+    BufferedInStream(Stream &&s) : _s(bl_fwd(s)), _buf() {}
+
+    SYS_API friend bl::pair<bl::usize, IOError>
+    tag_invoke(read_f, BufferedInStream &, bl::mut_byte_span) noexcept;
+
+    SYS_API friend IOError tag_invoke(close_f, BufferedInStream &s) noexcept
+        requires(ClosableStream<Stream>)
+    {
+        return close(s._s);
+    }
+
+    SYS_API friend bl::pair<bl::usize, IOError>
+    tag_invoke(read_f, BufferedInStream &s, bl::mut_byte_span buf) noexcept
+    {
+        return BufferedStreamBase::read_from(s._buf, s._cursor, s._s, buf);
+    }
+
+    const Stream &unbuffered() const noexcept { return _s; }
+    Stream &unbuffered() noexcept { return _s; }
+
+private:
+    Stream _s;
+    Buffer _buf;
+    bl::usize _cursor;
+};
+
+template<SomeOutStream Stream, typename Buffer = bl::array<bl::byte, 4096>>
+struct SYS_API BufferedOutStream final
+{
+    BufferedOutStream(Stream &&s, bool line_buffered, Buffer buf)
+      : _s(bl_fwd(s)), _buf(bl_fwd(buf)), _line_buffered(line_buffered)
+    {}
+
+    BufferedOutStream(Stream &&s, bool line_buffered = false)
+      : _s(bl_fwd(s)), _buf(), _line_buffered(line_buffered)
+    {}
+
+    SYS_API friend bl::pair<bl::usize, IOError>
+    tag_invoke(read_f, BufferedOutStream &, bl::mut_byte_span) noexcept;
+
+    SYS_API friend IOError tag_invoke(flush_f, BufferedOutStream &s) noexcept
+    {
+        auto err = BufferedStreamBase::flush_to(s._buf, s._cursor, s._s);
+        if constexpr (FlushableStream<Stream>) {
+            if (err == IOError::OK) {
+                err = io::flush(s._s);
+            }
+        }
+        return err;
+    }
+
+    SYS_API friend IOError tag_invoke(close_f, BufferedOutStream &s) noexcept
+        requires(ClosableStream<Stream>)
+    {
+        auto err = io::flush(s);
+        auto err2 = io::close(s._s);
+        if (err != IOError::OK) {
+            return err;
+        }
+        return err2;
+    }
+
+    SYS_API friend bl::pair<bl::usize, IOError>
+    tag_invoke(write_f, BufferedOutStream &s, bl::byte_span buf) noexcept
+    {
+        return BufferedStreamBase::write_to(
+          s._buf, s._cursor, s._line_buffered, s._s, buf);
+    }
+
+    const Stream &unbuffered() const noexcept { return _s; }
+    Stream &unbuffered() noexcept { return _s; }
+
+private:
+    Stream _s;
+    Buffer _buf;
+    bl::usize _cursor{};
+    bool _line_buffered;
+};
 
 } // namespace sys::io
 

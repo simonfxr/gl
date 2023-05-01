@@ -51,7 +51,7 @@ struct ShaderProgram::Data
 
     bool createProgram();
 
-    static void printProgramLog(GLuint progh, sys::io::OutStream &out);
+    static void printProgramLog(GLuint progh, sys::io::OutStream out);
 
     void handleCompileError(ShaderCompilerError /*unused*/);
 
@@ -152,7 +152,7 @@ ShaderProgram::Data::createProgram()
 }
 
 void
-ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream &out)
+ShaderProgram::Data::printProgramLog(GLuint progh, sys::io::OutStream out)
 {
     GLint log_len;
     GL_CALL(glGetProgramiv, progh, GL_INFO_LOG_LENGTH, &log_len);
