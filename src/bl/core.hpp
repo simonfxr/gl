@@ -4,6 +4,8 @@
 #include <bl/conf.hpp>
 #include <bl/type_traits.hpp>
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 
 namespace bl {

@@ -250,7 +250,7 @@ ReplServer::shutdown()
     ASSERT(m().running);
 
     m().clients.clear();
-    close(m().server);
+    sys::io::close(m().server);
 }
 
 } // namespace ge

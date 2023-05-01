@@ -84,49 +84,60 @@ protected:
     BL_DIAG_PUSH                                                               \
     BL_DIAG_IGN_CLANG("-Wsuggest-destructor-override")                         \
     BL_DIAG_IGN_CLANG("-Winconsistent-missing-destructor-override")            \
-protected:                                                                     \
-    ApiT() : runtime_sized_instantiation_t{ ::std::in_place }                  \
-    {}                                                                         \
-    ~ApiT() = default;                                                         \
-                                                                               \
 public:                                                                        \
     struct ImplT;                                                              \
                                                                                \
     static const ::bl::usize impl_size;                                        \
                                                                                \
     template<typename Defer = void>                                            \
-    BL_wrapper friend ::bl::usize tag_invoke(::bl::runtime_size_f,             \
-                                             ::bl::type_proxy<ApiT>) noexcept  \
+    BL_wrapper constexpr friend ::bl::usize tag_invoke(                        \
+      ::bl::runtime_size_f, ::bl::type_proxy<ApiT>) noexcept                   \
     {                                                                          \
         return ApiT::impl_size;                                                \
     }                                                                          \
                                                                                \
+private:                                                                       \
     template<typename Defer = void>                                            \
-    BL_wrapper decltype(auto) m() const                                        \
+    BL_wrapper constexpr decltype(auto) m() const noexcept                     \
     {                                                                          \
+        static_assert(                                                         \
+          std::is_base_of_v<ApiT, bl::runtime_sized_impl_t<ApiT, Defer>>);     \
         return *static_cast<const ::bl::runtime_sized_impl_t<ApiT, Defer> *>(  \
           static_cast<const ApiT *>(this));                                    \
     }                                                                          \
                                                                                \
     template<typename Defer = void>                                            \
-    BL_wrapper decltype(auto) m()                                              \
+    BL_wrapper constexpr decltype(auto) m() noexcept                           \
     {                                                                          \
+        static_assert(                                                         \
+          std::is_base_of_v<ApiT, bl::runtime_sized_impl_t<ApiT, Defer>>);     \
         return *static_cast<::bl::runtime_sized_impl_t<ApiT, Defer> *>(        \
           static_cast<ApiT *>(this));                                          \
     }                                                                          \
                                                                                \
+protected:                                                                     \
+    template<typename T = void>                                                \
+    ApiT() noexcept : runtime_sized_instantiation_t{ ::std::in_place }         \
+    {                                                                          \
+        m<T>();                                                                \
+    }                                                                          \
+                                                                               \
+    ~ApiT() = default;                                                         \
+                                                                               \
+public:                                                                        \
     BL_DIAG_POP                                                                \
     static void destruct_at(ApiT &) noexcept
 
 #define BL_DEFINE_RUNTIME_SIZED(ApiT, ImplT)                                   \
-    bl::type_proxy<ImplT> tag_invoke(bl::runtime_size_impl_type_f,             \
-                                     bl::type_proxy<ApiT>) noexcept            \
+    constexpr ::bl::type_proxy<ImplT> tag_invoke(                              \
+      ::bl::runtime_size_impl_type_f, ::bl::type_proxy<ApiT>) noexcept         \
     {                                                                          \
-        return bl::type_proxy<ImplT>{};                                        \
+        static_assert(std::is_base_of_v<ApiT, ImplT>);                         \
+        return ::bl::type_proxy<ImplT>{};                                      \
     }                                                                          \
     void ApiT::destruct_at(ApiT &p) noexcept                                   \
     {                                                                          \
-        std::destroy_at(bl::addressof(p.m()));                                 \
+        ::bl::destroy_at(::bl::addressof(p.m()));                              \
     }                                                                          \
     const ::bl::usize ApiT::impl_size = sizeof(::bl::runtime_sized_impl_t<ApiT>)
 

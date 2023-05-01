@@ -192,10 +192,6 @@ BL_DEFINE_RUNTIME_SIZED(ShaderCompilerQueue, ShaderCompilerQueue::Impl);
 
 namespace {
 
-template<class T>
-struct always_false : std::false_type
-{};
-
 bl::string
 hash(bl::string_view source)
 {
@@ -521,7 +517,7 @@ ShaderObject::Data::reloadIfOutdated(ShaderCompilerQueue &scq)
                   return ReloadState::Outdated;
               return ReloadState::Uptodate;
           } else {
-              static_assert(always_false<T>::value, "non-exhaustive visitor!");
+              static_assert(bl::always_false_v<T>, "non-exhaustive visitor!");
           }
       },
       object);

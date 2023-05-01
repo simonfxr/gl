@@ -16,13 +16,9 @@ struct GE_API CommandEvent;
 namespace detail {
 
 template<typename T>
-struct always_false : std::false_type
-{};
-
-template<typename T>
 struct command_param_mapping
 {
-    static_assert(always_false<T>::value, "cannot instantiate with this type");
+    static_assert(bl::always_false_v<T>, "cannot instantiate with this type");
 };
 
 HU_PURE_FN inline bool
