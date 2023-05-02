@@ -125,6 +125,7 @@ BL_DIAG_POP
     inline constexpr struct BL_PP_CAT(CPO, _f)                                 \
     {                                                                          \
         BL_DEF_TAG_CPO_OPERATOR(BL_PP_CAT(CPO, _f))                            \
-    } CPO
+    } CPO                                                                      \
+    {}
 
 #endif // BL_TAG_INVOKE_HPP

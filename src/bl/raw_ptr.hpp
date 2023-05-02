@@ -18,7 +18,7 @@ struct raw_ptr : ptr_ops<raw_ptr<T>, T, true, false>
     BL_wrapper raw_ptr() = default;
     // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
     BL_wrapper raw_ptr(std::nullptr_t) : _p(nullptr) {}
-    BL_wrapper constexpr explicit raw_ptr(T *p) : _p(p) {}
+    BL_wrapper /* implicit  */ constexpr raw_ptr(T *p) : _p(p) {}
 
     BL_wrapper constexpr raw_ptr(const raw_ptr &) = default;
     BL_wrapper constexpr raw_ptr(raw_ptr &&rhs) noexcept : _p(rhs.release()) {}

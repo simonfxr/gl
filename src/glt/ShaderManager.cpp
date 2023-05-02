@@ -37,7 +37,7 @@ struct ShaderManager::Impl : public ShaderManager
     {}
 };
 
-BL_DEFINE_RUNTIME_SIZED(ShaderManager, ShaderManager::Impl);
+BL_DEF_RUNTIME_SIZED(ShaderManager, ShaderManager::Impl);
 
 ShaderManager &
 ShaderManager::construct_at(void *p) noexcept

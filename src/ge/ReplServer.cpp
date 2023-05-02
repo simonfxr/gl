@@ -156,7 +156,7 @@ struct ReplServer::Impl : public ReplServer
     }
 };
 
-BL_DEFINE_RUNTIME_SIZED(ReplServer, ReplServer::Impl);
+BL_DEF_RUNTIME_SIZED(ReplServer, ReplServer::Impl);
 
 ReplServer &
 ReplServer::construct_at(void *p, Engine &e) noexcept

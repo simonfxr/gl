@@ -40,13 +40,13 @@ struct relative_ptr
     = delete;
 
     // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
-    BL_wrapper relative_ptr(T *p)
+    BL_wrapper /* implicit  */ relative_ptr(T *p)
         requires(is_nullable)
       : _p(relative_to(this, p))
     {}
 
     // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
-    BL_wrapper HU_NONNULL_PARAMS() relative_ptr(T *p)
+    BL_wrapper HU_NONNULL_PARAMS() /* implicit  */ relative_ptr(T *p)
         requires(!is_nullable)
       : _p(relative_to(this, p))
     {}

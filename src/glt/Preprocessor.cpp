@@ -3,44 +3,42 @@
 #include "err/err.hpp"
 
 #include <cstring>
+#include <utility>
 
 namespace glt {
 
-Preprocessor::DirectiveHandler::~DirectiveHandler() = default;
-
-void
-Preprocessor::DirectiveHandler::beginProcessing(
-  const Preprocessor::ContentContext & /*unused*/)
-{}
-
-void
-Preprocessor::DirectiveHandler::endProcessing(
-  const Preprocessor::ContentContext & /*unused*/)
-{}
-
-void
-Preprocessor::DirectiveHandler::directiveEncountered(
-  const Preprocessor::DirectiveContext & /*unused*/)
-{}
+struct null_handler
+{
+    template<typename F, typename... Args>
+    friend void tag_invoke(F, null_handler &, Args &&...) noexcept
+    {}
+};
 
 struct Preprocessor::Impl : Preprocessor
 {
-    Preprocessor::DirectiveHandler nullHandler;
-    Preprocessor::DirectiveHandler *defaultHandler;
+    [[no_unique_address]] null_handler null_handler_instance{};
+    Preprocessor::DirectiveHandler defaultHandler = null_handler_instance;
     sys::io::OutStream out;
     Preprocessor::Handlers handlers;
     bl::string sourceName;
     bool errorState{ false };
 
-    Impl() : defaultHandler(&nullHandler), out(sys::io::stdout()) {}
+    Impl() : out(sys::io::stdout()) {}
+    Impl(sys::io::OutStream out) : out(bl::move(out)) {}
 };
 
-BL_DEFINE_RUNTIME_SIZED(Preprocessor, Preprocessor::Impl);
+BL_DEF_RUNTIME_SIZED(Preprocessor, Preprocessor::Impl);
 
 Preprocessor &
 Preprocessor::construct_at(void *p) noexcept
 {
     return construct_impl(p);
+}
+
+Preprocessor &
+Preprocessor::construct_at(void *p, sys::io::OutStream out) noexcept
+{
+    return construct_impl(p, out);
 }
 
 namespace {
@@ -61,14 +59,13 @@ Preprocessor::process(bl::string_view data)
     const size_t size = data.size();
     DirectiveContext ctx(*this, bl::string(m().sourceName));
 
-    ctx.content.data = begin;
-    ctx.content.size = size;
+    ctx.content.data = { begin, size };
 
     for (auto &handler : m().handlers) {
-        handler.second->beginProcessing(ctx.content);
+        directiveScopeChanged(handler.second, beginDirective, ctx.content);
     }
 
-    m().defaultHandler->beginProcessing(ctx.content);
+    directiveScopeChanged(m().defaultHandler, beginDirective, ctx.content);
 
     const char *const end = begin + size;
     const char *str = begin;
@@ -111,29 +108,27 @@ Preprocessor::process(bl::string_view data)
 
         auto it = m().handlers.find(key);
         if (it != m().handlers.end())
-            it->second->directiveEncountered(ctx);
+            directiveEncountered(it->second, ctx);
         else
-            m().defaultHandler->directiveEncountered(ctx);
+            directiveEncountered(m().defaultHandler, ctx);
     }
 
     for (auto &handler : m().handlers)
-        handler.second->endProcessing(ctx.content);
+        directiveScopeChanged(handler.second, endDirective, ctx.content);
 
-    m().defaultHandler->endProcessing(ctx.content);
+    directiveScopeChanged(m().defaultHandler, endDirective, ctx.content);
 }
 
-Preprocessor::DirectiveHandler &
-Preprocessor::defaultHandler(Preprocessor::DirectiveHandler &handler)
+Preprocessor::DirectiveHandler
+Preprocessor::defaultHandler(Preprocessor::DirectiveHandler handler)
 {
-    DirectiveHandler &old = *m().defaultHandler;
-    m().defaultHandler = &handler;
-    return old;
+    return bl::exchange(m().defaultHandler, handler);
 }
 
-Preprocessor::DirectiveHandler &
+Preprocessor::DirectiveHandler
 Preprocessor::defaultHandler() const
 {
-    return *m().defaultHandler;
+    return m().defaultHandler;
 }
 
 Preprocessor::Handlers &
@@ -142,18 +137,15 @@ Preprocessor::handlers()
     return m().handlers;
 }
 
-Preprocessor::DirectiveHandler *
-Preprocessor::installHandler(const bl::string &directive,
-                             DirectiveHandler &handler)
+bl::optional<Preprocessor::DirectiveHandler>
+Preprocessor::installHandler(bl::string_view directive,
+                             DirectiveHandler handler)
 {
-    DirectiveHandler *old = nullptr;
-    auto it = m().handlers.find(directive);
-    if (it != m().handlers.end()) {
-        old = it->second;
-    }
+    if (auto it = m().handlers.find(directive); it != m().handlers.end())
+        return { bl::exchange(it->second, handler) };
 
-    m().handlers.insert(HandlerEntry(directive, &handler));
-    return old;
+    m().handlers.emplace(directive, handler);
+    return bl::nullopt;
 }
 
 sys::io::OutStream

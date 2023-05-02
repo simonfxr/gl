@@ -95,7 +95,7 @@ struct Engine::Impl
     }
 };
 
-BL_DEFINE_RUNTIME_SIZED(Engine, Engine::Impl);
+BL_DEF_RUNTIME_SIZED(Engine, Engine::Impl);
 
 namespace {
 bool

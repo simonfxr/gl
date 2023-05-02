@@ -63,7 +63,7 @@ struct GeometryTransform::Impl : GeometryTransform
     }
 };
 
-BL_DEFINE_RUNTIME_SIZED(GeometryTransform, GeometryTransform::Impl);
+BL_DEF_RUNTIME_SIZED(GeometryTransform, GeometryTransform::Impl);
 
 GeometryTransform &
 GeometryTransform::construct_at(void *p) noexcept

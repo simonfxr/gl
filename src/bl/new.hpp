@@ -128,7 +128,7 @@ public:                                                                        \
     BL_DIAG_POP                                                                \
     static void destruct_at(ApiT &) noexcept
 
-#define BL_DEFINE_RUNTIME_SIZED(ApiT, ImplT)                                   \
+#define BL_DEF_RUNTIME_SIZED(ApiT, ImplT)                                      \
     constexpr ::bl::type_proxy<ImplT> tag_invoke(                              \
       ::bl::runtime_size_impl_type_f, ::bl::type_proxy<ApiT>) noexcept         \
     {                                                                          \

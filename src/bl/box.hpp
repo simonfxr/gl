@@ -40,6 +40,7 @@ struct box : private owned<non_null<Rep<T>>>
 
     using Base::operator*;
     using Base::operator->;
+    using Base::get;
 
     friend bool operator==(const box<T, Rep> &, const box<T, Rep> &) = default;
 };

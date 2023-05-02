@@ -56,7 +56,7 @@ struct RenderManager::Impl : public RenderManager
     void endStats();
 };
 
-BL_DEFINE_RUNTIME_SIZED(RenderManager, RenderManager::Impl);
+BL_DEF_RUNTIME_SIZED(RenderManager, RenderManager::Impl);
 
 RenderManager &
 RenderManager::construct_at(void *p) noexcept

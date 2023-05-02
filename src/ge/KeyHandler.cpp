@@ -51,7 +51,7 @@ struct KeyHandler::Impl : public KeyHandler
     explicit Impl(CommandProcessor &proc);
 };
 
-BL_DEFINE_RUNTIME_SIZED(KeyHandler, KeyHandler::Impl);
+BL_DEF_RUNTIME_SIZED(KeyHandler, KeyHandler::Impl);
 
 KeyHandler::Impl::Impl(CommandProcessor &proc) : processor(proc)
 {

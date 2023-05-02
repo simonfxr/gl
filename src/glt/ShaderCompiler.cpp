@@ -167,7 +167,7 @@ struct ShaderCompiler::Impl : public ShaderCompiler
     void initPreprocessor(GLSLPreprocessor & /*proc*/);
 };
 
-BL_DEFINE_RUNTIME_SIZED(ShaderCompiler, ShaderCompiler::Impl);
+BL_DEF_RUNTIME_SIZED(ShaderCompiler, ShaderCompiler::Impl);
 
 struct ShaderCompilerQueue::Impl : ShaderCompilerQueue
 {
@@ -188,7 +188,7 @@ struct ShaderCompilerQueue::Impl : ShaderCompilerQueue
       const std::shared_ptr<ShaderObject> & /*so*/);
 };
 
-BL_DEFINE_RUNTIME_SIZED(ShaderCompilerQueue, ShaderCompilerQueue::Impl);
+BL_DEF_RUNTIME_SIZED(ShaderCompilerQueue, ShaderCompilerQueue::Impl);
 
 namespace {
 
@@ -252,10 +252,10 @@ compilePreprocessed(ShaderCompilerQueue &scq,
                     GLShaderObject &shader)
 {
 
-    auto nsegments = static_cast<GLsizei>(proc.segments.size());
-    const char **segments = proc.segments.data();
-    static_assert(sizeof(GLint) == sizeof(proc.segLengths[0]));
-    auto *p0 = proc.segLengths.data();
+    auto nsegments = static_cast<GLsizei>(proc.segments().size());
+    const char *const *segments = proc.segments().data();
+    static_assert(sizeof(GLint) == sizeof(proc.segLengths()[0]));
+    auto *p0 = proc.segLengths().data();
     auto segLengths = reinterpret_cast<const GLint *>(p0); // NOLINT
 
     shader.ensure(shader_type);
@@ -402,19 +402,24 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
     auto gltype = *opt_gltype;
 
     auto so = ShaderObject::Data::makeStringShaderObject(src, strsrc);
-    GLSLPreprocessor preproc(
+
+    auto pp = bl::box<Preprocessor>(std::in_place_t{},
+                                    scq.shaderCompiler().shaderManager().out());
+    auto preproc = bl::box<GLSLPreprocessor>(
+      std::in_place_t{},
+      pp.get(),
       scq.shaderCompiler().shaderManager().shaderDirectories(),
       so->self->includes,
       so->self->dependencies);
-    preproc.preprocessor->name(""_s);
-    scq.shaderCompiler().m().initPreprocessor(preproc);
+    pp->name(""_s);
+    scq.shaderCompiler().m().initPreprocessor(*preproc);
 
-    preproc.preprocessor->process(strsrc.source);
+    pp->process(strsrc.source);
 
-    if (preproc.preprocessor->wasError())
+    if (pp->wasError())
         return nullptr;
 
-    if (!compilePreprocessed(scq, gltype, ""_s, preproc, so->self->handle))
+    if (!compilePreprocessed(scq, gltype, ""_s, *preproc, so->self->handle))
         return nullptr;
     return so;
 }
@@ -443,18 +448,23 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
 
     auto so = ShaderObject::Data::makeFileShaderObject(src, filesrc, *mtime);
 
-    GLSLPreprocessor preproc(
+    auto pp =
+      bl::box<Preprocessor>{ std::in_place_t{},
+                             scq.shaderCompiler().shaderManager().out() };
+    auto preproc = bl::box<GLSLPreprocessor>(
+      std::in_place_t{},
+      pp.get(),
       scq.shaderCompiler().shaderManager().shaderDirectories(),
       so->self->includes,
       so->self->dependencies);
-    scq.shaderCompiler().m().initPreprocessor(preproc);
+    scq.shaderCompiler().m().initPreprocessor(*preproc);
 
-    preproc.processFileRecursively(bl::string(path));
-    if (preproc.preprocessor->wasError())
+    preproc->processFileRecursively(bl::string(path));
+    if (pp->wasError())
         return nullptr;
 
     if (!compilePreprocessed(
-          scq, gltype, so->self->source->key(), preproc, so->self->handle))
+          scq, gltype, so->self->source->key(), *preproc, so->self->handle))
         return nullptr;
     return so;
 }
@@ -732,7 +742,6 @@ void
 ShaderCompiler::Impl::initPreprocessor(GLSLPreprocessor &proc)
 {
     auto &m = shaderManager;
-    proc.preprocessor->out(m.out());
 
     if (m.shaderVersion() != 0) {
         sys::io::ByteStream glversdef;

@@ -51,7 +51,7 @@ struct Camera::Impl : public Camera
     void handleBeforeRender(const Event<RenderEvent> & /*e*/) const;
 };
 
-BL_DEFINE_RUNTIME_SIZED(Camera, Camera::Impl);
+BL_DEF_RUNTIME_SIZED(Camera, Camera::Impl);
 
 Camera::Impl::~Impl() = default;
 

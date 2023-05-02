@@ -179,7 +179,7 @@ struct CommandPrettyPrinter::Impl : public CommandPrettyPrinter
     ~Impl() { flush(); }
 };
 
-BL_DEFINE_RUNTIME_SIZED(CommandPrettyPrinter, CommandPrettyPrinter::Impl);
+BL_DEF_RUNTIME_SIZED(CommandPrettyPrinter, CommandPrettyPrinter::Impl);
 
 CommandPrettyPrinter &
 CommandPrettyPrinter::construct_at(void *p) noexcept

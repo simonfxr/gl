@@ -1,57 +1,23 @@
 #ifndef GLT_GLSLPREPROCESSOR_HPP
 #define GLT_GLSLPREPROCESSOR_HPP
 
+#include "glt/Preprocessor.hpp"
+#include "glt/ShaderCompiler.hpp"
+
+#include <bl/box.hpp>
+#include <bl/ptr.hpp>
 #include <bl/string.hpp>
 #include <bl/vec.hpp>
 
-#include "bl/box.hpp"
-#include "glt/Preprocessor.hpp"
-#include "glt/ShaderCompiler.hpp"
-#include "sys/fs.hpp"
-#include "util/Array.hpp"
-
 namespace glt {
 
-struct ProcessingState;
-struct GLSLPreprocessor;
-
-struct GLT_API IncludeHandler : public Preprocessor::DirectiveHandler
+struct GLT_API GLSLPreprocessor : bl::runtime_sized_base<GLSLPreprocessor>
 {
-    GLSLPreprocessor *glslPreprocessor;
-    void beginProcessing(const Preprocessor::ContentContext & /*ctx*/) final;
-    void directiveEncountered(
-      const Preprocessor::DirectiveContext & /*ctx*/) final;
-    void endProcessing(const Preprocessor::ContentContext & /*ctx*/) final;
-};
-
-struct GLT_API DependencyHandler : public Preprocessor::DirectiveHandler
-{
-    GLSLPreprocessor *glslPreprocessor;
-    void directiveEncountered(
-      const Preprocessor::DirectiveContext & /*ctx*/) final;
-};
-
-struct GLT_API GLSLPreprocessor
-{
-    const IncludePath &includePath;
-    ShaderIncludes &includes;
-    ShaderDependencies &dependencies;
-
-    bl::vec<uint32_t> segLengths;
-    bl::vec<const char *> segments;
-    bl::vec<Array<char>> contents;
-    bl::box<Preprocessor> preprocessor;
-
-    bl::box<ProcessingState> state;
-
-    IncludeHandler includeHandler;
-    DependencyHandler dependencyHandler;
-
-    GLSLPreprocessor(const IncludePath &,
-                     ShaderIncludes &,
-                     ShaderDependencies &);
-    ~GLSLPreprocessor();
-
+    static GLSLPreprocessor &construct_at(void *p,
+                                          bl::ptr<Preprocessor>,
+                                          const IncludePath &,
+                                          ShaderIncludes &,
+                                          ShaderDependencies &) noexcept;
     void appendString(bl::string_view);
 
     void addDefines(const PreprocessorDefinitions &);
@@ -60,6 +26,12 @@ struct GLT_API GLSLPreprocessor
 
     // internal use only
     void advanceSegments(const Preprocessor::DirectiveContext &);
+
+    [[nodiscard]] const bl::vec<const char *> &segments() const noexcept;
+
+    [[nodiscard]] const bl::vec<uint32_t> &segLengths() const noexcept;
+
+    BL_DECLARE_RUNTIME_SIZED(GLSLPreprocessor, Impl);
 };
 
 } // namespace glt

@@ -71,7 +71,7 @@ struct GameWindow::Impl : GameWindow
     }
 };
 
-BL_DEFINE_RUNTIME_SIZED(GameWindow, GameWindow::Impl);
+BL_DEF_RUNTIME_SIZED(GameWindow, GameWindow::Impl);
 
 namespace {
 

@@ -24,7 +24,7 @@ struct MouseLookPlugin::Impl : public MouseLookPlugin
 
 MouseLookPlugin::Impl::~Impl() = default;
 
-BL_DEFINE_RUNTIME_SIZED(MouseLookPlugin, MouseLookPlugin::Impl);
+BL_DEF_RUNTIME_SIZED(MouseLookPlugin, MouseLookPlugin::Impl);
 
 MouseLookPlugin::Impl::Impl()
 {

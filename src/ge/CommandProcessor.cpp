@@ -37,7 +37,7 @@ struct CommandProcessor::Impl : public CommandProcessor
     explicit Impl(Engine &e) : engine(e) {}
 };
 
-BL_DEFINE_RUNTIME_SIZED(CommandProcessor, CommandProcessor::Impl);
+BL_DEF_RUNTIME_SIZED(CommandProcessor, CommandProcessor::Impl);
 
 CommandProcessor &
 CommandProcessor::construct_at(void *p, Engine &e) noexcept
