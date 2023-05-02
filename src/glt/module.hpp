@@ -10,7 +10,7 @@ namespace glt {
 
 struct Utils
 {
-    std::shared_ptr<GLDebug> gl_debug;
+    GLDebug gl_debug;
 
     bool print_opengl_calls = false;
 

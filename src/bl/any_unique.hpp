@@ -1,6 +1,7 @@
 #ifndef BL_ANY_UNIQUE_HPP
 #define BL_ANY_UNIQUE_HPP
 
+#include <bl/swap.hpp>
 #include <bl/tag_invoke.hpp>
 
 /// Code adapted from the tag_invoke paper (P1895R0)
@@ -230,19 +231,19 @@ struct indirect_vtable_holder
         return indirect_vtable_holder{ v };
     }
 
-    const vtable<CPOs...> &operator*() const noexcept { return vtable_; }
+    const vtable<CPOs...> &operator*() const noexcept { return *vtable_; }
 
     const vtable<CPOs...> *operator->() const noexcept
     {
-        return bl::addressof(vtable_);
+        return bl::addressof(*vtable_);
     }
 
 private:
     constexpr indirect_vtable_holder(const vtable<CPOs...> &vtable)
-      : vtable_(vtable)
+      : vtable_(bl::addressof(vtable))
     {}
 
-    const vtable<CPOs...> &vtable_;
+    const vtable<CPOs...> *vtable_;
 };
 
 template<typename... CPOs>
@@ -259,6 +260,13 @@ struct inline_vtable_holder
     const vtable<CPOs...> *operator->() const noexcept
     {
         return bl::addressof(vtable_);
+    }
+
+    void tag_invoke(bl::swap_f,
+                    inline_vtable_holder &lhs,
+                    inline_vtable_holder &rhs) noexcept
+    {
+        bl::swap(lhs.vtable_, rhs.vtable_);
     }
 
 private:
@@ -449,6 +457,14 @@ public:
               vtable_->template get<detail::deallocate_cpo>();
             deallocateFn(detail::deallocate_cpo{}, impl_);
         }
+    }
+
+    any_unique &operator=(any_unique &&rhs) noexcept
+    {
+        auto old = bl::move(*this);
+        bl::swap(impl_, rhs.impl_);
+        bl::swap(vtable_, rhs.vtable_);
+        return *this;
     }
 
 private:

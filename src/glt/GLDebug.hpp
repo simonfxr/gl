@@ -8,53 +8,20 @@
 
 #include <bl/noncopymove.hpp>
 
-#include <unordered_set>
-
 namespace glt {
 
-struct GLDebug : private bl::non_copyable
-{
-    std::unordered_set<GLuint> ignored;
-    OpenGLVendor vendor{};
+BL_DEF_TAG_CPO(printGLDebugMessages);
+BL_DEF_TAG_CPO(ignoreGLDebugMessage);
 
-    GLDebug();
-    virtual ~GLDebug();
-    void init();
-    virtual void printDebugMessages(const err::Location &) = 0;
-    bool shouldIgnore(GLuint);
-    void ignoreMessage(OpenGLVendor vendor, GLuint id);
-};
+using GLDebug = bl::any_unique_t<
+  bl::overload<void(bl::self &, const err::Location &)>(printGLDebugMessages),
+  bl::overload<void(bl::self &, OpenGLVendor, GLuint)>(ignoreGLDebugMessage)>;
 
-struct NoDebug : public GLDebug
-{
-    NoDebug() = default;
-    ~NoDebug() override;
-    void printDebugMessages(const err::Location & /*unused*/) final {}
-};
+GLDebug
+makeGLDebugFallback();
 
-struct ARBDebug : public GLDebug
-{
-    GLsizei message_buffer_length;
-    char *message_buffer;
-
-    explicit ARBDebug(GLsizei buf_len);
-    ~ARBDebug() override;
-
-    static GLDebug *init();
-    void printDebugMessages(const err::Location &loc) final;
-};
-
-struct AMDDebug : public GLDebug
-{
-    GLsizei message_buffer_length;
-    char *message_buffer;
-
-    explicit AMDDebug(GLsizei buf_len);
-    ~AMDDebug() override;
-
-    static GLDebug *init();
-    void printDebugMessages(const err::Location &loc) final;
-};
+GLDebug
+makeGLDebug();
 
 } // namespace glt
 

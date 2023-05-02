@@ -87,7 +87,7 @@ isExtensionSupported(bl::string_view extension)
 void
 ignoreDebugMessage(OpenGLVendor vendor, GLuint id)
 {
-    G.gl_debug->ignoreMessage(vendor, id);
+    ignoreGLDebugMessage(G.gl_debug, vendor, id);
 }
 
 void
@@ -122,7 +122,7 @@ checkForGLError(const err::Location *loc)
     for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
         printGLError(loc, err);
 
-    G.gl_debug->printDebugMessages(*loc);
+    printGLDebugMessages(G.gl_debug, *loc);
 
     return was_error;
 }
@@ -130,38 +130,8 @@ checkForGLError(const err::Location *loc)
 bool
 initDebug()
 {
-
-    GLDebug *dbg = nullptr;
-    bl::string_view debug_impl{};
-
-    if (dbg == nullptr && GLAD_GL_ARB_debug_output) {
-        debug_impl = "GL_ARB_debug_output"_k;
-        sys::io::stdout() << "trying ARB debug\n"_k;
-        dbg = ARBDebug::init();
-    }
-
-    if (dbg == nullptr && GLAD_GL_AMD_debug_output) {
-        debug_impl = "GL_AMD_debug_output"_k;
-        sys::io::stdout() << "trying AMD debug\n"_k;
-        dbg = AMDDebug::init();
-    }
-
-    bool initialized;
-
-    if (dbg == nullptr) {
-        sys::io::stdout() << "couldnt initialize Debug Output, no debug "
-                             "implementaion available"_k
-                          << "\n"_k;
-        dbg = new NoDebug();
-        initialized = false;
-    } else {
-        sys::io::stdout() << "initialized Debug Output using "_k << debug_impl
-                          << "\n"_k;
-        initialized = true;
-    }
-
-    G.gl_debug.reset(dbg);
-    return initialized;
+    G.gl_debug = makeGLDebug();
+    return true;
 }
 
 namespace {
@@ -266,6 +236,6 @@ GLMemInfoNV::info(GLMemInfoNV *mi)
     return true;
 }
 
-Utils::Utils() : gl_debug(std::make_shared<NoDebug>()) {}
+Utils::Utils() : gl_debug(makeGLDebugFallback()) {}
 
 } // namespace glt

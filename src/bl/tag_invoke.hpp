@@ -121,4 +121,10 @@ BL_DIAG_POP
         return ::bl::tag_invoke(*this, bl_fwd(r), bl_fwd(ts)...);              \
     }
 
+#define BL_DEF_TAG_CPO(CPO)                                                    \
+    inline constexpr struct BL_PP_CAT(CPO, _f)                                 \
+    {                                                                          \
+        BL_DEF_TAG_CPO_OPERATOR(BL_PP_CAT(CPO, _f))                            \
+    } CPO
+
 #endif // BL_TAG_INVOKE_HPP
