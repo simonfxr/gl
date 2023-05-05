@@ -23,7 +23,7 @@ private:
     Self *self() { return static_cast<Self *>(this); }
 
 public:
-    bl::box<Engine> engine{ std::in_place, pluginSet };
+    bl::box<Engine> engine{ bl::in_place, pluginSet };
 
     Anim() = default;
     virtual ~Anim() = default;

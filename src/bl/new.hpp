@@ -65,7 +65,7 @@ struct alignas(std::max_align_t) runtime_sized_base : private runtime_sized_tag
     runtime_sized_base() = delete;
 
 protected:
-    constexpr runtime_sized_base(std::in_place_t) noexcept {}
+    constexpr runtime_sized_base(bl::in_place_t) noexcept {}
     ~runtime_sized_base() = default;
 
     using runtime_sized_base_api_t = ApiT;
@@ -117,7 +117,7 @@ private:                                                                       \
                                                                                \
 protected:                                                                     \
     template<typename T = void>                                                \
-    ApiT() noexcept : runtime_sized_instantiation_t{ ::std::in_place }         \
+    ApiT() noexcept : runtime_sized_instantiation_t{ ::bl::in_place }          \
     {                                                                          \
         m<T>();                                                                \
     }                                                                          \

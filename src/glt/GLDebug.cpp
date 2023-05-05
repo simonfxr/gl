@@ -116,7 +116,7 @@ ARBDebug::init()
     GLsizei max_len;
     glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH_ARB, &max_len);
 
-    return { GLDebug{ std::in_place_type_t<ARBDebug>{}, max_len } };
+    return { GLDebug{ bl::in_place_type_t<ARBDebug>{}, max_len } };
 }
 
 void
@@ -237,7 +237,7 @@ AMDDebug::init()
     GLsizei max_len;
     glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH_AMD, &max_len);
 
-    return { GLDebug{ std::in_place_type_t<AMDDebug>{}, max_len } };
+    return { GLDebug{ bl::in_place_type_t<AMDDebug>{}, max_len } };
 }
 
 void
@@ -307,7 +307,7 @@ tag_invoke(printGLDebugMessages_f, AMDDebug &d, const err::Location &loc)
 GLDebug
 makeGLDebugFallback()
 {
-    return GLDebug{ std::in_place_type_t<NoDebug>{} };
+    return GLDebug{ bl::in_place_type_t<NoDebug>{} };
 }
 
 GLDebug
@@ -333,7 +333,7 @@ makeGLDebug()
         sys::io::stdout() << "couldnt initialize Debug Output, no debug "
                              "implementaion available"_k
                           << "\n"_k;
-        return GLDebug{ std::in_place_type_t<NoDebug>{} };
+        return GLDebug{ bl::in_place_type_t<NoDebug>{} };
     } else {
         sys::io::stdout() << "initialized Debug Output using "_k << debug_impl
                           << "\n"_k;

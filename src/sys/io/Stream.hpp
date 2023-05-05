@@ -258,7 +258,7 @@ struct SYS_API BufferedInStream final
 private:
     Stream _s;
     Buffer _buf;
-    bl::usize _cursor;
+    bl::usize _cursor{};
 };
 
 template<SomeOutStream Stream, typename Buffer = bl::array<bl::byte, 4096>>

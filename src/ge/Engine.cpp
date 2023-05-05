@@ -69,9 +69,9 @@ struct Engine::Impl
 
     explicit Impl(PluginSet *ps)
       : gameLoop(60, 5, 120)
-      , commandProcessor(std::in_place, *this)
-      , keyHandler(std::in_place, *commandProcessor)
-      , replServer(std::in_place, *this)
+      , commandProcessor(bl::in_place, *this)
+      , keyHandler(bl::in_place, *commandProcessor)
+      , replServer(bl::in_place, *this)
       , out(sys::io::stdout())
       , pluginSet(ps ? *ps : emptyPluginSet)
     {}

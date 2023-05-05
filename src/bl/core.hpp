@@ -30,6 +30,15 @@ using cbyte = char;
 
 // using max_align_t = ::max_align_t;
 
+using in_place_t = std::in_place_t;
+inline constexpr in_place_t in_place{};
+
+template<typename T>
+using in_place_type_t = std::in_place_type_t<T>;
+
+template<typename T>
+inline constexpr in_place_type_t<T> in_place_type = in_place_type_t<T>{};
+
 template<typename T>
 BL_wrapper constexpr T &&
 forward(std::remove_reference_t<T> &x) noexcept

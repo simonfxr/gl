@@ -454,11 +454,11 @@ coordinateSystem(const vec<T, 3> &a)
     V b{};
 
     if (aa[0] > aa[1] && aa[0] > aa[2])
-        b = V(std::in_place_t{}, -a[2], T{}, a[0]);
+        b = V(bl::in_place_t{}, -a[2], T{}, a[0]);
     else if (aa[1] > aa[2])
-        b = V(std::in_place_t{}, a[1], -a[0], T{});
+        b = V(bl::in_place_t{}, a[1], -a[0], T{});
     else
-        b = V(std::in_place_t{}, T{}, a[2], -a[1]);
+        b = V(bl::in_place_t{}, T{}, a[2], -a[1]);
     return mat3(a, b, cross(a, b));
 }
 

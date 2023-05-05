@@ -145,6 +145,8 @@ N;
 struct broadcast_t
 {};
 
+inline constexpr broadcast_t broadcast{};
+
 template<typename T, size_t N>
 struct vec : private std::array<T, N>
 {
@@ -211,7 +213,7 @@ struct vec : private std::array<T, N>
     {}
 
     template<typename U, typename V>
-        requires(!std::is_same_v<std::decay_t<U>, std::in_place_t> &&
+        requires(!std::is_same_v<std::decay_t<U>, bl::in_place_t> &&
                  !std::is_same_v<std::decay_t<U>, broadcast_t> &&
                  (a_vec<U> || a_vec<V>) && tensor_dim<U> + tensor_dim<V> == N)
     constexpr explicit vec(U &&part1, V &&part2)
@@ -236,7 +238,7 @@ struct vec : private std::array<T, N>
      */
     template<typename... Args>
         requires(sizeof...(Args) == N)
-    constexpr explicit(N == 0) vec(std::in_place_t, Args &&...args)
+    constexpr explicit(N == 0) vec(bl::in_place_t, Args &&...args)
       : Base{ static_cast<T>(bl_fwd(args))... }
     {}
 
@@ -337,7 +339,7 @@ struct vec : private std::array<T, N>
     constexpr auto operator[](I... i) const noexcept
     {
         return vec<T, sizeof...(I)>{
-            std::in_place_t{}, operator[](static_cast<size_t>(i))...
+            bl::in_place_t{}, operator[](static_cast<size_t>(i))...
         };
     }
 
@@ -351,7 +353,7 @@ struct vec : private std::array<T, N>
                                                     decltype(vs[0])...>>;
         return [&]<size_t... I>(std::index_sequence<I...>)->vec<R, N>
         {
-            return { std::in_place,
+            return { bl::in_place,
                      [&](size_t i) { return f(v0[i], vs[i]...); }(I)... };
         }
         (std::make_index_sequence<N>{});

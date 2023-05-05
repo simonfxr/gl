@@ -383,7 +383,7 @@ public:
                  detail::is_type_erasable<Concrete, CPOs...>
     explicit any_unique(std::allocator_arg_t,
                         Allocator alloc,
-                        std::in_place_type_t<Concrete>,
+                        bl::in_place_type_t<Concrete>,
                         Args &&...args)
       : vtable_(vtable_holder_t::template create<
                 concrete_impl<Concrete, Allocator>>())
@@ -415,20 +415,20 @@ public:
         requires std::constructible_from<std::remove_cvref_t<Concrete>,
                                          Concrete> &&
                  (!std::same_as<std::allocator_arg_t, std::decay_t<Concrete>> &&
-                  !detail::is_instance_of_v<std::in_place_type_t,
+                  !detail::is_instance_of_v<bl::in_place_type_t,
                                             std::decay_t<Concrete>>) &&
                  detail::is_type_erasable<Concrete, CPOs...>
     any_unique(Concrete &&concrete, Allocator alloc)
       : any_unique(std::allocator_arg,
                    bl::move(alloc),
-                   std::in_place_type<std::remove_cvref_t<Concrete>>,
+                   bl::in_place_type<std::remove_cvref_t<Concrete>>,
                    (Concrete &&) concrete)
     {}
 
     template<typename Concrete, typename... Args>
         requires std::constructible_from<Concrete, Args...> &&
                  detail::is_type_erasable<Concrete, CPOs...>
-    explicit any_unique(std::in_place_type_t<Concrete> tag, Args &&...args)
+    explicit any_unique(bl::in_place_type_t<Concrete> tag, Args &&...args)
       : any_unique(std::allocator_arg,
                    std::allocator<unsigned char>{},
                    tag,
@@ -436,13 +436,13 @@ public:
     {}
 
     template<typename Concrete>
-        requires(!detail::is_instance_of_v<std::in_place_type_t, Concrete>) &&
+        requires(!detail::is_instance_of_v<bl::in_place_type_t, Concrete>) &&
                 (!std::same_as<std::remove_cvref_t<Concrete>, any_unique>) &&
                 std::constructible_from<std::remove_cvref_t<Concrete>,
                                         Concrete> &&
                 detail::is_type_erasable<Concrete, CPOs...>
     any_unique(Concrete &&concrete)
-      : any_unique(std::in_place_type<std::remove_cvref_t<Concrete>>,
+      : any_unique(bl::in_place_type<std::remove_cvref_t<Concrete>>,
                    (Concrete &&) concrete)
     {}
 
@@ -533,18 +533,18 @@ class any_ref
 public:
     template<typename Concrete>
         requires detail::is_type_erasable<Concrete, CPOs...>
-    explicit any_ref(std::in_place_type_t<Concrete>, Concrete &concrete)
+    explicit any_ref(bl::in_place_type_t<Concrete>, Concrete &concrete)
       : vtable_(vtable_holder_t::template create<concrete_impl<Concrete>>())
     {
         ::new (&impl_data_) concrete_impl<Concrete>{ concrete };
     }
 
     template<typename Concrete>
-        requires(!detail::is_instance_of_v<std::in_place_type_t, Concrete>) &&
+        requires(!detail::is_instance_of_v<bl::in_place_type_t, Concrete>) &&
                 (!std::same_as<std::remove_cvref_t<Concrete>, any_ref>) &&
                 detail::is_type_erasable<Concrete, CPOs...>
     any_ref(Concrete &concrete)
-      : any_ref(std::in_place_type<std::remove_cvref_t<Concrete>>, concrete)
+      : any_ref(bl::in_place_type<std::remove_cvref_t<Concrete>>, concrete)
     {}
 
     any_ref(any_ref &&other) noexcept

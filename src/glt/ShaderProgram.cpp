@@ -95,7 +95,7 @@ ShaderProgram::reload()
 {
     ShaderObjects newshaders;
     auto scq = bl::box<ShaderCompilerQueue>(
-      std::in_place, self->sm.shaderCompiler(), newshaders);
+      bl::in_place, self->sm.shaderCompiler(), newshaders);
 
     for (const auto &ent : self->rootdeps)
         scq->enqueueReload(self->shaders[ent.first]);
@@ -188,7 +188,7 @@ bool
 ShaderProgram::addShaderSrc(const bl::string &src, ShaderType type)
 {
     auto scq = bl::box<ShaderCompilerQueue>(
-      std::in_place, self->sm.shaderCompiler(), self->shaders);
+      bl::in_place, self->sm.shaderCompiler(), self->shaders);
     auto source = ShaderSource::makeStringSource(type, src);
 
     {
@@ -230,7 +230,7 @@ ShaderProgram::addShaderFile(const bl::string &file0,
     ASSERT(!file.empty());
 
     auto scq = bl::box<ShaderCompilerQueue>(
-      std::in_place, self->sm.shaderCompiler(), self->shaders);
+      bl::in_place, self->sm.shaderCompiler(), self->shaders);
     auto source = ShaderSource::makeFileSource(type, file);
 
     {

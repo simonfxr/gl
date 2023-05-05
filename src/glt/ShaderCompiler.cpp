@@ -403,10 +403,10 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
 
     auto so = ShaderObject::Data::makeStringShaderObject(src, strsrc);
 
-    auto pp = bl::box<Preprocessor>(std::in_place_t{},
+    auto pp = bl::box<Preprocessor>(bl::in_place_t{},
                                     scq.shaderCompiler().shaderManager().out());
     auto preproc = bl::box<GLSLPreprocessor>(
-      std::in_place_t{},
+      bl::in_place_t{},
       pp.get(),
       scq.shaderCompiler().shaderManager().shaderDirectories(),
       so->self->includes,
@@ -449,10 +449,10 @@ ShaderSource::Data::load(const std::shared_ptr<ShaderSource> &src,
     auto so = ShaderObject::Data::makeFileShaderObject(src, filesrc, *mtime);
 
     auto pp =
-      bl::box<Preprocessor>{ std::in_place_t{},
+      bl::box<Preprocessor>{ bl::in_place_t{},
                              scq.shaderCompiler().shaderManager().out() };
     auto preproc = bl::box<GLSLPreprocessor>(
-      std::in_place_t{},
+      bl::in_place_t{},
       pp.get(),
       scq.shaderCompiler().shaderManager().shaderDirectories(),
       so->self->includes,

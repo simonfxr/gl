@@ -11,6 +11,7 @@
 
 using namespace math;
 using namespace bl::literals;
+namespace r = bl::rand;
 
 CTEST_GROUP("vec3")
 {
@@ -36,8 +37,8 @@ CTEST_GROUP("vec3")
     {
         ctest_equal(v + v, 2 * v);
         ctest_equal(v + v, v * 2);
-        ctest_equal(v + ivec3(broadcast_t{}, 3), v + 3);
-        ctest_equal(v + ivec3(broadcast_t{}, 3), 3 + v);
+        ctest_equal(v + ivec3(broadcast, 3), v + 3);
+        ctest_equal(v + ivec3(broadcast, 3), 3 + v);
 
         ctest_equal(-v, (-1) * v);
         ctest_equal(-v, z - v);
@@ -46,21 +47,21 @@ CTEST_GROUP("vec3")
     CTEST("vec dist")
     {
         auto g = test_rng();
-        auto s = bl::rand::uniform<real>();
+        auto s = r::uniform<real>();
         {
             auto vs = vec{ s, s, s };
 
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
+            sys::io::stdout() << r::sample(vs, g) << "\n"_k;
+            sys::io::stdout() << r::sample(vs, g) << "\n"_k;
+            sys::io::stdout() << r::sample(vs, g) << "\n"_k;
+            sys::io::stdout() << r::sample(vs, g) << "\n"_k;
         }
         {
-            auto vs = bl::rand::uniform<vec3>(-1_r, 1_r);
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
-            sys::io::stdout() << bl::rand::sample(vs, g) << "\n"_k;
+            auto vs = r::uniform<vec3>(-1_r, 1_r);
+            sys::io::stdout() << r::sample(vs, g) << "\n"_k;
+            sys::io::stdout() << r::sample(vs, g) << "\n"_k;
+            sys::io::stdout() << r::sample(vs, g) << "\n"_k;
+            sys::io::stdout() << r::sample(vs, g) << "\n"_k;
         }
     }
 
@@ -68,6 +69,9 @@ CTEST_GROUP("vec3")
     {
         auto v = ivec3(1, 2, 3);
         auto [w, h, d] = std::as_const(v).cast<size_t>();
+        UNUSED(w);
+        UNUSED(h);
+        UNUSED(d);
     }
 }
 

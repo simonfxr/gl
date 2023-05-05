@@ -33,7 +33,7 @@ struct ShaderManager::Impl : public ShaderManager
     explicit Impl()
       : out(sys::io::stdout())
       , globalShaderCache(std::make_shared<ShaderCache>())
-      , shaderCompiler(std::in_place, *this)
+      , shaderCompiler(bl::in_place, *this)
     {}
 };
 

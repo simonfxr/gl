@@ -74,7 +74,7 @@
 #define PP_DROP4(_1, _2, _3, _4, ...) __VA_ARGS__
 #define PP_DROP5(_1, _2, _3, _4, _5, ...) __VA_ARGS__
 
-#define UNUSED(x) ((void) (x))
+#define UNUSED(...) ((void) (__VA_ARGS__))
 
 #if HU_COMP_CLANG_P
 #    define IGNORE_RESULT(x) ((void) (x))
