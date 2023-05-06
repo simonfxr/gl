@@ -217,9 +217,9 @@ print_stacktrace(sys::io::OutStream out, int skip)
 #else
 
 void
-print_stacktrace(sys::io::OutStream &out, int)
+print_stacktrace(sys::io::OutStream out, int)
 {
-    out << "  stacktrace: not available\n";
+    out << "  stacktrace: not available\n"_k;
 }
 
 #endif

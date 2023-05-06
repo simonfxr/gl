@@ -5,6 +5,7 @@
 #include "sys/strerror_unix.hpp"
 
 #include <bl/bit.hpp>
+#include <bl/cstring.hpp>
 
 #include <arpa/inet.h>
 #include <cerrno>
@@ -146,7 +147,7 @@ open(bl::string_view path, HandleMode mode)
         return util::unexpected{ IOError::INVALID_PARAM };
 
     int fd;
-    auto strpath = bl::string(path);
+    auto strpath = bl::cstring_view(path);
     RETRY_INTR(fd = ::open(strpath.c_str(), flags, 0777));
 
     if (fd == -1)

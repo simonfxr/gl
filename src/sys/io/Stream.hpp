@@ -195,12 +195,6 @@ operator<<(SomeOutStream auto &&out, T x)
     return out << (x ? BL_STRING_VIEW("true") : BL_STRING_VIEW("false"));
 }
 
-decltype(auto)
-operator<<(SomeOutStream auto &&out, const bl::string &str)
-{
-    return out << bl::string_view{ str };
-}
-
 struct ptr
 {
     const void *p;

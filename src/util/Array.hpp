@@ -8,6 +8,7 @@
 #include <bl/string_view.hpp>
 #include <bl/type_traits.hpp>
 
+#include <iterator>
 #include <memory>
 #include <new>
 

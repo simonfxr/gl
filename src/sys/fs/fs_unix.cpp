@@ -36,17 +36,15 @@ bl::string
 cwd()
 {
     using namespace bl::literals;
-    const bl::usize MIN_SIZE = 128;
-    auto size = MIN_SIZE;
-    bl::string path;
+    bl::string path(96_z, '\0');
 
 retry:
     for (;;) {
-        size *= 2;
-        path.resize(size, '\0');
-        while (!getcwd(path.data(), size)) {
-            if (errno == ERANGE)
+        while (!getcwd(path.data(), path.size())) {
+            if (errno == ERANGE) {
+                path.resize(path.size() * 2, '\0');
                 goto retry;
+            }
             if (errno != EINTR) {
                 ERR(scat("cwd() failed: "_sv, strerror_errno()));
                 return ""_s;
@@ -172,7 +170,7 @@ modificationTime(bl::string_view path)
 {
     struct stat st
     {};
-    if (stat(bl::string(path).c_str(), &st) != 0) {
+    if (stat(bl::cstring_view(path).c_str(), &st) != 0) {
         auto err = errno;
         if (err != ENOENT)
             ERR(strerror_errno(err));
@@ -192,8 +190,7 @@ exists(bl::string_view path)
 {
     using stat = struct stat;
     stat info{};
-    auto str = bl::string(path);
-    if (::stat(str.c_str(), &info) < 0) {
+    if (::stat(bl::cstring_view{ path }.c_str(), &info) < 0) {
         auto err = bl::exchange(errno, 0);
         if (err != ENOENT)
             ERR(strerror_errno(err));
