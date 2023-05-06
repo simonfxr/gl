@@ -44,7 +44,7 @@ TextureData::free()
 GLTextureObject &
 TextureData::ensureHandle()
 {
-    return _handle.ensure();
+    return _handle.ensure(getGLType(_type, _samples));
 }
 
 void
@@ -84,47 +84,45 @@ TextureData::upload(const Image &img)
 {
 
     GLenum format{};
-    GLenum type{};
+    GLenum glformat{};
     switch (img.format()) {
     case ImageFormat::RGB:
-        format = GL_RGB8;
-        type = GL_RGBA;
+        glformat = GL_RGB8;
+        format = GL_RGBA;
         break;
     case ImageFormat::RGBA:
-        format = GL_RGBA8;
-        type = GL_RGBA;
+        glformat = GL_RGBA8;
+        format = GL_RGBA;
     }
 
     auto old_dim = bl::exchange(_allocated_dim, img.dim());
     auto old_format = bl::exchange(_allocated_format, img.format());
 
-    if (_handle && (old_dim[0] * old_dim[1]) != 0 &&
-        old_format == _allocated_format && old_dim == _allocated_dim) {
-        GL_CALL(glTextureSubImage2DEXT,
-                *ensureHandle(),
-                GL_TEXTURE_2D,
-                0,
-                0,
-                0,
-                GLint(img.width()),
-                GLint(img.heigth()),
-                format,
-                type,
-                img.data());
-    } else {
+    auto storageUnchanged =
+      _handle && old_format == _allocated_format && old_dim == _allocated_dim;
+
+    using namespace bl::literals;
+    if (!storageUnchanged) {
         _handle.release();
-        GL_CALL(glTextureImage2DEXT,
+        ensureHandle();
+        GL_CALL(glTextureStorage2D,
                 *ensureHandle(),
-                GL_TEXTURE_2D,
-                0,
-                format,
+                1 /* levels */,
+                glformat,
                 GLint(img.width()),
-                GLint(img.heigth()),
-                0,
-                type,
-                GL_UNSIGNED_BYTE,
-                img.data());
+                GLint(img.heigth()));
     }
+
+    GL_CALL(glTextureSubImage2D,
+            *ensureHandle(),
+            0 /* level */,
+            0,
+            0,
+            GLint(img.width()),
+            GLint(img.heigth()),
+            format,
+            GL_UNSIGNED_BYTE,
+            img.data());
 }
 
 } // namespace glt

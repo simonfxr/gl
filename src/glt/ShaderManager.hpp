@@ -31,9 +31,9 @@ PP_DEF_ENUM(ShaderType,
             GuessShaderType,
             VertexShader,
             FragmentShader,
-            GeometryShader,
-            TesselationControl,
-            TesselationEvaluation);
+            GeometryShader);
+// ,TesselationControl
+// ,TesselationEvaluation
 
 struct GLT_API ShaderManager : private bl::runtime_sized_base<ShaderManager>
 {

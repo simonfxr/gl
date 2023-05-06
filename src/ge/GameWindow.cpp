@@ -217,12 +217,13 @@ GameWindow::Impl::makeWindow(const WindowOptions &opts)
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT,
                    opts.settings.debugContext ? GL_TRUE : GL_FALSE);
 
-    GLFWwindow *win = glfwCreateWindow(static_cast<int>(opts.width),
-                                       static_cast<int>(opts.height),
-                                       opts.title.c_str(),
-                                       nullptr,
-                                       nullptr);
-    return win;
+    // glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
+
+    return glfwCreateWindow(static_cast<int>(opts.width),
+                            static_cast<int>(opts.height),
+                            opts.title.c_str(),
+                            nullptr,
+                            nullptr);
 }
 
 GameWindow::Impl *
@@ -391,6 +392,10 @@ GameWindow::Impl::init(const WindowOptions &opts)
     if (!version)
         FATAL_ERR("GLAD initialization failed");
     GL_CHECK_ERRORS();
+
+    if (!glt::ensureExtensions()) {
+        FATAL_ERR("missing GL features");
+    }
 
     vsync = opts.vsync;
     //    win->setVerticalSyncEnabled(opts.vsync);

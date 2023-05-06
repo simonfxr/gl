@@ -99,10 +99,20 @@ if(NOT TARGET glfw)
   add_library(glfw::glfw ALIAS glfw)
 endif()
 
-set(GL_REQUIRED_EXTENSIONS GL_EXT_direct_state_access)
+set(GL_REQUIRED_EXTENSIONS GL_ARB_direct_state_access
+                           GL_EXT_direct_state_access)
+
 set(GL_OPTIONAL_EXTENSIONS
-    GL_AMD_debug_output GL_ARB_debug_output GL_ATI_meminfo
-    GL_NVX_gpu_memory_info GL_ARB_multisample)
+    # debug output
+    GL_KHR_debug
+    GL_AMD_debug_output
+    GL_ARB_debug_output
+    # hw introspection
+    GL_ATI_meminfo
+    GL_NVX_gpu_memory_info
+    # opengl 4 features
+    GL_ARB_multisample
+    GL_ARB_transform_feedback2)
 
 if(NOT TARGET glad::glad)
   find_package(
@@ -120,7 +130,7 @@ if(NOT TARGET glad::glad)
     C
     REPRODUCABLE
     API
-    gl:compatibility=4.5
+    gl:compatibility=3.3
     EXTENSIONS
     ${GL_REQUIRED_EXTENSIONS}
     ${GL_OPTIONAL_EXTENSIONS})

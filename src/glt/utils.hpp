@@ -64,6 +64,9 @@ GLT_API bool
 isExtensionSupported(bl::string_view extension);
 
 GLT_API bool
+ensureExtensions();
+
+GLT_API bool
 initDebug();
 
 GLT_API void ignoreDebugMessage(OpenGLVendor, GLuint);

@@ -44,9 +44,9 @@ descGLType(GLenum ty)
         CASE(GL_FLOAT_VEC3);
         CASE(GL_FLOAT_VEC4);
         CASE(GL_DOUBLE);
-        CASE(GL_DOUBLE_VEC2);
-        CASE(GL_DOUBLE_VEC3);
-        CASE(GL_DOUBLE_VEC4);
+        // CASE(GL_DOUBLE_VEC2);
+        // CASE(GL_DOUBLE_VEC3);
+        // CASE(GL_DOUBLE_VEC4);
         CASE(GL_INT);
         CASE(GL_INT_VEC2);
         CASE(GL_INT_VEC3);
@@ -68,15 +68,15 @@ descGLType(GLenum ty)
         CASE(GL_FLOAT_MAT3x4);
         CASE(GL_FLOAT_MAT4x2);
         CASE(GL_FLOAT_MAT4x3);
-        CASE(GL_DOUBLE_MAT2);
-        CASE(GL_DOUBLE_MAT3);
-        CASE(GL_DOUBLE_MAT4);
-        CASE(GL_DOUBLE_MAT2x3);
-        CASE(GL_DOUBLE_MAT2x4);
-        CASE(GL_DOUBLE_MAT3x2);
-        CASE(GL_DOUBLE_MAT3x4);
-        CASE(GL_DOUBLE_MAT4x2);
-        CASE(GL_DOUBLE_MAT4x3);
+        // CASE(GL_DOUBLE_MAT2);
+        // CASE(GL_DOUBLE_MAT3);
+        // CASE(GL_DOUBLE_MAT4);
+        // CASE(GL_DOUBLE_MAT2x3);
+        // CASE(GL_DOUBLE_MAT2x4);
+        // CASE(GL_DOUBLE_MAT3x2);
+        // CASE(GL_DOUBLE_MAT3x4);
+        // CASE(GL_DOUBLE_MAT4x2);
+        // CASE(GL_DOUBLE_MAT4x3);
         CASE(GL_SAMPLER_1D);
         CASE(GL_SAMPLER_2D);
         CASE(GL_SAMPLER_3D);
@@ -125,38 +125,41 @@ descGLType(GLenum ty)
 void
 programUniform(GLuint program, GLint loc, float value)
 {
-    GL_CALL(glProgramUniform1fv, program, loc, 1, &value);
+    GL_CALL(glProgramUniform1fvEXT, program, loc, 1, &value);
 }
 
 void
 programUniform(GLuint program, GLint loc, bl::span<const float> value)
 {
-    GL_CALL(
-      glProgramUniform1fv, program, loc, GLsizei(value.size()), value.data());
+    GL_CALL(glProgramUniform1fvEXT,
+            program,
+            loc,
+            GLsizei(value.size()),
+            value.data());
 }
 
 void
 programUniform(GLuint program, GLint loc, const vec4 &value)
 {
-    GL_CALL(glProgramUniform4fv, program, loc, 1, gltype(value).data());
+    GL_CALL(glProgramUniform4fvEXT, program, loc, 1, gltype(value).data());
 }
 
 void
 programUniform(GLuint program, GLint loc, const vec3 &value)
 {
-    GL_CALL(glProgramUniform3fv, program, loc, 1, gltype(value).data());
+    GL_CALL(glProgramUniform3fvEXT, program, loc, 1, gltype(value).data());
 }
 
 void
 programUniform(GLuint program, GLint loc, const vec2 &value)
 {
-    GL_CALL(glProgramUniform2fv, program, loc, 1, gltype(value).data());
+    GL_CALL(glProgramUniform2fvEXT, program, loc, 1, gltype(value).data());
 }
 
 void
 programUniform(GLuint program, GLint loc, const mat4_t &value)
 {
-    GL_CALL(glProgramUniformMatrix4fv,
+    GL_CALL(glProgramUniformMatrix4fvEXT,
             program,
             loc,
             1,
@@ -167,7 +170,7 @@ programUniform(GLuint program, GLint loc, const mat4_t &value)
 void
 programUniform(GLuint program, GLint loc, const mat3_t &value)
 {
-    GL_CALL(glProgramUniformMatrix3fv,
+    GL_CALL(glProgramUniformMatrix3fvEXT,
             program,
             loc,
             1,
@@ -178,7 +181,7 @@ programUniform(GLuint program, GLint loc, const mat3_t &value)
 void
 programUniform(GLuint program, GLint loc, const mat2_t &value)
 {
-    GL_CALL(glProgramUniformMatrix2fv,
+    GL_CALL(glProgramUniformMatrix2fvEXT,
             program,
             loc,
             1,
@@ -189,25 +192,25 @@ programUniform(GLuint program, GLint loc, const mat2_t &value)
 void
 programUniform(GLuint program, GLint loc, const BoundTexture &sampler)
 {
-    GL_CALL(glProgramUniform1i, program, loc, GLint(sampler.size_t));
+    GL_CALL(glProgramUniform1iEXT, program, loc, GLint(sampler.size_t));
 }
 
 void
 programUniform(GLuint program, GLint loc, const Sampler &sampler)
 {
-    GL_CALL(glProgramUniform1i, program, loc, GLint(sampler.size_t));
+    GL_CALL(glProgramUniform1iEXT, program, loc, GLint(sampler.size_t));
 }
 
 void
 programUniform(GLuint program, GLint loc, GLint val)
 {
-    GL_CALL(glProgramUniform1i, program, loc, val);
+    GL_CALL(glProgramUniform1iEXT, program, loc, val);
 }
 
 void
 programUniform(GLuint program, GLint loc, GLuint val)
 {
-    GL_CALL(glProgramUniform1ui, program, loc, val);
+    GL_CALL(glProgramUniform1uiEXT, program, loc, val);
 }
 
 template<typename T>

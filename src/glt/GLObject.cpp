@@ -77,12 +77,12 @@ Tables::Tables()
                                        #k)),                                   \
       ++i
     KIND(gen_programs, del_programs, Program);
-    KIND([](auto, auto) {}, del_shaders, Shader);
+    KIND(([](auto, auto) {}), del_shaders, Shader);
     KIND(glGenBuffers, glDeleteBuffers, Buffer);
-    KIND(glGenFramebuffers, glDeleteFramebuffers, Framebuffer);
+    KIND(glCreateFramebuffers, glDeleteFramebuffers, Framebuffer);
     KIND(glGenRenderbuffers, glDeleteRenderbuffers, Renderbuffer);
     KIND(glGenSamplers, glDeleteSamplers, Sampler);
-    KIND(glGenTextures, glDeleteTextures, Texture);
+    KIND([](auto, auto) {}, glDeleteTextures, Texture);
     KIND(
       glGenTransformFeedbacks, glDeleteTransformFeedbacks, TransformFeedback);
     KIND(glGenVertexArrays, glDeleteVertexArrays, VertexArray);
@@ -120,6 +120,15 @@ generateShader(GLenum shader_type, GLuint *shader)
     GL_ASSIGN_CALL(*shader, glCreateShader, shader_type);
     if (*shader != 0)
         ++tab.instance_count[ObjectType::Shader];
+}
+
+void
+generateTexture(GLenum texture_type, GLuint *tex)
+{
+    auto tab = Tables::get();
+    GL_CALL(glCreateTextures, texture_type, 1, tex);
+    if (*tex != 0)
+        ++tab.instance_count[ObjectType::Texture];
 }
 
 void

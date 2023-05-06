@@ -56,13 +56,17 @@ public:
 
     void free();
 
-    const GLSamplerObject &sampler() const { return _sampler; }
-    const std::shared_ptr<TextureData> &data() const { return _data; }
+    [[nodiscard]] const GLSamplerObject &sampler() const { return _sampler; }
+    [[nodiscard]] const std::shared_ptr<TextureData> &data() const
+    {
+        return _data;
+    }
     std::shared_ptr<TextureData> &data() { return _data; }
     GLSamplerObject &ensureSampler();
 
-    void filterMode(FilterMode, Filter filter = Filter(FilterMin | FilterMag));
-    void clampMode(ClampMode, Axis axis = Axis(S | T | R));
+    void filterMode(FilterMode,
+                    Filter filter = Filter{ FilterMin | FilterMag });
+    void clampMode(ClampMode, Axis axis = Axis{ S | T | R });
 
     void bind(uint32_t idx, bool set_active_idx = true);
     void unbind(uint32_t idx, bool set_active_idx = true);

@@ -14,7 +14,7 @@ BL_DEF_TAG_CPO(printGLDebugMessages);
 BL_DEF_TAG_CPO(ignoreGLDebugMessage);
 
 using GLDebug = bl::any_unique_t<
-  bl::overload<void(bl::self &, const err::Location &)>(printGLDebugMessages),
+  bl::overload<bool(bl::self &, const err::Location &)>(printGLDebugMessages),
   bl::overload<void(bl::self &, OpenGLVendor, GLuint)>(ignoreGLDebugMessage)>;
 
 GLDebug

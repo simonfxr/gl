@@ -51,6 +51,9 @@ GLT_API void printStats(sys::io::OutStream);
 GLT_API void
 generateShader(GLenum shader_type, GLuint *shader);
 
+GLT_API void
+generateTexture(GLenum texture_type, GLuint *tex);
+
 template<ObjectType T>
 struct GLObject : private bl::non_copyable
 {
@@ -91,7 +94,7 @@ struct GLObject : private bl::non_copyable
     friend auto operator<=>(const GLObject &lhs, const GLObject &rhs) = default;
 
     void generate()
-        requires(T != ObjectType::Shader)
+        requires(T != ObjectType::Shader && T != ObjectType::Texture)
     {
         glt::generate(T, 1, &this->_name);
     }
@@ -100,6 +103,12 @@ struct GLObject : private bl::non_copyable
         requires(T == ObjectType::Shader)
     {
         generateShader(ty, &_name);
+    }
+
+    void generate(GLenum ty)
+        requires(T == ObjectType::Texture)
+    {
+        generateTexture(ty, &_name);
     }
 
     template<typename... Args>

@@ -209,9 +209,10 @@ struct ShaderTypeMapping
 constexpr const auto shaderTypeMappings = std::to_array<ShaderTypeMapping>(
   { { "frag"_sv, ShaderType::FragmentShader, GL_FRAGMENT_SHADER },
     { "vert"_sv, ShaderType::VertexShader, GL_VERTEX_SHADER },
-    { "geom"_sv, ShaderType::GeometryShader, GL_GEOMETRY_SHADER },
-    { "tctl"_sv, ShaderType::TesselationControl, GL_TESS_CONTROL_SHADER },
-    { "tevl"_sv, ShaderType::TesselationEvaluation, GL_TESS_EVALUATION_SHADER } });
+    { "geom"_sv, ShaderType::GeometryShader, GL_GEOMETRY_SHADER }
+    // { "tctl"_sv, ShaderType::TesselationControl, GL_TESS_CONTROL_SHADER },
+    // { "tevl"_sv, ShaderType::TesselationEvaluation, GL_TESS_EVALUATION_SHADER }
+});
 // clang-format on
 
 bool

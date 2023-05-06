@@ -23,15 +23,11 @@ TextureRenderTarget3D::resize(const math::ivec3 &s)
     auto [w, h, d] = s.cast<size_t>();
 
     if (width() == w && height() == h) {
-
         if (depth() == d)
             return;
-
-        // just bind a new texture
         _depth = d;
         createTexture(true);
     } else {
-
         _depth = d;
         TextureRenderTarget::resize(w, h);
     }
@@ -44,20 +40,15 @@ TextureRenderTarget3D::createTexture(bool delete_old)
         _sampler.data()->free();
 
     _sampler.data()->type(Texture3D);
+    auto tex = *_sampler.data()->ensureHandle();
 
-    _sampler.data()->bind(0, false);
-    GL_CALL(glTexImage3D,
-            GL_TEXTURE_3D,
-            0,
+    GL_CALL(glTextureStorage3D,
+            tex,
+            1,
             GLint(_color_format),
             GLsizei(width()),
             GLsizei(height()),
-            GLsizei(_depth),
-            0,
-            GL_RGB,
-            GL_UNSIGNED_BYTE,
-            nullptr);
-    _sampler.data()->unbind(0, false);
+            GLsizei(_depth));
 
     _sampler.filterMode(this->filterMode());
     _sampler.clampMode(this->clampMode());

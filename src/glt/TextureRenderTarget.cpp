@@ -35,8 +35,8 @@ TextureRenderTarget::resize(size_t w, size_t h)
 
     _frame_buffer.release();
     _depth_buffer.release();
-
     _frame_buffer.ensure();
+
     createTexture();
 
     if (buffers() & RT_DEPTH_BUFFER) {
@@ -78,36 +78,32 @@ TextureRenderTarget::createTexture(bool delete_old)
     _sampler.filterMode(_filter_mode);
     _sampler.clampMode(_clamp_mode);
 
-    _sampler.data()->bind(0, false);
+    auto tex = *_sampler.data()->ensureHandle();
     if (ttype == GL_TEXTURE_2D) {
-        GL_CALL(glTexImage2D,
-                GL_TEXTURE_2D,
-                0,
-                GL_RGBA,
+        GL_CALL(glTextureStorage2D,
+                tex,
+                1,
+                GL_RGBA8,
                 GLsizei(width()),
-                GLsizei(height()),
-                0,
-                GL_RGBA,
-                GL_UNSIGNED_BYTE,
-                nullptr);
+                GLsizei(height()));
     } else if (ttype == GL_TEXTURE_2D_MULTISAMPLE) {
-        GL_CALL(glTexImage2DMultisample,
-                GL_TEXTURE_2D_MULTISAMPLE,
+        GL_CALL(glTextureStorage2DMultisample,
+                tex,
                 GLsizei(_samples),
-                GL_RGBA,
+                GL_RGBA8,
                 GLsizei(width()),
                 GLsizei(height()),
-                GL_FALSE);
+                GL_TRUE);
     } else {
         ERR("unexpected Texture type");
     }
-    _sampler.data()->unbind(0, false);
 
-    GL_CALL(glNamedFramebufferTextureEXT,
+    GL_CALL(glNamedFramebufferTexture,
             *_frame_buffer,
             GL_COLOR_ATTACHMENT0,
             *_sampler.data()->handle(),
             0);
+    GL_CALL(glNamedFramebufferDrawBuffer, *_frame_buffer, GL_COLOR_ATTACHMENT0);
 }
 
 void

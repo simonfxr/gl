@@ -5,6 +5,8 @@
 #include "glt/module.hpp"
 #include "opengl.hpp"
 
+#include <config_gl.h>
+
 #include <bl/array.hpp>
 
 #include <cstring>
@@ -83,6 +85,32 @@ isExtensionSupported(bl::string_view extension)
     return false;
 }
 
+bool
+ensureExtensions()
+{
+    auto required = bl::array{ GL_REQUIRED_EXTENSIONS };
+    auto okay = true;
+    for (auto &ext : required) {
+        auto extv = bl::string_view{ ext, strlen(ext) };
+        if (!isExtensionSupported(extv)) {
+            sys::io::stderr()
+              << "required GL extension unsupported: "_k << extv << "\n"_k;
+            okay = false;
+        }
+    }
+
+    auto optional = bl::array{ GL_OPTIONAL_EXTENSIONS };
+    for (auto &ext : optional) {
+        auto extv = bl::string_view{ ext, strlen(ext) };
+        if (!isExtensionSupported(extv)) {
+            sys::io::stderr()
+              << "optional GL extension unsupported: "_k << extv << "\n"_k;
+        }
+    }
+
+    return okay;
+}
+
 void
 ignoreDebugMessage(OpenGLVendor vendor, GLuint id)
 {
@@ -112,16 +140,17 @@ bool
 checkForGLError(const err::Location *loc)
 {
 
-    if (G.print_opengl_calls && !loc->operation.empty()) {
+    if (G.print_opengl_calls && !loc->operation.empty())
         printGLTrace(loc);
-    }
 
-    bool was_error = false;
-
+    auto was_error = false;
     for (GLenum err; (err = glGetError()) != GL_NO_ERROR; was_error = true)
         printGLError(loc, err);
 
-    printGLDebugMessages(G.gl_debug, *loc);
+    was_error = printGLDebugMessages(G.gl_debug, *loc) || was_error;
+
+    if (was_error)
+        FATAL_ERR("GL error");
 
     return was_error;
 }

@@ -36,10 +36,12 @@ struct NoDebug final : public GLDebugBase<NoDebug>
 {
     NoDebug() = default;
 
-    friend void tag_invoke(printGLDebugMessages_f,
+    friend bool tag_invoke(printGLDebugMessages_f,
                            NoDebug &,
                            const err::Location &)
-    {}
+    {
+        return false;
+    }
 };
 
 struct ARBDebug final : public GLDebugBase<ARBDebug>
@@ -49,7 +51,7 @@ struct ARBDebug final : public GLDebugBase<ARBDebug>
     explicit ARBDebug(GLsizei buf_len);
 
     static bl::optional<GLDebug> init();
-    friend void tag_invoke(printGLDebugMessages_f,
+    friend bool tag_invoke(printGLDebugMessages_f,
                            ARBDebug &,
                            const err::Location &loc);
 };
@@ -62,7 +64,7 @@ struct AMDDebug final : public GLDebugBase<AMDDebug>
 
     static bl::optional<GLDebug> init();
 
-    friend void tag_invoke(printGLDebugMessages_f,
+    friend bool tag_invoke(printGLDebugMessages_f,
                            AMDDebug &,
                            const err::Location &loc);
 };
@@ -120,7 +122,7 @@ ARBDebug::init()
     return { GLDebug{ bl::in_place_type_t<ARBDebug>{}, max_len } };
 }
 
-void
+bool
 tag_invoke(printGLDebugMessages_f, ARBDebug &d, const err::Location &loc)
 {
 
@@ -132,6 +134,8 @@ tag_invoke(printGLDebugMessages_f, ARBDebug &d, const err::Location &loc)
 
     GLenum severity;
     GLsizei length;
+
+    auto high_sev = false;
 
     while (glGetDebugMessageLogARB(1,
                                    d.message_buffer.size(),
@@ -145,11 +149,11 @@ tag_invoke(printGLDebugMessages_f, ARBDebug &d, const err::Location &loc)
         if (d.shouldIgnore(id))
             continue;
 
-#define sym_case(v, c)                                                         \
+#define sym_case_sev(v, c, high)                                               \
     case c:                                                                    \
-        (v) = #c;                                                              \
+        (v) = #c, high_sev = high_sev || (high);                               \
         break
-
+#define sym_case(v, c) sym_case_sev(v, c, false)
         const char *ssrc;
         switch (source) {
             sym_case(ssrc, GL_DEBUG_SOURCE_API_ARB);
@@ -177,19 +181,19 @@ tag_invoke(printGLDebugMessages_f, ARBDebug &d, const err::Location &loc)
         char other_severity_buf[32];
         const char *ssev;
         switch (severity) {
-            sym_case(ssev, GL_DEBUG_SEVERITY_HIGH_ARB);
-            sym_case(ssev, GL_DEBUG_SEVERITY_MEDIUM_ARB);
+            sym_case_sev(ssev, GL_DEBUG_SEVERITY_HIGH_ARB, true);
+            sym_case_sev(ssev, GL_DEBUG_SEVERITY_MEDIUM_ARB, true);
             sym_case(ssev, GL_DEBUG_SEVERITY_LOW_ARB);
         default:
             switch (severity) {
                 sym_case(ssev, GL_DEBUG_SEVERITY_NOTIFICATION);
-                sym_case(ssev, GL_DEBUG_SEVERITY_HIGH);
-                sym_case(ssev, GL_DEBUG_SEVERITY_MEDIUM);
+                sym_case_sev(ssev, GL_DEBUG_SEVERITY_HIGH, true);
+                sym_case_sev(ssev, GL_DEBUG_SEVERITY_MEDIUM, true);
                 sym_case(ssev, GL_DEBUG_SEVERITY_LOW);
             default:
                 switch (severity) {
-                    sym_case(ssev, GL_DEBUG_SEVERITY_HIGH);
-                    sym_case(ssev, GL_DEBUG_SEVERITY_MEDIUM);
+                    sym_case_sev(ssev, GL_DEBUG_SEVERITY_HIGH, true);
+                    sym_case_sev(ssev, GL_DEBUG_SEVERITY_MEDIUM, true);
                     sym_case(ssev, GL_DEBUG_SEVERITY_LOW);
                     sym_case(ssev, GL_DEBUG_SEVERITY_NOTIFICATION);
                 default:
@@ -203,6 +207,7 @@ tag_invoke(printGLDebugMessages_f, ARBDebug &d, const err::Location &loc)
         }
 
 #undef sym_case
+#undef sym_case_sev
 
         sys::io::ByteStream mesg;
         mesg << "source: "_k << bl::from_cstring(ssrc) << ", severity: "_k
@@ -216,6 +221,8 @@ tag_invoke(printGLDebugMessages_f, ARBDebug &d, const err::Location &loc)
                          err::LogLevel::Error,
                          bl::move(mesg).str());
     }
+
+    return high_sev;
 }
 
 AMDDebug::AMDDebug(GLsizei buf_len) : message_buffer(buf_len)
@@ -241,7 +248,7 @@ AMDDebug::init()
     return { GLDebug{ bl::in_place_type_t<AMDDebug>{}, max_len } };
 }
 
-void
+bool
 tag_invoke(printGLDebugMessages_f, AMDDebug &d, const err::Location &loc)
 {
 
@@ -250,6 +257,8 @@ tag_invoke(printGLDebugMessages_f, AMDDebug &d, const err::Location &loc)
 
     GLuint id;
     GLsizei length;
+
+    auto high_sev = false;
 
     while (glGetDebugMessageLogAMD(1,
                                    d.message_buffer.size(),
@@ -262,10 +271,11 @@ tag_invoke(printGLDebugMessages_f, AMDDebug &d, const err::Location &loc)
         if (d.shouldIgnore(id))
             continue;
 
-#define sym_case(v, c)                                                         \
+#define sym_case_sev(v, c, hi)                                                 \
     case c:                                                                    \
-        (v) = #c;                                                              \
+        (v) = #c, high_sev = high_sev || (hi);                                 \
         break
+#define sym_case(v, c) sym_case_sev(v, c, false)
 
         const char *scat;
         switch (category) {
@@ -283,14 +293,15 @@ tag_invoke(printGLDebugMessages_f, AMDDebug &d, const err::Location &loc)
 
         const char *ssev;
         switch (severity) {
-            sym_case(ssev, GL_DEBUG_SEVERITY_HIGH_AMD);
-            sym_case(ssev, GL_DEBUG_SEVERITY_MEDIUM_AMD);
+            sym_case_sev(ssev, GL_DEBUG_SEVERITY_HIGH_AMD, true);
+            sym_case_sev(ssev, GL_DEBUG_SEVERITY_MEDIUM_AMD, true);
             sym_case(ssev, GL_DEBUG_SEVERITY_LOW_AMD);
         default:
             ssev = "unknown";
         }
 
 #undef sym_case
+#undef sym_case_sev
 
         sys::io::ByteStream mesg;
         mesg << "category: "_k << bl::from_cstring(scat) << ", severity: "_k
@@ -303,6 +314,8 @@ tag_invoke(printGLDebugMessages_f, AMDDebug &d, const err::Location &loc)
                          err::LogLevel::Error,
                          bl::move(mesg).str());
     }
+
+    return high_sev;
 }
 
 GLDebug
