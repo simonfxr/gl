@@ -18,24 +18,24 @@ using namespace bl::literals;
 
 namespace {
 
-using Generator = PFNGLGENBUFFERSPROC;
-using Destructor = PFNGLDELETEBUFFERSPROC;
+using Generator = void (*)(GLsizei, GLuint *);
+using Destructor = void (*)(GLsizei, const GLuint *);
 
-void APIENTRY
+void
 gen_programs(GLsizei n, GLuint *names)
 {
     for (GLsizei i = 0; i < n; ++i)
         names[i] = glCreateProgram();
 }
 
-void APIENTRY
+void
 del_programs(GLsizei n, const GLuint *names)
 {
     for (GLsizei i = 0; i < n; ++i)
         glDeleteProgram(names[i]);
 }
 
-void APIENTRY
+void
 del_shaders(GLsizei n, const GLuint *names)
 {
     for (GLsizei i = 0; i < n; ++i)
@@ -71,9 +71,13 @@ struct Tables
 Tables::Tables()
 {
     int i = 0;
-#define KIND(g, d, k) (kinds[ObjectType::k] = ObjectKind(g, d, #k)), ++i
+#define KIND(g, d, k)                                                          \
+    (kinds[ObjectType::k] = ObjectKind([](auto n, auto vs) { g(n, vs); },      \
+                                       [](auto n, auto vs) { d(n, vs); },      \
+                                       #k)),                                   \
+      ++i
     KIND(gen_programs, del_programs, Program);
-    KIND(nullptr, del_shaders, Shader);
+    KIND([](auto, auto) {}, del_shaders, Shader);
     KIND(glGenBuffers, glDeleteBuffers, Buffer);
     KIND(glGenFramebuffers, glDeleteFramebuffers, Framebuffer);
     KIND(glGenRenderbuffers, glDeleteRenderbuffers, Renderbuffer);

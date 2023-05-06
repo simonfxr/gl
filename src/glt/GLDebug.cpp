@@ -1,4 +1,5 @@
 #include "glt/GLDebug.hpp"
+
 #include "glt/conf.hpp"
 #include "glt/utils.hpp"
 
@@ -181,10 +182,10 @@ tag_invoke(printGLDebugMessages_f, ARBDebug &d, const err::Location &loc)
             sym_case(ssev, GL_DEBUG_SEVERITY_LOW_ARB);
         default:
             switch (severity) {
-                sym_case(ssev, GL_DEBUG_SEVERITY_NOTIFICATION_KHR);
-                sym_case(ssev, GL_DEBUG_SEVERITY_HIGH_KHR);
-                sym_case(ssev, GL_DEBUG_SEVERITY_MEDIUM_KHR);
-                sym_case(ssev, GL_DEBUG_SEVERITY_LOW_KHR);
+                sym_case(ssev, GL_DEBUG_SEVERITY_NOTIFICATION);
+                sym_case(ssev, GL_DEBUG_SEVERITY_HIGH);
+                sym_case(ssev, GL_DEBUG_SEVERITY_MEDIUM);
+                sym_case(ssev, GL_DEBUG_SEVERITY_LOW);
             default:
                 switch (severity) {
                     sym_case(ssev, GL_DEBUG_SEVERITY_HIGH);

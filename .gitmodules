@@ -4,6 +4,7 @@
 [submodule "deps/glad"]
 	path = deps/glad
 	url = https://github.com/Dav1dde/glad
+	branch = glad2
 [submodule "deps/cxx-header-utils"]
 	path = deps/cxx-header-utils
 	url = https://github.com/simonfxr/cxx-header-utils

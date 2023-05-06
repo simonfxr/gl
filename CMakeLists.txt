@@ -100,22 +100,34 @@ if(NOT TARGET glfw)
 endif()
 
 if(NOT TARGET glad::glad)
-  set(GLAD_PROFILE
-      compatibility
-      CACHE STRING "" FORCE)
-  set(GLAD_ALL_EXTENSIONS
-      On
-      CACHE BOOL "" FORCE)
-  set(GLAD_REPRODUCIBLE
-      On
-      CACHE BOOL "" FORCE)
-  add_subdirectory(deps/glad)
-  add_library(glad_dl INTERFACE)
-  target_link_libraries(glad_dl INTERFACE glad)
-  if(CMU_OBJFMT_ELF)
-    target_link_libraries(glad_dl INTERFACE dl)
-  endif()
-  add_library(glad::glad ALIAS glad_dl)
+  find_package(
+    Python3 3.9
+    COMPONENTS Interpreter
+    REQUIRED)
+  set(PythonInterp_FOUND TRUE)
+  set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
+  add_subdirectory(deps/glad/cmake "glad_cmake")
+  set(glad_extensions
+      GL_AMD_debug_output
+      GL_ARB_debug_output
+      GL_ATI_meminfo
+      GL_EXT_debug_marker
+      GL_EXT_direct_state_access
+      GL_KHR_debug
+      GL_NVX_gpu_memory_info
+      GL_ARB_multisample)
+
+  glad_add_library(
+    glad_generated
+    MERGE
+    LANGUAGE
+    C
+    REPRODUCABLE
+    API
+    gl:compatibility=4.6
+    EXTENSIONS
+    ${glad_extensions})
+  add_library(glad::glad ALIAS glad_generated)
 endif()
 
 add_subdirectory(deps/cxx-header-utils)

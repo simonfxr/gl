@@ -8,7 +8,7 @@ PRAGMA_DIAGNOSTIC_PUSH
 #    pragma clang diagnostic ignored "-Wreserved-identifier"
 #endif
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 
 PRAGMA_DIAGNOSTIC_POP
 

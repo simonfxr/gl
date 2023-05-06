@@ -387,7 +387,8 @@ GameWindow::Impl::init(const WindowOptions &opts)
     glfwMakeContextCurrent(win);
 
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
+    auto version = gladLoadGL(glfwGetProcAddress);
+    if (!version)
         FATAL_ERR("GLAD initialization failed");
     GL_CHECK_ERRORS();
 

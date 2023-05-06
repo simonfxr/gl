@@ -237,7 +237,7 @@ main()
     glfwMakeContextCurrent(window);
 
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
+    if (!gladLoadGL(glfwGetProcAddress))
         goto err2;
 
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);

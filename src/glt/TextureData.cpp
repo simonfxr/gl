@@ -1,4 +1,5 @@
 #include "glt/TextureData.hpp"
+
 #include "err/err.hpp"
 #include "glt/utils.hpp"
 
@@ -99,9 +100,10 @@ TextureData::upload(const Image &img)
 
     if (_handle && (old_dim[0] * old_dim[1]) != 0 &&
         old_format == _allocated_format && old_dim == _allocated_dim) {
-        GL_CALL(glTexSubImage2DEXT,
+        GL_CALL(glTextureSubImage2DEXT,
                 *ensureHandle(),
                 GL_TEXTURE_2D,
+                0,
                 0,
                 0,
                 GLint(img.width()),

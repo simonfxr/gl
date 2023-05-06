@@ -62,7 +62,7 @@ main()
     glfwMakeContextCurrent(window);
 
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
+    if (!gladLoadGL(glfwGetProcAddress)) {
         fprintf(log, "GLAD init failed\n");
         ret = -1;
         goto err_win;

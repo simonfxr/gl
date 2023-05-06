@@ -41,7 +41,6 @@ getGLErrorString(GLenum err)
         err_case(GL_STACK_OVERFLOW);
         err_case(GL_STACK_UNDERFLOW);
         err_case(GL_OUT_OF_MEMORY);
-        err_case(GL_TABLE_TOO_LARGE);
         err_case(GL_INVALID_FRAMEBUFFER_OPERATION);
 #undef err_case
     default:
