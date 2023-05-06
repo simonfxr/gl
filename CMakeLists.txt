@@ -115,8 +115,9 @@ set(GL_OPTIONAL_EXTENSIONS
     GL_ARB_transform_feedback2)
 
 if(NOT TARGET glad::glad)
+  # FIXME it finds some random nix python?
   find_package(
-    Python3 3.9
+    Python3 3.11
     COMPONENTS Interpreter
     REQUIRED)
   set(PythonInterp_FOUND TRUE)

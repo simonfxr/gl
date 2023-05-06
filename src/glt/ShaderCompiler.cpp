@@ -350,7 +350,7 @@ translateShaderType(ShaderType type, const bl::string &basename)
     if (type == ShaderType::GuessShaderType) {
         auto guess = ShaderCompiler::guessShaderType(basename);
         if (!guess)
-            return false;
+            return {};
         type = *guess;
     }
 
