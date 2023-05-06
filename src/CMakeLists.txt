@@ -59,6 +59,25 @@ endif()
 
 cmu_add_library(math SOURCES math/math.cpp DEPEND bl sys)
 
+set(GL_REQUIRED_EXTENSIONS_LIST "")
+set(sep "")
+foreach(v ${GL_REQUIRED_EXTENSIONS})
+  set(GL_REQUIRED_EXTENSIONS_LIST
+      "${GL_REQUIRED_EXTENSIONS_LIST}${sep}\"${v}\"")
+  set(sep ",")
+endforeach()
+
+set(GL_OPTIONAL_EXTENSIONS_LIST "")
+set(sep "")
+foreach(v ${GL_OPTIONAL_EXTENSIONS})
+  set(GL_OPTIONAL_EXTENSIONS_LIST
+      "${GL_OPTIONAL_EXTENSIONS_LIST}${sep}\"${v}\"")
+  set(sep ",")
+endforeach()
+
+set(config_gl_h ${CMAKE_CURRENT_BINARY_DIR}/config_gl.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config_gl.h.in ${config_gl_h} @ONLY)
+
 set(GLT_SRC
     glt/Frame.cpp
     glt/GLDebug.cpp
@@ -99,6 +118,7 @@ cmu_add_library(
   bl
   sys
   ${GLT_LIBS})
+target_include_directories(glt PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 set(GE_SRC
     ge/Camera.cpp

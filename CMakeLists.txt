@@ -99,6 +99,11 @@ if(NOT TARGET glfw)
   add_library(glfw::glfw ALIAS glfw)
 endif()
 
+set(GL_REQUIRED_EXTENSIONS GL_EXT_direct_state_access)
+set(GL_OPTIONAL_EXTENSIONS
+    GL_AMD_debug_output GL_ARB_debug_output GL_ATI_meminfo
+    GL_NVX_gpu_memory_info GL_ARB_multisample)
+
 if(NOT TARGET glad::glad)
   find_package(
     Python3 3.9
@@ -107,15 +112,6 @@ if(NOT TARGET glad::glad)
   set(PythonInterp_FOUND TRUE)
   set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
   add_subdirectory(deps/glad/cmake "glad_cmake")
-  set(glad_extensions
-      GL_AMD_debug_output
-      GL_ARB_debug_output
-      GL_ATI_meminfo
-      GL_EXT_debug_marker
-      GL_EXT_direct_state_access
-      GL_KHR_debug
-      GL_NVX_gpu_memory_info
-      GL_ARB_multisample)
 
   glad_add_library(
     glad_generated
@@ -124,9 +120,10 @@ if(NOT TARGET glad::glad)
     C
     REPRODUCABLE
     API
-    gl:compatibility=4.6
+    gl:compatibility=4.5
     EXTENSIONS
-    ${glad_extensions})
+    ${GL_REQUIRED_EXTENSIONS}
+    ${GL_OPTIONAL_EXTENSIONS})
   add_library(glad::glad ALIAS glad_generated)
 endif()
 
