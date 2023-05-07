@@ -7,7 +7,7 @@
 #include "sys/fiber.hpp"
 #include "sys/io_operators.hpp"
 
-#include <bl/any_unique.hpp>
+#include <bl/any_ref.hpp>
 #include <bl/array.hpp>
 #include <bl/enum.hpp>
 #include <bl/pair.hpp>

@@ -6,6 +6,7 @@
 #include "glt/utils.hpp"
 #include "opengl.hpp"
 
+#include <bl/any_unique.hpp>
 #include <bl/noncopymove.hpp>
 
 namespace glt {
