@@ -88,7 +88,7 @@ dirname(bl::string_view path)
     if (pos == 0)
         return "/"_s;
 
-    return view_substr(path, 0, pos);
+    return path.first(pos);
 }
 
 bl::string
@@ -111,7 +111,7 @@ basename(bl::string_view path)
     if (end == bl::string::npos)
         end = path.size();
 
-    return view_substr(path, pos, end - pos);
+    return path.subspan(pos, end - pos);
 }
 
 bl::string
@@ -129,7 +129,7 @@ extension(bl::string_view path)
     pos = path.find('.', pos);
     if (pos == bl::string::npos)
         return ""_s;
-    return view_substr(path, pos + 1);
+    return path.subspan(pos + 1);
 }
 
 bool
@@ -180,9 +180,9 @@ modificationTime(bl::string_view path)
 }
 
 bl::string
-lookup(bl::span<const bl::string> dirs, bl::string_view name, ObjectType type)
+lookup(bl::span<const bl::string> dirs, bl::string_view path, ObjectType type)
 {
-    return def::lookup(dirs, name, type);
+    return def::lookup(dirs, path, type);
 }
 
 bl::optional<ObjectType>

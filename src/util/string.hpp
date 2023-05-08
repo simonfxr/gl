@@ -31,18 +31,4 @@ scat(Args &&...args)
     return bl::move(sstream).str();
 }
 
-inline bl::string_view
-view_substr(bl::string_view s, size_t begin)
-{
-    ASSERT(begin <= s.size());
-    return { s.data() + begin, s.size() - begin };
-}
-
-inline bl::string_view
-view_substr(bl::string_view s, size_t begin, size_t len)
-{
-    ASSERT(begin <= s.size() && begin + len <= s.size());
-    return { s.data() + begin, len };
-}
-
 #endif

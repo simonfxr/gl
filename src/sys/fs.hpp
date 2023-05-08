@@ -79,7 +79,7 @@ HU_NODISCARD SYS_API bl::string
 absolutePath(bl::string_view path);
 
 HU_NODISCARD SYS_API bl::string
-lookup(bl::span<const bl::string>, bl::string_view path, ObjectType type);
+lookup(bl::span<const bl::string> dirs, bl::string_view path, ObjectType type);
 
 HU_NODISCARD SYS_API bl::optional<ObjectType>
 exists(bl::string_view path);

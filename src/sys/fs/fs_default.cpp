@@ -20,16 +20,6 @@ is_pathsep(bl::cbyte c)
 #endif
 }
 
-bool
-is_pathsep(bl::string_view s)
-{
-#ifdef HU_OS_WINDOWS
-    return c == SEPARATOR || c == UNIX_SEPARATOR;
-#else
-    return s == SEPARATOR;
-#endif
-}
-
 bl::usize
 dropTrailingSeps(bl::string_view path)
 {
@@ -81,7 +71,7 @@ dirname(bl::string_view path)
     if (len == 0)
         return "/"_s;
 
-    return view_substr(path, 0, len);
+    return path.first(len);
 }
 
 bl::string
@@ -104,7 +94,7 @@ basename(bl::string_view path)
     if (end == bl::string::npos)
         end = path.size();
 
-    return view_substr(path, pos, end - pos);
+    return path.subspan(pos, end - pos);
 }
 
 bl::string
@@ -116,7 +106,7 @@ extension(bl::string_view path)
     pos = path.find('.', pos);
     if (pos == bl::string::npos)
         return ""_s;
-    return view_substr(path, pos + 1);
+    return path.subspan(pos + 1);
 }
 
 bl::string
@@ -128,7 +118,7 @@ dropExtension(bl::string_view path)
     pos = path.find('.', pos);
     if (pos == bl::string::npos)
         return path;
-    return view_substr(path, 0, pos);
+    return path.first(pos);
 }
 
 bl::string
@@ -137,7 +127,7 @@ dropTrailingSeparators(bl::string_view path)
     auto pos = dropTrailingSeps(path);
     if (pos == bl::string::npos)
         return bl::string(path);
-    return view_substr(path, 0, pos);
+    return path.first(pos);
 }
 
 bl::optional<ObjectType>
