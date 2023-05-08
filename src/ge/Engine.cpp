@@ -226,7 +226,7 @@ Engine::run(const EngineOptions &opts)
     m().programName = sys::fs::dropExtension(sys::fs::basename(opts.binary));
 
     if (!wd.empty()) {
-        if (!sys::fs::cwd(wd)) {
+        if (!sys::fs::changeDirectory(wd)) {
             ERR(scat("couldnt change into directory: "_k, wd));
             return 1;
         }

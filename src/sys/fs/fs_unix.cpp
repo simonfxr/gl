@@ -22,7 +22,7 @@ namespace sys::fs {
 using namespace bl::literals;
 
 bool
-cwd(bl::string_view dir)
+changeDirectory(bl::string_view dir)
 {
     auto cstr = bl::cstring_view{ dir };
     if (chdir(cstr.c_str()) < 0) {
@@ -33,7 +33,7 @@ cwd(bl::string_view dir)
 }
 
 bl::string
-cwd()
+currentDirectory()
 {
     using namespace bl::literals;
     bl::string path(96_z, '\0');
@@ -46,7 +46,7 @@ retry:
                 goto retry;
             }
             if (errno != EINTR) {
-                ERR(scat("cwd() failed: "_sv, strerror_errno()));
+                ERR(scat("getcwd() failed: "_sv, strerror_errno()));
                 return ""_s;
             }
         }
@@ -144,7 +144,7 @@ absolutePath(bl::string_view path)
     if (isAbsolute(path))
         return bl::string{ path };
 
-    auto dir = cwd();
+    auto dir = currentDirectory();
     if (dir.empty())
         return ""_s;
 

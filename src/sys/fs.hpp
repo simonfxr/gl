@@ -46,10 +46,10 @@ struct Stat
 };
 
 HU_NODISCARD SYS_API bool
-cwd(bl::string_view dir);
+changeDirectory(bl::string_view dir);
 
 HU_NODISCARD SYS_API bl::string
-cwd();
+currentDirectory();
 
 HU_NODISCARD SYS_API bl::string
 dirname(bl::string_view path);

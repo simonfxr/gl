@@ -27,14 +27,14 @@ filetimeToUnixTimestap(const FILETIME *ft)
 } // namespace
 
 bool
-cwd(bl::string_view dir)
+changeDirectory(bl::string_view dir)
 {
     auto dirstr = bl::string(dir);
     return SetCurrentDirectory(dirstr.c_str()) == TRUE;
 }
 
 bl::string
-cwd()
+currentDirectory()
 {
     win::platform_string dir(MAX_PATH, '\0');
     auto len = GetCurrentDirectoryW(DWORD(dir.size()), dir.data());
