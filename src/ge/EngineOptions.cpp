@@ -239,26 +239,20 @@ EngineOptions::parse(int *argcp, char ***argvp)
 
     auto dest = 1;
 
-    auto str_view = [](auto s) {
-        if (s)
-            return bl::string_view{ s, strlen(s) };
-        return ""_k;
-    };
-
     auto state = State{ *this };
     if (argc > 0) {
-        binary = sys::fs::absolutePath(str_view(argv[0]));
+        binary = sys::fs::absolutePath(bl::from_cstring(argv[0]));
         window.title = sys::fs::dropExtension(sys::fs::basename(binary));
     }
 
     auto done = false;
     int i;
     for (i = 1; i < argc && !done;) {
-        auto arg = str_view(argv[i]);
+        auto arg = bl::from_cstring(argv[i]);
         auto err = false;
         auto skip = 0;
 
-        if (arg == "-"_k) {
+        if (arg.starts_with("-"_k)) {
 
             if (arg == "--"_k) {
                 skip = 1;

@@ -197,10 +197,8 @@ Engine::programName() const
 int32_t
 Engine::run(const EngineOptions &opts)
 {
-    if (m().initialized) {
-        ERR("Engine already initialized: called run multiply times?");
-        return 1;
-    }
+    if (m().initialized)
+        FATAL_ERR("Engine already initialized: called run multiply times?");
 
     if (opts.mode == EngineOptions::Help) {
         EngineOptions::printHelp();

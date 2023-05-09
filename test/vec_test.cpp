@@ -67,8 +67,8 @@ CTEST_GROUP("vec3")
 
     CTEST("vec cast")
     {
-        auto v = ivec3(1, 2, 3);
-        auto [w, h, d] = std::as_const(v).cast<size_t>();
+        auto vv = ivec3(1, 2, 3);
+        auto [w, h, d] = std::as_const(vv).cast<size_t>();
         UNUSED(w);
         UNUSED(h);
         UNUSED(d);

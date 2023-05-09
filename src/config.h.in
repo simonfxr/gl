@@ -1,0 +1,6 @@
+#ifndef GL_CONFIG_H
+#define GL_CONFIG_H
+
+#cmakedefine01 BUILD_OPTIMIZED_P
+
+#endif // GL_CONFIG_H

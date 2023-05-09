@@ -31,7 +31,7 @@ template<typename F>
 inline std::shared_ptr<Command>
 operator+(CommandDecl &&decl, F f)
 {
-    return makeCommand(decl.name, decl.descr, decay_stateless_functor(f));
+    return makeCommand(decl.name, decl.descr, util::decay_stateless_functor(f));
 }
 
 struct InitCommandHandler : public EventHandler<InitEvent>
@@ -384,7 +384,7 @@ COMMAND("postInit", "execute its argument command in the postInit hook")
 }
 
 COMMAND("startReplServer", "start a REPL server on the given port")
-(const Event<CommandEvent> &ev, bl::span<const CommandArg> args)
+(const Event<CommandEvent> &ev, int64_t port)
 {
     auto &e = ev.info.engine;
     auto &serv = e.replServer();
@@ -394,7 +394,6 @@ COMMAND("startReplServer", "start a REPL server on the given port")
         return;
     }
 
-    auto port = args[0].integer;
     auto p16 = static_cast<uint16_t>(port);
 
     if (port < 0 || p16 != port) {

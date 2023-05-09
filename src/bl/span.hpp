@@ -80,16 +80,28 @@ struct span : private std::span<T, Extent>
 
     constexpr size_type find(T ch, size_type pos = 0) const noexcept
     {
-        using CharT = std::decay_t<T>;
-        using SV = std::basic_string_view<CharT, std::char_traits<CharT>>;
-        return SV{ data(), size() }.find(ch, pos);
+        return to_std_sv().find(ch, pos);
     }
 
     constexpr size_type rfind(T ch, size_type pos = npos) const noexcept
     {
-        using CharT = std::decay_t<T>;
-        using SV = std::basic_string_view<CharT, std::char_traits<CharT>>;
-        return SV{ data(), size() }.rfind(ch, pos);
+        return to_std_sv().rfind(ch, pos);
+    }
+
+    template<typename U, size_t M>
+    constexpr bool starts_with(span<U, M> prefix) noexcept
+    {
+        static_assert(M >= Extent ||
+                      (M == dynamic_extent && Extent != dynamic_extent));
+        return to_std_sv().starts_with(prefix.to_std_sv());
+    }
+
+    template<typename U, size_t M>
+    constexpr bool ends_with(span<U, M> prefix) noexcept
+    {
+        static_assert(M >= Extent ||
+                      (M == dynamic_extent && Extent != dynamic_extent));
+        return to_std_sv().ends_with(prefix.to_std_sv());
     }
 
     friend constexpr bool operator==(const span &lhs, const span &rhs) noexcept
@@ -138,6 +150,13 @@ private:
     static constexpr span<U, Extent2> from_std(std::span<U, Extent2> s) noexcept
     {
         return { s.data(), s.size() };
+    }
+
+    constexpr auto to_std_sv() const noexcept
+    {
+        using CharT = std::decay_t<T>;
+        using SV = std::basic_string_view<CharT, std::char_traits<CharT>>;
+        return SV{ data(), size() };
     }
 }; // namespace bl
 

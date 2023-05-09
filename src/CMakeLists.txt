@@ -9,6 +9,14 @@ endif()
 set(bl_SOURCES bl/rand.cpp)
 cmu_add_library(bl SOURCES ${bl_SOURCES} DEPEND sfx-bitops::sfx-bitops)
 
+set(BUILD_OPTIMIZED_P 0)
+if(CMU_BUILD_TYPE MATCHES "RELWITHDEBINFO|RELEASE|MINSIZEREL")
+  set(BUILD_OPTIMIZED_P 1)
+endif()
+
+set(config_h ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${config_h} @ONLY)
+
 set(ERR_SRC err/err.cpp)
 
 set(ERR_LIBS)
@@ -56,8 +64,10 @@ target_compile_definitions(sys PUBLIC ${FIBER_DEFINES})
 if(ERR_DEFINES)
   target_compile_definitions(sys PRIVATE ${ERR_DEFINES})
 endif()
+target_include_directories(sys PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 cmu_add_library(math SOURCES math/math.cpp DEPEND bl sys)
+target_include_directories(math PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 set(GL_REQUIRED_EXTENSIONS_LIST "")
 set(sep "")
@@ -118,7 +128,7 @@ cmu_add_library(
   bl
   sys
   ${GLT_LIBS})
-target_include_directories(glt PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(glt PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 set(GE_SRC
     ge/Camera.cpp
@@ -151,3 +161,4 @@ cmu_add_library(
   sys
   glt
   glfw::glfw)
+target_include_directories(ge PUBLIC ${CMAKE_CURRENT_BINARY_DIR})

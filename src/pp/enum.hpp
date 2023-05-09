@@ -21,7 +21,7 @@ case tag:                                                                      \
 #define PP_ENUM_DEF_WRAPPER(name) PP_CAT(name, _wrapper_type)
 
 #define PP_DEF_ENUM(NAME, UNDERLYING, ...)                                     \
-    struct PP_ENUM_DEF_WRAPPER(NAME)                                           \
+    struct PP_ENUM_DEF_WRAPPER(NAME) final                                     \
     {                                                                          \
         using underlying_t = UNDERLYING;                                       \
         enum NAME : UNDERLYING                                                 \
@@ -50,7 +50,11 @@ case tag:                                                                      \
         {                                                                      \
             return out << to_string(_enum_value_);                             \
         }                                                                      \
+                                                                               \
+        PP_ENUM_DEF_WRAPPER(NAME)() = delete;                                  \
+        ~PP_ENUM_DEF_WRAPPER(NAME)() = delete;                                 \
     };                                                                         \
+                                                                               \
     using NAME = PP_ENUM_DEF_WRAPPER(NAME)::NAME
 
 #endif // PP_ENUM_SIMPLE_HPP

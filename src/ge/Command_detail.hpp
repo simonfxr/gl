@@ -177,7 +177,7 @@ invoke(F &&f,
 
 template<typename FTraits, size_t... Is>
 auto make_arg_seq(std::index_sequence<Is...>)
-  -> CommandArgSeq<functor_traits_arg_type<FTraits, Is + 1>...>;
+  -> CommandArgSeq<util::functor_traits_arg_type<FTraits, Is + 1>...>;
 
 template<typename FTraits>
 auto

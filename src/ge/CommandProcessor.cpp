@@ -180,7 +180,7 @@ CommandProcessor::exec(const CommandPtr &com, bl::span<CommandArg> args)
     auto rest_args = !params.empty() && params[params.size() - 1] == PT::List;
     auto nparams = rest_args ? params.size() - 1 : params.size();
 
-    if (nparams != args.size() && !(rest_args && args.size() > nparams)) {
+    if (!(rest_args ? args.size() >= nparams : args.size() == nparams)) {
         sys::io::ByteStream err;
         if (!comname.empty())
             err << "executing Command "_k << comname << ": "_k;
@@ -190,8 +190,8 @@ CommandProcessor::exec(const CommandPtr &com, bl::span<CommandArg> args)
         if (rest_args)
             err << " or more"_k;
         err << " got "_k << args.size();
-        err << " (rest_args="_k << rest_args << ", nparams="_k << nparams
-            << ")"_k;
+        err << " parameters (rest_args="_k << rest_args << ", nparams="_k
+            << nparams << ")"_k;
         ERR(engine().out(), err.str());
     }
 

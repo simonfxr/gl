@@ -40,7 +40,7 @@ public:
     Command(Command &&) = default;
 
     virtual ~Command() override;
-    bl::vec<CommandParamType> parameters() const { return params; }
+    bl::span<const CommandParamType> parameters() const { return params; }
     const bl::string &name() const { return namestr; }
     void name(const bl::string &new_name)
     {
@@ -89,7 +89,7 @@ struct FunctorCommand : public Command
     }
 
 private:
-    using ftraits = functor_traits<F>;
+    using ftraits = util::functor_traits<F>;
 
     static_assert(std::is_same_v<typename ftraits::result_type, void>);
     static_assert(ftraits::arity > 0);

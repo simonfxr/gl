@@ -60,7 +60,8 @@ template<typename F>
 inline auto
 makeEventHandler(F f)
 {
-    using T = event_value_type<std::decay_t<functor_arg_type<F, 0>>>;
+    using T = event_value_type<
+      std::decay_t<util::functor_traits_arg_type<util::functor_traits<F>, 0>>>;
     // avoid excessive std::shared_ptr<XX> template instantiations
     return std::shared_ptr<EventHandler<T>>(static_cast<EventHandler<T> *>(
       new FunctorEventHandler<F, T>(bl::move(f))));

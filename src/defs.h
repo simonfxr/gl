@@ -1,10 +1,24 @@
 #ifndef DEFS_H_INCLUDED
 #define DEFS_H_INCLUDED
 
-#ifndef _GNU_SOURCE
-#    ifndef _POSIX_C_SOURCE
-#        define _POSIX_C_SOURCE 200809L
+#if defined __unix__ || defined __unix || defined _POSIX_VERSION ||            \
+  defined __APPLE__
+#    ifndef _GNU_SOURCE
+#        ifndef _POSIX_C_SOURCE
+#            define _POSIX_C_SOURCE 200809L
+#        endif
 #    endif
+#endif
+
+#include <hu/os.h>
+
+#if HU_OS_WINDOWS_P
+#    ifndef _WINVER
+/* Windows 7 */
+#        define _WINVER 0x0601
+#    endif
+#    undef _WIN32_WINNT
+#    define _WIN32_WINNT _WINVER
 #endif
 
 #include <hu/hu.h>
@@ -14,6 +28,16 @@
 #    define VC_EXTRALEAN 1
 #    define NOMINMAX 1
 #    define NOGDI 1
+#endif
+
+#include <config.h>
+
+#if HU_COMP_GNUC_P
+#    if defined __OPTIMIZE__ && !BUILD_OPTIMIZED_P
+#        error "__OPTIMIZE__ is defined but not BUILD_OPTIMIZED_P is false"
+#    elif !defined __OPTIMIZE__ && BUILD_OPTIMIZED_P
+#        error "__OPTIMIZE__ is undefined but BUILD_OPTIMIZED_P is true"
+#    endif
 #endif
 
 #ifdef __cplusplus
@@ -79,16 +103,8 @@
 #if HU_COMP_CLANG_P
 #    define IGNORE_RESULT(x) ((void) (x))
 #else
-#    define IGNORE_RESULT_(id, x)                                              \
-        do {                                                                   \
-            auto PP_CAT(ignored_, id) = (x);                                   \
-            UNUSED(PP_CAT(ignored_, id));                                      \
-        } while (0)
-#    ifdef __COUNTER__
-#        define IGNORE_RESULT(x) IGNORE_RESULT_(__COUNTER__, x)
-#    else
-#        define IGNORE_RESULT(x) IGNORE_RESULT_(__LINE__, x)
-#    endif
+#    define IGNORE_RESULT(...)                                                 \
+        ([](auto &&unused) { UNUSED(unused); }(__VA__ARGS__))
 #endif
 
 #if HU_COMP_CLANG_P

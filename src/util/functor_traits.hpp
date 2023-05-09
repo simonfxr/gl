@@ -3,69 +3,74 @@
 
 #include "defs.h"
 
-#include <type_traits>
-#include <utility>
+#include <bl/tuple.hpp>
+#include <bl/type_traits.hpp>
 
-namespace detail {
-template<typename T>
-struct functor_traits_impl
-{};
+namespace util {
 
-template<typename Functor, typename Ret, typename... Args>
-struct functor_traits_impl<Ret (Functor::*)(Args...) const>
+namespace _util_internal {
+
+template<typename Ret, bool is_noexceptv, typename... Args>
+struct functor_traits
 {
-    static inline constexpr size_t arity = sizeof...(Args);
     using result_type = Ret;
-
-    template<size_t N>
+    using arguments = bl::tuple<Args...>;
+    static inline constexpr size_t arity = sizeof...(Args);
+    static inline constexpr bool is_noexcept = is_noexceptv;
+    template<size_t I>
     struct arg_type
     {
-        using type = std::tuple_element_t<N, std::tuple<Args...>>;
+        using type = bl::tuple_element_t<I, arguments>;
     };
+    using fptr_type = Ret (*)(Args...) noexcept(is_noexcept);
 };
 
-template<typename Ret, typename... Args>
-struct functor_traits_impl<Ret (*)(Args...)>
-{
-    static inline constexpr size_t arity = sizeof...(Args);
-    using result_type = Ret;
+template<typename Ret, typename... Args, bool is_noexcept>
+auto functor_traits_for(Ret (*)(Args...) noexcept(is_noexcept))
+  -> functor_traits<Ret, is_noexcept, Args...>;
 
-    template<size_t N>
-    struct arg_type
-    {
-        using type = std::tuple_element_t<N, std::tuple<Args...>>;
-    };
-};
+template<typename Ret, typename F, typename... Args, bool is_noexcept>
+auto functor_traits_for(Ret (F::*)(Args...) noexcept(is_noexcept))
+  -> functor_traits<Ret, is_noexcept, Args...>;
 
-template<typename F, typename Ret, typename... Args>
-inline auto
-decay_stateless_functor(F f, Ret (F::*)(Args...) const)
-{
-    return static_cast<Ret (*)(Args...)>(f);
-}
+template<typename Ret, typename F, typename... Args, bool is_noexcept>
+auto
+functor_traits_for(Ret (F::*)(Args...) const noexcept(is_noexcept))
+  -> functor_traits<Ret, is_noexcept, Args...>;
 
-} // namespace detail
+template<typename Ret, typename F, typename... Args, bool is_noexcept>
+auto functor_traits_with(F, Ret (F::*)(Args...) noexcept(is_noexcept))
+  -> functor_traits<Ret, is_noexcept, Args...>;
+
+template<typename Ret, typename F, typename... Args, bool is_noexcept>
+auto
+functor_traits_with(F, Ret (F::*)(Args...) const noexcept(is_noexcept))
+  -> functor_traits<Ret, is_noexcept, Args...>;
 
 template<typename F>
-struct functor_traits : detail::functor_traits_impl<decltype(&F::operator())>
-{};
+    requires(!std::is_pointer_v<F> && !std::is_member_pointer_v<F>)
+auto functor_traits_for(F f)
+  -> decltype(functor_traits_with(bl_declval(F), &F::operator()));
 
-template<typename Ret, typename... Args>
-struct functor_traits<Ret (*)(Args...)>
-  : detail::functor_traits_impl<Ret (*)(Args...)>
-{};
+} // namespace _util_internal
 
-template<typename F, size_t i>
-using functor_arg_type = typename functor_traits<F>::template arg_type<i>::type;
+template<typename F>
+using functor_traits =
+  decltype(_util_internal::functor_traits_for(bl_declval(F)));
 
-template<typename FTraits, size_t i>
-using functor_traits_arg_type = typename FTraits::template arg_type<i>::type;
+template<typename Traits, size_t I>
+using functor_traits_arg_type = typename Traits::template arg_type<I>::type;
 
-template<typename F, typename = std::enable_if<std::is_empty_v<F>>>
-auto
-decay_stateless_functor(F f)
+template<typename F, size_t I>
+using functor_arg_type = functor_traits_arg_type<functor_traits<F>, I>;
+
+template<typename F>
+BL_inline constexpr auto
+decay_stateless_functor(F &&f) noexcept
 {
-    return detail::decay_stateless_functor(f, &F::operator());
+    return static_cast<typename functor_traits<std::decay_t<F>>::fptr_type>(f);
 }
 
-#endif
+} // namespace util
+
+#endif // UTIL_FUNCTOR_TRAITS_HPP

@@ -52,10 +52,16 @@ fiber_cleanup(Fiber *self, void *args)
     fiber_switch(self, static_cast<Fiber *>(args));
 }
 
+struct ParserFiberArgs
+{
+    Client *client;
+};
+
 void
 run_parser_fiber(void *args)
 {
-    auto *c = static_cast<Client *>(args);
+    auto *c = static_cast<const ParserFiberArgs *>(args)->client;
+
     while (c->state != ParsingState::Stop) {
         auto ok = tokenize(c->parser, c->statement);
         if (ok) {
@@ -80,18 +86,16 @@ Client::Client(int _id, Handle h)
   , parser(in_stream, ""_k)
   , id(_id)
 {
-    (void) fiber_alloc(
-      &parser_fiber, 65536, fiber_cleanup, &client_fiber, true);
-    Client *parser_args = this;
+    (void) fiber_alloc(&parser_fiber,
+                       (1 + !!BUILD_OPTIMIZED_P) * 64_KiB,
+                       fiber_cleanup,
+                       &client_fiber,
+                       FIBER_FLAG_GUARD_LO | FIBER_FLAG_GUARD_HI);
+
+    ParserFiberArgs parser_args{ this };
     fiber_push_return(
-      &parser_fiber,
-      run_parser_fiber,
-      static_cast<void *>(&parser_args),
-      // we really pass a pointer here
-      sizeof parser_args /* NOLINT(bugprone-sizeof-expression)*/);
-    sys::io::ByteStream name;
-    name << "<repl "_k << id << ">"_k;
-    parser.filename = name.str();
+      &parser_fiber, run_parser_fiber, &parser_args, sizeof parser_args);
+    parser.filename = scat("<repl "_k, id, ">"_k);
 }
 
 Client::~Client()
@@ -140,7 +144,7 @@ struct ReplServer::Impl : public ReplServer
     Handle server;
     bl::vec<std::shared_ptr<Client>> clients;
     bool running{ false };
-    int next_id{};
+    int next_id{ 1 };
     Engine &engine;
     std::shared_ptr<EventHandler<InputEvent>> io_handler;
 
@@ -167,7 +171,6 @@ ReplServer::construct_at(void *p, Engine &e) noexcept
 bool
 ReplServer::start(const IPAddr4 &listen_addr, uint16_t port)
 {
-
     if (m().running) {
         ERR("already running");
         return false;
