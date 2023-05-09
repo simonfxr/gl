@@ -78,7 +78,7 @@ addressof(T &x) noexcept
 }
 
 template<typename T, typename U = T>
-BL_wrapper constexpr T
+BL_wrapper constexpr std::remove_volatile_t<T>
 exchange(T &obj,
          U &&new_value) noexcept(std::is_nothrow_move_constructible_v<T>
                                    &&std::is_nothrow_assignable_v<T &, U>)
@@ -89,7 +89,7 @@ exchange(T &obj,
 }
 
 template<typename T>
-BL_wrapper constexpr T
+BL_wrapper constexpr std::remove_volatile_t<T>
 exchange(T &obj) noexcept(std::is_nothrow_move_constructible_v<T>
                             &&std::is_nothrow_default_constructible_v<T>
                               &&std::is_nothrow_move_assignable_v<T>)

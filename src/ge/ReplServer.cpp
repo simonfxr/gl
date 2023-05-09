@@ -80,7 +80,7 @@ run_parser_fiber(void *args)
 
 Client::Client(int _id, Handle h)
   : client_fiber(sys::fiber::toplevel())
-  , hstream_out(bl::move(h))
+  , hstream_out(bl::move(h), true /* line buffered */)
   , hstream_in(ClosableInStream{ hstream_out.unbuffered() })
   , in_stream(hstream_in, client_fiber, &parser_fiber)
   , parser(in_stream, ""_k)

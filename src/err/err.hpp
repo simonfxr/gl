@@ -233,14 +233,15 @@ reportError(sys::io::OutStream out,
 
 #define UNREACHABLE UNREACHABLE_MSG("assumed to be unreachable")
 
-#define ERR_ONCE(...)                                                          \
-    do {                                                                       \
-        static const bool PP_CAT(_err_once_reported_, __LINE__) = [&]() {      \
-            ERROR_WITH_LEVEL(::err::LogLevel::ErrorOnce, __VA_ARGS__);         \
-            return true;                                                       \
-        }();                                                                   \
-        UNUSED(PP_CAT(_err_once_reported_, __LINE__));                         \
-    } while (0)
+#define ERR_ONCE_(id, ...)                                                     \
+    (likely([]() {                                                             \
+        static volatile bool id = false;                                       \
+        return ::bl::exchange(id, true);                                       \
+    }())                                                                       \
+       ? (void) 0                                                              \
+       : ERR(__VA_ARGS__))
+
+#define ERR_ONCE(...) ERR_ONCE_(HU_CAT_COUNTER(_err_once_reported), __VA_ARGS__)
 
 } // namespace err
 
