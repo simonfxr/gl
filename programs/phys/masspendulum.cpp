@@ -77,8 +77,7 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
     p2.position =
       vec2(simulation.x1 + simulation.l * sin_phi, -simulation.l * cos_phi);
 
-    ParticleRenderer::Particle ps[] = { p1, p2 };
-    renderer.renderParticles(ev, ARRAY_LENGTH(ps), ps);
+    renderer.renderParticles(ev, bl::array{ p1, p2 });
 }
 
 real

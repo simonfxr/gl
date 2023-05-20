@@ -199,12 +199,12 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     physics_prog->bindAttribute("position_mass"_k, 0);
     physics_prog->bindAttribute("velocity"_k, 1);
     physics_prog->bindAttribute("connection"_k, 2);
-    const char *stream_vars[] = { "Out1.position_mass", "Out2.velocity" };
+    auto stream_vars = bl::array{ "Out1.position_mass", "Out2.velocity" };
 
     GL_CALL(glTransformFeedbackVaryings,
             *physics_prog->program(),
-            ARRAY_LENGTH(stream_vars),
-            stream_vars,
+            stream_vars.size(),
+            stream_vars.data(),
             GL_SEPARATE_ATTRIBS);
 
     ASSERT(physics_prog->link());

@@ -198,6 +198,13 @@ as_writable_bytes(const span<T, Extent> &s) noexcept
     return { reinterpret_cast<byte *>(s.data()), s.size_bytes() };
 }
 
+template<typename T, size_t Extent>
+constexpr span<std::add_const_t<T>, Extent>
+array_span(T (&s)[Extent]) noexcept
+{
+    return span<std::add_const_t<T>, Extent>{ s, Extent };
+}
+
 } // namespace bl
 
 template<typename T>

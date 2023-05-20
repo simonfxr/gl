@@ -60,8 +60,6 @@
 #    define SHARED_EXPORT
 #endif
 
-#define ARRAY_LENGTH(x) (sizeof(x) / sizeof *(x))
-
 #ifndef NDEBUG
 #    define ON_DEBUG(...)                                                      \
         do {                                                                   \
@@ -104,7 +102,7 @@
 #    define IGNORE_RESULT(x) ((void) (x))
 #else
 #    define IGNORE_RESULT(...)                                                 \
-        ([](auto &&unused) { UNUSED(unused); }(__VA__ARGS__))
+        ([](auto &&unused) { UNUSED(unused); }(__VA_ARGS__))
 #endif
 
 #if HU_COMP_CLANG_P

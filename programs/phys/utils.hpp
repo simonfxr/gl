@@ -30,8 +30,7 @@ struct ParticleRenderer
 
     bool init(ge::Engine *, const Opts &);
     void renderParticles(const ge::Event<ge::RenderEvent> &,
-                         size_t,
-                         const Particle *);
+                         bl::span<const ParticleRenderer::Particle>);
 
 private:
     ge::Engine *engine;
@@ -106,10 +105,10 @@ ParticleRenderer::init(ge::Engine *e, const ParticleRenderer::Opts &popts)
 
 void
 ParticleRenderer::renderParticles(const ge::Event<ge::RenderEvent> &ev,
-                                  size_t n,
-                                  const ParticleRenderer::Particle *ps)
+                                  bl::span<const ParticleRenderer::Particle> ps)
 {
     using namespace bl::literals;
+    using namespace math;
     glt::TextureSampler particle_sampler(
       std::make_shared<glt::TextureData>(glt::Texture1D));
 
@@ -120,11 +119,11 @@ ParticleRenderer::renderParticles(const ge::Event<ge::RenderEvent> &ev,
             GL_TEXTURE_1D,
             0,
             GL_RGBA32F,
-            GLsizei(n * 2),
+            ps.size() * 2,
             0,
             GL_RGBA,
             GL_FLOAT,
-            ps);
+            ps.data());
     ASSERT(this->shader->validate());
     this->shader->use();
 
@@ -134,13 +133,13 @@ ParticleRenderer::renderParticles(const ge::Event<ge::RenderEvent> &ev,
 
     gt.scale(math::vec3(math::recip(this->opts.world_size[0]),
                         math::recip(this->opts.world_size[1]),
-                        math::real(1)));
+                        1_r));
 
     glt::Uniforms us(*this->shader);
     us.optional("mvpMatrix"_k, gt.mvpMatrix());
     us.optional("instanceData"_k, glt::Sampler(particle_sampler, 0));
 
-    this->circle_mesh->drawInstanced(n);
+    this->circle_mesh->drawInstanced(ps.size());
 }
 
 #endif

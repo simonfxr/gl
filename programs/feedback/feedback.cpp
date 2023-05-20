@@ -134,9 +134,7 @@ Program::init(const ge::Event<ge::InitEvent> &ev)
                               glt::ShaderManager::VertexShader);
     quadProgram->addShaderSrc(QUAD_GEOMETRY_SHADER,
                               glt::ShaderManager::GeometryShader);
-    bl::string vars[] = { "position", "normal" };
-    quadProgram->bindStreamOutVaryings(
-      Array<bl::string>(vars, ARRAY_LENGTH(vars)));
+    quadProgram->bindStreamOutVaryings(bl::array{ "position"_s, "normal"_s });
     quadProgram->bindAttributes<QuadVertex>();
 
     if (!quadProgram->tryLink())

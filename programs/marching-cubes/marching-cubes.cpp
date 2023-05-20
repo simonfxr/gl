@@ -123,11 +123,11 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
             GL_TEXTURE_1D,
             0,
             GL_R16UI,
-            ARRAY_LENGTH(edgeTable),
+            edgeTable.size(),
             0,
             GL_RED_INTEGER,
             GL_UNSIGNED_SHORT,
-            edgeTable);
+            edgeTable.data());
     caseToNumPolysData.filterMode(glt::TextureSampler::FilterNearest);
 
     triangleTableData.data()->type(glt::Texture1D);
@@ -136,11 +136,11 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
             GL_TEXTURE_1D,
             0,
             GL_R32UI,
-            sizeof triTable,
+            triTable.size_bytes(),
             0,
             GL_RED_INTEGER,
             GL_UNSIGNED_BYTE,
-            triTable);
+            triTable.data());
     triangleTableData.filterMode(glt::TextureSampler::FilterNearest);
     triangleTableData.unbind(0, false);
 
@@ -167,9 +167,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
     marchingCubesProgram->addShaderFile("marching-cubes.vert"_k);
     marchingCubesProgram->addShaderFile("marching-cubes.geom"_k);
     marchingCubesProgram->bindAttributes<MCVertex>();
-    bl::string vars[] = { "gPosition"_k, "gNormal"_k };
     marchingCubesProgram->bindStreamOutVaryings(
-      Array<bl::string>(vars, ARRAY_LENGTH(vars)));
+      bl::array{ "gPosition"_s, "gNormal"_s });
     if (!marchingCubesProgram->tryLink())
         return;
 
