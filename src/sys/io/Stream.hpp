@@ -93,10 +93,10 @@ struct SYS_API ByteStream final
     ByteStream &operator=(const ByteStream &) = default;
     ByteStream &operator=(ByteStream &&) noexcept = default;
 
-    bl::usize size() const { return buffer.size(); }
-    auto data() const { return buffer.data(); }
+    [[nodiscard]] bl::usize size() const { return buffer.size(); }
+    [[nodiscard]] auto data() const { return buffer.data(); }
     auto data() { return buffer.data(); }
-    [[nodiscard]] bl::basic_string<C> str() const &
+    [[nodiscard]] auto str() const &
     {
         return bl::basic_string<C>(data(), size());
     }
@@ -107,7 +107,10 @@ struct SYS_API ByteStream final
         buffer.reserve(buffer.size() + additional);
     }
 
-    operator bl::basic_string_view<C>() const { return { data(), size() }; }
+    /* implicit */ operator bl::basic_string_view<C>() const
+    {
+        return { data(), size() };
+    }
 
     void truncate(bl::usize);
 
@@ -192,7 +195,7 @@ decltype(auto)
 operator<<(SomeOutStream auto &&out, T x)
 {
     using namespace bl::literals;
-    return out << (x ? BL_STRING_VIEW("true") : BL_STRING_VIEW("false"));
+    return out << (x ? "true"_k : "false"_k);
 }
 
 struct ptr
@@ -229,7 +232,7 @@ struct SYS_API BufferedInStream final
     BufferedInStream(Stream &&s, Buffer buf) : _s(bl_fwd(s)), _buf(bl_fwd(buf))
     {}
 
-    BufferedInStream(Stream &&s) : _s(bl_fwd(s)), _buf() {}
+    explicit BufferedInStream(Stream &&s) : _s(bl_fwd(s)), _buf() {}
 
     SYS_API friend bl::pair<bl::usize, IOError>
     tag_invoke(read_f, BufferedInStream &, bl::mut_byte_span) noexcept;
@@ -262,7 +265,7 @@ struct SYS_API BufferedOutStream final
       : _s(bl_fwd(s)), _buf(bl_fwd(buf)), _line_buffered(line_buffered)
     {}
 
-    BufferedOutStream(Stream &&s, bool line_buffered = false)
+    explicit BufferedOutStream(Stream &&s, bool line_buffered = false)
       : _s(bl_fwd(s)), _buf(), _line_buffered(line_buffered)
     {}
 
