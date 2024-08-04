@@ -242,12 +242,14 @@ PRAGMA_DIAGNOSTIC_PUSH
 #    pragma clang diagnostic ignored "-Wreserved-identifier"
 #endif
 
-inline constexpr real operator"" _r(long double x)
+inline constexpr real
+operator""_r(long double x)
 {
     return static_cast<real>(x);
 }
 
-inline constexpr real operator"" _r(unsigned long long x)
+inline constexpr real
+operator""_r(unsigned long long x)
 {
     return static_cast<real>(x);
 }

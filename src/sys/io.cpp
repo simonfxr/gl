@@ -30,10 +30,10 @@ readFile(bl::string_view path) noexcept
         ByteStream str;
         for (;;) {
             bl::array<bl::byte, BUF_SIZE> buf{};
-            auto size = sizeof buf;
-            bl::tie(size, err) = read(h, bl::span{ buf.data(), size });
+            auto size = 0_z;
+            bl::tie(size, err) = read(h, bl::span{ buf });
             if (size > 0)
-                write(str, bl::span{ buf.data(), buf.data() + size });
+                write(str, bl::span{ buf }.first(size));
             if (err == IOError::EOF) {
                 err = IOError::OK;
                 return { { str.data(), str.size() } };
