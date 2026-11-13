@@ -28,7 +28,68 @@ make use of C++17.
 
 Example programs can be found under programs.
 
+* Screenshots
+
+The scripting command =screenshot "path.png"= saves the next completed window
+frame as PNG, before buffer swap. It captures framebuffer pixels (including
+HiDPI resolution), not the desktop, and works while animation is paused.
+Paths are relative to the program's working directory. Existing files are
+overwritten; parent directories must already exist. Success or failure is
+logged when the frame is captured.
+
+The default scripts bind F12 to =screenshot "screenshot.png"=. To use a different
+path or key, for example:
+
+#+begin_src
+bindKey [+F12] { screenshot "mc.png" }
+#+end_src
+
+Capture the first rendered frame from the command line:
+
+#+begin_src sh
+./build/bin/mc --eval 'screenshot "/tmp/mc.png"'
+#+end_src
+
+Or enable the localhost REPL and send =screenshot "/tmp/mc.png"= as a newline-
+terminated command over TCP:
+
+#+begin_src sh
+./build/bin/mc --eval 'startReplServer 7777'
+printf 'screenshot "/tmp/mc.png"\n' | nc -N 127.0.0.1 7777
+#+end_src
+
+Capture is asynchronous: a queued reply means the command was accepted; the
+file is written at the next rendered frame. A minimized window with a zero-sized
+framebuffer defers pending captures until restored.
+
+The display-dependent screenshot regression test checks pixel orientation,
+colors, odd-width row packing, file errors, and preservation of OpenGL state:
+
+#+begin_src sh
+cmake --build build --target screenshot_test
+./build/bin/screenshot_test
+#+end_src
+
+It is not part of the displayless CTest suite. Some graphics drivers retain
+allocations at shutdown; if LeakSanitizer reports driver initialization leaks,
+=ASAN_OPTIONS=detect_leaks=0= runs this test with address checking still enabled.
+
 * Building and testing
+
+The manual =mc_mesh_test= target (available with OpenCL) compares eight chunks
+against one monolithic mesh at animation times 0, 4, and 12. It checks shared
+positions/normals, finite vertices within their cells, closed interior topology,
+and that padded GPU work-items leave output untouched. It needs no display,
+but requires an OpenCL device supporting the renderer's 3D image formats:
+
+#+begin_src sh
+cmake --build build --target mc_mesh_test
+./build/bin/mc_mesh_test
+#+end_src
+
+Unsupported devices return 77. If the OpenCL runtime fails inside AddressSanitizer,
+run the hardware check in a separate build with =-DENABLE_ASAN=OFF= and
+=-DENABLE_UBSAN=OFF=; this does not constitute sanitizer validation.
 
 The build requires CMake 3.25 or newer, a C++23 compiler, Python 3 with Jinja2
 (for glad), and OpenGL development libraries. On Linux, GLFW enables both X11

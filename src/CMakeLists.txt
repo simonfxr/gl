@@ -148,6 +148,7 @@ set(GE_SRC
     ge/MouseLookPlugin.cpp
     ge/Plugin.cpp
     ge/ReplServer.cpp
+    ge/Screenshot.cpp
     ge/Tokenizer.cpp
     ge/WindowRenderTarget.cpp
     ge/ge.cpp)
@@ -162,3 +163,5 @@ cmu_add_library(
   glt
   glfw::glfw)
 target_include_directories(ge PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(ge SYSTEM PRIVATE
+                           ${CMAKE_SOURCE_DIR}/deps/glfw/deps)

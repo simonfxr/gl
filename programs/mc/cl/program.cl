@@ -83,20 +83,20 @@ __kernel void computeHistogramLevel(
     write_imageui(dest, wpos, count);
 }
 
-int4 scanHistogramLevel(int index, __read_only image3d_t histo, int4 pos) {
+int4 scanHistogramLevel(uint index, __read_only image3d_t histo, int4 pos) {
 
-    int8 neighbors = {
-        read_imagei(histo, sampler, pos + cube_offsets[0]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[1]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[2]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[3]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[4]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[5]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[6]).x,
-        read_imagei(histo, sampler, pos + cube_offsets[7]).x
+    uint8 neighbors = {
+        read_imageui(histo, sampler, pos + cube_offsets[0]).x,
+        read_imageui(histo, sampler, pos + cube_offsets[1]).x,
+        read_imageui(histo, sampler, pos + cube_offsets[2]).x,
+        read_imageui(histo, sampler, pos + cube_offsets[3]).x,
+        read_imageui(histo, sampler, pos + cube_offsets[4]).x,
+        read_imageui(histo, sampler, pos + cube_offsets[5]).x,
+        read_imageui(histo, sampler, pos + cube_offsets[6]).x,
+        read_imageui(histo, sampler, pos + cube_offsets[7]).x
     };
     
-    int acc = pos.s3;
+    uint acc = pos.s3;
     int8 cmp;
 
     acc += neighbors.s0;
@@ -122,7 +122,7 @@ int4 scanHistogramLevel(int index, __read_only image3d_t histo, int4 pos) {
     pos.s1 *= 2;
     pos.s2 *= 2;
     
-    neighbors *= cmp;
+    neighbors *= convert_uint8(cmp);
     pos.s3 +=
         neighbors.s0 + neighbors.s1 + neighbors.s2 + neighbors.s3 +
         neighbors.s4 + neighbors.s5 + neighbors.s6 + neighbors.s7;
@@ -133,6 +133,7 @@ int4 scanHistogramLevel(int index, __read_only image3d_t histo, int4 pos) {
 float sampleVolume4(__read_only image3d_t volumeData, int4 p) {
     /* int x = (int) read_imageui(volumeData, sampler, (int4) (p.x, p.y, p.z, 0)).s0; */
     /* return (float)(x - ISOLEVEL) * (1.f / (float) ISOLEVEL); */
+    // The image stores logical samples -1..SIZE+1, including both halos.
     return read_imagef(volumeData, sampler, p + (int4)(1, 1, 1, 0)).s0;
 }
 
@@ -188,7 +189,7 @@ __kernel void histogramTraversal(
 	
     int target = get_global_id(0);
     if(target >= sum)
-        target = 0;
+        return;
 
     int4 cubePosition = {0,0,0,0}; // x,y,z,sum
 #if SIZE > 512
@@ -220,16 +221,19 @@ __kernel void histogramTraversal(
     // max 5 triangles
     for(int i = (target-cubePosition.s3)*3; i < (target-cubePosition.s3+1)*3; i++) { // for each vertex in triangle
         const uchar edge = triangle_edge_table[edge_code*16 + i];
-        const int3 p0 = (int3)(cubePosition.x + offsets3[edge*6], cubePosition.y + offsets3[edge*6+1], cubePosition.z + offsets3[edge*6+2]);
-        const int3 p1 = (int3)(cubePosition.x + offsets3[edge*6+3], cubePosition.y + offsets3[edge*6+4], cubePosition.z + offsets3[edge*6+5]);
-        
-        const float3 n0 = normalize(calculateGradient(volume, p0));
-        const float3 n1 = normalize(calculateGradient(volume, p1));
+        const int3 a = (int3)(cubePosition.x + offsets3[edge*6], cubePosition.y + offsets3[edge*6+1], cubePosition.z + offsets3[edge*6+2]);
+        const int3 b = (int3)(cubePosition.x + offsets3[edge*6+3], cubePosition.y + offsets3[edge*6+4], cubePosition.z + offsets3[edge*6+5]);
+        // Always interpolate shared edges in the same direction.
+        const int3 p0 = min(a, b);
+        const int3 p1 = max(a, b);
         
         float v0 = sampleVolume(volume, p0);
         float v1 = sampleVolume(volume, p1);
-        const float diff = native_divide(v0, v0 - v1);
+        const float diff = v0 / (v0 - v1);
         const float3 vertex = mix(convert_float3(p0), convert_float3(p1), diff);
+        // Preserve gradient magnitude until after interpolation.
+        const float3 n0 = calculateGradient(volume, p0);
+        const float3 n1 = calculateGradient(volume, p1);
         const float3 normal = normalize(mix(n0, n1, diff));
         
         vstore3(vertex, target*6 + vertexNr*2, VBOBuffer);

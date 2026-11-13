@@ -51,15 +51,10 @@ MouseLookPlugin::Impl::stateChanged(State new_state) const
     case Grabbing: {
         if (_camera)
             _camera->mouseLook(true);
-        size_t w;
-
-        size_t h;
-        win.windowSize(w, h);
-        win.setMouse(static_cast<int16_t>(w / 2), static_cast<int16_t>(h / 2));
-        win.showMouseCursor(false);
+        win.grabMouse(true);
     } break;
     case Free: {
-        win.showMouseCursor(true);
+        win.grabMouse(false);
         if (_camera)
             _camera->mouseLook(false);
     } break;
@@ -129,18 +124,6 @@ MouseLookPlugin::registerWith(Engine &e)
         if (m()._should_grab && m()._state == Free) {
             m().setState(Grabbing);
             ev.abort = true;
-        }
-    });
-
-    win.events().mouseMoved.reg([this](const Event<MouseMoved> &ev) {
-        auto &curwin = ev.info.window;
-        if (m()._state == Grabbing) {
-            size_t w;
-
-            size_t h;
-            curwin.windowSize(w, h);
-            curwin.setMouse(static_cast<int16_t>(w / 2),
-                            static_cast<int16_t>(h / 2));
         }
     });
 

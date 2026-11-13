@@ -89,7 +89,7 @@ Client::Client(int _id, Handle h)
     (void) fiber_alloc(&parser_fiber,
                        (1 + !!BUILD_OPTIMIZED_P) * 64_KiB,
                        fiber_cleanup,
-                       &client_fiber,
+                       client_fiber,
                        FIBER_FLAG_GUARD_LO | FIBER_FLAG_GUARD_HI);
 
     ParserFiberArgs parser_args{ this };

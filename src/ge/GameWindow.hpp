@@ -46,6 +46,9 @@ struct GE_API GameWindow : private bl::runtime_sized_base<GameWindow>
     void showMouseCursor(bool show);
     bool showMouseCursor() const;
 
+    // Capture relative mouse motion for mouse-look (including on Wayland).
+    void grabMouse(bool grab);
+
     void vsync(bool enable);
     bool vsync();
 
@@ -56,6 +59,9 @@ struct GE_API GameWindow : private bl::runtime_sized_base<GameWindow>
     const std::shared_ptr<WindowRenderTarget> &renderTarget() const;
 
     void swapBuffers();
+
+    // Save the next completed frame as PNG, immediately before buffer swap.
+    void requestScreenshot(const bl::string &filename);
 
     GLContextInfo contextInfo() const;
 

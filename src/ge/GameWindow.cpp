@@ -4,6 +4,7 @@
 
 #include "err/err.hpp"
 #include "ge/Event.hpp"
+#include "ge/Screenshot.hpp"
 #include "ge/module.hpp"
 #include "glt/utils.hpp"
 #include "math/real.hpp"
@@ -13,6 +14,7 @@
 #include <bl/vec.hpp>
 
 #include <GLFW/glfw3.h>
+#include <algorithm>
 #include <limits>
 
 using namespace bl::literals;
@@ -32,6 +34,7 @@ struct GameWindow::Impl : GameWindow
     const bool owning_win;
     bool have_focus{ true };
     bool vsync{ false };
+    bl::vec<bl::string> screenshots;
 
     Impl(bool owns_win, GLFWwindow *rw) : win(rw), owning_win(owns_win) {}
 
@@ -74,6 +77,16 @@ struct GameWindow::Impl : GameWindow
 BL_DEF_RUNTIME_SIZED(GameWindow, GameWindow::Impl);
 
 namespace {
+
+int16_t
+mouseCoordinate(double value)
+{
+    // Captured GLFW cursor coordinates are unbounded; event fields are not.
+    return static_cast<int16_t>(
+      std::clamp(value,
+                 double(std::numeric_limits<int16_t>::min()),
+                 double(std::numeric_limits<int16_t>::max())));
+}
 
 void
 glfw_error_callback(int error, const char *desc)
@@ -306,15 +319,15 @@ GameWindow::Impl::glfw_cursor_pos_callback(GLFWwindow *win, double x, double y)
 {
     auto *me = getUserPointer(win);
 
-    auto dx = static_cast<int16_t>(-(x - me->mouse_x));
-    auto dy = static_cast<int16_t>(y - me->mouse_y);
+    auto dx = mouseCoordinate(-(x - me->mouse_x));
+    auto dy = mouseCoordinate(y - me->mouse_y);
 
     me->mouse_x = x;
     me->mouse_y = y;
 
     if (dx != 0 || dy != 0)
         me->events.mouseMoved.raise(Event(MouseMoved(
-          *me, dx, dy, static_cast<int16_t>(x), static_cast<int16_t>(y))));
+          *me, dx, dy, mouseCoordinate(x), mouseCoordinate(y))));
 }
 
 void
@@ -348,8 +361,8 @@ GameWindow::Impl::glfw_mouse_button_callback(GLFWwindow *win,
                  convertGLFWMouseButton(button));
     me->events.mouseButton.raise(
       Event(MouseButton(*me,
-                        static_cast<int16_t>(me->mouse_x),
-                        static_cast<int16_t>(me->mouse_y),
+                        mouseCoordinate(me->mouse_x),
+                        mouseCoordinate(me->mouse_y),
                         b)));
 }
 
@@ -466,6 +479,17 @@ GameWindow::showMouseCursor() const
 }
 
 void
+GameWindow::grabMouse(bool grab)
+{
+    // GLFW manages relative motion and cursor confinement. Manually warping
+    // a hidden cursor is not supported by Wayland.
+    glfwSetInputMode(
+      m().win, GLFW_CURSOR, grab ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+    m().show_mouse_cursor = !grab;
+    glfwGetCursorPos(m().win, &m().mouse_x, &m().mouse_y);
+}
+
+void
 GameWindow::vsync(bool enable)
 {
     if (m().vsync != enable) {
@@ -544,8 +568,28 @@ GameWindow::setMouse(int16_t x, int16_t y)
 }
 
 void
+GameWindow::requestScreenshot(const bl::string &filename)
+{
+    m().screenshots.push_back(filename);
+}
+
+void
 GameWindow::swapBuffers()
 {
+    if (!m().screenshots.empty()) {
+        int width, height;
+        glfwGetFramebufferSize(m().win, &width, &height);
+        // Keep requests pending while minimized.
+        if (width > 0 && height > 0) {
+            for (const auto &filename : m().screenshots) {
+                if (writeFramebufferPNG(filename.c_str(), width, height))
+                    INFO(scat("saved screenshot: "_k, filename));
+                else
+                    ERR(scat("failed to save screenshot: "_k, filename));
+            }
+            m().screenshots.clear();
+        }
+    }
     glfwSwapBuffers(m().win);
 }
 

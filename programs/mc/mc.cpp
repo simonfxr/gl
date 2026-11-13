@@ -30,8 +30,12 @@ using namespace bl::literals;
 template<size_t N>
 using cl_size = std::array<cl::size_type, N>;
 
-#ifdef HU_OS_POSIX
+#if HU_OS_POSIX_P
 #    include <GL/glx.h>
+#    define GLFW_INCLUDE_NONE
+#    define GLFW_EXPOSE_NATIVE_EGL
+#    include <GLFW/glfw3.h>
+#    include <GLFW/glfw3native.h>
 #endif
 
 #define CL_ERR(msg)                                                            \
@@ -60,7 +64,8 @@ struct MCState
 
     GLuint vao{};
     GLuint vbo{};
-    cl::BufferGL vbo_buf;
+    cl::Buffer vbo_buf;
+    std::vector<float> vertex_staging;
 
     cl::Image3D volume;
     bl::vec<cl::Image3D> images;
@@ -81,6 +86,7 @@ struct Anim final : ge::Anim3D<Anim>
     cl::Context cl_ctx;
     cl::CommandQueue cl_q;
     cl::Device cl_device;
+    bool cl_gl_sharing{};
 
     cl::Program cl_program;
     cl::Kernel kernel_generateSphereVolume;
@@ -130,6 +136,8 @@ Anim::init(const ge::Event<ge::InitEvent> &ev)
 
     //    GL_CALL(glDisable, GL_CULL_FACE);
     GL_CALL(glEnable, GL_CULL_FACE);
+    // Chunks and their triangles are not submitted in depth order.
+    GL_CALL(glEnable, GL_DEPTH_TEST);
 
     initCL(ev);
 }
@@ -168,6 +176,20 @@ createCLGLContext(cl::Platform &platform, cl_int *err)
         0,
         0
     };
+
+#if HU_OS_POSIX_P
+    // GLFW uses EGL on Wayland; no GLX context exists in that case.
+    if (!glXGetCurrentContext()) {
+        auto *window = glfwGetCurrentContext();
+        if (!window) {
+            *err = CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR;
+            return {};
+        }
+        props[1] = cl_context_properties(glfwGetEGLContext(window));
+        props[2] = CL_EGL_DISPLAY_KHR;
+        props[3] = cl_context_properties(glfwGetEGLDisplay());
+    }
+#endif
 
     return { CL_DEVICE_TYPE_GPU, props, print_cl_error, nullptr, err };
 }
@@ -226,9 +248,16 @@ Anim::initCL(const ge::Event<ge::InitEvent> &ev)
 
     cl_int cl_err;
     cl_ctx = createCLGLContext(platform, &cl_err);
-    if (cl_err != CL_SUCCESS) {
-        ERR("createing shared OpenCL/OpenGL context failed");
-        return;
+    cl_gl_sharing = cl_err == CL_SUCCESS;
+    if (!cl_gl_sharing) {
+        engine->out() << "OpenCL/OpenGL sharing unavailable (error "_k
+                      << cl_err << "); using host vertex transfers\n"_k;
+        const cl_context_properties props[] = {
+            CL_CONTEXT_PLATFORM, cl_context_properties(platform()), 0
+        };
+        cl_ctx = cl::Context(
+          CL_DEVICE_TYPE_GPU, props, print_cl_error, nullptr, &cl_err);
+        CL_ERR("creating standalone OpenCL context failed");
     }
 
     engine->out() << "created CL context\n"_k;
@@ -368,12 +397,14 @@ Anim::initMC(MCState &cur_mc, vec3 orig, vec3 dim, bool *success)
     cur_mc.cube_origin = orig;
     cur_mc.cube_dim = dim;
 
+    // N cells need N + 1 corner samples, plus a halo sample on each side
+    // for central-difference normals: logical coordinates -1 through N + 1.
     cur_mc.volume = cl::Image3D(cl_ctx,
                                 CL_MEM_READ_WRITE,
                                 cl::ImageFormat(CL_R, CL_HALF_FLOAT),
-                                N + 2,
-                                N + 2,
-                                N + 2,
+                                N + 3,
+                                N + 3,
+                                N + 3,
                                 0,
                                 0,
                                 nullptr,
@@ -434,7 +465,8 @@ Anim::computeVolumeData(MCState &cur_mc, real time)
 
     M *= glt::translateTransform(cur_mc.cube_origin);
     M *= glt::scaleTransform(cur_mc.cube_dim);
-    M *= glt::scaleTransform(1_r / real(N - 2));
+    // The N meshed cells must span exactly cube_dim, without overlap.
+    M *= glt::scaleTransform(1_r / real(N));
 
 #define fract(x) ((x) -math::floor(x))
 #define tri(t) math::abs(2 * fract((t) / (2 * math::PI)) - 1)
@@ -451,7 +483,7 @@ Anim::computeVolumeData(MCState &cur_mc, real time)
 
     cl_q.enqueueNDRangeKernel(kernel_generateSphereVolume,
                               cl::NullRange,
-                              cl::NDRange(N + 2, N + 2, N + 2),
+                              cl::NDRange(N + 3, N + 3, N + 3),
                               cl::NullRange);
 }
 
@@ -525,7 +557,24 @@ Anim::constructVertices0(MCState &cur_mc)
             GL_STREAM_DRAW);
     GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
 
-    cur_mc.vbo_buf = cl::BufferGL(cl_ctx, CL_MEM_WRITE_ONLY, cur_mc.vbo);
+    cl_int cl_err;
+    if (cl_gl_sharing) {
+        cur_mc.vbo_buf =
+          cl::BufferGL(cl_ctx, CL_MEM_WRITE_ONLY, cur_mc.vbo, &cl_err);
+    } else {
+        cur_mc.vertex_staging.resize(size_t(cur_mc.num_tris) * 3 * 6);
+        cur_mc.vbo_buf = cl::Buffer(cl_ctx,
+                                   CL_MEM_WRITE_ONLY,
+                                   cur_mc.vertex_staging.size() * sizeof(float),
+                                   nullptr,
+                                   &cl_err);
+    }
+    if (cl_err != CL_SUCCESS) {
+        GL_CALL(glDeleteBuffers, 1, &cur_mc.vbo);
+        GL_CALL(glDeleteVertexArrays, 1, &cur_mc.vao);
+        cur_mc.num_tris = 0;
+        CL_ERR("creating OpenCL vertex buffer failed");
+    }
 }
 
 void
@@ -544,7 +593,7 @@ Anim::constructVertices1(MCState &cur_mc)
     ++i;
     kernel_histogramTraversal.setArg(i, cur_mc.num_tris);
 
-    int global_work_size = (cur_mc.num_tris / 64 + 1) * 64;
+    int global_work_size = ((cur_mc.num_tris + 63) / 64) * 64;
     cl_q.enqueueNDRangeKernel(kernel_histogramTraversal,
                               cl::NullRange,
                               cl::NDRange(global_work_size),
@@ -559,6 +608,29 @@ Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3 ecLight)
     if (cur_mc.num_tris == 0 || !cur_mc.init)
         return;
 
+    if (!cl_gl_sharing) {
+        const size_t bytes = cur_mc.vertex_staging.size() * sizeof(float);
+        cl_int cl_err = cl_q.enqueueReadBuffer(cur_mc.vbo_buf,
+                                               CL_TRUE,
+                                               0,
+                                               bytes,
+                                               cur_mc.vertex_staging.data());
+        if (cl_err != CL_SUCCESS) {
+            cur_mc.vbo_buf = cl::Buffer();
+            GL_CALL(glDeleteBuffers, 1, &cur_mc.vbo);
+            GL_CALL(glDeleteVertexArrays, 1, &cur_mc.vao);
+            cur_mc.num_tris = 0;
+            CL_ERR("reading OpenCL vertices failed");
+        }
+        GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, cur_mc.vbo);
+        GL_CALL(glBufferSubData,
+                GL_ARRAY_BUFFER,
+                0,
+                bytes,
+                cur_mc.vertex_staging.data());
+        GL_CALL(glBindBuffer, GL_ARRAY_BUFFER, 0);
+    }
+
     auto &rm = engine->renderManager();
     auto &gt = rm.geometryTransform();
 
@@ -568,7 +640,7 @@ Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3 ecLight)
         auto M = mat4();
         gt.translate(cur_mc.cube_origin);
         gt.scale(cur_mc.cube_dim);
-        gt.scale(1_r / static_cast<real>(N - 2));
+        gt.scale(1_r / static_cast<real>(N));
 
         gt.concat(M);
         glt::Uniforms(program)
@@ -598,6 +670,7 @@ Anim::renderMC(MCState &cur_mc, glt::ShaderProgram &program, vec3 ecLight)
     GL_CALL(glDrawArrays, GL_TRIANGLES, 0, cur_mc.num_tris * 3);
     GL_CALL(glBindVertexArray, 0);
 
+    cur_mc.vbo_buf = cl::Buffer();
     GL_CALL(glDeleteBuffers, 1, &cur_mc.vbo);
     GL_CALL(glDeleteVertexArrays, 1, &cur_mc.vao);
 }
@@ -632,16 +705,24 @@ Anim::render(const ge::Event<ge::RenderEvent> &ev)
     TIME(for (auto &i : mc) constructVertices0(i));
 
     std::vector<cl::Memory> gl_objs;
-    for (auto &i : mc)
-        if (i.num_tris > 0 && i.init)
-            gl_objs.push_back(i.vbo_buf);
+    if (cl_gl_sharing) {
+        for (auto &i : mc)
+            if (i.num_tris > 0 && i.init)
+                gl_objs.push_back(i.vbo_buf);
+    }
 
-    cl_q.enqueueAcquireGLObjects(&gl_objs);
+    if (!gl_objs.empty()) {
+        GL_CALL(glFinish);
+        cl_q.enqueueAcquireGLObjects(&gl_objs);
+    }
     for (auto &i : mc)
         constructVertices1(i);
 
-    cl_q.enqueueReleaseGLObjects(&gl_objs);
+    if (!gl_objs.empty())
+        cl_q.enqueueReleaseGLObjects(&gl_objs);
     cl_q.finish();
+    // renderMC releases each remaining CL wrapper before deleting its GL VBO.
+    gl_objs.clear();
 
     TIME(for (auto &i : mc) renderMC(i, *program, ecLight));
 

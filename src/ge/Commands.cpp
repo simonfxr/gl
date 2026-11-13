@@ -362,6 +362,19 @@ COMMAND("togglePause", "toggle the pause state")
     eng.gameLoop().pause(!eng.gameLoop().paused());
 }
 
+COMMAND("screenshot",
+        "screenshot <filename>: save the next completed window frame as PNG "
+        "(overwrites the file)")
+(const Event<CommandEvent> &e, const bl::string &filename)
+{
+    if (filename.empty()) {
+        ERR(e.info.engine.out(), "screenshot: filename must not be empty");
+        return;
+    }
+    e.info.engine.window().requestScreenshot(filename);
+    e.info.engine.out() << "screenshot queued: "_k << filename << "\n"_k;
+}
+
 COMMAND("perspectiveProjection", "set parameters for perspective projection")
 (const Event<CommandEvent> &e, double fovDeg, double zn, double zf)
 {
