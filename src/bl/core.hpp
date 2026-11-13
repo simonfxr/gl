@@ -6,7 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
+#include <new>
 #include <utility>
 
 namespace bl {
@@ -73,7 +73,12 @@ addressof(T &x) noexcept
 #if hu_has_builtin(__builtin_addressof)
     return __builtin_addressof(x);
 #else
-    return std::addressoff(x);
+    if constexpr (std::is_object_v<T>) {
+        return reinterpret_cast<T *>(
+          &const_cast<char &>(reinterpret_cast<const volatile char &>(x)));
+    } else {
+        return &x;
+    }
 #endif
 }
 
@@ -99,6 +104,19 @@ exchange(T &obj) noexcept(std::is_nothrow_move_constructible_v<T>
     return old_value;
 }
 
+// Unlike std::construct_at, placement new is not usable in constant
+// expressions before C++26. Only non-array objects are supported here.
+template<typename T, typename... Args>
+    requires(!std::is_array_v<T> && requires(T *loc, Args &&...args) {
+        ::new (static_cast<void *>(loc)) T(bl_fwd(args)...);
+    })
+BL_inline T *
+construct_at(T *loc, Args &&...args) noexcept(
+  noexcept(::new (static_cast<void *>(loc)) T(bl_fwd(args)...)))
+{
+    return ::new (static_cast<void *>(loc)) T(bl_fwd(args)...);
+}
+
 template<typename T>
     requires(!std::is_array_v<T>)
 BL_inline constexpr void destroy_at(T *loc)
@@ -108,11 +126,11 @@ BL_inline constexpr void destroy_at(T *loc)
 
 template<typename T>
     requires(!std::is_array_v<T>)
-BL_inline constexpr T *relocate_at(T *source, T *dest)
+BL_inline T *relocate_at(T *source, T *dest)
 {
-    std::uninitialized_move(source, source + 1, dest);
+    auto *result = ::bl::construct_at(dest, ::bl::move(*source));
     ::bl::destroy_at(source);
-    return std::launder(dest);
+    return result;
 }
 
 template<typename T, typename U = T>

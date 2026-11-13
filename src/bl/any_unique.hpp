@@ -3,6 +3,8 @@
 
 #include <bl/any_ref.hpp>
 
+#include <memory>
+
 /// Code adapted from the tag_invoke paper (P1895R0)
 /// https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1895r0.pdf
 /// godbolt link from paper: https://godbolt.org/z/3TvO4f

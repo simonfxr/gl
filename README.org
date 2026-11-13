@@ -27,3 +27,29 @@ make use of C++17.
 * Examples
 
 Example programs can be found under programs.
+
+* Building and testing
+
+The build requires CMake 3.25 or newer, a C++23 compiler, Python 3 with Jinja2
+(for glad), and OpenGL development libraries. On Linux, GLFW enables both X11
+and Wayland by default; install their development dependencies or disable an
+unused backend with =-DGLFW_BUILD_X11=OFF= or =-DGLFW_BUILD_WAYLAND=OFF=.
+
+#+begin_src sh
+git submodule update --init --recursive
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
+#+end_src
+
+When upgrading from the old GLFW submodule, configure once with
+=cmake --fresh -S . -B build -DCMAKE_BUILD_TYPE=Debug= to remove obsolete
+GLFW cache options. Reapply any custom configuration options at the same time.
+
+The automated tests do not require a display. Interactive examples and
+benchmarks are built but are not registered with CTest.
+
+Debug builds enable address and undefined-behavior sanitizers, with LTO off by
+default. Release builds enable LTO. An existing Debug cache may need
+=-DENABLE_LTO=OFF=: GCC 16 can report spurious ASan ODR violations for inline
+standard-library variables when LTO and shared libraries are combined.

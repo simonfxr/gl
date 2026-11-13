@@ -40,3 +40,12 @@ def_program(
   ctest
   bl
   sys)
+
+def_program(optional_test SOURCES optional_test.cpp DEPEND ctest bl sys)
+def_program(core_test SOURCES core_test.cpp DEPEND ctest bl)
+
+if(BUILD_TESTING)
+  foreach(tgt vec_test rand_test any_test optional_test core_test enum_to_string)
+    add_test(NAME ${tgt} COMMAND ${tgt})
+  endforeach()
+endif()

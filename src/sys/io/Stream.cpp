@@ -216,9 +216,11 @@ BufferedStreamBase::write_to(bl::mut_byte_span buf,
     auto rem = buf.size() - pos;
 
     if (data.size() <= rem) {
-        memcpy(buf.data() + pos, data.data(), data.size());
+        if (data.size())
+            memcpy(buf.data() + pos, data.data(), data.size());
         pos += data.size();
-        if (line_buffered && memchr(data.data(), '\n', data.size()))
+        if (line_buffered && data.size() &&
+            memchr(data.data(), '\n', data.size()))
             flush_to(buf, pos, os);
         return { data.size(), IOError::OK };
     }

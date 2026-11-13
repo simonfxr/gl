@@ -4,7 +4,6 @@
 #include <bl/core.hpp>
 #include <bl/string_view.hpp>
 
-#include <cstdint>
 #include <string>
 
 namespace bl {

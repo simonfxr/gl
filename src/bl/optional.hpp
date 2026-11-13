@@ -6,8 +6,6 @@
 #include <bl/core.hpp>
 #include <bl/type_traits.hpp>
 
-#include <optional>
-
 namespace bl {
 
 inline constexpr struct nullopt_t
@@ -24,10 +22,10 @@ struct optional
     constexpr /* implicit */ optional(nullopt_t) noexcept {}
 
     template<typename U = T>
-        requires(std::same_as<std::decay_t<U>, T>)
+        requires(std::is_same_v<std::decay_t<U>, T>)
     constexpr /* implicit */ optional(U &&val) : _present{ true }
     {
-        std::construct_at(place(), bl_fwd(val));
+        bl::construct_at(place(), bl_fwd(val));
     }
 
     constexpr optional(const optional &) noexcept
@@ -40,7 +38,7 @@ struct optional
       : _present(rhs._present)
     {
         if (_present)
-            std::construct_at(place(), rhs._val);
+            bl::construct_at(place(), *rhs.place());
     }
 
     constexpr optional(optional &&rhs) noexcept
@@ -53,8 +51,8 @@ struct optional
       : _present(bl::exchange(rhs._present, false))
     {
         if (_present) {
-            std::construct_at(bl::addressof(place()), bl::move(rhs._val));
-            bl::destroy_at(bl::addressof(rhs._val));
+            bl::construct_at(place(), bl::move(*rhs.place()));
+            bl::destroy_at(rhs.place());
         }
     }
 
@@ -76,7 +74,8 @@ struct optional
             bl::destroy_at(rhs.place());
             rhs._present = false;
         } else if (!_present && rhs._present) {
-            std::construct_at(place(), bl::move(*rhs.place()));
+            bl::construct_at(place(), bl::move(*rhs.place()));
+            bl::destroy_at(rhs.place());
             _present = bl::exchange(rhs._present, false);
         } else if (_present) {
             bl::destroy_at(place());
@@ -122,12 +121,12 @@ struct optional
         *this = nullopt;
     }
 
-    [[nodiscard]] BL_inline const T &operator*() const &noexcept
+    [[nodiscard]] BL_inline const T &operator*() const & noexcept
     {
         return *place();
     }
-    [[nodiscard]] BL_inline T &operator*() &noexcept { return *place(); }
-    [[nodiscard]] BL_inline T &&operator*() &&noexcept
+    [[nodiscard]] BL_inline T &operator*() & noexcept { return *place(); }
+    [[nodiscard]] BL_inline T &&operator*() && noexcept
     {
         return bl::move(*place());
     }
@@ -147,7 +146,7 @@ struct optional
     constexpr T &emplace(Args &&...args)
     {
         *this = nullopt;
-        std::construct_at(place(), bl_fwd(args)...);
+        bl::construct_at(place(), bl_fwd(args)...);
         _present = true;
         return *place();
     }

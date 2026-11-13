@@ -9,6 +9,8 @@ set(OpenGL_GL_PREFERENCE GLVND)
 
 project(gl LANGUAGES C CXX)
 
+include(CTest)
+
 include("${CMAKE_SOURCE_DIR}/cmake/cmake-utils/cmake-utils.cmake")
 
 macro(set_option var default type docstring)
@@ -49,7 +51,13 @@ set_option(ENABLE_VOXEL_OPENCL False BOOL
 
 set_option(ENABLE_ASAN ${is_devel} BOOL "enable -fsanitize=address")
 set_option(ENABLE_UBSAN ${is_devel} BOOL "enable -fsanitize=undefined")
-set_option(ENABLE_LTO True BOOL "enable lto")
+# Keep development builds sanitizer-friendly: GCC 16 LTO can turn inline
+# variables into strong symbols across DSOs, triggering ASan ODR violations.
+set(lto_default True)
+if(is_devel)
+  set(lto_default False)
+endif()
+set_option(ENABLE_LTO ${lto_default} BOOL "enable lto")
 
 if(UNIX)
   set_option(ENABLE_STACKTRACES True BOOL "print a stacktrace on errors")
@@ -128,7 +136,7 @@ if(NOT TARGET glad::glad)
     MERGE
     LANGUAGE
     C
-    REPRODUCABLE
+    REPRODUCIBLE
     API
     gl:compatibility=3.3
     EXTENSIONS

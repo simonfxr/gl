@@ -5,8 +5,6 @@
 #include <bl/ptr_ops.hpp>
 #include <bl/swap.hpp>
 
-#include <memory>
-
 namespace bl {
 
 template<a_ptr T, typename Deleter = default_deleter>

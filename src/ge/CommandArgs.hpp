@@ -11,6 +11,8 @@
 #include <bl/string.hpp>
 #include <bl/vec.hpp>
 
+#include <memory>
+
 namespace ge {
 
 struct Command;

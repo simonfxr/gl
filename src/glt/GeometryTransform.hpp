@@ -10,8 +10,6 @@
 #include <bl/box.hpp>
 #include <bl/noncopymove.hpp>
 
-#include <memory>
-
 namespace glt {
 
 inline constexpr uint32_t GEOMETRY_TRANSFORM_MAX_DEPTH = 16;
